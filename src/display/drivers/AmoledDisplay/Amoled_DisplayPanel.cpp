@@ -18,7 +18,9 @@ Amoled_DisplayPanel::~Amoled_DisplayPanel() {
     }
     if (display) {
         display->setBrightness(0);
-        digitalWrite(hwConfig.lcd_en, LOW);
+        if (hwConfig.lcd_en != -1) {
+            digitalWrite(hwConfig.lcd_en, LOW);
+        }
         delete display;
         display = nullptr;
     }
@@ -43,7 +45,10 @@ bool Amoled_DisplayPanel::installSD() {
 
     SD_MMC.setPins(hwConfig.sd_sclk, hwConfig.sd_mosi, hwConfig.sd_miso);
 
-    return SD_MMC.begin("/sdcard", true, false);
+    // maxOpenFiles 5 -> 10: shot history lives on SD, and the web server serves
+    // many .slog files concurrently alongside live shot logging + index access;
+    // the default of 5 exhausts and throws "too many open files". [GM-90]
+    return SD_MMC.begin("/sdcard", true, false, BOARD_MAX_SDMMC_FREQ, 10);
 }
 
 void Amoled_DisplayPanel::uninstallSD() {
@@ -78,7 +83,13 @@ Amoled_Display_Panel_Type Amoled_DisplayPanel::getModel() { return panelType; }
 
 const char *Amoled_DisplayPanel::getTouchModelName() { return _touchDrv->getModelName(); }
 
-void Amoled_DisplayPanel::enableTouchWakeup() { _wakeupMethod = WAKEUP_FROM_TOUCH; }
+void Amoled_DisplayPanel::enableTouchWakeup() {
+    if (hwConfig.tp_int == -1) {
+        ESP_LOGW("Amoled_DisplayPanel", "Touch wakeup is not supported: tp_int is not wired");
+        return;
+    }
+    _wakeupMethod = WAKEUP_FROM_TOUCH;
+}
 
 void Amoled_DisplayPanel::enableButtonWakeup() { _wakeupMethod = WAKEUP_FROM_BUTTON; }
 
@@ -268,8 +279,10 @@ bool Amoled_DisplayPanel::initDisplay(Amoled_Display_Panel_Color_Order colorOrde
                              0 /* row offset 1 */, hwConfig.lcd_gram_offset_y /* col_offset2 */, 0 /* row_offset2 */, colorOrder);
     }
 
-    pinMode(hwConfig.lcd_en, OUTPUT);
-    digitalWrite(hwConfig.lcd_en, HIGH);
+    if (hwConfig.lcd_en != -1) {
+        pinMode(hwConfig.lcd_en, OUTPUT);
+        digitalWrite(hwConfig.lcd_en, HIGH);
+    }
 
     bool success = display->begin(80000000);
     if (!success) {

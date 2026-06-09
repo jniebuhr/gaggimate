@@ -17,11 +17,12 @@ extern void ui_event_StandbyScreen(lv_event_t *e);
 extern lv_obj_t *ui_StandbyScreen;
 extern lv_obj_t *ui_StandbyScreen_logo;
 extern lv_obj_t *ui_StandbyScreen_time;
-extern lv_obj_t *ui_StandbyScreen_Container1;
+extern lv_obj_t *ui_StandbyScreen_statusContainer;
 extern lv_obj_t *ui_StandbyScreen_wifiIcon;
 extern lv_obj_t *ui_StandbyScreen_bluetoothIcon;
 extern lv_obj_t *ui_StandbyScreen_updateIcon;
-extern lv_obj_t *ui_StandbyScreen_Image3;
+extern lv_obj_t *ui_StandbyScreen_touchIcon;
+extern lv_obj_t *ui_StandbyScreen_mainLabel;
 // CUSTOM VARIABLES
 
 #ifdef __cplusplus

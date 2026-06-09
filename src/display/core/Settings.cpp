@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <utility>
+#include <display/util/ColorConversion.h>
 
 Settings::Settings() {
     preferences.begin(PREFERENCES_KEY, true);
@@ -42,6 +43,7 @@ Settings::Settings() {
     timezone = preferences.getString("tz", DEFAULT_TIMEZONE);
     clock24hFormat = preferences.getBool("clk_24h", true);
     selectedProfile = preferences.getString("sp", "");
+    startupProfile = preferences.getString("sup", ""); // Empty = last used profile
     favoritedProfiles = explode(preferences.getString("fp", ""), ',');
     profileOrder = explode(preferences.getString("po", ""), ',');
     steamPumpPercentage = preferences.getFloat("spp", DEFAULT_STEAM_PUMP_PERCENTAGE);
@@ -97,13 +99,21 @@ Settings::Settings() {
 
     // Sunrise settings
     sunriseR = preferences.getInt("sr_r", 0);
-    sunriseG = preferences.getInt("sr_g", 0);
-    sunriseB = preferences.getInt("sr_b", 255);
-    sunriseW = preferences.getInt("sr_w", 50);
-    sunriseExtBrightness = preferences.getInt("sr_exb", 255);
-    emptyTankDistance = preferences.getInt("sr_ed", 200);
-    fullTankDistance = preferences.getInt("sr_fd", 50);
+    sunriseG = preferences.getInt("sr_g", 250);
+    sunriseB = preferences.getInt("sr_b", 150);
+    sunriseW = preferences.getInt("sr_w", 255);
+    String sunriseIdleDefault = ColorConversion::toHex(sunriseR, sunriseG, sunriseB, sunriseW);
+    sunriseIdle = preferences.getString("sr_i", sunriseIdleDefault);
+    sunriseActive = preferences.getString("sr_a", "#0000FF");
+    sunriseFinished = preferences.getString("sr_f", "#00FF00");
+    sunriseError = preferences.getString("sr_e", "#FF0000");
+    sunriseExtBrightness = preferences.getInt("sr_exb", 75);
+    emptyTankDistance = preferences.getInt("sr_ed", 210);
+    fullTankDistance = preferences.getInt("sr_fd", 30);
     altRelayFunction = preferences.getInt("alt_relay", ALT_RELAY_GRIND);
+
+    String buttonBehaviorStr = preferences.getString("btnb", "brew,steam,water");
+    buttonBehavior = explode(buttonBehaviorStr, ',');
 
     preferences.end();
 
@@ -300,6 +310,11 @@ void Settings::setSelectedProfile(String selected_profile) {
     save();
 }
 
+void Settings::setStartupProfile(String startup_profile) {
+    this->startupProfile = std::move(startup_profile);
+    save();
+}
+
 void Settings::setFavoritedProfiles(std::vector<String> favorited_profiles) {
     favoritedProfiles = std::move(favorited_profiles);
     save();
@@ -394,6 +409,26 @@ void Settings::setSunriseW(int sunrise_w) {
     save();
 }
 
+void Settings::setSunriseIdle(String hexColor) {
+    sunriseIdle = hexColor;
+    save();
+}
+
+void Settings::setSunriseActive(String hexColor) {
+    sunriseActive = hexColor;
+    save();
+}
+
+void Settings::setSunriseFinished(String hexColor) {
+    sunriseFinished = hexColor;
+    save();
+}
+
+void Settings::setSunriseError(String hexColor) {
+    sunriseError = hexColor;
+    save();
+}
+
 void Settings::setSunriseExtBrightness(int sunrise_ext_brightness) {
     sunriseExtBrightness = sunrise_ext_brightness;
     save();
@@ -418,6 +453,19 @@ void Settings::setAutoWakeupEnabled(bool enabled) {
 
 void Settings::setAutoWakeupSchedules(const std::vector<AutoWakeupSchedule> &schedules) {
     autowakeupSchedules = schedules;
+    save();
+}
+
+void Settings::setButtonBehavior(int index, String behavior) {
+    if (index < 0 || index >= buttonBehavior.size()) {
+        return;
+    }
+    buttonBehavior[index] = std::move(behavior);
+    save();
+}
+
+void Settings::setButtonBehaviorList(const std::vector<String> &behavior_list) {
+    buttonBehavior = behavior_list;
     save();
 }
 
@@ -463,6 +511,7 @@ void Settings::doSave() {
     preferences.putString("tz", timezone);
     preferences.putBool("clk_24h", clock24hFormat);
     preferences.putString("sp", selectedProfile);
+    preferences.putString("sup", startupProfile);
     preferences.putInt("sbt", standbyTimeout);
     preferences.putBool("mb", momentaryButtons);
     preferences.putString("fp", implode(favoritedProfiles, ","));
@@ -494,14 +543,15 @@ void Settings::doSave() {
     preferences.putInt("theme", themeMode);
 
     // Sunrise Settings
-    preferences.putInt("sr_r", sunriseR);
-    preferences.putInt("sr_g", sunriseG);
-    preferences.putInt("sr_b", sunriseB);
-    preferences.putInt("sr_w", sunriseW);
+    preferences.putString("sr_i", sunriseIdle);
+    preferences.putString("sr_a", sunriseActive);
+    preferences.putString("sr_f", sunriseFinished);
+    preferences.putString("sr_e", sunriseError);
     preferences.putInt("sr_exb", sunriseExtBrightness);
     preferences.putInt("sr_ed", emptyTankDistance);
     preferences.putInt("sr_fd", fullTankDistance);
     preferences.putInt("alt_relay", altRelayFunction);
+    preferences.putString("btnb", implode(buttonBehavior, ","));
 
     preferences.end();
 }

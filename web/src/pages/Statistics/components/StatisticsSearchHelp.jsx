@@ -1,17 +1,30 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCircleQuestion } from '@fortawesome/free-solid-svg-icons/faCircleQuestion';
+import { getAnalyzerIconButtonClasses } from '../../ShotAnalyzer/components/analyzerControlStyles';
+import {
+  STATISTICS_DROPDOWN_PANEL_SURFACE_CLASS,
+  STATISTICS_DROPDOWN_PANEL_SURFACE_STYLE,
+} from './statisticsDropdownSurface';
+
+const STATISTICS_SEARCH_HELP_PANEL_CLASS = `dropdown-content mt-2 w-[min(92vw,34rem)] p-3 ${STATISTICS_DROPDOWN_PANEL_SURFACE_CLASS}`;
 
 export function StatisticsSearchHelp() {
   return (
     <details className='dropdown dropdown-end'>
       <summary
-        className='border-base-content/10 bg-base-100/45 text-base-content/60 hover:bg-base-200/60 hover:text-base-content flex h-9 min-h-0 w-9 list-none items-center justify-center rounded-lg border px-0 shadow-sm transition-colors [&::-webkit-details-marker]:hidden'
+        className={`${getAnalyzerIconButtonClasses({
+          className:
+            'text-base-content/60 hover:text-base-content flex h-9 min-h-0 w-9 list-none items-center justify-center bg-transparent px-0',
+        })} [&::-webkit-details-marker]:hidden`}
         aria-label='Search help'
         title='Search help'
       >
         <FontAwesomeIcon icon={faCircleQuestion} className='text-sm' />
       </summary>
-      <div className='dropdown-content bg-base-100/95 border-base-content/10 z-[60] mt-2 w-[min(92vw,34rem)] rounded-xl border p-3 shadow-xl backdrop-blur-md'>
+      <div
+        className={STATISTICS_SEARCH_HELP_PANEL_CLASS}
+        style={STATISTICS_DROPDOWN_PANEL_SURFACE_STYLE}
+      >
         <div className='space-y-2 text-xs leading-relaxed'>
           <p className='font-semibold'>Statistics Search DSL</p>
           <p className='opacity-80'>
@@ -21,7 +34,7 @@ export function StatisticsSearchHelp() {
             <p className='font-semibold'>Fields</p>
             <p>
               <code>name</code>, <code>profile</code>, <code>id</code>, <code>source</code>,{' '}
-              <code>date</code>
+              <code>date</code>, <code>pinned</code>
             </p>
           </div>
           <div className='bg-base-200/60 rounded-lg p-2'>
@@ -34,6 +47,9 @@ export function StatisticsSearchHelp() {
             </p>
             <p>
               <code>profile:3_0_25; date:&gt;h-7d;</code>
+            </p>
+            <p>
+              <code>pinned:true; source:gm;</code>
             </p>
             <p>
               <code>date:&gt;=01.02.2026; date:&lt;=07.02.2026 23:59;</code>

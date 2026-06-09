@@ -414,7 +414,7 @@ export function OverviewChart() {
 
   return (
     <ChartComponent
-      className='h-full min-h-[200px] w-full flex-1 lg:min-h-[350px]'
+      className='h-full min-h-[200px] w-full flex-1 lg:min-h-[350px] landscape:max-lg:min-h-0'
       chartClassName='h-full w-full'
       data={chartData}
     />

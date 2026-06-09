@@ -2,7 +2,7 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
-#define PING_INTERVAL 1000
+#define PING_INTERVAL 2000 // keepalive ping cadence (ms); feeds the controller's connection watchdog
 #define PROGRESS_INTERVAL 100
 #define HOT_WATER_SAFETY_DURATION_MS 120000
 #define STEAM_SAFETY_DURATION_MS 600000

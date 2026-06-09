@@ -3,19 +3,39 @@ import { faDroplet } from '@fortawesome/free-solid-svg-icons/faDroplet';
 import { faMugHot } from '@fortawesome/free-solid-svg-icons/faMugHot';
 import { faScaleBalanced } from '@fortawesome/free-solid-svg-icons/faScaleBalanced';
 import { faStopwatch } from '@fortawesome/free-solid-svg-icons/faStopwatch';
-import { STATISTICS_SECTION_TITLE_CLASS } from './statisticsUi';
 
 // Presentational only: renders a high-signal summary layer from StatisticsService.summary.
 function formatDuration(seconds) {
-  if (!Number.isFinite(seconds) || seconds <= 0) return '0s';
-  if (seconds < 60) return `${seconds.toFixed(1)}s`;
-  const m = Math.floor(seconds / 60);
-  const s = Math.round(seconds % 60);
-  return `${m}m ${s}s`;
+  if (!Number.isFinite(seconds) || seconds <= 0) return '0 s';
+  const totalSeconds = Math.max(0, Math.round(seconds));
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const remainingSeconds = totalSeconds % 60;
+  const parts = [];
+
+  if (hours > 0) parts.push(`${hours} h`);
+  if (hours > 0 || minutes > 0) parts.push(`${minutes} m`);
+  parts.push(`${remainingSeconds} s`);
+
+  return parts.join(' ');
 }
 
 function fmtNumber(value, digits = 1) {
   return Number.isFinite(value) ? value.toFixed(digits) : '-';
+}
+
+function formatWeight(value) {
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue)) return '-';
+  if (Math.abs(numericValue) >= 1000) return `${(numericValue / 1000).toFixed(3)} kg`;
+  return `${fmtNumber(numericValue)} g`;
+}
+
+function formatWater(value) {
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue)) return '-';
+  if (Math.abs(numericValue) >= 1000) return `${(numericValue / 1000).toFixed(3)} l`;
+  return `${fmtNumber(numericValue)} ml`;
 }
 
 function SummaryStatCard({ icon, label, value, accentColorVar, tone = 'muted' }) {
@@ -24,11 +44,8 @@ function SummaryStatCard({ icon, label, value, accentColorVar, tone = 'muted' })
 
   return (
     <div
-      className='rounded-2xl border p-3 shadow-sm transition-shadow sm:p-3.5'
+      className='rounded-2xl p-3 shadow-sm transition-shadow sm:p-3.5'
       style={{
-        borderColor: isStrong
-          ? `color-mix(in srgb, ${accent} 28%, var(--statistics-summary-border))`
-          : 'var(--statistics-summary-border)',
         background: isStrong
           ? 'var(--statistics-summary-surface-strong)'
           : 'var(--statistics-summary-surface-muted)',
@@ -77,7 +94,7 @@ export function SummaryCards({ summary }) {
     {
       key: 'totalWeight',
       label: 'Total Weight',
-      value: `${fmtNumber(summary.totalWeight)}g`,
+      value: formatWeight(summary.totalWeight),
       icon: faScaleBalanced,
       accentColorVar: '--analyzer-weight-text',
       tone: 'strong',
@@ -85,7 +102,7 @@ export function SummaryCards({ summary }) {
     {
       key: 'totalWater',
       label: 'Total Water',
-      value: `${fmtNumber(summary.totalWater)}ml`,
+      value: formatWater(summary.totalWater),
       icon: faDroplet,
       accentColorVar: '--statistics-summary-water',
       tone: 'strong',
@@ -102,7 +119,6 @@ export function SummaryCards({ summary }) {
 
   return (
     <div className='space-y-2'>
-      <h3 className={STATISTICS_SECTION_TITLE_CLASS}>Totals</h3>
       <div className='grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4'>
         {totalCards.map(card => (
           <SummaryStatCard key={card.key} {...card} />

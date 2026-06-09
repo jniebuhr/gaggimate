@@ -1,7 +1,7 @@
 #ifndef GAGGIMATECONTROLLER_H
 #define GAGGIMATECONTROLLER_H
 #include "ControllerConfig.h"
-#include "NimBLEServerController.h"
+#include "GaggiMateServer.h"
 #include <peripherals/DigitalInput.h>
 #include <peripherals/DistanceSensor.h>
 #include <peripherals/Heater.h>
@@ -34,9 +34,10 @@ class GaggiMateController {
     void startPidAutotune(void);
     void stopPidAutotune(void);
     void sendSensorData(void);
+    void handleSerialCommand(char c);
 
     ControllerConfig _config = ControllerConfig{};
-    NimBLEServerController _ble;
+    GaggiMateServer _comms;
 
     Max31855Thermocouple *thermocouple = nullptr;
     Heater *heater = nullptr;

@@ -17,10 +17,6 @@ function convert() {
   size="$2"
   output="out/${base}-${size}x${size}.png"
   mkdir -p out
-
-  $command -w "$size" -h "$size" "$input" -o "$output"
-}
-
 convert "angle-down.svg" 40
 convert "angle-up.svg" 40
 convert "angle-left.svg" 40
@@ -55,3 +51,9 @@ convert "pumpkin-alt-2.svg" 60
 convert "disk.svg" 30
 convert "floppy-disks.svg" 30
 convert "meter-droplet.svg" 40
+convert "time-check.svg" 40
+
+  $command -w "$size" -h "$size" "$input" -o "$output"
+}
+
+convert "clock-future-past.svg" 40

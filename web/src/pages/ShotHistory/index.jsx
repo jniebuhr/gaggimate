@@ -145,9 +145,6 @@ export function ShotHistory() {
       let comparison = 0;
 
       switch (sortBy) {
-        case 'date':
-          comparison = a.timestamp - b.timestamp;
-          break;
         case 'rating':
           comparison = (a.rating || 0) - (b.rating || 0);
           break;
@@ -160,8 +157,20 @@ export function ShotHistory() {
         case 'volume':
           comparison = (a.volume || 0) - (b.volume || 0);
           break;
+        case 'id':
+          comparison = parseInt(a.id) - parseInt(b.id);
+          break;
+        case 'date':
         default:
-          comparison = a.timestamp - b.timestamp;
+          if (a.timestamp >= 10000 && b.timestamp >= 10000) {
+            comparison = a.timestamp - b.timestamp;
+          } else if (a.timestamp >= 10000) {
+            comparison = 1;
+          } else if (b.timestamp >= 10000) {
+            comparison = -1;
+          } else {
+            comparison = parseInt(a.id) - parseInt(b.id);
+          }
       }
 
       return sortOrder === 'desc' ? -comparison : comparison;
@@ -240,6 +249,8 @@ export function ShotHistory() {
               <option value='duration-asc'>Shortest Duration</option>
               <option value='volume-desc'>Highest Volume</option>
               <option value='volume-asc'>Lowest Volume</option>
+              <option value='id-desc'>Highest ID First</option>
+              <option value='id-asc'>Lowest ID first</option>
             </select>
           </div>
 
