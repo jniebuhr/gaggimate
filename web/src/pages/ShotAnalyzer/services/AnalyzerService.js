@@ -4,8 +4,6 @@
  * Calculates metrics, detects phase transitions, and determines exit reasons
  */
 
-/* global globalThis */
-
 const PREDICTIVE_WINDOW_MS = 4000;
 // Last-phase fallback thresholds (g)
 const LAST_PHASE_UNDERSHOOT_MIN_G = 2;

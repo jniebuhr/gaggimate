@@ -1,5 +1,3 @@
-/* global globalThis */
-
 import { indexedDBService } from '../pages/ShotAnalyzer/services/IndexedDBService.js';
 import { libraryService } from '../pages/ShotAnalyzer/services/LibraryService.js';
 
