@@ -24,6 +24,7 @@
 #include <display/plugins/ShotHistoryPlugin.h>
 #include <display/plugins/SmartGrindPlugin.h>
 #include <display/plugins/WebUIPlugin.h>
+#include <display/plugins/WifiStaWatchdogPlugin.h>
 #include <display/plugins/mDNSPlugin.h>
 #include <display/util/PsramAllocator.h>
 #ifndef GAGGIMATE_HEADLESS
@@ -81,6 +82,7 @@ void Controller::setup() {
     }
     pluginManager->registerPlugin(new WebUIPlugin());
     pluginManager->registerPlugin(new NetworkWatchdogPlugin());
+    pluginManager->registerPlugin(new WifiStaWatchdogPlugin());
     pluginManager->registerPlugin(&ShotHistory);
     pluginManager->registerPlugin(&BLEScales);
     pluginManager->registerPlugin(new LedControlPlugin());
