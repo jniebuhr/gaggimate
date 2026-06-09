@@ -4,6 +4,7 @@ import './style.css';
 import { initializeTheme } from './utils/themeManager.js';
 
 import { render } from 'preact';
+import { registerSW } from 'virtual:pwa-register';
 import { LocationProvider, Router, Route, ErrorBoundary } from 'preact-iso';
 
 import { Header } from './components/Header.jsx';
@@ -68,3 +69,7 @@ export function App() {
 initializeTheme();
 
 render(<App />, document.getElementById('app'));
+
+registerSW({
+  immediate: true,
+});
