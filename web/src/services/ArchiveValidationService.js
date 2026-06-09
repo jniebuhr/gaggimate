@@ -1,3 +1,5 @@
+/* global globalThis */
+
 const SUPPORTED_SCHEMA_VERSION = 1;
 const REQUIRED_MANIFEST_FIELDS = [
   'archiveVersion',

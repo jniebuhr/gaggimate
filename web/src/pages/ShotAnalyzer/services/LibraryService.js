@@ -48,9 +48,6 @@ function getGaggiMateShotId(value) {
   return raw.startsWith('gaggimate:') ? raw.replace(/^gaggimate:/, '') : raw;
 }
 
-function getLocalShotLookupId(value) {
-  return String(value?.storageKey || value?.name || value?.gaggimateId || value?.id || value || '').trim();
-}
 
 function hasLoadedSamples(shot) {
   return Array.isArray(shot?.samples) && shot.samples.length > 0;
