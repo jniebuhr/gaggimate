@@ -1,9 +1,9 @@
 {
   "navigation": {
-    "selectedUserPageObject": "[gaggimate.eez-project]:/userPages/2",
+    "selectedUserPageObject": "[gaggimate.eez-project]:/userPages/7",
     "selectedUserWidgetObject": "[gaggimate.eez-project]:/userWidgets/0",
-    "selectedGlobalVariableObject": "[gaggimate.eez-project]:/variables/globalVariables/7",
-    "selectedStructureObject": "[gaggimate.eez-project]:/variables/structures/4",
+    "selectedGlobalVariableObject": "[gaggimate.eez-project]:/variables/globalVariables/8",
+    "selectedStructureObject": "[gaggimate.eez-project]:/variables/structures/3",
     "selectedThemeObject": "[gaggimate.eez-project]:/themes/0",
     "selectedBitmapObject": "[gaggimate.eez-project]:/bitmaps/35",
     "subnavigationSelectedItems": {
@@ -76,7 +76,7 @@
           },
           {
             "type": "border",
-            "selected": 0,
+            "selected": 3,
             "size": 154.5,
             "location": "bottom",
             "children": [
@@ -172,7 +172,8 @@
                       "enableClose": false,
                       "icon": "svg:hierarchy"
                     }
-                  ]
+                  ],
+                  "active": true
                 },
                 {
                   "type": "tabset",
@@ -203,10 +204,10 @@
                 {
                   "type": "tab",
                   "id": "#07a87284-0adf-47ce-9994-8cc743141d5f",
-                  "name": "StatusScreen",
+                  "name": "GrindScreen",
                   "component": "editor",
                   "config": {
-                    "objectPath": "[gaggimate.eez-project]:/userPages/2",
+                    "objectPath": "[gaggimate.eez-project]:/userPages/7",
                     "permanent": false
                   },
                   "icon": "svg:page"
@@ -265,8 +266,7 @@
                       "enableClose": false,
                       "icon": "svg:properties"
                     }
-                  ],
-                  "active": true
+                  ]
                 },
                 {
                   "type": "tabset",
@@ -1135,7 +1135,7 @@
       "transform": {
         "translate": {
           "x": -224,
-          "y": -248
+          "y": -252.000244140625
         },
         "scale": 1
       },
@@ -1256,10 +1256,11 @@
       },
       "selectionFront": {},
       "selectionBack": {
-        "0": {
+        "0": {},
+        "2": {},
+        "5": {
           "$selected": true
         },
-        "2": {},
         "6": {}
       }
     },
@@ -1900,6 +1901,7 @@
           "1": {
             "1": {},
             "2": {},
+            "3": {},
             "4": {}
           }
         }
@@ -2063,7 +2065,9 @@
       "selectionFront": {},
       "selectionBack": {
         "0": {
-          "0": {},
+          "0": {
+            "$selected": true
+          },
           "3": {
             "0": {}
           }
