@@ -36,15 +36,17 @@ static WebUIPlugin *g_webUIPlugin = nullptr;
 // (esp-sha/esp-aes "Failed to allocate"). mbedTLS is built with MBEDTLS_PLATFORM_MEMORY
 // (function-pointer allocator), so this runtime override moves those buffers to the 8 MB
 // PSRAM. Falls back to internal DRAM if PSRAM is exhausted so TLS still functions;
-// heap_caps_free handles pointers from either heap.
-static void *mbedtlsPsramCalloc(size_t n, size_t size) {
+// heap_caps_free handles pointers from either heap. The void* parameter/return types below are
+// dictated by the mbedtls_platform_set_calloc_free() callback contract and cannot be narrowed
+// (cpp:S5008 is a false positive here; retyping or casting the function pointers would be UB).
+static void *mbedtlsPsramCalloc(size_t n, size_t size) { // NOSONAR
     void *p = heap_caps_calloc(n, size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
     if (p == nullptr) {
         p = heap_caps_calloc(n, size, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
     }
     return p;
 }
-static void mbedtlsPsramFree(void *p) { heap_caps_free(p); }
+static void mbedtlsPsramFree(void *p) { heap_caps_free(p); } // NOSONAR
 
 WebUIPlugin::WebUIPlugin() : server(80), ws("/ws") { g_webUIPlugin = this; }
 
@@ -115,11 +117,12 @@ void WebUIPlugin::loop() {
     if (!serverRunning) {
         return;
     }
-    const long now = millis();
+    const unsigned long now = millis();
     // Skip the (blocking, TLS) update check while a process is active: a brew/steam/grind
     // must not have the control loop stalled for the duration of the handshake, nor compete
-    // with it for memory. isActive() is the reliable "a process is running" signal.
-    if (!controller->isActive() && (lastUpdateCheck == 0 || now > lastUpdateCheck + UPDATE_CHECK_INTERVAL)) {
+    // with it for memory. isActive() is the reliable "a process is running" signal. Subtraction
+    // (not now > last + interval) keeps the interval check millis()-rollover-safe.
+    if (!controller->isActive() && (lastUpdateCheck == 0 || now - lastUpdateCheck > UPDATE_CHECK_INTERVAL)) {
         ota->checkForUpdates();
         pluginManager->trigger("ota:update:status", "value", ota->isUpdateAvailable());
         lastUpdateCheck = now;
