@@ -15,6 +15,24 @@ This phase exists to prevent:
 
 ---
 
+## Gate 3 Authority
+
+```text
+project-docs/GAGGIMATE_HOSTED_PWA_ROADMAP.md
+```
+
+This document is the authoritative roadmap for:
+
+```text
+Deployment architecture validation
+Single-app feasibility validation
+GaggiMate-hosted PWA validation
+Proof-of-concept definition
+Gate 3 pass/fail criteria
+```
+
+---
+
 ## Current Status
 
 Status:
@@ -309,109 +327,12 @@ Status:
 PASS
 ```
 
-Evidence:
-
-```text
-dist/index.html generated
-dist/sw.js generated
-dist/workbox-*.js generated
-Navigation fallback present
-Application shell precached
-Cache-killer meta tags removed
-```
-
 ### Gate 2 — Desktop Localhost Validation
 
 Status:
 
 ```text
 PASS
-```
-
-Evidence:
-
-```text
-window.isSecureContext = true
-ServiceWorkerRegistration detected
-Active service worker detected
-Controller assigned successfully
-```
-
-Validated using:
-
-```text
-localhost preview deployment
-```
-
-Result:
-
-```text
-Desktop PWA functionality validated.
-```
-
----
-
-## Current Evidence
-
-Observed:
-
-```javascript
-window.isSecureContext
-```
-
-Result:
-
-```text
-true
-```
-
-Observed:
-
-```javascript
-await navigator.serviceWorker.getRegistrations()
-```
-
-Result:
-
-```text
-[ServiceWorkerRegistration]
-```
-
-Observed:
-
-```javascript
-navigator.serviceWorker.controller
-```
-
-Result:
-
-```text
-ServiceWorker
-```
-
-Observed:
-
-```text
-Service worker build files generated successfully.
-```
-
-Observed:
-
-```text
-Offline data available locally.
-```
-
-Current interpretation:
-
-```text
-Offline data layer validated.
-
-Dist output validated.
-
-Desktop localhost PWA validated.
-
-Target-device deployment architecture
-not yet validated.
 ```
 
 ---
@@ -435,126 +356,6 @@ Statistics loads
 ```
 
 Therefore deployment validation remains incomplete.
-
----
-
-## Deployment Validation Roadmap
-
-### Gate 3 — Deployment Architecture Validation
-
-Status:
-
-```text
-ACTIVE
-```
-
-Objective:
-
-```text
-Determine the correct deployment model.
-```
-
-Candidate models:
-
-#### Model A
-
-```text
-Static HTTPS-hosted PWA
-```
-
-#### Model B
-
-```text
-Trusted HTTPS tunnel
-```
-
-#### Model C
-
-```text
-GaggiMate-hosted application
-```
-
-Success:
-
-```text
-Validated deployment path selected.
-```
-
-### Gate 4 — Target Device Validation
-
-Status:
-
-```text
-BLOCKED BY GATE 3
-```
-
-Objective:
-
-```text
-Validate actual deployment platform.
-```
-
-Success criteria:
-
-```text
-Install
-↓
-Open
-↓
-Disconnect
-↓
-Reopen
-↓
-History loads
-↓
-Analyzer loads
-↓
-Statistics loads
-```
-
-Required result:
-
-```text
-PASS
-```
-
----
-
-## Merge Back Status
-
-Current status:
-
-```text
-BLOCKED
-```
-
-Reason:
-
-```text
-PWA deployment validation incomplete.
-```
-
-Required before merge audit resumes:
-
-```text
-Desktop PWA validation PASS
-Target-device validation PASS
-Deployment model documented
-```
-
----
-
-## Safe Sync Status
-
-Current status:
-
-```text
-BLOCKED
-```
-
-Reason:
-
-Deployment architecture not yet validated.
 
 ---
 
@@ -594,9 +395,6 @@ NOT AUTHORISED
 Next action:
 
 ```text
-Evaluate deployment architecture options:
-
-1. Static HTTPS-hosted PWA
-2. Trusted HTTPS tunnel
-3. GaggiMate-hosted application
+Execute Gate 3 validation from:
+project-docs/GAGGIMATE_HOSTED_PWA_ROADMAP.md
 ```
