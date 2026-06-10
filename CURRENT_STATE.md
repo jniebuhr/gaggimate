@@ -334,8 +334,6 @@ PASS
 
 Current phase:
 
-Current phase:
-
 PWA Deployment Validation
 
 Current gate:

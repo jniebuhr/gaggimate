@@ -24,7 +24,11 @@ The project has moved beyond analyzer/history recovery, cache-first stabilisatio
 
 Current phase:
 
-Post-Validation Audit
+PWA Deployment Validation
+
+Current gate:
+
+Gate 3 — Deployment Architecture Validation
 
 â¸»
 
