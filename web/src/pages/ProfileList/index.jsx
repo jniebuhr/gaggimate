@@ -1070,11 +1070,7 @@ export function ProfileList() {
   </Card>
 )}
 
-<div className='grid grid-cols-1 gap-4 lg:grid-cols-12'
-        role='list'
-        aria-label='Profile list'
-        ref={containerRef}
-      >
+<ul className='grid grid-cols-1 gap-4 lg:grid-cols-12' aria-label='Profile list' ref={containerRef}>
         {profilesToShow
           .filter(p => (activeTab === 'utility' ? p.utility : !p.utility))
           .map((data, idx, filtered) => (
@@ -1096,7 +1092,7 @@ export function ProfileList() {
               isLast={idx === filtered.length - 1}
             />
           ))}
-      </div>
+      </ul>
     </>
   );
 }
