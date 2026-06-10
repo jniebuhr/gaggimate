@@ -47,7 +47,7 @@ class WebUIPlugin : public Plugin {
     void handleBLEScaleScan(AsyncWebServerRequest *request);
     void handleBLEScaleConnect(AsyncWebServerRequest *request);
     void handleBLEScaleInfo(AsyncWebServerRequest *request);
-    void updateOTAStatus(const String &version);
+    void updateOTAStatus();
     void updateOTAProgress(uint8_t phase, int progress);
     void sendAutotuneResult();
     void sendAutotuneFailed();
@@ -80,6 +80,7 @@ class WebUIPlugin : public Plugin {
     bool apMode = false;
     bool serverRunning = false;
     String updateComponent = "";
+    String lastSyncedControllerVersion = "";
     float currentBluetoothWeight = 0.0f;
     // Reused for every 500ms status broadcast. Allocating a fresh JsonDocument
     // each tick was a major contributor to internal-heap fragmentation
