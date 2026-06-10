@@ -159,7 +159,7 @@ Remaining future hardening / validation:
 
 Deferred:
 
-* Large archive import behaviour testing — insufficient real-world archive volume
+* Large archive import behaviour testing ï¿½ insufficient real-world archive volume
 * Archive Browser
 * Archive Management
 
@@ -221,4 +221,10 @@ Merge-back compatibility remains a hard requirement.
 
 
 
-Current active gate: PWA Deployment Validation. Merge-back remains blocked until project-docs/PWA_DEPLOYMENT_VALIDATION.md passes.
+Current phase:
+
+PWA Deployment Validation
+
+Current gate:
+
+Gate 3 â€” Deployment Architecture Validation

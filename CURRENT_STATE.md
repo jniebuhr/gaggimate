@@ -334,16 +334,17 @@ PASS
 
 Current phase:
 
-Post-Validation Audit
+Current phase:
 
-Current remaining validation targets:
+PWA Deployment Validation
 
-1. Browser storage behaviour testing.
-2. Merge-back readiness audit.
+Current gate:
+
+Gate 3 â€” Deployment Architecture Validation
 
 Deferred:
 
-* Large archive import behaviour testing — insufficient real-world archive volume.
+* Large archive import behaviour testing ï¿½ insufficient real-world archive volume.
 * Archive Browser
 * Archive Management
 
@@ -448,7 +449,7 @@ Remaining before safe sync implementation:
 
 Deferred:
 
-* Large archive import behaviour testing — insufficient real-world archive volume.
+* Large archive import behaviour testing ï¿½ insufficient real-world archive volume.
 
 Completed Stabilisation Fixes
 
