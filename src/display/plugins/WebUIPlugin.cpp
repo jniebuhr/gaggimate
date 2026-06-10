@@ -848,15 +848,16 @@ void WebUIPlugin::updateOTAStatus(const String &version) {
         return;
     }
     Settings const &settings = controller->getSettings();
+    const String controllerVersion = controller->getSystemInfo().version;
+    ota->setControllerVersion(controllerVersion);
     JsonDocument doc(&psramAllocator);
-    doc["latestVersion"] = ota->getCurrentVersion();
     doc["tp"] = "res:ota-settings";
+    doc["latestVersion"] = ota->getCurrentVersion();
     doc["displayUpdateAvailable"] = ota->isUpdateAvailable(false);
     doc["controllerUpdateAvailable"] = ota->isUpdateAvailable(true);
     doc["displayVersion"] = BUILD_GIT_VERSION;
-    doc["controllerVersion"] = controller->getSystemInfo().version;
+    doc["controllerVersion"] = controllerVersion;
     doc["hardware"] = controller->getSystemInfo().hardware;
-    doc["latestVersion"] = ota->getCurrentVersion();
     doc["channel"] = settings.getOTAChannel();
     doc["updating"] = updating;
     // LittleFS usage metrics
