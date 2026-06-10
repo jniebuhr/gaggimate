@@ -26,11 +26,11 @@
           var explicit = ['light', 'dark', 'coffee', 'nord'];
           var allowed = ['system'].concat(explicit);
           var saved = localStorage.getItem(key);
-          var theme = allowed.indexOf(saved) >= 0 ? saved : 'system';
+          var theme = allowed.includes(saved) ? saved : 'system';
           if (theme === 'system') {
-            document.documentElement.removeAttribute('data-theme');
+            delete document.documentElement.dataset.theme;
           } else {
-            document.documentElement.setAttribute('data-theme', theme);
+            document.documentElement.dataset.theme = theme;
           }
         } catch (e) {}
       })();
