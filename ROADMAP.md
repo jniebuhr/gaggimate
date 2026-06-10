@@ -220,3 +220,5 @@ Do not reintroduce:
 Merge-back compatibility remains a hard requirement.
 
 
+
+Current active gate: PWA Deployment Validation. Merge-back remains blocked until project-docs/PWA_DEPLOYMENT_VALIDATION.md passes.

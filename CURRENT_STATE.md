@@ -461,3 +461,5 @@ Shot History / Analyzer
 * Archive export now uses the same canonical merged shot list as History/Analyzer instead of raw IndexedDB rows.
 * Archive import preview now uses the same canonical merged shot list as History/Analyzer instead of raw IndexedDB rows.
 
+
+PWA Deployment Validation is active. See project-docs/PWA_DEPLOYMENT_VALIDATION.md.
