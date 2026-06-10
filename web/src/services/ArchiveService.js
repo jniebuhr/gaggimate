@@ -124,7 +124,7 @@ class ArchiveService {
     const createdAt = options.createdAt || new Date().toISOString();
     const bundleName = options.bundleName || buildBundleName(new Date(createdAt));
     const rawShots = await libraryService.getAllShots('both');
-    const rawProfiles = await indexedDBService.getAllProfiles();
+    const rawProfiles = indexedDBService.getAllProfiles();
     const rawNotes = this.getAllNotes();
     const shots = this.buildArchiveShots(rawShots);
     const profiles = rawProfiles.map(normaliseArchiveProfile);
