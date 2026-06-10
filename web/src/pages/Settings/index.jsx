@@ -64,7 +64,7 @@ export function Settings() {
   const [submitting, setSubmitting] = useState(false);
   const [gen] = useState(0);
   const [formData, setFormData] = useState({});
-  const [currentTheme, setCurrentTheme] = useState('light');
+  const [currentTheme, setCurrentTheme] = useState('system');
   const [showWifiPassword, setShowWifiPassword] = useState(false);
   const [autowakeupSchedules, setAutoWakeupSchedules] = useState([
     { time: '07:00', days: [true, true, true, true, true, true, true] }, // Default: all days enabled
@@ -403,6 +403,7 @@ export function Settings() {
                   handleThemeChange(e);
                 }}
               >
+                <option value='system'>System</option>
                 <option value='light'>Light</option>
                 <option value='dark'>Dark</option>
                 <option value='coffee'>Coffee</option>
