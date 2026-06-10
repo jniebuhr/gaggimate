@@ -281,6 +281,18 @@ Reason:
 
 Service worker registration exists in source.
 
+### Missing Device-Served PWA Assets
+
+Status:
+
+```text
+RULED OUT
+```
+
+Reason:
+
+Target-device Gate 3A validation confirmed the GaggiMate device serves the app shell, service worker file, and web manifest by direct IP address.
+
 ---
 
 ## Investigated And Reverted
@@ -335,6 +347,97 @@ Status:
 PASS
 ```
 
+### Gate 3A — Target Device Static Asset Audit
+
+Status:
+
+```text
+PARTIAL PASS
+```
+
+Validated on GaggiMate device:
+
+```text
+http://gaggimate.local/
+FAIL — browser could not find host
+
+http://192.168.0.129/
+PASS — GaggiMate Web UI loads
+
+http://192.168.0.129/sw.js
+PASS — service worker file is served
+
+http://192.168.0.129/app.webmanifest
+PASS — web manifest is served and parses as JSON
+
+http://192.168.0.129/assets/
+RESPONDS — directory listing not exposed; no missing-server failure observed
+```
+
+Interpretation:
+
+```text
+mDNS discovery: FAIL
+Direct IP access: PASS
+Web UI serving: PASS
+Service worker asset presence: PASS
+Manifest asset presence: PASS
+Missing PWA assets: RULED OUT for sw.js and app.webmanifest
+```
+
+Gate 3A did not prove installable PWA behaviour.
+
+It did prove that the immediate failure is not missing `sw.js` or missing `app.webmanifest` on the flashed GaggiMate web filesystem.
+
+### Gate 3C — Service Worker Registration Audit
+
+Status:
+
+```text
+FAIL
+```
+
+Target origin tested:
+
+```text
+http://192.168.0.129/
+```
+
+Browser console evidence:
+
+```text
+window.isSecureContext
+false
+
+await navigator.serviceWorker.getRegistrations()
+Uncaught TypeError: Cannot read properties of undefined (reading 'getRegistrations')
+```
+
+Interpretation:
+
+```text
+navigator.serviceWorker is unavailable on the direct-IP HTTP origin.
+The browser does not expose the Service Worker API because the origin is not a secure context.
+```
+
+Failure classification:
+
+```text
+origin/security issue
+```
+
+This is not a failure of:
+
+```text
+IndexedDB
+Archive
+History rendering
+Analyzer rendering
+Statistics rendering
+PWA asset generation
+Device static-file serving
+```
+
 ---
 
 ## Current Risk
@@ -356,6 +459,13 @@ Statistics loads
 ```
 
 Therefore deployment validation remains incomplete.
+
+Current blocker:
+
+```text
+The GaggiMate-hosted direct-IP HTTP origin is not a secure context in the tested browser.
+Service worker registration is unavailable from that origin.
+```
 
 ---
 
@@ -395,6 +505,5 @@ NOT AUTHORISED
 Next action:
 
 ```text
-Execute Gate 3 validation from:
-project-docs/GAGGIMATE_HOSTED_PWA_ROADMAP.md
+Evaluate Gate 3C origin/security failure against project-docs/GAGGIMATE_HOSTED_PWA_ROADMAP.md decision rules before patching application logic.
 ```
