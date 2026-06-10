@@ -114,7 +114,7 @@ function filterLocalShotsBySource(shots, sourceFilter = 'both') {
 
 async function fetchWithTimeout(url, options = {}, timeoutMs = GAGGIMATE_HTTP_TIMEOUT_MS) {
   const controller = new AbortController();
-  const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
+  const timeout = globalThis.setTimeout(() => controller.abort(), timeoutMs);
 
   try {
     return await fetch(url, {
@@ -122,7 +122,7 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = GAGGIMATE_HTTP_TI
       signal: controller.signal,
     });
   } finally {
-    window.clearTimeout(timeout);
+    globalThis.clearTimeout(timeout);
   }
 }
 

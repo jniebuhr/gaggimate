@@ -131,7 +131,7 @@ function compareHistoryShotByDate(a, b) {
     return -1;
   }
 
-  return parseInt(a.id) - parseInt(b.id);
+  return Number.parseInt(a.id) - Number.parseInt(b.id);
 }
 
 function compareHistoryShots(a, b, sortBy) {
@@ -145,7 +145,7 @@ function compareHistoryShots(a, b, sortBy) {
     case 'volume':
       return (a.volume || 0) - (b.volume || 0);
     case 'id':
-      return parseInt(a.id) - parseInt(b.id);
+      return Number.parseInt(a.id) - Number.parseInt(b.id);
     case 'date':
     default:
       return compareHistoryShotByDate(a, b);
