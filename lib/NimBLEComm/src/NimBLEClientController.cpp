@@ -43,8 +43,8 @@ void NimBLEClientController::tare() {
 void NimBLEClientController::registerRemoteErrorCallback(const remote_err_callback_t &callback) {
     remoteErrorCallback = callback;
 }
-
-void NimBLEClientController::registerBtnCallback(const button_callback_t &callback) { btnCallback = callback; }
+void NimBLEClientController::registerBrewBtnCallback(const brew_callback_t &callback) { brewBtnCallback = callback; }
+void NimBLEClientController::registerSteamBtnCallback(const brew_callback_t &callback) { steamBtnCallback = callback; }
 
 void NimBLEClientController::registerSensorCallback(const sensor_read_callback_t &callback) { sensorCallback = callback; }
 
@@ -117,10 +117,16 @@ bool NimBLEClientController::connectToServer() {
                                              std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
     }
 
-    btnChar = pRemoteService->getCharacteristic(NimBLEUUID(BTN_UUID));
-    if (btnChar != nullptr && btnChar->canNotify()) {
-        btnChar->subscribe(true, std::bind(&NimBLEClientController::notifyCallback, this, std::placeholders::_1,
-                                           std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
+    brewBtnChar = pRemoteService->getCharacteristic(NimBLEUUID(BREW_BTN_UUID));
+    if (brewBtnChar != nullptr && brewBtnChar->canNotify()) {
+        brewBtnChar->subscribe(true, std::bind(&NimBLEClientController::notifyCallback, this, std::placeholders::_1,
+                                               std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
+    }
+
+    steamBtnChar = pRemoteService->getCharacteristic(NimBLEUUID(STEAM_BTN_UUID));
+    if (steamBtnChar != nullptr && steamBtnChar->canNotify()) {
+        steamBtnChar->subscribe(true, std::bind(&NimBLEClientController::notifyCallback, this, std::placeholders::_1,
+                                                std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
     }
 
     autotuneResultChar = pRemoteService->getCharacteristic(NimBLEUUID(AUTOTUNE_RESULT_UUID));
@@ -256,7 +262,8 @@ void NimBLEClientController::onDisconnect(NimBLEClient *pServer) {
     errorChar = nullptr;
     autotuneChar = nullptr;
     autotuneResultChar = nullptr;
-    btnChar = nullptr;
+    brewBtnChar = nullptr;
+    steamBtnChar = nullptr;
     infoChar = nullptr;
     sensorChar = nullptr;
     outputControlChar = nullptr;
@@ -286,17 +293,18 @@ void NimBLEClientController::notifyCallback(NimBLERemoteCharacteristic *pRemoteC
             remoteErrorCallback(errorCode);
         }
     }
-    if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(BTN_UUID))) {
-        int index = 0;
-        int status = 0;
-
-        int parsed = sscanf(rawData, "%d,%d", &index, &status);
-        if (parsed < 2) {
-            ESP_LOGW(LOG_TAG, "Malformed button data payload: %s", rawData);
-            return;
+    if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(BREW_BTN_UUID))) {
+        int brewButtonStatus = atoi(rawData);
+        ESP_LOGV(LOG_TAG, "brew button: %d", brewButtonStatus);
+        if (brewBtnCallback != nullptr) {
+            brewBtnCallback(brewButtonStatus);
         }
-        if (btnCallback != nullptr) {
-            btnCallback(index, status);
+    }
+    if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(STEAM_BTN_UUID))) {
+        int steamButtonStatus = atoi(rawData);
+        ESP_LOGV(LOG_TAG, "steam button: %d", steamButtonStatus);
+        if (steamBtnCallback != nullptr) {
+            steamBtnCallback(steamButtonStatus);
         }
     }
     if (pRemoteCharacteristic->getUUID().equals(NimBLEUUID(SENSOR_DATA_UUID))) {
