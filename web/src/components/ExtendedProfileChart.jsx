@@ -120,7 +120,7 @@ function makeChartData(data, selectedPhase, isDarkMode = false) {
   const phases = Array.isArray(data?.phases) ? data.phases : [];
   let duration = 0;
   for (const phase of phases) {
-    duration += parseFloat(phase.duration);
+    duration += Number.parseFloat(phase.duration);
   }
   const chartData = {
     type: 'line',
@@ -247,9 +247,9 @@ function makeChartData(data, selectedPhase, isDarkMode = false) {
   if (selectedPhase !== null && phases.length > 0) {
     let start = 0;
     for (let i = 0; i < selectedPhase; i++) {
-      start += parseFloat(phases[i].duration);
+      start += Number.parseFloat(phases[i].duration);
     }
-    let end = start + parseFloat(phases[selectedPhase].duration);
+    let end = start + Number.parseFloat(phases[selectedPhase].duration);
     chartData.options.plugins.annotation.annotations.push({
       id: 'box1',
       type: 'box',
@@ -297,7 +297,7 @@ function makeChartData(data, selectedPhase, isDarkMode = false) {
         : undefined,
     });
 
-    phaseStart += parseFloat(phase.duration);
+    phaseStart += Number.parseFloat(phase.duration);
   }
   return chartData;
 }
