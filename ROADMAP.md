@@ -28,7 +28,7 @@ PWA Deployment Validation
 
 Current gate:
 
-Gate 3 — Deployment Architecture Validation
+Gate 3 - Deployment Architecture Validation
 
 â¸»
 
