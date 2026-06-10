@@ -26,7 +26,8 @@ class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLECli
     void scan();
     void tare();
     void registerRemoteErrorCallback(const remote_err_callback_t &callback);
-    void registerBtnCallback(const button_callback_t &callback);
+    void registerBrewBtnCallback(const brew_callback_t &callback);
+    void registerSteamBtnCallback(const steam_callback_t &callback);
     void registerSensorCallback(const sensor_read_callback_t &callback);
     void registerAutotuneResultCallback(const pid_control_callback_t &callback);
     void registerVolumetricMeasurementCallback(const float_callback_t &callback);
@@ -50,7 +51,8 @@ class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLECli
     NimBLERemoteCharacteristic *errorChar = nullptr;
     NimBLERemoteCharacteristic *autotuneChar = nullptr;
     NimBLERemoteCharacteristic *autotuneResultChar = nullptr;
-    NimBLERemoteCharacteristic *btnChar = nullptr;
+    NimBLERemoteCharacteristic *brewBtnChar = nullptr;
+    NimBLERemoteCharacteristic *steamBtnChar = nullptr;
     NimBLERemoteCharacteristic *infoChar = nullptr;
     NimBLERemoteCharacteristic *sensorChar = nullptr;
     NimBLERemoteCharacteristic *outputControlChar = nullptr;
@@ -64,7 +66,8 @@ class NimBLEClientController : public NimBLEAdvertisedDeviceCallbacks, NimBLECli
     xTaskHandle taskHandle;
 
     remote_err_callback_t remoteErrorCallback = nullptr;
-    button_callback_t btnCallback = nullptr;
+    brew_callback_t brewBtnCallback = nullptr;
+    steam_callback_t steamBtnCallback = nullptr;
     pid_control_callback_t autotuneResultCallback = nullptr;
     sensor_read_callback_t sensorCallback = nullptr;
     float_callback_t volumetricMeasurementCallback = nullptr;
