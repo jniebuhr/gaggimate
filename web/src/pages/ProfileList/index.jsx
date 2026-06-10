@@ -2,7 +2,7 @@ import Sortable, { MultiDrag } from 'sortablejs';
 try {
   Sortable?.mount(new MultiDrag());
 } catch (error) {
-  // to avoid error when vite is reloading the page in dev mode
+  console.debug('Sortable MultiDrag mount skipped during reload.', error);
 }
 
 import {
@@ -63,6 +63,17 @@ const PhaseLabels = {
   preinfusion: 'Pre-Infusion',
   brew: 'Brew',
 };
+
+function handleExpectedPopoverError(error) {
+  if (
+    error instanceof DOMException &&
+    (error.name === 'InvalidStateError' || error.name === 'NotSupportedError')
+  ) {
+    return;
+  }
+
+  throw error;
+}
 
 const connected = computed(() => machine.value.connected);
 
@@ -145,7 +156,9 @@ function ProfileCard({
     if (!pop.matches(':popover-open')) {
       try {
         pop.showPopover();
-      } catch (_) {}
+      } catch (error) {
+        handleExpectedPopoverError(error);
+      }
     }
     // Measure size
     const w = pop.offsetWidth || 224; // ~w-56
@@ -170,10 +183,12 @@ function ProfileCard({
 
   const closeMenu = useCallback(() => {
     const pop = popoverRef.current;
-    if (pop && pop.matches(':popover-open')) {
+    if (pop?.matches(':popover-open')) {
       try {
         pop.hidePopover();
-      } catch (_) {}
+      } catch (error) {
+        handleExpectedPopoverError(error);
+      }
     }
     setMenuOpen(false);
   }, []);
@@ -190,7 +205,9 @@ function ProfileCard({
         try {
           pop.showPopover();
           setMenuOpen(true);
-        } catch (_) {}
+        } catch (error) {
+        handleExpectedPopoverError(error);
+      }
       }
     },
     [closeMenu, positionPopover],
