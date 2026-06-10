@@ -123,11 +123,9 @@ class ArchiveService {
   async prepareArchiveBundle(options = {}) {
     const createdAt = options.createdAt || new Date().toISOString();
     const bundleName = options.bundleName || buildBundleName(new Date(createdAt));
-    const [rawShots, rawProfiles, rawNotes] = await Promise.all([
-      libraryService.getAllShots('both'),
-      indexedDBService.getAllProfiles(),
-      this.getAllNotes(),
-    ]);
+    const rawShots = await libraryService.getAllShots('both');
+    const rawProfiles = await indexedDBService.getAllProfiles();
+    const rawNotes = this.getAllNotes();
     const shots = this.buildArchiveShots(rawShots);
     const profiles = rawProfiles.map(normaliseArchiveProfile);
     const notes = rawNotes.map(normaliseArchiveNote);
