@@ -9,6 +9,7 @@ import { Tooltip } from '../../components/Tooltip.jsx';
 
 export function StandardProfileForm(props) {
   const { data, onChange, onSave, saving = true, pressureAvailable = false } = props;
+  const phases = Array.isArray(data?.phases) ? data.phases : [];
 
   const onFieldChange = (field, value) => {
     onChange({
@@ -18,18 +19,19 @@ export function StandardProfileForm(props) {
   };
 
   const onPhaseChange = (index, value) => {
-    const newData = {
+    const newPhases = [...phases];
+    newPhases[index] = value;
+    onChange({
       ...data,
-    };
-    newData.phases[index] = value;
-    onChange(newData);
+      phases: newPhases,
+    });
   };
 
   const onPhaseAdd = () => {
     onChange({
       ...data,
       phases: [
-        ...data.phases,
+        ...phases,
         {
           phase: 'brew',
           name: 'New Phase',
@@ -47,9 +49,9 @@ export function StandardProfileForm(props) {
       ...data,
       phases: [],
     };
-    for (let i = 0; i < data.phases.length; i++) {
+    for (let i = 0; i < phases.length; i++) {
       if (i !== index) {
-        newData.phases.push(data.phases[i]);
+        newData.phases.push(phases[i]);
       }
     }
     onChange(newData);
@@ -117,7 +119,7 @@ export function StandardProfileForm(props) {
 
         <Card sm={10} title='Brew Phases'>
           <div className='space-y-4' role='group' aria-label='Brew phases configuration'>
-            {data.phases.map((value, index) => (
+            {phases.map((value, index) => (
               <div key={index}>
                 {index > 0 && (
                   <div className='flex flex-col items-center py-2' aria-hidden='true'>

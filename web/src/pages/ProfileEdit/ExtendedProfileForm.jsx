@@ -11,6 +11,7 @@ import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
 
 export function ExtendedProfileForm(props) {
   const { data, onChange, onSave, saving = true, pressureAvailable = false } = props;
+  const phases = Array.isArray(data?.phases) ? data.phases : [];
   const [currentPhaseIndex, setCurrentPhaseIndex] = useState(0);
 
   const onFieldChange = (field, value) => {
@@ -21,18 +22,19 @@ export function ExtendedProfileForm(props) {
   };
 
   const onPhaseChange = (index, value) => {
-    const newData = {
+    const newPhases = [...phases];
+    newPhases[index] = value;
+    onChange({
       ...data,
-    };
-    newData.phases[index] = value;
-    onChange(newData);
+      phases: newPhases,
+    });
   };
 
   const onPhaseAdd = () => {
     onChange({
       ...data,
       phases: [
-        ...data.phases,
+        ...phases,
         {
           phase: 'brew',
           name: 'New Phase',
@@ -48,7 +50,7 @@ export function ExtendedProfileForm(props) {
         },
       ],
     });
-    setCurrentPhaseIndex(data.phases.length);
+    setCurrentPhaseIndex(phases.length);
   };
 
   const onPhaseRemove = index => {
@@ -56,16 +58,16 @@ export function ExtendedProfileForm(props) {
       ...data,
       phases: [],
     };
-    for (let i = 0; i < data.phases.length; i++) {
+    for (let i = 0; i < phases.length; i++) {
       if (i !== index) {
-        newData.phases.push(data.phases[i]);
+        newData.phases.push(phases[i]);
       }
     }
     onChange(newData);
     setCurrentPhaseIndex(0);
   };
 
-  const currentPhase = data.phases[currentPhaseIndex];
+  const currentPhase = phases[currentPhaseIndex];
 
   return (
     <form
@@ -128,7 +130,7 @@ export function ExtendedProfileForm(props) {
         </Card>
         <Card sm={10}>
           <ExtendedProfileChart
-            data={data}
+            data={{ ...data, phases }}
             selectedPhase={currentPhaseIndex}
             className='max-h-72 w-full'
           />
@@ -137,7 +139,7 @@ export function ExtendedProfileForm(props) {
           <div className='card-header flex items-center gap-4'>
             <h2 className='card-title flex-grow text-lg sm:text-xl'>Phases</h2>
             <h5 className='card-subtitle text-sm sm:text-base'>
-              {currentPhaseIndex + 1} / {data.phases.length}
+              {phases.length > 0 ? `${currentPhaseIndex + 1} / ${phases.length}` : '0 / 0'}
             </h5>
             <div>
               <div className='join' role='group' aria-label='Phase navigation'>
@@ -154,7 +156,7 @@ export function ExtendedProfileForm(props) {
                   type='button'
                   className={`join-item btn btn-outline max-sm:btn-sm`}
                   aria-label='Next'
-                  disabled={currentPhaseIndex === data.phases.length - 1}
+                  disabled={phases.length === 0 || currentPhaseIndex === phases.length - 1}
                   onClick={() => setCurrentPhaseIndex(currentPhaseIndex + 1)}
                 >
                   <FontAwesomeIcon icon={faChevronRight} />
@@ -173,19 +175,24 @@ export function ExtendedProfileForm(props) {
               type='button'
               className={`join-item btn btn-outline text-error max-sm:btn-sm`}
               aria-label='Remove phase'
+              disabled={phases.length === 0}
               onClick={() => onPhaseRemove(currentPhaseIndex)}
             >
               <FontAwesomeIcon icon={faTrashCan} />
             </button>
           </div>
           <div className='space-y-4' role='group' aria-label='Brew phases configuration'>
-            <ExtendedPhase
-              phase={currentPhase}
-              index={currentPhaseIndex}
-              onChange={phase => onPhaseChange(currentPhaseIndex, phase)}
-              onRemove={() => onPhaseRemove(currentPhaseIndex)}
-              pressureAvailable={pressureAvailable}
-            />
+            {currentPhase ? (
+              <ExtendedPhase
+                phase={currentPhase}
+                index={currentPhaseIndex}
+                onChange={phase => onPhaseChange(currentPhaseIndex, phase)}
+                onRemove={() => onPhaseRemove(currentPhaseIndex)}
+                pressureAvailable={pressureAvailable}
+              />
+            ) : (
+              <p className='text-base-content/60 text-sm'>No phases yet. Add a phase to configure brewing.</p>
+            )}
           </div>
         </Card>
       </div>
