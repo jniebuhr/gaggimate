@@ -8,10 +8,11 @@ import { faChevronLeft } from '@fortawesome/free-solid-svg-icons/faChevronLeft';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight';
 import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
+import { getProfilePhases, removePhaseAt, updatePhaseAt } from './profilePhases.js';
 
 export function ExtendedProfileForm(props) {
   const { data, onChange, onSave, saving = true, pressureAvailable = false } = props;
-  const phases = Array.isArray(data?.phases) ? data.phases : [];
+  const phases = getProfilePhases(data);
   const [currentPhaseIndex, setCurrentPhaseIndex] = useState(0);
 
   const onFieldChange = (field, value) => {
@@ -22,11 +23,9 @@ export function ExtendedProfileForm(props) {
   };
 
   const onPhaseChange = (index, value) => {
-    const newPhases = [...phases];
-    newPhases[index] = value;
     onChange({
       ...data,
-      phases: newPhases,
+      phases: updatePhaseAt(phases, index, value),
     });
   };
 
@@ -54,16 +53,10 @@ export function ExtendedProfileForm(props) {
   };
 
   const onPhaseRemove = index => {
-    const newData = {
+    onChange({
       ...data,
-      phases: [],
-    };
-    for (let i = 0; i < phases.length; i++) {
-      if (i !== index) {
-        newData.phases.push(phases[i]);
-      }
-    }
-    onChange(newData);
+      phases: removePhaseAt(phases, index),
+    });
     setCurrentPhaseIndex(0);
   };
 
