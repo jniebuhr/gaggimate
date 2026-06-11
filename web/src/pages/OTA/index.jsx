@@ -97,7 +97,7 @@ export function OTA() {
       setSubmitting(true);
       const form = formRef.current;
       const formData = new FormData(form);
-      apiService.send({ tp: 'req:ota-settings', update: true, channel: formData.get('channel') });
+      apiService.send({ tp: 'req:ota-settings', update: true, channel: formData.get('channel'), customOTAURL: formData.get('customOTAURL') });
       setSubmitting(true);
     },
     [setFormData, formRef],
@@ -180,10 +180,9 @@ export function OTA() {
                   <input
                       id='customOTAURL'
                       name='customOTAURL'
-                      type='number'
+                      type='string'
                       placeholder='135'
                       value={formData.customOTAURL}
-                      onChange={onChange('customOTAURL')}
                   />
               </div>
             <div className='flex flex-col space-y-4'>
