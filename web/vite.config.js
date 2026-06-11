@@ -30,8 +30,11 @@ export default defineConfig(({ mode }) => {
   const configuredHost = env.VITE_GAGGIMATE_HOST;
   const httpTarget = normalizeTarget(configuredHost, 'http');
   const wsTarget = normalizeTarget(configuredHost, 'ws');
+  const repoName = process.env.GITHUB_REPOSITORY?.split('/')[1] ?? '';
+  const base = env.VITE_BASE_URL || (process.env.GITHUB_ACTIONS && repoName ? `/${repoName}/` : '/');
 
   return {
+    base,
     plugins: [
       preact(),
       tailwindcss(),
