@@ -4,10 +4,10 @@
 #include <ADS1X15.h>
 #include <Arduino.h>
 
-constexpr int ADC_READ_INTERVAL_MS = 60;
+constexpr int ADC_READ_INTERVAL_MS = 30;
 constexpr float ADC_STEP = 6.144f / 32767.0f;
 
-using pressure_callback_t = std::function<void(float)>;
+using ads_callback_t = std::function<void(uint8_t, int)>;
 
 class ADSAdc {
   public:
@@ -18,6 +18,7 @@ class ADSAdc {
     void loop();
     int getValue(uint8_t channel = 0) const { return _value[channel]; };
     void setScale(float pressure_scale);
+    void registerCallback(ads_callback_t callback);
 
   private:
     uint8_t _sda_pin;
@@ -26,7 +27,7 @@ class ADSAdc {
     uint8_t _currentChannel = 0;
     int _value[4] = {0, 0, 0, 0};
     ADS1115 *ads = nullptr;
-    pressure_callback_t _callback;
+    ads_callback_t _callback;
     xTaskHandle taskHandle;
 
     const char *LOG_TAG = "ADSAdc";

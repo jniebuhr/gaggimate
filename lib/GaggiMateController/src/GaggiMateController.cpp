@@ -32,7 +32,7 @@ void GaggiMateController::setup() {
             [this]() { thermalRunawayShutdown(); });
     }
     if (_config.capabilites.pressure || _config.capabilites.dualBoiler) {
-        adc = new ADSAdc(_config.pressureSda, _config.pressureScl, 4);
+        adc = new ADSAdc(_config.pressureSda, _config.pressureScl, 3);
         pressureSensor = new PressureSensor(this->adc);
         if (_config.capabilites.dualBoiler) {
             this->brewTemperature =

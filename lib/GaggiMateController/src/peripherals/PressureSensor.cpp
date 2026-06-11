@@ -9,11 +9,14 @@ PressureSensor::PressureSensor(ADSAdc *adc, float pressure_scale, float voltage_
 }
 
 void PressureSensor::setup() {
-    xTaskCreate(loopTask, "PressureSensor::loop", configMINIMAL_STACK_SIZE * 4, this, 1, &taskHandle);
+    _adc->registerCallback([this](uint8_t channel, int reading) {
+        if (channel == _channel) {
+            onReading(reading);
+        }
+    });
 }
 
-void PressureSensor::loop() {
-    int reading = _adc->getValue(_channel);
+void PressureSensor::onReading(int reading) {
     reading = reading - _adc_floor;
     const float pressure = static_cast<float>(reading) * _pressure_step;
     _raw_pressure = pressure;
@@ -26,13 +29,4 @@ void PressureSensor::loop() {
 void PressureSensor::setScale(float pressure_scale) {
     _pressure_scale = pressure_scale;
     _pressure_step = pressure_scale / _pressure_adc_range;
-}
-
-[[noreturn]] void PressureSensor::loopTask(void *arg) {
-    TickType_t lastWake = xTaskGetTickCount();
-    auto *sensor = static_cast<PressureSensor *>(arg);
-    while (true) {
-        sensor->loop();
-        xTaskDelayUntil(&lastWake, pdMS_TO_TICKS(SENSOR_READ_INTERVAL_MS));
-    }
 }

@@ -13,8 +13,6 @@ constexpr float PRESSURE_KF_PROCESS_NOISE =
     (4.0f * PRESSURE_KF_SAMPLE_TIME_S) * (4.0f * PRESSURE_KF_SAMPLE_TIME_S); // Q, same model as PressureController
 constexpr int SENSOR_READ_INTERVAL_MS = 100;
 
-using pressure_callback_t = std::function<void(float)>;
-
 class PressureSensor {
   public:
     PressureSensor(ADSAdc *adc, float pressure_scale = 16.0f, float voltage_floor = 0.5, float voltage_ceil = 4.5,
@@ -22,7 +20,7 @@ class PressureSensor {
     ~PressureSensor() = default;
 
     void setup();
-    void loop();
+    void onReading(int reading);
     float getPressure() const { return _pressure; };
     float getRawPressure() const { return _raw_pressure; };
     void setScale(float pressure_scale);
@@ -37,10 +35,6 @@ class PressureSensor {
     ADSAdc *_adc = nullptr;
     uint8_t _channel;
     SimpleKalmanFilter _filter;
-    xTaskHandle taskHandle;
-
-    const char *LOG_TAG = "PressureSensor";
-    static void loopTask(void *arg);
 };
 
 #endif // PRESSURESENSOR_H
