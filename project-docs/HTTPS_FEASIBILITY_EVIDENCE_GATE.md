@@ -249,19 +249,32 @@ Observed:
 }
 ```
 
+Detailed browser console evidence:
+
+```text
+Mixed Content: The page at 'https://tyrlabsos.github.io/GaggiGo/https-feasibility/' was loaded over HTTPS, but requested an insecure resource 'http://192.168.0.129/api/status'. This content should also be served over HTTPS.
+
+Access to fetch at 'http://192.168.0.129/api/status' from origin 'https://tyrlabsos.github.io' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.
+
+GET http://192.168.0.129/api/status net::ERR_FAILED 200 (OK)
+
+Uncaught TypeError: Failed to fetch
+```
+
 Interpretation:
 
 ```text
-The HTTPS-hosted page could not fetch the local HTTP GaggiMate API endpoint.
-The observed browser-level failure is consistent with one or more of:
+The local GaggiMate HTTP API endpoint responded with HTTP 200 OK, but the HTTPS-hosted page was not allowed to read the response.
 
-- mixed-content blocking
-- CORS failure
-- local-network fetch restriction
-- network/browser policy failure
+The failure is now classified as browser policy blocking, specifically:
+
+1. Mixed-content warning / insecure HTTP request from HTTPS origin
+2. CORS blocking because GaggiMate does not return Access-Control-Allow-Origin for the GitHub Pages origin
+
+This is not endpoint downtime.
+This is not a missing /api/status endpoint.
+This is not an app-shell/service-worker failure.
 ```
-
-This result does not prove the GaggiMate API endpoint itself is down.
 
 ### Test 6 — Local GaggiMate WebSocket
 
@@ -298,6 +311,8 @@ Service worker registration: PASS
 Service worker control: PASS
 Local HTTP API fetch: FAIL
 Local WebSocket access: PASS
+HTTP endpoint availability: PASS, response observed as 200 OK but blocked from script access
+Root cause classification: Mixed-content warning plus CORS policy block
 ```
 
 ---
@@ -306,24 +321,24 @@ Local WebSocket access: PASS
 
 Hosted HTTPS PWA + local GaggiMate authority is no longer blocked by service-worker availability.
 
-However, it is currently blocked for live API hydration because the HTTPS-hosted frontend failed to fetch the local HTTP `/api/status` endpoint.
+However, it is currently blocked for live API hydration because the HTTPS-hosted frontend cannot read the local HTTP `/api/status` response under current GaggiMate server headers and browser policy.
 
 The WebSocket result is better than expected and remains viable based on the current evidence.
 
 Primary remaining unknown:
 
 ```text
-Can local HTTP API fetch failure be resolved safely without heavy architecture changes or unsafe GaggiMate modification?
+Can the local HTTP API fetch failure be resolved safely with a narrow, auditable serving/header adjustment without creating architecture drift or unsafe authority expansion?
 ```
 
 Likely investigation targets:
 
 ```text
-1. Browser console/network details for the failed fetch
-2. Direct HTTP endpoint availability from the same device/browser
-3. CORS response headers from GaggiMate HTTP API
-4. Mixed-content classification for local HTTP fetch from HTTPS page
-5. Whether a narrow GaggiMate CORS/header change would be sufficient
+1. CORS handling in GaggiMate WebUIPlugin / API responses
+2. Whether adding narrow Access-Control-Allow-Origin support is sufficient
+3. Whether mixed-content remains a hard blocker after CORS is addressed
+4. Whether Safari/iOS behaves the same as the tested browser
+5. Whether hosted HTTPS frontend should be demoted to archive-only if API fetch remains blocked
 ```
 
 ---
@@ -349,7 +364,7 @@ Reason:
 
 ```text
 HTTPS app shell and WebSocket passed.
-HTTP API fetch failed.
+HTTP API endpoint responded 200 OK but fetch response access was blocked by browser policy / CORS.
 ```
 
 ---
@@ -368,7 +383,7 @@ mixed content blocks required data access
 Current risk:
 
 ```text
-Local API access appears blocked from HTTPS-hosted page.
+Local API access is blocked from the HTTPS-hosted page under current GaggiMate server headers.
 ```
 
 ---
@@ -396,7 +411,7 @@ Hosted HTTPS app remains viable only as archive-only viewer or mediated-access m
 Status:
 
 ```text
-CURRENT LEANING, PENDING ROOT-CAUSE CONFIRMATION
+CURRENT LEANING, PENDING CORS/MIXED-CONTENT REMEDIATION FEASIBILITY
 ```
 
 ### Outcome C — HTTPS Shell Fails
@@ -417,18 +432,20 @@ The HTTPS shell did not fail.
 
 ## Next Action
 
-Investigate the failed HTTP API fetch narrowly before selecting an architecture.
-
-Do not modify GaggiMate runtime code yet.
-
-Do not modify application logic yet.
+Investigate whether the API fetch failure can be resolved safely and narrowly without committing to architecture selection.
 
 Do not implement Safe Sync.
 
 Do not merge back.
 
+Do not expand product features.
+
+Implementation remains blocked except for narrowly scoped evidence work if explicitly approved.
+
 Immediate evidence task:
 
 ```text
-Collect browser console/network evidence for the failed fetch to classify whether it is mixed-content, CORS, local-network restriction, or endpoint availability.
+Audit GaggiMate WebUIPlugin / API response handling for whether a minimal CORS/header evidence patch could safely allow the HTTPS evidence page to read /api/status.
+
+Any such patch must remain evidence-only until validated and must not introduce new machine control, OTA, PID/autotune, Bluetooth management, raw websocket admin, unrestricted settings writes, or duplicate persistence authority.
 ```
