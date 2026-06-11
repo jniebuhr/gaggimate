@@ -1,12 +1,11 @@
 #include "DistanceSensor.h"
 
-DistanceSensor::DistanceSensor(TwoWire *wire, distance_callback_t callback) : i2c(wire), _callback(callback) {
-    this->tof = new VL53L0X();
+DistanceSensor::DistanceSensor(SoftWire *wire, distance_callback_t callback) : i2c(wire), _callback(callback) {
+    this->tof = new VL53L0X(i2c);
 }
 
 void DistanceSensor::setup() {
     this->tof->setAddress(0x7E);
-    this->tof->setBus(i2c);
     this->tof->setTimeout(1000);
     if (!this->tof->init()) {
         ESP_LOGE("DistanceSensor", "Failed to initialize VL53L0X");

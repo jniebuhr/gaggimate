@@ -2,20 +2,20 @@
 #define DISTANCESENSOR_H
 
 #include <Arduino.h>
-#include <VL53L0X.h>
-#include <Wire.h>
+#include <SoftWire.h>
+#include <VL35L0X/VL53L0X.h>
 
 using distance_callback_t = std::function<void(int)>;
 
 class DistanceSensor {
   public:
-    DistanceSensor(TwoWire *wire, distance_callback_t callback);
+    DistanceSensor(SoftWire *wire, distance_callback_t callback);
     void setup();
 
   private:
     void loop();
 
-    TwoWire *i2c;
+    SoftWire *i2c;
     VL53L0X *tof;
     xTaskHandle taskHandle;
     distance_callback_t _callback;

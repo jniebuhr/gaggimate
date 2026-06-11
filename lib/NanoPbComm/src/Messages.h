@@ -22,7 +22,7 @@ using BoilerControl = gaggimate_BoilerControl;
 using PumpControl = gaggimate_PumpControl;
 using RelayControl = gaggimate_RelayControl;
 using PidSettings = gaggimate_PidSettings;
-using PumpModelCoeffs = gaggimate_PumpModelCoeffs;
+using PumpSettings = gaggimate_PumpSettings;
 using AutotuneRequest = gaggimate_AutotuneRequest;
 using PressureScale = gaggimate_PressureScale;
 using Tare = gaggimate_Tare;
@@ -30,6 +30,7 @@ using LedChannel = gaggimate_LedChannel;
 using LedControl = gaggimate_LedControl;
 
 using DeviceCapabilities = gaggimate_Capabilities;
+using Addon = gaggimate_Addon;
 using SystemInfo = gaggimate_SystemInfo;
 using SensorData = gaggimate_SensorData;
 using BoilerReading = gaggimate_BoilerReading;

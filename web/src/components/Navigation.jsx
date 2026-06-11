@@ -153,7 +153,7 @@ export function Navigation({ collapsed = false, onToggleCollapsed }) {
                   version='1.1'
                   xmlns='http://www.w3.org/2000/svg'
                   style='fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;'
-                  className="mt-1"
+                  className='mt-1'
                 >
                   <g id='Artboard1' transform='matrix(1,0,0,1.01131,0,5.55112e-16)'>
                     <rect x='0' y='-0' width='70' height='8.227' style='fill:none;' />

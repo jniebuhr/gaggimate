@@ -1,10 +1,19 @@
 #ifndef PRESSURESENSOR_H
 #define PRESSURESENSOR_H
 
+#include "SimpleKalmanFilter/SimpleKalmanFilter.h"
 #include "ADSAdc.h"
 #include <Arduino.h>
 
+constexpr int PRESSURE_READ_INTERVAL_MS = 30;
+constexpr float PRESSURE_KF_SAMPLE_TIME_S = PRESSURE_READ_INTERVAL_MS / 1000.0f;
+constexpr float PRESSURE_KF_MEASUREMENT_NOISE = 0.1f; // R
+constexpr float PRESSURE_KF_ESTIMATE_ERROR = 10.0f;   // initial P, converges on first sample
+constexpr float PRESSURE_KF_PROCESS_NOISE =
+    (4.0f * PRESSURE_KF_SAMPLE_TIME_S) * (4.0f * PRESSURE_KF_SAMPLE_TIME_S); // Q, same model as PressureController
 constexpr int SENSOR_READ_INTERVAL_MS = 100;
+
+using pressure_callback_t = std::function<void(float)>;
 
 class PressureSensor {
   public:
@@ -27,6 +36,7 @@ class PressureSensor {
     int16_t _adc_floor;
     ADSAdc *_adc = nullptr;
     uint8_t _channel;
+    SimpleKalmanFilter _filter;
     xTaskHandle taskHandle;
 
     const char *LOG_TAG = "PressureSensor";

@@ -21,7 +21,7 @@ static constexpr const char *INFO_CHAR_UUID = "f8d7203b-e00c-48e2-83ba-37ff49cdb
 // Protocol/schema version. Bump on any breaking change to gaggimate.proto so a
 // display talking to an out-of-date controller (or vice versa) can detect the
 // mismatch. Carried in SystemInfo.protocol_version.
-static constexpr uint32_t PROTOCOL_VERSION = 2;
+static constexpr uint32_t PROTOCOL_VERSION = 3;
 
 // Outbound priorities (higher wins in the queue).
 enum Priority : uint8_t {

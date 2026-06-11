@@ -205,6 +205,7 @@ export default class ApiService {
         pressure: message.cp,
         ledControl: message.led,
         dualBoiler: message.db,
+        gearpumpAddon: message.gp,
       },
       history: [...machine.value.history, historyEntry],
     };

@@ -17,7 +17,7 @@ void NtcThermistor::setup() {
 
 void NtcThermistor::loop() {
     if (errorCount >= NTC_MAX_ERRORS || temperature > MAX_SAFE_TEMP) {
-        ESP_LOGV(LOG_TAG, "NTCThermistor failure! Error Count: %d, Temperature: %.2f\n", errorCount, temperature);
+        ESP_LOGE(LOG_TAG, "NTCThermistor failure! Error Count: %d, Temperature: %.2f\n", errorCount, temperature);
         error_callback();
         return;
     }
@@ -47,7 +47,7 @@ void NtcThermistor::loop() {
     if (temp <= 0.0f)
         return;
     temperature = 0.2f * temp + 0.8f * temperature;
-    ESP_LOGV(LOG_TAG, "Updated temperature: %2f\n", temperature);
+    ESP_LOGI(LOG_TAG, "Updated temperature: %2f\n", temperature);
 }
 
 [[noreturn]] void NtcThermistor::monitorTask(void *arg) {
