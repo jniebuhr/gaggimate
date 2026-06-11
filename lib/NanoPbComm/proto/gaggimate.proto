@@ -157,8 +157,8 @@ message Capabilities {
     bool pressure = 2;
     bool led_control = 3;
     bool tof = 4;
-    bool dual_boiler = 5;
-    repeated Addon addons = 6;
+    repeated Addon addons = 5;
+    bool dual_boiler = 6;
 }
 
 message Addon {
