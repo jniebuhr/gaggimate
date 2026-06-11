@@ -32,7 +32,7 @@ void GaggiMateController::setup() {
             [this]() { thermalRunawayShutdown(); });
     }
     if (_config.capabilites.pressure || _config.capabilites.dualBoiler) {
-        adc = new ADSAdc(_config.pressureSda, _config.pressureScl, 3);
+        adc = new ADSAdc(_config.pressureSda, _config.pressureScl, 4);
         pressureSensor = new PressureSensor(this->adc);
         if (_config.capabilites.dualBoiler) {
             this->brewTemperature =
@@ -106,17 +106,11 @@ void GaggiMateController::setup() {
         distanceSensor->setup();
     }
 
-    this->heater->setup();
-    this->valve->setup();
-    this->alt->setup();
-    this->pump->setup();
     if (this->gearpumpAddon != nullptr) {
         this->gearpumpAddon->setup(this->pump->getPumpPowerPtr());
         auto dimmedPump = static_cast<DimmedPump *>(pump);
         dimmedPump->setBinaryMode(true);
     }
-    this->brewBtn->setup();
-    this->steamBtn->setup();
     if (_config.capabilites.pressure || _config.capabilites.dualBoiler) {
         this->adc->setup();
         pressureSensor->setup();
