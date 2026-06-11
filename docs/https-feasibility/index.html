@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GaggiGo HTTPS Feasibility Evidence Test</title>
+  <style>
+    body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 2rem; line-height: 1.45; max-width: 980px; }
+    input, button { font: inherit; padding: 0.55rem 0.7rem; margin: 0.2rem 0.2rem 0.2rem 0; }
+    input { min-width: 18rem; }
+    button { cursor: pointer; }
+    pre { background: #111; color: #eee; padding: 1rem; overflow: auto; white-space: pre-wrap; border-radius: 0.4rem; }
+    .note { background: #f3f3f3; padding: 1rem; border-radius: 0.4rem; }
+  </style>
+</head>
+<body>
+  <h1>GaggiGo HTTPS Feasibility Evidence Test</h1>
+
+  <p class="note">
+    Evidence tool only. This page does not modify GaggiGo, GaggiMate, IndexedDB, settings, profiles, shots, or machine state.
+    It tests browser behaviour for HTTPS app-shell feasibility against a local GaggiMate HTTP/WebSocket endpoint.
+  </p>
+
+  <label for="host">GaggiMate host or IP</label><br>
+  <input id="host" value="192.168.0.129" autocomplete="off">
+
+  <div>
+    <button id="runAll">Run all checks</button>
+    <button id="clear">Clear log</button>
+  </div>
+
+  <h2>Checks</h2>
+  <ol>
+    <li>HTTPS secure context</li>
+    <li>Service worker availability</li>
+    <li>Service worker registration/control</li>
+    <li>HTTP fetch to local GaggiMate <code>/api/status</code></li>
+    <li>WebSocket connection to local GaggiMate <code>/ws</code></li>
+  </ol>
+
+  <h2>Log</h2>
+  <pre id="log"></pre>
+
+  <script>
+    const logEl = document.getElementById('log');
+    const hostEl = document.getElementById('host');
+
+    function log(label, value) {
+      const stamp = new Date().toISOString();
+      const text = typeof value === 'string' ? value : JSON.stringify(value, null, 2);
+      logEl.textContent += `[${stamp}] ${label}\n${text}\n\n`;
+    }
+
+    function normaliseHost(raw) {
+      return raw.trim().replace(/^https?:\/\//, '').replace(/^wss?:\/\//, '').replace(/\/$/, '');
+    }
+
+    async function checkSecureContext() {
+      log('Secure context', { windowIsSecureContext: window.isSecureContext, locationProtocol: location.protocol, locationOrigin: location.origin });
+    }
+
+    async function checkServiceWorker() {
+      const available = 'serviceWorker' in navigator;
+      log('Service worker availability', { available, navigatorServiceWorkerType: available ? typeof navigator.serviceWorker : 'undefined' });
+
+      if (!available) return;
+
+      try {
+        const registration = await navigator.serviceWorker.register('./sw.js', { scope: './' });
+        log('Service worker registration', { scope: registration.scope, active: Boolean(registration.active), installing: Boolean(registration.installing), waiting: Boolean(registration.waiting) });
+        await navigator.serviceWorker.ready;
+        log('Service worker ready', { controllerPresent: Boolean(navigator.serviceWorker.controller) });
+      } catch (error) {
+        log('Service worker registration failed', { name: error.name, message: error.message });
+      }
+    }
+
+    async function checkApiFetch(host) {
+      const url = `http://${host}/api/status`;
+      try {
+        const response = await fetch(url, { method: 'GET', cache: 'no-store' });
+        const text = await response.text();
+        log('HTTP API fetch result', { url, ok: response.ok, status: response.status, type: response.type, readableBodyPreview: text.slice(0, 500) });
+      } catch (error) {
+        log('HTTP API fetch failed', { url, name: error.name, message: error.message });
+      }
+    }
+
+    async function checkWebSocket(host) {
+      const url = `ws://${host}/ws`;
+      await new Promise((resolve) => {
+        let settled = false;
+        let ws;
+        const timeout = setTimeout(() => {
+          if (settled) return;
+          settled = true;
+          try { if (ws) ws.close(); } catch (_) {}
+          log('WebSocket result', { url, opened: false, reason: 'timeout' });
+          resolve();
+        }, 5000);
+
+        try {
+          ws = new WebSocket(url);
+          ws.onopen = () => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timeout);
+            log('WebSocket result', { url, opened: true });
+            ws.close();
+            resolve();
+          };
+          ws.onerror = () => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timeout);
+            log('WebSocket result', { url, opened: false, reason: 'error event' });
+            resolve();
+          };
+        } catch (error) {
+          if (settled) return;
+          settled = true;
+          clearTimeout(timeout);
+          log('WebSocket construction failed', { url, name: error.name, message: error.message });
+          resolve();
+        }
+      });
+    }
+
+    async function runAll() {
+      const host = normaliseHost(hostEl.value);
+      log('Test started', { host, page: location.href });
+      await checkSecureContext();
+      await checkServiceWorker();
+      await checkApiFetch(host);
+      await checkWebSocket(host);
+      log('Test finished', 'Copy this log into the evidence document or thread.');
+    }
+
+    document.getElementById('runAll').addEventListener('click', runAll);
+    document.getElementById('clear').addEventListener('click', () => { logEl.textContent = ''; });
+  </script>
+</body>
+</html>
