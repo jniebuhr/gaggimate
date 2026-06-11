@@ -67,6 +67,7 @@ class WebUIPlugin : public Plugin {
     GitHubOTA *ota = nullptr;
     AsyncWebServer server;
     AsyncWebSocket ws;
+    AsyncCorsMiddleware cors;
     Controller *controller = nullptr;
     PluginManager *pluginManager = nullptr;
     DNSServer *dnsServer = nullptr;

@@ -211,6 +211,11 @@ void WebUIPlugin::loop() {
 }
 
 void WebUIPlugin::setupServer() {
+    cors.setMethods("HEAD, GET");
+    cors.setHeaders("Upgrade");
+    cors.setMaxAge(3600);
+    cors.setOrigin("http://localhost:5173");
+    server.addMiddleware(&cors);
     server.on("/connecttest.txt", [](AsyncWebServerRequest *request) {
         request->redirect("http://logout.net");
     }); // windows 11 captive portal workaround
