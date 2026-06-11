@@ -160,20 +160,32 @@ export function OTA() {
       <form key='ota' method='post' action='/api/ota' ref={formRef} onSubmit={onSubmit}>
         <div className='grid grid-cols-1 gap-4 lg:grid-cols-12'>
           <Card sm={12} title='System Information'>
-            <div className='flex flex-col space-y-4'>
-              <label htmlFor='channel' className='mb-2 block text-sm font-medium'>
-                Update Channel
-              </label>
-              <select id='channel' name='channel' className='select select-bordered w-full'>
-                <option value='latest' selected={formData.channel === 'latest'}>
-                  Stable
-                </option>
-                <option value='nightly' selected={formData.channel === 'nightly'}>
-                  Nightly
-                </option>
-              </select>
-            </div>
-
+              <div className='flex flex-col space-y-4'>
+                  <label htmlFor='channel' className='mb-2 block text-sm font-medium'>
+                      Update Channel
+                  </label>
+                  <select id='channel' name='channel' className='select select-bordered w-full'>
+                      <option value='latest' selected={formData.channel === 'latest'}>
+                          Stable
+                      </option>
+                      <option value='nightly' selected={formData.channel === 'nightly'}>
+                          Nightly
+                      </option>
+                  </select>
+              </div>
+              <div className='flex flex-col space-y-4'>
+                  <label htmlFor='customOTAURL' className='mb-2 block text-sm font-medium'>
+                      Custom URL
+                  </label>
+                  <input
+                      id='customOTAURL'
+                      name='customOTAURL'
+                      type='number'
+                      placeholder='135'
+                      value={formData.customOTAURL}
+                      onChange={onChange('customOTAURL')}
+                  />
+              </div>
             <div className='flex flex-col space-y-4'>
               <label className='mb-2 block text-sm font-medium'>Hardware</label>
               <span className='font-light'>{formData.hardware}</span>
