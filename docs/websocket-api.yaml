@@ -96,6 +96,8 @@ components:
           enum: ['res:ota-settings']
         latestVersion:
           type: string
+        customOTAURL:
+          type: string
         displayVersion:
           type: string
         controllerVersion:

@@ -31,7 +31,7 @@ void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) 
     this->pluginManager = _pluginManager;
     this->ota = new GitHubOTA(
         BUILD_GIT_VERSION, controller->getSystemInfo().version,
-        RELEASE_URL + (controller->getSettings().getOTAChannel() == "latest" ? "latest" : "tag/nightly"),
+        createOtaURL(),
         [this](uint8_t phase) {
             pluginManager->trigger("ota:update:phase", "phase", phase);
             updateOTAProgress(phase, 0);
@@ -67,6 +67,11 @@ void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) 
                       [this](Event const &event) { this->currentBluetoothWeight = event.getFloat("value"); });
 
     setupServer();
+}
+
+String WebUIPlugin::createOtaURL(){
+    auto releaseURL = controller->getSettings().getCustomOTAURL().isEmpty() ? RELEASE_URL : controller->getSettings().getCustomOTAURL();
+    return releaseURL + (controller->getSettings().getOTAChannel() == "latest" ? "latest" : "tag/nightly");
 }
 
 void WebUIPlugin::loop() {
@@ -368,10 +373,13 @@ void WebUIPlugin::handleWebSocketData(AsyncWebSocket *server, AsyncWebSocketClie
 
 void WebUIPlugin::handleOTASettings(uint32_t clientId, JsonDocument &request) {
     if (request["update"].as<bool>()) {
+        if (!request["customOTAURL"].isNull()) {
+            controller->getSettings().setCustomOTAUrl(request["customOTAURL"].as<String>());
+        }
         if (!request["channel"].isNull()) {
             controller->getSettings().setOTAChannel(request["channel"].as<String>() == "latest" ? "latest" : "nightly");
-            auto releaseURL = controller->getSettings().getCustomOTAURL().isEmpty() ? RELEASE_URL : controller->getSettings().getCustomOTAURL();
-            ota->setReleaseUrl(releaseURL + (controller->getSettings().getOTAChannel() == "latest" ? "latest" : "tag/nightly"));
+
+            ota->setReleaseUrl(createOtaURL());
             lastUpdateCheck = 0;
         }
     }
@@ -648,6 +656,8 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     // Add auto-wakeup settings to response
     doc["autowakeupEnabled"] = settings.isAutoWakeupEnabled();
 
+    doc["customOTAURL"] = settings.getCustomOTAURL();
+
     // Add schedule format with days
     std::vector<AutoWakeupSchedule> autowakeupSchedules = settings.getAutoWakeupSchedules();
     String schedulesStr = "";
@@ -730,7 +740,7 @@ void WebUIPlugin::updateOTAStatus(const String &version) {
     JsonDocument doc;
     doc["latestVersion"] = ota->getCurrentVersion();
     doc["tp"] = "res:ota-settings";
-    doc["displayUpdateAvailable"] = ota->isUpdateAvailable(false);
+    doc["customOTAURL"] = settings.getCustomOTAURL();
     doc["controllerUpdateAvailable"] = ota->isUpdateAvailable(true);
     doc["displayVersion"] = BUILD_GIT_VERSION;
     doc["controllerVersion"] = controller->getSystemInfo().version;

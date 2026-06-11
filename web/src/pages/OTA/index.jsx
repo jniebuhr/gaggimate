@@ -180,8 +180,9 @@ export function OTA() {
                   <input
                       id='customOTAURL'
                       name='customOTAURL'
-                      type='string'
-                      placeholder='135'
+                      type='text'
+                      className='input input-bordered w-full'
+                      placeholder='Custom URL for OTA'
                       value={formData.customOTAURL}
                   />
               </div>
