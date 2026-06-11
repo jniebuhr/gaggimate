@@ -10,3 +10,9 @@ data/w
 .codebuddy
 src/version.h
 src/display/ui/default/lvgl/project.info
+
+# Nix / direnv
+!flake.lock
+.direnv/
+.envrc
+result
