@@ -647,7 +647,6 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["altRelayFunction"] = settings.getAltRelayFunction();
     // Add auto-wakeup settings to response
     doc["autowakeupEnabled"] = settings.isAutoWakeupEnabled();
-    doc["buttonBehavior"] = implode(settings.getButtonBehaviorList(), ",");
 
     // Add schedule format with days
     std::vector<AutoWakeupSchedule> autowakeupSchedules = settings.getAutoWakeupSchedules();
