@@ -572,7 +572,7 @@ void WebUIPlugin::handleProfileRequest(uint32_t clientId, JsonDocument &request)
 
 void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     if (request->method() == HTTP_POST) {
-        controller->getSettings().batchUpdate([request](Settings *settings) {
+        controller->getSettings().batchUpdate([this, request](Settings *settings) {
             if (request->hasArg("startupMode"))
                 settings->setStartupMode(request->arg("startupMode") == "brew" ? MODE_BREW : MODE_STANDBY);
             if (request->hasArg("startupProfile"))
@@ -656,8 +656,10 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setFullTankDistance(request->arg("fullTankDistance").toInt());
             if (request->hasArg("altRelayFunction"))
                 settings->setAltRelayFunction(request->arg("altRelayFunction").toInt());
-            if (request->hasArg("customOTAURL"))
+            if (request->hasArg("customOTAURL")) {
                 settings->setCustomOTAUrl(request->arg("customOTAURL"));
+                ota->setReleaseUrl(request->arg("customOTAURL"));
+            }
             if (request->hasArg("buttonBehavior"))
                 settings->setButtonBehaviorList(explode(request->arg("buttonBehavior"), ','));
             if (request->hasArg("commutationGain"))
@@ -874,7 +876,6 @@ void WebUIPlugin::updateOTAStatus(const String &version) {
     doc["hardware"] = controller->getSystemInfo().hardware;
     doc["latestVersion"] = ota->getCurrentVersion();
     doc["channel"] = settings.getOTAChannel();
-    doc["customChannel"] = settings.getOTAChannel();
     doc["updating"] = updating;
     // LittleFS usage metrics
     {
