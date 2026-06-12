@@ -46,7 +46,7 @@ export function MetricsGrid({ metrics = [], inCard = false }) {
       {metrics.map((m, i) => {
         const isLastOdd = metrics.length % 2 !== 0 && i === metrics.length - 1;
         return (
-          <div key={m.id} className={isLastOdd ? 'col-span-2' : ''}>
+          <div key={m.id} className={isLastOdd ? 'col-span-2' : undefined}>
             <MetricCell
               label={m.label}
               current={m.current}
@@ -76,6 +76,6 @@ MetricsGrid.propTypes = {
       onDecrease: PropTypes.func,
       onIncrease: PropTypes.func,
     })
-  ),
+  ).isRequired,
   inCard: PropTypes.bool,
 };
