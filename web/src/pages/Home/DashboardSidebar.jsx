@@ -16,15 +16,17 @@ export function DashboardSidebar() {
         changeMode={ds.changeMode}
       />
 
-      <ProfileCard
-        selectedProfile={ds.selectedProfile}
-        selectedProfileId={ds.selectedProfileId}
-        processInfo={ds.processInfo}
-        isActive={ds.isActive}
-        isFinished={ds.isFinished}
-        isBrewing={ds.isBrewing}
-        isGrinding={ds.isGrinding}
-      />
+      <div className='flex-1 min-h-0'>
+        <ProfileCard
+          selectedProfile={ds.selectedProfile}
+          selectedProfileId={ds.selectedProfileId}
+          processInfo={ds.processInfo}
+          isActive={ds.isActive}
+          isFinished={ds.isFinished}
+          isBrewing={ds.isBrewing}
+          isGrinding={ds.isGrinding}
+        />
+      </div>
 
       <MetricsGrid
         currentPressure={ds.currentPressure}
