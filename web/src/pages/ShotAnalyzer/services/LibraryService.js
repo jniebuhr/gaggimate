@@ -10,6 +10,7 @@ import { parseBinaryIndex, indexToShotList } from '../../ShotHistory/parseBinary
 import { parseBinaryShot } from '../../ShotHistory/parseBinaryShot';
 import { indexedDBService } from './IndexedDBService';
 import { notesService } from './NotesService';
+import { getProfileDisplayLabel } from '../utils/analyzerUtils';
 
 const HISTORY_NOTES_DEFAULTS = {
   id: '',
@@ -99,6 +100,49 @@ function buildHistoryLikeShotExport(rawShot, listItem, notes) {
     loaded: true,
     data: null,
   };
+}
+
+const PROFILE_EXPORT_METADATA_FIELDS = [
+  'id',
+  'selected',
+  'favorite',
+  'name',
+  'source',
+  'uploadedAt',
+  'exportName',
+  'fileName',
+  'profileId',
+  'storageKey',
+  'data',
+];
+
+function ensureJsonFilename(filename) {
+  const resolvedFilename = String(filename || 'export.json');
+  if (
+    resolvedFilename.toLowerCase().endsWith('.json') ||
+    resolvedFilename.toLowerCase().endsWith('.slog')
+  ) {
+    return resolvedFilename;
+  }
+  return `${resolvedFilename}.json`;
+}
+
+function getProfileExportFilename(profile, fallback = 'profile') {
+  const label = getProfileDisplayLabel(profile, fallback);
+  return ensureJsonFilename(label || fallback || 'profile');
+}
+
+function cleanProfileForExport(profile, fallbackProfile = null) {
+  const clean = { ...(profile || {}) };
+  if (!clean.label && fallbackProfile) {
+    clean.label = getProfileDisplayLabel(fallbackProfile, '');
+  }
+
+  PROFILE_EXPORT_METADATA_FIELDS.forEach(field => {
+    delete clean[field];
+  });
+
+  return clean;
 }
 
 class LibraryService {
@@ -211,11 +255,10 @@ class LibraryService {
         return [];
       }
 
-      // Add source tag and normalize name property
+      // Add source tag and preserve the API id for req:profiles:load.
       return response.profiles.map(profile => ({
         ...profile,
-        name: profile.label || profile.name || 'Unknown', // Display name
-        exportName: `${profile.label || profile.name}.json`, // Filename
+        exportName: getProfileExportFilename(profile),
         profileId: profile.id, // Keep real API id for req:profiles:load
         label: profile.label,
         source: 'gaggimate',
@@ -257,7 +300,9 @@ class LibraryService {
     const results = await Promise.all(promises);
     const merged = results.flat();
 
-    return merged.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    return merged.sort((a, b) =>
+      getProfileDisplayLabel(a, '').localeCompare(getProfileDisplayLabel(b, '')),
+    );
   }
 
   /**
@@ -318,7 +363,6 @@ class LibraryService {
 
       return {
         ...response.profile,
-        name: response.profile.label || response.profile.name || nameOrId,
         source: 'gaggimate',
       };
     }
@@ -344,9 +388,7 @@ class LibraryService {
     let filename = item.exportName || item.name || item.id || 'export.json';
 
     // Ensure extension .json (or .slog if preferred)
-    if (!filename.toLowerCase().endsWith('.json') && !filename.toLowerCase().endsWith('.slog')) {
-      filename += '.json';
-    }
+    filename = ensureJsonFilename(filename);
 
     if (item.source === 'gaggimate') {
       if (isShot) {
@@ -368,13 +410,11 @@ class LibraryService {
         if (!loadId) throw new Error('Profile ID missing for export');
 
         const raw = await this.loadProfile(loadId, 'gaggimate');
-        const clean = { ...raw };
-
-        // Cleanup internal metadata before export
-        delete clean.source;
-        // delete clean.name; // Use caution removing name, usually needed inside the file
-        delete clean.id; // Remove internal ID (e.g. "QtQdQjBeav")
-        exportData = clean;
+        filename = getProfileExportFilename(
+          raw,
+          item.label || item.name || item.fileName || item.exportName || item.id || 'profile',
+        );
+        exportData = cleanProfileForExport(raw, item);
       }
     } else if (isShot) {
       // BROWSER EXPORT:
@@ -387,9 +427,12 @@ class LibraryService {
       const notes = await notesService.loadNotes(shotNotesKey, 'browser');
       exportData = buildHistoryLikeShotExport(exportShot, item, notes);
     } else {
-      exportData = { ...(item.data || item) };
-      delete exportData.source;
-      delete exportData.uploadedAt;
+      const rawProfile = item.data || item;
+      filename = getProfileExportFilename(
+        rawProfile,
+        item.label || item.name || item.fileName || item.exportName || item.id || 'profile',
+      );
+      exportData = cleanProfileForExport(rawProfile, item);
     }
 
     // Return raw object

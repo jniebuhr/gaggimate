@@ -29,6 +29,7 @@ class PressureController {
     float getCoffeeOutputEstimate() { return std::fmax(0.0f, _coffeeOutput); };
     void setPumpFlowCoeff(float oneBarFlow, float nineBarFlow);
     void setPumpFlowPolyCoeffs(float a, float b, float c, float d);
+    void setGains(float commutationGain, float convergenceGain, float integralGain);
     float getPumpFlowRate() { return exportPumpFlowRate; };
     float getCoffeeFlowRate() { return *_valveStatus == 1 ? _coffeeFlowRate : 0.0f; };
     float getPuckResistance() { return _puckResistance; }

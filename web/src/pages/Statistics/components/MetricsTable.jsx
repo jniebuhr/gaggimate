@@ -146,15 +146,12 @@ function getMetricPositions(metric) {
 function MetricRangeViz({ row, metric }) {
   const spreadRatio = getSpreadRatio(metric);
   const positions = getMetricPositions(metric);
-  const avgBgPct = Math.round(10 + spreadRatio * 28);
-  const avgBorderPct = Math.round(18 + spreadRatio * 30);
   const stdBandPct = Math.round(14 + spreadRatio * 26);
 
   return (
     <div
-      className='flex h-full min-h-[11.5rem] flex-col rounded-2xl border p-3 shadow-sm transition-shadow sm:p-3.5'
+      className='flex h-full min-h-[11.5rem] flex-col rounded-2xl p-3 shadow-sm transition-shadow sm:p-3.5'
       style={{
-        borderColor: `color-mix(in srgb, ${row.accentColor} 18%, var(--statistics-summary-border))`,
         background: 'var(--statistics-summary-surface-muted)',
         boxShadow: '0 8px 22px var(--statistics-summary-shadow)',
       }}
@@ -185,9 +182,8 @@ function MetricRangeViz({ row, metric }) {
       </div>
 
       <div
-        className='mt-3 rounded-xl border px-3 py-2 shadow-sm'
+        className='mt-3 rounded-xl px-3 py-2 shadow-sm'
         style={{
-          borderColor: `color-mix(in srgb, ${row.accentColor} ${avgBorderPct}%, var(--color-base-content) 12%)`,
           background: 'var(--statistics-summary-surface-strong)',
         }}
       >

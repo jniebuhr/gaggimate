@@ -2,17 +2,25 @@
 #define PREDICTIVE_H
 
 #include <Arduino.h>
+#include <deque>
 
 class VolumetricRateCalculator {
   public:
     explicit VolumetricRateCalculator(double window_duration) : windowDuration(window_duration) {}
 
     void addMeasurement(double volume) {
+        const unsigned long now = millis();
         measurements.emplace_back(volume);
-        measurementTimes.emplace_back(millis());
+        measurementTimes.emplace_back(now);
+
+        // Unsigned subtraction is wrap-safe across the ~49d millis() rollover.
+        while (!measurementTimes.empty() && static_cast<double>(now - measurementTimes.front()) >= windowDuration) {
+            measurements.pop_front();
+            measurementTimes.pop_front();
+        }
     }
 
-    double getRate(double time = 0) const {
+    double getRate(unsigned long time = 0) const {
         if (time == 0) {
             time = millis();
         }
@@ -21,8 +29,8 @@ class VolumetricRateCalculator {
             return 0.0;
 
         size_t i = measurementTimes.size();
-        double cutoff = time - windowDuration;
-        while (i > 0 && measurementTimes[i - 1] > cutoff) { // check from the most recent time
+        // Walk backward over in-window entries; stop at the first out-of-window one.
+        while (i > 0 && static_cast<double>(time - measurementTimes[i - 1]) < windowDuration) {
             i--;
         }
         // i is the index of the first entry after the cutoff
@@ -78,8 +86,8 @@ class VolumetricRateCalculator {
     }
 
   private:
-    std::vector<double> measurements;
-    std::vector<double> measurementTimes;
+    std::deque<double> measurements;
+    std::deque<unsigned long> measurementTimes;
     const double windowDuration;
 };
 

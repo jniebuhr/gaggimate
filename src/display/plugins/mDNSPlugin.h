@@ -10,9 +10,11 @@ class mDNSPlugin : public Plugin {
     void loop() override {};
 
   private:
-    void start(Event const &event) const;
+    void start(Event const &event);
+    void stop();
 
     Controller *controller = nullptr;
+    bool responderRunning = false;
 };
 
 #endif // MDNSPLUGIN_H

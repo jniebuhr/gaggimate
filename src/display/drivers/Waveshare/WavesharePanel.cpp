@@ -83,7 +83,10 @@ bool WavesharePanel::installSD() {
 
     SD_MMC.setPins(WS_BOARD_SDMMC_SCK, WS_BOARD_SDMMC_CMD, WS_BOARD_SDMMC_DAT);
 
-    if (SD_MMC.begin("/sdcard", true, false)) {
+    // maxOpenFiles 5 -> 10: shot history lives on SD, and the web server serves
+    // many .slog files concurrently alongside live shot logging + index access;
+    // the default of 5 exhausts and throws "too many open files". [GM-90]
+    if (SD_MMC.begin("/sdcard", true, false, BOARD_MAX_SDMMC_FREQ, 10)) {
         uint8_t cardType = SD_MMC.cardType();
         if (cardType != CARD_NONE) {
             Serial.print(F("SD Card Type: "));

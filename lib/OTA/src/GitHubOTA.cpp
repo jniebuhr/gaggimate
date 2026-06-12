@@ -48,8 +48,13 @@ void GitHubOTA::checkForUpdates() {
         ESP_LOGI(TAG, "base_url %s\n", _latest_url.c_str());
 
         auto last_slash = _latest_url.lastIndexOf('/', _latest_url.length() - 2);
-        auto semver_str = _latest_url.substring(last_slash + 2);
+        auto semver_str = _latest_url.substring(last_slash + 1);
         semver_str.replace("/", "");
+        if (semver_str.substring(0, 1) != "v") {
+            ESP_LOGW(TAG, "not a valid version URL");
+            return;
+        }
+        semver_str = semver_str.substring(1);
         ESP_LOGI(TAG, "semver_str %s\n", semver_str.c_str());
         _latest_version_string = semver_str;
         semver_free(&_latest_version);

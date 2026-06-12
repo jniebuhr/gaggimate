@@ -16,13 +16,20 @@
     <link rel="manifest" href="/app.webmanifest" />
     <link rel="shortcut icon" type="image/svg+xml" href="/gm.svg" />
     <link rel="apple-touch-icon" href="/gm.png" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap"
-      rel="stylesheet"
-    />
     <title>Gaggimate Web UI</title>
+    <script>
+      // Apply the saved theme synchronously before any module loads, so we
+      // never flash the default-light theme on a fresh page load.
+      (function () {
+        try {
+          var key = 'gaggimate-daisyui-theme';
+          var allowed = ['light', 'dark', 'coffee', 'nord'];
+          var saved = localStorage.getItem(key);
+          var theme = allowed.indexOf(saved) >= 0 ? saved : 'light';
+          document.documentElement.setAttribute('data-theme', theme);
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body class="bg-base-100">
     <div id="app"></div>

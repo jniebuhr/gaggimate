@@ -10,12 +10,14 @@ String generateShortID(uint8_t length) {
     static const char charset[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
     static constexpr size_t charsetSize = sizeof(charset) - 1;
 
-    uint32_t seed = micros() ^ ((uint32_t)ESP.getEfuseMac() << 8);
-    randomSeed(seed);
-
+    // esp_random() is hardware-seeded once WiFi/BT are up, otherwise still
+    // significantly higher entropy than micros() XOR partial MAC. Calling it
+    // per character avoids the seeded-PRNG sequence collision that occurs
+    // when generateShortID is invoked twice within the same millisecond.
     String id;
+    id.reserve(length);
     for (uint8_t i = 0; i < length; ++i) {
-        id += charset[random(charsetSize)];
+        id += charset[esp_random() % charsetSize];
     }
     return id;
 }

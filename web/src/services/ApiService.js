@@ -185,6 +185,7 @@ export default class ApiService {
       process: message.process || null,
       timestamp: new Date(),
       rssi: message.rssi || 0,
+      lat: message.lat || 0,
       tofDistance: message.tof || 0,
     };
     const historyEntry = { ...newStatus };
@@ -201,6 +202,7 @@ export default class ApiService {
         dimming: message.cd,
         pressure: message.cp,
         ledControl: message.led,
+        gearpumpAddon: !!message.gp,
       },
       history: [...machine.value.history, historyEntry],
     };
