@@ -6,7 +6,7 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 
-constexpr int MAX31855_UPDATE_INTERVAL = 100;
+constexpr int MAX31855_UPDATE_INTERVAL = 250;
 constexpr int MAX31855_ERROR_WINDOW = 20;
 constexpr float MAX31855_MAX_ERROR_RATE = 0.5f;
 constexpr int MAX31855_MAX_ERRORS = static_cast<int>(static_cast<float>(MAX31855_ERROR_WINDOW) * MAX31855_MAX_ERROR_RATE);

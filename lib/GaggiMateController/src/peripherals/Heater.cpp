@@ -19,7 +19,7 @@ void Heater::setup() {
 }
 
 void Heater::setupPid() {
-    simplePid->setSamplingFrequency(1000.0f / TUNER_OUTPUT_SPAN);
+    simplePid->setSamplingFrequency(TUNER_OUTPUT_SPAN / 1000.0f);
     simplePid->setCtrlOutputLimits(0.0f, TUNER_OUTPUT_SPAN);
     simplePid->activateSetPointFilter(false);
     simplePid->activateFeedForward(false);
