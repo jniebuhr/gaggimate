@@ -95,6 +95,7 @@ export function useDashboardState() {
     ledControl, albaCalibrated, waterLevelPercent,
     // settings
     isSmartGrindEnabled, altRelayFunction,
+    emptyTankDistance, fullTankDistance,
     // action state
     isFlushing,
     // handlers
