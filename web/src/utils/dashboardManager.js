@@ -1,4 +1,5 @@
 const DASHBOARD_LAYOUT_KEY = 'dashboardLayout';
+const DASHBOARD_CARD_MODE_KEY = 'dashboardCardMode';
 
 export const getDashboardLayout = () => {
   if (typeof window === 'undefined' || !window.localStorage) {
@@ -31,4 +32,29 @@ export const setDashboardLayout = layout => {
 export const DASHBOARD_LAYOUTS = {
   ORDER_FIRST: 'order-first',
   ORDER_LAST: 'order-last',
+};
+
+export const DASHBOARD_CARD_MODES = {
+  MULTI: 'multi',
+  SINGLE: 'single',
+};
+
+export const getDashboardCardMode = () => {
+  if (typeof window === 'undefined' || !window.localStorage) {
+    return DASHBOARD_CARD_MODES.MULTI;
+  }
+  try {
+    return localStorage.getItem(DASHBOARD_CARD_MODE_KEY) || DASHBOARD_CARD_MODES.MULTI;
+  } catch {
+    return DASHBOARD_CARD_MODES.MULTI;
+  }
+};
+
+export const setDashboardCardMode = mode => {
+  try {
+    localStorage.setItem(DASHBOARD_CARD_MODE_KEY, mode);
+    return true;
+  } catch {
+    return false;
+  }
 };

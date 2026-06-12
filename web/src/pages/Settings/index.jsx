@@ -13,7 +13,7 @@ import {
 } from '../../components/SettingsFormField.jsx';
 import { timezones } from '../../config/zones.js';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
-import { DASHBOARD_LAYOUTS, setDashboardLayout } from '../../utils/dashboardManager.js';
+import { DASHBOARD_LAYOUTS, getDashboardLayout, setDashboardLayout, DASHBOARD_CARD_MODES, getDashboardCardMode, setDashboardCardMode } from '../../utils/dashboardManager.js';
 import { downloadJson } from '../../utils/download.js';
 import { getStoredTheme, handleThemeChange } from '../../utils/themeManager.js';
 import { PluginCard } from './PluginCard.jsx';
@@ -103,7 +103,8 @@ export function Settings() {
           fetchedSettings.standbyDisplayEnabled !== undefined
             ? fetchedSettings.standbyDisplayEnabled
             : fetchedSettings.standbyBrightness > 0,
-        dashboardLayout: fetchedSettings.dashboardLayout || DASHBOARD_LAYOUTS.ORDER_FIRST,
+        dashboardLayout: getDashboardLayout(),
+        dashboardCardMode: getDashboardCardMode(),
       };
 
       // Extract Kf from PID string and separate them. Mirrors the same
@@ -199,6 +200,9 @@ export function Settings() {
       }
       if (key === 'dashboardLayout') {
         setDashboardLayout(value);
+      }
+      if (key === 'dashboardCardMode') {
+        setDashboardCardMode(value);
       }
       setFormData({
         ...formData,
@@ -409,7 +413,7 @@ export function Settings() {
                 <option value='nord'>Nord</option>
               </select>
             </SettingsFormField>
-            <SettingsFormField label='Dashboard Layout' htmlFor='dashboardLayout' noMargin>
+            <SettingsFormField label='Dashboard Layout' htmlFor='dashboardLayout'>
               <select
                 id='dashboardLayout'
                 name='dashboardLayout'
@@ -422,6 +426,21 @@ export function Settings() {
               >
                 <option value={DASHBOARD_LAYOUTS.ORDER_FIRST}>Process Controls First</option>
                 <option value={DASHBOARD_LAYOUTS.ORDER_LAST}>Chart First</option>
+              </select>
+            </SettingsFormField>
+            <SettingsFormField label='Control Column Style' htmlFor='dashboardCardMode' noMargin>
+              <select
+                id='dashboardCardMode'
+                name='dashboardCardMode'
+                className='select select-bordered w-full'
+                value={formData.dashboardCardMode || DASHBOARD_CARD_MODES.MULTI}
+                onChange={e => {
+                  setFormData({ ...formData, dashboardCardMode: e.target.value });
+                  setDashboardCardMode(e.target.value);
+                }}
+              >
+                <option value={DASHBOARD_CARD_MODES.MULTI}>Multiple Cards</option>
+                <option value={DASHBOARD_CARD_MODES.SINGLE}>Single Card</option>
               </select>
             </SettingsFormField>
           </Card>
