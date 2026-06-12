@@ -58,3 +58,28 @@ export const setDashboardCardMode = mode => {
     return false;
   }
 };
+
+const DASHBOARD_METRICS_KEY = 'dashboardMetrics';
+
+const DEFAULT_METRIC_ORDER = ['pressure', 'flow', 'temp', 'weight'];
+
+export const getMetricOrder = () => {
+  if (typeof window === 'undefined' || !window.localStorage) {
+    return DEFAULT_METRIC_ORDER;
+  }
+  try {
+    const stored = localStorage.getItem(DASHBOARD_METRICS_KEY);
+    return stored ? JSON.parse(stored) : DEFAULT_METRIC_ORDER;
+  } catch {
+    return DEFAULT_METRIC_ORDER;
+  }
+};
+
+export const setMetricOrder = (ids) => {
+  try {
+    localStorage.setItem(DASHBOARD_METRICS_KEY, JSON.stringify(ids));
+    return true;
+  } catch {
+    return false;
+  }
+};
