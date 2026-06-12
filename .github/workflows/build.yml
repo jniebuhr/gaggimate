@@ -7,6 +7,8 @@ name: Build
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      HAS_UPLOAD_SECRETS: ${{ secrets.UPDATE_SERVER_HOST != '' && secrets.UPDATE_SERVER_API_KEY != '' }}
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
@@ -43,13 +45,14 @@ jobs:
       - name: Build controller
         run: |
           pio run -e controller
-          mv .pio/build/controller/firmware.bin out/board-firmware.bin
-          mv .pio/build/controller/partitions.bin out/board-partitions.bin
-          mv .pio/build/controller/bootloader.bin out/board-bootloader.bin
+          cp .pio/build/controller/firmware.bin out/board-firmware.bin
+          cp .pio/build/controller/partitions.bin out/board-partitions.bin
+          cp .pio/build/controller/bootloader.bin out/board-bootloader.bin
           cp .pio/build/controller/firmware.bin upload/controller/firmware.bin
           cp .pio/build/controller/partitions.bin upload/controller/partitions.bin
           cp .pio/build/controller/bootloader.bin upload/controller/bootloader.bin
       - uses: ./.github/actions/upload-firmware
+        if: env.HAS_UPLOAD_SECRETS == 'true'
         env:
           UPDATE_SERVER_HOST: ${{ secrets.UPDATE_SERVER_HOST }}
           UPDATE_SERVER_API_KEY: ${{ secrets.UPDATE_SERVER_API_KEY }}
@@ -67,13 +70,14 @@ jobs:
       - name: Build display
         run: |
           pio run -e display
-          mv .pio/build/display/firmware.bin out/display-firmware.bin
-          mv .pio/build/display/partitions.bin out/display-partitions.bin
-          mv .pio/build/display/bootloader.bin out/display-bootloader.bin
+          cp .pio/build/display/firmware.bin out/display-firmware.bin
+          cp .pio/build/display/partitions.bin out/display-partitions.bin
+          cp .pio/build/display/bootloader.bin out/display-bootloader.bin
           cp .pio/build/display/firmware.bin upload/display/firmware.bin
           cp .pio/build/display/partitions.bin upload/display/partitions.bin
           cp .pio/build/display/bootloader.bin upload/display/bootloader.bin
       - uses: ./.github/actions/upload-firmware
+        if: env.HAS_UPLOAD_SECRETS == 'true'
         env:
           UPDATE_SERVER_HOST: ${{ secrets.UPDATE_SERVER_HOST }}
           UPDATE_SERVER_API_KEY: ${{ secrets.UPDATE_SERVER_API_KEY }}
@@ -85,13 +89,14 @@ jobs:
       - name: Build headless
         run: |
           pio run -e display-headless
-          mv .pio/build/display-headless/firmware.bin out/display-headless-firmware.bin
-          mv .pio/build/display-headless/partitions.bin out/display-headless-partitions.bin
-          mv .pio/build/display-headless/bootloader.bin out/display-headless-bootloader.bin
+          cp .pio/build/display-headless/firmware.bin out/display-headless-firmware.bin
+          cp .pio/build/display-headless/partitions.bin out/display-headless-partitions.bin
+          cp .pio/build/display-headless/bootloader.bin out/display-headless-bootloader.bin
           cp .pio/build/display-headless/firmware.bin upload/headless/firmware.bin
           cp .pio/build/display-headless/partitions.bin upload/headless/partitions.bin
           cp .pio/build/display-headless/bootloader.bin upload/headless/bootloader.bin
       - uses: ./.github/actions/upload-firmware
+        if: env.HAS_UPLOAD_SECRETS == 'true'
         env:
           UPDATE_SERVER_HOST: ${{ secrets.UPDATE_SERVER_HOST }}
           UPDATE_SERVER_API_KEY: ${{ secrets.UPDATE_SERVER_API_KEY }}
