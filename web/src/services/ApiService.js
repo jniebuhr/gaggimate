@@ -170,6 +170,7 @@ export default class ApiService {
       targetWeight: message.tw || 0,
       activeTargetWeight: (message?.process?.a && message.tw) || 0,
       currentFlow: message.fl,
+      targetFlow: message.tf || 0,
       mode: message.m,
       selectedProfile: message.p,
       selectedProfileId: message.puid,
@@ -218,6 +219,8 @@ export const machine = signal({
   status: {
     currentTemperature: 0,
     targetTemperature: 0,
+    currentFlow: 0,
+    targetFlow: 0,
     mode: 0,
     selectedProfile: '',
     selectedProfileId: null,
