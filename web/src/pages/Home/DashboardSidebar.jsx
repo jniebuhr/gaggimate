@@ -1,3 +1,4 @@
+import { useState } from 'preact/hooks';
 import { useDashboardState } from './useDashboardState.js';
 import { ModeCard } from './cards/ModeCard.jsx';
 import { ProfileCard } from './cards/ProfileCard.jsx';
@@ -6,6 +7,8 @@ import { MetricsGrid } from './cards/MetricsGrid.jsx';
 import { WaterLevelCard } from './cards/WaterLevelCard.jsx';
 import { ActionCard } from './cards/ActionCard.jsx';
 import PropTypes from 'prop-types';
+import { METRIC_DEFINITIONS } from '../../utils/metricDefinitions.js';
+import { getMetricOrder } from '../../utils/dashboardManager.js';
 
 function Divider() {
   return <div className='border-t border-base-content/10' />;
@@ -14,15 +17,30 @@ function Divider() {
 export function DashboardSidebar({ unified = false }) {
   const ds = useDashboardState();
 
-  const metricsProps = {
-    currentPressure: ds.currentPressure, targetPressure: ds.targetPressure,
-    currentFlow: ds.currentFlow, targetFlow: ds.targetFlow,
-    currentTemperature: ds.currentTemperature, targetTemperature: ds.targetTemperature,
-    currentWeight: ds.currentWeight, targetWeight: ds.targetWeight,
-    volumetricAvailable: ds.volumetricAvailable, brewTarget: ds.brewTarget,
-    raiseTemp: ds.raiseTemp, lowerTemp: ds.lowerTemp,
-    raiseTarget: ds.raiseTarget, lowerTarget: ds.lowerTarget,
-  };
+  const [metricOrder] = useState(() => getMetricOrder());
+
+  // Inject any required metrics that are missing from the stored order (safety net)
+  const orderedIds = [
+    ...metricOrder,
+    ...METRIC_DEFINITIONS
+      .filter(m => m.required && !metricOrder.includes(m.id))
+      .map(m => m.id),
+  ];
+
+  const visibleMetrics = orderedIds
+    .map(id => METRIC_DEFINITIONS.find(m => m.id === id))
+    .filter(Boolean)
+    .filter(m => m.available(ds))
+    .map(m => ({
+      id: m.id,
+      label: m.label,
+      current: m.getValue(ds),
+      target: m.getTarget ? m.getTarget(ds) : null,
+      unit: m.unit,
+      adjustable: m.adjustable(ds),
+      onDecrease: m.onDecrease ? m.onDecrease(ds) : undefined,
+      onIncrease: m.onIncrease ? m.onIncrease(ds) : undefined,
+    }));
 
   const actionProps = {
     mode: ds.mode, isActive: ds.isActive, isFinished: ds.isFinished,
@@ -59,7 +77,7 @@ export function DashboardSidebar({ unified = false }) {
         </div>
         <Divider />
         <div className='p-3'>
-          <MetricsGrid {...metricsProps} inCard />
+          <MetricsGrid metrics={visibleMetrics} inCard />
         </div>
         {ds.waterLevelPercent !== null && (
           <>
@@ -99,7 +117,7 @@ export function DashboardSidebar({ unified = false }) {
         <FavoriteProfilesCard selectedProfileId={ds.selectedProfileId} />
       </div>
 
-      <MetricsGrid {...metricsProps} />
+      <MetricsGrid metrics={visibleMetrics} />
 
       {ds.waterLevelPercent !== null && (
         <WaterLevelCard waterLevelPercent={ds.waterLevelPercent} />
