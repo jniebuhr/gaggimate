@@ -19,7 +19,7 @@ function AdjBtn({ icon, onClick, visible }) {
 
 function MetricCell({ label, current, target, unit, onDecrease, onIncrease, adjustable }) {
   return (
-    <div className='card bg-base-200 flex flex-col items-center justify-between gap-1 rounded-xl p-2'>
+    <div className='card bg-base-100 flex flex-col items-center justify-between gap-1 rounded-xl p-2'>
       <div className='text-base-content/50 text-[0.6rem] font-semibold tracking-wider uppercase'>
         {label}
       </div>

@@ -86,7 +86,7 @@ export function ProfileCard({
   }
 
   return (
-    <div className='card bg-base-200 flex flex-col gap-1 rounded-xl p-3'>
+    <div className='card bg-base-100 flex flex-col gap-1 rounded-xl p-3'>
       <div className='text-base-content/50 text-[0.6rem] uppercase tracking-wider'>Profile</div>
       <a href='/profiles' className='flex items-center justify-between gap-2'>
         <span className='text-base-content truncate text-sm font-semibold'>

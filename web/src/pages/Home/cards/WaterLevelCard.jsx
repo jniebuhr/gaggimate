@@ -4,7 +4,7 @@ export function WaterLevelCard({ waterLevelPercent }) {
   const pct = Math.round(waterLevelPercent);
 
   return (
-    <div className='card bg-base-200 flex flex-col gap-1.5 rounded-xl p-3'>
+    <div className='card bg-base-100 flex flex-col gap-1.5 rounded-xl p-3'>
       <div className='flex items-center justify-between'>
         <div className='text-base-content/50 text-[0.6rem] font-semibold tracking-wider uppercase'>
           Water Tank
