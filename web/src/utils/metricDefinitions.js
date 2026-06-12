@@ -52,8 +52,8 @@ export const METRIC_DEFINITIONS = [
     id: 'weight',
     label: 'Weight',
     required: false,
-    available: (ds) => ds.volumetricAvailable,
-    getValue: (ds) => `${(ds.currentWeight ?? 0).toFixed(1)}g`,
+    available: () => true,
+    getValue: (ds) => ds.volumetricAvailable ? `${(ds.currentWeight ?? 0).toFixed(1)}g` : '—',
     getTarget: (ds) =>
       ds.brewTarget && ds.targetWeight != null ? ds.targetWeight.toFixed(0) : null,
     unit: 'g',
