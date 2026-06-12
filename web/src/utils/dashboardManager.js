@@ -1,3 +1,5 @@
+import { signal } from '@preact/signals';
+
 const DASHBOARD_LAYOUT_KEY = 'dashboardLayout';
 const DASHBOARD_CARD_MODE_KEY = 'dashboardCardMode';
 
@@ -75,10 +77,13 @@ export const getMetricOrder = () => {
   }
 };
 
+export const metricOrderSignal = signal(getMetricOrder());
+
 export const setMetricOrder = (ids) => {
   if (!Array.isArray(ids)) return false;
   try {
     localStorage.setItem(DASHBOARD_METRICS_KEY, JSON.stringify(ids));
+    metricOrderSignal.value = ids;
     return true;
   } catch {
     return false;

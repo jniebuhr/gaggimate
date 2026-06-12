@@ -1,4 +1,3 @@
-import { useState } from 'preact/hooks';
 import { useDashboardState } from './useDashboardState.js';
 import { ModeCard } from './cards/ModeCard.jsx';
 import { ProfileCard } from './cards/ProfileCard.jsx';
@@ -8,7 +7,7 @@ import { WaterLevelCard } from './cards/WaterLevelCard.jsx';
 import { ActionCard } from './cards/ActionCard.jsx';
 import PropTypes from 'prop-types';
 import { METRIC_DEFINITIONS } from '../../utils/metricDefinitions.js';
-import { getMetricOrder } from '../../utils/dashboardManager.js';
+import { metricOrderSignal } from '../../utils/dashboardManager.js';
 
 function Divider() {
   return <div className='border-t border-base-content/10' />;
@@ -17,7 +16,7 @@ function Divider() {
 export function DashboardSidebar({ unified = false }) {
   const ds = useDashboardState();
 
-  const [metricOrder] = useState(() => getMetricOrder());
+  const metricOrder = metricOrderSignal.value;
 
   // Inject any required metrics that are missing from the stored order (safety net)
   const orderedIds = [
