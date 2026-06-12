@@ -40,49 +40,42 @@ function MetricCell({ label, current, target, unit, onDecrease, onIncrease, adju
   );
 }
 
-export function MetricsGrid({
-  currentPressure, targetPressure,
-  currentFlow, targetFlow,
-  currentTemperature, targetTemperature,
-  currentWeight, targetWeight,
-  volumetricAvailable, brewTarget,
-  raiseTemp, lowerTemp,
-  raiseTarget, lowerTarget,
-  inCard = false,
-}) {
-  const weightCurrent = volumetricAvailable
-    ? `${(currentWeight ?? 0).toFixed(1)}g`
-    : '—';
-  const weightTarget = (volumetricAvailable && brewTarget && targetWeight != null)
-    ? targetWeight.toFixed(0)
-    : null;
-  const weightUnit = 'g';
-  const weightAdjustable = volumetricAvailable;
-
+export function MetricsGrid({ metrics = [], inCard = false }) {
   return (
     <div className='grid grid-cols-2 gap-2'>
-      <MetricCell label='Pressure' current={`${(currentPressure ?? 0).toFixed(1)}`} target={(targetPressure ?? 0).toFixed(1)} unit=' bar' adjustable={false} inCard={inCard} />
-      <MetricCell label='Flow' current={`${(currentFlow ?? 0).toFixed(1)}`} target={targetFlow > 0 ? (targetFlow ?? 0).toFixed(1) : null} unit=' ml/s' adjustable={false} inCard={inCard} />
-      <MetricCell label='Temp' current={`${(currentTemperature ?? 0).toFixed(1)}°`} target={(targetTemperature ?? 0).toFixed(0)} unit='°C' adjustable={true} onDecrease={lowerTemp} onIncrease={raiseTemp} inCard={inCard} />
-      <MetricCell label='Weight' current={weightCurrent} target={weightTarget} unit={weightUnit} adjustable={weightAdjustable} onDecrease={lowerTarget} onIncrease={raiseTarget} inCard={inCard} />
+      {metrics.map((m, i) => {
+        const isLastOdd = metrics.length % 2 !== 0 && i === metrics.length - 1;
+        return (
+          <div key={m.id} className={isLastOdd ? 'col-span-2' : ''}>
+            <MetricCell
+              label={m.label}
+              current={m.current}
+              target={m.target}
+              unit={m.unit}
+              adjustable={m.adjustable}
+              onDecrease={m.onDecrease}
+              onIncrease={m.onIncrease}
+              inCard={inCard}
+            />
+          </div>
+        );
+      })}
     </div>
   );
 }
 
 MetricsGrid.propTypes = {
-  currentPressure:    PropTypes.number,
-  targetPressure:     PropTypes.number,
-  currentFlow:        PropTypes.number,
-  targetFlow:         PropTypes.number,
-  currentTemperature: PropTypes.number,
-  targetTemperature:  PropTypes.number,
-  currentWeight:      PropTypes.number,
-  targetWeight:       PropTypes.number,
-  volumetricAvailable: PropTypes.bool,
-  brewTarget:         PropTypes.bool,
-  raiseTemp:          PropTypes.func.isRequired,
-  lowerTemp:          PropTypes.func.isRequired,
-  raiseTarget:        PropTypes.func.isRequired,
-  lowerTarget:        PropTypes.func.isRequired,
-  inCard:             PropTypes.bool,
+  metrics: PropTypes.arrayOf(
+    PropTypes.shape({
+      id:         PropTypes.string.isRequired,
+      label:      PropTypes.string.isRequired,
+      current:    PropTypes.string,
+      target:     PropTypes.string,
+      unit:       PropTypes.string,
+      adjustable: PropTypes.bool,
+      onDecrease: PropTypes.func,
+      onIncrease: PropTypes.func,
+    })
+  ),
+  inCard: PropTypes.bool,
 };
