@@ -27,6 +27,6 @@ export function ProcessProfileChart({ data, processInfo = null, className = 'max
   const activePhaseIndex = getActivePhaseIndex();
 
   return (
-    <ExtendedProfileChart data={data} className={className} selectedPhase={activePhaseIndex} />
+    <ExtendedProfileChart data={data} className={className} selectedPhase={activePhaseIndex} showPhaseLabels={false} />
   );
 }

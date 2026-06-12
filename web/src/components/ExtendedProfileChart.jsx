@@ -116,7 +116,7 @@ function prepareData(phases, target) {
   return data;
 }
 
-function makeChartData(data, selectedPhase, isDarkMode = false) {
+function makeChartData(data, selectedPhase, isDarkMode = false, showPhaseLabels = true) {
   const phases = Array.isArray(data?.phases) ? data.phases : [];
   let duration = 0;
   for (const phase of phases) {
@@ -261,7 +261,7 @@ function makeChartData(data, selectedPhase, isDarkMode = false) {
   }
 
   const chartWidth = window.innerWidth;
-  const showLabels = chartWidth >= 520;
+  const showLabels = showPhaseLabels && chartWidth >= 520;
   const isSmall = window.innerWidth < 640;
   const yMax = chartData.options.scales.y.max ?? 12;
 
@@ -306,10 +306,11 @@ export function ExtendedProfileChart({
   data,
   className = 'max-h-36 w-full',
   selectedPhase = null,
+  showPhaseLabels = true,
 }) {
   const isDarkMode = () =>
     window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-  const config = makeChartData(data, selectedPhase, isDarkMode());
+  const config = makeChartData(data, selectedPhase, isDarkMode(), showPhaseLabels);
 
   return (
     <ChartComponent

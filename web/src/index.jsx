@@ -79,7 +79,7 @@ export function App() {
             onToggleCollapsed={() => setNavCollapsed(collapsed => !collapsed)}
           />
           <div className='flex flex-1 flex-col overflow-x-hidden overflow-y-auto'>
-            <div className='mx-auto flex min-h-0 w-full max-w-(--breakpoint-2xl) flex-1 flex-col p-4'>
+            <div className='flex min-h-0 w-full flex-1 flex-col p-4'>
               <div className='grid min-h-0 flex-1 grid-cols-1'>
                 <div className='min-h-0'>
                   <ErrorBoundary>
