@@ -91,6 +91,8 @@ export function Settings() {
   };
 
   const removeMetric = (id) => {
+    const def = METRIC_DEFINITIONS.find(m => m.id === id);
+    if (def?.required) return;
     updateMetricOrder(metricOrder.filter(mid => mid !== id));
   };
 

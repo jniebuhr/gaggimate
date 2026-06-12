@@ -5,9 +5,10 @@
  *   id         — unique string key; stored in localStorage to represent order/visibility
  *   label      — display label shown in the cell header
  *   required   — if true: always visible, freely reorderable, but cannot be removed by the user
- *   available  — (ds, caps) => bool — return false to hide from the available pool entirely
- *                (e.g. a sensor that isn't installed). ds = useDashboardState() result,
- *                caps = machine.value.capabilities
+ *   available  — (ds) => bool — return false to hide this metric from the dashboard and the
+ *                Settings configurator pool. ds is either the useDashboardState() result
+ *                (in DashboardSidebar) or machine.value.status (in Settings) — both share
+ *                the same shape for fields used by available guards.
  *   getValue   — (ds) => string — primary displayed value
  *   getTarget  — (ds) => string|null — secondary target value (shown as "/target unit"). Omit if none.
  *   unit       — string appended to the target value (e.g. ' bar', '°C')
@@ -52,7 +53,7 @@ export const METRIC_DEFINITIONS = [
     id: 'weight',
     label: 'Weight',
     required: false,
-    available: () => true,
+    available: () => true, // always configurable; getValue shows '—' when scale not connected
     getValue: (ds) => ds.volumetricAvailable ? `${(ds.currentWeight ?? 0).toFixed(1)}g` : '—',
     getTarget: (ds) =>
       ds.brewTarget && ds.targetWeight != null ? ds.targetWeight.toFixed(0) : null,
