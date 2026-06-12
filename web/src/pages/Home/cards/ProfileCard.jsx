@@ -98,7 +98,7 @@ export function ProfileCard({
         <ProcessProfileChart
           data={profileData}
           processInfo={processInfo}
-          className='mt-1 max-h-16 w-full'
+          className='mt-1 h-full w-full'
         />
       )}
     </div>
