@@ -34,7 +34,7 @@ export function ActionCard({
   const primaryLabel = getPrimaryLabel(isActive, isFinished);
 
   return (
-    <div className='card bg-base-100 flex items-center justify-center gap-4 rounded-xl p-3'>
+    <div className='card bg-base-100 flex flex-row items-center justify-center gap-4 rounded-xl p-3'>
       {showFlush && (
         <button
           className='btn btn-ghost btn-sm text-base-content/60 hover:text-base-content rounded-full text-sm'
