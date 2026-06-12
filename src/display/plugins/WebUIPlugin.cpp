@@ -658,7 +658,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) {
                 settings->setAltRelayFunction(request->arg("altRelayFunction").toInt());
             if (request->hasArg("customOTAURL")) {
                 settings->setCustomOTAUrl(request->arg("customOTAURL"));
-                ota->setReleaseUrl(request->arg("customOTAURL"));
+                ota->setReleaseUrl(createOtaURL()   );
                 lastUpdateCheck = 0;
             }
             if (request->hasArg("buttonBehavior"))
