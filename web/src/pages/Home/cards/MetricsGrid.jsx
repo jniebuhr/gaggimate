@@ -50,8 +50,8 @@ export function MetricsGrid({
   const weightCurrent = volumetricAvailable
     ? `${(currentWeight ?? 0).toFixed(1)}g`
     : '—';
-  const weightTarget = (volumetricAvailable && brewTarget && targetWeight)
-    ? (targetWeight ?? 0).toFixed(0)
+  const weightTarget = (volumetricAvailable && brewTarget && targetWeight != null)
+    ? targetWeight.toFixed(0)
     : null;
   const weightUnit = 'g';
   const weightAdjustable = volumetricAvailable;
