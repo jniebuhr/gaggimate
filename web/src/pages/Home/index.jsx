@@ -40,12 +40,9 @@ export function Home() {
         <h1 className='flex-grow text-2xl font-bold sm:text-3xl'>Dashboard</h1>
       </div>
 
-      <div className='grid grid-cols-1 gap-4 lg:grid-cols-3 lg:items-stretch landscape:max-lg:min-h-0 landscape:max-lg:flex-1 landscape:sm:grid-cols-10'>
-        <Card
-          sm={10}
-          lg={1}
-          className={`landscape:max-lg:min-h-0 landscape:sm:col-span-5 ${isOrderFirst ? 'order-first' : 'order-last'}`}
-          title='Controls'
+      <div className='grid grid-cols-1 gap-4 lg:grid-cols-3 lg:items-stretch landscape:max-lg:min-h-0 landscape:max-lg:flex-1 landscape:max-lg:grid-cols-10'>
+        <div
+          className={`flex min-h-0 min-w-0 flex-col gap-2 sm:col-span-10 lg:col-span-1 landscape:max-lg:col-span-5 landscape:max-lg:min-h-0 ${isOrderFirst ? 'order-first' : 'order-last'}`}
         >
           <div className='landscape:hmd:hidden contents portrait:md:hidden'>
             <CompactProcessControls />
@@ -53,12 +50,12 @@ export function Home() {
           <div className='landscape:hmd:contents hidden portrait:md:contents'>
             <DashboardSidebar />
           </div>
-        </Card>
+        </div>
 
         <Card
           sm={10}
           lg={2}
-          className={`landscape:max-lg:min-h-0 landscape:sm:col-span-5 ${isOrderFirst ? 'order-last' : 'order-first'}`}
+          className={`landscape:max-lg:min-h-0 landscape:max-lg:col-span-5 ${isOrderFirst ? 'order-last' : 'order-first'}`}
           title='Temperature & Pressure Chart'
           fullHeight={true}
         >
