@@ -34,18 +34,8 @@ export function ActionCard({
   const primaryLabel = getPrimaryLabel(isActive, isFinished);
 
   return (
-    <div className='card bg-base-100 flex flex-row items-center justify-center gap-4 rounded-xl p-3'>
-      {showFlush && (
-        <button
-          className='btn btn-ghost btn-sm text-base-content/60 hover:text-base-content rounded-full text-sm'
-          onClick={startFlush}
-          disabled={isFlushing}
-          aria-label='Flush water'
-        >
-          <FontAwesomeIcon icon={faTint} />
-          Flush
-        </button>
-      )}
+    <div className='card bg-base-100 grid grid-cols-[1fr_auto_1fr] items-center rounded-xl p-3'>
+      <div />
       {showPrimary && (
         <button
           type='button'
@@ -60,6 +50,19 @@ export function ActionCard({
           />
         </button>
       )}
+      <div className='flex justify-end'>
+        {showFlush && (
+          <button
+            className='btn btn-ghost btn-sm text-base-content/60 hover:text-base-content rounded-full text-sm'
+            onClick={startFlush}
+            disabled={isFlushing}
+            aria-label='Flush water'
+          >
+            <FontAwesomeIcon icon={faTint} />
+            Flush
+          </button>
+        )}
+      </div>
     </div>
   );
 }
