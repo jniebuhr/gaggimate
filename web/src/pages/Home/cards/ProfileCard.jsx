@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'preact/hooks';
+import { useContext, useEffect, useState } from 'preact/hooks';
+import { ApiServiceContext } from '../../../services/ApiService.js';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faRectangleList } from '@fortawesome/free-solid-svg-icons/faRectangleList';
@@ -57,8 +58,8 @@ export function ProfileCard({
   isFinished,
   isBrewing,
   isGrinding,
-  apiService,
 }) {
+  const apiService = useContext(ApiServiceContext);
   const [profileData, setProfileData] = useState(null);
 
   useEffect(() => {
@@ -112,5 +113,4 @@ ProfileCard.propTypes = {
   isFinished:        PropTypes.bool.isRequired,
   isBrewing:         PropTypes.bool.isRequired,
   isGrinding:        PropTypes.bool.isRequired,
-  apiService:        PropTypes.object,
 };

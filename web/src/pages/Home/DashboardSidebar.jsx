@@ -1,5 +1,3 @@
-import { useContext } from 'preact/hooks';
-import { ApiServiceContext } from '../../services/ApiService.js';
 import { useDashboardState } from './useDashboardState.js';
 import { ModeCard } from './cards/ModeCard.jsx';
 import { ProfileCard } from './cards/ProfileCard.jsx';
@@ -8,7 +6,6 @@ import { WaterLevelCard } from './cards/WaterLevelCard.jsx';
 import { ActionCard } from './cards/ActionCard.jsx';
 
 export function DashboardSidebar() {
-  const apiService = useContext(ApiServiceContext);
   const ds = useDashboardState();
 
   return (
@@ -27,7 +24,6 @@ export function DashboardSidebar() {
         isFinished={ds.isFinished}
         isBrewing={ds.isBrewing}
         isGrinding={ds.isGrinding}
-        apiService={apiService}
       />
 
       <MetricsGrid

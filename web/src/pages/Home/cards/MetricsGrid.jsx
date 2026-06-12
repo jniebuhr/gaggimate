@@ -8,6 +8,8 @@ function AdjBtn({ icon, onClick, visible }) {
     <button
       onClick={onClick}
       style={{ visibility: visible ? 'visible' : 'hidden' }}
+      tabIndex={visible ? 0 : -1}
+      aria-hidden={!visible}
       className='btn btn-ghost btn-xs flex h-6 w-6 items-center justify-center rounded-full p-0'
     >
       <FontAwesomeIcon icon={icon} className='h-2.5 w-2.5' />
