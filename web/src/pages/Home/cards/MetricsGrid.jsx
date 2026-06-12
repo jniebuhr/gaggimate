@@ -17,9 +17,9 @@ function AdjBtn({ icon, onClick, visible }) {
   );
 }
 
-function MetricCell({ label, current, target, unit, onDecrease, onIncrease, adjustable }) {
+function MetricCell({ label, current, target, unit, onDecrease, onIncrease, adjustable, inCard = false }) {
   return (
-    <div className='card bg-base-100 flex flex-col items-center justify-between gap-1 rounded-xl p-2'>
+    <div className={`flex flex-col items-center justify-between gap-1 rounded-xl p-2 ${inCard ? 'bg-base-200/60' : 'card bg-base-100'}`}>
       <div className='text-base-content/50 text-[0.6rem] font-semibold tracking-wider uppercase'>
         {label}
       </div>
@@ -48,6 +48,7 @@ export function MetricsGrid({
   volumetricAvailable, brewTarget,
   raiseTemp, lowerTemp,
   raiseTarget, lowerTarget,
+  inCard = false,
 }) {
   const weightCurrent = volumetricAvailable
     ? `${(currentWeight ?? 0).toFixed(1)}g`
@@ -60,45 +61,10 @@ export function MetricsGrid({
 
   return (
     <div className='grid grid-cols-2 gap-2'>
-      {/* Pressure — display only */}
-      <MetricCell
-        label='Pressure'
-        current={`${(currentPressure ?? 0).toFixed(1)}`}
-        target={(targetPressure ?? 0).toFixed(1)}
-        unit=' bar'
-        adjustable={false}
-      />
-
-      {/* Flow — display only */}
-      <MetricCell
-        label='Flow'
-        current={`${(currentFlow ?? 0).toFixed(1)}`}
-        target={targetFlow > 0 ? (targetFlow ?? 0).toFixed(1) : null}
-        unit=' ml/s'
-        adjustable={false}
-      />
-
-      {/* Temperature — adjustable */}
-      <MetricCell
-        label='Temp'
-        current={`${(currentTemperature ?? 0).toFixed(1)}°`}
-        target={(targetTemperature ?? 0).toFixed(0)}
-        unit='°C'
-        adjustable={true}
-        onDecrease={lowerTemp}
-        onIncrease={raiseTemp}
-      />
-
-      {/* Weight — adjustable when scale connected */}
-      <MetricCell
-        label='Weight'
-        current={weightCurrent}
-        target={weightTarget}
-        unit={weightUnit}
-        adjustable={weightAdjustable}
-        onDecrease={lowerTarget}
-        onIncrease={raiseTarget}
-      />
+      <MetricCell label='Pressure' current={`${(currentPressure ?? 0).toFixed(1)}`} target={(targetPressure ?? 0).toFixed(1)} unit=' bar' adjustable={false} inCard={inCard} />
+      <MetricCell label='Flow' current={`${(currentFlow ?? 0).toFixed(1)}`} target={targetFlow > 0 ? (targetFlow ?? 0).toFixed(1) : null} unit=' ml/s' adjustable={false} inCard={inCard} />
+      <MetricCell label='Temp' current={`${(currentTemperature ?? 0).toFixed(1)}°`} target={(targetTemperature ?? 0).toFixed(0)} unit='°C' adjustable={true} onDecrease={lowerTemp} onIncrease={raiseTemp} inCard={inCard} />
+      <MetricCell label='Weight' current={weightCurrent} target={weightTarget} unit={weightUnit} adjustable={weightAdjustable} onDecrease={lowerTarget} onIncrease={raiseTarget} inCard={inCard} />
     </div>
   );
 }
@@ -118,4 +84,5 @@ MetricsGrid.propTypes = {
   lowerTemp:          PropTypes.func.isRequired,
   raiseTarget:        PropTypes.func.isRequired,
   lowerTarget:        PropTypes.func.isRequired,
+  inCard:             PropTypes.bool,
 };

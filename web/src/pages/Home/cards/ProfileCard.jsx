@@ -58,6 +58,7 @@ export function ProfileCard({
   isFinished,
   isBrewing,
   isGrinding,
+  inCard = false,
 }) {
   const apiService = useContext(ApiServiceContext);
   const [profileData, setProfileData] = useState(null);
@@ -85,8 +86,8 @@ export function ProfileCard({
     );
   }
 
-  return (
-    <div className='card bg-base-100 flex flex-col gap-1 rounded-xl p-3 h-full'>
+  const inner = (
+    <>
       <div className='text-base-content/50 text-[0.6rem] uppercase tracking-wider'>Profile</div>
       <a href='/profiles' className='flex items-center justify-between gap-2'>
         <span className='text-base-content truncate text-sm font-semibold'>
@@ -101,8 +102,14 @@ export function ProfileCard({
           className='mt-1 h-full w-full'
         />
       )}
-    </div>
+    </>
   );
+
+  if (inCard) {
+    return <div className='flex flex-col gap-1 h-full'>{inner}</div>;
+  }
+
+  return <div className='card bg-base-100 flex flex-col gap-1 rounded-xl p-3 h-full'>{inner}</div>;
 }
 
 ProfileCard.propTypes = {
@@ -113,4 +120,5 @@ ProfileCard.propTypes = {
   isFinished:        PropTypes.bool.isRequired,
   isBrewing:         PropTypes.bool.isRequired,
   isGrinding:        PropTypes.bool.isRequired,
+  inCard:            PropTypes.bool,
 };

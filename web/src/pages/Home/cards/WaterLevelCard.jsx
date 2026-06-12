@@ -1,10 +1,10 @@
 import PropTypes from 'prop-types';
 
-export function WaterLevelCard({ waterLevelPercent }) {
+export function WaterLevelCard({ waterLevelPercent, inCard = false }) {
   const pct = Math.round(waterLevelPercent);
 
   return (
-    <div className='card bg-base-100 flex flex-col gap-1.5 rounded-xl p-3'>
+    <div className={inCard ? 'flex flex-col gap-1.5' : 'card bg-base-100 flex flex-col gap-1.5 rounded-xl p-3'}>
       <div className='flex items-center justify-between'>
         <div className='text-base-content/50 text-[0.6rem] font-semibold tracking-wider uppercase'>
           Water Tank
@@ -23,4 +23,5 @@ export function WaterLevelCard({ waterLevelPercent }) {
 
 WaterLevelCard.propTypes = {
   waterLevelPercent: PropTypes.number.isRequired,
+  inCard:            PropTypes.bool,
 };

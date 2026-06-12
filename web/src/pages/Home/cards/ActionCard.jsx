@@ -15,6 +15,7 @@ export function ActionCard({
   deactivate,
   clear,
   startFlush,
+  inCard = false,
 }) {
   const showPrimary =
     mode === 1 ||
@@ -34,7 +35,7 @@ export function ActionCard({
   const primaryLabel = getPrimaryLabel(isActive, isFinished);
 
   return (
-    <div className='card bg-base-100 grid grid-cols-[1fr_auto_1fr] items-center rounded-xl p-3'>
+    <div className={`grid grid-cols-[1fr_auto_1fr] items-center ${inCard ? '' : 'card bg-base-100 rounded-xl p-3'}`}>
       <div />
       {showPrimary && (
         <button
@@ -79,4 +80,5 @@ ActionCard.propTypes = {
   deactivate:       PropTypes.func.isRequired,
   clear:            PropTypes.func.isRequired,
   startFlush:       PropTypes.func.isRequired,
+  inCard:           PropTypes.bool,
 };
