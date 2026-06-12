@@ -13,7 +13,11 @@ import {
 } from '../../components/SettingsFormField.jsx';
 import { timezones } from '../../config/zones.js';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
-import { DASHBOARD_LAYOUTS, getDashboardLayout, setDashboardLayout, DASHBOARD_CARD_MODES, getDashboardCardMode, setDashboardCardMode } from '../../utils/dashboardManager.js';
+import { DASHBOARD_LAYOUTS, getDashboardLayout, setDashboardLayout, DASHBOARD_CARD_MODES, getDashboardCardMode, setDashboardCardMode, getMetricOrder, setMetricOrder as persistMetricOrder } from '../../utils/dashboardManager.js';
+import { METRIC_DEFINITIONS } from '../../utils/metricDefinitions.js';
+import { faLock } from '@fortawesome/free-solid-svg-icons/faLock';
+import { faChevronUp } from '@fortawesome/free-solid-svg-icons/faChevronUp';
+import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown';
 import { downloadJson } from '../../utils/download.js';
 import { getStoredTheme, handleThemeChange } from '../../utils/themeManager.js';
 import { PluginCard } from './PluginCard.jsx';
@@ -69,6 +73,34 @@ export function Settings() {
   const [autowakeupSchedules, setAutoWakeupSchedules] = useState([
     { time: '07:00', days: [true, true, true, true, true, true, true] }, // Default: all days enabled
   ]);
+  const [metricOrder, setMetricOrderState] = useState(() => getMetricOrder());
+
+  const updateMetricOrder = (ids) => {
+    setMetricOrderState(ids);
+    persistMetricOrder(ids);
+  };
+
+  const moveMetric = (id, direction) => {
+    const idx = metricOrder.indexOf(id);
+    if (idx === -1) return;
+    const next = [...metricOrder];
+    const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= next.length) return;
+    [next[idx], next[swapIdx]] = [next[swapIdx], next[idx]];
+    updateMetricOrder(next);
+  };
+
+  const removeMetric = (id) => {
+    updateMetricOrder(metricOrder.filter(mid => mid !== id));
+  };
+
+  const addMetric = (id) => {
+    updateMetricOrder([...metricOrder, id]);
+  };
+
+  const hiddenMetrics = METRIC_DEFINITIONS.filter(
+    m => !m.required && !metricOrder.includes(m.id)
+  );
   const { isLoading, data: fetchedSettings } = useQuery(`settings/${gen}`, async () => {
     const response = await fetch(`/api/settings`);
     const data = await response.json();
@@ -443,6 +475,86 @@ export function Settings() {
                 <option value={DASHBOARD_CARD_MODES.SINGLE}>Single Card</option>
               </select>
             </SettingsFormField>
+            <div className='divider'>Dashboard Metrics</div>
+            <div className='grid grid-cols-2 gap-3'>
+              {/* Visible panel */}
+              <div>
+                <div className='mb-2 text-xs font-semibold uppercase tracking-wider opacity-50'>
+                  Visible
+                </div>
+                <div className='flex flex-col gap-1'>
+                  {metricOrder.map((id, idx) => {
+                    const def = METRIC_DEFINITIONS.find(m => m.id === id);
+                    if (!def) return null;
+                    return (
+                      <div
+                        key={id}
+                        className='flex items-center gap-2 rounded-lg border border-base-content/10 bg-base-100 px-2 py-1.5'
+                      >
+                        <span className='cursor-grab text-base-content/20 select-none'>⠿</span>
+                        <span className='flex-1 text-sm'>{def.label}</span>
+                        <div className='flex flex-col gap-px'>
+                          <button
+                            type='button'
+                            disabled={idx === 0}
+                            onClick={() => moveMetric(id, 'up')}
+                            className='btn btn-ghost btn-xs flex h-5 w-5 items-center justify-center rounded p-0'
+                          >
+                            <FontAwesomeIcon icon={faChevronUp} className='h-2.5 w-2.5' />
+                          </button>
+                          <button
+                            type='button'
+                            disabled={idx === metricOrder.length - 1}
+                            onClick={() => moveMetric(id, 'down')}
+                            className='btn btn-ghost btn-xs flex h-5 w-5 items-center justify-center rounded p-0'
+                          >
+                            <FontAwesomeIcon icon={faChevronDown} className='h-2.5 w-2.5' />
+                          </button>
+                        </div>
+                        {def.required ? (
+                          <FontAwesomeIcon icon={faLock} className='h-3 w-3 text-base-content/20' />
+                        ) : (
+                          <button
+                            type='button'
+                            onClick={() => removeMetric(id)}
+                            className='btn btn-ghost btn-xs flex h-5 w-5 items-center justify-center rounded p-0 text-error'
+                          >
+                            ×
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Hidden / Available panel */}
+              <div>
+                <div className='mb-2 text-xs font-semibold uppercase tracking-wider opacity-50'>
+                  Hidden / Available
+                </div>
+                <div className='flex flex-col gap-1'>
+                  {hiddenMetrics.map(def => (
+                    <div
+                      key={def.id}
+                      className='flex items-center gap-2 rounded-lg border border-base-content/10 bg-base-200/40 px-2 py-1.5'
+                    >
+                      <span className='flex-1 text-sm opacity-60'>{def.label}</span>
+                      <button
+                        type='button'
+                        onClick={() => addMetric(def.id)}
+                        className='btn btn-ghost btn-xs border border-base-content/20 text-xs'
+                      >
+                        + Add
+                      </button>
+                    </div>
+                  ))}
+                  {hiddenMetrics.length === 0 && (
+                    <p className='text-xs opacity-40'>All available metrics are visible.</p>
+                  )}
+                </div>
+              </div>
+            </div>
           </Card>
 
           {/* System Preferences */}
