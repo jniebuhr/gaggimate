@@ -12,7 +12,6 @@ import {
 import 'chartjs-adapter-dayjs-4/dist/chartjs-adapter-dayjs-4.esm';
 import { OverviewChart } from '../../components/OverviewChart.jsx';
 import Card from '../../components/Card.jsx';
-import CompactProcessControls from './CompactProcessControls.jsx';
 import { DashboardSidebar } from './DashboardSidebar.jsx';
 import { getDashboardLayout, DASHBOARD_LAYOUTS } from '../../utils/dashboardManager.js';
 
@@ -44,20 +43,14 @@ export function Home() {
         <div
           className={`flex min-h-0 min-w-0 flex-col gap-2 sm:col-span-10 lg:col-span-1 landscape:max-lg:col-span-5 landscape:max-lg:min-h-0 ${isOrderFirst ? 'order-first' : 'order-last'}`}
         >
-          <div className='landscape:hmd:hidden contents portrait:md:hidden'>
-            <CompactProcessControls />
-          </div>
-          <div className='landscape:hmd:contents hidden portrait:md:contents'>
-            <DashboardSidebar />
-          </div>
+          <DashboardSidebar />
         </div>
 
         <Card
           sm={10}
           lg={2}
           className={`landscape:max-lg:min-h-0 landscape:max-lg:col-span-5 ${isOrderFirst ? 'order-last' : 'order-first'}`}
-          title='Temperature & Pressure Chart'
-          fullHeight={true}
+fullHeight={true}
         >
           <OverviewChart />
         </Card>
