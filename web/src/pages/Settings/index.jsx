@@ -99,7 +99,7 @@ export function Settings() {
   };
 
   const hiddenMetrics = METRIC_DEFINITIONS.filter(
-    m => !m.required && !metricOrder.includes(m.id)
+    m => !m.required && !metricOrder.includes(m.id) && m.available(machine.value.status)
   );
   const { isLoading, data: fetchedSettings } = useQuery(`settings/${gen}`, async () => {
     const response = await fetch(`/api/settings`);
