@@ -106,6 +106,9 @@ void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) 
 
 String WebUIPlugin::createOtaURL(){
     auto releaseURL = controller->getSettings().getCustomOTAURL().isEmpty() ? RELEASE_URL : controller->getSettings().getCustomOTAURL();
+    if (!releaseURL.endsWith("/")) {
+        releaseURL += "/";
+    }
     return releaseURL + (controller->getSettings().getOTAChannel() == "latest" ? "latest" : "tag/nightly");
 }
 
