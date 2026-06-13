@@ -78,6 +78,7 @@ export function useDashboardState() {
     currentFlow:        s.currentFlow,
     targetFlow:         s.targetFlow,
     currentWeight:      s.currentWeight,
+    currentPumpPower:   s.currentPumpPower ?? 0,
     targetWeight:       s.targetWeight,
     volumetricAvailable: s.volumetricAvailable,
     brewTarget:         !!s.brewTarget,

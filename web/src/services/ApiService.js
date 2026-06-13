@@ -188,6 +188,7 @@ export default class ApiService {
       rssi: message.rssi || 0,
       lat: message.lat || 0,
       tofDistance: message.tof || 0,
+      currentPumpPower: message.pw ?? 0,
     };
     const historyEntry = { ...newStatus };
     delete historyEntry.process;
