@@ -23,10 +23,15 @@ void ADSAdc::loop() {
     if (ads->isConnected() && ads->isReady()) {
         int reading = ads->getValue();
         _value[_currentChannel] = reading;
+        if (_callback) {
+            _callback(_currentChannel, reading);
+        }
         _currentChannel = (_currentChannel + 1) % _numChannels;
         ads->requestADC(_currentChannel);
     }
 }
+
+void ADSAdc::registerCallback(ads_callback_t callback) { _callback = callback; }
 
 [[noreturn]] void ADSAdc::loopTask(void *arg) {
     TickType_t lastWake = xTaskGetTickCount();

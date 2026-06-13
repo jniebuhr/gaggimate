@@ -524,9 +524,12 @@ void DefaultUI::setupReactive() {
                           [=]() {
                               bool deactivated = true;
                               if (updateActive) {
-                                  lv_label_set_text_fmt(ui_StandbyScreen_mainLabel, "Updating...");
+                                  lv_label_set_text(ui_StandbyScreen_mainLabel, "Updating...");
                               } else if (protocolMismatch) {
-                                  lv_label_set_text_fmt(ui_StandbyScreen_mainLabel, "Protocol error, please update");
+                                  lv_label_set_text_fmt(ui_StandbyScreen_mainLabel, "Version mismatch, update %s",
+                                                        (controller->getSystemInfo().protocolVersion > gm_proto::PROTOCOL_VERSION
+                                                             ? "display"
+                                                             : "controller"));
                               } else if (error) {
                                   if (controller->getError() == ERROR_CODE_RUNAWAY) {
                                       lv_label_set_text_fmt(ui_StandbyScreen_mainLabel, "Temperature error, please restart");
