@@ -2,6 +2,8 @@
 #define BREWPROCESS_H
 
 #include <algorithm>
+#include <cmath>
+#include <limits>
 #include <display/core/constants.h>
 #include <display/core/predictive.h>
 #include <display/core/process/Process.h>
@@ -39,9 +41,8 @@ class BrewProcess : public Process {
         // Measurements may arrive before tare() completes (BLE scale) or carry a
         // non-zero controller estimate from a previous shot. Anchor to the first
         // reading so only coffee extracted during this process counts toward targets.
-        if (!volumeBaselineSet) {
+        if (std::isnan(volumeBaseline)) {
             volumeBaseline = volume;
-            volumeBaselineSet = true;
         }
         const double normalizedVolume = std::max(0.0, volume - volumeBaseline);
         currentVolume = normalizedVolume;
@@ -173,8 +174,7 @@ class BrewProcess : public Process {
     int getType() override { return MODE_BREW; }
 
   private:
-    bool volumeBaselineSet = false;
-    double volumeBaseline = 0.0;
+    double volumeBaseline = std::numeric_limits<double>::quiet_NaN();
 
     float phaseStartPressure = 0.0f;
     float phaseStartFlow = 0.0f;
