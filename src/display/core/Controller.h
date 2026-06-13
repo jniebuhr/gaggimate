@@ -53,7 +53,7 @@ class Controller {
     virtual float getCurrentPuckFlow() const { return currentPuckFlow; }
     virtual float getCurrentPumpFlow() const { return currentPumpFlow; }
 
-    bool isTaskHealthy() const { return is_task_healthy(eTaskGetState(taskHandle)); }
+    bool isTaskHealthy() const { return is_task_healthy(eTaskGetState(logicTaskHandle)); }
 
     void autotune(int testTime, int samples, int heaterWattage);
     void startProcess(Process *process);
@@ -203,10 +203,8 @@ class Controller {
     static const unsigned long BLUETOOTH_GRACE_PERIOD_MS = 1500; // 1.5 second grace period
     static const unsigned long CONTROLLER_WAITING_TIMEOUT_MS = 10000;
 
-    xTaskHandle taskHandle;
     xTaskHandle logicTaskHandle;
 
-    static void loopTask(void *arg);
     static void loopLogicTask(void *arg);
 };
 

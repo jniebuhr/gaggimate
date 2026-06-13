@@ -104,7 +104,6 @@ void Controller::setup() {
     this->onScreenReady();
 
     updateLastAction();
-    xTaskCreatePinnedToCore(loopTask, "Controller::loopControl", configMINIMAL_STACK_SIZE * 6, this, 2, &taskHandle, 0);
     xTaskCreatePinnedToCore(loopLogicTask, "Controller::loopLogic", configMINIMAL_STACK_SIZE * 6, this, 3, &logicTaskHandle, 0);
 }
 
@@ -391,11 +390,9 @@ void Controller::setupWifi() {
                 const auto &g = info.got_ip.ip_info;
                 const uint32_t ip = g.ip.addr;
                 const uint32_t gw = g.gw.addr;
-                ESP_LOGI(LOG_TAG, "STA got IP: %u.%u.%u.%u gw=%u.%u.%u.%u",
-                         (unsigned)(ip & 0xff), (unsigned)((ip >> 8) & 0xff),
-                         (unsigned)((ip >> 16) & 0xff), (unsigned)((ip >> 24) & 0xff),
-                         (unsigned)(gw & 0xff), (unsigned)((gw >> 8) & 0xff),
-                         (unsigned)((gw >> 16) & 0xff), (unsigned)((gw >> 24) & 0xff));
+                ESP_LOGI(LOG_TAG, "STA got IP: %u.%u.%u.%u gw=%u.%u.%u.%u", (unsigned)(ip & 0xff), (unsigned)((ip >> 8) & 0xff),
+                         (unsigned)((ip >> 16) & 0xff), (unsigned)((ip >> 24) & 0xff), (unsigned)(gw & 0xff),
+                         (unsigned)((gw >> 8) & 0xff), (unsigned)((gw >> 16) & 0xff), (unsigned)((gw >> 24) & 0xff));
                 wifiConnectedPending = true;
             },
             WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_GOT_IP);
@@ -407,8 +404,8 @@ void Controller::setupWifi() {
             [](WiFiEvent_t, WiFiEventInfo_t info) {
                 const auto &c = info.wifi_sta_connected;
                 ESP_LOGI(LOG_TAG, "STA connected: ssid=%.*s bssid=%02x:%02x:%02x:%02x:%02x:%02x ch=%u authmode=%u",
-                         (int)c.ssid_len, c.ssid, c.bssid[0], c.bssid[1], c.bssid[2], c.bssid[3], c.bssid[4],
-                         c.bssid[5], c.channel, c.authmode);
+                         (int)c.ssid_len, c.ssid, c.bssid[0], c.bssid[1], c.bssid[2], c.bssid[3], c.bssid[4], c.bssid[5],
+                         c.channel, c.authmode);
             },
             WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_CONNECTED);
         // Log numeric reason explicitly -- disconnectReasonName() returns NULL
@@ -418,15 +415,14 @@ void Controller::setupWifi() {
             [this](WiFiEvent_t, WiFiEventInfo_t info) {
                 const auto &d = info.wifi_sta_disconnected;
                 const char *name = WiFi.disconnectReasonName(static_cast<wifi_err_reason_t>(d.reason));
-                ESP_LOGW(LOG_TAG, "STA disconnected: reason=%u (%s) bssid=%02x:%02x:%02x:%02x:%02x:%02x ssid=%.*s",
-                         d.reason, name && *name ? name : "vendor/unknown", d.bssid[0], d.bssid[1], d.bssid[2],
-                         d.bssid[3], d.bssid[4], d.bssid[5], (int)d.ssid_len, d.ssid);
+                ESP_LOGW(LOG_TAG, "STA disconnected: reason=%u (%s) bssid=%02x:%02x:%02x:%02x:%02x:%02x ssid=%.*s", d.reason,
+                         name && *name ? name : "vendor/unknown", d.bssid[0], d.bssid[1], d.bssid[2], d.bssid[3], d.bssid[4],
+                         d.bssid[5], (int)d.ssid_len, d.ssid);
                 wifiDisconnectedPending = true;
             },
             WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
-        WiFi.onEvent(
-            [](WiFiEvent_t, WiFiEventInfo_t) { ESP_LOGW(LOG_TAG, "STA lost IP"); },
-            WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_LOST_IP);
+        WiFi.onEvent([](WiFiEvent_t, WiFiEventInfo_t) { ESP_LOGW(LOG_TAG, "STA lost IP"); },
+                     WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_LOST_IP);
         WiFi.onEvent(
             [](WiFiEvent_t, WiFiEventInfo_t info) {
                 ESP_LOGW(LOG_TAG, "STA authmode changed: %u -> %u", info.wifi_sta_authmode_change.old_mode,
@@ -514,19 +510,11 @@ void Controller::loop() {
     if (comms.isReadyForConnection() && comms.connectToServer()) {
         waitingForController = false;
     }
-
-    // Keepalive: updateControl() only sends control deltas now, so a steady-state
-    // session would otherwise go silent. A periodic ping keeps the controller's
-    // connection watchdog fed (sent in all states, including error). Skip it for
-    // an incompatible controller -- it can't parse the frame anyway.
-    if (comms.isConnected() && !systemInfo.protocolMismatch && now - lastPing >= PING_INTERVAL) {
-        comms.sendPing();
-        lastPing = now;
-    }
 }
 
 void Controller::loopLogic() {
     if (isErrorState()) {
+        loopControl();
         return;
     }
 
@@ -580,10 +568,23 @@ void Controller::loopLogic() {
         deactivateGrind();
     if (mode != MODE_STANDBY && settings.getStandbyTimeout() > 0 && now > lastAction + settings.getStandbyTimeout())
         activateStandby();
+
+    loopControl();
 }
 
 void Controller::loopControl() {
     if (initialized) {
+        unsigned long now = millis();
+
+        // Keepalive: updateControl() only sends control deltas now, so a steady-state
+        // session would otherwise go silent. A periodic ping keeps the controller's
+        // connection watchdog fed (sent in all states, including error). Skip it for
+        // an incompatible controller -- it can't parse the frame anyway.
+        if (comms.isConnected() && !systemInfo.protocolMismatch && now - lastPing >= PING_INTERVAL) {
+            comms.sendPing();
+            lastPing = now;
+        }
+
         updateControl();
     }
 }
@@ -1156,15 +1157,6 @@ void Controller::handleProfileUpdate() {
     pluginManager->trigger("boiler:targetTemperature:change", "value", profileManager->getSelectedProfile().temperature);
     pluginManager->trigger("controller:targetDuration:change", "value", profileManager->getSelectedProfile().getTotalDuration());
     pluginManager->trigger("controller:targetVolume:change", "value", profileManager->getSelectedProfile().getTotalVolume());
-}
-
-void Controller::loopTask(void *arg) {
-    TickType_t lastWake = xTaskGetTickCount();
-    auto *controller = static_cast<Controller *>(arg);
-    while (true) {
-        controller->loopControl();
-        xTaskDelayUntil(&lastWake, pdMS_TO_TICKS(controller->getMode() == MODE_STANDBY ? 1000 : PROGRESS_INTERVAL));
-    }
 }
 
 void Controller::loopLogicTask(void *arg) {

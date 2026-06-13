@@ -55,12 +55,10 @@ void WifiStaWatchdogPlugin::forceReassoc() {
     // disconnect+begin re-enters the connect path regardless of reason.
     wifi_ap_record_t ap{};
     const bool haveAp = esp_wifi_sta_get_ap_info(&ap) == ESP_OK;
-    ESP_LOGW(LOG_TAG, "STA down %lums; forcing reconnect (status=%d)",
-             millis() - lastConnectedMs, (int)WiFi.status());
+    ESP_LOGW(LOG_TAG, "STA down %lums; forcing reconnect (status=%d)", millis() - lastConnectedMs, (int)WiFi.status());
     if (haveAp) {
-        ESP_LOGW(LOG_TAG, "  last AP: bssid=%02x:%02x:%02x:%02x:%02x:%02x rssi=%d ch=%u",
-                 ap.bssid[0], ap.bssid[1], ap.bssid[2], ap.bssid[3], ap.bssid[4], ap.bssid[5],
-                 ap.rssi, ap.primary);
+        ESP_LOGW(LOG_TAG, "  last AP: bssid=%02x:%02x:%02x:%02x:%02x:%02x rssi=%d ch=%u", ap.bssid[0], ap.bssid[1], ap.bssid[2],
+                 ap.bssid[3], ap.bssid[4], ap.bssid[5], ap.rssi, ap.primary);
     }
 
     WiFi.disconnect(false); // reset state machine, keep stored wifi_config_t

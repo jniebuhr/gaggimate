@@ -202,7 +202,7 @@ export default class ApiService {
         dimming: message.cd,
         pressure: message.cp,
         ledControl: message.led,
-        gearpumpAddon: message.gp,
+        gearpumpAddon: !!message.gp,
       },
       history: [...machine.value.history, historyEntry],
     };
