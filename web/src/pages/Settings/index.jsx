@@ -1305,6 +1305,7 @@ export function Settings() {
                           const src = panelDraggingSourceRef.current;
                           if (!srcId || !info) return;
                           const cur = panelOrderRef.current;
+                          if (src !== 'visible' && cur.includes(srcId)) return;
                           const next = src === 'visible' ? cur.filter(x => x !== srcId) : [...cur];
                           const targetIdx = next.indexOf(info.id);
                           if (targetIdx === -1) return;
