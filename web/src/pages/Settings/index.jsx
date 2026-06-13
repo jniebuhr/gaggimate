@@ -1247,20 +1247,15 @@ export function Settings() {
                 <option value={DASHBOARD_CARD_MODES.SINGLE}>Single Card</option>
               </select>
             </SettingsFormField>
-            <SettingsFormField label='Show Recent Shots' htmlFor='showRecentShots' noMargin>
-              <div className='flex justify-end'>
-                <input
-                  type='checkbox'
-                  id='showRecentShots'
-                  className='toggle toggle-primary'
-                  checked={showRecentShots}
-                  onChange={e => {
-                    setShowRecentShotsState(e.target.checked);
-                    setShowRecentShots(e.target.checked);
-                  }}
-                />
-              </div>
-            </SettingsFormField>
+            <ToggleField
+              label='Show Recent Shots'
+              htmlFor='showRecentShots'
+              checked={showRecentShots}
+              onChange={e => {
+                setShowRecentShotsState(e.target.checked);
+                setShowRecentShots(e.target.checked);
+              }}
+            />
             <div className='divider'>
               <span>Dashboard Panels</span>
               <label className='flex cursor-pointer items-center gap-1.5 text-xs font-normal normal-case tracking-normal'>
