@@ -34,7 +34,7 @@ void GaggiMateController::setup() {
     this->valve = new SimpleRelay(_config.valvePin, _config.valveOn);
     this->alt = new SimpleRelay(_config.altPin, _config.altOn);
     if (_config.capabilites.pressure) {
-        this->adc = new ADSAdc(_config.pressureSda, _config.pressureScl, 3);
+        this->adc = new ADSAdc(_config.pressureSda, _config.pressureScl, 1);
         this->pressureSensor = new PressureSensor(this->adc);
     }
     if (_config.capabilites.dimming) {
@@ -302,7 +302,8 @@ void GaggiMateController::handlePingTimeout() {
     // the log.
     if (errorState != ERROR_CODE_TIMEOUT) {
         ESP_LOGE(LOG_TAG, "Ping timeout detected. Turning off heater and pump for safety.");
-        _comms.disconnect();
+        if (!_comms.isUpdating())
+            _comms.disconnect();
     }
     errorState = ERROR_CODE_TIMEOUT;
 }
