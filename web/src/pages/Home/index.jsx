@@ -14,7 +14,7 @@ import { OverviewChart } from '../../components/OverviewChart.jsx';
 import Card from '../../components/Card.jsx';
 import { DashboardSidebar } from './DashboardSidebar.jsx';
 import { RecentShotsCard } from './cards/RecentShotsCard.jsx';
-import { getDashboardLayout, DASHBOARD_LAYOUTS, getDashboardCardMode, DASHBOARD_CARD_MODES } from '../../utils/dashboardManager.js';
+import { getDashboardLayout, DASHBOARD_LAYOUTS, getDashboardCardMode, DASHBOARD_CARD_MODES, showRecentShotsSignal } from '../../utils/dashboardManager.js';
 
 Chart.register(LineController, TimeScale, LinearScale, PointElement, LineElement, Filler, Legend);
 
@@ -64,9 +64,11 @@ export function Home() {
         )}
       </div>
 
-      <div className='hidden [@media(min-height:700px)]:block mt-4'>
-        <RecentShotsCard />
-      </div>
+      {showRecentShotsSignal.value && (
+        <div className='hidden [@media(min-height:700px)]:block mt-4'>
+          <RecentShotsCard />
+        </div>
+      )}
     </div>
   );
 }

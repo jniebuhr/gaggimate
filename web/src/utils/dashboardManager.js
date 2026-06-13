@@ -145,3 +145,28 @@ export const setStickyBottom = (value) => {
     return false;
   }
 };
+
+// ── Recent Shots visibility ─────────────────────────────────────────────────
+
+const DASHBOARD_SHOW_RECENT_SHOTS_KEY = 'dashboardShowRecentShots';
+
+export const getShowRecentShots = () => {
+  if (typeof window === 'undefined' || !window.localStorage) return true;
+  try {
+    return localStorage.getItem(DASHBOARD_SHOW_RECENT_SHOTS_KEY) !== 'false';
+  } catch {
+    return true;
+  }
+};
+
+export const showRecentShotsSignal = signal(getShowRecentShots());
+
+export const setShowRecentShots = (value) => {
+  try {
+    localStorage.setItem(DASHBOARD_SHOW_RECENT_SHOTS_KEY, String(value));
+    showRecentShotsSignal.value = value;
+    return true;
+  } catch {
+    return false;
+  }
+};

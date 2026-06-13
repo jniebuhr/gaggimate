@@ -20,6 +20,7 @@ import {
   getMetricOrder, setMetricOrder as persistMetricOrder,
   getPanelOrder, setPanelOrder as persistPanelOrder,
   getStickyBottom, setStickyBottom,
+  getShowRecentShots, setShowRecentShots,
 } from '../../utils/dashboardManager.js';
 import { METRIC_DEFINITIONS } from '../../utils/metricDefinitions.js';
 import { PANEL_DEFINITIONS } from '../../utils/panelDefinitions.js';
@@ -145,6 +146,7 @@ export function Settings() {
   // ── Panel configurator state ───────────────────────────────────────────
   const [panelOrder, setPanelOrderState] = useState(() => getPanelOrder());
   const [stickyBottom, setStickyBottomState] = useState(() => getStickyBottom());
+  const [showRecentShots, setShowRecentShotsState] = useState(() => getShowRecentShots());
 
   const updatePanelOrder = (ids) => {
     setPanelOrderState(ids);
@@ -1230,7 +1232,7 @@ export function Settings() {
                 <option value={DASHBOARD_LAYOUTS.ORDER_LAST}>Chart First</option>
               </select>
             </SettingsFormField>
-            <SettingsFormField label='Control Column Style' htmlFor='dashboardCardMode' noMargin>
+            <SettingsFormField label='Control Column Style' htmlFor='dashboardCardMode'>
               <select
                 id='dashboardCardMode'
                 name='dashboardCardMode'
@@ -1244,6 +1246,20 @@ export function Settings() {
                 <option value={DASHBOARD_CARD_MODES.MULTI}>Multiple Cards</option>
                 <option value={DASHBOARD_CARD_MODES.SINGLE}>Single Card</option>
               </select>
+            </SettingsFormField>
+            <SettingsFormField label='Show Recent Shots' htmlFor='showRecentShots' noMargin>
+              <div className='flex justify-end'>
+                <input
+                  type='checkbox'
+                  id='showRecentShots'
+                  className='toggle toggle-primary'
+                  checked={showRecentShots}
+                  onChange={e => {
+                    setShowRecentShotsState(e.target.checked);
+                    setShowRecentShots(e.target.checked);
+                  }}
+                />
+              </div>
             </SettingsFormField>
             <div className='divider'>
               <span>Dashboard Panels</span>
