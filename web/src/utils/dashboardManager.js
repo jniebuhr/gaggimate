@@ -134,9 +134,12 @@ export const getStickyBottom = () => {
   }
 };
 
+export const stickyBottomSignal = signal(getStickyBottom());
+
 export const setStickyBottom = (value) => {
   try {
     localStorage.setItem(DASHBOARD_STICKY_BOTTOM_KEY, String(value));
+    stickyBottomSignal.value = value;
     return true;
   } catch {
     return false;

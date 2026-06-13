@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
 import { useDashboardState } from './useDashboardState.js';
 import { PANEL_DEFINITIONS } from '../../utils/panelDefinitions.js';
-import { panelOrderSignal, getStickyBottom } from '../../utils/dashboardManager.js';
+import { panelOrderSignal, stickyBottomSignal } from '../../utils/dashboardManager.js';
 
 function Divider() {
   return <div className='border-t border-base-content/10' />;
@@ -11,7 +11,7 @@ export function DashboardSidebar({ unified = false }) {
   const ds = useDashboardState();
 
   const panelOrder = panelOrderSignal.value;
-  const sticky = getStickyBottom();
+  const sticky = stickyBottomSignal.value;
 
   // Inject required panels missing from the stored order (safety net)
   const orderedIds = [
