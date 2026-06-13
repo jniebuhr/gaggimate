@@ -89,3 +89,56 @@ export const setMetricOrder = (ids) => {
     return false;
   }
 };
+
+// ── Panel order ────────────────────────────────────────────────────────────
+
+const DASHBOARD_PANELS_KEY = 'dashboardPanels';
+
+const DEFAULT_PANEL_ORDER = ['mode', 'profile', 'favorites', 'metrics', 'watertank', 'action'];
+
+export const getPanelOrder = () => {
+  if (typeof window === 'undefined' || !window.localStorage) {
+    return [...DEFAULT_PANEL_ORDER];
+  }
+  try {
+    const stored = localStorage.getItem(DASHBOARD_PANELS_KEY);
+    return stored ? JSON.parse(stored) : [...DEFAULT_PANEL_ORDER];
+  } catch {
+    return [...DEFAULT_PANEL_ORDER];
+  }
+};
+
+export const panelOrderSignal = signal(getPanelOrder());
+
+export const setPanelOrder = (ids) => {
+  if (!Array.isArray(ids)) return false;
+  try {
+    localStorage.setItem(DASHBOARD_PANELS_KEY, JSON.stringify(ids));
+    panelOrderSignal.value = ids;
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+// ── Sticky bottom ──────────────────────────────────────────────────────────
+
+const DASHBOARD_STICKY_BOTTOM_KEY = 'dashboardStickyBottom';
+
+export const getStickyBottom = () => {
+  if (typeof window === 'undefined' || !window.localStorage) return true;
+  try {
+    return localStorage.getItem(DASHBOARD_STICKY_BOTTOM_KEY) !== 'false';
+  } catch {
+    return true;
+  }
+};
+
+export const setStickyBottom = (value) => {
+  try {
+    localStorage.setItem(DASHBOARD_STICKY_BOTTOM_KEY, String(value));
+    return true;
+  } catch {
+    return false;
+  }
+};
