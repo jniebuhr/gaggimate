@@ -1,4 +1,3 @@
-import { h } from 'preact';
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 
 export function HoldToConfirmButton({
@@ -13,20 +12,17 @@ export function HoldToConfirmButton({
   const [isHolding, setIsHolding] = useState(false);
   const timerRef = useRef(null);
 
-  const startHold = useCallback(
-    e => {
-      // Only respond to primary button (left click) or touch
-      if (e.button !== undefined && e.button !== 0) return;
-      if (disabled) return;
-      setIsHolding(true);
-
-      // Optional: add a slight haptic feedback on mobile if supported
-      if (typeof window !== 'undefined' && window.navigator && window.navigator.vibrate) {
-        window.navigator.vibrate(50);
-      }
-    },
-    [disabled],
-  );
+  const startHold = useCallback((e) => {
+    // Only respond to primary button (left click) or touch
+    if (e.button !== undefined && e.button !== 0) return;
+    if (disabled) return;
+    setIsHolding(true);
+    
+    // Optional: add a slight haptic feedback on mobile if supported
+    if (typeof globalThis.navigator?.vibrate === 'function') {
+      globalThis.navigator.vibrate(50);
+    }
+  }, [disabled]);
 
   const cancelHold = useCallback(() => {
     setIsHolding(false);
@@ -36,16 +32,14 @@ export function HoldToConfirmButton({
     if (isHolding) {
       timerRef.current = setTimeout(() => {
         setIsHolding(false);
-        if (typeof window !== 'undefined' && window.navigator && window.navigator.vibrate) {
-          window.navigator.vibrate([50, 50, 50]); // Success vibration
+        if (typeof globalThis.navigator?.vibrate === 'function') {
+          globalThis.navigator.vibrate([50, 50, 50]); // Success vibration
         }
         if (onConfirm) onConfirm();
       }, holdDurationMs);
-    } else {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-        timerRef.current = null;
-      }
+    } else if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
     }
 
     return () => {
@@ -56,20 +50,17 @@ export function HoldToConfirmButton({
   }, [isHolding, holdDurationMs, onConfirm]);
 
   // Context menu prevention to stop touch-and-hold from bringing up OS menus
-  const onContextMenu = useCallback(
-    e => {
-      if (isHolding || disabled) {
-        e.preventDefault();
-        return false;
-      }
-    },
-    [isHolding, disabled],
-  );
+  const onContextMenu = useCallback((e) => {
+    if (isHolding || disabled) {
+      e.preventDefault();
+      return false;
+    }
+  }, [isHolding, disabled]);
 
   return (
     <button
       {...props}
-      className={`relative overflow-hidden ${className} ${disabled ? 'cursor-not-allowed opacity-50' : 'select-none'}`}
+      className={`relative overflow-hidden ${className} ${disabled ? 'opacity-50 cursor-not-allowed' : 'select-none'}`}
       onPointerDown={startHold}
       onPointerUp={cancelHold}
       onPointerLeave={cancelHold}
@@ -80,17 +71,15 @@ export function HoldToConfirmButton({
         WebkitUserSelect: 'none',
         userSelect: 'none',
         WebkitTouchCallout: 'none',
-        touchAction: 'none',
+        touchAction: 'none'
       }}
     >
       <div
-        className={`pointer-events-none absolute inset-0 origin-left rounded-[inherit] ${fillClass}`}
+        className={`absolute inset-0 origin-left pointer-events-none rounded-[inherit] ${fillClass}`}
         style={{
           transform: isHolding ? 'scaleX(1)' : 'scaleX(0)',
-          transition: isHolding
-            ? `transform ${holdDurationMs}ms linear`
-            : 'transform 150ms ease-out',
-          willChange: 'transform',
+          transition: isHolding ? `transform ${holdDurationMs}ms linear` : 'transform 150ms ease-out',
+          willChange: 'transform'
         }}
       />
       {children}
