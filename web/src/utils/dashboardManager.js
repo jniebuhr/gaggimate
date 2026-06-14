@@ -169,3 +169,62 @@ export const setShowRecentShots = (value) => {
     return false;
   }
 };
+
+// ── Metrics columns ───────────────────────────────────────────────────────
+
+const DASHBOARD_METRICS_COLUMNS_KEY = 'dashboardMetricsColumns';
+
+export const getMetricsColumns = () => {
+  if (typeof window === 'undefined' || !window.localStorage) return 2;
+  try {
+    const stored = localStorage.getItem(DASHBOARD_METRICS_COLUMNS_KEY);
+    const n = stored ? parseInt(stored, 10) : 2;
+    return Number.isFinite(n) && n >= 1 && n <= 4 ? n : 2;
+  } catch {
+    return 2;
+  }
+};
+
+export const metricsColumnsSignal = signal(getMetricsColumns());
+
+export const setMetricsColumns = (n) => {
+  try {
+    localStorage.setItem(DASHBOARD_METRICS_COLUMNS_KEY, String(n));
+    metricsColumnsSignal.value = n;
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+// ── Metrics last row fill ─────────────────────────────────────────────────
+
+const DASHBOARD_METRICS_LAST_ROW_FILL_KEY = 'dashboardMetricsLastRowFill';
+
+export const METRICS_LAST_ROW_FILLS = {
+  EVEN: 'even',
+  GRID: 'grid',
+};
+
+export const getMetricsLastRowFill = () => {
+  if (typeof window === 'undefined' || !window.localStorage) {
+    return METRICS_LAST_ROW_FILLS.EVEN;
+  }
+  try {
+    return localStorage.getItem(DASHBOARD_METRICS_LAST_ROW_FILL_KEY) || METRICS_LAST_ROW_FILLS.EVEN;
+  } catch {
+    return METRICS_LAST_ROW_FILLS.EVEN;
+  }
+};
+
+export const metricsLastRowFillSignal = signal(getMetricsLastRowFill());
+
+export const setMetricsLastRowFill = (value) => {
+  try {
+    localStorage.setItem(DASHBOARD_METRICS_LAST_ROW_FILL_KEY, value);
+    metricsLastRowFillSignal.value = value;
+    return true;
+  } catch {
+    return false;
+  }
+};
