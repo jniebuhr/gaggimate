@@ -1,6 +1,5 @@
 import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
 import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
-import { faXmark } from '@fortawesome/free-solid-svg-icons/faXmark';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { computed } from '@preact/signals';
 import { useQuery } from 'preact-fetching';
@@ -10,6 +9,7 @@ import { Spinner } from '../../components/Spinner.jsx';
 import {
   InputGroupField,
   SettingsFormField,
+  SortableConfigurator,
   ToggleField,
 } from '../../components/SettingsFormField.jsx';
 import { timezones } from '../../config/zones.js';
@@ -24,9 +24,6 @@ import {
 } from '../../utils/dashboardManager.js';
 import { METRIC_DEFINITIONS } from '../../utils/metricDefinitions.js';
 import { PANEL_DEFINITIONS } from '../../utils/panelDefinitions.js';
-import { faLock } from '@fortawesome/free-solid-svg-icons/faLock';
-import { faChevronUp } from '@fortawesome/free-solid-svg-icons/faChevronUp';
-import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown';
 import { downloadJson } from '../../utils/download.js';
 import { getStoredTheme, handleThemeChange } from '../../utils/themeManager.js';
 import { PluginCard } from './PluginCard.jsx';
@@ -89,56 +86,6 @@ export function Settings() {
     persistMetricOrder(ids);
   };
 
-  const moveMetric = (id, direction) => {
-    const idx = metricOrder.indexOf(id);
-    if (idx === -1) return;
-    const next = [...metricOrder];
-    const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
-    if (swapIdx < 0 || swapIdx >= next.length) return;
-    [next[idx], next[swapIdx]] = [next[swapIdx], next[idx]];
-    updateMetricOrder(next);
-  };
-
-  const removeMetric = (id) => {
-    const def = METRIC_DEFINITIONS.find(m => m.id === id);
-    if (def?.required) return;
-    updateMetricOrder(metricOrder.filter(mid => mid !== id));
-  };
-
-  const addMetric = (id) => {
-    updateMetricOrder([...metricOrder, id]);
-  };
-
-  const metricOrderRef = useRef(metricOrder);
-  metricOrderRef.current = metricOrder;
-  const draggingIdRef = useRef(null);
-  const draggingSourceRef = useRef(null);
-  const [draggingId, setDraggingId] = useState(null);
-  const [draggingSource, setDraggingSource] = useState(null);
-  const [dragOverInfo, setDragOverInfo] = useState(null); // { id, pos: 'before'|'after' }
-  const dragOverInfoRef = useRef(null);
-
-  const updateDragOver = (info) => {
-    dragOverInfoRef.current = info;
-    setDragOverInfo(info);
-  };
-
-  const startDrag = (e, id, source) => {
-    draggingIdRef.current = id;
-    draggingSourceRef.current = source;
-    setDraggingId(id);
-    setDraggingSource(source);
-    e.dataTransfer.effectAllowed = 'move';
-  };
-
-  const endDrag = () => {
-    draggingIdRef.current = null;
-    draggingSourceRef.current = null;
-    setDraggingId(null);
-    setDraggingSource(null);
-    updateDragOver(null);
-  };
-
   const hiddenMetrics = METRIC_DEFINITIONS.filter(
     m => !m.required && !metricOrder.includes(m.id) && m.available(machine.value.status)
   );
@@ -156,57 +103,6 @@ export function Settings() {
   const updateStickyBottom = (val) => {
     setStickyBottomState(val);
     setStickyBottom(val);
-  };
-
-  const movePanel = (id, direction) => {
-    const idx = panelOrder.indexOf(id);
-    if (idx === -1) return;
-    const next = [...panelOrder];
-    const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
-    if (swapIdx < 0 || swapIdx >= next.length) return;
-    [next[idx], next[swapIdx]] = [next[swapIdx], next[idx]];
-    updatePanelOrder(next);
-  };
-
-  const removePanel = (id) => {
-    const def = PANEL_DEFINITIONS.find(p => p.id === id);
-    if (def?.required) return;
-    updatePanelOrder(panelOrder.filter(pid => pid !== id));
-  };
-
-  const addPanel = (id) => {
-    if (panelOrder.includes(id)) return;
-    updatePanelOrder([...panelOrder, id]);
-  };
-
-  const panelOrderRef = useRef(panelOrder);
-  panelOrderRef.current = panelOrder;
-  const panelDraggingIdRef = useRef(null);
-  const panelDraggingSourceRef = useRef(null);
-  const [panelDraggingId, setPanelDraggingId] = useState(null);
-  const [panelDraggingSource, setPanelDraggingSource] = useState(null);
-  const [panelDragOverInfo, setPanelDragOverInfo] = useState(null);
-  const panelDragOverInfoRef = useRef(null);
-
-  const updatePanelDragOver = (info) => {
-    panelDragOverInfoRef.current = info;
-    setPanelDragOverInfo(info);
-  };
-
-  const startPanelDrag = (e, id, source) => {
-    panelDraggingIdRef.current = id;
-    panelDraggingSourceRef.current = source;
-    setPanelDraggingId(id);
-    setPanelDraggingSource(source);
-    e.dataTransfer.effectAllowed = 'move';
-  };
-
-  const endPanelDrag = () => {
-    panelDraggingIdRef.current = null;
-    panelDraggingSourceRef.current = null;
-    setPanelDraggingId(null);
-    setPanelDraggingSource(null);
-    updatePanelDragOver(null);
   };
 
   const hiddenPanels = PANEL_DEFINITIONS.filter(def => {
@@ -1220,7 +1116,6 @@ export function Settings() {
             <SettingsFormField label='Dashboard Layout' htmlFor='dashboardLayout'>
               <select
                 id='dashboardLayout'
-                name='dashboardLayout'
                 className='select select-bordered w-full'
                 value={formData.dashboardLayout || DASHBOARD_LAYOUTS.ORDER_FIRST}
                 onChange={e => {
@@ -1235,7 +1130,6 @@ export function Settings() {
             <SettingsFormField label='Control Column Style' htmlFor='dashboardCardMode'>
               <select
                 id='dashboardCardMode'
-                name='dashboardCardMode'
                 className='select select-bordered w-full'
                 value={formData.dashboardCardMode || DASHBOARD_CARD_MODES.MULTI}
                 onChange={e => {
@@ -1268,272 +1162,21 @@ export function Settings() {
                 Stick last to bottom
               </label>
             </div>
-            <div className='grid grid-cols-2 gap-3'>
-              {/* Visible panels */}
-              <div>
-                <div className='mb-2 text-xs font-semibold uppercase tracking-wider opacity-50'>
-                  Visible
-                </div>
-                <div
-                  className={`flex flex-col gap-1 rounded-lg transition-all duration-200${panelDraggingSource === 'available' ? ' bg-primary/5 ring-1 ring-primary/40' : ''}`}
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    const srcId = panelDraggingIdRef.current;
-                    const src = panelDraggingSourceRef.current;
-                    if (!srcId || src !== 'available') return;
-                    const cur = panelOrderRef.current;
-                    if (!cur.includes(srcId)) {
-                      updatePanelOrder([...cur, srcId]);
-                    }
-                  }}
-                >
-                  {panelOrder.map((id, idx) => {
-                    const def = PANEL_DEFINITIONS.find(p => p.id === id);
-                    if (!def) return null;
-                    const isDragging = panelDraggingId === id;
-                    const overPos = panelDragOverInfo?.id === id && !isDragging ? panelDragOverInfo.pos : null;
-                    return (
-                      <div
-                        key={id}
-                        draggable
-                        onDragStart={(e) => startPanelDrag(e, id, 'visible')}
-                        onDragOver={(e) => {
-                          e.preventDefault();
-                          const r = e.currentTarget.getBoundingClientRect();
-                          const pos = e.clientY < r.top + r.height / 2 ? 'before' : 'after';
-                          if (panelDragOverInfoRef.current?.id !== id || panelDragOverInfoRef.current?.pos !== pos) {
-                            updatePanelDragOver({ id, pos });
-                          }
-                        }}
-                        onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) updatePanelDragOver(null); }}
-                        onDrop={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          const info = panelDragOverInfoRef.current;
-                          updatePanelDragOver(null);
-                          const srcId = panelDraggingIdRef.current;
-                          const src = panelDraggingSourceRef.current;
-                          if (!srcId || !info) return;
-                          const cur = panelOrderRef.current;
-                          if (src !== 'visible' && cur.includes(srcId)) return;
-                          const next = src === 'visible' ? cur.filter(x => x !== srcId) : [...cur];
-                          const targetIdx = next.indexOf(info.id);
-                          if (targetIdx === -1) return;
-                          next.splice(info.pos === 'before' ? targetIdx : targetIdx + 1, 0, srcId);
-                          updatePanelOrder(next);
-                        }}
-                        onDragEnd={endPanelDrag}
-                        className={[
-                          'flex min-h-14 items-center gap-2 rounded-lg border border-base-content/10 bg-base-100 px-2 py-1.5 transition-all duration-100',
-                          overPos === 'before' && 'border-t-2 border-t-primary',
-                          overPos === 'after' && 'border-b-2 border-b-primary',
-                          isDragging && 'opacity-40',
-                        ].filter(Boolean).join(' ')}
-                      >
-                        <span className='cursor-grab select-none text-base-content/20'>⠿</span>
-                        <span className='flex-1 text-sm'>{def.label}</span>
-                        <div className='flex flex-col gap-px'>
-                          <button
-                            type='button'
-                            disabled={idx === 0}
-                            onClick={() => movePanel(id, 'up')}
-                            className='btn btn-ghost btn-xs flex h-5 w-5 items-center justify-center rounded p-0'
-                          >
-                            <FontAwesomeIcon icon={faChevronUp} className='h-2.5 w-2.5' />
-                          </button>
-                          <button
-                            type='button'
-                            disabled={idx === panelOrder.length - 1}
-                            onClick={() => movePanel(id, 'down')}
-                            className='btn btn-ghost btn-xs flex h-5 w-5 items-center justify-center rounded p-0'
-                          >
-                            <FontAwesomeIcon icon={faChevronDown} className='h-2.5 w-2.5' />
-                          </button>
-                        </div>
-                        {def.required ? (
-                          <div className='flex h-6 w-6 items-center justify-center'>
-                            <FontAwesomeIcon icon={faLock} className='h-3 w-3 text-base-content/20' />
-                          </div>
-                        ) : (
-                          <button
-                            type='button'
-                            onClick={() => removePanel(id)}
-                            className='btn btn-ghost btn-xs flex h-6 w-6 items-center justify-center rounded p-0 text-error'
-                          >
-                            <FontAwesomeIcon icon={faXmark} className='h-3.5 w-3.5' />
-                          </button>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Hidden / Available panels */}
-              <div>
-                <div className='mb-2 text-xs font-semibold uppercase tracking-wider opacity-50'>
-                  Hidden / Available
-                </div>
-                <div className='flex flex-col gap-1'>
-                  {hiddenPanels.map(def => (
-                    <div
-                      key={def.id}
-                      draggable
-                      onDragStart={(e) => startPanelDrag(e, def.id, 'available')}
-                      onDragEnd={endPanelDrag}
-                      className={`flex min-h-14 cursor-grab items-center gap-2 rounded-lg border border-base-content/10 bg-base-100 px-2 py-1.5 transition-all duration-150${panelDraggingId === def.id ? ' opacity-40' : ''}`}
-                    >
-                      <span className='select-none text-base-content/20'>⠿</span>
-                      <span className='flex-1 text-sm'>{def.label}</span>
-                      <button
-                        type='button'
-                        onClick={() => addPanel(def.id)}
-                        className='btn btn-ghost btn-xs border border-base-content/20 text-xs'
-                      >
-                        + Add
-                      </button>
-                    </div>
-                  ))}
-                  {hiddenPanels.length === 0 && (
-                    <p className='text-xs opacity-40'>All available panels are visible.</p>
-                  )}
-                </div>
-              </div>
-            </div>
+            <SortableConfigurator
+              order={panelOrder}
+              definitions={PANEL_DEFINITIONS}
+              hidden={hiddenPanels}
+              onOrderChange={updatePanelOrder}
+              emptyMessage='All available panels are visible.'
+            />
             <div className='divider'>Dashboard Metrics</div>
-            <div className='grid grid-cols-2 gap-3'>
-              {/* Visible panel */}
-              <div>
-                <div className='mb-2 text-xs font-semibold uppercase tracking-wider opacity-50'>
-                  Visible
-                </div>
-                <div
-                  className={`flex flex-col gap-1 rounded-lg transition-all duration-200${draggingSource === 'available' ? ' bg-primary/5 ring-1 ring-primary/40' : ''}`}
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    const srcId = draggingIdRef.current;
-                    const src = draggingSourceRef.current;
-                    if (!srcId || src !== 'available') return;
-                    const cur = metricOrderRef.current;
-                    if (!cur.includes(srcId)) {
-                      updateMetricOrder([...cur, srcId]);
-                    }
-                  }}
-                >
-                  {metricOrder.map((id, idx) => {
-                    const def = METRIC_DEFINITIONS.find(m => m.id === id);
-                    if (!def) return null;
-                    const isDragging = draggingId === id;
-                    const overPos = dragOverInfo?.id === id && !isDragging ? dragOverInfo.pos : null;
-                    return (
-                      <div
-                        key={id}
-                        draggable
-                        onDragStart={(e) => startDrag(e, id, 'visible')}
-                        onDragOver={(e) => {
-                          e.preventDefault();
-                          const r = e.currentTarget.getBoundingClientRect();
-                          const pos = e.clientY < r.top + r.height / 2 ? 'before' : 'after';
-                          if (dragOverInfoRef.current?.id !== id || dragOverInfoRef.current?.pos !== pos) {
-                            updateDragOver({ id, pos });
-                          }
-                        }}
-                        onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) updateDragOver(null); }}
-                        onDrop={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          const info = dragOverInfoRef.current;
-                          updateDragOver(null);
-                          const srcId = draggingIdRef.current;
-                          const src = draggingSourceRef.current;
-                          if (!srcId || !info) return;
-                          const cur = metricOrderRef.current;
-                          const next = src === 'visible' ? cur.filter(x => x !== srcId) : [...cur];
-                          const targetIdx = next.indexOf(info.id);
-                          if (targetIdx === -1) return;
-                          next.splice(info.pos === 'before' ? targetIdx : targetIdx + 1, 0, srcId);
-                          updateMetricOrder(next);
-                        }}
-                        onDragEnd={endDrag}
-                        className={[
-                          'flex min-h-14 items-center gap-2 rounded-lg border border-base-content/10 bg-base-100 px-2 py-1.5 transition-all duration-100',
-                          overPos === 'before' && 'border-t-2 border-t-primary',
-                          overPos === 'after' && 'border-b-2 border-b-primary',
-                          isDragging && 'opacity-40',
-                        ].filter(Boolean).join(' ')}
-                      >
-                        <span className='cursor-grab select-none text-base-content/20'>⠿</span>
-                        <span className='flex-1 text-sm'>{def.label}</span>
-                        <div className='flex flex-col gap-px'>
-                          <button
-                            type='button'
-                            disabled={idx === 0}
-                            onClick={() => moveMetric(id, 'up')}
-                            className='btn btn-ghost btn-xs flex h-5 w-5 items-center justify-center rounded p-0'
-                          >
-                            <FontAwesomeIcon icon={faChevronUp} className='h-2.5 w-2.5' />
-                          </button>
-                          <button
-                            type='button'
-                            disabled={idx === metricOrder.length - 1}
-                            onClick={() => moveMetric(id, 'down')}
-                            className='btn btn-ghost btn-xs flex h-5 w-5 items-center justify-center rounded p-0'
-                          >
-                            <FontAwesomeIcon icon={faChevronDown} className='h-2.5 w-2.5' />
-                          </button>
-                        </div>
-                        {def.required ? (
-                          <div className='flex h-6 w-6 items-center justify-center'>
-                            <FontAwesomeIcon icon={faLock} className='h-3 w-3 text-base-content/20' />
-                          </div>
-                        ) : (
-                          <button
-                            type='button'
-                            onClick={() => removeMetric(id)}
-                            className='btn btn-ghost btn-xs flex h-6 w-6 items-center justify-center rounded p-0 text-error'
-                          >
-                            <FontAwesomeIcon icon={faXmark} className='h-3.5 w-3.5' />
-                          </button>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Hidden / Available panel */}
-              <div>
-                <div className='mb-2 text-xs font-semibold uppercase tracking-wider opacity-50'>
-                  Hidden / Available
-                </div>
-                <div className='flex flex-col gap-1'>
-                  {hiddenMetrics.map(def => (
-                    <div
-                      key={def.id}
-                      draggable
-                      onDragStart={(e) => startDrag(e, def.id, 'available')}
-                      onDragEnd={endDrag}
-                      className={`flex min-h-14 cursor-grab items-center gap-2 rounded-lg border border-base-content/10 bg-base-100 px-2 py-1.5 transition-all duration-150${draggingId === def.id ? ' opacity-40' : ''}`}
-                    >
-                      <span className='select-none text-base-content/20'>⠿</span>
-                      <span className='flex-1 text-sm'>{def.label}</span>
-                      <button
-                        type='button'
-                        onClick={() => addMetric(def.id)}
-                        className='btn btn-ghost btn-xs border border-base-content/20 text-xs'
-                      >
-                        + Add
-                      </button>
-                    </div>
-                  ))}
-                  {hiddenMetrics.length === 0 && (
-                    <p className='text-xs opacity-40'>All available metrics are visible.</p>
-                  )}
-                </div>
-              </div>
-            </div>
+            <SortableConfigurator
+              order={metricOrder}
+              definitions={METRIC_DEFINITIONS}
+              hidden={hiddenMetrics}
+              onOrderChange={updateMetricOrder}
+              emptyMessage='All available metrics are visible.'
+            />
           </Card>
 
           <Card sm={10} title='Plugins'>
