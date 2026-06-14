@@ -60,15 +60,8 @@ const NAVIGATION_SECTIONS = [
     id: 'devices',
     showDivider: true,
     items: [
-      { label: 'PID Autotune', link: '/pidtune', icon: faTemperatureHalf },
-      { label: 'Bluetooth Devices', link: '/scales', icon: faBluetoothB },
       { label: 'Settings', link: '/settings', icon: faCog },
     ],
-  },
-  {
-    id: 'updates',
-    showDivider: true,
-    items: [{ label: 'System & Updates', link: '/ota', icon: faRotate }],
   },
 ];
 

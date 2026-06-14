@@ -23,11 +23,8 @@ import { faBars } from '@fortawesome/free-solid-svg-icons/faBars';
 const Home = lazy(() => import('./pages/Home/index.jsx').then(m => m.Home));
 const NotFound = lazy(() => import('./pages/_404.jsx').then(m => m.NotFound));
 const Settings = lazy(() => import('./pages/Settings/index.jsx').then(m => m.Settings));
-const OTA = lazy(() => import('./pages/OTA/index.jsx').then(m => m.OTA));
-const Scales = lazy(() => import('./pages/Scales/index.jsx').then(m => m.Scales));
 const ProfileList = lazy(() => import('./pages/ProfileList/index.jsx').then(m => m.ProfileList));
 const ProfileEdit = lazy(() => import('./pages/ProfileEdit/index.jsx').then(m => m.ProfileEdit));
-const Autotune = lazy(() => import('./pages/Autotune/index.jsx').then(m => m.Autotune));
 const ShotHistory = lazy(() => import('./pages/ShotHistory/index.jsx').then(m => m.ShotHistory));
 const ShotAnalyzer = lazy(() => import('./pages/ShotAnalyzer/index.jsx').then(m => m.ShotAnalyzer));
 const StatisticsPage = lazy(() =>
@@ -88,9 +85,6 @@ export function App() {
                       <Route path='/profiles' component={ProfileList} />
                       <Route path='/profiles/:id' component={ProfileEdit} />
                       <Route path='/settings' component={Settings} />
-                      <Route path='/ota' component={OTA} />
-                      <Route path='/scales' component={Scales} />
-                      <Route path='/pidtune' component={Autotune} />
                       <Route path='/history' component={ShotHistory} />
                       <Route path='/analyzer' component={ShotAnalyzer} />
                       <Route path='/statistics' component={StatisticsPage} />
