@@ -1,7 +1,13 @@
+import { useEffect, useRef, useState } from 'preact/hooks';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMinus } from '@fortawesome/free-solid-svg-icons/faMinus';
 import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
+import {
+  metricsColumnsSignal,
+  metricsLastRowFillSignal,
+  METRICS_LAST_ROW_FILLS,
+} from '../../../utils/dashboardManager.js';
 
 function AdjBtn({ icon, onClick, visible }) {
   return (
@@ -40,26 +46,72 @@ function MetricCell({ label, current, target, unit, onDecrease, onIncrease, adju
   );
 }
 
-export function MetricsGrid({ metrics = [], inCard = false }) {
+function MetricCellItem({ m, inCard }) {
   return (
-    <div className='grid grid-cols-2 gap-2'>
-      {metrics.map((m, i) => {
-        const isLastOdd = metrics.length % 2 !== 0 && i === metrics.length - 1;
-        return (
-          <div key={m.id} className={isLastOdd ? 'col-span-2' : undefined}>
-            <MetricCell
-              label={m.label}
-              current={m.current}
-              target={m.target}
-              unit={m.unit}
-              adjustable={m.adjustable}
-              onDecrease={m.onDecrease}
-              onIncrease={m.onIncrease}
-              inCard={inCard}
-            />
+    <MetricCell
+      label={m.label}
+      current={m.current}
+      target={m.target}
+      unit={m.unit}
+      adjustable={m.adjustable}
+      onDecrease={m.onDecrease}
+      onIncrease={m.onIncrease}
+      inCard={inCard}
+    />
+  );
+}
+
+export function MetricsGrid({ metrics = [], inCard = false }) {
+  const containerRef = useRef(null);
+  const userCols = metricsColumnsSignal.value;
+  const lastRowFill = metricsLastRowFillSignal.value;
+  const [effectiveCols, setEffectiveCols] = useState(userCols);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver(([entry]) => {
+      const width = entry.contentRect.width;
+      setEffectiveCols(Math.max(1, Math.min(userCols, Math.floor(width / 125))));
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [userCols]);
+
+  const remainder = metrics.length % effectiveCols;
+  const fullRows = remainder === 0 ? metrics : metrics.slice(0, -remainder);
+  const lastRow = remainder === 0 ? [] : metrics.slice(-remainder);
+
+  return (
+    <div ref={containerRef}>
+      <div
+        className='grid gap-2'
+        style={{ gridTemplateColumns: `repeat(${effectiveCols}, 1fr)` }}
+      >
+        {fullRows.map(m => (
+          <MetricCellItem key={m.id} m={m} inCard={inCard} />
+        ))}
+      </div>
+      {lastRow.length > 0 && (
+        lastRowFill === METRICS_LAST_ROW_FILLS.EVEN ? (
+          <div className='flex gap-2 mt-2'>
+            {lastRow.map(m => (
+              <div key={m.id} style={{ flex: 1 }}>
+                <MetricCellItem m={m} inCard={inCard} />
+              </div>
+            ))}
           </div>
-        );
-      })}
+        ) : (
+          <div
+            className='grid gap-2 mt-2'
+            style={{ gridTemplateColumns: `repeat(${effectiveCols}, 1fr)` }}
+          >
+            {lastRow.map(m => (
+              <MetricCellItem key={m.id} m={m} inCard={inCard} />
+            ))}
+          </div>
+        )
+      )}
     </div>
   );
 }
