@@ -9,8 +9,9 @@ import {
 // Statistics entry page: merges deep-link context with transient session hints.
 // Route params stay canonical for profile source/name, while session state can
 // carry extra one-off UI context like the current shot source and detail tab.
-export function StatisticsPage() {
-  const { params } = useRoute();
+export function StatisticsPage({ isTab = false, params: propParams }) {
+  const routeParams = useRoute().params;
+  const params = propParams || routeParams;
   const [sessionInitialContext] = useState(() => {
     try {
       const raw = sessionStorage.getItem('statsInitialContext');
@@ -51,10 +52,12 @@ export function StatisticsPage() {
   }, [routeInitialContext, sessionInitialContext]);
 
   return (
-    <div className='pb-20'>
-      <div className='mb-4 flex flex-row items-center gap-2'>
-        <h2 className='flex-grow text-2xl font-bold sm:text-3xl'>Statistics</h2>
-      </div>
+    <div>
+      {!isTab && (
+        <div className='mb-4 flex flex-row items-center gap-2'>
+          <h2 className='flex-grow text-2xl font-bold sm:text-3xl'>Statistics</h2>
+        </div>
+      )}
 
       <div className='w-full'>
         <StatisticsView initialContext={initialContext} />

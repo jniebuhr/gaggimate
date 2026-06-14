@@ -44,12 +44,11 @@ function SummaryStatCard({ icon, label, value, accentColorVar, tone = 'muted' })
 
   return (
     <div
-      className='rounded-2xl p-3 shadow-sm transition-shadow sm:p-3.5'
+      className='rounded-2xl p-3 transition-shadow sm:p-3.5'
       style={{
         background: isStrong
           ? 'var(--statistics-summary-surface-strong)'
           : 'var(--statistics-summary-surface-muted)',
-        boxShadow: '0 8px 22px var(--statistics-summary-shadow)',
       }}
     >
       <div className='flex items-center gap-3'>

@@ -129,7 +129,7 @@ export function ColumnControls({
   // Dynamic container styles
   const containerClasses = isIntegrated
     ? 'bg-base-100 rounded-t-lg border-b border-base-content/10'
-    : 'bg-base-200/80 backdrop-blur-md rounded-lg shadow-sm border border-base-content/10 mb-5';
+    : 'bg-base-200/80 backdrop-blur-md rounded-lg border border-base-content/10 mb-5';
 
   return (
     <div className={`overflow-hidden transition-colors ${containerClasses}`}>

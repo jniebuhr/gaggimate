@@ -534,9 +534,10 @@ async function tryAutoMatchCompareShotProfile({
   }
 }
 
-export function ShotAnalyzer() {
+export function ShotAnalyzer({ isTab = false, params: propParams }) {
   const apiService = useContext(ApiServiceContext);
-  const { params } = useRoute();
+  const routeParams = useRoute().params;
+  const params = propParams || routeParams;
   // --- State ---
   const [currentShot, setCurrentShot] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -1414,11 +1415,13 @@ export function ShotAnalyzer() {
   const isCompareActive = compareMode && compareHasSecondaryShot && compareCollection.length > 1;
 
   return (
-    <div className='shot-analyzer-page pb-20'>
+    <div className='shot-analyzer-page'>
       {/* Header */}
-      <div className='mb-4 flex flex-row items-center gap-2'>
-        <h2 className='flex-grow text-2xl font-bold sm:text-3xl'>Deep Dive Shot Analyzer</h2>
-      </div>
+      {!isTab && (
+        <div className='mb-4 flex flex-row items-center gap-2'>
+          <h2 className='flex-grow text-2xl font-bold sm:text-3xl'>Deep Dive Shot Analyzer</h2>
+        </div>
+      )}
 
       <div className='w-full'>
         {/* Library Panel (Always visible) */}
@@ -1481,7 +1484,7 @@ export function ShotAnalyzer() {
         {currentShot ? (
           // --- Active Analysis View ---
           <div ref={analysisSectionRef} className='animate-fade-in mt-8'>
-            <div className='bg-base-100 border-base-content/10 rounded-lg border p-5 shadow-sm'>
+            <div className='bg-base-100 border-base-content/10 rounded-lg border p-5'>
               <div>
                 <ShotChart
                   shotData={currentShot}

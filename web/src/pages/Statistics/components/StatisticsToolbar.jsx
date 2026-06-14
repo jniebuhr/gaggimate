@@ -973,7 +973,7 @@ export function StatisticsToolbar({
 
       {isToolbarExpanded && shouldShowDslSelectionPreview && (
         <div
-          className={`bg-base-100/55 border-base-content/10 flex w-full min-w-0 flex-col gap-3 rounded-lg border p-3 shadow-sm ${toolbarPassiveLayerClass}`.trim()}
+          className={`bg-base-100/55 border-base-content/10 flex w-full min-w-0 flex-col gap-3 rounded-lg border p-3 ${toolbarPassiveLayerClass}`.trim()}
         >
           {profilePreviewItems.length > 0 && (
             <div className='min-w-0 space-y-2'>

@@ -1,5 +1,5 @@
 export const STATISTICS_DROPDOWN_PANEL_SURFACE_CLASS =
-  'pointer-events-auto isolate z-[150] overflow-hidden rounded-xl border border-base-content/12 shadow-2xl';
+  'pointer-events-auto isolate z-[150] overflow-hidden rounded-xl border border-base-content/12 shadow-lg';
 
 export const STATISTICS_DROPDOWN_PANEL_SURFACE_STYLE = {
   backgroundColor: 'color-mix(in srgb, var(--color-base-100) 97%, transparent)',

@@ -26,6 +26,9 @@ import { Spinner } from '../../components/Spinner.jsx';
 import HistoryCard from './HistoryCard.jsx';
 import { parseBinaryShot } from './parseBinaryShot.js';
 import { parseBinaryIndex, indexToShotList } from './parseBinaryIndex.js';
+import { getCachedShotHistory, setCachedShotHistory } from '../../services/ShotHistoryCache.js';
+import { ProgressiveContent } from '../../components/ProgressiveContent.jsx';
+import { ShotHistorySkeleton } from '../../components/Skeletons.jsx';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch } from '@fortawesome/free-solid-svg-icons/faSearch';
 import { faSort } from '@fortawesome/free-solid-svg-icons/faSort';
@@ -33,10 +36,10 @@ import { faFilter } from '@fortawesome/free-solid-svg-icons/faFilter';
 
 const connected = computed(() => machine.value.connected);
 
-export function ShotHistory() {
+export function ShotHistory({ isTab = false }) {
   const apiService = useContext(ApiServiceContext);
-  const [history, setHistory] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [history, setHistory] = useState(getCachedShotHistory() || []);
+  const [loading, setLoading] = useState(!getCachedShotHistory());
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('date'); // date, rating, profile, duration, volume
   const [sortOrder, setSortOrder] = useState('desc'); // asc, desc
@@ -100,6 +103,12 @@ export function ShotHistory() {
     }
     return () => loadHistoryAbortRef.current?.abort();
   }, [connected.value]);
+
+  useEffect(() => {
+    if (history.length > 0 || !loading) {
+      setCachedShotHistory(history);
+    }
+  }, [history, loading]);
 
   const onDelete = useCallback(
     async id => {
@@ -187,24 +196,27 @@ export function ShotHistory() {
     return { paginatedHistory, totalPages, totalFilteredItems };
   }, [history, searchTerm, filterBy, sortBy, sortOrder, currentPage]);
 
-  if (loading) {
-    return (
-      <div className='flex w-full flex-row items-center justify-center py-16'>
-        <Spinner size={8} />
-      </div>
-    );
-  }
+  // Remove if(loading) spinner check here
 
   return (
-    <>
-      <div className='mb-6'>
-        <div className='mb-4 flex flex-row items-center gap-2'>
-          <h2 className='flex-grow text-2xl font-bold sm:text-3xl'>Shot History</h2>
-          <span className='text-base-content/70 text-sm'>
-            {totalFilteredItems} of {history.length} shots{' '}
-            {totalPages > 1 && `(Page ${currentPage} of ${totalPages})`}
-          </span>
-        </div>
+    <div className='flex flex-col gap-6'>
+      <div>
+        {!isTab ? (
+          <div className='mb-4 flex flex-row items-center gap-2'>
+            <h2 className='flex-grow text-2xl font-bold sm:text-3xl'>Shot History</h2>
+            <span className='text-base-content/70 text-sm'>
+              {totalFilteredItems} of {history.length} shots{' '}
+              {totalPages > 1 && `(Page ${currentPage} of ${totalPages})`}
+            </span>
+          </div>
+        ) : (
+          <div className='mb-4 flex flex-row items-center justify-between gap-2'>
+            <span className='text-base-content/70 text-sm font-medium'>
+              Showing {totalFilteredItems} of {history.length} shots{' '}
+              {totalPages > 1 && `(Page ${currentPage} of ${totalPages})`}
+            </span>
+          </div>
+        )}
 
         {/* Controls Row */}
         <div className='flex flex-col gap-3 sm:flex-row sm:items-center'>
@@ -273,104 +285,106 @@ export function ShotHistory() {
         </div>
       </div>
 
-      <div className='grid grid-cols-1 gap-3 lg:grid-cols-12'>
-        {paginatedHistory.map((item, idx) => (
-          <HistoryCard
-            key={item.id}
-            shot={item}
-            onDelete={id => onDelete(id)}
-            onNotesChanged={onNotesChanged}
-            onLoad={async id => {
-              // Fetch binary only if not loaded
-              const target = history.find(h => h.id === id);
-              if (!target || target.loaded) return;
-              try {
-                // Pad ID to 6 digits with zeros to match backend filename format
-                const paddedId = id.padStart(6, '0');
-                const resp = await fetch(`/api/history/${paddedId}.slog`);
-                if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-                const buf = await resp.arrayBuffer();
-                const parsed = parseBinaryShot(buf, id);
-                parsed.incomplete = (target?.incomplete ?? false) || parsed.incomplete;
-                if (target?.notes) parsed.notes = target.notes;
-                setHistory(prev =>
-                  prev.map(h =>
-                    h.id === id
-                      ? {
-                          ...h,
-                          ...parsed,
-                          // Preserve index metadata over shot file data
-                          volume: h.volume ?? parsed.volume, // Use index volume if available, fallback to shot volume
-                          rating: h.rating ?? parsed.rating, // Use index rating if available
-                          incomplete: h.incomplete ?? parsed.incomplete,
-                          loaded: true,
-                        }
-                      : h,
-                  ),
+      <ProgressiveContent isLoading={loading} skeleton={ShotHistorySkeleton}>
+        <div className='grid grid-cols-1 gap-3 lg:grid-cols-12'>
+          {paginatedHistory.map((item, idx) => (
+            <HistoryCard
+              key={item.id}
+              shot={item}
+              onDelete={id => onDelete(id)}
+              onNotesChanged={onNotesChanged}
+              onLoad={async id => {
+                // Fetch binary only if not loaded
+                const target = history.find(h => h.id === id);
+                if (!target || target.loaded) return;
+                try {
+                  // Pad ID to 6 digits with zeros to match backend filename format
+                  const paddedId = id.padStart(6, '0');
+                  const resp = await fetch(`/api/history/${paddedId}.slog`);
+                  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+                  const buf = await resp.arrayBuffer();
+                  const parsed = parseBinaryShot(buf, id);
+                  parsed.incomplete = (target?.incomplete ?? false) || parsed.incomplete;
+                  if (target?.notes) parsed.notes = target.notes;
+                  setHistory(prev =>
+                    prev.map(h =>
+                      h.id === id
+                        ? {
+                            ...h,
+                            ...parsed,
+                            // Preserve index metadata over shot file data
+                            volume: h.volume ?? parsed.volume, // Use index volume if available, fallback to shot volume
+                            rating: h.rating ?? parsed.rating, // Use index rating if available
+                            incomplete: h.incomplete ?? parsed.incomplete,
+                            loaded: true,
+                          }
+                        : h,
+                    ),
+                  );
+                } catch (e) {
+                  console.error('Failed loading shot', e);
+                }
+              }}
+            />
+          ))}
+          {totalFilteredItems === 0 && !loading && (
+            <div className='flex flex-row items-center justify-center py-20 lg:col-span-12'>
+              {history.length === 0 ? (
+                <span>No shots available</span>
+              ) : (
+                <span>No shots match your search and filter criteria</span>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className='mt-6 flex items-center justify-center gap-2'>
+            <button
+              className='btn btn-sm btn-outline'
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage(currentPage - 1)}
+            >
+              Previous
+            </button>
+
+            <div className='flex items-center gap-1'>
+              {/* Show page numbers */}
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                let pageNum;
+                if (totalPages <= 5) {
+                  pageNum = i + 1;
+                } else if (currentPage <= 3) {
+                  pageNum = i + 1;
+                } else if (currentPage >= totalPages - 2) {
+                  pageNum = totalPages - 4 + i;
+                } else {
+                  pageNum = currentPage - 2 + i;
+                }
+
+                return (
+                  <button
+                    key={pageNum}
+                    className={`btn btn-sm ${currentPage === pageNum ? 'btn-primary' : 'btn-outline'}`}
+                    onClick={() => setCurrentPage(pageNum)}
+                  >
+                    {pageNum}
+                  </button>
                 );
-              } catch (e) {
-                console.error('Failed loading shot', e);
-              }
-            }}
-          />
-        ))}
-        {totalFilteredItems === 0 && !loading && (
-          <div className='flex flex-row items-center justify-center py-20 lg:col-span-12'>
-            {history.length === 0 ? (
-              <span>No shots available</span>
-            ) : (
-              <span>No shots match your search and filter criteria</span>
-            )}
+              })}
+            </div>
+
+            <button
+              className='btn btn-sm btn-outline'
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage(currentPage + 1)}
+            >
+              Next
+            </button>
           </div>
         )}
-      </div>
-
-      {/* Pagination Controls */}
-      {totalPages > 1 && (
-        <div className='mt-6 flex items-center justify-center gap-2'>
-          <button
-            className='btn btn-sm btn-outline'
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage(currentPage - 1)}
-          >
-            Previous
-          </button>
-
-          <div className='flex items-center gap-1'>
-            {/* Show page numbers */}
-            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-              let pageNum;
-              if (totalPages <= 5) {
-                pageNum = i + 1;
-              } else if (currentPage <= 3) {
-                pageNum = i + 1;
-              } else if (currentPage >= totalPages - 2) {
-                pageNum = totalPages - 4 + i;
-              } else {
-                pageNum = currentPage - 2 + i;
-              }
-
-              return (
-                <button
-                  key={pageNum}
-                  className={`btn btn-sm ${currentPage === pageNum ? 'btn-primary' : 'btn-outline'}`}
-                  onClick={() => setCurrentPage(pageNum)}
-                >
-                  {pageNum}
-                </button>
-              );
-            })}
-          </div>
-
-          <button
-            className='btn btn-sm btn-outline'
-            disabled={currentPage === totalPages}
-            onClick={() => setCurrentPage(currentPage + 1)}
-          >
-            Next
-          </button>
-        </div>
-      )}
-    </>
+      </ProgressiveContent>
+    </div>
   );
 }

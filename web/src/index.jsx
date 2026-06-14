@@ -8,7 +8,7 @@ if (import.meta.env.DEV) {
 
 import { render } from 'preact';
 import { useEffect, useState } from 'preact/hooks';
-import { LocationProvider, Router, Route, ErrorBoundary } from 'preact-iso';
+import { LocationProvider, Router, Route, ErrorBoundary, useLocation, useRoute } from 'preact-iso';
 import lazy from 'preact-iso/lazy';
 
 import ApiService, { ApiServiceContext } from './services/ApiService.js';
@@ -28,11 +28,7 @@ const Scales = lazy(() => import('./pages/Scales/index.jsx').then(m => m.Scales)
 const ProfileList = lazy(() => import('./pages/ProfileList/index.jsx').then(m => m.ProfileList));
 const ProfileEdit = lazy(() => import('./pages/ProfileEdit/index.jsx').then(m => m.ProfileEdit));
 const Autotune = lazy(() => import('./pages/Autotune/index.jsx').then(m => m.Autotune));
-const ShotHistory = lazy(() => import('./pages/ShotHistory/index.jsx').then(m => m.ShotHistory));
-const ShotAnalyzer = lazy(() => import('./pages/ShotAnalyzer/index.jsx').then(m => m.ShotAnalyzer));
-const StatisticsPage = lazy(() =>
-  import('./pages/Statistics/index.jsx').then(m => m.StatisticsPage),
-);
+const Analysis = lazy(() => import('./pages/Analysis/index.jsx').then(m => m.Analysis));
 
 const apiService = new ApiService();
 const DESKTOP_NAV_COLLAPSED_STORAGE_KEY = 'gaggimate.desktopNavCollapsed';
@@ -54,6 +50,23 @@ function RouteFallback() {
       <Spinner size={8} />
     </div>
   );
+}
+
+const RedirectTo = (to) => () => {
+  const loc = useLocation();
+  useEffect(() => {
+    loc.route(to, true);
+  }, [loc]);
+  return null;
+};
+
+function RedirectToAnalyzer() {
+  const loc = useLocation();
+  const { params } = useRoute();
+  useEffect(() => {
+    loc.route(`/analysis/analyzer/${params.source}/${params.id}`, true);
+  }, [loc, params]);
+  return null;
 }
 
 export function App() {
@@ -91,15 +104,15 @@ export function App() {
                       <Route path='/ota' component={OTA} />
                       <Route path='/scales' component={Scales} />
                       <Route path='/pidtune' component={Autotune} />
-                      <Route path='/history' component={ShotHistory} />
-                      <Route path='/analyzer' component={ShotAnalyzer} />
-                      <Route path='/statistics' component={StatisticsPage} />
-                      <Route
-                        path='/statistics/:sourceAlias/:profileName'
-                        component={StatisticsPage}
-                      />
-                      <Route path='/analyzer/:source/:id' component={ShotAnalyzer} />{' '}
-                      {/*deep-link route (sorce & ID)*/}
+                      <Route path='/analysis/:tab?' component={Analysis} />
+                      <Route path='/analysis/analyzer/:source/:id' component={Analysis} />
+                      <Route path='/analysis/statistics/:sourceAlias/:profileName' component={Analysis} />
+                      
+                      {/* Legacy redirects */}
+                      <Route path='/history' component={RedirectTo('/analysis/history')} />
+                      <Route path='/analyzer' component={RedirectTo('/analysis/analyzer')} />
+                      <Route path='/analyzer/:source/:id' component={RedirectToAnalyzer} />
+                      <Route path='/statistics' component={RedirectTo('/analysis/statistics')} />
                       <Route default component={NotFound} />
                     </Router>
                   </ErrorBoundary>

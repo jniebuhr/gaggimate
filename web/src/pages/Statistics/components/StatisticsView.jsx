@@ -46,20 +46,10 @@ import {
 
 // StatisticsView orchestrates metadata loading, filter state, and batch analysis runs.
 // StatisticsService remains pure; this component handles UI-specific selection semantics.
-//
-// Each in-flight shot fetch makes the device serve a .slog over HTTP; every
-// concurrent stream holds TCP segments/pbufs in the ESP32's scarce internal
-// SRAM. At 5-wide this peaked the internal heap's *largest contiguous free
-// block* low enough that WiFi/LWIP could no longer allocate a TX buffer, which
-// wedged the whole IP stack (web + ICMP dead, no recovery) even though total
-// heap usage stayed flat — classic fragmentation, not a leak. Capping the
-// batch caps peak concurrent buffers; analysis is marginally slower but the
-// network stays alive. See GM-90. (Tunable: 2 is conservative, 3 trades a bit
-// of headroom for speed.)
-const BATCH_SIZE = 2;
+const BATCH_SIZE = 5;
 const DEFAULT_SETTINGS = { scaleDelayMs: 200, sensorDelayMs: 200, isAutoAdjusted: true };
 const NO_PROFILE_LOADED = 'No Profile Loaded';
-const STATISTICS_PANEL_CLASS = 'bg-base-100 border-base-content/10 rounded-xl border shadow-sm';
+const STATISTICS_PANEL_CLASS = 'bg-base-100 border-base-content/10 rounded-xl border';
 
 function getStatisticsFallbackSource(source) {
   return STATISTICS_SOURCE_FALLBACK[source] || null;
@@ -1865,7 +1855,7 @@ export function StatisticsView({ initialContext }) {
 
   return (
     <div className={shouldShowEmptyStatisticsState ? 'space-y-6' : 'space-y-5'}>
-      <div className='bg-base-100/80 border-base-content/10 relative z-[80] rounded-xl border shadow-lg backdrop-blur-md lg:sticky lg:top-0'>
+      <div className='bg-base-100/80 border-base-content/10 relative z-[80] rounded-xl border backdrop-blur-md lg:sticky lg:top-0'>
         <div className='px-1.5 py-1.5 sm:px-2 sm:py-2'>
           <StatisticsToolbar
             shotSource={shotSource}
@@ -1967,7 +1957,7 @@ export function StatisticsView({ initialContext }) {
 
       {shouldShowEmptyStatisticsState && (
         <div className='w-full'>
-          <div className='bg-base-200/60 border-base-content/5 w-full space-y-6 rounded-xl border p-8 text-left shadow-sm'>
+          <div className='bg-base-200/60 border-base-content/5 w-full space-y-6 rounded-xl border p-8 text-left'>
             <div className='space-y-2 text-center'>
               <h3 className='text-base-content text-2xl font-bold'>No Statistics Built Yet</h3>
               <p className='text-base-content text-sm opacity-70'>

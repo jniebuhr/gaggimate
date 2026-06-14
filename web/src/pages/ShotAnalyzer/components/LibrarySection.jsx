@@ -328,7 +328,7 @@ export function LibrarySection({
                     <FontAwesomeIcon icon={faChevronDown} className='text-[9px] opacity-60' />
                   </summary>
 
-                  <div className='dropdown-content bg-base-100/95 border-base-content/10 z-[65] mt-2 w-28 rounded-xl border p-1.5 shadow-xl backdrop-blur-md'>
+                  <div className='dropdown-content bg-base-100/95 border-base-content/10 z-[65] mt-2 w-28 rounded-xl border p-1.5 shadow-lg backdrop-blur-md'>
                     <div className='grid gap-1'>
                       {SOURCE_FILTER_OPTIONS.map(option => (
                         <button

@@ -712,7 +712,7 @@ export function StatusBar({
     >
       {compareBadgeNumber ? (
         <span
-          className={`pointer-events-none absolute top-0 left-1 z-10 inline-flex h-4 min-w-4 -translate-x-1/3 -translate-y-1/4 items-center justify-center rounded-full px-1 text-[10px] leading-none font-bold shadow-md ring-2 ${compareBadgeClasses}`}
+          className={`pointer-events-none absolute top-0 left-1 z-10 inline-flex h-4 min-w-4 -translate-x-1/3 -translate-y-1/4 items-center justify-center rounded-full px-1 text-[10px] leading-none font-bold ring-2 ${compareBadgeClasses}`}
         >
           {compareBadgeNumber}
         </span>
@@ -720,7 +720,7 @@ export function StatusBar({
       <div className={`relative ${compact ? 'px-1.5 py-0.5 sm:px-2' : 'px-1.5 py-1.5 sm:px-2'}`}>
         <div
           className={`grid ${compact ? 'h-8 rounded-lg' : 'h-10 min-h-10 rounded-xl'} w-full items-center gap-1 transition-all sm:gap-1.5 ${
-            isDragActive ? 'bg-primary/8 ring-primary/30 shadow-lg ring-2' : ''
+            isDragActive ? 'bg-primary/8 ring-primary/30 ring-2' : ''
           }`}
           style={{
             gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)',
