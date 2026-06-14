@@ -100,11 +100,12 @@ export function ProgressiveContent({
         const remaining = Math.max(0, minDisplayDuration - elapsed);
 
         if (remaining > 0) {
-          setTimeout(() => {
+          const timeoutId = setTimeout(() => {
             if (loaderRef.current === currentLoader && !isLoadingRef.current) {
               setStatus('transitioning');
             }
           }, remaining);
+          return () => clearTimeout(timeoutId);
         } else {
           setStatus('transitioning');
         }

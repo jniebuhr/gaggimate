@@ -239,7 +239,12 @@ let settingsData = null;
 
 export const prefetchSettings = () => {
   if (!settingsCache) {
-    settingsCache = fetch('/api/settings').then(res => res.json()).then(data => {
+    settingsCache = fetch('/api/settings').then(res => {
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      return res.json();
+    }).then(data => {
       settingsData = data;
       return data;
     }).catch(err => {

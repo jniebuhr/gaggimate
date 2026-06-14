@@ -35,20 +35,24 @@ export function SystemTab() {
   const rssi = machine.value.status.rssi;
 
   const downloadSupportData = useCallback(async () => {
-    const settingsResponse = await fetch(`/api/settings`);
-    const data = await settingsResponse.json();
-    delete data.wifiPassword;
-    delete data.haPassword;
-    const coredumpBlob = await fetch(`/api/core-dump`).then(r => r.blob());
-    let coredump = await imageUrlToBase64(coredumpBlob);
-    coredump = coredump.substring(coredump.indexOf('base64,') + 7);
-    const supportFile = {
-      settings: data,
-      versions: formData,
-      coredump,
-    };
-    const ts = Date.now();
-    downloadJson(supportFile, `support-${ts}.dat`);
+    try {
+      const settingsResponse = await fetch(`/api/settings`);
+      const data = await settingsResponse.json();
+      delete data.wifiPassword;
+      delete data.haPassword;
+      const coredumpBlob = await fetch(`/api/core-dump`).then(r => r.blob());
+      let coredump = await imageUrlToBase64(coredumpBlob);
+      coredump = coredump.substring(coredump.indexOf('base64,') + 7);
+      const supportFile = {
+        settings: data,
+        versions: formData,
+        coredump,
+      };
+      const ts = Date.now();
+      downloadJson(supportFile, `support-${ts}.dat`);
+    } catch (e) {
+      console.error('Error downloading support data:', e);
+    }
   }, [formData]);
 
   useEffect(() => {
@@ -288,7 +292,7 @@ export function SystemTab() {
                   <div
                     className='bg-primary h-full transition-all'
                     style={{
-                      width: `${((formData.heapTotal - formData.heapFree) / formData.heapTotal) * 100 || 0}%`,
+                      width: `${formData.heapTotal > 0 ? ((formData.heapTotal - formData.heapFree) / formData.heapTotal) * 100 : 0}%`,
                     }}
                   />
                 </div>
@@ -296,11 +300,12 @@ export function SystemTab() {
                   {((formData.heapTotal - formData.heapFree || 0) / 1024).toFixed(1)} kB /{' '}
                   {(formData.heapTotal / 1024).toFixed(1)} kB (
                   {(
-                    ((formData.heapTotal - formData.heapFree) / formData.heapTotal) *
-                    100
+                    formData.heapTotal > 0
+                      ? ((formData.heapTotal - formData.heapFree) / formData.heapTotal) * 100
+                      : 0
                   ).toFixed(2)}
                   %) (Frag:{' '}
-                  {(100 - (formData.heapLargest * 100) / formData.heapFree).toFixed(2)}%)
+                  {(formData.heapFree > 0 ? 100 - (formData.heapLargest * 100) / formData.heapFree : 0).toFixed(2)}%)
                 </div>
               </div>
             )}
