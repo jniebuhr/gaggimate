@@ -202,11 +202,14 @@ void Controller::setupBluetooth() {
         }
     });
     pluginManager->on("ota:update:end", [this](Event const &) { applyConnectionPriority(true); });
-    comms.onSensorData([this](float temp, float pressure, float puckFlow, float pumpFlow, float puckResistance) {
+    comms.onSensorData([this](float temp, float pressure, float puckFlow, float pumpFlow, float puckResistance,
+                               float pumpDuty, float boilerDuty) {
         onTempRead(temp);
         this->pressure = pressure;
         this->currentPuckFlow = puckFlow;
         this->currentPumpFlow = pumpFlow;
+        this->currentPumpDuty = pumpDuty;
+        this->currentBoilerDuty = boilerDuty;
         pluginManager->trigger("boiler:pressure:change", "value", pressure);
         pluginManager->trigger("pump:puck-flow:change", "value", puckFlow);
         pluginManager->trigger("pump:flow:change", "value", pumpFlow);

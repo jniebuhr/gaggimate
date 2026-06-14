@@ -184,6 +184,8 @@ message SensorData {
     float puck_flow = 2;
     float pump_flow = 3;
     float puck_resistance = 4;
+    float pump_duty = 5;   // pump duty cycle 0..100 %
+    float boiler_duty = 6; // heater duty cycle 0..100 %
 }
 
 message ButtonState {

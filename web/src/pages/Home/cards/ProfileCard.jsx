@@ -89,12 +89,14 @@ export function ProfileCard({
   const inner = (
     <>
       <div className='text-base-content/50 text-[0.6rem] uppercase tracking-wider'>Profile</div>
-      <a href='/profiles' className='flex items-center justify-between gap-2'>
+      <div className='flex items-center justify-between gap-2'>
         <span className='text-base-content truncate text-sm font-semibold'>
           {selectedProfile || 'Default'}
         </span>
-        <FontAwesomeIcon icon={faRectangleList} className='text-base-content/40 shrink-0 text-sm' />
-      </a>
+        <a href='/profiles'>
+          <FontAwesomeIcon icon={faRectangleList} className='text-base-content/40 shrink-0 text-sm' />
+        </a>
+      </div>
       {profileData && (
         <ProcessProfileChart
           data={profileData}

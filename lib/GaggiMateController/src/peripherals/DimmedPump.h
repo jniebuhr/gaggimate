@@ -24,6 +24,7 @@ class DimmedPump : public Pump {
     float getPressureTarget() { return _ctrlPressure; }
     float getFlowTarget() { return _ctrlFlow; }
     float getPowerTarget() { return _power; }
+    float getDutyCycle() const override { return _power; }
     float *getPumpPowerPtr() override { return &_power; } // For external pump control
     float *getPumpFlowPtr() { return &_currentFlow; }     // For thermal feedforward
     int *getValveStatusPtr() { return &_valveStatus; }    // For thermal feedforward valve state

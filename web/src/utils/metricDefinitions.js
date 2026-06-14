@@ -60,6 +60,16 @@ export const METRIC_DEFINITIONS = [
     adjustable: () => false,
   },
   {
+    id: 'heaterpower',
+    label: 'Heater Power',
+    required: false,
+    available: () => true,
+    getValue: (ds) => `${Math.round(ds.currentBoilerPower ?? 0)}%`,
+    getTarget: () => null,
+    unit: '%',
+    adjustable: () => false,
+  },
+  {
     id: 'waterlevel',
     label: 'Water Level',
     required: false,
