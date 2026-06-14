@@ -56,19 +56,20 @@ function RouteFallback() {
   );
 }
 
-export function App() {
-  const [navCollapsed, setNavCollapsed] = useState(readInitialDesktopNavCollapsed);
+export default function App() {
+  const [navCollapsed, setNavCollapsed] = useState(
+    JSON.parse(localStorage.getItem('gm_nav_collapsed') || 'false'),
+  );
 
   useEffect(() => {
-    const storage = globalThis.window?.localStorage;
-    if (!storage) return;
-
-    try {
-      storage.setItem(DESKTOP_NAV_COLLAPSED_STORAGE_KEY, String(navCollapsed));
-    } catch {
-      // Ignore storage write failures so the navigation still works in restricted browsers.
-    }
+    localStorage.setItem('gm_nav_collapsed', JSON.stringify(navCollapsed));
   }, [navCollapsed]);
+
+  useEffect(() => {
+    const handleOpenNav = () => setNavCollapsed(false);
+    window.addEventListener('open-mobile-nav', handleOpenNav);
+    return () => window.removeEventListener('open-mobile-nav', handleOpenNav);
+  }, []);
 
   return (
     <LocationProvider>
@@ -79,7 +80,7 @@ export function App() {
             onToggleCollapsed={() => setNavCollapsed(collapsed => !collapsed)}
           />
           <div className='flex flex-1 flex-col overflow-x-hidden overflow-y-auto'>
-            <div className='mx-auto flex min-h-0 w-full max-w-(--breakpoint-2xl) flex-1 flex-col p-4'>
+            <div className='mx-auto flex min-h-0 w-full max-w-(--breakpoint-2xl) flex-1 flex-col p-4 sm:p-6 lg:p-8 2xl:p-10'>
               <div className='grid min-h-0 flex-1 grid-cols-1'>
                 <div className='min-h-0'>
                   <ErrorBoundary>

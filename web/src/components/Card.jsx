@@ -1,4 +1,4 @@
-export default function Card({
+export function Section({
   xs,
   sm,
   md,
@@ -9,6 +9,7 @@ export default function Card({
   className = '',
   role,
   fullHeight = false,
+  surface = false,
 }) {
   const getGridClasses = () => {
     const breakpoints = [
@@ -27,19 +28,25 @@ export default function Card({
 
   const gridClasses = getGridClasses();
 
+  const bgClass = surface ? 'bg-base-200/40' : 'bg-base-100';
+
   return (
     <div
-      className={`card bg-base-100 min-h-0 min-w-0 shadow-xl ${gridClasses} ${fullHeight ? 'h-full' : ''} ${className}`}
+      className={`card ${bgClass} border border-base-content/10 min-h-0 min-w-0 ${gridClasses} ${fullHeight ? 'h-full' : ''} ${className}`}
       role={role}
     >
       {title && (
-        <div className='card-header hidden shrink-0 px-4 pt-4 lg:flex'>
-          <h2 className='card-title text-lg sm:text-xl'>{title}</h2>
+        <div className='card-header px-5 pt-5 shrink-0'>
+          <h2 className='card-title text-lg font-semibold text-base-content'>{title}</h2>
         </div>
       )}
-      <div className={`card-body flex min-h-0 flex-col gap-2 p-4 ${fullHeight ? 'flex-1' : ''}`}>
+      <div className={`card-body flex min-h-0 flex-col gap-2 p-5 ${fullHeight ? 'flex-1' : ''}`}>
         {children}
       </div>
     </div>
   );
 }
+
+export const Card = Section;
+export default Section;
+
