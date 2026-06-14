@@ -21,6 +21,8 @@ import {
   getPanelOrder, setPanelOrder as persistPanelOrder,
   getStickyBottom, setStickyBottom,
   getShowRecentShots, setShowRecentShots,
+  getMetricsColumns, setMetricsColumns,
+  METRICS_LAST_ROW_FILLS, getMetricsLastRowFill, setMetricsLastRowFill,
 } from '../../utils/dashboardManager.js';
 import { METRIC_DEFINITIONS } from '../../utils/metricDefinitions.js';
 import { PANEL_DEFINITIONS } from '../../utils/panelDefinitions.js';
@@ -80,6 +82,8 @@ export function Settings() {
     { time: '07:00', days: [true, true, true, true, true, true, true] }, // Default: all days enabled
   ]);
   const [metricOrder, setMetricOrderState] = useState(() => getMetricOrder());
+  const [metricsColumns, setMetricsColumnsState] = useState(() => getMetricsColumns());
+  const [metricsLastRowFill, setMetricsLastRowFillState] = useState(() => getMetricsLastRowFill());
 
   const updateMetricOrder = (ids) => {
     setMetricOrderState(ids);
@@ -1170,6 +1174,39 @@ export function Settings() {
               emptyMessage='All available panels are visible.'
             />
             <div className='divider'>Dashboard Metrics</div>
+            <SettingsFormField label='Metrics Columns' htmlFor='metricsColumns'>
+              <div className='flex items-center gap-3'>
+                <input
+                  id='metricsColumns'
+                  type='range'
+                  min='1'
+                  max='4'
+                  step='1'
+                  className='range range-primary range-sm flex-1'
+                  value={metricsColumns}
+                  onChange={e => {
+                    const n = Number(e.target.value);
+                    setMetricsColumnsState(n);
+                    setMetricsColumns(n);
+                  }}
+                />
+                <span className='w-20 text-sm'>{metricsColumns} {metricsColumns === 1 ? 'column' : 'columns'}</span>
+              </div>
+            </SettingsFormField>
+            <SettingsFormField label='Last Row Fill' htmlFor='metricsLastRowFill'>
+              <select
+                id='metricsLastRowFill'
+                className='select select-bordered w-full'
+                value={metricsLastRowFill}
+                onChange={e => {
+                  setMetricsLastRowFillState(e.target.value);
+                  setMetricsLastRowFill(e.target.value);
+                }}
+              >
+                <option value={METRICS_LAST_ROW_FILLS.EVEN}>Even fill</option>
+                <option value={METRICS_LAST_ROW_FILLS.GRID}>Align to grid</option>
+              </select>
+            </SettingsFormField>
             <SortableConfigurator
               order={metricOrder}
               definitions={METRIC_DEFINITIONS}
