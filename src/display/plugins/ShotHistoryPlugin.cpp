@@ -503,7 +503,8 @@ void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &respo
         response["notes"] = notes;
     } else if (type == "req:history:notes:save") {
         auto id = request["id"].as<String>();
-        auto notes = request["notes"];
+        JsonDocument notes; // explicit document: variant->const JsonDocument& is ambiguous on clang
+        notes.set(request["notes"]);
         saveNotes(id, notes);
 
         // Update rating and volume in index

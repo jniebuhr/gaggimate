@@ -5,10 +5,12 @@
 #include <display/core/process/BrewProcess.h>
 #include <display/core/process/Process.h>
 #include <display/core/zones.h>
+#ifndef GAGGIMATE_SIM // hardware panel drivers are device-only
 #include <display/drivers/AmoledDisplayDriver.h>
 #include <display/drivers/LilyGoDriver.h>
 #include <display/drivers/WaveshareDriver.h>
 #include <display/drivers/common/LV_Helper.h>
+#endif
 #include <display/main.h>
 #include <display/ui/default/lvgl/ui_theme_manager.h>
 #include <display/ui/default/lvgl/ui_themes.h>
@@ -725,7 +727,10 @@ void DefaultUI::handleScreenChange() {
         }
 
         _ui_screen_change(targetScreen, LV_SCR_LOAD_ANIM_NONE, 0, 0, targetScreenInit);
+#ifndef GAGGIMATE_SIM // outgoing screen is already freed by its SCREEN_UNLOADED cb; second del is a UAF the host allocator
+                      // catches
         lv_obj_del(current);
+#endif
         rerender = true;
     }
 }
@@ -926,9 +931,11 @@ void DefaultUI::applyTheme() {
         currentThemeMode = newThemeMode;
         ui_theme_set(currentThemeMode);
 
+#ifndef GAGGIMATE_SIM // Amoled-specific black theme override is device-only
         if (AmoledDisplayDriver::getInstance() == panelDriver && currentThemeMode == UI_THEME_DEFAULT) {
             enable_amoled_black_theme_override(lv_disp_get_default());
         }
+#endif
     }
 }
 
