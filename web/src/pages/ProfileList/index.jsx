@@ -185,6 +185,19 @@ function ProfileCard({
     setHasOpened(true);
     setDetailsCollapsed(v => !v);
   }, []);
+
+  const handleHeaderClick = useCallback((e) => {
+    if (
+      e.target.closest('input[type="checkbox"]') ||
+      e.target.closest('label') ||
+      e.target.closest('[role="group"]') ||
+      e.target.closest('.dropdown')
+    ) {
+      return;
+    }
+    onToggleDetails();
+  }, [onToggleDetails]);
+
   const chevronRotation = detailsCollapsed ? '' : 'rotate-90';
   const detailsSectionId = `profile-${data.id}-summary`;
 
@@ -203,13 +216,21 @@ function ProfileCard({
       {/* ── Clickable header row ── */}
       <div
         className='px-5 py-4 flex flex-row items-center gap-3 cursor-pointer select-none transition-colors duration-150 hover:bg-base-content/5'
-        onClick={onToggleDetails}
+        onClick={handleHeaderClick}
         role='button'
         tabIndex={0}
         aria-expanded={!detailsCollapsed}
         aria-controls={detailsSectionId}
         onKeyDown={e => {
           if (e.key === 'Enter' || e.key === ' ') {
+            if (
+              e.target.closest('input[type="checkbox"]') ||
+              e.target.closest('label') ||
+              e.target.closest('[role="group"]') ||
+              e.target.closest('.dropdown')
+            ) {
+              return;
+            }
             e.preventDefault();
             onToggleDetails();
           }
@@ -217,7 +238,7 @@ function ProfileCard({
       >
         <div className='flex items-center shrink-0'>
           <Tooltip content={data.selected ? 'Active' : 'Set active'}>
-            <label className='cursor-pointer' onClick={e => e.stopPropagation()}>
+            <label className='cursor-pointer'>
               <input
                 checked={data.selected}
                 type='checkbox'
@@ -249,8 +270,6 @@ function ProfileCard({
           className='flex items-center gap-2 shrink-0'
           role='group'
           aria-label={`Actions for ${data.label} profile`}
-          onClick={e => e.stopPropagation()}
-          onKeyDown={e => e.stopPropagation()}
         >
           {/* Desktop-only: Inline Visibility & Edit actions */}
           <div className='hidden sm:flex flex-row items-center gap-2'>
