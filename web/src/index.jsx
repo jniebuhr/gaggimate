@@ -67,8 +67,8 @@ export default function App() {
 
   useEffect(() => {
     const handleOpenNav = () => setNavCollapsed(false);
-    window.addEventListener('open-mobile-nav', handleOpenNav);
-    return () => window.removeEventListener('open-mobile-nav', handleOpenNav);
+    globalThis.addEventListener('open-mobile-nav', handleOpenNav);
+    return () => globalThis.removeEventListener('open-mobile-nav', handleOpenNav);
   }, []);
 
   return (

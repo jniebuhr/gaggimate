@@ -10,7 +10,6 @@ import { faRotate } from '@fortawesome/free-solid-svg-icons/faRotate';
 import { faMagnifyingGlassChart } from '@fortawesome/free-solid-svg-icons/faMagnifyingGlassChart';
 import { faChartSimple } from '@fortawesome/free-solid-svg-icons/faChartSimple';
 import { faCircleChevronLeft } from '@fortawesome/free-solid-svg-icons/faCircleChevronLeft';
-import { faCircleChevronRight } from '@fortawesome/free-solid-svg-icons/faCircleChevronRight';
 
 import { GmLogoIcon } from './GmLogoIcon.jsx';
 import { faGithub } from '@fortawesome/free-brands-svg-icons/faGithub';
@@ -77,7 +76,6 @@ const NAVIGATION_SECTIONS = [
 function MenuItem({ collapsed = false, icon, isNew = false, label, link, onHover }) {
   const { path } = useLocation();
   const isActive = link === '/' ? path === '/' : path.startsWith(link);
-  const isExpanded = collapsed === false;
 
   const baseClassName = 'btn btn-md h-12 w-full text-base-content hover:text-base-content hover:bg-base-content/10 bg-transparent border-none nav-btn-transition';
   const activeClassName = 'btn btn-md h-12 w-full bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary border-none nav-btn-transition';
@@ -231,7 +229,7 @@ export function Navigation({ collapsed = false, onToggleCollapsed }) {
                   href='https://gaggimate.eu'
                   target='_blank'
                   rel='noreferrer'
-                  >
+                >
                   Caffinnova S.r.l.
                 </a>
               </span>
