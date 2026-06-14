@@ -39,7 +39,7 @@ class GaggiMateServer {
     // Build a payload without sending (compose your own batch, then send()).
     // sendSensorData reports boiler 0; the wire format supports several boilers.
     gm::Payload buildSensorData(float temperature, float pressure, float puckFlow, float pumpFlow, float puckResistance,
-                                float pumpDuty = 0.0f, float boilerDuty = 0.0f);
+                                float pumpPower = 0.0f, float heaterPower = 0.0f);
     gm::Payload buildButtonState(uint8_t index, bool pressed);
     gm::Payload buildAutotuneResult(float kp, float ki, float kd, float kf);
     gm::Payload buildVolumetricMeasurement(float volume);
@@ -48,7 +48,7 @@ class GaggiMateServer {
 
     // Responses (controller -> display)
     void sendSensorData(float temperature, float pressure, float puckFlow, float pumpFlow, float puckResistance,
-                        float pumpDuty = 0.0f, float boilerDuty = 0.0f);
+                        float pumpPower = 0.0f, float heaterPower = 0.0f);
     void sendButtonState(uint8_t index, bool pressed);
     void sendAutotuneResult(float kp, float ki, float kd, float kf);
     void sendVolumetricMeasurement(float volume);

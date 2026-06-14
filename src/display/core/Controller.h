@@ -52,8 +52,8 @@ class Controller {
     virtual float getCurrentPressure() const { return pressure; }
     virtual float getCurrentPuckFlow() const { return currentPuckFlow; }
     virtual float getCurrentPumpFlow() const { return currentPumpFlow; }
-    virtual float getCurrentPumpDuty() const { return currentPumpDuty; }
-    virtual float getCurrentBoilerDuty() const { return currentBoilerDuty; }
+    virtual float getCurrentPumpPower() const { return currentPumpPower; }
+    virtual float getCurrentHeaterPower() const { return currentHeaterPower; }
 
     bool isTaskHealthy() const { return is_task_healthy(eTaskGetState(logicTaskHandle)); }
 
@@ -155,8 +155,8 @@ class Controller {
     float targetPressure = 0.0f;
     float currentPuckFlow = 0.0f;
     float currentPumpFlow = 0.0f;
-    float currentPumpDuty = 0.0f;
-    float currentBoilerDuty = 0.0f;
+    float currentPumpPower = 0.0f;
+    float currentHeaterPower = 0.0f;
     float targetFlow = 0.0f;
     int tofDistance = 0;
 
