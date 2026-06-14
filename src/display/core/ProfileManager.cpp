@@ -1,6 +1,6 @@
 #include "ProfileManager.h"
 #include <ArduinoJson.h>
-#include <display/util/PsramAllocator.h>
+#include "display/util/PsramAllocator.h"
 
 #include <utility>
 
@@ -13,8 +13,8 @@ void ProfileManager::setup() {
     // burned a file handle. Reuse this snapshot for both the entry guard and
     // the migrate() call so we hit the FS as little as possible at boot.
     auto profiles = listProfiles();
-    const bool needsMigrate = profiles.empty() || getFavoritedProfiles().empty() || _settings.getSelectedProfile() == "" ||
-                              !loadSelectedProfile(selectedProfile);
+    const bool needsMigrate = profiles.empty() || getFavoritedProfiles().empty() ||
+                              _settings.getSelectedProfile() == "" || !loadSelectedProfile(selectedProfile);
     if (needsMigrate) {
         migrate(profiles);
         // Reset before reload: parseProfile() appends to profile.phases. The
@@ -72,8 +72,7 @@ void ProfileManager::migrate(const std::vector<String> &existingProfiles) {
             // single entry even when more profiles exist on disk. Matches
             // the create-new-Default branch below.
             for (const String &id : existingProfiles) {
-                if (id != existingId)
-                    addFavoritedProfile(id);
+                if (id != existingId) addFavoritedProfile(id);
             }
             ESP_LOGI("ProfileManager", "Reusing existing Default profile %s", resolvedId.c_str());
             return;
@@ -110,14 +109,14 @@ void ProfileManager::migrate(const std::vector<String> &existingProfiles) {
     for (const String &id : existingProfiles) {
         addFavoritedProfile(id);
     }
+    invalidateCache();
 }
 
 std::vector<String> ProfileManager::listProfiles() {
     std::vector<String> uuids;
     File root = _fs->open(_dir);
     if (!root || !root.isDirectory()) {
-        if (root)
-            root.close();
+        if (root) root.close();
         return uuids;
     }
 
@@ -159,7 +158,7 @@ bool ProfileManager::loadProfile(const String &uuid, Profile &outProfile) {
     if (!file)
         return false;
 
-    JsonDocument doc(&psramAllocator);
+    JsonDocument doc;
     DeserializationError err = deserializeJson(doc, file);
     file.close();
     if (err)
@@ -190,7 +189,7 @@ bool ProfileManager::saveProfile(Profile &profile) {
     if (!file)
         return false;
 
-    JsonDocument doc(&psramAllocator);
+    JsonDocument doc;
     JsonObject obj = doc.to<JsonObject>();
     writeProfile(obj, profile);
 
@@ -205,6 +204,7 @@ bool ProfileManager::saveProfile(Profile &profile) {
     if (isNew) {
         addFavoritedProfile(profile.id);
     }
+    invalidateCache();
     return ok;
 }
 
@@ -213,7 +213,9 @@ bool ProfileManager::deleteProfile(const String &uuid) {
     if (_settings.getStartupProfile() == uuid) {
         _settings.setStartupProfile("");
     }
-    return _fs->remove(profilePath(uuid));
+    bool ok = _fs->remove(profilePath(uuid));
+    if (ok) invalidateCache();
+    return ok;
 }
 
 bool ProfileManager::profileExists(const String &uuid) { return _fs->exists(profilePath(uuid)); }
@@ -224,6 +226,7 @@ void ProfileManager::selectProfile(const String &uuid) {
     selectedProfile = Profile{};
     loadSelectedProfile(selectedProfile);
     _plugin_manager->trigger("profiles:profile:select", "id", uuid);
+    invalidateCache();
 }
 
 Profile &ProfileManager::getSelectedProfile() { return selectedProfile; }
@@ -267,9 +270,41 @@ std::vector<String> ProfileManager::getFavoritedProfiles(bool validate) {
 void ProfileManager::removeFavoritedProfile(String id) {
     _settings.removeFavoritedProfile(id);
     _plugin_manager->trigger("profiles:profile:unfavorite", "id", id);
+    invalidateCache();
 }
 
 void ProfileManager::addFavoritedProfile(String id) {
     _settings.addFavoritedProfile(id);
     _plugin_manager->trigger("profiles:profile:favorite", "id", id);
+    invalidateCache();
+}
+
+String ProfileManager::getProfilesJsonCache(bool minimal) {
+    if (minimal && !_minimalProfilesCache.isEmpty()) return _minimalProfilesCache;
+    if (!minimal && !_profilesCache.isEmpty()) return _profilesCache;
+
+    JsonDocument doc(&psramAllocator);
+    JsonArray arr = doc.to<JsonArray>();
+    for (auto const &id : listProfiles()) {
+        Profile profile{};
+        if (!loadProfile(id, profile)) continue;
+        auto p = arr.add<JsonObject>();
+        if (minimal) {
+            p["id"] = profile.id;
+            p["label"] = profile.label;
+        } else {
+            writeProfile(p, profile);
+        }
+    }
+
+    String out;
+    serializeJson(arr, out);
+    if (minimal) _minimalProfilesCache = out;
+    else _profilesCache = out;
+    return out;
+}
+
+void ProfileManager::invalidateCache() {
+    _profilesCache = "";
+    _minimalProfilesCache = "";
 }

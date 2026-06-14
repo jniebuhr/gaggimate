@@ -14,10 +14,10 @@ import { buildStatisticsProfileHref } from '../../Statistics/utils/statisticsRou
 import { SourceMarker } from './SourceMarker';
 import { getAnalyzerIconButtonClasses } from './analyzerControlStyles';
 
-const ACTIVE_ROW_CLASSES = 'bg-primary/20 border-2 border-primary/60 shadow-md';
-const COMPARE_PENDING_ROW_CLASSES = 'bg-primary/12 border border-primary/24 opacity-75 shadow-sm';
-const COMPARE_ROW_CLASSES = 'bg-primary/16 border border-primary/42 shadow-sm';
-const MATCH_ROW_CLASSES = 'bg-primary/8 border border-primary/24 shadow-sm';
+const ACTIVE_ROW_CLASSES = 'bg-primary/20 border-2 border-primary/60';
+const COMPARE_PENDING_ROW_CLASSES = 'bg-primary/12 border border-primary/24 opacity-75';
+const COMPARE_ROW_CLASSES = 'bg-primary/16 border border-primary/42';
+const MATCH_ROW_CLASSES = 'bg-primary/8 border border-primary/24';
 
 function getLibraryDisplayName(item, itemName, isShot) {
   if (!isShot) return itemName.replace(/\.json$/i, '');
@@ -88,7 +88,7 @@ function LibraryCompareBadge({ compareBadgeNumber }) {
 
   return (
     <span
-      className={`ring-base-100 pointer-events-none absolute -top-1.5 -left-1 z-[1] inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] leading-none font-bold shadow-md ring-2 ${getCompareBadgeClasses(compareBadgeNumber)}`}
+      className={`ring-base-100 pointer-events-none absolute -top-1.5 -left-1 z-[1] inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] leading-none font-bold ring-2 ${getCompareBadgeClasses(compareBadgeNumber)}`}
     >
       {compareBadgeNumber}
     </span>

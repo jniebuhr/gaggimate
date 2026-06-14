@@ -12,21 +12,19 @@
 import { Fragment } from 'preact';
 import { useState, useRef, useEffect } from 'preact/hooks';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-  faAngleRight,
-  faAngleDoubleRight,
-  faArrowRight,
-  faAngleLeft,
-  faAngleDoubleLeft,
-  faArrowLeft,
-  faExclamationTriangle,
-  faCalculator,
-  faMagnifyingGlassMinus,
-  faMagnifyingGlassPlus,
-  faCheck,
-  faTimes,
-  faCircleInfo,
-} from '@fortawesome/free-solid-svg-icons';
+import { faAngleRight } from '@fortawesome/free-solid-svg-icons/faAngleRight';
+import { faAngleDoubleRight } from '@fortawesome/free-solid-svg-icons/faAngleDoubleRight';
+import { faArrowRight } from '@fortawesome/free-solid-svg-icons/faArrowRight';
+import { faAngleLeft } from '@fortawesome/free-solid-svg-icons/faAngleLeft';
+import { faAngleDoubleLeft } from '@fortawesome/free-solid-svg-icons/faAngleDoubleLeft';
+import { faArrowLeft } from '@fortawesome/free-solid-svg-icons/faArrowLeft';
+import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons/faExclamationTriangle';
+import { faCalculator } from '@fortawesome/free-solid-svg-icons/faCalculator';
+import { faMagnifyingGlassMinus } from '@fortawesome/free-solid-svg-icons/faMagnifyingGlassMinus';
+import { faMagnifyingGlassPlus } from '@fortawesome/free-solid-svg-icons/faMagnifyingGlassPlus';
+import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
+import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes';
+import { faCircleInfo } from '@fortawesome/free-solid-svg-icons/faCircleInfo';
 import { cleanName, columnConfig, utilityColors } from '../utils/analyzerUtils';
 import { ColumnControls } from './ColumnControls'; // Import ColumnControls
 import { getAnalyzerColumnVisual } from './analyzerGroupVisuals';
@@ -63,7 +61,7 @@ function buildAnalysisWarningBadges(results) {
     badges.push({
       key: 'scale-lost',
       label: 'SCALE LOST',
-      colorClass: 'text-white shadow-sm',
+      colorClass: 'text-white',
       style: {
         backgroundColor: utilityColors.warningOrange,
         borderColor: utilityColors.warningOrange,
@@ -75,7 +73,7 @@ function buildAnalysisWarningBadges(results) {
     badges.push({
       key: 'high-scale-delay',
       label: 'HIGH SCALE DELAY',
-      colorClass: 'text-white shadow-sm',
+      colorClass: 'text-white',
       title: getHighScaleDelayTitle(results),
       style: {
         backgroundColor: utilityColors.warningOrange,
@@ -166,7 +164,7 @@ function StopCalculationHelpPopover() {
         <FontAwesomeIcon icon={faCircleInfo} className='text-[13px]' />
       </summary>
       <div
-        className={`dropdown-content bg-base-100/95 border-base-content/10 text-base-content z-[90] max-h-[70vh] overflow-y-auto rounded-xl border p-3 text-[12px] leading-relaxed font-normal tracking-normal normal-case shadow-xl backdrop-blur-md ${
+        className={`dropdown-content bg-base-100/95 border-base-content/10 text-base-content z-[90] max-h-[70vh] overflow-y-auto rounded-xl border p-3 text-[12px] leading-relaxed font-normal tracking-normal normal-case shadow-lg backdrop-blur-md ${
           isWideViewport ? 'absolute right-0 bottom-full mb-2 w-[min(92vw,34rem)]' : ''
         }`}
         style={mobilePopoverStyle}
@@ -457,7 +455,7 @@ export function AnalysisTable({
       </div>
 
       {/* 2. MAIN CARD WRAPPER */}
-      <div className='bg-base-100 border-base-content/10 flex flex-col rounded-lg border shadow-sm'>
+      <div className='bg-base-100 border-base-content/10 flex flex-col rounded-lg border'>
         {/* A. Top Toolbar: Column Controls + Actions (Zoom/Scroll) */}
         <ColumnControls
           activeColumns={activeColumns}

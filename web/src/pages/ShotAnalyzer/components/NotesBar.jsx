@@ -218,7 +218,7 @@ function ModeHintPortal({ modeHint, modeHintBadgeStyle, modeHintPosition, modeHi
 
   return createPortal(
     <div
-      className='border-base-content/10 bg-base-100/95 pointer-events-none fixed z-[85] rounded-xl border px-3 py-2 shadow-xl backdrop-blur-sm'
+      className='border-base-content/10 bg-base-100/95 pointer-events-none fixed z-[85] rounded-xl border px-3 py-2 shadow-lg backdrop-blur-sm'
       style={{
         top: `${modeHintPosition.top}px`,
         left: `${modeHintPosition.left}px`,

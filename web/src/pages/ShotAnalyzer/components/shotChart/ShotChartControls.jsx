@@ -192,7 +192,7 @@ export function ShotChartControls({
                     <FontAwesomeIcon icon={faFileExport} className='text-[10px]' />
                   </button>
                   {exportMenuState.open ? (
-                    <div className='bg-base-100/95 border-base-content/10 absolute top-full right-0 z-[70] mt-2 w-[min(92vw,15rem)] rounded-xl border p-3 text-[12px] shadow-xl backdrop-blur-md'>
+                    <div className='bg-base-100/95 border-base-content/10 absolute top-full right-0 z-[70] mt-2 w-[min(92vw,15rem)] rounded-xl border p-3 text-[12px] shadow-lg backdrop-blur-md'>
                       <div className='mb-2 text-[11px] font-semibold tracking-wide uppercase opacity-60'>
                         Export Shot
                       </div>
@@ -431,7 +431,7 @@ export function ShotChartControls({
 
       {!isCompareMode && shouldShowReplayFocusHint ? (
         <div className='mb-2 px-1'>
-          <div className='border-base-content/10 bg-base-100/70 inline-flex items-center rounded-md border px-2.5 py-1 text-[10px] font-semibold text-[var(--analyzer-warning-orange)] shadow-sm'>
+          <div className='border-base-content/10 bg-base-100/70 inline-flex items-center rounded-md border px-2.5 py-1 text-[10px] font-semibold text-[var(--analyzer-warning-orange)]'>
             Keep this window focused while the replay is being recorded.
           </div>
         </div>

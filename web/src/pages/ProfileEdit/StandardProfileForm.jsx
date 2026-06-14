@@ -6,11 +6,9 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
 import { Tooltip } from '../../components/Tooltip.jsx';
-import { getProfilePhases, removePhaseAt, updatePhaseAt } from './profilePhases.js';
 
 export function StandardProfileForm(props) {
-  const { data, onChange, onSave, saving = true, pressureAvailable = false } = props;
-  const phases = getProfilePhases(data);
+  const { data, onChange, onSave, saving = true, pressureAvailable = false, isNew = false } = props;
 
   const onFieldChange = (field, value) => {
     onChange({
@@ -20,17 +18,18 @@ export function StandardProfileForm(props) {
   };
 
   const onPhaseChange = (index, value) => {
-    onChange({
+    const newData = {
       ...data,
-      phases: updatePhaseAt(phases, index, value),
-    });
+    };
+    newData.phases[index] = value;
+    onChange(newData);
   };
 
   const onPhaseAdd = () => {
     onChange({
       ...data,
       phases: [
-        ...phases,
+        ...data.phases,
         {
           phase: 'brew',
           name: 'New Phase',
@@ -44,10 +43,16 @@ export function StandardProfileForm(props) {
   };
 
   const onPhaseRemove = index => {
-    onChange({
+    const newData = {
       ...data,
-      phases: removePhaseAt(phases, index),
-    });
+      phases: [],
+    };
+    for (let i = 0; i < data.phases.length; i++) {
+      if (i !== index) {
+        newData.phases.push(data.phases[i]);
+      }
+    }
+    onChange(newData);
   };
 
   return (
@@ -112,7 +117,7 @@ export function StandardProfileForm(props) {
 
         <Card sm={10} title='Brew Phases'>
           <div className='space-y-4' role='group' aria-label='Brew phases configuration'>
-            {phases.map((value, index) => (
+            {data.phases.map((value, index) => (
               <div key={index}>
                 {index > 0 && (
                   <div className='flex flex-col items-center py-2' aria-hidden='true'>
@@ -146,20 +151,22 @@ export function StandardProfileForm(props) {
         </Card>
       </div>
 
-      <div className='pt-4 lg:col-span-10'>
-        <div className='flex flex-col gap-2 sm:flex-row'>
-          <a href='/profiles' className='btn btn-outline'>
-            Back
-          </a>
-          <button
-            type='submit'
-            className='btn btn-primary gap-2'
-            disabled={saving}
-            aria-label={saving ? 'Saving profile...' : 'Save profile'}
-          >
-            <span>Save</span>
-            {saving && <Spinner size={4} />}
-          </button>
+      <div className='sticky bottom-0 z-40 border-t border-base-content/10 bg-base-300/95 backdrop-blur-md pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] mt-6'>
+        <div className='flex flex-col sm:flex-row sm:items-center sm:justify-start gap-2 sm:gap-4'>
+          <div className='flex items-center gap-2 w-full sm:w-auto'>
+            <button
+              type='submit'
+              className='btn btn-primary btn-sm flex-1 sm:flex-none'
+              disabled={saving}
+              aria-label={saving ? (isNew ? 'Creating profile...' : 'Saving profile...') : (isNew ? 'Create profile' : 'Save profile')}
+            >
+              {saving && <Spinner size={4} className='mr-2' />}
+              {isNew ? 'Create' : 'Save'}
+            </button>
+            <a href='/profiles' className='btn btn-ghost btn-sm flex-1 sm:flex-none'>
+              Cancel
+            </a>
+          </div>
         </div>
       </div>
     </form>

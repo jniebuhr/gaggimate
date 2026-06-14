@@ -8,7 +8,7 @@ if (import.meta.env.DEV) {
 
 import { render } from 'preact';
 import { useEffect, useState } from 'preact/hooks';
-import { LocationProvider, Router, Route, ErrorBoundary, useLocation } from 'preact-iso';
+import { LocationProvider, Router, Route, ErrorBoundary, useRoute, useLocation } from 'preact-iso';
 import lazy from 'preact-iso/lazy';
 
 import ApiService, { ApiServiceContext } from './services/ApiService.js';
@@ -18,18 +18,12 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBars } from '@fortawesome/free-solid-svg-icons/faBars';
 
 // Each page lazy-loads as its own Vite chunk so the initial bundle stays small.
-// Chart.js, FontAwesome icon sets, and the analyzer/statistics views are too
-// large to ship up-front on the ESP32's slow WiFi pipe.
 const Home = lazy(() => import('./pages/Home/index.jsx').then(m => m.Home));
 const NotFound = lazy(() => import('./pages/_404.jsx').then(m => m.NotFound));
 const Settings = lazy(() => import('./pages/Settings/index.jsx').then(m => m.Settings));
 const ProfileList = lazy(() => import('./pages/ProfileList/index.jsx').then(m => m.ProfileList));
 const ProfileEdit = lazy(() => import('./pages/ProfileEdit/index.jsx').then(m => m.ProfileEdit));
-const ShotHistory = lazy(() => import('./pages/ShotHistory/index.jsx').then(m => m.ShotHistory));
-const ShotAnalyzer = lazy(() => import('./pages/ShotAnalyzer/index.jsx').then(m => m.ShotAnalyzer));
-const StatisticsPage = lazy(() =>
-  import('./pages/Statistics/index.jsx').then(m => m.StatisticsPage),
-);
+const Analysis = lazy(() => import('./pages/Analysis/index.jsx').then(m => m.Analysis));
 
 const apiService = new ApiService();
 const DESKTOP_NAV_COLLAPSED_STORAGE_KEY = 'gaggimate.desktopNavCollapsed';
@@ -45,14 +39,6 @@ function readInitialDesktopNavCollapsed() {
   }
 }
 
-function RouteFallback() {
-  return (
-    <div className='flex w-full flex-row items-center justify-center py-16'>
-      <Spinner size={8} />
-    </div>
-  );
-}
-
 const RedirectTo = (to) => () => {
   const loc = useLocation();
   useEffect(() => {
@@ -60,6 +46,23 @@ const RedirectTo = (to) => () => {
   }, [loc]);
   return null;
 };
+
+function RedirectToAnalyzer() {
+  const loc = useLocation();
+  const { params } = useRoute();
+  useEffect(() => {
+    loc.route(`/analysis/analyzer/${params.source}/${params.id}`, true);
+  }, [loc, params]);
+  return null;
+}
+
+function RouteFallback() {
+  return (
+    <div className='flex w-full flex-row items-center justify-center py-16'>
+      <Spinner size={8} />
+    </div>
+  );
+}
 
 export function App() {
   const [navCollapsed, setNavCollapsed] = useState(readInitialDesktopNavCollapsed);
@@ -75,6 +78,12 @@ export function App() {
     }
   }, [navCollapsed]);
 
+  useEffect(() => {
+    const handleOpenNav = () => setNavCollapsed(false);
+    window.addEventListener('open-mobile-nav', handleOpenNav);
+    return () => window.removeEventListener('open-mobile-nav', handleOpenNav);
+  }, []);
+
   return (
     <LocationProvider>
       <ApiServiceContext.Provider value={apiService}>
@@ -84,7 +93,7 @@ export function App() {
             onToggleCollapsed={() => setNavCollapsed(collapsed => !collapsed)}
           />
           <div className='flex flex-1 flex-col overflow-x-hidden overflow-y-auto'>
-            <div className='mx-auto flex min-h-0 w-full max-w-(--breakpoint-2xl) flex-1 flex-col p-4'>
+            <div className='mx-auto flex min-h-0 w-full max-w-(--breakpoint-2xl) flex-1 flex-col p-4 sm:p-6 lg:p-8 2xl:p-10'>
               <div className='grid min-h-0 flex-1 grid-cols-1'>
                 <div className='min-h-0'>
                   <ErrorBoundary>
@@ -92,21 +101,20 @@ export function App() {
                       <Route path='/' component={Home} />
                       <Route path='/profiles' component={ProfileList} />
                       <Route path='/profiles/:id' component={ProfileEdit} />
+                      <Route path='/analysis/:tab?' component={Analysis} />
+                      <Route path='/analysis/analyzer/:source/:id' component={Analysis} />
+                      <Route path='/analysis/statistics/:sourceAlias/:profileName' component={Analysis} />
                       <Route path='/settings/:tab?' component={Settings} />
                       
                       {/* Legacy redirects */}
+                      <Route path='/history' component={RedirectTo('/analysis/history')} />
+                      <Route path='/analyzer' component={RedirectTo('/analysis/analyzer')} />
+                      <Route path='/analyzer/:source/:id' component={RedirectToAnalyzer} />
+                      <Route path='/statistics' component={RedirectTo('/analysis/statistics')} />
                       <Route path='/pidtune' component={RedirectTo('/settings/machine')} />
                       <Route path='/scales' component={RedirectTo('/settings/bluetooth')} />
                       <Route path='/ota' component={RedirectTo('/settings/system')} />
-                      <Route path='/history' component={ShotHistory} />
-                      <Route path='/analyzer' component={ShotAnalyzer} />
-                      <Route path='/statistics' component={StatisticsPage} />
-                      <Route
-                        path='/statistics/:sourceAlias/:profileName'
-                        component={StatisticsPage}
-                      />
-                      <Route path='/analyzer/:source/:id' component={ShotAnalyzer} />{' '}
-                      {/*deep-link route (sorce & ID)*/}
+                      
                       <Route default component={NotFound} />
                     </Router>
                   </ErrorBoundary>
@@ -114,16 +122,6 @@ export function App() {
               </div>
             </div>
           </div>
-          {navCollapsed && (
-            <div className='fab end-auto left-4 md:hidden landscape:hidden'>
-              <button
-                className='btn btn-lg btn-circle btn-primary'
-                onClick={() => setNavCollapsed(false)}
-              >
-                <FontAwesomeIcon icon={faBars} />
-              </button>
-            </div>
-          )}
         </div>
       </ApiServiceContext.Provider>
     </LocationProvider>
