@@ -8,11 +8,10 @@ import { faChevronLeft } from '@fortawesome/free-solid-svg-icons/faChevronLeft';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight';
 import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
-import { getProfilePhases, removePhaseAt, updatePhaseAt } from './profilePhases.js';
+import { Tooltip } from '../../components/Tooltip.jsx';
 
 export function ExtendedProfileForm(props) {
-  const { data, onChange, onSave, saving = true, pressureAvailable = false } = props;
-  const phases = getProfilePhases(data);
+  const { data, onChange, onSave, saving = true, pressureAvailable = false, isNew = false } = props;
   const [currentPhaseIndex, setCurrentPhaseIndex] = useState(0);
 
   const onFieldChange = (field, value) => {
@@ -23,17 +22,18 @@ export function ExtendedProfileForm(props) {
   };
 
   const onPhaseChange = (index, value) => {
-    onChange({
+    const newData = {
       ...data,
-      phases: updatePhaseAt(phases, index, value),
-    });
+    };
+    newData.phases[index] = value;
+    onChange(newData);
   };
 
   const onPhaseAdd = () => {
     onChange({
       ...data,
       phases: [
-        ...phases,
+        ...data.phases,
         {
           phase: 'brew',
           name: 'New Phase',
@@ -49,18 +49,24 @@ export function ExtendedProfileForm(props) {
         },
       ],
     });
-    setCurrentPhaseIndex(phases.length);
+    setCurrentPhaseIndex(data.phases.length);
   };
 
   const onPhaseRemove = index => {
-    onChange({
+    const newData = {
       ...data,
-      phases: removePhaseAt(phases, index),
-    });
+      phases: [],
+    };
+    for (let i = 0; i < data.phases.length; i++) {
+      if (i !== index) {
+        newData.phases.push(data.phases[i]);
+      }
+    }
+    onChange(newData);
     setCurrentPhaseIndex(0);
   };
 
-  const currentPhase = phases[currentPhaseIndex];
+  const currentPhase = data.phases[currentPhaseIndex];
 
   return (
     <form
@@ -123,7 +129,7 @@ export function ExtendedProfileForm(props) {
         </Card>
         <Card sm={10}>
           <ExtendedProfileChart
-            data={{ ...data, phases }}
+            data={data}
             selectedPhase={currentPhaseIndex}
             className='max-h-72 w-full'
           />
@@ -132,80 +138,83 @@ export function ExtendedProfileForm(props) {
           <div className='card-header flex items-center gap-4'>
             <h2 className='card-title flex-grow text-lg sm:text-xl'>Phases</h2>
             <h5 className='card-subtitle text-sm sm:text-base'>
-              {phases.length > 0 ? `${currentPhaseIndex + 1} / ${phases.length}` : '0 / 0'}
+              {currentPhaseIndex + 1} / {data.phases.length}
             </h5>
             <div>
-              <div className='join' role='group' aria-label='Phase navigation'>
-                <button
-                  type='button'
-                  className={`join-item btn btn-outline max-sm:btn-sm`}
-                  aria-label='Previous'
-                  disabled={currentPhaseIndex === 0}
-                  onClick={() => setCurrentPhaseIndex(currentPhaseIndex - 1)}
-                >
-                  <FontAwesomeIcon icon={faChevronLeft} />
-                </button>
-                <button
-                  type='button'
-                  className={`join-item btn btn-outline max-sm:btn-sm`}
-                  aria-label='Next'
-                  disabled={phases.length === 0 || currentPhaseIndex === phases.length - 1}
-                  onClick={() => setCurrentPhaseIndex(currentPhaseIndex + 1)}
-                >
-                  <FontAwesomeIcon icon={faChevronRight} />
-                </button>
+              <div className='flex gap-1' role='group' aria-label='Phase navigation'>
+                <Tooltip content='Previous Phase'>
+                  <button
+                    type='button'
+                    className={`btn btn-outline max-sm:btn-sm`}
+                    aria-label='Previous'
+                    disabled={currentPhaseIndex === 0}
+                    onClick={() => setCurrentPhaseIndex(currentPhaseIndex - 1)}
+                  >
+                    <FontAwesomeIcon icon={faChevronLeft} />
+                  </button>
+                </Tooltip>
+                <Tooltip content='Next Phase'>
+                  <button
+                    type='button'
+                    className={`btn btn-outline max-sm:btn-sm`}
+                    aria-label='Next'
+                    disabled={currentPhaseIndex === data.phases.length - 1}
+                    onClick={() => setCurrentPhaseIndex(currentPhaseIndex + 1)}
+                  >
+                    <FontAwesomeIcon icon={faChevronRight} />
+                  </button>
+                </Tooltip>
               </div>
             </div>
-            <button
-              type='button'
-              className={`join-item btn btn-outline max-sm:btn-sm`}
-              aria-label='Add phase'
-              onClick={() => onPhaseAdd()}
-            >
-              <FontAwesomeIcon icon={faPlus} />
-            </button>
-            <button
-              type='button'
-              className={`join-item btn btn-outline text-error max-sm:btn-sm`}
-              aria-label='Remove phase'
-              disabled={phases.length === 0}
-              onClick={() => onPhaseRemove(currentPhaseIndex)}
-            >
-              <FontAwesomeIcon icon={faTrashCan} />
-            </button>
+            <Tooltip content='Add Phase'>
+              <button
+                type='button'
+                className={`btn btn-outline max-sm:btn-sm`}
+                aria-label='Add phase'
+                onClick={() => onPhaseAdd()}
+              >
+                <FontAwesomeIcon icon={faPlus} />
+              </button>
+            </Tooltip>
+            <Tooltip content='Remove Phase'>
+              <button
+                type='button'
+                className={`btn btn-outline text-error max-sm:btn-sm`}
+                aria-label='Remove phase'
+                onClick={() => onPhaseRemove(currentPhaseIndex)}
+              >
+                <FontAwesomeIcon icon={faTrashCan} />
+              </button>
+            </Tooltip>
           </div>
           <div className='space-y-4' role='group' aria-label='Brew phases configuration'>
-            {currentPhase ? (
-              <ExtendedPhase
-                phase={currentPhase}
-                index={currentPhaseIndex}
-                onChange={phase => onPhaseChange(currentPhaseIndex, phase)}
-                onRemove={() => onPhaseRemove(currentPhaseIndex)}
-                pressureAvailable={pressureAvailable}
-              />
-            ) : (
-              <p className='text-base-content/60 text-sm'>
-                No phases yet. Add a phase to configure brewing.
-              </p>
-            )}
+            <ExtendedPhase
+              phase={currentPhase}
+              index={currentPhaseIndex}
+              onChange={phase => onPhaseChange(currentPhaseIndex, phase)}
+              onRemove={() => onPhaseRemove(currentPhaseIndex)}
+              pressureAvailable={pressureAvailable}
+            />
           </div>
         </Card>
       </div>
 
-      <div className='pt-4 lg:col-span-10'>
-        <div className='flex flex-col gap-2 sm:flex-row'>
-          <a href='/profiles' className='btn btn-outline'>
-            Back
-          </a>
-          <button
-            type='submit'
-            className='btn btn-primary gap-2'
-            disabled={saving}
-            aria-label={saving ? 'Saving profile...' : 'Save profile'}
-          >
-            <span>Save</span>
-            {saving && <Spinner size={4} />}
-          </button>
+      <div className='sticky bottom-0 z-40 border-t border-base-content/10 bg-base-300/95 backdrop-blur-md pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] mt-6'>
+        <div className='flex flex-col sm:flex-row sm:items-center sm:justify-start gap-2 sm:gap-4'>
+          <div className='flex items-center gap-2 w-full sm:w-auto'>
+            <button
+              type='submit'
+              className='btn btn-primary btn-sm flex-1 sm:flex-none'
+              disabled={saving}
+              aria-label={saving ? (isNew ? 'Creating profile...' : 'Saving profile...') : (isNew ? 'Create profile' : 'Save profile')}
+            >
+              {saving && <Spinner size={4} className='mr-2' />}
+              {isNew ? 'Create' : 'Save'}
+            </button>
+            <a href='/profiles' className='btn btn-ghost btn-sm flex-1 sm:flex-none'>
+              Cancel
+            </a>
+          </div>
         </div>
       </div>
     </form>
