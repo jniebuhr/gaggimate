@@ -1016,6 +1016,9 @@ void Controller::onProfileSaveAsNew() {
 }
 
 void Controller::onVolumetricMeasurement(double measurement, VolumetricMeasurementSource source) {
+    if (source == VolumetricMeasurementSource::FLOW_ESTIMATION) {
+        currentCoffeeVolume = static_cast<float>(measurement);
+    }
     pluginManager->trigger(source == VolumetricMeasurementSource::FLOW_ESTIMATION
                                ? F("controller:volumetric-measurement:estimation:change")
                                : F("controller:volumetric-measurement:bluetooth:change"),

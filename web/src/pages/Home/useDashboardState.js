@@ -81,6 +81,8 @@ export function useDashboardState() {
     currentPumpPower:   s.currentPumpPower ?? 0,
     currentBoilerPower: s.currentBoilerPower ?? 0,
     currentPuckResistance: s.currentPuckResistance ?? 0,
+    currentPuckFlow: s.currentPuckFlow ?? 0,
+    currentCoffeeVolume: s.currentCoffeeVolume ?? 0,
     targetWeight:       s.targetWeight,
     volumetricAvailable: s.volumetricAvailable,
     brewTarget:         !!s.brewTarget,

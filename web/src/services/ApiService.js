@@ -191,6 +191,8 @@ export default class ApiService {
       currentPumpPower: message.pw ?? 0,
       currentBoilerPower: message.hp ?? 0,
       currentPuckResistance: message.pkr ?? 0,
+      currentPuckFlow: message.pf ?? 0,
+      currentCoffeeVolume: message.cv ?? 0,
     };
     const historyEntry = { ...newStatus };
     delete historyEntry.process;

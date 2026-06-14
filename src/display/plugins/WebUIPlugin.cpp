@@ -161,6 +161,9 @@ void WebUIPlugin::loop() {
         statusDoc["pw"] = controller->getCurrentPumpPower();
         statusDoc["hp"] = controller->getCurrentHeaterPower();
         statusDoc["pkr"] = controller->getCurrentPuckResistance();
+        statusDoc["pf"] = controller->getCurrentPuckFlow();
+        statusDoc["tf"] = controller->getTargetFlow();
+        statusDoc["cv"] = controller->getCurrentCoffeeVolume();
 
         if (controller->getClientController()->getClient()->isConnected()) {
             statusDoc["rssi"] = controller->getClientController()->getClient()->getRssi();

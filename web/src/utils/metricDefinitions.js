@@ -82,6 +82,27 @@ export const METRIC_DEFINITIONS = [
     adjustable: () => false,
   },
   {
+    id: 'puckflow',
+    label: 'Puck Flow',
+    required: false,
+    available: () => true,
+    getValue: (ds) => `${(ds.currentPuckFlow ?? 0).toFixed(1)} ml/s`,
+    getTarget: () => null,
+    adjustable: () => false,
+  },
+  {
+    id: 'estimatedoutput',
+    label: 'Estimated Output',
+    required: false,
+    available: () => true,
+    getValue: (ds) => {
+      const v = ds.currentCoffeeVolume ?? 0;
+      return v > 0 ? `${v.toFixed(1)} ml` : '—';
+    },
+    getTarget: () => null,
+    adjustable: () => false,
+  },
+  {
     id: 'waterlevel',
     label: 'Water Level',
     required: false,

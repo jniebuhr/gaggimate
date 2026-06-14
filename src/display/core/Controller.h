@@ -55,6 +55,7 @@ class Controller {
     virtual float getCurrentPumpPower() const { return currentPumpPower; }
     virtual float getCurrentHeaterPower() const { return currentHeaterPower; }
     virtual float getCurrentPuckResistance() const { return currentPuckResistance; }
+    virtual float getCurrentCoffeeVolume() const { return currentCoffeeVolume; }
 
     bool isTaskHealthy() const { return is_task_healthy(eTaskGetState(logicTaskHandle)); }
 
@@ -159,6 +160,7 @@ class Controller {
     float currentPumpPower = 0.0f;
     float currentHeaterPower = 0.0f;
     float currentPuckResistance = 0.0f;
+    float currentCoffeeVolume = 0.0f;
     float targetFlow = 0.0f;
     int tofDistance = 0;
 
