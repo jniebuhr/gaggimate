@@ -22,7 +22,6 @@ Chart.register(Legend);
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
 import { useCallback, useEffect, useRef, useState, useContext, useMemo } from 'preact/hooks';
 import { computed } from '@preact/signals';
-import { Spinner } from '../../components/Spinner.jsx';
 import HistoryCard from './HistoryCard.jsx';
 import { parseBinaryShot } from './parseBinaryShot.js';
 import { parseBinaryIndex, indexToShotList } from './parseBinaryIndex.js';
@@ -201,18 +200,18 @@ export function ShotHistory({ isTab = false }) {
   return (
     <div className='flex flex-col gap-6'>
       <div>
-        {!isTab ? (
-          <div className='mb-4 flex flex-row items-center gap-2'>
-            <h2 className='flex-grow text-2xl font-bold sm:text-3xl'>Shot History</h2>
-            <span className='text-base-content/70 text-sm'>
-              {totalFilteredItems} of {history.length} shots{' '}
+        {isTab ? (
+          <div className='mb-4 flex flex-row items-center justify-between gap-2'>
+            <span className='text-base-content/70 text-sm font-medium'>
+              Showing {totalFilteredItems} of {history.length} shots{' '}
               {totalPages > 1 && `(Page ${currentPage} of ${totalPages})`}
             </span>
           </div>
         ) : (
-          <div className='mb-4 flex flex-row items-center justify-between gap-2'>
-            <span className='text-base-content/70 text-sm font-medium'>
-              Showing {totalFilteredItems} of {history.length} shots{' '}
+          <div className='mb-4 flex flex-row items-center gap-2'>
+            <h2 className='flex-grow text-2xl font-bold sm:text-3xl'>Shot History</h2>
+            <span className='text-base-content/70 text-sm'>
+              {totalFilteredItems} of {history.length} shots{' '}
               {totalPages > 1 && `(Page ${currentPage} of ${totalPages})`}
             </span>
           </div>

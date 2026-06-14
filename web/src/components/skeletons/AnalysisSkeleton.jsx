@@ -1,5 +1,9 @@
 import Section from '../Card.jsx';
 
+const HEADERS = ['col1', 'col2', 'col3', 'col4', 'col5'];
+const ROWS = ['row1', 'row2', 'row3', 'row4', 'row5', 'row6'];
+const WIDTH_CLASSES = ['w-24', 'w-12', 'w-16', 'w-20', 'w-20'];
+
 export function AnalysisSkeleton() {
   return (
     <div className='space-y-4 sm:space-y-6'>
@@ -19,20 +23,20 @@ export function AnalysisSkeleton() {
           <table className='table w-full'>
             <thead>
               <tr>
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <th key={i}>
+                {HEADERS.map(h => (
+                  <th key={h}>
                     <div className='skeleton h-4 w-16 rounded opacity-50'></div>
                   </th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {Array.from({ length: 6 }).map((_, i) => (
-                <tr key={i}>
-                  {Array.from({ length: 5 }).map((_, j) => (
-                    <td key={j}>
+              {ROWS.map(r => (
+                <tr key={r}>
+                  {HEADERS.map((h, j) => (
+                    <td key={h}>
                       <div
-                        className={`skeleton h-4 rounded opacity-40 ${j === 0 ? 'w-24' : j === 1 ? 'w-12' : j === 2 ? 'w-16' : 'w-20'}`}
+                        className={`skeleton h-4 rounded opacity-40 ${WIDTH_CLASSES[j] || 'w-20'}`}
                       ></div>
                     </td>
                   ))}

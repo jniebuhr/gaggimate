@@ -1,5 +1,4 @@
 import { useRoute } from 'preact-iso';
-import { AnalysisSkeleton } from '../../components/skeletons/AnalysisSkeleton.jsx';
 import PageLayout from '../../components/PageLayout.jsx';
 import PageHeader from '../../components/PageHeader.jsx';
 import TabBar from '../../components/TabBar.jsx';

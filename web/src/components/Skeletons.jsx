@@ -79,11 +79,13 @@ export function MachineTabSkeleton() {
   );
 }
 
+const PLUGIN_KEYS = ['plug1', 'plug2', 'plug3', 'plug4'];
+
 export function PluginsTabSkeleton() {
   return (
     <div className='grid grid-cols-1 gap-4 lg:grid-cols-2'>
-      {Array.from({ length: 4 }).map((_, i) => (
-        <Section key={i}>
+      {PLUGIN_KEYS.map(key => (
+        <Section key={key}>
           <div className='flex items-start gap-4'>
             <div className='skeleton border-base-content/10 h-12 w-12 shrink-0 rounded-xl border'></div>
             <div className='flex-1 space-y-2'>
@@ -102,6 +104,8 @@ export function PluginsTabSkeleton() {
   );
 }
 
+const BT_KEYS = ['bt1', 'bt2', 'bt3'];
+
 export function BluetoothTabSkeleton() {
   return (
     <div className='space-y-4 sm:space-y-6'>
@@ -111,9 +115,9 @@ export function BluetoothTabSkeleton() {
           <div className='skeleton h-10 w-32 rounded-lg opacity-85'></div>
         </div>
         <div className='mt-6 space-y-3'>
-          {Array.from({ length: 3 }).map((_, i) => (
+          {BT_KEYS.map(key => (
             <div
-              key={i}
+              key={key}
               className='border-base-content/5 bg-base-200/20 flex items-center justify-between rounded-lg border p-3'
             >
               <div className='flex items-center gap-3'>
@@ -156,6 +160,10 @@ export function SystemTabSkeleton() {
   );
 }
 
+const HEADERS = ['col1', 'col2', 'col3', 'col4', 'col5'];
+const ROWS = ['row1', 'row2', 'row3', 'row4', 'row5', 'row6'];
+const WIDTH_CLASSES = ['w-24', 'w-12', 'w-16', 'w-20', 'w-20'];
+
 export function AnalysisSkeleton() {
   return (
     <div className='space-y-4 sm:space-y-6'>
@@ -175,20 +183,20 @@ export function AnalysisSkeleton() {
           <table className='table w-full'>
             <thead>
               <tr>
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <th key={i}>
+                {HEADERS.map(h => (
+                  <th key={h}>
                     <div className='skeleton h-4 w-16 rounded opacity-50'></div>
                   </th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {Array.from({ length: 6 }).map((_, i) => (
-                <tr key={i}>
-                  {Array.from({ length: 5 }).map((_, j) => (
-                    <td key={j}>
+              {ROWS.map(r => (
+                <tr key={r}>
+                  {HEADERS.map((h, j) => (
+                    <td key={h}>
                       <div
-                        className={`skeleton h-4 rounded opacity-40 ${j === 0 ? 'w-24' : j === 1 ? 'w-12' : j === 2 ? 'w-16' : 'w-20'}`}
+                        className={`skeleton h-4 rounded opacity-40 ${WIDTH_CLASSES[j] || 'w-20'}`}
                       ></div>
                     </td>
                   ))}
@@ -202,11 +210,13 @@ export function AnalysisSkeleton() {
   );
 }
 
+const PROFILE_KEYS = ['prof1', 'prof2', 'prof3', 'prof4'];
+
 export function ProfileListSkeleton() {
   return (
     <div className='grid grid-cols-1 gap-3 lg:grid-cols-12'>
-      {Array.from({ length: 4 }).map((_, i) => (
-        <Section key={i} className='col-span-12'>
+      {PROFILE_KEYS.map(key => (
+        <Section key={key} className='col-span-12'>
           <div className='flex flex-col gap-4'>
             <div className='flex items-center gap-4'>
               <div className='skeleton h-5 w-5 rounded opacity-60'></div>
@@ -221,11 +231,13 @@ export function ProfileListSkeleton() {
   );
 }
 
+const HISTORY_KEYS = ['hist1', 'hist2', 'hist3', 'hist4'];
+
 export function ShotHistorySkeleton() {
   return (
     <div className='grid grid-cols-1 gap-3 lg:grid-cols-12'>
-      {Array.from({ length: 4 }).map((_, i) => (
-        <Section key={i} className='col-span-12'>
+      {HISTORY_KEYS.map(key => (
+        <Section key={key} className='col-span-12'>
           <div className='flex flex-col gap-4 md:flex-row'>
             <div className='skeleton h-24 w-full shrink-0 rounded-lg opacity-40 md:w-32'></div>
             <div className='flex-1 space-y-3 py-2'>

@@ -19,7 +19,6 @@ import { HoldToConfirmButton } from '../../components/HoldToConfirmButton.jsx';
 import VisualizerUploadModal from '../../components/VisualizerUploadModal.jsx';
 import { visualizerService } from '../../services/VisualizerService.js';
 import { ApiServiceContext } from '../../services/ApiService.js';
-import { Tooltip } from '../../components/Tooltip.jsx';
 
 function round2(v) {
   if (v == null || Number.isNaN(v)) return v;
