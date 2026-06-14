@@ -171,7 +171,7 @@ export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) 
           >
             <FontAwesomeIcon icon={expanded ? faMinus : faPlus} className='h-3 w-3' />
           </button>
-          
+
           <div className='min-w-0 flex-grow'>
             {/* Header Row */}
             <div className='mb-1 flex flex-row items-start justify-between gap-3'>
@@ -259,7 +259,7 @@ export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) 
                           onDelete(shot.id);
                           closeDropdownMenu();
                         }}
-                        className='justify-start text-error hover:bg-error/10 active:!bg-transparent active:!text-error'
+                        className='text-error hover:bg-error/10 active:!text-error justify-start active:!bg-transparent'
                         aria-label='Hold to delete shot'
                         holdDurationMs={2000}
                       >

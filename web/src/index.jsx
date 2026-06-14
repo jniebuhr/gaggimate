@@ -52,7 +52,7 @@ function RouteFallback() {
   );
 }
 
-const RedirectTo = (to) => () => {
+const RedirectTo = to => () => {
   const loc = useLocation();
   useEffect(() => {
     loc.route(to, true);
@@ -106,8 +106,11 @@ export function App() {
                       <Route path='/pidtune' component={Autotune} />
                       <Route path='/analysis/:tab?' component={Analysis} />
                       <Route path='/analysis/analyzer/:source/:id' component={Analysis} />
-                      <Route path='/analysis/statistics/:sourceAlias/:profileName' component={Analysis} />
-                      
+                      <Route
+                        path='/analysis/statistics/:sourceAlias/:profileName'
+                        component={Analysis}
+                      />
+
                       {/* Legacy redirects */}
                       <Route path='/history' component={RedirectTo('/analysis/history')} />
                       <Route path='/analyzer' component={RedirectTo('/analysis/analyzer')} />

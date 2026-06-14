@@ -1,8 +1,7 @@
 import { CompareShotCharts } from '../../ShotAnalyzer/components/shotChart/CompareShotCharts';
 import { STATISTICS_SECTION_TITLE_CLASS } from './statisticsUi';
 
-const STATISTICS_COMPARE_PANEL_CLASS =
-  'bg-base-100 border-base-content/10 rounded-xl border';
+const STATISTICS_COMPARE_PANEL_CLASS = 'bg-base-100 border-base-content/10 rounded-xl border';
 
 export function StatisticsShotCompareSection({
   compareEntries,

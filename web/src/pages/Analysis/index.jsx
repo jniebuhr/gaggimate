@@ -12,7 +12,9 @@ import lazy from 'preact-iso/lazy';
 
 const LazyShotHistory = lazy(() => import('../ShotHistory/index.jsx').then(m => m.ShotHistory));
 const LazyShotAnalyzer = lazy(() => import('../ShotAnalyzer/index.jsx').then(m => m.ShotAnalyzer));
-const LazyStatisticsPage = lazy(() => import('../Statistics/index.jsx').then(m => m.StatisticsPage));
+const LazyStatisticsPage = lazy(() =>
+  import('../Statistics/index.jsx').then(m => m.StatisticsPage),
+);
 
 // Expose preloaders for the TabBar hover
 const loadShotHistory = () => import('../ShotHistory/index.jsx');
@@ -37,26 +39,35 @@ export function Analysis() {
   const tab = resolveAnalysisTab(params);
 
   return (
-    <PageLayout variant="narrow">
-      <PageHeader 
-        title="Analysis" 
+    <PageLayout variant='narrow'>
+      <PageHeader
+        title='Analysis'
         tabs={
           <TabBar
             tabs={[
-              { id: 'history',    label: 'Shot History',    icon: faTimeline, preload: loadShotHistory },
-              { id: 'analyzer',   label: 'Shot Analyzer',   icon: faMagnifyingGlassChart, preload: loadShotAnalyzer },
-              { id: 'statistics', label: 'Statistics',      icon: faChartSimple, preload: loadStatisticsPage },
+              { id: 'history', label: 'Shot History', icon: faTimeline, preload: loadShotHistory },
+              {
+                id: 'analyzer',
+                label: 'Shot Analyzer',
+                icon: faMagnifyingGlassChart,
+                preload: loadShotAnalyzer,
+              },
+              {
+                id: 'statistics',
+                label: 'Statistics',
+                icon: faChartSimple,
+                preload: loadStatisticsPage,
+              },
             ]}
             activeTab={tab}
-            basePath="/analysis"
+            basePath='/analysis'
           />
         }
       />
-      
+
       {tab === 'history' && <LazyShotHistory isTab={true} />}
       {tab === 'analyzer' && <LazyShotAnalyzer isTab={true} params={params} />}
       {tab === 'statistics' && <LazyStatisticsPage isTab={true} params={params} />}
     </PageLayout>
   );
 }
-

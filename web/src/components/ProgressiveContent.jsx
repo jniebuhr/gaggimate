@@ -12,13 +12,13 @@ export function preloadComponent(loader) {
   if (loaderCache.has(loader)) return;
   // Trigger the dynamic import promise. Browser caches the evaluation/network chunk automatically.
   loader().then(
-    (comp) => {
+    comp => {
       const resolved = comp.default || comp;
       loaderCache.set(loader, resolved);
     },
-    (err) => {
+    err => {
       console.error('Failed to preload component:', err);
-    }
+    },
   );
 }
 
@@ -37,11 +37,11 @@ export function ProgressiveContent({
 }) {
   // A component is "ready" to show if its code is loaded (or not needed) AND data is not loading.
   const isCodeLoadedInitially = !loader || loaderCache.has(loader);
-  
+
   const [status, setStatus] = useState(() => {
-    return (isCodeLoadedInitially && !isLoading) ? 'ready' : 'idle';
+    return isCodeLoadedInitially && !isLoading ? 'ready' : 'idle';
   });
-  
+
   const [loadedComponent, setLoadedComponent] = useState(() => {
     return loader && loaderCache.has(loader) ? loaderCache.get(loader) : null;
   });
@@ -59,27 +59,27 @@ export function ProgressiveContent({
   // 1. Code Loading Effect
   useEffect(() => {
     if (!loader) return;
-    
+
     const currentLoader = loader;
     if (loaderCache.has(currentLoader)) {
       setLoadedComponent(() => loaderCache.get(currentLoader));
       return;
     }
-    
+
     let isSubscribed = true;
     currentLoader().then(
-      (module) => {
+      module => {
         if (!isSubscribed || loaderRef.current !== currentLoader) return;
         const resolvedComponent = module.default || module;
         loaderCache.set(currentLoader, resolvedComponent);
         setLoadedComponent(() => resolvedComponent);
       },
-      (error) => {
+      error => {
         console.error('ProgressiveContent failed to load chunk:', error);
         if (isSubscribed && loaderRef.current === currentLoader) {
           setStatus('error');
         }
-      }
+      },
     );
     return () => {
       isSubscribed = false;
@@ -94,13 +94,15 @@ export function ProgressiveContent({
 
     if (statusRef.current === 'error') return;
 
+    let timer;
+
     if (isReadyToShow) {
       if (statusRef.current === 'skeleton') {
         const elapsed = Date.now() - skeletonShownAtRef.current;
         const remaining = Math.max(0, minDisplayDuration - elapsed);
 
         if (remaining > 0) {
-          setTimeout(() => {
+          timer = setTimeout(() => {
             if (loaderRef.current === currentLoader && !isLoadingRef.current) {
               setStatus('transitioning');
             }
@@ -116,15 +118,18 @@ export function ProgressiveContent({
       // Need to show skeleton or loading
       if (statusRef.current === 'ready' || statusRef.current === 'idle') {
         setStatus('loading');
-        const delayTimer = setTimeout(() => {
+        timer = setTimeout(() => {
           if (loaderRef.current === currentLoader && statusRef.current === 'loading') {
             setStatus('skeleton');
             skeletonShownAtRef.current = Date.now();
           }
         }, loadingDelay);
-        return () => clearTimeout(delayTimer);
       }
     }
+
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
   }, [loadedComponent, isLoading, loader, loadingDelay, minDisplayDuration]);
 
   // Handle transition completion (crossfade animation is 250ms)
@@ -141,7 +146,7 @@ export function ProgressiveContent({
     // Render the skeleton but make it invisible so it occupies the exact same layout space
     // and prevents layout shift (jank) when the skeleton or component loads
     return (
-      <div className="opacity-0 pointer-events-none select-none transition-none">
+      <div className='pointer-events-none opacity-0 transition-none select-none'>
         <Skeleton />
       </div>
     );
@@ -149,7 +154,7 @@ export function ProgressiveContent({
 
   if (status === 'error') {
     return (
-      <div className="alert alert-error my-4">
+      <div className='alert alert-error my-4'>
         <span>Failed to load component. Please check your connection or reload the page.</span>
       </div>
     );
@@ -162,11 +167,11 @@ export function ProgressiveContent({
   if (status === 'transitioning' && (loadedComponent || children)) {
     const Component = loadedComponent;
     return (
-      <div className="progressive-transition-container">
-        <div className="progressive-transition-fade-out">
+      <div className='progressive-transition-container'>
+        <div className='progressive-transition-fade-out'>
           <Skeleton />
         </div>
-        <div className="progressive-transition-fade-in">
+        <div className='progressive-transition-fade-in'>
           {Component ? <Component {...componentProps} /> : children}
         </div>
       </div>

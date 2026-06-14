@@ -2,7 +2,7 @@ let cachedShotHistory = null;
 
 export const getCachedShotHistory = () => cachedShotHistory;
 
-export const setCachedShotHistory = (history) => {
+export const setCachedShotHistory = history => {
   cachedShotHistory = history;
 };
 
