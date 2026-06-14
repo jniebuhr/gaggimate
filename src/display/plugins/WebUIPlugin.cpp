@@ -160,6 +160,7 @@ void WebUIPlugin::loop() {
         statusDoc["lat"] = -1; // BLE round-trip latency (ms); -1 = not yet measured
         statusDoc["pw"] = controller->getCurrentPumpPower();
         statusDoc["hp"] = controller->getCurrentHeaterPower();
+        statusDoc["pkr"] = controller->getCurrentPuckResistance();
 
         if (controller->getClientController()->getClient()->isConnected()) {
             statusDoc["rssi"] = controller->getClientController()->getClient()->getRssi();

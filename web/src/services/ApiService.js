@@ -190,6 +190,7 @@ export default class ApiService {
       tofDistance: message.tof || 0,
       currentPumpPower: message.pw ?? 0,
       currentBoilerPower: message.hp ?? 0,
+      currentPuckResistance: message.pkr ?? 0,
     };
     const historyEntry = { ...newStatus };
     delete historyEntry.process;

@@ -70,6 +70,18 @@ export const METRIC_DEFINITIONS = [
     adjustable: () => false,
   },
   {
+    id: 'puckresistance',
+    label: 'Puck Resistance',
+    required: false,
+    available: () => true,
+    getValue: (ds) => {
+      const r = ds.currentPuckResistance ?? 0;
+      return r > 0 && r < 100 ? r.toFixed(2) : '—';
+    },
+    getTarget: () => null,
+    adjustable: () => false,
+  },
+  {
     id: 'waterlevel',
     label: 'Water Level',
     required: false,

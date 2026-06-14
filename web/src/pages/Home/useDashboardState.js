@@ -80,6 +80,7 @@ export function useDashboardState() {
     currentWeight:      s.currentWeight,
     currentPumpPower:   s.currentPumpPower ?? 0,
     currentBoilerPower: s.currentBoilerPower ?? 0,
+    currentPuckResistance: s.currentPuckResistance ?? 0,
     targetWeight:       s.targetWeight,
     volumetricAvailable: s.volumetricAvailable,
     brewTarget:         !!s.brewTarget,

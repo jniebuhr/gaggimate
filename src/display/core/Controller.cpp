@@ -210,6 +210,7 @@ void Controller::setupBluetooth() {
         this->currentPumpFlow = pumpFlow;
         this->currentPumpPower = pumpPower;
         this->currentHeaterPower = heaterPower;
+        this->currentPuckResistance = puckResistance;
         pluginManager->trigger("boiler:pressure:change", "value", pressure);
         pluginManager->trigger("pump:puck-flow:change", "value", puckFlow);
         pluginManager->trigger("pump:flow:change", "value", pumpFlow);
