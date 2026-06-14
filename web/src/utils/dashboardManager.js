@@ -188,6 +188,7 @@ export const getMetricsColumns = () => {
 export const metricsColumnsSignal = signal(getMetricsColumns());
 
 export const setMetricsColumns = (n) => {
+  if (!Number.isInteger(n) || n < 1 || n > 4) return false;
   try {
     localStorage.setItem(DASHBOARD_METRICS_COLUMNS_KEY, String(n));
     metricsColumnsSignal.value = n;
@@ -211,7 +212,9 @@ export const getMetricsLastRowFill = () => {
     return METRICS_LAST_ROW_FILLS.EVEN;
   }
   try {
-    return localStorage.getItem(DASHBOARD_METRICS_LAST_ROW_FILL_KEY) || METRICS_LAST_ROW_FILLS.EVEN;
+    const stored = localStorage.getItem(DASHBOARD_METRICS_LAST_ROW_FILL_KEY);
+    const valid = Object.values(METRICS_LAST_ROW_FILLS);
+    return stored && valid.includes(stored) ? stored : METRICS_LAST_ROW_FILLS.EVEN;
   } catch {
     return METRICS_LAST_ROW_FILLS.EVEN;
   }
@@ -220,6 +223,7 @@ export const getMetricsLastRowFill = () => {
 export const metricsLastRowFillSignal = signal(getMetricsLastRowFill());
 
 export const setMetricsLastRowFill = (value) => {
+  if (!Object.values(METRICS_LAST_ROW_FILLS).includes(value)) return false;
   try {
     localStorage.setItem(DASHBOARD_METRICS_LAST_ROW_FILL_KEY, value);
     metricsLastRowFillSignal.value = value;
