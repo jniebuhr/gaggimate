@@ -70,6 +70,7 @@ const FinishedView = ({ elapsed }) => (
 
 const ActiveView = ({ p, grind }) => {
   const progress = Math.max(0, Math.min(100, ((p?.pp ?? 0) / (p?.pt || 1)) * 100));
+  const phaseTarget = fmtPhaseTarget(p, grind);
   return (
     <div className='flex w-full max-w-sm min-w-0 flex-col gap-1.5 px-2'>
       <div className='flex min-w-0 items-baseline justify-between gap-2'>
@@ -91,9 +92,9 @@ const ActiveView = ({ p, grind }) => {
           style={{ width: `${progress}%` }}
         />
       </div>
-      {fmtPhaseTarget(p, grind) && (
+      {phaseTarget && (
         <div className='text-base-content/60 self-end text-[0.65rem] tabular-nums'>
-          target {fmtPhaseTarget(p, grind)}
+          target {phaseTarget}
         </div>
       )}
     </div>

@@ -1,13 +1,13 @@
 import { useContext, useEffect, useState } from 'preact/hooks';
 import { computed } from '@preact/signals';
 import { ApiServiceContext, machine } from '../../../services/ApiService.js';
-
-const connected = computed(() => machine.value.connected);
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTemperatureFull } from '@fortawesome/free-solid-svg-icons/faTemperatureFull';
 import { faClock } from '@fortawesome/free-solid-svg-icons/faClock';
 import { faScaleBalanced } from '@fortawesome/free-solid-svg-icons/faScaleBalanced';
 import PropTypes from 'prop-types';
+
+const connected = computed(() => machine.value.connected);
 
 function ProfileMiniCard({ profile, isSelected, onSelect }) {
   const phases = Array.isArray(profile?.phases) ? profile.phases : [];

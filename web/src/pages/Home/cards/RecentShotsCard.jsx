@@ -7,7 +7,10 @@ import { parseBinaryShot } from '../../ShotHistory/parseBinaryShot.js';
 import { machine } from '../../../services/ApiService.js';
 import PropTypes from 'prop-types';
 
-const isFinished = computed(() => machine.value.status?.process?.f === true);
+const isFinished = computed(() => {
+  const p = machine.value.status?.process;
+  return !!p?.e && !p?.a;
+});
 
 function formatTime(timestamp) {
   if (!timestamp || timestamp < 10000) return null;
