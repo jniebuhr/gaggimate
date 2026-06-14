@@ -304,13 +304,14 @@ export function GeneralTab({
                 value={formData.wifiPassword}
                 onChange={onChange('wifiPassword')}
               />
-              <span
-                className='hover:text-primary cursor-pointer'
+              <button
+                type='button'
+                className='hover:text-primary cursor-pointer focus:outline-none'
                 aria-label='Show Password'
                 onClick={() => setShowWifiPassword(!showWifiPassword)}
               >
                 <FontAwesomeIcon icon={showWifiPassword ? faEyeSlash : faEye} />
-              </span>
+              </button>
             </label>
           </div>
           <div className='form-control'>

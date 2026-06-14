@@ -8,7 +8,6 @@ import { ApiServiceContext, machine, prefetchSettings, updateSettingsCache, getC
 import { DASHBOARD_LAYOUTS, setDashboardLayout } from '../../utils/dashboardManager.js';
 import { downloadJson } from '../../utils/download.js';
 import { getStoredTheme, handleThemeChange } from '../../utils/themeManager.js';
-import { Spinner } from '../../components/Spinner.jsx';
 
 import PageLayout from '../../components/PageLayout.jsx';
 import PageHeader from '../../components/PageHeader.jsx';
@@ -66,7 +65,6 @@ export function Settings() {
 
   const [profiles, setProfiles] = useState([]);
   const [submitting, setSubmitting] = useState(false);
-  const [gen] = useState(0);
   const [formData, setFormData] = useState({});
   const [currentTheme, setCurrentTheme] = useState('light');
   const [showWifiPassword, setShowWifiPassword] = useState(false);

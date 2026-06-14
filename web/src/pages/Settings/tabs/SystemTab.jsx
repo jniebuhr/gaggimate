@@ -1,10 +1,9 @@
 import { useCallback, useContext, useEffect, useRef, useState } from 'preact/hooks';
-import { ApiServiceContext } from '../../../services/ApiService.js';
+import { ApiServiceContext, machine } from '../../../services/ApiService.js';
 import { downloadJson } from '../../../utils/download.js';
 import { SystemTabSkeleton } from '../../../components/skeletons/SettingsSkeletons.jsx';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
-import { machine } from '../../../services/ApiService.js';
 import { Spinner } from '../../../components/Spinner.jsx';
 import Section from '../../../components/Card.jsx';
 
@@ -15,12 +14,12 @@ const imageUrlToBase64 = async blob => {
       reader.onload = function () {
         onSuccess(this.result);
       };
-      reader.onerror = function (e) {
-        onError(e);
+      reader.onerror = function () {
+        onError(new Error('FileReader failed to read image blob.'));
       };
       reader.readAsDataURL(blob);
     } catch (e) {
-      onError(e);
+      onError(e instanceof Error ? e : new Error(String(e)));
     }
   });
 };
@@ -161,8 +160,7 @@ export function SystemTab() {
   }
 
   return (
-    <>
-      <div className='space-y-4 sm:space-y-6'>
+    <div className='space-y-4 sm:space-y-6'>
         {/* Firmware updates channel */}
         <Section title='System Version & Updates'>
           <form ref={formRef} onSubmit={onSubmit} className='space-y-4'>
@@ -370,6 +368,5 @@ export function SystemTab() {
           )}
         </Section>
       </div>
-    </>
   );
 }

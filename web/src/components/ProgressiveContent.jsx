@@ -113,18 +113,16 @@ export function ProgressiveContent({
         // Never showed the skeleton, show immediately without transition
         setStatus('ready');
       }
-    } else {
+    } else if (statusRef.current === 'ready' || statusRef.current === 'idle') {
       // Need to show skeleton or loading
-      if (statusRef.current === 'ready' || statusRef.current === 'idle') {
-        setStatus('loading');
-        const delayTimer = setTimeout(() => {
-          if (loaderRef.current === currentLoader && statusRef.current === 'loading') {
-            setStatus('skeleton');
-            skeletonShownAtRef.current = Date.now();
-          }
-        }, loadingDelay);
-        return () => clearTimeout(delayTimer);
-      }
+      setStatus('loading');
+      const delayTimer = setTimeout(() => {
+        if (loaderRef.current === currentLoader && statusRef.current === 'loading') {
+          setStatus('skeleton');
+          skeletonShownAtRef.current = Date.now();
+        }
+      }, loadingDelay);
+      return () => clearTimeout(delayTimer);
     }
   }, [loadedComponent, isLoading, loader, loadingDelay, minDisplayDuration]);
 

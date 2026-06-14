@@ -215,10 +215,9 @@ function ProfileCard({
           }
         }}
       >
-        {/* Checkbox — stop propagation so click doesn't toggle accordion */}
-        <div className='flex items-center shrink-0' onClick={e => e.stopPropagation()}>
+        <div className='flex items-center shrink-0'>
           <Tooltip content={data.selected ? 'Active' : 'Set active'}>
-            <label className='cursor-pointer'>
+            <label className='cursor-pointer' onClick={e => e.stopPropagation()}>
               <input
                 checked={data.selected}
                 type='checkbox'

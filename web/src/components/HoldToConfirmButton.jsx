@@ -1,4 +1,3 @@
-import { h } from 'preact';
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 
 export function HoldToConfirmButton({
@@ -20,8 +19,8 @@ export function HoldToConfirmButton({
     setIsHolding(true);
     
     // Optional: add a slight haptic feedback on mobile if supported
-    if (typeof window !== 'undefined' && window.navigator && window.navigator.vibrate) {
-      window.navigator.vibrate(50);
+    if (typeof globalThis.navigator?.vibrate === 'function') {
+      globalThis.navigator.vibrate(50);
     }
   }, [disabled]);
 
@@ -33,16 +32,14 @@ export function HoldToConfirmButton({
     if (isHolding) {
       timerRef.current = setTimeout(() => {
         setIsHolding(false);
-        if (typeof window !== 'undefined' && window.navigator && window.navigator.vibrate) {
-          window.navigator.vibrate([50, 50, 50]); // Success vibration
+        if (typeof globalThis.navigator?.vibrate === 'function') {
+          globalThis.navigator.vibrate([50, 50, 50]); // Success vibration
         }
         if (onConfirm) onConfirm();
       }, holdDurationMs);
-    } else {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-        timerRef.current = null;
-      }
+    } else if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
     }
 
     return () => {
