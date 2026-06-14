@@ -70,6 +70,8 @@ export function MetricsGrid({ metrics = [], inCard = false }) {
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
+    const initialWidth = el.getBoundingClientRect().width;
+    setEffectiveCols(Math.max(1, Math.min(userCols, Math.floor(initialWidth / 125))));
     const observer = new ResizeObserver(([entry]) => {
       const width = entry.contentRect.width;
       setEffectiveCols(Math.max(1, Math.min(userCols, Math.floor(width / 125))));
