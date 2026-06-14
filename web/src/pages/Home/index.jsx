@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'preact/hooks';
 import {
   Chart,
   LineController,
@@ -14,31 +13,19 @@ import { OverviewChart } from '../../components/OverviewChart.jsx';
 import Card from '../../components/Card.jsx';
 import { DashboardSidebar } from './DashboardSidebar.jsx';
 import { RecentShotsCard } from './cards/RecentShotsCard.jsx';
-import { getDashboardLayout, DASHBOARD_LAYOUTS, getDashboardCardMode, DASHBOARD_CARD_MODES, showRecentShotsSignal } from '../../utils/dashboardManager.js';
+import {
+  DASHBOARD_LAYOUTS,
+  DASHBOARD_CARD_MODES,
+  dashboardLayoutSignal,
+  dashboardCardModeSignal,
+  showRecentShotsSignal,
+} from '../../utils/dashboardManager.js';
 
 Chart.register(LineController, TimeScale, LinearScale, PointElement, LineElement, Filler, Legend);
 
 export function Home() {
-  const [dashboardLayout, setDashboardLayout] = useState(DASHBOARD_LAYOUTS.ORDER_FIRST);
-  const [cardMode, setCardMode] = useState(DASHBOARD_CARD_MODES.MULTI);
-
-  useEffect(() => {
-    setDashboardLayout(getDashboardLayout());
-    setCardMode(getDashboardCardMode());
-    const handleStorageChange = e => {
-      if (e.key === 'dashboardLayout') {
-        setDashboardLayout(e.newValue || DASHBOARD_LAYOUTS.ORDER_FIRST);
-      }
-      if (e.key === 'dashboardCardMode') {
-        setCardMode(e.newValue || DASHBOARD_CARD_MODES.MULTI);
-      }
-    };
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
-
-  const isOrderFirst = dashboardLayout === DASHBOARD_LAYOUTS.ORDER_FIRST;
-  const unified = cardMode === DASHBOARD_CARD_MODES.SINGLE;
+  const isOrderFirst = dashboardLayoutSignal.value === DASHBOARD_LAYOUTS.ORDER_FIRST;
+  const unified = dashboardCardModeSignal.value === DASHBOARD_CARD_MODES.SINGLE;
 
   return (
     <div className='w-full landscape:max-lg:flex landscape:max-lg:h-full landscape:max-lg:flex-col lg:flex lg:h-full lg:flex-col'>
