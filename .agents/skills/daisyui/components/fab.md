@@ -9,7 +9,7 @@ FAB (Floating Action Button) stays in the bottom corner of screen. It includes a
 - modifier: `fab-flower`
 
 #### Syntax
-A single FAB in the corder of screen
+A single FAB in the corner of screen
 ```html
 <div class="fab">
   <button class="btn btn-lg btn-circle">{IconOriginal}</button>

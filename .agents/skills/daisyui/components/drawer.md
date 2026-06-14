@@ -51,7 +51,7 @@ Example: This sidebar is always visible on large screen, can be toggled on small
 </div>
 ```
 
-Example: This sidebar is always visible. When it's close we only see iocns, when it's open we see icons and text
+Example: This sidebar is always visible. When it's close we only see icons, when it's open we see icons and text
 ```html
 <div class="drawer lg:drawer-open">
   <input id="my-drawer-4" type="checkbox" class="drawer-toggle" />
