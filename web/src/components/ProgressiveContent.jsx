@@ -94,13 +94,15 @@ export function ProgressiveContent({
 
     if (statusRef.current === 'error') return;
 
+    let timerId;
+
     if (isReadyToShow) {
       if (statusRef.current === 'skeleton') {
         const elapsed = Date.now() - skeletonShownAtRef.current;
         const remaining = Math.max(0, minDisplayDuration - elapsed);
 
         if (remaining > 0) {
-          setTimeout(() => {
+          timerId = setTimeout(() => {
             if (loaderRef.current === currentLoader && !isLoadingRef.current) {
               setStatus('transitioning');
             }
@@ -116,15 +118,20 @@ export function ProgressiveContent({
       // Need to show skeleton or loading
       if (statusRef.current === 'ready' || statusRef.current === 'idle') {
         setStatus('loading');
-        const delayTimer = setTimeout(() => {
+        timerId = setTimeout(() => {
           if (loaderRef.current === currentLoader && statusRef.current === 'loading') {
             setStatus('skeleton');
             skeletonShownAtRef.current = Date.now();
           }
         }, loadingDelay);
-        return () => clearTimeout(delayTimer);
       }
     }
+
+    return () => {
+      if (timerId) {
+        clearTimeout(timerId);
+      }
+    };
   }, [loadedComponent, isLoading, loader, loadingDelay, minDisplayDuration]);
 
   // Handle transition completion (crossfade animation is 250ms)
