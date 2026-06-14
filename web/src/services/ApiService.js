@@ -185,7 +185,6 @@ export default class ApiService {
       process: message.process || null,
       timestamp: new Date(),
       rssi: message.rssi || 0,
-      lat: message.lat || 0,
       tofDistance: message.tof || 0,
     };
     const historyEntry = { ...newStatus };
@@ -202,7 +201,6 @@ export default class ApiService {
         dimming: message.cd,
         pressure: message.cp,
         ledControl: message.led,
-        gearpumpAddon: !!message.gp,
       },
       history: [...machine.value.history, historyEntry],
     };
@@ -235,3 +233,31 @@ export const machine = signal({
   },
   history: [],
 });
+
+let settingsCache = null;
+let settingsData = null;
+
+export const prefetchSettings = () => {
+  if (!settingsCache) {
+    settingsCache = fetch('/api/settings').then(res => res.json()).then(data => {
+      settingsData = data;
+      return data;
+    }).catch(err => {
+      settingsCache = null;
+      throw err;
+    });
+  }
+  return settingsCache;
+};
+
+export const getCachedSettings = () => settingsData;
+
+export const updateSettingsCache = (data) => {
+  settingsData = data;
+  settingsCache = Promise.resolve(data);
+};
+
+export const invalidateSettingsCache = () => {
+  settingsData = null;
+  settingsCache = null;
+};

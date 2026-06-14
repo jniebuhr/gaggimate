@@ -11,6 +11,7 @@ import { faMagnifyingGlassChart } from '@fortawesome/free-solid-svg-icons/faMagn
 import { faChartSimple } from '@fortawesome/free-solid-svg-icons/faChartSimple';
 import { faCircleChevronLeft } from '@fortawesome/free-solid-svg-icons/faCircleChevronLeft';
 import { faCircleChevronRight } from '@fortawesome/free-solid-svg-icons/faCircleChevronRight';
+import { prefetchSettings } from '../services/ApiService.js';
 import { GmLogoIcon } from '../pages/ShotAnalyzer/components/SourceMarker.jsx';
 import { faGithub } from '@fortawesome/free-brands-svg-icons/faGithub';
 import { faDiscord } from '@fortawesome/free-brands-svg-icons/faDiscord';
@@ -60,19 +61,12 @@ const NAVIGATION_SECTIONS = [
     id: 'devices',
     showDivider: true,
     items: [
-      { label: 'PID Autotune', link: '/pidtune', icon: faTemperatureHalf },
-      { label: 'Bluetooth Devices', link: '/scales', icon: faBluetoothB },
-      { label: 'Settings', link: '/settings', icon: faCog },
+      { label: 'Settings', link: '/settings', icon: faCog, onHover: prefetchSettings },
     ],
-  },
-  {
-    id: 'updates',
-    showDivider: true,
-    items: [{ label: 'System & Updates', link: '/ota', icon: faRotate }],
   },
 ];
 
-function MenuItem({ collapsed = false, icon, isNew = false, label, link }) {
+function MenuItem({ collapsed = false, icon, isNew = false, label, link, onHover }) {
   const { path } = useLocation();
   const isActive = path === link;
   const isExpanded = collapsed === false;
@@ -91,6 +85,7 @@ function MenuItem({ collapsed = false, icon, isNew = false, label, link }) {
       aria-label={collapsed ? label : undefined}
       aria-current={isActive ? 'page' : undefined}
       title={collapsed ? label : undefined}
+      onMouseEnter={() => onHover && onHover()}
     >
       <FontAwesomeIcon size='md' icon={icon} />
       {isExpanded ? (
