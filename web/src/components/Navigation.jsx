@@ -223,8 +223,7 @@ export function Navigation({ collapsed = false, onToggleCollapsed }) {
               <span>Crafted with</span>
               <span className='mx-1'>{randomIcon}</span>
               <span>
-                in Italy by&nbsp;
-                <a
+                in Italy by&nbsp;<a
                   className='text-primary hover:text-primary/80 font-medium transition'
                   href='https://gaggimate.eu'
                   target='_blank'
