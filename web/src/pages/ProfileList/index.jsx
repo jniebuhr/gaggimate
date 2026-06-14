@@ -527,15 +527,13 @@ export function ProfileList() {
       if (mobileSearchInputRef.current && document.activeElement === mobileSearchInputRef.current) {
         mobileSearchInputRef.current.blur();
       }
-    } else {
+    } else if (
+      typeof globalThis.matchMedia === 'function' &&
+      globalThis.matchMedia('(prefers-reduced-motion: reduce)').matches &&
+      mobileSearchInputRef.current
+    ) {
       // If motion is reduced, bypass the transition delay and focus instantly for 0ms accessibility
-      if (
-        typeof window !== 'undefined' &&
-        window.matchMedia('(prefers-reduced-motion: reduce)').matches &&
-        mobileSearchInputRef.current
-      ) {
-        mobileSearchInputRef.current.focus({ preventScroll: true });
-      }
+      mobileSearchInputRef.current.focus({ preventScroll: true });
     }
   }, [isMobileSearchActive]);
 
@@ -952,7 +950,7 @@ export function ProfileList() {
           <h3 className="font-bold text-2xl mb-6 text-base-content text-center">Select Profile Type</h3>
           <ProfileTypeSelection onSelect={(type) => {
             document.getElementById('new_profile_modal').close();
-            window.location.href = `/profiles/new?type=${type}`;
+            globalThis.location.href = `/profiles/new?type=${type}`;
           }} />
         </div>
         <form method="dialog" className="modal-backdrop">

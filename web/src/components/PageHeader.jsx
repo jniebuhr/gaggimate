@@ -12,7 +12,7 @@ export default function PageHeader({ title, actions, tabs, className = '', noSta
         <div className="flex flex-row items-center gap-3">
           <button 
             className="btn btn-ghost btn-circle md:hidden landscape:hidden -ml-3 text-base-content/70" 
-            onClick={() => window.dispatchEvent(new Event('open-mobile-nav'))}
+            onClick={() => globalThis.dispatchEvent(new Event('open-mobile-nav'))}
             aria-label="Open menu"
           >
             <FontAwesomeIcon icon={faBars} size="xl" />
