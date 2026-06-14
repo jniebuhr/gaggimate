@@ -6,7 +6,6 @@ import { ProfileTypeSelection } from './ProfileTypeSelection.jsx';
 import { StandardProfileForm } from './StandardProfileForm.jsx';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
 import { computed } from '@preact/signals';
-import { Spinner } from '../../components/Spinner.jsx';
 import { ExtendedProfileForm } from './ExtendedProfileForm.jsx';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
@@ -45,7 +44,7 @@ export function ProfileEdit() {
   useEffect(() => {
     async function fetchData() {
       if (params.id === 'new') {
-        const searchParams = new URLSearchParams(window.location.search);
+        const searchParams = new URLSearchParams(globalThis.location.search);
         const initialType = searchParams.get('type');
         setData({
           label: 'New Profile',
@@ -194,10 +193,17 @@ export function ProfileEdit() {
     </div>
   );
 
+  let pageTitle = 'Loading...';
+  if (params.id === 'new') {
+    pageTitle = 'Create Profile';
+  } else if (data) {
+    pageTitle = `Edit ${data.label}`;
+  }
+
   return (
     <PageLayout variant="narrow">
       <PageHeader
-        title={params.id === 'new' ? 'Create Profile' : (data ? `Edit ${data.label}` : 'Loading...')}
+        title={pageTitle}
         noStack={true}
         actions={actions}
       />

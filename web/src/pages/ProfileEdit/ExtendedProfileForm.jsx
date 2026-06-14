@@ -68,6 +68,11 @@ export function ExtendedProfileForm(props) {
 
   const currentPhase = data.phases[currentPhaseIndex];
 
+  const getSaveAriaLabel = () => {
+    if (saving) return isNew ? 'Creating profile...' : 'Saving profile...';
+    return isNew ? 'Create profile' : 'Save profile';
+  };
+
   return (
     <form
       onSubmit={e => {
@@ -141,7 +146,7 @@ export function ExtendedProfileForm(props) {
               {currentPhaseIndex + 1} / {data.phases.length}
             </h5>
             <div>
-              <div className='flex gap-1' role='group' aria-label='Phase navigation'>
+              <fieldset className='flex gap-1' aria-label='Phase navigation'>
                 <Tooltip content='Previous Phase'>
                   <button
                     type='button'
@@ -164,7 +169,7 @@ export function ExtendedProfileForm(props) {
                     <FontAwesomeIcon icon={faChevronRight} />
                   </button>
                 </Tooltip>
-              </div>
+              </fieldset>
             </div>
             <Tooltip content='Add Phase'>
               <button
@@ -206,7 +211,7 @@ export function ExtendedProfileForm(props) {
               type='submit'
               className='btn btn-primary btn-sm flex-1 sm:flex-none'
               disabled={saving}
-              aria-label={saving ? (isNew ? 'Creating profile...' : 'Saving profile...') : (isNew ? 'Create profile' : 'Save profile')}
+              aria-label={getSaveAriaLabel()}
             >
               {saving && <Spinner size={4} className='mr-2' />}
               {isNew ? 'Create' : 'Save'}

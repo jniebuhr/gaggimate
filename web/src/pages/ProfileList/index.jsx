@@ -24,7 +24,6 @@ import { useIntersectionObserver } from '../../hooks/useIntersectionObserver.js'
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { computed } from '@preact/signals';
-import { Spinner } from '../../components/Spinner.jsx';
 import PageLayout from '../../components/PageLayout.jsx';
 import PageHeader from '../../components/PageHeader.jsx';
 import TabBar from '../../components/TabBar.jsx';
@@ -182,13 +181,12 @@ function ProfileCard({
   }, [data.selected]);
 
   const onToggleDetails = useCallback(e => {
-    if (e && e.target && e.target.closest('.no-toggle')) {
+    if (e?.target?.closest('.no-toggle')) {
       return;
     }
     setHasOpened(true);
     setDetailsCollapsed(v => !v);
   }, []);
-  const chevronRotation = detailsCollapsed ? '' : 'rotate-90';
   const detailsSectionId = `profile-${data.id}-summary`;
 
   // Sum total duration from phases (in seconds)
@@ -432,17 +430,14 @@ function ProfileCard({
 
                   {/* Chart */}
                   <div className='flex-1 min-w-0' ref={chartContainerRef}>
-                    {hasIntersected ? (
-                      data.type === 'pro' ? (
-                        <ExtendedProfileChart data={data} className='h-36 md:h-48 w-full' />
-                      ) : (
-                        <SimpleContent data={data} />
-                      )
-                    ) : data.type === 'pro' ? (
-                      <div className='skeleton h-36 md:h-48 w-full opacity-30' aria-hidden='true'></div>
-                    ) : (
-                      <div className='skeleton h-16 w-full opacity-30' aria-hidden='true'></div>
-                    )}
+                    {(() => {
+                      if (hasIntersected) {
+                        if (data.type === 'pro') return <ExtendedProfileChart data={data} className='h-36 md:h-48 w-full' />;
+                        return <SimpleContent data={data} />;
+                      }
+                      if (data.type === 'pro') return <div className='skeleton h-36 md:h-48 w-full opacity-30' aria-hidden='true'></div>;
+                      return <div className='skeleton h-16 w-full opacity-30' aria-hidden='true'></div>;
+                    })()}
                   </div>
                 </div>
               </div>

@@ -1,10 +1,12 @@
 import Section from '../Card.jsx';
 
+const profileListSkeletons = Array.from({ length: 4 }, () => crypto.randomUUID());
+
 export function ProfileListSkeleton() {
   return (
     <div className='grid grid-cols-1 gap-3 lg:grid-cols-12'>
-      {Array.from({ length: 4 }).map((_, i) => (
-        <Section key={i} className="col-span-12">
+      {profileListSkeletons.map((id) => (
+        <Section key={id} className="col-span-12">
           <div className='flex flex-col gap-4'>
              <div className='flex gap-4 items-center'>
                 <div className='w-5 h-5 skeleton rounded opacity-60'></div>
@@ -19,11 +21,13 @@ export function ProfileListSkeleton() {
   );
 }
 
+const shotHistorySkeletons = Array.from({ length: 4 }, () => crypto.randomUUID());
+
 export function ShotHistorySkeleton() {
   return (
     <div className='grid grid-cols-1 gap-3 lg:grid-cols-12'>
-      {Array.from({ length: 4 }).map((_, i) => (
-        <Section key={i} className="col-span-12">
+      {shotHistorySkeletons.map((id) => (
+        <Section key={id} className="col-span-12">
           <div className='flex flex-col md:flex-row gap-4'>
              <div className='w-full md:w-32 h-24 skeleton rounded-lg opacity-40 shrink-0'></div>
              <div className='flex-1 space-y-3 py-2'>

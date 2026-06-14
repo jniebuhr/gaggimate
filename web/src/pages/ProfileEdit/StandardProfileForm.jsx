@@ -55,6 +55,11 @@ export function StandardProfileForm(props) {
     onChange(newData);
   };
 
+  const getSaveAriaLabel = () => {
+    if (saving) return isNew ? 'Creating profile...' : 'Saving profile...';
+    return isNew ? 'Create profile' : 'Save profile';
+  };
+
   return (
     <form
       onSubmit={e => {
@@ -158,7 +163,7 @@ export function StandardProfileForm(props) {
               type='submit'
               className='btn btn-primary btn-sm flex-1 sm:flex-none'
               disabled={saving}
-              aria-label={saving ? (isNew ? 'Creating profile...' : 'Saving profile...') : (isNew ? 'Create profile' : 'Save profile')}
+              aria-label={getSaveAriaLabel()}
             >
               {saving && <Spinner size={4} className='mr-2' />}
               {isNew ? 'Create' : 'Save'}
@@ -208,6 +213,11 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
   const pressure = !isNumber(phase.pump) ? phase.pump.pressure : 0;
   const flow = !isNumber(phase.pump) ? phase.pump.flow : 0;
   const mode = isNumber(phase.pump) ? (phase.pump === 0 ? 'off' : 'power') : phase.pump.target;
+
+  const getSaveAriaLabel = () => {
+    if (saving) return isNew ? 'Creating profile...' : 'Saving profile...';
+    return isNew ? 'Create profile' : 'Save profile';
+  };
 
   return (
     <div
