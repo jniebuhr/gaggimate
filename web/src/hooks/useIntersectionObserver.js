@@ -3,6 +3,7 @@ import { useEffect, useState } from 'preact/hooks';
 export function useIntersectionObserver(ref, options = {}) {
   const [isIntersecting, setIsIntersecting] = useState(false);
   const [hasIntersected, setHasIntersected] = useState(false);
+  const { root, rootMargin, threshold } = options;
 
   useEffect(() => {
     if (!ref.current) return;
@@ -12,15 +13,14 @@ export function useIntersectionObserver(ref, options = {}) {
       if (entry.isIntersecting) {
         setHasIntersected(true);
       }
-    }, options);
+    }, { root, rootMargin, threshold });
 
     observer.observe(ref.current);
 
     return () => {
       observer.disconnect();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ref, options.root, options.rootMargin, options.threshold]);
+  }, [ref, root, rootMargin, threshold]);
 
   return { isIntersecting, hasIntersected };
 }
