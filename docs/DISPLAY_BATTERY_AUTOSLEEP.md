@@ -132,8 +132,8 @@ scripts/format.sh
 
 | # | Scenario | Expected | Result (PASS/FAIL + notes) |
 |---|----------|----------|----------------------------|
-| 1 | Battery power, controller off | Sleeps ~120 s after boot | _todo_ |
-| 2 | Battery power, touch the sleeping screen | Wakes (reboots), re-scans BLE | _todo_ |
+| 1 | Battery power, controller off | Sleeps ~120 s after boot | **PASS** — verified via a 15 s test build (USB-CDC port dropped = deep sleep, screen black) |
+| 2 | Battery power, touch the sleeping screen | Wakes (reboots), re-scans BLE | **PASS** — touch woke the CST820 panel and the board rebooted |
 | 3 | Controller turned on within 120 s | Connects, does **not** sleep | _todo_ |
 | 4 | Connected, then controller off | Sleeps ~120 s after disconnect | _todo_ |
 | 5 | Controller back within 120 s of disconnect | Does **not** sleep | _todo_ |
@@ -141,8 +141,10 @@ scripts/format.sh
 | 7 | Battery in, then plug USB-C charger | Overlay shows **⚡ USB** (charging), **not** 100 % | _todo_ |
 | 8 | Battery overlay on battery power | Approx **% only** (no voltage); amber < 3.5 V, red < 3.4 V | _todo_ |
 
-> Status: **not yet run on hardware** — code builds (display + display-sim), static check passes
-> (space-free path), web UI builds. Real-device confirmation of the above is the remaining step.
+> Status: core path **verified on a real LilyGo T-RGB** (touch IC: **CST820**) — no-controller
+> deep sleep and **touch wake** both work (items 1–2). Builds (display + display-sim), static
+> check (space-free path) and web UI all pass. Items 3–8 remain to confirm with a controller
+> and on battery power.
 
 ---
 
