@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
 import { useDashboardState } from './useDashboardState.js';
 import { PANEL_DEFINITIONS } from '../../utils/panelDefinitions.js';
-import { panelOrderSignal, stickyBottomSignal } from '../../utils/dashboardManager.js';
+import { columnSpacingSignal, compactPanelsSignal, panelOrderSignal, stickyBottomSignal } from '../../utils/dashboardManager.js';
 
 function Divider() {
   return <div className='border-t border-base-content/10' />;
@@ -12,6 +12,7 @@ export function DashboardSidebar({ unified = false }) {
 
   const panelOrder = panelOrderSignal.value;
   const sticky = stickyBottomSignal.value;
+  const compactPanels = compactPanelsSignal.value;
 
   // Inject required panels missing from the stored order (safety net)
   const orderedIds = [
@@ -42,7 +43,7 @@ export function DashboardSidebar({ unified = false }) {
             >
               {!isFirst && <Divider />}
               <div className='p-3'>
-                <panel.component {...panel.props(ds)} inCard />
+                <panel.component {...panel.props(ds)} compact={compactPanels.includes(panel.id)} inCard />
               </div>
             </div>
           );
@@ -51,8 +52,10 @@ export function DashboardSidebar({ unified = false }) {
     );
   }
 
+  const spacing = columnSpacingSignal.value;
+
   return (
-    <div className='flex h-full flex-col gap-2'>
+    <div className={`flex h-full flex-col gap-2 ${spacing === 'between' ? 'justify-between' : 'justify-start'}`}>
       {visiblePanels.map((panel, i) => {
         const isLast = i === visiblePanels.length - 1;
         return (
@@ -63,7 +66,7 @@ export function DashboardSidebar({ unified = false }) {
               panel.containerClass ?? '',
             ].filter(Boolean).join(' ')}
           >
-            <panel.component {...panel.props(ds)} />
+            <panel.component {...panel.props(ds)} compact={compactPanels.includes(panel.id)} />
           </div>
         );
       })}
