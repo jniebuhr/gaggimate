@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
 import { useDashboardState } from './useDashboardState.js';
 import { PANEL_DEFINITIONS } from '../../utils/panelDefinitions.js';
-import { columnSpacingSignal, compactPanelsSignal, panelOrderSignal, stickyBottomSignal } from '../../utils/dashboardManager.js';
+import { COLUMN_SPACINGS, columnSpacingSignal, compactPanelsSignal, panelOrderSignal, stickyBottomSignal } from '../../utils/dashboardManager.js';
 
 function Divider() {
   return <div className='border-t border-base-content/10' />;
@@ -55,7 +55,7 @@ export function DashboardSidebar({ unified = false }) {
   const spacing = columnSpacingSignal.value;
 
   return (
-    <div className={`flex h-full flex-col gap-2 ${spacing === 'between' ? 'justify-between' : 'justify-start'}`}>
+    <div className={`flex h-full flex-col gap-2 ${spacing === COLUMN_SPACINGS.BETWEEN ? 'justify-between' : 'justify-start'}`}>
       {visiblePanels.map((panel, i) => {
         const isLast = i === visiblePanels.length - 1;
         return (
