@@ -307,6 +307,7 @@ export function ExtendedProfileChart({
   className = 'max-h-36 w-full',
   selectedPhase = null,
   showPhaseLabels = true,
+  style,
 }) {
   const isDarkMode = () =>
     window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -317,6 +318,7 @@ export function ExtendedProfileChart({
       className='max-w-full min-h-0 flex-shrink flex-grow'
       chartClassName={className}
       data={config}
+      style={style}
     />
   );
 }
