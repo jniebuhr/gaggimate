@@ -342,15 +342,21 @@ void DefaultUI::updateBatteryOverlay() {
         lv_label_set_text(batteryLabel, "");
         return;
     }
-    const uint16_t mv = battery.voltageMv();
+    // While USB is plugged the reading is pinned at/above a full cell, so the percentage
+    // is meaningless — show a charging indicator instead of a misleading "100%".
+    if (battery.isCharging()) {
+        lv_label_set_text_fmt(batteryLabel, "%s USB", LV_SYMBOL_CHARGE);
+        lv_obj_set_style_text_color(batteryLabel, lv_color_hex(0x30D030), LV_PART_MAIN | LV_STATE_DEFAULT);
+        return;
+    }
+    // On battery: show the approximate percentage only (no voltage).
     const uint8_t pct = battery.percent();
     const char *sym = pct >= 80   ? LV_SYMBOL_BATTERY_FULL
                       : pct >= 55 ? LV_SYMBOL_BATTERY_3
                       : pct >= 30 ? LV_SYMBOL_BATTERY_2
                       : pct >= 10 ? LV_SYMBOL_BATTERY_1
                                   : LV_SYMBOL_BATTERY_EMPTY;
-    // e.g. "<bat> 76% 3.91V" — percentage is approximate, voltage shown alongside.
-    lv_label_set_text_fmt(batteryLabel, "%s %d%% %d.%02dV", sym, pct, mv / 1000, (mv % 1000) / 10);
+    lv_label_set_text_fmt(batteryLabel, "%s %d%%", sym, pct);
     const uint32_t color = battery.isCritical() ? 0xFF3030 : battery.isLow() ? 0xFFB020 : 0xFFFFFF;
     lv_obj_set_style_text_color(batteryLabel, lv_color_hex(color), LV_PART_MAIN | LV_STATE_DEFAULT);
 }

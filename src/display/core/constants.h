@@ -25,6 +25,10 @@
 #define BATTERY_SAMPLE_COUNT 12
 #define BATTERY_LOW_MV 3500
 #define BATTERY_CRITICAL_MV 3400
+// The T-RGB has no charge-status pin, so charging is inferred: while USB is plugged
+// the measured voltage is pinned at/above a full cell (~4.2V). At/above this we show
+// a charging indicator instead of a (misleading) percentage.
+#define BATTERY_CHARGING_MV 4200
 
 #define MIN_TEMP 0
 #define MAX_TEMP 160

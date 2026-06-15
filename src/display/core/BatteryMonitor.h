@@ -28,6 +28,9 @@ class BatteryMonitor {
     uint32_t lastSampleAt() const { return lastSampleAt_; }
     bool isLow() const { return valid_ && voltageMv_ < BATTERY_LOW_MV; }
     bool isCritical() const { return valid_ && voltageMv_ < BATTERY_CRITICAL_MV; }
+    // Heuristic "USB plugged / charging": with no charge-status pin, a reading pinned
+    // at/above a full cell means external power is present (see BATTERY_CHARGING_MV).
+    bool isCharging() const { return valid_ && voltageMv_ >= BATTERY_CHARGING_MV; }
 
     // Coarse Li-ion approximation with linear interpolation between table points.
     static uint8_t percentFromMv(uint16_t mv) {

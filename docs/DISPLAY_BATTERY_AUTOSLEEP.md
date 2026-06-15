@@ -71,22 +71,26 @@ sends standby/brew/stop/valve/pump/heater commands before sleeping.
 - Sampled every 30 s via `Driver::getBatteryMilliVolts()` → on the T-RGB this is
   `panel.getBattVoltage()`, which averages ~20 ADC reads on `BOARD_ADC_DET` (GPIO4) and
   already accounts for the on-board 1/2 divider.
-- Percentage is an **approximation** (coarse Li-ion LUT, 3400 mV = 0 %, 4200 mV = 100 %);
-  the raw voltage is shown next to it on purpose.
-- Shown on every screen as a small overlay on the LVGL top layer: `<icon> NN% N.NNV`,
-  white normally, amber < 3500 mV, red < 3400 mV.
+- Percentage is an **approximation** (coarse Li-ion LUT, 3400 mV = 0 %, 4200 mV = 100 %).
+  Only the **percentage** is shown (no voltage), on a small overlay on the LVGL top layer:
+  `<icon> NN%`, white normally, amber < 3500 mV, red < 3400 mV.
+- **Charging / USB:** the T-RGB has no charge-status pin, so charging is *inferred* — while
+  USB is plugged the reading is pinned at/above a full cell (≥ `BATTERY_CHARGING_MV` = 4200 mV).
+  In that case the overlay shows a **charging indicator** (`⚡ USB`, green) instead of a
+  misleading `100 %`.
 
-> **USB caveat:** when USB-C is connected the reading reflects the charging voltage, so it
-> does **not** represent the true remaining battery charge. Treat on-screen battery as
-> meaningful only on battery power.
+> **USB caveat:** because there is no charge-status pin, "charging" is a voltage heuristic, not
+> a true charge signal: a battery genuinely at 100 % reads the same as one being charged. The
+> reading is meaningful as a *percentage* only on battery power.
 
 ### Screenshots (from the simulator)
 
-Normal vs. critical battery (top-centre overlay, inside the round panel):
+Top-centre overlay, inside the round panel — percentage only on battery, charging
+indicator on USB:
 
-| Normal (`GM_SIM_BATTERY_MV=3950`) | Critical (`GM_SIM_BATTERY_MV=3380`) |
-|---|---|
-| ![standby, normal battery](img/standby-battery.png) | ![standby, low battery](img/standby-battery-low.png) |
+| Normal (`GM_SIM_BATTERY_MV=3950`) | Charging / USB (`=4250`) | Critical (`=3380`) |
+|---|---|---|
+| ![normal](img/standby-battery.png) | ![charging](img/standby-battery-charging.png) | ![low](img/standby-battery-low.png) |
 
 Captured headlessly with `./.pio/build/display-sim/program --screenshot shot.bmp 4500`.
 The "starting / waiting-for-controller" view uses the same standby screen, so the overlay
@@ -134,8 +138,8 @@ scripts/format.sh
 | 4 | Connected, then controller off | Sleeps ~120 s after disconnect | _todo_ |
 | 5 | Controller back within 120 s of disconnect | Does **not** sleep | _todo_ |
 | 6 | Display asleep, then controller powered on | Display stays asleep until touched; no BLE wake | _todo_ |
-| 7 | USB power, battery reading | Shows charging voltage (not true charge) — overlay sane | _todo_ |
-| 8 | Battery overlay on battery power | Approx % + voltage; amber < 3.5 V, red < 3.4 V | _todo_ |
+| 7 | Battery in, then plug USB-C charger | Overlay shows **⚡ USB** (charging), **not** 100 % | _todo_ |
+| 8 | Battery overlay on battery power | Approx **% only** (no voltage); amber < 3.5 V, red < 3.4 V | _todo_ |
 
 > Status: **not yet run on hardware** — code builds (display + display-sim), static check passes
 > (space-free path), web UI builds. Real-device confirmation of the above is the remaining step.
