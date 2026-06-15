@@ -32,6 +32,7 @@ export function SystemTab() {
   const [phase, setPhase] = useState(0);
   const [progress, setProgress] = useState(0);
   const rssi = machine.value.status.rssi;
+  const lat = machine.value.status.lat;
 
   const downloadSupportData = useCallback(async () => {
     try {
@@ -193,7 +194,7 @@ export function SystemTab() {
             <div className='flex flex-col space-y-1'>
               <span className='text-sm font-medium text-base-content/70'>Controller Signal Strength</span>
               <span className='font-semibold text-base-content flex items-center gap-2'>
-                {rssi}dB
+                {rssi}dB (Roundtrip: {lat} ms)
                 <span
                   className={`indicator-item status ${rssi < -90 ? 'status-error' : rssi < -80 ? 'status-warning' : 'status-success'}`}
                 ></span>
@@ -253,7 +254,7 @@ export function SystemTab() {
           <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
             {formData.spiffsTotal !== undefined && (
               <div className='flex flex-col space-y-2'>
-                <span className='text-sm font-medium text-base-content/70'>Storage (SPIFFS)</span>
+                <span className='text-sm font-medium text-base-content/70'>Storage (LittleFS)</span>
                 <div className='bg-base-300 h-3 w-full overflow-hidden rounded'>
                   <div
                     className='bg-primary h-full transition-all'
