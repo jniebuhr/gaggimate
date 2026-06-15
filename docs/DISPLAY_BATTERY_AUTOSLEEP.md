@@ -75,9 +75,10 @@ sends standby/brew/stop/valve/pump/heater commands before sleeping.
   Only the **percentage** is shown (no voltage), on a small overlay on the LVGL top layer:
   `<icon> NN%`, white normally, amber < 3500 mV, red < 3400 mV.
 - **Charging / USB:** the T-RGB has no charge-status pin, so charging is *inferred* — while
-  USB is plugged the reading is pinned at/above a full cell (≥ `BATTERY_CHARGING_MV` = 4200 mV).
-  In that case the overlay shows a **charging indicator** (`⚡ USB`, green) instead of a
-  misleading `100 %`.
+  USB is plugged the reading tracks the charging voltage (≥ `BATTERY_CHARGING_MV` = 4200 mV
+  once it tops off). In that case the overlay shows a **charging bolt + percentage**
+  (`⚡ NN%`, green) — the bolt distinguishes charging from on-battery, while the percentage
+  (charging-voltage based, so it trends toward ~100 %) is still visible.
 
 > **USB caveat:** because there is no charge-status pin, "charging" is a voltage heuristic, not
 > a true charge signal: a battery genuinely at 100 % reads the same as one being charged. The
@@ -138,7 +139,7 @@ scripts/format.sh
 | 4 | Connected, then controller off | Sleeps ~120 s after disconnect | _todo_ |
 | 5 | Controller back within 120 s of disconnect | Does **not** sleep | _todo_ |
 | 6 | Display asleep, then controller powered on | Display stays asleep until touched; no BLE wake | _todo_ |
-| 7 | Battery in, then plug USB-C charger | Overlay shows **⚡ USB** (charging), **not** 100 % | _todo_ |
+| 7 | Battery in, then plug USB-C charger | Overlay shows **⚡ NN%** (charging bolt + percentage) | _todo_ |
 | 8 | Battery overlay on battery power | Approx **% only** (no voltage); amber < 3.5 V, red < 3.4 V | _todo_ |
 
 > Status: core path **verified on a real LilyGo T-RGB** (touch IC: **CST820**) — no-controller

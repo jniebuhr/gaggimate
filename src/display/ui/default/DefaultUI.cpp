@@ -342,15 +342,16 @@ void DefaultUI::updateBatteryOverlay() {
         lv_label_set_text(batteryLabel, "");
         return;
     }
-    // While USB is plugged the reading is pinned at/above a full cell, so the percentage
-    // is meaningless — show a charging indicator instead of a misleading "100%".
+    const uint8_t pct = battery.percent();
+    // While USB is plugged the reading tracks the charging voltage (approaches ~100% as
+    // it tops off), so show a charging bolt next to the percentage to make clear it is
+    // charging rather than a real "remaining charge" reading.
     if (battery.isCharging()) {
-        lv_label_set_text_fmt(batteryLabel, "%s USB", LV_SYMBOL_CHARGE);
+        lv_label_set_text_fmt(batteryLabel, "%s %d%%", LV_SYMBOL_CHARGE, pct);
         lv_obj_set_style_text_color(batteryLabel, lv_color_hex(0x30D030), LV_PART_MAIN | LV_STATE_DEFAULT);
         return;
     }
     // On battery: show the approximate percentage only (no voltage).
-    const uint8_t pct = battery.percent();
     const char *sym = pct >= 80   ? LV_SYMBOL_BATTERY_FULL
                       : pct >= 55 ? LV_SYMBOL_BATTERY_3
                       : pct >= 30 ? LV_SYMBOL_BATTERY_2
