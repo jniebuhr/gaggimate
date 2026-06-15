@@ -26,6 +26,7 @@ export const PANEL_DEFINITIONS = [
     id: 'mode',
     label: 'Mode Selector',
     required: true,
+    supportsCompact: true,
     available: () => true,
     component: ModeCard,
     props: (ds) => ({
@@ -38,6 +39,7 @@ export const PANEL_DEFINITIONS = [
     id: 'profile',
     label: 'Profile Selector',
     required: false,
+    supportsCompact: true,
     available: () => true,
     component: ProfileCard,
     props: (ds) => ({
@@ -49,12 +51,12 @@ export const PANEL_DEFINITIONS = [
       isBrewing: ds.isBrewing,
       isGrinding: ds.isGrinding,
     }),
-    containerClass: 'flex-1 min-h-0 max-h-[50%]',
   },
   {
     id: 'favorites',
     label: 'Quick Select',
     required: false,
+    supportsCompact: true,
     available: () => true,
     component: FavoriteProfilesCard,
     props: (ds) => ({
@@ -66,6 +68,7 @@ export const PANEL_DEFINITIONS = [
     id: 'metrics',
     label: 'Shot Metrics',
     required: true,
+    supportsCompact: true,
     available: () => true,
     component: MetricsPanelWrapper,
     props: (ds) => ({ ds }),
@@ -85,7 +88,8 @@ export const PANEL_DEFINITIONS = [
     id: 'action',
     label: 'Shot Controls',
     required: true,
-    available: () => true,
+    available: (ds) => ds.mode === 1 || ds.mode === 3 || (ds.isGrinding && ds.isGrindAvailable),
+    availableInSettings: () => true,
     component: ActionCard,
     props: (ds) => ({
       mode: ds.mode,
