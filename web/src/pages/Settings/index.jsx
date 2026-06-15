@@ -1,3 +1,4 @@
+import { faCompress } from '@fortawesome/free-solid-svg-icons/faCompress';
 import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
 import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -23,6 +24,9 @@ import {
   getShowRecentShots, setShowRecentShots,
   getMetricsColumns, setMetricsColumns,
   METRICS_LAST_ROW_FILLS, getMetricsLastRowFill, setMetricsLastRowFill,
+  getCompactPanels, toggleCompactPanel,
+  getProfileChartHeight, setProfileChartHeight,
+  COLUMN_SPACINGS, getColumnSpacing, setColumnSpacing,
 } from '../../utils/dashboardManager.js';
 import { METRIC_DEFINITIONS } from '../../utils/metricDefinitions.js';
 import { PANEL_DEFINITIONS } from '../../utils/panelDefinitions.js';
@@ -98,6 +102,14 @@ export function Settings() {
   const [panelOrder, setPanelOrderState] = useState(() => getPanelOrder());
   const [stickyBottom, setStickyBottomState] = useState(() => getStickyBottom());
   const [showRecentShots, setShowRecentShotsState] = useState(() => getShowRecentShots());
+  const [compactPanels, setCompactPanelsState] = useState(() => getCompactPanels());
+  const [profileChartHeight, setProfileChartHeightState] = useState(() => getProfileChartHeight());
+  const [columnSpacing, setColumnSpacingState] = useState(() => getColumnSpacing());
+
+  const handleToggleCompact = (id) => {
+    toggleCompactPanel(id);
+    setCompactPanelsState(getCompactPanels());
+  };
 
   const updatePanelOrder = (ids) => {
     setPanelOrderState(ids);
@@ -1156,15 +1168,33 @@ export function Settings() {
             />
             <div className='divider'>
               <span>Dashboard Panels</span>
-              <label className='flex cursor-pointer items-center gap-1.5 text-xs font-normal normal-case tracking-normal'>
-                <input
-                  type='checkbox'
-                  className='toggle toggle-xs toggle-primary'
-                  checked={stickyBottom}
-                  onChange={e => updateStickyBottom(e.target.checked)}
-                />
-                Stick last to bottom
-              </label>
+              <div className='flex items-center gap-3'>
+                <label className='flex cursor-pointer items-center gap-1.5 text-xs font-normal normal-case tracking-normal'>
+                  <input
+                    type='checkbox'
+                    className='toggle toggle-xs toggle-primary'
+                    checked={stickyBottom}
+                    onChange={e => updateStickyBottom(e.target.checked)}
+                  />
+                  Stick last to bottom
+                </label>
+                <div className='join'>
+                  <button
+                    type='button'
+                    className={`btn btn-xs join-item ${columnSpacing === COLUMN_SPACINGS.START ? 'btn-primary' : 'btn-ghost'}`}
+                    onClick={() => { setColumnSpacingState(COLUMN_SPACINGS.START); setColumnSpacing(COLUMN_SPACINGS.START); }}
+                  >
+                    Pack to top
+                  </button>
+                  <button
+                    type='button'
+                    className={`btn btn-xs join-item ${columnSpacing === COLUMN_SPACINGS.BETWEEN ? 'btn-primary' : 'btn-ghost'}`}
+                    onClick={() => { setColumnSpacingState(COLUMN_SPACINGS.BETWEEN); setColumnSpacing(COLUMN_SPACINGS.BETWEEN); }}
+                  >
+                    Space evenly
+                  </button>
+                </div>
+              </div>
             </div>
             <SortableConfigurator
               order={panelOrder}
@@ -1172,7 +1202,38 @@ export function Settings() {
               hidden={hiddenPanels}
               onOrderChange={updatePanelOrder}
               emptyMessage='All available panels are visible.'
+              extraControls={(def) => def.supportsCompact ? (
+                <button
+                  type='button'
+                  title={compactPanels.includes(def.id) ? 'Switch to full view' : 'Switch to compact view'}
+                  onClick={() => handleToggleCompact(def.id)}
+                  className={`btn btn-ghost btn-xs flex h-6 w-6 items-center justify-center rounded p-0 ${compactPanels.includes(def.id) ? 'text-primary' : 'text-base-content/30'}`}
+                >
+                  <FontAwesomeIcon icon={faCompress} className='h-3 w-3' />
+                </button>
+              ) : null}
             />
+            {!compactPanels.includes('profile') && panelOrder.includes('profile') && (
+              <SettingsFormField label='Profile Chart Height' htmlFor='profileChartHeight'>
+                <div className='flex items-center gap-3'>
+                  <input
+                    id='profileChartHeight'
+                    type='range'
+                    min='64'
+                    max='256'
+                    step='8'
+                    className='range range-primary range-sm flex-1'
+                    value={profileChartHeight}
+                    onChange={e => {
+                      const n = Number(e.target.value);
+                      setProfileChartHeightState(n);
+                      setProfileChartHeight(n);
+                    }}
+                  />
+                  <span className='w-16 text-sm'>{profileChartHeight} px</span>
+                </div>
+              </SettingsFormField>
+            )}
             <div className='divider'>Dashboard Metrics</div>
             <SettingsFormField label='Metrics Columns' htmlFor='metricsColumns'>
               <div className='flex items-center gap-3'>
