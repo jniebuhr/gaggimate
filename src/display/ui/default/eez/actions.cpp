@@ -91,7 +91,6 @@ void action_on_volumetric_delete(lv_event_t *e) { controller.getUI()->onVolumetr
 void action_on_profile_accept(lv_event_t *e) { controller.getUI()->changeBrewScreenMode(BrewScreenState::Brew); };
 
 void action_on_profile_save(lv_event_t *e) {
-
     controller.onProfileSave();
     controller.getUI()->markProfileClean();
     controller.getUI()->changeBrewScreenMode(BrewScreenState::Brew);
@@ -105,7 +104,47 @@ void action_on_profile_save_as_new(lv_event_t *e) {
 };
 
 void action_on_meter_draw(lv_event_t *e) {
+    // Render the meter scale ticks as pills (rounded ends).
+    lv_obj_draw_part_dsc_t *dsc = lv_event_get_draw_part_dsc(e);
+    if (dsc == nullptr || dsc->class_p != &lv_meter_class || dsc->type != LV_METER_DRAW_PART_TICK || dsc->line_dsc == nullptr ||
+        dsc->p1 == nullptr || dsc->p2 == nullptr || dsc->draw_ctx == nullptr) {
+        return;
+    }
+    auto *scale = static_cast<const lv_meter_scale_t *>(dsc->sub_part_ptr);
+    if (scale == nullptr) {
+        return;
+    }
 
+    lv_obj_t *obj = lv_event_get_target(e);
+    lv_area_t content;
+    lv_obj_get_content_coords(obj, &content);
+    const lv_coord_t r_out = LV_MIN(lv_area_get_width(&content), lv_area_get_height(&content)) / 2;
+    const lv_coord_t r_in = r_out - scale->tick_length;
+    const lv_coord_t cap = dsc->line_dsc->width / 2;
+
+    // Unit vector from the meter center (p1) outwards towards the tick (p2).
+    const float dx = (float)(dsc->p2->x - dsc->p1->x);
+    const float dy = (float)(dsc->p2->y - dsc->p1->y);
+    const float len = sqrtf(dx * dx + dy * dy);
+    if (len < 1.0f || r_in >= r_out) {
+        return;
+    }
+    const float ux = dx / len;
+    const float uy = dy / len;
+
+    // Inset each end by the cap radius so the round caps land on r_in/r_out, not clipped.
+    lv_point_t inner = {(lv_coord_t)(dsc->p1->x + ux * (r_in + cap)), (lv_coord_t)(dsc->p1->y + uy * (r_in + cap))};
+    lv_point_t outer = {(lv_coord_t)(dsc->p1->x + ux * (r_out - cap)), (lv_coord_t)(dsc->p1->y + uy * (r_out - cap))};
+
+    lv_draw_line_dsc_t pill = *dsc->line_dsc;
+    pill.opa = LV_OPA_COVER; // ticks are opaque; guard against the persisted suppression below
+    pill.round_start = 1;
+    pill.round_end = 1;
+    pill.raw_end = 0;
+    lv_draw_line(dsc->draw_ctx, &pill, &inner, &outer);
+
+    // Suppress lv_meter's own sharp-cornered tick (we drew the rounded one).
+    dsc->line_dsc->opa = LV_OPA_TRANSP;
 };
 
 void action_on_steam_temp_lower(lv_event_t *e) { controller.lowerTemp(); };
@@ -139,3 +178,10 @@ void action_on_profile_load(lv_event_t *e) { controller.getUI()->onProfileSelect
 void action_on_previous_profile(lv_event_t *e) { controller.getUI()->onPreviousProfile(); };
 
 void action_on_next_profile(lv_event_t *e) { controller.getUI()->onNextProfile(); };
+
+void action_on_brew_cancel(lv_event_t *e) {
+    controller.deactivate();
+    controller.clear();
+}
+
+void action_on_standby(lv_event_t *e) { controller.activateStandby(); }

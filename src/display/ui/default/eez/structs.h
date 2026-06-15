@@ -41,6 +41,7 @@ enum SystemStatusFlowStructureFields {
     FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_SCALE_CONNECTED = 6,
     FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_CONTROLLER_VERSION = 7,
     FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_DISPLAY_VERSION = 8,
+    FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_IN_MENU = 9,
     FLOW_STRUCTURE_SYSTEM_STATUS_NUM_FIELDS
 };
 
@@ -141,6 +142,9 @@ struct SystemStatusValue {
     void display_version(const char *display_version) {
         value.getArray()->values[FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_DISPLAY_VERSION] = StringValue(display_version);
     }
+
+    bool in_menu() { return value.getArray()->values[FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_IN_MENU].getBoolean(); }
+    void in_menu(bool in_menu) { value.getArray()->values[FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_IN_MENU] = BooleanValue(in_menu); }
 };
 
 typedef ArrayOf<SystemStatusValue, FLOW_ARRAY_OF_STRUCTURE_SYSTEM_STATUS> ArrayOfSystemStatusValue;

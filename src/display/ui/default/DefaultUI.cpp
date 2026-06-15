@@ -21,6 +21,16 @@
 
 static EffectManager effect_mgr;
 
+// Format a millisecond duration as "m:ss" for the brew/profile time labels.
+static void formatDuration(unsigned long ms, char *buf, size_t len) {
+    const double seconds = ms / 1000.0;
+    const int minutes = static_cast<int>(seconds / 60.0);
+    const int secs = static_cast<int>(seconds) % 60;
+    snprintf(buf, len, "%d:%02d", minutes, secs);
+}
+
+static float clampPercentage(float pct) { return pct < 0.0f ? 0.0f : (pct > 100.0f ? 100.0f : pct); }
+
 int16_t calculate_angle(int set_temp, int range, int offset) {
     const double percentage = static_cast<double>(set_temp) / static_cast<double>(MAX_TEMP);
     return (percentage * ((double)range)) - range / 2 - offset;
@@ -272,38 +282,21 @@ void DefaultUI::loop() {
             changeScreen(SCREEN_ID_STANDBY_SCREEN);
         }
         updateTempStableFlag();
+
+        // Fill the EEZ data models before handleScreenChange() creates/ticks a screen (undefined fields abort the flow).
+        updateSystemStatus();
+        updateProfileInfo();
+        updateBoiler();
+        updateBrewProcess();
+        uiFlags.brew_adjustments(false);
+        currentWeight = FloatValue(bluetoothWeight);
+        eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_SCALE_WEIGHT_CURRENT, currentWeight);
+
         handleScreenChange();
         currentScreen = static_cast<ScreensEnum>(eez_flow_get_current_screen());
         if (currentScreen == SCREEN_ID_STANDBY_SCREEN)
             updateStandbyScreen();
-        if (currentScreen == SCREEN_ID_STATUS_SCREEN)
-            updateStatusScreen();
         effect_mgr.evaluate_all();
-
-        systemStatus.bluetooth(controller->getClientController()->isConnected());
-        systemStatus.wifi(!apActive && WiFi.status() == WL_CONNECTED);
-        systemStatus.error(controller->isErrorState());
-        systemStatus.error_label("");
-        systemStatus.time("9:41");
-        systemStatus.scale_connected(controller->isVolumetricAvailable());
-        systemStatus.controller_version("v1.8.1");
-        systemStatus.display_version("v1.8.1");
-        systemStatus.update_available(false);
-        profileInfo.is_current(true);
-        profileInfo.is_volumetric(false);
-        profileInfo.name("Default");
-        profileInfo.phases(2);
-        profileInfo.steps(3);
-        profileInfo.target_weight(36);
-        profileInfo.temperature(93);
-        profileInfo.time("0:28");
-        boiler.current_temperature(controller->getCurrentTemp());
-        boiler.target_temperature(controller->getTargetTemp());
-        boiler.current_temperature(pressure);
-        boiler.target_pressure(0.0f);
-        boiler.max_temperature(160.0f);
-        boiler.max_pressure(settings.getPressureScaling());
-        uiFlags.brew_adjustments(false);
     }
 
     ui_tick();
@@ -416,36 +409,21 @@ void DefaultUI::setupState() {
     eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_STEAM_READY, steamReady);
     eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_GRIND_WEIGHT_TARGET, grindWeightTarget);
     eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_GRIND_TIME_TARGET, grindTimeTarget);
-    systemStatus.bluetooth(controller->getClientController()->isConnected());
-    systemStatus.wifi(!apActive && WiFi.status() == WL_CONNECTED);
-    systemStatus.error(controller->isErrorState());
-    systemStatus.error_label("");
-    systemStatus.time("9:41");
-    systemStatus.scale_connected(controller->isVolumetricAvailable());
-    systemStatus.controller_version("v1.8.1");
-    systemStatus.display_version("v1.8.1");
-    systemStatus.update_available(false);
+
+    // Register the struct-backed globals once; their ref-counted arrays let later in-place updates show through.
     eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_SYSTEM, systemStatus);
-    profileInfo.is_current(true);
-    profileInfo.is_volumetric(false);
-    profileInfo.name("Default");
-    profileInfo.phases(2);
-    profileInfo.steps(3);
-    profileInfo.target_weight(36);
-    profileInfo.temperature(93);
-    profileInfo.time("0:28");
-    eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_PREVIEW_PROFILE, profileInfo);
-    eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_SELECTED_PROFILE, profileInfo);
-    boiler.current_temperature(controller->getCurrentTemp());
-    boiler.target_temperature(controller->getTargetTemp());
-    boiler.current_pressure(pressure);
-    boiler.target_pressure(0.0f);
-    boiler.max_temperature(160.0f);
-    boiler.max_pressure(settings.getPressureScaling());
+    eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_PREVIEW_PROFILE, previewProfileInfo);
+    eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_SELECTED_PROFILE, selectedProfileInfo);
     eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_BOILER, boiler);
-    uiFlags.brew_adjustments(false);
     eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_UI_FLAGS, uiFlags);
     eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_BREW_PROCESS_INFO, brewProcess);
+
+    // Fill every field so the first screen render never reads an undefined struct field.
+    updateSystemStatus();
+    updateProfileInfo();
+    updateBoiler();
+    updateBrewProcess();
+    uiFlags.brew_adjustments(false);
 }
 
 void DefaultUI::setupReactive() {
@@ -825,133 +803,178 @@ void DefaultUI::updateStandbyScreen() {
                                               */
 }
 
-void DefaultUI::updateStatusScreen() const {
-    // Copy process pointers to avoid race conditions with controller thread
+void DefaultUI::updateSystemStatus() {
+    systemStatus.bluetooth(controller->getClientController()->isConnected());
+    systemStatus.wifi(!apActive && WiFi.status() == WL_CONNECTED);
+    bool error = !initialized || waitingForController || controller->isErrorState() || controller->isUpdating() ||
+                 controller->isAutotuning() || controller->getSystemInfo().protocolMismatch || !controller->isReady();
+    systemStatus.error(error);
+    systemStatus.error_label(error ? getErrorMessage().c_str() : "");
+    systemStatus.scale_connected(controller->isVolumetricAvailable());
+    systemStatus.controller_version(controller->getSystemInfo().version.c_str());
+    systemStatus.display_version(BUILD_GIT_VERSION);
+    systemStatus.update_available(updateAvailable);
+    systemStatus.in_menu(currentScreen == SCREEN_ID_MENU_SCREEN);
+
+    char timeBuf[12] = "";
+    struct tm timeinfo;
+    if (getLocalTime(&timeinfo, 5)) {
+        const ::Settings &settings = controller->getSettings();
+        strftime(timeBuf, sizeof(timeBuf), settings.isClock24hFormat() ? "%H:%M" : "%I:%M %p", &timeinfo);
+    }
+    systemStatus.time(timeBuf);
+}
+
+static void populateProfileInfo(ProfileInfoValue &info, const Profile &profile, bool isCurrent) {
+    char timeBuf[12];
+    formatDuration(static_cast<unsigned long>(profile.getTotalDuration() * 1000.0f), timeBuf, sizeof(timeBuf));
+    info.name(profile.label.c_str());
+    info.temperature(profile.temperature);
+    info.time(timeBuf);
+    info.phases(static_cast<int>(profile.getPhaseCount()));
+    info.steps(static_cast<int>(profile.phases.size()));
+    info.is_volumetric(profile.isVolumetric());
+    info.is_current(isCurrent);
+    info.target_weight(profile.getTotalVolume());
+}
+
+void DefaultUI::updateProfileInfo() {
+    populateProfileInfo(selectedProfileInfo, profileManager->getSelectedProfile(), true);
+
+    // Preview backs the ProfileScreen carousel (index 0 = selected); bounds-check as the list is built on another task.
+    if (!favoritedProfiles.empty() && currentProfileIdx >= 0 && currentProfileIdx < static_cast<int>(favoritedProfiles.size())) {
+        populateProfileInfo(previewProfileInfo, favoritedProfiles[currentProfileIdx], currentProfileIdx == 0);
+    } else {
+        populateProfileInfo(previewProfileInfo, profileManager->getSelectedProfile(), true);
+    }
+}
+
+void DefaultUI::updateBoiler() {
+    const ::Settings &settings = controller->getSettings();
+    boiler.current_temperature(controller->getCurrentTemp());
+    boiler.target_temperature(controller->getTargetTemp());
+    boiler.current_pressure(pressure);
+    boiler.target_pressure(controller->getTargetPressure());
+    boiler.max_temperature(160.0f);
+    boiler.max_pressure(settings.getPressureScaling());
+}
+
+// Mirror the live BrewProcess into brew_process_info; every field must stay valid/typed or the StatusScreen flow aborts.
+void DefaultUI::updateBrewProcess() {
+    const Profile &selected = profileManager->getSelectedProfile();
+    char buf[12];
+
+    // Profile-derived defaults so the struct is valid even before a process runs.
+    formatDuration(static_cast<unsigned long>(selected.getTotalDuration() * 1000.0f), buf, sizeof(buf));
+    brewProcess.profile_temperature(selected.temperature);
+    brewProcess.profile_time(buf);
+    brewProcess.profile_phases(static_cast<int>(selected.getPhaseCount()));
+    brewProcess.profile_steps(static_cast<int>(selected.phases.size()));
+    brewProcess.profile_is_volumetric(profileVolumetric);
+    brewProcess.profile_is_current(true);
+    brewProcess.profile_target_weight(selected.getTotalVolume());
+    brewProcess.boiler_target_temperature(controller->getTargetTemp());
+
+    // Copy + re-validate the process pointer against the controller before dereferencing (control task may swap it).
     Process *process = controller->getProcess();
-    Process *lastProcess = controller->getLastProcess();
-
     if (process == nullptr) {
-        process = lastProcess;
+        process = controller->getLastProcess();
     }
-    if (process == nullptr || process->getType() != MODE_BREW) {
+    const bool validBrew = process != nullptr && process->getType() == MODE_BREW &&
+                           (process == controller->getProcess() || process == controller->getLastProcess());
+    if (!validBrew) {
+        brewProcess.phase_type("");
+        brewProcess.phase_name("");
+        brewProcess.phase_value_current(0.0f);
+        brewProcess.phase_value_target(0.0f);
+        brewProcess.phase_value_is_weight(false);
+        brewProcess.elapsed_time("0:00");
+        brewProcess.elapsed_percentage(0.0f);
+        brewProcess.is_complete(false);
         return;
     }
 
-    // Additional safety: Validate that the process pointer is still valid
-    // by checking if it matches either current or last process
-    if (process != controller->getProcess() && process != controller->getLastProcess()) {
-        ESP_LOGW("DefaultUI", "Process pointer became invalid during access, skipping update");
+    auto *bp = static_cast<BrewProcess *>(process);
+    if (bp->profile.phases.empty() || bp->phaseIndex >= bp->profile.phases.size()) {
+        // Object is mid-mutation/invalid: keep the last valid values.
         return;
     }
 
-    auto *brewProcess = static_cast<BrewProcess *>(process);
-    if (brewProcess == nullptr) {
-        ESP_LOGE("DefaultUI", "brewProcess is null after cast");
-        return;
-    }
+    const Phase phase = bp->currentPhase;
+    const bool active = process->isActive();
 
-    // Validate the brewProcess object before accessing its members
-    // Check if the object is in a reasonable state by validating key fields
-    if (brewProcess->profile.phases.empty() || brewProcess->phaseIndex >= brewProcess->profile.phases.size()) {
-        ESP_LOGE("DefaultUI", "brewProcess phaseIndex out of bounds: %u >= %zu", brewProcess->phaseIndex,
-                 brewProcess->profile.phases.size());
-        return;
-    }
+    // Live profile fields from the running process.
+    formatDuration(bp->getTotalDuration(), buf, sizeof(buf));
+    brewProcess.profile_temperature(bp->profile.temperature);
+    brewProcess.profile_time(buf);
+    brewProcess.profile_phases(static_cast<int>(bp->profile.getPhaseCount()));
+    brewProcess.profile_steps(static_cast<int>(bp->profile.phases.size()));
+    brewProcess.profile_is_volumetric(bp->target == ProcessTarget::VOLUMETRIC);
+    brewProcess.profile_target_weight(bp->getBrewVolume());
+    brewProcess.boiler_target_temperature(bp->getTemperature());
 
-    // Final safety check before accessing brewProcess members
-    if (!brewProcess) {
-        ESP_LOGE("DefaultUI", "brewProcess became null after validation");
-        return;
-    }
+    brewProcess.phase_type(phase.phase == PhaseType::PHASE_TYPE_BREW ? "BREW" : "INFUSION");
 
-    const auto phase = brewProcess->currentPhase;
+    String phaseName = "Finished";
+    if (active) {
+        phaseName = phase.name;
+    } else if (controller->getSettings().isDelayAdjust() && !process->isComplete()) {
+        phaseName = "Calibrating...";
+    }
+    brewProcess.phase_name(phaseName.c_str());
 
     unsigned long now = ::millis();
-    if (!process->isActive()) {
-        // Add bounds check for finished timestamp
-        if (brewProcess && brewProcess->finished > 0) {
-            now = brewProcess->finished;
-        }
+    if (!active && bp->finished > 0) {
+        now = bp->finished;
     }
+    const unsigned long elapsedMs = (bp->processStarted > 0 && now >= bp->processStarted) ? now - bp->processStarted : 0;
+    formatDuration(elapsedMs, buf, sizeof(buf));
+    brewProcess.elapsed_time(buf);
 
-    // lv_label_set_text(ui_StatusScreen_stepLabel, phase.phase == PhaseType::PHASE_TYPE_BREW ? "BREW" : "INFUSION");
-    String phaseText = "Finished";
-    if (process->isActive()) {
-        phaseText = phase.name;
-    } else if (controller->getSettings().isDelayAdjust() && !process->isComplete()) {
-        phaseText = "Calibrating...";
-    }
-    // lv_label_set_text(ui_StatusScreen_phaseLabel, phaseText.c_str());
-
-    // Add bounds check for processStarted timestamp
-    if (brewProcess && brewProcess->processStarted > 0 && now >= brewProcess->processStarted) {
-        const unsigned long processDuration = now - brewProcess->processStarted;
-        const double processSecondsDouble = processDuration / 1000.0;
-        const auto processMinutes = static_cast<int>(processSecondsDouble / 60.0);
-        const auto processSeconds = static_cast<int>(processSecondsDouble) % 60;
-        // lv_label_set_text_fmt(ui_StatusScreen_currentDuration, "%2d:%02d", processMinutes, processSeconds);
+    const bool weightTarget = bp->target == ProcessTarget::VOLUMETRIC && phase.hasVolumetricTarget();
+    brewProcess.phase_value_is_weight(weightTarget);
+    if (weightTarget) {
+        const float target = phase.getVolumetricTarget().value;
+        const float current = static_cast<float>(bp->currentVolume);
+        brewProcess.phase_value_current(current);
+        brewProcess.phase_value_target(target);
+        brewProcess.elapsed_percentage(target > 0.0f ? clampPercentage(current / target * 100.0f) : 0.0f);
     } else {
-        // lv_label_set_text_fmt(ui_StatusScreen_currentDuration, "00:00");
+        const unsigned long phaseElapsed =
+            (bp->currentPhaseStarted > 0 && now >= bp->currentPhaseStarted) ? now - bp->currentPhaseStarted : 0;
+        const float current = phaseElapsed / 1000.0f;
+        const float target = bp->getPhaseDuration() / 1000.0f;
+        brewProcess.phase_value_current(current);
+        brewProcess.phase_value_target(target);
+        brewProcess.elapsed_percentage(target > 0.0f ? clampPercentage(current / target * 100.0f) : 0.0f);
     }
 
-    if (brewProcess && brewProcess->target == ProcessTarget::VOLUMETRIC && phase.hasVolumetricTarget()) {
-        Target target = phase.getVolumetricTarget();
-        // lv_bar_set_value(ui_StatusScreen_brewBar, brewProcess->currentVolume * 10.0, LV_ANIM_OFF);
-        // lv_bar_set_range(ui_StatusScreen_brewBar, 0, target.value * 10.0 + 1.0);
-        // lv_label_set_text_fmt(ui_StatusScreen_brewLabel, "%.1f / %.1fg", brewProcess->currentVolume, target.value);
-    } else if (brewProcess) {
-        // Add bounds check for currentPhaseStarted timestamp
-        if (brewProcess->currentPhaseStarted > 0 && now >= brewProcess->currentPhaseStarted) {
-            const unsigned long progress = now - brewProcess->currentPhaseStarted;
-            // lv_bar_set_value(ui_StatusScreen_brewBar, progress, LV_ANIM_OFF);
-            // lv_bar_set_range(ui_StatusScreen_brewBar, 0, std::max(static_cast<int>(brewProcess->getPhaseDuration()), 1));
-            // lv_label_set_text_fmt(ui_StatusScreen_brewLabel, "%d / %ds", progress / 1000, brewProcess->getPhaseDuration() /
-            // 1000);
-        } else {
-            // lv_bar_set_value(ui_StatusScreen_brewBar, 0, LV_ANIM_OFF);
-            // lv_bar_set_range(ui_StatusScreen_brewBar, 0, 1);
-            // lv_label_set_text(ui_StatusScreen_brewLabel, "0s");
+    brewProcess.is_complete(process->isComplete());
+}
+
+String DefaultUI::getErrorMessage() {
+    if (controller->isUpdating()) {
+        return "Updating...";
+    }
+    if (controller->isAutotuning()) {
+        return "Autotuning...";
+    }
+    if (controller->getSystemInfo().protocolMismatch) {
+        return controller->getSystemInfo().protocolVersion > gm_proto::PROTOCOL_VERSION ? "Version mismatch, update display"
+                                                                                        : "Version mismatch, update controller";
+    }
+    if (controller->isErrorState()) {
+        switch (controller->getError()) {
+        case ERROR_CODE_RUNAWAY:
+            return "Temperature error, restart...";
+        default:
+            return "Unknown error";
         }
     }
-
-    if (brewProcess && brewProcess->target == ProcessTarget::TIME) {
-        const unsigned long targetDuration = brewProcess->getTotalDuration();
-        const double targetSecondsDouble = targetDuration / 1000.0;
-        const auto targetMinutes = static_cast<int>(targetSecondsDouble / 60.0);
-        const auto targetSeconds = static_cast<int>(targetSecondsDouble) % 60;
-        // lv_label_set_text_fmt(ui_StatusScreen_targetDuration, "%2d:%02d", targetMinutes, targetSeconds);
-    } else if (brewProcess) {
-        // lv_label_set_text_fmt(ui_StatusScreen_targetDuration, "%.1fg", brewProcess->getBrewVolume());
+    if (waitingForController) {
+        return "Waiting for controller...";
     }
-    if (brewProcess) {
-        // lv_img_set_src(ui_StatusScreen_Image8,
-        //                brewProcess->target == ProcessTarget::TIME ? &ui_img_360122106 : &ui_img_1424216268);
-    }
-
-    if (brewProcess && brewProcess->isAdvancedPump()) {
-        float pressure = brewProcess->getPumpPressure();
-        const double percentage = 1.0 - static_cast<double>(pressure) / static_cast<double>(pressureScaling);
-        // adjustTarget(uic_StatusScreen_dials_pressureTarget, percentage, -62.0, 124.0);
-    } else {
-        const double percentage = 1.0 - 0.5;
-        // adjustTarget(uic_StatusScreen_dials_pressureTarget, percentage, -62.0, 124.0);
-    }
-
-    // Brew finished adjustments
-    if (process->isActive()) {
-        // lv_obj_add_flag(ui_StatusScreen_brewVolume, LV_OBJ_FLAG_HIDDEN);
-    } else {
-        // Re-validate brewProcess pointer before accessing members
-        if (brewProcess && brewProcess->target == ProcessTarget::VOLUMETRIC) {
-            // lv_obj_clear_flag(ui_StatusScreen_brewVolume, LV_OBJ_FLAG_HIDDEN);
-        }
-        // lv_obj_add_flag(ui_StatusScreen_barContainer, LV_OBJ_FLAG_HIDDEN);
-        // lv_obj_add_flag(ui_StatusScreen_labelContainer, LV_OBJ_FLAG_HIDDEN);
-        if (brewProcess) {
-            // lv_label_set_text_fmt(ui_StatusScreen_brewVolume, "%.1lfg", brewProcess->currentVolume);
-        }
-        // lv_imgbtn_set_src(ui_StatusScreen_pauseButton, LV_IMGBTN_STATE_RELEASED, nullptr, &ui_img_631115820, nullptr);
-    }
+    return initialized ? "" : "Starting...";
 }
 
 void DefaultUI::adjustDials(lv_obj_t *dials) {

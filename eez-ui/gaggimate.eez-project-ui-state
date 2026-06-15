@@ -1,7 +1,8 @@
 {
   "navigation": {
-    "selectedUserPageObject": "[gaggimate.eez-project]:/userPages/7",
+    "selectedUserPageObject": "[gaggimate.eez-project]:/userPages/1",
     "selectedUserWidgetObject": "[gaggimate.eez-project]:/userWidgets/0",
+    "selectedActionObject": "[gaggimate.eez-project]:/actions/-1",
     "selectedGlobalVariableObject": "[gaggimate.eez-project]:/variables/globalVariables/8",
     "selectedStructureObject": "[gaggimate.eez-project]:/variables/structures/3",
     "selectedThemeObject": "[gaggimate.eez-project]:/themes/0",
@@ -130,7 +131,6 @@
                   "type": "tabset",
                   "id": "#62043989-83c1-428b-8417-b89c3070fb5a",
                   "weight": 0.5267379679144385,
-                  "selected": 1,
                   "enableClose": false,
                   "children": [
                     {
@@ -172,8 +172,7 @@
                       "enableClose": false,
                       "icon": "svg:hierarchy"
                     }
-                  ],
-                  "active": true
+                  ]
                 },
                 {
                   "type": "tabset",
@@ -197,17 +196,16 @@
               "type": "tabset",
               "id": "EDITORS",
               "weight": 44.06285141286475,
-              "selected": 2,
               "enableDeleteWhenEmpty": false,
               "enableClose": false,
               "children": [
                 {
                   "type": "tab",
                   "id": "#07a87284-0adf-47ce-9994-8cc743141d5f",
-                  "name": "GrindScreen",
+                  "name": "BrewScreen",
                   "component": "editor",
                   "config": {
-                    "objectPath": "[gaggimate.eez-project]:/userPages/7",
+                    "objectPath": "[gaggimate.eez-project]:/userPages/1",
                     "permanent": false
                   },
                   "icon": "svg:page"
@@ -246,7 +244,8 @@
                   },
                   "icon": "svg:page"
                 }
-              ]
+              ],
+              "active": true
             },
             {
               "type": "row",
@@ -1178,15 +1177,19 @@
       "selectionFront": {},
       "selectionBack": {
         "0": {
-          "0": {},
+          "0": {
+            "$selected": true
+          },
           "1": {
             "2": {
+              "1": {
+                "1": {}
+              },
               "2": {
+                "0": {},
                 "1": {},
                 "2": {
-                  "0": {
-                    "$selected": true
-                  }
+                  "0": {}
                 }
               }
             }
@@ -1222,9 +1225,7 @@
         "0": {
           "0": {},
           "2": {
-            "0": {
-              "$selected": true
-            },
+            "0": {},
             "2": {},
             "11": {
               "0": {}
@@ -1258,9 +1259,7 @@
       "selectionBack": {
         "0": {},
         "2": {},
-        "5": {
-          "$selected": true
-        },
+        "5": {},
         "6": {}
       }
     },
@@ -1415,11 +1414,10 @@
             "1": {
               "1": {
                 "1": {
-                  "2": {
-                    "$selected": true
-                  }
+                  "2": {}
                 }
-              }
+              },
+              "2": {}
             },
             "2": {},
             "4": {}
@@ -1897,7 +1895,9 @@
       "selectionFront": {},
       "selectionBack": {
         "0": {
-          "0": {},
+          "0": {
+            "$selected": true
+          },
           "1": {
             "1": {},
             "2": {},
@@ -2085,6 +2085,36 @@
         "position": 0,
         "secondToPx": 200,
         "scrollLeft": 0
+      }
+    },
+    "[gaggimate.eez-project]:/actions/1[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": 0,
+          "y": 0
+        },
+        "scale": 1
+      }
+    },
+    "[gaggimate.eez-project]:/actions/33[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": 0,
+          "y": 0
+        },
+        "scale": 1
+      }
+    },
+    "[gaggimate.eez-project]:/actions/34[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": 0,
+          "y": 0
+        },
+        "scale": 1
       }
     }
   },

@@ -40,6 +40,8 @@ extern void action_on_simple_process_toggle(lv_event_t *e);
 extern void action_on_profile_load(lv_event_t *e);
 extern void action_on_previous_profile(lv_event_t *e);
 extern void action_on_next_profile(lv_event_t *e);
+extern void action_on_brew_cancel(lv_event_t *e);
+extern void action_on_standby(lv_event_t *e);
 
 #ifdef __cplusplus
 }

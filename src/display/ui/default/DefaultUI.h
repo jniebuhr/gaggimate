@@ -64,7 +64,11 @@ class DefaultUI {
     void handleScreenChange();
 
     void updateStandbyScreen();
-    void updateStatusScreen() const;
+    void updateSystemStatus();
+    void updateProfileInfo();
+    void updateBoiler();
+    void updateBrewProcess();
+    String getErrorMessage();
 
     void adjustDials(lv_obj_t *dials);
     void adjustTempTarget(lv_obj_t *dials);
@@ -130,7 +134,8 @@ class DefaultUI {
 
     // EEZ Structs
     SystemStatusValue systemStatus;
-    ProfileInfoValue profileInfo;
+    ProfileInfoValue selectedProfileInfo;
+    ProfileInfoValue previewProfileInfo;
     BoilerValue boiler;
     UIFlagsValue uiFlags;
     BrewProcessValue brewProcess;
@@ -140,7 +145,7 @@ class DefaultUI {
     Value grindTimeTarget = StringValue("0:15");
 
     int profileDirty = 0;
-    int currentProfileIdx;
+    int currentProfileIdx = 0;
     int profileLoaded = 0;
     std::vector<String> favoritedProfileIds;
     std::vector<Profile> favoritedProfiles;

@@ -40,6 +40,7 @@ typedef struct _objects_t {
     lv_obj_t *obj0;
     lv_obj_t *obj0__temp_gauge;
     lv_obj_t *obj0__pressure_gauge;
+    lv_obj_t *obj0__standby_icon;
     lv_obj_t *obj0__menu_icon;
     lv_obj_t *obj0__temp_icon;
     lv_obj_t *obj0__pressure_icon;
@@ -48,6 +49,7 @@ typedef struct _objects_t {
     lv_obj_t *obj1;
     lv_obj_t *obj1__temp_gauge;
     lv_obj_t *obj1__pressure_gauge;
+    lv_obj_t *obj1__standby_icon;
     lv_obj_t *obj1__menu_icon;
     lv_obj_t *obj1__temp_icon;
     lv_obj_t *obj1__pressure_icon;
@@ -56,6 +58,7 @@ typedef struct _objects_t {
     lv_obj_t *obj2;
     lv_obj_t *obj2__temp_gauge;
     lv_obj_t *obj2__pressure_gauge;
+    lv_obj_t *obj2__standby_icon;
     lv_obj_t *obj2__menu_icon;
     lv_obj_t *obj2__temp_icon;
     lv_obj_t *obj2__pressure_icon;
@@ -64,6 +67,7 @@ typedef struct _objects_t {
     lv_obj_t *obj3;
     lv_obj_t *obj3__temp_gauge;
     lv_obj_t *obj3__pressure_gauge;
+    lv_obj_t *obj3__standby_icon;
     lv_obj_t *obj3__menu_icon;
     lv_obj_t *obj3__temp_icon;
     lv_obj_t *obj3__pressure_icon;
@@ -72,6 +76,7 @@ typedef struct _objects_t {
     lv_obj_t *obj4;
     lv_obj_t *obj4__temp_gauge;
     lv_obj_t *obj4__pressure_gauge;
+    lv_obj_t *obj4__standby_icon;
     lv_obj_t *obj4__menu_icon;
     lv_obj_t *obj4__temp_icon;
     lv_obj_t *obj4__pressure_icon;
@@ -80,6 +85,7 @@ typedef struct _objects_t {
     lv_obj_t *obj5;
     lv_obj_t *obj5__temp_gauge;
     lv_obj_t *obj5__pressure_gauge;
+    lv_obj_t *obj5__standby_icon;
     lv_obj_t *obj5__menu_icon;
     lv_obj_t *obj5__temp_icon;
     lv_obj_t *obj5__pressure_icon;
@@ -88,6 +94,7 @@ typedef struct _objects_t {
     lv_obj_t *obj6;
     lv_obj_t *obj6__temp_gauge;
     lv_obj_t *obj6__pressure_gauge;
+    lv_obj_t *obj6__standby_icon;
     lv_obj_t *obj6__menu_icon;
     lv_obj_t *obj6__temp_icon;
     lv_obj_t *obj6__pressure_icon;
@@ -134,7 +141,6 @@ typedef struct _objects_t {
     lv_obj_t *accept_button;
     lv_obj_t *save_as_new_button;
     lv_obj_t *obj13;
-    lv_obj_t *img_button8;
     lv_obj_t *target_duration_1;
     lv_obj_t *target_weight_2;
     lv_obj_t *target_temp_1;
