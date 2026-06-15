@@ -873,6 +873,17 @@ static void event_handler_cb_dials_pressure_gauge(lv_event_t *e) {
     }
 }
 
+static void event_handler_cb_dials_standby_icon(lv_event_t *e) {
+    lv_event_code_t event = lv_event_get_code(e);
+    void *flowState = lv_event_get_user_data(e);
+    (void)flowState;
+
+    if (event == LV_EVENT_CLICKED) {
+        e->user_data = (void *)0;
+        action_on_standby(e);
+    }
+}
+
 static void event_handler_cb_dials_menu_icon(lv_event_t *e) {
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
@@ -5332,6 +5343,7 @@ void create_user_widget_dials(lv_obj_t *parent_obj, void *flowState, int startWi
             lv_obj_set_pos(obj, 0, 210);
             lv_obj_set_size(obj, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
             lv_img_set_src(obj, &img_power_40x40);
+            lv_obj_add_event_cb(obj, event_handler_cb_dials_standby_icon, LV_EVENT_ALL, flowState);
             lv_obj_add_flag(obj, LV_OBJ_FLAG_CLICKABLE);
             lv_obj_set_style_align(obj, LV_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_img_recolor(obj, lv_color_hex(theme_colors[eez_flow_get_selected_theme_index()][0]),

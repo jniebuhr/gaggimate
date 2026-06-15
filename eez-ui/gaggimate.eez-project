@@ -13188,7 +13188,15 @@
             "childStyles": []
           },
           "timeline": [],
-          "eventHandlers": [],
+          "eventHandlers": [
+            {
+              "objID": "b17cead4-a946-4a64-a172-599833c982a3",
+              "eventName": "CLICKED",
+              "handlerType": "action",
+              "action": "onStandby",
+              "userData": 0
+            }
+          ],
           "identifier": "standbyIcon",
           "leftUnit": "px",
           "topUnit": "px",
