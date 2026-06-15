@@ -27,9 +27,15 @@ export function DashboardSidebar({ unified = false }) {
     .filter(Boolean)
     .filter(p => p.available(ds));
 
+  const spacing = columnSpacingSignal.value;
+  // Only the panel that is BOTH last-visible AND last-configured gets mt-auto.
+  // This prevents mt-auto from transferring to a different panel when the
+  // intended sticky panel is temporarily hidden (e.g. ActionCard when not brewing).
+  const lastConfiguredId = orderedIds[orderedIds.length - 1];
+
   if (unified) {
     return (
-      <div className='card bg-base-100 flex h-full flex-col gap-0 overflow-hidden rounded-xl'>
+      <div className={`card bg-base-100 flex h-full flex-col gap-0 overflow-hidden rounded-xl ${spacing === COLUMN_SPACINGS.BETWEEN ? 'justify-between' : 'justify-start'}`}>
         {visiblePanels.map((panel, i) => {
           const isFirst = i === 0;
           const isLast = i === visiblePanels.length - 1;
@@ -37,7 +43,7 @@ export function DashboardSidebar({ unified = false }) {
             <div
               key={panel.id}
               className={[
-                isLast && sticky ? 'mt-auto' : '',
+                isLast && sticky && panel.id === lastConfiguredId ? 'mt-auto' : '',
                 panel.containerClass ?? '',
               ].filter(Boolean).join(' ')}
             >
@@ -52,8 +58,6 @@ export function DashboardSidebar({ unified = false }) {
     );
   }
 
-  const spacing = columnSpacingSignal.value;
-
   return (
     <div className={`flex h-full flex-col gap-2 ${spacing === COLUMN_SPACINGS.BETWEEN ? 'justify-between' : 'justify-start'}`}>
       {visiblePanels.map((panel, i) => {
@@ -62,7 +66,7 @@ export function DashboardSidebar({ unified = false }) {
           <div
             key={panel.id}
             className={[
-              isLast && sticky ? 'mt-auto' : '',
+              isLast && sticky && panel.id === lastConfiguredId ? 'mt-auto' : '',
               panel.containerClass ?? '',
             ].filter(Boolean).join(' ')}
           >
