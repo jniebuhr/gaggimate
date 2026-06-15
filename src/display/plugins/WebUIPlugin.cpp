@@ -665,10 +665,9 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setStandbyBrightness(request->arg("standbyBrightness").toInt());
             if (request->hasArg("standbyBrightnessTimeout"))
                 settings->setStandbyBrightnessTimeout(request->arg("standbyBrightnessTimeout").toInt() * 1000);
-            // [display-auto-sleep] display-only settings
-            if (request->hasArg("autoSleepNoController"))
-                settings->setAutoSleepNoController(request->arg("autoSleepNoController") == "true" ||
-                                                   request->arg("autoSleepNoController") == "1");
+            // [display-auto-sleep] display-only settings. Checkbox uses the same
+            // presence-means-true convention as clock24hFormat / autowakeupEnabled.
+            settings->setAutoSleepNoController(request->hasArg("autoSleepNoController"));
             if (request->hasArg("noControllerSleepTimeout"))
                 settings->setNoControllerSleepTimeout(request->arg("noControllerSleepTimeout").toInt() * 1000);
             if (request->hasArg("steamPumpPercentage"))

@@ -31,7 +31,8 @@ Base: forked from `jniebuhr/gaggimate` upstream `master` @ `591abe74`.
 | `src/display/core/AutoSleepManager.h` | New pure-logic module: no-controller sleep policy |
 | `src/display/core/BatteryMonitor.h` | New pure-logic module: voltage → approx. % (piecewise LUT) |
 | `src/display/core/Settings.{h,cpp}` | `autoSleepNoController` (default on) + `noControllerSleepTimeout` (default 120 s) |
-| `src/display/plugins/WebUIPlugin.cpp` | Read/serialize the two new settings via the existing config API |
+| `src/display/plugins/WebUIPlugin.cpp` | Read/serialize the two new settings (checkbox uses the `hasArg` presence convention, like `clock24hFormat`) |
+| `web/src/pages/Settings/index.jsx` | Display Settings → **Auto Sleep**: enable toggle + timeout (s) input |
 | `src/display/ui/default/DefaultUI.{h,cpp}` | Drive both managers; battery overlay on the LVGL top layer |
 | `sim/driver/SdlDriver.h` | Mock battery (`GM_SIM_BATTERY_MV`, default 3900) + mock sleep (logs, never exits) |
 
@@ -48,9 +49,9 @@ sends standby/brew/stop/valve/pump/heater commands before sleeping.
 - Touch resets the UI idle timer but does **not** block the no-controller countdown.
 - Suppressed during OTA / firmware update / Wi-Fi AP setup / autotune.
 - If the battery is **critical** (< 3400 mV) and no controller, it sleeps after ¼ of the timeout.
-- Configurable: `Settings.autoSleepNoController` (on/off) and `noControllerSleepTimeout`
-  (the web config API accepts seconds; suggested presets 1 / 2 / 5 / 10 min). Compile-time
-  defaults live in `constants.h`.
+- Configurable in the **Web UI**: *Settings → Display Settings → Auto Sleep* (enable toggle +
+  timeout in seconds), backed by `Settings.autoSleepNoController` / `noControllerSleepTimeout`.
+  Compile-time defaults live in `constants.h`.
 
 ### Battery (`BatteryMonitor`)
 - Sampled every 30 s via `Driver::getBatteryMilliVolts()` → on the T-RGB this is
@@ -108,6 +109,21 @@ scripts/format.sh
 4. Controller back within 120 s → does **not** sleep.
 5. USB to a PC → flashes, serial logs OK; auto-sleep can be disabled via the setting while debugging.
 6. Simulator → mock battery visible; `[sim] AutoSleep: enterDisplaySleep() (mock, not sleeping)` logged instead of exiting.
+
+### Hardware test record (fill in on a real T-RGB)
+
+| # | Scenario | Expected | Result (PASS/FAIL + notes) |
+|---|----------|----------|----------------------------|
+| 1 | Battery power, controller off | Sleeps ~120 s after boot | _todo_ |
+| 2 | Battery power, touch the sleeping screen | Wakes (reboots), re-scans BLE | _todo_ |
+| 3 | Controller turned on within 120 s | Connects, does **not** sleep | _todo_ |
+| 4 | Connected, then controller off | Sleeps ~120 s after disconnect | _todo_ |
+| 5 | Controller back within 120 s of disconnect | Does **not** sleep | _todo_ |
+| 6 | USB power, battery reading | Shows charging voltage (not true charge) — overlay sane | _todo_ |
+| 7 | Battery overlay on battery power | Approx % + voltage; amber < 3.5 V, red < 3.4 V | _todo_ |
+
+> Status: **not yet run on hardware** — code builds (display + display-sim), static check passes
+> (space-free path), web UI builds. Real-device confirmation of the above is the remaining step.
 
 ---
 

@@ -184,6 +184,9 @@ export function Settings() {
       if (key === 'autowakeupEnabled') {
         value = !formData.autowakeupEnabled;
       }
+      if (key === 'autoSleepNoController') {
+        value = !formData.autoSleepNoController;
+      }
       if (key === 'standbyDisplayEnabled') {
         value = !formData.standbyDisplayEnabled;
         // Set standby brightness to 0 when toggle is off
@@ -547,6 +550,32 @@ export function Settings() {
                 min='1'
                 value={formData.standbyBrightnessTimeout}
                 onChange={onChange('standbyBrightnessTimeout')}
+              />
+            </InputGroupField>
+            <div className='divider'>Auto Sleep</div>
+            <ToggleField
+              label='Sleep when controller not found'
+              htmlFor='autoSleepNoController'
+              checked={formData.autoSleepNoController}
+              onChange={onChange('autoSleepNoController')}
+              helpText='Deep-sleep the display when there is no Bluetooth connection to the controller (battery saving). Touch the screen to wake.'
+            />
+            <InputGroupField
+              label='No-controller sleep timeout (s)'
+              htmlFor='noControllerSleepTimeout'
+              unit='s'
+              unitAriaLabel='seconds'
+            >
+              <input
+                id='noControllerSleepTimeout'
+                name='noControllerSleepTimeout'
+                type='number'
+                className='grow'
+                placeholder='120'
+                min='10'
+                value={formData.noControllerSleepTimeout}
+                onChange={onChange('noControllerSleepTimeout')}
+                disabled={!formData.autoSleepNoController}
               />
             </InputGroupField>
             <SettingsFormField label='Theme' htmlFor='themeMode' noMargin>
