@@ -198,6 +198,39 @@ export const setMetricsColumns = (n) => {
   }
 };
 
+// ── Compact panels ────────────────────────────────────────────────────────
+
+const DASHBOARD_COMPACT_PANELS_KEY = 'dashboardCompactPanels';
+
+export const getCompactPanels = () => {
+  if (typeof window === 'undefined' || !window.localStorage) return [];
+  try {
+    const stored = localStorage.getItem(DASHBOARD_COMPACT_PANELS_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+};
+
+export const compactPanelsSignal = signal(getCompactPanels());
+
+export const setCompactPanels = (ids) => {
+  if (!Array.isArray(ids)) return false;
+  try {
+    localStorage.setItem(DASHBOARD_COMPACT_PANELS_KEY, JSON.stringify(ids));
+    compactPanelsSignal.value = ids;
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+export const toggleCompactPanel = (id) => {
+  const current = compactPanelsSignal.value;
+  const next = current.includes(id) ? current.filter(x => x !== id) : [...current, id];
+  return setCompactPanels(next);
+};
+
 // ── Metrics last row fill ─────────────────────────────────────────────────
 
 const DASHBOARD_METRICS_LAST_ROW_FILL_KEY = 'dashboardMetricsLastRowFill';
@@ -227,6 +260,69 @@ export const setMetricsLastRowFill = (value) => {
   try {
     localStorage.setItem(DASHBOARD_METRICS_LAST_ROW_FILL_KEY, value);
     metricsLastRowFillSignal.value = value;
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+// ── Profile chart height ──────────────────────────────────────────────────
+
+const DASHBOARD_PROFILE_CHART_HEIGHT_KEY = 'dashboardProfileChartHeight';
+
+export const getProfileChartHeight = () => {
+  if (typeof window === 'undefined' || !window.localStorage) return 128;
+  try {
+    const stored = localStorage.getItem(DASHBOARD_PROFILE_CHART_HEIGHT_KEY);
+    const n = stored ? parseInt(stored, 10) : 128;
+    return Number.isFinite(n) && n >= 64 && n <= 256 ? n : 128;
+  } catch {
+    return 128;
+  }
+};
+
+export const profileChartHeightSignal = signal(getProfileChartHeight());
+
+export const setProfileChartHeight = (n) => {
+  if (!Number.isInteger(n) || n < 64 || n > 256) return false;
+  try {
+    localStorage.setItem(DASHBOARD_PROFILE_CHART_HEIGHT_KEY, String(n));
+    profileChartHeightSignal.value = n;
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+// ── Column spacing ────────────────────────────────────────────────────────
+
+const DASHBOARD_COLUMN_SPACING_KEY = 'dashboardColumnSpacing';
+
+export const COLUMN_SPACINGS = {
+  START:   'start',
+  BETWEEN: 'between',
+};
+
+export const getColumnSpacing = () => {
+  if (typeof window === 'undefined' || !window.localStorage) {
+    return COLUMN_SPACINGS.START;
+  }
+  try {
+    const stored = localStorage.getItem(DASHBOARD_COLUMN_SPACING_KEY);
+    const valid = Object.values(COLUMN_SPACINGS);
+    return stored && valid.includes(stored) ? stored : COLUMN_SPACINGS.START;
+  } catch {
+    return COLUMN_SPACINGS.START;
+  }
+};
+
+export const columnSpacingSignal = signal(getColumnSpacing());
+
+export const setColumnSpacing = (value) => {
+  if (!Object.values(COLUMN_SPACINGS).includes(value)) return false;
+  try {
+    localStorage.setItem(DASHBOARD_COLUMN_SPACING_KEY, value);
+    columnSpacingSignal.value = value;
     return true;
   } catch {
     return false;
