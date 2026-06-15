@@ -65,6 +65,18 @@ sends standby/brew/stop/valve/pump/heater commands before sleeping.
 > does **not** represent the true remaining battery charge. Treat on-screen battery as
 > meaningful only on battery power.
 
+### Screenshots (from the simulator)
+
+Normal vs. critical battery (top-centre overlay, inside the round panel):
+
+| Normal (`GM_SIM_BATTERY_MV=3950`) | Critical (`GM_SIM_BATTERY_MV=3380`) |
+|---|---|
+| ![standby, normal battery](img/standby-battery.png) | ![standby, low battery](img/standby-battery-low.png) |
+
+Captured headlessly with `./.pio/build/display-sim/program --screenshot shot.bmp 4500`.
+The "starting / waiting-for-controller" view uses the same standby screen, so the overlay
+appears there too.
+
 ---
 
 ## Build / test

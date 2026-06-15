@@ -315,7 +315,9 @@ void DefaultUI::setupBatteryOverlay() {
     lv_label_set_text(batteryLabel, "");
     lv_obj_set_style_text_color(batteryLabel, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(batteryLabel, LV_OPA_TRANSP, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_align(batteryLabel, LV_ALIGN_TOP_RIGHT, -8, 6);
+    // Top-centre, just under the status-icon row. Centred so it stays inside the
+    // round panel's visible area (the corners are outside the circle on the T-RGB).
+    lv_obj_align(batteryLabel, LV_ALIGN_TOP_MID, 0, 44);
 }
 
 // [display-battery] Read the pack voltage and refresh the indicator. The panel's
