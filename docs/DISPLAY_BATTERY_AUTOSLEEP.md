@@ -53,6 +53,20 @@ sends standby/brew/stop/valve/pump/heater commands before sleeping.
   timeout in seconds), backed by `Settings.autoSleepNoController` / `noControllerSleepTimeout`.
   Compile-time defaults live in `constants.h`.
 
+### Wake behaviour
+- The LilyGo T-RGB display enters ESP32-S3 deep sleep with touch IRQ configured as
+  the wake source (`panel.enableTouchWakeup(); panel.sleep();`).
+- Touch wake does **not** mean the main CPU keeps polling the touch panel. In deep
+  sleep, the CPU/BLE/Wi-Fi/LVGL are stopped; only the low-power wake circuitry and
+  touch interrupt path remain active.
+- A wake from deep sleep is a reboot. The display firmware starts fresh and scans
+  for the controller again.
+- The controller cannot wake a sleeping display over BLE because BLE is off during
+  deep sleep. If the display is already asleep, the user must touch it to wake it.
+- A future timer-wake mode could periodically wake, scan for the controller, and go
+  back to sleep, but that is intentionally not part of this display-only touch-wake
+  implementation because it increases battery use.
+
 ### Battery (`BatteryMonitor`)
 - Sampled every 30 s via `Driver::getBatteryMilliVolts()` → on the T-RGB this is
   `panel.getBattVoltage()`, which averages ~20 ADC reads on `BOARD_ADC_DET` (GPIO4) and
@@ -119,8 +133,9 @@ scripts/format.sh
 | 3 | Controller turned on within 120 s | Connects, does **not** sleep | _todo_ |
 | 4 | Connected, then controller off | Sleeps ~120 s after disconnect | _todo_ |
 | 5 | Controller back within 120 s of disconnect | Does **not** sleep | _todo_ |
-| 6 | USB power, battery reading | Shows charging voltage (not true charge) — overlay sane | _todo_ |
-| 7 | Battery overlay on battery power | Approx % + voltage; amber < 3.5 V, red < 3.4 V | _todo_ |
+| 6 | Display asleep, then controller powered on | Display stays asleep until touched; no BLE wake | _todo_ |
+| 7 | USB power, battery reading | Shows charging voltage (not true charge) — overlay sane | _todo_ |
+| 8 | Battery overlay on battery power | Approx % + voltage; amber < 3.5 V, red < 3.4 V | _todo_ |
 
 > Status: **not yet run on hardware** — code builds (display + display-sim), static check passes
 > (space-free path), web UI builds. Real-device confirmation of the above is the remaining step.
