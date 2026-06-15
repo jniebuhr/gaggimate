@@ -358,34 +358,19 @@ export function Settings() {
           {/* Temperature Settings */}
           <Card sm={10} lg={5} title='Temperature Settings'>
             <InputGroupField
-              label='Default Steam Temperature'
-              htmlFor='targetSteamTemp'
-              unit='°C'
-              unitAriaLabel='celsius'
-            >
-              <input
-                id='targetSteamTemp'
-                name='targetSteamTemp'
-                type='number'
-                placeholder='135'
-                value={formData.targetSteamTemp}
-                onChange={onChange('targetSteamTemp')}
-              />
-            </InputGroupField>
-            <InputGroupField
-              label='Default Water Temperature'
-              htmlFor='targetWaterTemp'
+              label='Standby Temperature'
+              htmlFor='standbyTemperature'
               unit='°C'
               unitAriaLabel='celsius'
               noMargin
             >
               <input
-                id='targetWaterTemp'
-                name='targetWaterTemp'
+                id='standbyTemperature'
+                name='standbyTemperature'
                 type='number'
-                placeholder='80'
-                value={formData.targetWaterTemp}
-                onChange={onChange('targetWaterTemp')}
+                placeholder='60'
+                value={formData.standbyTemperature}
+                onChange={onChange('standbyTemperature')}
               />
             </InputGroupField>
           </Card>
