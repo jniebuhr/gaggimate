@@ -145,6 +145,31 @@ export const setStickyBottom = (value) => {
   }
 };
 
+// ── Sticky top ─────────────────────────────────────────────────────────────
+
+const DASHBOARD_STICKY_TOP_KEY = 'dashboardStickyTop';
+
+export const getStickyTop = () => {
+  if (typeof window === 'undefined' || !window.localStorage) return false;
+  try {
+    return localStorage.getItem(DASHBOARD_STICKY_TOP_KEY) === 'true';
+  } catch {
+    return false;
+  }
+};
+
+export const stickyTopSignal = signal(getStickyTop());
+
+export const setStickyTop = (value) => {
+  try {
+    localStorage.setItem(DASHBOARD_STICKY_TOP_KEY, String(value));
+    stickyTopSignal.value = value;
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 // ── Recent Shots visibility ─────────────────────────────────────────────────
 
 const DASHBOARD_SHOW_RECENT_SHOTS_KEY = 'dashboardShowRecentShots';

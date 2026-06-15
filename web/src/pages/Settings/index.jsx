@@ -21,6 +21,7 @@ import {
   getMetricOrder, setMetricOrder as persistMetricOrder,
   getPanelOrder, setPanelOrder as persistPanelOrder,
   getStickyBottom, setStickyBottom,
+  getStickyTop, setStickyTop,
   getShowRecentShots, setShowRecentShots,
   getMetricsColumns, setMetricsColumns,
   METRICS_LAST_ROW_FILLS, getMetricsLastRowFill, setMetricsLastRowFill,
@@ -101,6 +102,7 @@ export function Settings() {
   // ── Panel configurator state ───────────────────────────────────────────
   const [panelOrder, setPanelOrderState] = useState(() => getPanelOrder());
   const [stickyBottom, setStickyBottomState] = useState(() => getStickyBottom());
+  const [stickyTop, setStickyTopState] = useState(() => getStickyTop());
   const [showRecentShots, setShowRecentShotsState] = useState(() => getShowRecentShots());
   const [compactPanels, setCompactPanelsState] = useState(() => getCompactPanels());
   const [profileChartHeight, setProfileChartHeightState] = useState(() => getProfileChartHeight());
@@ -1169,6 +1171,15 @@ export function Settings() {
             <div className='divider'>
               <span>Dashboard Panels</span>
               <div className='flex items-center gap-3'>
+                <label className='flex cursor-pointer items-center gap-1.5 text-xs font-normal normal-case tracking-normal'>
+                  <input
+                    type='checkbox'
+                    className='toggle toggle-xs toggle-primary'
+                    checked={stickyTop}
+                    onChange={e => { setStickyTopState(e.target.checked); setStickyTop(e.target.checked); }}
+                  />
+                  Stick first to top
+                </label>
                 <label className='flex cursor-pointer items-center gap-1.5 text-xs font-normal normal-case tracking-normal'>
                   <input
                     type='checkbox'
