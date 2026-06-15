@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faRectangleList } from '@fortawesome/free-solid-svg-icons/faRectangleList';
 import { ProcessProfileChart } from '../../../components/ProcessProfileChart.jsx';
+import { profileChartHeightSignal } from '../../../utils/dashboardManager.js';
 import { fmtElapsed, fmtPhaseTarget, getPhaseLabel } from '../utils.js';
 
 function ProgressCard({ processInfo, isBrewing, isGrinding, selectedProfile }) {
@@ -59,6 +60,7 @@ export function ProfileCard({
   isBrewing,
   isGrinding,
   inCard = false,
+  compact = false,
 }) {
   const apiService = useContext(ApiServiceContext);
   const [profileData, setProfileData] = useState(null);
@@ -97,11 +99,12 @@ export function ProfileCard({
           <FontAwesomeIcon icon={faRectangleList} className='text-base-content/40 shrink-0 text-sm' />
         </a>
       </div>
-      {profileData && (
+      {!compact && profileData && (
         <ProcessProfileChart
           data={profileData}
           processInfo={processInfo}
-          className='mt-1 h-full w-full'
+          className='mt-1 w-full'
+          style={{ height: `${profileChartHeightSignal.value}px` }}
         />
       )}
     </>
@@ -123,4 +126,5 @@ ProfileCard.propTypes = {
   isBrewing:         PropTypes.bool.isRequired,
   isGrinding:        PropTypes.bool.isRequired,
   inCard:            PropTypes.bool,
+  compact:           PropTypes.bool,
 };
