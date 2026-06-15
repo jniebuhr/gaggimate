@@ -14,6 +14,19 @@ class LilyGoDriver : public Driver {
     bool supportsSDCard() override;
     bool installSDCard() override;
 
+    // [display-auto-sleep] Deep sleep with touch wakeup. The chip reboots on wake,
+    // so the firmware starts fresh and re-scans for the controller over BLE.
+    void sleep() override {
+        panel.enableTouchWakeup();
+        panel.sleep();
+    };
+
+    // [display-battery] The T-RGB exposes the single-cell Li-ion voltage on
+    // BOARD_ADC_DET (GPIO4); panel.getBattVoltage() already handles the 1/2 divider
+    // and returns millivolts.
+    bool hasBattery() override { return true; }
+    uint16_t getBatteryMilliVolts() override { return panel.getBattVoltage(); }
+
     static LilyGoDriver *getInstance() {
         if (instance == nullptr) {
             instance = new LilyGoDriver();

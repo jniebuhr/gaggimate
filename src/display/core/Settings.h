@@ -96,6 +96,9 @@ class Settings {
     int getMainBrightness() const { return mainBrightness; }
     int getStandbyBrightness() const { return standbyBrightness; }
     int getStandbyBrightnessTimeout() const { return standbyBrightnessTimeout; }
+    // [display-auto-sleep] display-only: sleep the screen when no controller is found
+    bool isAutoSleepNoController() const { return autoSleepNoController; }
+    int getNoControllerSleepTimeout() const { return noControllerSleepTimeout; }
     int getWifiApTimeout() const { return wifiApTimeout; }
     float getSteamPumpPercentage() const { return steamPumpPercentage; }
     float getSteamPumpCutoff() const { return steamPumpCutoff; }
@@ -183,6 +186,8 @@ class Settings {
     void setMainBrightness(int main_brightness);
     void setStandbyBrightness(int standby_brightness);
     void setStandbyBrightnessTimeout(int standby_brightness_timeout);
+    void setAutoSleepNoController(bool enabled);
+    void setNoControllerSleepTimeout(int timeout_ms);
     void setWifiApTimeout(int timeout);
     void setSteamPumpPercentage(float steam_pump_percentage);
     void setSteamPumpCutoff(float steam_pump_cutoff);
@@ -267,6 +272,9 @@ class Settings {
     int mainBrightness = 16;
     int standbyBrightness = 8;
     int standbyBrightnessTimeout = 60000; // 60 seconds default
+    // [display-auto-sleep] display-only
+    bool autoSleepNoController = DEFAULT_AUTO_SLEEP_NO_CONTROLLER;
+    int noControllerSleepTimeout = DEFAULT_NO_CONTROLLER_SLEEP_TIMEOUT_MS;
     int wifiApTimeout = DEFAULT_WIFI_AP_TIMEOUT_MS;
     int themeMode = 0;
 

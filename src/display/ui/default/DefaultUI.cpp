@@ -156,11 +156,13 @@ void DefaultUI::init() {
     pluginManager->on("controller:bluetooth:waiting", [this](Event const &) {
         waitingForController = true;
         rerender = true;
+        autoSleep.onControllerDisconnected(millis()); // [display-auto-sleep]
     });
     pluginManager->on("controller:bluetooth:connect", [this](Event const &) {
         waitingForController = false;
         rerender = true;
         initialized = true;
+        autoSleep.onControllerConnected(millis()); // [display-auto-sleep]
         // Stay on the standby screen when the controller is incompatible so the
         // mismatch message remains visible instead of jumping into brew.
         if (lv_scr_act() == ui_StandbyScreen && !controller->getSystemInfo().protocolMismatch) {
@@ -176,6 +178,7 @@ void DefaultUI::init() {
     pluginManager->on("controller:bluetooth:disconnect", [this](Event const &) {
         waitingForController = true;
         rerender = true;
+        autoSleep.onControllerDisconnected(millis()); // [display-auto-sleep]
     });
     pluginManager->on("controller:wifi:connect", [this](Event const &event) {
         rerender = true;
@@ -237,6 +240,11 @@ void DefaultUI::init() {
     });
     setupState();
     setupReactive();
+    // [display-auto-sleep] start the no-controller countdown at boot (a display
+    // powered up while the machine is off will sleep on its own after the timeout).
+    autoSleep.begin(millis());
+    // [display-battery] overlay shown on every screen via the top layer.
+    setupBatteryOverlay();
     xTaskCreatePinnedToCore(loopTask, "DefaultUI::loop", configMINIMAL_STACK_SIZE * 6, this, 1, &taskHandle, 1);
     xTaskCreatePinnedToCore(profileLoopTask, "DefaultUI::loopProfiles", configMINIMAL_STACK_SIZE * 4, this, 1, &profileTaskHandle,
                             0);
@@ -245,6 +253,16 @@ void DefaultUI::init() {
 void DefaultUI::loop() {
     const unsigned long now = millis();
     const unsigned long diff = now - lastRender;
+
+    // [display-battery] sample on a slow cadence (the ADC read briefly blocks)
+    if (lastBatterySampleAt == 0 || now - lastBatterySampleAt >= BATTERY_SAMPLE_INTERVAL_MS) {
+        sampleBattery(now);
+    }
+    // [display-auto-sleep] evaluate the no-controller sleep policy once per second
+    if (now - lastAutoSleepCheckAt >= NO_CONTROLLER_SLEEP_CHECK_INTERVAL_MS) {
+        lastAutoSleepCheckAt = now;
+        tickAutoSleep(now);
+    }
 
     if (now - lastTempLog > TEMP_HISTORY_INTERVAL) {
         updateTempHistory();
@@ -285,6 +303,75 @@ void DefaultUI::loop() {
     }
 
     lv_task_handler();
+}
+
+// [display-battery] Create a small battery indicator on the top layer so it shows
+// on every screen (starting / standby / menu / ...) without editing generated UI.
+void DefaultUI::setupBatteryOverlay() {
+    if (batteryLabel != nullptr || panelDriver == nullptr || !panelDriver->hasBattery()) {
+        return;
+    }
+    batteryLabel = lv_label_create(lv_layer_top());
+    lv_label_set_text(batteryLabel, "");
+    lv_obj_set_style_text_color(batteryLabel, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(batteryLabel, LV_OPA_TRANSP, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_align(batteryLabel, LV_ALIGN_TOP_RIGHT, -8, 6);
+}
+
+// [display-battery] Read the pack voltage and refresh the indicator. The panel's
+// getBattVoltage() already averages ~20 ADC samples internally, so one call per
+// sampling interval is enough. Display-only; never feeds any controller logic.
+void DefaultUI::sampleBattery(unsigned long now) {
+    if (panelDriver == nullptr || !panelDriver->hasBattery()) {
+        return;
+    }
+    battery.update(panelDriver->getBatteryMilliVolts(), now);
+    lastBatterySampleAt = now;
+    // Critically low and no controller -> allow sleeping sooner to protect the cell.
+    autoSleep.setForceShortTimeout(battery.isCritical() && !autoSleep.isControllerConnected());
+    updateBatteryOverlay();
+}
+
+void DefaultUI::updateBatteryOverlay() {
+    if (batteryLabel == nullptr) {
+        return;
+    }
+    if (!battery.isValid()) {
+        lv_label_set_text(batteryLabel, "");
+        return;
+    }
+    const uint16_t mv = battery.voltageMv();
+    const uint8_t pct = battery.percent();
+    const char *sym = pct >= 80   ? LV_SYMBOL_BATTERY_FULL
+                      : pct >= 55 ? LV_SYMBOL_BATTERY_3
+                      : pct >= 30 ? LV_SYMBOL_BATTERY_2
+                      : pct >= 10 ? LV_SYMBOL_BATTERY_1
+                                  : LV_SYMBOL_BATTERY_EMPTY;
+    // e.g. "<bat> 76% 3.91V" — percentage is approximate, voltage shown alongside.
+    lv_label_set_text_fmt(batteryLabel, "%s %d%% %d.%02dV", sym, pct, mv / 1000, (mv % 1000) / 10);
+    const uint32_t color = battery.isCritical() ? 0xFF3030 : battery.isLow() ? 0xFFB020 : 0xFFFFFF;
+    lv_obj_set_style_text_color(batteryLabel, lv_color_hex(color), LV_PART_MAIN | LV_STATE_DEFAULT);
+}
+
+// [display-auto-sleep] Evaluate the no-controller sleep policy. Display-only: it
+// only reads connection state and, when it decides to sleep, dims the panel and
+// calls the driver's deep-sleep. It NEVER sends any command to the controller.
+void DefaultUI::tickAutoSleep(unsigned long now) {
+    const Settings &settings = controller->getSettings();
+    autoSleep.setEnabled(settings.isAutoSleepNoController());
+    autoSleep.setTimeoutMs(settings.getNoControllerSleepTimeout());
+    // Don't sleep during OTA / firmware update, Wi-Fi AP setup, or PID autotune.
+    autoSleep.setSuppressed(updateActive || apActive || autotuning);
+
+    const AutoSleepManager::SleepReason reason = autoSleep.evaluate(now);
+    if (reason == AutoSleepManager::SleepReason::None) {
+        return;
+    }
+    ESP_LOGI("AutoSleep", "Entering display sleep, reason=%s", AutoSleepManager::reasonName(reason));
+    setBrightness(0);
+    if (panelDriver != nullptr) {
+        panelDriver->sleep(); // device: deep sleep (wake on touch). sim: logs a mock event.
+    }
 }
 
 void DefaultUI::loopProfiles() {

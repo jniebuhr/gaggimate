@@ -1,6 +1,8 @@
 #ifndef DEFAULTUI_H
 #define DEFAULTUI_H
 
+#include <display/core/AutoSleepManager.h>
+#include <display/core/BatteryMonitor.h>
 #include <display/core/PluginManager.h>
 #include <display/core/ProfileManager.h>
 #include <display/core/constants.h>
@@ -65,6 +67,12 @@ class DefaultUI {
 
     void updateStandbyScreen();
     void updateStatusScreen() const;
+
+    // [display-auto-sleep] + [display-battery] display-only helpers
+    void setupBatteryOverlay();
+    void sampleBattery(unsigned long now);
+    void updateBatteryOverlay();
+    void tickAutoSleep(unsigned long now);
 
     void adjustDials(lv_obj_t *dials);
     void adjustTempTarget(lv_obj_t *dials);
@@ -142,6 +150,13 @@ class DefaultUI {
 
     // Standby brightness control
     unsigned long standbyEnterTime = 0;
+
+    // [display-auto-sleep] + [display-battery] display-only state
+    AutoSleepManager autoSleep;
+    BatteryMonitor battery;
+    unsigned long lastBatterySampleAt = 0;
+    unsigned long lastAutoSleepCheckAt = 0;
+    lv_obj_t *batteryLabel = nullptr;
 
     xTaskHandle taskHandle;
     static void loopTask(void *arg);

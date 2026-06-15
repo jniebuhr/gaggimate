@@ -94,6 +94,9 @@ Settings::Settings() {
     mainBrightness = preferences.getInt("main_b", 16);
     standbyBrightness = preferences.getInt("standby_b", 8);
     standbyBrightnessTimeout = preferences.getInt("standby_bt", 60000);
+    // [display-auto-sleep] display-only
+    autoSleepNoController = preferences.getBool("as_noctl", DEFAULT_AUTO_SLEEP_NO_CONTROLLER);
+    noControllerSleepTimeout = preferences.getInt("as_noctl_t", DEFAULT_NO_CONTROLLER_SLEEP_TIMEOUT_MS);
     wifiApTimeout = preferences.getInt("wifi_apt", DEFAULT_WIFI_AP_TIMEOUT_MS);
     themeMode = preferences.getInt("theme", 0);
 
@@ -369,6 +372,16 @@ void Settings::setStandbyBrightnessTimeout(int standby_brightness_timeout) {
     save();
 }
 
+void Settings::setAutoSleepNoController(bool enabled) {
+    autoSleepNoController = enabled;
+    save();
+}
+
+void Settings::setNoControllerSleepTimeout(int timeout_ms) {
+    noControllerSleepTimeout = timeout_ms;
+    save();
+}
+
 void Settings::setWifiApTimeout(int timeout) {
     wifiApTimeout = timeout;
     save();
@@ -564,6 +577,9 @@ void Settings::doSave() {
     preferences.putInt("main_b", mainBrightness);
     preferences.putInt("standby_b", standbyBrightness);
     preferences.putInt("standby_bt", standbyBrightnessTimeout);
+    // [display-auto-sleep] display-only
+    preferences.putBool("as_noctl", autoSleepNoController);
+    preferences.putInt("as_noctl_t", noControllerSleepTimeout);
     preferences.putInt("wifi_apt", wifiApTimeout);
     preferences.putInt("theme", themeMode);
 

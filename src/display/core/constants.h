@@ -12,6 +12,20 @@
 #define BREW_MIN_VOLUMETRIC 5.0
 #define BREW_MAX_VOLUMETRIC 250.0
 #define DEFAULT_STANDBY_TIMEOUT_MS 900000
+
+// [display-auto-sleep] Deep-sleep the display when the controller (PCB) has been
+// unreachable over BLE for this long, to save battery. Display-only; wakes on touch.
+#define DEFAULT_AUTO_SLEEP_NO_CONTROLLER true
+#define DEFAULT_NO_CONTROLLER_SLEEP_TIMEOUT_MS 120000 // 2 minutes
+#define NO_CONTROLLER_SLEEP_CHECK_INTERVAL_MS 1000
+
+// [display-battery] Single-cell Li-ion telemetry (display-only). Sampling cadence,
+// samples averaged per reading, and the low/critical thresholds in millivolts.
+#define BATTERY_SAMPLE_INTERVAL_MS 30000
+#define BATTERY_SAMPLE_COUNT 12
+#define BATTERY_LOW_MV 3500
+#define BATTERY_CRITICAL_MV 3400
+
 #define MIN_TEMP 0
 #define MAX_TEMP 160
 #define DEFAULT_TEMPERATURE_OFFSET 0

@@ -665,6 +665,12 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setStandbyBrightness(request->arg("standbyBrightness").toInt());
             if (request->hasArg("standbyBrightnessTimeout"))
                 settings->setStandbyBrightnessTimeout(request->arg("standbyBrightnessTimeout").toInt() * 1000);
+            // [display-auto-sleep] display-only settings
+            if (request->hasArg("autoSleepNoController"))
+                settings->setAutoSleepNoController(request->arg("autoSleepNoController") == "true" ||
+                                                   request->arg("autoSleepNoController") == "1");
+            if (request->hasArg("noControllerSleepTimeout"))
+                settings->setNoControllerSleepTimeout(request->arg("noControllerSleepTimeout").toInt() * 1000);
             if (request->hasArg("steamPumpPercentage"))
                 settings->setSteamPumpPercentage(request->arg("steamPumpPercentage").toFloat());
             if (request->hasArg("steamPumpCutoff"))
@@ -784,6 +790,9 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["mainBrightness"] = settings.getMainBrightness();
     doc["standbyBrightness"] = settings.getStandbyBrightness();
     doc["standbyBrightnessTimeout"] = settings.getStandbyBrightnessTimeout() / 1000;
+    // [display-auto-sleep] display-only settings
+    doc["autoSleepNoController"] = settings.isAutoSleepNoController();
+    doc["noControllerSleepTimeout"] = settings.getNoControllerSleepTimeout() / 1000;
     doc["steamPumpPercentage"] = settings.getSteamPumpPercentage();
     doc["steamPumpCutoff"] = settings.getSteamPumpCutoff();
     doc["themeMode"] = settings.getThemeMode();
