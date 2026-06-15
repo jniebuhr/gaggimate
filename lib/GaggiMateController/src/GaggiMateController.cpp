@@ -1,8 +1,7 @@
 #include "GaggiMateController.h"
 #include "utilities.h"
 #include <Arduino.h>
-#include <freertos/FreeRTOS.h>
-#include <freertos/task.h>
+#include <ExtensionIOXL9555.hpp>
 #include <peripherals/DimmedPump.h>
 #include <peripherals/SimplePump.h>
 
@@ -16,6 +15,9 @@ GaggiMateController::GaggiMateController(String version) : _version(std::move(ve
     configs.push_back(GM_PRO_LEGO);
     configs.push_back(GM_PRO_REV_11);
 }
+
+char albaSwTxBuffer[128];
+char albaSwRxBuffer[128];
 
 void GaggiMateController::setup() {
     delay(5000);
@@ -32,7 +34,8 @@ void GaggiMateController::setup() {
     this->valve = new SimpleRelay(_config.valvePin, _config.valveOn);
     this->alt = new SimpleRelay(_config.altPin, _config.altOn);
     if (_config.capabilites.pressure) {
-        pressureSensor = new PressureSensor(_config.pressureSda, _config.pressureScl, [this](float pressure) { /* noop */ });
+        this->adc = new ADSAdc(_config.pressureSda, _config.pressureScl, 1);
+        this->pressureSensor = new PressureSensor(this->adc);
     }
     if (_config.capabilites.dimming) {
         pump = new DimmedPump(_config.pumpPin, _config.pumpSensePin, pressureSensor);
@@ -43,19 +46,31 @@ void GaggiMateController::setup() {
     this->steamBtn = new DigitalInput(_config.steamButtonPin, [this](const bool state) { _comms.sendButtonState(1, state); });
 
     // 4-Pin peripheral port
-    if (!Wire.begin(_config.sunriseSdaPin, _config.sunriseSclPin, 400000)) {
-        ESP_LOGE(LOG_TAG, "Failed to initialize I2C bus");
-    }
-    this->ledController = new LedController(&Wire);
-    this->distanceSensor = new DistanceSensor(&Wire, [this](int distance) { _comms.sendTofMeasurement(distance); });
+    albaComms = new SoftWire(_config.sunriseSdaPin, _config.sunriseSclPin);
+    albaComms->setTxBuffer(albaSwTxBuffer, sizeof(albaSwTxBuffer));
+    albaComms->setRxBuffer(albaSwRxBuffer, sizeof(albaSwRxBuffer));
+    albaComms->setTimeout_ms(200);
+    albaComms->setDelay_us(20);
+    albaComms->begin();
+    this->ledController = new LedController(albaComms);
+    this->distanceSensor = new DistanceSensor(albaComms, [this](int distance) { _comms.sendTofMeasurement(distance); });
     if (this->ledController->isAvailable()) {
         _config.capabilites.ledControls = true;
         _config.capabilites.tof = true;
         _comms.onLedControl([this](uint8_t channel, uint8_t brightness) { ledController->setChannel(channel, brightness); });
     }
 
-    _comms.init("GPBLS", _config.name.c_str(), _version, _config.capabilites.dimming, _config.capabilites.pressure,
-                _config.capabilites.ledControls, _config.capabilites.tof);
+    gm::DeviceCapabilities capabilities = gaggimate_Capabilities_init_zero;
+    capabilities.dimming = _config.capabilites.dimming;
+    capabilities.pressure = _config.capabilites.pressure;
+    capabilities.tof = _config.capabilites.tof;
+    capabilities.led_control = _config.capabilites.ledControls;
+    if (this->gearpumpAddon != nullptr) {
+        capabilities.addons_count = 1;
+        capabilities.addons[0] = gaggimate_Addon_init_zero;
+        capabilities.addons[0].type = 7;
+    }
+    _comms.init("GPBLS", _config.name.c_str(), _version, capabilities);
 
     if (_config.capabilites.ledControls) {
         this->ledController->setup();
@@ -69,9 +84,15 @@ void GaggiMateController::setup() {
     this->valve->setup();
     this->alt->setup();
     this->pump->setup();
+    if (this->gearpumpAddon != nullptr) {
+        this->gearpumpAddon->setup(this->pump->getPumpPowerPtr());
+        auto dimmedPump = static_cast<DimmedPump *>(pump);
+        dimmedPump->setBinaryMode(true);
+    }
     this->brewBtn->setup();
     this->steamBtn->setup();
     if (_config.capabilites.pressure) {
+        this->adc->setup();
         pressureSensor->setup();
         _comms.onPressureScale([this](float scale) { this->pressureSensor->setScale(scale); });
     }
@@ -117,6 +138,11 @@ void GaggiMateController::setup() {
         }
         if (mode == PumpControlMode::Power) {
             this->pump->setPower(power);
+            if (power == 0.0f) {
+                if (gearpumpAddon != nullptr) {
+                    gearpumpAddon->stop();
+                }
+            }
             return;
         }
         if (!_config.capabilites.dimming) {
@@ -156,15 +182,22 @@ void GaggiMateController::setup() {
         // Apply thermal feedforward parameters if available
         this->heater->setFeedforwardScale(Kf);
     });
-    _comms.onPumpModelCoeffs([this](float a, float b, float c, float d) {
+    _comms.onPumpSettings([this](gm::PumpSettings settings) {
         if (_config.capabilites.dimming) {
             auto dimmedPump = static_cast<DimmedPump *>(pump);
             // Check if this is a flow measurement call (a and b are flow measurements, c and d are nan)
-            if (isnan(c) && isnan(d)) {
-                dimmedPump->setPumpFlowCoeff(a, b); // a = oneBarFlow, b = nineBarFlow
+            if (isnan(settings.c) && isnan(settings.d)) {
+                dimmedPump->setPumpFlowCoeff(settings.a, settings.b); // a = oneBarFlow, b = nineBarFlow
             } else {
-                dimmedPump->setPumpFlowPolyCoeffs(a, b, c, d); // a, b, c, d are polynomial coefficients
+                dimmedPump->setPumpFlowPolyCoeffs(settings.a, settings.b, settings.c,
+                                                  settings.d); // a, b, c, d are polynomial coefficients
             }
+            if (this->gearpumpAddon != nullptr) {
+                dimmedPump->setGains(settings.commutationGain, settings.convergenceGain, settings.integralGain);
+            }
+        }
+        if (this->gearpumpAddon != nullptr) {
+            gearpumpAddon->setMaxPower(settings.maxBLDCPower);
         }
     });
     _comms.onPing([this]() { handlePing(); });
@@ -233,7 +266,17 @@ void GaggiMateController::detectBoard() {
 }
 
 void GaggiMateController::detectAddon() {
-    // TODO: Add I2C scanning for extensions
+    Wire.begin(_config.ext3Pin, _config.ext2Pin, 400000);
+    for (uint8_t addr = XL9555_SLAVE_ADDRESS0; addr <= XL9555_SLAVE_ADDRESS7; ++addr) {
+        Wire.beginTransmission(addr);
+        if (Wire.endTransmission(addr) == 0) {
+            ESP_LOGI(LOG_TAG, "Found an extension at address 0x%X", addr);
+            if (addr == 0x26) {
+                ESP_LOGI(LOG_TAG, "Identified addon as Gearpump Addon");
+                gearpumpAddon = new GearpumpAddon(addr, _config.ext3Pin, _config.ext2Pin, _config.ext1Pin);
+            }
+        }
+    }
 }
 
 void GaggiMateController::handlePing() {
@@ -245,12 +288,23 @@ void GaggiMateController::handlePing() {
 }
 
 void GaggiMateController::handlePingTimeout() {
-    ESP_LOGE(LOG_TAG, "Ping timeout detected. Turning off heater and pump for safety.\n");
     // Turn off the heater and pump as a safety measure
     this->heater->setSetpoint(0);
     this->pump->setPower(0);
     this->valve->set(false);
     this->alt->set(false);
+    // On the healthy->timeout transition, drop the BLE link. An in-band error
+    // notify can be silently swallowed on a wedged GATT (the failure mode this
+    // is here to recover from), but LL_TERMINATE_IND propagates reliably at
+    // the link layer. The display's existing disconnect path then rebuilds
+    // the link and re-sends control state. loop() re-enters every 250 ms while
+    // timed out -- guard so we don't repeatedly bounce the connection or spam
+    // the log.
+    if (errorState != ERROR_CODE_TIMEOUT) {
+        ESP_LOGE(LOG_TAG, "Ping timeout detected. Turning off heater and pump for safety.");
+        if (!_comms.isUpdating())
+            _comms.disconnect();
+    }
     errorState = ERROR_CODE_TIMEOUT;
 }
 

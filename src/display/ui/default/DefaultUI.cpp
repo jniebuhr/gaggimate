@@ -5,10 +5,13 @@
 #include <display/core/process/BrewProcess.h>
 #include <display/core/process/Process.h>
 #include <display/core/zones.h>
+#ifndef GAGGIMATE_SIM // hardware panel drivers are device-only
 #include <display/drivers/AmoledDisplayDriver.h>
 #include <display/drivers/LilyGoDriver.h>
 #include <display/drivers/WaveshareDriver.h>
 #include <display/drivers/common/LV_Helper.h>
+#endif
+#include <display/main.h>
 #include <display/ui/utils/effects.h>
 #include <utility>
 
@@ -985,9 +988,11 @@ void DefaultUI::applyTheme() {
         change_color_theme(currentThemeMode);
         // ui_theme_set(currentThemeMode);
 
+#ifndef GAGGIMATE_SIM // Amoled-specific black theme override is device-only
         if (AmoledDisplayDriver::getInstance() == panelDriver && currentThemeMode == THEME_ID_DARK) {
             enable_amoled_black_theme_override(lv_disp_get_default());
         }
+#endif
     }
 }
 

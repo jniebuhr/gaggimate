@@ -65,13 +65,18 @@ gm::Payload GaggiMateClient::buildPidSettings(float kp, float ki, float kd, floa
     return p;
 }
 
-gm::Payload GaggiMateClient::buildPumpModelCoeffs(float a, float b, float c, float d) {
+gm::Payload GaggiMateClient::buildPumpSettings(float a, float b, float c, float d, float commutationGain, float convergenceGain,
+                                               float integralGain, float maxPower) {
     gm::Payload p = gaggimate_Payload_init_zero;
     p.which_content = gaggimate_Payload_pump_model_tag;
     p.content.pump_model.a = a;
     p.content.pump_model.b = b;
     p.content.pump_model.c = c;
     p.content.pump_model.d = d;
+    p.content.pump_model.commutationGain = commutationGain;
+    p.content.pump_model.convergenceGain = convergenceGain;
+    p.content.pump_model.integralGain = integralGain;
+    p.content.pump_model.maxBLDCPower = maxPower;
     return p;
 }
 
@@ -129,8 +134,9 @@ void GaggiMateClient::sendPidSettings(float kp, float ki, float kd, float kf) {
     _endpoint.send(buildPidSettings(kp, ki, kd, kf));
 }
 
-void GaggiMateClient::sendPumpModelCoeffs(float a, float b, float c, float d) {
-    _endpoint.send(buildPumpModelCoeffs(a, b, c, d));
+void GaggiMateClient::sendPumpSettings(float a, float b, float c, float d, float commutationGain, float convergenceGain,
+                                       float integralGain, float maxPower) {
+    _endpoint.send(buildPumpSettings(a, b, c, d, commutationGain, convergenceGain, integralGain, maxPower));
 }
 
 void GaggiMateClient::sendAutotune(uint32_t testTime, uint32_t samples, uint32_t heaterWattage) {
@@ -147,10 +153,17 @@ void GaggiMateClient::sendLedControl(const LedChannelCommand *channels, size_t c
 
 void GaggiMateClient::registerHandlers() {
     _endpoint.on(gaggimate_Payload_system_info_tag, [this](const gm::Payload &p) {
-        if (_systemInfoCb)
+        if (_systemInfoCb) {
+            std::vector<uint32_t> addonList = {};
+            if (p.content.system_info.capabilities.addons_count > 0) {
+                for (int i = 0; i < p.content.system_info.capabilities.addons_count; i++) {
+                    addonList.push_back(p.content.system_info.capabilities.addons[i].type);
+                }
+            }
             _systemInfoCb(p.content.system_info.hardware, p.content.system_info.version, p.content.system_info.protocol_version,
                           p.content.system_info.capabilities.dimming, p.content.system_info.capabilities.pressure,
-                          p.content.system_info.capabilities.led_control, p.content.system_info.capabilities.tof);
+                          p.content.system_info.capabilities.led_control, p.content.system_info.capabilities.tof, addonList);
+        }
     });
     _endpoint.on(gaggimate_Payload_sensor_tag, [this](const gm::Payload &p) {
         if (!_sensorCb)

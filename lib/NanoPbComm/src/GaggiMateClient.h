@@ -21,8 +21,9 @@ class GaggiMateClient {
     using ConnectionCallback = std::function<void(bool connected)>;
     // Argument is the raw legacy INFO characteristic (JSON), if readable.
     using IncompatibleCallback = std::function<void(const String &info)>;
-    using SystemInfoCallback = std::function<void(const char *hardware, const char *version, uint32_t protocolVersion,
-                                                  bool dimming, bool pressure, bool ledControl, bool tof)>;
+    using SystemInfoCallback =
+        std::function<void(const char *hardware, const char *version, uint32_t protocolVersion, bool dimming, bool pressure,
+                           bool ledControl, bool tof, std::vector<uint32_t> addons)>;
     using SensorCallback =
         std::function<void(float temperature, float pressure, float puckFlow, float pumpFlow, float puckResistance)>;
     using ButtonCallback = std::function<void(uint8_t index, bool pressed)>;
@@ -63,7 +64,8 @@ class GaggiMateClient {
     gm::Payload buildPumpControl(uint8_t index, PumpControlMode mode, float power, float pressure, float flow);
     gm::Payload buildRelayControl(uint8_t index, bool open);
     gm::Payload buildPidSettings(float kp, float ki, float kd, float kf);
-    gm::Payload buildPumpModelCoeffs(float a, float b, float c, float d);
+    gm::Payload buildPumpSettings(float a, float b, float c, float d, float commutationGain, float convergenceGain,
+                                  float integralGain, float maxPower);
     gm::Payload buildAutotune(uint32_t testTime, uint32_t samples, uint32_t heaterWattage);
     gm::Payload buildPressureScale(float scale);
     gm::Payload buildTare();
@@ -77,7 +79,8 @@ class GaggiMateClient {
     void sendPumpControl(uint8_t index, PumpControlMode mode, float power, float pressure, float flow);
     void sendRelayControl(uint8_t index, bool open); // index 0 = brew valve, 1 = alt relay
     void sendPidSettings(float kp, float ki, float kd, float kf);
-    void sendPumpModelCoeffs(float a, float b, float c, float d);
+    void sendPumpSettings(float a, float b, float c, float d, float commutationGain, float convergenceGain, float integralGain,
+                          float maxPower);
     void sendAutotune(uint32_t testTime, uint32_t samples, uint32_t heaterWattage);
     void sendPressureScale(float scale);
     void tare();

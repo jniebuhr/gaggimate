@@ -5,9 +5,9 @@
 
 GaggiMateServer::GaggiMateServer() : _endpoint(_transport) {}
 
-void GaggiMateServer::init(const String &deviceName, const String &hardware, const String &version, bool dimming, bool pressure,
-                           bool ledControl, bool tof) {
-    setSystemInfo(hardware, version, dimming, pressure, ledControl, tof);
+void GaggiMateServer::init(const String &deviceName, const String &hardware, const String &version,
+                           const gm::DeviceCapabilities &capabilities) {
+    setSystemInfo(hardware, version, capabilities);
     registerHandlers();
     _endpoint.onConnection([this](bool connected) {
         if (connected)
@@ -31,24 +31,21 @@ void GaggiMateServer::pumpTask(void *arg) {
     }
 }
 
-void GaggiMateServer::setSystemInfo(const String &hardware, const String &version, bool dimming, bool pressure, bool ledControl,
-                                    bool tof) {
+void GaggiMateServer::setSystemInfo(const String &hardware, const String &version, const gm::DeviceCapabilities &capabilities) {
     memset(&_systemInfo, 0, sizeof(_systemInfo));
     strlcpy(_systemInfo.hardware, hardware.c_str(), sizeof(_systemInfo.hardware));
     strlcpy(_systemInfo.version, version.c_str(), sizeof(_systemInfo.version));
     _systemInfo.protocol_version = gm_proto::PROTOCOL_VERSION;
     _systemInfo.has_capabilities = true;
-    _systemInfo.capabilities.dimming = dimming;
-    _systemInfo.capabilities.pressure = pressure;
-    _systemInfo.capabilities.led_control = ledControl;
-    _systemInfo.capabilities.tof = tof;
+    _systemInfo.capabilities = capabilities;
 
     // Mirror system info onto the legacy read-only characteristic in the old
     // JSON shape (plus "pv"), so pre-framing tools can still read it.
     char json[224];
     snprintf(json, sizeof(json), "{\"hw\":\"%s\",\"v\":\"%s\",\"pv\":%u,\"cp\":{\"ps\":%s,\"dm\":%s,\"led\":%s,\"tof\":%s}}",
-             hardware.c_str(), version.c_str(), static_cast<unsigned>(gm_proto::PROTOCOL_VERSION), pressure ? "true" : "false",
-             dimming ? "true" : "false", ledControl ? "true" : "false", tof ? "true" : "false");
+             hardware.c_str(), version.c_str(), static_cast<unsigned>(gm_proto::PROTOCOL_VERSION),
+             capabilities.pressure ? "true" : "false", capabilities.dimming ? "true" : "false",
+             capabilities.led_control ? "true" : "false", capabilities.tof ? "true" : "false");
     _transport.setInfo(json);
 }
 
@@ -156,8 +153,8 @@ void GaggiMateServer::registerHandlers() {
             _pidCb(p.content.pid.kp, p.content.pid.ki, p.content.pid.kd, p.content.pid.kf);
     });
     _endpoint.on(gaggimate_Payload_pump_model_tag, [this](const gm::Payload &p) {
-        if (_pumpModelCb)
-            _pumpModelCb(p.content.pump_model.a, p.content.pump_model.b, p.content.pump_model.c, p.content.pump_model.d);
+        if (_pumpSettingsCb)
+            _pumpSettingsCb(p.content.pump_model);
     });
     _endpoint.on(gaggimate_Payload_autotune_tag, [this](const gm::Payload &p) {
         if (_autotuneCb)

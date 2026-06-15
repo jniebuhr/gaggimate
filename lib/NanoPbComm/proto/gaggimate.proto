@@ -39,7 +39,7 @@ message Payload {
         PumpControl pump = 3;
         RelayControl relay = 4;
         PidSettings pid = 6;
-        PumpModelCoeffs pump_model = 7;
+        PumpSettings pump_model = 7;
         AutotuneRequest autotune = 8;
         PressureScale pressure_scale = 9;
         Tare tare = 10;
@@ -106,13 +106,20 @@ message PidSettings {
     float kf = 4; // combined thermal feedforward gain
 }
 
-message PumpModelCoeffs {
+message PumpSettings {
     // c and d may be NaN to signal two-point flow-measurement mode
     // (a = oneBarFlow, b = nineBarFlow) instead of polynomial coefficients.
     float a = 1;
     float b = 2;
     float c = 3;
     float d = 4;
+
+    float commutationGain = 5;
+    float convergenceGain = 6;
+    float integralGain = 7;
+
+    // BLDC pumps only
+    float maxBLDCPower = 8;
 }
 
 message AutotuneRequest {
@@ -150,6 +157,11 @@ message Capabilities {
     bool pressure = 2;
     bool led_control = 3;
     bool tof = 4;
+    repeated Addon addons = 5;
+}
+
+message Addon {
+    uint32 type = 1;
 }
 
 message SystemInfo {

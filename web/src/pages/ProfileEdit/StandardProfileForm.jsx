@@ -6,9 +6,11 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
 import { Tooltip } from '../../components/Tooltip.jsx';
+import { getProfilePhases, removePhaseAt, updatePhaseAt } from './profilePhases.js';
 
 export function StandardProfileForm(props) {
   const { data, onChange, onSave, saving = true, pressureAvailable = false } = props;
+  const phases = getProfilePhases(data);
 
   const onFieldChange = (field, value) => {
     onChange({
@@ -18,18 +20,17 @@ export function StandardProfileForm(props) {
   };
 
   const onPhaseChange = (index, value) => {
-    const newData = {
+    onChange({
       ...data,
-    };
-    newData.phases[index] = value;
-    onChange(newData);
+      phases: updatePhaseAt(phases, index, value),
+    });
   };
 
   const onPhaseAdd = () => {
     onChange({
       ...data,
       phases: [
-        ...data.phases,
+        ...phases,
         {
           phase: 'brew',
           name: 'New Phase',
@@ -43,16 +44,10 @@ export function StandardProfileForm(props) {
   };
 
   const onPhaseRemove = index => {
-    const newData = {
+    onChange({
       ...data,
-      phases: [],
-    };
-    for (let i = 0; i < data.phases.length; i++) {
-      if (i !== index) {
-        newData.phases.push(data.phases[i]);
-      }
-    }
-    onChange(newData);
+      phases: removePhaseAt(phases, index),
+    });
   };
 
   return (
@@ -117,7 +112,7 @@ export function StandardProfileForm(props) {
 
         <Card sm={10} title='Brew Phases'>
           <div className='space-y-4' role='group' aria-label='Brew phases configuration'>
-            {data.phases.map((value, index) => (
+            {phases.map((value, index) => (
               <div key={index}>
                 {index > 0 && (
                   <div className='flex flex-col items-center py-2' aria-hidden='true'>

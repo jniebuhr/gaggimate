@@ -24,6 +24,13 @@ constexpr uint16_t RESISTANCE_MAX_VALUE = 0xFFFF;
 constexpr int16_t FLOW_MIN_VALUE = -2000; // -20.00 ml/s
 constexpr int16_t FLOW_MAX_VALUE = 2000;  //  20.00 ml/s
 
+// Largest believable change in scale weight within one sample interval. A real
+// espresso never adds >5 g in 250 ms (that is already 20 ml/s, the saturation
+// point of the vf field); anything larger is a scale/BLE glitch and must not be
+// folded into the flow EMA, where a single bad reading would otherwise pin vf at
+// the ±20 floor for seconds while the EMA bleeds off. See GM-110.
+constexpr float MAX_PLAUSIBLE_WEIGHT_DELTA = 5.0f; // grams per sample
+
 uint16_t encodeUnsigned(float value, float scale, uint16_t maxValue) {
     if (!std::isfinite(value)) {
         return 0;
@@ -121,10 +128,17 @@ void ShotHistoryPlugin::record() {
                 currentFile.write(reinterpret_cast<const uint8_t *>(&header), sizeof(header));
             }
         }
-        float btDiff = currentBluetoothWeight - lastBluetoothWeight;
-        float btFlow = btDiff / 0.25f;
-        currentBluetoothFlow = currentBluetoothFlow * 0.75f + btFlow * 0.25f;
-        lastBluetoothWeight = currentBluetoothWeight;
+        // Bluetooth weight flow (vf): derive from the same non-negative weight we
+        // store in sample.v so the two can never disagree, and skip the EMA update
+        // on an implausible single-sample jump so one bad scale/BLE reading cannot
+        // saturate vf for seconds. See GM-110.
+        const float btWeight = currentBluetoothWeight > 0.0f ? currentBluetoothWeight : 0.0f;
+        const float btDiff = btWeight - lastBluetoothWeight;
+        if (fabsf(btDiff) <= MAX_PLAUSIBLE_WEIGHT_DELTA) {
+            const float btFlow = btDiff / (SHOT_LOG_SAMPLE_INTERVAL_MS / 1000.0f);
+            currentBluetoothFlow = currentBluetoothFlow * 0.75f + btFlow * 0.25f;
+        }
+        lastBluetoothWeight = btWeight;
 
         ShotLogSample sample{};
         uint32_t tick = sampleCount <= 0xFFFF ? sampleCount : 0xFFFF;
@@ -137,7 +151,7 @@ void ShotHistoryPlugin::record() {
         sample.tf = encodeSigned(controller->getTargetFlow(), FLOW_SCALE, FLOW_MIN_VALUE, FLOW_MAX_VALUE);
         sample.pf = encodeSigned(controller->getCurrentPuckFlow(), FLOW_SCALE, FLOW_MIN_VALUE, FLOW_MAX_VALUE);
         sample.vf = encodeSigned(currentBluetoothFlow, FLOW_SCALE, FLOW_MIN_VALUE, FLOW_MAX_VALUE);
-        sample.v = encodeUnsigned(currentBluetoothWeight, WEIGHT_SCALE, WEIGHT_MAX_VALUE);
+        sample.v = encodeUnsigned(btWeight, WEIGHT_SCALE, WEIGHT_MAX_VALUE);
         sample.ev = encodeUnsigned(currentEstimatedWeight, WEIGHT_SCALE, WEIGHT_MAX_VALUE);
         sample.pr = encodeUnsigned(currentPuckResistance, RESISTANCE_SCALE, RESISTANCE_MAX_VALUE);
         sample.si = getSystemInfo(); // Pack system state information
@@ -271,6 +285,7 @@ void ShotHistoryPlugin::startRecording() {
     lastStableWeight = 0.0f;
     currentEstimatedWeight = 0.0f;
     currentBluetoothFlow = 0.0f;
+    lastBluetoothWeight = 0.0f;
     currentProfileName = controller->getProfileManager()->getSelectedProfile().label;
     recording = true;
     extendedRecording = false;
@@ -502,7 +517,8 @@ void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &respo
         response["notes"] = notes;
     } else if (type == "req:history:notes:save") {
         auto id = request["id"].as<String>();
-        auto notes = request["notes"];
+        JsonDocument notes; // explicit document: variant->const JsonDocument& is ambiguous on clang
+        notes.set(request["notes"]);
         saveNotes(id, notes);
 
         // Update rating and volume in index

@@ -62,6 +62,10 @@ function applyEasing(t, type) {
 }
 
 function prepareData(phases, target) {
+  if (!Array.isArray(phases) || phases.length === 0) {
+    return [];
+  }
+
   const data = [];
   let time = 0;
   let phaseTime = 0;
@@ -113,9 +117,10 @@ function prepareData(phases, target) {
 }
 
 function makeChartData(data, selectedPhase, isDarkMode = false) {
+  const phases = Array.isArray(data?.phases) ? data.phases : [];
   let duration = 0;
-  for (const phase of data.phases) {
-    duration += parseFloat(phase.duration);
+  for (const phase of phases) {
+    duration += Number.parseFloat(phase.duration);
   }
   const chartData = {
     type: 'line',
@@ -123,11 +128,11 @@ function makeChartData(data, selectedPhase, isDarkMode = false) {
       datasets: [
         {
           ...pressureDatasetDefaults,
-          data: prepareData(data.phases, 'pressure'),
+          data: prepareData(phases, 'pressure'),
         },
         {
           ...flowDatasetDefaults,
-          data: prepareData(data.phases, 'flow'),
+          data: prepareData(phases, 'flow'),
         },
       ],
     },
@@ -239,12 +244,12 @@ function makeChartData(data, selectedPhase, isDarkMode = false) {
   };
 
   // Add highlighting box only if a phase is selected
-  if (selectedPhase !== null) {
+  if (selectedPhase !== null && phases.length > 0) {
     let start = 0;
     for (let i = 0; i < selectedPhase; i++) {
-      start += parseFloat(data.phases[i].duration);
+      start += Number.parseFloat(phases[i].duration);
     }
-    let end = start + parseFloat(data.phases[selectedPhase].duration);
+    let end = start + Number.parseFloat(phases[selectedPhase].duration);
     chartData.options.plugins.annotation.annotations.push({
       id: 'box1',
       type: 'box',
@@ -261,8 +266,8 @@ function makeChartData(data, selectedPhase, isDarkMode = false) {
   const yMax = chartData.options.scales.y.max ?? 12;
 
   let phaseStart = 0;
-  for (let i = 0; i < data.phases.length; i++) {
-    const phase = data.phases[i];
+  for (let i = 0; i < phases.length; i++) {
+    const phase = phases[i];
     const phaseName = phase.name || `Phase ${i + 1}`;
 
     chartData.options.plugins.annotation.annotations.push({
@@ -292,7 +297,7 @@ function makeChartData(data, selectedPhase, isDarkMode = false) {
         : undefined,
     });
 
-    phaseStart += parseFloat(phase.duration);
+    phaseStart += Number.parseFloat(phase.duration);
   }
   return chartData;
 }

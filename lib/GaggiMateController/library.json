@@ -17,6 +17,7 @@
     "ble_ota_dfu": "file://lib/ble_ota_dfu",
     "NanoPbComm": "file://lib/NanoPbComm",
     "nanopb/Nanopb": "^0.4.9",
+    "overrides": "file://lib/overrides",
     "h2zero/NimBLE-Arduino": "^1.4.0",
     "robtillaart/MAX31855": "^0.6.1",
     "bblanchon/ArduinoJson": "^7.2.1",
@@ -24,8 +25,6 @@
     "robtillaart/ADS1X15": "^0.5.2",
     "Wire": "*",
     "NayrodPID": "file://lib/NayrodPID",
-    "robtillaart/PCA9634": "0.4.1",
-    "PWFusion_VL53L3C": "https://github.com/PlayingWithFusion/PWFusion_VL53L3C",
-    "pololu/VL53L0X": "^1.3.1"
+    "lewisxhe/SensorLib": "0.2.3"
   }
 }
