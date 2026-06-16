@@ -10,8 +10,15 @@ void GaggiMateServer::init(const String &deviceName, const String &hardware, con
     setSystemInfo(hardware, version, capabilities);
     registerHandlers();
     _endpoint.onConnection([this](bool connected) {
-        if (connected)
-            pushSystemInfo();
+        // Don't announce mid-handshake -- the display's config burst would race link setup.
+        // pumpTask announces once the link is stable, and re-announces until config arrives.
+        _linkUp = connected;
+        if (connected) {
+            _linkSettledAt = millis();
+            _configReceived = false;
+            _lastSysInfoPush = 0;
+            _sysInfoAttempts = 0;
+        }
     });
     _endpoint.begin();
     _transport.init(deviceName);
@@ -27,6 +34,13 @@ void GaggiMateServer::pumpTask(void *arg) {
     TickType_t lastWake = xTaskGetTickCount();
     for (;;) {
         self->_endpoint.loop();
+        if (self->_linkUp && !self->_configReceived && self->_sysInfoAttempts < MAX_SYSINFO_ATTEMPTS &&
+            (millis() - self->_linkSettledAt) >= SYSINFO_STABILIZE_MS &&
+            (self->_lastSysInfoPush == 0 || (millis() - self->_lastSysInfoPush) >= SYSINFO_RETRY_MS)) {
+            self->_lastSysInfoPush = millis();
+            self->_sysInfoAttempts++;
+            self->pushSystemInfo();
+        }
         xTaskDelayUntil(&lastWake, pdMS_TO_TICKS(15));
     }
 }
@@ -149,6 +163,7 @@ void GaggiMateServer::registerHandlers() {
             _relayCb(static_cast<uint8_t>(p.content.relay.index), p.content.relay.open);
     });
     _endpoint.on(gaggimate_Payload_pid_tag, [this](const gm::Payload &p) {
+        _configReceived = true;
         if (_pidCb)
             _pidCb(p.content.pid.kp, p.content.pid.ki, p.content.pid.kd, p.content.pid.kf);
     });

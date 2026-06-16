@@ -251,21 +251,27 @@ void Endpoint::handleData(const uint8_t *data, size_t length) {
 }
 
 void Endpoint::handleConnection(bool connected) {
-    lock();
-    _inFlight = false;
-    _retries = 0;
-    _txLen = 0;
-    _inFlightId = 0;
-    _lastRxId = 0;
-    _nextId = 1;
-    _rttValid = false; // latency is per-link; don't carry a stale estimate across reconnects
-    _smoothedRttMs = 0;
-    _lastRttMs = 0;
-    _queue.clear();
-    unlock();
+    // NimBLE emits "connected" more than once per link (onConnect + onSubscribe);
+    // reset the session only on a real transition, else a redundant emit's xQueueReset wipes an already-arrived burst.
+    const bool changed = connected != _connected;
+    _connected = connected;
+    if (changed) {
+        lock();
+        _inFlight = false;
+        _retries = 0;
+        _txLen = 0;
+        _inFlightId = 0;
+        _lastRxId = 0;
+        _nextId = 1;
+        _rttValid = false; // latency is per-link; don't carry a stale estimate across reconnects
+        _smoothedRttMs = 0;
+        _lastRttMs = 0;
+        _queue.clear();
+        unlock();
 
-    if (_rxQueue)
-        xQueueReset(_rxQueue); // drop any inbound payloads from a previous session
+        if (_rxQueue)
+            xQueueReset(_rxQueue); // drop any inbound payloads from a previous session
+    }
 
     if (_connHandler)
         _connHandler(connected); // e.g. push SystemInfo on connect

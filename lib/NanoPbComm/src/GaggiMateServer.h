@@ -96,6 +96,16 @@ class GaggiMateServer {
     void registerHandlers();
     void pushSystemInfo();
 
+    // SystemInfo announce timing (rationale in GaggiMateServer.cpp init()):
+    static constexpr uint32_t SYSINFO_STABILIZE_MS = 600; // wait for the link to go quiet before first announce
+    static constexpr uint32_t SYSINFO_RETRY_MS = 1500;    // re-announce cadence until config arrives
+    static constexpr uint8_t MAX_SYSINFO_ATTEMPTS = 8;    // stop after this many (e.g. proto mismatch)
+    volatile bool _linkUp = false;
+    volatile bool _configReceived = false;
+    volatile uint32_t _linkSettledAt = 0;
+    volatile uint32_t _lastSysInfoPush = 0;
+    volatile uint8_t _sysInfoAttempts = 0;
+
     // Drives the endpoint send pump / retransmit independently of the
     // controller's (slow, 250ms) main loop, on the NimBLE core.
     TaskHandle_t _taskHandle = nullptr;

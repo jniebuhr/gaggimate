@@ -108,6 +108,7 @@ class Endpoint {
     unsigned long _sentAt = 0;
     uint8_t _retries = 0;
     bool _inFlight = false;
+    bool _connected = false; // link state; reset the session only on a true transition (see handleConnection)
 
     // Round-trip latency from the reliability layer. Sampled only on frames
     // ACKed without a retransmit (Karn's algorithm) so an ambiguous retransmit
