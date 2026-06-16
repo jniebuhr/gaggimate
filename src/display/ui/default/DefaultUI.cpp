@@ -21,6 +21,8 @@
 
 static EffectManager effect_mgr;
 
+static constexpr uint32_t STARTUP_FADE_MS = 2000; // standby fade-in duration on power-up
+
 // Format a millisecond duration as "m:ss" for the brew/profile time labels.
 static void formatDuration(unsigned long ms, char *buf, size_t len) {
     const double seconds = ms / 1000.0;
@@ -90,6 +92,7 @@ void DefaultUI::reloadProfiles() { profileLoaded = 0; }
 DefaultUI::DefaultUI(Controller *controller, Driver *driver, PluginManager *pluginManager)
     : controller(controller), panelDriver(driver), pluginManager(pluginManager) {
     setupPanel();
+    xTaskCreatePinnedToCore(loopTask, "DefaultUI::loop", configMINIMAL_STACK_SIZE * 6, this, 1, &taskHandle, 1);
 }
 
 void DefaultUI::init() {
@@ -217,7 +220,6 @@ void DefaultUI::init() {
             rerender = true;
         }
     });
-    xTaskCreatePinnedToCore(loopTask, "DefaultUI::loop", configMINIMAL_STACK_SIZE * 6, this, 1, &taskHandle, 1);
     xTaskCreatePinnedToCore(profileLoopTask, "DefaultUI::loopProfiles", configMINIMAL_STACK_SIZE * 4, this, 1, &profileTaskHandle,
                             0);
 }
@@ -337,6 +339,16 @@ void DefaultUI::setupPanel() {
     setupState();
     applyTheme();
     ui_tick();
+
+    // Polished power-up: ui_init() makes standby active instantly, so stage a black screen and
+    // fade standby in over it (lv_scr_load_anim no-ops when the target is already the active screen).
+    lv_obj_t *standby = lv_scr_act();
+    lv_obj_t *black = lv_obj_create(nullptr);
+    lv_obj_set_style_bg_color(black, lv_color_black(), LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(black, LV_OPA_COVER, LV_PART_MAIN);
+    lv_scr_load(black);
+    lv_scr_load_anim(standby, LV_SCR_LOAD_ANIM_FADE_ON, STARTUP_FADE_MS, 0, true);
+
     lv_task_handler();
 
     delay(100);
@@ -761,6 +773,10 @@ void DefaultUI::updateBoiler() {
 
 // Mirror the live BrewProcess into brew_process_info; every field must stay valid/typed or the StatusScreen flow aborts.
 void DefaultUI::updateBrewProcess() {
+    if (!initialized) {
+        return;
+    }
+
     const Profile &selected = profileManager->getSelectedProfile();
     char buf[12];
 
