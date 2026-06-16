@@ -7,6 +7,6 @@
   "lang": "en-US",
   "name": "GaggiGo Web UI",
   "short_name": "GaggiGo",
-  "start_url": "/GaggiGo/",
-  "scope": "/GaggiGo/"
+  "start_url": "/",
+  "scope": "/"
 }
