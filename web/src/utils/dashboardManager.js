@@ -353,3 +353,62 @@ export const setColumnSpacing = (value) => {
     return false;
   }
 };
+
+// ── Shot card metric slots ────────────────────────────────────────────────
+
+const DASHBOARD_SHOT_METRIC_SLOTS_KEY = 'dashboardShotMetricSlots';
+const DEFAULT_SHOT_METRIC_SLOTS = ['duration', 'weight', 'maxPressure'];
+
+export const getShotMetricSlots = () => {
+  if (typeof window === 'undefined' || !window.localStorage) {
+    return [...DEFAULT_SHOT_METRIC_SLOTS];
+  }
+  try {
+    const stored = localStorage.getItem(DASHBOARD_SHOT_METRIC_SLOTS_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed) && parsed.length === 3) return parsed;
+    }
+    return [...DEFAULT_SHOT_METRIC_SLOTS];
+  } catch {
+    return [...DEFAULT_SHOT_METRIC_SLOTS];
+  }
+};
+
+export const shotMetricSlotsSignal = signal(getShotMetricSlots());
+
+export const setShotMetricSlots = slots => {
+  if (!Array.isArray(slots) || slots.length !== 3) return false;
+  try {
+    localStorage.setItem(DASHBOARD_SHOT_METRIC_SLOTS_KEY, JSON.stringify(slots));
+    shotMetricSlotsSignal.value = slots;
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+// ── Clock 24h mirror ──────────────────────────────────────────────────────
+
+const DASHBOARD_CLOCK_24H_KEY = 'dashboardClock24h';
+
+export const getClock24h = () => {
+  if (typeof window === 'undefined' || !window.localStorage) return false;
+  try {
+    return localStorage.getItem(DASHBOARD_CLOCK_24H_KEY) === 'true';
+  } catch {
+    return false;
+  }
+};
+
+export const clock24hSignal = signal(getClock24h());
+
+export const setClock24h = value => {
+  try {
+    localStorage.setItem(DASHBOARD_CLOCK_24H_KEY, String(!!value));
+    clock24hSignal.value = !!value;
+    return true;
+  } catch {
+    return false;
+  }
+};
