@@ -305,7 +305,7 @@ void DefaultUI::loop() {
     lv_task_handler();
 }
 
-// [display-battery] Create a small battery indicator on the top layer so it shows
+// [display-battery] Create a large battery indicator on the top layer so it shows
 // on every screen (starting / standby / menu / ...) without editing generated UI.
 void DefaultUI::setupBatteryOverlay() {
     if (batteryLabel != nullptr || panelDriver == nullptr || !panelDriver->hasBattery()) {
@@ -315,6 +315,11 @@ void DefaultUI::setupBatteryOverlay() {
     lv_label_set_text(batteryLabel, "");
     lv_obj_set_style_text_color(batteryLabel, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(batteryLabel, LV_OPA_TRANSP, LV_PART_MAIN | LV_STATE_DEFAULT);
+    // [display-battery] Render the bolt icon + percentage at the Montserrat 20 font
+    // (half of the previous 42 per user request -- the 42 read too large on the
+    // connect screen). The FontAwesome battery/charge glyphs live in the same font,
+    // so this single call sizes BOTH the icon and the digits together.
+    lv_obj_set_style_text_font(batteryLabel, &lv_font_montserrat_20, LV_PART_MAIN | LV_STATE_DEFAULT);
     // Top-centre, just under the status-icon row. Centred so it stays inside the
     // round panel's visible area (the corners are outside the circle on the T-RGB).
     lv_obj_align(batteryLabel, LV_ALIGN_TOP_MID, 0, 44);
@@ -369,8 +374,12 @@ void DefaultUI::tickAutoSleep(unsigned long now) {
     const Settings &settings = controller->getSettings();
     autoSleep.setEnabled(settings.isAutoSleepNoController());
     autoSleep.setTimeoutMs(settings.getNoControllerSleepTimeout());
-    // Don't sleep during OTA / firmware update, Wi-Fi AP setup, or PID autotune.
-    autoSleep.setSuppressed(updateActive || apActive || autotuning);
+    // Don't sleep during an OTA / firmware update or PID autotune. NOTE: being in
+    // Wi-Fi AP / captive-portal mode must NOT block sleep -- when no Wi-Fi is
+    // configured the device stays in AP mode permanently (Controller::setupWifi),
+    // and we still want it to deep-sleep when the controller is unreachable. So
+    // apActive is intentionally excluded from the suppression condition.
+    autoSleep.setSuppressed(updateActive || autotuning);
 
     const AutoSleepManager::SleepReason reason = autoSleep.evaluate(now);
     if (reason == AutoSleepManager::SleepReason::None) {

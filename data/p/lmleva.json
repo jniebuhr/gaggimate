@@ -168,9 +168,9 @@
           "value": 100
         },
         {
-          "type": "volumetric",
+          "type": "pumped",
           "operator": "gte",
-          "value": 36
+          "value": 18
         }
       ]
     }

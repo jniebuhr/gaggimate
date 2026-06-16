@@ -45,6 +45,7 @@ extern lv_obj_t *ui____initial_actions0;
 
 // IMAGES AND IMAGE SETS
 LV_IMG_DECLARE(ui_img_logo_png);      // assets/logo.png
+LV_IMG_DECLARE(ui_img_coffee_anim);   // [boot-anim] coffee-bean juggling startup GIF
 LV_IMG_DECLARE(ui_img_364513079);     // assets/wifi-20x20.png
 LV_IMG_DECLARE(ui_img_1091371356);    // assets/bluetooth-alt-20x20.png
 LV_IMG_DECLARE(ui_img_1765671371);    // assets/refresh-20x20.png

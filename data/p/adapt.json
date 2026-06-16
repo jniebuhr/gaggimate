@@ -130,11 +130,6 @@
           "type": "pressure",
           "operator": "gte",
           "value": 8.8
-        },
-        {
-          "type": "volumetric",
-          "operator": "gte",
-          "value": 38
         }
       ]
     },
@@ -161,9 +156,9 @@
           "value": 100
         },
         {
-          "type": "volumetric",
+          "type": "pumped",
           "operator": "gte",
-          "value": 38
+          "value": 30
         }
       ]
     }

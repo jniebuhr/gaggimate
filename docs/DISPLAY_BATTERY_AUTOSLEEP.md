@@ -7,6 +7,8 @@ eFuse, Secure Boot, or Flash Encryption.
 
 Base: forked from `jniebuhr/gaggimate` upstream `master` @ `591abe74`.
 
+> **注:本文件是该功能的设计记录。项目当前整体状态、构建/刷写坑、待办与维护交接,以根目录 [`HANDOFF.md`](../HANDOFF.md) 为准。**
+
 ---
 
 ## Goals
@@ -14,8 +16,8 @@ Base: forked from `jniebuhr/gaggimate` upstream `master` @ `591abe74`.
 1. **Auto-sleep when no controller** — if the display has no BLE connection to the
    GaggiMate Controller (PCB) for **120 s**, it enters deep sleep to save battery. It
    wakes on **touch** (the chip reboots and re-scans for the controller).
-2. **Battery indicator** — show the single-cell 3.7 V Li-ion state (approx. percentage
-   **and** voltage) on the display.
+2. **Battery indicator** — show the single-cell 3.7 V Li-ion state (approx. percentage)
+   on the display. **Only the percentage is shown (no voltage).**
 3. **Official firmware stays recoverable** — no bootloader/partition/flash-security
    changes; re-flash the official build to revert.
 
@@ -47,7 +49,7 @@ sends standby/brew/stop/valve/pump/heater commands before sleeping.
 - Countdown starts at boot and whenever the controller disconnects.
 - Reconnect within the timeout cancels it.
 - Touch resets the UI idle timer but does **not** block the no-controller countdown.
-- Suppressed during OTA / firmware update / Wi-Fi AP setup / autotune.
+- Suppressed during OTA / firmware update / autotune. **Wi-Fi AP / captive-portal mode does NOT block sleep** (changed from the earlier design: with no Wi-Fi configured the device stays in AP mode permanently, yet we still want it to deep-sleep when the controller is unreachable). The suppression condition in `DefaultUI::tickAutoSleep()` is `updateActive || autotuning` — `apActive` is intentionally excluded.
 - If the battery is **critical** (< 3400 mV) and no controller, it sleeps after ¼ of the timeout.
 - Configurable in the **Web UI**: *Settings → Display Settings → Auto Sleep* (enable toggle +
   timeout in seconds), backed by `Settings.autoSleepNoController` / `noControllerSleepTimeout`.

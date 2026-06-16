@@ -15,3 +15,8 @@ src/display/webassets/
 # Desktop simulator runtime data (settings/profiles/shots) and screenshots
 sim_data/
 *.bmp
+
+# macOS junk & local backups (handoff)
+.DS_Store
+/display_flash_backup.bin
+/data_p_orig_backup/

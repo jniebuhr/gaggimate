@@ -23,9 +23,9 @@
       },
       "targets": [
         {
-          "type": "volumetric",
+          "type": "pumped",
           "operator": "gte",
-          "value": 36
+          "value": 40
         }
       ]
     }

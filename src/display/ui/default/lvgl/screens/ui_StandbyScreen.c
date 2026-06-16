@@ -34,18 +34,14 @@ void ui_StandbyScreen_screen_init(void) {
     ui_object_set_themeable_style_property(ui_StandbyScreen, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_BG_OPA,
                                            _ui_theme_alpha_Dark);
 
-    ui_StandbyScreen_logo = lv_img_create(ui_StandbyScreen);
-    lv_img_set_src(ui_StandbyScreen_logo, &ui_img_logo_png);
-    lv_obj_set_width(ui_StandbyScreen_logo, LV_SIZE_CONTENT);  /// 1
-    lv_obj_set_height(ui_StandbyScreen_logo, LV_SIZE_CONTENT); /// 1
+    // [boot-anim] Replace the GaggiMate logo with the coffee-bean juggling
+    // animation: an lv_gif (240x228, pre-composited on the dark standby bg)
+    // centred on the panel -> ~half of the 480x480 screen. It is a full-colour
+    // GIF, so no recolor and no zoom (native size is already the target size).
+    ui_StandbyScreen_logo = lv_gif_create(ui_StandbyScreen);
+    lv_gif_set_src(ui_StandbyScreen_logo, &ui_img_coffee_anim);
     lv_obj_set_align(ui_StandbyScreen_logo, LV_ALIGN_CENTER);
-    lv_obj_add_flag(ui_StandbyScreen_logo, LV_OBJ_FLAG_ADV_HITTEST);  /// Flags
     lv_obj_clear_flag(ui_StandbyScreen_logo, LV_OBJ_FLAG_SCROLLABLE); /// Flags
-    lv_img_set_zoom(ui_StandbyScreen_logo, 210);
-    ui_object_set_themeable_style_property(ui_StandbyScreen_logo, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_IMG_RECOLOR,
-                                           _ui_theme_color_NiceWhite);
-    ui_object_set_themeable_style_property(ui_StandbyScreen_logo, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_IMG_RECOLOR_OPA,
-                                           _ui_theme_alpha_NiceWhite);
 
     ui_StandbyScreen_time = lv_label_create(ui_StandbyScreen);
     lv_obj_set_width(ui_StandbyScreen_time, LV_SIZE_CONTENT);  /// 1
