@@ -613,11 +613,11 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
             if (request->hasArg("targetWaterTemp"))
                 settings->setTargetWaterTemp(request->arg("targetWaterTemp").toInt());
             if (request->hasArg("temperatureOffset"))
-                settings->setTemperatureOffset(request->arg("temperatureOffset").toInt());
+                controller->updateTemperatureOffset(request->arg("temperatureOffset").toInt());
             if (request->hasArg("pressureScaling"))
                 settings->setPressureScaling(request->arg("pressureScaling").toFloat());
             if (request->hasArg("pid"))
-                settings->setPid(request->arg("pid"));
+                controller->updatePIDValues(request->arg("pid"));
             if (request->hasArg("pumpModelCoeffs"))
                 settings->setPumpModelCoeffs(request->arg("pumpModelCoeffs"));
             if (request->hasArg("wifiSsid"))

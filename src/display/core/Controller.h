@@ -55,6 +55,9 @@ class Controller {
 
     bool isTaskHealthy() const { return is_task_healthy(eTaskGetState(logicTaskHandle)); }
 
+    void updatePIDValues(String s);
+    void updateTemperatureOffset(float);
+
     void autotune(int testTime, int samples, int heaterWattage);
     void startProcess(Process *process);
     Process *getProcess() const { return currentProcess; }
@@ -97,7 +100,8 @@ class Controller {
                               static_cast<float>(std::min(settings.getEmptyTankDistance(), tofDistance));
         float range = static_cast<float>(settings.getEmptyTankDistance() - settings.getFullTankDistance());
         return static_cast<int>(std::min(reversedLevel / range * 100.0f, 100.0f));
-    };
+    }
+
     int getTofDistance() const { return tofDistance; }
 
     void onVolumetricDelete();
