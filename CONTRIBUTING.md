@@ -62,7 +62,7 @@ The `web/` directory contains a Preact + Vite project. The README inside explain
 - `npm run build` - Builds for production, emitting to `dist/`
 - `npm run preview` - Starts a server at <http://localhost:4173/> to test production build locally
 
-When building the firmware, the `scripts/build_spiffs.sh` script installs the web dependencies and copies the compiled files to the data/ directory for inclusion in the device’s SPIFFS image.
+When building the firmware, the `scripts/build_webui.sh` script installs the web dependencies and copies the compiled files to the data/ directory for inclusion in the device’s SPIFFS image.
 
 ### Next Steps for Learning
 
@@ -83,18 +83,27 @@ When building the firmware, the `scripts/build_spiffs.sh` script installs the we
 
    ```shell
    platformio run -e display -e controller
-   scripts/build_spiffs.sh
+   scripts/build_webui.sh
    ```
 
 4. Choose what to deploy:
 
-   | Asset               | Commands                                                                               |
-   | ------------------- | -------------------------------------------------------------------------------------- |
-   | Display Firmware    | `platformio run -e display -t upload -t monitor`                                       |
-   | Controller Firmware | `platformio run -e controller -t upload -t monitor`                                    |
-   | Web UI              | <pre>scripts/build_spiffs.sh<br>platformio run -e display -t uploadfs -t monitor</pre> |
+   | Asset               | Commands                                                                            |
+   | ------------------- |-------------------------------------------------------------------------------------|
+   | Display Firmware    | `platformio run -e display -t upload -t monitor`                                    |
+   | Controller Firmware | `platformio run -e controller -t upload -t monitor`                                 |
+   | Web UI              | <pre>scripts/build_webui.sh<br>platformio run -e display -t upload -t monitor</pre> |
 
    **NOTE**: You can omit `-t monitor` if you don't want to immediately attach to the board's serial console.
+
+## Simulator
+
+You can run parts of the project directly on your computer using SDL2. To do this, use the `display-sim` environment in platformio.
+This target mocks out the controller PCB but workings of processes, touch UI and web UI can be tested.
+
+```
+platformio run -e display-sim -t run
+```
 
 ## Code Style
 

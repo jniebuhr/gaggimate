@@ -43,7 +43,10 @@ class WebUIPlugin : public Plugin {
     void handleFlushStart(uint32_t clientId, JsonDocument &request);
 
     // HTTP handlers
-    void handleSettings(AsyncWebServerRequest *request);
+    // Serves the web UI from the firmware-embedded, memory-mapped flash blob
+    // (catch-all for any path not claimed by an explicit route). [GM-106]
+    void serveWebAsset(AsyncWebServerRequest *request);
+    void handleSettings(AsyncWebServerRequest *request) const;
     void handleBLEScaleList(AsyncWebServerRequest *request);
     void handleBLEScaleScan(AsyncWebServerRequest *request);
     void handleBLEScaleConnect(AsyncWebServerRequest *request);

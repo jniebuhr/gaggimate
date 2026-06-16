@@ -15,22 +15,28 @@
 #include <display/core/static_profiles.h>
 #include <display/core/zones.h>
 #include <display/plugins/AutoWakeupPlugin.h>
-#include <display/plugins/BLEScalePlugin.h>
 #include <display/plugins/BoilerFillPlugin.h>
-#include <display/plugins/HomekitPlugin.h>
 #include <display/plugins/LedControlPlugin.h>
-#include <display/plugins/MQTTPlugin.h>
-#include <display/plugins/NetworkWatchdogPlugin.h>
 #include <display/plugins/ShotHistoryPlugin.h>
 #include <display/plugins/SmartGrindPlugin.h>
 #include <display/plugins/WebUIPlugin.h>
+#ifndef GAGGIMATE_SIM // network/BLE plugins are device-only
+#include <display/plugins/BLEScalePlugin.h>
+#include <display/plugins/HomekitPlugin.h>
+#include <display/plugins/MQTTPlugin.h>
+#include <display/plugins/NetworkWatchdogPlugin.h>
 #include <display/plugins/WifiStaWatchdogPlugin.h>
 #include <display/plugins/mDNSPlugin.h>
+#endif
 #include <display/util/PsramAllocator.h>
 #ifndef GAGGIMATE_HEADLESS
+#ifdef GAGGIMATE_SIM
+#include <SdlDriver.h> // desktop SDL panel stands in for the hardware drivers
+#else
 #include <display/drivers/AmoledDisplayDriver.h>
 #include <display/drivers/LilyGoDriver.h>
 #include <display/drivers/WaveshareDriver.h>
+#endif
 #endif
 
 const String LOG_TAG = F("Controller");
@@ -67,24 +73,32 @@ void Controller::setup() {
     }
     profileManager = new ProfileManager(fs, "/p", settings, pluginManager);
     profileManager->setup();
+#ifndef GAGGIMATE_SIM // mDNS/HomeKit are device-only
     if (settings.isHomekit())
         pluginManager->registerPlugin(new HomekitPlugin(settings.getWifiSsid(), settings.getWifiPassword()));
     else
         pluginManager->registerPlugin(new mDNSPlugin());
+#endif
     if (settings.isBoilerFillActive()) {
         pluginManager->registerPlugin(new BoilerFillPlugin());
     }
     if (settings.isSmartGrindActive()) {
         pluginManager->registerPlugin(new SmartGrindPlugin());
     }
+#ifndef GAGGIMATE_SIM // MQTT/HomeAssistant is device-only
     if (settings.isHomeAssistant()) {
         pluginManager->registerPlugin(new MQTTPlugin());
     }
+#endif
     pluginManager->registerPlugin(new WebUIPlugin());
+#ifndef GAGGIMATE_SIM // WiFi watchdogs and BLE scales are device-only
     pluginManager->registerPlugin(new NetworkWatchdogPlugin());
     pluginManager->registerPlugin(new WifiStaWatchdogPlugin());
+#endif
     pluginManager->registerPlugin(&ShotHistory);
+#ifndef GAGGIMATE_SIM
     pluginManager->registerPlugin(&BLEScales);
+#endif
     pluginManager->registerPlugin(new LedControlPlugin());
     pluginManager->registerPlugin(new AutoWakeupPlugin());
     pluginManager->setup(this);
@@ -104,7 +118,6 @@ void Controller::setup() {
     this->onScreenReady();
 
     updateLastAction();
-    xTaskCreatePinnedToCore(loopTask, "Controller::loopControl", configMINIMAL_STACK_SIZE * 6, this, 2, &taskHandle, 0);
     xTaskCreatePinnedToCore(loopLogicTask, "Controller::loopLogic", configMINIMAL_STACK_SIZE * 6, this, 3, &logicTaskHandle, 0);
 }
 
@@ -130,6 +143,9 @@ void Controller::connect() {
 
 #ifndef GAGGIMATE_HEADLESS
 void Controller::setupPanel() {
+#ifdef GAGGIMATE_SIM
+    driver = SdlDriver::getInstance(); // desktop SDL panel
+#else
     if (LilyGoDriver::getInstance()->isCompatible()) {
         driver = LilyGoDriver::getInstance();
     } else if (AmoledDisplayDriver::getInstance()->isCompatible()) {
@@ -141,6 +157,7 @@ void Controller::setupPanel() {
         delay(10000);
         ESP.restart();
     }
+#endif
     driver->init();
 }
 #endif
@@ -511,19 +528,11 @@ void Controller::loop() {
     if (comms.isReadyForConnection() && comms.connectToServer()) {
         waitingForController = false;
     }
-
-    // Keepalive: updateControl() only sends control deltas now, so a steady-state
-    // session would otherwise go silent. A periodic ping keeps the controller's
-    // connection watchdog fed (sent in all states, including error). Skip it for
-    // an incompatible controller -- it can't parse the frame anyway.
-    if (comms.isConnected() && !systemInfo.protocolMismatch && now - lastPing >= PING_INTERVAL) {
-        comms.sendPing();
-        lastPing = now;
-    }
 }
 
 void Controller::loopLogic() {
     if (isErrorState()) {
+        loopControl();
         return;
     }
 
@@ -577,10 +586,23 @@ void Controller::loopLogic() {
         deactivateGrind();
     if (mode != MODE_STANDBY && settings.getStandbyTimeout() > 0 && now > lastAction + settings.getStandbyTimeout())
         activateStandby();
+
+    loopControl();
 }
 
 void Controller::loopControl() {
     if (initialized) {
+        unsigned long now = millis();
+
+        // Keepalive: updateControl() only sends control deltas now, so a steady-state
+        // session would otherwise go silent. A periodic ping keeps the controller's
+        // connection watchdog fed (sent in all states, including error). Skip it for
+        // an incompatible controller -- it can't parse the frame anyway.
+        if (comms.isConnected() && !systemInfo.protocolMismatch && now - lastPing >= PING_INTERVAL) {
+            comms.sendPing();
+            lastPing = now;
+        }
+
         updateControl();
     }
 }
@@ -1153,15 +1175,6 @@ void Controller::handleProfileUpdate() {
     pluginManager->trigger("boiler:targetTemperature:change", "value", profileManager->getSelectedProfile().temperature);
     pluginManager->trigger("controller:targetDuration:change", "value", profileManager->getSelectedProfile().getTotalDuration());
     pluginManager->trigger("controller:targetVolume:change", "value", profileManager->getSelectedProfile().getTotalVolume());
-}
-
-void Controller::loopTask(void *arg) {
-    TickType_t lastWake = xTaskGetTickCount();
-    auto *controller = static_cast<Controller *>(arg);
-    while (true) {
-        controller->loopControl();
-        xTaskDelayUntil(&lastWake, pdMS_TO_TICKS(controller->getMode() == MODE_STANDBY ? 1000 : PROGRESS_INTERVAL));
-    }
 }
 
 void Controller::loopLogicTask(void *arg) {
