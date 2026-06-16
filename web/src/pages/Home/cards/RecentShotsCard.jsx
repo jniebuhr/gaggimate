@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
-import { computed } from '@preact/signals';
+import { computed, useSignalEffect } from '@preact/signals';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMagnifyingGlassChart } from '@fortawesome/free-solid-svg-icons/faMagnifyingGlassChart';
 import { parseBinaryIndex, indexToShotList } from '../../ShotHistory/parseBinaryIndex.js';
@@ -141,13 +141,13 @@ export function RecentShotsCard() {
   const slots = shotMetricSlotsSignal.value;
 
   // Trigger a refresh when a shot transitions to finished
-  useEffect(() => {
+  useSignalEffect(() => {
     const finished = isFinished.value;
     if (finished && !prevFinishedRef.current) {
       setRefreshKey(k => k + 1);
     }
     prevFinishedRef.current = finished;
-  }, [isFinished.value]);
+  });
 
   useEffect(() => {
     let cancelled = false;
