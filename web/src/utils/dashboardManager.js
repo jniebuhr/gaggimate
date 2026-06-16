@@ -367,7 +367,7 @@ export const getShotMetricSlots = () => {
     const stored = localStorage.getItem(DASHBOARD_SHOT_METRIC_SLOTS_KEY);
     if (stored) {
       const parsed = JSON.parse(stored);
-      if (Array.isArray(parsed) && parsed.length === 3) return parsed;
+      if (Array.isArray(parsed)) return parsed;
     }
     return [...DEFAULT_SHOT_METRIC_SLOTS];
   } catch {
