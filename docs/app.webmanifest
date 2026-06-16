@@ -1,0 +1,12 @@
+{
+  "theme_color": "#0A1120",
+  "background_color": "#E3E9F4",
+  "orientation": "any",
+  "display": "fullscreen",
+  "dir": "auto",
+  "lang": "en-US",
+  "name": "GaggiGo Web UI",
+  "short_name": "GaggiGo",
+  "start_url": "/",
+  "scope": "/"
+}
