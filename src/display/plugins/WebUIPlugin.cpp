@@ -601,7 +601,7 @@ void WebUIPlugin::handleProfileRequest(uint32_t clientId, JsonDocument &request)
     ws.text(clientId, buffer);
 }
 
-void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
+void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) {
     if (request->method() == HTTP_POST) {
         controller->getSettings().batchUpdate([request](Settings *settings) {
             if (request->hasArg("startupMode"))
