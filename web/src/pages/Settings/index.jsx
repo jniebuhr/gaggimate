@@ -28,6 +28,8 @@ import {
   getCompactPanels, toggleCompactPanel,
   getProfileChartHeight, setProfileChartHeight,
   COLUMN_SPACINGS, getColumnSpacing, setColumnSpacing,
+  getShotMetricSlots, setShotMetricSlots,
+  setClock24h,
 } from '../../utils/dashboardManager.js';
 import { METRIC_DEFINITIONS } from '../../utils/metricDefinitions.js';
 import { PANEL_DEFINITIONS } from '../../utils/panelDefinitions.js';
@@ -107,6 +109,7 @@ export function Settings() {
   const [compactPanels, setCompactPanelsState] = useState(() => getCompactPanels());
   const [profileChartHeight, setProfileChartHeightState] = useState(() => getProfileChartHeight());
   const [columnSpacing, setColumnSpacingState] = useState(() => getColumnSpacing());
+  const [shotMetricSlots, setShotMetricSlotsState] = useState(() => getShotMetricSlots());
 
   const handleToggleCompact = (id) => {
     toggleCompactPanel(id);
@@ -242,6 +245,7 @@ export function Settings() {
       }
       if (key === 'clock24hFormat') {
         value = !formData.clock24hFormat;
+        setClock24h(value);
       }
       if (key === 'autowakeupEnabled') {
         value = !formData.autowakeupEnabled;
@@ -1168,6 +1172,33 @@ export function Settings() {
                 setShowRecentShots(e.target.checked);
               }}
             />
+            {showRecentShots && (
+              <SettingsFormField label='Shot Card Metrics' htmlFor='shotMetricSlot0' noMargin>
+                <div className='flex gap-2'>
+                  {[0, 1, 2].map(i => (
+                    <div key={i} className='flex flex-1 flex-col gap-1'>
+                      <span className='text-base-content/60 text-xs'>Slot {i + 1}</span>
+                      <select
+                        className='select select-bordered select-sm w-full'
+                        value={shotMetricSlots[i]}
+                        onChange={e => {
+                          const next = [...shotMetricSlots];
+                          next[i] = e.target.value;
+                          setShotMetricSlotsState(next);
+                          setShotMetricSlots(next);
+                        }}
+                      >
+                        <option value='duration'>Duration</option>
+                        <option value='weight'>Weight</option>
+                        <option value='avgTemp'>Avg Temp</option>
+                        <option value='maxPressure'>Max Pressure</option>
+                        <option value='avgFlow'>Avg Flow</option>
+                      </select>
+                    </div>
+                  ))}
+                </div>
+              </SettingsFormField>
+            )}
             <div className='divider'>
               <span>Dashboard Panels</span>
               <div className='flex items-center gap-3'>
