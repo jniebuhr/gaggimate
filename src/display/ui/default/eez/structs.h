@@ -54,6 +54,7 @@ enum ProfileInfoFlowStructureFields {
     FLOW_STRUCTURE_PROFILE_INFO_FIELD_IS_VOLUMETRIC = 5,
     FLOW_STRUCTURE_PROFILE_INFO_FIELD_IS_CURRENT = 6,
     FLOW_STRUCTURE_PROFILE_INFO_FIELD_TARGET_WEIGHT = 7,
+    FLOW_STRUCTURE_PROFILE_INFO_FIELD_DIRTY = 8,
     FLOW_STRUCTURE_PROFILE_INFO_NUM_FIELDS
 };
 
@@ -67,7 +68,13 @@ enum BoilerFlowStructureFields {
     FLOW_STRUCTURE_BOILER_NUM_FIELDS
 };
 
-enum UIFlagsFlowStructureFields { FLOW_STRUCTURE_UI_FLAGS_FIELD_BREW_ADJUSTMENTS = 0, FLOW_STRUCTURE_UI_FLAGS_NUM_FIELDS };
+enum UIFlagsFlowStructureFields {
+    FLOW_STRUCTURE_UI_FLAGS_FIELD_BREW_ADJUSTMENTS = 0,
+    FLOW_STRUCTURE_UI_FLAGS_FIELD_GRIND_ACTIVE = 1,
+    FLOW_STRUCTURE_UI_FLAGS_FIELD_ACTIVE = 2,
+    FLOW_STRUCTURE_UI_FLAGS_FIELD_GRIND_VOLUMETRIC = 3,
+    FLOW_STRUCTURE_UI_FLAGS_NUM_FIELDS
+};
 
 enum BrewProcessFlowStructureFields {
     FLOW_STRUCTURE_BREW_PROCESS_FIELD_BOILER_TARGET_TEMPERATURE = 0,
@@ -190,6 +197,9 @@ struct ProfileInfoValue {
     void target_weight(float target_weight) {
         value.getArray()->values[FLOW_STRUCTURE_PROFILE_INFO_FIELD_TARGET_WEIGHT] = FloatValue(target_weight);
     }
+
+    bool dirty() { return value.getArray()->values[FLOW_STRUCTURE_PROFILE_INFO_FIELD_DIRTY].getBoolean(); }
+    void dirty(bool dirty) { value.getArray()->values[FLOW_STRUCTURE_PROFILE_INFO_FIELD_DIRTY] = BooleanValue(dirty); }
 };
 
 typedef ArrayOf<ProfileInfoValue, FLOW_ARRAY_OF_STRUCTURE_PROFILE_INFO> ArrayOfProfileInfoValue;
@@ -250,6 +260,19 @@ struct UIFlagsValue {
     bool brew_adjustments() { return value.getArray()->values[FLOW_STRUCTURE_UI_FLAGS_FIELD_BREW_ADJUSTMENTS].getBoolean(); }
     void brew_adjustments(bool brew_adjustments) {
         value.getArray()->values[FLOW_STRUCTURE_UI_FLAGS_FIELD_BREW_ADJUSTMENTS] = BooleanValue(brew_adjustments);
+    }
+
+    bool grind_active() { return value.getArray()->values[FLOW_STRUCTURE_UI_FLAGS_FIELD_GRIND_ACTIVE].getBoolean(); }
+    void grind_active(bool grind_active) {
+        value.getArray()->values[FLOW_STRUCTURE_UI_FLAGS_FIELD_GRIND_ACTIVE] = BooleanValue(grind_active);
+    }
+
+    bool active() { return value.getArray()->values[FLOW_STRUCTURE_UI_FLAGS_FIELD_ACTIVE].getBoolean(); }
+    void active(bool active) { value.getArray()->values[FLOW_STRUCTURE_UI_FLAGS_FIELD_ACTIVE] = BooleanValue(active); }
+
+    bool grind_volumetric() { return value.getArray()->values[FLOW_STRUCTURE_UI_FLAGS_FIELD_GRIND_VOLUMETRIC].getBoolean(); }
+    void grind_volumetric(bool grind_volumetric) {
+        value.getArray()->values[FLOW_STRUCTURE_UI_FLAGS_FIELD_GRIND_VOLUMETRIC] = BooleanValue(grind_volumetric);
     }
 };
 

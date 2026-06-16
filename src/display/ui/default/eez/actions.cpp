@@ -25,10 +25,6 @@ void action_on_menu_click(lv_event_t *e) {
     controller.getUI()->changeScreen(SCREEN_ID_MENU_SCREEN);
 };
 
-void action_on_menu_screen_load(lv_event_t *e) {
-
-};
-
 void action_on_brew_screen(lv_event_t *e) {
     controller.getUI()->changeScreen(SCREEN_ID_BREW_SCREEN);
     controller.deactivate();
@@ -159,9 +155,7 @@ void action_on_timed_click(lv_event_t *e) {
 
 };
 
-void action_on_volumetric_click(lv_event_t *e) {
-
-};
+void action_on_volumetric_click(lv_event_t *e) { controller.onTargetToggle(); };
 
 void action_on_grind_toggle(lv_event_t *e) {
     controller.isGrindActive() ? controller.deactivateGrind() : controller.activateGrind();
@@ -185,3 +179,58 @@ void action_on_brew_cancel(lv_event_t *e) {
 }
 
 void action_on_standby(lv_event_t *e) { controller.activateStandby(); }
+
+void applyClickArea(lv_obj_t *obj, lv_coord_t size) {
+    if (obj == nullptr) {
+        return;
+    }
+    lv_obj_set_ext_click_area(obj, size);
+}
+
+void action_on_screen_load(lv_event_t *e) {
+    applyClickArea(objects.select_profile, 30);
+    applyClickArea(objects.previous_profile, 30);
+    applyClickArea(objects.next_profile, 30);
+    applyClickArea(objects.btn_brew, 15);
+    applyClickArea(objects.btn_steam, 15);
+    applyClickArea(objects.btn_water, 15);
+    applyClickArea(objects.btn_steam, 15);
+    applyClickArea(objects.obj0__standby_icon, 20);
+    applyClickArea(objects.obj1__standby_icon, 20);
+    applyClickArea(objects.obj2__standby_icon, 20);
+    applyClickArea(objects.obj3__standby_icon, 20);
+    applyClickArea(objects.obj4__standby_icon, 20);
+    applyClickArea(objects.obj5__standby_icon, 20);
+    applyClickArea(objects.obj6__standby_icon, 20);
+    applyClickArea(objects.obj0__menu_icon, 20);
+    applyClickArea(objects.obj1__menu_icon, 20);
+    applyClickArea(objects.obj2__menu_icon, 20);
+    applyClickArea(objects.obj3__menu_icon, 20);
+    applyClickArea(objects.obj4__menu_icon, 20);
+    applyClickArea(objects.obj5__menu_icon, 20);
+    applyClickArea(objects.obj6__menu_icon, 20);
+    applyClickArea(objects.start_button, 25);
+    applyClickArea(objects.water_start_button, 25);
+    applyClickArea(objects.grind_start_button, 25);
+    applyClickArea(objects.profile_select_button, 25);
+    applyClickArea(objects.settings_button, 25);
+    applyClickArea(objects.up_duration_button, 15);
+    applyClickArea(objects.down_duration_button, 15);
+    applyClickArea(objects.up_weight_button, 15);
+    applyClickArea(objects.down_weight_button, 15);
+    applyClickArea(objects.up_temp_button, 15);
+    applyClickArea(objects.down_temp_button, 15);
+    applyClickArea(objects.water_up_temp_button, 15);
+    applyClickArea(objects.water_down_temp_button, 15);
+    applyClickArea(objects.steam_up_temp_button, 15);
+    applyClickArea(objects.steam_down_temp_button, 15);
+    applyClickArea(objects.grind_up_duration_button, 15);
+    applyClickArea(objects.grind_down_duration_button, 15);
+    applyClickArea(objects.grind_up_weight_button, 15);
+    applyClickArea(objects.grind_down_weight_button, 15);
+    applyClickArea(objects.pause_button, 25);
+    applyClickArea(objects.check_button, 25);
+    applyClickArea(objects.accept_button, 20);
+    applyClickArea(objects.save_as_new_button, 20);
+    applyClickArea(objects.save_button, 20);
+}

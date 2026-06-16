@@ -1,11 +1,12 @@
 {
   "navigation": {
-    "selectedUserPageObject": "[gaggimate.eez-project]:/userPages/1",
+    "selectedUserPageObject": "[gaggimate.eez-project]:/userPages/0",
     "selectedUserWidgetObject": "[gaggimate.eez-project]:/userWidgets/0",
-    "selectedActionObject": "[gaggimate.eez-project]:/actions/-1",
-    "selectedGlobalVariableObject": "[gaggimate.eez-project]:/variables/globalVariables/8",
+    "selectedActionObject": "[gaggimate.eez-project]:/actions/34",
+    "selectedGlobalVariableObject": "[gaggimate.eez-project]:/variables/globalVariables/3",
     "selectedStructureObject": "[gaggimate.eez-project]:/variables/structures/3",
     "selectedThemeObject": "[gaggimate.eez-project]:/themes/0",
+    "selectedThemeColorObject": "[gaggimate.eez-project]:/colors/3",
     "selectedBitmapObject": "[gaggimate.eez-project]:/bitmaps/35",
     "subnavigationSelectedItems": {
       "variables-tab/sub-navigation/selected-item": "Global"
@@ -29,7 +30,7 @@
           },
           {
             "type": "border",
-            "selected": 2,
+            "selected": 3,
             "size": 255.5,
             "location": "right",
             "children": [
@@ -196,9 +197,21 @@
               "type": "tabset",
               "id": "EDITORS",
               "weight": 44.06285141286475,
+              "selected": 4,
               "enableDeleteWhenEmpty": false,
               "enableClose": false,
               "children": [
+                {
+                  "type": "tab",
+                  "id": "#acbf425d-f9ac-457e-90c1-4ea068d04b16",
+                  "name": "onScreenLoad",
+                  "component": "editor",
+                  "config": {
+                    "objectPath": "[gaggimate.eez-project]:/actions/34",
+                    "permanent": false
+                  },
+                  "icon": "material:code"
+                },
                 {
                   "type": "tab",
                   "id": "#07a87284-0adf-47ce-9994-8cc743141d5f",
@@ -1148,7 +1161,8 @@
       "selectionBack": {
         "0": {
           "0": {},
-          "1": {}
+          "1": {},
+          "3": {}
         }
       }
     },
@@ -1164,7 +1178,7 @@
       "transform": {
         "translate": {
           "x": -240,
-          "y": -120.8258056640625
+          "y": -124.8260498046875
         },
         "scale": 1
       },
@@ -1177,22 +1191,25 @@
       "selectionFront": {},
       "selectionBack": {
         "0": {
-          "0": {
-            "$selected": true
-          },
+          "0": {},
           "1": {
+            "1": {},
             "2": {
               "1": {
-                "1": {}
+                "1": {
+                  "2": {}
+                }
               },
               "2": {
                 "0": {},
                 "1": {},
                 "2": {
-                  "0": {}
+                  "3": {},
+                  "4": {}
                 }
               }
-            }
+            },
+            "3": {}
           }
         }
       }
@@ -1210,7 +1227,7 @@
       "transform": {
         "translate": {
           "x": -240,
-          "y": -120.8258056640625
+          "y": -512.5836181640625
         },
         "scale": 1
       },
@@ -1224,9 +1241,12 @@
       "selectionBack": {
         "0": {
           "0": {},
-          "2": {
+          "1": {
             "0": {},
             "2": {},
+            "6": {
+              "$selected": true
+            },
             "11": {
               "0": {}
             }
@@ -1258,9 +1278,9 @@
       "selectionFront": {},
       "selectionBack": {
         "0": {},
-        "2": {},
-        "5": {},
-        "6": {}
+        "3": {},
+        "6": {},
+        "7": {}
       }
     },
     "[gaggimate.eez-project]:/lvglStyles/styles[tree-state]": {
@@ -1302,6 +1322,9 @@
       "selectionFront": {},
       "selectionBack": {
         "0": {
+          "0": {
+            "$selected": true
+          },
           "1": {
             "1": {},
             "2": {},
@@ -1330,7 +1353,7 @@
       "transform": {
         "translate": {
           "x": -240,
-          "y": -247
+          "y": -242.999755859375
         },
         "scale": 1
       },
@@ -1345,7 +1368,8 @@
         "0": {
           "1": {
             "1": {},
-            "2": {}
+            "2": {},
+            "3": {}
           }
         }
       }
@@ -1378,8 +1402,12 @@
           "1": {
             "0": {},
             "1": {
-              "1": {}
-            }
+              "1": {},
+              "3": {
+                "$selected": true
+              }
+            },
+            "2": {}
           }
         }
       }
@@ -1895,9 +1923,7 @@
       "selectionFront": {},
       "selectionBack": {
         "0": {
-          "0": {
-            "$selected": true
-          },
+          "0": {},
           "1": {
             "1": {},
             "2": {},
@@ -1909,7 +1935,7 @@
       "transform": {
         "translate": {
           "x": -240,
-          "y": -247
+          "y": -562.4315185546875
         },
         "scale": 1
       },
@@ -1973,7 +1999,11 @@
     "[gaggimate.eez-project]:/userPages/8[flow-state]": {
       "selectionFront": {},
       "selectionBack": {
-        "0": {}
+        "0": {
+          "7": {
+            "$selected": true
+          }
+        }
       },
       "transform": {
         "translate": {
@@ -2035,11 +2065,12 @@
         "0": {
           "0": {},
           "1": {
+            "0": {
+              "$selected": true
+            },
             "2": {
               "0": {
-                "5": {
-                  "$selected": true
-                }
+                "5": {}
               }
             }
           },
@@ -2066,8 +2097,12 @@
       "selectionBack": {
         "0": {
           "0": {
-            "$selected": true
+            "0": {
+              "$selected": true
+            },
+            "3": {}
           },
+          "1": {},
           "3": {
             "0": {}
           }
@@ -2116,6 +2151,26 @@
         },
         "scale": 1
       }
+    },
+    "[gaggimate.eez-project]:/actions/4[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": 0,
+          "y": 0
+        },
+        "scale": 1
+      }
+    },
+    "[gaggimate.eez-project]:/actions/3[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": 0,
+          "y": 0
+        },
+        "scale": 1
+      }
     }
   },
   "activeOutputSection": 0,
@@ -2131,7 +2186,7 @@
   "logsPanelFilter": "all",
   "selectedStylePropertyName": "",
   "lvglPart": "MAIN",
-  "lvglState": "DEFAULT",
+  "lvglState": "CHECKED",
   "lvglExpandedPropertiesGroup": [
     "POSITION AND SIZE",
     "IMAGE",
@@ -2144,7 +2199,8 @@
     "PADDING",
     "BACKGROUND",
     "BORDER",
-    "LAYOUT"
+    "LAYOUT",
+    "MARGIN"
   ],
   "showInactiveFlowsInDebugger": true,
   "globalFlowZoom": true,

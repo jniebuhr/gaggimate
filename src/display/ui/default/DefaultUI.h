@@ -63,7 +63,7 @@ class DefaultUI {
 
     void handleScreenChange();
 
-    void updateStandbyScreen();
+    void updateState();
     void updateSystemStatus();
     void updateProfileInfo();
     void updateBoiler();
@@ -71,7 +71,6 @@ class DefaultUI {
     String getErrorMessage();
 
     void adjustDials(lv_obj_t *dials);
-    void adjustTempTarget(lv_obj_t *dials);
     void adjustTarget(lv_obj_t *obj, double percentage, double start, double range) const;
 
     int tempHistory[TEMP_HISTORY_LENGTH] = {0};
@@ -92,24 +91,9 @@ class DefaultUI {
     ProfileManager *profileManager;
 
     // Screen state
-    String selectedProfileId = "";
-    Profile selectedProfile{};
     int updateAvailable = false;
-    int updateActive = false;
     int apActive = false;
-    int error = false;
-    int protocolMismatch = false;
-    int autotuning = false;
     int waitingForController = false;
-    int volumetricAvailable = false;
-    int bluetoothScales = false;
-    int volumetricMode = false;
-    int brewVolumetric = false;
-    int profileVolumetric = false;
-    int grindActive = false;
-    int active = false;
-    int smartGrindActive = false;
-    int grindAvailable = false;
     int initialized = false;
 
     // Seasonal flags
@@ -119,16 +103,11 @@ class DefaultUI {
     unsigned long lastRender = 0;
 
     int mode = MODE_STANDBY;
-    int currentTemp = 0;
-    int targetTemp = 0;
-    float targetDuration = 0;
-    float targetVolume = 0;
-    int grindDuration = 0;
-    float grindVolume = 0.0f;
-    int pressureAvailable = 0;
-    float pressure = 0.0f;
-    int pressureScaling = DEFAULT_PRESSURE_SCALING;
+    bool pressureAvailable = false;
     int heatingFlash = 0;
+    float pressure = 0.0f;
+    float currentTemp = 0.0f;
+    float targetTemp = 0.0f;
     double bluetoothWeight = 0.0;
     BrewScreenState brewScreenState = BrewScreenState::Brew;
 

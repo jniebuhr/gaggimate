@@ -116,22 +116,10 @@ void DefaultUI::init() {
             rerender = true;
         }
     });
-    pluginManager->on("controller:targetVolume:change", [=](Event const &event) {
-        targetVolume = event.getFloat("value");
-        rerender = true;
-    });
-    pluginManager->on("controller:targetDuration:change", [=](Event const &event) {
-        targetDuration = event.getFloat("value");
-        rerender = true;
-    });
-    pluginManager->on("controller:grindDuration:change", [=](Event const &event) {
-        grindDuration = event.getInt("value");
-        rerender = true;
-    });
-    pluginManager->on("controller:grindVolume:change", [=](Event const &event) {
-        grindVolume = event.getFloat("value");
-        rerender = true;
-    });
+    pluginManager->on("controller:targetVolume:change", [=](Event const &event) { rerender = true; });
+    pluginManager->on("controller:targetDuration:change", [=](Event const &event) { rerender = true; });
+    pluginManager->on("controller:grindDuration:change", [=](Event const &event) { rerender = true; });
+    pluginManager->on("controller:grindVolume:change", [=](Event const &event) { rerender = true; });
     pluginManager->on("controller:process:end", triggerRender);
     pluginManager->on("controller:process:start", triggerRender);
     pluginManager->on("controller:mode:change", [this](Event const &event) {
@@ -191,12 +179,10 @@ void DefaultUI::init() {
         apActive = event.getInt("AP");
     });
     pluginManager->on("ota:update:start", [this](Event const &) {
-        updateActive = true;
         rerender = true;
         changeScreen(SCREEN_ID_STANDBY_SCREEN);
     });
     pluginManager->on("ota:update:end", [this](Event const &) {
-        updateActive = false;
         rerender = true;
         changeScreen(SCREEN_ID_STANDBY_SCREEN);
     });
@@ -218,17 +204,6 @@ void DefaultUI::init() {
     pluginManager->on("controller:autotune:result", [this](Event const &) { changeScreen(SCREEN_ID_STANDBY_SCREEN); });
 
     pluginManager->on("profiles:profile:select", [this](Event const &event) {
-        // Reset the local copy before reload: parseProfile() appends to
-        // profile.phases rather than replacing, so feeding it the already-
-        // populated member would double the phase count on every profile
-        // switch (memory leak + corrupted internal phase count). Mirrors the
-        // pattern ProfileManager::selectProfile uses for the same reason.
-        selectedProfile = Profile{};
-        profileManager->loadSelectedProfile(selectedProfile);
-        selectedProfileId = event.getString("id");
-        targetDuration = profileManager->getSelectedProfile().getTotalDuration();
-        targetVolume = profileManager->getSelectedProfile().getTotalVolume();
-        profileVolumetric = profileManager->getSelectedProfile().isVolumetric();
         reloadProfiles();
         rerender = true;
     });
@@ -242,8 +217,6 @@ void DefaultUI::init() {
             rerender = true;
         }
     });
-    setupState();
-    setupReactive();
     xTaskCreatePinnedToCore(loopTask, "DefaultUI::loop", configMINIMAL_STACK_SIZE * 6, this, 1, &taskHandle, 1);
     xTaskCreatePinnedToCore(profileLoopTask, "DefaultUI::loopProfiles", configMINIMAL_STACK_SIZE * 4, this, 1, &profileTaskHandle,
                             0);
@@ -265,37 +238,30 @@ void DefaultUI::loop() {
     if (rerender) {
         rerender = false;
         lastRender = now;
-        error = controller->isErrorState();
-        protocolMismatch = controller->getSystemInfo().protocolMismatch;
-        autotuning = controller->isAutotuning();
-        const ::Settings &settings = controller->getSettings();
-        volumetricAvailable = controller->isVolumetricAvailable();
-        bluetoothScales = controller->isBluetoothScaleHealthy();
-        volumetricMode = volumetricAvailable && settings.isVolumetricTarget();
-        brewVolumetric = volumetricAvailable && profileVolumetric;
-        grindActive = controller->isGrindActive();
-        active = controller->isActive();
-        smartGrindActive = settings.isSmartGrindActive();
-        grindAvailable = smartGrindActive || settings.getAltRelayFunction() == ALT_RELAY_GRIND;
         applyTheme();
         if (controller->isErrorState()) {
             changeScreen(SCREEN_ID_STANDBY_SCREEN);
         }
         updateTempStableFlag();
 
+        updateState();
         // Fill the EEZ data models before handleScreenChange() creates/ticks a screen (undefined fields abort the flow).
         updateSystemStatus();
         updateProfileInfo();
         updateBoiler();
         updateBrewProcess();
-        uiFlags.brew_adjustments(false);
         currentWeight = FloatValue(bluetoothWeight);
         eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_SCALE_WEIGHT_CURRENT, currentWeight);
 
+        char timeBuf[12];
+        formatDuration(controller->getSettings().getTargetGrindDuration(), timeBuf, sizeof(timeBuf));
+        grindTimeTarget = StringValue(timeBuf);
+        eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_GRIND_TIME_TARGET, grindTimeTarget);
+        grindWeightTarget = FloatValue(controller->getSettings().getTargetGrindVolume());
+        eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_GRIND_WEIGHT_TARGET, grindWeightTarget);
+
         handleScreenChange();
         currentScreen = static_cast<ScreensEnum>(eez_flow_get_current_screen());
-        if (currentScreen == SCREEN_ID_STANDBY_SCREEN)
-            updateStandbyScreen();
         effect_mgr.evaluate_all();
     }
 
@@ -363,12 +329,14 @@ void DefaultUI::onProfileSelect() {
 
 void DefaultUI::onVolumetricDelete() {
     controller->onVolumetricDelete();
-    profileVolumetric = profileManager->getSelectedProfile().isVolumetric();
     profileDirty = true;
 }
 
 void DefaultUI::setupPanel() {
     ui_init();
+    setupState();
+    applyTheme();
+    ui_tick();
     lv_task_handler();
 
     delay(100);
@@ -378,35 +346,8 @@ void DefaultUI::setupPanel() {
 }
 
 void DefaultUI::setupState() {
-    error = controller->isErrorState();
-    protocolMismatch = controller->getSystemInfo().protocolMismatch;
-    autotuning = controller->isAutotuning();
-    const ::Settings &settings = controller->getSettings();
-    volumetricAvailable = controller->isVolumetricAvailable();
-    volumetricMode = volumetricAvailable && settings.isVolumetricTarget();
-    grindActive = controller->isGrindActive();
-    active = controller->isActive();
-    smartGrindActive = settings.isSmartGrindActive();
-    grindAvailable = smartGrindActive || settings.getAltRelayFunction() == ALT_RELAY_GRIND;
-    mode = controller->getMode();
-    currentTemp = static_cast<int>(controller->getCurrentTemp());
-    targetTemp = static_cast<int>(controller->getTargetTemp());
-    targetDuration = profileManager->getSelectedProfile().getTotalDuration();
-    targetVolume = profileManager->getSelectedProfile().getTotalVolume();
-    grindDuration = settings.getTargetGrindDuration();
-    grindVolume = settings.getTargetGrindVolume();
-    pressureAvailable = controller->getSystemInfo().capabilities.pressure ? 1 : 0;
-    pressureScaling = std::ceil(settings.getPressureScaling());
-    selectedProfileId = settings.getSelectedProfile();
-    // Defense in depth: reset before reload (this site is currently safe in
-    // practice because setupState runs once with a fresh field-initialized
-    // member, but keeps the pattern consistent with the event handler above).
-    selectedProfile = Profile{};
-    // profileManager->loadSelectedProfile(selectedProfile);
-    profileVolumetric = selectedProfile.isVolumetric();
 
     eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_SCALE_WEIGHT_CURRENT, currentWeight);
-    eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_STEAM_READY, steamReady);
     eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_GRIND_WEIGHT_TARGET, grindWeightTarget);
     eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_GRIND_TIME_TARGET, grindTimeTarget);
 
@@ -419,11 +360,11 @@ void DefaultUI::setupState() {
     eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_BREW_PROCESS_INFO, brewProcess);
 
     // Fill every field so the first screen render never reads an undefined struct field.
+    updateState();
     updateSystemStatus();
     updateProfileInfo();
     updateBoiler();
     updateBrewProcess();
-    uiFlags.brew_adjustments(false);
 }
 
 void DefaultUI::setupReactive() {
@@ -649,9 +590,6 @@ void DefaultUI::setupReactive() {
     //                                             grindActive ? &ui_img_1456692430 : &ui_img_445946954, nullptr);
     //                       },
     //                       &grindActive);
-    // effect_mgr.use_effect([=] { return currentScreen == ui_BrewScreen; },
-    //                       [=] { lv_label_set_text(ui_BrewScreen_profileName, selectedProfile.label.c_str()); },
-    //                       &selectedProfileId);
     //
     // effect_mgr.use_effect(
     //     [=] { return currentScreen == ui_ProfileScreen; },
@@ -734,23 +672,6 @@ void DefaultUI::setupReactive() {
     //         }
     //     },
     //     &brewScreenState, &volumetricAvailable, &bluetoothScales);
-    // effect_mgr.use_effect(
-    //     [=] { return currentScreen == ui_BrewScreen; },
-    //     [=]() {
-    //         ui_object_set_themeable_style_property(ui_BrewScreen_saveButton, LV_PART_MAIN | LV_STATE_DEFAULT,
-    //                                                LV_STYLE_IMG_RECOLOR,
-    //                                                profileDirty ? _ui_theme_color_NiceWhite : _ui_theme_color_SemiDark);
-    //         ui_object_set_themeable_style_property(ui_BrewScreen_saveButton, LV_PART_MAIN | LV_STATE_DEFAULT,
-    //                                                LV_STYLE_IMG_RECOLOR_OPA,
-    //                                                profileDirty ? _ui_theme_alpha_NiceWhite : _ui_theme_alpha_SemiDark);
-    //         ui_object_set_themeable_style_property(ui_BrewScreen_saveAsNewButton, LV_PART_MAIN | LV_STATE_DEFAULT,
-    //                                                LV_STYLE_IMG_RECOLOR,
-    //                                                profileDirty ? _ui_theme_color_NiceWhite : _ui_theme_color_SemiDark);
-    //         ui_object_set_themeable_style_property(ui_BrewScreen_saveAsNewButton, LV_PART_MAIN | LV_STATE_DEFAULT,
-    //                                                LV_STYLE_IMG_RECOLOR_OPA,
-    //                                                profileDirty ? _ui_theme_alpha_NiceWhite : _ui_theme_alpha_SemiDark);
-    //     },
-    //     &brewScreenState, &profileDirty);
 }
 
 void DefaultUI::handleScreenChange() {
@@ -766,41 +687,16 @@ void DefaultUI::handleScreenChange() {
     }
 }
 
-void DefaultUI::updateStandbyScreen() {
-    if (standbyEnterTime > 0) {
-        const ::Settings &settings = controller->getSettings();
-        const unsigned long now = ::millis();
-        if (now - standbyEnterTime >= settings.getStandbyBrightnessTimeout()) {
-            setBrightness(settings.getStandbyBrightness());
-        }
-    }
+void DefaultUI::updateState() {
+    mode = controller->getMode();
+    currentTemp = static_cast<int>(controller->getCurrentTemp());
+    targetTemp = static_cast<int>(controller->getTargetTemp());
+    pressureAvailable = controller->getSystemInfo().capabilities.pressure ? 1 : 0;
 
-    if (!apActive && WiFi.status() == WL_CONNECTED && !updateActive && !error && !protocolMismatch && !autotuning &&
-        !waitingForController && initialized) {
-        time_t now;
-        struct tm timeinfo;
-
-        localtime_r(&now, &timeinfo);
-        // allocate enough space for both 12h/24h time formats
-        if (getLocalTime(&timeinfo, 500)) {
-            char time[9];
-            ::Settings &settings = controller->getSettings();
-            const char *format = settings.isClock24hFormat() ? "%H:%M" : "%I:%M %p";
-            strftime(time, sizeof(time), format, &timeinfo);
-            // lv_label_set_text(ui_StandbyScreen_time, time);
-            // lv_obj_clear_flag(ui_StandbyScreen_time, LV_OBJ_FLAG_HIDDEN);
-
-            christmasMode = (timeinfo.tm_mon == 11 && timeinfo.tm_mday < 27) || (timeinfo.tm_mon == 0 && timeinfo.tm_mday < 6);
-        }
-    } else {
-        // lv_obj_add_flag(ui_StandbyScreen_time, LV_OBJ_FLAG_HIDDEN);
-    }
-    /*
-    controller->getClientController()->isConnected() ? lv_obj_clear_flag(ui_StandbyScreen_bluetoothIcon, LV_OBJ_FLAG_HIDDEN)
-                                                     : lv_obj_add_flag(ui_StandbyScreen_bluetoothIcon, LV_OBJ_FLAG_HIDDEN);
-    !apActive &&WiFi.status() == WL_CONNECTED ? lv_obj_clear_flag(ui_StandbyScreen_wifiIcon, LV_OBJ_FLAG_HIDDEN)
-                                              : lv_obj_add_flag(ui_StandbyScreen_wifiIcon, LV_OBJ_FLAG_HIDDEN);
-                                              */
+    uiFlags.brew_adjustments(brewScreenState == BrewScreenState::Settings);
+    uiFlags.active(controller->isActive());
+    uiFlags.grind_active(controller->isGrindActive());
+    uiFlags.grind_volumetric(controller->isVolumetricAvailable() && controller->getSettings().isVolumetricTarget());
 }
 
 void DefaultUI::updateSystemStatus() {
@@ -839,7 +735,11 @@ static void populateProfileInfo(ProfileInfoValue &info, const Profile &profile, 
 }
 
 void DefaultUI::updateProfileInfo() {
+    if (!initialized) {
+        return;
+    }
     populateProfileInfo(selectedProfileInfo, profileManager->getSelectedProfile(), true);
+    selectedProfileInfo.dirty(profileDirty);
 
     // Preview backs the ProfileScreen carousel (index 0 = selected); bounds-check as the list is built on another task.
     if (!favoritedProfiles.empty() && currentProfileIdx >= 0 && currentProfileIdx < static_cast<int>(favoritedProfiles.size())) {
@@ -870,7 +770,7 @@ void DefaultUI::updateBrewProcess() {
     brewProcess.profile_time(buf);
     brewProcess.profile_phases(static_cast<int>(selected.getPhaseCount()));
     brewProcess.profile_steps(static_cast<int>(selected.phases.size()));
-    brewProcess.profile_is_volumetric(profileVolumetric);
+    brewProcess.profile_is_volumetric(selected.isVolumetric());
     brewProcess.profile_is_current(true);
     brewProcess.profile_target_weight(selected.getTotalVolume());
     brewProcess.boiler_target_temperature(controller->getTargetTemp());
@@ -992,14 +892,6 @@ void DefaultUI::adjustDials(lv_obj_t *dials) {
     // lv_obj_set_y(tempText, pressureAvailable ? -205 : -180);
     // lv_arc_set_bg_angles(tempGauge, 118, pressureAvailable ? 242 : 62);
     // lv_arc_set_range(pressureGauge, 0, pressureScaling * 10);
-}
-
-inline void DefaultUI::adjustTempTarget(lv_obj_t *dials) {
-    // double gaugeAngle = pressureAvailable ? 124.0 : 304;
-    // double gaugeStart = pressureAvailable ? 118.0 : -62;
-    // double percentage = static_cast<double>(targetTemp) / 160.0;
-    // lv_obj_t *tempTarget = ui_comp_get_child(dials, UI_COMP_DIALS_TEMPTARGET);
-    // adjustTarget(tempTarget, percentage, gaugeStart, gaugeAngle);
 }
 
 void DefaultUI::applyTheme() {
