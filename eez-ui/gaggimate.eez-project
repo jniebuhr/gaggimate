@@ -12636,11 +12636,11 @@
                   "objID": "a2a5758c-e4b2-4c2d-a981-515daad89966",
                   "eventName": "CLICKED",
                   "handlerType": "action",
-                  "action": "onMenuClick",
+                  "action": "onStandby",
                   "userData": 0
                 }
               ],
-              "identifier": "menuIcon_1",
+              "identifier": "standbyButton",
               "leftUnit": "px",
               "topUnit": "px",
               "widthUnit": "content",
@@ -12735,7 +12735,7 @@
               "type": "LVGLContainerWidget",
               "left": 0,
               "top": 0,
-              "width": 230,
+              "width": 240,
               "height": 50,
               "customInputs": [],
               "customOutputs": [],
@@ -12815,7 +12815,7 @@
                   "type": "LVGLLabelWidget",
                   "left": 0,
                   "top": -52,
-                  "width": 58,
+                  "width": 65,
                   "height": 18,
                   "customInputs": [],
                   "customOutputs": [],
@@ -12857,10 +12857,11 @@
                   },
                   "group": "",
                   "groupIndex": 0,
-                  "text": "93 °C",
-                  "textType": "literal",
+                  "text": "String.format(\"%.0f\", boiler.current_temperature) + \" °C\"",
+                  "textType": "expression",
                   "longMode": "WRAP",
-                  "recolor": false
+                  "recolor": false,
+                  "previewValue": "93 °C"
                 },
                 {
                   "objID": "bdb9c6bd-4c0b-44bf-d559-a43137dfa5d6",
@@ -12881,8 +12882,8 @@
                   "eventHandlers": [],
                   "leftUnit": "px",
                   "topUnit": "px",
-                  "widthUnit": "content",
-                  "heightUnit": "content",
+                  "widthUnit": "px",
+                  "heightUnit": "px",
                   "children": [],
                   "widgetFlags": "ADV_HITTEST|CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLLABLE|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_WITH_ARROW|SNAPPABLE",
                   "hiddenFlagType": "literal",
@@ -12925,7 +12926,7 @@
                   "type": "LVGLLabelWidget",
                   "left": 0,
                   "top": -52,
-                  "width": 58,
+                  "width": 65,
                   "height": 18,
                   "customInputs": [],
                   "customOutputs": [],
@@ -12967,10 +12968,11 @@
                   },
                   "group": "",
                   "groupIndex": 0,
-                  "text": "8.5 bar",
-                  "textType": "literal",
+                  "text": "String.format(\"%.1f\", boiler.current_pressure) + \" bar\"",
+                  "textType": "expression",
                   "longMode": "WRAP",
-                  "recolor": false
+                  "recolor": false,
+                  "previewValue": "8.5 bar"
                 }
               ],
               "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLLABLE|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_WITH_ARROW|SNAPPABLE",
@@ -12997,7 +12999,7 @@
                       "align": "CENTER",
                       "layout": "FLEX",
                       "flex_flow": "ROW",
-                      "flex_main_place": "CENTER",
+                      "flex_main_place": "SPACE_AROUND",
                       "flex_track_place": "CENTER",
                       "flex_cross_place": "CENTER"
                     }
