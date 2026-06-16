@@ -24,6 +24,11 @@ function logProxyUnavailable(scope) {
   };
 }
 
+function normalizeBasePath(base) {
+  if (!base || base === '/') return '/';
+  return base.endsWith('/') ? base : `${base}/`;
+}
+
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
@@ -31,7 +36,7 @@ export default defineConfig(({ mode }) => {
   const httpTarget = normalizeTarget(configuredHost, 'http');
   const wsTarget = normalizeTarget(configuredHost, 'ws');
   const repoName = process.env.GITHUB_REPOSITORY?.split('/')[1] ?? '';
-  const base = env.VITE_BASE_URL || (process.env.GITHUB_ACTIONS && repoName ? `/${repoName}/` : '/');
+  const base = normalizeBasePath(env.VITE_BASE_URL || (process.env.GITHUB_ACTIONS && repoName ? `/${repoName}/` : '/'));
 
   return {
     base,
@@ -44,7 +49,7 @@ export default defineConfig(({ mode }) => {
         includeAssets: ['gm.svg', 'gm.png', 'app.webmanifest'],
         workbox: {
           globPatterns: ['**/*.{js,css,html,svg,png,ico,webmanifest}'],
-          navigateFallback: '/index.html',
+          navigateFallback: `${base}index.html`,
         },
         manifest: false,
       }),
