@@ -55,17 +55,17 @@ const METRIC_DEFS = {
     getValue: shot => (shot.volume != null ? shot.volume.toFixed(1) : null),
   },
   avgTemp: {
-    label: 'Avg Temp',
+    label: 'Temperature',
     unit: '°C',
     getValue: shot => (shot.avgTemp != null ? shot.avgTemp.toFixed(1) : null),
   },
   maxPressure: {
-    label: 'Max P.',
+    label: 'Pressure',
     unit: 'bar',
     getValue: shot => (shot.maxPressure != null ? shot.maxPressure.toFixed(1) : null),
   },
   avgFlow: {
-    label: 'Avg Flow',
+    label: 'Flow',
     unit: 'ml/s',
     getValue: shot => (shot.avgFlow != null ? shot.avgFlow.toFixed(2) : null),
   },
@@ -77,7 +77,7 @@ function ShotMiniCard({ shot, slots }) {
   const dateLabel = formatShotDateTime(shot.timestamp, !clock24hSignal.value);
 
   return (
-    <div className='app-card-surface flex min-w-0 flex-col rounded-xl p-3 lg:p-2.5 xl:p-3'>
+    <div className='app-card-surface bg-base-200 flex min-w-0 flex-col rounded-xl p-3 lg:p-2.5 xl:p-3'>
       <div className='flex min-w-0 items-start gap-2'>
         <div className='min-w-0 flex-1'>
           <div className='text-base-content truncate text-sm font-semibold'>
