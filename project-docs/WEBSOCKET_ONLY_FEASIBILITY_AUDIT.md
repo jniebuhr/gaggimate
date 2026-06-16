@@ -53,6 +53,13 @@ src/display/plugins/WebUIPlugin.cpp
 project-docs/HTTPS_FEASIBILITY_EVIDENCE_GATE.md
 ```
 
+Runtime evidence collected from:
+
+```text
+https://tyrlabsos.github.io/GaggiGo/https-feasibility/
+Standard GaggiMate master at ws://192.168.0.129/ws
+```
+
 ---
 
 ## Evidence 1 — Manual WebSocket Feasibility
@@ -134,6 +141,8 @@ capabilities
 short rolling in-memory status history
 ```
 
+Runtime evidence confirmed continuous `evt:status` messages from standard GaggiMate master over `ws://` from the HTTPS evidence page.
+
 This is useful for live observer/status display.
 
 ---
@@ -186,6 +195,71 @@ The audited WebSocket path does not currently prove equivalent historical hydrat
 
 ---
 
+## Runtime Evidence — Read-only Profile List
+
+Test command:
+
+```javascript
+const ws = new WebSocket('ws://192.168.0.129/ws');
+
+ws.onopen = () => {
+  ws.send(JSON.stringify({
+    tp: 'req:profiles:list',
+    rid: 'profile-list-test-1'
+  }));
+};
+```
+
+Observed result:
+
+```text
+WS OPEN
+WS MESSAGE {"tp":"res:profiles:list","rid":"profile-list-test-1","profiles":[...]}
+```
+
+Result:
+
+```text
+PASS
+```
+
+The returned profiles included live standard GaggiMate master profile data.
+
+---
+
+## Runtime Evidence — Read-only Profile Load
+
+Test command:
+
+```javascript
+const ws = new WebSocket('ws://192.168.0.129/ws');
+
+ws.onopen = () => {
+  ws.send(JSON.stringify({
+    tp: 'req:profiles:load',
+    rid: 'profile-load-test',
+    id: 's6bYmAxVdw'
+  }));
+};
+```
+
+Observed result:
+
+```text
+WS OPEN
+WS MESSAGE {"tp":"res:profiles:load","rid":"profile-load-test","profile":{"id":"s6bYmAxVdw","label":"Espresso Eds House",...}}
+```
+
+Result:
+
+```text
+PASS
+```
+
+This proves read-only profile loading works over `ws://` from the HTTPS evidence page against standard GaggiMate master.
+
+---
+
 ## Audit Findings
 
 ### Finding A — WebSocket Alone Is Not Currently Equivalent To Full Hydration
@@ -221,16 +295,16 @@ EXPECTED FAIL AGAINST STANDARD GAGGIMATE
 
 Therefore a narrow frontend evidence change would be required to test actual hosted-app WebSocket behaviour against standard GaggiMate.
 
-### Finding C — Profiles May Be Testable Via WebSocket
+### Finding C — Profiles Are Proven Readable Via WebSocket
 
-Profile reads are exposed through SafeGaggiMateClient:
+Profile reads exposed through SafeGaggiMateClient were runtime-tested:
 
 ```text
-req:profiles:list
-req:profiles:load
+req:profiles:list PASS
+req:profiles:load PASS
 ```
 
-This may allow an additional non-HTTP evidence test for profile loading through WebSocket.
+This proves profile authority reads can be recovered over WebSocket without HTTP API fetch access.
 
 However, this does not solve history/analyzer/statistics hydration.
 
@@ -245,8 +319,10 @@ Because the active architecture hydrates local IndexedDB from GaggiMate history 
 ```text
 HTTPS hosted app shell: PASS
 Manual local ws:// access: PASS
+Live status over WebSocket: PASS
+Read-only profile list over WebSocket: PASS
+Read-only profile load over WebSocket: PASS
 Current app configured WebSocket behaviour: NOT PROVEN / likely blocked by forced wss://
-Profile read via WebSocket: POSSIBLE, untested in hosted app
 Historical hydration via WebSocket only: NOT PROVEN
 HTTP API hydration: BLOCKED by mixed-content/CORS under standard GaggiMate master
 ```
@@ -256,6 +332,24 @@ HTTP API hydration: BLOCKED by mixed-content/CORS under standard GaggiMate maste
 ## Decision Impact
 
 Hosted HTTPS + local GaggiMate authority remains partially viable, but not complete.
+
+Confirmed viable through WebSocket:
+
+```text
+live status
+profile list
+profile load
+```
+
+Still unproven / blocked:
+
+```text
+history index hydration
+shot payload hydration
+Analyzer population
+Statistics population
+full IndexedDB mirror construction
+```
 
 It requires at least one of the following to preserve full MVP behaviour:
 
@@ -276,23 +370,12 @@ Do not select an architecture yet.
 Next narrow investigation:
 
 ```text
-Audit and test whether the hosted evidence page can send read-only WebSocket request messages to standard GaggiMate master, specifically:
-
-req:profiles:list
-req:profiles:load
+Audit whether standard GaggiMate master exposes any read-only WebSocket request path for shot history index or shot payload retrieval.
 ```
 
-Reason:
+If no such path exists, the project can classify WebSocket-only operation as insufficient for the current MVP historical mirror.
 
-```text
-This can be tested against the currently running standard GaggiMate master without firmware changes.
-```
-
-If profile reads work, the project will know that some GaggiMate authority reads are recoverable over WebSocket.
-
-If they fail, Hosted HTTPS + live GaggiMate authority weakens further.
-
-This does not solve historical hydration but improves the evidence map.
+If such a path exists, test it read-only before any architecture selection.
 
 ---
 
