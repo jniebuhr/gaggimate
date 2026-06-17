@@ -15,6 +15,7 @@
 #include <display/ui/default/lvgl/ui_theme_manager.h>
 #include <display/ui/default/lvgl/ui_themes.h>
 #include <display/ui/utils/effects.h>
+#include <iterator>
 #include <utility>
 
 #include "esp_sntp.h"
@@ -290,19 +291,33 @@ void DefaultUI::loop() {
 void DefaultUI::loopProfiles() {
     if (!profileLoaded) {
         const auto favoritedIds = profileManager->getFavoritedProfiles();
+        const auto profileIds = profileManager->listProfiles();
+        const auto selectedId = controller->getSettings().getSelectedProfile();
+        std::vector<String> profileListIds;
         favoritedProfileIds.clear();
         favoritedProfiles.clear();
-        favoritedProfileIds.reserve(favoritedIds.size() + 1);
-        favoritedProfileIds.emplace_back(controller->getSettings().getSelectedProfile());
+        profileListIds.reserve(profileIds.size());
         for (const auto &id : favoritedIds) {
-            if (std::find(favoritedProfileIds.begin(), favoritedProfileIds.end(), id) == favoritedProfileIds.end())
-                favoritedProfileIds.emplace_back(id);
+            if (std::find(profileListIds.begin(), profileListIds.end(), id) == profileListIds.end())
+                profileListIds.emplace_back(id);
         }
-        favoritedProfiles.reserve(favoritedProfileIds.size());
-        for (const auto &profileId : favoritedProfileIds) {
+        for (const auto &id : profileIds) {
+            if (std::find(profileListIds.begin(), profileListIds.end(), id) == profileListIds.end())
+                profileListIds.emplace_back(id);
+        }
+        favoritedProfileIds.reserve(profileListIds.size());
+        favoritedProfiles.reserve(profileListIds.size());
+        for (const auto &profileId : profileListIds) {
             Profile profile{};
-            profileManager->loadProfile(profileId, profile);
-            favoritedProfiles.emplace_back(std::move(profile));
+            if (profileManager->loadProfile(profileId, profile)) {
+                favoritedProfileIds.emplace_back(profileId);
+                favoritedProfiles.emplace_back(std::move(profile));
+            }
+        }
+        currentProfileIdx = 0;
+        auto selectedProfileIt = std::find(favoritedProfileIds.begin(), favoritedProfileIds.end(), selectedId);
+        if (selectedProfileIt != favoritedProfileIds.end()) {
+            currentProfileIdx = static_cast<int>(std::distance(favoritedProfileIds.begin(), selectedProfileIt));
         }
         profileLoaded = 1;
     }
@@ -323,12 +338,12 @@ void DefaultUI::changeBrewScreenMode(BrewScreenState state) {
 }
 
 void DefaultUI::onProfileSwitch() {
-    currentProfileIdx = 0;
+    reloadProfiles();
     changeScreen(&ui_ProfileScreen, ui_ProfileScreen_screen_init);
 }
 
 void DefaultUI::onNextProfile() {
-    if (currentProfileIdx < favoritedProfileIds.size() - 1) {
+    if (!favoritedProfileIds.empty() && currentProfileIdx < static_cast<int>(favoritedProfileIds.size()) - 1) {
         currentProfileIdx++;
     }
     rerender = true;
@@ -342,6 +357,10 @@ void DefaultUI::onPreviousProfile() {
 }
 
 void DefaultUI::onProfileSelect() {
+    if (favoritedProfileIds.empty() || currentProfileIdx < 0 ||
+        currentProfileIdx >= static_cast<int>(favoritedProfileIds.size())) {
+        return;
+    }
     profileManager->selectProfile(favoritedProfileIds[currentProfileIdx]);
     profileDirty = false;
     changeScreen(&ui_BrewScreen, ui_BrewScreen_screen_init);
@@ -623,18 +642,22 @@ void DefaultUI::setupReactive() {
             if (profileLoaded) {
                 _ui_flag_modify(ui_ProfileScreen_profileDetails, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_REMOVE);
                 _ui_flag_modify(ui_ProfileScreen_loadingSpinner, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_ADD);
-                lv_label_set_text(ui_ProfileScreen_profileName, favoritedProfiles[currentProfileIdx].label.c_str());
-                lv_label_set_text(ui_ProfileScreen_mainLabel, currentProfileIdx == 0 ? "Current profile" : "Select profile");
+                if (!favoritedProfiles.empty() && currentProfileIdx >= 0 &&
+                    currentProfileIdx < static_cast<int>(favoritedProfiles.size())) {
+                    const auto &profile = favoritedProfiles[currentProfileIdx];
+                    lv_label_set_text(ui_ProfileScreen_profileName, profile.label.c_str());
+                    lv_label_set_text(ui_ProfileScreen_mainLabel,
+                                      profile.id == selectedProfileId ? "Current profile" : "Select profile");
 
-                const auto minutes = static_cast<int>(favoritedProfiles[currentProfileIdx].getTotalDuration() / 60.0 - 0.5);
-                const auto seconds = static_cast<int>(favoritedProfiles[currentProfileIdx].getTotalDuration()) % 60;
-                lv_label_set_text_fmt(ui_ProfileScreen_targetDuration2, "%2d:%02d", minutes, seconds);
-                lv_label_set_text_fmt(ui_ProfileScreen_targetTemp2, "%d°C",
-                                      static_cast<int>(favoritedProfiles[currentProfileIdx].temperature));
-                unsigned int phaseCount = favoritedProfiles[currentProfileIdx].getPhaseCount();
-                unsigned int stepCount = favoritedProfiles[currentProfileIdx].phases.size();
-                lv_label_set_text_fmt(ui_ProfileScreen_stepsLabel, "%d step%s", stepCount, stepCount > 1 ? "s" : "");
-                lv_label_set_text_fmt(ui_ProfileScreen_phasesLabel, "%d phase%s", phaseCount, phaseCount > 1 ? "s" : "");
+                    const auto minutes = static_cast<int>(profile.getTotalDuration() / 60.0 - 0.5);
+                    const auto seconds = static_cast<int>(profile.getTotalDuration()) % 60;
+                    lv_label_set_text_fmt(ui_ProfileScreen_targetDuration2, "%2d:%02d", minutes, seconds);
+                    lv_label_set_text_fmt(ui_ProfileScreen_targetTemp2, "%d°C", static_cast<int>(profile.temperature));
+                    unsigned int phaseCount = profile.getPhaseCount();
+                    unsigned int stepCount = profile.phases.size();
+                    lv_label_set_text_fmt(ui_ProfileScreen_stepsLabel, "%d step%s", stepCount, stepCount > 1 ? "s" : "");
+                    lv_label_set_text_fmt(ui_ProfileScreen_phasesLabel, "%d phase%s", phaseCount, phaseCount > 1 ? "s" : "");
+                }
             } else {
                 _ui_flag_modify(ui_ProfileScreen_profileDetails, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_ADD);
                 _ui_flag_modify(ui_ProfileScreen_loadingSpinner, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_REMOVE);
@@ -648,10 +671,12 @@ void DefaultUI::setupReactive() {
                                                    currentProfileIdx > 0 ? _ui_theme_alpha_NiceWhite : _ui_theme_alpha_SemiDark);
             ui_object_set_themeable_style_property(
                 ui_ProfileScreen_nextProfileBtn, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_IMG_RECOLOR,
-                currentProfileIdx < favoritedProfiles.size() - 1 ? _ui_theme_color_NiceWhite : _ui_theme_color_SemiDark);
+                currentProfileIdx < static_cast<int>(favoritedProfiles.size()) - 1 ? _ui_theme_color_NiceWhite
+                                                                                   : _ui_theme_color_SemiDark);
             ui_object_set_themeable_style_property(
                 ui_ProfileScreen_nextProfileBtn, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_IMG_RECOLOR_OPA,
-                currentProfileIdx < favoritedProfiles.size() - 1 ? _ui_theme_alpha_NiceWhite : _ui_theme_alpha_SemiDark);
+                currentProfileIdx < static_cast<int>(favoritedProfiles.size()) - 1 ? _ui_theme_alpha_NiceWhite
+                                                                                   : _ui_theme_alpha_SemiDark);
         },
         &currentProfileIdx, &profileLoaded);
 

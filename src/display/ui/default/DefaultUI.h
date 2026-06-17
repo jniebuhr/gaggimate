@@ -129,7 +129,7 @@ class DefaultUI {
     BrewScreenState brewScreenState = BrewScreenState::Brew;
 
     int profileDirty = 0;
-    int currentProfileIdx;
+    int currentProfileIdx = 0;
     int profileLoaded = 0;
     std::vector<String> favoritedProfileIds;
     std::vector<Profile> favoritedProfiles;
