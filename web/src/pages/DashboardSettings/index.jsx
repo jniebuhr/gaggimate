@@ -150,22 +150,15 @@ export function DashboardSettings() {
             onChange={e => { setStickyBottomState(e.target.checked); setStickyBottom(e.target.checked); }}
           />
           <SettingsFormField label='Column Spacing' htmlFor='columnSpacing'>
-            <div className='join'>
-              <button
-                type='button'
-                className={`btn btn-sm join-item ${columnSpacing === COLUMN_SPACINGS.START ? 'btn-primary' : 'btn-ghost'}`}
-                onClick={() => { setColumnSpacingState(COLUMN_SPACINGS.START); setColumnSpacing(COLUMN_SPACINGS.START); }}
-              >
-                Pack to top
-              </button>
-              <button
-                type='button'
-                className={`btn btn-sm join-item ${columnSpacing === COLUMN_SPACINGS.BETWEEN ? 'btn-primary' : 'btn-ghost'}`}
-                onClick={() => { setColumnSpacingState(COLUMN_SPACINGS.BETWEEN); setColumnSpacing(COLUMN_SPACINGS.BETWEEN); }}
-              >
-                Space evenly
-              </button>
-            </div>
+            <select
+              id='columnSpacing'
+              className='select select-bordered w-full'
+              value={columnSpacing}
+              onChange={e => { setColumnSpacingState(e.target.value); setColumnSpacing(e.target.value); }}
+            >
+              <option value={COLUMN_SPACINGS.START}>Pack to top</option>
+              <option value={COLUMN_SPACINGS.BETWEEN}>Space evenly</option>
+            </select>
           </SettingsFormField>
           <SortableConfigurator
             order={panelOrder}
