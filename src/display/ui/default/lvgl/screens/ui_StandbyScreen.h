@@ -13,20 +13,19 @@ extern "C" {
 // SCREEN: ui_StandbyScreen
 extern void ui_StandbyScreen_screen_init(void);
 extern void ui_StandbyScreen_screen_destroy(void);
-extern void ui_event_StandbyScreen(lv_event_t *e);
+extern void ui_event_StandbyScreen( lv_event_t * e);
 extern lv_obj_t *ui_StandbyScreen;
-extern lv_obj_t *ui_StandbyScreen_logo;
-extern lv_obj_t *ui_StandbyScreen_time;
-extern lv_obj_t *ui_StandbyScreen_statusContainer;
-extern lv_obj_t *ui_StandbyScreen_wifiIcon;
-extern lv_obj_t *ui_StandbyScreen_bluetoothIcon;
-extern lv_obj_t *ui_StandbyScreen_updateIcon;
-extern lv_obj_t *ui_StandbyScreen_touchIcon;
-extern lv_obj_t *ui_StandbyScreen_mainLabel;
+extern lv_obj_t *ui_StandbyScreen_dials;
+extern lv_obj_t *ui_StandbyScreen_Image12;
+extern lv_obj_t *ui_StandbyScreen_Image13;
+extern lv_obj_t *ui_StandbyScreen_targetTemp;
 // CUSTOM VARIABLES
+extern lv_obj_t *uic_StandbyScreen_dials_tempGauge;
+extern lv_obj_t *uic_StatusScreen_dials_tempTarget;
 
 #ifdef __cplusplus
 } /*extern "C"*/
 #endif
 
 #endif
+

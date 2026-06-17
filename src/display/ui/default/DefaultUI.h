@@ -34,17 +34,11 @@ class DefaultUI {
     void changeScreen(lv_obj_t **screen, void (*target_init)(void));
 
     void changeBrewScreenMode(BrewScreenState state);
-    void onProfileSwitch();
-    void onNextProfile();
-    void onPreviousProfile();
-    void onProfileSelect();
     void setBrightness(int brightness) {
         if (panelDriver) {
             panelDriver->setBrightness(brightness);
         }
     };
-
-    void onVolumetricDelete();
 
     void markDirty() { rerender = true; }
     void markProfileDirty() { profileDirty = true; }
@@ -62,9 +56,6 @@ class DefaultUI {
     void setupReactive();
 
     void handleScreenChange();
-
-    void updateStandbyScreen();
-    void updateStatusScreen() const;
 
     void adjustDials(lv_obj_t *dials);
     void adjustTempTarget(lv_obj_t *dials);
