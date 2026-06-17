@@ -33,6 +33,9 @@ const ShotAnalyzer = lazy(() => import('./pages/ShotAnalyzer/index.jsx').then(m 
 const StatisticsPage = lazy(() =>
   import('./pages/Statistics/index.jsx').then(m => m.StatisticsPage),
 );
+const DashboardSettings = lazy(() =>
+  import('./pages/DashboardSettings/index.jsx').then(m => m.DashboardSettings)
+);
 
 const apiService = new ApiService();
 const DESKTOP_NAV_COLLAPSED_STORAGE_KEY = 'gaggimate.desktopNavCollapsed';
@@ -85,6 +88,7 @@ export function App() {
                   <ErrorBoundary>
                     <Router>
                       <Route path='/' component={Home} />
+                      <Route path='/dashboard-settings' component={DashboardSettings} />
                       <Route path='/profiles' component={ProfileList} />
                       <Route path='/profiles/:id' component={ProfileEdit} />
                       <Route path='/settings' component={Settings} />
