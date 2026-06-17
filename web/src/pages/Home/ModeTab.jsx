@@ -1,6 +1,6 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
-export const ModeTab = ({ mode, active, onClick, rotation = 0 }) => (
+export const ModeTab = ({ mode, active, onClick, rotation = 0, compact = false }) => (
   <>
     <button
       type='button'
@@ -14,10 +14,16 @@ export const ModeTab = ({ mode, active, onClick, rotation = 0 }) => (
           : 'text-base-content/50 hover:text-base-content'
       }`}
     >
-      <span className='hidden md:contents'>{mode.label}</span>
-      <span className='md:hidden'>
+      {compact ? (
         <FontAwesomeIcon icon={mode.icon} className='h-3.5 w-3.5' rotation={rotation} />
-      </span>
+      ) : (
+        <>
+          <span className='hidden md:contents'>{mode.label}</span>
+          <span className='md:hidden'>
+            <FontAwesomeIcon icon={mode.icon} className='h-3.5 w-3.5' rotation={rotation} />
+          </span>
+        </>
+      )}
     </button>
   </>
 );

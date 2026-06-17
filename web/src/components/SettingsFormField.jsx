@@ -68,7 +68,7 @@ export function ToggleField({ label, htmlFor, checked, onChange, helpText }) {
   );
 }
 
-export function SortableConfigurator({ order, definitions, hidden, onOrderChange, emptyMessage }) {
+export function SortableConfigurator({ order, definitions, hidden, onOrderChange, emptyMessage, extraControls }) {
   const orderRef = useRef(order);
   orderRef.current = order;
 
@@ -186,6 +186,7 @@ export function SortableConfigurator({ order, definitions, hidden, onOrderChange
               >
                 <span className='cursor-grab select-none text-base-content/20'>⠿</span>
                 <span className='flex-1 text-sm'>{def.label}</span>
+                {extraControls?.(def)}
                 <div className='flex flex-col gap-px'>
                   <button
                     type='button'

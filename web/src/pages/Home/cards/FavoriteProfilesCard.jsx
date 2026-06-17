@@ -56,7 +56,7 @@ ProfileMiniCard.propTypes = {
   onSelect: PropTypes.func.isRequired,
 };
 
-export function FavoriteProfilesCard({ selectedProfileId, inCard = false }) {
+export function FavoriteProfilesCard({ selectedProfileId, inCard = false, compact = false }) {
   const apiService = useContext(ApiServiceContext);
   const [favorites, setFavorites] = useState([]);
 
@@ -74,19 +74,40 @@ export function FavoriteProfilesCard({ selectedProfileId, inCard = false }) {
 
   if (favorites.length === 0) return null;
 
+  const content = compact ? (
+    <div className='flex gap-1.5 overflow-x-auto pb-0.5'>
+      {favorites.map(profile => (
+        <button
+          key={profile.id}
+          type='button'
+          onClick={() => handleSelect(profile.id)}
+          className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+            profile.id === selectedProfileId
+              ? 'bg-primary text-primary-content'
+              : 'bg-base-200 text-base-content hover:bg-base-300'
+          }`}
+        >
+          {profile.label}
+        </button>
+      ))}
+    </div>
+  ) : (
+    <div className='grid grid-cols-3 gap-2'>
+      {favorites.map(profile => (
+        <ProfileMiniCard
+          key={profile.id}
+          profile={profile}
+          isSelected={profile.id === selectedProfileId}
+          onSelect={handleSelect}
+        />
+      ))}
+    </div>
+  );
+
   return (
     <div className={inCard ? 'flex flex-col gap-2' : 'card bg-base-100 flex flex-col gap-2 rounded-xl p-3'}>
       <div className='text-base-content/50 text-[0.6rem] uppercase tracking-wider'>Quick Select</div>
-      <div className='grid grid-cols-3 gap-2'>
-        {favorites.map(profile => (
-          <ProfileMiniCard
-            key={profile.id}
-            profile={profile}
-            isSelected={profile.id === selectedProfileId}
-            onSelect={handleSelect}
-          />
-        ))}
-      </div>
+      {content}
     </div>
   );
 }
@@ -94,4 +115,5 @@ export function FavoriteProfilesCard({ selectedProfileId, inCard = false }) {
 FavoriteProfilesCard.propTypes = {
   selectedProfileId: PropTypes.string,
   inCard:            PropTypes.bool,
+  compact:           PropTypes.bool,
 };

@@ -3,7 +3,7 @@ import { METRIC_DEFINITIONS } from '../../../utils/metricDefinitions.js';
 import { metricOrderSignal } from '../../../utils/dashboardManager.js';
 import { MetricsGrid } from './MetricsGrid.jsx';
 
-export function MetricsPanelWrapper({ ds, inCard = false }) {
+export function MetricsPanelWrapper({ ds, inCard = false, compact = false }) {
   const metricOrder = metricOrderSignal.value;
 
   const orderedIds = [
@@ -28,10 +28,11 @@ export function MetricsPanelWrapper({ ds, inCard = false }) {
       onIncrease: m.onIncrease ? m.onIncrease(ds) : undefined,
     }));
 
-  return <MetricsGrid metrics={visibleMetrics} inCard={inCard} />;
+  return <MetricsGrid metrics={visibleMetrics} inCard={inCard} compact={compact} />;
 }
 
 MetricsPanelWrapper.propTypes = {
   ds: PropTypes.object.isRequired,
   inCard: PropTypes.bool,
+  compact: PropTypes.bool,
 };
