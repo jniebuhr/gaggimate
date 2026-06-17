@@ -11,18 +11,22 @@ import { faDiscord } from '@fortawesome/free-brands-svg-icons/faDiscord';
 import { faMagnifyingGlassChart } from '@fortawesome/free-solid-svg-icons/faMagnifyingGlassChart';
 import { faChartSimple } from '@fortawesome/free-solid-svg-icons/faChartSimple';
 
+const routeBase = import.meta.env.BASE_URL === '/' ? '' : import.meta.env.BASE_URL.replace(/\/$/, '');
+const routeLink = path => `${routeBase}${path}`;
+
 function HeaderItem(props) {
   const { path } = useLocation();
+  const link = routeLink(props.link);
   let className =
     'btn btn-md justify-start gap-3 w-full text-base-content hover:text-base-content hover:bg-base-content/10 bg-transparent border-none px-2';
 
-  if (path === props.link) {
+  if (path === link) {
     className =
       'btn btn-md justify-start gap-3 w-full bg-primary text-primary-content hover:bg-primary hover:text-primary-content px-2';
   }
 
   return (
-    <a href={props.link} onClick={props.onClick} className={className}>
+    <a href={link} onClick={props.onClick} className={className}>
       <FontAwesomeIcon icon={props.icon} />
       <span>{props.label}</span>
     </a>
@@ -42,7 +46,7 @@ export function Header() {
       <div className='mx-auto px-4 lg:px-8 xl:container'>
         <div className='border-base-300 flex justify-between border-b-2 py-2 lg:py-6'>
           <div className='flex items-center'>
-            <a href='/' className='inline-flex' onClick={() => openCb(false)}>
+            <a href={routeLink('/')} className='inline-flex' onClick={() => openCb(false)}>
               <span className='text-base-content font-logo text-3xl font-light'>
                 <span className='font-semibold'>Gaggi</span>Go
               </span>
