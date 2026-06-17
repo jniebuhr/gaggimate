@@ -11,6 +11,7 @@ import { faMagnifyingGlassChart } from '@fortawesome/free-solid-svg-icons/faMagn
 import { faChartSimple } from '@fortawesome/free-solid-svg-icons/faChartSimple';
 import { faCircleChevronLeft } from '@fortawesome/free-solid-svg-icons/faCircleChevronLeft';
 import { faCircleChevronRight } from '@fortawesome/free-solid-svg-icons/faCircleChevronRight';
+import { faPen } from '@fortawesome/free-solid-svg-icons/faPen';
 import { GmLogoIcon } from '../pages/ShotAnalyzer/components/SourceMarker.jsx';
 import { faGithub } from '@fortawesome/free-brands-svg-icons/faGithub';
 import { faDiscord } from '@fortawesome/free-brands-svg-icons/faDiscord';
@@ -228,9 +229,32 @@ export function Navigation({ collapsed = false, onToggleCollapsed }) {
             <div key={section.id}>
               {section.showDivider ? <hr className='h-5 border-0' /> : null}
               <div className='space-y-1.5'>
-                {section.items.map(item => (
-                  <MenuItem key={item.link} collapsed={collapsed} {...item} />
-                ))}
+                {section.items.map(item => {
+                  if (section.id === 'dashboard') {
+                    return (
+                      <div key={item.link} className='flex items-center gap-1'>
+                        <div className='min-w-0 flex-1'>
+                          <MenuItem collapsed={collapsed} {...item} />
+                        </div>
+                        {!collapsed && (
+                          <a
+                            href='/dashboard-settings'
+                            aria-label='Dashboard Settings'
+                            title='Dashboard Settings'
+                            className={`btn btn-square btn-sm h-12 min-h-0 w-10 min-w-0 shrink-0 rounded-xl border-none ${
+                              loc.path === '/dashboard-settings'
+                                ? 'bg-primary text-primary-content hover:bg-primary hover:text-primary-content'
+                                : 'bg-transparent text-base-content hover:bg-base-content/10 hover:text-base-content'
+                            }`}
+                          >
+                            <FontAwesomeIcon icon={faPen} className='h-3.5 w-3.5' />
+                          </a>
+                        )}
+                      </div>
+                    );
+                  }
+                  return <MenuItem key={item.link} collapsed={collapsed} {...item} />;
+                })}
               </div>
             </div>
           ))}
