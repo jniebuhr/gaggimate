@@ -137,45 +137,36 @@ export function DashboardSettings() {
 
         {/* ── Card 2: Panel Selection ───────────────────────────────────── */}
         <Card sm={10} lg={5} title='Panel Selection'>
-          <div className='divider'>
-            <span>Panels</span>
-            <div className='flex items-center gap-3'>
-              <label className='flex cursor-pointer items-center gap-1.5 text-xs font-normal normal-case tracking-normal'>
-                <input
-                  type='checkbox'
-                  className='toggle toggle-xs toggle-primary'
-                  checked={stickyTop}
-                  onChange={e => { setStickyTopState(e.target.checked); setStickyTop(e.target.checked); }}
-                />
-                Stick first to top
-              </label>
-              <label className='flex cursor-pointer items-center gap-1.5 text-xs font-normal normal-case tracking-normal'>
-                <input
-                  type='checkbox'
-                  className='toggle toggle-xs toggle-primary'
-                  checked={stickyBottom}
-                  onChange={e => { setStickyBottomState(e.target.checked); setStickyBottom(e.target.checked); }}
-                />
-                Stick last to bottom
-              </label>
-              <div className='join'>
-                <button
-                  type='button'
-                  className={`btn btn-xs join-item ${columnSpacing === COLUMN_SPACINGS.START ? 'btn-primary' : 'btn-ghost'}`}
-                  onClick={() => { setColumnSpacingState(COLUMN_SPACINGS.START); setColumnSpacing(COLUMN_SPACINGS.START); }}
-                >
-                  Pack to top
-                </button>
-                <button
-                  type='button'
-                  className={`btn btn-xs join-item ${columnSpacing === COLUMN_SPACINGS.BETWEEN ? 'btn-primary' : 'btn-ghost'}`}
-                  onClick={() => { setColumnSpacingState(COLUMN_SPACINGS.BETWEEN); setColumnSpacing(COLUMN_SPACINGS.BETWEEN); }}
-                >
-                  Space evenly
-                </button>
-              </div>
+          <ToggleField
+            label='Stick first panel to top'
+            htmlFor='stickyTop'
+            checked={stickyTop}
+            onChange={e => { setStickyTopState(e.target.checked); setStickyTop(e.target.checked); }}
+          />
+          <ToggleField
+            label='Stick last panel to bottom'
+            htmlFor='stickyBottom'
+            checked={stickyBottom}
+            onChange={e => { setStickyBottomState(e.target.checked); setStickyBottom(e.target.checked); }}
+          />
+          <SettingsFormField label='Column Spacing' htmlFor='columnSpacing'>
+            <div className='join'>
+              <button
+                type='button'
+                className={`btn btn-sm join-item ${columnSpacing === COLUMN_SPACINGS.START ? 'btn-primary' : 'btn-ghost'}`}
+                onClick={() => { setColumnSpacingState(COLUMN_SPACINGS.START); setColumnSpacing(COLUMN_SPACINGS.START); }}
+              >
+                Pack to top
+              </button>
+              <button
+                type='button'
+                className={`btn btn-sm join-item ${columnSpacing === COLUMN_SPACINGS.BETWEEN ? 'btn-primary' : 'btn-ghost'}`}
+                onClick={() => { setColumnSpacingState(COLUMN_SPACINGS.BETWEEN); setColumnSpacing(COLUMN_SPACINGS.BETWEEN); }}
+              >
+                Space evenly
+              </button>
             </div>
-          </div>
+          </SettingsFormField>
           <SortableConfigurator
             order={panelOrder}
             definitions={PANEL_DEFINITIONS}
