@@ -28,14 +28,14 @@ function getRelativeDayLabel(timestamp) {
   const diffDays = Math.round((todayDay - shotDay) / 86400000);
   if (diffDays === 0) return 'Today';
   if (diffDays === 1) return 'Yesterday';
-  return d.toLocaleDateString([], { weekday: 'short' });
+  return d.toLocaleDateString([], { weekday: 'long' });
 }
 
 function formatShotDateTime(timestamp, hour12) {
   if (!timestamp || timestamp < 10000) return '';
   return new Date(timestamp * 1000).toLocaleString([], {
     day: 'numeric',
-    month: 'short',
+    month: 'numeric',
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
@@ -81,7 +81,7 @@ function ShotMiniCard({ shot, slots }) {
       <div className='flex min-w-0 items-start gap-2'>
         <div className='min-w-0 flex-1'>
           <div className='text-base-content truncate text-sm font-semibold'>
-            #{shot.id}
+            shot-{shot.id}
             <span className='text-base-content/45 ml-1.5 text-xs font-normal'>
               · {getRelativeDayLabel(shot.timestamp)}
             </span>
@@ -98,14 +98,14 @@ function ShotMiniCard({ shot, slots }) {
         </a>
       </div>
 
-      <div className='mt-4 flex gap-2 lg:mt-3.5 lg:gap-1.5 xl:mt-4 xl:gap-2'>
+      <div className='mt-1.5 flex gap-2 lg:gap-1.5 xl:gap-2'>
         {slots.map(slotId => {
           const def = METRIC_DEFS[slotId];
           const value = def ? def.getValue(shot) : null;
           return (
             <div key={slotId} className='min-w-0 flex-1 text-center'>
               <div className='flex items-baseline justify-center gap-1.5 lg:gap-1 xl:gap-1.5'>
-                <span className='truncate text-base leading-none font-normal tabular-nums lg:text-sm xl:text-base'>
+                <span className='text-base-content text-sm font-bold'>
                   {value ?? '—'}
                 </span>
                 {value != null && def && (
@@ -114,7 +114,7 @@ function ShotMiniCard({ shot, slots }) {
                   </span>
                 )}
               </div>
-              <div className='text-base-content/55 mt-0.5 truncate text-center text-xs leading-tight font-medium'>
+              <div className='text-base-content/50 text-[0.6rem] font-semibold tracking-wider uppercase'>
                 {def?.label ?? slotId}
               </div>
             </div>
@@ -122,7 +122,7 @@ function ShotMiniCard({ shot, slots }) {
         })}
       </div>
 
-      <div className='mt-3'>
+      <div className='mt-1'>
         <span className='text-base-content/45 text-xs italic'>{dateLabel}</span>
       </div>
     </div>
