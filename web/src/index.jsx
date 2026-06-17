@@ -22,6 +22,8 @@ import { StatisticsPage } from './pages/Statistics/index.jsx';
 import { Storage } from './pages/Storage/index.jsx';
 
 const apiService = new ApiService();
+const routeBase = import.meta.env.BASE_URL === '/' ? '' : import.meta.env.BASE_URL.replace(/\/$/, '');
+const routePath = path => `${routeBase}${path}`;
 
 export function App() {
   return (
@@ -38,19 +40,19 @@ export function App() {
                   <div className='lg:col-span-10'>
                     <ErrorBoundary>
                       <Router>
-                        <Route path='/' component={Home} />
-                        <Route path='/profiles' component={ProfileList} />
-                        <Route path='/profiles/:id' component={ProfileEdit} />
-                        <Route path='/settings' component={Settings} />
-                        <Route path='/history' component={ShotHistory} />
-                        <Route path='/analyzer' component={ShotAnalyzer} />
-                        <Route path='/statistics' component={StatisticsPage} />
-                        <Route path='/storage' component={Storage} />
+                        <Route path={routePath('/')} component={Home} />
+                        <Route path={routePath('/profiles')} component={ProfileList} />
+                        <Route path={routePath('/profiles/:id')} component={ProfileEdit} />
+                        <Route path={routePath('/settings')} component={Settings} />
+                        <Route path={routePath('/history')} component={ShotHistory} />
+                        <Route path={routePath('/analyzer')} component={ShotAnalyzer} />
+                        <Route path={routePath('/statistics')} component={StatisticsPage} />
+                        <Route path={routePath('/storage')} component={Storage} />
                         <Route
-                          path='/statistics/:sourceAlias/:profileName'
+                          path={routePath('/statistics/:sourceAlias/:profileName')}
                           component={StatisticsPage}
                         />
-                        <Route path='/analyzer/:source/:id' component={ShotAnalyzer} />
+                        <Route path={routePath('/analyzer/:source/:id')} component={ShotAnalyzer} />
                         <Route default component={NotFound} />
                       </Router>
                     </ErrorBoundary>
