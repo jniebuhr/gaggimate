@@ -28,6 +28,55 @@ machine control work
 
 ---
 
+## Exact Current Question
+
+```text
+Why does the deployed application show no live machine data when:
+
+- the application loads
+- all routes work
+- manual WebSocket access succeeds
+```
+
+This is the only active deployment-validation question.
+
+---
+
+## Closed Evidence (Do Not Re-Audit)
+
+Validated and closed:
+
+```text
+PASS
+- GitHub Pages deployment
+- PWA installability
+- Service worker registration
+- Service worker control
+- Base path routing
+- Desktop navigation routing
+- Mobile navigation routing
+- Direct WebSocket access from hosted HTTPS page
+- History endpoint access
+- Repository synchronisation
+```
+
+Known and accepted:
+
+```text
+FAIL
+- Hosted HTTPS -> HTTP API fetch
+```
+
+Reason:
+
+```text
+Browser mixed-content and CORS policy.
+```
+
+Do not re-investigate unless architecture changes.
+
+---
+
 ## Current Deployment Target
 
 GitHub Pages publishes from:
