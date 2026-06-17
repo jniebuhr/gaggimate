@@ -25,7 +25,17 @@ class SdlDriver : public Driver {
     bool hasBattery() override { return true; }
     uint16_t getBatteryMilliVolts() override {
         const char *mv = getenv("GM_SIM_BATTERY_MV");
-        return static_cast<uint16_t>(mv ? atoi(mv) : 3900);
+        if (mv == nullptr) {
+            return 3900;
+        }
+        // Validate: a bare atoi()+cast would wrap invalid input (e.g. "-1" -> 65535),
+        // which distorts the simulated battery %. Reject non-numeric/out-of-range.
+        char *end = nullptr;
+        const long parsed = strtol(mv, &end, 10);
+        if (end == mv || *end != '\0' || parsed < 0 || parsed > 5000) {
+            return 3900;
+        }
+        return static_cast<uint16_t>(parsed);
     }
 
     static SdlDriver *getInstance() {

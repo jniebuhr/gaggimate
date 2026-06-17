@@ -34,24 +34,30 @@ class AutoSleepManager {
     bool isControllerConnected() const { return controllerConnected_; }
     uint32_t controllerDisconnectedSince() const { return controllerDisconnectedSince_; }
 
-    // Begin with no connection yet (start the countdown at boot).
+    // Begin with no connection yet (start the countdown at boot). A dedicated
+    // "counting" flag tracks whether the timer is active, so the timestamp is a
+    // plain value (no 0->1 coercion) and `now - controllerDisconnectedSince_`
+    // can never underflow at now == 0 / the millis() wrap edge.
     void begin(uint32_t now) {
         controllerConnected_ = false;
-        controllerDisconnectedSince_ = now ? now : 1; // 0 means "not counting"
+        controllerDisconnectedSince_ = now;
+        disconnectCountdownActive_ = true;
         lastUserInteractionAt_ = now;
     }
 
     void onControllerConnected(uint32_t now) {
         controllerConnected_ = true;
         lastControllerConnectedAt_ = now;
-        controllerDisconnectedSince_ = 0; // cancel the countdown
+        disconnectCountdownActive_ = false; // cancel the countdown
+        controllerDisconnectedSince_ = 0;
     }
 
     void onControllerDisconnected(uint32_t now) {
         // Only (re)start the countdown on a real transition, so repeated
         // "waiting" events don't keep pushing the deadline forward.
-        if (controllerConnected_ || controllerDisconnectedSince_ == 0) {
-            controllerDisconnectedSince_ = now ? now : 1;
+        if (controllerConnected_ || !disconnectCountdownActive_) {
+            controllerDisconnectedSince_ = now;
+            disconnectCountdownActive_ = true;
         }
         controllerConnected_ = false;
     }
@@ -62,7 +68,7 @@ class AutoSleepManager {
 
     // Returns why the display should sleep right now, or None.
     SleepReason evaluate(uint32_t now) const {
-        if (!enabled_ || suppressed_ || controllerConnected_ || controllerDisconnectedSince_ == 0) {
+        if (!enabled_ || suppressed_ || controllerConnected_ || !disconnectCountdownActive_) {
             return SleepReason::None;
         }
         const uint32_t timeout = forceShortTimeout_ ? (timeoutMs_ / 4) : timeoutMs_;
@@ -86,6 +92,7 @@ class AutoSleepManager {
     bool suppressed_ = false;
     bool forceShortTimeout_ = false;
     bool controllerConnected_ = false;
+    bool disconnectCountdownActive_ = false;
     uint32_t timeoutMs_ = DEFAULT_NO_CONTROLLER_SLEEP_TIMEOUT_MS;
     uint32_t controllerDisconnectedSince_ = 0;
     uint32_t lastControllerConnectedAt_ = 0;
