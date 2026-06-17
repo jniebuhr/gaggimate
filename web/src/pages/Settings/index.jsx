@@ -1,4 +1,3 @@
-import { faCompress } from '@fortawesome/free-solid-svg-icons/faCompress';
 import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
 import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -10,29 +9,11 @@ import { Spinner } from '../../components/Spinner.jsx';
 import {
   InputGroupField,
   SettingsFormField,
-  SortableConfigurator,
   ToggleField,
 } from '../../components/SettingsFormField.jsx';
 import { timezones } from '../../config/zones.js';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
-import {
-  DASHBOARD_LAYOUTS, getDashboardLayout, setDashboardLayout,
-  DASHBOARD_CARD_MODES, getDashboardCardMode, setDashboardCardMode,
-  getMetricOrder, setMetricOrder as persistMetricOrder,
-  getPanelOrder, setPanelOrder as persistPanelOrder,
-  getStickyBottom, setStickyBottom,
-  getStickyTop, setStickyTop,
-  getShowRecentShots, setShowRecentShots,
-  getMetricsColumns, setMetricsColumns,
-  METRICS_LAST_ROW_FILLS, getMetricsLastRowFill, setMetricsLastRowFill,
-  getCompactPanels, toggleCompactPanel,
-  getProfileChartHeight, setProfileChartHeight,
-  COLUMN_SPACINGS, getColumnSpacing, setColumnSpacing,
-  getShotMetricSlots, setShotMetricSlots,
-  setClock24h,
-} from '../../utils/dashboardManager.js';
-import { METRIC_DEFINITIONS } from '../../utils/metricDefinitions.js';
-import { PANEL_DEFINITIONS } from '../../utils/panelDefinitions.js';
+import { setClock24h } from '../../utils/dashboardManager.js';
 import { downloadJson } from '../../utils/download.js';
 import { getStoredTheme, handleThemeChange } from '../../utils/themeManager.js';
 import { PluginCard } from './PluginCard.jsx';
@@ -88,51 +69,6 @@ export function Settings() {
   const [autowakeupSchedules, setAutoWakeupSchedules] = useState([
     { time: '07:00', days: [true, true, true, true, true, true, true] }, // Default: all days enabled
   ]);
-  const [metricOrder, setMetricOrderState] = useState(() => getMetricOrder());
-  const [metricsColumns, setMetricsColumnsState] = useState(() => getMetricsColumns());
-  const [metricsLastRowFill, setMetricsLastRowFillState] = useState(() => getMetricsLastRowFill());
-
-  const updateMetricOrder = (ids) => {
-    setMetricOrderState(ids);
-    persistMetricOrder(ids);
-  };
-
-  const hiddenMetrics = METRIC_DEFINITIONS.filter(
-    m => !m.required && !metricOrder.includes(m.id) && m.available(machine.value.status)
-  );
-
-  // ── Panel configurator state ───────────────────────────────────────────
-  const [panelOrder, setPanelOrderState] = useState(() => getPanelOrder());
-  const [stickyBottom, setStickyBottomState] = useState(() => getStickyBottom());
-  const [stickyTop, setStickyTopState] = useState(() => getStickyTop());
-  const [showRecentShots, setShowRecentShotsState] = useState(() => getShowRecentShots());
-  const [compactPanels, setCompactPanelsState] = useState(() => getCompactPanels());
-  const [profileChartHeight, setProfileChartHeightState] = useState(() => getProfileChartHeight());
-  const [columnSpacing, setColumnSpacingState] = useState(() => getColumnSpacing());
-  const [shotMetricSlots, setShotMetricSlotsState] = useState(() => getShotMetricSlots());
-
-  const handleToggleCompact = (id) => {
-    toggleCompactPanel(id);
-    setCompactPanelsState(getCompactPanels());
-  };
-
-  const updatePanelOrder = (ids) => {
-    setPanelOrderState(ids);
-    persistPanelOrder(ids);
-  };
-
-  const updateStickyBottom = (val) => {
-    setStickyBottomState(val);
-    setStickyBottom(val);
-  };
-
-  const hiddenPanels = PANEL_DEFINITIONS.filter(def => {
-    if (def.required) return false;
-    if (panelOrder.includes(def.id)) return false;
-    const availFn = def.availableInSettings ?? def.available;
-    return availFn(machine.value.status);
-  });
-
   const { isLoading, data: fetchedSettings } = useQuery(`settings/${gen}`, async () => {
     const response = await fetch(`/api/settings`);
     const data = await response.json();
@@ -167,8 +103,6 @@ export function Settings() {
           fetchedSettings.standbyDisplayEnabled !== undefined
             ? fetchedSettings.standbyDisplayEnabled
             : fetchedSettings.standbyBrightness > 0,
-        dashboardLayout: getDashboardLayout(),
-        dashboardCardMode: getDashboardCardMode(),
       };
 
       // Extract Kf from PID string and separate them. Mirrors the same
@@ -262,12 +196,6 @@ export function Settings() {
         }
         setFormData(newFormData);
         return;
-      }
-      if (key === 'dashboardLayout') {
-        setDashboardLayout(value);
-      }
-      if (key === 'dashboardCardMode') {
-        setDashboardCardMode(value);
       }
       setFormData({
         ...formData,
@@ -1133,191 +1061,6 @@ export function Settings() {
               </div>
             </Card>
           )}
-
-          <Card sm={10} lg={5} title='Dashboard Settings'>
-            <SettingsFormField label='Dashboard Layout' htmlFor='dashboardLayout'>
-              <select
-                id='dashboardLayout'
-                className='select select-bordered w-full'
-                value={formData.dashboardLayout || DASHBOARD_LAYOUTS.ORDER_FIRST}
-                onChange={e => {
-                  setFormData({ ...formData, dashboardLayout: e.target.value });
-                  setDashboardLayout(e.target.value);
-                }}
-              >
-                <option value={DASHBOARD_LAYOUTS.ORDER_FIRST}>Process Controls First</option>
-                <option value={DASHBOARD_LAYOUTS.ORDER_LAST}>Chart First</option>
-              </select>
-            </SettingsFormField>
-            <SettingsFormField label='Control Column Style' htmlFor='dashboardCardMode'>
-              <select
-                id='dashboardCardMode'
-                className='select select-bordered w-full'
-                value={formData.dashboardCardMode || DASHBOARD_CARD_MODES.MULTI}
-                onChange={e => {
-                  setFormData({ ...formData, dashboardCardMode: e.target.value });
-                  setDashboardCardMode(e.target.value);
-                }}
-              >
-                <option value={DASHBOARD_CARD_MODES.MULTI}>Multiple Cards</option>
-                <option value={DASHBOARD_CARD_MODES.SINGLE}>Single Card</option>
-              </select>
-            </SettingsFormField>
-            <ToggleField
-              label='Show Recent Shots'
-              htmlFor='showRecentShots'
-              checked={showRecentShots}
-              onChange={e => {
-                setShowRecentShotsState(e.target.checked);
-                setShowRecentShots(e.target.checked);
-              }}
-            />
-            {showRecentShots && (
-              <SettingsFormField label='Shot Card Metrics' htmlFor='shotMetricSlot0' noMargin>
-                <div className='flex gap-2'>
-                  {[0, 1, 2].map(i => (
-                    <div key={i} className='flex flex-1 flex-col gap-1'>
-                      <span className='text-base-content/60 text-xs'>Slot {i + 1}</span>
-                      <select
-                        className='select select-bordered select-sm w-full'
-                        value={shotMetricSlots[i]}
-                        onChange={e => {
-                          const next = [...shotMetricSlots];
-                          next[i] = e.target.value;
-                          setShotMetricSlotsState(next);
-                          setShotMetricSlots(next);
-                        }}
-                      >
-                        <option value='duration'>Duration</option>
-                        <option value='weight'>Weight</option>
-                        <option value='avgTemp'>Avg Temp</option>
-                        <option value='maxPressure'>Max Pressure</option>
-                        <option value='avgFlow'>Avg Flow</option>
-                      </select>
-                    </div>
-                  ))}
-                </div>
-              </SettingsFormField>
-            )}
-            <div className='divider'>
-              <span>Dashboard Panels</span>
-              <div className='flex items-center gap-3'>
-                <label className='flex cursor-pointer items-center gap-1.5 text-xs font-normal normal-case tracking-normal'>
-                  <input
-                    type='checkbox'
-                    className='toggle toggle-xs toggle-primary'
-                    checked={stickyTop}
-                    onChange={e => { setStickyTopState(e.target.checked); setStickyTop(e.target.checked); }}
-                  />
-                  Stick first to top
-                </label>
-                <label className='flex cursor-pointer items-center gap-1.5 text-xs font-normal normal-case tracking-normal'>
-                  <input
-                    type='checkbox'
-                    className='toggle toggle-xs toggle-primary'
-                    checked={stickyBottom}
-                    onChange={e => updateStickyBottom(e.target.checked)}
-                  />
-                  Stick last to bottom
-                </label>
-                <div className='join'>
-                  <button
-                    type='button'
-                    className={`btn btn-xs join-item ${columnSpacing === COLUMN_SPACINGS.START ? 'btn-primary' : 'btn-ghost'}`}
-                    onClick={() => { setColumnSpacingState(COLUMN_SPACINGS.START); setColumnSpacing(COLUMN_SPACINGS.START); }}
-                  >
-                    Pack to top
-                  </button>
-                  <button
-                    type='button'
-                    className={`btn btn-xs join-item ${columnSpacing === COLUMN_SPACINGS.BETWEEN ? 'btn-primary' : 'btn-ghost'}`}
-                    onClick={() => { setColumnSpacingState(COLUMN_SPACINGS.BETWEEN); setColumnSpacing(COLUMN_SPACINGS.BETWEEN); }}
-                  >
-                    Space evenly
-                  </button>
-                </div>
-              </div>
-            </div>
-            <SortableConfigurator
-              order={panelOrder}
-              definitions={PANEL_DEFINITIONS}
-              hidden={hiddenPanels}
-              onOrderChange={updatePanelOrder}
-              emptyMessage='All available panels are visible.'
-              extraControls={(def) => def.supportsCompact ? (
-                <button
-                  type='button'
-                  title={compactPanels.includes(def.id) ? 'Switch to full view' : 'Switch to compact view'}
-                  onClick={() => handleToggleCompact(def.id)}
-                  className={`btn btn-ghost btn-xs flex h-6 w-6 items-center justify-center rounded p-0 ${compactPanels.includes(def.id) ? 'text-primary' : 'text-base-content/30'}`}
-                >
-                  <FontAwesomeIcon icon={faCompress} className='h-3 w-3' />
-                </button>
-              ) : null}
-            />
-            {!compactPanels.includes('profile') && panelOrder.includes('profile') && (
-              <SettingsFormField label='Profile Chart Height' htmlFor='profileChartHeight'>
-                <div className='flex items-center gap-3'>
-                  <input
-                    id='profileChartHeight'
-                    type='range'
-                    min='64'
-                    max='256'
-                    step='8'
-                    className='range range-primary range-sm flex-1'
-                    value={profileChartHeight}
-                    onChange={e => {
-                      const n = Number(e.target.value);
-                      setProfileChartHeightState(n);
-                      setProfileChartHeight(n);
-                    }}
-                  />
-                  <span className='w-16 text-sm'>{profileChartHeight} px</span>
-                </div>
-              </SettingsFormField>
-            )}
-            <div className='divider'>Dashboard Metrics</div>
-            <SettingsFormField label='Metrics Columns' htmlFor='metricsColumns'>
-              <div className='flex items-center gap-3'>
-                <input
-                  id='metricsColumns'
-                  type='range'
-                  min='1'
-                  max='4'
-                  step='1'
-                  className='range range-primary range-sm flex-1'
-                  value={metricsColumns}
-                  onChange={e => {
-                    const n = Number(e.target.value);
-                    setMetricsColumnsState(n);
-                    setMetricsColumns(n);
-                  }}
-                />
-                <span className='w-20 text-sm'>{metricsColumns} {metricsColumns === 1 ? 'column' : 'columns'}</span>
-              </div>
-            </SettingsFormField>
-            <SettingsFormField label='Last Row Fill' htmlFor='metricsLastRowFill'>
-              <select
-                id='metricsLastRowFill'
-                className='select select-bordered w-full'
-                value={metricsLastRowFill}
-                onChange={e => {
-                  setMetricsLastRowFillState(e.target.value);
-                  setMetricsLastRowFill(e.target.value);
-                }}
-              >
-                <option value={METRICS_LAST_ROW_FILLS.EVEN}>Even fill</option>
-                <option value={METRICS_LAST_ROW_FILLS.GRID}>Align to grid</option>
-              </select>
-            </SettingsFormField>
-            <SortableConfigurator
-              order={metricOrder}
-              definitions={METRIC_DEFINITIONS}
-              hidden={hiddenMetrics}
-              onOrderChange={updateMetricOrder}
-              emptyMessage='All available metrics are visible.'
-            />
-          </Card>
 
           <Card sm={10} title='Plugins'>
             <PluginCard
