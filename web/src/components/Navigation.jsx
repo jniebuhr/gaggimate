@@ -241,7 +241,7 @@ export function Navigation({ collapsed = false, onToggleCollapsed }) {
                             href='/dashboard-settings'
                             aria-label='Dashboard Settings'
                             title='Dashboard Settings'
-                            className={`btn btn-square btn-sm h-12 min-h-0 w-10 min-w-0 shrink-0 rounded-xl border-none ${
+                            className={`btn btn-square btn-md h-12 min-h-0 w-10 min-w-0 shrink-0 rounded-xl border-none ${
                               loc.path === '/dashboard-settings'
                                 ? 'bg-primary text-primary-content hover:bg-primary hover:text-primary-content'
                                 : 'bg-transparent text-base-content hover:bg-base-content/10 hover:text-base-content'
