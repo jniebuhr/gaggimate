@@ -64,7 +64,7 @@ export const METRIC_DEFINITIONS = [
     label: 'Heater Power',
     required: false,
     available: () => true,
-    getValue: (ds) => `${Math.round(ds.currentBoilerPower ?? 0)}%`,
+    getValue: (ds) => `${Math.round(ds.mode === 0 ? 0 : (ds.currentBoilerPower ?? 0))}%`,
     getTarget: () => null,
     unit: '%',
     adjustable: () => false,
@@ -76,7 +76,7 @@ export const METRIC_DEFINITIONS = [
     available: () => true,
     getValue: (ds) => {
       const r = ds.currentPuckResistance ?? 0;
-      return r > 0 && r < 100 ? r.toFixed(2) : '—';
+      return r > 0 && r < 100 ? r.toFixed(2) + ' s·√bar/mL' : '—';
     },
     getTarget: () => null,
     adjustable: () => false,
