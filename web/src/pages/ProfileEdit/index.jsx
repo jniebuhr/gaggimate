@@ -197,10 +197,17 @@ export function ProfileEdit() {
     </div>
   );
 
+  let pageTitle = 'Loading...';
+  if (params.id === 'new') {
+    pageTitle = 'Create Profile';
+  } else if (data) {
+    pageTitle = `Edit ${data.label}`;
+  }
+
   return (
     <PageLayout variant="narrow">
       <PageHeader
-        title={params.id === 'new' ? 'Create Profile' : (data ? `Edit ${data.label}` : 'Loading...')}
+        title={pageTitle}
         noStack={true}
         actions={actions}
       />

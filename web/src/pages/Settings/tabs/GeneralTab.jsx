@@ -5,6 +5,34 @@ import { timezones } from '../../../config/zones.js';
 import { DASHBOARD_LAYOUTS } from '../../../utils/dashboardManager.js';
 import Section from '../../../components/Card.jsx';
 
+function ButtonBehaviorSelect({ id, label, value, onChange, profiles }) {
+  return (
+    <div className='form-control'>
+      <label htmlFor={id} className='mb-2 block text-sm font-medium'>
+        {label}
+      </label>
+      <select
+        id={id}
+        name={id}
+        className='select select-bordered w-full'
+        value={value}
+        onChange={onChange}
+      >
+        <option value='none'>None</option>
+        <option value='brew'>Brew button</option>
+        <option value='steam'>Steam button</option>
+        <option value='water'>Water button</option>
+        <option value='flush'>Flush</option>
+        {profiles.map(p => (
+          <option key={p.id} value={p.id}>
+            Profile: {p.label}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
 export function GeneralTab({
   formData,
   onChange,
@@ -99,54 +127,58 @@ export function GeneralTab({
           </div>
           <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
             <div className='form-control'>
-              <label htmlFor='brewDelay' className='mb-2 block text-sm font-medium'>
-                Brew
+              <label htmlFor='scaleDelay' className='mb-2 block text-sm font-medium'>
+                Scale Delay
               </label>
               <div className='input-group'>
-                <label htmlFor='brewDelay' className='input w-full'>
+                <label htmlFor='scaleDelay' className='input w-full'>
                   <input
-                    id='brewDelay'
-                    name='brewDelay'
+                    id='scaleDelay'
+                    name='scaleDelay'
                     type='number'
-                    step='any'
-                    className='grow'
+                    step='0.1'
                     placeholder='0'
-                    value={formData.brewDelay}
-                    onChange={onChange('brewDelay')}
+                    value={formData.scaleDelay}
+                    onChange={onChange('scaleDelay')}
+                    disabled={formData.delayAdjust}
                   />
-                  <span aria-label='milliseconds'>ms</span>
+                  <span aria-label='seconds'>s</span>
                 </label>
               </div>
             </div>
             <div className='form-control'>
-              <label htmlFor='grindDelay' className='mb-2 block text-sm font-medium'>
-                Grind
+              <label htmlFor='stopAdvanceWeight' className='mb-2 block text-sm font-medium'>
+                Advance Stop Weight
               </label>
               <div className='input-group'>
-                <label htmlFor='grindDelay' className='input w-full'>
+                <label htmlFor='stopAdvanceWeight' className='input w-full'>
                   <input
-                    id='grindDelay'
-                    name='grindDelay'
+                    id='stopAdvanceWeight'
+                    name='stopAdvanceWeight'
                     type='number'
-                    step='any'
-                    className='grow'
+                    step='0.1'
                     placeholder='0'
-                    value={formData.grindDelay}
-                    onChange={onChange('grindDelay')}
+                    value={formData.stopAdvanceWeight}
+                    onChange={onChange('stopAdvanceWeight')}
+                    disabled={formData.delayAdjust}
                   />
-                  <span aria-label='milliseconds'>ms</span>
+                  <span aria-label='grams'>g</span>
                 </label>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Switch Control */}
+        {/* Buttons */}
         <div className='mt-6 border-t border-base-content/5 pt-6'>
-          <h3 className='text-md font-semibold mb-2 text-base-content'>Switch Control</h3>
+          <h3 className='text-md font-semibold mb-2 text-base-content'>Physical Buttons</h3>
+          <p className='text-sm opacity-70 mb-4 text-base-content/85'>
+            Define behavior for physical buttons when pressed. Make sure they are wired to the Alt
+            Relay Header.
+          </p>
           <div className='form-control mb-4'>
             <label className='label cursor-pointer justify-start gap-4'>
-              <span className='label-text'>Use momentary switches</span>
+              <span className='label-text font-medium'>Momentary Buttons</span>
               <input
                 id='momentaryButtons'
                 name='momentaryButtons'
@@ -158,75 +190,27 @@ export function GeneralTab({
             </label>
           </div>
           <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
-            <div className='form-control'>
-              <label htmlFor='button0' className='mb-2 block text-sm font-medium'>
-                Brew Button Behavior
-              </label>
-              <select
-                id='button0'
-                name='button0'
-                className='select select-bordered w-full'
-                value={formData.button0}
-                onChange={onChange('button0')}
-              >
-                <option value='none'>None</option>
-                <option value='brew'>Brew button</option>
-                <option value='steam'>Steam button</option>
-                <option value='water'>Water button</option>
-                <option value='flush'>Flush</option>
-                {profiles.map(p => (
-                  <option key={p.id} value={p.id}>
-                    Profile: {p.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className='form-control'>
-              <label htmlFor='button1' className='mb-2 block text-sm font-medium'>
-                Steam Button Behavior
-              </label>
-              <select
-                id='button1'
-                name='button1'
-                className='select select-bordered w-full'
-                value={formData.button1}
-                onChange={onChange('button1')}
-              >
-                <option value='none'>None</option>
-                <option value='brew'>Brew button</option>
-                <option value='steam'>Steam button</option>
-                <option value='water'>Water button</option>
-                <option value='flush'>Flush</option>
-                {profiles.map(p => (
-                  <option key={p.id} value={p.id}>
-                    Profile: {p.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className='form-control'>
-              <label htmlFor='button2' className='mb-2 block text-sm font-medium'>
-                Water Button Behavior
-              </label>
-              <select
-                id='button2'
-                name='button2'
-                className='select select-bordered w-full'
-                value={formData.button2}
-                onChange={onChange('button2')}
-              >
-                <option value='none'>None</option>
-                <option value='brew'>Brew button</option>
-                <option value='steam'>Steam button</option>
-                <option value='water'>Water button</option>
-                <option value='flush'>Flush</option>
-                {profiles.map(p => (
-                  <option key={p.id} value={p.id}>
-                    Profile: {p.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <ButtonBehaviorSelect
+              id='button0'
+              label='Brew Button Behavior'
+              value={formData.button0}
+              onChange={onChange('button0')}
+              profiles={profiles}
+            />
+            <ButtonBehaviorSelect
+              id='button1'
+              label='Steam Button Behavior'
+              value={formData.button1}
+              onChange={onChange('button1')}
+              profiles={profiles}
+            />
+            <ButtonBehaviorSelect
+              id='button2'
+              label='Water Button Behavior'
+              value={formData.button2}
+              onChange={onChange('button2')}
+              profiles={profiles}
+            />
           </div>
         </div>
       </Section>

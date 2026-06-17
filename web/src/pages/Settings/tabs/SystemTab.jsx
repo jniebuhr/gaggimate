@@ -24,6 +24,168 @@ const imageUrlToBase64 = async blob => {
   });
 };
 
+const getRssiStatusClass = rssi => {
+  if (rssi < -90) return 'status-error';
+  if (rssi < -80) return 'status-warning';
+  return 'status-success';
+};
+
+function OtaProgressView({ phase, progress }) {
+  const getOtaPhaseText = p => {
+    switch (p) {
+      case 1:
+        return 'Updating Display firmware';
+      case 2:
+        return 'Updating Display filesystem';
+      case 3:
+        return 'Updating controller firmware';
+      default:
+        return 'Finished';
+    }
+  };
+
+  return (
+    <div className='flex flex-col items-center gap-4 py-12'>
+      <Spinner size={8} />
+      <span className='text-xl font-medium text-base-content'>
+        {getOtaPhaseText(phase)}
+      </span>
+      <span className='text-lg font-medium text-base-content'>{phase === 4 ? 100 : progress}%</span>
+      {phase === 4 && (
+        <a href='/' className='btn btn-primary'>
+          Back
+        </a>
+      )}
+    </div>
+  );
+}
+
+function StorageAndMemorySection({ formData }) {
+  return (
+    <Section title='Storage & Memory'>
+      <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
+        {formData.spiffsTotal !== undefined && (
+          <div className='flex flex-col space-y-2'>
+            <span className='text-sm font-medium text-base-content/70'>Storage (LittleFS)</span>
+            <div className='bg-base-300 h-3 w-full overflow-hidden rounded'>
+              <div
+                className='bg-primary h-full transition-all'
+                style={{ width: `${formData.spiffsUsedPct || 0}%` }}
+              />
+            </div>
+            <div className='text-xs text-base-content/60'>
+              {((formData.spiffsUsed || 0) / 1024).toFixed(1)} KB /{' '}
+              {(formData.spiffsTotal / 1024).toFixed(1)} KB ({formData.spiffsUsedPct}%)
+            </div>
+          </div>
+        )}
+
+        {formData.sdTotal !== undefined && (
+          <div className='flex flex-col space-y-2'>
+            <span className='text-sm font-medium text-base-content/70'>Storage (SD-Card)</span>
+            <div className='bg-base-300 h-3 w-full overflow-hidden rounded'>
+              <div
+                className='bg-primary h-full transition-all'
+                style={{ width: `${formData.sdUsedPct || 0}%` }}
+              />
+            </div>
+            <div className='text-xs text-base-content/60'>
+              {((formData.sdUsed || 0) / 1024 / 1024).toFixed(1)} MB /{' '}
+              {(formData.sdTotal / 1024 / 1024).toFixed(1)} MB ({formData.sdUsedPct}%)
+            </div>
+          </div>
+        )}
+
+        {formData.heapTotal !== undefined && (
+          <div className='flex flex-col space-y-2'>
+            <span className='text-sm font-medium text-base-content/70'>Free Memory (Heap)</span>
+            <div className='bg-base-300 h-3 w-full overflow-hidden rounded'>
+              <div
+                className='bg-primary h-full transition-all'
+                style={{
+                  width: `${formData.heapTotal > 0 ? ((formData.heapTotal - formData.heapFree) / formData.heapTotal) * 100 : 0}%`,
+                }}
+              />
+            </div>
+            <div className='text-xs text-base-content/60'>
+              {((formData.heapTotal - formData.heapFree || 0) / 1024).toFixed(1)} kB /{' '}
+              {(formData.heapTotal / 1024).toFixed(1)} kB (
+              {(
+                formData.heapTotal > 0
+                  ? ((formData.heapTotal - formData.heapFree) / formData.heapTotal) * 100
+                  : 0
+              ).toFixed(2)}
+              %) (Frag:{' '}
+              {(formData.heapFree > 0 ? 100 - (formData.heapLargest * 100) / formData.heapFree : 0).toFixed(2)}%)
+            </div>
+          </div>
+        )}
+      </div>
+    </Section>
+  );
+}
+
+function MaintenanceSection({ downloadSupportData, onHistoryRebuild, rebuilding, rebuilt, rebuildProgress }) {
+  return (
+    <Section title='Maintenance & Support'>
+      <div className='flex flex-col sm:flex-row gap-4 flex-wrap'>
+        <button type='button' className='btn btn-outline btn-sm' onClick={downloadSupportData}>
+          Download Support Data
+        </button>
+        
+        <button
+          type='button'
+          className='btn btn-outline btn-sm'
+          onClick={onHistoryRebuild}
+          disabled={rebuilding}
+        >
+          Rebuild Shot History
+          {rebuilding && (
+            <>
+              <Spinner size={4} className='ml-2' />
+              {rebuildProgress.total > 0 && (
+                <span className='ml-2 text-xs'>
+                  {rebuildProgress.current}/{rebuildProgress.total}
+                </span>
+              )}
+            </>
+          )}
+          {rebuilt && (
+            <span className='text-success ml-2'>
+              <FontAwesomeIcon icon={faCheck}></FontAwesomeIcon>
+            </span>
+          )}
+        </button>
+      </div>
+
+      {rebuilding && (
+        <div className='mt-4 max-w-md'>
+          <div className='text-base-content/70 mb-1 text-xs'>
+            {rebuildProgress.status === 'starting' ||
+            rebuildProgress.status === 'scanning' ||
+            rebuildProgress.total === 0
+              ? 'Scanning shot history files...'
+              : `Processing shot history files (${rebuildProgress.current}/{rebuildProgress.total})`}
+          </div>
+          <div className='bg-base-300 h-2 w-full overflow-hidden rounded'>
+            <div
+              className={`h-full transition-all duration-300 ${
+                rebuildProgress.total === 0 ? 'bg-primary animate-pulse' : 'bg-primary'
+              }`}
+              style={{
+                width:
+                  rebuildProgress.total > 0
+                    ? `${(rebuildProgress.current / rebuildProgress.total) * 100}%`
+                    : '30%',
+              }}
+            />
+          </div>
+        </div>
+      )}
+    </Section>
+  );
+}
+
 export function SystemTab() {
   const apiService = useContext(ApiServiceContext);
   const [isLoading, setIsLoading] = useState(true);
@@ -131,29 +293,8 @@ export function SystemTab() {
     apiService.send({ tp: 'req:history:rebuild' });
   }, [apiService]);
 
-  // Remove spinner here
-
   if (phase > 0) {
-    return (
-      <div className='flex flex-col items-center gap-4 py-12'>
-        <Spinner size={8} />
-        <span className='text-xl font-medium text-base-content'>
-          {phase === 1
-            ? 'Updating Display firmware'
-            : phase === 2
-              ? 'Updating Display filesystem'
-              : phase === 3
-                ? 'Updating controller firmware'
-                : 'Finished'}
-        </span>
-        <span className='text-lg font-medium text-base-content'>{phase === 4 ? 100 : progress}%</span>
-        {phase === 4 && (
-          <a href='/' className='btn btn-primary'>
-            Back
-          </a>
-        )}
-      </div>
-    );
+    return <OtaProgressView phase={phase} progress={progress} />;
   }
 
   if (isLoading) {
@@ -196,7 +337,7 @@ export function SystemTab() {
               <span className='font-semibold text-base-content flex items-center gap-2'>
                 {rssi}dB (Roundtrip: {lat} ms)
                 <span
-                  className={`indicator-item status ${rssi < -90 ? 'status-error' : rssi < -80 ? 'status-warning' : 'status-success'}`}
+                  className={`indicator-item status ${getRssiStatusClass(rssi)}`}
                 ></span>
               </span>
             </div>
@@ -249,125 +390,15 @@ export function SystemTab() {
           </div>
         </Section>
 
-        {/* Storage and memory */}
-        <Section title='Storage & Memory'>
-          <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
-            {formData.spiffsTotal !== undefined && (
-              <div className='flex flex-col space-y-2'>
-                <span className='text-sm font-medium text-base-content/70'>Storage (LittleFS)</span>
-                <div className='bg-base-300 h-3 w-full overflow-hidden rounded'>
-                  <div
-                    className='bg-primary h-full transition-all'
-                    style={{ width: `${formData.spiffsUsedPct || 0}%` }}
-                  />
-                </div>
-                <div className='text-xs text-base-content/60'>
-                  {((formData.spiffsUsed || 0) / 1024).toFixed(1)} KB /{' '}
-                  {(formData.spiffsTotal / 1024).toFixed(1)} KB ({formData.spiffsUsedPct}%)
-                </div>
-              </div>
-            )}
+        <StorageAndMemorySection formData={formData} />
 
-            {formData.sdTotal !== undefined && (
-              <div className='flex flex-col space-y-2'>
-                <span className='text-sm font-medium text-base-content/70'>Storage (SD-Card)</span>
-                <div className='bg-base-300 h-3 w-full overflow-hidden rounded'>
-                  <div
-                    className='bg-primary h-full transition-all'
-                    style={{ width: `${formData.sdUsedPct || 0}%` }}
-                  />
-                </div>
-                <div className='text-xs text-base-content/60'>
-                  {((formData.sdUsed || 0) / 1024 / 1024).toFixed(1)} MB /{' '}
-                  {(formData.sdTotal / 1024 / 1024).toFixed(1)} MB ({formData.sdUsedPct}%)
-                </div>
-              </div>
-            )}
-
-            {formData.heapTotal !== undefined && (
-              <div className='flex flex-col space-y-2'>
-                <span className='text-sm font-medium text-base-content/70'>Free Memory (Heap)</span>
-                <div className='bg-base-300 h-3 w-full overflow-hidden rounded'>
-                  <div
-                    className='bg-primary h-full transition-all'
-                    style={{
-                      width: `${formData.heapTotal > 0 ? ((formData.heapTotal - formData.heapFree) / formData.heapTotal) * 100 : 0}%`,
-                    }}
-                  />
-                </div>
-                <div className='text-xs text-base-content/60'>
-                  {((formData.heapTotal - formData.heapFree || 0) / 1024).toFixed(1)} kB /{' '}
-                  {(formData.heapTotal / 1024).toFixed(1)} kB (
-                  {(
-                    formData.heapTotal > 0
-                      ? ((formData.heapTotal - formData.heapFree) / formData.heapTotal) * 100
-                      : 0
-                  ).toFixed(2)}
-                  %) (Frag:{' '}
-                  {(formData.heapFree > 0 ? 100 - (formData.heapLargest * 100) / formData.heapFree : 0).toFixed(2)}%)
-                </div>
-              </div>
-            )}
-          </div>
-        </Section>
-
-        {/* Maintenance & Support */}
-        <Section title='Maintenance & Support'>
-          <div className='flex flex-col sm:flex-row gap-4 flex-wrap'>
-            <button type='button' className='btn btn-outline btn-sm' onClick={downloadSupportData}>
-              Download Support Data
-            </button>
-            
-            <button
-              type='button'
-              className='btn btn-outline btn-sm'
-              onClick={onHistoryRebuild}
-              disabled={rebuilding}
-            >
-              Rebuild Shot History
-              {rebuilding && (
-                <>
-                  <Spinner size={4} className='ml-2' />
-                  {rebuildProgress.total > 0 && (
-                    <span className='ml-2 text-xs'>
-                      {rebuildProgress.current}/{rebuildProgress.total}
-                    </span>
-                  )}
-                </>
-              )}
-              {rebuilt && (
-                <span className='text-success ml-2'>
-                  <FontAwesomeIcon icon={faCheck}></FontAwesomeIcon>
-                </span>
-              )}
-            </button>
-          </div>
-
-          {rebuilding && (
-            <div className='mt-4 max-w-md'>
-              <div className='text-base-content/70 mb-1 text-xs'>
-                {rebuildProgress.status === 'starting' ||
-                rebuildProgress.status === 'scanning' ||
-                rebuildProgress.total === 0
-                  ? 'Scanning shot history files...'
-                  : `Processing shot history files (${rebuildProgress.current}/${rebuildProgress.total})`}
-              </div>
-              <div className='bg-base-300 h-2 w-full overflow-hidden rounded'>
-                <div
-                  className={`h-full transition-all duration-300 ${
-                    rebuildProgress.total === 0 ? 'bg-primary animate-pulse' : 'bg-primary'
-                  }`}
-                  style={{
-                    width:
-                      rebuildProgress.total > 0
-                        ? `${(rebuildProgress.current / rebuildProgress.total) * 100}%`
-                        : '30%',
-                  }}
-                />
-              </div>
-            </div>
-          )}
-        </Section>
+        <MaintenanceSection
+          downloadSupportData={downloadSupportData}
+          onHistoryRebuild={onHistoryRebuild}
+          rebuilding={rebuilding}
+          rebuilt={rebuilt}
+          rebuildProgress={rebuildProgress}
+        />
       </div>
   );
 }

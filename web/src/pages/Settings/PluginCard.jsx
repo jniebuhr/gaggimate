@@ -36,7 +36,7 @@ export function PluginCard({
               <label className='mb-2 block text-sm font-medium'>Auto Wakeup Schedule</label>
               <div className='space-y-2'>
                 {autowakeupSchedules?.map((schedule, scheduleIndex) => (
-                  <div key={scheduleIndex} className='flex flex-wrap items-center gap-1'>
+                  <div key={`wakeup-schedule-${schedule.time}-${scheduleIndex}`} className='flex flex-wrap items-center gap-1'>
                     {/* Time input */}
                     <input
                       type='time'
@@ -47,10 +47,10 @@ export function PluginCard({
                     />
 
                     {/* Days toggle buttons */}
-                    <div className='join' role='group' aria-label='Days of week selection'>
+                    <fieldset className='join' aria-label='Days of week selection'>
                       {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((dayLabel, dayIndex) => (
                         <button
-                          key={dayIndex}
+                          key={`day-${dayIndex}`}
                           type='button'
                           className={`join-item btn btn-xs ${schedule.days[dayIndex] ? 'btn-primary' : 'btn-outline'}`}
                           onClick={() =>
@@ -84,7 +84,7 @@ export function PluginCard({
                           {dayLabel}
                         </button>
                       ))}
-                    </div>
+                    </fieldset>
 
                     {/* Delete button */}
                     {autowakeupSchedules.length > 1 ? (

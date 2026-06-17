@@ -198,7 +198,6 @@ function ProfileCard({
     onToggleDetails();
   }, [onToggleDetails]);
 
-  const chevronRotation = detailsCollapsed ? '' : 'rotate-90';
   const detailsSectionId = `profile-${data.id}-summary`;
 
   // Sum total duration from phases (in seconds)
@@ -210,6 +209,21 @@ function ProfileCard({
   const closeDropdownMenu = useCallback(() => {
     setCardDropdownOpen(false);
   }, []);
+
+  let chartContent;
+  if (hasIntersected) {
+    if (data.type === 'pro') {
+      chartContent = <ExtendedProfileChart data={data} className='h-36 md:h-48 w-full' />;
+    } else {
+      chartContent = <SimpleContent data={data} />;
+    }
+  } else {
+    if (data.type === 'pro') {
+      chartContent = <div className='skeleton h-36 md:h-48 w-full opacity-30' aria-hidden='true'></div>;
+    } else {
+      chartContent = <div className='skeleton h-16 w-full opacity-30' aria-hidden='true'></div>;
+    }
+  }
 
   return (
     <Card role='listitem' className='profile-card-container col-span-12 [&>.card-body]:p-0 [&>.card-body]:gap-0 overflow-hidden'>
@@ -449,17 +463,7 @@ function ProfileCard({
 
                   {/* Chart */}
                   <div className='flex-1 min-w-0' ref={chartContainerRef}>
-                    {hasIntersected ? (
-                      data.type === 'pro' ? (
-                        <ExtendedProfileChart data={data} className='h-36 md:h-48 w-full' />
-                      ) : (
-                        <SimpleContent data={data} />
-                      )
-                    ) : data.type === 'pro' ? (
-                      <div className='skeleton h-36 md:h-48 w-full opacity-30' aria-hidden='true'></div>
-                    ) : (
-                      <div className='skeleton h-16 w-full opacity-30' aria-hidden='true'></div>
-                    )}
+                    {chartContent}
                   </div>
                 </div>
               </div>
@@ -544,15 +548,13 @@ export function ProfileList() {
       if (mobileSearchInputRef.current && document.activeElement === mobileSearchInputRef.current) {
         mobileSearchInputRef.current.blur();
       }
-    } else {
+    } else if (
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches &&
+      mobileSearchInputRef.current
+    ) {
       // If motion is reduced, bypass the transition delay and focus instantly for 0ms accessibility
-      if (
-        typeof window !== 'undefined' &&
-        window.matchMedia('(prefers-reduced-motion: reduce)').matches &&
-        mobileSearchInputRef.current
-      ) {
-        mobileSearchInputRef.current.focus({ preventScroll: true });
-      }
+      mobileSearchInputRef.current.focus({ preventScroll: true });
     }
   }, [isMobileSearchActive]);
 

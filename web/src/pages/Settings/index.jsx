@@ -57,6 +57,108 @@ function splitButtons(buttonBehavior) {
   return { button0, button1, button2 };
 }
 
+function parseAutoWakeupSchedules(autowakeupSchedules) {
+  const defaultSchedule = [{ time: '07:00', days: [true, true, true, true, true, true, true] }];
+  if (!autowakeupSchedules) {
+    return defaultSchedule;
+  }
+  const schedules = [];
+  if (
+    typeof autowakeupSchedules === 'string' &&
+    autowakeupSchedules.trim()
+  ) {
+    const scheduleStrings = autowakeupSchedules.split(';');
+    for (const scheduleStr of scheduleStrings) {
+      const [time, daysStr] = scheduleStr.split('|');
+      if (time && daysStr && daysStr.length === 7) {
+        const days = daysStr.split('').map(d => d === '1');
+        schedules.push({ time, days });
+      }
+    }
+  }
+  return schedules.length > 0 ? schedules : defaultSchedule;
+}
+
+function transformFetchedSettings(fetchedSettings) {
+  if (!fetchedSettings) return {};
+  const buttonFields = fetchedSettings.buttonBehavior
+    ? splitButtons(fetchedSettings.buttonBehavior)
+    : {};
+  const settingsWithToggle = {
+    ...fetchedSettings,
+    ...buttonFields,
+    standbyDisplayEnabled:
+      fetchedSettings.standbyDisplayEnabled !== undefined
+        ? fetchedSettings.standbyDisplayEnabled
+        : fetchedSettings.standbyBrightness > 0,
+    dashboardLayout: fetchedSettings.dashboardLayout || DASHBOARD_LAYOUTS.ORDER_FIRST,
+  };
+
+  if (fetchedSettings.pid) {
+    const split = splitPidString(fetchedSettings.pid);
+    settingsWithToggle.pid = split.pid;
+    settingsWithToggle.kf = split.kf;
+  }
+  return settingsWithToggle;
+}
+
+function buildSubmitFormData(formData, autowakeupSchedules, restart) {
+  const formDataToSubmit = new FormData();
+  const checkboxKeys = [
+    'homekit',
+    'boilerFillActive',
+    'smartGrindActive',
+    'homeAssistant',
+    'momentaryButtons',
+    'delayAdjust',
+    'clock24hFormat',
+    'autowakeupEnabled',
+    'smartGrindToggle'
+  ];
+
+  for (const [key, value] of Object.entries(formData)) {
+    if (value === undefined || value === null) continue;
+
+    if (checkboxKeys.includes(key)) {
+      if (value) {
+        formDataToSubmit.set(key, '1');
+      }
+    } else {
+      formDataToSubmit.set(key, String(value));
+    }
+  }
+
+  formDataToSubmit.set('steamPumpPercentage', String(formData.steamPumpPercentage ?? 0));
+  formDataToSubmit.set(
+    'altRelayFunction',
+    formData.altRelayFunction !== undefined ? String(formData.altRelayFunction) : '1',
+  );
+  formDataToSubmit.set(
+    'buttonBehavior',
+    `${formData.button0},${formData.button1},${formData.button2}`,
+  );
+
+  if (formData.pid && formData.kf !== undefined) {
+    const combinedPid = `${formData.pid},${formData.kf}`;
+    formDataToSubmit.set('pid', combinedPid);
+  }
+
+  const schedulesStr = autowakeupSchedules
+    .map(schedule => `${schedule.time}|${schedule.days.map(d => (d ? '1' : '0')).join('')}`)
+    .join(';');
+  formDataToSubmit.set('autowakeupSchedules', schedulesStr);
+
+  if (!formData.standbyDisplayEnabled) {
+    formDataToSubmit.set('standbyBrightness', '0');
+  }
+
+  if (restart) {
+    formDataToSubmit.append('restart', '1');
+  }
+
+  return formDataToSubmit;
+}
+
 export function Settings() {
   const apiService = useContext(ApiServiceContext);
   const { params } = useRoute();
@@ -116,50 +218,9 @@ export function Settings() {
 
   useEffect(() => {
     if (fetchedSettings) {
-      const buttonFields = fetchedSettings.buttonBehavior
-        ? splitButtons(fetchedSettings.buttonBehavior)
-        : {};
-      const settingsWithToggle = {
-        ...fetchedSettings,
-        ...buttonFields,
-        standbyDisplayEnabled:
-          fetchedSettings.standbyDisplayEnabled !== undefined
-            ? fetchedSettings.standbyDisplayEnabled
-            : fetchedSettings.standbyBrightness > 0,
-        dashboardLayout: fetchedSettings.dashboardLayout || DASHBOARD_LAYOUTS.ORDER_FIRST,
-      };
-
-      if (fetchedSettings.pid) {
-        const split = splitPidString(fetchedSettings.pid);
-        settingsWithToggle.pid = split.pid;
-        settingsWithToggle.kf = split.kf;
-      }
-
-      if (fetchedSettings.autowakeupSchedules) {
-        const schedules = [];
-        if (
-          typeof fetchedSettings.autowakeupSchedules === 'string' &&
-          fetchedSettings.autowakeupSchedules.trim()
-        ) {
-          const scheduleStrings = fetchedSettings.autowakeupSchedules.split(';');
-          for (const scheduleStr of scheduleStrings) {
-            const [time, daysStr] = scheduleStr.split('|');
-            if (time && daysStr && daysStr.length === 7) {
-              const days = daysStr.split('').map(d => d === '1');
-              schedules.push({ time, days });
-            }
-          }
-        }
-        if (schedules.length === 0) {
-          schedules.push({ time: '07:00', days: [true, true, true, true, true, true, true] });
-        }
-        setAutoWakeupSchedules(schedules);
-      } else {
-        setAutoWakeupSchedules([
-          { time: '07:00', days: [true, true, true, true, true, true, true] },
-        ]);
-      }
-
+      const settingsWithToggle = transformFetchedSettings(fetchedSettings);
+      const parsedSchedules = parseAutoWakeupSchedules(fetchedSettings.autowakeupSchedules);
+      setAutoWakeupSchedules(parsedSchedules);
       setFormData(settingsWithToggle);
     } else {
       setFormData({});
@@ -245,62 +306,7 @@ export function Settings() {
       if (e) e.preventDefault();
       setSubmitting(true);
       const form = formRef.current;
-      const formDataToSubmit = new FormData();
-
-      // Define which keys are checkboxes in the C++ backend
-      const checkboxKeys = [
-        'homekit',
-        'boilerFillActive',
-        'smartGrindActive',
-        'homeAssistant',
-        'momentaryButtons',
-        'delayAdjust',
-        'clock24hFormat',
-        'autowakeupEnabled',
-        'smartGrindToggle'
-      ];
-
-      // Populate form data from state
-      for (const [key, value] of Object.entries(formData)) {
-        if (value === undefined || value === null) continue;
-
-        if (checkboxKeys.includes(key)) {
-          if (value) {
-            formDataToSubmit.set(key, '1');
-          }
-        } else {
-          formDataToSubmit.set(key, String(value));
-        }
-      }
-
-      // Explicit overrides matching original onSubmit logic:
-      formDataToSubmit.set('steamPumpPercentage', String(formData.steamPumpPercentage ?? 0));
-      formDataToSubmit.set(
-        'altRelayFunction',
-        formData.altRelayFunction !== undefined ? String(formData.altRelayFunction) : '1',
-      );
-      formDataToSubmit.set(
-        'buttonBehavior',
-        `${formData.button0},${formData.button1},${formData.button2}`,
-      );
-
-      if (formData.pid && formData.kf !== undefined) {
-        const combinedPid = `${formData.pid},${formData.kf}`;
-        formDataToSubmit.set('pid', combinedPid);
-      }
-
-      const schedulesStr = autowakeupSchedules
-        .map(schedule => `${schedule.time}|${schedule.days.map(d => (d ? '1' : '0')).join('')}`)
-        .join(';');
-      formDataToSubmit.set('autowakeupSchedules', schedulesStr);
-
-      if (!formData.standbyDisplayEnabled) {
-        formDataToSubmit.set('standbyBrightness', '0');
-      }
-
-      if (restart) {
-        formDataToSubmit.append('restart', '1');
-      }
+      const formDataToSubmit = buildSubmitFormData(formData, autowakeupSchedules, restart);
       
       try {
         const response = await fetch(form.action, {
