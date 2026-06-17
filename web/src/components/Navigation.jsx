@@ -8,16 +8,20 @@ import { faDatabase } from '@fortawesome/free-solid-svg-icons/faDatabase';
 import { faMagnifyingGlassChart } from '@fortawesome/free-solid-svg-icons/faMagnifyingGlassChart';
 import { faChartSimple } from '@fortawesome/free-solid-svg-icons/faChartSimple';
 
+const routeBase = import.meta.env.BASE_URL === '/' ? '' : import.meta.env.BASE_URL.replace(/\/$/, '');
+const routeLink = path => `${routeBase}${path}`;
+
 function MenuItem(props) {
   let className =
     'btn btn-md justify-start gap-3 w-full text-base-content hover:text-base-content hover:bg-base-content/10 bg-transparent border-none px-2';
   const { path } = useLocation();
-  if (props.active || path === props.link) {
+  const link = routeLink(props.link);
+  if (props.active || path === link) {
     className =
       'btn btn-md justify-start gap-3 w-full bg-primary text-primary-content hover:bg-primary hover:text-primary-content px-2';
   }
   return (
-    <a href={props.link} className={className}>
+    <a href={link} className={className}>
       <FontAwesomeIcon icon={props.icon} />
       <div className='indicator'>
         {props.isNew && (
