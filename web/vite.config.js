@@ -25,11 +25,11 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://silvia.local/',
+        target: 'http://gaggimate.local/',
         changeOrigin: true,
       },
       '/ws': {
-        target: 'ws://silvia.local',
+        target: 'ws://gaggimate.local',
         ws: true,
       },
     },

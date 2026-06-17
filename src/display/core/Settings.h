@@ -295,7 +295,7 @@ class Settings {
 
     void doSave();
     xTaskHandle taskHandle;
-    static void loopTask(void *arg);
+    [[noreturn]] static void loopTask(void *arg);
 };
 
 #endif // SETTINGS_H

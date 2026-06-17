@@ -31,9 +31,7 @@ void ADSAdc::loop() {
     }
 }
 
-void ADSAdc::registerCallback(ads_callback_t callback) {
-    _callback = callback;
-}
+void ADSAdc::registerCallback(ads_callback_t callback) { _callback = callback; }
 
 [[noreturn]] void ADSAdc::loopTask(void *arg) {
     TickType_t lastWake = xTaskGetTickCount();

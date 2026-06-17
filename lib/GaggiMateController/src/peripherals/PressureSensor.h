@@ -1,8 +1,8 @@
 #ifndef PRESSURESENSOR_H
 #define PRESSURESENSOR_H
 
-#include "SimpleKalmanFilter/SimpleKalmanFilter.h"
 #include "ADSAdc.h"
+#include "SimpleKalmanFilter/SimpleKalmanFilter.h"
 #include <Arduino.h>
 
 constexpr int PRESSURE_READ_INTERVAL_MS = 30;

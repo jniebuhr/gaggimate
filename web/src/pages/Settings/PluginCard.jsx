@@ -5,7 +5,7 @@ import { faCalendarDays } from '@fortawesome/free-solid-svg-icons/faCalendarDays
 import { computed } from '@preact/signals';
 import { machine } from '../../services/ApiService.js';
 
-const gearpumpAddon = computed(() => machine.value.status.gearpumpAddon);
+const gearpumpAddon = computed(() => machine.value.capabilities.gearpumpAddon);
 
 export function PluginCard({
   formData,
@@ -373,7 +373,7 @@ export function PluginCard({
         )}
       </div>
 
-      {gearpumpAddon && (
+      {gearpumpAddon.value && (
         <div className='bg-base-200 rounded-lg p-4'>
           <div className='flex items-center justify-between'>
             <span className='text-xl font-medium'>BLDC Pump Settings</span>

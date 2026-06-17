@@ -32,6 +32,7 @@ class GaggiMateServer {
     void init(const String &deviceName, const String &hardware, const String &version,
               const gm::DeviceCapabilities &capabilities);
     bool isConnected() const { return _endpoint.isConnected(); }
+    bool isUpdating() const { return _transport.isUpdating(); }
 
     void setSystemInfo(const String &hardware, const String &version, const gm::DeviceCapabilities &capabilities);
 

@@ -184,7 +184,9 @@ export function ExtendedProfileForm(props) {
                 pressureAvailable={pressureAvailable}
               />
             ) : (
-              <p className='text-base-content/60 text-sm'>No phases yet. Add a phase to configure brewing.</p>
+              <p className='text-base-content/60 text-sm'>
+                No phases yet. Add a phase to configure brewing.
+              </p>
             )}
           </div>
         </Card>

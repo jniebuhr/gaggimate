@@ -41,7 +41,7 @@ jobs:
           git tag -d nightly
           git describe --tags --dirty > out/version.txt
       - name: Build Web
-        run: ./scripts/build_spiffs.sh
+        run: ./scripts/build_webui.sh
       - name: Build controller
         run: |
           export PLATFORMIO_BUILD_FLAGS="'-DNIGHTLY_BUILD'"

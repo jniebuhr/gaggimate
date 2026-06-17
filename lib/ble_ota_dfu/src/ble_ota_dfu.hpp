@@ -66,6 +66,7 @@ private:
   BLEService *pServiceOTA = nullptr;
   BLECharacteristic *pCharacteristic_BLE_OTA_DFU_TX = nullptr;
   friend class BLEOverTheAirDeviceFirmwareUpdate;
+  bool updating = false;
 
 public:
   BLE_OTA_DFU() = default;
@@ -77,6 +78,8 @@ public:
   bool begin(String local_name);
 
   bool connected();
+  bool isUpdating() const;
+  void setUpdating(bool updating);
 
   void send_OTA_DFU(uint8_t value);
   void send_OTA_DFU(uint8_t *value, size_t size);
