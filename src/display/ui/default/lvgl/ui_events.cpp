@@ -38,9 +38,13 @@ void onBrewTimeRaise(lv_event_t *e) {
     controller.raiseBrewTarget();
 }
 
-void onSteamTempLower(lv_event_t *e) { controller.lowerTemp(); }
+void onSteamTempLower(lv_event_t *e) {
+    controller.getSystemInfo().capabilities.dualBoiler ? controller.lowerSteamTemp() : controller.lowerTemp();
+}
 
-void onSteamTempRaise(lv_event_t *e) { controller.raiseTemp(); }
+void onSteamTempRaise(lv_event_t *e) {
+    controller.getSystemInfo().capabilities.dualBoiler ? controller.raiseSteamTemp() :  controller.raiseTemp();
+}
 
 void onBrewScreen(lv_event_t *e) {
     controller.getUI()->changeScreen(&ui_BrewScreen, &ui_BrewScreen_screen_init);
@@ -56,8 +60,10 @@ void onWaterScreen(lv_event_t *e) {
 
 void onSteamScreen(lv_event_t *e) {
     controller.getUI()->changeScreen(&ui_SimpleProcessScreen, &ui_SimpleProcessScreen_screen_init);
-    controller.setMode(MODE_STEAM);
-    controller.deactivate();
+    if (!controller.getSystemInfo().capabilities.dualBoiler) {
+        controller.setMode(MODE_STEAM);
+        controller.deactivate();
+    }
 }
 
 void onWakeup(lv_event_t *e) {

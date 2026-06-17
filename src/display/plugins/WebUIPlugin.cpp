@@ -60,7 +60,7 @@ void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) 
     this->pluginManager = _pluginManager;
     this->ota = new GitHubOTA(
         BUILD_GIT_VERSION, controller->getSystemInfo().version,
-        RELEASE_URL + (controller->getSettings().getOTAChannel() == "latest" ? "latest" : "tag/nightly"),
+        RELEASE_URL + (controller->getSettings().getOTAChannel() == "latest" ? "latest" : "tag/db"),
         [this](uint8_t phase) {
             pluginManager->trigger("ota:update:phase", "phase", phase);
             updateOTAProgress(phase, 0);

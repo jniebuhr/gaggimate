@@ -74,6 +74,8 @@ class Controller {
     void updateLastAction();
     void raiseTemp();
     void lowerTemp();
+    void raiseSteamTemp();
+    void lowerSteamTemp();
     void raiseBrewTarget();
     void lowerBrewTarget();
     void raiseGrindTarget();

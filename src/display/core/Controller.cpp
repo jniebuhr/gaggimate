@@ -773,6 +773,18 @@ void Controller::lowerTemp() {
     setTargetTemp(temp);
 }
 
+void Controller::raiseSteamTemp() {
+    float temp = getTargetSteamTemp();
+    temp = constrain(temp + 1.0f, MIN_TEMP, MAX_TEMP);
+    settings.setTargetSteamTemp(static_cast<int>(temp));
+}
+
+void Controller::lowerSteamTemp() {
+    float temp = getTargetSteamTemp();
+    temp = constrain(temp - 1.0f, MIN_TEMP, MAX_TEMP);
+    settings.setTargetSteamTemp(static_cast<int>(temp));
+}
+
 void Controller::raiseBrewTarget() {
     if (isVolumetricAvailable() && profileManager->getSelectedProfile().isVolumetric()) {
         profileManager->getSelectedProfile().adjustVolumetricTarget(1);

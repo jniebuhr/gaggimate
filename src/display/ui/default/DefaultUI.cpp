@@ -270,6 +270,9 @@ void DefaultUI::loop() {
         active = controller->isActive();
         smartGrindActive = settings.isSmartGrindActive();
         grindAvailable = smartGrindActive || settings.getAltRelayFunction() == ALT_RELAY_GRIND;
+        dualBoiler = controller->getSystemInfo().capabilities.dualBoiler;
+        currentSteamTemp = static_cast<int>(controller->getCurrentSteamTemp());
+        targetSteamTemp = static_cast<int>(controller->getTargetSteamTemp());
         applyTheme();
         if (controller->isErrorState()) {
             changeScreen(&ui_StandbyScreen, &ui_StandbyScreen_screen_init);
@@ -374,9 +377,12 @@ void DefaultUI::setupState() {
     active = controller->isActive();
     smartGrindActive = settings.isSmartGrindActive();
     grindAvailable = smartGrindActive || settings.getAltRelayFunction() == ALT_RELAY_GRIND;
+    dualBoiler = controller->getSystemInfo().capabilities.dualBoiler;
     mode = controller->getMode();
     currentTemp = static_cast<int>(controller->getCurrentTemp());
+    currentSteamTemp = static_cast<int>(controller->getCurrentSteamTemp());
     targetTemp = static_cast<int>(controller->getTargetTemp());
+    targetSteamTemp = static_cast<int>(controller->getTargetSteamTemp());
     targetDuration = profileManager->getSelectedProfile().getTotalDuration();
     targetVolume = profileManager->getSelectedProfile().getTotalVolume();
     grindDuration = settings.getTargetGrindDuration();
@@ -418,7 +424,7 @@ void DefaultUI::setupReactive() {
     effect_mgr.use_effect([=] { return currentScreen == ui_StatusScreen; },
                           [=]() { adjustHeatingIndicator(ui_StatusScreen_dials); }, &isTemperatureStable, &heatingFlash);
     effect_mgr.use_effect([=] { return currentScreen == ui_SimpleProcessScreen; },
-                          [=]() { lv_label_set_text(ui_SimpleProcessScreen_mainLabel5, mode == MODE_STEAM ? "Steam" : "Water"); },
+                          [=]() { lv_label_set_text(ui_SimpleProcessScreen_mainLabel5, mode == MODE_STEAM || controller->getSystemInfo().capabilities.dualBoiler ? "Steam" : "Water"); },
                           &mode);
     effect_mgr.use_effect([=] { return currentScreen == ui_MenuScreen; },
                           [=]() {
@@ -446,10 +452,11 @@ void DefaultUI::setupReactive() {
                           &currentTemp);
     effect_mgr.use_effect([=] { return currentScreen == ui_SimpleProcessScreen; },
                           [=]() {
-                              lv_arc_set_value(uic_SimpleProcessScreen_dials_tempGauge, currentTemp);
-                              lv_label_set_text_fmt(uic_SimpleProcessScreen_dials_tempText, "%d°C", currentTemp);
+                              int temp = dualBoiler ? currentSteamTemp : currentTemp;
+                              lv_arc_set_value(uic_SimpleProcessScreen_dials_tempGauge, temp);
+                              lv_label_set_text_fmt(uic_SimpleProcessScreen_dials_tempText, "%d°C", temp);
                           },
-                          &currentTemp);
+                          &currentTemp, &currentSteamTemp, &dualBoiler);
     effect_mgr.use_effect([=] { return currentScreen == ui_ProfileScreen; },
                           [=]() {
                               lv_arc_set_value(uic_ProfileScreen_dials_tempGauge, currentTemp);
@@ -474,10 +481,11 @@ void DefaultUI::setupReactive() {
                           &targetTemp);
     effect_mgr.use_effect([=] { return currentScreen == ui_SimpleProcessScreen; },
                           [=]() {
-                              lv_label_set_text_fmt(ui_SimpleProcessScreen_targetTemp, "%d°C", targetTemp);
-                              adjustTempTarget(ui_SimpleProcessScreen_dials);
+                              int temp = dualBoiler ? targetSteamTemp : currentTemp;
+                              lv_label_set_text_fmt(ui_SimpleProcessScreen_targetTemp, "%d°C", temp);
+                              adjustTempTarget(ui_SimpleProcessScreen_dials, temp);
                           },
-                          &targetTemp);
+                          &targetTemp, &targetSteamTemp, &dualBoiler);
     effect_mgr.use_effect([=] { return currentScreen == ui_ProfileScreen; }, [=]() { adjustTempTarget(ui_ProfileScreen_dials); },
                           &targetTemp);
     effect_mgr.use_effect([=] { return currentScreen == ui_MenuScreen; },
@@ -662,6 +670,11 @@ void DefaultUI::setupReactive() {
                                              : lv_obj_add_flag(ui_MenuScreen_grindBtn, LV_OBJ_FLAG_HIDDEN);
                           },
                           &grindAvailable);
+    effect_mgr.use_effect([=] { return currentScreen == ui_MenuScreen; },
+                          [=]() {
+                              _ui_flag_modify(ui_MenuScreen_waterBtn, LV_OBJ_FLAG_HIDDEN, !dualBoiler);
+                          },
+                          &dualBoiler);
     effect_mgr.use_effect([=] { return currentScreen == ui_BrewScreen; },
                           [=]() {
                               if (volumetricAvailable && bluetoothScales) {
@@ -916,9 +929,13 @@ void DefaultUI::adjustDials(lv_obj_t *dials) {
 }
 
 inline void DefaultUI::adjustTempTarget(lv_obj_t *dials) {
+    adjustTempTarget(dials, targetTemp);
+}
+
+void DefaultUI::adjustTempTarget(lv_obj_t *dials, int temp) {
     double gaugeAngle = pressureAvailable ? 124.0 : 304;
     double gaugeStart = pressureAvailable ? 118.0 : -62;
-    double percentage = static_cast<double>(targetTemp) / 160.0;
+    double percentage = static_cast<double>(temp) / 160.0;
     lv_obj_t *tempTarget = ui_comp_get_child(dials, UI_COMP_DIALS_TEMPTARGET);
     adjustTarget(tempTarget, percentage, gaugeStart, gaugeAngle);
 }

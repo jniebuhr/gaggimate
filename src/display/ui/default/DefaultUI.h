@@ -68,6 +68,7 @@ class DefaultUI {
 
     void adjustDials(lv_obj_t *dials);
     void adjustTempTarget(lv_obj_t *dials);
+    void adjustTempTarget(lv_obj_t *dials, int temp);
     void adjustTarget(lv_obj_t *obj, double percentage, double start, double range) const;
 
     int tempHistory[TEMP_HISTORY_LENGTH] = {0};
@@ -106,6 +107,7 @@ class DefaultUI {
     int active = false;
     int smartGrindActive = false;
     int grindAvailable = false;
+    int dualBoiler = false;
     int initialized = false;
 
     // Seasonal flags
@@ -116,7 +118,9 @@ class DefaultUI {
 
     int mode = MODE_STANDBY;
     int currentTemp = 0;
+    int currentSteamTemp = 0;
     int targetTemp = 0;
+    int targetSteamTemp = 0;
     float targetDuration = 0;
     float targetVolume = 0;
     int grindDuration = 0;
