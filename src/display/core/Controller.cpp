@@ -622,7 +622,6 @@ bool Controller::isVolumetricAvailable() const {
 
 void Controller::updatePIDValues(String newValue){
     settings.setPid(newValue);
-g
     setPidSettings();
 }
 
