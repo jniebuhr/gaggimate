@@ -15,22 +15,28 @@
 #include <display/core/static_profiles.h>
 #include <display/core/zones.h>
 #include <display/plugins/AutoWakeupPlugin.h>
-#include <display/plugins/BLEScalePlugin.h>
 #include <display/plugins/BoilerFillPlugin.h>
-#include <display/plugins/HomekitPlugin.h>
 #include <display/plugins/LedControlPlugin.h>
-#include <display/plugins/MQTTPlugin.h>
-#include <display/plugins/NetworkWatchdogPlugin.h>
 #include <display/plugins/ShotHistoryPlugin.h>
 #include <display/plugins/SmartGrindPlugin.h>
 #include <display/plugins/WebUIPlugin.h>
+#ifndef GAGGIMATE_SIM // network/BLE plugins are device-only
+#include <display/plugins/BLEScalePlugin.h>
+#include <display/plugins/HomekitPlugin.h>
+#include <display/plugins/MQTTPlugin.h>
+#include <display/plugins/NetworkWatchdogPlugin.h>
 #include <display/plugins/WifiStaWatchdogPlugin.h>
 #include <display/plugins/mDNSPlugin.h>
+#endif
 #include <display/util/PsramAllocator.h>
 #ifndef GAGGIMATE_HEADLESS
+#ifdef GAGGIMATE_SIM
+#include <SdlDriver.h> // desktop SDL panel stands in for the hardware drivers
+#else
 #include <display/drivers/AmoledDisplayDriver.h>
 #include <display/drivers/LilyGoDriver.h>
 #include <display/drivers/WaveshareDriver.h>
+#endif
 #endif
 
 const String LOG_TAG = F("Controller");
@@ -67,24 +73,32 @@ void Controller::setup() {
     }
     profileManager = new ProfileManager(fs, "/p", settings, pluginManager);
     profileManager->setup();
+#ifndef GAGGIMATE_SIM // mDNS/HomeKit are device-only
     if (settings.isHomekit())
         pluginManager->registerPlugin(new HomekitPlugin(settings.getWifiSsid(), settings.getWifiPassword()));
     else
         pluginManager->registerPlugin(new mDNSPlugin());
+#endif
     if (settings.isBoilerFillActive()) {
         pluginManager->registerPlugin(new BoilerFillPlugin());
     }
     if (settings.isSmartGrindActive()) {
         pluginManager->registerPlugin(new SmartGrindPlugin());
     }
+#ifndef GAGGIMATE_SIM // MQTT/HomeAssistant is device-only
     if (settings.isHomeAssistant()) {
         pluginManager->registerPlugin(new MQTTPlugin());
     }
+#endif
     pluginManager->registerPlugin(new WebUIPlugin());
+#ifndef GAGGIMATE_SIM // WiFi watchdogs and BLE scales are device-only
     pluginManager->registerPlugin(new NetworkWatchdogPlugin());
     pluginManager->registerPlugin(new WifiStaWatchdogPlugin());
+#endif
     pluginManager->registerPlugin(&ShotHistory);
+#ifndef GAGGIMATE_SIM
     pluginManager->registerPlugin(&BLEScales);
+#endif
     pluginManager->registerPlugin(new LedControlPlugin());
     pluginManager->registerPlugin(new AutoWakeupPlugin());
     pluginManager->setup(this);
@@ -129,6 +143,9 @@ void Controller::connect() {
 
 #ifndef GAGGIMATE_HEADLESS
 void Controller::setupPanel() {
+#ifdef GAGGIMATE_SIM
+    driver = SdlDriver::getInstance(); // desktop SDL panel
+#else
     if (LilyGoDriver::getInstance()->isCompatible()) {
         driver = LilyGoDriver::getInstance();
     } else if (AmoledDisplayDriver::getInstance()->isCompatible()) {
@@ -140,6 +157,7 @@ void Controller::setupPanel() {
         delay(10000);
         ESP.restart();
     }
+#endif
     driver->init();
 }
 #endif
@@ -333,9 +351,7 @@ void Controller::onSystemInfo(const char *hardware, const char *version, uint32_
         // Capability-dependent setup that the old protocol ran synchronously right
         // after connect, now driven by the asynchronous SystemInfo push.
         setPressureScale();
-        float pid[4];
-        parseFloatCsv(settings.getPid(), pid, 4, 0.0f);
-        comms.sendPidSettings(pid[0], pid[1], pid[2], pid[3]);
+        setPidSettings();
         setPumpModelCoeffs();
     }
 
@@ -703,6 +719,12 @@ void Controller::setPumpModelCoeffs(void) {
     }
 }
 
+void Controller::setPidSettings() {
+    float pid[4];
+    parseFloatCsv(settings.getPid(), pid, 4, 0.0f);
+    comms.sendPidSettings(pid[0], pid[1], pid[2], pid[3]);
+}
+
 int Controller::getTargetGrindDuration() const { return settings.getTargetGrindDuration(); }
 
 void Controller::setTargetGrindDuration(int duration) {
@@ -985,6 +1007,7 @@ void Controller::setMode(int newMode) {
 
     updateLastAction();
     setTargetTemp(getTargetTemp());
+    setPidSettings();
 }
 
 void Controller::onTempRead(float temperature) {
