@@ -46,7 +46,7 @@ class WebUIPlugin : public Plugin {
     // Serves the web UI from the firmware-embedded, memory-mapped flash blob
     // (catch-all for any path not claimed by an explicit route). [GM-106]
     void serveWebAsset(AsyncWebServerRequest *request);
-    void handleSettings(AsyncWebServerRequest *request) const;
+    void handleSettings(AsyncWebServerRequest *request);
     void handleBLEScaleList(AsyncWebServerRequest *request);
     void handleBLEScaleScan(AsyncWebServerRequest *request);
     void handleBLEScaleConnect(AsyncWebServerRequest *request);
