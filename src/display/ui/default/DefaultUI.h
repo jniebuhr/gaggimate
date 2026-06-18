@@ -59,7 +59,6 @@ class DefaultUI {
   private:
     void setupPanel();
     void setupState();
-    void setupReactive();
 
     void handleScreenChange();
 
@@ -82,7 +81,6 @@ class DefaultUI {
 
     void updateTempHistory();
     void updateTempStableFlag();
-    void adjustHeatingIndicator(lv_obj_t *contentPanel);
     void reloadProfiles();
 
     Driver *panelDriver = nullptr;

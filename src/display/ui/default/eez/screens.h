@@ -39,6 +39,7 @@ typedef struct _objects_t {
     lv_obj_t *menu_screen_1;
     lv_obj_t *obj0;
     lv_obj_t *obj0__temp_gauge;
+    lv_obj_t *obj0__temp_gauge_full;
     lv_obj_t *obj0__pressure_gauge;
     lv_obj_t *obj0__standby_icon;
     lv_obj_t *obj0__menu_icon;
@@ -46,8 +47,10 @@ typedef struct _objects_t {
     lv_obj_t *obj0__pressure_icon;
     lv_obj_t *obj0__pressure_text;
     lv_obj_t *obj0__temp_text;
+    lv_obj_t *obj0__temp_text_full;
     lv_obj_t *obj1;
     lv_obj_t *obj1__temp_gauge;
+    lv_obj_t *obj1__temp_gauge_full;
     lv_obj_t *obj1__pressure_gauge;
     lv_obj_t *obj1__standby_icon;
     lv_obj_t *obj1__menu_icon;
@@ -55,8 +58,10 @@ typedef struct _objects_t {
     lv_obj_t *obj1__pressure_icon;
     lv_obj_t *obj1__pressure_text;
     lv_obj_t *obj1__temp_text;
+    lv_obj_t *obj1__temp_text_full;
     lv_obj_t *obj2;
     lv_obj_t *obj2__temp_gauge;
+    lv_obj_t *obj2__temp_gauge_full;
     lv_obj_t *obj2__pressure_gauge;
     lv_obj_t *obj2__standby_icon;
     lv_obj_t *obj2__menu_icon;
@@ -64,8 +69,10 @@ typedef struct _objects_t {
     lv_obj_t *obj2__pressure_icon;
     lv_obj_t *obj2__pressure_text;
     lv_obj_t *obj2__temp_text;
+    lv_obj_t *obj2__temp_text_full;
     lv_obj_t *obj3;
     lv_obj_t *obj3__temp_gauge;
+    lv_obj_t *obj3__temp_gauge_full;
     lv_obj_t *obj3__pressure_gauge;
     lv_obj_t *obj3__standby_icon;
     lv_obj_t *obj3__menu_icon;
@@ -73,8 +80,10 @@ typedef struct _objects_t {
     lv_obj_t *obj3__pressure_icon;
     lv_obj_t *obj3__pressure_text;
     lv_obj_t *obj3__temp_text;
+    lv_obj_t *obj3__temp_text_full;
     lv_obj_t *obj4;
     lv_obj_t *obj4__temp_gauge;
+    lv_obj_t *obj4__temp_gauge_full;
     lv_obj_t *obj4__pressure_gauge;
     lv_obj_t *obj4__standby_icon;
     lv_obj_t *obj4__menu_icon;
@@ -82,8 +91,10 @@ typedef struct _objects_t {
     lv_obj_t *obj4__pressure_icon;
     lv_obj_t *obj4__pressure_text;
     lv_obj_t *obj4__temp_text;
+    lv_obj_t *obj4__temp_text_full;
     lv_obj_t *obj5;
     lv_obj_t *obj5__temp_gauge;
+    lv_obj_t *obj5__temp_gauge_full;
     lv_obj_t *obj5__pressure_gauge;
     lv_obj_t *obj5__standby_icon;
     lv_obj_t *obj5__menu_icon;
@@ -91,8 +102,10 @@ typedef struct _objects_t {
     lv_obj_t *obj5__pressure_icon;
     lv_obj_t *obj5__pressure_text;
     lv_obj_t *obj5__temp_text;
+    lv_obj_t *obj5__temp_text_full;
     lv_obj_t *obj6;
     lv_obj_t *obj6__temp_gauge;
+    lv_obj_t *obj6__temp_gauge_full;
     lv_obj_t *obj6__pressure_gauge;
     lv_obj_t *obj6__standby_icon;
     lv_obj_t *obj6__menu_icon;
@@ -100,6 +113,7 @@ typedef struct _objects_t {
     lv_obj_t *obj6__pressure_icon;
     lv_obj_t *obj6__pressure_text;
     lv_obj_t *obj6__temp_text;
+    lv_obj_t *obj6__temp_text_full;
     lv_obj_t *obj7;
     lv_obj_t *touch_icon;
     lv_obj_t *time;
@@ -112,7 +126,8 @@ typedef struct _objects_t {
     lv_obj_t *start_button;
     lv_obj_t *control_container;
     lv_obj_t *mode_switch;
-    lv_obj_t *volumetric_icon;
+    lv_obj_t *bluetooth_scale_icon;
+    lv_obj_t *flow_prediction_icon;
     lv_obj_t *weight_label;
     lv_obj_t *profile_info;
     lv_obj_t *obj9;
@@ -261,7 +276,7 @@ typedef struct _objects_t {
     lv_obj_t *btn_grind_1;
     lv_obj_t *btn_settings_1;
     lv_obj_t *btn_info_1;
-    lv_obj_t *menu_icon_1;
+    lv_obj_t *standby_button;
     lv_obj_t *obj67;
     lv_obj_t *obj68;
     lv_obj_t *obj69;
@@ -278,6 +293,9 @@ typedef struct {
     lv_meter_scale_t *scale1;
     lv_meter_indicator_t *indicator2;
     lv_meter_indicator_t *indicator3;
+    lv_meter_scale_t *scale2;
+    lv_meter_indicator_t *indicator4;
+    lv_meter_indicator_t *indicator5;
 } user_widget_dials_state_t;
 
 typedef struct {

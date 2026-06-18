@@ -38,10 +38,13 @@ enum SystemStatusFlowStructureFields {
     FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_ERROR = 3,
     FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_ERROR_LABEL = 4,
     FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_TIME = 5,
-    FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_SCALE_CONNECTED = 6,
+    FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_VOLUMETRIC_AVAILABLE = 6,
     FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_CONTROLLER_VERSION = 7,
     FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_DISPLAY_VERSION = 8,
     FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_IN_MENU = 9,
+    FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_PRESSURE_AVAILABLE = 10,
+    FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_BLUETOOTH_SCALES = 11,
+    FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_GRIND_AVAILABLE = 12,
     FLOW_STRUCTURE_SYSTEM_STATUS_NUM_FIELDS
 };
 
@@ -73,6 +76,10 @@ enum UIFlagsFlowStructureFields {
     FLOW_STRUCTURE_UI_FLAGS_FIELD_GRIND_ACTIVE = 1,
     FLOW_STRUCTURE_UI_FLAGS_FIELD_ACTIVE = 2,
     FLOW_STRUCTURE_UI_FLAGS_FIELD_GRIND_VOLUMETRIC = 3,
+    FLOW_STRUCTURE_UI_FLAGS_FIELD_HEATING_FLASH = 4,
+    FLOW_STRUCTURE_UI_FLAGS_FIELD_TEMPERATURE_STABLE = 5,
+    FLOW_STRUCTURE_UI_FLAGS_FIELD_HAS_PREV_PROFILE = 6,
+    FLOW_STRUCTURE_UI_FLAGS_FIELD_HAS_NEXT_PROFILE = 7,
     FLOW_STRUCTURE_UI_FLAGS_NUM_FIELDS
 };
 
@@ -93,6 +100,7 @@ enum BrewProcessFlowStructureFields {
     FLOW_STRUCTURE_BREW_PROCESS_FIELD_ELAPSED_TIME = 13,
     FLOW_STRUCTURE_BREW_PROCESS_FIELD_ELAPSED_PERCENTAGE = 14,
     FLOW_STRUCTURE_BREW_PROCESS_FIELD_IS_COMPLETE = 15,
+    FLOW_STRUCTURE_BREW_PROCESS_FIELD_CURRENT_VOLUME = 16,
     FLOW_STRUCTURE_BREW_PROCESS_NUM_FIELDS
 };
 
@@ -131,9 +139,11 @@ struct SystemStatusValue {
     const char *time() { return value.getArray()->values[FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_TIME].getString(); }
     void time(const char *time) { value.getArray()->values[FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_TIME] = StringValue(time); }
 
-    bool scale_connected() { return value.getArray()->values[FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_SCALE_CONNECTED].getBoolean(); }
-    void scale_connected(bool scale_connected) {
-        value.getArray()->values[FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_SCALE_CONNECTED] = BooleanValue(scale_connected);
+    bool volumetric_available() {
+        return value.getArray()->values[FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_VOLUMETRIC_AVAILABLE].getBoolean();
+    }
+    void volumetric_available(bool volumetric_available) {
+        value.getArray()->values[FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_VOLUMETRIC_AVAILABLE] = BooleanValue(volumetric_available);
     }
 
     const char *controller_version() {
@@ -152,6 +162,23 @@ struct SystemStatusValue {
 
     bool in_menu() { return value.getArray()->values[FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_IN_MENU].getBoolean(); }
     void in_menu(bool in_menu) { value.getArray()->values[FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_IN_MENU] = BooleanValue(in_menu); }
+
+    bool pressure_available() {
+        return value.getArray()->values[FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_PRESSURE_AVAILABLE].getBoolean();
+    }
+    void pressure_available(bool pressure_available) {
+        value.getArray()->values[FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_PRESSURE_AVAILABLE] = BooleanValue(pressure_available);
+    }
+
+    bool bluetooth_scales() { return value.getArray()->values[FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_BLUETOOTH_SCALES].getBoolean(); }
+    void bluetooth_scales(bool bluetooth_scales) {
+        value.getArray()->values[FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_BLUETOOTH_SCALES] = BooleanValue(bluetooth_scales);
+    }
+
+    bool grind_available() { return value.getArray()->values[FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_GRIND_AVAILABLE].getBoolean(); }
+    void grind_available(bool grind_available) {
+        value.getArray()->values[FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_GRIND_AVAILABLE] = BooleanValue(grind_available);
+    }
 };
 
 typedef ArrayOf<SystemStatusValue, FLOW_ARRAY_OF_STRUCTURE_SYSTEM_STATUS> ArrayOfSystemStatusValue;
@@ -274,6 +301,26 @@ struct UIFlagsValue {
     void grind_volumetric(bool grind_volumetric) {
         value.getArray()->values[FLOW_STRUCTURE_UI_FLAGS_FIELD_GRIND_VOLUMETRIC] = BooleanValue(grind_volumetric);
     }
+
+    bool heating_flash() { return value.getArray()->values[FLOW_STRUCTURE_UI_FLAGS_FIELD_HEATING_FLASH].getBoolean(); }
+    void heating_flash(bool heating_flash) {
+        value.getArray()->values[FLOW_STRUCTURE_UI_FLAGS_FIELD_HEATING_FLASH] = BooleanValue(heating_flash);
+    }
+
+    bool temperature_stable() { return value.getArray()->values[FLOW_STRUCTURE_UI_FLAGS_FIELD_TEMPERATURE_STABLE].getBoolean(); }
+    void temperature_stable(bool temperature_stable) {
+        value.getArray()->values[FLOW_STRUCTURE_UI_FLAGS_FIELD_TEMPERATURE_STABLE] = BooleanValue(temperature_stable);
+    }
+
+    bool has_prev_profile() { return value.getArray()->values[FLOW_STRUCTURE_UI_FLAGS_FIELD_HAS_PREV_PROFILE].getBoolean(); }
+    void has_prev_profile(bool has_prev_profile) {
+        value.getArray()->values[FLOW_STRUCTURE_UI_FLAGS_FIELD_HAS_PREV_PROFILE] = BooleanValue(has_prev_profile);
+    }
+
+    bool has_next_profile() { return value.getArray()->values[FLOW_STRUCTURE_UI_FLAGS_FIELD_HAS_NEXT_PROFILE].getBoolean(); }
+    void has_next_profile(bool has_next_profile) {
+        value.getArray()->values[FLOW_STRUCTURE_UI_FLAGS_FIELD_HAS_NEXT_PROFILE] = BooleanValue(has_next_profile);
+    }
 };
 
 typedef ArrayOf<UIFlagsValue, FLOW_ARRAY_OF_STRUCTURE_UI_FLAGS> ArrayOfUIFlagsValue;
@@ -385,6 +432,11 @@ struct BrewProcessValue {
     bool is_complete() { return value.getArray()->values[FLOW_STRUCTURE_BREW_PROCESS_FIELD_IS_COMPLETE].getBoolean(); }
     void is_complete(bool is_complete) {
         value.getArray()->values[FLOW_STRUCTURE_BREW_PROCESS_FIELD_IS_COMPLETE] = BooleanValue(is_complete);
+    }
+
+    float current_volume() { return value.getArray()->values[FLOW_STRUCTURE_BREW_PROCESS_FIELD_CURRENT_VOLUME].getFloat(); }
+    void current_volume(float current_volume) {
+        value.getArray()->values[FLOW_STRUCTURE_BREW_PROCESS_FIELD_CURRENT_VOLUME] = FloatValue(current_volume);
     }
 };
 

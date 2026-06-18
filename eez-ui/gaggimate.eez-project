@@ -137,7 +137,7 @@
         "objID": "9aa0827d-621a-4d16-c9c6-b9647d15bfab",
         "name": "system",
         "type": "struct:SystemStatus",
-        "defaultValue": "{ bluetooth: true,  update_available: true, wifi: true, error: false, error_label: \"Mammamia\", scale_connected: true}",
+        "defaultValue": "{ bluetooth: true,  update_available: true, wifi: true, error: false, error_label: \"Mammamia\", volumetric_available: true}",
         "persistent": false,
         "native": false
       },
@@ -220,7 +220,7 @@
           },
           {
             "objID": "86f4428f-8d2a-416d-f09f-7cb210aaa94f",
-            "name": "scale_connected",
+            "name": "volumetric_available",
             "type": "boolean"
           },
           {
@@ -236,6 +236,21 @@
           {
             "objID": "59acb7f8-66ea-4932-b70b-10481aafb043",
             "name": "in_menu",
+            "type": "boolean"
+          },
+          {
+            "objID": "fb2f35dc-f2fc-4379-d79b-aebd7c62eb09",
+            "name": "pressure_available",
+            "type": "boolean"
+          },
+          {
+            "objID": "7a89b269-df6d-4dfc-8b8d-5e7d4d7f2e19",
+            "name": "bluetooth_scales",
+            "type": "boolean"
+          },
+          {
+            "objID": "46969647-5965-4e88-fa36-82294300bc2c",
+            "name": "grind_available",
             "type": "boolean"
           }
         ]
@@ -350,6 +365,26 @@
             "objID": "45a4c548-6a43-466b-e0f1-234b081561bb",
             "name": "grind_volumetric",
             "type": "boolean"
+          },
+          {
+            "objID": "f7ddc0da-2c3f-437c-961a-2993ff3f059c",
+            "name": "heating_flash",
+            "type": "boolean"
+          },
+          {
+            "objID": "4562d0a9-f762-4896-ecf0-fde7d6a84ade",
+            "name": "temperature_stable",
+            "type": "boolean"
+          },
+          {
+            "objID": "cd550276-51e7-42f9-cc3f-1916d6efc92f",
+            "name": "has_prev_profile",
+            "type": "boolean"
+          },
+          {
+            "objID": "c2b849c7-0625-45ea-c9be-4c98ce944198",
+            "name": "has_next_profile",
+            "type": "boolean"
           }
         ]
       },
@@ -436,6 +471,11 @@
             "objID": "9ed27ea5-aadb-4653-de4b-e99bbea2af4c",
             "name": "is_complete",
             "type": "boolean"
+          },
+          {
+            "objID": "14018eef-4218-4bb1-da76-81ae59baf154",
+            "name": "current_volume",
+            "type": "float"
           }
         ]
       }
@@ -1629,14 +1669,15 @@
                           "hiddenInEditor": false,
                           "timeline": [],
                           "eventHandlers": [],
-                          "identifier": "volumetricIcon",
+                          "identifier": "bluetoothScaleIcon",
                           "leftUnit": "px",
                           "topUnit": "px",
                           "widthUnit": "content",
                           "heightUnit": "content",
                           "children": [],
                           "widgetFlags": "ADV_HITTEST|CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLLABLE|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_WITH_ARROW|SNAPPABLE",
-                          "hiddenFlagType": "literal",
+                          "hiddenFlag": "!system.bluetooth_scales",
+                          "hiddenFlagType": "expression",
                           "clickableFlagType": "literal",
                           "flagScrollbarMode": "",
                           "flagScrollDirection": "",
@@ -1666,6 +1707,66 @@
                           "angle": 0,
                           "innerAlign": "CENTER",
                           "sizeMode": "VIRTUAL"
+                        },
+                        {
+                          "objID": "470242c9-7425-4f57-930a-ef70ee891a00",
+                          "type": "LVGLImageWidget",
+                          "left": 0,
+                          "top": 0,
+                          "width": 40,
+                          "height": 40,
+                          "customInputs": [],
+                          "customOutputs": [],
+                          "style": {
+                            "objID": "66924007-3f29-4204-d0c3-06de84557a79",
+                            "useStyle": "default",
+                            "conditionalStyles": [],
+                            "childStyles": []
+                          },
+                          "hiddenInEditor": true,
+                          "timeline": [],
+                          "eventHandlers": [],
+                          "identifier": "flowPredictionIcon",
+                          "leftUnit": "px",
+                          "topUnit": "px",
+                          "widthUnit": "content",
+                          "heightUnit": "content",
+                          "children": [],
+                          "widgetFlags": "ADV_HITTEST|CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLLABLE|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_WITH_ARROW|SNAPPABLE",
+                          "hiddenFlag": "system.bluetooth_scales",
+                          "hiddenFlagType": "expression",
+                          "clickableFlagType": "literal",
+                          "flagScrollbarMode": "",
+                          "flagScrollDirection": "",
+                          "scrollSnapX": "",
+                          "scrollSnapY": "",
+                          "checkedStateType": "literal",
+                          "disabledStateType": "literal",
+                          "states": "",
+                          "localStyles": {
+                            "objID": "ae2ffd7a-532b-45c3-cb28-61e2e3866931",
+                            "definition": {
+                              "MAIN": {
+                                "DEFAULT": {
+                                  "img_recolor": "NiceWhite",
+                                  "img_recolor_opa": 255
+                                }
+                              }
+                            }
+                          },
+                          "group": "",
+                          "groupIndex": 0,
+                          "image": "flowmeter",
+                          "setPivot": false,
+                          "pivotX": 0,
+                          "pivotY": 0,
+                          "zoom": 256,
+                          "angle": 0,
+                          "innerAlign": "CENTER",
+                          "sizeMode": "VIRTUAL",
+                          "value": 0,
+                          "valueType": "literal",
+                          "previewValue": 0
                         },
                         {
                           "objID": "a70d88f2-299b-4f90-926a-2bb1225fdbc9",
@@ -1716,7 +1817,7 @@
                           },
                           "group": "",
                           "groupIndex": 0,
-                          "text": "String.format(\"%.1f\", scale_weight_current) + \"g\"",
+                          "text": "system.bluetooth_scales ? String.format(\"%.1f\", scale_weight_current) + \"g\" : \"-\"",
                           "textType": "expression",
                           "longMode": "WRAP",
                           "recolor": false,
@@ -1724,7 +1825,7 @@
                         }
                       ],
                       "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
-                      "hiddenFlag": "!system.scale_connected || ui_flags.brew_adjustments",
+                      "hiddenFlag": "!system.volumetric_available || ui_flags.brew_adjustments",
                       "hiddenFlagType": "expression",
                       "clickableFlag": true,
                       "clickableFlagType": "literal",
@@ -2645,7 +2746,7 @@
                             }
                           ],
                           "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
-                          "hiddenFlag": "selected_profile.is_volumetric && system.scale_connected",
+                          "hiddenFlag": "selected_profile.is_volumetric && system.volumetric_available",
                           "hiddenFlagType": "expression",
                           "clickableFlag": true,
                           "clickableFlagType": "literal",
@@ -2977,7 +3078,7 @@
                             }
                           ],
                           "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
-                          "hiddenFlag": "!system.scale_connected || !selected_profile.is_volumetric",
+                          "hiddenFlag": "!system.volumetric_available || !selected_profile.is_volumetric",
                           "hiddenFlagType": "expression",
                           "clickableFlag": true,
                           "clickableFlagType": "literal",
@@ -3134,8 +3235,8 @@
                               "img_recolor_opa": 255
                             },
                             "DISABLED": {
-                              "img_recolor": "SemiDark",
-                              "blend_mode": "NORMAL"
+                              "blend_mode": "NORMAL",
+                              "img_opa": 125
                             }
                           }
                         }
@@ -3259,7 +3360,7 @@
                               "img_recolor_opa": 255
                             },
                             "DISABLED": {
-                              "img_recolor": "SemiDark"
+                              "img_opa": 125
                             }
                           }
                         }
@@ -3934,7 +4035,7 @@
                   "type": "LVGLLabelWidget",
                   "left": 0,
                   "top": 70,
-                  "width": 150,
+                  "width": 320,
                   "height": 50,
                   "customInputs": [],
                   "customOutputs": [],
@@ -3978,11 +4079,11 @@
                   },
                   "group": "",
                   "groupIndex": 0,
-                  "text": "brew_process_info.elapsed_time",
+                  "text": "(system.bluetooth_scales && ! brew_process_info.is_complete ? String.format(\"%.1f\", brew_process_info.current_volume) + \" g / \" : \"\") + brew_process_info.elapsed_time",
                   "textType": "expression",
                   "longMode": "WRAP",
                   "recolor": false,
-                  "previewValue": "0:00"
+                  "previewValue": "23.1 g / 0:00"
                 },
                 {
                   "objID": "29d0d25a-94a2-4d10-83b8-beb94d93ba6a",
@@ -4644,6 +4745,7 @@
                     "conditionalStyles": [],
                     "childStyles": []
                   },
+                  "hiddenInEditor": false,
                   "timeline": [],
                   "eventHandlers": [
                     {
@@ -4661,8 +4763,8 @@
                   "heightUnit": "px",
                   "children": [],
                   "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_ON_FOCUS|SCROLL_WITH_ARROW|SNAPPABLE",
-                  "hiddenFlag": false,
-                  "hiddenFlagType": "literal",
+                  "hiddenFlag": "!system.grind_available",
+                  "hiddenFlagType": "expression",
                   "clickableFlag": true,
                   "clickableFlagType": "literal",
                   "flagScrollbarMode": "",
@@ -6853,7 +6955,8 @@
                   "scrollSnapX": "",
                   "scrollSnapY": "",
                   "checkedStateType": "literal",
-                  "disabledStateType": "literal",
+                  "disabledState": "!ui_flags.has_prev_profile",
+                  "disabledStateType": "expression",
                   "states": "",
                   "localStyles": {
                     "objID": "e9c5614d-6b7e-4f72-e19f-7844bbc0b6cc",
@@ -6863,6 +6966,9 @@
                           "align": "LEFT_MID",
                           "img_recolor": "NiceWhite",
                           "img_recolor_opa": 255
+                        },
+                        "DISABLED": {
+                          "img_opa": 125
                         }
                       }
                     }
@@ -6911,7 +7017,8 @@
                   "scrollSnapX": "",
                   "scrollSnapY": "",
                   "checkedStateType": "literal",
-                  "disabledStateType": "literal",
+                  "disabledState": "!ui_flags.has_next_profile",
+                  "disabledStateType": "expression",
                   "states": "",
                   "localStyles": {
                     "objID": "cd11c870-82a6-490a-8b9b-382f2a9bfb42",
@@ -6921,6 +7028,9 @@
                           "align": "RIGHT_MID",
                           "img_recolor": "NiceWhite",
                           "img_recolor_opa": 255
+                        },
+                        "DISABLED": {
+                          "img_opa": 125
                         }
                       }
                     }
@@ -7362,7 +7472,7 @@
                     }
                   ],
                   "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SNAPPABLE",
-                  "hiddenFlag": "!system.scale_connected",
+                  "hiddenFlag": "!system.volumetric_available || !system.bluetooth_scales",
                   "hiddenFlagType": "expression",
                   "clickableFlag": false,
                   "clickableFlagType": "literal",
@@ -13063,6 +13173,7 @@
             "conditionalStyles": [],
             "childStyles": []
           },
+          "hiddenInEditor": false,
           "timeline": [],
           "eventHandlers": [
             {
@@ -13080,8 +13191,9 @@
           "heightUnit": "px",
           "children": [],
           "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_WITH_ARROW|SNAPPABLE",
-          "hiddenFlagType": "literal",
-          "clickableFlag": true,
+          "hiddenFlag": "!system.pressure_available",
+          "hiddenFlagType": "expression",
+          "clickableFlag": false,
           "clickableFlagType": "literal",
           "flagScrollbarMode": "off",
           "flagScrollDirection": "none",
@@ -13151,6 +13263,110 @@
           ]
         },
         {
+          "objID": "97af3533-9d02-4a11-9e2d-841d06dafb9e",
+          "type": "LVGLMeterWidget",
+          "left": 0,
+          "top": 0,
+          "width": 500,
+          "height": 500,
+          "customInputs": [],
+          "customOutputs": [],
+          "style": {
+            "objID": "9588249d-3628-4387-c75c-c3ba1198408d",
+            "useStyle": "default",
+            "conditionalStyles": [],
+            "childStyles": []
+          },
+          "hiddenInEditor": true,
+          "timeline": [],
+          "eventHandlers": [
+            {
+              "objID": "c5c8fab3-17b9-4730-9cd4-dd8788b823ad",
+              "eventName": "DRAW_PART_BEGIN",
+              "handlerType": "action",
+              "action": "onMeterDraw",
+              "userData": 0
+            }
+          ],
+          "identifier": "tempGaugeFull",
+          "leftUnit": "px",
+          "topUnit": "px",
+          "widthUnit": "px",
+          "heightUnit": "px",
+          "children": [],
+          "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLLABLE|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_WITH_ARROW|SNAPPABLE",
+          "hiddenFlag": "system.pressure_available",
+          "hiddenFlagType": "expression",
+          "clickableFlag": false,
+          "clickableFlagType": "literal",
+          "flagScrollbarMode": "",
+          "flagScrollDirection": "",
+          "scrollSnapX": "",
+          "scrollSnapY": "",
+          "checkedStateType": "literal",
+          "disabledStateType": "literal",
+          "states": "",
+          "localStyles": {
+            "objID": "9a02dfa8-c0fa-4d90-b194-2e1132c127ba",
+            "definition": {
+              "MAIN": {
+                "DEFAULT": {
+                  "align": "CENTER",
+                  "bg_opa": 0
+                }
+              },
+              "INDICATOR": {
+                "DEFAULT": {
+                  "opa": 0
+                }
+              }
+            }
+          },
+          "group": "",
+          "groupIndex": 0,
+          "scales": [
+            {
+              "indicators": [
+                {
+                  "objID": "47366bae-7b56-4e58-d130-c8523a6aa671",
+                  "type": "NEEDLE_IMG",
+                  "image": "indicator-small",
+                  "pivotX": -233,
+                  "pivotY": 0,
+                  "value": "boiler.target_temperature",
+                  "valueType": "expression"
+                },
+                {
+                  "objID": "a600d5fd-40e2-451d-ea6d-05e3ce342b49",
+                  "type": "SCALE_LINES",
+                  "colorStart": "Temperature",
+                  "colorEnd": "Temperature",
+                  "local": false,
+                  "widthModifier": 0,
+                  "startValue": 0,
+                  "startValueType": "literal",
+                  "endValue": "boiler.current_temperature",
+                  "endValueType": "expression"
+                }
+              ],
+              "objID": "646a31af-b91c-4e64-9fbd-2ada27f37dfb",
+              "minorTickCount": 62,
+              "minorTickLineWidth": 10,
+              "minorTickLength": 25,
+              "minorTickColor": "Ticks",
+              "nthMajor": 0,
+              "majorTickWidth": 0,
+              "majorTickLength": 0,
+              "majorTickColor": "#000000",
+              "labelGap": 0,
+              "scaleMin": 0,
+              "scaleMax": 160,
+              "scaleAngleRange": 300,
+              "scaleRotation": 120
+            }
+          ]
+        },
+        {
           "objID": "6be33350-5365-4805-c05f-953c7f2c5e47",
           "type": "LVGLMeterWidget",
           "left": 0,
@@ -13165,6 +13381,7 @@
             "conditionalStyles": [],
             "childStyles": []
           },
+          "hiddenInEditor": false,
           "timeline": [],
           "eventHandlers": [
             {
@@ -13182,9 +13399,9 @@
           "heightUnit": "px",
           "children": [],
           "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLL_CHAIN_HOR|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_WITH_ARROW|SNAPPABLE|SCROLL_CHAIN_VER",
-          "hiddenFlag": false,
-          "hiddenFlagType": "literal",
-          "clickableFlag": true,
+          "hiddenFlag": "!system.pressure_available",
+          "hiddenFlagType": "expression",
+          "clickableFlag": false,
           "clickableFlagType": "literal",
           "flagScrollbarMode": "off",
           "flagScrollDirection": "none",
@@ -13418,8 +13635,10 @@
           "flagScrollDirection": "",
           "scrollSnapX": "",
           "scrollSnapY": "",
-          "checkedStateType": "literal",
-          "disabledStateType": "literal",
+          "checkedState": "ui_flags.temperature_stable",
+          "checkedStateType": "expression",
+          "disabledState": "ui_flags.heating_flash && !ui_flags.temperature_stable",
+          "disabledStateType": "expression",
           "states": "",
           "localStyles": {
             "objID": "e89ca877-68ae-4afb-a25b-033945063b8f",
@@ -13429,6 +13648,12 @@
                   "align": "CENTER",
                   "img_recolor": "Temperature",
                   "img_recolor_opa": 255
+                },
+                "CHECKED": {
+                  "img_recolor": "Progress"
+                },
+                "DISABLED": {
+                  "img_opa": 125
                 }
               }
             }
@@ -13459,6 +13684,7 @@
             "conditionalStyles": [],
             "childStyles": []
           },
+          "hiddenInEditor": false,
           "timeline": [],
           "eventHandlers": [],
           "identifier": "pressureIcon",
@@ -13468,7 +13694,8 @@
           "heightUnit": "content",
           "children": [],
           "widgetFlags": "ADV_HITTEST|CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLLABLE|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_WITH_ARROW|SNAPPABLE",
-          "hiddenFlagType": "literal",
+          "hiddenFlag": "!system.pressure_available",
+          "hiddenFlagType": "expression",
           "clickableFlagType": "literal",
           "flagScrollbarMode": "",
           "flagScrollDirection": "",
@@ -13515,6 +13742,7 @@
             "conditionalStyles": [],
             "childStyles": []
           },
+          "hiddenInEditor": false,
           "timeline": [],
           "eventHandlers": [],
           "identifier": "pressureText",
@@ -13524,7 +13752,8 @@
           "heightUnit": "content",
           "children": [],
           "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLLABLE|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_WITH_ARROW|SNAPPABLE",
-          "hiddenFlagType": "literal",
+          "hiddenFlag": "!system.pressure_available",
+          "hiddenFlagType": "expression",
           "clickableFlagType": "literal",
           "flagScrollbarMode": "",
           "flagScrollDirection": "",
@@ -13568,6 +13797,7 @@
             "conditionalStyles": [],
             "childStyles": []
           },
+          "hiddenInEditor": false,
           "timeline": [],
           "eventHandlers": [],
           "identifier": "tempText",
@@ -13577,7 +13807,8 @@
           "heightUnit": "content",
           "children": [],
           "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLLABLE|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_WITH_ARROW|SNAPPABLE",
-          "hiddenFlagType": "literal",
+          "hiddenFlag": "!system.pressure_available",
+          "hiddenFlagType": "expression",
           "clickableFlagType": "literal",
           "flagScrollbarMode": "",
           "flagScrollDirection": "",
@@ -13605,6 +13836,61 @@
           "longMode": "WRAP",
           "recolor": false,
           "previewValue": "80 °C"
+        },
+        {
+          "objID": "6d05b162-7ae0-4b19-ab9a-68f11fb1b18c",
+          "type": "LVGLLabelWidget",
+          "left": 70,
+          "top": 205,
+          "width": 57,
+          "height": 21,
+          "customInputs": [],
+          "customOutputs": [],
+          "style": {
+            "objID": "06e7b23e-3af4-4fbd-cab6-99f5aef6fc3c",
+            "useStyle": "default",
+            "conditionalStyles": [],
+            "childStyles": []
+          },
+          "hiddenInEditor": true,
+          "timeline": [],
+          "eventHandlers": [],
+          "identifier": "tempTextFull",
+          "leftUnit": "px",
+          "topUnit": "px",
+          "widthUnit": "content",
+          "heightUnit": "content",
+          "children": [],
+          "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLLABLE|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_WITH_ARROW|SNAPPABLE",
+          "hiddenFlag": "system.pressure_available",
+          "hiddenFlagType": "expression",
+          "clickableFlagType": "literal",
+          "flagScrollbarMode": "",
+          "flagScrollDirection": "",
+          "scrollSnapX": "",
+          "scrollSnapY": "",
+          "checkedStateType": "literal",
+          "disabledStateType": "literal",
+          "states": "",
+          "localStyles": {
+            "objID": "fb58b33c-b217-42a8-cfb5-a03e514a8eca",
+            "definition": {
+              "MAIN": {
+                "DEFAULT": {
+                  "align": "CENTER",
+                  "text_color": "NiceWhite",
+                  "text_font": "MONTSERRAT_18"
+                }
+              }
+            }
+          },
+          "group": "",
+          "groupIndex": 0,
+          "text": "String.format(\"%.f\", boiler.current_temperature) + \" °C\"",
+          "textType": "expression",
+          "longMode": "WRAP",
+          "recolor": false,
+          "previewValue": "100 °C"
         }
       ],
       "connectionLines": [],

@@ -128,9 +128,11 @@ void action_on_meter_draw(lv_event_t *e) {
     const float ux = dx / len;
     const float uy = dy / len;
 
-    // Inset each end by the cap radius so the round caps land on r_in/r_out, not clipped.
-    lv_point_t inner = {(lv_coord_t)(dsc->p1->x + ux * (r_in + cap)), (lv_coord_t)(dsc->p1->y + uy * (r_in + cap))};
-    lv_point_t outer = {(lv_coord_t)(dsc->p1->x + ux * (r_out - cap)), (lv_coord_t)(dsc->p1->y + uy * (r_out - cap))};
+    // Inset each end by the cap radius so the round caps land on r_in/r_out, not clipped. Round (not
+    // truncate) the coords so every tick lands on the same sub-pixel grid and the ring looks even.
+    lv_point_t inner = {(lv_coord_t)lroundf(dsc->p1->x + ux * (r_in + cap)), (lv_coord_t)lroundf(dsc->p1->y + uy * (r_in + cap))};
+    lv_point_t outer = {(lv_coord_t)lroundf(dsc->p1->x + ux * (r_out - cap)),
+                        (lv_coord_t)lroundf(dsc->p1->y + uy * (r_out - cap))};
 
     lv_draw_line_dsc_t pill = *dsc->line_dsc;
     pill.opa = LV_OPA_COVER; // ticks are opaque; guard against the persisted suppression below
