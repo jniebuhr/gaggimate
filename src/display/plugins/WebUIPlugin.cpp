@@ -915,6 +915,7 @@ void WebUIPlugin::updateOTAStatus(const String &version) {
     doc["tp"] = "res:ota-settings";
     doc["customOTAURL"] = settings.getCustomOTAURL();
     doc["controllerUpdateAvailable"] = ota->isUpdateAvailable(true);
+    doc["displayUpdateAvailable"] = ota->isUpdateAvailable(false);
     doc["displayVersion"] = BUILD_GIT_VERSION;
     doc["controllerVersion"] = controller->getSystemInfo().version;
     doc["hardware"] = controller->getSystemInfo().hardware;
