@@ -1,10 +1,10 @@
 {
   "navigation": {
-    "selectedUserPageObject": "[gaggimate.eez-project]:/userPages/1",
+    "selectedUserPageObject": "[gaggimate.eez-project]:/userPages/2",
     "selectedUserWidgetObject": "[gaggimate.eez-project]:/userWidgets/0",
     "selectedActionObject": "[gaggimate.eez-project]:/actions/34",
     "selectedGlobalVariableObject": "[gaggimate.eez-project]:/variables/globalVariables/3",
-    "selectedStructureObject": "[gaggimate.eez-project]:/variables/structures/3",
+    "selectedStructureObject": "[gaggimate.eez-project]:/variables/structures/4",
     "selectedThemeObject": "[gaggimate.eez-project]:/themes/0",
     "selectedThemeColorObject": "[gaggimate.eez-project]:/colors/3",
     "selectedBitmapObject": "[gaggimate.eez-project]:/bitmaps/35",
@@ -215,10 +215,10 @@
                 {
                   "type": "tab",
                   "id": "#07a87284-0adf-47ce-9994-8cc743141d5f",
-                  "name": "BrewScreen",
+                  "name": "StatusScreen",
                   "component": "editor",
                   "config": {
-                    "objectPath": "[gaggimate.eez-project]:/userPages/1",
+                    "objectPath": "[gaggimate.eez-project]:/userPages/2",
                     "permanent": false
                   },
                   "icon": "svg:page"
@@ -242,7 +242,7 @@
                   "component": "editor",
                   "config": {
                     "objectPath": "[gaggimate.eez-project]:/userWidgets/0",
-                    "permanent": false
+                    "permanent": true
                   },
                   "icon": "svg:user_widget"
                 },
@@ -1178,7 +1178,7 @@
       "transform": {
         "translate": {
           "x": -240,
-          "y": -124.8260498046875
+          "y": -120.8258056640625
         },
         "scale": 1
       },
@@ -1193,20 +1193,12 @@
         "0": {
           "0": {},
           "1": {
-            "1": {},
+            "1": {
+              "$selected": true
+            },
             "2": {
-              "1": {
-                "1": {
-                  "2": {}
-                }
-              },
-              "2": {
-                "0": {},
-                "1": {},
-                "2": {
-                  "3": {},
-                  "4": {}
-                }
+              "0": {
+                "0": {}
               }
             },
             "3": {}
@@ -1244,9 +1236,7 @@
           "1": {
             "0": {},
             "2": {},
-            "6": {
-              "$selected": true
-            },
+            "6": {},
             "11": {
               "0": {}
             }
@@ -1265,7 +1255,7 @@
       "transform": {
         "translate": {
           "x": -303.5,
-          "y": -229.5
+          "y": -99.0855712890625
         },
         "scale": 1
       },
@@ -1277,10 +1267,9 @@
       },
       "selectionFront": {},
       "selectionBack": {
-        "0": {},
-        "3": {},
-        "6": {},
-        "7": {}
+        "4": {},
+        "7": {},
+        "8": {}
       }
     },
     "[gaggimate.eez-project]:/lvglStyles/styles[tree-state]": {
@@ -1448,6 +1437,9 @@
               "2": {}
             },
             "2": {},
+            "3": {
+              "$selected": true
+            },
             "4": {}
           }
         }
@@ -1926,7 +1918,11 @@
           "0": {},
           "1": {
             "1": {},
-            "2": {},
+            "2": {
+              "0": {
+                "$selected": true
+              }
+            },
             "3": {},
             "4": {}
           }
@@ -2185,7 +2181,7 @@
   "logsPanelFilter": "all",
   "selectedStylePropertyName": "",
   "lvglPart": "MAIN",
-  "lvglState": "DEFAULT",
+  "lvglState": "DISABLED",
   "lvglExpandedPropertiesGroup": [
     "POSITION AND SIZE",
     "IMAGE",
