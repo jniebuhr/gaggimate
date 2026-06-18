@@ -67,7 +67,7 @@ void Max31855Thermocouple::loop() {
     std::sort(copyWindow.begin(), copyWindow.end());
     temperature = copyWindow[MAX31855_WINDOW_SIZE/2];
 
-    ESP_LOGI(LOG_TAG, "Updated temperature: %2f, original: %2f\n", temperature, temp);
+    ESP_LOGV(LOG_TAG, "Updated temperature: %2f, original: %2f\n", temperature, temp);
     callback(temperature);
 }
 
