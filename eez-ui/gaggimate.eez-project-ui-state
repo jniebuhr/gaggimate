@@ -173,7 +173,8 @@
                       "enableClose": false,
                       "icon": "svg:hierarchy"
                     }
-                  ]
+                  ],
+                  "active": true
                 },
                 {
                   "type": "tabset",
@@ -257,8 +258,7 @@
                   },
                   "icon": "svg:page"
                 }
-              ],
-              "active": true
+              ]
             },
             {
               "type": "row",
@@ -1219,7 +1219,7 @@
       "transform": {
         "translate": {
           "x": -240,
-          "y": -512.5836181640625
+          "y": -516.5838623046875
         },
         "scale": 1
       },
@@ -2181,7 +2181,7 @@
   "logsPanelFilter": "all",
   "selectedStylePropertyName": "",
   "lvglPart": "MAIN",
-  "lvglState": "DISABLED",
+  "lvglState": "DEFAULT",
   "lvglExpandedPropertiesGroup": [
     "POSITION AND SIZE",
     "IMAGE",

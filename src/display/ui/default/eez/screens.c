@@ -158,6 +158,7 @@ static const char *object_names[] = {"standby_screen",
                                      "bar_container",
                                      "brew_bar",
                                      "phase_progress",
+                                     "process_volume",
                                      "btn_brew",
                                      "btn_steam",
                                      "btn_water",
@@ -2398,6 +2399,19 @@ void create_screen_status_screen() {
                     lv_obj_set_style_flex_grow(obj, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
                     lv_label_set_text(obj, "");
                 }
+                {
+                    // processVolume
+                    lv_obj_t *obj = lv_label_create(parent_obj);
+                    objects.process_volume = obj;
+                    lv_obj_set_pos(obj, 0, 0);
+                    lv_obj_set_size(obj, 180, 30);
+                    lv_obj_set_style_align(obj, LV_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+                    lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+                    lv_obj_set_style_text_color(obj, lv_color_hex(theme_colors[eez_flow_get_selected_theme_index()][0]),
+                                                LV_PART_MAIN | LV_STATE_DEFAULT);
+                    lv_obj_set_style_text_font(obj, &lv_font_montserrat_24, LV_PART_MAIN | LV_STATE_DEFAULT);
+                    lv_label_set_text(obj, "");
+                }
             }
         }
     }
@@ -2423,6 +2437,7 @@ void delete_screen_status_screen() {
     objects.bar_container = 0;
     objects.brew_bar = 0;
     objects.phase_progress = 0;
+    objects.process_volume = 0;
     screen_status_screen_state.dials1_state.scale = 0;
     screen_status_screen_state.dials1_state.indicator = 0;
     screen_status_screen_state.dials1_state.indicator1 = 0;
@@ -2613,6 +2628,28 @@ void tick_screen_status_screen() {
                 lv_obj_add_flag(objects.phase_progress, LV_OBJ_FLAG_HIDDEN);
             } else {
                 lv_obj_clear_flag(objects.phase_progress, LV_OBJ_FLAG_HIDDEN);
+            }
+            tick_value_change_obj = NULL;
+        }
+    }
+    {
+        const char *new_val = evalTextProperty(flowState, 17, 4, "Failed to evaluate Text in Label widget");
+        const char *cur_val = lv_label_get_text(objects.process_volume);
+        if (strcmp(new_val, cur_val) != 0) {
+            tick_value_change_obj = objects.process_volume;
+            lv_label_set_text(objects.process_volume, new_val);
+            tick_value_change_obj = NULL;
+        }
+    }
+    {
+        bool new_val = evalBooleanProperty(flowState, 17, 3, "Failed to evaluate Hidden flag");
+        bool cur_val = lv_obj_has_flag(objects.process_volume, LV_OBJ_FLAG_HIDDEN);
+        if (new_val != cur_val) {
+            tick_value_change_obj = objects.process_volume;
+            if (new_val) {
+                lv_obj_add_flag(objects.process_volume, LV_OBJ_FLAG_HIDDEN);
+            } else {
+                lv_obj_clear_flag(objects.process_volume, LV_OBJ_FLAG_HIDDEN);
             }
             tick_value_change_obj = NULL;
         }
@@ -6387,6 +6424,9 @@ void change_color_theme(uint32_t theme_index) {
                                       LV_PART_INDICATOR | LV_STATE_DEFAULT);
         if (objects.phase_progress)
             lv_obj_set_style_text_color(objects.phase_progress, lv_color_hex(theme_colors[theme_index][3]),
+                                        LV_PART_MAIN | LV_STATE_DEFAULT);
+        if (objects.process_volume)
+            lv_obj_set_style_text_color(objects.process_volume, lv_color_hex(theme_colors[theme_index][0]),
                                         LV_PART_MAIN | LV_STATE_DEFAULT);
         {
             screen_status_screen_state_t *parent_state = state;

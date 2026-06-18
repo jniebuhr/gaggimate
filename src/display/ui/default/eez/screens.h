@@ -169,6 +169,7 @@ typedef struct _objects_t {
     lv_obj_t *bar_container;
     lv_obj_t *brew_bar;
     lv_obj_t *phase_progress;
+    lv_obj_t *process_volume;
     lv_obj_t *btn_brew;
     lv_obj_t *btn_steam;
     lv_obj_t *btn_water;

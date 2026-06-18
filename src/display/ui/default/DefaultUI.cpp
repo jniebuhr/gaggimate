@@ -517,6 +517,7 @@ void DefaultUI::updateBrewProcess() {
     brewProcess.profile_is_volumetric(bp->target == ProcessTarget::VOLUMETRIC);
     brewProcess.profile_target_weight(bp->getBrewVolume());
     brewProcess.boiler_target_temperature(bp->getTemperature());
+    brewProcess.current_volume(bp->currentVolume);
 
     brewProcess.phase_type(phase.phase == PhaseType::PHASE_TYPE_BREW ? "BREW" : "INFUSION");
 
