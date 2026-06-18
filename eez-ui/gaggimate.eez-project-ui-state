@@ -1,8 +1,8 @@
 {
   "navigation": {
-    "selectedUserPageObject": "[gaggimate.eez-project]:/userPages/2",
+    "selectedUserPageObject": "[gaggimate.eez-project]:/userPages/6",
     "selectedUserWidgetObject": "[gaggimate.eez-project]:/userWidgets/0",
-    "selectedActionObject": "[gaggimate.eez-project]:/actions/34",
+    "selectedActionObject": "[gaggimate.eez-project]:/actions/35",
     "selectedGlobalVariableObject": "[gaggimate.eez-project]:/variables/globalVariables/3",
     "selectedStructureObject": "[gaggimate.eez-project]:/variables/structures/4",
     "selectedThemeObject": "[gaggimate.eez-project]:/themes/0",
@@ -173,8 +173,7 @@
                       "enableClose": false,
                       "icon": "svg:hierarchy"
                     }
-                  ],
-                  "active": true
+                  ]
                 },
                 {
                   "type": "tabset",
@@ -205,10 +204,10 @@
                 {
                   "type": "tab",
                   "id": "#acbf425d-f9ac-457e-90c1-4ea068d04b16",
-                  "name": "onScreenLoad",
+                  "name": "onScreenSwipe",
                   "component": "editor",
                   "config": {
-                    "objectPath": "[gaggimate.eez-project]:/actions/34",
+                    "objectPath": "[gaggimate.eez-project]:/actions/35",
                     "permanent": false
                   },
                   "icon": "material:code"
@@ -216,10 +215,10 @@
                 {
                   "type": "tab",
                   "id": "#07a87284-0adf-47ce-9994-8cc743141d5f",
-                  "name": "StatusScreen",
+                  "name": "ProfileScreen",
                   "component": "editor",
                   "config": {
-                    "objectPath": "[gaggimate.eez-project]:/userPages/2",
+                    "objectPath": "[gaggimate.eez-project]:/userPages/6",
                     "permanent": false
                   },
                   "icon": "svg:page"
@@ -258,7 +257,8 @@
                   },
                   "icon": "svg:page"
                 }
-              ]
+              ],
+              "active": true
             },
             {
               "type": "row",
@@ -1178,7 +1178,7 @@
       "transform": {
         "translate": {
           "x": -240,
-          "y": -120.8258056640625
+          "y": -334.5281982421875
         },
         "scale": 1
       },
@@ -1193,9 +1193,7 @@
         "0": {
           "0": {},
           "1": {
-            "1": {
-              "$selected": true
-            },
+            "1": {},
             "2": {
               "0": {
                 "0": {}
@@ -1437,9 +1435,7 @@
               "2": {}
             },
             "2": {},
-            "3": {
-              "$selected": true
-            },
+            "3": {},
             "4": {}
           }
         }
@@ -1919,9 +1915,7 @@
           "1": {
             "1": {},
             "2": {
-              "0": {
-                "$selected": true
-              }
+              "0": {}
             },
             "3": {},
             "4": {}
@@ -2158,6 +2152,36 @@
       }
     },
     "[gaggimate.eez-project]:/actions/3[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": 0,
+          "y": 0
+        },
+        "scale": 1
+      }
+    },
+    "[gaggimate.eez-project]:/actions/10[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": 0,
+          "y": 0
+        },
+        "scale": 1
+      }
+    },
+    "[gaggimate.eez-project]:/actions/2[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": 0,
+          "y": 0
+        },
+        "scale": 1
+      }
+    },
+    "[gaggimate.eez-project]:/actions/35[flow-state]": {
       "selection": {},
       "transform": {
         "translate": {

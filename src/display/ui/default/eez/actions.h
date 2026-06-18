@@ -42,6 +42,7 @@ extern void action_on_next_profile(lv_event_t *e);
 extern void action_on_brew_cancel(lv_event_t *e);
 extern void action_on_standby(lv_event_t *e);
 extern void action_on_screen_load(lv_event_t *e);
+extern void action_on_screen_swipe(lv_event_t *e);
 
 #ifdef __cplusplus
 }

@@ -307,6 +307,10 @@ static void event_handler_cb_brew_screen_brew_screen(lv_event_t *e) {
         e->user_data = (void *)0;
         action_on_screen_load(e);
     }
+    if (event == LV_EVENT_GESTURE) {
+        e->user_data = (void *)0;
+        action_on_screen_swipe(e);
+    }
 }
 
 static void event_handler_cb_brew_screen_start_button(lv_event_t *e) {
@@ -478,7 +482,7 @@ static void event_handler_cb_status_screen_status_screen(lv_event_t *e) {
 
     if (event == LV_EVENT_GESTURE) {
         e->user_data = (void *)0;
-        action_on_menu_click(e);
+        action_on_screen_swipe(e);
     }
     if (event == LV_EVENT_SCREEN_LOADED) {
         e->user_data = (void *)0;
@@ -572,6 +576,10 @@ static void event_handler_cb_steam_screen_steam_screen(lv_event_t *e) {
         e->user_data = (void *)0;
         action_on_screen_load(e);
     }
+    if (event == LV_EVENT_GESTURE) {
+        e->user_data = (void *)0;
+        action_on_screen_swipe(e);
+    }
 }
 
 static void event_handler_cb_steam_screen_steam_down_temp_button(lv_event_t *e) {
@@ -603,7 +611,7 @@ static void event_handler_cb_water_screen_water_screen(lv_event_t *e) {
 
     if (event == LV_EVENT_GESTURE) {
         e->user_data = (void *)0;
-        action_on_menu_click(e);
+        action_on_screen_swipe(e);
     }
     if (event == LV_EVENT_SCREEN_LOADED) {
         e->user_data = (void *)0;
@@ -660,6 +668,10 @@ static void event_handler_cb_profile_screen_profile_screen(lv_event_t *e) {
         e->user_data = (void *)0;
         action_on_screen_load(e);
     }
+    if (event == LV_EVENT_GESTURE) {
+        e->user_data = (void *)0;
+        action_on_screen_swipe(e);
+    }
 }
 
 static void event_handler_cb_profile_screen_select_profile(lv_event_t *e) {
@@ -703,6 +715,10 @@ static void event_handler_cb_grind_screen_grind_screen(lv_event_t *e) {
     if (event == LV_EVENT_SCREEN_LOADED) {
         e->user_data = (void *)0;
         action_on_screen_load(e);
+    }
+    if (event == LV_EVENT_GESTURE) {
+        e->user_data = (void *)0;
+        action_on_screen_swipe(e);
     }
 }
 

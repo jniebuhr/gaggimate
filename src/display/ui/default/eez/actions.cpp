@@ -236,3 +236,22 @@ void action_on_screen_load(lv_event_t *e) {
     applyClickArea(objects.save_as_new_button, 20);
     applyClickArea(objects.save_button, 20);
 }
+
+void action_on_screen_swipe(lv_event_t *e) {
+    lv_event_code_t event_code = lv_event_get_code(e);
+
+    if (event_code == LV_EVENT_GESTURE) {
+        if (lv_indev_get_gesture_dir(lv_indev_get_act()) == LV_DIR_TOP) {
+            lv_indev_wait_release(lv_indev_get_act());
+            action_on_menu_click(e);
+        } else if (lv_indev_get_gesture_dir(lv_indev_get_act()) == LV_DIR_RIGHT &&
+                   eez_flow_get_current_screen() == SCREEN_ID_PROFILE_SCREEN) {
+            lv_indev_wait_release(lv_indev_get_act());
+            action_on_previous_profile(e);
+        } else if (lv_indev_get_gesture_dir(lv_indev_get_act()) == LV_DIR_LEFT &&
+                   eez_flow_get_current_screen() == SCREEN_ID_PROFILE_SCREEN) {
+            lv_indev_wait_release(lv_indev_get_act());
+            action_on_next_profile(e);
+        }
+    }
+}

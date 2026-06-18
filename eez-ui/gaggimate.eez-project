@@ -832,6 +832,16 @@
       "userProperties": [],
       "name": "onScreenLoad",
       "implementationType": "native"
+    },
+    {
+      "objID": "40f34d60-e230-4819-b7bf-41cd588b4334",
+      "components": [],
+      "connectionLines": [],
+      "localVariables": [],
+      "componentGroups": [],
+      "userProperties": [],
+      "name": "onScreenSwipe",
+      "implementationType": "native"
     }
   ],
   "userPages": [
@@ -1386,6 +1396,13 @@
               "eventName": "SCREEN_LOADED",
               "handlerType": "action",
               "action": "onScreenLoad",
+              "userData": 0
+            },
+            {
+              "objID": "3ca898d5-d2a4-4244-9ede-97d390982fe1",
+              "eventName": "GESTURE",
+              "handlerType": "action",
+              "action": "onScreenSwipe",
               "userData": 0
             }
           ],
@@ -3484,7 +3501,7 @@
               "objID": "b4e9d7bc-07d0-4753-dbcd-29c97069f475",
               "eventName": "GESTURE",
               "handlerType": "action",
-              "action": "onMenuClick",
+              "action": "onScreenSwipe",
               "userData": 0
             },
             {
@@ -4943,6 +4960,13 @@
               "handlerType": "action",
               "action": "onScreenLoad",
               "userData": 0
+            },
+            {
+              "objID": "40a3ad41-3a63-42c1-c41d-c6340376318c",
+              "eventName": "GESTURE",
+              "handlerType": "action",
+              "action": "onScreenSwipe",
+              "userData": 0
             }
           ],
           "leftUnit": "px",
@@ -5511,7 +5535,7 @@
               "objID": "85dee0bc-2c9d-413d-cdbb-ee9492b42781",
               "eventName": "GESTURE",
               "handlerType": "action",
-              "action": "onMenuClick",
+              "action": "onScreenSwipe",
               "userData": 0
             },
             {
@@ -6084,6 +6108,13 @@
               "eventName": "SCREEN_LOADED",
               "handlerType": "action",
               "action": "onScreenLoad",
+              "userData": 0
+            },
+            {
+              "objID": "2ff0a05c-b7dc-4f51-d4f8-607667a63e79",
+              "eventName": "GESTURE",
+              "handlerType": "action",
+              "action": "onScreenSwipe",
               "userData": 0
             }
           ],
@@ -7180,6 +7211,13 @@
               "eventName": "SCREEN_LOADED",
               "handlerType": "action",
               "action": "onScreenLoad",
+              "userData": 0
+            },
+            {
+              "objID": "1eda90b7-2ec6-4594-c976-72efcea4546a",
+              "eventName": "GESTURE",
+              "handlerType": "action",
+              "action": "onScreenSwipe",
               "userData": 0
             }
           ],
