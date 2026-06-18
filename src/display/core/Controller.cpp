@@ -621,13 +621,9 @@ bool Controller::isVolumetricAvailable() const {
 }
 
 void Controller::updatePIDValues(String newValue){
-    auto savedValue = settings.getPid();
-    if (savedValue != newValue) {
-        settings.setPid(newValue);
-    }
-    float pid[4];
-    parseFloatCsv(newValue, pid, 4, 0.0f);
-    comms.sendPidSettings(pid[0], pid[1], pid[2], pid[3]);
+    settings.setPid(newValue);
+g
+    setPidSettings();
 }
 
 void Controller::updateTemperatureOffset(float temperatureOffset){
