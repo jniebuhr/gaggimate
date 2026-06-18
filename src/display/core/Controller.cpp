@@ -42,7 +42,7 @@
 const String LOG_TAG = F("Controller");
 
 void Controller::setup() {
-    mode = settings.getStartupMode();
+    mode = MODE_STANDBY;
 
     // Web assets are served from this partition. LittleFS (not SPIFFS): SPIFFS
     // has no directory tree, so stat()/exists() is O(whole filesystem) and a
@@ -351,9 +351,7 @@ void Controller::onSystemInfo(const char *hardware, const char *version, uint32_
         // Capability-dependent setup that the old protocol ran synchronously right
         // after connect, now driven by the asynchronous SystemInfo push.
         setPressureScale();
-        float pid[4];
-        parseFloatCsv(settings.getPid(), pid, 4, 0.0f);
-        comms.sendPidSettings(pid[0], pid[1], pid[2], pid[3]);
+        setPidSettings();
         setPumpModelCoeffs();
     }
 
@@ -362,6 +360,7 @@ void Controller::onSystemInfo(const char *hardware, const char *version, uint32_
         if (!mismatch && settings.getStartupMode() == MODE_STANDBY)
             activateStandby();
         pluginManager->trigger("controller:ready");
+        setMode(settings.getStartupMode());
     }
     pluginManager->trigger("controller:bluetooth:connect");
 }
@@ -721,6 +720,12 @@ void Controller::setPumpModelCoeffs(void) {
     }
 }
 
+void Controller::setPidSettings() {
+    float pid[4];
+    parseFloatCsv(settings.getPid(), pid, 4, 0.0f);
+    comms.sendPidSettings(pid[0], pid[1], pid[2], pid[3]);
+}
+
 int Controller::getTargetGrindDuration() const { return settings.getTargetGrindDuration(); }
 
 void Controller::setTargetGrindDuration(int duration) {
@@ -1003,6 +1008,7 @@ void Controller::setMode(int newMode) {
 
     updateLastAction();
     setTargetTemp(getTargetTemp());
+    setPidSettings();
 }
 
 void Controller::onTempRead(float temperature) {
