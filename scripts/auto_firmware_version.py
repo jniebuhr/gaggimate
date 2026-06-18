@@ -4,7 +4,7 @@ import datetime
 Import("env")
 
 def get_firmware_specifier_build_flag():
-    ret = subprocess.run(["git", "describe", "--tags", "--dirty", "--exclude", "nightly"], stdout=subprocess.PIPE, text=True) #Uses any tags
+    ret = subprocess.run(["git", "describe", "--tags", "--dirty", "--exclude", "nightly", "--exclude", "db"], stdout=subprocess.PIPE, text=True) #Uses any tags
     build_version = ret.stdout.strip()
     build_flag = "#define BUILD_GIT_VERSION \"" + build_version + "\""
     print ("Build version: " + build_version)
