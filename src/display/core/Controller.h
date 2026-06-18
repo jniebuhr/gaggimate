@@ -57,7 +57,6 @@ class Controller {
     bool isTaskHealthy() const { return is_task_healthy(eTaskGetState(logicTaskHandle)); }
 
     void updatePIDValues(String s);
-    void updateTemperatureOffset(float);
 
     void autotune(int testTime, int samples, int heaterWattage);
     void startProcess(Process *process);

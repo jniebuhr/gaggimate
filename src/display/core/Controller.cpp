@@ -625,11 +625,6 @@ void Controller::updatePIDValues(String newValue){
     setPidSettings();
 }
 
-void Controller::updateTemperatureOffset(float temperatureOffset){
-    settings.setTemperatureOffset(temperatureOffset);
-
-}
-
 void Controller::autotune(int testTime, int samples, int heaterWattage) {
     if (isActive() || !isReady()) {
         return;
