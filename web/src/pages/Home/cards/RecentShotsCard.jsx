@@ -148,13 +148,18 @@ export function RecentShotsCard() {
   const prevFinishedRef = useRef(false);
   const slots = shotMetricSlotsSignal.value;
 
-  // Trigger a refresh when a shot transitions to finished
+  // Trigger a refresh when a shot transitions to finished or the count setting changes
   useSignalEffect(() => {
     const finished = isFinished.value;
     if (finished && !prevFinishedRef.current) {
       setRefreshKey(k => k + 1);
     }
     prevFinishedRef.current = finished;
+  });
+
+  useSignalEffect(() => {
+    void recentShotCountSignal.value;
+    setRefreshKey(k => k + 1);
   });
 
   useEffect(() => {
@@ -224,7 +229,7 @@ export function RecentShotsCard() {
     return () => {
       cancelled = true;
     };
-  }, [refreshKey, slots, recentShotCountSignal.value]);
+  }, [refreshKey, slots]);
 
   if (shots.length === 0) return null;
 
