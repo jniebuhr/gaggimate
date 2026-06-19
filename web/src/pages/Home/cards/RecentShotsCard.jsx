@@ -12,6 +12,7 @@ import {
   recentShotCountSignal,
 } from '../../../utils/dashboardManager.js';
 import PropTypes from 'prop-types';
+import { SkeletonBlock } from '../../../components/SkeletonBlock.jsx';
 
 const isFinished = computed(() => {
   const p = machine.value.status?.process;
@@ -142,8 +143,31 @@ ShotMiniCard.propTypes = {
   slots: PropTypes.arrayOf(PropTypes.string).isRequired,
 };
 
+function ShotMiniCardSkeleton({ slots }) {
+  return (
+    <div className='bg-base-200 flex min-w-0 flex-col gap-2 rounded-xl p-3'>
+      <SkeletonBlock className='h-2.5 w-3/4' />
+      <SkeletonBlock className='h-2 w-1/2' />
+      <div className='flex gap-2 mt-1'>
+        {slots.map((_, i) => (
+          <div key={i} className='flex flex-1 flex-col items-center gap-1'>
+            <SkeletonBlock className='h-3.5 w-7' />
+            <SkeletonBlock className='h-2 w-6' />
+          </div>
+        ))}
+      </div>
+      <SkeletonBlock className='h-2 w-3/5' />
+    </div>
+  );
+}
+
+ShotMiniCardSkeleton.propTypes = {
+  slots: PropTypes.arrayOf(PropTypes.string).isRequired,
+};
+
 export function RecentShotsCard() {
   const [shots, setShots] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
   const prevFinishedRef = useRef(false);
   const slots = shotMetricSlotsSignal.value;
@@ -164,15 +188,18 @@ export function RecentShotsCard() {
 
   useEffect(() => {
     let cancelled = false;
+    setLoading(true);
 
     const load = async () => {
       try {
         const resp = await fetch('/api/history/index.bin');
-        if (!resp.ok || cancelled) return;
+        if (cancelled) return;
+        if (!resp.ok) { setLoading(false); return; }
         const buf = await resp.arrayBuffer();
         const list = indexToShotList(parseBinaryIndex(buf)).slice(0, recentShotCountSignal.value);
         if (cancelled) return;
         setShots(list);
+        setLoading(false);
 
         // Determine which slog-computed metrics are actually needed
         const needsAvgTemp = slots.includes('avgTemp');
@@ -221,7 +248,7 @@ export function RecentShotsCard() {
           }
         }
       } catch {
-        // Index unavailable
+        setLoading(false);
       }
     };
 
@@ -231,6 +258,18 @@ export function RecentShotsCard() {
     };
   }, [refreshKey, slots]);
 
+  if (loading) {
+    return (
+      <div className='card bg-base-100 flex flex-col gap-2 rounded-xl p-3'>
+        <SkeletonBlock className='h-2 w-20' />
+        <div className='grid grid-cols-1 gap-3 sm:[grid-template-columns:repeat(auto-fit,minmax(180px,1fr))]'>
+          {Array.from({ length: recentShotCountSignal.value }).map((_, i) => (
+            <ShotMiniCardSkeleton key={i} slots={slots} />
+          ))}
+        </div>
+      </div>
+    );
+  }
   if (shots.length === 0) return null;
 
   return (
