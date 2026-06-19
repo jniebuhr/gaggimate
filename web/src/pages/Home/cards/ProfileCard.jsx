@@ -111,7 +111,7 @@ export function ProfileCard({
         </a>
       </div>
       {!compact && (
-        profileLoading ? (
+        (profileLoading || (!!selectedProfileId && !profileData)) ? (
           <SkeletonBlock
             className='mt-1 w-full rounded-xl'
             style={{ height: `${profileChartHeightSignal.value}px` }}

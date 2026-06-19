@@ -86,7 +86,7 @@ export function FavoriteProfilesCard({ selectedProfileId, inCard = false, compac
 
   const wrapperClass = inCard ? 'flex flex-col gap-2' : 'card bg-base-100 flex flex-col gap-2 rounded-xl p-3';
 
-  if (loading) {
+  if (loading || favorites === null) {
     return (
       <div className={wrapperClass}>
         <SkeletonBlock className='h-2 w-20' />
@@ -102,8 +102,6 @@ export function FavoriteProfilesCard({ selectedProfileId, inCard = false, compac
       </div>
     );
   }
-
-  if (favorites === null) return null;
 
   if (favorites.length === 0) {
     return (
