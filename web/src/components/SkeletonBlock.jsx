@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
 
 export function SkeletonBlock({ className = '' }) {
-  return <div className={`shimmer ${className}`} />;
+  return <div aria-hidden='true' className={`shimmer${className ? ` ${className}` : ''}`} />;
 }
 
 SkeletonBlock.propTypes = {
