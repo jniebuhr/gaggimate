@@ -9,6 +9,7 @@ import { cleanName } from '../../ShotAnalyzer/utils/analyzerUtils.js';
 import {
   shotMetricSlotsSignal,
   clock24hSignal,
+  recentShotCountSignal,
 } from '../../../utils/dashboardManager.js';
 import PropTypes from 'prop-types';
 
@@ -77,8 +78,9 @@ function ShotMiniCard({ shot, slots }) {
   const dateLabel = formatShotDateTime(shot.timestamp, !clock24hSignal.value);
 
   return (
-    <div className='app-card-surface bg-base-200 flex min-w-0 flex-col rounded-xl p-3 lg:p-2.5 xl:p-3'>
-      <div className='flex min-w-0 items-start gap-2'>
+    <div className='app-card-surface bg-base-200 flex min-w-0 flex-row items-center gap-3 rounded-xl p-3 sm:flex-col sm:items-stretch lg:p-2.5 xl:p-3'>
+      {/* Identity — left on mobile, top on sm+ */}
+      <div className='flex min-w-0 flex-1 items-start gap-2'>
         <div className='min-w-0 flex-1'>
           <div className='text-base-content truncate text-sm font-semibold'>
             shot-{shot.id}
@@ -87,6 +89,10 @@ function ShotMiniCard({ shot, slots }) {
             </span>
           </div>
           <div className='text-base-content/60 truncate text-xs'>{profileLabel}</div>
+          {/* Date shown below profile on mobile only */}
+          <div className='mt-0.5 sm:hidden'>
+            <span className='text-base-content/45 text-xs italic'>{dateLabel}</span>
+          </div>
         </div>
         <a
           href={analyzerUrl}
@@ -98,7 +104,8 @@ function ShotMiniCard({ shot, slots }) {
         </a>
       </div>
 
-      <div className='mt-1.5 flex gap-2 lg:gap-1.5 xl:gap-2'>
+      {/* Metrics — right on mobile, below identity on sm+ */}
+      <div className='flex gap-2 sm:mt-1.5 lg:gap-1.5 xl:gap-2'>
         {slots.map(slotId => {
           const def = METRIC_DEFS[slotId];
           const value = def ? def.getValue(shot) : null;
@@ -122,7 +129,8 @@ function ShotMiniCard({ shot, slots }) {
         })}
       </div>
 
-      <div className='mt-1'>
+      {/* Date shown below metrics on sm+ only */}
+      <div className='mt-1 hidden sm:block'>
         <span className='text-base-content/45 text-xs italic'>{dateLabel}</span>
       </div>
     </div>
@@ -157,7 +165,7 @@ export function RecentShotsCard() {
         const resp = await fetch('/api/history/index.bin');
         if (!resp.ok || cancelled) return;
         const buf = await resp.arrayBuffer();
-        const list = indexToShotList(parseBinaryIndex(buf)).slice(0, 4);
+        const list = indexToShotList(parseBinaryIndex(buf)).slice(0, recentShotCountSignal.value);
         if (cancelled) return;
         setShots(list);
 
@@ -216,14 +224,14 @@ export function RecentShotsCard() {
     return () => {
       cancelled = true;
     };
-  }, [refreshKey, slots]);
+  }, [refreshKey, slots, recentShotCountSignal.value]);
 
   if (shots.length === 0) return null;
 
   return (
     <div className='card bg-base-100 flex flex-col gap-2 rounded-xl p-3'>
       <div className='text-base-content/50 text-[0.6rem] uppercase tracking-wider'>Recent Shots</div>
-      <div className='grid grid-cols-4 gap-3'>
+      <div className='grid grid-cols-1 gap-3 sm:[grid-template-columns:repeat(auto-fill,minmax(180px,1fr))]'>
         {shots.map(shot => (
           <ShotMiniCard key={shot.id} shot={shot} slots={slots} />
         ))}
