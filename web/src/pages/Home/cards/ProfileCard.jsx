@@ -69,17 +69,21 @@ export function ProfileCard({
 
   useEffect(() => {
     if (!selectedProfileId || !apiService) { setProfileData(null); return; }
+    let cancelled = false;
     setProfileLoading(true);
     apiService
       .request({ tp: 'req:profiles:load', id: selectedProfileId })
       .then(res => {
+        if (cancelled) return;
         setProfileData(res.profile?.type === 'pro' ? res.profile : null);
         setProfileLoading(false);
       })
       .catch(() => {
+        if (cancelled) return;
         setProfileData(null);
         setProfileLoading(false);
       });
+    return () => { cancelled = true; };
   }, [selectedProfileId, apiService]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const showProgress = (isBrewing || isGrinding) && (isActive || isFinished);
