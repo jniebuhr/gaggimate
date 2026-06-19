@@ -63,15 +63,21 @@ export function FavoriteProfilesCard({ selectedProfileId, inCard = false, compac
   const [loading, setLoading] = useState(false);
 
   useSignalEffect(() => {
-    if (!apiService || !connected.value) return;
+    if (!apiService || !connected.value) {
+      setLoading(false);
+      return;
+    }
+    let cancelled = false;
     setLoading(true);
     apiService
       .request({ tp: 'req:profiles:list' })
       .then(res => {
+        if (cancelled) return;
         setFavorites((res.profiles ?? []).filter(p => p.favorite).slice(0, 3));
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
   });
 
   const handleSelect = id => {
