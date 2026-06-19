@@ -32,6 +32,7 @@ class Controller {
     void setTargetTemp(float temperature);
     void setPressureScale();
     void setPumpModelCoeffs();
+    void setPidSettings();
     void setTargetGrindDuration(int duration);
     void setTargetGrindVolume(double volume);
 

@@ -20,6 +20,7 @@ Settings::Settings() {
     pumpModelCoeffs = preferences.getString("pmc", DEFAULT_PUMP_MODEL_COEFFS);
     wifiSsid = preferences.getString("ws", "");
     wifiPassword = preferences.getString("wp", "");
+    wifiApPassword = preferences.getString("wap", "");
     mdnsName = preferences.getString("mn", DEFAULT_MDNS_NAME);
     homekit = preferences.getBool("hk", false);
     volumetricTarget = preferences.getBool("vt", false);
@@ -210,6 +211,11 @@ void Settings::setWifiSsid(const String &wifiSsid) {
 
 void Settings::setWifiPassword(const String &wifiPassword) {
     this->wifiPassword = wifiPassword;
+    save();
+}
+
+void Settings::setWifiApPassword(const String &wifiApPassword) {
+    this->wifiApPassword = wifiApPassword;
     save();
 }
 
@@ -515,6 +521,7 @@ void Settings::doSave() {
     preferences.putString("pmc", pumpModelCoeffs);
     preferences.putString("ws", wifiSsid);
     preferences.putString("wp", wifiPassword);
+    preferences.putString("wap", wifiApPassword);
     preferences.putString("mn", mdnsName);
     preferences.putBool("hk", homekit);
     preferences.putBool("vt", volumetricTarget);

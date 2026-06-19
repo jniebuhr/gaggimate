@@ -281,14 +281,14 @@
 /*1: Show CPU usage and FPS count*/
 #define LV_USE_PERF_MONITOR 0
 #if LV_USE_PERF_MONITOR
-    #define LV_USE_PERF_MONITOR_POS LV_ALIGN_BOTTOM_MID
+    #define LV_USE_PERF_MONITOR_POS LV_ALIGN_CENTER
 #endif
 
 /*1: Show the used memory and the memory fragmentation
  * Requires LV_MEM_CUSTOM = 0*/
 #define LV_USE_MEM_MONITOR 0
 #if LV_USE_MEM_MONITOR
-    #define LV_USE_MEM_MONITOR_POS LV_ALIGN_BOTTOM_LEFT
+    #define LV_USE_MEM_MONITOR_POS LV_ALIGN_BOTTOM_MID
 #endif
 
 /*1: Draw random colored rectangles over the redrawn areas*/
@@ -365,7 +365,7 @@
 #define LV_FONT_MONTSERRAT_10 0
 #define LV_FONT_MONTSERRAT_12 0
 #define LV_FONT_MONTSERRAT_14 1
-#define LV_FONT_MONTSERRAT_16 0
+#define LV_FONT_MONTSERRAT_16 1
 #define LV_FONT_MONTSERRAT_18 1
 #define LV_FONT_MONTSERRAT_20 1
 #define LV_FONT_MONTSERRAT_22 0
@@ -520,7 +520,7 @@
  *----------*/
 #define LV_USE_ANIMIMG    1
 
-#define LV_USE_CALENDAR   0
+#define LV_USE_CALENDAR   1
 #if LV_USE_CALENDAR
     #define LV_CALENDAR_WEEK_STARTS_MONDAY 0
     #if LV_CALENDAR_WEEK_STARTS_MONDAY
@@ -540,7 +540,7 @@
 
 #define LV_USE_IMGBTN     1
 
-#define LV_USE_KEYBOARD   0
+#define LV_USE_KEYBOARD   1
 
 #define LV_USE_LED        0
 
@@ -562,7 +562,7 @@
 
 #define LV_USE_SPINNER    1
 
-#define LV_USE_TABVIEW    0
+#define LV_USE_TABVIEW    1
 
 #define LV_USE_TILEVIEW   0
 
