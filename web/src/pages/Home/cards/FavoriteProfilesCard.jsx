@@ -6,6 +6,7 @@ import { faTemperatureFull } from '@fortawesome/free-solid-svg-icons/faTemperatu
 import { faClock } from '@fortawesome/free-solid-svg-icons/faClock';
 import { faScaleBalanced } from '@fortawesome/free-solid-svg-icons/faScaleBalanced';
 import PropTypes from 'prop-types';
+import { SkeletonBlock } from '../../../components/SkeletonBlock.jsx';
 
 const connected = computed(() => machine.value.connected);
 
@@ -28,7 +29,7 @@ function ProfileMiniCard({ profile, isSelected, onSelect }) {
     >
       <div className='w-full truncate text-sm font-semibold'>{profile.label}</div>
       <div className='text-base-content/50 w-full truncate text-xs'>
-        {profile.description || ' '}
+        {profile.description || ' '}
       </div>
       <div className='mt-auto flex flex-wrap gap-1 pt-0.5'>
         <span className='badge badge-ghost badge-xs gap-1'>
@@ -58,21 +59,57 @@ ProfileMiniCard.propTypes = {
 
 export function FavoriteProfilesCard({ selectedProfileId, inCard = false, compact = false }) {
   const apiService = useContext(ApiServiceContext);
-  const [favorites, setFavorites] = useState([]);
+  const [favorites, setFavorites] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   useSignalEffect(() => {
     if (!apiService || !connected.value) return;
+    setLoading(true);
     apiService
       .request({ tp: 'req:profiles:list' })
-      .then(res => setFavorites((res.profiles ?? []).filter(p => p.favorite).slice(0, 3)))
-      .catch(() => {});
+      .then(res => {
+        setFavorites((res.profiles ?? []).filter(p => p.favorite).slice(0, 3));
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
   });
 
   const handleSelect = id => {
     apiService.request({ tp: 'req:profiles:select', id }).catch(() => {});
   };
 
-  if (favorites.length === 0) return null;
+  const wrapperClass = inCard ? 'flex flex-col gap-2' : 'card bg-base-100 flex flex-col gap-2 rounded-xl p-3';
+
+  if (loading) {
+    return (
+      <div className={wrapperClass}>
+        <SkeletonBlock className='h-2 w-20' />
+        {compact ? (
+          <div className='flex gap-1.5'>
+            {[0, 1, 2].map(i => <SkeletonBlock key={i} className='h-7 w-20 rounded-full' />)}
+          </div>
+        ) : (
+          <div className='grid grid-cols-3 gap-2'>
+            {[0, 1, 2].map(i => <SkeletonBlock key={i} className='h-24 rounded-lg' />)}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (favorites === null) return null;
+
+  if (favorites.length === 0) {
+    return (
+      <div className={wrapperClass}>
+        <div className='text-base-content/50 text-[0.6rem] uppercase tracking-wider'>Quick Select</div>
+        <div className='text-base-content/50 flex flex-col items-center gap-1 py-3 text-center text-sm'>
+          <span className='text-lg'>★</span>
+          <span>No favorites — mark profiles as ★ in the profile list</span>
+        </div>
+      </div>
+    );
+  }
 
   const content = compact ? (
     <div className='flex gap-1.5 overflow-x-auto pb-0.5'>
@@ -105,7 +142,7 @@ export function FavoriteProfilesCard({ selectedProfileId, inCard = false, compac
   );
 
   return (
-    <div className={inCard ? 'flex flex-col gap-2' : 'card bg-base-100 flex flex-col gap-2 rounded-xl p-3'}>
+    <div className={wrapperClass}>
       <div className='text-base-content/50 text-[0.6rem] uppercase tracking-wider'>Quick Select</div>
       {content}
     </div>
