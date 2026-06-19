@@ -386,23 +386,34 @@ export const setShotMetricSlots = slots => {
 
 // ── Clock 24h mirror ──────────────────────────────────────────────────────
 
-const DASHBOARD_CLOCK_24H_KEY = 'dashboardClock24h';
+export const clock24hSignal = signal(false);
 
-export const getClock24h = () => {
-  if (typeof window === 'undefined' || !window.localStorage) return false;
+export const setClock24h = value => {
+  clock24hSignal.value = !!value;
+};
+
+// ── Recent shot count ─────────────────────────────────────────────────────
+
+const DASHBOARD_RECENT_SHOT_COUNT_KEY = 'dashboardRecentShotCount';
+
+export const getRecentShotCount = () => {
+  if (typeof window === 'undefined' || !window.localStorage) return 4;
   try {
-    return localStorage.getItem(DASHBOARD_CLOCK_24H_KEY) === 'true';
+    const stored = localStorage.getItem(DASHBOARD_RECENT_SHOT_COUNT_KEY);
+    const n = stored ? parseInt(stored, 10) : 4;
+    return Number.isFinite(n) && n >= 1 && n <= 8 ? n : 4;
   } catch {
-    return false;
+    return 4;
   }
 };
 
-export const clock24hSignal = signal(getClock24h());
+export const recentShotCountSignal = signal(getRecentShotCount());
 
-export const setClock24h = value => {
+export const setRecentShotCount = (n) => {
+  if (!Number.isInteger(n) || n < 1 || n > 8) return false;
   try {
-    localStorage.setItem(DASHBOARD_CLOCK_24H_KEY, String(!!value));
-    clock24hSignal.value = !!value;
+    localStorage.setItem(DASHBOARD_RECENT_SHOT_COUNT_KEY, String(n));
+    recentShotCountSignal.value = n;
     return true;
   } catch {
     return false;
