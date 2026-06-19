@@ -192,6 +192,11 @@ class Controller {
     bool screenReady = false;
     bool waitingForController = false;
     unsigned long connectStartTime = 0;
+    // Re-send the config burst for a few seconds after a (re)connect (see loop()).
+    unsigned long configResendUntil = 0;
+    unsigned long lastConfigResend = 0;
+    static const unsigned long CONFIG_RESEND_WINDOW_MS = 8000;
+    static const unsigned long CONFIG_RESEND_INTERVAL_MS = 1000;
     bool volumetricOverride = false;
     bool processCompleted = false;
     bool steamReady = false;
