@@ -126,7 +126,7 @@ export function DashboardSettings() {
                     setRecentShotCount(n);
                   }}
                 />
-                <span className='w-16 text-sm'>{recentShotCount} {recentShotCount === 1 ? 'shot' : 'shots'}</span>
+                <span className='w-20 text-sm'>{recentShotCount} {recentShotCount === 1 ? 'shot' : 'shots'}</span>
               </div>
             </SettingsFormField>
             <SettingsFormField label='Shot Card Metrics' htmlFor='shotMetricSlot0' noMargin>
