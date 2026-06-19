@@ -5,6 +5,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faRectangleList } from '@fortawesome/free-solid-svg-icons/faRectangleList';
 import { ProcessProfileChart } from '../../../components/ProcessProfileChart.jsx';
 import { profileChartHeightSignal } from '../../../utils/dashboardManager.js';
+import { SkeletonBlock } from '../../../components/SkeletonBlock.jsx';
 import { fmtElapsed, fmtPhaseTarget, getPhaseLabel } from '../utils.js';
 
 function ProgressCard({ processInfo, isBrewing, isGrinding, selectedProfile }) {
@@ -64,15 +65,21 @@ export function ProfileCard({
 }) {
   const apiService = useContext(ApiServiceContext);
   const [profileData, setProfileData] = useState(null);
+  const [profileLoading, setProfileLoading] = useState(false);
 
   useEffect(() => {
     if (!selectedProfileId || !apiService) { setProfileData(null); return; }
+    setProfileLoading(true);
     apiService
       .request({ tp: 'req:profiles:load', id: selectedProfileId })
       .then(res => {
         setProfileData(res.profile?.type === 'pro' ? res.profile : null);
+        setProfileLoading(false);
       })
-      .catch(() => setProfileData(null));
+      .catch(() => {
+        setProfileData(null);
+        setProfileLoading(false);
+      });
   }, [selectedProfileId, apiService]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const showProgress = (isBrewing || isGrinding) && (isActive || isFinished);
@@ -99,13 +106,20 @@ export function ProfileCard({
           <FontAwesomeIcon icon={faRectangleList} className='text-base-content/40 shrink-0 text-sm' />
         </a>
       </div>
-      {!compact && profileData && (
-        <ProcessProfileChart
-          data={profileData}
-          processInfo={processInfo}
-          className='mt-1 w-full'
-          style={{ height: `${profileChartHeightSignal.value}px` }}
-        />
+      {!compact && (
+        profileLoading ? (
+          <SkeletonBlock
+            className='mt-1 w-full rounded-xl'
+            style={{ height: `${profileChartHeightSignal.value}px` }}
+          />
+        ) : profileData ? (
+          <ProcessProfileChart
+            data={profileData}
+            processInfo={processInfo}
+            className='mt-1 w-full'
+            style={{ height: `${profileChartHeightSignal.value}px` }}
+          />
+        ) : null
       )}
     </>
   );
