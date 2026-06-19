@@ -1,5 +1,5 @@
-import { useContext, useEffect, useState } from 'preact/hooks';
-import { computed } from '@preact/signals';
+import { useContext, useState } from 'preact/hooks';
+import { computed, useSignalEffect } from '@preact/signals';
 import { ApiServiceContext, machine } from '../../../services/ApiService.js';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTemperatureFull } from '@fortawesome/free-solid-svg-icons/faTemperatureFull';
@@ -60,13 +60,13 @@ export function FavoriteProfilesCard({ selectedProfileId, inCard = false, compac
   const apiService = useContext(ApiServiceContext);
   const [favorites, setFavorites] = useState([]);
 
-  useEffect(() => {
+  useSignalEffect(() => {
     if (!apiService || !connected.value) return;
     apiService
       .request({ tp: 'req:profiles:list' })
       .then(res => setFavorites((res.profiles ?? []).filter(p => p.favorite).slice(0, 3)))
       .catch(() => {});
-  }, [apiService, connected.value]);
+  });
 
   const handleSelect = id => {
     apiService.request({ tp: 'req:profiles:select', id }).catch(() => {});

@@ -1,7 +1,7 @@
 import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
 import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { computed } from '@preact/signals';
+import { computed, useSignalEffect } from '@preact/signals';
 import { useQuery } from 'preact-fetching';
 import { useCallback, useContext, useEffect, useRef, useState } from 'preact/hooks';
 import Card from '../../components/Card.jsx';
@@ -76,16 +76,12 @@ export function Settings() {
   });
 
   // Fetch profiles via WebSocket (wait for connection)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => {
-    const loadProfiles = async () => {
-      if (connected.value) {
-        const response = await apiService.request({ tp: 'req:profiles:list', minimal: true });
-        setProfiles(response.profiles);
-      }
-    };
-    loadProfiles();
-  }, [connected.value]);
+  useSignalEffect(() => {
+    if (!connected.value) return;
+    apiService.request({ tp: 'req:profiles:list', minimal: true })
+      .then(res => setProfiles(res.profiles))
+      .catch(() => {});
+  });
 
   const formRef = useRef();
 
@@ -141,6 +137,7 @@ export function Settings() {
         ]);
       }
 
+      setClock24h(!!fetchedSettings.clock24hFormat);
       setFormData(settingsWithToggle);
     } else {
       setFormData({});
