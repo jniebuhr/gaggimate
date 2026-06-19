@@ -16,6 +16,7 @@ import {
   getStickyBottom, setStickyBottom,
   getStickyTop, setStickyTop,
   getShowRecentShots, setShowRecentShots,
+  getRecentShotCount, setRecentShotCount,
   getMetricsColumns, setMetricsColumns,
   METRICS_LAST_ROW_FILLS, getMetricsLastRowFill, setMetricsLastRowFill,
   getCompactPanels, toggleCompactPanel,
@@ -30,6 +31,7 @@ export function DashboardSettings() {
   const [dashboardLayout,    setDashboardLayoutState]    = useState(() => getDashboardLayout());
   const [dashboardCardMode,  setDashboardCardModeState]  = useState(() => getDashboardCardMode());
   const [showRecentShots,    setShowRecentShotsState]    = useState(() => getShowRecentShots());
+  const [recentShotCount,    setRecentShotCountState]    = useState(() => getRecentShotCount());
   const [shotMetricSlots,    setShotMetricSlotsState]    = useState(() => getShotMetricSlots());
 
   const [panelOrder,         setPanelOrderState]         = useState(() => getPanelOrder());
@@ -107,6 +109,26 @@ export function DashboardSettings() {
             }}
           />
           {showRecentShots && (
+            <>
+            <SettingsFormField label='Max Recent Shots' htmlFor='recentShotCount'>
+              <div className='flex items-center gap-3'>
+                <input
+                  id='recentShotCount'
+                  type='range'
+                  min='1'
+                  max='8'
+                  step='1'
+                  className='range range-primary range-sm flex-1'
+                  value={recentShotCount}
+                  onChange={e => {
+                    const n = Number(e.target.value);
+                    setRecentShotCountState(n);
+                    setRecentShotCount(n);
+                  }}
+                />
+                <span className='w-16 text-sm'>{recentShotCount} {recentShotCount === 1 ? 'shot' : 'shots'}</span>
+              </div>
+            </SettingsFormField>
             <SettingsFormField label='Shot Card Metrics' htmlFor='shotMetricSlot0' noMargin>
               <div className='flex gap-2'>
                 {[0, 1, 2].map(i => (
@@ -132,6 +154,7 @@ export function DashboardSettings() {
                 ))}
               </div>
             </SettingsFormField>
+            </>
           )}
         </Card>
 
