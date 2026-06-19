@@ -85,7 +85,7 @@ export function DashboardSettings() {
               <option value={DASHBOARD_LAYOUTS.ORDER_LAST}>Chart First</option>
             </select>
           </SettingsFormField>
-          <SettingsFormField label='Control Column Style' htmlFor='dashboardCardMode'>
+          <SettingsFormField label='Control Column Style' htmlFor='dashboardCardMode' noMargin>
             <select
               id='dashboardCardMode'
               className='select select-bordered w-full'
@@ -99,6 +99,10 @@ export function DashboardSettings() {
               <option value={DASHBOARD_CARD_MODES.SINGLE}>Single Card</option>
             </select>
           </SettingsFormField>
+        </Card>
+
+        {/* ── Card 2: Recent Shots ──────────────────────────────────────── */}
+        <Card sm={10} lg={5} title='Recent Shots'>
           <ToggleField
             label='Show Recent Shots'
             htmlFor='showRecentShots'
@@ -158,7 +162,7 @@ export function DashboardSettings() {
           )}
         </Card>
 
-        {/* ── Card 2: Panel Selection ───────────────────────────────────── */}
+        {/* ── Card 3: Panel Selection ───────────────────────────────────── */}
         <Card sm={10} lg={5} title='Panel Selection'>
           <ToggleField
             label='Stick first panel to top'
@@ -223,7 +227,7 @@ export function DashboardSettings() {
           )}
         </Card>
 
-        {/* ── Card 3: Metric Selection ──────────────────────────────────── */}
+        {/* ── Card 4: Metric Selection ──────────────────────────────────── */}
         <Card sm={10} lg={5} title='Metric Selection'>
           <SettingsFormField label='Metrics Columns' htmlFor='metricsColumns'>
             <div className='flex items-center gap-3'>
