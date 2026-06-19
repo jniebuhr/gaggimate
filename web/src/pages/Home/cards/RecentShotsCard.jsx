@@ -105,7 +105,7 @@ function ShotMiniCard({ shot, slots }) {
       </div>
 
       {/* Metrics — right on mobile, below identity on sm+ */}
-      <div className='flex gap-2 sm:mt-1.5 lg:gap-1.5 xl:gap-2'>
+      <div className='flex shrink-0 gap-2 sm:mt-1.5 lg:gap-1.5 xl:gap-2'>
         {slots.map(slotId => {
           const def = METRIC_DEFS[slotId];
           const value = def ? def.getValue(shot) : null;
@@ -231,7 +231,7 @@ export function RecentShotsCard() {
   return (
     <div className='card bg-base-100 flex flex-col gap-2 rounded-xl p-3'>
       <div className='text-base-content/50 text-[0.6rem] uppercase tracking-wider'>Recent Shots</div>
-      <div className='grid grid-cols-1 gap-3 sm:[grid-template-columns:repeat(auto-fill,minmax(180px,1fr))]'>
+      <div className='grid grid-cols-1 gap-3 sm:[grid-template-columns:repeat(auto-fit,minmax(180px,1fr))]'>
         {shots.map(shot => (
           <ShotMiniCard key={shot.id} shot={shot} slots={slots} />
         ))}
