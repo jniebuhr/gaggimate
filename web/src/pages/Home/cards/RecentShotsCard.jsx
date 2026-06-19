@@ -248,7 +248,7 @@ export function RecentShotsCard() {
           }
         }
       } catch {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
