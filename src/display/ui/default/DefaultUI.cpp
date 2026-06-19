@@ -389,7 +389,22 @@ void DefaultUI::setupState() {
                           [=]() {
                               String content = "";
                               if (apActive) {
-                                  content = "WIFI:S:GaggiMate;;;;";
+                                  // WIFI: QR syntax — escape \ ; , : " in the password per the spec.
+                                  const String pw = controller->getSettings().getWifiApPassword();
+                                  String escaped;
+                                  escaped.reserve(pw.length() + 4);
+                                  for (size_t i = 0; i < pw.length(); i++) {
+                                      const char c = pw.charAt(i);
+                                      if (c == '\\' || c == ';' || c == ',' || c == ':' || c == '"') {
+                                          escaped += '\\';
+                                      }
+                                      escaped += c;
+                                  }
+                                  if (escaped.isEmpty()) {
+                                      content = "WIFI:S:GaggiMate;;;;";
+                                  } else {
+                                      content = "WIFI:S:GaggiMate;T:WPA;P:" + escaped + ";;";
+                                  }
                               } else if (wifiConnected) {
                                   content = "http://" + WiFi.localIP().toString() + "/";
                               }
@@ -519,8 +534,9 @@ void DefaultUI::updateSystemStatus() {
     systemStatus.pressure_available(pressureAvailable);
     systemStatus.grind_available(grindAvailable);
     systemStatus.mode(mode);
-    systemStatus.ip(WiFi.localIP().toString().c_str());
+    systemStatus.ip(apActive ? "4.4.4.1" : WiFi.localIP().toString().c_str());
     systemStatus.network(apActive ? "GaggiMate" : systemStatus.wifi() ? settings.getWifiSsid().c_str() : "Disconnected");
+    systemStatus.ap_active(apActive);
 
     char timeBuf[12] = "";
     struct tm timeinfo;

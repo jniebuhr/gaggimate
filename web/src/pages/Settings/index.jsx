@@ -66,6 +66,7 @@ export function Settings() {
   const [formData, setFormData] = useState({});
   const [currentTheme, setCurrentTheme] = useState('light');
   const [showWifiPassword, setShowWifiPassword] = useState(false);
+  const [showApPassword, setShowApPassword] = useState(false);
   const [autowakeupSchedules, setAutoWakeupSchedules] = useState([
     { time: '07:00', days: [true, true, true, true, true, true, true] }, // Default: all days enabled
   ]);
@@ -455,6 +456,31 @@ export function Settings() {
                   onClick={() => setShowWifiPassword(!showWifiPassword)}
                 >
                   <FontAwesomeIcon icon={showWifiPassword ? faEyeSlash : faEye} />
+                </span>
+              </label>
+            </SettingsFormField>
+            <SettingsFormField
+              label='Access Point Password'
+              htmlFor='apPassword'
+              helpText='Used for the GaggiMate hotspot when no Wi-Fi is configured (min. 8 characters).'
+            >
+              <label className='input w-full'>
+                <input
+                  id='apPassword'
+                  name='apPassword'
+                  type={showApPassword ? 'text' : 'password'}
+                  placeholder='Access Point Password'
+                  minLength={8}
+                  maxLength={63}
+                  value={formData.apPassword}
+                  onChange={onChange('apPassword')}
+                />
+                <span
+                  className={`hover:text-primary cursor-pointer`}
+                  aria-label='Show Password'
+                  onClick={() => setShowApPassword(!showApPassword)}
+                >
+                  <FontAwesomeIcon icon={showApPassword ? faEyeSlash : faEye} />
                 </span>
               </label>
             </SettingsFormField>

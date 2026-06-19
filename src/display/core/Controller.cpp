@@ -23,6 +23,7 @@
 #ifndef GAGGIMATE_SIM // network/BLE plugins are device-only
 #include <display/plugins/BLEScalePlugin.h>
 #include <display/plugins/HomekitPlugin.h>
+#include <display/plugins/ImprovPlugin.h>
 #include <display/plugins/MQTTPlugin.h>
 #include <display/plugins/NetworkWatchdogPlugin.h>
 #include <display/plugins/WifiStaWatchdogPlugin.h>
@@ -94,6 +95,7 @@ void Controller::setup() {
 #ifndef GAGGIMATE_SIM // WiFi watchdogs and BLE scales are device-only
     pluginManager->registerPlugin(new NetworkWatchdogPlugin());
     pluginManager->registerPlugin(new WifiStaWatchdogPlugin());
+    pluginManager->registerPlugin(new ImprovPlugin());
 #endif
     pluginManager->registerPlugin(&ShotHistory);
 #ifndef GAGGIMATE_SIM
@@ -340,16 +342,10 @@ void Controller::onSystemInfo(const char *hardware, const char *version, uint32_
     ESP_LOGI(LOG_TAG, "System info: %s %s (proto=%u local=%u dm=%d ps=%d led=%d tof=%d)", hardware, version, protocolVersion,
              gm_proto::PROTOCOL_VERSION, dimming, pressure, ledControl, tof);
     if (mismatch) {
-        // Mixed-firmware links are not wire-compatible, so don't push config and
-        // don't drive control (updateControl() also bails on protocolMismatch).
-        // We still fire controller:ready below so OTA can init -- that's the
-        // recovery path to update the out-of-date side.
         ESP_LOGW(LOG_TAG, "Protocol version mismatch: controller=%u display=%u -- control inhibited, OTA only", protocolVersion,
                  gm_proto::PROTOCOL_VERSION);
         pluginManager->trigger("controller:protocol:mismatch", "value", static_cast<int>(protocolVersion));
     } else {
-        // Capability-dependent setup that the old protocol ran synchronously right
-        // after connect, now driven by the asynchronous SystemInfo push.
         setPressureScale();
         setPidSettings();
         setPumpModelCoeffs();
@@ -366,12 +362,6 @@ void Controller::onSystemInfo(const char *hardware, const char *version, uint32_
 }
 
 void Controller::onIncompatibleController(const String &infoJson) {
-    // An old controller (no framed-comms characteristics) is, for our purposes,
-    // a protocol mismatch: reuse the exact same path. We force protocolVersion 0
-    // (it cannot speak the framed protocol), so onSystemInfo() inhibits control
-    // but still fires controller:ready so OTA can flash the controller back into
-    // compatibility. The real hardware/version/capabilities come from the legacy
-    // read-only INFO characteristic the old controller still exposes.
     waitingForController = false;
 
     JsonDocument doc;
@@ -392,16 +382,17 @@ void Controller::onIncompatibleController(const String &infoJson) {
 }
 
 void Controller::setupWifi() {
+    // Generate and persist a WPA2 AP password on first start
+    if (settings.getWifiApPassword().isEmpty()) {
+        settings.setWifiApPassword(generateShortID(DEFAULT_WIFI_AP_PASSWORD_LENGTH));
+    }
+
     if (settings.getWifiSsid() != "" && settings.getWifiPassword() != "") {
         WiFi.setHostname(settings.getMdnsName().c_str());
         WiFi.mode(WIFI_STA);
         WiFi.setAutoReconnect(true);
         WiFi.config(INADDR_NONE, INADDR_NONE, INADDR_NONE, INADDR_NONE);
 
-        // Register WiFi event handlers BEFORE begin() so STA_CONNECTED and
-        // STA_GOT_IP from the boot connect fire through them too. Handlers
-        // run in the Arduino WiFi event task (small stack), so they only log
-        // and flag; loop() fires plugin events on the main loop.
         WiFi.onEvent(
             [this](WiFiEvent_t, WiFiEventInfo_t info) {
                 const auto &g = info.got_ip.ip_info;
@@ -413,10 +404,6 @@ void Controller::setupWifi() {
                 wifiConnectedPending = true;
             },
             WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_GOT_IP);
-        // setMinSecurity() is a scan filter, not an auth ceiling -- the SDK
-        // can still negotiate WPA3-SAE on a WPA3-transition AP, so log the
-        // authmode it actually chose, the BSSID of the AP we landed on
-        // (useful in multi-AP topologies), and the channel.
         WiFi.onEvent(
             [](WiFiEvent_t, WiFiEventInfo_t info) {
                 const auto &c = info.wifi_sta_connected;
@@ -425,9 +412,6 @@ void Controller::setupWifi() {
                          c.channel, c.authmode);
             },
             WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_CONNECTED);
-        // Log numeric reason explicitly -- disconnectReasonName() returns NULL
-        // for vendor codes (UniFi 168), which made earlier logs read
-        // "Reason:" with empty body and obscured the root cause.
         WiFi.onEvent(
             [this](WiFiEvent_t, WiFiEventInfo_t info) {
                 const auto &d = info.wifi_sta_disconnected;
@@ -474,11 +458,24 @@ void Controller::setupWifi() {
     }
     if (WiFi.status() != WL_CONNECTED) {
         isApConnection = true;
+        const String apPassword = settings.getWifiApPassword();
+        // WPA2 requires >= 8 chars; fall back to an open AP if somehow shorter.
+        const bool secured = apPassword.length() >= WIFI_AP_PASSWORD_MIN_LENGTH;
         WiFi.mode(WIFI_AP);
         WiFi.softAPConfig(WIFI_AP_IP, WIFI_AP_IP, WIFI_SUBNET_MASK);
-        WiFi.softAP(WIFI_AP_SSID);
+        WiFi.softAP(WIFI_AP_SSID, secured ? apPassword.c_str() : nullptr);
         WiFi.setTxPower(WIFI_POWER_19_5dBm);
-        ESP_LOGI(LOG_TAG, "Started WiFi AP %s", WIFI_AP_SSID);
+        // Credentials block so headless users can read the AP login from serial.
+        ESP_LOGI(LOG_TAG, "========================================");
+        ESP_LOGI(LOG_TAG, "  WiFi Access Point started");
+        ESP_LOGI(LOG_TAG, "  SSID:     %s", WIFI_AP_SSID);
+        if (secured) {
+            ESP_LOGI(LOG_TAG, "  Password: %s", apPassword.c_str());
+        } else {
+            ESP_LOGI(LOG_TAG, "  Password: <open network>");
+        }
+        ESP_LOGI(LOG_TAG, "  Web UI:   http://%s/", WIFI_AP_IP.toString().c_str());
+        ESP_LOGI(LOG_TAG, "========================================");
     }
 
     pluginManager->on("ota:update:start", [this](Event const &) { this->updating = true; });
