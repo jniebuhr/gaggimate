@@ -342,6 +342,8 @@ void Controller::onSystemInfo(const char *hardware, const char *version, uint32_
         parseFloatCsv(settings.getPid(), pid, 4, 0.0f);
         comms.sendPidSettings(pid[0], pid[1], pid[2], pid[3]);
         setPumpModelCoeffs();
+        configResendUntil = millis() + CONFIG_RESEND_WINDOW_MS;
+        lastConfigResend = millis();
     }
 
     if (!loaded) {
@@ -446,6 +448,17 @@ void Controller::loop() {
     }
 
     unsigned long now = millis();
+
+    // A config burst right after a reconnect can be lost in the unstable BLE window,
+    // and a spurious ACK then stops the reliable layer retrying. Re-send until it lands.
+    if (comms.isConnected() && now < configResendUntil && (now - lastConfigResend) >= CONFIG_RESEND_INTERVAL_MS) {
+        setPressureScale();
+        float pid[4];
+        parseFloatCsv(settings.getPid(), pid, 4, 0.0f);
+        comms.sendPidSettings(pid[0], pid[1], pid[2], pid[3]);
+        setPumpModelCoeffs();
+        lastConfigResend = now;
+    }
 
     // If BLE scanning has been running for a while without finding the controller,
     // notify the UI so it can update the startup label accordingly.
