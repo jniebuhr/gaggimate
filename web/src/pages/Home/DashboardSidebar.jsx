@@ -30,7 +30,7 @@ export function DashboardSidebar({ unified = false }) {
     .filter(p => p.available(ds));
 
   const firstConfiguredId = orderedIds[0];
-  const lastConfiguredId = orderedIds[orderedIds.length - 1];
+  const lastConfiguredId = orderedIds.at(orderedIds.length - 1);
 
   // Split visible panels into sticky anchors and scrollable middle.
   // Sticky panels only anchor when they are ALSO the first/last in the configured
@@ -39,8 +39,8 @@ export function DashboardSidebar({ unified = false }) {
   const topPanel = stickyTop && visiblePanels[0]?.id === firstConfiguredId
     ? visiblePanels[0]
     : null;
-  const bottomPanel = stickyBottom && visiblePanels[visiblePanels.length - 1]?.id === lastConfiguredId
-    ? visiblePanels[visiblePanels.length - 1]
+  const bottomPanel = stickyBottom && visiblePanels.at(visiblePanels.length - 1)?.id === lastConfiguredId
+    ? visiblePanels.at(visiblePanels.length - 1)
     : null;
   const middlePanels = visiblePanels.filter(p => p !== topPanel && p !== bottomPanel);
 
