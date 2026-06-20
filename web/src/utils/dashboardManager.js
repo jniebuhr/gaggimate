@@ -203,7 +203,7 @@ export const getMetricsColumns = () => {
   if (globalThis.window === undefined || !globalThis.window.localStorage) return 2;
   try {
     const stored = localStorage.getItem(DASHBOARD_METRICS_COLUMNS_KEY);
-    const n = stored ? parseInt(stored, 10) : 2;
+    const n = stored ? Number.parseInt(stored, 10) : 2;
     return Number.isFinite(n) && n >= 1 && n <= 4 ? n : 2;
   } catch {
     return 2;
@@ -299,7 +299,7 @@ export const getProfileChartHeight = () => {
   if (globalThis.window === undefined || !globalThis.window.localStorage) return 128;
   try {
     const stored = localStorage.getItem(DASHBOARD_PROFILE_CHART_HEIGHT_KEY);
-    const n = stored ? parseInt(stored, 10) : 128;
+    const n = stored ? Number.parseInt(stored, 10) : 128;
     return Number.isFinite(n) && n >= 64 && n <= 256 ? n : 128;
   } catch {
     return 128;
@@ -400,7 +400,7 @@ export const getRecentShotCount = () => {
   if (globalThis.window === undefined || !globalThis.window.localStorage) return 4;
   try {
     const stored = localStorage.getItem(DASHBOARD_RECENT_SHOT_COUNT_KEY);
-    const n = stored ? parseInt(stored, 10) : 4;
+    const n = stored ? Number.parseInt(stored, 10) : 4;
     return Number.isFinite(n) && n >= 1 && n <= 8 ? n : 4;
   } catch {
     return 4;
