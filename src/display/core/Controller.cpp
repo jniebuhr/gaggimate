@@ -198,6 +198,12 @@ void Controller::setupBluetooth() {
         } else if (initialized) {
             pluginManager->trigger("controller:bluetooth:disconnect");
             waitingForController = true;
+            // Reset so onSystemInfo() re-runs the full startup sequence on the
+            // next connect: applies startup mode, fires controller:ready, etc.
+            // Without this the head unit stays in STANDBY permanently after the
+            // machine reboots because loaded stays true and setMode(startupMode)
+            // is never called again.
+            loaded = false;
             setMode(MODE_STANDBY);
         }
     });
