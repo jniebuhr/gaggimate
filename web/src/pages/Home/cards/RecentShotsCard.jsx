@@ -45,6 +45,50 @@ function formatShotDateTime(timestamp, hour12) {
   });
 }
 
+async function loadShotIndex(recentShotCount) {
+  const resp = await fetch('/api/history/index.bin');
+  if (!resp.ok) return null;
+  const buf = await resp.arrayBuffer();
+  return indexToShotList(parseBinaryIndex(buf)).slice(0, recentShotCount);
+}
+
+function computeSlogMetrics(samples, { needsAvgTemp, needsMaxPressure, needsAvgFlow }) {
+  const update = {};
+  if (needsMaxPressure) {
+    update.maxPressure = samples.length > 0 ? Math.max(...samples.map(s => s.cp ?? 0)) : null;
+  }
+  if (needsAvgTemp) {
+    const ctSamples = samples.filter(s => s.ct != null);
+    update.avgTemp =
+      ctSamples.length > 0 ? ctSamples.reduce((sum, s) => sum + s.ct, 0) / ctSamples.length : null;
+  }
+  if (needsAvgFlow) {
+    const flSamples = samples.filter(s => s.fl != null && s.fl > 0);
+    update.avgFlow =
+      flSamples.length > 0 ? flSamples.reduce((sum, s) => sum + s.fl, 0) / flSamples.length : null;
+  }
+  return update;
+}
+
+// Loads slog binaries sequentially (not in parallel) to avoid overwhelming the ESP32
+async function enrichShotsWithSlog(shots, neededMetrics, isCancelled, onShotUpdate) {
+  for (const shot of shots) {
+    if (isCancelled()) break;
+    try {
+      const paddedId = shot.id.toString().padStart(6, '0');
+      const slogResp = await fetch(`/api/history/${paddedId}.slog`);
+      if (!slogResp.ok || isCancelled()) continue;
+      const slogBuf = await slogResp.arrayBuffer();
+      const parsed = parseBinaryShot(slogBuf, shot.id);
+      const update = computeSlogMetrics(parsed.samples ?? [], neededMetrics);
+      if (isCancelled()) break;
+      onShotUpdate(shot.id, update);
+    } catch {
+      // Skip shot if binary load fails
+    }
+  }
+}
+
 const METRIC_DEFS = {
   duration: {
     label: 'Duration',
@@ -190,69 +234,30 @@ export function RecentShotsCard() {
     let cancelled = false;
     setLoading(true);
 
-    const load = async () => {
+    (async () => {
       try {
-        const resp = await fetch('/api/history/index.bin');
+        const list = await loadShotIndex(recentShotCountSignal.value);
         if (cancelled) return;
-        if (!resp.ok) { setLoading(false); return; }
-        const buf = await resp.arrayBuffer();
-        const list = indexToShotList(parseBinaryIndex(buf)).slice(0, recentShotCountSignal.value);
-        if (cancelled) return;
+        if (!list) { setLoading(false); return; }
         setShots(list);
         setLoading(false);
 
-        // Determine which slog-computed metrics are actually needed
-        const needsAvgTemp = slots.includes('avgTemp');
-        const needsMaxPressure = slots.includes('maxPressure');
-        const needsAvgFlow = slots.includes('avgFlow');
-        const needsSlog = needsAvgTemp || needsMaxPressure || needsAvgFlow;
-
+        const neededMetrics = {
+          needsAvgTemp: slots.includes('avgTemp'),
+          needsMaxPressure: slots.includes('maxPressure'),
+          needsAvgFlow: slots.includes('avgFlow'),
+        };
+        const needsSlog = neededMetrics.needsAvgTemp || neededMetrics.needsMaxPressure || neededMetrics.needsAvgFlow;
         if (!needsSlog) return;
 
-        // Load binaries sequentially to avoid overwhelming the ESP32
-        for (const shot of list) {
-          if (cancelled) break;
-          try {
-            const paddedId = shot.id.toString().padStart(6, '0');
-            const slogResp = await fetch(`/api/history/${paddedId}.slog`);
-            if (!slogResp.ok || cancelled) continue;
-            const slogBuf = await slogResp.arrayBuffer();
-            const parsed = parseBinaryShot(slogBuf, shot.id);
-            const samples = parsed.samples ?? [];
-
-            const update = {};
-
-            if (needsMaxPressure) {
-              update.maxPressure =
-                samples.length > 0 ? Math.max(...samples.map(s => s.cp ?? 0)) : null;
-            }
-            if (needsAvgTemp) {
-              const ctSamples = samples.filter(s => s.ct != null);
-              update.avgTemp =
-                ctSamples.length > 0
-                  ? ctSamples.reduce((sum, s) => sum + s.ct, 0) / ctSamples.length
-                  : null;
-            }
-            if (needsAvgFlow) {
-              const flSamples = samples.filter(s => s.fl != null && s.fl > 0);
-              update.avgFlow =
-                flSamples.length > 0
-                  ? flSamples.reduce((sum, s) => sum + s.fl, 0) / flSamples.length
-                  : null;
-            }
-
-            if (cancelled) break;
-            setShots(prev => prev.map(s => (s.id === shot.id ? { ...s, ...update } : s)));
-          } catch {
-            // Skip shot if binary load fails
-          }
-        }
+        await enrichShotsWithSlog(list, neededMetrics, () => cancelled, (id, update) =>
+          setShots(prev => prev.map(s => (s.id === id ? { ...s, ...update } : s)))
+        );
       } catch {
         if (!cancelled) setLoading(false);
       }
-    };
+    })();
 
-    load();
     return () => {
       cancelled = true;
     };
