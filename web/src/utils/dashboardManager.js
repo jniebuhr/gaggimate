@@ -14,7 +14,7 @@ export const DASHBOARD_CARD_MODES = {
 };
 
 export const getDashboardLayout = () => {
-  if (globalThis.window === undefined || !globalThis.window.localStorage) {
+  if (!globalThis.window?.localStorage) {
     return DASHBOARD_LAYOUTS.ORDER_FIRST;
   }
   try {
@@ -38,7 +38,7 @@ export const setDashboardLayout = layout => {
 };
 
 export const getDashboardCardMode = () => {
-  if (globalThis.window === undefined || !globalThis.window.localStorage) {
+  if (!globalThis.window?.localStorage) {
     return DASHBOARD_CARD_MODES.MULTI;
   }
   try {
@@ -65,7 +65,7 @@ const DASHBOARD_METRICS_KEY = 'dashboardMetrics';
 const DEFAULT_METRIC_ORDER = ['pressure', 'flow', 'temp', 'weight'];
 
 export const getMetricOrder = () => {
-  if (globalThis.window === undefined || !globalThis.window.localStorage) {
+  if (!globalThis.window?.localStorage) {
     return [...DEFAULT_METRIC_ORDER];
   }
   try {
@@ -96,7 +96,7 @@ const DASHBOARD_PANELS_KEY = 'dashboardPanels';
 const DEFAULT_PANEL_ORDER = ['mode', 'profile', 'favorites', 'metrics', 'watertank', 'action'];
 
 export const getPanelOrder = () => {
-  if (globalThis.window === undefined || !globalThis.window.localStorage) {
+  if (!globalThis.window?.localStorage) {
     return [...DEFAULT_PANEL_ORDER];
   }
   try {
@@ -125,7 +125,7 @@ export const setPanelOrder = (ids) => {
 const DASHBOARD_STICKY_BOTTOM_KEY = 'dashboardStickyBottom';
 
 export const getStickyBottom = () => {
-  if (globalThis.window === undefined || !globalThis.window.localStorage) return true;
+  if (!globalThis.window?.localStorage) return true;
   try {
     return localStorage.getItem(DASHBOARD_STICKY_BOTTOM_KEY) !== 'false';
   } catch {
@@ -150,7 +150,7 @@ export const setStickyBottom = (value) => {
 const DASHBOARD_STICKY_TOP_KEY = 'dashboardStickyTop';
 
 export const getStickyTop = () => {
-  if (globalThis.window === undefined || !globalThis.window.localStorage) return false;
+  if (!globalThis.window?.localStorage) return false;
   try {
     return localStorage.getItem(DASHBOARD_STICKY_TOP_KEY) === 'true';
   } catch {
@@ -175,7 +175,7 @@ export const setStickyTop = (value) => {
 const DASHBOARD_SHOW_RECENT_SHOTS_KEY = 'dashboardShowRecentShots';
 
 export const getShowRecentShots = () => {
-  if (globalThis.window === undefined || !globalThis.window.localStorage) return true;
+  if (!globalThis.window?.localStorage) return true;
   try {
     return localStorage.getItem(DASHBOARD_SHOW_RECENT_SHOTS_KEY) !== 'false';
   } catch {
@@ -200,7 +200,7 @@ export const setShowRecentShots = (value) => {
 const DASHBOARD_METRICS_COLUMNS_KEY = 'dashboardMetricsColumns';
 
 export const getMetricsColumns = () => {
-  if (globalThis.window === undefined || !globalThis.window.localStorage) return 2;
+  if (!globalThis.window?.localStorage) return 2;
   try {
     const stored = localStorage.getItem(DASHBOARD_METRICS_COLUMNS_KEY);
     const n = stored ? Number.parseInt(stored, 10) : 2;
@@ -228,7 +228,7 @@ export const setMetricsColumns = (n) => {
 const DASHBOARD_COMPACT_PANELS_KEY = 'dashboardCompactPanels';
 
 export const getCompactPanels = () => {
-  if (globalThis.window === undefined || !globalThis.window.localStorage) return [];
+  if (!globalThis.window?.localStorage) return [];
   try {
     const stored = localStorage.getItem(DASHBOARD_COMPACT_PANELS_KEY);
     return stored ? JSON.parse(stored) : [];
@@ -266,7 +266,7 @@ export const METRICS_LAST_ROW_FILLS = {
 };
 
 export const getMetricsLastRowFill = () => {
-  if (globalThis.window === undefined || !globalThis.window.localStorage) {
+  if (!globalThis.window?.localStorage) {
     return METRICS_LAST_ROW_FILLS.EVEN;
   }
   try {
@@ -296,7 +296,7 @@ export const setMetricsLastRowFill = (value) => {
 const DASHBOARD_PROFILE_CHART_HEIGHT_KEY = 'dashboardProfileChartHeight';
 
 export const getProfileChartHeight = () => {
-  if (globalThis.window === undefined || !globalThis.window.localStorage) return 128;
+  if (!globalThis.window?.localStorage) return 128;
   try {
     const stored = localStorage.getItem(DASHBOARD_PROFILE_CHART_HEIGHT_KEY);
     const n = stored ? Number.parseInt(stored, 10) : 128;
@@ -329,7 +329,7 @@ export const COLUMN_SPACINGS = {
 };
 
 export const getColumnSpacing = () => {
-  if (globalThis.window === undefined || !globalThis.window.localStorage) {
+  if (!globalThis.window?.localStorage) {
     return COLUMN_SPACINGS.START;
   }
   try {
@@ -360,7 +360,7 @@ const DASHBOARD_SHOT_METRIC_SLOTS_KEY = 'dashboardShotMetricSlots';
 const DEFAULT_SHOT_METRIC_SLOTS = ['duration', 'weight', 'maxPressure'];
 
 export const getShotMetricSlots = () => {
-  if (globalThis.window === undefined || !globalThis.window.localStorage) {
+  if (!globalThis.window?.localStorage) {
     return [...DEFAULT_SHOT_METRIC_SLOTS];
   }
   try {
@@ -397,7 +397,7 @@ export const setClock24h = value => {
 const DASHBOARD_RECENT_SHOT_COUNT_KEY = 'dashboardRecentShotCount';
 
 export const getRecentShotCount = () => {
-  if (globalThis.window === undefined || !globalThis.window.localStorage) return 4;
+  if (!globalThis.window?.localStorage) return 4;
   try {
     const stored = localStorage.getItem(DASHBOARD_RECENT_SHOT_COUNT_KEY);
     const n = stored ? Number.parseInt(stored, 10) : 4;
