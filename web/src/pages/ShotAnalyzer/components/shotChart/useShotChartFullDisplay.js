@@ -6,30 +6,42 @@
  * main component so ShotChart.jsx can stay focused on chart orchestration.
  */
 
+/* global globalThis */
+
 import { useEffect, useState } from 'preact/hooks';
-import { MAIN_CHART_HEIGHT_BIG } from './constants';
+import { MAIN_CHART_HEIGHT_DEFAULT } from './constants';
 
 function getFullDisplayViewportHeight() {
-  if (typeof window === 'undefined') return 0;
-  return Math.round(window.visualViewport?.height || window.innerHeight || 0);
+  const browserWindow = globalThis.window;
+  if (!browserWindow) return 0;
+  return Math.round(browserWindow.visualViewport?.height || browserWindow.innerHeight || 0);
 }
 
-// Fit both charts into the available viewport height so the overlay does not
-// introduce an extra internal scroll area on desktop or mobile browsers.
+function isFullDisplayAllowedViewport() {
+  const browserWindow = globalThis.window;
+  if (!browserWindow?.matchMedia) return true;
+  return !browserWindow.matchMedia('(max-width: 1023px)').matches;
+}
+
+// Fit both charts into the available viewport height when possible. On very
+// small viewports the chart area may still scroll, but the initial sizing should
+// stay close to the visible overlay instead of forcing a desktop-sized chart.
 function getFullDisplayMainChartHeight(viewportHeight, tempChartHeightRatio) {
-  if (!Number.isFinite(viewportHeight) || viewportHeight <= 0) return MAIN_CHART_HEIGHT_BIG;
+  if (!Number.isFinite(viewportHeight) || viewportHeight <= 0) return MAIN_CHART_HEIGHT_DEFAULT;
 
   const reservedChromeHeight = 136;
-  const availableCombinedChartHeight = Math.max(560, viewportHeight - reservedChromeHeight);
+  const availableCombinedChartHeight = Math.max(260, viewportHeight - reservedChromeHeight);
   const totalChartRatio = 1 + tempChartHeightRatio;
-  return Math.max(420, Math.min(980, Math.round(availableCombinedChartHeight / totalChartRatio)));
+  const fittedMainHeight = Math.round(availableCombinedChartHeight / totalChartRatio);
+  const responsiveMinimum = viewportHeight < 560 ? 220 : 320;
+  return Math.max(responsiveMinimum, Math.min(980, fittedMainHeight));
 }
 
 export function useShotChartFullDisplay({
   isControlsLocked,
   clearAllHoverRef,
   onBeforeToggle,
-  mainChartHeight,
+  resolvedMainChartHeight,
   tempChartHeightRatio,
 }) {
   const [isFullDisplay, setIsFullDisplay] = useState(false);
@@ -40,8 +52,12 @@ export function useShotChartFullDisplay({
   useEffect(() => {
     if (!isFullDisplay) return undefined;
 
-    const documentElement = document.documentElement;
-    const body = document.body;
+    const browserWindow = globalThis.window;
+    const browserDocument = globalThis.document;
+    if (!browserWindow || !browserDocument) return undefined;
+
+    const documentElement = browserDocument.documentElement;
+    const body = browserDocument.body;
     const previousDocumentOverflow = documentElement.style.overflow;
     const previousBodyOverflow = body.style.overflow;
     const previousBodyOverscroll = body.style.overscrollBehavior;
@@ -61,22 +77,37 @@ export function useShotChartFullDisplay({
     body.style.overscrollBehavior = 'contain';
 
     handleViewportResize();
-    window.addEventListener('resize', handleViewportResize);
-    window.visualViewport?.addEventListener('resize', handleViewportResize);
-    document.addEventListener('keydown', handleKeyDown);
+    browserWindow.addEventListener('resize', handleViewportResize);
+    browserWindow.visualViewport?.addEventListener('resize', handleViewportResize);
+    browserDocument.addEventListener('keydown', handleKeyDown);
 
     return () => {
       documentElement.style.overflow = previousDocumentOverflow;
       body.style.overflow = previousBodyOverflow;
       body.style.overscrollBehavior = previousBodyOverscroll;
-      window.removeEventListener('resize', handleViewportResize);
-      window.visualViewport?.removeEventListener('resize', handleViewportResize);
-      document.removeEventListener('keydown', handleKeyDown);
+      browserWindow.removeEventListener('resize', handleViewportResize);
+      browserWindow.visualViewport?.removeEventListener('resize', handleViewportResize);
+      browserDocument.removeEventListener('keydown', handleKeyDown);
     };
   }, [isControlsLocked, isFullDisplay]);
 
+  useEffect(() => {
+    const browserWindow = globalThis.window;
+    if (!browserWindow?.matchMedia) return undefined;
+
+    const mediaQuery = browserWindow.matchMedia('(max-width: 1023px)');
+    const handleChange = event => {
+      if (event.matches) setIsFullDisplay(false);
+    };
+
+    if (mediaQuery.matches) setIsFullDisplay(false);
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
+
   const toggleFullDisplay = () => {
     if (isControlsLocked) return;
+    if (!isFullDisplay && !isFullDisplayAllowedViewport()) return;
     // Clear hover and close transient UI before moving the canvases into or out of
     // the portal so the user never carries stale overlay state across layouts.
     clearAllHoverRef.current?.();
@@ -86,7 +117,7 @@ export function useShotChartFullDisplay({
 
   const effectiveMainChartHeight = isFullDisplay
     ? getFullDisplayMainChartHeight(fullDisplayViewportHeight, tempChartHeightRatio)
-    : mainChartHeight;
+    : resolvedMainChartHeight;
 
   return {
     isFullDisplay,

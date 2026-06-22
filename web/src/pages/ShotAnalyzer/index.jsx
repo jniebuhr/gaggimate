@@ -6,11 +6,23 @@
 
 /* global globalThis */
 
-import { useState, useEffect, useContext, useRef, useCallback } from 'preact/hooks';
+import {
+  useState,
+  useEffect,
+  useContext,
+  useRef,
+  useCallback,
+  useLayoutEffect,
+} from 'preact/hooks';
 import { useRoute } from 'preact-iso';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faChevronLeft } from '@fortawesome/free-solid-svg-icons/faChevronLeft';
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight';
 import { LibraryPanel } from './components/LibraryPanel';
 import { AnalysisTable } from './components/AnalysisTable';
 import { ShotChart } from './components/ShotChart';
+import { ShotDetailsPanel, ShotMobilePrimaryCards } from './components/ShotDetailsPanel';
+import { useAnalyzerMobileSubpageNavigation } from './components/useAnalyzerMobileSubpageNavigation';
 import { calculateShotMetrics, detectAutoDelay } from './services/AnalyzerService';
 import { libraryService } from './services/LibraryService';
 import { notesService } from './services/NotesService';
@@ -22,6 +34,7 @@ import {
   getProfileDisplayLabel,
   getShotDisplayName,
   getShotIdentityKey,
+  getShotStorageKey,
   loadFromStorage,
   normalizeCompareTargetDisplayMode,
   saveToStorage,
@@ -46,12 +59,7 @@ function hasLoadedShotPayload(item) {
   return Boolean(item) && Array.isArray(item.samples);
 }
 
-function getShotSelectionLoadKey(item) {
-  if (!item) return '';
-  return item.source === 'gaggimate' ? item.id : item.storageKey || item.name || item.id;
-}
-
-function getShotSelectionName(item, loadKey = getShotSelectionLoadKey(item)) {
+function getShotSelectionName(item, loadKey = getShotStorageKey(item)) {
   if (!item) return 'No Shot Loaded';
   return item.name || item.storageKey || String(loadKey || item.id || 'No Shot Loaded');
 }
@@ -106,6 +114,17 @@ function getNextDirectionalSelection(request) {
 }
 
 function findPreferredProfileMatch(allProfiles, shotProfileName, shotSource, shotProfileId = '') {
+  // Legacy shots may retain IDs from an older profile revision. Prefer the normalized
+  // profile label so they follow the intended version, then fall back to the stored ID.
+  const target = cleanName(shotProfileName).toLowerCase();
+  if (target) {
+    const matches = allProfiles.filter(
+      profile => getProfileDisplayLabel(profile, '').toLowerCase() === target,
+    );
+    const preferredNameMatch = matches.find(profile => profile.source === shotSource) || matches[0];
+    if (preferredNameMatch) return preferredNameMatch;
+  }
+
   const targetId = String(shotProfileId || '').trim();
   if (targetId) {
     const idMatches = allProfiles.filter(
@@ -116,13 +135,7 @@ function findPreferredProfileMatch(allProfiles, shotProfileName, shotSource, sho
     if (preferredIdMatch) return preferredIdMatch;
   }
 
-  const target = cleanName(shotProfileName).toLowerCase();
-  if (!target) return null;
-
-  const matches = allProfiles.filter(
-    profile => getProfileDisplayLabel(profile, '').toLowerCase() === target,
-  );
-  return matches.find(profile => profile.source === shotSource) || matches[0] || null;
+  return null;
 }
 
 function getProfileLookupId(profileMatch) {
@@ -350,6 +363,132 @@ function finalizeCompareSelectionAttempt({
   }
 }
 
+function createComparePendingStateClearer({
+  setPendingCompareSelection,
+  setComparePendingKeys,
+  setCompareIsSearchingProfile,
+}) {
+  return () =>
+    clearComparePendingSelectionState({
+      setPendingCompareSelection,
+      setComparePendingKeys,
+      setCompareIsSearchingProfile,
+    });
+}
+
+function getSkippableCompareSelection({
+  activeRequest,
+  pendingPrimarySelectionRef,
+  currentShotRef,
+}) {
+  const { item } = activeRequest;
+  const targetShotKey = getShotIdentityKey(item);
+  const activePrimaryShotKey = getActivePrimaryShotKey(pendingPrimarySelectionRef, currentShotRef);
+
+  return {
+    shouldSkip: Boolean(activePrimaryShotKey && targetShotKey === activePrimaryShotKey),
+    targetShotKey,
+  };
+}
+
+function getNextCompareSelection({
+  activeRequest,
+  loadId,
+  setPendingCompareSelection,
+  setComparePendingKeys,
+  clearPendingState,
+}) {
+  return advanceCompareSelectionAfterFailure({
+    selectionRequest: activeRequest,
+    loadId,
+    setPendingCompareSelection,
+    setComparePendingKeys,
+    clearPendingState,
+  });
+}
+
+async function tryLoadActiveCompareSelection({
+  activeRequest,
+  clearPendingState,
+  compareLoadIdRef,
+  compareSelectionRequestIdRef,
+  importMode,
+  requestId,
+  setCompareIsSearchingProfile,
+  setComparePendingKeys,
+  setCompareShots,
+  setPendingCompareSelection,
+  targetShotKey,
+}) {
+  const { item, loadId } = activeRequest;
+
+  try {
+    const { shotWithMetadata, loadKey } = await loadCompareShotSelection({ item, importMode });
+    if (
+      shouldAbortCompareLoad({
+        requestId,
+        compareSelectionRequestIdRef,
+        loadId,
+        compareLoadIdRef,
+      })
+    ) {
+      return { status: 'aborted' };
+    }
+
+    commitLoadedCompareSelection({
+      targetShotKey,
+      shotWithMetadata,
+      item,
+      loadKey,
+      setCompareShots,
+      setPendingCompareSelection,
+      setComparePendingKeys,
+    });
+
+    await tryAutoMatchCompareShotProfile({
+      loadId,
+      compareLoadIdRef,
+      shotKey: targetShotKey,
+      shotWithMetadata,
+      setCompareIsSearchingProfile,
+      setCompareShots,
+    });
+
+    return { status: 'loaded' };
+  } catch (error) {
+    if (
+      shouldAbortCompareLoad({
+        requestId,
+        compareSelectionRequestIdRef,
+        loadId,
+        compareLoadIdRef,
+      })
+    ) {
+      return { status: 'aborted' };
+    }
+
+    console.warn('Failed to load compare shot:', error);
+
+    return {
+      status: 'retry',
+      nextRequest: getNextCompareSelection({
+        activeRequest,
+        loadId,
+        setPendingCompareSelection,
+        setComparePendingKeys,
+        clearPendingState,
+      }),
+    };
+  } finally {
+    finalizeCompareSelectionAttempt({
+      requestId,
+      compareSelectionRequestIdRef,
+      item,
+      setCompareIsSearchingProfile,
+    });
+  }
+}
+
 async function executeCompareSelectionLoad({
   requestId,
   selectionRequest,
@@ -363,31 +502,30 @@ async function executeCompareSelectionLoad({
   setCompareIsSearchingProfile,
   setCompareShots,
 }) {
-  const clearPendingState = () =>
-    clearComparePendingSelectionState({
-      setPendingCompareSelection,
-      setComparePendingKeys,
-      setCompareIsSearchingProfile,
-    });
+  const clearPendingState = createComparePendingStateClearer({
+    setPendingCompareSelection,
+    setComparePendingKeys,
+    setCompareIsSearchingProfile,
+  });
 
   let activeRequest = selectionRequest;
 
   while (activeRequest) {
-    const { item, loadId } = activeRequest;
-    const targetShotKey = getShotIdentityKey(item);
-    const activePrimaryShotKey = getActivePrimaryShotKey(
+    const { loadId } = activeRequest;
+    const { shouldSkip, targetShotKey } = getSkippableCompareSelection({
+      activeRequest,
       pendingPrimarySelectionRef,
       currentShotRef,
-    );
+    });
 
     if (!targetShotKey) {
       clearPendingState();
       return false;
     }
 
-    if (activePrimaryShotKey && targetShotKey === activePrimaryShotKey) {
-      activeRequest = advanceCompareSelectionAfterFailure({
-        selectionRequest: activeRequest,
+    if (shouldSkip) {
+      activeRequest = getNextCompareSelection({
+        activeRequest,
         loadId,
         setPendingCompareSelection,
         setComparePendingKeys,
@@ -397,67 +535,25 @@ async function executeCompareSelectionLoad({
       continue;
     }
 
-    try {
-      const { shotWithMetadata, loadKey } = await loadCompareShotSelection({ item, importMode });
-      if (
-        shouldAbortCompareLoad({
-          requestId,
-          compareSelectionRequestIdRef,
-          loadId,
-          compareLoadIdRef,
-        })
-      )
-        return false;
+    const loadResult = await tryLoadActiveCompareSelection({
+      activeRequest,
+      clearPendingState,
+      compareLoadIdRef,
+      compareSelectionRequestIdRef,
+      importMode,
+      requestId,
+      setCompareIsSearchingProfile,
+      setComparePendingKeys,
+      setCompareShots,
+      setPendingCompareSelection,
+      targetShotKey,
+    });
 
-      commitLoadedCompareSelection({
-        targetShotKey,
-        shotWithMetadata,
-        item,
-        loadKey,
-        setCompareShots,
-        setPendingCompareSelection,
-        setComparePendingKeys,
-      });
+    if (loadResult.status === 'loaded') return true;
+    if (loadResult.status === 'aborted') return false;
 
-      await tryAutoMatchCompareShotProfile({
-        loadId,
-        compareLoadIdRef,
-        shotKey: targetShotKey,
-        shotWithMetadata,
-        setCompareIsSearchingProfile,
-        setCompareShots,
-      });
-
-      return true;
-    } catch (error) {
-      if (
-        shouldAbortCompareLoad({
-          requestId,
-          compareSelectionRequestIdRef,
-          loadId,
-          compareLoadIdRef,
-        })
-      )
-        return false;
-
-      console.warn('Failed to load compare shot:', error);
-
-      activeRequest = advanceCompareSelectionAfterFailure({
-        selectionRequest: activeRequest,
-        loadId,
-        setPendingCompareSelection,
-        setComparePendingKeys,
-        clearPendingState,
-      });
-      if (!activeRequest) return false;
-    } finally {
-      finalizeCompareSelectionAttempt({
-        requestId,
-        compareSelectionRequestIdRef,
-        item,
-        setCompareIsSearchingProfile,
-      });
-    }
+    activeRequest = loadResult.nextRequest;
+    if (!activeRequest) return false;
   }
 
   clearPendingState();
@@ -465,7 +561,7 @@ async function executeCompareSelectionLoad({
 }
 
 async function loadShotSelection({ item, importMode }) {
-  const loadKey = getShotSelectionLoadKey(item);
+  const loadKey = getShotStorageKey(item);
   const loadedShot = hasLoadedShotPayload(item)
     ? item
     : await libraryService.loadShot(loadKey, item.source);
@@ -484,7 +580,7 @@ async function loadShotSelection({ item, importMode }) {
 }
 
 async function loadCompareShotSelection({ item, importMode }) {
-  const loadKey = getShotSelectionLoadKey(item);
+  const loadKey = getShotStorageKey(item);
   const loadedShot = hasLoadedShotPayload(item)
     ? item
     : await libraryService.loadShot(loadKey, item.source);
@@ -534,6 +630,357 @@ async function tryAutoMatchCompareShotProfile({
   }
 }
 
+function isAlreadyLoadedDeepLink({ currentShot, params, serviceSource }) {
+  return currentShot?.id === params.id && currentShot?.source === serviceSource;
+}
+
+function buildShotDetailsEntries({
+  isCompareActive,
+  compareCollectionWithAccents,
+  referenceCompareEntry,
+}) {
+  if (isCompareActive) return compareCollectionWithAccents;
+  if (!referenceCompareEntry) return [];
+
+  return [
+    {
+      ...referenceCompareEntry,
+      accentColor: 'var(--color-primary)',
+      accentStrength: 1,
+    },
+  ];
+}
+
+function resetMeasuredDesktopDetailsHeight(setDesktopSingleDetailsHeight) {
+  setDesktopSingleDetailsHeight(prev => (prev === 0 ? prev : 0));
+}
+
+function getDesktopSingleChartStyle(singleDesktopDetailsHeight) {
+  if (!singleDesktopDetailsHeight) return undefined;
+  return { height: `${singleDesktopDetailsHeight}px` };
+}
+
+function getActiveAnalysisViewClasses(isCompareActive) {
+  return {
+    desktopStickyDetailsClass: isCompareActive ? 'analyzer-shot-details-sticky' : '',
+    compareShellClass: isCompareActive ? 'shot-chart-card-shell--compare' : '',
+    chartSurfaceClass: isCompareActive
+      ? ''
+      : 'app-card-surface rounded-xl px-1.5 py-2 sm:px-2 lg:h-full',
+    mobilePrimaryShellClass: isCompareActive
+      ? ''
+      : 'analyzer-mobile-stack-layer analyzer-mobile-stack-layer--primary',
+    singleShellClass: isCompareActive
+      ? ''
+      : 'analyzer-mobile-stack-layer analyzer-mobile-stack-layer--chart',
+    mobileDetailsShellClass: isCompareActive
+      ? 'hidden lg:block'
+      : 'analyzer-mobile-stack-layer analyzer-mobile-stack-layer--details',
+  };
+}
+
+function getCompareDetailsKey(isCompareActive, shotDetailsEntries) {
+  if (!isCompareActive) return '';
+  return shotDetailsEntries
+    .map((entry, index) => entry?.key || entry?.shot?.id || entry?.shotName || index)
+    .join('|');
+}
+
+function MobileAnalyzerSubpageHeader({ onBack, subtitle, title }) {
+  return (
+    <div className='flex items-center gap-3'>
+      <button
+        type='button'
+        className='app-card-surface text-base-content/75 hover:text-base-content flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-xl transition-colors'
+        onClick={onBack}
+        aria-label='Back to analyzer'
+      >
+        <FontAwesomeIcon icon={faChevronLeft} aria-hidden='true' />
+      </button>
+      <div className='min-w-0'>
+        <div className='text-base-content text-sm font-semibold'>{title}</div>
+        <div className='text-base-content/55 truncate text-xs'>{subtitle}</div>
+      </div>
+    </div>
+  );
+}
+
+function MobileAnalyzerSubpageAction({ label, onClick }) {
+  return (
+    <button
+      type='button'
+      className='app-card-surface hover:bg-base-200/60 relative z-0 flex min-h-14 w-full cursor-pointer items-center justify-between rounded-xl px-4 py-3 text-left transition-colors'
+      onClick={onClick}
+    >
+      <span className='text-base-content text-sm font-semibold'>{label}</span>
+      <FontAwesomeIcon
+        icon={faChevronRight}
+        className='text-base-content/45 text-xs'
+        aria-hidden='true'
+      />
+    </button>
+  );
+}
+
+function getMobileAnalyzerSubpageMeta({ isCompareActive, showMobileAnalysisPage }) {
+  if (!showMobileAnalysisPage) {
+    return { subtitle: 'Compare shot details', title: 'Notes' };
+  }
+  return {
+    subtitle: isCompareActive ? 'Compare analysis table' : 'Shot analysis table',
+    title: 'Analysis Table',
+  };
+}
+
+function getVerticalScrollContainer(element) {
+  const browserWindow = globalThis.window;
+  if (!browserWindow || !element) return null;
+
+  let currentElement = element.parentElement;
+  while (currentElement) {
+    const overflowY = browserWindow.getComputedStyle(currentElement).overflowY;
+    if (overflowY === 'auto' || overflowY === 'scroll' || overflowY === 'overlay') {
+      return currentElement;
+    }
+    currentElement = currentElement.parentElement;
+  }
+
+  return browserWindow.document.scrollingElement;
+}
+
+function scheduleAfterLayout(callback) {
+  const browserWindow = globalThis.window;
+  if (!browserWindow) {
+    callback();
+    return () => {};
+  }
+
+  const frameId = browserWindow.requestAnimationFrame(callback);
+  return () => browserWindow.cancelAnimationFrame(frameId);
+}
+
+function scheduleAcrossLayoutFrames(callback) {
+  let cancelFinalFrame = () => {};
+  const cancelInitialFrame = scheduleAfterLayout(() => {
+    callback();
+    cancelFinalFrame = scheduleAfterLayout(callback);
+  });
+
+  return () => {
+    cancelInitialFrame();
+    cancelFinalFrame();
+  };
+}
+
+function AnalyzerTable({
+  activeColumns,
+  analysisResults,
+  compareCollectionWithAccents,
+  handleSettingsChange,
+  isCompareActive,
+  performAnalysis,
+  setActiveColumns,
+  settings,
+}) {
+  return (
+    <AnalysisTable
+      results={analysisResults}
+      compareEntries={compareCollectionWithAccents}
+      isCompareActive={isCompareActive}
+      activeColumns={activeColumns}
+      onColumnsChange={setActiveColumns}
+      settings={settings}
+      onSettingsChange={handleSettingsChange}
+      onAnalyze={performAnalysis}
+    />
+  );
+}
+
+function ActiveAnalysisView({
+  activeColumns,
+  analysisResults,
+  analysisSectionRef,
+  chartMountKey,
+  compareCollectionWithAccents,
+  compareTargetDisplayMode,
+  currentShot,
+  handleSettingsChange,
+  handleSwapCompareSlots,
+  isCompareActive,
+  mobileSubpageNavigation,
+  performAnalysis,
+  setActiveColumns,
+  setCompareTargetDisplayMode,
+  settings,
+  shotDetailsColumnRef,
+  shotDetailsEntries,
+  singleDesktopChartStyle,
+  singleDesktopDetailsHeight,
+}) {
+  const alignmentClass = 'lg:items-start';
+  const {
+    desktopStickyDetailsClass,
+    compareShellClass,
+    chartSurfaceClass,
+    mobilePrimaryShellClass,
+    singleShellClass,
+    mobileDetailsShellClass,
+  } = getActiveAnalysisViewClasses(isCompareActive);
+  const [activeCompareDetailsIndex, setActiveCompareDetailsIndex] = useState(0);
+  const mobileSubpageRef = useRef(null);
+  const mobileSubpageReturnScrollRef = useRef(null);
+  const wasMobileSubpageOpenRef = useRef(false);
+  const compareDetailsKey = getCompareDetailsKey(isCompareActive, shotDetailsEntries);
+  const { closeMobileSubpage, mobileSubpage, openMobileSubpage } = mobileSubpageNavigation;
+  const showCompareMobileDetailsPage = isCompareActive && mobileSubpage === 'notes';
+  const showMobileAnalysisPage = mobileSubpage === 'analysis' && Boolean(analysisResults);
+  const showMobileSubpage = showCompareMobileDetailsPage || showMobileAnalysisPage;
+  const mobileSubpageMeta = getMobileAnalyzerSubpageMeta({
+    isCompareActive,
+    showMobileAnalysisPage,
+  });
+
+  useEffect(() => {
+    setActiveCompareDetailsIndex(0);
+  }, [compareDetailsKey, isCompareActive]);
+
+  useLayoutEffect(() => {
+    if (showMobileSubpage) {
+      wasMobileSubpageOpenRef.current = true;
+      return scheduleAcrossLayoutFrames(() => {
+        mobileSubpageRef.current?.scrollIntoView({ behavior: 'auto', block: 'start' });
+      });
+    }
+
+    if (!wasMobileSubpageOpenRef.current) return undefined;
+    wasMobileSubpageOpenRef.current = false;
+    const savedScroll = mobileSubpageReturnScrollRef.current;
+    if (!savedScroll?.container) return undefined;
+
+    return scheduleAcrossLayoutFrames(() => {
+      savedScroll.container.scrollTop = savedScroll.top;
+    });
+  }, [showMobileSubpage]);
+
+  const handleOpenMobileSubpage = useCallback(
+    page => {
+      const scrollContainer = getVerticalScrollContainer(analysisSectionRef.current);
+      mobileSubpageReturnScrollRef.current = scrollContainer
+        ? { container: scrollContainer, top: scrollContainer.scrollTop }
+        : null;
+      openMobileSubpage(page);
+    },
+    [analysisSectionRef, openMobileSubpage],
+  );
+
+  return (
+    <div ref={analysisSectionRef} className='analyzer-mobile-scroll-target animate-fade-in mt-8'>
+      {showMobileSubpage ? (
+        <div ref={mobileSubpageRef} className='analyzer-mobile-scroll-target space-y-3 lg:hidden'>
+          <MobileAnalyzerSubpageHeader
+            onBack={closeMobileSubpage}
+            title={mobileSubpageMeta.title}
+            subtitle={mobileSubpageMeta.subtitle}
+          />
+          {showCompareMobileDetailsPage ? (
+            <ShotDetailsPanel
+              entries={shotDetailsEntries}
+              isCompareActive={isCompareActive}
+              activeCompareIndex={activeCompareDetailsIndex}
+              onActiveCompareIndexChange={setActiveCompareDetailsIndex}
+            />
+          ) : null}
+          {showMobileAnalysisPage ? (
+            <AnalyzerTable
+              activeColumns={activeColumns}
+              analysisResults={analysisResults}
+              compareCollectionWithAccents={compareCollectionWithAccents}
+              handleSettingsChange={handleSettingsChange}
+              isCompareActive={isCompareActive}
+              performAnalysis={performAnalysis}
+              setActiveColumns={setActiveColumns}
+              settings={settings}
+            />
+          ) : null}
+        </div>
+      ) : null}
+
+      <div className={showMobileSubpage ? 'hidden lg:block' : ''}>
+        <div
+          className={`grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(14.5rem,17rem)] xl:grid-cols-[minmax(0,1fr)_minmax(18rem,22rem)] ${alignmentClass}`}
+        >
+          <div className='order-1 min-w-0 lg:order-1'>
+            {!isCompareActive && shotDetailsEntries[0]?.shot ? (
+              <div className={mobilePrimaryShellClass}>
+                <ShotMobilePrimaryCards entry={shotDetailsEntries[0]} />
+              </div>
+            ) : null}
+            <div
+              key={chartMountKey}
+              className={`shot-chart-card-shell ${chartSurfaceClass} ${compareShellClass} ${singleShellClass}`}
+              style={singleDesktopChartStyle}
+            >
+              <ShotChart
+                shotData={currentShot}
+                results={analysisResults}
+                compareEntries={compareCollectionWithAccents}
+                isCompareActive={isCompareActive}
+                desktopCardHeight={singleDesktopDetailsHeight}
+                onCompareSwap={handleSwapCompareSlots}
+                compareTargetDisplayMode={compareTargetDisplayMode}
+                onCompareTargetDisplayModeChange={setCompareTargetDisplayMode}
+              />
+            </div>
+          </div>
+          <div
+            ref={shotDetailsColumnRef}
+            className={`order-2 min-w-0 lg:order-2 ${desktopStickyDetailsClass} ${mobileDetailsShellClass}`}
+          >
+            <ShotDetailsPanel
+              entries={shotDetailsEntries}
+              isCompareActive={isCompareActive}
+              activeCompareIndex={activeCompareDetailsIndex}
+              onActiveCompareIndexChange={setActiveCompareDetailsIndex}
+            />
+          </div>
+        </div>
+
+        {isCompareActive ? (
+          <div className='analyzer-mobile-stack-layer analyzer-mobile-stack-layer--details mt-3 lg:hidden'>
+            <MobileAnalyzerSubpageAction
+              label='Notes'
+              onClick={() => handleOpenMobileSubpage('notes')}
+            />
+          </div>
+        ) : null}
+
+        {analysisResults ? (
+          <>
+            <div className='analyzer-mobile-stack-layer analyzer-mobile-stack-layer--analysis mt-3 lg:hidden'>
+              <MobileAnalyzerSubpageAction
+                label='Analysis Table'
+                onClick={() => handleOpenMobileSubpage('analysis')}
+              />
+            </div>
+            <div className='analyzer-analysis-shell mt-4 hidden lg:block'>
+              <AnalyzerTable
+                activeColumns={activeColumns}
+                analysisResults={analysisResults}
+                compareCollectionWithAccents={compareCollectionWithAccents}
+                handleSettingsChange={handleSettingsChange}
+                isCompareActive={isCompareActive}
+                performAnalysis={performAnalysis}
+                setActiveColumns={setActiveColumns}
+                settings={settings}
+              />
+            </div>
+          </>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 export function ShotAnalyzer() {
   const apiService = useContext(ApiServiceContext);
   const { params } = useRoute();
@@ -550,7 +997,7 @@ export function ShotAnalyzer() {
   const [importMode, setImportMode] = useState('temp');
 
   const [isMatchingProfile, setIsMatchingProfile] = useState(false);
-  const [isSearchingProfile, setIsSearchingProfile] = useState(false); // <--- NEW STATE
+  const [isSearchingProfile, setIsSearchingProfile] = useState(false);
 
   const [activeColumns, setActiveColumns] = useState(() => {
     const userStandard = loadFromStorage(ANALYZER_DB_KEYS.USER_STANDARD);
@@ -575,7 +1022,11 @@ export function ShotAnalyzer() {
   );
   const [compareIsSearchingProfile, setCompareIsSearchingProfile] = useState(false);
   const [pendingMobileAnalysisScroll, setPendingMobileAnalysisScroll] = useState(false);
+  const [pendingDesktopLibraryScroll, setPendingDesktopLibraryScroll] = useState(false);
+  const [desktopSingleDetailsHeight, setDesktopSingleDetailsHeight] = useState(0);
   const analysisSectionRef = useRef(null);
+  const libraryPanelRef = useRef(null);
+  const shotDetailsColumnRef = useRef(null);
   const profileMatchIdRef = useRef(0);
   const compareProfileMatchIdRef = useRef(0);
   const analysisIdRef = useRef(0);
@@ -691,49 +1142,6 @@ export function ShotAnalyzer() {
     };
   }, []);
 
-  // --- DEEP LINK HANDLER ---
-  useEffect(() => {
-    const loadDeepLink = async () => {
-      if (params.source && params.id) {
-        // 1. MAP URL PARAMS TO SERVICE PARAMS
-        // internal -> gaggimate
-        // external -> browser
-        let serviceSource = params.source;
-        if (params.source === 'internal') serviceSource = 'gaggimate';
-        if (params.source === 'external') serviceSource = 'browser';
-
-        // Prevent reloading if already loaded
-        if (currentShot && currentShot.id === params.id && currentShot.source === serviceSource) {
-          return;
-        }
-
-        console.log(
-          `Deep Link detected: Loading ${params.id} from ${serviceSource} (URL: ${params.source})`,
-        );
-
-        try {
-          // Load using the mapped service source
-          setLoading(true);
-          const shot = await libraryService.loadShot(params.id, serviceSource);
-
-          if (shot) {
-            // Ensure the shot object has the correct internal source ('gaggimate'/'browser')
-            // so that badges and logic work correctly, regardless of what the URL says.
-            shot.source = serviceSource;
-            commitPrimaryShotLoad(shot, shot.name || params.id);
-          }
-        } catch (e) {
-          console.error('Deep Link Load Failed:', e);
-        }
-      }
-    };
-
-    if (apiService) {
-      loadDeepLink();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [params.source, params.id, apiService]);
-
   // --- Effects ---
   useEffect(() => {
     if (apiService) {
@@ -785,6 +1193,18 @@ export function ShotAnalyzer() {
 
     return () => globalThis.window?.clearTimeout(timer);
   }, [pendingMobileAnalysisScroll, currentShot]);
+
+  useEffect(() => {
+    if (!pendingDesktopLibraryScroll || !currentShot) return;
+    if (!globalThis.window) return;
+
+    const timer = globalThis.window?.setTimeout(() => {
+      libraryPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setPendingDesktopLibraryScroll(false);
+    }, 350);
+
+    return () => globalThis.window?.clearTimeout(timer);
+  }, [pendingDesktopLibraryScroll, currentShot]);
 
   useEffect(() => {
     if (compareShots.length === 0) {
@@ -921,14 +1341,48 @@ export function ShotAnalyzer() {
         setIsSearchingProfile(false);
       }
 
-      if (requestSelectionScroll && shouldAutoScrollAnalyzerOnSelection()) {
-        setPendingMobileAnalysisScroll(true);
+      if (requestSelectionScroll) {
+        if (shouldAutoScrollAnalyzerOnSelection()) {
+          setPendingMobileAnalysisScroll(true);
+        } else {
+          setPendingDesktopLibraryScroll(true);
+        }
       }
 
       setLoading(false);
     },
     [cancelPrimaryProfileSearch, clearPrimarySelectionTimer, importMode, resetCompareState],
   );
+
+  useEffect(() => {
+    const loadDeepLink = async () => {
+      if (!params.source || !params.id) return;
+
+      let serviceSource = params.source;
+      if (params.source === 'internal') serviceSource = 'gaggimate';
+      if (params.source === 'external') serviceSource = 'browser';
+
+      if (isAlreadyLoadedDeepLink({ currentShot, params: { id: params.id }, serviceSource }))
+        return;
+
+      try {
+        setLoading(true);
+        const shot = await libraryService.loadShot(params.id, serviceSource);
+
+        if (shot) {
+          // URL sources are aliases; normalize them before the analyzer stores the shot.
+          shot.source = serviceSource;
+          commitPrimaryShotLoad(shot, shot.name || params.id);
+        }
+      } catch (e) {
+        console.error('Deep Link Load Failed:', e);
+      }
+    };
+
+    if (apiService) {
+      loadDeepLink();
+    }
+  }, [apiService, commitPrimaryShotLoad, currentShot, params.id, params.source]);
 
   const tryLoadPrimarySelection = useCallback(
     async (requestId, selectionRequest) => {
@@ -1147,9 +1601,15 @@ export function ShotAnalyzer() {
 
   const launchCompareSelectionLoad = useCallback(
     (requestId, selectionRequest) => {
-      tryLoadCompareSelection(requestId, selectionRequest).catch(error => {
-        console.error('Compare selection load failed:', error);
-      });
+      tryLoadCompareSelection(requestId, selectionRequest)
+        .then(didLoadCompareShot => {
+          if (didLoadCompareShot && shouldAutoScrollAnalyzerOnSelection()) {
+            setPendingMobileAnalysisScroll(true);
+          }
+        })
+        .catch(error => {
+          console.error('Compare selection load failed:', error);
+        });
     },
     [tryLoadCompareSelection],
   );
@@ -1411,7 +1871,78 @@ export function ShotAnalyzer() {
           .filter(entry => entry.results),
       ]
     : [];
-  const isCompareActive = compareMode && compareHasSecondaryShot && compareCollection.length > 1;
+  const compareCollectionWithAccents = compareCollection.map((entry, index) => ({
+    ...entry,
+    accentColor: 'var(--color-primary)',
+    accentStrength: index === 0 ? 1 : 0.7,
+  }));
+  const isCompareActive =
+    compareMode && compareHasSecondaryShot && compareCollectionWithAccents.length > 1;
+  const shotDetailsEntries = buildShotDetailsEntries({
+    isCompareActive,
+    compareCollectionWithAccents,
+    referenceCompareEntry,
+  });
+  const chartMountKey = [
+    isCompareActive ? 'compare' : 'single',
+    currentShot?.storageKey || currentShot?.id || currentShotName || 'shot',
+  ].join(':');
+  const compareDetailsKey = getCompareDetailsKey(isCompareActive, shotDetailsEntries);
+  const mobileSubpageNavigation = useAnalyzerMobileSubpageNavigation({
+    analysisEnabled: Boolean(currentShot && analysisResults),
+    notesEnabled: Boolean(currentShot && isCompareActive),
+    viewKey: `${chartMountKey}|${compareDetailsKey}`,
+  });
+  const singleDesktopDetailsHeight =
+    !isCompareActive && desktopSingleDetailsHeight > 0 ? desktopSingleDetailsHeight : 0;
+  const singleDesktopChartStyle = getDesktopSingleChartStyle(singleDesktopDetailsHeight);
+
+  useLayoutEffect(() => {
+    if (globalThis.window === undefined) return undefined;
+    if (!currentShot || !analysisResults || isCompareActive) {
+      resetMeasuredDesktopDetailsHeight(setDesktopSingleDetailsHeight);
+      return undefined;
+    }
+
+    const detailsElement = shotDetailsColumnRef.current;
+    if (!detailsElement) {
+      resetMeasuredDesktopDetailsHeight(setDesktopSingleDetailsHeight);
+      return undefined;
+    }
+    if (typeof ResizeObserver === 'undefined') {
+      resetMeasuredDesktopDetailsHeight(setDesktopSingleDetailsHeight);
+      return undefined;
+    }
+
+    const desktopMediaQuery = globalThis.window.matchMedia('(min-width: 1024px)');
+    let frameId = 0;
+    const updateHeight = () => {
+      if (!desktopMediaQuery.matches) {
+        resetMeasuredDesktopDetailsHeight(setDesktopSingleDetailsHeight);
+        return;
+      }
+
+      const nextHeight = Math.round(detailsElement.getBoundingClientRect().height || 0);
+      setDesktopSingleDetailsHeight(prev => (Math.abs(prev - nextHeight) <= 1 ? prev : nextHeight));
+    };
+    const scheduleUpdate = () => {
+      globalThis.window.cancelAnimationFrame(frameId);
+      frameId = globalThis.window.requestAnimationFrame(updateHeight);
+    };
+    const resizeObserver = new ResizeObserver(scheduleUpdate);
+
+    resizeObserver.observe(detailsElement);
+    desktopMediaQuery.addEventListener('change', scheduleUpdate);
+    globalThis.window.addEventListener('resize', scheduleUpdate);
+    scheduleUpdate();
+
+    return () => {
+      globalThis.window.cancelAnimationFrame(frameId);
+      resizeObserver.disconnect();
+      desktopMediaQuery.removeEventListener('change', scheduleUpdate);
+      globalThis.window.removeEventListener('resize', scheduleUpdate);
+    };
+  }, [analysisResults, chartMountKey, currentShot, isCompareActive]);
 
   return (
     <div className='shot-analyzer-page pb-20'>
@@ -1422,7 +1953,7 @@ export function ShotAnalyzer() {
 
       <div className='w-full'>
         {/* Library Panel (Always visible) */}
-        <div className='mt-4'>
+        <div ref={libraryPanelRef} className='mt-4'>
           <LibraryPanel
             currentShot={currentShot}
             currentProfile={currentProfile}
@@ -1473,42 +2004,33 @@ export function ShotAnalyzer() {
             onRetryProfileSearch={handleRetryProfileSearch}
             onRetryCompareProfileSearch={handleRetryCompareProfileSearch}
             isMatchingProfile={isMatchingProfile}
-            isSearchingProfile={isSearchingProfile} // <- pass prop
+            isSearchingProfile={isSearchingProfile}
             compareIsSearchingProfile={compareIsSearchingProfile}
           />
         </div>
 
         {currentShot ? (
-          // --- Active Analysis View ---
-          <div ref={analysisSectionRef} className='animate-fade-in mt-8'>
-            <div className='bg-base-100 border-base-content/10 rounded-lg border p-5 shadow-sm'>
-              <div>
-                <ShotChart
-                  shotData={currentShot}
-                  results={analysisResults}
-                  compareEntries={compareCollection}
-                  isCompareActive={isCompareActive}
-                  compareTargetDisplayMode={compareTargetDisplayMode}
-                  onCompareTargetDisplayModeChange={setCompareTargetDisplayMode}
-                />
-              </div>
-            </div>
-
-            {analysisResults && (
-              <div className='mt-2'>
-                <AnalysisTable
-                  results={analysisResults}
-                  compareEntries={compareCollection}
-                  isCompareActive={isCompareActive}
-                  activeColumns={activeColumns}
-                  onColumnsChange={setActiveColumns}
-                  settings={settings}
-                  onSettingsChange={handleSettingsChange}
-                  onAnalyze={performAnalysis}
-                />
-              </div>
-            )}
-          </div>
+          <ActiveAnalysisView
+            activeColumns={activeColumns}
+            analysisResults={analysisResults}
+            analysisSectionRef={analysisSectionRef}
+            chartMountKey={chartMountKey}
+            compareCollectionWithAccents={compareCollectionWithAccents}
+            compareTargetDisplayMode={compareTargetDisplayMode}
+            currentShot={currentShot}
+            handleSettingsChange={handleSettingsChange}
+            handleSwapCompareSlots={handleSwapCompareSlots}
+            isCompareActive={isCompareActive}
+            mobileSubpageNavigation={mobileSubpageNavigation}
+            performAnalysis={performAnalysis}
+            setActiveColumns={setActiveColumns}
+            setCompareTargetDisplayMode={setCompareTargetDisplayMode}
+            settings={settings}
+            shotDetailsColumnRef={shotDetailsColumnRef}
+            shotDetailsEntries={shotDetailsEntries}
+            singleDesktopChartStyle={singleDesktopChartStyle}
+            singleDesktopDetailsHeight={singleDesktopDetailsHeight}
+          />
         ) : (
           <div className='mt-6'>
             <EmptyState loading={loading} />

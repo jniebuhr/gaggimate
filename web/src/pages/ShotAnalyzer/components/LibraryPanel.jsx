@@ -5,16 +5,15 @@
  * that feed the two library tables.
  */
 
+/* global globalThis */
+
 import { useState, useEffect, useContext, useRef, useCallback } from 'preact/hooks';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUpDown } from '@fortawesome/free-solid-svg-icons/faUpDown';
+import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
 import { StatusBar } from './StatusBar';
-import { NotesBar } from './NotesBar';
+import { AnalyzerActionBar } from './AnalyzerActionBar';
 import { LibrarySection } from './LibrarySection';
-import {
-  getAnalyzerIconButtonClasses,
-  getAnalyzerTextButtonClasses,
-} from './analyzerControlStyles';
+import { getAnalyzerTextButtonClasses } from './analyzerControlStyles';
 import { libraryService } from '../services/LibraryService';
 import { indexedDBService } from '../services/IndexedDBService';
 import { notesService } from '../services/NotesService';
@@ -31,6 +30,7 @@ import {
   getProfilePinKey,
   getShotIdentityKey,
   getShotPinBucketKey,
+  getShotStorageKey,
   isProfilePinned,
   isShotPinned,
   isShotPinnedAnywhere,
@@ -40,6 +40,16 @@ import {
   toggleShotPin,
 } from '../utils/analyzerUtils';
 import { downloadJson } from '../../../utils/download';
+
+const STATUS_BAR_CARD_GAP = 12;
+
+function hasFileDrag(event) {
+  const types = event?.dataTransfer?.types;
+  if (!types) return false;
+  if (Array.isArray(types)) return types.includes('Files');
+  if (typeof types.contains === 'function') return types.contains('Files');
+  return false;
+}
 
 function getStoredLibrarySourceFilter(storageKey) {
   const storedValue = loadFromStorage(storageKey, 'all');
@@ -77,8 +87,8 @@ function applyLibrarySort(items, cfg) {
         valB = b.rating || 0;
         break;
       case 'duration':
-        valA = parseFloat(a.duration) || 0;
-        valB = parseFloat(b.duration) || 0;
+        valA = Number.parseFloat(a.duration) || 0;
+        valB = Number.parseFloat(b.duration) || 0;
         break;
       default:
         valA = a[cfg.key];
@@ -169,6 +179,18 @@ function doesProfileMatchShot(profile, shot, fallbackProfileName = '') {
   return getProfileDisplayLabel(profile, fallbackProfileName).toLowerCase() === expectedProfileName;
 }
 
+function doesProfileLabelMatchShot(profile, shot, fallbackProfileName = '') {
+  if (!profile || !shot) return false;
+
+  const expectedProfileName = cleanName(shot.profile || '').toLowerCase();
+  if (!expectedProfileName) return doesProfileMatchShot(profile, shot, fallbackProfileName);
+
+  const profileLabel = cleanName(
+    getProfileDisplayLabel(profile, fallbackProfileName),
+  ).toLowerCase();
+  return profileLabel === expectedProfileName;
+}
+
 function doesProfileMatchProfile(profile, selectedProfile, selectedProfileName = '') {
   if (!profile || !selectedProfile) return false;
 
@@ -183,7 +205,7 @@ function doesProfileMatchProfile(profile, selectedProfile, selectedProfileName =
 }
 
 function hasLoadedProfileMismatch(shot, profile, fallbackProfileName = '') {
-  return Boolean(shot && profile && !doesProfileMatchShot(profile, shot, fallbackProfileName));
+  return Boolean(shot && profile && !doesProfileLabelMatchShot(profile, shot, fallbackProfileName));
 }
 
 function buildPromotedLibraryItems({
@@ -216,7 +238,7 @@ function buildPromotedLibraryItems({
     cleanName(item.profile || '').toLowerCase() === normalizedCurrentProfileName;
   const promoteMatchedProfiles = item =>
     hasActiveShotProfileMatch &&
-    doesProfileMatchShot(item, { profile: normalizedCurrentShotProfileName });
+    doesProfileLabelMatchShot(item, { profile: normalizedCurrentShotProfileName });
 
   let nextShots = applyLibrarySort(filteredShots, shotsSort);
   if (shotsPinnedFirst) {
@@ -255,12 +277,12 @@ function buildShotNavigationItems({
   return nextShots;
 }
 
-function useLibraryPanelLayoutState({ sentinelRef, barRef }) {
+function useLibraryPanelLayoutState({ sentinelRef, barSlotRef, barRef }) {
   const [isStuck, setIsStuck] = useState(false);
   const [isMobileViewport, setIsMobileViewport] = useState(() =>
-    typeof window !== 'undefined' ? window.matchMedia('(max-width: 1023px)').matches : false,
+    Boolean(globalThis.window?.matchMedia('(max-width: 1023px)').matches),
   );
-  const [barRect, setBarRect] = useState({ width: 0, left: 0, height: 0 });
+  const [barRect, setBarRect] = useState({ width: 0, left: 0, height: 64 });
 
   useEffect(() => {
     const sentinel = sentinelRef.current;
@@ -273,108 +295,55 @@ function useLibraryPanelLayoutState({ sentinelRef, barRef }) {
   }, [sentinelRef]);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return undefined;
+    if (globalThis.window === undefined) return undefined;
 
-    const mediaQuery = window.matchMedia('(max-width: 1023px)');
+    const mediaQuery = globalThis.window.matchMedia('(max-width: 1023px)');
     const handleChange = event => setIsMobileViewport(event.matches);
 
     setIsMobileViewport(mediaQuery.matches);
 
-    if (typeof mediaQuery.addEventListener === 'function') {
-      mediaQuery.addEventListener('change', handleChange);
-      return () => mediaQuery.removeEventListener('change', handleChange);
-    }
-
-    mediaQuery.addListener(handleChange);
-    return () => mediaQuery.removeListener(handleChange);
+    mediaQuery.addEventListener?.('change', handleChange);
+    return () => mediaQuery.removeEventListener?.('change', handleChange);
   }, []);
 
   const updateRect = useCallback(() => {
-    if (!sentinelRef.current) return;
-    const rect = sentinelRef.current.getBoundingClientRect();
-    setBarRect({
+    const anchor = barSlotRef.current || sentinelRef.current;
+    if (!anchor) return;
+
+    const rect = anchor.getBoundingClientRect();
+    const nextRect = {
       width: rect.width,
       left: rect.left,
       height: barRef.current?.offsetHeight || 64,
-    });
-  }, [barRef, sentinelRef]);
+    };
+
+    setBarRect(previousRect =>
+      Math.round(previousRect.width) === Math.round(nextRect.width) &&
+      Math.round(previousRect.left) === Math.round(nextRect.left) &&
+      Math.round(previousRect.height) === Math.round(nextRect.height)
+        ? previousRect
+        : nextRect,
+    );
+  }, [barRef, barSlotRef, sentinelRef]);
 
   useEffect(() => {
     updateRect();
-    window.addEventListener('resize', updateRect);
-    window.addEventListener('scroll', updateRect, { passive: true });
-    return () => {
-      window.removeEventListener('resize', updateRect);
-      window.removeEventListener('scroll', updateRect);
-    };
+    globalThis.window?.addEventListener('resize', updateRect);
+    return () => globalThis.window?.removeEventListener('resize', updateRect);
   }, [updateRect]);
 
   useEffect(() => {
     if (typeof ResizeObserver === 'undefined') return;
     const resizeObserver = new ResizeObserver(() => updateRect());
     if (barRef.current) resizeObserver.observe(barRef.current);
-    if (sentinelRef.current) resizeObserver.observe(sentinelRef.current);
+    if (barSlotRef.current) resizeObserver.observe(barSlotRef.current);
     return () => resizeObserver.disconnect();
-  }, [barRef, sentinelRef, updateRect]);
+  }, [barRef, barSlotRef, updateRect]);
 
   return {
     isStuck,
     isMobileViewport,
     barRect,
-  };
-}
-
-function useLibraryPanelNotesState({ currentShot, secondaryShot, compareMode }) {
-  const [primaryNotesExpanded, setPrimaryNotesExpanded] = useState(false);
-  const [primaryNotesIsEditing, setPrimaryNotesIsEditing] = useState(false);
-  const [primaryNotesExpandedHeight, setPrimaryNotesExpandedHeight] = useState(0);
-  const [secondaryNotesExpanded, setSecondaryNotesExpanded] = useState(false);
-  const [secondaryNotesIsEditing, setSecondaryNotesIsEditing] = useState(false);
-  const [secondaryNotesExpandedHeight, setSecondaryNotesExpandedHeight] = useState(0);
-
-  useEffect(() => {
-    if (!primaryNotesExpanded) {
-      setPrimaryNotesIsEditing(false);
-      setPrimaryNotesExpandedHeight(0);
-    }
-  }, [primaryNotesExpanded]);
-
-  useEffect(() => {
-    if (!secondaryNotesExpanded) {
-      setSecondaryNotesIsEditing(false);
-      setSecondaryNotesExpandedHeight(0);
-    }
-  }, [secondaryNotesExpanded]);
-
-  useEffect(() => {
-    if (!currentShot) {
-      setPrimaryNotesExpanded(false);
-      setPrimaryNotesIsEditing(false);
-      setPrimaryNotesExpandedHeight(0);
-    }
-  }, [currentShot]);
-
-  useEffect(() => {
-    if (!secondaryShot || !compareMode) {
-      setSecondaryNotesExpanded(false);
-      setSecondaryNotesIsEditing(false);
-      setSecondaryNotesExpandedHeight(0);
-    }
-  }, [secondaryShot, compareMode]);
-
-  return {
-    primaryNotesExpanded,
-    setPrimaryNotesExpanded,
-    primaryNotesIsEditing,
-    setPrimaryNotesIsEditing,
-    primaryNotesExpandedHeight,
-    setPrimaryNotesExpandedHeight,
-    secondaryNotesExpanded,
-    setSecondaryNotesExpanded,
-    secondaryNotesIsEditing,
-    setSecondaryNotesIsEditing,
-    secondaryNotesExpandedHeight,
-    setSecondaryNotesExpandedHeight,
   };
 }
 
@@ -459,6 +428,151 @@ function getLibraryPanelDisplayState({
   };
 }
 
+function createImportOutcome() {
+  return {
+    appliedImportCount: 0,
+    mismatchedImportCount: 0,
+    blockedSecondaryProfileImport: false,
+  };
+}
+
+function mergeImportOutcome(target, source) {
+  target.appliedImportCount += source.appliedImportCount;
+  target.mismatchedImportCount += source.mismatchedImportCount;
+  target.blockedSecondaryProfileImport =
+    target.blockedSecondaryProfileImport || source.blockedSecondaryProfileImport;
+}
+
+async function buildImportedShot({ data, file, importMode }) {
+  const source = importMode === 'browser' ? 'browser' : 'temp';
+  const storageKey = file.name;
+  let notesWithId = null;
+  const importedNotes = data.notes;
+  const shotData = { ...data };
+  delete shotData.notes;
+
+  const shot = {
+    ...shotData,
+    id: String(shotData.id ?? storageKey),
+    name: file.name,
+    storageKey,
+    data: shotData,
+    source,
+  };
+  if (source === 'browser') await indexedDBService.saveShot(shot);
+
+  if (importedNotes && typeof importedNotes === 'object') {
+    notesWithId = {
+      ...notesService.getDefaults(storageKey),
+      ...importedNotes,
+      id: storageKey,
+    };
+    await notesService.saveNotes(storageKey, source, notesWithId);
+  }
+
+  return notesWithId ? { ...shot, notes: notesWithId } : shot;
+}
+
+async function importShotFile({
+  data,
+  file,
+  targetType,
+  slot,
+  importMode,
+  currentShot,
+  compareMode,
+  onCompareShotToggle,
+  onShotSelect,
+}) {
+  const outcome = createImportOutcome();
+  if (targetType === 'profile') {
+    outcome.mismatchedImportCount += 1;
+    return outcome;
+  }
+
+  const importedShot = await buildImportedShot({ data, file, importMode });
+  if (slot === 'secondary' && currentShot) {
+    await onCompareShotToggle?.(importedShot, true);
+  } else {
+    onShotSelect?.({
+      item: importedShot,
+      name: file.name,
+      preserveCompare: compareMode,
+    });
+  }
+  outcome.appliedImportCount += 1;
+  return outcome;
+}
+
+async function importProfileFile({
+  data,
+  file,
+  targetType,
+  slot,
+  importMode,
+  currentShot,
+  secondaryShot,
+  onCompareProfileLoad,
+  onProfileLoad,
+}) {
+  const outcome = createImportOutcome();
+  if (targetType === 'shot') {
+    outcome.mismatchedImportCount += 1;
+    return outcome;
+  }
+
+  const profileName = data.label || cleanName(file.name);
+  const profileData = data.label ? data : { ...data, label: profileName };
+  const profile = {
+    ...profileData,
+    data: profileData,
+    fileName: file.name,
+    source: importMode === 'browser' ? 'browser' : 'temp',
+  };
+  if (importMode === 'browser') await indexedDBService.saveProfile(profile);
+
+  if (slot !== 'secondary') {
+    onProfileLoad(profileData, profileName, profile.source);
+    outcome.appliedImportCount += 1;
+    return outcome;
+  }
+
+  if (secondaryShot) {
+    onCompareProfileLoad?.(profileData, profileName, profile.source);
+    outcome.appliedImportCount += 1;
+  } else if (currentShot) {
+    outcome.blockedSecondaryProfileImport = true;
+  } else {
+    onProfileLoad(profileData, profileName, profile.source);
+    outcome.appliedImportCount += 1;
+  }
+
+  return outcome;
+}
+
+async function importAnalyzerFile({ file, data, ...options }) {
+  if (data.samples) return importShotFile({ file, data, ...options });
+  if (data.phases) return importProfileFile({ file, data, ...options });
+  return createImportOutcome();
+}
+
+function showImportOutcomeAlerts({ outcome, targetType }) {
+  if (outcome.appliedImportCount > 0) return;
+
+  if (outcome.blockedSecondaryProfileImport) {
+    alert('Load a secondary shot before importing a secondary profile.');
+    return;
+  }
+
+  if (outcome.mismatchedImportCount > 0) {
+    alert(
+      targetType === 'shot'
+        ? 'Only shot files can be imported in the shot field.'
+        : 'Only profile files can be imported in the profile field.',
+    );
+  }
+}
+
 function useLibraryPanelImportHandler({
   currentShot,
   secondaryShot,
@@ -476,104 +590,30 @@ function useLibraryPanelImportHandler({
       setImporting(true);
 
       setTimeout(async () => {
-        let appliedImportCount = 0;
-        let mismatchedImportCount = 0;
-        let blockedSecondaryProfileImport = false;
+        const outcome = createImportOutcome();
 
         try {
           for (const file of Array.from(files)) {
             const text = await file.text();
             const data = JSON.parse(text);
-            if (data.samples) {
-              if (targetType === 'profile') {
-                mismatchedImportCount += 1;
-                continue;
-              }
-
-              const source = importMode === 'browser' ? 'browser' : 'temp';
-              const storageKey = file.name;
-              let notesWithId = null;
-              const importedNotes = data.notes;
-              const shotData = { ...data };
-              delete shotData.notes;
-
-              const shot = {
-                ...shotData,
-                id: String(shotData.id ?? storageKey),
-                name: file.name,
-                storageKey,
-                data: shotData,
-                source,
-              };
-              if (source === 'browser') await indexedDBService.saveShot(shot);
-
-              if (importedNotes && typeof importedNotes === 'object') {
-                notesWithId = {
-                  ...notesService.getDefaults(storageKey),
-                  ...importedNotes,
-                  id: storageKey,
-                };
-                await notesService.saveNotes(storageKey, source, notesWithId);
-              }
-
-              const importedShot = notesWithId ? { ...shot, notes: notesWithId } : shot;
-              if (slot === 'secondary' && currentShot) {
-                await onCompareShotToggle?.(importedShot, true);
-              } else {
-                onShotSelect?.({
-                  item: importedShot,
-                  name: file.name,
-                  preserveCompare: compareMode,
-                });
-              }
-              appliedImportCount += 1;
-              continue;
-            }
-
-            if (!data.phases) continue;
-            if (targetType === 'shot') {
-              mismatchedImportCount += 1;
-              continue;
-            }
-
-            const profileName = data.label || cleanName(file.name);
-            const profileData = data.label ? data : { ...data, label: profileName };
-            const profile = {
-              ...profileData,
-              data: profileData,
-              fileName: file.name,
-              source: importMode === 'browser' ? 'browser' : 'temp',
-            };
-            if (importMode === 'browser') await indexedDBService.saveProfile(profile);
-
-            if (slot !== 'secondary') {
-              onProfileLoad(profileData, profileName, profile.source);
-              appliedImportCount += 1;
-              continue;
-            }
-
-            if (secondaryShot) {
-              onCompareProfileLoad?.(profileData, profileName, profile.source);
-              appliedImportCount += 1;
-            } else if (currentShot) {
-              blockedSecondaryProfileImport = true;
-            } else {
-              onProfileLoad(profileData, profileName, profile.source);
-              appliedImportCount += 1;
-            }
+            const fileOutcome = await importAnalyzerFile({
+              data,
+              file,
+              targetType,
+              slot,
+              importMode,
+              currentShot,
+              secondaryShot,
+              compareMode,
+              onCompareShotToggle,
+              onShotSelect,
+              onCompareProfileLoad,
+              onProfileLoad,
+            });
+            mergeImportOutcome(outcome, fileOutcome);
           }
 
-          if (appliedImportCount === 0) {
-            if (blockedSecondaryProfileImport) {
-              alert('Load a secondary shot before importing a secondary profile.');
-            } else if (mismatchedImportCount > 0) {
-              alert(
-                targetType === 'shot'
-                  ? 'Only shot files can be imported in the shot field.'
-                  : 'Only profile files can be imported in the profile field.',
-              );
-            }
-          }
+          showImportOutcomeAlerts({ outcome, targetType });
         } catch (error) {
           console.error('Import error:', error);
           alert('Import failed. Please check the file format.');
@@ -598,12 +638,145 @@ function useLibraryPanelImportHandler({
   );
 }
 
-function AnalyzerPanelSlot({ statusBarProps, notesBarProps }) {
+function AnalyzerPanelSlot({ statusBarProps, actionBarProps, showActionBar = true }) {
+  const dragDepthRef = useRef(0);
+  const dragResetTimerRef = useRef(null);
+  const [isDragActive, setIsDragActive] = useState(false);
+  const [isWindowFileDragActive, setIsWindowFileDragActive] = useState(false);
+  const isImporting = Boolean(actionBarProps?.isImporting);
+  const onImport = actionBarProps?.onImport;
+  const isDropzoneActive = !isImporting && (isDragActive || isWindowFileDragActive);
+
+  const clearDragResetTimer = useCallback(() => {
+    if (dragResetTimerRef.current) {
+      globalThis.window?.clearTimeout(dragResetTimerRef.current);
+      dragResetTimerRef.current = null;
+    }
+  }, []);
+
+  const clearDragState = useCallback(() => {
+    clearDragResetTimer();
+    dragDepthRef.current = 0;
+    setIsDragActive(false);
+    setIsWindowFileDragActive(false);
+  }, [clearDragResetTimer]);
+
+  const armDragResetTimer = useCallback(() => {
+    clearDragResetTimer();
+    dragResetTimerRef.current = globalThis.window?.setTimeout(() => {
+      clearDragState();
+    }, 350);
+  }, [clearDragResetTimer, clearDragState]);
+
+  useEffect(() => {
+    if (isImporting) {
+      clearDragState();
+      return undefined;
+    }
+    if (globalThis.window === undefined) return undefined;
+
+    const handleWindowDragEnter = event => {
+      if (!hasFileDrag(event)) return;
+      setIsWindowFileDragActive(true);
+      armDragResetTimer();
+    };
+
+    const handleWindowDragOver = event => {
+      if (!hasFileDrag(event)) return;
+      event.preventDefault();
+      setIsWindowFileDragActive(true);
+      event.dataTransfer.dropEffect = 'copy';
+      armDragResetTimer();
+    };
+
+    const handleWindowDragLeave = event => {
+      const isOutsideWindow =
+        event.clientX <= 0 ||
+        event.clientY <= 0 ||
+        event.clientX >= globalThis.window.innerWidth ||
+        event.clientY >= globalThis.window.innerHeight;
+      if (isOutsideWindow) clearDragState();
+    };
+
+    const handleWindowDrop = event => {
+      if (!hasFileDrag(event)) return;
+      event.preventDefault();
+      clearDragState();
+    };
+
+    globalThis.window.addEventListener('dragenter', handleWindowDragEnter);
+    globalThis.window.addEventListener('dragover', handleWindowDragOver);
+    globalThis.window.addEventListener('dragleave', handleWindowDragLeave);
+    globalThis.window.addEventListener('drop', handleWindowDrop);
+    globalThis.window.addEventListener('dragend', clearDragState);
+
+    return () => {
+      globalThis.window.removeEventListener('dragenter', handleWindowDragEnter);
+      globalThis.window.removeEventListener('dragover', handleWindowDragOver);
+      globalThis.window.removeEventListener('dragleave', handleWindowDragLeave);
+      globalThis.window.removeEventListener('drop', handleWindowDrop);
+      globalThis.window.removeEventListener('dragend', clearDragState);
+      clearDragResetTimer();
+    };
+  }, [armDragResetTimer, clearDragResetTimer, clearDragState, isImporting]);
+
+  const handleDragEnter = event => {
+    if (isImporting || !hasFileDrag(event)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    dragDepthRef.current += 1;
+    setIsDragActive(true);
+    armDragResetTimer();
+  };
+
+  const handleDragOver = event => {
+    if (isImporting || !hasFileDrag(event)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    event.dataTransfer.dropEffect = 'copy';
+    if (!isDragActive) setIsDragActive(true);
+    armDragResetTimer();
+  };
+
+  const handleDragLeave = event => {
+    if (isImporting || !isDragActive) return;
+    event.preventDefault();
+    event.stopPropagation();
+    dragDepthRef.current = Math.max(0, dragDepthRef.current - 1);
+    if (dragDepthRef.current === 0) setIsDragActive(false);
+  };
+
+  const handleDrop = event => {
+    if (isImporting || !hasFileDrag(event)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    clearDragState();
+    const files = Array.from(event.dataTransfer.files || []);
+    if (files.length > 0) onImport?.(files);
+  };
+
   return (
-    <div>
+    <section
+      className={`relative transition-all ${
+        isDropzoneActive ? 'bg-primary/8 ring-primary/30 rounded-lg shadow-lg ring-2' : ''
+      }`}
+      aria-label='Shot and profile import dropzone'
+      onDragEnter={handleDragEnter}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
+      {isDropzoneActive ? (
+        <div className='border-primary/55 bg-base-100/90 text-primary pointer-events-none absolute inset-0 z-[30] flex items-center justify-center rounded-lg border-2 border-dashed shadow-inner'>
+          <div className='border-primary/25 bg-base-100/90 flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium shadow-sm'>
+            <FontAwesomeIcon icon={faFileImport} className='text-sm' />
+            <span>Drop shot or profile JSON here</span>
+          </div>
+        </div>
+      ) : null}
       <StatusBar {...statusBarProps} />
-      <NotesBar {...notesBarProps} />
-    </div>
+      {showActionBar ? <AnalyzerActionBar {...actionBarProps} /> : null}
+    </section>
   );
 }
 
@@ -637,8 +810,8 @@ function useLibraryPanelHotkeys({
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    globalThis.document?.addEventListener('keydown', handleKeyDown);
+    return () => globalThis.document?.removeEventListener('keydown', handleKeyDown);
   }, [
     collapsed,
     librarySelectionTarget,
@@ -648,18 +821,11 @@ function useLibraryPanelHotkeys({
   ]);
 }
 
-function getLibraryPanelLayoutStyles({
-  collapsed,
-  isMobileViewport,
-  isStuck,
-  barRect,
-  primaryNotesIsEditing,
-  primaryNotesExpandedHeight,
-  secondaryNotesIsEditing,
-  secondaryNotesExpandedHeight,
-}) {
+function getLibraryPanelLayoutStyles({ collapsed, isMobileViewport, isStuck, barRect }) {
   const shouldBeFixed = !collapsed || (!isMobileViewport && isStuck);
-  const fixedBarStyle = shouldBeFixed
+  const barSlotHeight = barRect.height + (collapsed ? STATUS_BAR_CARD_GAP : 0);
+  const barSlotStyle = { height: `${barSlotHeight}px` };
+  const barStyle = shouldBeFixed
     ? {
         position: 'fixed',
         top: 0,
@@ -667,15 +833,18 @@ function getLibraryPanelLayoutStyles({
         width: `${barRect.width}px`,
         zIndex: 50,
       }
-    : {};
-  const expandedEditingOffset =
-    (primaryNotesIsEditing ? primaryNotesExpandedHeight : 0) +
-    (secondaryNotesIsEditing ? secondaryNotesExpandedHeight : 0);
-  const dropdownTop = Math.max(0, barRect.height - expandedEditingOffset);
+    : {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%',
+      };
+  const dropdownTop = barRect.height;
 
   return {
-    shouldBeFixed,
-    fixedBarStyle,
+    barStyle,
+    barSlotHeight,
+    barSlotStyle,
     dropdownTop,
     dropdownStyle: {
       position: 'fixed',
@@ -692,7 +861,9 @@ function getLibraryPanelLayoutStyles({
 
 function isLibraryHotkeyTypingTarget(target) {
   const activeElement =
-    typeof Element !== 'undefined' && target instanceof Element ? target : document.activeElement;
+    typeof Element !== 'undefined' && target instanceof Element
+      ? target
+      : globalThis.document?.activeElement;
   if (!activeElement) return false;
   const tag = activeElement.tagName?.toLowerCase();
   if (activeElement.isContentEditable) return true;
@@ -700,6 +871,799 @@ function isLibraryHotkeyTypingTarget(target) {
   return !!activeElement.closest(
     'input, textarea, select, [contenteditable="true"], [role="textbox"]',
   );
+}
+
+function getNextLibrarySortState(currentSort, key, order) {
+  return {
+    key,
+    order: order || (currentSort.key === key && currentSort.order === 'desc' ? 'asc' : 'desc'),
+  };
+}
+
+function getLibrarySectionVisibilityClass(activeSection, section) {
+  return activeSection === section ? 'block lg:block' : 'hidden lg:block';
+}
+
+function getShotCompareBadgeNumber({
+  compareMode,
+  item,
+  primaryDisplayShot,
+  compareSecondaryShotKey,
+}) {
+  if (!compareMode) return null;
+  const itemKey = getShotIdentityKey(item);
+  if (!itemKey) return null;
+  if (primaryDisplayShot && itemKey === getShotIdentityKey(primaryDisplayShot)) return 1;
+  if (compareSecondaryShotKey && itemKey === compareSecondaryShotKey) return 2;
+  return null;
+}
+
+function getProfileCompareBadgeNumber({
+  compareMode,
+  item,
+  primaryDisplayProfile,
+  primaryDisplayProfileName,
+  secondaryDisplayProfile,
+  secondaryDisplayProfileName,
+}) {
+  if (!compareMode) return null;
+  if (
+    primaryDisplayProfile &&
+    doesProfileMatchProfile(item, primaryDisplayProfile, primaryDisplayProfileName)
+  ) {
+    return 1;
+  }
+  if (
+    secondaryDisplayProfile &&
+    doesProfileMatchProfile(item, secondaryDisplayProfile, secondaryDisplayProfileName)
+  ) {
+    return 2;
+  }
+  return null;
+}
+
+function getLibraryProfileDeleteKey(item) {
+  return item.source === 'gaggimate' ? item.profileId || item.id : item.label || item.name;
+}
+
+function createLibraryProfileStatsContext({
+  compareMode,
+  currentShot,
+  profileItem,
+  secondaryShot,
+  shotsSourceFilter,
+}) {
+  const profileSource = profileItem.source || profileItem.src || 'both';
+  const statsInitialContext = {
+    profileName: getProfileDisplayLabel(profileItem, ''),
+    shotSource:
+      currentShot?.source ||
+      secondaryShot?.source ||
+      getLibraryRequestSource(shotsSourceFilter) ||
+      'both',
+    profileSource,
+    source: profileSource,
+  };
+
+  if (compareMode) {
+    statsInitialContext.preferredDetailSection = 'compare';
+  }
+
+  return statsInitialContext;
+}
+
+function getNormalizedCurrentProfileName(profile, profileMismatch, profileName) {
+  return profile && !profileMismatch ? cleanName(profileName).toLowerCase() : '';
+}
+
+function getRealProfilePinKey(profileValue) {
+  const key = getProfilePinKey(profileValue);
+  return key && key !== 'no profile loaded' ? key : '';
+}
+
+function getActiveShotPinBucketKey({
+  primaryDisplayProfile,
+  primaryProfileMismatch,
+  primaryDisplayProfileName,
+}) {
+  return primaryDisplayProfile && !primaryProfileMismatch
+    ? getRealProfilePinKey(primaryDisplayProfileName)
+    : '';
+}
+
+function getPinnedShotBucketKeyForItem(item, pinnedShotsByProfile) {
+  const shotKey = getShotIdentityKey(item);
+  if (!shotKey) return '';
+
+  return (
+    Object.entries(pinnedShotsByProfile).find(([, shotKeys]) => shotKeys.includes(shotKey))?.[0] ||
+    ''
+  );
+}
+
+function getProfilePinDisabledReasonForItem(item, pinnedProfiles) {
+  if (isProfilePinned(item, pinnedProfiles)) return '';
+  return pinnedProfiles.length >= MAX_PINNED_PROFILES
+    ? `Maximum ${MAX_PINNED_PROFILES} pinned profiles`
+    : '';
+}
+
+function getShotPinDisabledReasonForItem({
+  item,
+  getEffectiveShotPinBucketKey,
+  pinnedShotsByProfile,
+}) {
+  const bucketKey = getEffectiveShotPinBucketKey(item);
+  if (isShotPinned(item, bucketKey, pinnedShotsByProfile)) return '';
+
+  const pinnedCount = (pinnedShotsByProfile[bucketKey] || []).length;
+  if (pinnedCount < MAX_PINNED_SHOTS_PER_PROFILE) return '';
+
+  return bucketKey === PINNED_NO_PROFILE_BUCKET
+    ? `Maximum ${MAX_PINNED_SHOTS_PER_PROFILE} pinned shots without a profile`
+    : `Maximum ${MAX_PINNED_SHOTS_PER_PROFILE} pinned shots per profile`;
+}
+
+function getLibraryTargetMobileSection(target) {
+  return target === 'primaryProfile' || target === 'secondaryProfile' ? 'profiles' : 'shots';
+}
+
+function getSecondaryImportSlot(currentShot) {
+  return currentShot ? 'secondary' : 'primary';
+}
+
+function getSecondaryShotPanelTarget(primaryDisplayShot) {
+  return primaryDisplayShot ? 'secondaryShot' : 'primaryShot';
+}
+
+function getShotRowActionIntent({
+  collapsed,
+  compareMode,
+  currentShot,
+  item,
+  librarySelectionTarget,
+  primaryDisplayShot,
+  secondaryShot,
+}) {
+  const primaryShotKey = primaryDisplayShot ? getShotIdentityKey(primaryDisplayShot) : '';
+  const committedSecondaryShotKey = secondaryShot ? getShotIdentityKey(secondaryShot) : '';
+  const itemShotKey = item ? getShotIdentityKey(item) : '';
+
+  if (librarySelectionTarget === 'secondaryShot') {
+    return !primaryDisplayShot || !itemShotKey || itemShotKey === primaryShotKey
+      ? { type: 'ignore' }
+      : { type: 'selectSecondary' };
+  }
+
+  if (compareMode && committedSecondaryShotKey && itemShotKey === committedSecondaryShotKey) {
+    return { type: 'swap' };
+  }
+
+  const keepLibraryOpen = compareMode && !currentShot;
+  return {
+    type: 'selectPrimary',
+    closeLibrary: !keepLibraryOpen,
+    requestSelectionScroll: !collapsed && !keepLibraryOpen,
+  };
+}
+
+function executeShotRowActionIntent({
+  compareMode,
+  handleSwapCompareSlots,
+  intent,
+  item,
+  onCompareShotToggle,
+  onShotSelect,
+  setCollapsed,
+}) {
+  if (intent.type === 'ignore') return;
+  if (intent.type === 'selectSecondary') {
+    setCollapsed(true);
+    onCompareShotToggle?.({ item, debounceMs: 0 }, true);
+    return;
+  }
+
+  if (intent.type === 'swap') {
+    setCollapsed(true);
+    handleSwapCompareSlots();
+    return;
+  }
+
+  if (intent.closeLibrary) {
+    setCollapsed(true);
+  }
+  onShotSelect?.({
+    item,
+    preserveCompare: compareMode,
+    requestSelectionScroll: intent.requestSelectionScroll,
+    debounceMs: 0,
+  });
+}
+
+function executeProfileRowAction({
+  item,
+  librarySelectionTarget,
+  onCompareProfileLoad,
+  onProfileLoad,
+  secondaryShot,
+  setCollapsed,
+}) {
+  if (librarySelectionTarget === 'secondaryProfile') {
+    if (!secondaryShot) return;
+    onCompareProfileLoad?.(item.data || item, getProfileDisplayLabel(item, ''), item.source);
+    setCollapsed(true);
+    return;
+  }
+
+  onProfileLoad(item.data || item, getProfileDisplayLabel(item, ''), item.source);
+  setCollapsed(true);
+}
+
+function executeStatusBarCompareToggle({
+  compareMode,
+  onCompareModeToggle,
+  openLibraryForTarget,
+  primaryDisplayShot,
+}) {
+  onCompareModeToggle?.();
+  if (!compareMode) {
+    openLibraryForTarget(getSecondaryShotPanelTarget(primaryDisplayShot));
+  }
+}
+
+function maybeOpenSecondaryProfilePanel({ openLibraryForTarget, secondaryDisplayShot }) {
+  if (!secondaryDisplayShot) return;
+  openLibraryForTarget('secondaryProfile');
+}
+
+function applyChangedProfilePins(result, setPinnedProfiles) {
+  if (!result.changed) return;
+  setPinnedProfiles(result.pinnedProfiles);
+}
+
+function applyChangedShotPins(result, setPinnedShotsByProfile) {
+  if (!result.changed) return;
+  setPinnedShotsByProfile(result.pinnedShotsByProfile);
+}
+
+function getShotPinToggleBucketKey({
+  getEffectiveShotPinBucketKey,
+  getPinnedShotBucketKey,
+  item,
+  shotsPinnedFirst,
+}) {
+  return (shotsPinnedFirst && getPinnedShotBucketKey(item)) || getEffectiveShotPinBucketKey(item);
+}
+
+async function deleteLibraryItem(item) {
+  if (item.duration !== undefined || item.samples) {
+    await libraryService.deleteShot(getShotStorageKey(item), item.source);
+    return;
+  }
+  await libraryService.deleteProfile(getLibraryProfileDeleteKey(item), item.source);
+}
+
+function useDebouncedLibraryValue(value, delayMs = 250) {
+  const [debouncedValue, setDebouncedValue] = useState('');
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedValue(value), delayMs);
+    return () => clearTimeout(timer);
+  }, [delayMs, value]);
+
+  return debouncedValue;
+}
+
+function useLibraryServiceApi(apiService) {
+  useEffect(() => {
+    if (apiService) libraryService.setApiService(apiService);
+  }, [apiService]);
+}
+
+function useLibrarySelectionTargetSync({
+  compareMode,
+  currentShot,
+  librarySelectionTarget,
+  secondaryShot,
+  setLibrarySelectionTarget,
+}) {
+  useEffect(() => {
+    if (!compareMode) {
+      setLibrarySelectionTarget('primaryShot');
+    }
+  }, [compareMode, setLibrarySelectionTarget]);
+
+  useEffect(() => {
+    if (compareMode && currentShot && !secondaryShot && librarySelectionTarget === 'primaryShot') {
+      setLibrarySelectionTarget('secondaryShot');
+    }
+  }, [compareMode, currentShot, secondaryShot, librarySelectionTarget, setLibrarySelectionTarget]);
+}
+
+function useCloseLibraryOnOutsideClick({ collapsed, panelRef, setCollapsed }) {
+  useEffect(() => {
+    if (collapsed) return;
+    const handleOutsideClick = event => {
+      if (panelRef.current && !panelRef.current.contains(event.target)) {
+        setCollapsed(true);
+      }
+    };
+    globalThis.document?.addEventListener('mousedown', handleOutsideClick);
+    return () => globalThis.document?.removeEventListener('mousedown', handleOutsideClick);
+  }, [collapsed, panelRef, setCollapsed]);
+}
+
+function useAnalyzerStickyOffset(panelRef, barSlotHeight) {
+  useEffect(() => {
+    const pageElement = panelRef.current?.closest?.('.shot-analyzer-page');
+    if (!pageElement) return undefined;
+
+    pageElement.style.setProperty('--analyzer-sticky-offset', `${barSlotHeight}px`);
+
+    return () => {
+      pageElement.style.removeProperty('--analyzer-sticky-offset');
+    };
+  }, [barSlotHeight, panelRef]);
+}
+
+function useLibraryRefresh({
+  debouncedProfilesSearch,
+  debouncedShotsSearch,
+  normalizedCurrentProfileName,
+  normalizedCurrentShotProfileName,
+  pinnedProfiles,
+  pinnedShotsByProfile,
+  profilesPinnedFirst,
+  profilesSort,
+  profilesSourceFilter,
+  selectionPromotionsEnabled,
+  setLoading,
+  setNavigationShots,
+  setProfiles,
+  setShots,
+  shotsPinnedFirst,
+  shotsSort,
+  shotsSourceFilter,
+}) {
+  const refreshIdRef = useRef(0);
+
+  const refreshLibraries = useCallback(async () => {
+    const id = ++refreshIdRef.current;
+    setLoading(true);
+    try {
+      const [shotsData, profilesData] = await Promise.all([
+        libraryService.getAllShots(getLibraryRequestSource(shotsSourceFilter)),
+        libraryService.getAllProfiles(getLibraryRequestSource(profilesSourceFilter)),
+      ]);
+
+      if (id !== refreshIdRef.current) return;
+      const { nextShots, nextProfiles } = buildPromotedLibraryItems({
+        shotsData,
+        profilesData,
+        shotSearch: debouncedShotsSearch,
+        profileSearch: debouncedProfilesSearch,
+        shotsSort,
+        profilesSort,
+        normalizedCurrentProfileName: selectionPromotionsEnabled
+          ? normalizedCurrentProfileName
+          : '',
+        normalizedCurrentShotProfileName: selectionPromotionsEnabled
+          ? normalizedCurrentShotProfileName
+          : '',
+        pinnedProfiles,
+        pinnedShotsByProfile,
+        shotsPinnedFirst,
+        profilesPinnedFirst,
+        selectionPromotionsEnabled,
+      });
+      const nextNavigationShots = buildShotNavigationItems({
+        shotsData,
+        shotsSort,
+        shotsPinnedFirst,
+        pinnedShotsByProfile,
+      });
+
+      setShots(nextShots);
+      setProfiles(nextProfiles);
+      setNavigationShots(nextNavigationShots);
+    } catch (error) {
+      if (id !== refreshIdRef.current) return;
+      console.error('Library refresh failed:', error);
+    } finally {
+      if (id === refreshIdRef.current) {
+        setLoading(false);
+      }
+    }
+  }, [
+    debouncedProfilesSearch,
+    debouncedShotsSearch,
+    normalizedCurrentProfileName,
+    normalizedCurrentShotProfileName,
+    pinnedProfiles,
+    pinnedShotsByProfile,
+    profilesPinnedFirst,
+    profilesSort,
+    profilesSourceFilter,
+    selectionPromotionsEnabled,
+    setLoading,
+    setNavigationShots,
+    setProfiles,
+    setShots,
+    shotsPinnedFirst,
+    shotsSort,
+    shotsSourceFilter,
+  ]);
+
+  useEffect(() => {
+    refreshLibraries();
+  }, [refreshLibraries]);
+
+  return refreshLibraries;
+}
+
+function LibraryPanelStatusSlots({
+  collapsed,
+  compareMode,
+  primaryActionBarProps,
+  primaryStatusBarProps,
+  secondaryActionBarProps,
+  secondaryStatusBarProps,
+}) {
+  return (
+    <div
+      className={`app-card-surface ${compareMode ? 'overflow-visible' : 'overflow-hidden'} rounded-xl transition-all duration-200 ${
+        collapsed ? '' : 'library-panel-statusbar-surface--open rounded-b-none'
+      }`}
+    >
+      {compareMode ? (
+        <div>
+          <AnalyzerPanelSlot
+            statusBarProps={{
+              ...primaryStatusBarProps,
+              compareBadgeNumber: 1,
+            }}
+            actionBarProps={primaryActionBarProps}
+          />
+          <AnalyzerPanelSlot
+            statusBarProps={secondaryStatusBarProps}
+            actionBarProps={secondaryActionBarProps}
+            showActionBar={false}
+          />
+        </div>
+      ) : (
+        <AnalyzerPanelSlot
+          statusBarProps={primaryStatusBarProps}
+          actionBarProps={primaryActionBarProps}
+        />
+      )}
+    </div>
+  );
+}
+
+function LibraryMobileSectionTabs({ activeSection, onSectionChange }) {
+  const getTabClassName = section =>
+    `flex-1 rounded-md px-3 py-1.5 text-xs font-semibold transition-all ${
+      activeSection === section
+        ? 'bg-base-100 text-base-content shadow-sm'
+        : getAnalyzerTextButtonClasses({
+            className: 'justify-center',
+          })
+    }`;
+
+  return (
+    <div className='px-4 pt-4 lg:hidden'>
+      <div className='bg-base-200/60 flex items-center gap-1 rounded-lg p-1'>
+        <button
+          type='button'
+          className={getTabClassName('shots')}
+          onClick={() => onSectionChange('shots')}
+        >
+          Shots
+        </button>
+        <button
+          type='button'
+          className={getTabClassName('profiles')}
+          onClick={() => onSectionChange('profiles')}
+        >
+          Profiles
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function LibraryDropdown({
+  children,
+  dropdownStyle,
+  mobileActiveSection,
+  onClose,
+  onMobileSectionChange,
+}) {
+  return (
+    <>
+      <button
+        type='button'
+        className='fixed inset-0 cursor-pointer border-0 bg-black/20 p-0'
+        style={{ zIndex: 40 }}
+        onClick={onClose}
+        aria-label='Close library'
+      />
+      <div style={dropdownStyle}>
+        <div className='library-panel-dropdown-surface app-card-surface animate-fade-in-down origin-top overflow-hidden rounded-b-xl'>
+          <LibraryMobileSectionTabs
+            activeSection={mobileActiveSection}
+            onSectionChange={onMobileSectionChange}
+          />
+          <div className='max-h-[75vh] overflow-y-auto overscroll-contain lg:max-h-none lg:overflow-hidden'>
+            <div className='grid grid-cols-1 gap-x-4 gap-y-4 p-4 lg:grid-cols-2 lg:gap-x-1.5'>
+              {children}
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function LibraryShotsPanelSection({
+  compareMode,
+  comparePendingKeys,
+  compareSecondaryShotKey,
+  compareSelectedCount,
+  compareSelectionKeys,
+  desktopSectionHeight,
+  getEffectiveShotPinBucketKey,
+  getPinnedShotBucketKey,
+  getShotPinDisabledReason,
+  handleDelete,
+  handleExport,
+  handleShotPinToggle,
+  handleShotRowAction,
+  loading,
+  mobileActiveSection,
+  normalizedCurrentProfileName,
+  onCompareShotToggle,
+  pinnedShotsByProfile,
+  primaryDisplayProfile,
+  primaryDisplayShot,
+  refreshLibraries,
+  setShotsPinnedFirst,
+  setShotsSearch,
+  setShotsSort,
+  setShotsSourceFilter,
+  shots,
+  shotsPinnedFirst,
+  shotsSearch,
+  shotsSort,
+  shotsSourceFilter,
+}) {
+  const handleExportAllShots = () => {
+    if (shots.length === 0) return;
+    if (
+      confirm(
+        `Do you really want to export all ${shots.length} filtered shots? (Shots are downloaded individually, one after the other.)`,
+      )
+    ) {
+      for (let i = 0; i < shots.length; i++)
+        setTimeout(() => handleExport(shots[i], true), i * 300);
+    }
+  };
+
+  const handleDeleteAllShots = async () => {
+    if (
+      confirm(
+        `WARNING: Do you really want to IRREVOCABLY delete all ${shots.length} filtered shots?`,
+      )
+    ) {
+      for (const shot of shots) {
+        await libraryService.deleteShot(getShotStorageKey(shot), shot.source);
+      }
+      refreshLibraries();
+    }
+  };
+
+  return (
+    <div className={getLibrarySectionVisibilityClass(mobileActiveSection, 'shots')}>
+      <LibrarySection
+        title='Shots'
+        items={shots}
+        isShot={true}
+        compareMode={compareMode}
+        sectionHeight={desktopSectionHeight}
+        searchValue={shotsSearch}
+        sortKey={shotsSort.key}
+        sortOrder={shotsSort.order}
+        sourceFilter={shotsSourceFilter}
+        onSearchChange={setShotsSearch}
+        onSortChange={(key, order) => setShotsSort(getNextLibrarySortState(shotsSort, key, order))}
+        onSourceFilterChange={setShotsSourceFilter}
+        onLoad={handleShotRowAction}
+        onExport={item => handleExport(item, true)}
+        onDelete={handleDelete}
+        compareSelectedCount={compareSelectedCount}
+        compareSelectionKeys={compareSelectionKeys}
+        comparePendingKeys={comparePendingKeys}
+        compareReferenceKey={primaryDisplayShot ? getShotIdentityKey(primaryDisplayShot) : ''}
+        getCompareBadgeNumber={item =>
+          getShotCompareBadgeNumber({
+            compareMode,
+            item,
+            primaryDisplayShot,
+            compareSecondaryShotKey,
+          })
+        }
+        onCompareToggle={onCompareShotToggle}
+        isLoading={loading}
+        onExportAll={handleExportAllShots}
+        onDeleteAll={handleDeleteAllShots}
+        getMatchStatus={item =>
+          primaryDisplayProfile &&
+          cleanName(item.profile || '').toLowerCase() === normalizedCurrentProfileName
+        }
+        getActiveStatus={item =>
+          primaryDisplayShot &&
+          getShotIdentityKey(item) === getShotIdentityKey(primaryDisplayShot) &&
+          item.source === primaryDisplayShot.source
+        }
+        getPinStatus={item =>
+          shotsPinnedFirst
+            ? Boolean(getPinnedShotBucketKey(item))
+            : isShotPinned(item, getEffectiveShotPinBucketKey(item), pinnedShotsByProfile)
+        }
+        getPinDisabledReason={getShotPinDisabledReason}
+        pinnedFirstEnabled={shotsPinnedFirst}
+        onPinnedFirstToggle={() => setShotsPinnedFirst(value => !value)}
+        onPinToggle={handleShotPinToggle}
+      />
+    </div>
+  );
+}
+
+function LibraryProfilesPanelSection({
+  compareMode,
+  desktopSectionHeight,
+  getProfilePinDisabledReason,
+  handleDelete,
+  handleExport,
+  handleLibraryProfileStatsOpen,
+  handleProfilePinToggle,
+  handleProfileRowAction,
+  loading,
+  mobileActiveSection,
+  normalizedCompareSecondaryProfileName,
+  pinnedProfiles,
+  primaryDisplayProfile,
+  primaryDisplayProfileName,
+  primaryDisplayShot,
+  profiles,
+  profilesPinnedFirst,
+  profilesSearch,
+  profilesSort,
+  profilesSourceFilter,
+  refreshLibraries,
+  secondaryDisplayProfile,
+  secondaryDisplayProfileName,
+  secondaryDisplayShot,
+  setProfilesPinnedFirst,
+  setProfilesSearch,
+  setProfilesSort,
+  setProfilesSourceFilter,
+}) {
+  const handleExportAllProfiles = () => {
+    if (profiles.length === 0) return;
+    if (
+      confirm(
+        `Do you really want to export all ${profiles.length} filtered profiles? (Profiles are downloaded individually, one after the other.)`,
+      )
+    ) {
+      for (let i = 0; i < profiles.length; i++)
+        setTimeout(() => handleExport(profiles[i], false), i * 300);
+    }
+  };
+
+  const handleDeleteAllProfiles = async () => {
+    if (
+      confirm(
+        `WARNING: Do you really want to IRREVOCABLY delete all ${profiles.length} filtered profiles?`,
+      )
+    ) {
+      for (const profile of profiles) {
+        await libraryService.deleteProfile(getLibraryProfileDeleteKey(profile), profile.source);
+      }
+      refreshLibraries();
+    }
+  };
+
+  return (
+    <div className={getLibrarySectionVisibilityClass(mobileActiveSection, 'profiles')}>
+      <LibrarySection
+        title='Profiles'
+        items={profiles}
+        isShot={false}
+        compareMode={compareMode}
+        sectionHeight={desktopSectionHeight}
+        searchValue={profilesSearch}
+        sortKey={profilesSort.key}
+        sortOrder={profilesSort.order}
+        sourceFilter={profilesSourceFilter}
+        onSearchChange={setProfilesSearch}
+        onSortChange={(key, order) =>
+          setProfilesSort(getNextLibrarySortState(profilesSort, key, order))
+        }
+        onSourceFilterChange={setProfilesSourceFilter}
+        onLoad={handleProfileRowAction}
+        onShowStats={handleLibraryProfileStatsOpen}
+        onExport={item => handleExport(item, false)}
+        onDelete={handleDelete}
+        isLoading={loading}
+        onExportAll={handleExportAllProfiles}
+        onDeleteAll={handleDeleteAllProfiles}
+        getMatchStatus={item =>
+          primaryDisplayShot && doesProfileLabelMatchShot(item, primaryDisplayShot)
+        }
+        getCompareStatus={item =>
+          Boolean(
+            secondaryDisplayProfileName &&
+              normalizedCompareSecondaryProfileName &&
+              normalizedCompareSecondaryProfileName !== 'no profile loaded' &&
+              doesProfileLabelMatchShot(item, secondaryDisplayShot),
+          )
+        }
+        getCompareBadgeNumber={item =>
+          getProfileCompareBadgeNumber({
+            compareMode,
+            item,
+            primaryDisplayProfile,
+            primaryDisplayProfileName,
+            secondaryDisplayProfile,
+            secondaryDisplayProfileName,
+          })
+        }
+        getActiveStatus={item =>
+          primaryDisplayProfile &&
+          doesProfileMatchProfile(item, primaryDisplayProfile, primaryDisplayProfileName)
+        }
+        getPinStatus={item => isProfilePinned(item, pinnedProfiles)}
+        getPinDisabledReason={getProfilePinDisabledReason}
+        pinnedFirstEnabled={profilesPinnedFirst}
+        onPinnedFirstToggle={() => setProfilesPinnedFirst(value => !value)}
+        onPinToggle={handleProfilePinToggle}
+      />
+    </div>
+  );
+}
+
+function getLibraryExportHandler(item, isShot, handleExport) {
+  return item ? () => handleExport(item, isShot) : null;
+}
+
+function createPrimaryStatsHandler({
+  onShowStats,
+  primaryDisplayProfile,
+  primaryDisplayProfileName,
+  primaryDisplayShot,
+}) {
+  return () =>
+    onShowStats?.({
+      shotSource: primaryDisplayShot?.source || 'both',
+      profileSource: primaryDisplayProfile?.source || 'both',
+      profileName: primaryDisplayProfileName,
+    });
+}
+
+function createSecondaryStatsHandler({
+  onShowStats,
+  primaryDisplayShot,
+  secondaryDisplayProfile,
+  secondaryDisplayProfileName,
+  secondaryDisplayShot,
+}) {
+  return () =>
+    onShowStats?.({
+      shotSource: secondaryDisplayShot?.source || primaryDisplayShot?.source || 'both',
+      profileSource: secondaryDisplayProfile?.source || 'both',
+      profileName: secondaryDisplayProfileName,
+    });
 }
 
 export function LibraryPanel({
@@ -741,8 +1705,8 @@ export function LibraryPanel({
   const apiService = useContext(ApiServiceContext);
   const panelRef = useRef(null);
   const sentinelRef = useRef(null);
+  const barSlotRef = useRef(null);
   const barRef = useRef(null);
-  const refreshIdRef = useRef(0);
 
   // UI State
   const [collapsed, setCollapsed] = useState(true);
@@ -751,25 +1715,8 @@ export function LibraryPanel({
   const [librarySelectionTarget, setLibrarySelectionTarget] = useState('primaryShot');
   const { isStuck, isMobileViewport, barRect } = useLibraryPanelLayoutState({
     sentinelRef,
+    barSlotRef,
     barRef,
-  });
-  const {
-    primaryNotesExpanded,
-    setPrimaryNotesExpanded,
-    primaryNotesIsEditing,
-    setPrimaryNotesIsEditing,
-    primaryNotesExpandedHeight,
-    setPrimaryNotesExpandedHeight,
-    secondaryNotesExpanded,
-    setSecondaryNotesExpanded,
-    secondaryNotesIsEditing,
-    setSecondaryNotesIsEditing,
-    secondaryNotesExpandedHeight,
-    setSecondaryNotesExpandedHeight,
-  } = useLibraryPanelNotesState({
-    currentShot,
-    secondaryShot,
-    compareMode,
   });
   const {
     primaryDisplayShot,
@@ -833,80 +1780,55 @@ export function LibraryPanel({
     profileItem => {
       if (!profileItem) return;
       try {
-        const currentAnalyzerShotSource =
-          currentShot?.source ||
-          secondaryShot?.source ||
-          getLibraryRequestSource(shotsSourceFilter) ||
-          'both';
-        const profileSource = profileItem.source || profileItem.src || 'both';
-        const statsInitialContext = {
-          profileName: getProfileDisplayLabel(profileItem, ''),
-          shotSource: currentAnalyzerShotSource,
-          profileSource,
-          source: profileSource,
-        };
-        if (compareMode) {
-          statsInitialContext.preferredDetailSection = 'compare';
-        }
-        sessionStorage.setItem('statsInitialContext', JSON.stringify(statsInitialContext));
+        sessionStorage.setItem(
+          'statsInitialContext',
+          JSON.stringify(
+            createLibraryProfileStatsContext({
+              compareMode,
+              currentShot,
+              profileItem,
+              secondaryShot,
+              shotsSourceFilter,
+            }),
+          ),
+        );
       } catch {
         // Ignore session storage issues and keep navigation working.
       }
     },
-    [compareMode, currentShot?.source, secondaryShot?.source, shotsSourceFilter],
+    [compareMode, currentShot, secondaryShot, shotsSourceFilter],
   );
 
   // Debounced search values to avoid re-fetching on every keystroke
-  const [debouncedShotsSearch, setDebouncedShotsSearch] = useState('');
-  const [debouncedProfilesSearch, setDebouncedProfilesSearch] = useState('');
+  const debouncedShotsSearch = useDebouncedLibraryValue(shotsSearch);
+  const debouncedProfilesSearch = useDebouncedLibraryValue(profilesSearch);
   const normalizedCurrentShotProfileName = cleanName(
     primaryDisplayShot?.profile || '',
   ).toLowerCase();
-  const normalizedCurrentProfileName =
-    primaryDisplayProfile && !primaryProfileMismatch
-      ? cleanName(primaryDisplayProfileName).toLowerCase()
-      : '';
+  const normalizedCurrentProfileName = getNormalizedCurrentProfileName(
+    primaryDisplayProfile,
+    primaryProfileMismatch,
+    primaryDisplayProfileName,
+  );
   const normalizedCompareSecondaryProfileName = cleanName(
     secondaryDisplayProfileName,
   ).toLowerCase();
-  const resolveRealProfilePinKey = useCallback(profileValue => {
-    const key = getProfilePinKey(profileValue);
-    return key && key !== 'no profile loaded' ? key : '';
-  }, []);
   // Shot pins remain profile-scoped for pin/unpin actions and row state, but
   // they no longer affect list ordering unless the user explicitly enables the
   // global "pinned first" mode in the header.
-  const activeShotPinBucketKey =
-    primaryDisplayProfile && !primaryProfileMismatch
-      ? resolveRealProfilePinKey(primaryDisplayProfileName)
-      : '';
+  const activeShotPinBucketKey = getActiveShotPinBucketKey({
+    primaryDisplayProfile,
+    primaryProfileMismatch,
+    primaryDisplayProfileName,
+  });
   const getEffectiveShotPinBucketKey = useCallback(
     item => activeShotPinBucketKey || getShotPinBucketKey(item),
     [activeShotPinBucketKey],
   );
   const getPinnedShotBucketKey = useCallback(
-    item => {
-      const shotKey = getShotIdentityKey(item);
-      if (!shotKey) return '';
-
-      return (
-        Object.entries(pinnedShotsByProfile).find(([, shotKeys]) =>
-          shotKeys.includes(shotKey),
-        )?.[0] || ''
-      );
-    },
+    item => getPinnedShotBucketKeyForItem(item, pinnedShotsByProfile),
     [pinnedShotsByProfile],
   );
-
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedShotsSearch(shotsSearch), 250);
-    return () => clearTimeout(timer);
-  }, [shotsSearch]);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedProfilesSearch(profilesSearch), 250);
-    return () => clearTimeout(timer);
-  }, [profilesSearch]);
 
   useEffect(() => {
     saveToStorage(ANALYZER_DB_KEYS.LIBRARY_SHOTS_SOURCE_FILTER, shotsSourceFilter);
@@ -916,173 +1838,66 @@ export function LibraryPanel({
     saveToStorage(ANALYZER_DB_KEYS.LIBRARY_PROFILES_SOURCE_FILTER, profilesSourceFilter);
   }, [profilesSourceFilter]);
 
-  // Initialize API Service for Library
-  useEffect(() => {
-    if (apiService) libraryService.setApiService(apiService);
-  }, [apiService]);
+  useLibraryServiceApi(apiService);
+  useLibrarySelectionTargetSync({
+    compareMode,
+    currentShot,
+    librarySelectionTarget,
+    secondaryShot,
+    setLibrarySelectionTarget,
+  });
+  useCloseLibraryOnOutsideClick({ collapsed, panelRef, setCollapsed });
 
-  useEffect(() => {
-    if (!compareMode) {
-      setLibrarySelectionTarget('primaryShot');
-    }
-  }, [compareMode]);
-
-  useEffect(() => {
-    if (compareMode && currentShot && !secondaryShot && librarySelectionTarget === 'primaryShot') {
-      setLibrarySelectionTarget('secondaryShot');
-    }
-  }, [compareMode, currentShot, secondaryShot, librarySelectionTarget]);
-
-  useEffect(() => {
-    if (!isPrimarySelectionPending) return;
-    setPrimaryNotesExpanded(false);
-    setPrimaryNotesIsEditing(false);
-    setPrimaryNotesExpandedHeight(0);
-  }, [
-    isPrimarySelectionPending,
-    setPrimaryNotesExpanded,
-    setPrimaryNotesExpandedHeight,
-    setPrimaryNotesIsEditing,
-  ]);
-
-  useEffect(() => {
-    if (!isCompareSelectionPending) return;
-    setSecondaryNotesExpanded(false);
-    setSecondaryNotesIsEditing(false);
-    setSecondaryNotesExpandedHeight(0);
-  }, [
-    isCompareSelectionPending,
-    setSecondaryNotesExpanded,
-    setSecondaryNotesExpandedHeight,
-    setSecondaryNotesIsEditing,
-  ]);
-
-  // Close panel on outside click
-  useEffect(() => {
-    if (collapsed) return;
-    const handleOutsideClick = e => {
-      if (panelRef.current && !panelRef.current.contains(e.target)) {
-        setCollapsed(true);
-      }
-    };
-    document.addEventListener('mousedown', handleOutsideClick);
-    return () => document.removeEventListener('mousedown', handleOutsideClick);
-  }, [collapsed]);
-
-  /**
-   * Fetch, Filter, and Sort data from sources.
-   * Reorders rows by selection match and pin state after the base sort.
-   */
-  const refreshLibraries = useCallback(async () => {
-    const id = ++refreshIdRef.current;
-    setLoading(true);
-    try {
-      const [shotsData, profilesData] = await Promise.all([
-        libraryService.getAllShots(getLibraryRequestSource(shotsSourceFilter)),
-        libraryService.getAllProfiles(getLibraryRequestSource(profilesSourceFilter)),
-      ]);
-
-      if (id !== refreshIdRef.current) return; // stale request, discard
-      const { nextShots, nextProfiles } = buildPromotedLibraryItems({
-        shotsData,
-        profilesData,
-        shotSearch: debouncedShotsSearch,
-        profileSearch: debouncedProfilesSearch,
-        shotsSort,
-        profilesSort,
-        normalizedCurrentProfileName: selectionPromotionsEnabled
-          ? normalizedCurrentProfileName
-          : '',
-        normalizedCurrentShotProfileName: selectionPromotionsEnabled
-          ? normalizedCurrentShotProfileName
-          : '',
-        pinnedProfiles,
-        pinnedShotsByProfile,
-        shotsPinnedFirst,
-        profilesPinnedFirst,
-        selectionPromotionsEnabled,
-      });
-      const nextNavigationShots = buildShotNavigationItems({
-        shotsData,
-        shotsSort,
-        shotsPinnedFirst,
-        pinnedShotsByProfile,
-      });
-
-      setShots(nextShots);
-      setProfiles(nextProfiles);
-      setNavigationShots(nextNavigationShots);
-    } catch (error) {
-      if (id !== refreshIdRef.current) return;
-      console.error('Library refresh failed:', error);
-    } finally {
-      if (id === refreshIdRef.current) {
-        setLoading(false);
-      }
-    }
-  }, [
-    shotsSourceFilter,
-    profilesSourceFilter,
-    debouncedShotsSearch,
+  const refreshLibraries = useLibraryRefresh({
     debouncedProfilesSearch,
-    shotsSort,
-    profilesSort,
-    selectionPromotionsEnabled,
+    debouncedShotsSearch,
     normalizedCurrentProfileName,
     normalizedCurrentShotProfileName,
     pinnedProfiles,
     pinnedShotsByProfile,
-    shotsPinnedFirst,
     profilesPinnedFirst,
-  ]);
-
-  useEffect(() => {
-    refreshLibraries();
-  }, [refreshLibraries]);
+    profilesSort,
+    profilesSourceFilter,
+    selectionPromotionsEnabled,
+    setLoading,
+    setNavigationShots,
+    setProfiles,
+    setShots,
+    shotsPinnedFirst,
+    shotsSort,
+    shotsSourceFilter,
+  });
 
   // --- Action Handlers ---
 
   const getProfilePinDisabledReason = useCallback(
-    item => {
-      if (isProfilePinned(item, pinnedProfiles)) return '';
-      if (pinnedProfiles.length >= MAX_PINNED_PROFILES) {
-        return `Maximum ${MAX_PINNED_PROFILES} pinned profiles`;
-      }
-      return '';
-    },
+    item => getProfilePinDisabledReasonForItem(item, pinnedProfiles),
     [pinnedProfiles],
   );
 
   const getShotPinDisabledReason = useCallback(
-    item => {
-      const bucketKey = getEffectiveShotPinBucketKey(item);
-      if (isShotPinned(item, bucketKey, pinnedShotsByProfile)) return '';
-
-      const pinnedCount = (pinnedShotsByProfile[bucketKey] || []).length;
-      if (pinnedCount >= MAX_PINNED_SHOTS_PER_PROFILE) {
-        return bucketKey === PINNED_NO_PROFILE_BUCKET
-          ? `Maximum ${MAX_PINNED_SHOTS_PER_PROFILE} pinned shots without a profile`
-          : `Maximum ${MAX_PINNED_SHOTS_PER_PROFILE} pinned shots per profile`;
-      }
-
-      return '';
-    },
+    item =>
+      getShotPinDisabledReasonForItem({
+        item,
+        getEffectiveShotPinBucketKey,
+        pinnedShotsByProfile,
+      }),
     [getEffectiveShotPinBucketKey, pinnedShotsByProfile],
   );
 
   const handleProfilePinToggle = useCallback(item => {
-    const result = toggleProfilePin(item);
-    if (!result.changed) return;
-    setPinnedProfiles(result.pinnedProfiles);
+    applyChangedProfilePins(toggleProfilePin(item), setPinnedProfiles);
   }, []);
 
   const handleShotPinToggle = useCallback(
     item => {
-      const resolvedBucketKey =
-        (shotsPinnedFirst && getPinnedShotBucketKey(item)) || getEffectiveShotPinBucketKey(item);
-      const result = toggleShotPin(item, resolvedBucketKey);
-      if (!result.changed) return;
-      setPinnedShotsByProfile(result.pinnedShotsByProfile);
+      const resolvedBucketKey = getShotPinToggleBucketKey({
+        getEffectiveShotPinBucketKey,
+        getPinnedShotBucketKey,
+        item,
+        shotsPinnedFirst,
+      });
+      applyChangedShotPins(toggleShotPin(item, resolvedBucketKey), setPinnedShotsByProfile);
     },
     [getEffectiveShotPinBucketKey, getPinnedShotBucketKey, shotsPinnedFirst],
   );
@@ -1104,15 +1919,7 @@ export function LibraryPanel({
   const handleDelete = async item => {
     if (!confirm(`Are you sure you want to delete "${item.name || item.id}"?`)) return;
     try {
-      if (item.duration !== undefined || item.samples) {
-        const deleteKey =
-          item.source === 'gaggimate' ? item.id : item.storageKey || item.name || item.id;
-        await libraryService.deleteShot(deleteKey, item.source);
-      } else {
-        const deleteKey =
-          item.source === 'gaggimate' ? item.profileId || item.id : item.label || item.name;
-        await libraryService.deleteProfile(deleteKey, item.source);
-      }
+      await deleteLibraryItem(item);
       refreshLibraries();
     } catch (e) {
       alert(`Delete failed: ${e.message}`);
@@ -1134,10 +1941,7 @@ export function LibraryPanel({
 
   const openLibraryForTarget = useCallback(
     target => {
-      const nextMobileSection =
-        target === 'primaryProfile' || target === 'secondaryProfile' ? 'profiles' : 'shots';
-
-      setMobileActiveSection(nextMobileSection);
+      setMobileActiveSection(getLibraryTargetMobileSection(target));
 
       if (!collapsed && librarySelectionTarget === target) {
         setCollapsed(true);
@@ -1151,44 +1955,32 @@ export function LibraryPanel({
   );
 
   const handleShotRowAction = item => {
-    const primaryShotKey = primaryDisplayShot ? getShotIdentityKey(primaryDisplayShot) : '';
-    const committedSecondaryShotKey = secondaryShot ? getShotIdentityKey(secondaryShot) : '';
-    const itemShotKey = item ? getShotIdentityKey(item) : '';
-
-    if (librarySelectionTarget === 'secondaryShot') {
-      if (!primaryDisplayShot || !itemShotKey || itemShotKey === primaryShotKey) return;
-      setCollapsed(true);
-      onCompareShotToggle?.({ item, debounceMs: 0 }, true);
-      return;
-    }
-
-    if (compareMode && committedSecondaryShotKey && itemShotKey === committedSecondaryShotKey) {
-      setCollapsed(true);
-      handleSwapCompareSlots();
-      return;
-    }
-
-    const keepLibraryOpenForCompareBootstrap = compareMode && !currentShot;
-    const shouldRequestSelectionScroll = !collapsed && !keepLibraryOpenForCompareBootstrap;
-    if (!keepLibraryOpenForCompareBootstrap) {
-      setCollapsed(true);
-    }
-    onShotSelect?.({
+    executeShotRowActionIntent({
+      compareMode,
+      handleSwapCompareSlots,
+      intent: getShotRowActionIntent({
+        collapsed,
+        compareMode,
+        currentShot,
+        item,
+        librarySelectionTarget,
+        primaryDisplayShot,
+        secondaryShot,
+      }),
       item,
-      preserveCompare: compareMode,
-      requestSelectionScroll: shouldRequestSelectionScroll,
-      debounceMs: 0,
+      onCompareShotToggle,
+      onShotSelect,
+      setCollapsed,
     });
   };
 
   const handleStatusBarCompareToggle = useCallback(() => {
-    if (!compareMode) {
-      onCompareModeToggle?.();
-      openLibraryForTarget(primaryDisplayShot ? 'secondaryShot' : 'primaryShot');
-      return;
-    }
-
-    onCompareModeToggle?.();
+    executeStatusBarCompareToggle({
+      compareMode,
+      onCompareModeToggle,
+      openLibraryForTarget,
+      primaryDisplayShot,
+    });
   }, [compareMode, onCompareModeToggle, openLibraryForTarget, primaryDisplayShot]);
 
   useLibraryPanelHotkeys({
@@ -1200,21 +1992,20 @@ export function LibraryPanel({
   });
 
   const handleProfileRowAction = item => {
-    if (librarySelectionTarget === 'secondaryProfile') {
-      if (!secondaryShot) return;
-      onCompareProfileLoad?.(item.data || item, getProfileDisplayLabel(item, ''), item.source);
-      setCollapsed(true);
-      return;
-    }
-
-    onProfileLoad(item.data || item, getProfileDisplayLabel(item, ''), item.source);
-    setCollapsed(true);
+    executeProfileRowAction({
+      item,
+      librarySelectionTarget,
+      onCompareProfileLoad,
+      onProfileLoad,
+      secondaryShot,
+      setCollapsed,
+    });
   };
 
   const handleNavigateShot = request => {
     onShotSelect?.({
       ...request,
-      preserveCompare: compareMode && compareHasSecondaryShot,
+      preserveCompare: Boolean(compareMode && compareHasSecondaryShot),
       requestSelectionScroll: false,
     });
   };
@@ -1226,34 +2017,24 @@ export function LibraryPanel({
 
   const handleClearSecondaryShot = () => {
     if (!secondaryDisplayShot) return;
-    setSecondaryNotesExpanded(false);
-    setSecondaryNotesIsEditing(false);
-    setSecondaryNotesExpandedHeight(0);
     onCompareShotToggle?.(secondaryDisplayShot, false);
   };
 
   const handleSwapCompareSlots = () => {
     if (!currentShot || !secondaryShot) return;
-    setPrimaryNotesExpanded(false);
-    setPrimaryNotesIsEditing(false);
-    setPrimaryNotesExpandedHeight(0);
-    setSecondaryNotesExpanded(false);
-    setSecondaryNotesIsEditing(false);
-    setSecondaryNotesExpandedHeight(0);
     onCompareSwap?.();
   };
 
-  const { shouldBeFixed, fixedBarStyle, dropdownStyle, desktopSectionHeight } =
+  const { barStyle, barSlotHeight, barSlotStyle, dropdownStyle, desktopSectionHeight } =
     getLibraryPanelLayoutStyles({
       collapsed,
       isMobileViewport,
       isStuck,
       barRect,
-      primaryNotesIsEditing,
-      primaryNotesExpandedHeight,
-      secondaryNotesIsEditing,
-      secondaryNotesExpandedHeight,
     });
+
+  useAnalyzerStickyOffset(panelRef, barSlotHeight);
+
   const primaryStatusBarProps = {
     currentShot: primaryDisplayShot,
     currentProfile: primaryDisplayProfile,
@@ -1261,17 +2042,19 @@ export function LibraryPanel({
     currentProfileName: primaryDisplayProfileName,
     onUnloadShot: onShotUnload,
     onUnloadProfile: onProfileUnload,
+    onExportShot: getLibraryExportHandler(primaryDisplayShot, true, handleExport),
+    onExportProfile: getLibraryExportHandler(primaryDisplayProfile, false, handleExport),
     onCompareModeToggle: handleStatusBarCompareToggle,
     onRetryProfileSearch,
     onShotPanelToggle: () => openLibraryForTarget('primaryShot'),
     onProfilePanelToggle: () => openLibraryForTarget('primaryProfile'),
     onImport: files => handleImport(files, { slot: 'primary' }),
-    onShowStats: () =>
-      onShowStats?.({
-        shotSource: primaryDisplayShot?.source || 'both',
-        profileSource: primaryDisplayProfile?.source || 'both',
-        profileName: primaryDisplayProfileName,
-      }),
+    onShowStats: createPrimaryStatsHandler({
+      onShowStats,
+      primaryDisplayProfile,
+      primaryDisplayProfileName,
+      primaryDisplayShot,
+    }),
     statsHref,
     compareAvailable: shots.length > 0,
     compareMode,
@@ -1281,23 +2064,24 @@ export function LibraryPanel({
     isShotPending: isPrimarySelectionPending,
     canRetryProfileSearch: canRetryPrimaryProfileSearch,
   };
-  const primaryNotesBarProps = {
+  const primaryActionBarProps = {
     currentShot,
-    currentShotName,
     selectedShot: primaryDisplayShot,
-    selectedShotName: primaryDisplayShotName,
-    selectedProfileName: primaryDisplayProfileName,
     shotList: collapsed ? navigationShots : shots,
     onNavigate: handleNavigateShot,
+    onCompareModeToggle: handleStatusBarCompareToggle,
+    compareAvailable: shots.length > 0,
+    compareMode,
+    showCompareButton: true,
+    onShowStats: primaryStatusBarProps.onShowStats,
+    statsHref,
+    statisticsAvailable: Boolean(primaryDisplayProfile || primaryProfileMismatch),
+    onImport: files => handleImport(files, { slot: 'primary', targetType: 'any' }),
+    isImporting: importing,
     importMode,
     onImportModeChange,
-    isExpanded: !collapsed,
     isSelectionPending: isPrimarySelectionPending,
     isProfilePending: isPrimaryProfileSearching,
-    notesExpanded: primaryNotesExpanded,
-    onToggleNotesExpanded: () => setPrimaryNotesExpanded(value => !value),
-    onEditingChange: setPrimaryNotesIsEditing,
-    onExpandedHeightChange: setPrimaryNotesExpandedHeight,
   };
   const secondaryStatusBarProps = {
     currentShot: secondaryDisplayShot,
@@ -1306,23 +2090,23 @@ export function LibraryPanel({
     currentProfileName: secondaryDisplayProfileName,
     onUnloadShot: handleClearSecondaryShot,
     onUnloadProfile: onCompareProfileUnload,
+    onExportShot: getLibraryExportHandler(secondaryDisplayShot, true, handleExport),
+    onExportProfile: getLibraryExportHandler(secondaryDisplayProfile, false, handleExport),
     onRetryProfileSearch: onRetryCompareProfileSearch,
-    onShotPanelToggle: () =>
-      openLibraryForTarget(primaryDisplayShot ? 'secondaryShot' : 'primaryShot'),
-    onProfilePanelToggle: () => {
-      if (!secondaryDisplayShot) return;
-      openLibraryForTarget('secondaryProfile');
-    },
+    onShotPanelToggle: () => openLibraryForTarget(getSecondaryShotPanelTarget(primaryDisplayShot)),
+    onProfilePanelToggle: () =>
+      maybeOpenSecondaryProfilePanel({ openLibraryForTarget, secondaryDisplayShot }),
     onImport: files =>
       handleImport(files, {
-        slot: currentShot ? 'secondary' : 'primary',
+        slot: getSecondaryImportSlot(currentShot),
       }),
-    onShowStats: () =>
-      onShowStats?.({
-        shotSource: secondaryDisplayShot?.source || primaryDisplayShot?.source || 'both',
-        profileSource: secondaryDisplayProfile?.source || 'both',
-        profileName: secondaryDisplayProfileName,
-      }),
+    onShowStats: createSecondaryStatsHandler({
+      onShowStats,
+      primaryDisplayShot,
+      secondaryDisplayProfile,
+      secondaryDisplayProfileName,
+      secondaryDisplayShot,
+    }),
     statsHref: secondaryStatsHref,
     compareAvailable: false,
     compareMode,
@@ -1331,335 +2115,122 @@ export function LibraryPanel({
     isSearchingProfile: isCompareProfileSearching,
     isShotPending: isCompareSelectionPending,
     canRetryProfileSearch: canRetryCompareProfileSearch,
-    compact: true,
     showCompareButton: false,
     compareBadgeNumber: 2,
     ghosted: true,
   };
-  const secondaryNotesBarProps = {
+  const secondaryActionBarProps = {
     currentShot: secondaryShot,
-    currentShotName: secondaryShotName,
     selectedShot: secondaryDisplayShot,
-    selectedShotName: secondaryDisplayShotName,
-    selectedProfileName: secondaryDisplayProfileName,
     shotList: collapsed ? navigationShots : shots,
     onNavigate: handleNavigateCompareShot,
+    onShowStats: secondaryStatusBarProps.onShowStats,
+    statsHref: secondaryStatsHref,
+    statisticsAvailable: Boolean(secondaryDisplayProfile || secondaryProfileMismatch),
+    onImport: files =>
+      handleImport(files, {
+        slot: getSecondaryImportSlot(currentShot),
+        targetType: 'any',
+      }),
+    isImporting: importing,
     importMode,
     onImportModeChange,
-    isExpanded: !collapsed,
     isSelectionPending: isCompareSelectionPending,
     isProfilePending: isCompareProfileSearching,
-    notesExpanded: secondaryNotesExpanded,
-    onToggleNotesExpanded: () => setSecondaryNotesExpanded(value => !value),
-    onEditingChange: setSecondaryNotesIsEditing,
-    onExpandedHeightChange: setSecondaryNotesExpandedHeight,
     showImportModeToggle: false,
+    showCompareButton: false,
     enableKeyboardNavigation: false,
   };
   return (
     <div ref={panelRef} className='relative'>
       <div ref={sentinelRef} className='h-0 w-full' />
-      {shouldBeFixed && <div style={{ height: `${barRect.height}px` }} />}
 
-      <div ref={barRef} style={fixedBarStyle}>
-        <div
-          className={`bg-base-100/80 border-base-content/10 ${compareMode ? 'overflow-visible' : 'overflow-hidden'} border backdrop-blur-md transition-all duration-200 ${
-            collapsed ? 'rounded-xl shadow-lg' : 'rounded-t-xl border-b-0 shadow-none'
-          }`}
-        >
-          {compareMode ? (
-            <div>
-              <AnalyzerPanelSlot
-                statusBarProps={{
-                  ...primaryStatusBarProps,
-                  compact: true,
-                  compareBadgeNumber: 1,
-                }}
-                notesBarProps={primaryNotesBarProps}
-              />
-              <div className='flex -translate-y-2 items-center justify-center py-0'>
-                <button
-                  type='button'
-                  onClick={handleSwapCompareSlots}
-                  disabled={!currentShot || !secondaryShot}
-                  className={getAnalyzerIconButtonClasses({
-                    tone: !currentShot || !secondaryShot ? 'subtle' : 'primary',
-                    className:
-                      'h-5 w-5 rounded-none border-none bg-transparent p-0 shadow-none hover:bg-transparent disabled:cursor-not-allowed disabled:opacity-40',
-                  })}
-                  title='Swap shot 1 and shot 2'
-                  aria-label='Swap shot 1 and shot 2'
-                >
-                  <FontAwesomeIcon icon={faUpDown} className='text-[11px]' />
-                </button>
-              </div>
-              <AnalyzerPanelSlot
-                statusBarProps={secondaryStatusBarProps}
-                notesBarProps={secondaryNotesBarProps}
-              />
-            </div>
-          ) : (
-            <AnalyzerPanelSlot
-              statusBarProps={primaryStatusBarProps}
-              notesBarProps={primaryNotesBarProps}
-            />
-          )}
+      <div ref={barSlotRef} className='relative w-full' style={barSlotStyle}>
+        <div ref={barRef} style={barStyle}>
+          <LibraryPanelStatusSlots
+            collapsed={collapsed}
+            compareMode={compareMode}
+            primaryActionBarProps={primaryActionBarProps}
+            primaryStatusBarProps={primaryStatusBarProps}
+            secondaryActionBarProps={secondaryActionBarProps}
+            secondaryStatusBarProps={secondaryStatusBarProps}
+          />
         </div>
       </div>
 
       {!collapsed && (
-        <>
-          <div
-            className='fixed inset-0 cursor-pointer bg-black/20 backdrop-blur-[1px]'
-            style={{ zIndex: 40 }}
-            onClick={() => setCollapsed(true)}
+        <LibraryDropdown
+          dropdownStyle={dropdownStyle}
+          mobileActiveSection={mobileActiveSection}
+          onClose={() => setCollapsed(true)}
+          onMobileSectionChange={setMobileActiveSection}
+        >
+          {/* SHOTS SECTION */}
+          <LibraryShotsPanelSection
+            compareMode={compareMode}
+            comparePendingKeys={comparePendingKeys}
+            compareSecondaryShotKey={compareSecondaryShotKey}
+            compareSelectedCount={compareSelectedCount}
+            compareSelectionKeys={compareSelectionKeys}
+            desktopSectionHeight={desktopSectionHeight}
+            getEffectiveShotPinBucketKey={getEffectiveShotPinBucketKey}
+            getPinnedShotBucketKey={getPinnedShotBucketKey}
+            getShotPinDisabledReason={getShotPinDisabledReason}
+            handleDelete={handleDelete}
+            handleExport={handleExport}
+            handleShotPinToggle={handleShotPinToggle}
+            handleShotRowAction={handleShotRowAction}
+            loading={loading}
+            mobileActiveSection={mobileActiveSection}
+            normalizedCurrentProfileName={normalizedCurrentProfileName}
+            onCompareShotToggle={onCompareShotToggle}
+            pinnedShotsByProfile={pinnedShotsByProfile}
+            primaryDisplayProfile={primaryDisplayProfile}
+            primaryDisplayShot={primaryDisplayShot}
+            refreshLibraries={refreshLibraries}
+            setShotsPinnedFirst={setShotsPinnedFirst}
+            setShotsSearch={setShotsSearch}
+            setShotsSort={setShotsSort}
+            setShotsSourceFilter={setShotsSourceFilter}
+            shots={shots}
+            shotsPinnedFirst={shotsPinnedFirst}
+            shotsSearch={shotsSearch}
+            shotsSort={shotsSort}
+            shotsSourceFilter={shotsSourceFilter}
           />
-          <div style={dropdownStyle}>
-            <div className='bg-base-100/80 border-base-content/10 animate-fade-in-down origin-top overflow-hidden rounded-b-xl border border-t-0 shadow-2xl backdrop-blur-md'>
-              <div className='px-4 pt-4 lg:hidden'>
-                <div className='bg-base-200/60 flex items-center gap-1 rounded-lg p-1'>
-                  <button
-                    type='button'
-                    className={`flex-1 rounded-md px-3 py-1.5 text-xs font-semibold transition-all ${
-                      mobileActiveSection === 'shots'
-                        ? 'bg-base-100 text-base-content shadow-sm'
-                        : getAnalyzerTextButtonClasses({
-                            className: 'justify-center',
-                          })
-                    }`}
-                    onClick={() => setMobileActiveSection('shots')}
-                  >
-                    Shots
-                  </button>
-                  <button
-                    type='button'
-                    className={`flex-1 rounded-md px-3 py-1.5 text-xs font-semibold transition-all ${
-                      mobileActiveSection === 'profiles'
-                        ? 'bg-base-100 text-base-content shadow-sm'
-                        : getAnalyzerTextButtonClasses({
-                            className: 'justify-center',
-                          })
-                    }`}
-                    onClick={() => setMobileActiveSection('profiles')}
-                  >
-                    Profiles
-                  </button>
-                </div>
-              </div>
-              <div className='max-h-[75vh] overflow-y-auto overscroll-contain lg:max-h-none lg:overflow-hidden'>
-                <div className='grid grid-cols-1 gap-x-4 gap-y-4 p-4 lg:grid-cols-2 lg:gap-x-1.5'>
-                  {/* SHOTS SECTION */}
-                  <div
-                    className={
-                      mobileActiveSection === 'shots' ? 'block lg:block' : 'hidden lg:block'
-                    }
-                  >
-                    <LibrarySection
-                      title='Shots'
-                      items={shots}
-                      isShot={true}
-                      compareMode={compareMode}
-                      sectionHeight={desktopSectionHeight}
-                      searchValue={shotsSearch}
-                      sortKey={shotsSort.key}
-                      sortOrder={shotsSort.order}
-                      sourceFilter={shotsSourceFilter}
-                      onSearchChange={setShotsSearch}
-                      onSortChange={(k, o) =>
-                        setShotsSort({
-                          key: k,
-                          order:
-                            o ||
-                            (shotsSort.key === k && shotsSort.order === 'desc' ? 'asc' : 'desc'),
-                        })
-                      }
-                      onSourceFilterChange={setShotsSourceFilter}
-                      onLoad={handleShotRowAction}
-                      onExport={item => handleExport(item, true)} // Pass true for shots
-                      onDelete={handleDelete}
-                      compareSelectedCount={compareSelectedCount}
-                      compareSelectionKeys={compareSelectionKeys}
-                      comparePendingKeys={comparePendingKeys}
-                      compareReferenceKey={
-                        primaryDisplayShot ? getShotIdentityKey(primaryDisplayShot) : ''
-                      }
-                      getCompareBadgeNumber={item => {
-                        if (!compareMode) return null;
-                        const itemKey = getShotIdentityKey(item);
-                        if (!itemKey) return null;
-                        if (
-                          primaryDisplayShot &&
-                          itemKey === getShotIdentityKey(primaryDisplayShot)
-                        )
-                          return 1;
-                        if (compareSecondaryShotKey && itemKey === compareSecondaryShotKey)
-                          return 2;
-                        return null;
-                      }}
-                      onCompareToggle={onCompareShotToggle}
-                      isLoading={loading} // Pass loading state to show spinner in list
-                      onExportAll={() => {
-                        if (shots.length === 0) return;
-                        if (
-                          confirm(
-                            `Do you really want to export all ${shots.length} filtered shots? (Shots are downloaded individually, one after the other.)`,
-                          )
-                        ) {
-                          for (let i = 0; i < shots.length; i++)
-                            setTimeout(() => handleExport(shots[i], true), i * 300);
-                        }
-                      }}
-                      onDeleteAll={async () => {
-                        if (
-                          confirm(
-                            `WARNING: Do you really want to IRREVOCABLY delete all ${shots.length} filtered shots?`,
-                          )
-                        ) {
-                          for (const s of shots)
-                            await libraryService.deleteShot(
-                              s.source === 'gaggimate' ? s.id : s.storageKey || s.name || s.id,
-                              s.source,
-                            );
-                          refreshLibraries();
-                        }
-                      }}
-                      getMatchStatus={item =>
-                        primaryDisplayProfile &&
-                        cleanName(item.profile || '').toLowerCase() === normalizedCurrentProfileName
-                      }
-                      getActiveStatus={item =>
-                        primaryDisplayShot &&
-                        getShotIdentityKey(item) === getShotIdentityKey(primaryDisplayShot) &&
-                        item.source === primaryDisplayShot.source
-                      }
-                      getPinStatus={item =>
-                        shotsPinnedFirst
-                          ? Boolean(getPinnedShotBucketKey(item))
-                          : isShotPinned(
-                              item,
-                              getEffectiveShotPinBucketKey(item),
-                              pinnedShotsByProfile,
-                            )
-                      }
-                      getPinDisabledReason={getShotPinDisabledReason}
-                      pinnedFirstEnabled={shotsPinnedFirst}
-                      onPinnedFirstToggle={() => setShotsPinnedFirst(value => !value)}
-                      onPinToggle={handleShotPinToggle}
-                    />
-                  </div>
 
-                  {/* PROFILES SECTION */}
-                  <div
-                    className={
-                      mobileActiveSection === 'profiles' ? 'block lg:block' : 'hidden lg:block'
-                    }
-                  >
-                    <LibrarySection
-                      title='Profiles'
-                      items={profiles}
-                      isShot={false}
-                      compareMode={compareMode}
-                      sectionHeight={desktopSectionHeight}
-                      searchValue={profilesSearch}
-                      sortKey={profilesSort.key}
-                      sortOrder={profilesSort.order}
-                      sourceFilter={profilesSourceFilter}
-                      onSearchChange={setProfilesSearch}
-                      onSortChange={(k, o) =>
-                        setProfilesSort({
-                          key: k,
-                          order:
-                            o ||
-                            (profilesSort.key === k && profilesSort.order === 'desc'
-                              ? 'asc'
-                              : 'desc'),
-                        })
-                      }
-                      onSourceFilterChange={setProfilesSourceFilter}
-                      onLoad={handleProfileRowAction}
-                      onShowStats={handleLibraryProfileStatsOpen}
-                      onExport={item => handleExport(item, false)} // Pass false for profiles
-                      onDelete={handleDelete}
-                      isLoading={loading} // Pass loading state to show spinner in list
-                      onExportAll={() => {
-                        if (profiles.length === 0) return;
-                        if (
-                          confirm(
-                            `Do you really want to export all ${profiles.length} filtered profiles? (Profiles are downloaded individually, one after the other.)`,
-                          )
-                        ) {
-                          for (let i = 0; i < profiles.length; i++)
-                            setTimeout(() => handleExport(profiles[i], false), i * 300);
-                        }
-                      }}
-                      onDeleteAll={async () => {
-                        if (
-                          confirm(
-                            `WARNING: Do you really want to IRREVOCABLY delete all ${profiles.length} filtered profiles?`,
-                          )
-                        ) {
-                          for (const p of profiles) {
-                            const deleteKey =
-                              p.source === 'gaggimate' ? p.profileId || p.id : p.label || p.name;
-                            await libraryService.deleteProfile(deleteKey, p.source);
-                          }
-                          refreshLibraries();
-                        }
-                      }}
-                      getMatchStatus={item =>
-                        primaryDisplayShot && doesProfileMatchShot(item, primaryDisplayShot)
-                      }
-                      getCompareStatus={item =>
-                        Boolean(
-                          secondaryDisplayProfileName &&
-                            normalizedCompareSecondaryProfileName &&
-                            normalizedCompareSecondaryProfileName !== 'no profile loaded' &&
-                            doesProfileMatchShot(item, secondaryDisplayShot),
-                        )
-                      }
-                      getCompareBadgeNumber={item => {
-                        if (!compareMode) return null;
-                        if (
-                          primaryDisplayProfile &&
-                          doesProfileMatchProfile(
-                            item,
-                            primaryDisplayProfile,
-                            primaryDisplayProfileName,
-                          )
-                        )
-                          return 1;
-                        if (
-                          secondaryDisplayProfile &&
-                          doesProfileMatchProfile(
-                            item,
-                            secondaryDisplayProfile,
-                            secondaryDisplayProfileName,
-                          )
-                        ) {
-                          return 2;
-                        }
-                        return null;
-                      }}
-                      getActiveStatus={item =>
-                        primaryDisplayProfile &&
-                        doesProfileMatchProfile(
-                          item,
-                          primaryDisplayProfile,
-                          primaryDisplayProfileName,
-                        )
-                      }
-                      getPinStatus={item => isProfilePinned(item, pinnedProfiles)}
-                      getPinDisabledReason={getProfilePinDisabledReason}
-                      pinnedFirstEnabled={profilesPinnedFirst}
-                      onPinnedFirstToggle={() => setProfilesPinnedFirst(value => !value)}
-                      onPinToggle={handleProfilePinToggle}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </>
+          {/* PROFILES SECTION */}
+          <LibraryProfilesPanelSection
+            compareMode={compareMode}
+            desktopSectionHeight={desktopSectionHeight}
+            getProfilePinDisabledReason={getProfilePinDisabledReason}
+            handleDelete={handleDelete}
+            handleExport={handleExport}
+            handleLibraryProfileStatsOpen={handleLibraryProfileStatsOpen}
+            handleProfilePinToggle={handleProfilePinToggle}
+            handleProfileRowAction={handleProfileRowAction}
+            loading={loading}
+            mobileActiveSection={mobileActiveSection}
+            normalizedCompareSecondaryProfileName={normalizedCompareSecondaryProfileName}
+            pinnedProfiles={pinnedProfiles}
+            primaryDisplayProfile={primaryDisplayProfile}
+            primaryDisplayProfileName={primaryDisplayProfileName}
+            primaryDisplayShot={primaryDisplayShot}
+            profiles={profiles}
+            profilesPinnedFirst={profilesPinnedFirst}
+            profilesSearch={profilesSearch}
+            profilesSort={profilesSort}
+            profilesSourceFilter={profilesSourceFilter}
+            refreshLibraries={refreshLibraries}
+            secondaryDisplayProfile={secondaryDisplayProfile}
+            secondaryDisplayProfileName={secondaryDisplayProfileName}
+            secondaryDisplayShot={secondaryDisplayShot}
+            setProfilesPinnedFirst={setProfilesPinnedFirst}
+            setProfilesSearch={setProfilesSearch}
+            setProfilesSort={setProfilesSort}
+            setProfilesSourceFilter={setProfilesSourceFilter}
+          />
+        </LibraryDropdown>
       )}
     </div>
   );

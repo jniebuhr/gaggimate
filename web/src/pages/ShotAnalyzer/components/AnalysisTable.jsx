@@ -9,8 +9,11 @@
  * - Integrated Zoom Controls (Font Size scaling)
  */
 
+/* global globalThis */
+
 import { Fragment } from 'preact';
-import { useState, useRef, useEffect } from 'preact/hooks';
+import { createPortal } from 'preact/compat';
+import { useState, useRef, useEffect, useCallback } from 'preact/hooks';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faAngleRight,
@@ -20,34 +23,56 @@ import {
   faAngleDoubleLeft,
   faArrowLeft,
   faExclamationTriangle,
-  faCalculator,
   faMagnifyingGlassMinus,
   faMagnifyingGlassPlus,
   faCheck,
   faTimes,
   faCircleInfo,
 } from '@fortawesome/free-solid-svg-icons';
-import { cleanName, columnConfig, utilityColors } from '../utils/analyzerUtils';
+import {
+  ANALYZER_DB_KEYS,
+  cleanName,
+  columnConfig,
+  getDisplayStopReasonParts,
+  loadFromStorage,
+  saveToStorage,
+  utilityColors,
+} from '../utils/analyzerUtils';
 import { ColumnControls } from './ColumnControls'; // Import ColumnControls
 import { getAnalyzerColumnVisual } from './analyzerGroupVisuals';
 import {
-  ANALYZER_COMPACT_GROUP_CLASSES,
-  ANALYZER_COMPACT_ICON_BUTTON_CLASS,
+  ANALYZER_ACTION_GROUP_CLASSES,
+  ANALYZER_ACTION_ICON_BUTTON_CLASS,
+  ANALYZER_ACTION_ICON_CLASS,
+  ANALYZER_ACTION_ICON_STYLE,
   getAnalyzerIconButtonClasses,
   getAnalyzerTextButtonClasses,
   joinAnalyzerClasses,
 } from './analyzerControlStyles';
 
 const NEUTRAL_STATUS_BADGE_CLASS = 'bg-base-content/10 text-base-content/80 border-base-content/15';
+const WARNING_BADGE_HIGH_SCALE_LABEL = 'HIGH SCALE DELAY OR MANUAL STOP (ADJUSTMENT)';
+const WARNING_BADGE_SCALE_LOST_LABEL = 'SCALE LOST';
+const WARNING_BADGE_REVIEW_LABEL = 'REVIEW PHASE';
+const MIN_TABLE_FONT_SIZE = 8;
+const MAX_TABLE_FONT_SIZE = 16;
+const DEFAULT_TABLE_FONT_SIZE = 12;
+const SCROLLBAR_HIDE_STYLE = {
+  scrollbarWidth: 'none',
+  msOverflowStyle: 'none',
+};
+
+const WARNING_HELP_COPY = {
+  delayReview:
+    'Review the stop reason for this phase. The algorithm was only able to identify it after several intermediate calculations.',
+  highScaleDelay:
+    'This may indicate an incorrectly configured scale delay in the GaggiMate settings, a shot that was manually stopped near the target, or an adjusted target weight.',
+  scaleLost:
+    'Shown when the scale briefly loses connection during the brew. In this case, weight is ignored for stop detection for that brew, even if the scale reconnects later.',
+};
 
 function getBrewModeLabel(isBrewByWeight) {
   return isBrewByWeight ? 'Brew by Weight' : 'Brew by Time';
-}
-
-function getHighScaleDelayTitle(results) {
-  return results?.highScaleDelayMs
-    ? `Estimated scale delay exceeds 2000 ms (${results.highScaleDelayMs} ms), or the shot may have been manually stopped near the target. Please review scale-delay settings.`
-    : 'Estimated scale delay exceeds 2000 ms, or the shot may have been manually stopped near the target. Please review scale-delay settings.';
 }
 
 function getDelayReviewLabel(results) {
@@ -62,8 +87,9 @@ function buildAnalysisWarningBadges(results) {
   if (results?.globalScaleLost) {
     badges.push({
       key: 'scale-lost',
-      label: 'SCALE LOST',
+      label: WARNING_BADGE_SCALE_LOST_LABEL,
       colorClass: 'text-white shadow-sm',
+      details: WARNING_HELP_COPY.scaleLost,
       style: {
         backgroundColor: utilityColors.warningOrange,
         borderColor: utilityColors.warningOrange,
@@ -74,9 +100,9 @@ function buildAnalysisWarningBadges(results) {
   if (results?.highScaleDelay) {
     badges.push({
       key: 'high-scale-delay',
-      label: 'HIGH SCALE DELAY',
+      label: WARNING_BADGE_HIGH_SCALE_LABEL,
       colorClass: 'text-white shadow-sm',
-      title: getHighScaleDelayTitle(results),
+      details: WARNING_HELP_COPY.highScaleDelay,
       style: {
         backgroundColor: utilityColors.warningOrange,
         borderColor: utilityColors.warningOrange,
@@ -89,71 +115,369 @@ function buildAnalysisWarningBadges(results) {
       key: 'delay-review',
       label: getDelayReviewLabel(results),
       colorClass: NEUTRAL_STATUS_BADGE_CLASS,
-      title: results.delayReviewMessage || 'Unusually high inferred delay detected.',
+      details: results.delayReviewMessage || WARNING_HELP_COPY.delayReview,
     });
   }
 
   return badges;
 }
 
-function StopCalculationHelpPopover() {
-  const detailsRef = useRef(null);
-  const [isWideViewport, setIsWideViewport] = useState(false);
+function normalizeTableFontSize(value) {
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue)) return DEFAULT_TABLE_FONT_SIZE;
+  return Math.min(MAX_TABLE_FONT_SIZE, Math.max(MIN_TABLE_FONT_SIZE, Math.round(numericValue)));
+}
+
+function getAnalysisHeaderBaseLabel(col) {
+  if (col.id === 'duration') return 'Time';
+  if (col.id === 'water') return 'Pumped Water (phase)';
+  if (col.id === 'weight') return 'Weight (total)';
+  if (col.group === 'flow') return 'Pump Flow';
+  if (col.group === 'target_flow') return 'Target Pump Flow';
+  if (col.group === 'puckflow') return 'Puck Flow';
+  if (col.group === 'temp') return 'Temperature';
+  if (col.group === 'target_temp') return 'Target Temp';
+  return col.label.replace(/\s*\([^)]*\)/g, '');
+}
+
+function getAnalysisHeaderLabel(col) {
+  const suffixByType = {
+    se: ' S/E',
+    mm: ' Min/Max',
+    avg: ' Avg ∅',
+  };
+
+  return `${getAnalysisHeaderBaseLabel(col)}${suffixByType[col.type] || ''}`;
+}
+
+function getAnalysisTouchInteractionStyle(isTouchOptimized) {
+  if (!isTouchOptimized) {
+    return { touchAction: 'pan-y' };
+  }
+
+  return {
+    touchAction: 'pan-x pan-y pinch-zoom',
+    WebkitOverflowScrolling: 'touch',
+    overscrollBehaviorX: 'contain',
+  };
+}
+
+function getCompareAccentColor(entry, index) {
+  return entry?.accentColor || (index === 0 ? 'var(--color-primary)' : 'var(--color-secondary)');
+}
+
+function getCompareAccentStrength(entry) {
+  return Number.isFinite(Number(entry?.accentStrength)) ? Number(entry.accentStrength) : 1;
+}
+
+function getCompareRowStyle(entry, index) {
+  const strength = getCompareAccentStrength(entry);
+  const statusbarStrength = Math.round(100 * strength);
+  const accentColor = getCompareAccentColor(entry, index);
+
+  return {
+    '--compare-shot-color': accentColor,
+    '--analyzer-compare-shot-color': accentColor,
+    '--compare-shot-label-color': `${statusbarStrength}%`,
+    '--compare-shot-marker-opacity': '1',
+  };
+}
+
+function getMaxComparePhaseCount(compareMode, compareEntries) {
+  if (!compareMode) return 0;
+  return Math.max(...compareEntries.map(entry => entry?.results?.phases?.length || 0), 0);
+}
+
+function getNextTableFontSize(currentFontSize, direction) {
+  if (direction === 'in') return Math.min(MAX_TABLE_FONT_SIZE, currentFontSize + 1);
+  if (direction === 'out') return Math.max(MIN_TABLE_FONT_SIZE, currentFontSize - 1);
+  return currentFontSize;
+}
+
+function scrollAnalysisTable(ref, amount) {
+  ref.current?.scrollBy({ left: amount, behavior: 'smooth' });
+}
+
+function scrollAnalysisTableToBound(ref, direction) {
+  const tableElement = ref.current;
+  if (!tableElement) return;
+  const left = direction === 'start' ? 0 : tableElement.scrollWidth;
+  tableElement.scrollTo({ left, behavior: 'smooth' });
+}
+
+function useAnalysisTablePreferences(tableFontSize, advancedMode) {
+  useEffect(() => {
+    saveToStorage(ANALYZER_DB_KEYS.ANALYSIS_TABLE_FONT_SIZE, tableFontSize);
+  }, [tableFontSize]);
 
   useEffect(() => {
-    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return undefined;
+    saveToStorage(ANALYZER_DB_KEYS.ANALYSIS_TABLE_ADVANCED, advancedMode);
+  }, [advancedMode]);
+}
 
-    const mediaQuery = window.matchMedia('(min-width: 1024px)');
-    const updateViewportMode = () => setIsWideViewport(mediaQuery.matches);
-    updateViewportMode();
+function useVerticalWheelForwarding(tableContainerRef) {
+  useEffect(() => {
+    const tableElement = tableContainerRef.current;
+    if (!tableElement) return undefined;
 
-    const listener = event => setIsWideViewport(event.matches);
-    if (typeof mediaQuery.addEventListener === 'function') {
-      mediaQuery.addEventListener('change', listener);
-      return () => mediaQuery.removeEventListener('change', listener);
-    }
+    const handleWheel = event => {
+      if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+      globalThis.window?.scrollBy({
+        top: event.deltaY,
+        left: 0,
+        behavior: 'auto',
+      });
+    };
 
-    mediaQuery.addListener(listener);
-    return () => mediaQuery.removeListener(listener);
+    tableElement.addEventListener('wheel', handleWheel, { passive: true });
+    return () => tableElement.removeEventListener('wheel', handleWheel);
+  }, [tableContainerRef]);
+}
+
+function useTouchOptimizedPointer() {
+  const [isTouchOptimized, setIsTouchOptimized] = useState(false);
+
+  useEffect(() => {
+    const browserWindow = globalThis.window;
+    if (!browserWindow) return undefined;
+
+    const mediaQuery = browserWindow.matchMedia?.('(any-pointer: coarse)') || null;
+    const updateTouchOptimization = () => {
+      const hasCoarsePointer = Boolean(mediaQuery?.matches);
+      const hasTouchPoints = Number(browserWindow.navigator?.maxTouchPoints || 0) > 0;
+      setIsTouchOptimized(hasCoarsePointer || hasTouchPoints);
+    };
+
+    updateTouchOptimization();
+    if (mediaQuery === null) return undefined;
+
+    mediaQuery.addEventListener?.('change', updateTouchOptimization);
+    return () => mediaQuery.removeEventListener?.('change', updateTouchOptimization);
+  }, []);
+
+  return isTouchOptimized;
+}
+
+function StopCalculationHelpPopover() {
+  const detailsRef = useRef(null);
+  const summaryRef = useRef(null);
+  const popoverRef = useRef(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const [popoverStyle, setPopoverStyle] = useState(null);
+
+  const closePopover = useCallback(() => {
+    detailsRef.current?.removeAttribute('open');
+    setIsOpen(false);
+  }, []);
+
+  const updatePopoverPosition = useCallback(() => {
+    const triggerElement = summaryRef.current;
+    const browserWindow = globalThis.window;
+    if (!triggerElement || !browserWindow) return;
+
+    const viewportWidth = browserWindow.innerWidth || 0;
+    const viewportHeight = browserWindow.innerHeight || 0;
+    const scrollX = browserWindow.scrollX || browserWindow.pageXOffset || 0;
+    const scrollY = browserWindow.scrollY || browserWindow.pageYOffset || 0;
+    const triggerRect = triggerElement.getBoundingClientRect();
+    const margin = 12;
+    const width = Math.min(viewportWidth - margin * 2, 544);
+    const left = Math.min(
+      Math.max(margin, triggerRect.right - width),
+      Math.max(margin, viewportWidth - width - margin),
+    );
+    const spaceAbove = triggerRect.top - margin;
+    const spaceBelow = viewportHeight - triggerRect.bottom - margin;
+    const openAbove = spaceAbove >= Math.min(420, spaceBelow);
+    const maxHeight = Math.max(
+      80,
+      Math.min(
+        viewportHeight - margin * 2,
+        viewportHeight * 0.7,
+        openAbove ? spaceAbove : spaceBelow,
+      ),
+    );
+
+    setPopoverStyle({
+      position: 'absolute',
+      left: `${scrollX + left}px`,
+      top: `${
+        scrollY +
+        (openAbove ? Math.max(margin, triggerRect.top - maxHeight - 8) : triggerRect.bottom + 8)
+      }px`,
+      width: `${width}px`,
+      maxWidth: 'none',
+      maxHeight: `${maxHeight}px`,
+    });
   }, []);
 
   useEffect(() => {
     const handlePointerDown = event => {
       const el = detailsRef.current;
-      if (!el || !el.hasAttribute('open')) return;
+      if (!el?.hasAttribute('open')) return;
       if (el.contains(event.target)) return;
-      el.removeAttribute('open');
+      if (popoverRef.current?.contains(event.target)) return;
+      closePopover();
     };
 
     const handleKeyDown = event => {
       if (event.key !== 'Escape') return;
       const el = detailsRef.current;
-      if (!el || !el.hasAttribute('open')) return;
-      el.removeAttribute('open');
+      if (!el?.hasAttribute('open')) return;
+      closePopover();
     };
 
-    document.addEventListener('pointerdown', handlePointerDown);
-    document.addEventListener('keydown', handleKeyDown);
+    globalThis.document?.addEventListener('pointerdown', handlePointerDown);
+    globalThis.document?.addEventListener('keydown', handleKeyDown);
     return () => {
-      document.removeEventListener('pointerdown', handlePointerDown);
-      document.removeEventListener('keydown', handleKeyDown);
+      globalThis.document?.removeEventListener('pointerdown', handlePointerDown);
+      globalThis.document?.removeEventListener('keydown', handleKeyDown);
     };
-  }, []);
+  }, [closePopover]);
 
-  const mobilePopoverStyle = isWideViewport
-    ? undefined
-    : {
-        position: 'fixed',
-        left: '0.5rem',
-        right: '0.5rem',
-        bottom: '1rem',
-        width: 'auto',
-        maxWidth: 'none',
-      };
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    updatePopoverPosition();
+
+    const handleResize = () => updatePopoverPosition();
+    const handleScroll = event => {
+      if (popoverRef.current?.contains(event.target)) return;
+      closePopover();
+    };
+    globalThis.window?.addEventListener('resize', handleResize);
+    globalThis.window?.addEventListener('scroll', handleScroll, { passive: true });
+    globalThis.document?.addEventListener('scroll', handleScroll, true);
+    return () => {
+      globalThis.window?.removeEventListener('resize', handleResize);
+      globalThis.window?.removeEventListener('scroll', handleScroll);
+      globalThis.document?.removeEventListener('scroll', handleScroll, true);
+    };
+  }, [closePopover, isOpen, updatePopoverPosition]);
+
+  const popoverContent = isOpen ? (
+    <div
+      ref={popoverRef}
+      className='bg-base-100/95 border-base-content/10 text-base-content z-[10000] overflow-y-auto rounded-xl border p-3 text-[12px] leading-relaxed font-normal tracking-normal normal-case shadow-xl backdrop-blur-md'
+      style={popoverStyle || { position: 'absolute', visibility: 'hidden' }}
+    >
+      <div className='space-y-2.5'>
+        <p className='text-sm leading-tight font-medium tracking-normal'>
+          Stop Calculation (Analyzer only)
+        </p>
+        <p className='opacity-85'>
+          The <strong>Stop Calculation</strong> settings and{' '}
+          <strong style={{ color: utilityColors.predictionInfoBlue }}>Calc</strong> values are
+          Analyzer-only tools. Future-value calculations are not performed by GaggiMate itself and
+          shot execution is not changed by these settings.
+        </p>
+
+        <div className='bg-base-200/60 rounded-lg p-2'>
+          <p className='text-base-content/90 text-[12px] leading-tight font-medium tracking-normal'>
+            Status Labels
+          </p>
+          <div className='mt-1 space-y-1.5'>
+            <p>
+              <span
+                className={`mr-1.5 inline-flex rounded-[4px] border px-1.5 py-0.5 align-middle text-[10px] leading-none font-bold tracking-tight ${NEUTRAL_STATUS_BADGE_CLASS}`}
+              >
+                {WARNING_BADGE_REVIEW_LABEL}
+              </span>{' '}
+              {WARNING_HELP_COPY.delayReview}
+            </p>
+            <p>
+              <span
+                className='mr-1.5 inline-flex rounded-[4px] border px-1.5 py-0.5 align-middle text-[10px] leading-none font-bold tracking-tight text-white'
+                style={{
+                  backgroundColor: utilityColors.warningOrange,
+                  borderColor: utilityColors.warningOrange,
+                }}
+              >
+                {WARNING_BADGE_HIGH_SCALE_LABEL}
+              </span>{' '}
+              {WARNING_HELP_COPY.highScaleDelay}
+            </p>
+            <p>
+              <span
+                className='mr-1.5 inline-flex rounded-[4px] border px-1.5 py-0.5 align-middle text-[10px] leading-none font-bold tracking-tight text-white'
+                style={{
+                  backgroundColor: utilityColors.warningOrange,
+                  borderColor: utilityColors.warningOrange,
+                }}
+              >
+                {WARNING_BADGE_SCALE_LOST_LABEL}
+              </span>{' '}
+              {WARNING_HELP_COPY.scaleLost}
+            </p>
+          </div>
+        </div>
+
+        <div className='bg-base-200/60 rounded-lg p-2'>
+          <p className='text-base-content/90 text-[12px] leading-tight font-medium tracking-normal'>
+            How stop detection works
+          </p>
+          <p>
+            The Analyzer determines stop reasons from a recorded sample stream. Since samples are
+            recorded at fixed intervals (typically <strong>250 ms</strong>), the exact stop event
+            may happen between recorded points.
+          </p>
+          <p className='mt-1'>
+            To identify the most likely stop reason, the Analyzer first checks up to three nearby
+            timestamps around the phase transition:
+          </p>
+          <ol className='mt-1 ml-4 list-decimal'>
+            <li>the end of the current phase,</li>
+            <li>the next recorded point,</li>
+            <li>the following recorded point.</li>
+          </ol>
+          <p className='mt-1'>
+            If no clear stop reason is found at those three timestamps, the Analyzer performs a
+            limited short-range calculation (extrapolation) based only on that small time window.
+          </p>
+          <p className='mt-1'>
+            The Analyzer intentionally does not use values further into the future, because those
+            may already be influenced by the next phase and could distort stop detection.
+          </p>
+        </div>
+
+        <div className='bg-base-200/60 rounded-lg p-2'>
+          <p className='text-base-content/90 text-[12px] leading-tight font-medium tracking-normal'>
+            Auto vs Manual
+          </p>
+          <p className='mt-1'>
+            <strong>Auto</strong>: Calculates stop timing per phase, individually. The displayed
+            average values are the averages of those phase-specific calculations. The step size
+            follows the recording sample interval (typically 250 ms), which makes Auto generally
+            more accurate overall.
+          </p>
+          <p className='mt-1'>
+            <strong>Manual</strong>: Applies one stop-calculation offset to all phases at once. This
+            is best for reviewing one specific phase / stop reason in detail. Manual mode can use
+            smaller step intervals than Auto, which may occasionally produce different results.
+          </p>
+        </div>
+
+        <div className='bg-base-200/60 rounded-lg p-2'>
+          <p className='text-base-content/90 text-[12px] leading-tight font-medium tracking-normal'>
+            Scale vs System
+          </p>
+          <p>
+            <strong>Scale</strong> and <strong>System</strong> can be adjusted separately because
+            Bluetooth scales often have their own sampling rates and timing behavior, independent of
+            system sampling / processing timing.
+          </p>
+        </div>
+      </div>
+    </div>
+  ) : null;
 
   return (
-    <details ref={detailsRef} className='dropdown'>
+    <details
+      ref={detailsRef}
+      className='dropdown'
+      onToggle={event => setIsOpen(event.currentTarget.open)}
+    >
       <summary
+        ref={summaryRef}
         className={joinAnalyzerClasses(
           getAnalyzerIconButtonClasses({
             className: 'h-5 w-5 rounded-full [&::-webkit-details-marker]:hidden',
@@ -163,137 +487,118 @@ function StopCalculationHelpPopover() {
         aria-label='Stop Calculation help'
         title='Stop Calculation help'
       >
-        <FontAwesomeIcon icon={faCircleInfo} className='text-[13px]' />
+        <FontAwesomeIcon icon={faCircleInfo} className='text-xs' />
       </summary>
-      <div
-        className={`dropdown-content bg-base-100/95 border-base-content/10 text-base-content z-[90] max-h-[70vh] overflow-y-auto rounded-xl border p-3 text-[12px] leading-relaxed font-normal tracking-normal normal-case shadow-xl backdrop-blur-md ${
-          isWideViewport ? 'absolute right-0 bottom-full mb-2 w-[min(92vw,34rem)]' : ''
-        }`}
-        style={mobilePopoverStyle}
-      >
-        <div className='space-y-2.5'>
-          <p className='text-sm leading-tight font-semibold'>Stop Calculation (Analyzer only)</p>
-          <p className='opacity-85'>
-            The <strong>Stop Calculation</strong> settings and{' '}
-            <strong style={{ color: utilityColors.predictionInfoBlue }}>Calc</strong> values are
-            Analyzer-only tools. Future-value calculations are not performed by GaggiMate itself and
-            shot execution is not changed by these settings.
-          </p>
-
-          <div className='bg-base-200/60 rounded-lg p-2'>
-            <p className='text-base-content/90 text-[12px] leading-tight font-semibold'>
-              Status Labels
-            </p>
-            <div className='mt-1 space-y-1.5'>
-              <p>
-                <span
-                  className={`mr-1.5 inline-flex rounded-[4px] border px-1.5 py-0.5 align-middle text-[10px] leading-none font-bold tracking-tight ${NEUTRAL_STATUS_BADGE_CLASS}`}
-                >
-                  REVIEW PHASE
-                </span>
-                Shown when a stop reason is only detected after a higher calculation step / deeper
-                review. This usually means the stop happened between recorded samples and was not
-                visible in the first pass.
-              </p>
-              <p>
-                <span
-                  className='mr-1.5 inline-flex rounded-[4px] border px-1.5 py-0.5 align-middle text-[10px] leading-none font-bold tracking-tight text-white'
-                  style={{
-                    backgroundColor: utilityColors.warningOrange,
-                    borderColor: utilityColors.warningOrange,
-                  }}
-                >
-                  HIGH SCALE DELAY
-                </span>
-                Shown when a weight-based stop was likely triggered, but the detected timing is
-                significantly too early or too late. This may indicate an incorrectly configured
-                scale delay in the GaggiMate settings (or a shot that was manually stopped near the
-                target).
-              </p>
-              <p>
-                <span
-                  className='mr-1.5 inline-flex rounded-[4px] border px-1.5 py-0.5 align-middle text-[10px] leading-none font-bold tracking-tight text-white'
-                  style={{
-                    backgroundColor: utilityColors.warningOrange,
-                    borderColor: utilityColors.warningOrange,
-                  }}
-                >
-                  SCALE LOST
-                </span>
-                Shown when the scale briefly loses connection during the brew. In this case, weight
-                is ignored for stop detection for that brew, even if the scale reconnects later.
-              </p>
-            </div>
-          </div>
-
-          <div className='bg-base-200/60 rounded-lg p-2'>
-            <p className='text-base-content/90 text-[12px] leading-tight font-semibold'>
-              How stop detection works
-            </p>
-            <p>
-              The Analyzer determines stop reasons from a recorded sample stream. Since samples are
-              recorded at fixed intervals (typically <strong>250 ms</strong>), the exact stop event
-              may happen between recorded points.
-            </p>
-            <p className='mt-1'>
-              To identify the most likely stop reason, the Analyzer first checks up to three nearby
-              timestamps around the phase transition:
-            </p>
-            <ol className='mt-1 ml-4 list-decimal'>
-              <li>the end of the current phase,</li>
-              <li>the next recorded point,</li>
-              <li>the following recorded point.</li>
-            </ol>
-            <p className='mt-1'>
-              If no clear stop reason is found at those three timestamps, the Analyzer performs a
-              limited short-range calculation (extrapolation) based only on that small time window.
-            </p>
-            <p className='mt-1'>
-              The Analyzer intentionally does not use values further into the future, because those
-              may already be influenced by the next phase and could distort stop detection.
-            </p>
-          </div>
-
-          <div className='bg-base-200/60 rounded-lg p-2'>
-            <p className='text-base-content/90 text-[12px] leading-tight font-semibold'>Example</p>
-            <p>
-              If a phase has a flow stop at <strong>1 ml/s</strong>, flow may briefly cross that
-              threshold between two samples. A short calculation helps estimate the stop condition
-              more accurately than relying on later values that may already reflect the next phase.
-            </p>
-          </div>
-
-          <div className='bg-base-200/60 rounded-lg p-2'>
-            <p className='text-base-content/90 text-[12px] leading-tight font-semibold'>
-              Auto vs Manual
-            </p>
-            <p className='mt-1'>
-              <strong>Auto</strong>: Calculates stop timing per phase, individually. The displayed
-              average values are the averages of those phase-specific calculations. The step size
-              follows the recording sample interval (typically 250 ms), which makes Auto generally
-              more accurate overall.
-            </p>
-            <p className='mt-1'>
-              <strong>Manual</strong>: Applies one stop-calculation offset to all phases at once.
-              This is best for reviewing one specific phase / stop reason in detail. Manual mode can
-              use smaller step intervals than Auto, which may occasionally produce different
-              results.
-            </p>
-          </div>
-
-          <div className='bg-base-200/60 rounded-lg p-2'>
-            <p className='text-base-content/90 text-[12px] leading-tight font-semibold'>
-              Scale vs System
-            </p>
-            <p>
-              <strong>Scale</strong> and <strong>System</strong> can be adjusted separately because
-              Bluetooth scales often have their own sampling rates and timing behavior, independent
-              of system sampling / processing timing.
-            </p>
-          </div>
-        </div>
-      </div>
+      {globalThis.document?.body ? createPortal(popoverContent, globalThis.document.body) : null}
     </details>
+  );
+}
+
+function AnalysisTableToolbarActions({ tableFontSize, onZoom, onScrollTable, onScrollToBound }) {
+  return (
+    <div className='flex items-center gap-2'>
+      <div className={ANALYZER_ACTION_GROUP_CLASSES}>
+        <ScrollBtn
+          icon={faMagnifyingGlassMinus}
+          onClick={() => onZoom('out')}
+          title='Zoom Out'
+          className={tableFontSize <= MIN_TABLE_FONT_SIZE ? 'opacity-20' : ''}
+        />
+        <span className='w-5 text-center text-sm tabular-nums opacity-55 select-none'>
+          {tableFontSize}
+        </span>
+        <ScrollBtn
+          icon={faMagnifyingGlassPlus}
+          onClick={() => onZoom('in')}
+          title='Zoom In'
+          className={tableFontSize >= MAX_TABLE_FONT_SIZE ? 'opacity-20' : ''}
+        />
+      </div>
+
+      <div className='bg-base-content/10 hidden h-3 w-px shrink-0 sm:block' aria-hidden='true' />
+
+      <div className={`${ANALYZER_ACTION_GROUP_CLASSES} hidden sm:flex`}>
+        <ScrollBtn icon={faArrowLeft} onClick={() => onScrollToBound('start')} />
+        <ScrollBtn icon={faAngleDoubleLeft} onClick={() => onScrollTable(-300)} />
+        <ScrollBtn
+          icon={faAngleLeft}
+          onClick={() => onScrollTable(-100)}
+          className='mr-1 rounded-r-none'
+        />
+        <ScrollBtn
+          icon={faAngleRight}
+          onClick={() => onScrollTable(100)}
+          className='rounded-l-none'
+        />
+        <ScrollBtn icon={faAngleDoubleRight} onClick={() => onScrollTable(300)} />
+        <ScrollBtn icon={faArrowRight} onClick={() => onScrollToBound('end')} />
+      </div>
+    </div>
+  );
+}
+
+function hasAnalysisProfilePhaseStops(results) {
+  return Boolean(results?.phases?.some(phase => phase.profilePhase));
+}
+
+function AnalysisTableHeader({
+  compareMode,
+  hasProfilePhaseStops,
+  visibleColumns,
+  subtleDividerClass,
+  strongDividerClass,
+  tableHeaderTextClass,
+  tableHeaderSubtextClass,
+}) {
+  return (
+    <thead>
+      <tr className='border-base-content/10 border-b-2'>
+        {!compareMode && (
+          <th
+            className={`w-10 border-r px-2 py-2 text-center select-none ${subtleDividerClass} ${tableHeaderTextClass}`}
+          >
+            #
+          </th>
+        )}
+        {compareMode && (
+          <th
+            className={`min-w-[140px] px-2 py-2 text-left whitespace-nowrap ${subtleDividerClass} ${tableHeaderTextClass}`}
+          >
+            Shot
+          </th>
+        )}
+        <th
+          className={`min-w-[120px] px-2 py-2 text-left whitespace-nowrap ${strongDividerClass} ${tableHeaderTextClass}`}
+        >
+          <div className='leading-none'>Phase</div>
+          {hasProfilePhaseStops && (
+            <div className={`mt-0.5 ${tableHeaderSubtextClass}`} style={{ fontSize: '0.85em' }}>
+              Stop reason
+            </div>
+          )}
+        </th>
+        {visibleColumns.map(col => {
+          const columnVisual = getAnalyzerColumnVisual(col);
+          return (
+            <th
+              key={col.id}
+              className={`border-l px-3 py-2 text-right align-middle ${subtleDividerClass} ${tableHeaderTextClass}`}
+            >
+              <span className='ml-auto flex max-w-[6.75rem] items-center justify-end gap-1.5 text-right leading-tight'>
+                <FontAwesomeIcon
+                  icon={columnVisual.icon}
+                  className='shrink-0 text-xs'
+                  style={{ color: columnVisual.color }}
+                />
+                <span className='min-w-0 break-words whitespace-normal'>
+                  {getAnalysisHeaderLabel(col)}
+                </span>
+              </span>
+            </th>
+          );
+        })}
+      </tr>
+    </thead>
   );
 }
 
@@ -308,21 +613,26 @@ export function AnalysisTable({
   onColumnsChange,
   settings,
   onSettingsChange,
-  onAnalyze,
 }) {
   const compareMode = isCompareActive && Array.isArray(compareEntries) && compareEntries.length > 1;
-  if (!results?.phases && !compareMode) return null;
 
-  // State for Table Zoom (Font Size) - Default 11px
-  const [tableFontSize, setTableFontSize] = useState(11);
-  const [isTouchOptimized, setIsTouchOptimized] = useState(false);
+  // State for Table Zoom (Font Size) - Default 12px to match the compact UI text scale.
+  const [tableFontSize, setTableFontSize] = useState(() =>
+    normalizeTableFontSize(
+      loadFromStorage(ANALYZER_DB_KEYS.ANALYSIS_TABLE_FONT_SIZE, DEFAULT_TABLE_FONT_SIZE),
+    ),
+  );
+  const isTouchOptimized = useTouchOptimizedPointer();
+  const [advancedMode, setAdvancedMode] = useState(() =>
+    Boolean(loadFromStorage(ANALYZER_DB_KEYS.ANALYSIS_TABLE_ADVANCED, false)),
+  );
 
   const tableContainerRef = useRef(null);
   const safeSettings = settings || { scaleDelay: 1000, sensorDelay: 200, autoDelay: true };
   const visibleColumns = columnConfig.filter(col => activeColumns.has(col.id));
-  const maxComparePhaseCount = compareMode
-    ? Math.max(...compareEntries.map(entry => entry?.results?.phases?.length || 0), 0)
-    : 0;
+  const compareTableColumnCount = visibleColumns.length + 2;
+  const maxComparePhaseCount = getMaxComparePhaseCount(compareMode, compareEntries);
+  const hasProfilePhaseStops = hasAnalysisProfilePhaseStops(results);
 
   // --- Helper Functions ---
   const handleNonNegativeDelayInput = (key, rawValue) => {
@@ -331,183 +641,83 @@ export function AnalysisTable({
     onSettingsChange({ ...safeSettings, [key]: Math.max(0, parsedValue) });
   };
 
-  const scrollTable = amount => {
-    if (tableContainerRef.current) {
-      tableContainerRef.current.scrollBy({ left: amount, behavior: 'smooth' });
-    }
-  };
-
-  const scrollToBound = direction => {
-    if (tableContainerRef.current) {
-      const left = direction === 'start' ? 0 : tableContainerRef.current.scrollWidth;
-      tableContainerRef.current.scrollTo({ left, behavior: 'smooth' });
-    }
-  };
+  const scrollTable = amount => scrollAnalysisTable(tableContainerRef, amount);
+  const scrollToBound = direction => scrollAnalysisTableToBound(tableContainerRef, direction);
 
   const handleZoom = direction => {
-    setTableFontSize(prev => {
-      if (direction === 'in') return Math.min(16, prev + 1); // Max 16px
-      if (direction === 'out') return Math.max(8, prev - 1); // Min 8px
-      return prev;
-    });
+    setTableFontSize(prev => getNextTableFontSize(prev, direction));
   };
 
-  // --- SCROLL TRAP FIX ---
-  // Listen for wheel events. If scrolling strictly vertical, and the table handles X-scroll,
-  // manually scroll the window to prevent "locking".
-  useEffect(() => {
-    const el = tableContainerRef.current;
-    if (!el) return;
+  useAnalysisTablePreferences(tableFontSize, advancedMode);
+  useVerticalWheelForwarding(tableContainerRef);
 
-    const handleWheel = e => {
-      // Check if vertical scrolling dominates
-      if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
-        // Manually scroll the window
-        window.scrollBy({
-          top: e.deltaY,
-          left: 0,
-          behavior: 'auto', // Instant scroll to feel native
-        });
-      }
-    };
-
-    // Passive: true allows performance, but we rely on manual window scrolling
-    el.addEventListener('wheel', handleWheel, { passive: true });
-
-    return () => el.removeEventListener('wheel', handleWheel);
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return undefined;
-
-    const mediaQuery =
-      typeof window.matchMedia === 'function' ? window.matchMedia('(any-pointer: coarse)') : null;
-
-    const updateTouchOptimization = () => {
-      const hasCoarsePointer = Boolean(mediaQuery?.matches);
-      const hasTouchPoints = Number(window.navigator?.maxTouchPoints || 0) > 0;
-      setIsTouchOptimized(hasCoarsePointer || hasTouchPoints);
-    };
-
-    updateTouchOptimization();
-
-    if (!mediaQuery) return undefined;
-
-    if (typeof mediaQuery.addEventListener === 'function') {
-      mediaQuery.addEventListener('change', updateTouchOptimization);
-      return () => mediaQuery.removeEventListener('change', updateTouchOptimization);
-    }
-
-    mediaQuery.addListener(updateTouchOptimization);
-    return () => mediaQuery.removeListener(updateTouchOptimization);
-  }, []);
-
-  const getHeaderLabel = col => {
-    let label = col.label;
-    if (col.id === 'duration') label = 'Time';
-    else if (col.id === 'water') label = 'Water';
-    else if (col.group === 'puckflow') label = 'Puck Flow';
-    else if (col.group === 'temp' || col.group === 'target_temp') label = '℃';
-
-    if (col.type === 'se') label += ' S/E';
-    else if (col.type === 'mm') label += ' Min/Max';
-    else if (col.type === 'avg') label += ' Avg ∅';
-    return label;
-  };
+  if (!results?.phases && !compareMode) return null;
 
   // --- Styles ---
-  const scrollbarHideStyle = {
-    scrollbarWidth: 'none' /* Firefox */,
-    msOverflowStyle: 'none' /* IE / Edge */,
-  };
-  const touchInteractionStyle = isTouchOptimized
-    ? {
-        touchAction: 'pan-x pan-y pinch-zoom',
-        WebkitOverflowScrolling: 'touch',
-        overscrollBehaviorX: 'contain',
-      }
-    : {
-        touchAction: 'pan-y',
-      };
+  const touchInteractionStyle = getAnalysisTouchInteractionStyle(isTouchOptimized);
 
   const subtleDividerClass = 'border-base-content/5';
   const strongDividerClass = 'border-base-content/12 border-r-2';
-  const primaryTableTextClass = 'text-base-content/90 font-semibold';
-  const secondaryTableTextClass = 'text-base-content/65 font-medium';
+  const tableHeaderTextClass = 'text-base-content leading-tight font-medium tracking-normal';
+  const tableHeaderSubtextClass = 'text-base-content/55 leading-tight font-medium tracking-normal';
+  const primaryTableTextClass = 'text-base-content/90 font-medium';
+  const secondaryTableTextClass = 'text-base-content/75 font-normal';
+  const tableSubtextClass = 'text-base-content/55 leading-tight font-medium';
+  const tableLegendTextClass = 'text-base-content/75 text-xs font-normal tracking-normal';
   const analysisWarningBadges = buildAnalysisWarningBadges(results);
-
   return (
     <div className='flex w-full flex-col'>
       {/* Inject CSS to hide Webkit Scrollbars */}
       <style>{`
                 .no-scrollbar::-webkit-scrollbar { display: none; }
+                .analysis-table-compare-row:hover {
+                  background: color-mix(
+                    in srgb,
+                    var(--color-base-content) 5%,
+                    transparent
+                  );
+                }
+                .analysis-table-compare-marker {
+                  background: var(--compare-shot-color);
+                  opacity: var(--compare-shot-marker-opacity, 1);
+                }
+                .analysis-table-compare-badge {
+                  background: var(--compare-shot-color);
+                  opacity: var(--compare-shot-marker-opacity, 1);
+                  color: var(--color-primary-content);
+                }
+                .analysis-table-compare-label {
+                  color: var(--color-base-content);
+                }
             `}</style>
 
       {/* Keep the top strip focused on global warnings and phase-review hints only. */}
-      <div className='mb-2 flex flex-wrap gap-2 px-1'>
+      <div className='relative z-0 -mb-1 flex flex-wrap gap-1.5 px-2'>
         {analysisWarningBadges.map(badge => (
           <StatusBadge
             key={badge.key}
             label={badge.label}
             style={badge.style}
             colorClass={badge.colorClass}
-            title={badge.title}
+            details={badge.details}
           />
         ))}
       </div>
 
       {/* 2. MAIN CARD WRAPPER */}
-      <div className='bg-base-100 border-base-content/10 flex flex-col rounded-lg border shadow-sm'>
+      <div className='app-card-surface relative isolate z-[1] flex flex-col overflow-hidden rounded-xl px-1.5 sm:px-2'>
         {/* A. Top Toolbar: Column Controls + Actions (Zoom/Scroll) */}
         <ColumnControls
           activeColumns={activeColumns}
           onColumnsChange={onColumnsChange}
           isIntegrated={true}
           headerChildren={
-            // Navigation & Zoom Group Injected into ColumnControls Header
-            <div className='flex items-center gap-2'>
-              {/* Zoom Controls */}
-              <div className={ANALYZER_COMPACT_GROUP_CLASSES}>
-                <ScrollBtn
-                  icon={faMagnifyingGlassMinus}
-                  onClick={() => handleZoom('out')}
-                  title='Zoom Out'
-                  className={tableFontSize <= 8 ? 'opacity-20' : ''}
-                />
-                <span className='w-4 text-center font-mono text-[9px] opacity-40 select-none'>
-                  {tableFontSize}
-                </span>
-                <ScrollBtn
-                  icon={faMagnifyingGlassPlus}
-                  onClick={() => handleZoom('in')}
-                  title='Zoom In'
-                  className={tableFontSize >= 16 ? 'opacity-20' : ''}
-                />
-              </div>
-
-              <div
-                className='bg-base-content/10 hidden h-3 w-px shrink-0 sm:block'
-                aria-hidden='true'
-              />
-
-              {/* Scroll Controls */}
-              <div className={`${ANALYZER_COMPACT_GROUP_CLASSES} hidden sm:flex`}>
-                <ScrollBtn icon={faArrowLeft} onClick={() => scrollToBound('start')} />
-                <ScrollBtn icon={faAngleDoubleLeft} onClick={() => scrollTable(-300)} />
-                <ScrollBtn
-                  icon={faAngleLeft}
-                  onClick={() => scrollTable(-100)}
-                  className='mr-1 rounded-r-none'
-                />
-                <ScrollBtn
-                  icon={faAngleRight}
-                  onClick={() => scrollTable(100)}
-                  className='rounded-l-none'
-                />
-                <ScrollBtn icon={faAngleDoubleRight} onClick={() => scrollTable(300)} />
-                <ScrollBtn icon={faArrowRight} onClick={() => scrollToBound('end')} />
-              </div>
-            </div>
+            <AnalysisTableToolbarActions
+              tableFontSize={tableFontSize}
+              onZoom={handleZoom}
+              onScrollTable={scrollTable}
+              onScrollToBound={scrollToBound}
+            />
           }
         />
 
@@ -515,55 +725,23 @@ export function AnalysisTable({
         <div
           ref={tableContainerRef}
           // removed 'overscroll-*' classes to prevent latching
-          className='no-scrollbar block h-auto min-h-0 w-full overflow-x-auto overflow-y-hidden'
-          style={{ scrollBehavior: 'smooth', ...scrollbarHideStyle, ...touchInteractionStyle }}
+          className='no-scrollbar my-1.5 block h-auto min-h-0 w-full overflow-x-auto overflow-y-hidden sm:my-2'
+          style={{ scrollBehavior: 'smooth', ...SCROLLBAR_HIDE_STYLE, ...touchInteractionStyle }}
         >
           {/* Dynamic Font Size applied to Table */}
           <table
             className='text-base-content w-full border-collapse transition-all duration-200'
             style={{ fontSize: `${tableFontSize}px`, lineHeight: '1.4' }}
           >
-            <thead>
-              <tr className='border-base-content/10 border-b-2'>
-                <th
-                  className={`w-8 border-r py-2 text-center select-none ${subtleDividerClass} ${primaryTableTextClass}`}
-                >
-                  #
-                </th>
-                {compareMode && (
-                  <th
-                    className={`min-w-[140px] px-2 py-2 text-left whitespace-nowrap ${subtleDividerClass} ${primaryTableTextClass}`}
-                  >
-                    Shot
-                  </th>
-                )}
-                <th
-                  className={`min-w-[120px] px-2 py-2 text-left whitespace-nowrap ${strongDividerClass} ${primaryTableTextClass}`}
-                >
-                  Phase
-                </th>
-                {visibleColumns.map(col => {
-                  const columnVisual = getAnalyzerColumnVisual(col);
-                  return (
-                    <th
-                      key={col.id}
-                      className={`border-l px-3 py-2 text-right align-middle ${subtleDividerClass} ${primaryTableTextClass}`}
-                    >
-                      <span className='ml-auto flex max-w-[6.75rem] items-center justify-end gap-1.5 text-right leading-tight'>
-                        <FontAwesomeIcon
-                          icon={columnVisual.icon}
-                          className='shrink-0 text-[11px]'
-                          style={{ color: columnVisual.color }}
-                        />
-                        <span className='min-w-0 break-words whitespace-normal'>
-                          {getHeaderLabel(col)}
-                        </span>
-                      </span>
-                    </th>
-                  );
-                })}
-              </tr>
-            </thead>
+            <AnalysisTableHeader
+              compareMode={compareMode}
+              hasProfilePhaseStops={hasProfilePhaseStops}
+              visibleColumns={visibleColumns}
+              subtleDividerClass={subtleDividerClass}
+              strongDividerClass={strongDividerClass}
+              tableHeaderTextClass={tableHeaderTextClass}
+              tableHeaderSubtextClass={tableHeaderSubtextClass}
+            />
 
             {compareMode ? (
               <tbody>
@@ -571,35 +749,44 @@ export function AnalysisTable({
                   <Fragment key={`phase-group-${phaseIndex}`}>
                     <tr className='bg-base-200/55'>
                       <td
-                        colSpan={visibleColumns.length + 3}
-                        className='border-base-content/10 px-3 py-2 text-left text-[10px] font-bold tracking-wide uppercase'
+                        colSpan={compareTableColumnCount}
+                        className={`border-base-content/10 px-3 py-2 text-left text-xs ${tableHeaderTextClass}`}
                       >
                         Phase {phaseIndex + 1}
                       </td>
                     </tr>
-                    {compareEntries.map(entry => {
+                    {compareEntries.map((entry, compareIndex) => {
                       const phase = entry?.results?.phases?.[phaseIndex] || null;
 
                       return (
                         <tr
                           key={`${entry.key}-phase-${phaseIndex}`}
-                          className='border-base-content/5 hover:bg-base-content/5 group border-b align-top transition-colors'
+                          className='analysis-table-compare-row border-base-content/5 group border-b align-top transition-colors'
+                          style={getCompareRowStyle(entry, compareIndex)}
                         >
-                          <td
-                            className={`border-r pt-2.5 text-center font-bold select-none ${subtleDividerClass} text-base-content/85`}
-                          >
-                            {phaseIndex + 1}
-                          </td>
                           <td
                             className={`px-2 py-2 text-left whitespace-nowrap ${subtleDividerClass}`}
                           >
-                            <div
-                              className={`leading-tight font-semibold ${entry.isReference ? 'text-primary' : 'text-base-content/90'}`}
-                            >
-                              {entry.label}
+                            <div className='flex min-w-0 items-center gap-1.5'>
+                              <span
+                                className={[
+                                  'analyzer-compare-shot-badge analysis-table-compare-badge inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs leading-none font-semibold tabular-nums',
+                                  compareIndex === 1 ? 'analyzer-compare-shot-badge--striped' : '',
+                                ]
+                                  .filter(Boolean)
+                                  .join(' ')}
+                                aria-label={`Shot ${compareIndex + 1}`}
+                              >
+                                {compareIndex + 1}
+                              </span>
+                              <div
+                                className={`analysis-table-compare-label min-w-0 truncate ${tableHeaderTextClass}`}
+                              >
+                                {entry.label}
+                              </div>
                             </div>
                             {entry.profileName && entry.profileName !== 'No Profile Loaded' ? (
-                              <div className='text-base-content/50 text-[10px] leading-tight'>
+                              <div className={`text-xs ${tableSubtextClass}`}>
                                 {cleanName(entry.profileName)}
                               </div>
                             ) : null}
@@ -616,9 +803,14 @@ export function AnalysisTable({
                           {visibleColumns.map(col => (
                             <td
                               key={`${entry.key}-${phaseIndex}-${col.id}`}
-                              className={`border-l px-3 py-2 text-right font-mono whitespace-nowrap tabular-nums ${subtleDividerClass}`}
+                              className={`border-l px-3 py-2 text-right whitespace-nowrap tabular-nums ${subtleDividerClass}`}
                             >
-                              <CellContent phase={phase} col={col} results={entry.results} />
+                              <CellContent
+                                phase={phase}
+                                col={col}
+                                results={entry.results}
+                                advancedMode={advancedMode}
+                              />
                             </td>
                           ))}
                         </tr>
@@ -629,27 +821,36 @@ export function AnalysisTable({
 
                 <tr className='bg-base-200/75'>
                   <td
-                    colSpan={visibleColumns.length + 3}
-                    className='border-base-content/10 border-t-2 px-3 py-2 text-left text-[10px] font-bold tracking-wide uppercase'
+                    colSpan={compareTableColumnCount}
+                    className={`border-base-content/10 border-t-2 px-3 py-2 text-left text-xs ${tableHeaderTextClass}`}
                   >
                     Totals
                   </td>
                 </tr>
-                {compareEntries.map(entry => (
+                {compareEntries.map((entry, compareIndex) => (
                   <tr
                     key={`${entry.key}-total`}
-                    className='border-base-content/5 hover:bg-base-content/5 group border-b align-top transition-colors'
+                    className='analysis-table-compare-row border-base-content/5 group border-b align-top transition-colors'
+                    style={getCompareRowStyle(entry, compareIndex)}
                   >
-                    <td
-                      className={`border-r py-2 text-center font-bold select-none ${subtleDividerClass} text-base-content/75`}
-                    >
-                      T
-                    </td>
                     <td className={`px-2 py-2 text-left whitespace-nowrap ${subtleDividerClass}`}>
-                      <div
-                        className={`leading-tight font-semibold ${entry.isReference ? 'text-primary' : 'text-base-content/90'}`}
-                      >
-                        {entry.label}
+                      <div className='flex min-w-0 items-center gap-1.5'>
+                        <span
+                          className={[
+                            'analyzer-compare-shot-badge analysis-table-compare-badge inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs leading-none font-semibold tabular-nums',
+                            compareIndex === 1 ? 'analyzer-compare-shot-badge--striped' : '',
+                          ]
+                            .filter(Boolean)
+                            .join(' ')}
+                          aria-label={`Shot ${compareIndex + 1}`}
+                        >
+                          {compareIndex + 1}
+                        </span>
+                        <div
+                          className={`analysis-table-compare-label min-w-0 truncate ${tableHeaderTextClass}`}
+                        >
+                          {entry.label}
+                        </div>
                       </div>
                     </td>
                     <td
@@ -660,13 +861,14 @@ export function AnalysisTable({
                     {visibleColumns.map(col => (
                       <td
                         key={`${entry.key}-total-${col.id}`}
-                        className={`border-l px-3 py-2 text-right font-mono tabular-nums ${subtleDividerClass} ${primaryTableTextClass}`}
+                        className={`border-l px-3 py-2 text-right tabular-nums ${subtleDividerClass} ${primaryTableTextClass}`}
                       >
                         <CellContent
                           phase={null}
                           col={col}
                           results={entry.results}
                           isTotal={true}
+                          advancedMode={advancedMode}
                         />
                       </td>
                     ))}
@@ -678,11 +880,22 @@ export function AnalysisTable({
                 <tbody>
                   {results.phases.map((phase, idx) => (
                     <tr
-                      key={idx}
+                      key={
+                        phase.key ||
+                        [
+                          phase.number,
+                          phase.displayName || phase.name,
+                          phase.start,
+                          phase.end,
+                          phase.exit?.reason,
+                        ]
+                          .filter(value => value !== null && value !== undefined && value !== '')
+                          .join('-')
+                      }
                       className='border-base-content/5 hover:bg-base-content/5 group border-b align-top transition-colors'
                     >
                       <td
-                        className={`border-r pt-2.5 text-center font-bold select-none ${subtleDividerClass} text-base-content/85`}
+                        className={`border-r pt-2.5 text-center select-none ${subtleDividerClass} ${tableHeaderTextClass}`}
                       >
                         {idx + 1}
                       </td>
@@ -692,9 +905,14 @@ export function AnalysisTable({
                       {visibleColumns.map(col => (
                         <td
                           key={col.id}
-                          className={`border-l px-3 py-2 text-right font-mono whitespace-nowrap tabular-nums ${subtleDividerClass}`}
+                          className={`border-l px-3 py-2 text-right whitespace-nowrap tabular-nums ${subtleDividerClass}`}
                         >
-                          <CellContent phase={phase} col={col} results={results} />
+                          <CellContent
+                            phase={phase}
+                            col={col}
+                            results={results}
+                            advancedMode={advancedMode}
+                          />
                         </td>
                       ))}
                     </tr>
@@ -703,18 +921,24 @@ export function AnalysisTable({
 
                 <tfoot className='border-base-content/10 text-base-content border-t-2'>
                   <tr>
-                    <td className={`border-r ${subtleDividerClass}`}></td>
+                    <td className={`border-r ${subtleDividerClass}`} />
                     <td
-                      className={`px-2 py-2 text-left ${strongDividerClass} ${primaryTableTextClass}`}
+                      className={`px-2 py-2 text-left ${strongDividerClass} ${tableHeaderTextClass}`}
                     >
                       Total
                     </td>
                     {visibleColumns.map(col => (
                       <td
                         key={col.id}
-                        className={`border-l px-3 py-2 text-right font-mono tabular-nums ${subtleDividerClass} ${primaryTableTextClass}`}
+                        className={`border-l px-3 py-2 text-right tabular-nums ${subtleDividerClass} ${primaryTableTextClass}`}
                       >
-                        <CellContent phase={null} col={col} results={results} isTotal={true} />
+                        <CellContent
+                          phase={null}
+                          col={col}
+                          results={results}
+                          isTotal={true}
+                          advancedMode={advancedMode}
+                        />
                       </td>
                     ))}
                   </tr>
@@ -725,78 +949,99 @@ export function AnalysisTable({
         </div>
 
         {/* C. New Footer: Delay Settings (Left) & Legend (Right) */}
-        <div className='bg-base-100 border-base-content/10 flex flex-col items-stretch gap-3 rounded-b-lg border-t px-4 py-3 text-[10px] sm:flex-row sm:flex-wrap sm:items-center sm:justify-between'>
-          {/* Left: Stop Calculation Inputs */}
+        <div className='bg-base-100 border-base-content/10 flex flex-col items-stretch gap-3 rounded-b-lg border-t py-2 text-xs sm:flex-row sm:flex-wrap sm:items-center sm:justify-between'>
+          {/* Left: Advanced mode and Stop Calculation Inputs */}
           <div className='flex w-full flex-wrap items-center gap-x-3 gap-y-2 sm:w-auto sm:gap-4'>
-            <span className={`hidden select-none sm:inline ${secondaryTableTextClass}`}>
-              Stop Calculation
-            </span>
-            <div className='flex flex-wrap items-center gap-2'>
-              {/* Shows Average Symbol ∅ if auto-delay is active */}
-              <span className={secondaryTableTextClass}>
-                Scale{safeSettings.autoDelay ? ' ∅' : ''}
-              </span>
+            <label
+              className={getAnalyzerTextButtonClasses({
+                className: 'flex cursor-pointer items-center gap-2 px-1.5 py-0.5',
+              })}
+            >
               <input
-                type='number'
-                min='0'
-                step='50'
-                value={
-                  safeSettings.autoDelay && results?.usedSettings
-                    ? results.usedSettings.scaleDelayMs
-                    : safeSettings.scaleDelay
-                }
-                disabled={safeSettings.autoDelay}
-                onInput={e => handleNonNegativeDelayInput('scaleDelay', e.target.value)}
-                className='bg-base-200 border-base-content/10 focus:border-primary text-base-content h-5 w-12 rounded border text-center font-mono focus:outline-none disabled:opacity-30'
+                type='checkbox'
+                checked={advancedMode}
+                onChange={e => setAdvancedMode(e.target.checked)}
+                className='toggle toggle-primary toggle-xs'
               />
-              <span className='text-base-content/45 font-normal lowercase'>ms</span>
-            </div>
-            <div className='bg-base-content/10 mx-1 hidden h-3 w-px sm:block'></div>
-            <div className='flex flex-wrap items-center gap-2'>
-              {/* Shows Average Symbol ∅ if auto-delay is active */}
-              <span className={secondaryTableTextClass}>
-                System{safeSettings.autoDelay ? ' ∅' : ''}
-              </span>
-              <input
-                type='number'
-                min='0'
-                step='50'
-                value={
-                  safeSettings.autoDelay && results?.usedSettings
-                    ? results.usedSettings.sensorDelayMs
-                    : safeSettings.sensorDelay
-                }
-                disabled={safeSettings.autoDelay}
-                onInput={e => handleNonNegativeDelayInput('sensorDelay', e.target.value)}
-                className='bg-base-200 border-base-content/10 focus:border-primary text-base-content h-5 w-12 rounded border text-center font-mono focus:outline-none disabled:opacity-30'
-              />
-              <span className='text-base-content/45 font-normal lowercase'>ms</span>
-              <label
-                className={getAnalyzerTextButtonClasses({
-                  className: 'ml-2 flex cursor-pointer items-center gap-1.5 px-1.5 py-0.5',
-                })}
-              >
-                <input
-                  type='checkbox'
-                  checked={safeSettings.autoDelay}
-                  onChange={e => onSettingsChange({ ...safeSettings, autoDelay: e.target.checked })}
-                  className='checkbox checkbox-xs border-base-content/30 rounded-sm'
-                />
-                <span className='opacity-60'>Auto</span>
-              </label>
-              <StopCalculationHelpPopover />
-            </div>
+              <span className={secondaryTableTextClass}>Advanced</span>
+            </label>
+
+            {advancedMode ? (
+              <>
+                <div className='bg-base-content/10 mx-1 hidden h-3 w-px sm:block' />
+                <span className={`hidden select-none sm:inline ${secondaryTableTextClass}`}>
+                  Stop Calculation
+                </span>
+                <div className='flex flex-wrap items-center gap-2'>
+                  {/* Shows Average Symbol ∅ if auto-delay is active */}
+                  <span className={secondaryTableTextClass}>
+                    Scale{safeSettings.autoDelay ? ' ∅' : ''}
+                  </span>
+                  <input
+                    type='number'
+                    min='0'
+                    step='50'
+                    value={
+                      safeSettings.autoDelay && results?.usedSettings
+                        ? results.usedSettings.scaleDelayMs
+                        : safeSettings.scaleDelay
+                    }
+                    disabled={safeSettings.autoDelay}
+                    onInput={e => handleNonNegativeDelayInput('scaleDelay', e.target.value)}
+                    className='bg-base-200 border-base-content/10 focus:border-primary text-base-content h-5 w-12 rounded border text-center tabular-nums focus:outline-none disabled:opacity-30'
+                  />
+                  <span className={`${secondaryTableTextClass} lowercase`}>ms</span>
+                </div>
+                <div className='bg-base-content/10 mx-1 hidden h-3 w-px sm:block' />
+                <div className='flex flex-wrap items-center gap-2'>
+                  {/* Shows Average Symbol ∅ if auto-delay is active */}
+                  <span className={secondaryTableTextClass}>
+                    System{safeSettings.autoDelay ? ' ∅' : ''}
+                  </span>
+                  <input
+                    type='number'
+                    min='0'
+                    step='50'
+                    value={
+                      safeSettings.autoDelay && results?.usedSettings
+                        ? results.usedSettings.sensorDelayMs
+                        : safeSettings.sensorDelay
+                    }
+                    disabled={safeSettings.autoDelay}
+                    onInput={e => handleNonNegativeDelayInput('sensorDelay', e.target.value)}
+                    className='bg-base-200 border-base-content/10 focus:border-primary text-base-content h-5 w-12 rounded border text-center tabular-nums focus:outline-none disabled:opacity-30'
+                  />
+                  <span className={`${secondaryTableTextClass} lowercase`}>ms</span>
+                  <label
+                    className={getAnalyzerTextButtonClasses({
+                      className: 'ml-2 flex cursor-pointer items-center gap-1.5 px-1.5 py-0.5',
+                    })}
+                  >
+                    <input
+                      type='checkbox'
+                      checked={safeSettings.autoDelay}
+                      onChange={e =>
+                        onSettingsChange({ ...safeSettings, autoDelay: e.target.checked })
+                      }
+                      className='checkbox checkbox-xs border-base-content/30 rounded-sm'
+                    />
+                    <span className={secondaryTableTextClass}>Auto</span>
+                  </label>
+                  <StopCalculationHelpPopover />
+                </div>
+              </>
+            ) : null}
           </div>
 
           {/* Right: Legend */}
           <div className='text-base-content grid w-full grid-cols-3 gap-x-3 gap-y-1 select-none sm:flex sm:w-auto sm:items-center sm:gap-4'>
-            <span className={`leading-tight whitespace-normal ${secondaryTableTextClass}`}>
-              Avg (time weighted)
+            <span className={`leading-tight whitespace-normal ${tableLegendTextClass}`}>
+              Avg Average (time weighted)
             </span>
-            <span className={`leading-tight whitespace-normal ${secondaryTableTextClass}`}>
+            <span className={`leading-tight whitespace-normal ${tableLegendTextClass}`}>
               S/E Start/End
             </span>
-            <span className={`leading-tight whitespace-normal ${secondaryTableTextClass}`}>
+            <span className={`leading-tight whitespace-normal ${tableLegendTextClass}`}>
               Range Min/Max
             </span>
           </div>
@@ -811,17 +1056,26 @@ function ComparePhaseLabel({ phase, phaseIndex, results }) {
     return <div className='text-base-content/45 leading-tight font-medium'>-</div>;
   }
 
+  const { skipNotice, stopReason } = getDisplayStopReasonParts(phase.exit?.reason);
+
   return (
     <>
-      <div className='text-base-content mb-0.5 leading-none font-semibold'>{phase.displayName}</div>
-      {phase.exit?.reason && (
+      <div className='text-base-content/90 mb-0.5 leading-none font-medium'>
+        {phase.displayName}
+      </div>
+      {skipNotice ? (
         <div
-          className='font-semibold tracking-tight uppercase'
-          style={{ fontSize: '0.8em', color: utilityColors.stopRed }}
+          className='text-base-content/55 leading-tight font-medium'
+          style={{ fontSize: '0.8em' }}
         >
-          via {phase.exit.reason}
+          {skipNotice}
         </div>
-      )}
+      ) : null}
+      {stopReason ? (
+        <div className='font-normal' style={{ fontSize: '0.85em', color: utilityColors.stopRed }}>
+          {stopReason}
+        </div>
+      ) : null}
       {phaseIndex === (results?.phases?.length || 0) - 1 && (
         <div
           className='text-base-content/55 leading-tight font-medium'
@@ -838,308 +1092,232 @@ function ComparePhaseLabel({ phase, phaseIndex, results }) {
  * Sub-Component: Cell Content
  * Uses relative sizing (em) or inherited font size for consistency
  */
-function CellContent({ phase, col, results, isTotal = false }) {
-  const data = isTotal ? results?.total : phase;
-  const stats = isTotal ? results?.total : phase?.stats;
+const DIRECT_CELL_FIELDS = {
+  duration: { path: 'duration', unit: 's' },
+  water: { path: 'water', unit: 'ml' },
+  weight: { path: 'weight', unit: 'g' },
+};
 
-  if (!data) return <span>-</span>;
+const CELL_METRIC_UNITS = {
+  p: 'bar',
+  tp: 'bar',
+  f: 'ml/s',
+  tf: 'ml/s',
+  pf: 'ml/s',
+  t: '°C',
+  tt: '°C',
+  w: 'g',
+  wf: 'g/s',
+};
 
-  // Safe number formatter — returns "-" for null/undefined/NaN
-  const sf = (v, d = 1) => (v != null && isFinite(v) ? v.toFixed(d) : '-');
+const CELL_METRIC_PARTS = {
+  se: ['start', 'end'],
+  mm: ['min', 'max'],
+  avg: ['avg'],
+};
 
-  // Helper for Boolean Status rendering
-  const renderBool = val => {
-    if (val === true) {
-      return <FontAwesomeIcon icon={faCheck} className='text-success text-[1em]' />;
-    }
-    if (val === false) {
-      return <FontAwesomeIcon icon={faTimes} className='text-error text-[1em]' />;
-    }
-    return <span className='text-base-content/60'>-</span>;
+const BOOLEAN_CELL_FIELDS = {
+  sys_shot_vol: 'sys_shot_vol',
+  sys_curr_vol: 'sys_curr_vol',
+  sys_scale: 'sys_scale',
+  sys_vol_avail: 'sys_vol_avail',
+  sys_ext: 'sys_ext',
+};
+
+function formatCellNumber(value, digits = 1) {
+  const numericValue = Number(value);
+  return value != null && Number.isFinite(numericValue) ? numericValue.toFixed(digits) : '-';
+}
+
+function renderCellBoolean(value) {
+  if (value === true) {
+    return <FontAwesomeIcon icon={faCheck} className='text-success text-[1em]' />;
+  }
+  if (value === false) {
+    return <FontAwesomeIcon icon={faTimes} className='text-error text-[1em]' />;
+  }
+  return <span className='text-base-content/55 font-medium'>-</span>;
+}
+
+function getMetricCellValue(stats, metricKey, partKey) {
+  const metric = stats?.[metricKey];
+  const parts = CELL_METRIC_PARTS[partKey];
+  if (!parts) return '-';
+
+  const formatPart = part => {
+    const value = metric?.[part];
+    return metricKey === 'wf' ? formatCellNumber(Math.max(0, value ?? 0)) : formatCellNumber(value);
   };
 
-  let mainValue = '-';
-  let unit = '';
-  let isBoolean = false;
-  let booleanContent = null;
+  return parts.length === 1
+    ? formatPart(parts[0])
+    : `${formatPart(parts[0])}/${formatPart(parts[1])}`;
+}
 
-  // FORMATTED: Multi-line switch case as requested
-  switch (col.id) {
-    case 'duration':
-      mainValue = sf(data.duration);
-      unit = 's';
-      break;
-    case 'water':
-      mainValue = sf(data.water);
-      unit = 'ml';
-      break;
-    case 'weight':
-      mainValue = sf(data.weight);
-      unit = 'g';
-      break;
-
-    // Pressure
-    case 'p_se':
-      mainValue = `${sf(stats?.p?.start)}/${sf(stats?.p?.end)}`;
-      break;
-    case 'p_mm':
-      mainValue = `${sf(stats?.p?.min)}/${sf(stats?.p?.max)}`;
-      break;
-    case 'p_avg':
-      mainValue = sf(stats?.p?.avg);
-      unit = 'bar';
-      break;
-
-    // Target Pressure
-    case 'tp_se':
-      mainValue = `${sf(stats?.tp?.start)}/${sf(stats?.tp?.end)}`;
-      break;
-    case 'tp_mm':
-      mainValue = `${sf(stats?.tp?.min)}/${sf(stats?.tp?.max)}`;
-      break;
-    case 'tp_avg':
-      mainValue = sf(stats?.tp?.avg);
-      unit = 'bar';
-      break;
-
-    // Flow
-    case 'f_se':
-      mainValue = `${sf(stats?.f?.start)}/${sf(stats?.f?.end)}`;
-      break;
-    case 'f_mm':
-      mainValue = `${sf(stats?.f?.min)}/${sf(stats?.f?.max)}`;
-      break;
-    case 'f_avg':
-      mainValue = sf(stats?.f?.avg);
-      unit = 'ml/s';
-      break;
-
-    // Target Flow
-    case 'tf_se':
-      mainValue = `${sf(stats?.tf?.start)}/${sf(stats?.tf?.end)}`;
-      break;
-    case 'tf_mm':
-      mainValue = `${sf(stats?.tf?.min)}/${sf(stats?.tf?.max)}`;
-      break;
-    case 'tf_avg':
-      mainValue = sf(stats?.tf?.avg);
-      unit = 'ml/s';
-      break;
-
-    // Puck Flow
-    case 'pf_se':
-      mainValue = `${sf(stats?.pf?.start)}/${sf(stats?.pf?.end)}`;
-      break;
-    case 'pf_mm':
-      mainValue = `${sf(stats?.pf?.min)}/${sf(stats?.pf?.max)}`;
-      break;
-    case 'pf_avg':
-      mainValue = sf(stats?.pf?.avg);
-      unit = 'ml/s';
-      break;
-
-    // Temperature
-    case 't_se':
-      mainValue = `${sf(stats?.t?.start)}/${sf(stats?.t?.end)}`;
-      break;
-    case 't_mm':
-      mainValue = `${sf(stats?.t?.min)}/${sf(stats?.t?.max)}`;
-      break;
-    case 't_avg':
-      mainValue = sf(stats?.t?.avg);
-      unit = '°';
-      break;
-
-    // Target Temperature
-    case 'tt_se':
-      mainValue = `${sf(stats?.tt?.start)}/${sf(stats?.tt?.end)}`;
-      break;
-    case 'tt_mm':
-      mainValue = `${sf(stats?.tt?.min)}/${sf(stats?.tt?.max)}`;
-      break;
-    case 'tt_avg':
-      mainValue = sf(stats?.tt?.avg);
-      unit = '°';
-      break;
-
-    // Weight Details
-    case 'w_se':
-      mainValue = `${sf(stats?.w?.start)}/${sf(stats?.w?.end)}`;
-      break;
-    case 'w_mm':
-      mainValue = `${sf(stats?.w?.min)}/${sf(stats?.w?.max)}`;
-      break;
-    case 'w_avg':
-      mainValue = sf(stats?.w?.avg);
-      unit = 'g';
-      break;
-
-    // Weight Flow Details (clamp to 0)
-    case 'wf_se':
-      mainValue = `${sf(Math.max(0, stats?.wf?.start ?? 0))}/${sf(Math.max(0, stats?.wf?.end ?? 0))}`;
-      break;
-    case 'wf_mm':
-      mainValue = `${sf(Math.max(0, stats?.wf?.min ?? 0))}/${sf(Math.max(0, stats?.wf?.max ?? 0))}`;
-      break;
-    case 'wf_avg':
-      mainValue = sf(Math.max(0, stats?.wf?.avg ?? 0));
-      unit = 'g/s';
-      break;
-
-    // --- System Info (Mapped from AnalyzerService stats) ---
-    case 'sys_raw':
-      mainValue = stats?.sys_raw !== undefined ? stats.sys_raw : '-';
-      break;
-    case 'sys_shot_vol':
-      isBoolean = true;
-      booleanContent = renderBool(stats?.sys_shot_vol);
-      break;
-    case 'sys_curr_vol':
-      isBoolean = true;
-      booleanContent = renderBool(stats?.sys_curr_vol);
-      break;
-    case 'sys_scale':
-      isBoolean = true;
-      booleanContent = renderBool(stats?.sys_scale);
-      break;
-    case 'sys_vol_avail':
-      isBoolean = true;
-      booleanContent = renderBool(stats?.sys_vol_avail);
-      break;
-    case 'sys_ext':
-      isBoolean = true;
-      booleanContent = renderBool(stats?.sys_ext);
-      break;
-
-    default:
-      mainValue = '-';
+function resolveCellValue({ data, stats, col, isSkipped = false }) {
+  if (isSkipped && col.id !== 'sys_raw' && !BOOLEAN_CELL_FIELDS[col.id]) {
+    const metricMatch = /^([a-z]+)_(se|mm|avg)$/.exec(col.id);
+    return {
+      mainValue: '-',
+      unit: metricMatch
+        ? CELL_METRIC_UNITS[metricMatch[1]] || ''
+        : DIRECT_CELL_FIELDS[col.id]?.unit || '',
+      isBoolean: false,
+      booleanContent: null,
+    };
   }
 
-  if (isTotal) {
-    if (isBoolean) return <div className='flex justify-end'>{booleanContent}</div>;
+  const directField = DIRECT_CELL_FIELDS[col.id];
+  if (directField) {
+    return {
+      mainValue: formatCellNumber(data?.[directField.path]),
+      unit: directField.unit,
+      isBoolean: false,
+      booleanContent: null,
+    };
+  }
+
+  if (col.id === 'sys_raw') {
+    return {
+      mainValue: stats?.sys_raw ?? '-',
+      unit: '',
+      isBoolean: false,
+      booleanContent: null,
+    };
+  }
+
+  const booleanField = BOOLEAN_CELL_FIELDS[col.id];
+  if (booleanField) {
+    return {
+      mainValue: '-',
+      unit: '',
+      isBoolean: true,
+      booleanContent: renderCellBoolean(stats?.[booleanField]),
+    };
+  }
+
+  const metricMatch = /^([a-z]+)_(se|mm|avg)$/.exec(col.id);
+  if (!metricMatch) {
+    return {
+      mainValue: '-',
+      unit: '',
+      isBoolean: false,
+      booleanContent: null,
+    };
+  }
+
+  const [, metricKey, partKey] = metricMatch;
+  return {
+    mainValue: getMetricCellValue(stats, metricKey, partKey),
+    unit: CELL_METRIC_UNITS[metricKey] || '',
+    isBoolean: false,
+    booleanContent: null,
+  };
+}
+
+function TargetDeltaDisplay({ targetVal, unit, subTextSize }) {
+  return (
+    <div
+      style={subTextSize}
+      className='text-base-content/55 mt-0.5 leading-tight font-medium tracking-normal whitespace-nowrap italic'
+    >
+      Target {targetVal} {unit}
+    </div>
+  );
+}
+
+function findPhaseTarget(phase, col) {
+  const targets = Array.isArray(phase?.profilePhase?.targets) ? phase.profilePhase.targets : [];
+  return targets.find(target => {
+    if (col.id === 'weight') return target.type === 'weight' || target.type === 'volumetric';
+    return target.type === col.targetType;
+  });
+}
+
+function getTargetDisplay({ phase, col, unit, subTextSize }) {
+  if (col.id === 'duration' && phase?.profilePhase?.duration > 0) {
     return (
-      <span className='text-base-content/90 font-semibold'>
-        {mainValue}
-        {unit}
-      </span>
+      <TargetDeltaDisplay
+        targetVal={phase.profilePhase.duration}
+        unit={unit}
+        subTextSize={subTextSize}
+      />
     );
   }
 
-  const isWeightCol = col.id === 'weight';
-  const exitMatchesCol = isWeightCol
-    ? phase.exit?.type === 'weight' || phase.exit?.type === 'volumetric'
-    : phase.exit?.type === col.targetType;
-  const isHit = exitMatchesCol;
+  if (!col.targetType) return null;
 
-  let targetDisplay = null;
-  let predictionDisplay = null;
-  let warningDisplays = [];
+  const target = findPhaseTarget(phase, col);
+  if (!target) return null;
 
-  // Relative font sizing for sub-elements (0.85em) ensures they scale with zoom
-  const subTextSize = { fontSize: '0.85em' };
-  const iconSize = { fontSize: '0.8em' };
-  const booleanAnomaly = !isTotal && isBoolean ? stats?.sys_anomalies?.[col.id] : null;
+  return <TargetDeltaDisplay targetVal={target.value} unit={unit} subTextSize={subTextSize} />;
+}
 
-  // Unified Target Display - Parentheses + Italics, no "Target:" label
-  if (col.id === 'duration' && phase.profilePhase && phase.profilePhase.duration > 0) {
-    const targetVal = phase.profilePhase.duration;
-    const diff = data.duration - targetVal;
-    const diffSign = diff > 0 ? '+' : '';
-    const diffColor = Math.abs(diff) < 0.5 ? 'text-success' : 'text-base-content/60';
+function getTargetCalcEntry(phase, col) {
+  if (!col.targetType || !phase?.targetCalcValues) return null;
+  return col.id === 'weight'
+    ? phase.targetCalcValues.volumetric || phase.targetCalcValues.weight
+    : phase.targetCalcValues[col.targetType];
+}
 
-    targetDisplay = (
+function getFallbackCalcUnit(unit, targetType) {
+  if (unit) return unit;
+  if (targetType === 'duration') return 's';
+  if (targetType === 'pressure') return 'bar';
+  if (targetType === 'flow') return 'ml/s';
+  if (targetType === 'pumped') return 'ml';
+  if (targetType === 'weight' || targetType === 'volumetric') return 'g';
+  return '';
+}
+
+function replaceCellValueWithCalc({ mainValue, calcEntry, col }) {
+  if (!calcEntry) return mainValue;
+
+  const calcValue = formatCellNumber(calcEntry.value);
+  if (
+    typeof mainValue === 'string' &&
+    mainValue.includes('/') &&
+    (col.type === 'se' || col.type === 'mm')
+  ) {
+    const parts = mainValue.split('/');
+    return `${parts.slice(0, -1).join('/')}/${calcValue}`;
+  }
+
+  return calcValue;
+}
+
+function getPredictionDisplay({ phase, col, unit, subTextSize }) {
+  const calcEntry = getTargetCalcEntry(phase, col);
+  if (!calcEntry) {
+    return { calcIsStopReason: false, predictionDisplay: null };
+  }
+
+  const calcColor = calcEntry.isStopReason
+    ? utilityColors.predictionStopRed
+    : utilityColors.predictionInfoBlue;
+  const calcUnit = getFallbackCalcUnit(unit, col.targetType);
+
+  return {
+    calcIsStopReason: calcEntry.isStopReason,
+    predictionDisplay: (
       <div
-        style={subTextSize}
-        className='mt-0.5 leading-tight font-medium whitespace-nowrap italic opacity-100'
+        style={{ ...subTextSize, color: calcColor }}
+        className='mt-0.5 flex items-center justify-end gap-1 leading-tight font-medium tracking-normal'
       >
-        ({targetVal}
-        {unit})
-        <span className={`ml-1 font-bold ${diffColor}`}>
-          ({diffSign}
-          {diff.toFixed(1)})
+        <span>
+          Calc: {formatCellNumber(calcEntry.value)} {calcUnit}
         </span>
       </div>
-    );
-  }
+    ),
+  };
+}
 
-  if (phase.profilePhase && phase.profilePhase.targets && col.targetType) {
-    const target = phase.profilePhase.targets.find(t => {
-      if (col.id === 'weight') return t.type === 'weight' || t.type === 'volumetric';
-      return t.type === col.targetType;
-    });
+function getWeightWarnings({ phase, isWeightCol, subTextSize }) {
+  if (!isWeightCol) return [];
 
-    if (target) {
-      const targetVal = target.value;
-      const rawForParse =
-        typeof mainValue === 'string' && mainValue.includes('/')
-          ? mainValue.split('/').pop()
-          : mainValue;
-      const measuredVal = parseFloat(rawForParse);
-
-      if (!isNaN(measuredVal)) {
-        const diff = measuredVal - targetVal;
-        const diffSign = diff > 0 ? '+' : '';
-        const diffColor = Math.abs(diff) < 0.5 ? 'text-success' : 'text-base-content/60';
-
-        targetDisplay = (
-          <div
-            style={subTextSize}
-            className='mt-0.5 leading-tight font-medium whitespace-nowrap italic opacity-100'
-          >
-            ({targetVal}
-            {unit})
-            <span className={`ml-1 font-bold ${diffColor}`}>
-              ({diffSign}
-              {diff.toFixed(1)})
-            </span>
-          </div>
-        );
-      }
-    }
-  }
-
-  if (col.targetType && phase.targetCalcValues) {
-    const calcEntry =
-      col.id === 'weight'
-        ? phase.targetCalcValues['volumetric'] || phase.targetCalcValues['weight']
-        : phase.targetCalcValues[col.targetType];
-
-    if (calcEntry) {
-      const rawForParse =
-        typeof mainValue === 'string' && mainValue.includes('/')
-          ? mainValue.split('/').pop()
-          : mainValue;
-      const measuredVal = parseFloat(rawForParse);
-
-      if (!isNaN(measuredVal)) {
-        const calcVal = sf(calcEntry.value);
-        const calcColor = calcEntry.isStopReason
-          ? utilityColors.predictionStopRed
-          : utilityColors.predictionInfoBlue;
-
-        let calcUnit = unit;
-        if (!calcUnit && col.targetType === 'pressure') calcUnit = 'bar';
-        if (!calcUnit && col.targetType === 'flow') calcUnit = 'ml/s';
-        if (!calcUnit && col.targetType === 'pumped') calcUnit = 'ml';
-
-        predictionDisplay = (
-          <div
-            style={{ ...subTextSize, color: calcColor }}
-            className='mt-0.5 flex items-center justify-end gap-1 leading-tight font-bold'
-          >
-            <FontAwesomeIcon icon={faCalculator} style={iconSize} className='opacity-60' />
-            <span>
-              Calc: {calcVal}
-              {calcUnit}
-            </span>
-          </div>
-        );
-      }
-    }
-  }
-
-  if (isWeightCol && phase.scaleLost) {
-    warningDisplays.push(
+  const warnings = [];
+  if (phase.scaleLost) {
+    warnings.push(
       <div
         key='scale-lost-warning'
         style={{ ...subTextSize, color: utilityColors.warningOrange }}
@@ -1151,8 +1329,8 @@ function CellContent({ phase, col, results, isTotal = false }) {
     );
   }
 
-  if (isWeightCol && phase.highScaleDelay) {
-    warningDisplays.push(
+  if (phase.highScaleDelay) {
+    warnings.push(
       <div
         key='high-scale-delay-warning'
         style={{ ...subTextSize, color: utilityColors.warningOrange }}
@@ -1167,53 +1345,233 @@ function CellContent({ phase, col, results, isTotal = false }) {
     );
   }
 
+  return warnings;
+}
+
+function renderTotalCellContent({ isBoolean, booleanContent, mainValue, unit }) {
+  if (isBoolean) return <div className='flex justify-end'>{booleanContent}</div>;
+  return (
+    <span className='text-base-content/90 font-medium'>
+      {mainValue} {unit}
+    </span>
+  );
+}
+
+function getCellHitState({ phase, col }) {
+  if (col.id === 'weight') {
+    return phase.exit?.type === 'weight' || phase.exit?.type === 'volumetric';
+  }
+  return phase.exit?.type === col.targetType;
+}
+
+function renderBooleanCellContent({ booleanContent, booleanAnomaly, subTextSize }) {
+  return (
+    <div className='flex h-full flex-col items-end justify-center pb-1'>
+      <div className='flex items-center'>{booleanContent}</div>
+      {booleanAnomaly && (
+        <div
+          style={subTextSize}
+          className='text-base-content/55 mt-0.5 flex flex-col items-end leading-tight font-medium tracking-normal'
+          title={`Sample ${booleanAnomaly.sampleInPhase}: ${String(booleanAnomaly.value)}`}
+        >
+          <span>
+            Sample {booleanAnomaly.sampleInPhase}
+            {Number.isFinite(booleanAnomaly.sampleCountInPhase)
+              ? ` (${booleanAnomaly.sampleCountInPhase})`
+              : ''}
+          </span>
+          <span className='text-base-content/55 font-normal'>{String(booleanAnomaly.value)}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function renderMetricCellValue({
+  isHit,
+  calcIsStopReason,
+  mainValue,
+  unit,
+  mainValueIsCalculated,
+}) {
+  const isStopValue = mainValueIsCalculated ? calcIsStopReason : isHit && !calcIsStopReason;
+  return (
+    <span
+      className={isStopValue ? 'font-normal' : 'text-base-content/90 font-medium'}
+      style={isStopValue ? { color: utilityColors.stopRed } : {}}
+    >
+      {mainValue} {unit}
+    </span>
+  );
+}
+
+function CellContent({ phase, col, results, isTotal = false, advancedMode = false }) {
+  const data = isTotal ? results?.total : phase;
+  const stats = isTotal ? results?.total : phase?.stats;
+
+  if (!data) return <span>-</span>;
+
+  const { mainValue, unit, isBoolean, booleanContent } = resolveCellValue({
+    data,
+    stats,
+    col,
+    isSkipped: Boolean(phase?.skipped),
+  });
+
+  if (isTotal) {
+    return renderTotalCellContent({ isBoolean, booleanContent, mainValue, unit });
+  }
+
+  const isWeightCol = col.id === 'weight';
+  const isHit = getCellHitState({ phase, col });
+
+  // Relative font sizing for sub-elements (0.85em) ensures they scale with zoom
+  const subTextSize = { fontSize: '0.85em' };
+  const booleanAnomaly = !isTotal && isBoolean ? stats?.sys_anomalies?.[col.id] : null;
+  const calcEntry = getTargetCalcEntry(phase, col);
+  const displayMainValue =
+    !advancedMode && !isBoolean
+      ? replaceCellValueWithCalc({ mainValue, calcEntry, col })
+      : mainValue;
+  const mainValueIsCalculated = !advancedMode && !isBoolean && Boolean(calcEntry);
+  const targetDisplay = getTargetDisplay({
+    phase,
+    col,
+    unit,
+    subTextSize,
+  });
+  const { calcIsStopReason, predictionDisplay } = getPredictionDisplay({
+    phase,
+    col,
+    unit,
+    subTextSize,
+  });
+  const warningDisplays = getWeightWarnings({ phase, isWeightCol, subTextSize });
+
   return (
     <div className='flex min-h-[2em] flex-col items-end justify-center'>
-      {isBoolean ? (
-        <div className='flex h-full flex-col items-end justify-center pb-1'>
-          <div className='flex items-center'>{booleanContent}</div>
-          {booleanAnomaly && (
-            <div
-              style={subTextSize}
-              className='text-base-content/75 mt-0.5 flex flex-col items-end leading-tight font-bold'
-              title={`Sample ${booleanAnomaly.sampleInPhase}: ${String(booleanAnomaly.value)}`}
-            >
-              <span>
-                Sample {booleanAnomaly.sampleInPhase}
-                {Number.isFinite(booleanAnomaly.sampleCountInPhase)
-                  ? ` (${booleanAnomaly.sampleCountInPhase})`
-                  : ''}
-              </span>
-              <span className='text-base-content/60'>{String(booleanAnomaly.value)}</span>
-            </div>
-          )}
-        </div>
-      ) : (
-        <span
-          className={isHit ? 'font-semibold' : 'text-base-content/85 font-medium'}
-          style={isHit ? { color: utilityColors.stopRed } : {}}
-        >
-          {mainValue}
-          {unit}
-        </span>
-      )}
+      {isBoolean
+        ? renderBooleanCellContent({ booleanContent, booleanAnomaly, subTextSize })
+        : renderMetricCellValue({
+            isHit,
+            calcIsStopReason,
+            mainValue: displayMainValue,
+            unit,
+            mainValueIsCalculated,
+          })}
+      {advancedMode ? predictionDisplay : null}
       {targetDisplay}
-      {predictionDisplay}
       {warningDisplays}
     </div>
   );
 }
 
 // --- Status Badge Helper ---
-const StatusBadge = ({ label, colorClass = '', style = {}, title }) => (
-  <span
-    className={`rounded-[4px] border px-2 py-0.5 text-[10px] leading-none font-bold tracking-tight select-none ${colorClass}`}
-    style={style}
-    title={title}
-  >
-    {label}
-  </span>
-);
+function StatusBadge({ label, colorClass = '', style = {}, details }) {
+  const triggerRef = useRef(null);
+  const popoverRef = useRef(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const [popoverStyle, setPopoverStyle] = useState(null);
+
+  const updatePopoverPosition = useCallback(() => {
+    const triggerElement = triggerRef.current;
+    const browserWindow = globalThis.window;
+    if (!triggerElement || !browserWindow) return;
+
+    const viewportWidth = browserWindow.innerWidth || 0;
+    const viewportHeight = browserWindow.innerHeight || 0;
+    const scrollX = browserWindow.scrollX || browserWindow.pageXOffset || 0;
+    const scrollY = browserWindow.scrollY || browserWindow.pageYOffset || 0;
+    const triggerRect = triggerElement.getBoundingClientRect();
+    const margin = 10;
+    const width = Math.min(viewportWidth - margin * 2, 360);
+    const left = Math.min(
+      Math.max(margin, triggerRect.left),
+      Math.max(margin, viewportWidth - width - margin),
+    );
+    const spaceAbove = triggerRect.top - margin;
+    const spaceBelow = viewportHeight - triggerRect.bottom - margin;
+    const openAbove = spaceBelow < 120 && spaceAbove > spaceBelow;
+    const maxHeight = Math.max(80, Math.min(viewportHeight - margin * 2, 220));
+
+    setPopoverStyle({
+      position: 'absolute',
+      left: `${scrollX + left}px`,
+      top: `${
+        scrollY +
+        (openAbove ? Math.max(margin, triggerRect.top - maxHeight - 8) : triggerRect.bottom + 8)
+      }px`,
+      width: `${width}px`,
+      maxHeight: `${maxHeight}px`,
+    });
+  }, []);
+
+  const closePopover = useCallback(() => setIsOpen(false), []);
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    updatePopoverPosition();
+
+    const handlePointerDown = event => {
+      if (triggerRef.current?.contains(event.target)) return;
+      if (popoverRef.current?.contains(event.target)) return;
+      closePopover();
+    };
+    const handleKeyDown = event => {
+      if (event.key === 'Escape') closePopover();
+    };
+    const handleResize = () => updatePopoverPosition();
+    const handleScroll = event => {
+      if (popoverRef.current?.contains(event.target)) return;
+      closePopover();
+    };
+
+    globalThis.document?.addEventListener('pointerdown', handlePointerDown);
+    globalThis.document?.addEventListener('keydown', handleKeyDown);
+    globalThis.window?.addEventListener('resize', handleResize);
+    globalThis.window?.addEventListener('scroll', handleScroll, { passive: true });
+    globalThis.document?.addEventListener('scroll', handleScroll, true);
+
+    return () => {
+      globalThis.document?.removeEventListener('pointerdown', handlePointerDown);
+      globalThis.document?.removeEventListener('keydown', handleKeyDown);
+      globalThis.window?.removeEventListener('resize', handleResize);
+      globalThis.window?.removeEventListener('scroll', handleScroll);
+      globalThis.document?.removeEventListener('scroll', handleScroll, true);
+    };
+  }, [closePopover, isOpen, updatePopoverPosition]);
+
+  const popoverContent =
+    isOpen && details ? (
+      <div
+        ref={popoverRef}
+        className='bg-base-100/95 border-base-content/10 text-base-content z-[10000] overflow-y-auto rounded-lg border p-2.5 text-xs leading-relaxed font-normal tracking-normal normal-case shadow-xl backdrop-blur-md'
+        style={popoverStyle || { position: 'absolute', visibility: 'hidden' }}
+      >
+        <p className='text-base-content/90 mb-1 text-[12px] leading-tight font-medium tracking-normal'>
+          {label}
+        </p>
+        <p className='text-base-content/55 leading-relaxed font-normal'>{details}</p>
+      </div>
+    ) : null;
+
+  return (
+    <>
+      <button
+        ref={triggerRef}
+        type='button'
+        className={`relative inline-flex items-center gap-1 rounded-t-md rounded-b-none border border-b-0 px-2.5 pt-1 pb-2 text-xs leading-none font-medium tracking-tight transition-[filter,background-color] duration-150 select-none hover:brightness-105 focus-visible:ring-2 focus-visible:ring-current focus-visible:outline-none ${colorClass}`}
+        style={style}
+        aria-expanded={isOpen}
+        onClick={() => setIsOpen(current => !current)}
+      >
+        <span>{label}</span>
+        <FontAwesomeIcon icon={faCircleInfo} className='text-[10px] opacity-80' />
+      </button>
+      {globalThis.document?.body ? createPortal(popoverContent, globalThis.document.body) : null}
+    </>
+  );
+}
 
 // --- Scroll Button Helper ---
 const ScrollBtn = ({ icon, onClick, className = '', title }) => (
@@ -1221,9 +1579,13 @@ const ScrollBtn = ({ icon, onClick, className = '', title }) => (
     onClick={onClick}
     title={title}
     className={getAnalyzerIconButtonClasses({
-      className: `btn btn-ghost btn-xs ${ANALYZER_COMPACT_ICON_BUTTON_CLASS} px-0 ${className}`,
+      className: `${ANALYZER_ACTION_ICON_BUTTON_CLASS} ${className}`,
     })}
   >
-    <FontAwesomeIcon icon={icon} className='text-[10px]' />
+    <FontAwesomeIcon
+      icon={icon}
+      className={ANALYZER_ACTION_ICON_CLASS}
+      style={ANALYZER_ACTION_ICON_STYLE}
+    />
   </button>
 );

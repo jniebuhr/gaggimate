@@ -13,23 +13,22 @@ import {
 } from './constants';
 import { shouldRenderTooltipLabel, sortTooltipItems } from './ShotChartExternalTooltip';
 import {
-  formatAxisTick,
+  axisUnitLabelPlugin,
+  createChartPointElementConfig,
+  finalWeightBadgeOverlayPlugin,
+  finalWeightCalloutLinePlugin,
+  formatResponsiveXAxisTick,
+  formatUniqueAxisTick,
+  getAxisUnitReservedPadding,
+  getNeutralAxisTickColor,
   hoverGuidePlugin,
+  phaseBackgroundOverlayPlugin,
+  phaseLabelOverlayPlugin,
   replayRevealPlugin,
-  resolveHoverPointColor,
+  stopIconOverlayPlugin,
 } from './helpers';
 
-const POINT_ELEMENT_CONFIG = {
-  radius: 0,
-  hoverRadius: 4,
-  hitRadius: 12,
-  borderWidth: 0,
-  hoverBorderWidth: 0,
-  backgroundColor: resolveHoverPointColor,
-  hoverBackgroundColor: resolveHoverPointColor,
-  borderColor: resolveHoverPointColor,
-  hoverBorderColor: resolveHoverPointColor,
-};
+const MAIN_CHART_MARKER_TOP_PADDING = 48;
 
 export function createShotChartConfigs({
   model,
@@ -41,14 +40,38 @@ export function createShotChartConfigs({
   targetFlowFill,
   tempToTargetFill,
   updateExternalTooltip,
+  showStopBadges = true,
 }) {
   const showWeightSeries = Boolean(hasWeightData && model.hasWeight);
+  const neutralAxisTickColor = getNeutralAxisTickColor();
+  const mainAxisUnitLabels = [
+    { scaleId: 'yMain', label: 'bar / ml/s' },
+    { scaleId: 'yMain', label: 'Phase', side: 'center', yOffset: 0 },
+  ];
+  const showWeightAxis = Boolean(showWeightSeries && visibility.weight);
+  if (showWeightAxis) {
+    mainAxisUnitLabels.push({
+      scaleId: 'yWeight',
+      label: 'g',
+      side: 'right',
+      yOffset: 0,
+    });
+  }
+  const mainChartInsideLabels = [];
+  const tempAxisUnitLabels = [{ scaleId: 'yTemp', label: '°C', side: 'left' }];
+  const mainAxisUnitPadding = getAxisUnitReservedPadding({ yLabels: mainAxisUnitLabels });
+  mainAxisUnitPadding.top = Math.max(mainAxisUnitPadding.top, MAIN_CHART_MARKER_TOP_PADDING);
+  const tempAxisUnitPadding = getAxisUnitReservedPadding({
+    yLabels: tempAxisUnitLabels,
+    xLabel: 's',
+    reserveXLabelSpace: false,
+  });
 
   // The main chart carries all primary series plus a few hidden helper datasets
   // that exist only for tooltip composition and replay/export consistency.
   const mainDatasets = [
     {
-      label: 'Phase Names',
+      label: 'Phases',
       data: [],
       borderColor: colors.phaseLine,
       backgroundColor: colors.phaseLine,
@@ -110,7 +133,7 @@ export function createShotChartConfigs({
       data: model.series.targetPressure,
       borderColor: colors.pressure,
       backgroundColor: targetPressureFill,
-      fill: 'origin',
+      fill: false,
       borderDash: [4, 4],
       yAxisID: 'yMain',
       pointRadius: 0,
@@ -119,7 +142,7 @@ export function createShotChartConfigs({
       hidden: !visibility.targetPressure,
     },
     {
-      label: 'Flow',
+      label: 'Pump Flow',
       data: model.series.flow,
       borderColor: colors.flow,
       backgroundColor: colors.flow,
@@ -134,7 +157,7 @@ export function createShotChartConfigs({
       data: model.series.targetFlow,
       borderColor: colors.flow,
       backgroundColor: targetFlowFill,
-      fill: 'origin',
+      fill: false,
       borderDash: [4, 4],
       yAxisID: 'yMain',
       pointRadius: 0,
@@ -214,7 +237,7 @@ export function createShotChartConfigs({
       data: model.series.temp,
       borderColor: colors.temp,
       backgroundColor: tempToTargetFill,
-      fill: visibility.targetTemp ? '+1' : false,
+      fill: false,
       yAxisID: 'yTemp',
       pointRadius: 0,
       borderWidth: STANDARD_LINE_WIDTH,
@@ -239,13 +262,26 @@ export function createShotChartConfigs({
     mainConfig: {
       type: 'line',
       data: { datasets: mainDatasets },
-      plugins: [hoverGuidePlugin, replayRevealPlugin],
+      plugins: [
+        phaseBackgroundOverlayPlugin,
+        hoverGuidePlugin,
+        replayRevealPlugin,
+        finalWeightCalloutLinePlugin,
+        axisUnitLabelPlugin,
+        phaseLabelOverlayPlugin,
+        stopIconOverlayPlugin,
+        finalWeightBadgeOverlayPlugin,
+      ],
       options: {
         responsive: true,
         maintainAspectRatio: false,
         animation: false,
+        layout: {
+          autoPadding: false,
+          padding: mainAxisUnitPadding,
+        },
         elements: {
-          point: POINT_ELEMENT_CONFIG,
+          point: createChartPointElementConfig(),
         },
         interaction: {
           mode: 'index',
@@ -272,7 +308,27 @@ export function createShotChartConfigs({
             external: updateExternalTooltip,
           },
           annotation: {
+            clip: false,
             annotations: model.phaseAnnotations,
+          },
+          phaseBackgroundOverlay: {
+            ranges: model.phaseBackgroundRanges,
+          },
+          finalWeightCalloutLine: {
+            callouts: [model.phaseAnnotations?.final_weight_callout_meta].filter(Boolean),
+          },
+          axisUnitLabels: {
+            yLabels: mainAxisUnitLabels,
+            chartLabels: mainChartInsideLabels,
+          },
+          phaseLabelOverlay: {
+            labels: model.phaseLabelOverlays,
+          },
+          stopIconOverlay: {
+            stops: showStopBadges ? model.stopIconOverlays : [],
+          },
+          finalWeightBadgeOverlay: {
+            labels: [model.phaseAnnotations?.final_weight].filter(Boolean),
           },
         },
         scales: {
@@ -294,9 +350,10 @@ export function createShotChartConfigs({
             min: 0,
             max: model.mainAxisMax,
             ticks: {
+              display: true,
               font: { size: 10 },
-              color: colors.pressure,
-              callback: formatAxisTick,
+              color: neutralAxisTickColor,
+              callback: formatUniqueAxisTick,
             },
             grid: {
               color: 'rgba(200, 200, 200, 0.1)',
@@ -323,18 +380,20 @@ export function createShotChartConfigs({
           },
           yWeight: {
             type: 'linear',
-            display: true,
+            display: showWeightAxis,
             position: 'right',
             offset: false,
             beginAtZero: true,
             min: 0,
             max: model.weightAxisMax,
             ticks: {
+              display: showWeightAxis,
               font: { size: 10 },
-              color: colors.weight,
-              callback: formatAxisTick,
+              color: neutralAxisTickColor,
+              callback: formatUniqueAxisTick,
             },
             grid: { display: false },
+            border: { display: false },
           },
         },
       },
@@ -342,16 +401,17 @@ export function createShotChartConfigs({
     tempConfig: {
       type: 'line',
       data: { datasets: tempDatasets },
-      plugins: [hoverGuidePlugin, replayRevealPlugin],
+      plugins: [phaseBackgroundOverlayPlugin, replayRevealPlugin, axisUnitLabelPlugin],
       options: {
         responsive: true,
         maintainAspectRatio: false,
         animation: false,
         layout: {
-          padding: { left: 0, right: 0, top: 0, bottom: 0 },
+          autoPadding: false,
+          padding: tempAxisUnitPadding,
         },
         elements: {
-          point: POINT_ELEMENT_CONFIG,
+          point: createChartPointElementConfig(),
         },
         interaction: {
           mode: 'index',
@@ -367,17 +427,32 @@ export function createShotChartConfigs({
           annotation: {
             annotations: model.tempPhaseAnnotations,
           },
+          phaseBackgroundOverlay: {
+            ranges: model.phaseBackgroundRanges,
+          },
+          axisUnitLabels: {
+            yLabels: tempAxisUnitLabels,
+            xLabel: 's',
+            xLabelPlacement: 'inside',
+            xLabelYOffset: 0,
+          },
         },
         scales: {
           x: {
             type: 'linear',
-            position: 'top',
+            position: 'bottom',
             max: model.maxTime,
             ticks: {
+              display: true,
+              autoSkip: false,
               font: { size: 10 },
-              color: '#888',
-              callback: formatAxisTick,
+              color: neutralAxisTickColor,
+              callback: formatResponsiveXAxisTick,
               padding: 4,
+              align: 'inner',
+              includeBounds: true,
+              maxRotation: 0,
+              minRotation: 0,
             },
             grid: {
               display: false,
@@ -394,9 +469,10 @@ export function createShotChartConfigs({
             min: model.tempAxisMin,
             max: model.tempAxisMax,
             ticks: {
+              display: true,
               font: { size: 10 },
-              color: colors.temp,
-              callback: formatAxisTick,
+              color: neutralAxisTickColor,
+              callback: formatUniqueAxisTick,
             },
             grid: {
               color: 'rgba(200, 200, 200, 0.1)',
@@ -404,16 +480,18 @@ export function createShotChartConfigs({
           },
           yTempRight: {
             type: 'linear',
+            display: showWeightAxis,
             position: 'right',
             min: model.tempAxisMin,
             max: model.tempAxisMax,
-            ticks: {
-              display: true,
-              font: { size: 10 },
-              color: colors.tempTarget,
-              callback: formatAxisTick,
-            },
             grid: { display: false },
+            border: { display: false },
+            ticks: {
+              display: showWeightAxis,
+              font: { size: 10 },
+              color: 'rgba(0, 0, 0, 0)',
+              callback: formatUniqueAxisTick,
+            },
           },
         },
       },

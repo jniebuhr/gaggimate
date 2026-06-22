@@ -59,7 +59,7 @@ import {
 const BATCH_SIZE = 2;
 const DEFAULT_SETTINGS = { scaleDelayMs: 200, sensorDelayMs: 200, isAutoAdjusted: true };
 const NO_PROFILE_LOADED = 'No Profile Loaded';
-const STATISTICS_PANEL_CLASS = 'bg-base-100 border-base-content/10 rounded-xl border shadow-sm';
+const STATISTICS_PANEL_CLASS = 'app-card-surface rounded-xl';
 
 function getStatisticsFallbackSource(source) {
   return STATISTICS_SOURCE_FALLBACK[source] || null;
@@ -85,7 +85,7 @@ function parseDateInputMs(value, boundary = 'start') {
   if (!value) return { valueMs: null, error: null };
 
   const normalizedValue = String(value).trim();
-  const dateOnlyMatch = normalizedValue.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  const dateOnlyMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(normalizedValue);
   if (dateOnlyMatch) {
     const [, year, month, day] = dateOnlyMatch;
     const yearNum = Number(year);
@@ -527,7 +527,11 @@ function StatisticsDetailSectionPanel({
     return null;
   }
 
-  const shouldUsePanelSurface = resolvedStatisticsDetailSection !== 'metrics';
+  const shouldUsePanelSurface =
+    resolvedStatisticsDetailSection !== 'metrics' &&
+    resolvedStatisticsDetailSection !== 'compare' &&
+    resolvedStatisticsDetailSection !== 'phase';
+  const shouldUseCompactChartPadding = resolvedStatisticsDetailSection === 'trends';
 
   const sectionContent = (
     <>
@@ -576,7 +580,13 @@ function StatisticsDetailSectionPanel({
         setStatisticsDetailSection={setStatisticsDetailSection}
       />
       {shouldUsePanelSurface ? (
-        <div className={`${STATISTICS_PANEL_CLASS} p-4`}>{sectionContent}</div>
+        <div
+          className={`${STATISTICS_PANEL_CLASS} ${
+            shouldUseCompactChartPadding ? 'px-1.5 py-2 sm:px-2' : 'p-4'
+          }`}
+        >
+          {sectionContent}
+        </div>
       ) : (
         sectionContent
       )}
@@ -1186,6 +1196,189 @@ function useStatisticsSelectionSync({
   }, [mode, metadataLoaded, hasBaseParseErrors, selectionScopeShotKeySet, setSelectedShotKeys]);
 }
 
+function buildProfileLookupMap(profileList, existingMap = null) {
+  const profileMap = new Map();
+  for (const profile of profileList) {
+    const displayName = getProfileDisplayLabel(profile, '');
+    const key = displayName.toLowerCase();
+    if (key && !existingMap?.has(key)) profileMap.set(key, profile);
+  }
+  return profileMap;
+}
+
+function getStatisticsShotId(shot) {
+  if (shot.source === 'gaggimate') return shot.id;
+  return shot.storageKey || shot.name || shot.id;
+}
+
+function buildFullStatisticsShot({ loadedShot, shot, shotId }) {
+  if (!loadedShot) return null;
+  return {
+    ...loadedShot,
+    source: loadedShot.source || shot.source,
+    storageKey: loadedShot.storageKey || shot.storageKey || shot.name || String(shotId),
+    name: loadedShot.name || shot.name || shot.storageKey || String(shotId),
+  };
+}
+
+function resolveMatchedProfileEntry({ fallbackProfileMap, fullShot, profileMap }) {
+  const profileField = fullShot.profile || '';
+  const profileKey = cleanName(profileField).toLowerCase();
+  if (!profileKey) return null;
+  return profileMap.get(profileKey) || fallbackProfileMap.get(profileKey) || null;
+}
+
+function getProfileLoadId(profileEntry) {
+  if (profileEntry.source === 'gaggimate') return profileEntry.profileId || profileEntry.id;
+  return profileEntry.label || profileEntry.name;
+}
+
+async function loadStatisticsMatchedProfile({ loadedProfileCache, matchedProfileEntry }) {
+  if (!matchedProfileEntry) return null;
+  if (matchedProfileEntry.data) return matchedProfileEntry.data;
+
+  const profileId = getProfileLoadId(matchedProfileEntry);
+  if (!profileId) return null;
+
+  const cacheKey = `${matchedProfileEntry.source}:${String(profileId || '')}`;
+  if (!loadedProfileCache.has(cacheKey)) {
+    loadedProfileCache.set(
+      cacheKey,
+      libraryService.loadProfile(profileId, matchedProfileEntry.source).catch(() => null),
+    );
+  }
+  return loadedProfileCache.get(cacheKey);
+}
+
+function attachProfileSource(profile, matchedProfileEntry) {
+  if (profile && matchedProfileEntry?.source && !profile.source) {
+    return { ...profile, source: matchedProfileEntry.source };
+  }
+  return profile;
+}
+
+function getStatisticsAnalysisSettings(fullShot, matchedProfile) {
+  const settings = { ...DEFAULT_SETTINGS };
+  const autoResult = detectAutoDelay(fullShot, matchedProfile, settings.scaleDelayMs);
+  if (autoResult.auto) {
+    settings.scaleDelayMs = autoResult.delay;
+    settings.isAutoAdjusted = true;
+  }
+  return settings;
+}
+
+async function analyzeStatisticsShot({ fallbackProfileMap, loadedProfileCache, profileMap, shot }) {
+  try {
+    const shotId = getStatisticsShotId(shot);
+    const loadedShot = await libraryService.loadShot(shotId, shot.source);
+    const fullShot = buildFullStatisticsShot({ loadedShot, shot, shotId });
+    if (!fullShot?.samples || fullShot.samples.length === 0) return null;
+
+    const matchedProfileEntry = resolveMatchedProfileEntry({
+      fallbackProfileMap,
+      fullShot,
+      profileMap,
+    });
+    const loadedProfile = await loadStatisticsMatchedProfile({
+      loadedProfileCache,
+      matchedProfileEntry,
+    });
+    const matchedProfile = attachProfileSource(loadedProfile, matchedProfileEntry);
+    const settings = getStatisticsAnalysisSettings(fullShot, matchedProfile);
+    const profileField = fullShot.profile || '';
+
+    return {
+      analysis: calculateShotMetrics(fullShot, matchedProfile, settings),
+      shotData: fullShot,
+      profileData: matchedProfile,
+      meta: {
+        id: shotId,
+        selectionKey: getShotSelectionKey(shot),
+        displayName: getShotDisplayName(fullShot),
+        timestamp: shot.timestamp || shot.shotDate || shot.uploadedAt || 0,
+        profileName: cleanName(profileField) || '(Unknown)',
+        source: shot.source,
+      },
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function analyzeStatisticsShotBatch({
+  batch,
+  fallbackProfileMap,
+  loadedProfileCache,
+  profileMap,
+}) {
+  return Promise.all(
+    batch.map(shot =>
+      analyzeStatisticsShot({
+        fallbackProfileMap,
+        loadedProfileCache,
+        profileMap,
+        shot,
+      }),
+    ),
+  );
+}
+
+function getStatisticsSelectionHint({ mode, selectedProfileNames, selectedShotKeys }) {
+  if (mode === 'profile' && selectedProfileNames.length === 0) {
+    return 'Select one or more profiles.';
+  }
+  if (mode === 'shots' && selectedShotKeys.length === 0) {
+    return 'Select one or more shots.';
+  }
+  return null;
+}
+
+function getStatisticsRunSources(runRequest) {
+  const shotList = Array.isArray(runRequest.shots) ? runRequest.shots : [];
+  const profileList = Array.isArray(runRequest.profiles) ? runRequest.profiles : [];
+  const fallbackProfileList = Array.isArray(runRequest.fallbackProfiles)
+    ? runRequest.fallbackProfiles
+    : [];
+
+  return { fallbackProfileList, profileList, shotList };
+}
+
+function appendDefinedEntries(targetEntries, batchResults) {
+  for (const entry of batchResults) {
+    if (entry) targetEntries.push(entry);
+  }
+}
+
+async function runStatisticsAnalysis({ isCurrentRun, onProgress, runRequest }) {
+  const { fallbackProfileList, profileList, shotList } = getStatisticsRunSources(runRequest);
+  const profileMap = buildProfileLookupMap(profileList);
+  const fallbackProfileMap = buildProfileLookupMap(fallbackProfileList, profileMap);
+  const loadedProfileCache = new Map();
+  const total = shotList.length;
+
+  onProgress({ current: 0, total });
+  if (total === 0) return [];
+
+  const entries = [];
+  for (let i = 0; i < total; i += BATCH_SIZE) {
+    if (!isCurrentRun()) return null;
+
+    const batch = shotList.slice(i, i + BATCH_SIZE);
+    const batchResults = await analyzeStatisticsShotBatch({
+      batch,
+      fallbackProfileMap,
+      loadedProfileCache,
+      profileMap,
+    });
+    appendDefinedEntries(entries, batchResults);
+
+    if (!isCurrentRun()) return null;
+    onProgress({ current: Math.min(i + BATCH_SIZE, total), total });
+  }
+
+  return entries;
+}
+
 function useStatisticsRunExecution({
   runRequest,
   calcMode,
@@ -1209,132 +1402,13 @@ function useStatisticsRunExecution({
       setProgress({ current: 0, total: 0 });
 
       try {
-        const shotList = Array.isArray(runRequest.shots) ? runRequest.shots : [];
-        const profileList = Array.isArray(runRequest.profiles) ? runRequest.profiles : [];
-        const fallbackProfileList = Array.isArray(runRequest.fallbackProfiles)
-          ? runRequest.fallbackProfiles
-          : [];
+        const entries = await runStatisticsAnalysis({
+          isCurrentRun: () => !cancelled && loadId === analyzeLoadIdRef.current,
+          onProgress: setProgress,
+          runRequest,
+        });
+        if (!entries) return;
 
-        const profileMap = new Map();
-        for (const p of profileList) {
-          const displayName = getProfileDisplayLabel(p, '');
-          const key = displayName.toLowerCase();
-          if (key) profileMap.set(key, p);
-        }
-        const fallbackProfileMap = new Map();
-        for (const p of fallbackProfileList) {
-          const displayName = getProfileDisplayLabel(p, '');
-          const key = displayName.toLowerCase();
-          if (key && !profileMap.has(key)) fallbackProfileMap.set(key, p);
-        }
-
-        const loadedProfileCache = new Map();
-        const total = shotList.length;
-        setProgress({ current: 0, total });
-
-        if (total === 0) {
-          entriesRef.current = [];
-          setResult(computeStatistics([], { calcMode: !!runRequest.calcMode }));
-          setLoading(false);
-          return;
-        }
-
-        const entries = [];
-
-        for (let i = 0; i < total; i += BATCH_SIZE) {
-          if (loadId !== analyzeLoadIdRef.current) return;
-
-          const batch = shotList.slice(i, i + BATCH_SIZE);
-          const batchResults = await Promise.all(
-            batch.map(async shot => {
-              try {
-                const shotId =
-                  shot.source === 'gaggimate' ? shot.id : shot.storageKey || shot.name || shot.id;
-                const loadedShot = await libraryService.loadShot(shotId, shot.source);
-                const fullShot = loadedShot
-                  ? {
-                      ...loadedShot,
-                      source: loadedShot.source || shot.source,
-                      storageKey:
-                        loadedShot.storageKey || shot.storageKey || shot.name || String(shotId),
-                      name: loadedShot.name || shot.name || shot.storageKey || String(shotId),
-                    }
-                  : null;
-                if (!fullShot || !fullShot.samples || fullShot.samples.length === 0) return null;
-
-                const profileField = fullShot.profile || '';
-                const profileKey = cleanName(profileField).toLowerCase();
-                const matchedProfileEntry = profileKey
-                  ? profileMap.get(profileKey) || fallbackProfileMap.get(profileKey) || null
-                  : null;
-
-                let matchedProfile = null;
-                if (matchedProfileEntry) {
-                  if (matchedProfileEntry.data) {
-                    matchedProfile = matchedProfileEntry.data;
-                  } else {
-                    const pid =
-                      matchedProfileEntry.source === 'gaggimate'
-                        ? matchedProfileEntry.profileId || matchedProfileEntry.id
-                        : matchedProfileEntry.label || matchedProfileEntry.name;
-                    try {
-                      const cacheKey = `${matchedProfileEntry.source}:${String(pid || '')}`;
-                      if (pid) {
-                        if (!loadedProfileCache.has(cacheKey)) {
-                          loadedProfileCache.set(
-                            cacheKey,
-                            libraryService
-                              .loadProfile(pid, matchedProfileEntry.source)
-                              .catch(() => null),
-                          );
-                        }
-                        matchedProfile = await loadedProfileCache.get(cacheKey);
-                      }
-                    } catch {
-                      // Analyze without profile if profile load fails.
-                    }
-                  }
-                }
-
-                if (matchedProfile && matchedProfileEntry?.source && !matchedProfile.source) {
-                  matchedProfile = { ...matchedProfile, source: matchedProfileEntry.source };
-                }
-
-                const settings = { ...DEFAULT_SETTINGS };
-                const autoResult = detectAutoDelay(fullShot, matchedProfile, settings.scaleDelayMs);
-                if (autoResult.auto) {
-                  settings.scaleDelayMs = autoResult.delay;
-                  settings.isAutoAdjusted = true;
-                }
-
-                return {
-                  analysis: calculateShotMetrics(fullShot, matchedProfile, settings),
-                  shotData: fullShot,
-                  profileData: matchedProfile,
-                  meta: {
-                    id: shotId,
-                    selectionKey: getShotSelectionKey(shot),
-                    displayName: getShotDisplayName(fullShot),
-                    timestamp: shot.timestamp || shot.shotDate || shot.uploadedAt || 0,
-                    profileName: cleanName(profileField) || '(Unknown)',
-                    source: shot.source,
-                  },
-                };
-              } catch {
-                return null;
-              }
-            }),
-          );
-
-          for (const entry of batchResults) {
-            if (entry) entries.push(entry);
-          }
-
-          if (loadId !== analyzeLoadIdRef.current) return;
-          setProgress({ current: Math.min(i + BATCH_SIZE, total), total });
-        }
-
-        if (cancelled || loadId !== analyzeLoadIdRef.current) return;
         entriesRef.current = entries;
         setResult(computeStatistics(entries, { calcMode: !!runRequest.calcMode }));
       } catch {
@@ -1710,12 +1784,11 @@ export function StatisticsView({ initialContext }) {
   const isSelectionMissing =
     (mode === 'profile' && selectedProfileNames.length === 0) ||
     (mode === 'shots' && selectedShotKeys.length === 0);
-  const selectionHint =
-    mode === 'profile' && selectedProfileNames.length === 0
-      ? 'Select one or more profiles.'
-      : mode === 'shots' && selectedShotKeys.length === 0
-        ? 'Select one or more shots.'
-        : null;
+  const selectionHint = getStatisticsSelectionHint({
+    mode,
+    selectedProfileNames,
+    selectedShotKeys,
+  });
   const canRunStatistics =
     !loading &&
     !preparingRun &&
@@ -1865,7 +1938,10 @@ export function StatisticsView({ initialContext }) {
 
   return (
     <div className={shouldShowEmptyStatisticsState ? 'space-y-6' : 'space-y-5'}>
-      <div className='bg-base-100/80 border-base-content/10 relative z-[80] rounded-xl border shadow-lg backdrop-blur-md lg:sticky lg:top-0'>
+      <div
+        className='app-card-surface relative z-[80] rounded-xl lg:sticky lg:top-0'
+        data-statistics-toolbar-shell
+      >
         <div className='px-1.5 py-1.5 sm:px-2 sm:py-2'>
           <StatisticsToolbar
             shotSource={shotSource}
@@ -1967,7 +2043,7 @@ export function StatisticsView({ initialContext }) {
 
       {shouldShowEmptyStatisticsState && (
         <div className='w-full'>
-          <div className='bg-base-200/60 border-base-content/5 w-full space-y-6 rounded-xl border p-8 text-left shadow-sm'>
+          <div className='app-card-surface w-full space-y-6 rounded-xl p-8 text-left'>
             <div className='space-y-2 text-center'>
               <h3 className='text-base-content text-2xl font-bold'>No Statistics Built Yet</h3>
               <p className='text-base-content text-sm opacity-70'>

@@ -1,3 +1,4 @@
+/* global globalThis */
 /**
  * useShotChartReplayExport.js
  *
@@ -25,6 +26,96 @@ import {
   buildReplayImageFilename,
   getVisibleLegendItemsForExport,
 } from './helpers';
+
+function shouldUseForcedWebmExport(videoExportCapabilities) {
+  return (
+    videoExportCapabilities.canRecordMp4 === false &&
+    videoExportCapabilities.shouldHideWebmOption === false
+  );
+}
+
+function getEffectiveVideoExportFormat({
+  exportFormat,
+  hasVideoExportSupport,
+  shouldForceWebmExport,
+  shouldHideWebmOption,
+}) {
+  if (hasVideoExportSupport) {
+    if (shouldForceWebmExport) {
+      return 'webm';
+    }
+    if (exportFormat === 'webm' && shouldHideWebmOption === false) {
+      return 'webm';
+    }
+    return 'mp4';
+  }
+  return null;
+}
+
+function getNextExportType({ exportType, hasVideoExportSupport }) {
+  if (hasVideoExportSupport === false && exportType === 'video') {
+    return 'image';
+  }
+  return exportType;
+}
+
+function getNextExportFormat({
+  exportFormat,
+  hasVideoExportSupport,
+  shouldForceWebmExport,
+  shouldHideWebmOption,
+}) {
+  if (hasVideoExportSupport) {
+    if (shouldForceWebmExport) {
+      return 'webm';
+    }
+    if (shouldHideWebmOption && exportFormat === 'webm') {
+      return 'mp4';
+    }
+  }
+  return exportFormat;
+}
+
+function appendReplayChunk(activeData, frameChunk) {
+  if (!Array.isArray(frameChunk) || frameChunk.length === 0) return;
+  for (const point of frameChunk) {
+    if (!point || !Number.isFinite(point.x) || !Number.isFinite(point.y)) continue;
+    const lastPoint = activeData.at(-1);
+    if (lastPoint && lastPoint.x === point.x && lastPoint.y === point.y) continue;
+    activeData.push(point);
+  }
+}
+
+function applyReplayDatasetFrames(chart, replayDatasets, { endFrame, shouldReset, startFrame }) {
+  replayDatasets?.forEach((datasetMeta, datasetIndex) => {
+    const dataset = chart.data.datasets[datasetIndex];
+    if (!dataset || !datasetMeta) return;
+
+    if (shouldReset) {
+      datasetMeta.activeData.length = 0;
+      dataset.data = datasetMeta.activeData;
+    } else if (dataset.data !== datasetMeta.activeData) {
+      dataset.data = datasetMeta.activeData;
+    }
+
+    for (let currentFrame = startFrame; currentFrame <= endFrame; currentFrame++) {
+      appendReplayChunk(datasetMeta.activeData, datasetMeta.frameChunks[currentFrame]);
+    }
+  });
+}
+
+function updateReplayAnnotations(chart, annotationMetadata, isVisible) {
+  const annotations = chart.options?.plugins?.annotation?.annotations || {};
+  for (const meta of annotationMetadata || []) {
+    const annotation = annotations[meta.key];
+    if (annotation) annotation.display = isVisible(meta);
+  }
+}
+
+function setChartReplayReveal(chart, enabled, revealX) {
+  chart.$replayRevealEnabled = enabled;
+  chart.$replayRevealX = enabled ? revealX : null;
+}
 
 export function useShotChartReplayExport({
   shotData,
@@ -70,15 +161,13 @@ export function useShotChartReplayExport({
   const videoExportCapabilities = getVideoExportCapabilities();
   const hasVideoExportSupport =
     videoExportCapabilities.canRecordMp4 || videoExportCapabilities.canRecordWebm;
-  const shouldForceWebmExport =
-    !videoExportCapabilities.canRecordMp4 && !videoExportCapabilities.shouldHideWebmOption;
-  const effectiveVideoExportFormat = !hasVideoExportSupport
-    ? null
-    : shouldForceWebmExport
-      ? 'webm'
-      : exportMenuState.exportFormat === 'webm' && !videoExportCapabilities.shouldHideWebmOption
-        ? 'webm'
-        : 'mp4';
+  const shouldForceWebmExport = shouldUseForcedWebmExport(videoExportCapabilities);
+  const effectiveVideoExportFormat = getEffectiveVideoExportFormat({
+    exportFormat: exportMenuState.exportFormat,
+    hasVideoExportSupport,
+    shouldForceWebmExport,
+    shouldHideWebmOption: videoExportCapabilities.shouldHideWebmOption,
+  });
   const activeExportType = activeExportTypeRef.current;
   const isVideoExportActive =
     hasVideoExportSupport && isReplayExporting && activeExportType === 'video';
@@ -143,11 +232,28 @@ export function useShotChartReplayExport({
     tempChart.update('none');
   };
 
+  const setStopOverlayReplayReveal = (enabled, xValue = null) => {
+    const revealEnabled = enabled === true && Number.isFinite(Number(xValue));
+    const revealX = revealEnabled ? Number(xValue) : null;
+    const mainChart = getMainChart();
+    const tempChart = getTempChart();
+
+    if (mainChart) {
+      mainChart.$replayStopRevealEnabled = revealEnabled;
+      mainChart.$replayStopRevealX = revealX;
+    }
+    if (tempChart) {
+      tempChart.$replayStopRevealEnabled = revealEnabled;
+      tempChart.$replayStopRevealX = revealX;
+    }
+  };
+
   const stopReplayAnimation = (clearHover = false) => {
     // A full stop always resets both the animation loop and the replay-only dataset state.
     // That guarantees replay restarts from a known clean baseline.
-    if (typeof window !== 'undefined' && replayRafRef.current !== null) {
-      window.cancelAnimationFrame(replayRafRef.current);
+    const browserWindow = globalThis.window;
+    if (browserWindow && replayRafRef.current !== null) {
+      browserWindow.cancelAnimationFrame(replayRafRef.current);
     }
     replayRafRef.current = null;
     replayStartPerfMsRef.current = 0;
@@ -164,11 +270,15 @@ export function useShotChartReplayExport({
       mainChart.$replayRevealEnabled = false;
       mainChart.$replayRevealX = null;
       mainChart.$replayRevealClipActive = false;
+      mainChart.$replayStopRevealEnabled = false;
+      mainChart.$replayStopRevealX = null;
     }
     if (tempChart) {
       tempChart.$replayRevealEnabled = false;
       tempChart.$replayRevealX = null;
       tempChart.$replayRevealClipActive = false;
+      tempChart.$replayStopRevealEnabled = false;
+      tempChart.$replayStopRevealX = null;
     }
 
     restoreFullReplayVisuals();
@@ -180,68 +290,36 @@ export function useShotChartReplayExport({
     const tempChart = getTempChart();
     if (!runtime || !mainChart || !tempChart) return;
 
-    // Replay datasets are prepared as per-frame chunks ahead of time. At runtime the
-    // frame loop only appends the next chunk, which keeps live replay cheap enough
-    // while still performing a real Chart.js re-render.
-    const appendReplayChunk = (activeData, frameChunk) => {
-      if (!Array.isArray(frameChunk) || frameChunk.length === 0) return;
-      for (const point of frameChunk) {
-        if (!point || !Number.isFinite(point.x) || !Number.isFinite(point.y)) continue;
-        const lastPoint = activeData[activeData.length - 1];
-        if (lastPoint && lastPoint.x === point.x && lastPoint.y === point.y) continue;
-        activeData.push(point);
-      }
-    };
-
     const clampedFrameIndex = Math.max(-1, Math.min(runtime.frameCount, frameIndex));
+    const frameDurationSec = REPLAY_FRAME_INTERVAL_MS / 1000;
+    const replayRevealX =
+      clampedFrameIndex < 0
+        ? runtime.shotStartSec - 0.001
+        : runtime.shotStartSec +
+          Math.min(runtime.totalDurationSec, clampedFrameIndex * frameDurationSec);
     const shouldReset =
       options.forceReset === true || clampedFrameIndex < replayLastAppliedFrameRef.current;
     const startFrame = shouldReset ? 0 : replayLastAppliedFrameRef.current + 1;
 
-    runtime.mainReplayDatasets?.forEach((datasetMeta, datasetIndex) => {
-      const dataset = mainChart.data.datasets[datasetIndex];
-      if (!dataset || !datasetMeta) return;
-      if (shouldReset) {
-        datasetMeta.activeData.length = 0;
-        dataset.data = datasetMeta.activeData;
-      } else if (dataset.data !== datasetMeta.activeData) {
-        dataset.data = datasetMeta.activeData;
-      }
+    const frameOptions = {
+      endFrame: clampedFrameIndex,
+      shouldReset,
+      startFrame,
+    };
+    applyReplayDatasetFrames(mainChart, runtime.mainReplayDatasets, frameOptions);
+    applyReplayDatasetFrames(tempChart, runtime.tempReplayDatasets, frameOptions);
+    updateReplayAnnotations(
+      mainChart,
+      runtime.mainAnnotationMeta,
+      meta => meta.baseDisplay && clampedFrameIndex >= meta.frameIndex,
+    );
+    updateReplayAnnotations(
+      tempChart,
+      runtime.tempAnnotationMeta,
+      meta => meta.baseDisplay && clampedFrameIndex >= meta.frameIndex,
+    );
 
-      for (let currentFrame = startFrame; currentFrame <= clampedFrameIndex; currentFrame++) {
-        appendReplayChunk(datasetMeta.activeData, datasetMeta.frameChunks[currentFrame]);
-      }
-    });
-
-    runtime.tempReplayDatasets?.forEach((datasetMeta, datasetIndex) => {
-      const dataset = tempChart.data.datasets[datasetIndex];
-      if (!dataset || !datasetMeta) return;
-      if (shouldReset) {
-        datasetMeta.activeData.length = 0;
-        dataset.data = datasetMeta.activeData;
-      } else if (dataset.data !== datasetMeta.activeData) {
-        dataset.data = datasetMeta.activeData;
-      }
-
-      for (let currentFrame = startFrame; currentFrame <= clampedFrameIndex; currentFrame++) {
-        appendReplayChunk(datasetMeta.activeData, datasetMeta.frameChunks[currentFrame]);
-      }
-    });
-
-    const mainAnnotations = mainChart.options?.plugins?.annotation?.annotations || {};
-    for (const meta of runtime.mainAnnotationMeta || []) {
-      const annotation = mainAnnotations[meta.key];
-      if (!annotation) continue;
-      annotation.display = meta.baseDisplay && clampedFrameIndex >= meta.frameIndex;
-    }
-
-    const tempAnnotations = tempChart.options?.plugins?.annotation?.annotations || {};
-    for (const meta of runtime.tempAnnotationMeta || []) {
-      const annotation = tempAnnotations[meta.key];
-      if (!annotation) continue;
-      annotation.display = meta.baseDisplay && clampedFrameIndex >= meta.frameIndex;
-    }
-
+    setStopOverlayReplayReveal(true, replayRevealX);
     replayLastAppliedFrameRef.current = clampedFrameIndex;
     mainChart.update('none');
     tempChart.update('none');
@@ -255,27 +333,18 @@ export function useShotChartReplayExport({
 
     const revealAll = options.revealAll === true || !Number.isFinite(cutoffX);
     const effectiveCutoffX = revealAll ? runtime.maxTime : cutoffX;
+    const shouldRevealPartialReplay = revealAll === false;
 
     // Export still uses reveal clipping because it can reuse the fully rendered
     // charts without mutating the replay dataset state mid-session.
-    mainChart.$replayRevealEnabled = !revealAll;
-    mainChart.$replayRevealX = !revealAll ? effectiveCutoffX : null;
-    tempChart.$replayRevealEnabled = !revealAll;
-    tempChart.$replayRevealX = !revealAll ? effectiveCutoffX : null;
+    setChartReplayReveal(mainChart, shouldRevealPartialReplay, effectiveCutoffX);
+    setChartReplayReveal(tempChart, shouldRevealPartialReplay, effectiveCutoffX);
+    setStopOverlayReplayReveal(shouldRevealPartialReplay, effectiveCutoffX);
 
-    const mainAnnotations = mainChart.options?.plugins?.annotation?.annotations || {};
-    for (const meta of runtime.mainAnnotationMeta || []) {
-      const annotation = mainAnnotations[meta.key];
-      if (!annotation) continue;
-      annotation.display = meta.baseDisplay && (revealAll || effectiveCutoffX >= meta.time);
-    }
-
-    const tempAnnotations = tempChart.options?.plugins?.annotation?.annotations || {};
-    for (const meta of runtime.tempAnnotationMeta || []) {
-      const annotation = tempAnnotations[meta.key];
-      if (!annotation) continue;
-      annotation.display = meta.baseDisplay && (revealAll || effectiveCutoffX >= meta.time);
-    }
+    const isAnnotationVisible = meta =>
+      meta.baseDisplay && (revealAll || effectiveCutoffX >= meta.time);
+    updateReplayAnnotations(mainChart, runtime.mainAnnotationMeta, isAnnotationVisible);
+    updateReplayAnnotations(tempChart, runtime.tempAnnotationMeta, isAnnotationVisible);
 
     mainChart.update('none');
     tempChart.update('none');
@@ -287,11 +356,12 @@ export function useShotChartReplayExport({
       : Date.now();
 
   const scheduleReplayFrame = frameHandler => {
-    if (typeof window === 'undefined' || typeof window.requestAnimationFrame !== 'function') {
-      return false;
+    const browserWindow = globalThis.window;
+    if (typeof browserWindow?.requestAnimationFrame === 'function') {
+      replayRafRef.current = browserWindow.requestAnimationFrame(frameHandler);
+      return true;
     }
-    replayRafRef.current = window.requestAnimationFrame(frameHandler);
-    return true;
+    return false;
   };
 
   const startReplayLoop = () => {
@@ -328,7 +398,10 @@ export function useShotChartReplayExport({
         return;
       }
 
-      replayRafRef.current = window.requestAnimationFrame(frame);
+      const browserWindow = globalThis.window;
+      if (typeof browserWindow?.requestAnimationFrame === 'function') {
+        replayRafRef.current = browserWindow.requestAnimationFrame(frame);
+      }
     };
 
     if (!scheduleReplayFrame(frame)) {
@@ -371,8 +444,9 @@ export function useShotChartReplayExport({
         (nowMs - replayStartPerfMsRef.current) / 1000,
       );
     }
-    if (typeof window !== 'undefined' && replayRafRef.current !== null) {
-      window.cancelAnimationFrame(replayRafRef.current);
+    const browserWindow = globalThis.window;
+    if (browserWindow && replayRafRef.current !== null) {
+      browserWindow.cancelAnimationFrame(replayRafRef.current);
     }
     replayRafRef.current = null;
     replayStartPerfMsRef.current = 0;
@@ -540,7 +614,9 @@ export function useShotChartReplayExport({
   };
 
   const handleVideoExport = async () => {
-    if (!hasVideoExportSupport || !effectiveVideoExportFormat) {
+    const isVideoExportUnavailable =
+      hasVideoExportSupport === false || effectiveVideoExportFormat == null;
+    if (isVideoExportUnavailable) {
       setReplayExportStatusSafely({
         status: 'error',
         error: 'Video export is not supported in this browser.',
@@ -704,7 +780,7 @@ export function useShotChartReplayExport({
   };
 
   const handleExportTypeChange = exportType => {
-    if (exportType === 'video' && !hasVideoExportSupport) return;
+    if (exportType === 'video' && hasVideoExportSupport === false) return;
     setExportMenuState(prev => ({ ...prev, exportType }));
   };
 
@@ -767,63 +843,71 @@ export function useShotChartReplayExport({
 
   useEffect(() => {
     if (replayExportStatus.error !== 'Replay export was cancelled.') return undefined;
-    if (typeof window === 'undefined') return undefined;
+    const browserWindow = globalThis.window;
+    const browserDocument = globalThis.document;
+    if (browserWindow && browserDocument) {
+      let isDisposed = false;
+      const handlePointerDown = () => {
+        if (isDisposed) return;
+        setReplayExportStatus({ status: 'idle', error: null });
+      };
 
-    let isDisposed = false;
-    const handlePointerDown = () => {
-      if (isDisposed) return;
-      setReplayExportStatus({ status: 'idle', error: null });
-    };
+      const timerId = browserWindow.setTimeout(() => {
+        if (isDisposed) return;
+        browserDocument.addEventListener('pointerdown', handlePointerDown, { once: true });
+      }, 0);
 
-    const timerId = window.setTimeout(() => {
-      if (isDisposed) return;
-      document.addEventListener('pointerdown', handlePointerDown, { once: true });
-    }, 0);
-
-    return () => {
-      isDisposed = true;
-      window.clearTimeout(timerId);
-      document.removeEventListener('pointerdown', handlePointerDown);
-    };
+      return () => {
+        isDisposed = true;
+        browserWindow.clearTimeout(timerId);
+        browserDocument.removeEventListener('pointerdown', handlePointerDown);
+      };
+    }
+    return undefined;
   }, [replayExportStatus.error]);
 
   useEffect(() => {
-    if (!exportMenuState.open) return undefined;
+    const browserDocument = globalThis.document;
+    if (exportMenuState.open && browserDocument) {
+      // The export menu behaves like a lightweight popover: close on outside click
+      // or Escape without pushing that responsibility back into the controls component.
+      const handlePointerDown = event => {
+        const menuNode = exportMenuRef.current;
+        if (menuNode) {
+          if (menuNode.contains(event.target)) return;
+          setExportMenuState(prev => ({ ...prev, open: false }));
+        }
+      };
 
-    // The export menu behaves like a lightweight popover: close on outside click
-    // or Escape without pushing that responsibility back into the controls component.
-    const handlePointerDown = event => {
-      const menuNode = exportMenuRef.current;
-      if (!menuNode || menuNode.contains(event.target)) return;
-      setExportMenuState(prev => ({ ...prev, open: false }));
-    };
+      const handleKeyDown = event => {
+        if (event.key !== 'Escape') return;
+        setExportMenuState(prev => ({ ...prev, open: false }));
+      };
 
-    const handleKeyDown = event => {
-      if (event.key !== 'Escape') return;
-      setExportMenuState(prev => ({ ...prev, open: false }));
-    };
-
-    document.addEventListener('pointerdown', handlePointerDown);
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.removeEventListener('pointerdown', handlePointerDown);
-      document.removeEventListener('keydown', handleKeyDown);
-    };
+      browserDocument.addEventListener('pointerdown', handlePointerDown);
+      browserDocument.addEventListener('keydown', handleKeyDown);
+      return () => {
+        browserDocument.removeEventListener('pointerdown', handlePointerDown);
+        browserDocument.removeEventListener('keydown', handleKeyDown);
+      };
+    }
+    return undefined;
   }, [exportMenuState.open, exportMenuRef]);
 
   useEffect(() => {
     // Keep menu state aligned with runtime format capabilities. This avoids ending
     // up with a stale "video/mp4" selection after browser capability changes or refactors.
     setExportMenuState(prev => {
-      const nextExportType =
-        !hasVideoExportSupport && prev.exportType === 'video' ? 'image' : prev.exportType;
-      const nextExportFormat = !hasVideoExportSupport
-        ? prev.exportFormat
-        : shouldForceWebmExport
-          ? 'webm'
-          : videoExportCapabilities.shouldHideWebmOption && prev.exportFormat === 'webm'
-            ? 'mp4'
-            : prev.exportFormat;
+      const nextExportType = getNextExportType({
+        exportType: prev.exportType,
+        hasVideoExportSupport,
+      });
+      const nextExportFormat = getNextExportFormat({
+        exportFormat: prev.exportFormat,
+        hasVideoExportSupport,
+        shouldForceWebmExport,
+        shouldHideWebmOption: videoExportCapabilities.shouldHideWebmOption,
+      });
 
       if (nextExportType === prev.exportType && nextExportFormat === prev.exportFormat) {
         return prev;

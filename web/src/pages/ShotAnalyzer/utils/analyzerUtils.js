@@ -10,8 +10,12 @@ export const ANALYZER_DB_KEYS = {
   PROFILES: 'gaggimate_profiles',
   PRESETS: 'gaggimate_column_presets',
   USER_STANDARD: 'gaggimate_user_standard_cols',
+  SINGLE_CHART_VISIBILITY: 'gaggimate_single_chart_visibility',
+  ANALYSIS_TABLE_ADVANCED: 'gaggimate_analysis_table_advanced',
+  ANALYSIS_TABLE_FONT_SIZE: 'gaggimate_analysis_table_font_size',
   COMPARE_TARGET_DISPLAY_MODE: 'gaggimate_compare_target_display_mode',
   COMPARE_ANNOTATIONS_ENABLED: 'gaggimate_compare_annotations_enabled',
+  COMPARE_CHART_VISIBILITY: 'gaggimate_compare_chart_visibility',
   LIBRARY_SHOTS_SOURCE_FILTER: 'gaggimate_library_shots_source_filter',
   LIBRARY_PROFILES_SOURCE_FILTER: 'gaggimate_library_profiles_source_filter',
   PINNED_PROFILES: 'gaggimate_pinned_profiles',
@@ -27,6 +31,45 @@ export const COMPARE_TARGET_DISPLAY_MODES = {
   PER_SHOT: 'perShot',
   MAIN_SHOT_ONLY: 'mainShotOnly',
 };
+
+export function formatMetricValue(value, digits = 1) {
+  const numericValue = Number(value);
+  return Number.isFinite(numericValue) ? numericValue.toFixed(digits) : '-';
+}
+
+function getDisplayStopReason(reason) {
+  if (reason === 'Water Drawn Stop') return 'Pumped Water Stop';
+  if (reason === 'Flow Stop') return 'Pump Flow Stop';
+  return reason;
+}
+
+export function getDisplayStopReasonParts(reason = '') {
+  const rawReason = reason ?? '';
+  const skippedSuffix = ' (skipped)';
+  const hasSkippedSuffix = rawReason.endsWith(skippedSuffix);
+  const baseReason = hasSkippedSuffix ? rawReason.slice(0, -skippedSuffix.length) : rawReason;
+  const displayReason = getDisplayStopReason(baseReason);
+  if (!displayReason) {
+    return { skipNotice: '', stopReason: '' };
+  }
+
+  if (displayReason === 'Phase skipped') {
+    return { skipNotice: 'Phase skipped', stopReason: '' };
+  }
+
+  if (displayReason === 'Phase skipped (no preceding phase)') {
+    return { skipNotice: 'Phase skipped', stopReason: 'No preceding phase' };
+  }
+
+  if (hasSkippedSuffix) {
+    return {
+      skipNotice: 'Phase skipped',
+      stopReason: displayReason,
+    };
+  }
+
+  return { skipNotice: '', stopReason: displayReason };
+}
 
 /**
  * Column Configuration
@@ -51,7 +94,7 @@ export const columnConfig = [
   },
   {
     id: 'water',
-    label: 'Water Drawn (ml)',
+    label: 'Pumped Water (ml)',
     type: 'val',
     group: 'basics',
     default: true,
@@ -160,7 +203,7 @@ export const columnConfig = [
   // --- FLOW ---
   {
     id: 'f_se',
-    label: 'Flow (ml/s)',
+    label: 'Pump Flow (ml/s)',
     type: 'se',
     group: 'flow',
     default: true,
@@ -168,14 +211,14 @@ export const columnConfig = [
   },
   {
     id: 'f_mm',
-    label: 'Flow (ml/s)',
+    label: 'Pump Flow (ml/s)',
     type: 'mm',
     group: 'flow',
     default: false,
   },
   {
     id: 'f_avg',
-    label: 'Flow (ml/s)',
+    label: 'Pump Flow (ml/s)',
     type: 'avg',
     group: 'flow',
     default: false,
@@ -184,21 +227,21 @@ export const columnConfig = [
   // --- TARGET FLOW ---
   {
     id: 'tf_se',
-    label: 'Target Flow (ml/s)',
+    label: 'Target Pump Flow (ml/s)',
     type: 'se',
     group: 'target_flow',
     default: false,
   },
   {
     id: 'tf_mm',
-    label: 'Target Flow (ml/s)',
+    label: 'Target Pump Flow (ml/s)',
     type: 'mm',
     group: 'target_flow',
     default: false,
   },
   {
     id: 'tf_avg',
-    label: 'Target Flow (ml/s)',
+    label: 'Target Pump Flow (ml/s)',
     type: 'avg',
     group: 'target_flow',
     default: false,
@@ -327,7 +370,7 @@ export const groups = {
   pressure: 'Pressure (bar)',
   target_pressure: 'Target Pressure (bar)',
   flow: 'Pump Flow (ml/s)',
-  target_flow: 'Target Flow (ml/s)',
+  target_flow: 'Target Pump Flow (ml/s)',
   puckflow: 'Puck Flow (ml/s)',
   temp: 'Temperature (℃)',
   target_temp: 'Target Temp (℃)',
@@ -366,7 +409,7 @@ export const analyzerUiColors = {
   stopLabel: 'var(--analyzer-stop-label)',
 };
 
-export const notesTasteStyles = {
+const notesTasteStyles = {
   bitter: {
     color: analyzerUiColors.notesTasteBitter,
     borderColor: analyzerUiColors.notesTasteBitter,
@@ -511,18 +554,20 @@ export const normalizeCompareTargetDisplayMode = value => {
   return COMPARE_TARGET_DISPLAY_MODES.NONE;
 };
 
+export const getShotStorageKey = shot => {
+  if (!shot) return '';
+  return shot.source === 'gaggimate' ? shot.id : shot.storageKey || shot.name || shot.id || '';
+};
+
 export const getShotIdentityKey = shot => {
   if (!shot) return '';
 
   const source = shot.source || 'temp';
-  if (source === 'gaggimate') {
-    return `gaggimate:${String(shot.id || '')}`;
-  }
-  if (source === 'temp') {
-    return `temp:${String(shot.storageKey || shot.name || shot.id || '')}`;
-  }
+  const storageKey = String(getShotStorageKey(shot) || '');
+  if (source === 'gaggimate') return `gaggimate:${storageKey}`;
+  if (source === 'temp') return `temp:${storageKey}`;
 
-  return `browser:${String(shot.storageKey || shot.name || shot.id || '')}`;
+  return `browser:${storageKey}`;
 };
 
 export const getProfilePinKey = profile => {
@@ -722,7 +767,7 @@ export const formatTimestamp = timestamp => {
 export const formatDuration = samples => {
   if (!samples || samples.length === 0) return '0s';
 
-  const duration = (samples[samples.length - 1].t - samples[0].t) / 1000;
+  const duration = (samples.at(-1).t - samples[0].t) / 1000;
   return `${duration.toFixed(1)}s`;
 };
 
@@ -924,7 +969,7 @@ export const detectDoseFromProfileName = profileName => {
  */
 export const calculateRatio = (doseIn, doseOut) => {
   if (!doseIn || !doseOut || doseIn <= 0) return null;
-  return parseFloat((doseOut / doseIn).toFixed(2));
+  return Number.parseFloat((doseOut / doseIn).toFixed(2));
 };
 
 /**
@@ -1019,8 +1064,8 @@ export const getSortedLibrary = (collectionKey, options = {}) => {
       valA = a.data?.rating || 0;
       valB = b.data?.rating || 0;
     } else if (sortKey === 'duration') {
-      valA = parseFloat(a.duration || 0);
-      valB = parseFloat(b.duration || 0);
+      valA = Number.parseFloat(a.duration || 0);
+      valB = Number.parseFloat(b.duration || 0);
     } else {
       valA = valA || '';
       valB = valB || '';

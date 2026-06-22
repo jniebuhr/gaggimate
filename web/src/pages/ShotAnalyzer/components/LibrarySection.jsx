@@ -15,6 +15,7 @@ import {
   getAnalyzerSurfaceTriggerClasses,
 } from './analyzerControlStyles';
 import { SourceMarker } from './SourceMarker';
+import './LibrarySection.css';
 
 function getLibraryItemKey(item, isShot) {
   if (!item) return 'unknown-item';
@@ -87,20 +88,9 @@ function renderLibrarySourceHeaderContent(value) {
   );
 }
 
-function getNameColumnWidth(isShot, showCompareSelection) {
-  if (!isShot) return '55%';
-  return showCompareSelection ? '24%' : '30%';
-}
-
 function getLibraryColumnLayout(isShot, showCompareSelection) {
   return {
-    widthCompare: showCompareSelection ? '6%' : '0%',
-    widthName: getNameColumnWidth(isShot, showCompareSelection),
-    widthSource: '7%',
-    widthDate: isShot ? '25%' : '0%',
-    widthProfile: isShot ? '25%' : '0%',
-    widthAction: '10%',
-    columnCount: (showCompareSelection ? 1 : 0) + 1 + 1 + (isShot ? 2 : 0) + 1,
+    columnCount: (showCompareSelection ? 1 : 0) + 1 + 1 + 1 + (isShot ? 2 : 0) + 1,
   };
 }
 
@@ -177,21 +167,12 @@ export function LibrarySection({
   // Keep the name column flexible because pinning and compare badges both live
   // inside that cell instead of adding separate narrow columns.
   const showCompareSelection = false;
-  const {
-    widthCompare,
-    widthName,
-    widthSource,
-    widthDate,
-    widthProfile,
-    widthAction,
-    columnCount,
-  } = getLibraryColumnLayout(isShot, showCompareSelection);
+  const { columnCount } = getLibraryColumnLayout(isShot, showCompareSelection);
   const hasCompareBadges = items.some(item => Boolean(getCompareBadgeNumber?.(item)));
-  const stickyHeaderCellClass = 'relative z-20 bg-base-200';
 
   return (
     <div
-      className='bg-base-100/30 border-base-content/5 relative flex h-full flex-col rounded-lg border'
+      className='library-section bg-base-100/30 border-base-content/5 relative flex h-full flex-col rounded-lg border'
       style={sectionHeight ? { height: sectionHeight } : undefined}
     >
       {/* Toolbar */}
@@ -226,13 +207,13 @@ export function LibrarySection({
             </button>
           </div>
         </div>
-        <div className='flex gap-2'>
+        <div className='flex min-w-0 gap-2'>
           <input
             type='text'
             placeholder={`Search ${title.toLowerCase()}...`}
             value={searchValue}
             onInput={e => onSearchChange(e.target.value)}
-            className='bg-base-100/50 border-base-content/10 focus:border-primary h-9 flex-1 rounded border pl-3 text-sm outline-none'
+            className='library-toolbar-field bg-base-100/50 border-base-content/10 focus:border-primary h-9 min-w-0 flex-1 rounded-md border px-3 text-sm outline-none'
           />
           <select
             value={`${sortKey}-${sortOrder}`}
@@ -240,7 +221,7 @@ export function LibrarySection({
               const [k, o] = e.target.value.split('-');
               onSortChange(k, o);
             }}
-            className='bg-base-100/50 border-base-content/10 hover:bg-base-content/5 hover:border-base-content/20 h-9 cursor-pointer rounded border px-2 text-xs transition-colors outline-none'
+            className='library-toolbar-field bg-base-100/50 border-base-content/10 hover:bg-base-content/5 hover:border-base-content/20 focus:border-primary h-9 max-w-[8.5rem] shrink-0 cursor-pointer rounded-md border px-2 text-xs transition-colors outline-none sm:max-w-none'
           >
             {isShot && <option value='shotDate-desc'>Date (New)</option>}
             {isShot && <option value='shotDate-asc'>Date (Old)</option>}
@@ -259,29 +240,23 @@ export function LibrarySection({
         style={{ scrollbarGutter: 'stable' }}
       >
         {isLoading && (
-          <div className='bg-base-100/50 absolute inset-0 z-20 flex items-center justify-center backdrop-blur-[1px]'>
+          <div className='bg-base-100/90 absolute inset-0 z-20 flex items-center justify-center'>
             <FontAwesomeIcon icon={faCircleNotch} spin className='text-primary text-3xl' />
           </div>
         )}
 
         <table className='relative w-full border-separate border-spacing-0'>
-          <thead className='sticky top-0 z-20 text-[10px] font-bold tracking-wide'>
+          <thead className='sticky top-0 z-20 text-xs font-medium tracking-normal'>
             <tr>
-              {showCompareSelection && (
-                <th
-                  className={`${stickyHeaderCellClass} px-2 py-3 text-center`}
-                  style={{ width: widthCompare }}
+              <th colSpan={columnCount} className='library-table-header-cell relative z-20 p-0'>
+                <div
+                  className={`library-row-grid library-row-grid--${isShot ? 'shot' : 'profile'} library-row-grid--header min-h-9 px-3`}
                 >
-                  Cmp
-                </th>
-              )}
-              <th className={`${stickyHeaderCellClass} p-0 text-left`} style={{ width: widthName }}>
-                <div className='grid h-full w-full grid-cols-[minmax(0,1fr)_auto] items-stretch'>
                   <button
                     type='button'
                     className={getAnalyzerSurfaceTriggerClasses({
                       className:
-                        'flex h-full w-full min-w-0 cursor-pointer items-center gap-1 px-3 py-3 text-left text-[10px] font-bold tracking-wide',
+                        'library-row-grid__name flex h-full w-full min-w-0 cursor-pointer items-center gap-1 p-0 text-left text-xs font-medium tracking-normal',
                     })}
                     onClick={() => onSortChange('name')}
                   >
@@ -293,7 +268,7 @@ export function LibrarySection({
                       type='button'
                       className={getAnalyzerIconButtonClasses({
                         tone: pinnedFirstEnabled ? 'primary' : 'subtle',
-                        className: `mr-3 h-full min-h-full w-5 shrink-0 justify-self-end rounded-none bg-transparent p-0 text-[11px] ${
+                        className: `library-row-grid__pin h-full min-h-full w-5 shrink-0 justify-self-end rounded-none bg-transparent p-0 text-xs ${
                           pinnedFirstEnabled ? 'text-primary hover:text-primary' : ''
                         }`,
                       })}
@@ -308,81 +283,70 @@ export function LibrarySection({
                     >
                       <FontAwesomeIcon icon={faThumbtack} />
                     </button>
+                  ) : (
+                    <span className='library-row-grid__pin' aria-hidden='true' />
+                  )}
+                  <details className='library-row-grid__source dropdown block h-full w-full'>
+                    <summary
+                      className={getAnalyzerSurfaceTriggerClasses({
+                        className:
+                          'flex h-full w-full cursor-pointer list-none items-center justify-center gap-1 px-1 py-2 text-xs font-medium outline-none [&::-webkit-details-marker]:hidden',
+                      })}
+                      aria-label='Filter library source'
+                      title='Filter library source'
+                    >
+                      {renderLibrarySourceHeaderContent(sourceFilter)}
+                      <FontAwesomeIcon
+                        icon={faChevronDown}
+                        className='library-source-filter-chevron text-[10px] opacity-60'
+                      />
+                    </summary>
+
+                    <div className='dropdown-content app-card-surface z-[65] mt-2 w-28 rounded-xl p-1.5'>
+                      <div className='grid gap-1'>
+                        {SOURCE_FILTER_OPTIONS.map(option => (
+                          <button
+                            key={option.value}
+                            type='button'
+                            className={getAnalyzerSurfaceTriggerClasses({
+                              className: `flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-[10px] font-bold ${
+                                sourceFilter === option.value
+                                  ? 'bg-base-content/6 text-base-content'
+                                  : 'text-base-content/70'
+                              }`,
+                            })}
+                            onClick={event => {
+                              onSourceFilterChange(option.value);
+                              closeParentDetails(event.currentTarget);
+                            }}
+                          >
+                            {renderLibrarySourceOptionContent(option.value)}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </details>
+                  {isShot ? (
+                    <button
+                      type='button'
+                      className={getAnalyzerSurfaceTriggerClasses({
+                        className:
+                          'library-row-grid__date flex h-full w-full cursor-pointer items-center gap-1 p-0 text-left text-xs font-medium tracking-normal',
+                      })}
+                      onClick={() => onSortChange('shotDate')}
+                    >
+                      <span>Date</span>
+                      {getSortIcon('shotDate')}
+                    </button>
                   ) : null}
+                  {isShot ? (
+                    <span className='library-row-grid__profile text-base-content/70 text-left text-xs font-medium tracking-normal'>
+                      Profile
+                    </span>
+                  ) : null}
+                  <span className='library-row-grid__actions' aria-hidden='true' />
                 </div>
               </th>
-              <th
-                className={`${stickyHeaderCellClass} p-0 text-center`}
-                style={{ width: widthSource }}
-              >
-                <details className='dropdown block h-full w-full'>
-                  <summary
-                    className={getAnalyzerSurfaceTriggerClasses({
-                      className:
-                        'flex h-full w-full cursor-pointer list-none items-center justify-center gap-1 px-1 py-3 text-[10px] font-bold outline-none [&::-webkit-details-marker]:hidden',
-                    })}
-                    aria-label='Filter library source'
-                    title='Filter library source'
-                  >
-                    {renderLibrarySourceHeaderContent(sourceFilter)}
-                    <FontAwesomeIcon icon={faChevronDown} className='text-[9px] opacity-60' />
-                  </summary>
-
-                  <div className='dropdown-content bg-base-100/95 border-base-content/10 z-[65] mt-2 w-28 rounded-xl border p-1.5 shadow-xl backdrop-blur-md'>
-                    <div className='grid gap-1'>
-                      {SOURCE_FILTER_OPTIONS.map(option => (
-                        <button
-                          key={option.value}
-                          type='button'
-                          className={getAnalyzerSurfaceTriggerClasses({
-                            className: `flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-[10px] font-bold ${
-                              sourceFilter === option.value
-                                ? 'bg-base-content/6 text-base-content'
-                                : 'text-base-content/70'
-                            }`,
-                          })}
-                          onClick={event => {
-                            onSourceFilterChange(option.value);
-                            closeParentDetails(event.currentTarget);
-                          }}
-                        >
-                          {renderLibrarySourceOptionContent(option.value)}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </details>
-              </th>
-              {isShot && (
-                <th
-                  className={`${stickyHeaderCellClass} p-0 text-left`}
-                  style={{ width: widthDate }}
-                >
-                  <button
-                    type='button'
-                    className={getAnalyzerSurfaceTriggerClasses({
-                      className:
-                        'flex h-full w-full cursor-pointer items-center gap-1 px-3 py-3 text-left text-[10px] font-bold tracking-wide',
-                    })}
-                    onClick={() => onSortChange('shotDate')}
-                  >
-                    <span>Date</span>
-                    {getSortIcon('shotDate')}
-                  </button>
-                </th>
-              )}
-              {isShot && (
-                <th
-                  className={`${stickyHeaderCellClass} px-3 py-3 text-left`}
-                  style={{ width: widthProfile }}
-                >
-                  Profile
-                </th>
-              )}
-              <th
-                className={`${stickyHeaderCellClass} px-2 py-3 text-right`}
-                style={{ width: widthAction }}
-              />
             </tr>
           </thead>
           <tbody className='text-sm'>
@@ -432,6 +396,7 @@ export function LibrarySection({
                   isPinned={Boolean(getPinStatus?.(item))}
                   pinDisabledReason={getPinDisabledReason?.(item) || ''}
                   onPinToggle={onPinToggle}
+                  columnCount={columnCount}
                 />
               );
             })}

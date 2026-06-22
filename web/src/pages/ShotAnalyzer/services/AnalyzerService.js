@@ -26,31 +26,26 @@ function getMetricStats(samples, key) {
   let totalTime = 0;
 
   // Start and End values
-  let start = samples[0][key];
-  let end = samples[samples.length - 1][key];
-
-  // Check for both null and undefined using loose equality or explicit checks
-  if (start == null) start = 0;
-  if (end == null) end = 0;
+  const start = normalizeMetricValue(samples[0][key]);
+  const end = normalizeMetricValue(samples.at(-1)[key]);
 
   // Min, Max, and Time-Weighted Average
-  for (let i = 0; i < samples.length; i++) {
-    let val = samples[i][key];
-
-    // Ensure val is a number (handle null/undefined)
-    if (val == null) val = 0;
+  let previousSample = null;
+  for (const sample of samples) {
+    const val = normalizeMetricValue(sample[key]);
 
     if (val < min) min = val;
     if (val > max) max = val;
 
     // Time-weighted average (using time delta between samples)
-    if (i > 0) {
-      const dt = (samples[i].t - samples[i - 1].t) / 1000; // Convert to seconds
+    if (previousSample) {
+      const dt = (sample.t - previousSample.t) / 1000; // Convert to seconds
       if (dt > 0) {
         weightedSum += val * dt;
         totalTime += dt;
       }
     }
+    previousSample = sample;
   }
 
   // Safety for Infinity (if no valid samples processed)
@@ -138,7 +133,7 @@ function getSampleInstantWeightRate(sample) {
 }
 
 function isDirectionallyValidLookAhead(operator, currentValue, nextValue) {
-  if (!isFinite(currentValue) || !isFinite(nextValue)) return false;
+  if (!Number.isFinite(currentValue) || !Number.isFinite(nextValue)) return false;
   if (operator === 'gte') return nextValue >= currentValue;
   if (operator === 'lte') return nextValue <= currentValue;
   return true;
@@ -173,22 +168,1151 @@ function analyzerDebug(enabled, message, payload = null) {
   }
 }
 
+function isPositiveFiniteRate(value) {
+  return value != null && Number.isFinite(value) && value > 0.1;
+}
+
+function getPhaseEndSample(samples) {
+  return samples.at(-1);
+}
+
+function getDelayReviewMessage(phaseNumber, delayMs) {
+  if (!phaseNumber) return null;
+  if (delayMs != null) {
+    return `Unusually high inferred delay in Phase ${phaseNumber} (${delayMs} ms).`;
+  }
+  return `Unusually high inferred delay in Phase ${phaseNumber}.`;
+}
+
+function normalizeMetricValue(value) {
+  return value == null ? 0 : value;
+}
+
+function isWeightTarget(target) {
+  return target.type === 'volumetric' || target.type === 'weight';
+}
+
+function shouldSkipTarget(target, context) {
+  const weightTarget = isWeightTarget(target);
+  if (!weightTarget) return false;
+  if (!context.isBrewByWeight) return true;
+  if (context.scaleConnectionBrokenPermanently) return true;
+  return (
+    context.isLastPhase &&
+    context.lastNonExtendedSample.v > target.value + LAST_PHASE_OVERSHOOT_MAX_G
+  );
+}
+
+function isTargetHit(target, value, context) {
+  if (target.operator === 'lte') return value <= target.value;
+  if (target.operator !== 'gte' || value < target.value) return false;
+
+  return !(
+    context.isLastPhase &&
+    isWeightTarget(target) &&
+    value > target.value + LAST_PHASE_OVERSHOOT_MAX_G
+  );
+}
+
+function getTargetValue(target, values) {
+  if (target.type === 'pressure') return values.pressure;
+  if (target.type === 'flow') return values.flow;
+  if (isWeightTarget(target)) return values.weight;
+  if (target.type === 'pumped') return values.pumped;
+  return undefined;
+}
+
+function createTargetMatch(target, value, delayMs) {
+  return {
+    target,
+    delayMs,
+    predictedWeight: isWeightTarget(target) ? value : null,
+  };
+}
+
+function findTargetMatch(targets, values, delayMs, context) {
+  for (const target of targets) {
+    if (shouldSkipTarget(target, context)) continue;
+
+    const value = getTargetValue(target, values);
+    if (value === undefined) continue;
+
+    if (isTargetHit(target, value, context)) {
+      return createTargetMatch(target, value, delayMs);
+    }
+  }
+  return null;
+}
+
+function getLookAheadTargetValues(target, nextSample, nSteps, context) {
+  const horizon = nSteps * context.sampleIntervalSec;
+  const nextDt = (nextSample.t - context.anchor.t) / 1000;
+
+  if (target.type === 'pressure') {
+    return {
+      anchorValue: context.anchor.cp,
+      nextValue: nextSample.cp,
+      predictedValue: Math.max(0, context.anchor.cp + context.pressureSlope * horizon),
+    };
+  }
+  if (target.type === 'flow') {
+    return {
+      anchorValue: context.anchor.fl,
+      nextValue: nextSample.fl,
+      predictedValue: Math.max(0, context.anchor.fl + context.flowSlope * horizon),
+    };
+  }
+  if (isWeightTarget(target)) {
+    return {
+      anchorValue: context.anchor.v,
+      nextValue: nextSample.v,
+      predictedValue:
+        context.anchor.v + (context.weightRate > 0 ? context.weightRate * horizon : 0),
+    };
+  }
+  if (target.type === 'pumped') {
+    return {
+      anchorValue: context.anchorPumped,
+      nextValue: context.anchorPumped + nextSample.fl * nextDt,
+      predictedValue: context.anchorPumped + Math.max(0, context.anchor.fl) * horizon,
+    };
+  }
+  return null;
+}
+
+function findTargetMatchWithDirection(targets, nextSample, nSteps, context) {
+  for (const target of targets) {
+    if (shouldSkipTarget(target, context)) continue;
+
+    const values = getLookAheadTargetValues(target, nextSample, nSteps, context);
+    if (!values) continue;
+
+    const directionIsValid = isDirectionallyValidLookAhead(
+      target.operator,
+      values.anchorValue,
+      values.nextValue,
+    );
+    const value = directionIsValid ? values.nextValue : values.predictedValue;
+
+    if (isTargetHit(target, value, context)) {
+      return createTargetMatch(target, value, nSteps * context.sampleInterval);
+    }
+  }
+  return null;
+}
+
+function predictTargetValuesAtStep(nSteps, context) {
+  const horizon = nSteps * context.sampleIntervalSec;
+  return {
+    pressure: Math.max(0, context.anchor.cp + context.pressureSlope * horizon),
+    flow: Math.max(0, context.anchor.fl + context.flowSlope * horizon),
+    weight: context.anchor.v + (context.weightRate > 0 ? context.weightRate * horizon : 0),
+    pumped: context.anchorPumped + Math.max(0, context.anchor.fl) * horizon,
+  };
+}
+
+function getManualTargetValue(target, context) {
+  const scaleDelaySec = context.normalizedScaleDelayMs / 1000;
+  const sensorDelaySec = context.normalizedSensorDelayMs / 1000;
+
+  if (target.type === 'pressure') {
+    return {
+      delayMs: context.normalizedSensorDelayMs,
+      value: Math.max(0, context.anchor.cp + context.pressureSlope * sensorDelaySec),
+    };
+  }
+  if (target.type === 'flow') {
+    return {
+      delayMs: context.normalizedSensorDelayMs,
+      value: Math.max(0, context.anchor.fl + context.flowSlope * sensorDelaySec),
+    };
+  }
+  if (isWeightTarget(target)) {
+    return {
+      delayMs: context.normalizedScaleDelayMs,
+      value: context.anchor.v + (context.weightRate > 0 ? context.weightRate * scaleDelaySec : 0),
+    };
+  }
+  if (target.type === 'pumped') {
+    return {
+      delayMs: context.normalizedSensorDelayMs,
+      value: context.anchorPumped + Math.max(0, context.anchor.fl) * sensorDelaySec,
+    };
+  }
+  return null;
+}
+
+function findManualTargetMatch(targets, context) {
+  for (const target of targets) {
+    if (shouldSkipTarget(target, context)) continue;
+
+    const result = getManualTargetValue(target, context);
+    if (!result) continue;
+
+    if (isTargetHit(target, result.value, context)) {
+      return createTargetMatch(target, result.value, result.delayMs);
+    }
+  }
+  return null;
+}
+
+function getCalculatedTargetValueAtDelay(target, context) {
+  const matchStep = Math.round(context.matchDelayMs / context.sampleInterval);
+  const nextSampleIndex = matchStep - 1;
+  const hasNextSample =
+    context.isAutoAdjusted &&
+    nextSampleIndex >= 0 &&
+    nextSampleIndex < context.nextPhaseSamples.length;
+
+  if (hasNextSample) {
+    const values = getLookAheadTargetValues(
+      target,
+      context.nextPhaseSamples[nextSampleIndex],
+      matchStep,
+      context,
+    );
+    if (!values) return undefined;
+
+    const directionIsValid = isDirectionallyValidLookAhead(
+      target.operator,
+      values.anchorValue,
+      values.nextValue,
+    );
+    return directionIsValid ? values.nextValue : values.predictedValue;
+  }
+
+  return getTargetValue(
+    target,
+    predictTargetValuesAtStep(context.matchDelayMs / context.sampleInterval, context),
+  );
+}
+
+function buildTargetCalcValues(targets, match, context) {
+  if (match.delayMs <= 0) return null;
+
+  const targetCalcValues = {};
+  const calcContext = {
+    ...context,
+    matchDelayMs: match.delayMs,
+  };
+
+  for (const target of targets) {
+    if (shouldSkipTarget(target, context)) continue;
+
+    const value = getCalculatedTargetValueAtDelay(target, calcContext);
+    if (value === undefined) continue;
+
+    targetCalcValues[target.type] = {
+      value,
+      isStopReason: target === match.target,
+    };
+  }
+
+  return targetCalcValues;
+}
+
+function createEmptyMetricStats() {
+  return { start: null, end: null, min: null, max: null, avg: null };
+}
+
+function createEmptyPhaseStats() {
+  return {
+    p: createEmptyMetricStats(),
+    tp: createEmptyMetricStats(),
+    f: createEmptyMetricStats(),
+    pf: createEmptyMetricStats(),
+    tf: createEmptyMetricStats(),
+    t: createEmptyMetricStats(),
+    tt: createEmptyMetricStats(),
+    w: createEmptyMetricStats(),
+    wf: createEmptyMetricStats(),
+  };
+}
+
+function normalizePhaseLookupName(name) {
+  return (name || '').trim().toLowerCase();
+}
+
+function getPreviousPhaseTargetValue(target, prevPhase) {
+  if (isWeightTarget(target)) return prevPhase.weight ?? 0;
+  if (target.type === 'pumped') return prevPhase.water ?? 0;
+  if (target.type === 'pressure') return prevPhase.stats?.p?.avg ?? 0;
+  if (target.type === 'flow') return prevPhase.stats?.f?.avg ?? 0;
+  return undefined;
+}
+
+function getFirstSampleTargetValue(target, firstSample) {
+  if (isWeightTarget(target)) return firstSample.v ?? 0;
+  if (target.type === 'pressure') return firstSample.cp ?? 0;
+  if (target.type === 'flow') return firstSample.fl ?? 0;
+  return undefined;
+}
+
+function findSkippedTargetMatch(targets, getCurrentValue) {
+  if (!Array.isArray(targets)) return null;
+
+  for (const target of targets) {
+    const currentValue = getCurrentValue(target);
+    if (currentValue === undefined) continue;
+
+    if (isTargetHit(target, currentValue, { isLastPhase: false })) {
+      return {
+        reason: `${formatStopReason(target.type)} (skipped)`,
+        type: target.type,
+        value: target.value,
+      };
+    }
+  }
+  return null;
+}
+
+function findNextExecutedFirstSample({ analyzedByName, phases, profileData, profileIndex }) {
+  for (let index = profileIndex + 1; index < profileData.phases.length; index++) {
+    const nextName = normalizePhaseLookupName(profileData.phases[index].name);
+    const nextPhase = analyzedByName.get(nextName);
+    if (!nextPhase) continue;
+
+    const nextSamples = phases[nextPhase.number];
+    return Array.isArray(nextSamples) ? nextSamples[0] || null : null;
+  }
+  return null;
+}
+
+function getSkippedPhaseFallbackInfo(prevPhase) {
+  return {
+    reason: prevPhase ? 'Phase skipped' : 'Phase skipped (no preceding phase)',
+    type: 'unknown',
+    value: null,
+  };
+}
+
+function getSkippedPhaseInfo({
+  analyzedByName,
+  phases,
+  prevPhase,
+  profileData,
+  profileIndex,
+  profilePhase,
+}) {
+  const previousMatch = prevPhase
+    ? findSkippedTargetMatch(profilePhase.targets, target =>
+        getPreviousPhaseTargetValue(target, prevPhase),
+      )
+    : null;
+  if (previousMatch) return previousMatch;
+
+  const firstSample = findNextExecutedFirstSample({
+    analyzedByName,
+    phases,
+    profileData,
+    profileIndex,
+  });
+  const nextMatch = firstSample
+    ? findSkippedTargetMatch(profilePhase.targets, target =>
+        getFirstSampleTargetValue(target, firstSample),
+      )
+    : null;
+
+  return nextMatch || getSkippedPhaseFallbackInfo(prevPhase);
+}
+
+function buildSkippedTargetCalcValues(skipType, skipValue) {
+  if (!skipType || skipValue == null) return null;
+
+  const calcValueByType = {
+    duration: 'duration',
+    flow: 'flow',
+    pressure: 'pressure',
+    pumped: 'pumped',
+    volumetric: 'weight',
+    weight: 'weight',
+  };
+  const calcKey = calcValueByType[skipType];
+  if (!calcKey) return null;
+
+  return {
+    [calcKey]: {
+      value: skipValue,
+      isStopReason: true,
+    },
+  };
+}
+
+function createSkippedPhase(profilePhase, profileIndex, skipInfo) {
+  return {
+    number: profileIndex,
+    name: profilePhase.name,
+    displayName: profilePhase.name,
+    start: 0,
+    end: 0,
+    duration: 0,
+    water: 0,
+    weight: 0,
+    stats: createEmptyPhaseStats(),
+    exit: {
+      reason: skipInfo.reason,
+      type: skipInfo.type || 'unknown',
+    },
+    profilePhase,
+    scaleLost: false,
+    scalePermanentlyLost: false,
+    highScaleDelay: false,
+    estimatedScaleDelayMs: null,
+    delayReviewHint: false,
+    delayReviewReason: null,
+    delayReviewMs: null,
+    prediction: { finalWeight: null },
+    targetCalcValues: buildSkippedTargetCalcValues(skipInfo.type, skipInfo.value),
+    skipped: true,
+  };
+}
+
+function buildAnalyzedPhaseLookup(analyzedPhases) {
+  const analyzedByName = new Map();
+
+  for (const phase of analyzedPhases) {
+    const key = normalizePhaseLookupName(phase.displayName || phase.name);
+    if (key) analyzedByName.set(key, phase);
+  }
+
+  return analyzedByName;
+}
+
+function findMatchingProfilePhaseIndex(profilePhases, phase, startIndex) {
+  const phaseName = normalizePhaseLookupName(phase.displayName || phase.name);
+  if (!phaseName) return -1;
+
+  return profilePhases.findIndex(
+    (profilePhase, profileIndex) =>
+      profileIndex >= startIndex && normalizePhaseLookupName(profilePhase.name) === phaseName,
+  );
+}
+
+function appendSkippedProfilePhases({
+  analyzedByName,
+  endIndex,
+  orderedPhases,
+  phases,
+  prevPhase,
+  profileData,
+  startIndex,
+}) {
+  for (let profileIndex = startIndex; profileIndex < endIndex; profileIndex++) {
+    const profilePhase = profileData.phases[profileIndex];
+    if (!normalizePhaseLookupName(profilePhase.name)) continue;
+
+    const skipInfo = getSkippedPhaseInfo({
+      analyzedByName,
+      phases,
+      prevPhase,
+      profileData,
+      profileIndex,
+      profilePhase,
+    });
+    orderedPhases.push(createSkippedPhase(profilePhase, profileIndex, skipInfo));
+  }
+}
+
+function mergeSkippedProfilePhases({ analyzedPhases, phases, profileData }) {
+  if (!profileData?.phases?.length) return;
+
+  const executedPhases = [...analyzedPhases];
+  const analyzedByName = buildAnalyzedPhaseLookup(executedPhases);
+  const orderedPhases = [];
+  let profileIndex = 0;
+  let previousExecutedPhase = null;
+
+  for (const executedPhase of executedPhases) {
+    const matchingProfileIndex = findMatchingProfilePhaseIndex(
+      profileData.phases,
+      executedPhase,
+      profileIndex,
+    );
+
+    if (matchingProfileIndex >= 0) {
+      appendSkippedProfilePhases({
+        analyzedByName,
+        endIndex: matchingProfileIndex,
+        orderedPhases,
+        phases,
+        prevPhase: previousExecutedPhase,
+        profileData,
+        startIndex: profileIndex,
+      });
+      profileIndex = matchingProfileIndex + 1;
+    }
+
+    orderedPhases.push(executedPhase);
+    previousExecutedPhase = executedPhase;
+  }
+
+  appendSkippedProfilePhases({
+    analyzedByName,
+    endIndex: profileData.phases.length,
+    orderedPhases,
+    phases,
+    prevPhase: previousExecutedPhase,
+    profileData,
+    startIndex: profileIndex,
+  });
+
+  analyzedPhases.length = 0;
+  analyzedPhases.push(...orderedPhases);
+}
+
+function createDelayTotals() {
+  return {
+    sumScaleDelay: 0,
+    countScaleHits: 0,
+    sumSensorDelay: 0,
+    countSensorHits: 0,
+  };
+}
+
+function addDelayHit(delayTotals, exitType, delayMs) {
+  if (exitType === 'weight' || exitType === 'volumetric') {
+    delayTotals.sumScaleDelay += delayMs;
+    delayTotals.countScaleHits++;
+    return;
+  }
+  delayTotals.sumSensorDelay += delayMs;
+  delayTotals.countSensorHits++;
+}
+
+function createPhaseDelayTracker(isLastPhase) {
+  const state = {
+    highScaleDelay: false,
+    estimatedScaleDelayMs: null,
+    delayReviewHint: false,
+    delayReviewReason: null,
+    delayReviewMs: null,
+  };
+
+  const setEstimatedScaleDelay = delayMs => {
+    if (delayMs == null || !Number.isFinite(delayMs) || delayMs < 0) return;
+    const roundedDelay = Math.round(delayMs);
+    state.estimatedScaleDelayMs =
+      state.estimatedScaleDelayMs == null
+        ? roundedDelay
+        : Math.max(state.estimatedScaleDelayMs, roundedDelay);
+    if (isLastPhase && roundedDelay > 2000) {
+      state.highScaleDelay = true;
+    }
+  };
+
+  const setPhaseDelayReviewHint = (delayMs, reason) => {
+    if (delayMs == null || !Number.isFinite(delayMs) || delayMs < 1000) return;
+    const roundedDelay = Math.round(delayMs);
+    state.delayReviewHint = true;
+    state.delayReviewReason = reason || 'manual-check';
+    state.delayReviewMs =
+      state.delayReviewMs == null ? roundedDelay : Math.max(state.delayReviewMs, roundedDelay);
+  };
+
+  return { state, setEstimatedScaleDelay, setPhaseDelayReviewHint };
+}
+
+function getPhaseSysAnomalies(samples, sysInfo) {
+  const sysFieldMap = [
+    ['sys_shot_vol', 'shotStartedVolumetric'],
+    ['sys_curr_vol', 'currentlyVolumetric'],
+    ['sys_scale', 'bluetoothScaleConnected'],
+    ['sys_vol_avail', 'volumetricAvailable'],
+    ['sys_ext', 'extendedRecording'],
+  ];
+  const sysAnomalies = {};
+
+  for (const [statsKey, sampleKey] of sysFieldMap) {
+    const finalValue = sysInfo[sampleKey];
+    if (typeof finalValue !== 'boolean') continue;
+    const mismatchIndex = samples.findIndex(sample => {
+      const sampleValue = sample?.systemInfo?.[sampleKey];
+      return typeof sampleValue === 'boolean' && sampleValue !== finalValue;
+    });
+    if (mismatchIndex < 0) continue;
+    const mismatchSampleValue = samples[mismatchIndex]?.systemInfo?.[sampleKey];
+    if (typeof mismatchSampleValue !== 'boolean') continue;
+    sysAnomalies[statsKey] = {
+      sampleInPhase: mismatchIndex + 1,
+      sampleCountInPhase: samples.length,
+      value: mismatchSampleValue,
+    };
+  }
+
+  return sysAnomalies;
+}
+
+function findProfilePhase(profileData, rawName) {
+  if (!profileData?.phases) return null;
+  const cleanName = rawName ? rawName.trim().toLowerCase() : '';
+  return profileData.phases.find(p => p.name.trim().toLowerCase() === cleanName) || null;
+}
+
+function getNextPhaseSamples({ phaseNum, phases, sortedPhaseKeys }) {
+  const currentKeyIndex = sortedPhaseKeys.indexOf(phaseNum);
+  const nextPhaseKey =
+    currentKeyIndex >= 0 && currentKeyIndex < sortedPhaseKeys.length - 1
+      ? sortedPhaseKeys[currentKeyIndex + 1]
+      : null;
+  return nextPhaseKey ? phases[nextPhaseKey] || [] : [];
+}
+
+function getPumpedWaterUntilIndex(samples, endIndex) {
+  let pumped = 0;
+  for (let i = 1; i <= endIndex; i++) {
+    const dt = (samples[i].t - samples[i - 1].t) / 1000;
+    pumped += samples[i].fl * dt;
+  }
+  return pumped;
+}
+
+function buildPhaseTargetContext({
+  isBrewByWeight,
+  isLastPhase,
+  samples,
+  scaleConnectionBrokenPermanently,
+  shotData,
+}) {
+  const sampleInterval = shotData.sampleInterval || 250;
+  const lastNonExtendedIndex = getLastNonExtendedIndex(samples);
+  const lastNonExtendedSample =
+    lastNonExtendedIndex >= 0 ? samples[lastNonExtendedIndex] : getPhaseEndSample(samples);
+  const anchorIdx =
+    isLastPhase && lastNonExtendedIndex >= 0 ? lastNonExtendedIndex : samples.length - 1;
+  const anchor = samples[anchorIdx];
+  const prevAnchor = anchorIdx > 0 ? samples[anchorIdx - 1] : anchor;
+  const anchorDt = (anchor.t - prevAnchor.t) / 1000;
+
+  return {
+    anchor,
+    anchorPumped: getPumpedWaterUntilIndex(samples, anchorIdx),
+    flowSlope: anchorDt > 0 ? (anchor.fl - prevAnchor.fl) / anchorDt : 0,
+    isBrewByWeight,
+    isLastPhase,
+    lastNonExtendedSample,
+    pressureSlope: anchorDt > 0 ? (anchor.cp - prevAnchor.cp) / anchorDt : 0,
+    sampleInterval,
+    sampleIntervalSec: sampleInterval / 1000,
+    scaleConnectionBrokenPermanently,
+    weightRate: getPhaseWeightRate(samples, isLastPhase),
+  };
+}
+
+function findAutoAdjustedTargetMatch(targets, targetContext, nextPhaseSamples) {
+  const anchor = targetContext.anchor;
+  let match = findTargetMatch(
+    targets,
+    {
+      pressure: anchor.cp,
+      flow: anchor.fl,
+      weight: anchor.v,
+      pumped: targetContext.anchorPumped,
+    },
+    0,
+    targetContext,
+  );
+  if (match) return match;
+
+  if (nextPhaseSamples.length > 0) {
+    match = findTargetMatchWithDirection(targets, nextPhaseSamples[0], 1, targetContext);
+  }
+  if (match) return match;
+
+  if (nextPhaseSamples.length > 1) {
+    match = findTargetMatchWithDirection(targets, nextPhaseSamples[1], 2, targetContext);
+  }
+  if (match) return match;
+
+  const maxSteps = Math.ceil(LAST_PHASE_ESTIMATED_DELAY_MAX_MS / targetContext.sampleInterval);
+  for (let step = 3; step <= maxSteps; step++) {
+    match = findTargetMatch(
+      targets,
+      predictTargetValuesAtStep(step, targetContext),
+      step * targetContext.sampleInterval,
+      targetContext,
+    );
+    if (match) return match;
+  }
+  return null;
+}
+
+function findPhaseTargetMatch({
+  isAutoAdjusted,
+  nextPhaseSamples,
+  profilePhase,
+  targetContext,
+  settings,
+}) {
+  if (isAutoAdjusted) {
+    return findAutoAdjustedTargetMatch(profilePhase.targets, targetContext, nextPhaseSamples);
+  }
+  return findManualTargetMatch(profilePhase.targets, {
+    ...targetContext,
+    normalizedScaleDelayMs: Math.max(0, settings.scaleDelayMs || 0),
+    normalizedSensorDelayMs: Math.max(0, settings.sensorDelayMs || 0),
+  });
+}
+
+function createExitState() {
+  return {
+    exitReason: null,
+    exitType: null,
+    finalPredictedWeight: null,
+    targetCalcValues: null,
+  };
+}
+
+function applyTimeLimitExit(exitState, duration, profilePhase) {
+  const profDur = profilePhase.duration;
+  if (Math.abs(duration - profDur) < 0.5 || duration >= profDur) {
+    exitState.exitReason = 'Time Limit';
+    exitState.exitType = 'duration';
+  }
+}
+
+function applyTargetMatchResult({
+  debugEnabled,
+  delayTracker,
+  delayTotals,
+  displayName,
+  exitState,
+  isAutoAdjusted,
+  match,
+  nextPhaseSamples,
+  phaseNum,
+  profilePhase,
+  shotData,
+  targetContext,
+}) {
+  exitState.exitReason = formatStopReason(match.target.type);
+  exitState.exitType = match.target.type;
+  exitState.finalPredictedWeight = match.predictedWeight;
+  delayTracker.setEstimatedScaleDelay(match.delayMs);
+
+  if (isAutoAdjusted && match.delayMs >= targetContext.sampleInterval * 2) {
+    delayTracker.setPhaseDelayReviewHint(match.delayMs, 'auto-delay');
+  }
+
+  analyzerDebug(debugEnabled, `Stop detected phase ${phaseNum}`, {
+    shotId: shotData.id,
+    phaseName: displayName,
+    targetType: match.target.type,
+    operator: match.target.operator,
+    targetValue: match.target.value,
+    delayMs: match.delayMs,
+  });
+
+  if (isAutoAdjusted) {
+    addDelayHit(delayTotals, exitState.exitType, match.delayMs);
+  }
+
+  if (match.delayMs > 0) {
+    exitState.targetCalcValues = buildTargetCalcValues(profilePhase.targets, match, {
+      ...targetContext,
+      isAutoAdjusted,
+      nextPhaseSamples,
+    });
+  }
+}
+
+function findWeightTarget(targets) {
+  return targets.find(t => t.type === 'weight' || t.type === 'volumetric') || null;
+}
+
+function getLastPhaseWeightSamples(samples) {
+  const finalSample = getPhaseEndSample(samples);
+  const lastNonExtendedIndex = getLastNonExtendedIndex(samples);
+  const stopSample = lastNonExtendedIndex >= 0 ? samples[lastNonExtendedIndex] : finalSample;
+  return {
+    finalSample,
+    finalW: finalSample.v,
+    stopSample,
+    stopW: stopSample.v,
+  };
+}
+
+function getConservativeRate(...rates) {
+  const rateCandidates = rates.filter(isPositiveFiniteRate);
+  return rateCandidates.length > 0 ? Math.min(...rateCandidates) : 0;
+}
+
+function applyLastPhaseOvershootFallback({
+  debugEnabled,
+  delayTracker,
+  delayTotals,
+  displayName,
+  exitState,
+  phaseWeightRate,
+  shotData,
+  stopW,
+  weightTarget,
+}) {
+  const overshoot = stopW - weightTarget.value;
+  const stoppedAboveTargetInRange = overshoot >= 0 && overshoot <= LAST_PHASE_OVERSHOOT_MAX_G;
+  if (!stoppedAboveTargetInRange || phaseWeightRate <= 0.1) return;
+
+  const calculatedDelay = Math.max(0, (overshoot / phaseWeightRate) * 1000);
+  if (calculatedDelay > LAST_PHASE_ESTIMATED_DELAY_MAX_MS) return;
+
+  delayTracker.setEstimatedScaleDelay(calculatedDelay);
+  exitState.exitReason = formatStopReason(weightTarget.type);
+  exitState.exitType = weightTarget.type;
+  exitState.finalPredictedWeight = weightTarget.value;
+  addDelayHit(delayTotals, exitState.exitType, calculatedDelay);
+  delayTracker.setPhaseDelayReviewHint(calculatedDelay, 'fallback-overshoot');
+  analyzerDebug(debugEnabled, `Last-phase fallback weight stop (overshoot)`, {
+    shotId: shotData.id,
+    phaseName: displayName,
+    stopWeight: stopW,
+    targetWeight: weightTarget.value,
+    estimatedDelayMs: Math.round(calculatedDelay),
+  });
+}
+
+function applyLastPhaseUndershootFallback({
+  conservativeRate,
+  debugEnabled,
+  delayTracker,
+  delayTotals,
+  displayName,
+  exitState,
+  finalW,
+  shotData,
+  stopW,
+  weightTarget,
+}) {
+  const undershootAtEnd = weightTarget.value - finalW;
+  const stoppedBelowTargetHighDelayCandidate =
+    undershootAtEnd >= LAST_PHASE_UNDERSHOOT_MIN_G &&
+    undershootAtEnd <= LAST_PHASE_UNDERSHOOT_MAX_G;
+  if (exitState.exitType || !stoppedBelowTargetHighDelayCandidate || conservativeRate <= 0.1) {
+    return;
+  }
+
+  const estimatedDelay = (undershootAtEnd / conservativeRate) * 1000;
+  if (estimatedDelay <= 2000 || estimatedDelay > LAST_PHASE_ESTIMATED_DELAY_MAX_MS) return;
+
+  delayTracker.setEstimatedScaleDelay(estimatedDelay);
+  exitState.exitReason = formatStopReason(weightTarget.type);
+  exitState.exitType = weightTarget.type;
+  exitState.finalPredictedWeight = weightTarget.value;
+  addDelayHit(delayTotals, exitState.exitType, estimatedDelay);
+  delayTracker.setPhaseDelayReviewHint(estimatedDelay, 'fallback-undershoot');
+  analyzerDebug(debugEnabled, `Last-phase fallback weight stop (undershoot high delay)`, {
+    shotId: shotData.id,
+    phaseName: displayName,
+    stopWeight: stopW,
+    finalWeight: finalW,
+    targetWeight: weightTarget.value,
+    estimatedDelayMs: Math.round(estimatedDelay),
+  });
+}
+
+function applyLastPhaseWeightFallback({
+  debugEnabled,
+  delayTracker,
+  delayTotals,
+  displayName,
+  exitState,
+  phaseWeightRate,
+  profilePhase,
+  samples,
+  shotData,
+}) {
+  const weightTarget = findWeightTarget(profilePhase.targets);
+  if (!weightTarget) return;
+
+  const { finalW, stopSample, stopW } = getLastPhaseWeightSamples(samples);
+  if (stopW > weightTarget.value + LAST_PHASE_OVERSHOOT_MAX_G) {
+    analyzerDebug(
+      debugEnabled,
+      `Last-phase weight stop blocked (>+${LAST_PHASE_OVERSHOOT_MAX_G}g)`,
+      {
+        shotId: shotData.id,
+        phaseName: displayName,
+        stopWeight: stopW,
+        targetWeight: weightTarget.value,
+      },
+    );
+    return;
+  }
+
+  const stopInstantRate = getSampleInstantWeightRate(stopSample);
+  const conservativeRate = getConservativeRate(phaseWeightRate, stopInstantRate);
+  applyLastPhaseOvershootFallback({
+    debugEnabled,
+    delayTracker,
+    delayTotals,
+    displayName,
+    exitState,
+    phaseWeightRate,
+    shotData,
+    stopW,
+    weightTarget,
+  });
+  applyLastPhaseUndershootFallback({
+    conservativeRate,
+    debugEnabled,
+    delayTracker,
+    delayTotals,
+    displayName,
+    exitState,
+    finalW,
+    shotData,
+    stopW,
+    weightTarget,
+  });
+}
+
+function updateLastPhaseDelayWarning({ delayTracker, phaseWeightRate, profilePhase, samples }) {
+  const weightTarget = findWeightTarget(profilePhase.targets);
+  if (!weightTarget) return;
+
+  const { finalW, stopSample, stopW } = getLastPhaseWeightSamples(samples);
+  const conservativeRate = getConservativeRate(
+    phaseWeightRate,
+    getSampleInstantWeightRate(stopSample),
+  );
+  const absDelta = Math.abs(finalW - weightTarget.value);
+
+  if (
+    stopW <= weightTarget.value + LAST_PHASE_OVERSHOOT_MAX_G &&
+    conservativeRate > 0.1 &&
+    absDelta >= LAST_PHASE_UNDERSHOOT_MIN_G &&
+    absDelta <= LAST_PHASE_UNDERSHOOT_MAX_G
+  ) {
+    const estimatedDelay = (absDelta / conservativeRate) * 1000;
+    if (estimatedDelay <= LAST_PHASE_ESTIMATED_DELAY_MAX_MS) {
+      delayTracker.setEstimatedScaleDelay(estimatedDelay);
+    }
+  }
+}
+
+function shouldRunLastPhaseWeightLogic({
+  isAutoAdjusted,
+  isBrewByWeight,
+  isLastPhase,
+  scaleConnectionBrokenPermanently,
+}) {
+  return (
+    isLastPhase && isAutoAdjusted && isBrewByWeight && scaleConnectionBrokenPermanently === false
+  );
+}
+
+function analyzePhaseTargets({
+  debugEnabled,
+  delayTracker,
+  delayTotals,
+  displayName,
+  duration,
+  exitState,
+  isAutoAdjusted,
+  isBrewByWeight,
+  isLastPhase,
+  phaseNum,
+  phaseWeightRate,
+  phases,
+  profilePhase,
+  samples,
+  scaleConnectionBrokenPermanently,
+  settings,
+  shotData,
+  sortedPhaseKeys,
+}) {
+  applyTimeLimitExit(exitState, duration, profilePhase);
+  const profDur = profilePhase.duration;
+  const shouldCheckTargets =
+    profilePhase.targets?.length > 0 && (!exitState.exitType || duration < profDur - 0.5);
+  if (!shouldCheckTargets) return;
+
+  const nextPhaseSamples = getNextPhaseSamples({ phaseNum, phases, sortedPhaseKeys });
+  const targetContext = buildPhaseTargetContext({
+    isBrewByWeight,
+    isLastPhase,
+    samples,
+    scaleConnectionBrokenPermanently,
+    shotData,
+  });
+  const match = findPhaseTargetMatch({
+    isAutoAdjusted,
+    nextPhaseSamples,
+    profilePhase,
+    targetContext,
+    settings,
+  });
+
+  if (match) {
+    applyTargetMatchResult({
+      debugEnabled,
+      delayTracker,
+      delayTotals,
+      displayName,
+      exitState,
+      isAutoAdjusted,
+      match,
+      nextPhaseSamples,
+      phaseNum,
+      profilePhase,
+      shotData,
+      targetContext,
+    });
+  } else {
+    analyzerDebug(debugEnabled, `No stop match phase ${phaseNum}`, {
+      shotId: shotData.id,
+      phaseName: displayName,
+      targetCount: profilePhase.targets.length,
+    });
+  }
+
+  const runLastPhaseWeightLogic = shouldRunLastPhaseWeightLogic({
+    isAutoAdjusted,
+    isBrewByWeight,
+    isLastPhase,
+    scaleConnectionBrokenPermanently,
+  });
+  if (runLastPhaseWeightLogic && !match) {
+    applyLastPhaseWeightFallback({
+      debugEnabled,
+      delayTracker,
+      delayTotals,
+      displayName,
+      exitState,
+      phaseWeightRate,
+      profilePhase,
+      samples,
+      shotData,
+    });
+  }
+  if (runLastPhaseWeightLogic) {
+    updateLastPhaseDelayWarning({ delayTracker, phaseWeightRate, profilePhase, samples });
+  }
+}
+
+function getPhaseStats(samples, sysInfo, sysAnomalies) {
+  return {
+    p: getMetricStats(samples, 'cp'),
+    tp: getMetricStats(samples, 'tp'),
+    f: getMetricStats(samples, 'fl'),
+    pf: getMetricStats(samples, 'pf'),
+    tf: getMetricStats(samples, 'tf'),
+    t: getMetricStats(samples, 'ct'),
+    tt: getMetricStats(samples, 'tt'),
+    w: getMetricStats(samples, 'v'),
+    wf: getMetricStats(samples, 'vf'),
+    sys_raw: sysInfo.raw,
+    sys_shot_vol: sysInfo.shotStartedVolumetric,
+    sys_curr_vol: sysInfo.currentlyVolumetric,
+    sys_scale: sysInfo.bluetoothScaleConnected,
+    sys_vol_avail: sysInfo.volumetricAvailable,
+    sys_ext: sysInfo.extendedRecording,
+    sys_anomalies: Object.keys(sysAnomalies).length > 0 ? sysAnomalies : undefined,
+  };
+}
+
+function analyzeExecutedPhase({
+  debugEnabled,
+  delayTotals,
+  globalStartTime,
+  isAutoAdjusted,
+  isBrewByWeight,
+  lastPhaseKey,
+  phaseNameMap,
+  phaseNum,
+  phases,
+  profileData,
+  scaleConnectionBrokenPermanently,
+  settings,
+  shotData,
+  sortedPhaseKeys,
+}) {
+  const samples = phases[phaseNum];
+  const pStart = (samples[0].t - globalStartTime) / 1000;
+  const pEnd = (getPhaseEndSample(samples).t - globalStartTime) / 1000;
+  const duration = pEnd - pStart;
+  const isLastPhase = phaseNum === lastPhaseKey;
+  const phaseWeightRate = getPhaseWeightRate(samples, isLastPhase);
+  const rawName = phaseNameMap[phaseNum];
+  const displayName = rawName || `Phase ${phaseNum}`;
+  const sysInfo = getPhaseEndSample(samples).systemInfo || {};
+  const sysAnomalies = getPhaseSysAnomalies(samples, sysInfo);
+  const scaleLostInThisPhase =
+    isBrewByWeight && samples.some(s => s.systemInfo?.bluetoothScaleConnected === false);
+  const nextScaleConnectionBroken = scaleConnectionBrokenPermanently || scaleLostInThisPhase;
+  const delayTracker = createPhaseDelayTracker(isLastPhase);
+  const exitState = createExitState();
+  const profilePhase = findProfilePhase(profileData, rawName);
+
+  if (profilePhase) {
+    analyzePhaseTargets({
+      debugEnabled,
+      delayTracker,
+      delayTotals,
+      displayName,
+      duration,
+      exitState,
+      isAutoAdjusted,
+      isBrewByWeight,
+      isLastPhase,
+      phaseNum,
+      phaseWeightRate,
+      phases,
+      profilePhase,
+      samples,
+      scaleConnectionBrokenPermanently: nextScaleConnectionBroken,
+      settings,
+      shotData,
+      sortedPhaseKeys,
+    });
+  }
+
+  return {
+    phase: {
+      number: phaseNum,
+      name: rawName,
+      displayName,
+      start: pStart,
+      end: pEnd,
+      duration,
+      water: getPumpedWaterUntilIndex(samples, samples.length - 1),
+      weight: getPhaseEndSample(samples).v,
+      stats: getPhaseStats(samples, sysInfo, sysAnomalies),
+      exit: {
+        reason: exitState.exitReason,
+        type: exitState.exitType,
+      },
+      profilePhase,
+      scaleLost: scaleLostInThisPhase,
+      scalePermanentlyLost: nextScaleConnectionBroken,
+      highScaleDelay: delayTracker.state.highScaleDelay,
+      estimatedScaleDelayMs: delayTracker.state.estimatedScaleDelayMs,
+      delayReviewHint: delayTracker.state.delayReviewHint,
+      delayReviewReason: delayTracker.state.delayReviewReason,
+      delayReviewMs: delayTracker.state.delayReviewMs,
+      prediction: {
+        finalWeight: exitState.finalPredictedWeight,
+      },
+      targetCalcValues: exitState.targetCalcValues,
+    },
+    scaleConnectionBrokenPermanently: nextScaleConnectionBroken,
+  };
+}
+
 /**
  * Format stop reason type into human-readable string
  * @param {string} type - Raw stop reason type
  * @returns {string} Formatted reason
  */
-export function formatStopReason(type) {
+function formatStopReason(type) {
   if (!type) return '';
 
   const t = type.toLowerCase();
 
   // Map internal types to GM UI friendly labels
   if (t === 'duration') return 'Time Stop';
-  if (t === 'pumped') return 'Water Drawn Stop';
+  if (t === 'pumped') return 'Pumped Water Stop';
   if (t === 'volumetric' || t === 'weight') return 'Weight Stop';
   if (t === 'pressure') return 'Pressure Stop';
-  if (t === 'flow') return 'Flow Stop';
+  if (t === 'flow') return 'Pump Flow Stop';
 
   // Fallback
   return `${t.charAt(0).toUpperCase() + t.slice(1)} Stop`;
@@ -233,7 +1357,7 @@ export function calculateShotMetrics(shotData, profileData, settings) {
   });
 
   const sortedPhaseKeys = Object.keys(phases).sort((a, b) => a - b);
-  const lastPhaseKey = sortedPhaseKeys[sortedPhaseKeys.length - 1];
+  const lastPhaseKey = sortedPhaseKeys.at(-1);
 
   // --- 2. BREW MODE DETECTION ---
   const startSysInfo = gSamples[0].systemInfo || {};
@@ -241,13 +1365,11 @@ export function calculateShotMetrics(shotData, profileData, settings) {
 
   let globalScaleLost = false;
   if (isBrewByWeight) {
-    globalScaleLost = gSamples.some(
-      s => s.systemInfo && s.systemInfo.bluetoothScaleConnected === false,
-    );
+    globalScaleLost = gSamples.some(s => s.systemInfo?.bluetoothScaleConnected === false);
   }
 
   // --- 3. GLOBAL TOTALS ---
-  let gDuration = (gSamples[gSamples.length - 1].t - gSamples[0].t) / 1000;
+  let gDuration = (gSamples.at(-1).t - gSamples[0].t) / 1000;
 
   let gWater = 0;
   for (let i = 1; i < gSamples.length; i++) {
@@ -255,665 +1377,62 @@ export function calculateShotMetrics(shotData, profileData, settings) {
     gWater += gSamples[i].fl * dt;
   }
 
-  let gWeight = gSamples[gSamples.length - 1].v;
+  let gWeight = gSamples.at(-1).v;
 
   // --- 4. PHASE-BY-PHASE ANALYSIS ---
   const analyzedPhases = [];
-
-  let sumScaleDelay = 0;
-  let countScaleHits = 0;
-  let sumSensorDelay = 0;
-  let countSensorHits = 0;
-
+  const delayTotals = createDelayTotals();
   let scaleConnectionBrokenPermanently = false;
 
-  sortedPhaseKeys.forEach(phaseNum => {
-    const samples = phases[phaseNum];
-    const pStart = (samples[0].t - globalStartTime) / 1000;
-    const pEnd = (samples[samples.length - 1].t - globalStartTime) / 1000;
-    const duration = pEnd - pStart;
-
-    const isLastPhase = phaseNum === lastPhaseKey;
-    const phaseWeightRate = getPhaseWeightRate(samples, isLastPhase);
-
-    const rawName = phaseNameMap[phaseNum];
-    const displayName = rawName ? rawName : `Phase ${phaseNum}`;
-
-    // System Info
-    const lastSampleInPhase = samples[samples.length - 1];
-    const sysInfo = lastSampleInPhase.systemInfo || {};
-    const sysFieldMap = [
-      ['sys_shot_vol', 'shotStartedVolumetric'],
-      ['sys_curr_vol', 'currentlyVolumetric'],
-      ['sys_scale', 'bluetoothScaleConnected'],
-      ['sys_vol_avail', 'volumetricAvailable'],
-      ['sys_ext', 'extendedRecording'],
-    ];
-    const sysAnomalies = {};
-    sysFieldMap.forEach(([statsKey, sampleKey]) => {
-      const finalValue = sysInfo[sampleKey];
-      if (typeof finalValue !== 'boolean') return;
-      const mismatchIndex = samples.findIndex(sample => {
-        const sampleValue = sample?.systemInfo?.[sampleKey];
-        return typeof sampleValue === 'boolean' && sampleValue !== finalValue;
-      });
-      if (mismatchIndex < 0) return;
-      const mismatchSampleValue = samples[mismatchIndex]?.systemInfo?.[sampleKey];
-      if (typeof mismatchSampleValue !== 'boolean') return;
-      sysAnomalies[statsKey] = {
-        sampleInPhase: mismatchIndex + 1,
-        sampleCountInPhase: samples.length,
-        value: mismatchSampleValue,
-      };
+  for (const phaseNum of sortedPhaseKeys) {
+    const result = analyzeExecutedPhase({
+      debugEnabled,
+      delayTotals,
+      globalStartTime,
+      isAutoAdjusted,
+      isBrewByWeight,
+      lastPhaseKey,
+      phaseNameMap,
+      phaseNum,
+      phases,
+      profileData,
+      scaleConnectionBrokenPermanently,
+      settings,
+      shotData,
+      sortedPhaseKeys,
     });
+    analyzedPhases.push(result.phase);
+    scaleConnectionBrokenPermanently = result.scaleConnectionBrokenPermanently;
+  }
 
-    let scaleLostInThisPhase = false;
-    if (isBrewByWeight) {
-      scaleLostInThisPhase = samples.some(
-        s => s.systemInfo && s.systemInfo.bluetoothScaleConnected === false,
-      );
-    }
-    if (scaleLostInThisPhase) {
-      scaleConnectionBrokenPermanently = true;
-    }
-
-    // --- EXIT REASON & AUTO-DELAY LOGIC ---
-    let exitReason = null;
-    let exitType = null;
-    let finalPredictedWeight = null;
-    let targetCalcValues = null;
-    let profilePhase = null;
-    let phaseHighScaleDelay = false;
-    let phaseEstimatedScaleDelayMs = null;
-    let phaseDelayReviewHint = false;
-    let phaseDelayReviewReason = null;
-    let phaseDelayReviewMs = null;
-    const setEstimatedScaleDelay = delayMs => {
-      if (delayMs == null || !isFinite(delayMs) || delayMs < 0) return;
-      const roundedDelay = Math.round(delayMs);
-      if (phaseEstimatedScaleDelayMs == null) {
-        phaseEstimatedScaleDelayMs = roundedDelay;
-      } else if (roundedDelay > phaseEstimatedScaleDelayMs) {
-        phaseEstimatedScaleDelayMs = roundedDelay;
-      }
-      if (isLastPhase && roundedDelay > 2000) {
-        phaseHighScaleDelay = true;
-      }
-    };
-    const setPhaseDelayReviewHint = (delayMs, reason) => {
-      if (delayMs == null || !isFinite(delayMs) || delayMs < 1000) return;
-      const roundedDelay = Math.round(delayMs);
-      phaseDelayReviewHint = true;
-      phaseDelayReviewReason = reason || 'manual-check';
-      if (phaseDelayReviewMs == null || roundedDelay > phaseDelayReviewMs) {
-        phaseDelayReviewMs = roundedDelay;
-      }
-    };
-
-    if (profileData && profileData.phases) {
-      const cleanName = rawName ? rawName.trim().toLowerCase() : '';
-      profilePhase = profileData.phases.find(p => p.name.trim().toLowerCase() === cleanName);
-
-      if (profilePhase) {
-        const profDur = profilePhase.duration;
-
-        // Time Limit Check (Always runs first)
-        if (Math.abs(duration - profDur) < 0.5 || duration >= profDur) {
-          exitReason = 'Time Limit';
-          exitType = 'duration';
-        }
-
-        // Check target-based exits
-        if (profilePhase.targets && (!exitType || duration < profDur - 0.5)) {
-          let foundMatch = false;
-
-          const sInterval = shotData.sampleInterval || 250;
-          const sIntervalSec = sInterval / 1000;
-          const currentKeyIndex = sortedPhaseKeys.indexOf(phaseNum);
-          const nextPhaseKey =
-            currentKeyIndex >= 0 && currentKeyIndex < sortedPhaseKeys.length - 1
-              ? sortedPhaseKeys[currentKeyIndex + 1]
-              : null;
-          const nextPhaseSamples = nextPhaseKey ? phases[nextPhaseKey] || [] : [];
-          const lastNonExtendedIndex = getLastNonExtendedIndex(samples);
-          const lastNonExtendedSample =
-            lastNonExtendedIndex >= 0 ? samples[lastNonExtendedIndex] : samples[samples.length - 1];
-
-          // Anchor: last non-extended sample for last phase, otherwise last sample
-          const anchorIdx =
-            isLastPhase && lastNonExtendedIndex >= 0 ? lastNonExtendedIndex : samples.length - 1;
-          const anchor = samples[anchorIdx];
-          const prevAnchor = anchorIdx > 0 ? samples[anchorIdx - 1] : anchor;
-
-          // Cumulative pumped water up to anchor
-          let anchorPumped = 0;
-          for (let i = 1; i <= anchorIdx; i++) {
-            const dt = (samples[i].t - samples[i - 1].t) / 1000;
-            anchorPumped += samples[i].fl * dt;
-          }
-
-          // Prediction setup: weight rate and pressure/flow slopes
-          const wRate = getPhaseWeightRate(samples, isLastPhase);
-          const anchorDt = (anchor.t - prevAnchor.t) / 1000;
-          const pSlope = anchorDt > 0 ? (anchor.cp - prevAnchor.cp) / anchorDt : 0;
-          const fSlope = anchorDt > 0 ? (anchor.fl - prevAnchor.fl) / anchorDt : 0;
-
-          // --- Helper: check targets against given values ---
-          const tryTargets = (p, f, w, pumped, delayMs) => {
-            for (let ti = 0; ti < profilePhase.targets.length; ti++) {
-              const tgt = profilePhase.targets[ti];
-              const isWt = tgt.type === 'volumetric' || tgt.type === 'weight';
-              if (isWt && !isBrewByWeight) continue;
-              if (isWt && scaleConnectionBrokenPermanently) continue;
-              if (
-                isLastPhase &&
-                isWt &&
-                lastNonExtendedSample.v > tgt.value + LAST_PHASE_OVERSHOOT_MAX_G
-              )
-                continue;
-
-              let val;
-              if (tgt.type === 'pressure') {
-                val = p;
-              } else if (tgt.type === 'flow') {
-                val = f;
-              } else if (isWt) {
-                val = w;
-              } else if (tgt.type === 'pumped') {
-                val = pumped;
-              } else continue;
-
-              let hit = false;
-              if (tgt.operator === 'gte' && val >= tgt.value) {
-                if (!(isLastPhase && isWt && val > tgt.value + LAST_PHASE_OVERSHOOT_MAX_G))
-                  hit = true;
-              }
-              if (tgt.operator === 'lte' && val <= tgt.value) hit = true;
-
-              if (hit) return { target: tgt, delayMs, predictedWeight: isWt ? val : null };
-            }
-            return null;
-          };
-
-          // --- Helper: check targets with direction validation per target ---
-          const tryTargetsWithDir = (nextSample, nSteps) => {
-            const horizon = nSteps * sIntervalSec;
-            const nextDt = (nextSample.t - anchor.t) / 1000;
-
-            for (let ti = 0; ti < profilePhase.targets.length; ti++) {
-              const tgt = profilePhase.targets[ti];
-              const isWt = tgt.type === 'volumetric' || tgt.type === 'weight';
-              if (isWt && !isBrewByWeight) continue;
-              if (isWt && scaleConnectionBrokenPermanently) continue;
-              if (
-                isLastPhase &&
-                isWt &&
-                lastNonExtendedSample.v > tgt.value + LAST_PHASE_OVERSHOOT_MAX_G
-              )
-                continue;
-
-              let anchorVal, nextVal, predVal;
-              if (tgt.type === 'pressure') {
-                anchorVal = anchor.cp;
-                nextVal = nextSample.cp;
-                predVal = Math.max(0, anchor.cp + pSlope * horizon);
-              } else if (tgt.type === 'flow') {
-                anchorVal = anchor.fl;
-                nextVal = nextSample.fl;
-                predVal = Math.max(0, anchor.fl + fSlope * horizon);
-              } else if (isWt) {
-                anchorVal = anchor.v;
-                nextVal = nextSample.v;
-                predVal = anchor.v + (wRate > 0 ? wRate * horizon : 0);
-              } else if (tgt.type === 'pumped') {
-                anchorVal = anchorPumped;
-                nextVal = anchorPumped + nextSample.fl * nextDt;
-                predVal = anchorPumped + Math.max(0, anchor.fl) * horizon;
-              } else continue;
-
-              // Use actual value if direction is valid, otherwise fall back to prediction
-              const dirValid = isDirectionallyValidLookAhead(tgt.operator, anchorVal, nextVal);
-              const val = dirValid ? nextVal : predVal;
-
-              // No tolerance at look-ahead steps — these are actual/predicted values, not raw sensor readings
-              let hit = false;
-              if (tgt.operator === 'gte' && val >= tgt.value) {
-                if (!(isLastPhase && isWt && val > tgt.value + LAST_PHASE_OVERSHOOT_MAX_G))
-                  hit = true;
-              }
-              if (tgt.operator === 'lte' && val <= tgt.value) hit = true;
-
-              if (hit) {
-                return {
-                  target: tgt,
-                  delayMs: nSteps * sInterval,
-                  predictedWeight: isWt ? val : null,
-                };
-              }
-            }
-            return null;
-          };
-
-          // --- Helper: predict values at N steps ahead (pure extrapolation) ---
-          const predictAt = nSteps => {
-            const h = nSteps * sIntervalSec;
-            return {
-              p: Math.max(0, anchor.cp + pSlope * h),
-              f: Math.max(0, anchor.fl + fSlope * h),
-              w: anchor.v + (wRate > 0 ? wRate * h : 0),
-              pumped: anchorPumped + Math.max(0, anchor.fl) * h,
-            };
-          };
-
-          let match = null;
-
-          if (isAutoAdjusted) {
-            // AUTO MODE: 4-step detection using actual recorded data
-
-            // STEP 1: Check at anchor point (delay = 0) — with sensor tolerance
-            match = tryTargets(anchor.cp, anchor.fl, anchor.v, anchorPumped, 0);
-
-            // STEP 2: First next-phase sample (delay ≈ 1 × sampleInterval)
-            if (!match && nextPhaseSamples.length > 0) {
-              match = tryTargetsWithDir(nextPhaseSamples[0], 1);
-            }
-
-            // STEP 3: Second next-phase sample (delay ≈ 2 × sampleInterval)
-            if (!match && nextPhaseSamples.length > 1) {
-              match = tryTargetsWithDir(nextPhaseSamples[1], 2);
-            }
-
-            // STEP 4: Predictive extrapolation fallback
-            if (!match) {
-              const maxSteps = Math.ceil(LAST_PHASE_ESTIMATED_DELAY_MAX_MS / sInterval);
-              for (let step = 3; step <= maxSteps && !match; step++) {
-                const pred = predictAt(step);
-                match = tryTargets(pred.p, pred.f, pred.w, pred.pumped, step * sInterval);
-              }
-            }
-          } else {
-            // MANUAL MODE: predict with user-configured delays
-            const normScaleMs = Math.max(0, scaleDelayMs || 0);
-            const normSensorMs = Math.max(0, sensorDelayMs || 0);
-            const scaleDelaySec = normScaleMs / 1000;
-            const sensorDelaySec = normSensorMs / 1000;
-
-            for (let ti = 0; ti < profilePhase.targets.length && !match; ti++) {
-              const tgt = profilePhase.targets[ti];
-              const isWt = tgt.type === 'volumetric' || tgt.type === 'weight';
-              if (isWt && !isBrewByWeight) continue;
-              if (isWt && scaleConnectionBrokenPermanently) continue;
-              if (
-                isLastPhase &&
-                isWt &&
-                lastNonExtendedSample.v > tgt.value + LAST_PHASE_OVERSHOOT_MAX_G
-              )
-                continue;
-
-              let val,
-                delayMs = 0;
-              if (tgt.type === 'pressure') {
-                val = Math.max(0, anchor.cp + pSlope * sensorDelaySec);
-                delayMs = normSensorMs;
-              } else if (tgt.type === 'flow') {
-                val = Math.max(0, anchor.fl + fSlope * sensorDelaySec);
-                delayMs = normSensorMs;
-              } else if (isWt) {
-                val = anchor.v + (wRate > 0 ? wRate * scaleDelaySec : 0);
-                delayMs = normScaleMs;
-              } else if (tgt.type === 'pumped') {
-                val = anchorPumped + Math.max(0, anchor.fl) * sensorDelaySec;
-                delayMs = normSensorMs;
-              } else continue;
-
-              // No tolerance for predicted values — tolerance only at step 1 (raw sensor readings)
-              let hit = false;
-              if (tgt.operator === 'gte' && val >= tgt.value) {
-                if (!(isLastPhase && isWt && val > tgt.value + LAST_PHASE_OVERSHOOT_MAX_G))
-                  hit = true;
-              }
-              if (tgt.operator === 'lte' && val <= tgt.value) hit = true;
-
-              if (hit) {
-                match = { target: tgt, delayMs, predictedWeight: isWt ? val : null };
-              }
-            }
-          }
-
-          // --- Process match result ---
-          if (match) {
-            exitReason = formatStopReason(match.target.type);
-            exitType = match.target.type;
-            finalPredictedWeight = match.predictedWeight;
-
-            setEstimatedScaleDelay(match.delayMs);
-
-            // Review hint when stop was found at step 3 or later (delay >= 2 × sampleInterval)
-            if (isAutoAdjusted && match.delayMs >= sInterval * 2) {
-              setPhaseDelayReviewHint(match.delayMs, 'auto-delay');
-            }
-
-            analyzerDebug(debugEnabled, `Stop detected phase ${phaseNum}`, {
-              shotId: shotData.id,
-              phaseName: displayName,
-              targetType: match.target.type,
-              operator: match.target.operator,
-              targetValue: match.target.value,
-              delayMs: match.delayMs,
-            });
-
-            if (isAutoAdjusted) {
-              if (exitType === 'weight' || exitType === 'volumetric') {
-                sumScaleDelay += match.delayMs;
-                countScaleHits++;
-              } else {
-                sumSensorDelay += match.delayMs;
-                countSensorHits++;
-              }
-            }
-            foundMatch = true;
-
-            // Compute calculated values for ALL targets at the matched delay
-            if (match.delayMs > 0) {
-              targetCalcValues = {};
-              const matchStep = Math.round(match.delayMs / sInterval);
-
-              for (const tgt of profilePhase.targets) {
-                const isWt = tgt.type === 'volumetric' || tgt.type === 'weight';
-                if (isWt && !isBrewByWeight) continue;
-                if (isWt && scaleConnectionBrokenPermanently) continue;
-
-                let calcVal;
-                const nextSampleIdx = matchStep - 1;
-                if (
-                  isAutoAdjusted &&
-                  nextSampleIdx >= 0 &&
-                  nextSampleIdx < nextPhaseSamples.length
-                ) {
-                  const ns = nextPhaseSamples[nextSampleIdx];
-                  const horizon = matchStep * sIntervalSec;
-                  const nextDt = (ns.t - anchor.t) / 1000;
-                  let anchorVal, nextVal, predVal;
-                  if (tgt.type === 'pressure') {
-                    anchorVal = anchor.cp;
-                    nextVal = ns.cp;
-                    predVal = Math.max(0, anchor.cp + pSlope * horizon);
-                  } else if (tgt.type === 'flow') {
-                    anchorVal = anchor.fl;
-                    nextVal = ns.fl;
-                    predVal = Math.max(0, anchor.fl + fSlope * horizon);
-                  } else if (isWt) {
-                    anchorVal = anchor.v;
-                    nextVal = ns.v;
-                    predVal = anchor.v + (wRate > 0 ? wRate * horizon : 0);
-                  } else if (tgt.type === 'pumped') {
-                    anchorVal = anchorPumped;
-                    nextVal = anchorPumped + ns.fl * nextDt;
-                    predVal = anchorPumped + Math.max(0, anchor.fl) * horizon;
-                  } else continue;
-                  const dirValid = isDirectionallyValidLookAhead(tgt.operator, anchorVal, nextVal);
-                  calcVal = dirValid ? nextVal : predVal;
-                } else {
-                  const h = match.delayMs / 1000;
-                  if (tgt.type === 'pressure') calcVal = Math.max(0, anchor.cp + pSlope * h);
-                  else if (tgt.type === 'flow') calcVal = Math.max(0, anchor.fl + fSlope * h);
-                  else if (isWt) calcVal = anchor.v + (wRate > 0 ? wRate * h : 0);
-                  else if (tgt.type === 'pumped')
-                    calcVal = anchorPumped + Math.max(0, anchor.fl) * h;
-                  else continue;
-                }
-
-                targetCalcValues[tgt.type] = {
-                  value: calcVal,
-                  isStopReason: tgt === match.target,
-                };
-              }
-            }
-          } else {
-            analyzerDebug(debugEnabled, `No stop match phase ${phaseNum}`, {
-              shotId: shotData.id,
-              phaseName: displayName,
-              targetCount: profilePhase.targets.length,
-            });
-          }
-
-          // --- FALLBACK: LAST PHASE SPECIAL LOGIC ---
-          // Only run if:
-          // - No match found yet
-          // - Last phase
-          // - Auto-adjust ON
-          // - Brew-by-weight mode
-          // - Scale connection was never lost (weight stop must be ignored otherwise)
-          if (
-            !foundMatch &&
-            isLastPhase &&
-            isAutoAdjusted &&
-            isBrewByWeight &&
-            !scaleConnectionBrokenPermanently
-          ) {
-            const weightTarget = profilePhase.targets.find(
-              t => t.type === 'weight' || t.type === 'volumetric',
-            );
-
-            if (weightTarget) {
-              const finalSample = samples[samples.length - 1];
-              const finalW = finalSample.v;
-              const lastNonExtendedIndex = getLastNonExtendedIndex(samples);
-              const stopSample =
-                lastNonExtendedIndex >= 0 ? samples[lastNonExtendedIndex] : finalSample;
-              const stopW = stopSample.v;
-
-              // If the shot already exceeded target above configured overshoot cap,
-              // treat as manual/other stop (never weight stop).
-              if (stopW > weightTarget.value + LAST_PHASE_OVERSHOOT_MAX_G) {
-                analyzerDebug(
-                  debugEnabled,
-                  `Last-phase weight stop blocked (>+${LAST_PHASE_OVERSHOOT_MAX_G}g)`,
-                  {
-                    shotId: shotData.id,
-                    phaseName: displayName,
-                    stopWeight: stopW,
-                    targetWeight: weightTarget.value,
-                  },
-                );
-                // Intentionally no weight-stop fallback.
-              } else {
-                const currentRate = phaseWeightRate;
-                const overshoot = stopW - weightTarget.value;
-                const undershootAtEnd = weightTarget.value - finalW;
-                const stopInstantRate = getSampleInstantWeightRate(stopSample);
-
-                const conservativeRateCandidates = [currentRate, stopInstantRate].filter(
-                  r => r != null && isFinite(r) && r > 0.1,
-                );
-                const conservativeRate =
-                  conservativeRateCandidates.length > 0
-                    ? Math.min(...conservativeRateCandidates)
-                    : 0;
-
-                // Fallback A: stopped above target
-                const stoppedAboveTargetInRange =
-                  overshoot >= 0 && overshoot <= LAST_PHASE_OVERSHOOT_MAX_G;
-
-                if (stoppedAboveTargetInRange && currentRate > 0.1) {
-                  // Assume overshoot is due to scale delay: Delay = Overshoot / FlowRate
-                  // (If overshoot is negative/zero, delay is 0)
-                  const calculatedDelay = Math.max(0, (overshoot / currentRate) * 1000);
-
-                  // Allow plausible delay (0..configured max)
-                  if (calculatedDelay <= LAST_PHASE_ESTIMATED_DELAY_MAX_MS) {
-                    setEstimatedScaleDelay(calculatedDelay);
-
-                    exitReason = formatStopReason(weightTarget.type);
-                    exitType = weightTarget.type;
-                    finalPredictedWeight = weightTarget.value;
-
-                    sumScaleDelay += calculatedDelay;
-                    countScaleHits++;
-                    setPhaseDelayReviewHint(calculatedDelay, 'fallback-overshoot');
-                    analyzerDebug(debugEnabled, `Last-phase fallback weight stop (overshoot)`, {
-                      shotId: shotData.id,
-                      phaseName: displayName,
-                      stopWeight: stopW,
-                      targetWeight: weightTarget.value,
-                      estimatedDelayMs: Math.round(calculatedDelay),
-                    });
-                  }
-                }
-
-                // Fallback B: finished below target
-                // Only classify when estimated delay is clearly high (>2000ms).
-                const stoppedBelowTargetHighDelayCandidate =
-                  undershootAtEnd >= LAST_PHASE_UNDERSHOOT_MIN_G &&
-                  undershootAtEnd <= LAST_PHASE_UNDERSHOOT_MAX_G;
-                if (!exitType && stoppedBelowTargetHighDelayCandidate && conservativeRate > 0.1) {
-                  const estimatedDelay = (undershootAtEnd / conservativeRate) * 1000;
-                  if (
-                    estimatedDelay > 2000 &&
-                    estimatedDelay <= LAST_PHASE_ESTIMATED_DELAY_MAX_MS
-                  ) {
-                    setEstimatedScaleDelay(estimatedDelay);
-
-                    exitReason = formatStopReason(weightTarget.type);
-                    exitType = weightTarget.type;
-                    finalPredictedWeight = weightTarget.value;
-
-                    sumScaleDelay += estimatedDelay;
-                    countScaleHits++;
-                    setPhaseDelayReviewHint(estimatedDelay, 'fallback-undershoot');
-                    analyzerDebug(
-                      debugEnabled,
-                      `Last-phase fallback weight stop (undershoot high delay)`,
-                      {
-                        shotId: shotData.id,
-                        phaseName: displayName,
-                        stopWeight: stopW,
-                        finalWeight: finalW,
-                        targetWeight: weightTarget.value,
-                        estimatedDelayMs: Math.round(estimatedDelay),
-                      },
-                    );
-                  }
-                }
-              }
-            }
-          }
-
-          // Independent high-delay warning detection for last phase (undershoot up to configured max,
-          // overshoot up to configured max) to avoid flagging clear manual stops.
-          if (isLastPhase && isBrewByWeight && !scaleConnectionBrokenPermanently) {
-            const weightTarget = profilePhase.targets.find(
-              t => t.type === 'weight' || t.type === 'volumetric',
-            );
-            if (weightTarget) {
-              const finalSample = samples[samples.length - 1];
-              const finalW = finalSample.v;
-              const lastNonExtendedIndex = getLastNonExtendedIndex(samples);
-              const stopSample =
-                lastNonExtendedIndex >= 0 ? samples[lastNonExtendedIndex] : finalSample;
-              const stopW = stopSample.v;
-              const stopInstantRate = getSampleInstantWeightRate(stopSample);
-              const rateCandidates = [phaseWeightRate, stopInstantRate].filter(
-                r => r != null && isFinite(r) && r > 0.1,
-              );
-              const conservativeRate = rateCandidates.length > 0 ? Math.min(...rateCandidates) : 0;
-              const absDelta = Math.abs(finalW - weightTarget.value);
-
-              // Ignore clear manual overshoot and tiny deltas.
-              if (
-                stopW <= weightTarget.value + LAST_PHASE_OVERSHOOT_MAX_G &&
-                conservativeRate > 0.1 &&
-                absDelta >= LAST_PHASE_UNDERSHOOT_MIN_G &&
-                absDelta <= LAST_PHASE_UNDERSHOOT_MAX_G
-              ) {
-                const estimatedDelay = (absDelta / conservativeRate) * 1000;
-                if (estimatedDelay <= LAST_PHASE_ESTIMATED_DELAY_MAX_MS) {
-                  setEstimatedScaleDelay(estimatedDelay);
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-
-    // --- PHASE METRICS ---
-    let pWaterPumped = 0;
-    for (let i = 1; i < samples.length; i++) {
-      const dt = (samples[i].t - samples[i - 1].t) / 1000;
-      pWaterPumped += samples[i].fl * dt;
-    }
-
-    analyzedPhases.push({
-      number: phaseNum,
-      name: rawName,
-      displayName,
-      start: pStart,
-      end: pEnd,
-      duration,
-      water: pWaterPumped,
-      weight: samples[samples.length - 1].v,
-      stats: {
-        p: getMetricStats(samples, 'cp'),
-        tp: getMetricStats(samples, 'tp'),
-        f: getMetricStats(samples, 'fl'),
-        pf: getMetricStats(samples, 'pf'),
-        tf: getMetricStats(samples, 'tf'),
-        t: getMetricStats(samples, 'ct'),
-        tt: getMetricStats(samples, 'tt'),
-        w: getMetricStats(samples, 'v'),
-        wf: getMetricStats(samples, 'vf'),
-        sys_raw: sysInfo.raw,
-        sys_shot_vol: sysInfo.shotStartedVolumetric,
-        sys_curr_vol: sysInfo.currentlyVolumetric,
-        sys_scale: sysInfo.bluetoothScaleConnected,
-        sys_vol_avail: sysInfo.volumetricAvailable,
-        sys_ext: sysInfo.extendedRecording,
-        sys_anomalies: Object.keys(sysAnomalies).length > 0 ? sysAnomalies : undefined,
-      },
-      exit: {
-        reason: exitReason,
-        type: exitType,
-      },
-      profilePhase,
-      scaleLost: scaleLostInThisPhase,
-      scalePermanentlyLost: scaleConnectionBrokenPermanently,
-      highScaleDelay: phaseHighScaleDelay,
-      estimatedScaleDelayMs: phaseEstimatedScaleDelayMs,
-      delayReviewHint: phaseDelayReviewHint,
-      delayReviewReason: phaseDelayReviewReason,
-      delayReviewMs: phaseDelayReviewMs,
-      prediction: {
-        finalWeight: finalPredictedWeight,
-      },
-      targetCalcValues,
-    });
-  });
+  // --- 4b. DETECT SKIPPED PHASES (phases defined in profile but absent from shot) ---
+  mergeSkippedProfilePhases({ analyzedPhases, phases, profileData });
 
   // Calculate distinct Average Delays
   let avgScaleDelay = scaleDelayMs;
   let avgSensorDelay = sensorDelayMs;
 
   if (isAutoAdjusted) {
-    if (countScaleHits > 0) {
-      avgScaleDelay = Math.round(sumScaleDelay / countScaleHits / 50) * 50;
+    if (delayTotals.countScaleHits > 0) {
+      avgScaleDelay = Math.round(delayTotals.sumScaleDelay / delayTotals.countScaleHits / 50) * 50;
     }
-    if (countSensorHits > 0) {
-      avgSensorDelay = Math.round(sumSensorDelay / countSensorHits / 50) * 50;
+    if (delayTotals.countSensorHits > 0) {
+      avgSensorDelay =
+        Math.round(delayTotals.sumSensorDelay / delayTotals.countSensorHits / 50) * 50;
     }
   }
 
   analyzerDebug(debugEnabled, 'Auto-delay summary', {
     shotId: shotData.id,
     isAutoAdjusted,
-    scaleHits: countScaleHits,
-    sensorHits: countSensorHits,
+    scaleHits: delayTotals.countScaleHits,
+    sensorHits: delayTotals.countSensorHits,
     avgScaleDelayMs: avgScaleDelay,
     avgSensorDelayMs: avgSensorDelay,
   });
 
   // --- 5. TOTAL STATS ---
-  const finalSysInfo = gSamples[gSamples.length - 1].systemInfo || {};
+  const finalSysInfo = gSamples.at(-1).systemInfo || {};
 
   const totalStats = {
     duration: gDuration,
@@ -954,11 +1473,7 @@ export function calculateShotMetrics(shotData, profileData, settings) {
     ? primaryDelayReview.tablePhaseNumber
     : null;
   const delayReviewMs = shouldExposeDelayReview ? primaryDelayReview.delayReviewMs : null;
-  const delayReviewMessage = delayReviewPhaseNumber
-    ? delayReviewMs != null
-      ? `Unusually high inferred delay in Phase ${delayReviewPhaseNumber} (${delayReviewMs} ms).`
-      : `Unusually high inferred delay in Phase ${delayReviewPhaseNumber}.`
-    : null;
+  const delayReviewMessage = getDelayReviewMessage(delayReviewPhaseNumber, delayReviewMs);
 
   return {
     isBrewByWeight,
@@ -998,7 +1513,7 @@ export function detectAutoDelay(shotData, profileData, manualDelay) {
     isAutoAdjusted: true,
   });
 
-  if (results && results.usedSettings) {
+  if (results?.usedSettings) {
     // Return scale delay as primary "detected" delay for legacy compatibility
     return { delay: results.usedSettings.scaleDelayMs, auto: true };
   }
