@@ -190,9 +190,9 @@ function computeProfileGroups(entries) {
 /**
  * For a group of same-name phases across shots, compute the average
  * deviation from profile targets (duration, water/pumped, pressure, flow, weight, temp).
- * Uses delay-corrected targetCalcValues when available, falls back to raw measured values.
+ * Uses the measured values from the analyzed shot.
  */
-function computePhaseTargetDeltas(phases, calcMode) {
+function computePhaseTargetDeltas(phases) {
   const keys = ['duration', 'water', 'p', 'f', 't', 'w'];
   const actuals = {};
   const targets = {};
@@ -202,7 +202,7 @@ function computePhaseTargetDeltas(phases, calcMode) {
   }
 
   for (const phase of phases) {
-    addPhaseTargetDeltaValues({ phase, calcMode, actuals, targets });
+    addPhaseTargetDeltaValues({ phase, actuals, targets });
   }
 
   const result = {};
@@ -237,41 +237,38 @@ function addDurationTargetDelta({ phase, actuals, targets }) {
   });
 }
 
-function addPumpedTargetDelta({ phase, calcMode, actuals, targets }) {
+function addPumpedTargetDelta({ phase, actuals, targets }) {
   const pumpedTarget = findPhaseTarget(phase, target => target.type === 'pumped');
-  const calcVal = calcMode ? phase.targetCalcValues?.pumped : null;
   pushTargetDeltaValues({
     actuals,
     targets,
     key: 'water',
-    actual: calcVal ? calcVal.value : phase.water,
+    actual: phase.water,
     target: pumpedTarget?.value,
   });
 }
 
-function addWeightTargetDelta({ phase, calcMode, actuals, targets }) {
+function addWeightTargetDelta({ phase, actuals, targets }) {
   const weightTarget = findPhaseTarget(
     phase,
     target => target.type === 'weight' || target.type === 'volumetric',
   );
-  const calcVal = calcMode && weightTarget ? phase.targetCalcValues?.[weightTarget.type] : null;
   pushTargetDeltaValues({
     actuals,
     targets,
     key: 'w',
-    actual: calcVal ? calcVal.value : (phase.prediction?.finalWeight ?? phase.weight),
+    actual: phase.prediction?.finalWeight ?? phase.weight,
     target: weightTarget?.value,
   });
 }
 
-function addMetricTargetDelta({ phase, calcMode, actuals, targets, key, targetType, calcKey }) {
+function addMetricTargetDelta({ phase, actuals, targets, key, targetType }) {
   const target = findPhaseTarget(phase, candidate => candidate.type === targetType);
-  const calcVal = calcMode ? phase.targetCalcValues?.[calcKey] : null;
   pushTargetDeltaValues({
     actuals,
     targets,
     key,
-    actual: calcVal ? calcVal.value : phase.stats?.[key]?.avg,
+    actual: phase.stats?.[key]?.avg,
     target: target?.value,
   });
 }
@@ -286,28 +283,24 @@ function addTemperatureTargetDelta({ phase, actuals, targets }) {
   });
 }
 
-function addPhaseTargetDeltaValues({ phase, calcMode, actuals, targets }) {
+function addPhaseTargetDeltaValues({ phase, actuals, targets }) {
   if (!phase.profilePhase) return;
   addDurationTargetDelta({ phase, actuals, targets });
-  addPumpedTargetDelta({ phase, calcMode, actuals, targets });
-  addWeightTargetDelta({ phase, calcMode, actuals, targets });
+  addPumpedTargetDelta({ phase, actuals, targets });
+  addWeightTargetDelta({ phase, actuals, targets });
   addMetricTargetDelta({
     phase,
-    calcMode,
     actuals,
     targets,
     key: 'p',
     targetType: 'pressure',
-    calcKey: 'pressure',
   });
   addMetricTargetDelta({
     phase,
-    calcMode,
     actuals,
     targets,
     key: 'f',
     targetType: 'flow',
-    calcKey: 'flow',
   });
   addTemperatureTargetDelta({ phase, actuals, targets });
 }
@@ -357,7 +350,7 @@ function buildTotalPhaseMetrics({ metricKeys, allStatsArrays }) {
   return totalMetrics;
 }
 
-function computePhaseStats(entries, calcMode) {
+function computePhaseStats(entries) {
   const phaseMap = buildPhaseMap(entries);
   const result = [];
   let totalDuration = 0;
@@ -378,7 +371,7 @@ function computePhaseStats(entries, calcMode) {
       totalCounts: totalExitReasons,
     });
     const metrics = aggregatePhaseMetrics({ statsArray, metricKeys, allStatsArrays });
-    const targetDeltas = computePhaseTargetDeltas(phases, calcMode);
+    const targetDeltas = computePhaseTargetDeltas(phases);
 
     const avgDur = averageOf(durations);
     const avgWat = averageOf(waters);
@@ -434,7 +427,7 @@ function computeTrends(entries) {
   });
 }
 
-export function computeStatistics(entries, options = {}) {
+export function computeStatistics(entries) {
   if (!entries || entries.length === 0) {
     return {
       summary: {
@@ -461,7 +454,7 @@ export function computeStatistics(entries, options = {}) {
     summary: computeSummary(entries),
     metrics: computeMetricAverages(entries),
     profileGroups: computeProfileGroups(entries),
-    phaseStats: computePhaseStats(entries, !!options.calcMode),
+    phaseStats: computePhaseStats(entries),
     trends: computeTrends(entries),
   };
 }

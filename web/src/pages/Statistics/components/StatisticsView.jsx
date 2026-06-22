@@ -1381,7 +1381,6 @@ async function runStatisticsAnalysis({ isCurrentRun, onProgress, runRequest }) {
 
 function useStatisticsRunExecution({
   runRequest,
-  calcMode,
   analyzeLoadIdRef,
   entriesRef,
   setLoading,
@@ -1410,7 +1409,7 @@ function useStatisticsRunExecution({
         if (!entries) return;
 
         entriesRef.current = entries;
-        setResult(computeStatistics(entries, { calcMode: !!runRequest.calcMode }));
+        setResult(computeStatistics(entries));
       } catch {
         if (cancelled || loadId !== analyzeLoadIdRef.current) return;
         setError('Failed to load statistics. Please try again.');
@@ -1427,12 +1426,6 @@ function useStatisticsRunExecution({
       cancelled = true;
     };
   }, [runRequest, analyzeLoadIdRef, entriesRef, setError, setLoading, setProgress, setResult]);
-
-  useEffect(() => {
-    if (entriesRef.current) {
-      setResult(computeStatistics(entriesRef.current, { calcMode }));
-    }
-  }, [calcMode, entriesRef, setResult]);
 }
 
 function buildStatisticsCompareEntries(result, runRequest, entriesRef) {
@@ -1667,7 +1660,6 @@ export function StatisticsView({ initialContext }) {
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
   const [runRequest, setRunRequest] = useState(null);
-  const [calcMode, setCalcMode] = useState(false);
   const [preparingRun, setPreparingRun] = useState(false);
   const [statisticsDetailSection, setStatisticsDetailSection] = useState(
     () => normalizeStatisticsDetailSection(initialContext?.preferredDetailSection) || 'metrics',
@@ -1772,7 +1764,6 @@ export function StatisticsView({ initialContext }) {
 
   useStatisticsRunExecution({
     runRequest,
-    calcMode,
     analyzeLoadIdRef,
     entriesRef,
     setLoading,
@@ -1809,7 +1800,6 @@ export function StatisticsView({ initialContext }) {
       const shotSnapshot = [...candidateFilterState.filteredShots];
       const profileSnapshot = [...rawProfiles];
       const orderedShotKeysSnapshot = [...selectedShotKeys];
-      const nextCalcMode = calcMode;
       setPreparingRun(true);
 
       async function prepareRunRequest() {
@@ -1833,7 +1823,6 @@ export function StatisticsView({ initialContext }) {
             profiles: profileSnapshot,
             fallbackProfiles: Array.isArray(fallbackProfiles) ? fallbackProfiles : [],
             orderedShotKeys: orderedShotKeysSnapshot,
-            calcMode: nextCalcMode,
             dateBasisMode,
             mode,
             preferredDetailSection:
@@ -1854,7 +1843,6 @@ export function StatisticsView({ initialContext }) {
       candidateFilterState.filteredShots,
       rawProfiles,
       selectedShotKeys,
-      calcMode,
       dateBasisMode,
       mode,
     ],
@@ -1951,8 +1939,6 @@ export function StatisticsView({ initialContext }) {
             mode={mode}
             onModeChange={setMode}
             onGo={handleGo}
-            calcMode={calcMode}
-            onCalcModeChange={setCalcMode}
             startLoading={preparingRun}
             loading={loading}
             metadataLoading={metadataLoading}

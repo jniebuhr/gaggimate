@@ -977,13 +977,13 @@ function CellContent({ phase, col, results, isTotal = false }) {
   const isWeightCol = col.id === 'weight';
   const isHit = getCellHitState({ phase, col });
 
-  // Relative font sizing for sub-elements (0.85em) ensures they scale with zoom
+  // Keep secondary text proportional to the table text.
   const subTextSize = { fontSize: '0.85em' };
-  const booleanAnomaly = !isTotal && isBoolean ? stats?.sys_anomalies?.[col.id] : null;
+  const booleanAnomaly = isBoolean ? stats?.sys_anomalies?.[col.id] : null;
   const calcEntry = getTargetCalcEntry(phase, col);
-  const displayMainValue = !isBoolean
-    ? replaceCellValueWithCalc({ mainValue, calcEntry, col })
-    : mainValue;
+  const displayMainValue = isBoolean
+    ? mainValue
+    : replaceCellValueWithCalc({ mainValue, calcEntry, col });
   const mainValueIsCalculated = !isBoolean && Boolean(calcEntry);
   const targetDisplay = getTargetDisplay({
     phase,

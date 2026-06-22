@@ -61,18 +61,6 @@ function StatisticsSearchHelpContent() {
           are detected.
         </p>
       </div>
-      <div className='bg-base-200/60 rounded-lg p-2'>
-        <p className='font-semibold'>Raw / Calc</p>
-        <p className='opacity-80'>
-          Raw builds statistics directly from the values stored in the shot file and only reuses the
-          analyzer&apos;s detected stop reasons.
-        </p>
-        <p className='opacity-80'>
-          Calc builds statistics from the analyzer&apos;s calculated values so the results align
-          with analyzer-based stop detection.
-        </p>
-        <p className='font-semibold opacity-90'>If you are unsure which mode to use, use Raw.</p>
-      </div>
     </div>
   );
 }

@@ -51,10 +51,6 @@ const SEGMENT_BUTTON_BASE_CLASS =
   'flex h-11 min-h-0 items-center justify-center border-0 px-2 text-xs font-semibold whitespace-nowrap transition-colors disabled:cursor-not-allowed disabled:opacity-40 sm:px-2.5';
 const COMPACT_SEGMENT_BUTTON_BASE_CLASS =
   'flex h-9 min-h-0 items-center justify-center border-0 px-1.5 text-[11px] font-semibold whitespace-nowrap transition-colors disabled:cursor-not-allowed disabled:opacity-40';
-const CALC_ACTIVE_SEGMENT_STYLE = {
-  color: 'var(--analyzer-pred-info-blue)',
-  backgroundColor: 'color-mix(in srgb, var(--analyzer-pred-info-blue) 12%, transparent)',
-};
 const WARNING_ORANGE_TEXT_STYLE = { color: 'var(--analyzer-warning-orange)' };
 const WARNING_ORANGE_TEXT_MUTED_STYLE = {
   color: 'color-mix(in srgb, var(--analyzer-warning-orange) 70%, var(--color-base-content) 30%)',
@@ -615,8 +611,6 @@ function AdvancedSearchControls({
   dslInputRef,
   query,
   onQueryChange,
-  calcMode,
-  onCalcModeChange,
   isBusy,
   compactNeutralButtonClasses,
   activeCompactNeutralButtonClasses,
@@ -649,20 +643,6 @@ function AdvancedSearchControls({
             disabled={isBusy}
           />
         </div>
-      )}
-
-      {showAdvancedSearch && (
-        <button
-          type='button'
-          className={calcMode ? activeCompactNeutralButtonClasses : compactNeutralButtonClasses}
-          style={calcMode ? CALC_ACTIVE_SEGMENT_STYLE : undefined}
-          onClick={() => onCalcModeChange(!calcMode)}
-          disabled={isBusy}
-          aria-label={`Toggle calculation mode (currently ${calcMode ? 'Calc' : 'Raw'})`}
-          title={`Current: ${calcMode ? 'Calc' : 'Raw'} (click to switch)`}
-        >
-          {calcMode ? 'Calc' : 'Raw'}
-        </button>
       )}
 
       {showAdvancedSearch && (
@@ -741,8 +721,6 @@ function ExpandedToolbarControls({
   dslInputRef,
   query,
   onQueryChange,
-  calcMode,
-  onCalcModeChange,
   activeCompactNeutralButtonClasses,
 }) {
   return (
@@ -854,8 +832,6 @@ function ExpandedToolbarControls({
           dslInputRef={dslInputRef}
           query={query}
           onQueryChange={onQueryChange}
-          calcMode={calcMode}
-          onCalcModeChange={onCalcModeChange}
           isBusy={isBusy}
           compactNeutralButtonClasses={compactNeutralButtonClasses}
           activeCompactNeutralButtonClasses={activeCompactNeutralButtonClasses}
@@ -1238,8 +1214,6 @@ export function StatisticsToolbar({
   mode,
   onModeChange,
   onGo,
-  calcMode,
-  onCalcModeChange,
   startLoading = false,
   loading = false,
   metadataLoading = false,
@@ -1460,8 +1434,6 @@ export function StatisticsToolbar({
           dslInputRef={dslInputRef}
           query={query}
           onQueryChange={onQueryChange}
-          calcMode={calcMode}
-          onCalcModeChange={onCalcModeChange}
           activeCompactNeutralButtonClasses={activeCompactNeutralButtonClasses}
         />
       )}
