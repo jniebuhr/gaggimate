@@ -128,6 +128,13 @@ function normalizeTableFontSize(value) {
   return Math.min(MAX_TABLE_FONT_SIZE, Math.max(MIN_TABLE_FONT_SIZE, Math.round(numericValue)));
 }
 
+function stripTrailingParentheticalSuffix(value) {
+  const label = String(value || '');
+  const suffixStart = label.lastIndexOf(' (');
+  if (suffixStart < 0 || !label.endsWith(')')) return label;
+  return label.slice(0, suffixStart);
+}
+
 function getAnalysisHeaderBaseLabel(col) {
   if (col.id === 'duration') return 'Time';
   if (col.id === 'water') return 'Pumped Water (phase)';
@@ -137,7 +144,7 @@ function getAnalysisHeaderBaseLabel(col) {
   if (col.group === 'puckflow') return 'Puck Flow';
   if (col.group === 'temp') return 'Temperature';
   if (col.group === 'target_temp') return 'Target Temp';
-  return col.label.replace(/\s*\([^)]*\)/g, '');
+  return stripTrailingParentheticalSuffix(col.label);
 }
 
 function getAnalysisHeaderLabel(col) {

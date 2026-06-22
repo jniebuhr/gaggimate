@@ -439,10 +439,10 @@ function useRatioCardState({ currentShot, entryKey }) {
   );
 
   const handleRatioCommit = useCallback(
-    value => {
+    async value => {
       clearSaveTimer();
       setIsEditingRatio(false);
-      void updateAndSave('ratio', value);
+      await updateAndSave('ratio', value);
     },
     [clearSaveTimer, updateAndSave],
   );

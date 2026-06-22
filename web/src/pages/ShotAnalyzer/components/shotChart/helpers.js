@@ -48,6 +48,7 @@ const GLASS_SURFACE_SHADOW_FALLBACK = {
   color: 'rgba(15, 23, 42, 0.16)',
 };
 const CSS_LENGTH_PATTERN = /^(-?\d+(?:\.\d+)?)(?:px)?$/;
+const BREW_LABEL_ICONS = ['⏱', '⚖'];
 
 function parseShadowLengthToken(token) {
   const match = CSS_LENGTH_PATTERN.exec(String(token || ''));
@@ -390,13 +391,19 @@ function drawFontAwesomeIcon(ctx, { iconDef, x, y, size, color }) {
 }
 
 function splitLeadingBrewIcon(text) {
-  const match = /^([⏱⚖])\s+(.+)$/.exec(String(text || ''));
-  if (!match) return null;
-  return { icon: match[1], label: match[2] };
+  const value = String(text || '');
+  const icon = BREW_LABEL_ICONS.find(candidate => value.startsWith(candidate));
+  if (!icon) return null;
+
+  const remainder = value.slice(icon.length);
+  const label = remainder.trimStart();
+  if (!label || label === remainder) return null;
+
+  return { icon, label };
 }
 
 function isBrewIconOnly(text) {
-  return /^[⏱⚖]$/.test(String(text || ''));
+  return BREW_LABEL_ICONS.includes(String(text || ''));
 }
 
 function getAxisLabelBackgroundAnchor({ x, y, width, height, align, baseline }) {
