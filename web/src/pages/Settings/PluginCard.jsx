@@ -468,7 +468,7 @@ export function PluginCard({
                 onChange={onChange('pumpSlipCoeffs')}
               />
               <span className='mt-1 text-xs opacity-70'>
-                Pressure polynomial (a,b,c,d) for vane-pump internal leakage. Leave at 0,0,0,0 if
+                Pressure polynomial (a,b,c,d) for vane-/gear-pump internal leakage. Leave at 0,0,0,0 if
                 uncalibrated.
               </span>
             </div>
