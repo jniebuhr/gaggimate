@@ -23,19 +23,14 @@ import {
   faAngleDoubleLeft,
   faArrowLeft,
   faExclamationTriangle,
-  faMagnifyingGlassMinus,
-  faMagnifyingGlassPlus,
   faCheck,
   faTimes,
   faCircleInfo,
 } from '@fortawesome/free-solid-svg-icons';
 import {
-  ANALYZER_DB_KEYS,
   cleanName,
   columnConfig,
   getDisplayStopReasonParts,
-  loadFromStorage,
-  saveToStorage,
   utilityColors,
 } from '../utils/analyzerUtils';
 import { ColumnControls } from './ColumnControls'; // Import ColumnControls
@@ -46,17 +41,11 @@ import {
   ANALYZER_ACTION_ICON_CLASS,
   ANALYZER_ACTION_ICON_STYLE,
   getAnalyzerIconButtonClasses,
-  getAnalyzerTextButtonClasses,
-  joinAnalyzerClasses,
 } from './analyzerControlStyles';
 
 const NEUTRAL_STATUS_BADGE_CLASS = 'bg-base-content/10 text-base-content/80 border-base-content/15';
 const WARNING_BADGE_HIGH_SCALE_LABEL = 'HIGH SCALE DELAY OR MANUAL STOP (ADJUSTMENT)';
 const WARNING_BADGE_SCALE_LOST_LABEL = 'SCALE LOST';
-const WARNING_BADGE_REVIEW_LABEL = 'REVIEW PHASE';
-const MIN_TABLE_FONT_SIZE = 8;
-const MAX_TABLE_FONT_SIZE = 16;
-const DEFAULT_TABLE_FONT_SIZE = 12;
 const SCROLLBAR_HIDE_STYLE = {
   scrollbarWidth: 'none',
   msOverflowStyle: 'none',
@@ -120,12 +109,6 @@ function buildAnalysisWarningBadges(results) {
   }
 
   return badges;
-}
-
-function normalizeTableFontSize(value) {
-  const numericValue = Number(value);
-  if (!Number.isFinite(numericValue)) return DEFAULT_TABLE_FONT_SIZE;
-  return Math.min(MAX_TABLE_FONT_SIZE, Math.max(MIN_TABLE_FONT_SIZE, Math.round(numericValue)));
 }
 
 function stripTrailingParentheticalSuffix(value) {
@@ -195,12 +178,6 @@ function getMaxComparePhaseCount(compareMode, compareEntries) {
   return Math.max(...compareEntries.map(entry => entry?.results?.phases?.length || 0), 0);
 }
 
-function getNextTableFontSize(currentFontSize, direction) {
-  if (direction === 'in') return Math.min(MAX_TABLE_FONT_SIZE, currentFontSize + 1);
-  if (direction === 'out') return Math.max(MIN_TABLE_FONT_SIZE, currentFontSize - 1);
-  return currentFontSize;
-}
-
 function scrollAnalysisTable(ref, amount) {
   ref.current?.scrollBy({ left: amount, behavior: 'smooth' });
 }
@@ -210,16 +187,6 @@ function scrollAnalysisTableToBound(ref, direction) {
   if (!tableElement) return;
   const left = direction === 'start' ? 0 : tableElement.scrollWidth;
   tableElement.scrollTo({ left, behavior: 'smooth' });
-}
-
-function useAnalysisTablePreferences(tableFontSize, advancedMode) {
-  useEffect(() => {
-    saveToStorage(ANALYZER_DB_KEYS.ANALYSIS_TABLE_FONT_SIZE, tableFontSize);
-  }, [tableFontSize]);
-
-  useEffect(() => {
-    saveToStorage(ANALYZER_DB_KEYS.ANALYSIS_TABLE_ADVANCED, advancedMode);
-  }, [advancedMode]);
 }
 
 function useVerticalWheelForwarding(tableContainerRef) {
@@ -265,281 +232,23 @@ function useTouchOptimizedPointer() {
   return isTouchOptimized;
 }
 
-function StopCalculationHelpPopover() {
-  const detailsRef = useRef(null);
-  const summaryRef = useRef(null);
-  const popoverRef = useRef(null);
-  const [isOpen, setIsOpen] = useState(false);
-  const [popoverStyle, setPopoverStyle] = useState(null);
-
-  const closePopover = useCallback(() => {
-    detailsRef.current?.removeAttribute('open');
-    setIsOpen(false);
-  }, []);
-
-  const updatePopoverPosition = useCallback(() => {
-    const triggerElement = summaryRef.current;
-    const browserWindow = globalThis.window;
-    if (!triggerElement || !browserWindow) return;
-
-    const viewportWidth = browserWindow.innerWidth || 0;
-    const viewportHeight = browserWindow.innerHeight || 0;
-    const scrollX = browserWindow.scrollX || browserWindow.pageXOffset || 0;
-    const scrollY = browserWindow.scrollY || browserWindow.pageYOffset || 0;
-    const triggerRect = triggerElement.getBoundingClientRect();
-    const margin = 12;
-    const width = Math.min(viewportWidth - margin * 2, 544);
-    const left = Math.min(
-      Math.max(margin, triggerRect.right - width),
-      Math.max(margin, viewportWidth - width - margin),
-    );
-    const spaceAbove = triggerRect.top - margin;
-    const spaceBelow = viewportHeight - triggerRect.bottom - margin;
-    const openAbove = spaceAbove >= Math.min(420, spaceBelow);
-    const maxHeight = Math.max(
-      80,
-      Math.min(
-        viewportHeight - margin * 2,
-        viewportHeight * 0.7,
-        openAbove ? spaceAbove : spaceBelow,
-      ),
-    );
-
-    setPopoverStyle({
-      position: 'absolute',
-      left: `${scrollX + left}px`,
-      top: `${
-        scrollY +
-        (openAbove ? Math.max(margin, triggerRect.top - maxHeight - 8) : triggerRect.bottom + 8)
-      }px`,
-      width: `${width}px`,
-      maxWidth: 'none',
-      maxHeight: `${maxHeight}px`,
-    });
-  }, []);
-
-  useEffect(() => {
-    const handlePointerDown = event => {
-      const el = detailsRef.current;
-      if (!el?.hasAttribute('open')) return;
-      if (el.contains(event.target)) return;
-      if (popoverRef.current?.contains(event.target)) return;
-      closePopover();
-    };
-
-    const handleKeyDown = event => {
-      if (event.key !== 'Escape') return;
-      const el = detailsRef.current;
-      if (!el?.hasAttribute('open')) return;
-      closePopover();
-    };
-
-    globalThis.document?.addEventListener('pointerdown', handlePointerDown);
-    globalThis.document?.addEventListener('keydown', handleKeyDown);
-    return () => {
-      globalThis.document?.removeEventListener('pointerdown', handlePointerDown);
-      globalThis.document?.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [closePopover]);
-
-  useEffect(() => {
-    if (!isOpen) return undefined;
-    updatePopoverPosition();
-
-    const handleResize = () => updatePopoverPosition();
-    const handleScroll = event => {
-      if (popoverRef.current?.contains(event.target)) return;
-      closePopover();
-    };
-    globalThis.window?.addEventListener('resize', handleResize);
-    globalThis.window?.addEventListener('scroll', handleScroll, { passive: true });
-    globalThis.document?.addEventListener('scroll', handleScroll, true);
-    return () => {
-      globalThis.window?.removeEventListener('resize', handleResize);
-      globalThis.window?.removeEventListener('scroll', handleScroll);
-      globalThis.document?.removeEventListener('scroll', handleScroll, true);
-    };
-  }, [closePopover, isOpen, updatePopoverPosition]);
-
-  const popoverContent = isOpen ? (
-    <div
-      ref={popoverRef}
-      className='bg-base-100/95 border-base-content/10 text-base-content z-[10000] overflow-y-auto rounded-xl border p-3 text-[12px] leading-relaxed font-normal tracking-normal normal-case shadow-xl backdrop-blur-md'
-      style={popoverStyle || { position: 'absolute', visibility: 'hidden' }}
-    >
-      <div className='space-y-2.5'>
-        <p className='text-sm leading-tight font-medium tracking-normal'>
-          Stop Calculation (Analyzer only)
-        </p>
-        <p className='opacity-85'>
-          The <strong>Stop Calculation</strong> settings and{' '}
-          <strong style={{ color: utilityColors.predictionInfoBlue }}>Calc</strong> values are
-          Analyzer-only tools. Future-value calculations are not performed by GaggiMate itself and
-          shot execution is not changed by these settings.
-        </p>
-
-        <div className='bg-base-200/60 rounded-lg p-2'>
-          <p className='text-base-content/90 text-[12px] leading-tight font-medium tracking-normal'>
-            Status Labels
-          </p>
-          <div className='mt-1 space-y-1.5'>
-            <p>
-              <span
-                className={`mr-1.5 inline-flex rounded-[4px] border px-1.5 py-0.5 align-middle text-[10px] leading-none font-bold tracking-tight ${NEUTRAL_STATUS_BADGE_CLASS}`}
-              >
-                {WARNING_BADGE_REVIEW_LABEL}
-              </span>{' '}
-              {WARNING_HELP_COPY.delayReview}
-            </p>
-            <p>
-              <span
-                className='mr-1.5 inline-flex rounded-[4px] border px-1.5 py-0.5 align-middle text-[10px] leading-none font-bold tracking-tight text-white'
-                style={{
-                  backgroundColor: utilityColors.warningOrange,
-                  borderColor: utilityColors.warningOrange,
-                }}
-              >
-                {WARNING_BADGE_HIGH_SCALE_LABEL}
-              </span>{' '}
-              {WARNING_HELP_COPY.highScaleDelay}
-            </p>
-            <p>
-              <span
-                className='mr-1.5 inline-flex rounded-[4px] border px-1.5 py-0.5 align-middle text-[10px] leading-none font-bold tracking-tight text-white'
-                style={{
-                  backgroundColor: utilityColors.warningOrange,
-                  borderColor: utilityColors.warningOrange,
-                }}
-              >
-                {WARNING_BADGE_SCALE_LOST_LABEL}
-              </span>{' '}
-              {WARNING_HELP_COPY.scaleLost}
-            </p>
-          </div>
-        </div>
-
-        <div className='bg-base-200/60 rounded-lg p-2'>
-          <p className='text-base-content/90 text-[12px] leading-tight font-medium tracking-normal'>
-            How stop detection works
-          </p>
-          <p>
-            The Analyzer determines stop reasons from a recorded sample stream. Since samples are
-            recorded at fixed intervals (typically <strong>250 ms</strong>), the exact stop event
-            may happen between recorded points.
-          </p>
-          <p className='mt-1'>
-            To identify the most likely stop reason, the Analyzer first checks up to three nearby
-            timestamps around the phase transition:
-          </p>
-          <ol className='mt-1 ml-4 list-decimal'>
-            <li>the end of the current phase,</li>
-            <li>the next recorded point,</li>
-            <li>the following recorded point.</li>
-          </ol>
-          <p className='mt-1'>
-            If no clear stop reason is found at those three timestamps, the Analyzer performs a
-            limited short-range calculation (extrapolation) based only on that small time window.
-          </p>
-          <p className='mt-1'>
-            The Analyzer intentionally does not use values further into the future, because those
-            may already be influenced by the next phase and could distort stop detection.
-          </p>
-        </div>
-
-        <div className='bg-base-200/60 rounded-lg p-2'>
-          <p className='text-base-content/90 text-[12px] leading-tight font-medium tracking-normal'>
-            Auto vs Manual
-          </p>
-          <p className='mt-1'>
-            <strong>Auto</strong>: Calculates stop timing per phase, individually. The displayed
-            average values are the averages of those phase-specific calculations. The step size
-            follows the recording sample interval (typically 250 ms), which makes Auto generally
-            more accurate overall.
-          </p>
-          <p className='mt-1'>
-            <strong>Manual</strong>: Applies one stop-calculation offset to all phases at once. This
-            is best for reviewing one specific phase / stop reason in detail. Manual mode can use
-            smaller step intervals than Auto, which may occasionally produce different results.
-          </p>
-        </div>
-
-        <div className='bg-base-200/60 rounded-lg p-2'>
-          <p className='text-base-content/90 text-[12px] leading-tight font-medium tracking-normal'>
-            Scale vs System
-          </p>
-          <p>
-            <strong>Scale</strong> and <strong>System</strong> can be adjusted separately because
-            Bluetooth scales often have their own sampling rates and timing behavior, independent of
-            system sampling / processing timing.
-          </p>
-        </div>
-      </div>
-    </div>
-  ) : null;
-
+function AnalysisTableToolbarActions({ onScrollTable, onScrollToBound }) {
   return (
-    <details
-      ref={detailsRef}
-      className='dropdown'
-      onToggle={event => setIsOpen(event.currentTarget.open)}
-    >
-      <summary
-        ref={summaryRef}
-        className={joinAnalyzerClasses(
-          getAnalyzerIconButtonClasses({
-            className: 'h-5 w-5 rounded-full [&::-webkit-details-marker]:hidden',
-          }),
-          'list-none',
-        )}
-        aria-label='Stop Calculation help'
-        title='Stop Calculation help'
-      >
-        <FontAwesomeIcon icon={faCircleInfo} className='text-xs' />
-      </summary>
-      {globalThis.document?.body ? createPortal(popoverContent, globalThis.document.body) : null}
-    </details>
-  );
-}
-
-function AnalysisTableToolbarActions({ tableFontSize, onZoom, onScrollTable, onScrollToBound }) {
-  return (
-    <div className='flex items-center gap-2'>
-      <div className={ANALYZER_ACTION_GROUP_CLASSES}>
-        <ScrollBtn
-          icon={faMagnifyingGlassMinus}
-          onClick={() => onZoom('out')}
-          title='Zoom Out'
-          className={tableFontSize <= MIN_TABLE_FONT_SIZE ? 'opacity-20' : ''}
-        />
-        <span className='w-5 text-center text-sm tabular-nums opacity-55 select-none'>
-          {tableFontSize}
-        </span>
-        <ScrollBtn
-          icon={faMagnifyingGlassPlus}
-          onClick={() => onZoom('in')}
-          title='Zoom In'
-          className={tableFontSize >= MAX_TABLE_FONT_SIZE ? 'opacity-20' : ''}
-        />
-      </div>
-
-      <div className='bg-base-content/10 hidden h-3 w-px shrink-0 sm:block' aria-hidden='true' />
-
-      <div className={`${ANALYZER_ACTION_GROUP_CLASSES} hidden sm:flex`}>
-        <ScrollBtn icon={faArrowLeft} onClick={() => onScrollToBound('start')} />
-        <ScrollBtn icon={faAngleDoubleLeft} onClick={() => onScrollTable(-300)} />
-        <ScrollBtn
-          icon={faAngleLeft}
-          onClick={() => onScrollTable(-100)}
-          className='mr-1 rounded-r-none'
-        />
-        <ScrollBtn
-          icon={faAngleRight}
-          onClick={() => onScrollTable(100)}
-          className='rounded-l-none'
-        />
-        <ScrollBtn icon={faAngleDoubleRight} onClick={() => onScrollTable(300)} />
-        <ScrollBtn icon={faArrowRight} onClick={() => onScrollToBound('end')} />
-      </div>
+    <div className={`${ANALYZER_ACTION_GROUP_CLASSES} hidden sm:flex`}>
+      <ScrollBtn icon={faArrowLeft} onClick={() => onScrollToBound('start')} />
+      <ScrollBtn icon={faAngleDoubleLeft} onClick={() => onScrollTable(-300)} />
+      <ScrollBtn
+        icon={faAngleLeft}
+        onClick={() => onScrollTable(-100)}
+        className='mr-1 rounded-r-none'
+      />
+      <ScrollBtn
+        icon={faAngleRight}
+        onClick={() => onScrollTable(100)}
+        className='rounded-l-none'
+      />
+      <ScrollBtn icon={faAngleDoubleRight} onClick={() => onScrollTable(300)} />
+      <ScrollBtn icon={faArrowRight} onClick={() => onScrollToBound('end')} />
     </div>
   );
 }
@@ -618,44 +327,20 @@ export function AnalysisTable({
   isCompareActive = false,
   activeColumns,
   onColumnsChange,
-  settings,
-  onSettingsChange,
 }) {
   const compareMode = isCompareActive && Array.isArray(compareEntries) && compareEntries.length > 1;
 
-  // State for Table Zoom (Font Size) - Default 12px to match the compact UI text scale.
-  const [tableFontSize, setTableFontSize] = useState(() =>
-    normalizeTableFontSize(
-      loadFromStorage(ANALYZER_DB_KEYS.ANALYSIS_TABLE_FONT_SIZE, DEFAULT_TABLE_FONT_SIZE),
-    ),
-  );
   const isTouchOptimized = useTouchOptimizedPointer();
-  const [advancedMode, setAdvancedMode] = useState(() =>
-    Boolean(loadFromStorage(ANALYZER_DB_KEYS.ANALYSIS_TABLE_ADVANCED, false)),
-  );
 
   const tableContainerRef = useRef(null);
-  const safeSettings = settings || { scaleDelay: 1000, sensorDelay: 200, autoDelay: true };
   const visibleColumns = columnConfig.filter(col => activeColumns.has(col.id));
   const compareTableColumnCount = visibleColumns.length + 2;
   const maxComparePhaseCount = getMaxComparePhaseCount(compareMode, compareEntries);
   const hasProfilePhaseStops = hasAnalysisProfilePhaseStops(results);
 
-  // --- Helper Functions ---
-  const handleNonNegativeDelayInput = (key, rawValue) => {
-    const parsedValue = Number.parseInt(rawValue, 10);
-    if (Number.isNaN(parsedValue)) return;
-    onSettingsChange({ ...safeSettings, [key]: Math.max(0, parsedValue) });
-  };
-
   const scrollTable = amount => scrollAnalysisTable(tableContainerRef, amount);
   const scrollToBound = direction => scrollAnalysisTableToBound(tableContainerRef, direction);
 
-  const handleZoom = direction => {
-    setTableFontSize(prev => getNextTableFontSize(prev, direction));
-  };
-
-  useAnalysisTablePreferences(tableFontSize, advancedMode);
   useVerticalWheelForwarding(tableContainerRef);
 
   if (!results?.phases && !compareMode) return null;
@@ -668,7 +353,6 @@ export function AnalysisTable({
   const tableHeaderTextClass = 'text-base-content leading-tight font-medium tracking-normal';
   const tableHeaderSubtextClass = 'text-base-content/55 leading-tight font-medium tracking-normal';
   const primaryTableTextClass = 'text-base-content/90 font-medium';
-  const secondaryTableTextClass = 'text-base-content/75 font-normal';
   const tableSubtextClass = 'text-base-content/55 leading-tight font-medium';
   const tableLegendTextClass = 'text-base-content/75 text-xs font-normal tracking-normal';
   const analysisWarningBadges = buildAnalysisWarningBadges(results);
@@ -720,8 +404,6 @@ export function AnalysisTable({
           isIntegrated={true}
           headerChildren={
             <AnalysisTableToolbarActions
-              tableFontSize={tableFontSize}
-              onZoom={handleZoom}
               onScrollTable={scrollTable}
               onScrollToBound={scrollToBound}
             />
@@ -738,7 +420,7 @@ export function AnalysisTable({
           {/* Dynamic Font Size applied to Table */}
           <table
             className='text-base-content w-full border-collapse transition-all duration-200'
-            style={{ fontSize: `${tableFontSize}px`, lineHeight: '1.4' }}
+            style={{ fontSize: '12px', lineHeight: '1.4' }}
           >
             <AnalysisTableHeader
               compareMode={compareMode}
@@ -812,12 +494,7 @@ export function AnalysisTable({
                               key={`${entry.key}-${phaseIndex}-${col.id}`}
                               className={`border-l px-3 py-2 text-right whitespace-nowrap tabular-nums ${subtleDividerClass}`}
                             >
-                              <CellContent
-                                phase={phase}
-                                col={col}
-                                results={entry.results}
-                                advancedMode={advancedMode}
-                              />
+                              <CellContent phase={phase} col={col} results={entry.results} />
                             </td>
                           ))}
                         </tr>
@@ -875,7 +552,6 @@ export function AnalysisTable({
                           col={col}
                           results={entry.results}
                           isTotal={true}
-                          advancedMode={advancedMode}
                         />
                       </td>
                     ))}
@@ -914,12 +590,7 @@ export function AnalysisTable({
                           key={col.id}
                           className={`border-l px-3 py-2 text-right whitespace-nowrap tabular-nums ${subtleDividerClass}`}
                         >
-                          <CellContent
-                            phase={phase}
-                            col={col}
-                            results={results}
-                            advancedMode={advancedMode}
-                          />
+                          <CellContent phase={phase} col={col} results={results} />
                         </td>
                       ))}
                     </tr>
@@ -939,13 +610,7 @@ export function AnalysisTable({
                         key={col.id}
                         className={`border-l px-3 py-2 text-right tabular-nums ${subtleDividerClass} ${primaryTableTextClass}`}
                       >
-                        <CellContent
-                          phase={null}
-                          col={col}
-                          results={results}
-                          isTotal={true}
-                          advancedMode={advancedMode}
-                        />
+                        <CellContent phase={null} col={col} results={results} isTotal={true} />
                       </td>
                     ))}
                   </tr>
@@ -955,93 +620,9 @@ export function AnalysisTable({
           </table>
         </div>
 
-        {/* C. New Footer: Delay Settings (Left) & Legend (Right) */}
-        <div className='bg-base-100 border-base-content/10 flex flex-col items-stretch gap-3 rounded-b-lg border-t py-2 text-xs sm:flex-row sm:flex-wrap sm:items-center sm:justify-between'>
-          {/* Left: Advanced mode and Stop Calculation Inputs */}
-          <div className='flex w-full flex-wrap items-center gap-x-3 gap-y-2 sm:w-auto sm:gap-4'>
-            <label
-              className={getAnalyzerTextButtonClasses({
-                className: 'flex cursor-pointer items-center gap-2 px-1.5 py-0.5',
-              })}
-            >
-              <input
-                type='checkbox'
-                checked={advancedMode}
-                onChange={e => setAdvancedMode(e.target.checked)}
-                className='toggle toggle-primary toggle-xs'
-              />
-              <span className={secondaryTableTextClass}>Advanced</span>
-            </label>
-
-            {advancedMode ? (
-              <>
-                <div className='bg-base-content/10 mx-1 hidden h-3 w-px sm:block' />
-                <span className={`hidden select-none sm:inline ${secondaryTableTextClass}`}>
-                  Stop Calculation
-                </span>
-                <div className='flex flex-wrap items-center gap-2'>
-                  {/* Shows Average Symbol ∅ if auto-delay is active */}
-                  <span className={secondaryTableTextClass}>
-                    Scale{safeSettings.autoDelay ? ' ∅' : ''}
-                  </span>
-                  <input
-                    type='number'
-                    min='0'
-                    step='50'
-                    value={
-                      safeSettings.autoDelay && results?.usedSettings
-                        ? results.usedSettings.scaleDelayMs
-                        : safeSettings.scaleDelay
-                    }
-                    disabled={safeSettings.autoDelay}
-                    onInput={e => handleNonNegativeDelayInput('scaleDelay', e.target.value)}
-                    className='bg-base-200 border-base-content/10 focus:border-primary text-base-content h-5 w-12 rounded border text-center tabular-nums focus:outline-none disabled:opacity-30'
-                  />
-                  <span className={`${secondaryTableTextClass} lowercase`}>ms</span>
-                </div>
-                <div className='bg-base-content/10 mx-1 hidden h-3 w-px sm:block' />
-                <div className='flex flex-wrap items-center gap-2'>
-                  {/* Shows Average Symbol ∅ if auto-delay is active */}
-                  <span className={secondaryTableTextClass}>
-                    System{safeSettings.autoDelay ? ' ∅' : ''}
-                  </span>
-                  <input
-                    type='number'
-                    min='0'
-                    step='50'
-                    value={
-                      safeSettings.autoDelay && results?.usedSettings
-                        ? results.usedSettings.sensorDelayMs
-                        : safeSettings.sensorDelay
-                    }
-                    disabled={safeSettings.autoDelay}
-                    onInput={e => handleNonNegativeDelayInput('sensorDelay', e.target.value)}
-                    className='bg-base-200 border-base-content/10 focus:border-primary text-base-content h-5 w-12 rounded border text-center tabular-nums focus:outline-none disabled:opacity-30'
-                  />
-                  <span className={`${secondaryTableTextClass} lowercase`}>ms</span>
-                  <label
-                    className={getAnalyzerTextButtonClasses({
-                      className: 'ml-2 flex cursor-pointer items-center gap-1.5 px-1.5 py-0.5',
-                    })}
-                  >
-                    <input
-                      type='checkbox'
-                      checked={safeSettings.autoDelay}
-                      onChange={e =>
-                        onSettingsChange({ ...safeSettings, autoDelay: e.target.checked })
-                      }
-                      className='checkbox checkbox-xs border-base-content/30 rounded-sm'
-                    />
-                    <span className={secondaryTableTextClass}>Auto</span>
-                  </label>
-                  <StopCalculationHelpPopover />
-                </div>
-              </>
-            ) : null}
-          </div>
-
-          {/* Right: Legend */}
-          <div className='text-base-content grid w-full grid-cols-3 gap-x-3 gap-y-1 select-none sm:flex sm:w-auto sm:items-center sm:gap-4'>
+        {/* C. Footer legend */}
+        <div className='bg-base-100 border-base-content/10 flex rounded-b-lg border-t py-2 text-xs sm:justify-end'>
+          <div className='text-base-content grid w-full grid-cols-3 gap-x-3 gap-y-1 select-none sm:ml-auto sm:flex sm:w-auto sm:items-center sm:gap-4'>
             <span className={`leading-tight whitespace-normal ${tableLegendTextClass}`}>
               Avg Average (time weighted)
             </span>
@@ -1267,16 +848,6 @@ function getTargetCalcEntry(phase, col) {
     : phase.targetCalcValues[col.targetType];
 }
 
-function getFallbackCalcUnit(unit, targetType) {
-  if (unit) return unit;
-  if (targetType === 'duration') return 's';
-  if (targetType === 'pressure') return 'bar';
-  if (targetType === 'flow') return 'ml/s';
-  if (targetType === 'pumped') return 'ml';
-  if (targetType === 'weight' || targetType === 'volumetric') return 'g';
-  return '';
-}
-
 function replaceCellValueWithCalc({ mainValue, calcEntry, col }) {
   if (!calcEntry) return mainValue;
 
@@ -1291,32 +862,6 @@ function replaceCellValueWithCalc({ mainValue, calcEntry, col }) {
   }
 
   return calcValue;
-}
-
-function getPredictionDisplay({ phase, col, unit, subTextSize }) {
-  const calcEntry = getTargetCalcEntry(phase, col);
-  if (!calcEntry) {
-    return { calcIsStopReason: false, predictionDisplay: null };
-  }
-
-  const calcColor = calcEntry.isStopReason
-    ? utilityColors.predictionStopRed
-    : utilityColors.predictionInfoBlue;
-  const calcUnit = getFallbackCalcUnit(unit, col.targetType);
-
-  return {
-    calcIsStopReason: calcEntry.isStopReason,
-    predictionDisplay: (
-      <div
-        style={{ ...subTextSize, color: calcColor }}
-        className='mt-0.5 flex items-center justify-end gap-1 leading-tight font-medium tracking-normal'
-      >
-        <span>
-          Calc: {formatCellNumber(calcEntry.value)} {calcUnit}
-        </span>
-      </div>
-    ),
-  };
 }
 
 function getWeightWarnings({ phase, isWeightCol, subTextSize }) {
@@ -1412,7 +957,7 @@ function renderMetricCellValue({
   );
 }
 
-function CellContent({ phase, col, results, isTotal = false, advancedMode = false }) {
+function CellContent({ phase, col, results, isTotal = false }) {
   const data = isTotal ? results?.total : phase;
   const stats = isTotal ? results?.total : phase?.stats;
 
@@ -1436,23 +981,17 @@ function CellContent({ phase, col, results, isTotal = false, advancedMode = fals
   const subTextSize = { fontSize: '0.85em' };
   const booleanAnomaly = !isTotal && isBoolean ? stats?.sys_anomalies?.[col.id] : null;
   const calcEntry = getTargetCalcEntry(phase, col);
-  const displayMainValue =
-    !advancedMode && !isBoolean
-      ? replaceCellValueWithCalc({ mainValue, calcEntry, col })
-      : mainValue;
-  const mainValueIsCalculated = !advancedMode && !isBoolean && Boolean(calcEntry);
+  const displayMainValue = !isBoolean
+    ? replaceCellValueWithCalc({ mainValue, calcEntry, col })
+    : mainValue;
+  const mainValueIsCalculated = !isBoolean && Boolean(calcEntry);
   const targetDisplay = getTargetDisplay({
     phase,
     col,
     unit,
     subTextSize,
   });
-  const { calcIsStopReason, predictionDisplay } = getPredictionDisplay({
-    phase,
-    col,
-    unit,
-    subTextSize,
-  });
+  const calcIsStopReason = Boolean(calcEntry?.isStopReason);
   const warningDisplays = getWeightWarnings({ phase, isWeightCol, subTextSize });
 
   return (
@@ -1466,7 +1005,6 @@ function CellContent({ phase, col, results, isTotal = false, advancedMode = fals
             unit,
             mainValueIsCalculated,
           })}
-      {advancedMode ? predictionDisplay : null}
       {targetDisplay}
       {warningDisplays}
     </div>

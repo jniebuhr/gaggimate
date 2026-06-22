@@ -1502,14 +1502,14 @@ export function calculateShotMetrics(shotData, profileData, settings) {
  * Special Handling: Last phase weight target is calculated independently.
  * * @param {Object} shotData - Shot data
  * @param {Object|null} profileData - Profile data with targets
- * @param {number} manualDelay - User-configured delay (fallback)
+ * @param {number} fallbackDelay - Delay used when automatic detection cannot find a match
  * @returns {Object} { delay: number, auto: boolean }
  */
-export function detectAutoDelay(shotData, profileData, manualDelay) {
+export function detectAutoDelay(shotData, profileData, fallbackDelay) {
   // Perform a quick check using calculateShotMetrics logic
   const results = calculateShotMetrics(shotData, profileData, {
-    scaleDelayMs: manualDelay,
-    sensorDelayMs: manualDelay,
+    scaleDelayMs: fallbackDelay,
+    sensorDelayMs: fallbackDelay,
     isAutoAdjusted: true,
   });
 
@@ -1518,5 +1518,5 @@ export function detectAutoDelay(shotData, profileData, manualDelay) {
     return { delay: results.usedSettings.scaleDelayMs, auto: true };
   }
 
-  return { delay: manualDelay, auto: false };
+  return { delay: fallbackDelay, auto: false };
 }

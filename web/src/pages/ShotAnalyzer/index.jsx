@@ -44,16 +44,11 @@ import { buildStatisticsProfileHref } from '../Statistics/utils/statisticsRoute'
 import { EmptyState } from './components/EmptyState.jsx';
 import './ShotAnalyzer.css';
 
-const clampNonNegativeDelay = value => {
-  const parsedValue = Number(value);
-  if (!Number.isFinite(parsedValue)) return 0;
-  return Math.max(0, Math.round(parsedValue));
-};
-
 const PROFILE_AUTO_MATCH_INITIAL_DELAY_MS = 250;
 const PROFILE_AUTO_MATCH_RETRY_DELAY_MS = 450;
 const PROFILE_AUTO_MATCH_MAX_ATTEMPTS = 4;
 const SHOT_SELECTION_DEBOUNCE_MS = 400;
+const DEFAULT_ANALYSIS_DELAY_MS = 200;
 
 function hasLoadedShotPayload(item) {
   return Boolean(item) && Array.isArray(item.samples);
@@ -192,18 +187,18 @@ async function loadPreferredAutoMatchedProfile(shotWithMetadata, allProfiles) {
   };
 }
 
-function analyzeShotWithSettings(shotData, profileData, settings) {
-  let usedSensorDelay = settings.sensorDelay;
+function analyzeShot(shotData, profileData) {
+  let usedSensorDelay = DEFAULT_ANALYSIS_DELAY_MS;
   let isAutoAdjusted = false;
 
-  if (settings.autoDelay && profileData) {
-    const detection = detectAutoDelay(shotData, profileData, settings.sensorDelay);
+  if (profileData) {
+    const detection = detectAutoDelay(shotData, profileData, DEFAULT_ANALYSIS_DELAY_MS);
     usedSensorDelay = detection.delay;
     isAutoAdjusted = detection.auto;
   }
 
   return calculateShotMetrics(shotData, profileData, {
-    scaleDelayMs: settings.scaleDelay,
+    scaleDelayMs: DEFAULT_ANALYSIS_DELAY_MS,
     sensorDelayMs: usedSensorDelay,
     isAutoAdjusted,
   });
@@ -776,11 +771,8 @@ function AnalyzerTable({
   activeColumns,
   analysisResults,
   compareCollectionWithAccents,
-  handleSettingsChange,
   isCompareActive,
-  performAnalysis,
   setActiveColumns,
-  settings,
 }) {
   return (
     <AnalysisTable
@@ -789,9 +781,6 @@ function AnalyzerTable({
       isCompareActive={isCompareActive}
       activeColumns={activeColumns}
       onColumnsChange={setActiveColumns}
-      settings={settings}
-      onSettingsChange={handleSettingsChange}
-      onAnalyze={performAnalysis}
     />
   );
 }
@@ -804,14 +793,11 @@ function ActiveAnalysisView({
   compareCollectionWithAccents,
   compareTargetDisplayMode,
   currentShot,
-  handleSettingsChange,
   handleSwapCompareSlots,
   isCompareActive,
   mobileSubpageNavigation,
-  performAnalysis,
   setActiveColumns,
   setCompareTargetDisplayMode,
-  settings,
   shotDetailsColumnRef,
   shotDetailsEntries,
   singleDesktopChartStyle,
@@ -895,11 +881,8 @@ function ActiveAnalysisView({
               activeColumns={activeColumns}
               analysisResults={analysisResults}
               compareCollectionWithAccents={compareCollectionWithAccents}
-              handleSettingsChange={handleSettingsChange}
               isCompareActive={isCompareActive}
-              performAnalysis={performAnalysis}
               setActiveColumns={setActiveColumns}
-              settings={settings}
             />
           ) : null}
         </div>
@@ -967,11 +950,8 @@ function ActiveAnalysisView({
                 activeColumns={activeColumns}
                 analysisResults={analysisResults}
                 compareCollectionWithAccents={compareCollectionWithAccents}
-                handleSettingsChange={handleSettingsChange}
                 isCompareActive={isCompareActive}
-                performAnalysis={performAnalysis}
                 setActiveColumns={setActiveColumns}
-                settings={settings}
               />
             </div>
           </>
@@ -1002,12 +982,6 @@ export function ShotAnalyzer() {
   const [activeColumns, setActiveColumns] = useState(() => {
     const userStandard = loadFromStorage(ANALYZER_DB_KEYS.USER_STANDARD);
     return userStandard ? new Set(userStandard) : getDefaultColumns();
-  });
-
-  const [settings, setSettings] = useState({
-    scaleDelay: 200,
-    sensorDelay: 200,
-    autoDelay: true,
   });
 
   const [analysisResults, setAnalysisResults] = useState(null);
@@ -1115,16 +1089,6 @@ export function ShotAnalyzer() {
     [clearPendingCompareSelection],
   );
 
-  const handleSettingsChange = nextSettings => {
-    setSettings(prevSettings => ({
-      ...prevSettings,
-      ...nextSettings,
-      scaleDelay: clampNonNegativeDelay(nextSettings?.scaleDelay ?? prevSettings.scaleDelay),
-      sensorDelay: clampNonNegativeDelay(nextSettings?.sensorDelay ?? prevSettings.sensorDelay),
-      autoDelay: Boolean(nextSettings?.autoDelay ?? prevSettings.autoDelay),
-    }));
-  };
-
   const scheduleProfileAutoMatchRetry = (attempt, callback) => {
     if (attempt + 1 >= PROFILE_AUTO_MATCH_MAX_ATTEMPTS) return false;
     profileSearchTimerRef.current = setTimeout(() => {
@@ -1162,12 +1126,12 @@ export function ShotAnalyzer() {
     if (!currentShot) return;
 
     try {
-      setAnalysisResults(analyzeShotWithSettings(currentShot, currentProfile, settings));
+      setAnalysisResults(analyzeShot(currentShot, currentProfile));
     } catch (e) {
       console.error('Analysis failed:', e);
       setAnalysisResults(null);
     }
-  }, [currentProfile, currentShot, settings]);
+  }, [currentProfile, currentShot]);
 
   useEffect(() => {
     if (!currentShot) {
@@ -1180,7 +1144,7 @@ export function ShotAnalyzer() {
       if (id !== analysisIdRef.current) return; // stale
       performAnalysis();
     }, 0);
-  }, [currentShot, currentProfile, performAnalysis, settings]);
+  }, [currentShot, currentProfile, performAnalysis]);
 
   useEffect(() => {
     if (!pendingMobileAnalysisScroll || !currentShot) return;
@@ -1216,7 +1180,7 @@ export function ShotAnalyzer() {
       try {
         acc.push({
           key: entry.key,
-          results: analyzeShotWithSettings(entry.shot, entry.profile, settings),
+          results: analyzeShot(entry.shot, entry.profile),
         });
       } catch (error) {
         console.error(`Compare analysis failed for ${entry.key}:`, error);
@@ -1225,7 +1189,7 @@ export function ShotAnalyzer() {
     }, []);
 
     setCompareResults(nextResults);
-  }, [compareShots, settings]);
+  }, [compareShots]);
 
   // --- Data Handlers ---
   const normalizePrimarySelectionRequest = useCallback(
@@ -2018,14 +1982,11 @@ export function ShotAnalyzer() {
             compareCollectionWithAccents={compareCollectionWithAccents}
             compareTargetDisplayMode={compareTargetDisplayMode}
             currentShot={currentShot}
-            handleSettingsChange={handleSettingsChange}
             handleSwapCompareSlots={handleSwapCompareSlots}
             isCompareActive={isCompareActive}
             mobileSubpageNavigation={mobileSubpageNavigation}
-            performAnalysis={performAnalysis}
             setActiveColumns={setActiveColumns}
             setCompareTargetDisplayMode={setCompareTargetDisplayMode}
-            settings={settings}
             shotDetailsColumnRef={shotDetailsColumnRef}
             shotDetailsEntries={shotDetailsEntries}
             singleDesktopChartStyle={singleDesktopChartStyle}

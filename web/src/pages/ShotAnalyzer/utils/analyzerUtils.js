@@ -11,8 +11,6 @@ export const ANALYZER_DB_KEYS = {
   PRESETS: 'gaggimate_column_presets',
   USER_STANDARD: 'gaggimate_user_standard_cols',
   SINGLE_CHART_VISIBILITY: 'gaggimate_single_chart_visibility',
-  ANALYSIS_TABLE_ADVANCED: 'gaggimate_analysis_table_advanced',
-  ANALYSIS_TABLE_FONT_SIZE: 'gaggimate_analysis_table_font_size',
   COMPARE_TARGET_DISPLAY_MODE: 'gaggimate_compare_target_display_mode',
   COMPARE_ANNOTATIONS_ENABLED: 'gaggimate_compare_annotations_enabled',
   COMPARE_CHART_VISIBILITY: 'gaggimate_compare_chart_visibility',
@@ -382,8 +380,6 @@ export const groups = {
 export const utilityColors = {
   stopRed: 'var(--analyzer-pred-stop-red)',
   warningOrange: 'var(--analyzer-warning-orange)',
-  predictionStopRed: 'var(--analyzer-pred-stop-red)',
-  predictionInfoBlue: 'var(--analyzer-pred-info-blue)',
 };
 
 export const analyzerUiColors = {
