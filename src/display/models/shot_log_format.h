@@ -40,14 +40,26 @@ static constexpr uint32_t SHOT_LOG_FIELD_SI = 0x1000; // system info (bit 12)
 // Bits 13-31 available for future fields
 
 // Phase transition structure for version 5+ headers
+// transitionReason was a reserved/padding byte through v5; repurposing it keeps the struct byte-identical,
+// so old readers (firmware + web parser) ignore it and old files read back as PHASE_EXIT_REASON_NONE (0).
 #pragma pack(push, 1)
 struct PhaseTransition {
-    uint16_t sampleIndex; // Sample index when phase changed
-    uint8_t phaseNumber;  // Phase number (0-based)
-    uint8_t reserved;     // Padding for alignment
-    char phaseName[25];   // Phase name (24 chars + null terminator)
+    uint16_t sampleIndex;     // Sample index when phase changed
+    uint8_t phaseNumber;      // Phase number (0-based)
+    uint8_t transitionReason; // Why the previous phase ended (PhaseExitReason / PHASE_EXIT_REASON_*; 0 = unknown/legacy)
+    char phaseName[25];       // Phase name (24 chars + null terminator)
 }; // 29 bytes per transition
 #pragma pack(pop)
+
+// Phase exit reason codes stored in PhaseTransition.transitionReason.
+// Must stay in sync with enum class PhaseExitReason in models/profile.h.
+static constexpr uint8_t PHASE_EXIT_REASON_NONE = 0;              // unknown / legacy shot file
+static constexpr uint8_t PHASE_EXIT_REASON_TARGET_VOLUMETRIC = 1; // volumetric target reached
+static constexpr uint8_t PHASE_EXIT_REASON_TARGET_PRESSURE = 2;   // pressure target reached
+static constexpr uint8_t PHASE_EXIT_REASON_TARGET_FLOW = 3;       // flow target reached
+static constexpr uint8_t PHASE_EXIT_REASON_TARGET_PUMPED = 4;     // pumped-water target reached
+static constexpr uint8_t PHASE_EXIT_REASON_DURATION = 5;          // phase duration elapsed
+static constexpr uint8_t PHASE_EXIT_REASON_SAFETY = 6;            // brew safety timeout
 
 #pragma pack(push, 1)
 struct ShotLogHeader {

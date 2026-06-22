@@ -165,7 +165,7 @@ void ShotHistoryPlugin::record() {
 
                 // Check for phase transition
                 if (currentPhase != lastRecordedPhase) {
-                    recordPhaseTransition(currentPhase, sampleCount);
+                    recordPhaseTransition(currentPhase, sampleCount, static_cast<uint8_t>(brewProcess->lastExitReason));
                     lastRecordedPhase = currentPhase;
                 }
             }
@@ -321,7 +321,7 @@ void ShotHistoryPlugin::endExtendedRecording() {
     }
 }
 
-void ShotHistoryPlugin::recordPhaseTransition(uint8_t phaseNumber, uint16_t sampleIndex) {
+void ShotHistoryPlugin::recordPhaseTransition(uint8_t phaseNumber, uint16_t sampleIndex, uint8_t reason) {
     // Only record if we have space and a valid header
     if (header.phaseTransitionCount >= 12 || !isFileOpen) {
         return;
@@ -333,7 +333,7 @@ void ShotHistoryPlugin::recordPhaseTransition(uint8_t phaseNumber, uint16_t samp
 
     transition.sampleIndex = sampleIndex;
     transition.phaseNumber = phaseNumber;
-    transition.reserved = 0;
+    transition.transitionReason = reason; // PhaseExitReason for why the previous phase ended
 
     // Get phase name from profile
     if (phaseNumber < profile.phases.size()) {

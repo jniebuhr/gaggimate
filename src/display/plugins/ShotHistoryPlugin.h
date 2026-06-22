@@ -52,7 +52,8 @@ class ShotHistoryPlugin : public Plugin {
     void cleanupHistory();
     size_t getFreeSpace();
 
-    void recordPhaseTransition(uint8_t phaseNumber, uint16_t sampleIndex); // Helper for phase transitions
+    void recordPhaseTransition(uint8_t phaseNumber, uint16_t sampleIndex,
+                               uint8_t reason); // Helper for phase transitions
 
     Controller *controller = nullptr;
     PluginManager *pluginManager = nullptr;
