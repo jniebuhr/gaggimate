@@ -67,6 +67,7 @@ class Settings {
     bool isDelayAdjust() const { return delayAdjust; }
     String getPid() const { return pid; }
     String getPumpModelCoeffs() const { return pumpModelCoeffs; }
+    String getPumpSlipCoeffs() const { return pumpSlipCoeffs; }
     String getWifiSsid() const { return wifiSsid; }
     String getWifiPassword() const { return wifiPassword; }
     String getWifiApPassword() const { return wifiApPassword; }
@@ -153,6 +154,7 @@ class Settings {
     void setDelayAdjust(bool delay_adjust);
     void setPid(const String &pid);
     void setPumpModelCoeffs(const String &pumpModelCoeffs);
+    void setPumpSlipCoeffs(const String &pumpSlipCoeffs);
     void setWifiSsid(const String &wifiSsid);
     void setWifiPassword(const String &wifiPassword);
     void setWifiApPassword(const String &wifiApPassword);
@@ -291,6 +293,7 @@ class Settings {
 
     // Pump settings
     String pumpModelCoeffs = DEFAULT_PUMP_MODEL_COEFFS;
+    String pumpSlipCoeffs = DEFAULT_PUMP_SLIP_COEFFS;
     float commutationGain = DEFAULT_COMMUTATION_GAIN;
     float convergenceGain = DEFAULT_CONVERGENCE_GAIN;
     float integralGain = DEFAULT_INTEGRAL_GAIN;

@@ -65,7 +65,7 @@ class GaggiMateClient {
     gm::Payload buildRelayControl(uint8_t index, bool open);
     gm::Payload buildPidSettings(float kp, float ki, float kd, float kf);
     gm::Payload buildPumpSettings(float a, float b, float c, float d, float commutationGain, float convergenceGain,
-                                  float integralGain, float maxPower);
+                                  float integralGain, float maxPower, float slipA, float slipB, float slipC, float slipD);
     gm::Payload buildAutotune(uint32_t testTime, uint32_t samples, uint32_t heaterWattage);
     gm::Payload buildPressureScale(float scale);
     gm::Payload buildTare();
@@ -80,7 +80,7 @@ class GaggiMateClient {
     void sendRelayControl(uint8_t index, bool open); // index 0 = brew valve, 1 = alt relay
     void sendPidSettings(float kp, float ki, float kd, float kf);
     void sendPumpSettings(float a, float b, float c, float d, float commutationGain, float convergenceGain, float integralGain,
-                          float maxPower);
+                          float maxPower, float slipA, float slipB, float slipC, float slipD);
     void sendAutotune(uint32_t testTime, uint32_t samples, uint32_t heaterWattage);
     void sendPressureScale(float scale);
     void tare();

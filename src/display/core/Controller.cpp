@@ -710,10 +710,16 @@ void Controller::setPumpModelCoeffs(void) {
         float coeffs[4];
         parseFloatCsv(settings.getPumpModelCoeffs(), coeffs, 4, NAN);
         bool gearpumpEnabled = systemInfo.capabilities.hasAddon(7);
+        // Slip is gear-pump only; send zeros otherwise so it stays a no-op.
+        float slip[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+        if (gearpumpEnabled) {
+            parseFloatCsv(settings.getPumpSlipCoeffs(), slip, 4, 0.0f);
+        }
         comms.sendPumpSettings(coeffs[0], coeffs[1], coeffs[2], coeffs[3],
                                gearpumpEnabled ? settings.getCommutationGain() : DEFAULT_COMMUTATION_GAIN,
                                gearpumpEnabled ? settings.getConvergenceGain() : DEFAULT_CONVERGENCE_GAIN,
-                               gearpumpEnabled ? settings.getIntegralGain() : DEFAULT_INTEGRAL_GAIN, settings.getMaxPumpPower());
+                               gearpumpEnabled ? settings.getIntegralGain() : DEFAULT_INTEGRAL_GAIN, settings.getMaxPumpPower(),
+                               slip[0], slip[1], slip[2], slip[3]);
     }
 }
 
