@@ -1132,5 +1132,3 @@ export const deleteFromLibrary = (collection, name) => {
 export const clearLibrary = collection => {
   saveToStorage(collection, []);
 };
-
-// Helper style for CSS Masking
