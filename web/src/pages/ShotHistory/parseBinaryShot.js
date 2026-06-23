@@ -84,6 +84,19 @@ function countSetBits(n) {
   return count;
 }
 
+// Phase exit reason codes (must match PhaseExitReason in shot_log_format.h / profile.h).
+// 0 (unknown) is also what legacy files carry in the formerly-reserved byte.
+export const PHASE_EXIT_REASON_LABELS = {
+  0: 'Unknown',
+  1: 'Volumetric target',
+  2: 'Pressure target',
+  3: 'Flow target',
+  4: 'Pumped target',
+  5: 'Duration',
+  6: 'Safety timeout',
+  7: 'Aborted',
+};
+
 // Parse phase transitions from v5+ headers
 function parsePhaseTransitions(view, transitionCount) {
   const transitions = [];
@@ -94,7 +107,9 @@ function parsePhaseTransitions(view, transitionCount) {
 
     const sampleIndex = view.getUint16(offset, true);
     const phaseNumber = view.getUint8(offset + 2);
-    // Skip reserved byte at offset + 3
+    // Byte at offset + 3 was reserved through v5; repurposed as the phase exit reason.
+    // Legacy files wrote 0 here, which maps to "Unknown".
+    const transitionReason = view.getUint8(offset + 3);
     const phaseNameBytes = new Uint8Array(view.buffer, view.byteOffset + offset + 4, 25);
     const phaseName = decodeCString(phaseNameBytes);
 
@@ -102,6 +117,8 @@ function parsePhaseTransitions(view, transitionCount) {
       sampleIndex,
       phaseNumber,
       phaseName,
+      transitionReason,
+      transitionReasonLabel: PHASE_EXIT_REASON_LABELS[transitionReason] ?? 'Unknown',
     });
   }
 
@@ -157,9 +174,15 @@ export function parseBinaryShot(arrayBuffer, id) {
 
   // Parse phase transitions for v5+
   let phaseTransitions = [];
+  let finalExitReason = 0;
+  let brewDelay = 0;
   if (version >= 5) {
     const transitionCount = view.getUint8(110 + 12 * 29); // After 12 PhaseTransitions
     phaseTransitions = parsePhaseTransitions(view, transitionCount);
+    // finalExitReason follows phaseTransitionCount; was reserved padding before, so legacy files read 0.
+    finalExitReason = view.getUint8(110 + 12 * 29 + 1);
+    // brewDelayMs (ms) follows finalExitReason; legacy files read 0 (was reserved padding).
+    brewDelay = view.getUint16(110 + 12 * 29 + 2, true);
   }
 
   // Calculate expected sample size from fieldsMask
@@ -283,5 +306,8 @@ export function parseBinaryShot(arrayBuffer, id) {
     trailingBytes,
     samplesExpected: sampleCountHeader,
     phaseTransitions, // v5+ phase transition data
+    finalExitReason, // v5+ reason the shot ended (last phase exit or manual abort)
+    finalExitReasonLabel: PHASE_EXIT_REASON_LABELS[finalExitReason] ?? 'Unknown',
+    brewDelay, // v5+ predictive brew delay (ms) the shot ran with
   };
 }

@@ -124,6 +124,9 @@ void ShotHistoryPlugin::record() {
                 strncpy(header.profileName, profile.label.c_str(), sizeof(header.profileName) - 1);
                 header.profileName[sizeof(header.profileName) - 1] = '\0';
                 header.phaseTransitionCount = 0; // Initialize phase transition count
+                // Brew delay (ms) the shot ran with; round and clamp into the uint16_t field
+                double delayMs = currentBrewDelay > 0.0 ? currentBrewDelay + 0.5 : 0.0;
+                header.brewDelayMs = delayMs > 65535.0 ? 65535 : static_cast<uint16_t>(delayMs);
                 // Write header placeholder
                 currentFile.write(reinterpret_cast<const uint8_t *>(&header), sizeof(header));
             }
@@ -165,7 +168,7 @@ void ShotHistoryPlugin::record() {
 
                 // Check for phase transition
                 if (currentPhase != lastRecordedPhase) {
-                    recordPhaseTransition(currentPhase, sampleCount);
+                    recordPhaseTransition(currentPhase, sampleCount, static_cast<uint8_t>(brewProcess->lastExitReason));
                     lastRecordedPhase = currentPhase;
                 }
             }
@@ -227,6 +230,7 @@ void ShotHistoryPlugin::record() {
         // Patch header with sampleCount and duration
         header.sampleCount = sampleCount;
         header.durationMs = millis() - shotStart;
+        header.finalExitReason = finalExitReason; // why the shot ended (last phase exit or manual abort)
         float finalWeight = currentBluetoothWeight;
         header.finalWeight = finalWeight > 0.0f ? encodeUnsigned(finalWeight, WEIGHT_SCALE, WEIGHT_MAX_VALUE) : 0;
         currentFile.seek(0, SeekSet);
@@ -276,6 +280,8 @@ void ShotHistoryPlugin::startRecording() {
         }
         // Capture initial volumetric mode state (brew by weight vs brew by time)
         shotStartedVolumetric = brewProcess->target == ProcessTarget::VOLUMETRIC;
+        // Capture the brew delay the shot runs with (fixed at process construction)
+        currentBrewDelay = brewProcess->brewDelay;
     }
     currentId = padId(String(controller->getSettings().getHistoryIndex()));
     shotStart = millis();
@@ -294,7 +300,8 @@ void ShotHistoryPlugin::startRecording() {
     ioBufferPos = 0;
 
     // Reset phase tracking for new shot
-    lastRecordedPhase = 0xFF; // Invalid value to detect first phase
+    lastRecordedPhase = 0xFF;                                      // Invalid value to detect first phase
+    finalExitReason = static_cast<uint8_t>(PhaseExitReason::NONE); // Reset shot-end reason
 }
 
 unsigned long ShotHistoryPlugin::getTime() {
@@ -304,6 +311,19 @@ unsigned long ShotHistoryPlugin::getTime() {
 }
 
 void ShotHistoryPlugin::endRecording() {
+    // Capture how the shot ended: if the process ran to completion, reuse the last phase's exit reason;
+    // if it was still running when stopped, the user aborted it. getLastProcess() is the just-ended brew
+    // process here (deactivate() moves currentProcess -> lastProcess before firing controller:brew:end).
+    if (controller != nullptr) {
+        Process *last = controller->getLastProcess();
+        if (last != nullptr && last->getType() == MODE_BREW) {
+            auto *brewProcess = static_cast<BrewProcess *>(last);
+            PhaseExitReason reason =
+                brewProcess->processPhase == ProcessPhase::FINISHED ? brewProcess->lastExitReason : PhaseExitReason::ABORTED;
+            finalExitReason = static_cast<uint8_t>(reason);
+        }
+    }
+
     if (recording && controller && controller->isVolumetricAvailable() && currentBluetoothWeight > 0) {
         // Start extended recording for any shot with active weight data
         extendedRecording = true;
@@ -321,7 +341,7 @@ void ShotHistoryPlugin::endExtendedRecording() {
     }
 }
 
-void ShotHistoryPlugin::recordPhaseTransition(uint8_t phaseNumber, uint16_t sampleIndex) {
+void ShotHistoryPlugin::recordPhaseTransition(uint8_t phaseNumber, uint16_t sampleIndex, uint8_t reason) {
     // Only record if we have space and a valid header
     if (header.phaseTransitionCount >= 12 || !isFileOpen) {
         return;
@@ -333,7 +353,7 @@ void ShotHistoryPlugin::recordPhaseTransition(uint8_t phaseNumber, uint16_t samp
 
     transition.sampleIndex = sampleIndex;
     transition.phaseNumber = phaseNumber;
-    transition.reserved = 0;
+    transition.transitionReason = reason; // PhaseExitReason for why the previous phase ended
 
     // Get phase name from profile
     if (phaseNumber < profile.phases.size()) {
@@ -454,50 +474,7 @@ void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &respo
     response["tp"] = String("res:") + type.substring(4);
     response["rid"] = request["rid"].as<String>();
 
-    if (type == "req:history:list") {
-        JsonArray arr = response["history"].to<JsonArray>();
-        File root = fs->open("/h");
-        if (root && root.isDirectory()) {
-            File file = root.openNextFile();
-            while (file) {
-                String fname = String(file.name());
-                if (fname.endsWith(".slog")) {
-                    // Read header only
-                    ShotLogHeader hdr{};
-                    if (file.read(reinterpret_cast<uint8_t *>(&hdr), sizeof(hdr)) == sizeof(hdr) && hdr.magic == SHOT_LOG_MAGIC) {
-                        float finalWeight = hdr.finalWeight > 0 ? static_cast<float>(hdr.finalWeight) / WEIGHT_SCALE : 0.0f;
-
-                        bool headerIncomplete = hdr.sampleCount == 0;
-
-                        auto o = arr.add<JsonObject>();
-                        int start = fname.lastIndexOf('/') + 1;
-                        int end = fname.lastIndexOf('.');
-                        String id = fname.substring(start, end);
-                        o["id"] = id;
-                        o["version"] = hdr.version;
-                        o["timestamp"] = hdr.startEpoch;
-                        o["profile"] = hdr.profileName;
-                        o["profileId"] = hdr.profileId;
-                        o["samples"] = hdr.sampleCount;
-                        o["duration"] = hdr.durationMs;
-                        if (finalWeight > 0.0f) {
-                            o["volume"] = finalWeight;
-                        }
-                        if (headerIncomplete) {
-                            o["incomplete"] = true; // flag partial shot
-                        }
-                    }
-                }
-                file.close();
-                file = root.openNextFile();
-            }
-        }
-        if (root)
-            root.close();
-    } else if (type == "req:history:get") {
-        // Return error: binary must be fetched via HTTP endpoint
-        response["error"] = "use HTTP /api/history?id=<id>";
-    } else if (type == "req:history:delete") {
+    if (type == "req:history:delete") {
         auto id = request["id"].as<String>();
         String paddedId = id;
         while (paddedId.length() < 6) {
