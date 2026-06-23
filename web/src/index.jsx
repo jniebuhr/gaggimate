@@ -33,6 +33,9 @@ const ShotAnalyzer = lazy(() => import('./pages/ShotAnalyzer/index.jsx').then(m 
 const StatisticsPage = lazy(() =>
   import('./pages/Statistics/index.jsx').then(m => m.StatisticsPage),
 );
+const DashboardSettings = lazy(() =>
+  import('./pages/DashboardSettings/index.jsx').then(m => m.DashboardSettings)
+);
 
 const apiService = new ApiService();
 const DESKTOP_NAV_COLLAPSED_STORAGE_KEY = 'gaggimate.desktopNavCollapsed';
@@ -79,12 +82,13 @@ export function App() {
             onToggleCollapsed={() => setNavCollapsed(collapsed => !collapsed)}
           />
           <div className='flex flex-1 flex-col overflow-x-hidden overflow-y-auto'>
-            <div className='mx-auto flex min-h-0 w-full max-w-(--breakpoint-2xl) flex-1 flex-col p-4'>
+            <div className='flex min-h-0 w-full flex-1 flex-col p-4'>
               <div className='grid min-h-0 flex-1 grid-cols-1'>
                 <div className='min-h-0'>
                   <ErrorBoundary>
                     <Router>
                       <Route path='/' component={Home} />
+                      <Route path='/dashboard-settings' component={DashboardSettings} />
                       <Route path='/profiles' component={ProfileList} />
                       <Route path='/profiles/:id' component={ProfileEdit} />
                       <Route path='/settings' component={Settings} />

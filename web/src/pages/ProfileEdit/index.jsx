@@ -76,7 +76,10 @@ export function ProfileEdit() {
         setLoading(false);
       } else if (connected.value) {
         const response = await apiService.request({ tp: 'req:profiles:load', id: params.id });
-        setData(response.profile);
+        setData({
+          ...response.profile,
+          phases: Array.isArray(response.profile?.phases) ? response.profile.phases : [],
+        });
         setLoading(false);
       }
     }

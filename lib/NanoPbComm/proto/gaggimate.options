@@ -16,3 +16,5 @@ gaggimate.LedControl.channels max_count:8
 # member) stays compact -- every batched Payload slot pays for this.
 gaggimate.SystemInfo.hardware max_size:40
 gaggimate.SystemInfo.version max_size:24
+
+gaggimate.Capabilities.addons max_count:4

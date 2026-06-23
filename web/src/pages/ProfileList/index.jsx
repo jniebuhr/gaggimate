@@ -124,10 +124,13 @@ function ProfileCard({
   const chevronRotation = detailsCollapsed ? '' : 'rotate-90';
   const detailsSectionId = `profile-${data.id}-summary`;
 
+  const phases = Array.isArray(data?.phases) ? data.phases : [];
+
   // Sum total duration from phases (in seconds)
-  const totalDurationSeconds = Array.isArray(data?.phases)
-    ? data.phases.reduce((sum, p) => sum + (Number.isFinite(p?.duration) ? p.duration : 0), 0)
-    : 0;
+  const totalDurationSeconds = phases.reduce(
+    (sum, p) => sum + (Number.isFinite(p?.duration) ? p.duration : 0),
+    0,
+  );
 
   // Mobile actions menu — state-driven (was using the Popover API which isn't
   // supported in Safari <17 / Firefox <125, leaving the menu broken on most
@@ -462,18 +465,16 @@ function ProfileCard({
                     <FontAwesomeIcon icon={faClock} />
                     {totalDurationSeconds}s
                   </span>
-                  {data.phases.length > 0 &&
-                    data.phases[data.phases.length - 1]?.targets?.some(
-                      t => t.type === 'volumetric',
-                    ) && (
+                  {phases.length > 0 &&
+                    phases[phases.length - 1]?.targets?.some(t => t.type === 'volumetric') && (
                       <span className='text-base-content/60 badge badge-xs md:badge-sm badge-outline'>
                         <FontAwesomeIcon icon={faScaleBalanced} />
-                        {`${data.phases[data.phases.length - 1].targets.find(t => t.type === 'volumetric').value}g`}
+                        {`${phases[phases.length - 1].targets.find(t => t.type === 'volumetric').value}g`}
                       </span>
                     )}
-                  {data.phases.length > 0 && (
+                  {phases.length > 0 && (
                     <span className='text-base-content/60 badge badge-xs md:badge-sm badge-outline'>
-                      {data.phases.length} phase{data.phases.length === 1 ? '' : 's'}
+                      {phases.length} phase{phases.length === 1 ? '' : 's'}
                     </span>
                   )}
                 </div>
@@ -519,9 +520,9 @@ function ProfileCard({
               </div>
               <div className='flex-grow overflow-x-auto'>
                 {data.type === 'pro' ? (
-                  <ExtendedProfileChart data={data} className='max-h-36' />
+                  <ExtendedProfileChart data={{ ...data, phases }} className='max-h-36' />
                 ) : (
-                  <SimpleContent data={data} />
+                  <SimpleContent phases={phases} />
                 )}
               </div>
             </div>
@@ -532,10 +533,14 @@ function ProfileCard({
   );
 }
 
-function SimpleContent({ data }) {
+function SimpleContent({ phases }) {
+  if (phases.length === 0) {
+    return <div className='text-base-content/60 text-sm'>No phases</div>;
+  }
+
   return (
     <div className='flex flex-row items-center gap-2' role='list' aria-label='Brew phases'>
-      {data.phases.map((phase, i) => (
+      {phases.map((phase, i) => (
         <div key={i} className='flex flex-row items-center gap-2' role='listitem'>
           {i > 0 && <SimpleDivider />}
           <SimpleStep

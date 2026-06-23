@@ -32,6 +32,7 @@ class Controller {
     void setTargetTemp(float temperature);
     void setPressureScale();
     void setPumpModelCoeffs();
+    void setPidSettings();
     void setTargetGrindDuration(int duration);
     void setTargetGrindVolume(double volume);
 
@@ -52,8 +53,12 @@ class Controller {
     virtual float getCurrentPressure() const { return pressure; }
     virtual float getCurrentPuckFlow() const { return currentPuckFlow; }
     virtual float getCurrentPumpFlow() const { return currentPumpFlow; }
+    virtual float getCurrentPumpPower() const { return currentPumpPower; }
+    virtual float getCurrentHeaterPower() const { return currentHeaterPower; }
+    virtual float getCurrentPuckResistance() const { return currentPuckResistance; }
+    virtual float getCurrentCoffeeVolume() const { return currentCoffeeVolume; }
 
-    bool isTaskHealthy() const { return is_task_healthy(eTaskGetState(taskHandle)); }
+    bool isTaskHealthy() const { return is_task_healthy(eTaskGetState(logicTaskHandle)); }
 
     void autotune(int testTime, int samples, int heaterWattage);
     void startProcess(Process *process);
@@ -114,7 +119,7 @@ class Controller {
 #endif
     void setupBluetooth();
     void onSystemInfo(const char *hardware, const char *version, uint32_t protocolVersion, bool dimming, bool pressure,
-                      bool ledControl, bool tof);
+                      bool ledControl, bool tof, std::vector<uint32_t> addons);
     // Connected to a controller too old to speak the framed protocol: drive the
     // same path as a protocol-version mismatch (OTA recovery only). infoJson is
     // the legacy INFO characteristic contents (hardware/version/capabilities).
@@ -153,6 +158,10 @@ class Controller {
     float targetPressure = 0.0f;
     float currentPuckFlow = 0.0f;
     float currentPumpFlow = 0.0f;
+    float currentPumpPower = 0.0f;
+    float currentHeaterPower = 0.0f;
+    float currentPuckResistance = 0.0f;
+    float currentCoffeeVolume = 0.0f;
     float targetFlow = 0.0f;
     int tofDistance = 0;
 
@@ -203,10 +212,8 @@ class Controller {
     static const unsigned long BLUETOOTH_GRACE_PERIOD_MS = 1500; // 1.5 second grace period
     static const unsigned long CONTROLLER_WAITING_TIMEOUT_MS = 10000;
 
-    xTaskHandle taskHandle;
     xTaskHandle logicTaskHandle;
 
-    static void loopTask(void *arg);
     static void loopLogicTask(void *arg);
 };
 

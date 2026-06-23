@@ -7,8 +7,6 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 
-enum class PIDLibrary { Legacy, Nimrod };
-
 constexpr float MAX_AUTOTUNE_TEMP = 125.0f;
 constexpr float TUNER_OUTPUT_SPAN = 1000.0f;
 
@@ -28,6 +26,7 @@ class Heater {
 
     void setSetpoint(float setpoint);
     float getSetpoint() { return setpoint; };
+    float getDutyCycle() const { return output / TUNER_OUTPUT_SPAN * 100.0f; }
     void setTunings(float Kp, float Ki, float Kd);
     void autotune(int testTimeSec, int windowSize, int heaterWattage);
 

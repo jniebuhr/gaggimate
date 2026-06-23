@@ -4,12 +4,14 @@
 #include "GaggiMateServer.h"
 #include <peripherals/DigitalInput.h>
 #include <peripherals/DistanceSensor.h>
+#include <peripherals/FlowSensor.h>
 #include <peripherals/Heater.h>
 #include <peripherals/LedController.h>
 #include <peripherals/Max31855Thermocouple.h>
 #include <peripherals/PressureSensor.h>
 #include <peripherals/Pump.h>
 #include <peripherals/SimpleRelay.h>
+#include <peripherals/addons/GearpumpAddon.h>
 #include <vector>
 
 constexpr double PING_TIMEOUT_SECONDS = 20.0;
@@ -49,6 +51,12 @@ class GaggiMateController {
     PressureSensor *pressureSensor = nullptr;
     LedController *ledController = nullptr;
     DistanceSensor *distanceSensor = nullptr;
+    ADSAdc *adc = nullptr;
+    FlowSensor *flowSensor = nullptr;
+
+    GearpumpAddon *gearpumpAddon = nullptr;
+
+    SoftWire *albaComms = nullptr;
 
     std::vector<ControllerConfig> configs;
 

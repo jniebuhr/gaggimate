@@ -15,27 +15,35 @@
 #include <display/core/static_profiles.h>
 #include <display/core/zones.h>
 #include <display/plugins/AutoWakeupPlugin.h>
-#include <display/plugins/BLEScalePlugin.h>
 #include <display/plugins/BoilerFillPlugin.h>
-#include <display/plugins/HomekitPlugin.h>
 #include <display/plugins/LedControlPlugin.h>
-#include <display/plugins/MQTTPlugin.h>
-#include <display/plugins/NetworkWatchdogPlugin.h>
 #include <display/plugins/ShotHistoryPlugin.h>
 #include <display/plugins/SmartGrindPlugin.h>
 #include <display/plugins/WebUIPlugin.h>
+#ifndef GAGGIMATE_SIM // network/BLE plugins are device-only
+#include <display/plugins/BLEScalePlugin.h>
+#include <display/plugins/HomekitPlugin.h>
+#include <display/plugins/ImprovPlugin.h>
+#include <display/plugins/MQTTPlugin.h>
+#include <display/plugins/NetworkWatchdogPlugin.h>
+#include <display/plugins/WifiStaWatchdogPlugin.h>
 #include <display/plugins/mDNSPlugin.h>
+#endif
 #include <display/util/PsramAllocator.h>
 #ifndef GAGGIMATE_HEADLESS
+#ifdef GAGGIMATE_SIM
+#include <SdlDriver.h> // desktop SDL panel stands in for the hardware drivers
+#else
 #include <display/drivers/AmoledDisplayDriver.h>
 #include <display/drivers/LilyGoDriver.h>
 #include <display/drivers/WaveshareDriver.h>
+#endif
 #endif
 
 const String LOG_TAG = F("Controller");
 
 void Controller::setup() {
-    mode = settings.getStartupMode();
+    mode = MODE_STANDBY;
 
     // Web assets are served from this partition. LittleFS (not SPIFFS): SPIFFS
     // has no directory tree, so stat()/exists() is O(whole filesystem) and a
@@ -66,23 +74,33 @@ void Controller::setup() {
     }
     profileManager = new ProfileManager(fs, "/p", settings, pluginManager);
     profileManager->setup();
+#ifndef GAGGIMATE_SIM // mDNS/HomeKit are device-only
     if (settings.isHomekit())
         pluginManager->registerPlugin(new HomekitPlugin(settings.getWifiSsid(), settings.getWifiPassword()));
     else
         pluginManager->registerPlugin(new mDNSPlugin());
+#endif
     if (settings.isBoilerFillActive()) {
         pluginManager->registerPlugin(new BoilerFillPlugin());
     }
     if (settings.isSmartGrindActive()) {
         pluginManager->registerPlugin(new SmartGrindPlugin());
     }
+#ifndef GAGGIMATE_SIM // MQTT/HomeAssistant is device-only
     if (settings.isHomeAssistant()) {
         pluginManager->registerPlugin(new MQTTPlugin());
     }
+#endif
     pluginManager->registerPlugin(new WebUIPlugin());
+#ifndef GAGGIMATE_SIM // WiFi watchdogs and BLE scales are device-only
     pluginManager->registerPlugin(new NetworkWatchdogPlugin());
+    pluginManager->registerPlugin(new WifiStaWatchdogPlugin());
+    pluginManager->registerPlugin(new ImprovPlugin());
+#endif
     pluginManager->registerPlugin(&ShotHistory);
+#ifndef GAGGIMATE_SIM
     pluginManager->registerPlugin(&BLEScales);
+#endif
     pluginManager->registerPlugin(new LedControlPlugin());
     pluginManager->registerPlugin(new AutoWakeupPlugin());
     pluginManager->setup(this);
@@ -102,7 +120,6 @@ void Controller::setup() {
     this->onScreenReady();
 
     updateLastAction();
-    xTaskCreatePinnedToCore(loopTask, "Controller::loopControl", configMINIMAL_STACK_SIZE * 6, this, 2, &taskHandle, 0);
     xTaskCreatePinnedToCore(loopLogicTask, "Controller::loopLogic", configMINIMAL_STACK_SIZE * 6, this, 3, &logicTaskHandle, 0);
 }
 
@@ -128,6 +145,9 @@ void Controller::connect() {
 
 #ifndef GAGGIMATE_HEADLESS
 void Controller::setupPanel() {
+#ifdef GAGGIMATE_SIM
+    driver = SdlDriver::getInstance(); // desktop SDL panel
+#else
     if (LilyGoDriver::getInstance()->isCompatible()) {
         driver = LilyGoDriver::getInstance();
     } else if (AmoledDisplayDriver::getInstance()->isCompatible()) {
@@ -139,6 +159,7 @@ void Controller::setupPanel() {
         delay(10000);
         ESP.restart();
     }
+#endif
     driver->init();
 }
 #endif
@@ -180,9 +201,10 @@ void Controller::setupBluetooth() {
             setMode(MODE_STANDBY);
         }
     });
-    comms.onSystemInfo(
-        [this](const char *hardware, const char *version, uint32_t protocolVersion, bool dimming, bool pressure, bool ledControl,
-               bool tof) { onSystemInfo(hardware, version, protocolVersion, dimming, pressure, ledControl, tof); });
+    comms.onSystemInfo([this](const char *hardware, const char *version, uint32_t protocolVersion, bool dimming, bool pressure,
+                              bool ledControl, bool tof, vector<uint32_t> addons) {
+        onSystemInfo(hardware, version, protocolVersion, dimming, pressure, ledControl, tof, addons);
+    });
     comms.onIncompatibleController([this](const String &info) { onIncompatibleController(info); });
     // A controller OTA streams the firmware over this BLE link; the relaxed idle
     // interval makes that crawl. Force a low-latency interval for the duration of
@@ -200,11 +222,15 @@ void Controller::setupBluetooth() {
         }
     });
     pluginManager->on("ota:update:end", [this](Event const &) { applyConnectionPriority(true); });
-    comms.onSensorData([this](float temp, float pressure, float puckFlow, float pumpFlow, float puckResistance) {
+    comms.onSensorData([this](float temp, float pressure, float puckFlow, float pumpFlow, float puckResistance,
+                               float pumpPower, float heaterPower) {
         onTempRead(temp);
         this->pressure = pressure;
         this->currentPuckFlow = puckFlow;
         this->currentPumpFlow = pumpFlow;
+        this->currentPumpPower = pumpPower;
+        this->currentHeaterPower = heaterPower;
+        this->currentPuckResistance = puckResistance;
         pluginManager->trigger("boiler:pressure:change", "value", pressure);
         pluginManager->trigger("pump:puck-flow:change", "value", puckFlow);
         pluginManager->trigger("pump:flow:change", "value", pumpFlow);
@@ -303,7 +329,7 @@ void Controller::setupBluetooth() {
 }
 
 void Controller::onSystemInfo(const char *hardware, const char *version, uint32_t protocolVersion, bool dimming, bool pressure,
-                              bool ledControl, bool tof) {
+                              bool ledControl, bool tof, vector<uint32_t> addons) {
     const bool mismatch = protocolVersion != gm_proto::PROTOCOL_VERSION;
     systemInfo = SystemInfo{.hardware = String(hardware),
                             .version = String(version),
@@ -313,26 +339,19 @@ void Controller::onSystemInfo(const char *hardware, const char *version, uint32_
                                     .pressure = pressure,
                                     .ledControl = ledControl,
                                     .tof = tof,
+                                    .addons = addons,
                                 },
                             .protocolVersion = protocolVersion,
                             .protocolMismatch = mismatch};
     ESP_LOGI(LOG_TAG, "System info: %s %s (proto=%u local=%u dm=%d ps=%d led=%d tof=%d)", hardware, version, protocolVersion,
              gm_proto::PROTOCOL_VERSION, dimming, pressure, ledControl, tof);
     if (mismatch) {
-        // Mixed-firmware links are not wire-compatible, so don't push config and
-        // don't drive control (updateControl() also bails on protocolMismatch).
-        // We still fire controller:ready below so OTA can init -- that's the
-        // recovery path to update the out-of-date side.
         ESP_LOGW(LOG_TAG, "Protocol version mismatch: controller=%u display=%u -- control inhibited, OTA only", protocolVersion,
                  gm_proto::PROTOCOL_VERSION);
         pluginManager->trigger("controller:protocol:mismatch", "value", static_cast<int>(protocolVersion));
     } else {
-        // Capability-dependent setup that the old protocol ran synchronously right
-        // after connect, now driven by the asynchronous SystemInfo push.
         setPressureScale();
-        float pid[4];
-        parseFloatCsv(settings.getPid(), pid, 4, 0.0f);
-        comms.sendPidSettings(pid[0], pid[1], pid[2], pid[3]);
+        setPidSettings();
         setPumpModelCoeffs();
     }
 
@@ -341,24 +360,19 @@ void Controller::onSystemInfo(const char *hardware, const char *version, uint32_
         if (!mismatch && settings.getStartupMode() == MODE_STANDBY)
             activateStandby();
         pluginManager->trigger("controller:ready");
+        setMode(settings.getStartupMode());
     }
     pluginManager->trigger("controller:bluetooth:connect");
 }
 
 void Controller::onIncompatibleController(const String &infoJson) {
-    // An old controller (no framed-comms characteristics) is, for our purposes,
-    // a protocol mismatch: reuse the exact same path. We force protocolVersion 0
-    // (it cannot speak the framed protocol), so onSystemInfo() inhibits control
-    // but still fires controller:ready so OTA can flash the controller back into
-    // compatibility. The real hardware/version/capabilities come from the legacy
-    // read-only INFO characteristic the old controller still exposes.
     waitingForController = false;
 
     JsonDocument doc;
     DeserializationError err = deserializeJson(doc, infoJson);
     if (err) {
         ESP_LOGW(LOG_TAG, "Incompatible controller, no readable info (%s)", err.c_str());
-        onSystemInfo("Legacy controller", "0.0.0", 0, false, false, false, false);
+        onSystemInfo("Legacy controller", "0.0.0", 0, false, false, false, false, {});
         return;
     }
     String hardware = doc["hw"].as<String>();
@@ -368,15 +382,59 @@ void Controller::onIncompatibleController(const String &infoJson) {
     if (version.isEmpty())
         version = "0.0.0";
     onSystemInfo(hardware.c_str(), version.c_str(), 0, doc["cp"]["dm"].as<bool>(), doc["cp"]["ps"].as<bool>(),
-                 doc["cp"]["led"].as<bool>(), doc["cp"]["tof"].as<bool>());
+                 doc["cp"]["led"].as<bool>(), doc["cp"]["tof"].as<bool>(), {});
 }
 
 void Controller::setupWifi() {
+    // Generate and persist a WPA2 AP password on first start
+    if (settings.getWifiApPassword().isEmpty()) {
+        settings.setWifiApPassword(generateShortID(DEFAULT_WIFI_AP_PASSWORD_LENGTH));
+    }
+
     if (settings.getWifiSsid() != "" && settings.getWifiPassword() != "") {
         WiFi.setHostname(settings.getMdnsName().c_str());
         WiFi.mode(WIFI_STA);
         WiFi.setAutoReconnect(true);
         WiFi.config(INADDR_NONE, INADDR_NONE, INADDR_NONE, INADDR_NONE);
+
+        WiFi.onEvent(
+            [this](WiFiEvent_t, WiFiEventInfo_t info) {
+                const auto &g = info.got_ip.ip_info;
+                const uint32_t ip = g.ip.addr;
+                const uint32_t gw = g.gw.addr;
+                ESP_LOGI(LOG_TAG, "STA got IP: %u.%u.%u.%u gw=%u.%u.%u.%u", (unsigned)(ip & 0xff), (unsigned)((ip >> 8) & 0xff),
+                         (unsigned)((ip >> 16) & 0xff), (unsigned)((ip >> 24) & 0xff), (unsigned)(gw & 0xff),
+                         (unsigned)((gw >> 8) & 0xff), (unsigned)((gw >> 16) & 0xff), (unsigned)((gw >> 24) & 0xff));
+                wifiConnectedPending = true;
+            },
+            WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_GOT_IP);
+        WiFi.onEvent(
+            [](WiFiEvent_t, WiFiEventInfo_t info) {
+                const auto &c = info.wifi_sta_connected;
+                ESP_LOGI(LOG_TAG, "STA connected: ssid=%.*s bssid=%02x:%02x:%02x:%02x:%02x:%02x ch=%u authmode=%u",
+                         (int)c.ssid_len, c.ssid, c.bssid[0], c.bssid[1], c.bssid[2], c.bssid[3], c.bssid[4], c.bssid[5],
+                         c.channel, c.authmode);
+            },
+            WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_CONNECTED);
+        WiFi.onEvent(
+            [this](WiFiEvent_t, WiFiEventInfo_t info) {
+                const auto &d = info.wifi_sta_disconnected;
+                const char *name = WiFi.disconnectReasonName(static_cast<wifi_err_reason_t>(d.reason));
+                ESP_LOGW(LOG_TAG, "STA disconnected: reason=%u (%s) bssid=%02x:%02x:%02x:%02x:%02x:%02x ssid=%.*s", d.reason,
+                         name && *name ? name : "vendor/unknown", d.bssid[0], d.bssid[1], d.bssid[2], d.bssid[3], d.bssid[4],
+                         d.bssid[5], (int)d.ssid_len, d.ssid);
+                wifiDisconnectedPending = true;
+            },
+            WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
+        WiFi.onEvent([](WiFiEvent_t, WiFiEventInfo_t) { ESP_LOGW(LOG_TAG, "STA lost IP"); },
+                     WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_LOST_IP);
+        WiFi.onEvent(
+            [](WiFiEvent_t, WiFiEventInfo_t info) {
+                ESP_LOGW(LOG_TAG, "STA authmode changed: %u -> %u", info.wifi_sta_authmode_change.old_mode,
+                         info.wifi_sta_authmode_change.new_mode);
+            },
+            WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_AUTHMODE_CHANGE);
+
         WiFi.begin(settings.getWifiSsid(), settings.getWifiPassword());
         WiFi.setTxPower(WIFI_POWER_19_5dBm);
         for (int attempts = 0; attempts < WIFI_CONNECT_ATTEMPTS; attempts++) {
@@ -390,18 +448,6 @@ void Controller::setupWifi() {
         if (WiFi.status() == WL_CONNECTED) {
             ESP_LOGI(LOG_TAG, "Connected to %s with IP address %s", settings.getWifiSsid().c_str(),
                      WiFi.localIP().toString().c_str());
-            // These run in the Arduino WiFi event task (small stack). Only flag
-            // the change here; loop() fires the plugin events on the main loop so
-            // server/mDNS/socket teardown never runs in this callback context.
-            WiFi.onEvent([this](WiFiEvent_t, WiFiEventInfo_t) { wifiConnectedPending = true; },
-                         WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_GOT_IP);
-            WiFi.onEvent(
-                [this](WiFiEvent_t, WiFiEventInfo_t info) {
-                    ESP_LOGI(LOG_TAG, "Lost WiFi connection. Reason: %s",
-                             WiFi.disconnectReasonName(static_cast<wifi_err_reason_t>(info.wifi_sta_disconnected.reason)));
-                    wifiDisconnectedPending = true;
-                },
-                WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
             configTzTime(resolve_timezone(settings.getTimezone()), NTP_SERVER);
             setenv("TZ", resolve_timezone(settings.getTimezone()), 1);
             tzset();
@@ -416,17 +462,35 @@ void Controller::setupWifi() {
     }
     if (WiFi.status() != WL_CONNECTED) {
         isApConnection = true;
+        const String apPassword = settings.getWifiApPassword();
+        // WPA2 requires >= 8 chars; fall back to an open AP if somehow shorter.
+        const bool secured = apPassword.length() >= WIFI_AP_PASSWORD_MIN_LENGTH;
         WiFi.mode(WIFI_AP);
         WiFi.softAPConfig(WIFI_AP_IP, WIFI_AP_IP, WIFI_SUBNET_MASK);
-        WiFi.softAP(WIFI_AP_SSID);
+        WiFi.softAP(WIFI_AP_SSID, secured ? apPassword.c_str() : nullptr);
         WiFi.setTxPower(WIFI_POWER_19_5dBm);
-        ESP_LOGI(LOG_TAG, "Started WiFi AP %s", WIFI_AP_SSID);
+        // Credentials block so headless users can read the AP login from serial.
+        ESP_LOGI(LOG_TAG, "========================================");
+        ESP_LOGI(LOG_TAG, "  WiFi Access Point started");
+        ESP_LOGI(LOG_TAG, "  SSID:     %s", WIFI_AP_SSID);
+        if (secured) {
+            ESP_LOGI(LOG_TAG, "  Password: %s", apPassword.c_str());
+        } else {
+            ESP_LOGI(LOG_TAG, "  Password: <open network>");
+        }
+        ESP_LOGI(LOG_TAG, "  Web UI:   http://%s/", WIFI_AP_IP.toString().c_str());
+        ESP_LOGI(LOG_TAG, "========================================");
     }
 
     pluginManager->on("ota:update:start", [this](Event const &) { this->updating = true; });
     pluginManager->on("ota:update:end", [this](Event const &) { this->updating = false; });
 
-    pluginManager->trigger("controller:wifi:connect", "AP", isApConnection ? 1 : 0);
+    // STA path: STA_GOT_IP handler already set wifiConnectedPending; loop()
+    // dispatches controller:wifi:connect from there. AP path has no STA_GOT_IP,
+    // so it needs the explicit trigger here.
+    if (isApConnection) {
+        pluginManager->trigger("controller:wifi:connect", "AP", 1);
+    }
 }
 
 void Controller::loop() {
@@ -464,19 +528,11 @@ void Controller::loop() {
     if (comms.isReadyForConnection() && comms.connectToServer()) {
         waitingForController = false;
     }
-
-    // Keepalive: updateControl() only sends control deltas now, so a steady-state
-    // session would otherwise go silent. A periodic ping keeps the controller's
-    // connection watchdog fed (sent in all states, including error). Skip it for
-    // an incompatible controller -- it can't parse the frame anyway.
-    if (comms.isConnected() && !systemInfo.protocolMismatch && now - lastPing >= PING_INTERVAL) {
-        comms.sendPing();
-        lastPing = now;
-    }
 }
 
 void Controller::loopLogic() {
     if (isErrorState()) {
+        loopControl();
         return;
     }
 
@@ -530,10 +586,23 @@ void Controller::loopLogic() {
         deactivateGrind();
     if (mode != MODE_STANDBY && settings.getStandbyTimeout() > 0 && now > lastAction + settings.getStandbyTimeout())
         activateStandby();
+
+    loopControl();
 }
 
 void Controller::loopControl() {
     if (initialized) {
+        unsigned long now = millis();
+
+        // Keepalive: updateControl() only sends control deltas now, so a steady-state
+        // session would otherwise go silent. A periodic ping keeps the controller's
+        // connection watchdog fed (sent in all states, including error). Skip it for
+        // an incompatible controller -- it can't parse the frame anyway.
+        if (comms.isConnected() && !systemInfo.protocolMismatch && now - lastPing >= PING_INTERVAL) {
+            comms.sendPing();
+            lastPing = now;
+        }
+
         updateControl();
     }
 }
@@ -644,8 +713,24 @@ void Controller::setPumpModelCoeffs(void) {
         // flow-measurement semantics (c,d NaN) on the controller side.
         float coeffs[4];
         parseFloatCsv(settings.getPumpModelCoeffs(), coeffs, 4, NAN);
-        comms.sendPumpModelCoeffs(coeffs[0], coeffs[1], coeffs[2], coeffs[3]);
+        bool gearpumpEnabled = systemInfo.capabilities.hasAddon(7);
+        // Slip is gear-pump only; send zeros otherwise so it stays a no-op.
+        float slip[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+        if (gearpumpEnabled) {
+            parseFloatCsv(settings.getPumpSlipCoeffs(), slip, 4, 0.0f);
+        }
+        comms.sendPumpSettings(coeffs[0], coeffs[1], coeffs[2], coeffs[3],
+                               gearpumpEnabled ? settings.getCommutationGain() : DEFAULT_COMMUTATION_GAIN,
+                               gearpumpEnabled ? settings.getConvergenceGain() : DEFAULT_CONVERGENCE_GAIN,
+                               gearpumpEnabled ? settings.getIntegralGain() : DEFAULT_INTEGRAL_GAIN, settings.getMaxPumpPower(),
+                               slip[0], slip[1], slip[2], slip[3]);
     }
+}
+
+void Controller::setPidSettings() {
+    float pid[4];
+    parseFloatCsv(settings.getPid(), pid, 4, 0.0f);
+    comms.sendPidSettings(pid[0], pid[1], pid[2], pid[3]);
 }
 
 int Controller::getTargetGrindDuration() const { return settings.getTargetGrindDuration(); }
@@ -930,6 +1015,7 @@ void Controller::setMode(int newMode) {
 
     updateLastAction();
     setTargetTemp(getTargetTemp());
+    setPidSettings();
 }
 
 void Controller::onTempRead(float temperature) {
@@ -957,6 +1043,9 @@ void Controller::onProfileSaveAsNew() {
 }
 
 void Controller::onVolumetricMeasurement(double measurement, VolumetricMeasurementSource source) {
+    if (source == VolumetricMeasurementSource::FLOW_ESTIMATION) {
+        currentCoffeeVolume = static_cast<float>(measurement);
+    }
     pluginManager->trigger(source == VolumetricMeasurementSource::FLOW_ESTIMATION
                                ? F("controller:volumetric-measurement:estimation:change")
                                : F("controller:volumetric-measurement:bluetooth:change"),
@@ -1102,15 +1191,6 @@ void Controller::handleProfileUpdate() {
     pluginManager->trigger("boiler:targetTemperature:change", "value", profileManager->getSelectedProfile().temperature);
     pluginManager->trigger("controller:targetDuration:change", "value", profileManager->getSelectedProfile().getTotalDuration());
     pluginManager->trigger("controller:targetVolume:change", "value", profileManager->getSelectedProfile().getTotalVolume());
-}
-
-void Controller::loopTask(void *arg) {
-    TickType_t lastWake = xTaskGetTickCount();
-    auto *controller = static_cast<Controller *>(arg);
-    while (true) {
-        controller->loopControl();
-        xTaskDelayUntil(&lastWake, pdMS_TO_TICKS(controller->getMode() == MODE_STANDBY ? 1000 : PROGRESS_INTERVAL));
-    }
 }
 
 void Controller::loopLogicTask(void *arg) {
