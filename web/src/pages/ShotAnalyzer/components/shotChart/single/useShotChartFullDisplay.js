@@ -9,7 +9,7 @@
 /* global globalThis */
 
 import { useEffect, useState } from 'preact/hooks';
-import { MAIN_CHART_HEIGHT_DEFAULT } from './constants';
+import { MAIN_CHART_HEIGHT_DEFAULT } from '../constants';
 
 function getFullDisplayViewportHeight() {
   const browserWindow = globalThis.window;

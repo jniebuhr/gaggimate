@@ -10,8 +10,8 @@ import {
   THIN_LINE_WIDTH,
   WATER_DRAWN_PHASE_LABEL,
   WATER_DRAWN_TOTAL_LABEL,
-} from './constants';
-import { shouldRenderTooltipLabel, sortTooltipItems } from './ShotChartExternalTooltip';
+} from '../constants';
+import { shouldRenderTooltipLabel, sortTooltipItems } from '../ShotChartExternalTooltip';
 import {
   axisUnitLabelPlugin,
   createChartPointElementConfig,
@@ -26,7 +26,7 @@ import {
   phaseLabelOverlayPlugin,
   replayRevealPlugin,
   stopIconOverlayPlugin,
-} from './helpers';
+} from '../helpers';
 
 const MAIN_CHART_MARKER_TOP_PADDING = 48;
 

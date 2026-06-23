@@ -8,24 +8,24 @@
  */
 
 import { useEffect, useRef, useState } from 'preact/hooks';
-import { downloadBlob, downloadJson } from '../../../../utils/download';
+import { downloadBlob, downloadJson } from '../../../../../utils/download';
 import {
   exportReplayImage,
   exportReplayVideo,
   getVideoExportCapabilities,
-} from '../../services/ReplayVideoExportService';
-import { libraryService } from '../../services/LibraryService';
+} from '../../../services/ReplayVideoExportService';
+import { libraryService } from '../../../services/LibraryService';
 import {
   DEFAULT_REPLAY_EXPORT_CONFIG,
   getReplayExportStatusHint,
   getReplayExportStatusLabel,
   REPLAY_FRAME_INTERVAL_MS,
-} from './constants';
+} from '../constants';
 import {
   buildReplayExportFilename,
   buildReplayImageFilename,
   getVisibleLegendItemsForExport,
-} from './helpers';
+} from '../helpers';
 
 function shouldUseForcedWebmExport(videoExportCapabilities) {
   return (

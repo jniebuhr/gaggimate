@@ -39,10 +39,10 @@ import {
   getTooltipColorByLabel,
 } from '../helpers';
 import { getShotChartBrewModeMeta } from '../labelVisuals';
-import { useShotChartFullDisplay } from '../useShotChartFullDisplay';
-import { useShotChartReplayExport } from '../useShotChartReplayExport';
+import { useShotChartFullDisplay } from './useShotChartFullDisplay';
+import { useShotChartReplayExport } from './useShotChartReplayExport';
 import { buildShotChartModel } from '../buildShotChartModel';
-import { createShotChartConfigs } from '../createShotChartConfigs';
+import { createShotChartConfigs } from './createShotChartConfigs';
 import {
   applyShotChartHoverAtX,
   attachShotChartHoverSync,
