@@ -41,12 +41,12 @@ export const setDashboardLayout = layout => {
 
 export const getDashboardCardMode = () => {
   if (!globalThis.window?.localStorage) {
-    return DASHBOARD_CARD_MODES.MULTI;
+    return DASHBOARD_CARD_MODES.SINGLE;
   }
   try {
-    return localStorage.getItem(DASHBOARD_CARD_MODE_KEY) || DASHBOARD_CARD_MODES.MULTI;
+    return localStorage.getItem(DASHBOARD_CARD_MODE_KEY) || DASHBOARD_CARD_MODES.SINGLE;
   } catch {
-    return DASHBOARD_CARD_MODES.MULTI;
+    return DASHBOARD_CARD_MODES.SINGLE;
   }
 };
 
@@ -65,16 +65,21 @@ export const setDashboardCardMode = mode => {
 const DASHBOARD_METRICS_KEY = 'dashboardMetrics';
 
 const DEFAULT_METRIC_ORDER = ['pressure', 'flow', 'temp', 'weight'];
+const DEFAULT_METRIC_ORDER_MOBILE = ['pressure', 'temp', 'weight'];
 
 export const getMetricOrder = () => {
+
+  const isMobile = globalThis.window?.matchMedia('(max-width: 768px)').matches;
+  const defaultOrder = isMobile ? [...DEFAULT_METRIC_ORDER_MOBILE] : [... DEFAULT_METRIC_ORDER];
+
   if (!globalThis.window?.localStorage) {
-    return [...DEFAULT_METRIC_ORDER];
+    return [...defaultOrder];
   }
   try {
     const stored = localStorage.getItem(DASHBOARD_METRICS_KEY);
-    return stored ? JSON.parse(stored) : [...DEFAULT_METRIC_ORDER];
+    return stored ? JSON.parse(stored) : [...defaultOrder];
   } catch {
-    return [...DEFAULT_METRIC_ORDER];
+    return [...defaultOrder];
   }
 };
 
@@ -95,7 +100,7 @@ export const setMetricOrder = ids => {
 
 const DASHBOARD_PANELS_KEY = 'dashboardPanels';
 
-const DEFAULT_PANEL_ORDER = ['mode', 'profile', 'favorites', 'metrics', 'watertank', 'action'];
+const DEFAULT_PANEL_ORDER = ['mode', 'profile', 'metrics', 'watertank', 'action'];
 
 export const getPanelOrder = () => {
   if (!globalThis.window?.localStorage) {
@@ -177,11 +182,11 @@ export const setStickyTop = value => {
 const DASHBOARD_SHOW_RECENT_SHOTS_KEY = 'dashboardShowRecentShots';
 
 export const getShowRecentShots = () => {
-  if (!globalThis.window?.localStorage) return true;
+  if (!globalThis.window?.localStorage) return false;
   try {
-    return localStorage.getItem(DASHBOARD_SHOW_RECENT_SHOTS_KEY) !== 'false';
+    return localStorage.getItem(DASHBOARD_SHOW_RECENT_SHOTS_KEY) === 'true';
   } catch {
-    return true;
+    return false;
   }
 };
 
@@ -202,13 +207,13 @@ export const setShowRecentShots = value => {
 const DASHBOARD_METRICS_COLUMNS_KEY = 'dashboardMetricsColumns';
 
 export const getMetricsColumns = () => {
-  if (!globalThis.window?.localStorage) return 2;
+  if (!globalThis.window?.localStorage) return 3;
   try {
     const stored = localStorage.getItem(DASHBOARD_METRICS_COLUMNS_KEY);
-    const n = stored ? Number.parseInt(stored, 10) : 2;
-    return Number.isFinite(n) && n >= 1 && n <= 4 ? n : 2;
+    const n = stored ? Number.parseInt(stored, 10) : 3;
+    return Number.isFinite(n) && n >= 1 && n <= 4 ? n : 3;
   } catch {
-    return 2;
+    return 3;
   }
 };
 
@@ -228,14 +233,18 @@ export const setMetricsColumns = n => {
 // ── Compact panels ────────────────────────────────────────────────────────
 
 const DASHBOARD_COMPACT_PANELS_KEY = 'dashboardCompactPanels';
+const DEFAULT_COMPACT_PANELS_MOBILE = ['profile', 'favorites', 'metrics'];
 
 export const getCompactPanels = () => {
-  if (!globalThis.window?.localStorage) return [];
+  const isMobile = globalThis.window?.matchMedia('(max-width: 768px)').matches;
+  const defaultPanels = isMobile ? [...DEFAULT_COMPACT_PANELS_MOBILE] : [];
+
+  if (!globalThis.window?.localStorage) return defaultPanels;
   try {
     const stored = localStorage.getItem(DASHBOARD_COMPACT_PANELS_KEY);
-    return stored ? JSON.parse(stored) : [];
+    return stored ? JSON.parse(stored) : defaultPanels;
   } catch {
-    return [];
+    return defaultPanels;
   }
 };
 
