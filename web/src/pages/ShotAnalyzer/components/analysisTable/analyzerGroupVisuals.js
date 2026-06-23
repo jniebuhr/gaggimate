@@ -7,7 +7,7 @@ import { faGauge } from '@fortawesome/free-solid-svg-icons/faGauge';
 import { faGears } from '@fortawesome/free-solid-svg-icons/faGears';
 import { faScaleBalanced } from '@fortawesome/free-solid-svg-icons/faScaleBalanced';
 import { faTemperatureHalf } from '@fortawesome/free-solid-svg-icons/faTemperatureHalf';
-import { groupColors } from '../utils/analyzerUtils';
+import { groupColors } from '../../utils/analyzerUtils';
 
 const GROUP_ICON_BY_KEY = {
   basics: faClock,

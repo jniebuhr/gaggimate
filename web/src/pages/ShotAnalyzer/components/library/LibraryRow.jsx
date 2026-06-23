@@ -9,10 +9,10 @@ import { faCircleNotch } from '@fortawesome/free-solid-svg-icons/faCircleNotch';
 import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
 import { faThumbtack } from '@fortawesome/free-solid-svg-icons/faThumbtack';
 import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
-import { cleanName, formatTimestamp, getProfileDisplayLabel } from '../utils/analyzerUtils';
-import { buildStatisticsProfileHref } from '../../Statistics/utils/statisticsRoute';
-import { SourceMarker } from './SourceMarker';
-import { getAnalyzerIconButtonClasses } from './analyzerControlStyles';
+import { cleanName, formatTimestamp, getProfileDisplayLabel } from '../../utils/analyzerUtils';
+import { buildStatisticsProfileHref } from '../../../Statistics/utils/statisticsRoute';
+import { SourceMarker } from '../SourceMarker';
+import { getAnalyzerIconButtonClasses } from '../analyzerControlStyles';
 
 const ACTIVE_ROW_CLASSES = 'bg-primary/18';
 const COMPARE_PENDING_ROW_CLASSES = 'bg-primary/10 opacity-75';

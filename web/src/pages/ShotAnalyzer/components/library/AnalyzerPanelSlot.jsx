@@ -1,5 +1,5 @@
 import { AnalyzerActionBar } from '../AnalyzerActionBar';
-import { StatusBar } from '../StatusBar';
+import { StatusBar } from './StatusBar';
 import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';

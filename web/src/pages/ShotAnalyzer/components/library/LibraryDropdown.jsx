@@ -7,7 +7,7 @@ import {
   isShotPinned,
 } from '../../utils/analyzerUtils';
 import { getAnalyzerTextButtonClasses } from '../analyzerControlStyles';
-import { LibrarySection } from '../LibrarySection';
+import { LibrarySection } from './LibrarySection';
 import { doesProfileLabelMatchShot, doesProfileMatchProfile } from './libraryData';
 import {
   getLibraryProfileDeleteKey,

@@ -19,7 +19,7 @@ import {
   getColumnsByGroup,
   saveToStorage,
   loadFromStorage,
-} from '../utils/analyzerUtils';
+} from '../../utils/analyzerUtils';
 import { getAnalyzerGroupCardVisuals } from './analyzerGroupVisuals';
 import {
   ANALYZER_ACTION_GROUP_CLASSES,
@@ -29,7 +29,7 @@ import {
   getAnalyzerIconButtonClasses,
   getAnalyzerSurfaceTriggerClasses,
   getAnalyzerTextButtonClasses,
-} from './analyzerControlStyles';
+} from '../analyzerControlStyles';
 
 const BUILT_IN_PRESET_IDS = {
   ALL_METRICS: 'ALL_METRICS',

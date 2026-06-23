@@ -3,7 +3,7 @@
  * * Merges seamlessly with the dropdown when expanded.
  */
 
-import { cleanName, analyzerUiColors } from '../utils/analyzerUtils';
+import { cleanName, analyzerUiColors } from '../../utils/analyzerUtils';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes';
 import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons/faTriangleExclamation';
@@ -11,7 +11,7 @@ import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons/faCircleNotch';
 import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
 import { faRotateRight } from '@fortawesome/free-solid-svg-icons/faRotateRight';
-import { getAnalyzerIconButtonClasses } from './analyzerControlStyles';
+import { getAnalyzerIconButtonClasses } from '../analyzerControlStyles';
 
 function getProfileBadgeClasses({ isMismatch, currentProfile, badgeBaseClass, loadedShadowClass }) {
   if (isMismatch) return `${badgeBaseClass} ${loadedShadowClass} border-transparent text-white`;

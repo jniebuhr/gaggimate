@@ -9,12 +9,12 @@ import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
 import { faThumbtack } from '@fortawesome/free-solid-svg-icons/faThumbtack';
 import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons/faCircleNotch';
-import { getShotIdentityKey } from '../utils/analyzerUtils';
+import { getShotIdentityKey } from '../../utils/analyzerUtils';
 import {
   getAnalyzerIconButtonClasses,
   getAnalyzerSurfaceTriggerClasses,
-} from './analyzerControlStyles';
-import { SourceMarker } from './SourceMarker';
+} from '../analyzerControlStyles';
+import { SourceMarker } from '../SourceMarker';
 import './LibrarySection.css';
 
 function getLibraryItemKey(item, isShot) {
