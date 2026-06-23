@@ -1,3 +1,5 @@
+/** Analyzes executed phases, including target exits, delay inference, and final-phase fallbacks. */
+
 import {
   LAST_PHASE_ESTIMATED_DELAY_MAX_MS,
   LAST_PHASE_OVERSHOOT_MAX_G,

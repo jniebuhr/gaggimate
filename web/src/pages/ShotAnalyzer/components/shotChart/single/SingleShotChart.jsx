@@ -1,5 +1,7 @@
 /* global globalThis */
 
+/** Coordinates the single-chart lifecycle, responsive layout, hover, replay, and export. */
+
 import { createPortal } from 'preact/compat';
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import Chart from 'chart.js/auto';

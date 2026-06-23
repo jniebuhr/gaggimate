@@ -1,3 +1,5 @@
+/** Orchestrates full-shot aggregation while delegating phase-level decisions. */
+
 import {
   analyzerDebug,
   createDelayTotals,

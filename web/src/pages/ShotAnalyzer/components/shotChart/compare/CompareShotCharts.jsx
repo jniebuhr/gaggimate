@@ -1,3 +1,5 @@
+/** Coordinates compare state, chart models, controls, and shared Chart.js lifecycles. */
+
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import Chart from 'chart.js/auto';
 import annotationPlugin from 'chartjs-plugin-annotation';

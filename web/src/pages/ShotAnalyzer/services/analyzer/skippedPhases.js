@@ -1,3 +1,5 @@
+/** Inserts missing profile phases without discarding or reordering executed shot phases. */
+
 import { createEmptyPhaseStats } from './metricStats';
 import { formatStopReason, isTargetHit, isWeightTarget } from './targetMatching';
 
