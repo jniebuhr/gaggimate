@@ -67,8 +67,10 @@ class Settings {
     bool isDelayAdjust() const { return delayAdjust; }
     String getPid() const { return pid; }
     String getPumpModelCoeffs() const { return pumpModelCoeffs; }
+    String getPumpSlipCoeffs() const { return pumpSlipCoeffs; }
     String getWifiSsid() const { return wifiSsid; }
     String getWifiPassword() const { return wifiPassword; }
+    String getWifiApPassword() const { return wifiApPassword; }
     String getMdnsName() const { return mdnsName; }
     bool isHomekit() const { return homekit; }
     bool isVolumetricTarget() const { return volumetricTarget; }
@@ -101,10 +103,27 @@ class Settings {
     float getSteamPumpCutoff() const { return steamPumpCutoff; }
     int getThemeMode() const { return themeMode; }
     int getHistoryIndex() const { return historyIndex; }
-    int getSunriseR() const { return sunriseR; }
-    int getSunriseG() const { return sunriseG; }
-    int getSunriseB() const { return sunriseB; }
-    int getSunriseW() const { return sunriseW; }
+
+    [[deprecated]]
+    int getSunriseR() const {
+        return sunriseR;
+    }
+    [[deprecated]]
+    int getSunriseG() const {
+        return sunriseG;
+    }
+    [[deprecated]]
+    int getSunriseB() const {
+        return sunriseB;
+    }
+    [[deprecated]]
+    int getSunriseW() const {
+        return sunriseW;
+    }
+    String getSunriseIdle() const { return sunriseIdle; }
+    String getSunriseActive() const { return sunriseActive; }
+    String getSunriseFinished() const { return sunriseFinished; }
+    String getSunriseError() const { return sunriseError; }
     int getSunriseExtBrightness() const { return sunriseExtBrightness; }
     int getEmptyTankDistance() const { return emptyTankDistance; }
     int getFullTankDistance() const { return fullTankDistance; }
@@ -117,6 +136,11 @@ class Settings {
         return "";
     };
     std::vector<String> getButtonBehaviorList() const { return buttonBehavior; }
+    float getCommutationGain() const { return commutationGain; }
+    float getConvergenceGain() const { return convergenceGain; }
+    float getIntegralGain() const { return integralGain; }
+    float getMaxPumpPower() const { return maxPumpPower; }
+
     void setTargetSteamTemp(int target_steam_temp);
     void setTargetWaterTemp(int target_water_temp);
     void setTemperatureOffset(int temperature_offset);
@@ -130,8 +154,10 @@ class Settings {
     void setDelayAdjust(bool delay_adjust);
     void setPid(const String &pid);
     void setPumpModelCoeffs(const String &pumpModelCoeffs);
+    void setPumpSlipCoeffs(const String &pumpSlipCoeffs);
     void setWifiSsid(const String &wifiSsid);
     void setWifiPassword(const String &wifiPassword);
+    void setWifiApPassword(const String &wifiApPassword);
     void setMdnsName(const String &mdnsName);
     void setHomekit(bool homekit);
     void setVolumetricTarget(bool volumetric_target);
@@ -166,10 +192,18 @@ class Settings {
     void setSteamPumpCutoff(float steam_pump_cutoff);
     void setThemeMode(int theme_mode);
     void setHistoryIndex(int history_index);
+    [[deprecated]]
     void setSunriseR(int sunrise_r);
+    [[deprecated]]
     void setSunriseG(int sunrise_g);
+    [[deprecated]]
     void setSunriseB(int sunrise_b);
+    [[deprecated]]
     void setSunriseW(int sunrise_w);
+    void setSunriseIdle(String hexColor);
+    void setSunriseActive(String hexColor);
+    void setSunriseFinished(String hexColor);
+    void setSunriseError(String hexColor);
     void setSunriseExtBrightness(int sunrise_ext_brightness);
     void setEmptyTankDistance(int empty_tank_distance);
     void setFullTankDistance(int full_tank_distance);
@@ -178,6 +212,11 @@ class Settings {
     void setAutoWakeupSchedules(const std::vector<AutoWakeupSchedule> &schedules);
     void setButtonBehavior(int index, String behavior);
     void setButtonBehaviorList(const std::vector<String> &behavior_list);
+
+    void setCommutationGain(float commutationGain);
+    void setConvergenceGain(float convergenceGain);
+    void setIntegralGain(float integralGain);
+    void setMaxPumpPower(float maxPumpPower);
 
   private:
     Preferences preferences;
@@ -199,9 +238,9 @@ class Settings {
     std::vector<AutoWakeupSchedule> autowakeupSchedules;
     int standbyTimeout = DEFAULT_STANDBY_TIMEOUT_MS;
     String pid = DEFAULT_PID;
-    String pumpModelCoeffs = DEFAULT_PUMP_MODEL_COEFFS;
     String wifiSsid = "";
     String wifiPassword = "";
+    String wifiApPassword = ""; // empty until generated on first start
     String mdnsName = DEFAULT_MDNS_NAME;
     String savedScale = "";
     bool homekit = false;
@@ -241,15 +280,28 @@ class Settings {
     int sunriseG = 0;
     int sunriseB = 255;
     int sunriseW = 50;
+    String sunriseIdle = "#00FFFF";
+    String sunriseActive = "#0000FF";
+    String sunriseFinished = "#00FF00";
+    String sunriseError = "#FF0000";
     int sunriseExtBrightness = 255;
     int emptyTankDistance = 200;
     int fullTankDistance = 50;
+
     int altRelayFunction = ALT_RELAY_GRIND; // Default to grind
     std::vector<String> buttonBehavior;
 
+    // Pump settings
+    String pumpModelCoeffs = DEFAULT_PUMP_MODEL_COEFFS;
+    String pumpSlipCoeffs = DEFAULT_PUMP_SLIP_COEFFS;
+    float commutationGain = DEFAULT_COMMUTATION_GAIN;
+    float convergenceGain = DEFAULT_CONVERGENCE_GAIN;
+    float integralGain = DEFAULT_INTEGRAL_GAIN;
+    float maxPumpPower = 1.0f;
+
     void doSave();
     xTaskHandle taskHandle;
-    static void loopTask(void *arg);
+    [[noreturn]] static void loopTask(void *arg);
 };
 
 #endif // SETTINGS_H

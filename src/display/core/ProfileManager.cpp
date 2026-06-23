@@ -1,5 +1,6 @@
 #include "ProfileManager.h"
 #include <ArduinoJson.h>
+#include <display/util/PsramAllocator.h>
 
 #include <utility>
 
@@ -12,10 +13,15 @@ void ProfileManager::setup() {
     // burned a file handle. Reuse this snapshot for both the entry guard and
     // the migrate() call so we hit the FS as little as possible at boot.
     auto profiles = listProfiles();
-    const bool needsMigrate = profiles.empty() || getFavoritedProfiles().empty() ||
-                              _settings.getSelectedProfile() == "" || !loadSelectedProfile(selectedProfile);
+    const bool needsMigrate = profiles.empty() || getFavoritedProfiles().empty() || _settings.getSelectedProfile() == "" ||
+                              !loadSelectedProfile(selectedProfile);
     if (needsMigrate) {
         migrate(profiles);
+        // Reset before reload: parseProfile() appends to profile.phases. The
+        // earlier loadSelectedProfile in `needsMigrate` may have pushed phases
+        // before failing validation, leaving partial state that this reload
+        // would double. Defensive — current paths almost never hit this.
+        selectedProfile = Profile{};
         loadSelectedProfile(selectedProfile);
     }
     _settings.setFavoritedProfiles(getFavoritedProfiles(true));
@@ -66,7 +72,8 @@ void ProfileManager::migrate(const std::vector<String> &existingProfiles) {
             // single entry even when more profiles exist on disk. Matches
             // the create-new-Default branch below.
             for (const String &id : existingProfiles) {
-                if (id != existingId) addFavoritedProfile(id);
+                if (id != existingId)
+                    addFavoritedProfile(id);
             }
             ESP_LOGI("ProfileManager", "Reusing existing Default profile %s", resolvedId.c_str());
             return;
@@ -109,7 +116,8 @@ std::vector<String> ProfileManager::listProfiles() {
     std::vector<String> uuids;
     File root = _fs->open(_dir);
     if (!root || !root.isDirectory()) {
-        if (root) root.close();
+        if (root)
+            root.close();
         return uuids;
     }
 
@@ -151,7 +159,7 @@ bool ProfileManager::loadProfile(const String &uuid, Profile &outProfile) {
     if (!file)
         return false;
 
-    JsonDocument doc;
+    JsonDocument doc(&psramAllocator);
     DeserializationError err = deserializeJson(doc, file);
     file.close();
     if (err)
@@ -182,7 +190,7 @@ bool ProfileManager::saveProfile(Profile &profile) {
     if (!file)
         return false;
 
-    JsonDocument doc;
+    JsonDocument doc(&psramAllocator);
     JsonObject obj = doc.to<JsonObject>();
     writeProfile(obj, profile);
 

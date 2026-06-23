@@ -3,8 +3,6 @@ on:
     tags:
       - "*"
 
-permissions:
-  contents: write
 name: Build
 jobs:
   build:
@@ -39,9 +37,10 @@ jobs:
           mkdir -p upload/headless
           mkdir -p upload/controller
           git tag -d nightly
+          git tag -d db
           git describe --tags --dirty > out/version.txt
       - name: Build Web
-        run: ./scripts/build_spiffs.sh
+        run: ./scripts/build_webui.sh
       - name: Build controller
         run: |
           pio run -e controller
@@ -62,10 +61,10 @@ jobs:
       - name: Build display FS
         run: |
           pio run -t buildfs -e display
-          cp .pio/build/display/spiffs.bin out/display-filesystem.bin
-          cp .pio/build/display/spiffs.bin out/display-headless-filesystem.bin
-          cp .pio/build/display/spiffs.bin upload/display/filesystem.bin
-          cp .pio/build/display/spiffs.bin upload/headless/filesystem.bin
+          cp .pio/build/display/littlefs.bin out/display-filesystem.bin
+          cp .pio/build/display/littlefs.bin out/display-headless-filesystem.bin
+          cp .pio/build/display/littlefs.bin upload/display/filesystem.bin
+          cp .pio/build/display/littlefs.bin upload/headless/filesystem.bin
       - name: Build display
         run: |
           pio run -e display
@@ -107,9 +106,12 @@ jobs:
         with:
           name: gaggimate-firmware
           path: "out/*"
+
   release:
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Download Firmware Files
         uses: actions/download-artifact@v4

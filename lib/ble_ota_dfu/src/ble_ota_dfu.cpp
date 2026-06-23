@@ -221,6 +221,7 @@ void BLEOverTheAirDeviceFirmwareUpdate::onWrite(BLECharacteristic *pCharacterist
 
             // Write updater content to the flash
         case 0xFC: {
+            OTA_DFU_BLE->setUpdating(true);
             selected_updater = !selected_updater;
             write_len[selected_updater] = (pData[1] * 256) + pData[2];
             current_progression = (pData[3] * 256) + pData[4];
@@ -272,6 +273,7 @@ void BLEOverTheAirDeviceFirmwareUpdate::onWrite(BLECharacteristic *pCharacterist
                 FLASH.remove("/update.bin");
             }
 
+            OTA_DFU_BLE->setUpdating(true);
             // Send mode ("fast" or "slow")
             uint8_t mode[] = {0xAA, FASTMODE};
             OTA_DFU_BLE->pCharacteristic_BLE_OTA_DFU_TX->setValue(mode, 2);
@@ -289,6 +291,7 @@ void BLEOverTheAirDeviceFirmwareUpdate::onWrite(BLECharacteristic *pCharacterist
 
             // Switch to update mode
         case 0xFF:
+            OTA_DFU_BLE->setUpdating(true);
             parts = (pData[1] * 256) + pData[2];
             MTU = (pData[3] * 256) + pData[4];
             break;
@@ -397,6 +400,10 @@ bool BLE_OTA_DFU::connected() {
     // True if connected
     return pServer->getConnectedCount() > 0;
 }
+
+bool BLE_OTA_DFU::isUpdating() const { return updating; }
+
+void BLE_OTA_DFU::setUpdating(bool updating) { this->updating = updating; }
 
 void BLE_OTA_DFU::send_OTA_DFU(uint8_t value) {
     uint8_t _value = value;

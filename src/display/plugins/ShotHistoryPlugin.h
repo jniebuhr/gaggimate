@@ -2,7 +2,7 @@
 #define SHOTHISTORYPLUGIN_H
 
 #include <ArduinoJson.h>
-#include <SPIFFS.h>
+#include <LittleFS.h>
 #include <display/core/Plugin.h>
 #include <display/core/utils.h>
 #include <display/models/shot_log_format.h>
@@ -52,11 +52,12 @@ class ShotHistoryPlugin : public Plugin {
     void cleanupHistory();
     size_t getFreeSpace();
 
-    void recordPhaseTransition(uint8_t phaseNumber, uint16_t sampleIndex); // Helper for phase transitions
+    void recordPhaseTransition(uint8_t phaseNumber, uint16_t sampleIndex,
+                               uint8_t reason); // Helper for phase transitions
 
     Controller *controller = nullptr;
     PluginManager *pluginManager = nullptr;
-    FS *fs = &SPIFFS;
+    FS *fs = &LittleFS;
     String currentId = "";
     bool isFileOpen = false;
     File currentFile;
@@ -69,6 +70,7 @@ class ShotHistoryPlugin : public Plugin {
     bool extendedRecording = false;
     bool indexEntryCreated = false;     // Track if early index entry was created
     bool shotStartedVolumetric = false; // Track initial volumetric mode
+    double currentBrewDelay = 0.0;      // Brew delay (ms) the active shot was started with
     unsigned long shotStart = 0;
     unsigned long extendedRecordingStart = 0;
     unsigned long lastWeightChangeTime = 0;
@@ -83,6 +85,7 @@ class ShotHistoryPlugin : public Plugin {
 
     // Phase transition tracking (v5+)
     uint8_t lastRecordedPhase = 0xFF; // Invalid initial value to detect first phase
+    uint8_t finalExitReason = 0;      // Reason the shot ended (PhaseExitReason); captured at brew end
 
     // Async rebuild state
     bool rebuildInProgress = false;

@@ -1,10 +1,10 @@
 #ifndef CONTROLLER_H
 #define CONTROLLER_H
 
-#include "NimBLEClientController.h"
-#include "NimBLEComm.h"
+#include "GaggiMateClient.h"
 #include "PluginManager.h"
 #include "Settings.h"
+#include "SystemInfo.h"
 #include <WiFi.h>
 #include <display/core/ProfileManager.h>
 #include <display/core/process/Process.h>
@@ -25,12 +25,14 @@ class Controller {
     void setup();
     void connect();
     void loop();
+    void loopLogic();
     void loopControl();
 
     void setMode(int newMode);
     void setTargetTemp(float temperature);
     void setPressureScale();
     void setPumpModelCoeffs();
+    void setPidSettings();
     void setTargetGrindDuration(int duration);
     void setTargetGrindVolume(double volume);
 
@@ -52,7 +54,7 @@ class Controller {
     virtual float getCurrentPuckFlow() const { return currentPuckFlow; }
     virtual float getCurrentPumpFlow() const { return currentPumpFlow; }
 
-    bool isTaskHealthy() const { return is_task_healthy(eTaskGetState(taskHandle)); }
+    bool isTaskHealthy() const { return is_task_healthy(eTaskGetState(logicTaskHandle)); }
 
     void autotune(int testTime, int samples, int heaterWattage);
     void startProcess(Process *process);
@@ -94,8 +96,8 @@ class Controller {
     int getWaterLevel() const {
         float reversedLevel = static_cast<float>(settings.getEmptyTankDistance()) -
                               static_cast<float>(std::min(settings.getEmptyTankDistance(), tofDistance));
-        return static_cast<int>((reversedLevel - settings.getFullTankDistance()) /
-                                static_cast<float>(settings.getEmptyTankDistance() - settings.getFullTankDistance()) * 100.0f);
+        float range = static_cast<float>(settings.getEmptyTankDistance() - settings.getFullTankDistance());
+        return static_cast<int>(std::min(reversedLevel / range * 100.0f, 100.0f));
     };
     int getTofDistance() const { return tofDistance; }
 
@@ -104,7 +106,7 @@ class Controller {
 
     SystemInfo getSystemInfo() const { return systemInfo; }
 
-    NimBLEClientController *getClientController() { return &clientController; }
+    GaggiMateClient *getClientController() { return &comms; }
 
   private:
     // Initialization methods
@@ -112,11 +114,19 @@ class Controller {
     void setupPanel();
 #endif
     void setupBluetooth();
-    void setupInfos();
+    void onSystemInfo(const char *hardware, const char *version, uint32_t protocolVersion, bool dimming, bool pressure,
+                      bool ledControl, bool tof, std::vector<uint32_t> addons);
+    // Connected to a controller too old to speak the framed protocol: drive the
+    // same path as a protocol-version mismatch (OTA recovery only). infoJson is
+    // the legacy INFO characteristic contents (hardware/version/capabilities).
+    void onIncompatibleController(const String &infoJson);
     void setupWifi();
 
     // Functional methods
     void updateControl();
+    // Switch the BLE connection interval based on whether a process is running.
+    // force re-applies even if the desired state is unchanged (use on connect).
+    void applyConnectionPriority(bool force = false);
 
     // Event handlers
     void onTempRead(float temperature);
@@ -132,7 +142,7 @@ class Controller {
     DefaultUI *ui = nullptr;
     Driver *driver = nullptr;
 #endif
-    NimBLEClientController clientController;
+    GaggiMateClient comms;
     hw_timer_t *timer = nullptr;
     Settings settings;
     PluginManager *pluginManager{};
@@ -149,6 +159,19 @@ class Controller {
 
     SystemInfo systemInfo{};
 
+    // Last control values sent to the controller. updateControl() only
+    // transmits components that differ from these (the controller is stateful
+    // and delivery is acknowledged). Reset on (re)connect to force a full resend.
+    BoilerCommand lastBoiler{};
+    PumpCommand lastPump{};
+    RelayCommand lastRelay{};
+    bool lastAlt = false;
+    bool controlStateSent = false;
+
+    // BLE connection-interval priority: tight while a process runs, relaxed when
+    // idle (frees radio airtime for Wi-Fi). Tracks the last requested state.
+    bool connLowLatency = false;
+
     Process *currentProcess = nullptr;
     Process *lastProcess = nullptr;
 
@@ -160,6 +183,11 @@ class Controller {
     bool updating = false;
     bool autotuning = false;
     bool isApConnection = false;
+    // WiFi up/down is signalled (flag only) from the Arduino WiFi event task and
+    // acted on in loop(): doing server/socket/mDNS start-stop in that small-stack
+    // callback corrupted the heap under load. See setupWifi() + loop().
+    volatile bool wifiConnectedPending = false;
+    volatile bool wifiDisconnectedPending = false;
     bool initialized = false;
     bool screenReady = false;
     bool waitingForController = false;
@@ -176,9 +204,9 @@ class Controller {
     static const unsigned long BLUETOOTH_GRACE_PERIOD_MS = 1500; // 1.5 second grace period
     static const unsigned long CONTROLLER_WAITING_TIMEOUT_MS = 10000;
 
-    xTaskHandle taskHandle;
+    xTaskHandle logicTaskHandle;
 
-    static void loopTask(void *arg);
+    static void loopLogicTask(void *arg);
 };
 
 #endif // CONTROLLER_H
