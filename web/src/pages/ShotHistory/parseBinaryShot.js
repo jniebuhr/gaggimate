@@ -175,11 +175,14 @@ export function parseBinaryShot(arrayBuffer, id) {
   // Parse phase transitions for v5+
   let phaseTransitions = [];
   let finalExitReason = 0;
+  let brewDelay = 0;
   if (version >= 5) {
     const transitionCount = view.getUint8(110 + 12 * 29); // After 12 PhaseTransitions
     phaseTransitions = parsePhaseTransitions(view, transitionCount);
     // finalExitReason follows phaseTransitionCount; was reserved padding before, so legacy files read 0.
     finalExitReason = view.getUint8(110 + 12 * 29 + 1);
+    // brewDelayMs (ms) follows finalExitReason; legacy files read 0 (was reserved padding).
+    brewDelay = view.getUint16(110 + 12 * 29 + 2, true);
   }
 
   // Calculate expected sample size from fieldsMask
@@ -305,5 +308,6 @@ export function parseBinaryShot(arrayBuffer, id) {
     phaseTransitions, // v5+ phase transition data
     finalExitReason, // v5+ reason the shot ended (last phase exit or manual abort)
     finalExitReasonLabel: PHASE_EXIT_REASON_LABELS[finalExitReason] ?? 'Unknown',
+    brewDelay, // v5+ predictive brew delay (ms) the shot ran with
   };
 }

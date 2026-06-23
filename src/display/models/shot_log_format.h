@@ -83,12 +83,14 @@ struct ShotLogHeader {
     uint8_t phaseTransitionCount;         // 1 byte
 
     // Reason the shot itself ended = how the final phase exited (PhaseExitReason / PHASE_EXIT_REASON_*).
-    // Carved from the v5 reserved padding so the header stays 512 bytes; old files have 0 (= unknown) here
-    // and old readers ignore it, preserving both compatibility directions.
     uint8_t finalExitReason; // 1 byte
 
+    // Brew delay (predictive volumetric lead time, ms) the shot ran with, from Settings::getBrewDelay().
+    // Carved from the v5 reserved padding; old files have 0 here and old readers ignore it.
+    uint16_t brewDelayMs; // 2 bytes
+
     // Future expansion - pad to 512 bytes total
-    uint8_t reserved_v5[52]; // Manual padding to reach 512 bytes
+    uint8_t reserved_v5[50]; // Manual padding to reach 512 bytes
 };
 #pragma pack(pop)
 

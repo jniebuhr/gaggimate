@@ -70,6 +70,7 @@ class ShotHistoryPlugin : public Plugin {
     bool extendedRecording = false;
     bool indexEntryCreated = false;     // Track if early index entry was created
     bool shotStartedVolumetric = false; // Track initial volumetric mode
+    double currentBrewDelay = 0.0;      // Brew delay (ms) the active shot was started with
     unsigned long shotStart = 0;
     unsigned long extendedRecordingStart = 0;
     unsigned long lastWeightChangeTime = 0;

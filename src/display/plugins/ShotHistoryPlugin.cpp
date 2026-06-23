@@ -124,6 +124,9 @@ void ShotHistoryPlugin::record() {
                 strncpy(header.profileName, profile.label.c_str(), sizeof(header.profileName) - 1);
                 header.profileName[sizeof(header.profileName) - 1] = '\0';
                 header.phaseTransitionCount = 0; // Initialize phase transition count
+                // Brew delay (ms) the shot ran with; round and clamp into the uint16_t field
+                double delayMs = currentBrewDelay > 0.0 ? currentBrewDelay + 0.5 : 0.0;
+                header.brewDelayMs = delayMs > 65535.0 ? 65535 : static_cast<uint16_t>(delayMs);
                 // Write header placeholder
                 currentFile.write(reinterpret_cast<const uint8_t *>(&header), sizeof(header));
             }
@@ -277,6 +280,8 @@ void ShotHistoryPlugin::startRecording() {
         }
         // Capture initial volumetric mode state (brew by weight vs brew by time)
         shotStartedVolumetric = brewProcess->target == ProcessTarget::VOLUMETRIC;
+        // Capture the brew delay the shot runs with (fixed at process construction)
+        currentBrewDelay = brewProcess->brewDelay;
     }
     currentId = padId(String(controller->getSettings().getHistoryIndex()));
     shotStart = millis();
@@ -469,50 +474,7 @@ void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &respo
     response["tp"] = String("res:") + type.substring(4);
     response["rid"] = request["rid"].as<String>();
 
-    if (type == "req:history:list") {
-        JsonArray arr = response["history"].to<JsonArray>();
-        File root = fs->open("/h");
-        if (root && root.isDirectory()) {
-            File file = root.openNextFile();
-            while (file) {
-                String fname = String(file.name());
-                if (fname.endsWith(".slog")) {
-                    // Read header only
-                    ShotLogHeader hdr{};
-                    if (file.read(reinterpret_cast<uint8_t *>(&hdr), sizeof(hdr)) == sizeof(hdr) && hdr.magic == SHOT_LOG_MAGIC) {
-                        float finalWeight = hdr.finalWeight > 0 ? static_cast<float>(hdr.finalWeight) / WEIGHT_SCALE : 0.0f;
-
-                        bool headerIncomplete = hdr.sampleCount == 0;
-
-                        auto o = arr.add<JsonObject>();
-                        int start = fname.lastIndexOf('/') + 1;
-                        int end = fname.lastIndexOf('.');
-                        String id = fname.substring(start, end);
-                        o["id"] = id;
-                        o["version"] = hdr.version;
-                        o["timestamp"] = hdr.startEpoch;
-                        o["profile"] = hdr.profileName;
-                        o["profileId"] = hdr.profileId;
-                        o["samples"] = hdr.sampleCount;
-                        o["duration"] = hdr.durationMs;
-                        if (finalWeight > 0.0f) {
-                            o["volume"] = finalWeight;
-                        }
-                        if (headerIncomplete) {
-                            o["incomplete"] = true; // flag partial shot
-                        }
-                    }
-                }
-                file.close();
-                file = root.openNextFile();
-            }
-        }
-        if (root)
-            root.close();
-    } else if (type == "req:history:get") {
-        // Return error: binary must be fetched via HTTP endpoint
-        response["error"] = "use HTTP /api/history?id=<id>";
-    } else if (type == "req:history:delete") {
+    if (type == "req:history:delete") {
         auto id = request["id"].as<String>();
         String paddedId = id;
         while (paddedId.length() < 6) {
