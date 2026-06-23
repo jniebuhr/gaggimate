@@ -34,7 +34,7 @@ const StatisticsPage = lazy(() =>
   import('./pages/Statistics/index.jsx').then(m => m.StatisticsPage),
 );
 const DashboardSettings = lazy(() =>
-  import('./pages/DashboardSettings/index.jsx').then(m => m.DashboardSettings)
+  import('./pages/DashboardSettings/index.jsx').then(m => m.DashboardSettings),
 );
 
 const apiService = new ApiService();

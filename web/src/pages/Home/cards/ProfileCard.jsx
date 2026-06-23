@@ -30,7 +30,9 @@ function ProgressCard({ processInfo, isBrewing, isGrinding, selectedProfile }) {
         </div>
         {target && (
           <div className='text-right'>
-            <div className='text-base-content/50 text-[0.6rem] uppercase tracking-wider'>Target</div>
+            <div className='text-base-content/50 text-[0.6rem] tracking-wider uppercase'>
+              Target
+            </div>
             <div className='text-base-content text-lg font-bold tabular-nums'>{target}</div>
           </div>
         )}
@@ -46,9 +48,9 @@ function ProgressCard({ processInfo, isBrewing, isGrinding, selectedProfile }) {
 }
 
 ProgressCard.propTypes = {
-  processInfo:     PropTypes.object,
-  isBrewing:       PropTypes.bool.isRequired,
-  isGrinding:      PropTypes.bool.isRequired,
+  processInfo: PropTypes.object,
+  isBrewing: PropTypes.bool.isRequired,
+  isGrinding: PropTypes.bool.isRequired,
   selectedProfile: PropTypes.string,
 };
 
@@ -68,7 +70,10 @@ export function ProfileCard({
   const [profileLoading, setProfileLoading] = useState(false);
 
   useEffect(() => {
-    if (!selectedProfileId || !apiService) { setProfileData(null); return; }
+    if (!selectedProfileId || !apiService) {
+      setProfileData(null);
+      return;
+    }
     let cancelled = false;
     setProfileLoading(true);
     apiService
@@ -83,7 +88,9 @@ export function ProfileCard({
         setProfileData(null);
         setProfileLoading(false);
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [selectedProfileId, apiService]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const showProgress = (isBrewing || isGrinding) && (isActive || isFinished);
@@ -101,17 +108,20 @@ export function ProfileCard({
 
   const inner = (
     <>
-      <div className='text-base-content/50 text-[0.6rem] uppercase tracking-wider'>Profile</div>
+      <div className='text-base-content/50 text-[0.6rem] tracking-wider uppercase'>Profile</div>
       <div className='flex items-center justify-between gap-2'>
         <span className='text-base-content truncate text-sm font-semibold'>
           {selectedProfile || 'Default'}
         </span>
         <a href='/profiles'>
-          <FontAwesomeIcon icon={faRectangleList} className='text-base-content/40 shrink-0 text-sm' />
+          <FontAwesomeIcon
+            icon={faRectangleList}
+            className='text-base-content/40 shrink-0 text-sm'
+          />
         </a>
       </div>
-      {!compact && (
-        (profileLoading || (!!selectedProfileId && !profileData)) ? (
+      {!compact &&
+        (profileLoading || (!!selectedProfileId && !profileData) ? (
           <SkeletonBlock
             className='mt-1 w-full rounded-xl'
             style={{ height: `${profileChartHeightSignal.value}px` }}
@@ -123,26 +133,25 @@ export function ProfileCard({
             className='mt-1 w-full'
             style={{ height: `${profileChartHeightSignal.value}px` }}
           />
-        ) : null
-      )}
+        ) : null)}
     </>
   );
 
   if (inCard) {
-    return <div className='flex flex-col gap-1 h-full'>{inner}</div>;
+    return <div className='flex h-full flex-col gap-1'>{inner}</div>;
   }
 
-  return <div className='card bg-base-100 flex flex-col gap-1 rounded-xl p-3 h-full'>{inner}</div>;
+  return <div className='card bg-base-100 flex h-full flex-col gap-1 rounded-xl p-3'>{inner}</div>;
 }
 
 ProfileCard.propTypes = {
-  selectedProfile:   PropTypes.string,
+  selectedProfile: PropTypes.string,
   selectedProfileId: PropTypes.string,
-  processInfo:       PropTypes.object,
-  isActive:          PropTypes.bool.isRequired,
-  isFinished:        PropTypes.bool.isRequired,
-  isBrewing:         PropTypes.bool.isRequired,
-  isGrinding:        PropTypes.bool.isRequired,
-  inCard:            PropTypes.bool,
-  compact:           PropTypes.bool,
+  processInfo: PropTypes.object,
+  isActive: PropTypes.bool.isRequired,
+  isFinished: PropTypes.bool.isRequired,
+  isBrewing: PropTypes.bool.isRequired,
+  isGrinding: PropTypes.bool.isRequired,
+  inCard: PropTypes.bool,
+  compact: PropTypes.bool,
 };

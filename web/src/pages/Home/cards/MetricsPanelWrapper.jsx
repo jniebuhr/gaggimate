@@ -8,9 +8,7 @@ export function MetricsPanelWrapper({ ds, inCard = false, compact = false }) {
 
   const orderedIds = [
     ...metricOrder,
-    ...METRIC_DEFINITIONS
-      .filter(m => m.required && !metricOrder.includes(m.id))
-      .map(m => m.id),
+    ...METRIC_DEFINITIONS.filter(m => m.required && !metricOrder.includes(m.id)).map(m => m.id),
   ];
 
   const visibleMetrics = orderedIds

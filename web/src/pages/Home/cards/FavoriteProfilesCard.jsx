@@ -24,7 +24,7 @@ function ProfileMiniCard({ profile, isSelected, onSelect }) {
       type='button'
       onClick={() => onSelect(profile.id)}
       className={`flex w-full flex-col gap-1.5 rounded-lg p-2 text-left transition-colors ${
-        isSelected ? 'bg-primary/15 ring-1 ring-primary/40' : 'bg-base-200 hover:bg-base-300'
+        isSelected ? 'bg-primary/15 ring-primary/40 ring-1' : 'bg-base-200 hover:bg-base-300'
       }`}
     >
       <div className='w-full truncate text-sm font-semibold'>{profile.label}</div>
@@ -76,15 +76,21 @@ export function FavoriteProfilesCard({ selectedProfileId, inCard = false, compac
         setFavorites((res.profiles ?? []).filter(p => p.favorite).slice(0, 3));
         setLoading(false);
       })
-      .catch(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
+      .catch(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   });
 
   const handleSelect = id => {
     apiService.request({ tp: 'req:profiles:select', id }).catch(() => {});
   };
 
-  const wrapperClass = inCard ? 'flex flex-col gap-2' : 'card bg-base-100 flex flex-col gap-2 rounded-xl p-3';
+  const wrapperClass = inCard
+    ? 'flex flex-col gap-2'
+    : 'card bg-base-100 flex flex-col gap-2 rounded-xl p-3';
 
   if (loading || favorites === null) {
     return (
@@ -92,11 +98,15 @@ export function FavoriteProfilesCard({ selectedProfileId, inCard = false, compac
         <SkeletonBlock className='h-2 w-20' />
         {compact ? (
           <div className='flex gap-1.5'>
-            {[0, 1, 2].map(i => <SkeletonBlock key={i} className='h-7 w-20 rounded-full' />)}
+            {[0, 1, 2].map(i => (
+              <SkeletonBlock key={i} className='h-7 w-20 rounded-full' />
+            ))}
           </div>
         ) : (
           <div className='grid grid-cols-3 gap-2'>
-            {[0, 1, 2].map(i => <SkeletonBlock key={i} className='h-24 rounded-lg' />)}
+            {[0, 1, 2].map(i => (
+              <SkeletonBlock key={i} className='h-24 rounded-lg' />
+            ))}
           </div>
         )}
       </div>
@@ -106,7 +116,9 @@ export function FavoriteProfilesCard({ selectedProfileId, inCard = false, compac
   if (favorites.length === 0) {
     return (
       <div className={wrapperClass}>
-        <div className='text-base-content/50 text-[0.6rem] uppercase tracking-wider'>Quick Select</div>
+        <div className='text-base-content/50 text-[0.6rem] tracking-wider uppercase'>
+          Quick Select
+        </div>
         <div className='text-base-content/50 flex flex-col items-center gap-1 py-3 text-center text-sm'>
           <span className='text-lg'>★</span>
           <span>No favorites — mark profiles as ★ in the profile list</span>
@@ -147,7 +159,9 @@ export function FavoriteProfilesCard({ selectedProfileId, inCard = false, compac
 
   return (
     <div className={wrapperClass}>
-      <div className='text-base-content/50 text-[0.6rem] uppercase tracking-wider'>Quick Select</div>
+      <div className='text-base-content/50 text-[0.6rem] tracking-wider uppercase'>
+        Quick Select
+      </div>
       {content}
     </div>
   );
@@ -155,6 +169,6 @@ export function FavoriteProfilesCard({ selectedProfileId, inCard = false, compac
 
 FavoriteProfilesCard.propTypes = {
   selectedProfileId: PropTypes.string,
-  inCard:            PropTypes.bool,
-  compact:           PropTypes.bool,
+  inCard: PropTypes.bool,
+  compact: PropTypes.bool,
 };

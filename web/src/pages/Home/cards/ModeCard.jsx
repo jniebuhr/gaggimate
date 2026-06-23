@@ -20,8 +20,8 @@ export function ModeCard({ mode, showGrindTab, changeMode, compact = false }) {
 }
 
 ModeCard.propTypes = {
-  mode:         PropTypes.number.isRequired,
+  mode: PropTypes.number.isRequired,
   showGrindTab: PropTypes.bool.isRequired,
-  changeMode:   PropTypes.func.isRequired,
-  compact:      PropTypes.bool,
+  changeMode: PropTypes.func.isRequired,
+  compact: PropTypes.bool,
 };
