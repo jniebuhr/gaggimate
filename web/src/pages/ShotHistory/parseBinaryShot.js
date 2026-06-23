@@ -67,12 +67,17 @@ const FIELD_DEFS = {
 };
 
 function decodeCString(bytes) {
-  let out = '';
+  // Bytes are a null-terminated UTF-8 C string. Decode as UTF-8 — appending
+  // String.fromCharCode(byte) treats each byte as a Latin-1 code point, which
+  // mangles multibyte characters (e.g. "é" 0xC3 0xA9 -> "Ã©").
+  let end = bytes.length;
   for (let i = 0; i < bytes.length; i++) {
-    if (bytes[i] === 0) break;
-    out += String.fromCharCode(bytes[i]);
+    if (bytes[i] === 0) {
+      end = i;
+      break;
+    }
   }
-  return out;
+  return new TextDecoder('utf-8').decode(bytes.subarray(0, end));
 }
 
 function countSetBits(n) {
