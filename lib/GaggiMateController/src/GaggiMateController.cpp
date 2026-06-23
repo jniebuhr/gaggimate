@@ -194,6 +194,8 @@ void GaggiMateController::setup() {
             }
             if (this->gearpumpAddon != nullptr) {
                 dimmedPump->setGains(settings.commutationGain, settings.convergenceGain, settings.integralGain);
+                // Slip model is only meaningful for the positive-displacement gear/rotary-vane pump.
+                dimmedPump->setPumpSlipPolyCoeffs(settings.slipA, settings.slipB, settings.slipC, settings.slipD);
             }
         }
         if (this->gearpumpAddon != nullptr) {

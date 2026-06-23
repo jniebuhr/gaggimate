@@ -620,6 +620,8 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setPid(request->arg("pid"));
             if (request->hasArg("pumpModelCoeffs"))
                 settings->setPumpModelCoeffs(request->arg("pumpModelCoeffs"));
+            if (request->hasArg("pumpSlipCoeffs"))
+                settings->setPumpSlipCoeffs(request->arg("pumpSlipCoeffs"));
             if (request->hasArg("wifiSsid"))
                 settings->setWifiSsid(request->arg("wifiSsid"));
             if (request->hasArg("mdnsName"))
@@ -767,6 +769,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["haTopic"] = settings.getHomeAssistantTopic();
     doc["pid"] = settings.getPid();
     doc["pumpModelCoeffs"] = settings.getPumpModelCoeffs();
+    doc["pumpSlipCoeffs"] = settings.getPumpSlipCoeffs();
     doc["wifiSsid"] = settings.getWifiSsid();
     doc["wifiPassword"] = apMode ? "---unchanged---" : settings.getWifiPassword();
     doc["apPassword"] = settings.getWifiApPassword();
