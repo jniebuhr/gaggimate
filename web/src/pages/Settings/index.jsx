@@ -1,7 +1,7 @@
 import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
 import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { computed } from '@preact/signals';
+import { computed, useSignalEffect } from '@preact/signals';
 import { useQuery } from 'preact-fetching';
 import { useCallback, useContext, useEffect, useRef, useState } from 'preact/hooks';
 import Card from '../../components/Card.jsx';
@@ -13,7 +13,7 @@ import {
 } from '../../components/SettingsFormField.jsx';
 import { timezones } from '../../config/zones.js';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
-import { DASHBOARD_LAYOUTS, setDashboardLayout } from '../../utils/dashboardManager.js';
+import { setClock24h } from '../../utils/dashboardManager.js';
 import { downloadJson } from '../../utils/download.js';
 import { getStoredTheme, handleThemeChange } from '../../utils/themeManager.js';
 import { PluginCard } from './PluginCard.jsx';
@@ -77,16 +77,12 @@ export function Settings() {
   });
 
   // Fetch profiles via WebSocket (wait for connection)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => {
-    const loadProfiles = async () => {
-      if (connected.value) {
-        const response = await apiService.request({ tp: 'req:profiles:list', minimal: true });
-        setProfiles(response.profiles);
-      }
-    };
-    loadProfiles();
-  }, [connected.value]);
+  useSignalEffect(() => {
+    if (!connected.value) return;
+    apiService.request({ tp: 'req:profiles:list', minimal: true })
+      .then(res => setProfiles(res.profiles))
+      .catch(() => {});
+  });
 
   const formRef = useRef();
 
@@ -104,7 +100,6 @@ export function Settings() {
           fetchedSettings.standbyDisplayEnabled !== undefined
             ? fetchedSettings.standbyDisplayEnabled
             : fetchedSettings.standbyBrightness > 0,
-        dashboardLayout: fetchedSettings.dashboardLayout || DASHBOARD_LAYOUTS.ORDER_FIRST,
       };
 
       // Extract Kf from PID string and separate them. Mirrors the same
@@ -143,6 +138,7 @@ export function Settings() {
         ]);
       }
 
+      setClock24h(!!fetchedSettings.clock24hFormat);
       setFormData(settingsWithToggle);
     } else {
       setFormData({});
@@ -181,6 +177,7 @@ export function Settings() {
       }
       if (key === 'clock24hFormat') {
         value = !formData.clock24hFormat;
+        setClock24h(value);
       }
       if (key === 'autowakeupEnabled') {
         value = !formData.autowakeupEnabled;
@@ -197,9 +194,6 @@ export function Settings() {
         }
         setFormData(newFormData);
         return;
-      }
-      if (key === 'dashboardLayout') {
-        setDashboardLayout(value);
       }
       setFormData({
         ...formData,
@@ -393,7 +387,7 @@ export function Settings() {
 
           {/* Web Settings */}
           <Card sm={10} lg={5} title='Web Settings'>
-            <SettingsFormField label='Theme' htmlFor='webui-theme'>
+            <SettingsFormField label='Theme' htmlFor='webui-theme' noMargin>
               <select
                 id='webui-theme'
                 name='webui-theme'
@@ -408,21 +402,6 @@ export function Settings() {
                 <option value='dark'>Dark</option>
                 <option value='coffee'>Coffee</option>
                 <option value='nord'>Nord</option>
-              </select>
-            </SettingsFormField>
-            <SettingsFormField label='Dashboard Layout' htmlFor='dashboardLayout' noMargin>
-              <select
-                id='dashboardLayout'
-                name='dashboardLayout'
-                className='select select-bordered w-full'
-                value={formData.dashboardLayout || DASHBOARD_LAYOUTS.ORDER_FIRST}
-                onChange={e => {
-                  setFormData({ ...formData, dashboardLayout: e.target.value });
-                  setDashboardLayout(e.target.value);
-                }}
-              >
-                <option value={DASHBOARD_LAYOUTS.ORDER_FIRST}>Process Controls First</option>
-                <option value={DASHBOARD_LAYOUTS.ORDER_LAST}>Chart First</option>
               </select>
             </SettingsFormField>
           </Card>

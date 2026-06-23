@@ -11,6 +11,7 @@ import { faMagnifyingGlassChart } from '@fortawesome/free-solid-svg-icons/faMagn
 import { faChartSimple } from '@fortawesome/free-solid-svg-icons/faChartSimple';
 import { faCircleChevronLeft } from '@fortawesome/free-solid-svg-icons/faCircleChevronLeft';
 import { faCircleChevronRight } from '@fortawesome/free-solid-svg-icons/faCircleChevronRight';
+import { faPen } from '@fortawesome/free-solid-svg-icons/faPen';
 import { GmLogoIcon } from '../pages/ShotAnalyzer/components/SourceMarker.jsx';
 import { faGithub } from '@fortawesome/free-brands-svg-icons/faGithub';
 import { faDiscord } from '@fortawesome/free-brands-svg-icons/faDiscord';
@@ -228,9 +229,46 @@ export function Navigation({ collapsed = false, onToggleCollapsed }) {
             <div key={section.id}>
               {section.showDivider ? <hr className='h-5 border-0' /> : null}
               <div className='space-y-1.5'>
-                {section.items.map(item => (
-                  <MenuItem key={item.link} collapsed={collapsed} {...item} />
-                ))}
+                {section.items.map(item => {
+                  if (section.id === 'dashboard') {
+                    if (collapsed) {
+                      return <MenuItem key={item.link} collapsed={true} {...item} />;
+                    }
+                    const isDashActive = loc.path === '/';
+                    const isPenActive = loc.path === '/dashboard-settings';
+                    return (
+                      <div key={item.link} className='flex h-12 w-full overflow-hidden rounded-xl'>
+                        <a
+                          href='/'
+                          aria-current={isDashActive ? 'page' : undefined}
+                          className={`flex flex-1 items-center gap-3 px-2 ${
+                            isDashActive
+                              ? 'bg-primary text-primary-content hover:bg-primary hover:text-primary-content'
+                              : 'bg-transparent text-base-content hover:bg-base-content/10 hover:text-base-content'
+                          }`}
+                        >
+                          <FontAwesomeIcon size='md' icon={item.icon} />
+                          <span>{item.label}</span>
+                        </a>
+                        <a
+                          href='/dashboard-settings'
+                          aria-label='Dashboard Settings'
+                          title='Dashboard Settings'
+                          className={`flex items-center justify-center px-2.5 ${
+                            isPenActive
+                              ? 'bg-primary text-primary-content'
+                              : isDashActive
+                                ? 'bg-primary text-primary-content/50 hover:text-primary-content'
+                                : 'bg-transparent text-base-content/30 hover:bg-base-content/10 hover:text-base-content'
+                          }`}
+                        >
+                          <FontAwesomeIcon icon={faPen} className='h-3 w-3' />
+                        </a>
+                      </div>
+                    );
+                  }
+                  return <MenuItem key={item.link} collapsed={collapsed} {...item} />;
+                })}
               </div>
             </div>
           ))}

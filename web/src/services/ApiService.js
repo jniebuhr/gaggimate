@@ -170,6 +170,7 @@ export default class ApiService {
       targetWeight: message.tw || 0,
       activeTargetWeight: (message?.process?.a && message.tw) || 0,
       currentFlow: message.fl,
+      targetFlow: message.tf || 0,
       mode: message.m,
       selectedProfile: message.p,
       selectedProfileId: message.puid,
@@ -187,6 +188,11 @@ export default class ApiService {
       rssi: message.rssi || 0,
       lat: message.lat || 0,
       tofDistance: message.tof || 0,
+      currentPumpPower: message.pw ?? 0,
+      currentBoilerPower: message.hp ?? 0,
+      currentPuckResistance: message.pkr ?? 0,
+      currentPuckFlow: message.pf ?? 0,
+      currentCoffeeVolume: message.cv ?? 0,
     };
     const historyEntry = { ...newStatus };
     delete historyEntry.process;
@@ -218,6 +224,8 @@ export const machine = signal({
   status: {
     currentTemperature: 0,
     targetTemperature: 0,
+    currentFlow: 0,
+    targetFlow: 0,
     mode: 0,
     selectedProfile: '',
     selectedProfileId: null,
