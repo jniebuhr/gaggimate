@@ -160,10 +160,6 @@ void WebUIPlugin::loop() {
         statusDoc["lat"] = -1; // BLE round-trip latency (ms); -1 = not yet measured
         statusDoc["pw"] = controller->getCurrentPumpPower();
         statusDoc["hp"] = controller->getCurrentHeaterPower();
-        statusDoc["pkr"] = controller->getCurrentPuckResistance();
-        statusDoc["pf"] = controller->getCurrentPuckFlow();
-        statusDoc["tf"] = controller->getTargetFlow();
-        statusDoc["cv"] = controller->getCurrentCoffeeVolume();
 
         if (controller->getClientController()->getClient()->isConnected()) {
             statusDoc["rssi"] = controller->getClientController()->getClient()->getRssi();
@@ -195,6 +191,9 @@ void WebUIPlugin::loop() {
         if (process != nullptr) {
             auto pObj = statusDoc["process"].to<JsonObject>();
             pObj["a"] = controller->isActive() ? 1 : 0;
+            statusDoc["pkr"] = controller->getCurrentPuckResistance();
+            statusDoc["pf"] = controller->getCurrentPuckFlow();
+            statusDoc["tf"] = controller->getTargetFlow();
             if (process->getType() == MODE_BREW) {
                 auto *brew = static_cast<BrewProcess *>(process);
                 unsigned long ts = brew->isActive() && controller->isActive() ? millis() : brew->finished;

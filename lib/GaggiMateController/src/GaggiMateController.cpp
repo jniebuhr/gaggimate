@@ -322,7 +322,7 @@ void GaggiMateController::thermalRunawayShutdown() {
 }
 
 void GaggiMateController::sendSensorData() {
-    const float pumpPower = pump ? pump->getPowerTarget() : 0.0f;
+    const float pumpPower = *pump->getPumpPowerPtr();
     const float heaterPower = heater ? heater->getDutyCycle() : 0.0f;
     if (_config.capabilites.pressure) {
         // Flow/volumetric come from the DimmedPump; only cast when this board
