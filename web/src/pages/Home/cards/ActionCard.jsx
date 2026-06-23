@@ -17,10 +17,7 @@ export function ActionCard({
   startFlush,
   inCard = false,
 }) {
-  const showPrimary =
-    mode === 1 ||
-    mode === 3 ||
-    (isGrinding && isGrindAvailable);
+  const showPrimary = mode === 1 || mode === 3 || (isGrinding && isGrindAvailable);
 
   const showFlush = isBrewing && !isActive && !isFinished;
 
@@ -35,7 +32,9 @@ export function ActionCard({
   const primaryLabel = getPrimaryLabel(isActive, isFinished);
 
   return (
-    <div className={`grid grid-cols-[1fr_auto_1fr] items-center ${inCard ? '' : 'card bg-base-100 rounded-xl p-3'}`}>
+    <div
+      className={`grid grid-cols-[1fr_auto_1fr] items-center ${inCard ? '' : 'card bg-base-100 rounded-xl p-3'}`}
+    >
       <div />
       {showPrimary && (
         <button
@@ -45,10 +44,7 @@ export function ActionCard({
           aria-label={primaryLabel}
           title={primaryLabel}
         >
-          <FontAwesomeIcon
-            icon={getPrimaryIcon(isActive, isFinished)}
-            className='text-2xl'
-          />
+          <FontAwesomeIcon icon={getPrimaryIcon(isActive, isFinished)} className='text-2xl' />
         </button>
       )}
       <div className='flex justify-end'>
@@ -69,16 +65,16 @@ export function ActionCard({
 }
 
 ActionCard.propTypes = {
-  mode:             PropTypes.number.isRequired,
-  isActive:         PropTypes.bool.isRequired,
-  isFinished:       PropTypes.bool.isRequired,
-  isBrewing:        PropTypes.bool.isRequired,
-  isGrinding:       PropTypes.bool.isRequired,
+  mode: PropTypes.number.isRequired,
+  isActive: PropTypes.bool.isRequired,
+  isFinished: PropTypes.bool.isRequired,
+  isBrewing: PropTypes.bool.isRequired,
+  isGrinding: PropTypes.bool.isRequired,
   isGrindAvailable: PropTypes.bool.isRequired,
-  isFlushing:       PropTypes.bool.isRequired,
-  activate:         PropTypes.func.isRequired,
-  deactivate:       PropTypes.func.isRequired,
-  clear:            PropTypes.func.isRequired,
-  startFlush:       PropTypes.func.isRequired,
-  inCard:           PropTypes.bool,
+  isFlushing: PropTypes.bool.isRequired,
+  activate: PropTypes.func.isRequired,
+  deactivate: PropTypes.func.isRequired,
+  clear: PropTypes.func.isRequired,
+  startFlush: PropTypes.func.isRequired,
+  inCard: PropTypes.bool,
 };

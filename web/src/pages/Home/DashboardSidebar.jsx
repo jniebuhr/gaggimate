@@ -1,10 +1,17 @@
 import PropTypes from 'prop-types';
 import { useDashboardState } from './useDashboardState.js';
 import { PANEL_DEFINITIONS } from '../../utils/panelDefinitions.js';
-import { COLUMN_SPACINGS, columnSpacingSignal, compactPanelsSignal, panelOrderSignal, stickyBottomSignal, stickyTopSignal } from '../../utils/dashboardManager.js';
+import {
+  COLUMN_SPACINGS,
+  columnSpacingSignal,
+  compactPanelsSignal,
+  panelOrderSignal,
+  stickyBottomSignal,
+  stickyTopSignal,
+} from '../../utils/dashboardManager.js';
 
 function Divider() {
-  return <div className='border-t border-base-content/10' />;
+  return <div className='border-base-content/10 border-t' />;
 }
 
 export function DashboardSidebar({ unified = false }) {
@@ -19,9 +26,7 @@ export function DashboardSidebar({ unified = false }) {
   // Inject required panels missing from the stored order (safety net)
   const orderedIds = [
     ...panelOrder,
-    ...PANEL_DEFINITIONS
-      .filter(p => p.required && !panelOrder.includes(p.id))
-      .map(p => p.id),
+    ...PANEL_DEFINITIONS.filter(p => p.required && !panelOrder.includes(p.id)).map(p => p.id),
   ];
 
   const visiblePanels = orderedIds
@@ -36,12 +41,10 @@ export function DashboardSidebar({ unified = false }) {
   // Sticky panels only anchor when they are ALSO the first/last in the configured
   // order — prevents the anchor transferring to a different panel when the
   // intended sticky panel is temporarily hidden (e.g. ActionCard when not brewing).
-  const topPanel = stickyTop && visiblePanels[0]?.id === firstConfiguredId
-    ? visiblePanels[0]
-    : null;
-  const bottomPanel = stickyBottom && visiblePanels.at(- 1)?.id === lastConfiguredId
-    ? visiblePanels.at(- 1)
-    : null;
+  const topPanel =
+    stickyTop && visiblePanels[0]?.id === firstConfiguredId ? visiblePanels[0] : null;
+  const bottomPanel =
+    stickyBottom && visiblePanels.at(-1)?.id === lastConfiguredId ? visiblePanels.at(-1) : null;
   const middlePanels = visiblePanels.filter(p => p !== topPanel && p !== bottomPanel);
 
   const justifyClass = spacing === COLUMN_SPACINGS.BETWEEN ? 'justify-between' : 'justify-start';
@@ -52,7 +55,11 @@ export function DashboardSidebar({ unified = false }) {
         {topPanel && (
           <div key={topPanel.id} className={topPanel.containerClass ?? ''}>
             <div className='p-3'>
-              <topPanel.component {...topPanel.props(ds)} compact={compactPanels.includes(topPanel.id)} inCard />
+              <topPanel.component
+                {...topPanel.props(ds)}
+                compact={compactPanels.includes(topPanel.id)}
+                inCard
+              />
             </div>
           </div>
         )}
@@ -61,7 +68,11 @@ export function DashboardSidebar({ unified = false }) {
             <div key={panel.id} className={panel.containerClass ?? ''}>
               {(topPanel || i > 0) && <Divider />}
               <div className='p-3'>
-                <panel.component {...panel.props(ds)} compact={compactPanels.includes(panel.id)} inCard />
+                <panel.component
+                  {...panel.props(ds)}
+                  compact={compactPanels.includes(panel.id)}
+                  inCard
+                />
               </div>
             </div>
           ))}
@@ -70,7 +81,11 @@ export function DashboardSidebar({ unified = false }) {
           <div key={bottomPanel.id} className={bottomPanel.containerClass ?? ''}>
             {(topPanel || middlePanels.length > 0) && <Divider />}
             <div className='p-3'>
-              <bottomPanel.component {...bottomPanel.props(ds)} compact={compactPanels.includes(bottomPanel.id)} inCard />
+              <bottomPanel.component
+                {...bottomPanel.props(ds)}
+                compact={compactPanels.includes(bottomPanel.id)}
+                inCard
+              />
             </div>
           </div>
         )}
@@ -82,7 +97,10 @@ export function DashboardSidebar({ unified = false }) {
     <div className='flex h-full flex-col gap-2'>
       {topPanel && (
         <div key={topPanel.id} className={topPanel.containerClass ?? ''}>
-          <topPanel.component {...topPanel.props(ds)} compact={compactPanels.includes(topPanel.id)} />
+          <topPanel.component
+            {...topPanel.props(ds)}
+            compact={compactPanels.includes(topPanel.id)}
+          />
         </div>
       )}
       <div className={`flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto ${justifyClass}`}>
@@ -94,7 +112,10 @@ export function DashboardSidebar({ unified = false }) {
       </div>
       {bottomPanel && (
         <div key={bottomPanel.id} className={bottomPanel.containerClass ?? ''}>
-          <bottomPanel.component {...bottomPanel.props(ds)} compact={compactPanels.includes(bottomPanel.id)} />
+          <bottomPanel.component
+            {...bottomPanel.props(ds)}
+            compact={compactPanels.includes(bottomPanel.id)}
+          />
         </div>
       )}
     </div>

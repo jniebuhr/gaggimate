@@ -22,7 +22,10 @@ const Metric = ({ icon, current, target, unit }) => (
   <div className='flex items-center gap-1.5'>
     <FontAwesomeIcon icon={icon} className='text-base-content/60 text-xs' />
     <span className='text-base-content tabular-nums'>{current}</span>
-    <span className='text-success font-semibold tabular-nums'>/ {target}{unit}</span>
+    <span className='text-success font-semibold tabular-nums'>
+      / {target}
+      {unit}
+    </span>
   </div>
 );
 
@@ -116,17 +119,41 @@ const getSteamHint = (currentTemp, targetTemp, mode) => {
 export default function CompactProcessControls() {
   const ds = useDashboardState();
   const {
-    mode, processInfo: p, isActive, isFinished, isBrewing, isGrinding,
-    isGrindAvailable, showGrindTab, brewTarget, volumetricAvailable,
-    currentTemperature, targetTemperature, currentPressure, targetPressure,
-    currentWeight, targetWeight, grindTarget, grindTargetDuration, grindTargetVolume,
-    changeMode, activate, deactivate, clear, startFlush, isFlushing,
-    raiseTemp, lowerTemp, raiseTarget, lowerTarget, changeTarget,
+    mode,
+    processInfo: p,
+    isActive,
+    isFinished,
+    isBrewing,
+    isGrinding,
+    isGrindAvailable,
+    showGrindTab,
+    brewTarget,
+    volumetricAvailable,
+    currentTemperature,
+    targetTemperature,
+    currentPressure,
+    targetPressure,
+    currentWeight,
+    targetWeight,
+    grindTarget,
+    grindTargetDuration,
+    grindTargetVolume,
+    changeMode,
+    activate,
+    deactivate,
+    clear,
+    startFlush,
+    isFlushing,
+    raiseTemp,
+    lowerTemp,
+    raiseTarget,
+    lowerTarget,
+    changeTarget,
   } = ds;
 
   const showPrimary = mode === 1 || mode === 3 || (isGrinding && isGrindAvailable);
-  const showFlush   = isBrewing && !isActive && !isFinished;
-  const showWeight  = volumetricAvailable && (mode === 1 || mode === 3) && brewTarget;
+  const showFlush = isBrewing && !isActive && !isFinished;
+  const showWeight = volumetricAvailable && (mode === 1 || mode === 3) && brewTarget;
   const processRunning = (isActive || isFinished) && (isBrewing || isGrinding);
 
   const handlePrimary = () => {
@@ -135,62 +162,67 @@ export default function CompactProcessControls() {
     else activate();
   };
 
-  const grindValue = grindTarget === 1 && volumetricAvailable
-    ? `${grindTargetVolume}g`
-    : `${Math.round(grindTargetDuration / 1000)}s`;
+  const grindValue =
+    grindTarget === 1 && volumetricAvailable
+      ? `${grindTargetVolume}g`
+      : `${Math.round(grindTargetDuration / 1000)}s`;
 
   const renderContent = () => {
     if (processRunning && isFinished) return <FinishedView elapsed={fmtElapsed(p?.e)} />;
     if (processRunning) return <ActiveView p={p} grind={isGrinding} />;
     if (mode === 0) return <InfoView title='Standby' hint='Machine is ready' />;
-    if (mode === 1) return (
-      <div className='flex w-full max-w-sm min-w-0 flex-col items-stretch gap-3'>
-        <a
-          href='/profiles'
-          className='bg-base-200/70 hover:bg-base-200 flex min-w-0 items-center gap-3 rounded-2xl px-3 py-2 transition-colors'
-        >
-          <span className='bg-primary/10 text-primary flex h-9 w-9 shrink-0 items-center justify-center rounded-xl'>
-            <FontAwesomeIcon icon={faRectangleList} className='text-sm' />
-          </span>
-          <span className='flex min-w-0 flex-1 flex-col leading-tight'>
-            <span className='text-base-content/50 text-[0.6rem] font-semibold tracking-[0.18em] uppercase'>Profile</span>
-            <span className='text-base-content min-w-0 truncate text-sm font-bold'>
-              {ds.selectedProfile || 'Default'}
+    if (mode === 1)
+      return (
+        <div className='flex w-full max-w-sm min-w-0 flex-col items-stretch gap-3'>
+          <a
+            href='/profiles'
+            className='bg-base-200/70 hover:bg-base-200 flex min-w-0 items-center gap-3 rounded-2xl px-3 py-2 transition-colors'
+          >
+            <span className='bg-primary/10 text-primary flex h-9 w-9 shrink-0 items-center justify-center rounded-xl'>
+              <FontAwesomeIcon icon={faRectangleList} className='text-sm' />
             </span>
-          </span>
-        </a>
-        {volumetricAvailable && (
-          <TargetToggle value={brewTarget ? 1 : 0} onChange={changeTarget} />
-        )}
-      </div>
-    );
-    if (mode === 2 || mode === 3) return (
-      <div className='flex flex-col items-center gap-3'>
-        <Adjuster
-          label='TEMPERATURE'
-          value={`${targetTemperature}°C`}
-          onDecrease={lowerTemp}
-          onIncrease={raiseTemp}
-        />
-        <div className='text-base-content/60 text-xs'>
-          {getSteamHint(currentTemperature, targetTemperature, mode)}
+            <span className='flex min-w-0 flex-1 flex-col leading-tight'>
+              <span className='text-base-content/50 text-[0.6rem] font-semibold tracking-[0.18em] uppercase'>
+                Profile
+              </span>
+              <span className='text-base-content min-w-0 truncate text-sm font-bold'>
+                {ds.selectedProfile || 'Default'}
+              </span>
+            </span>
+          </a>
+          {volumetricAvailable && (
+            <TargetToggle value={brewTarget ? 1 : 0} onChange={changeTarget} />
+          )}
         </div>
-      </div>
-    );
-    if (isGrinding && !isGrindAvailable) return <InfoView title='Grind' hint='Grind function not available' />;
-    if (isGrinding) return (
-      <div className='flex flex-col items-center gap-3'>
-        <Adjuster
-          label='GRIND TARGET'
-          value={grindValue}
-          onDecrease={lowerTarget}
-          onIncrease={raiseTarget}
-        />
-        {volumetricAvailable && (
-          <TargetToggle value={grindTarget} onChange={changeTarget} />
-        )}
-      </div>
-    );
+      );
+    if (mode === 2 || mode === 3)
+      return (
+        <div className='flex flex-col items-center gap-3'>
+          <Adjuster
+            label='TEMPERATURE'
+            value={`${targetTemperature}°C`}
+            onDecrease={lowerTemp}
+            onIncrease={raiseTemp}
+          />
+          <div className='text-base-content/60 text-xs'>
+            {getSteamHint(currentTemperature, targetTemperature, mode)}
+          </div>
+        </div>
+      );
+    if (isGrinding && !isGrindAvailable)
+      return <InfoView title='Grind' hint='Grind function not available' />;
+    if (isGrinding)
+      return (
+        <div className='flex flex-col items-center gap-3'>
+          <Adjuster
+            label='GRIND TARGET'
+            value={grindValue}
+            onDecrease={lowerTarget}
+            onIncrease={raiseTarget}
+          />
+          {volumetricAvailable && <TargetToggle value={grindTarget} onChange={changeTarget} />}
+        </div>
+      );
     return null;
   };
 

@@ -157,9 +157,7 @@ function ShotMiniCard({ shot, slots }) {
           return (
             <div key={slotId} className='min-w-0 flex-1 text-center'>
               <div className='flex items-baseline justify-center gap-1.5 lg:gap-1 xl:gap-1.5'>
-                <span className='text-base-content text-sm font-bold'>
-                  {value ?? '—'}
-                </span>
+                <span className='text-base-content text-sm font-bold'>{value ?? '—'}</span>
                 {value != null && def && (
                   <span className='text-base-content/55 text-xs lg:text-[0.68rem] xl:text-xs'>
                     {def.unit}
@@ -192,7 +190,7 @@ function ShotMiniCardSkeleton({ slots }) {
     <div className='bg-base-200 flex min-w-0 flex-col gap-2 rounded-xl p-3'>
       <SkeletonBlock className='h-2.5 w-3/4' />
       <SkeletonBlock className='h-2 w-1/2' />
-      <div className='flex gap-2 mt-1'>
+      <div className='mt-1 flex gap-2'>
         {slots.map((_, i) => (
           <div key={i} className='flex flex-1 flex-col items-center gap-1'>
             <SkeletonBlock className='h-3.5 w-7' />
@@ -238,7 +236,10 @@ export function RecentShotsCard() {
       try {
         const list = await loadShotIndex(recentShotCountSignal.value);
         if (cancelled) return;
-        if (!list) { setLoading(false); return; }
+        if (!list) {
+          setLoading(false);
+          return;
+        }
         setShots(list);
         setLoading(false);
 
@@ -247,11 +248,17 @@ export function RecentShotsCard() {
           needsMaxPressure: slots.includes('maxPressure'),
           needsAvgFlow: slots.includes('avgFlow'),
         };
-        const needsSlog = neededMetrics.needsAvgTemp || neededMetrics.needsMaxPressure || neededMetrics.needsAvgFlow;
+        const needsSlog =
+          neededMetrics.needsAvgTemp ||
+          neededMetrics.needsMaxPressure ||
+          neededMetrics.needsAvgFlow;
         if (!needsSlog) return;
 
-        await enrichShotsWithSlog(list, neededMetrics, () => cancelled, (id, update) =>
-          setShots(prev => prev.map(s => (s.id === id ? { ...s, ...update } : s)))
+        await enrichShotsWithSlog(
+          list,
+          neededMetrics,
+          () => cancelled,
+          (id, update) => setShots(prev => prev.map(s => (s.id === id ? { ...s, ...update } : s))),
         );
       } catch {
         if (!cancelled) setLoading(false);
@@ -279,7 +286,9 @@ export function RecentShotsCard() {
 
   return (
     <div className='card bg-base-100 flex flex-col gap-2 rounded-xl p-3'>
-      <div className='text-base-content/50 text-[0.6rem] uppercase tracking-wider'>Recent Shots</div>
+      <div className='text-base-content/50 text-[0.6rem] tracking-wider uppercase'>
+        Recent Shots
+      </div>
       <div className='grid grid-cols-1 gap-3 sm:[grid-template-columns:repeat(auto-fit,minmax(180px,1fr))]'>
         {shots.map(shot => (
           <ShotMiniCard key={shot.id} shot={shot} slots={slots} />
