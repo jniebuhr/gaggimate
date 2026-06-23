@@ -94,6 +94,7 @@ export const PHASE_EXIT_REASON_LABELS = {
   4: 'Pumped target',
   5: 'Duration',
   6: 'Safety timeout',
+  7: 'Aborted',
 };
 
 // Parse phase transitions from v5+ headers
@@ -173,9 +174,12 @@ export function parseBinaryShot(arrayBuffer, id) {
 
   // Parse phase transitions for v5+
   let phaseTransitions = [];
+  let finalExitReason = 0;
   if (version >= 5) {
     const transitionCount = view.getUint8(110 + 12 * 29); // After 12 PhaseTransitions
     phaseTransitions = parsePhaseTransitions(view, transitionCount);
+    // finalExitReason follows phaseTransitionCount; was reserved padding before, so legacy files read 0.
+    finalExitReason = view.getUint8(110 + 12 * 29 + 1);
   }
 
   // Calculate expected sample size from fieldsMask
@@ -299,5 +303,7 @@ export function parseBinaryShot(arrayBuffer, id) {
     trailingBytes,
     samplesExpected: sampleCountHeader,
     phaseTransitions, // v5+ phase transition data
+    finalExitReason, // v5+ reason the shot ended (last phase exit or manual abort)
+    finalExitReasonLabel: PHASE_EXIT_REASON_LABELS[finalExitReason] ?? 'Unknown',
   };
 }

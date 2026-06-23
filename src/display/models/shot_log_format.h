@@ -60,6 +60,7 @@ static constexpr uint8_t PHASE_EXIT_REASON_TARGET_FLOW = 3;       // flow target
 static constexpr uint8_t PHASE_EXIT_REASON_TARGET_PUMPED = 4;     // pumped-water target reached
 static constexpr uint8_t PHASE_EXIT_REASON_DURATION = 5;          // phase duration elapsed
 static constexpr uint8_t PHASE_EXIT_REASON_SAFETY = 6;            // brew safety timeout
+static constexpr uint8_t PHASE_EXIT_REASON_ABORTED = 7;           // shot manually stopped before finishing
 
 #pragma pack(push, 1)
 struct ShotLogHeader {
@@ -81,8 +82,13 @@ struct ShotLogHeader {
     PhaseTransition phaseTransitions[12]; // 12 × 29 = 348 bytes
     uint8_t phaseTransitionCount;         // 1 byte
 
+    // Reason the shot itself ended = how the final phase exited (PhaseExitReason / PHASE_EXIT_REASON_*).
+    // Carved from the v5 reserved padding so the header stays 512 bytes; old files have 0 (= unknown) here
+    // and old readers ignore it, preserving both compatibility directions.
+    uint8_t finalExitReason; // 1 byte
+
     // Future expansion - pad to 512 bytes total
-    uint8_t reserved_v5[53]; // Manual padding to reach 512 bytes
+    uint8_t reserved_v5[52]; // Manual padding to reach 512 bytes
 };
 #pragma pack(pop)
 

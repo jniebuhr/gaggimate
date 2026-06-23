@@ -23,6 +23,7 @@ enum class PhaseExitReason : uint8_t {
     TARGET_PUMPED = 4,     // pumped-water target reached
     DURATION = 5,          // phase duration elapsed
     SAFETY = 6,            // brew safety timeout (set by BrewProcess, not Phase::isFinished)
+    ABORTED = 7,           // shot manually stopped before the process finished
 };
 
 struct Target {

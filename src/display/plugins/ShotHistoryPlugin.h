@@ -84,6 +84,7 @@ class ShotHistoryPlugin : public Plugin {
 
     // Phase transition tracking (v5+)
     uint8_t lastRecordedPhase = 0xFF; // Invalid initial value to detect first phase
+    uint8_t finalExitReason = 0;      // Reason the shot ended (PhaseExitReason); captured at brew end
 
     // Async rebuild state
     bool rebuildInProgress = false;

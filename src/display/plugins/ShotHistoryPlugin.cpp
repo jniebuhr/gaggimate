@@ -227,6 +227,7 @@ void ShotHistoryPlugin::record() {
         // Patch header with sampleCount and duration
         header.sampleCount = sampleCount;
         header.durationMs = millis() - shotStart;
+        header.finalExitReason = finalExitReason; // why the shot ended (last phase exit or manual abort)
         float finalWeight = currentBluetoothWeight;
         header.finalWeight = finalWeight > 0.0f ? encodeUnsigned(finalWeight, WEIGHT_SCALE, WEIGHT_MAX_VALUE) : 0;
         currentFile.seek(0, SeekSet);
@@ -294,7 +295,8 @@ void ShotHistoryPlugin::startRecording() {
     ioBufferPos = 0;
 
     // Reset phase tracking for new shot
-    lastRecordedPhase = 0xFF; // Invalid value to detect first phase
+    lastRecordedPhase = 0xFF;                                      // Invalid value to detect first phase
+    finalExitReason = static_cast<uint8_t>(PhaseExitReason::NONE); // Reset shot-end reason
 }
 
 unsigned long ShotHistoryPlugin::getTime() {
@@ -304,6 +306,19 @@ unsigned long ShotHistoryPlugin::getTime() {
 }
 
 void ShotHistoryPlugin::endRecording() {
+    // Capture how the shot ended: if the process ran to completion, reuse the last phase's exit reason;
+    // if it was still running when stopped, the user aborted it. getLastProcess() is the just-ended brew
+    // process here (deactivate() moves currentProcess -> lastProcess before firing controller:brew:end).
+    if (controller != nullptr) {
+        Process *last = controller->getLastProcess();
+        if (last != nullptr && last->getType() == MODE_BREW) {
+            auto *brewProcess = static_cast<BrewProcess *>(last);
+            PhaseExitReason reason =
+                brewProcess->processPhase == ProcessPhase::FINISHED ? brewProcess->lastExitReason : PhaseExitReason::ABORTED;
+            finalExitReason = static_cast<uint8_t>(reason);
+        }
+    }
+
     if (recording && controller && controller->isVolumetricAvailable() && currentBluetoothWeight > 0) {
         // Start extended recording for any shot with active weight data
         extendedRecording = true;
