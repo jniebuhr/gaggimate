@@ -36,5 +36,5 @@ const ext_img_desc_t images[36] = {
     {"clock-future-past-40x40", &img_clock_future_past_40x40},
     {"indicator", &img_indicator},
     {"settings-80x80", &img_settings_80x80},
-    {"info-80x80", &img_info_80x80},
+    {"info-40x40", &img_info_40x40},
 };

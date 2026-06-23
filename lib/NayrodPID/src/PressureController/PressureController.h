@@ -29,6 +29,8 @@ class PressureController {
     float getCoffeeOutputEstimate() { return std::fmax(0.0f, _coffeeOutput); };
     void setPumpFlowCoeff(float oneBarFlow, float nineBarFlow);
     void setPumpFlowPolyCoeffs(float a, float b, float c, float d);
+    // Rotary-vane slip polynomial (gear pump only); default zero -> no effect.
+    void setPumpSlipPolyCoeffs(float a, float b, float c, float d);
     void setGains(float commutationGain, float convergenceGain, float integralGain);
     float getPumpFlowRate() { return exportPumpFlowRate; };
     float getCoffeeFlowRate() { return *_valveStatus == 1 ? _coffeeFlowRate : 0.0f; };
@@ -43,6 +45,8 @@ class PressureController {
     void filterSetpoint(float rawSetpoint);
     float pumpFlowModel(float alpha = 100.0f) const;
     float getAvailableFlow() const;
+    float getSlip() const;          // Vane-pump internal leakage at current pressure (ml/s)
+    float getGeometricFlow() const; // Full geometric flow Q_geo = full-drive curve + slip
     float getPumpDutyCycleForFlowRate() const;
 
     float _dt = 1.0f; // Controller sampling period (seconds)
@@ -70,7 +74,8 @@ class PressureController {
     float _puckResistance = 1e7f;                                    // Initial estimate of puck resistance
     const float _maxPressure = 15.0f;                                // Maximum pressure (bar)
     const float _maxPressureRate = 9.0f;                             // Maximum pressure rate (bar/s)
-    float _pumpFlowCoefficients[4] = {0.0f, 0.0f, -0.5854f, 10.79f}; // Pump flow polynomial coefficients
+    float _pumpFlowCoefficients[4] = {0.0f, 0.0f, -0.5854f, 10.79f}; // Full-drive flow polynomial (Q_geo - slip)
+    float _pumpSlipCoefficients[4] = {0.0f, 0.0f, 0.0f, 0.0f};       // Vane-pump slip polynomial (gear pump only)
 
     // === Controller Gains ===
     float _commutationGain = 0.7f;     // Commutation gain

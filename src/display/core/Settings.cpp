@@ -18,6 +18,7 @@ Settings::Settings() {
     pressureScaling = preferences.getFloat("ps", DEFAULT_PRESSURE_SCALING);
     pid = preferences.getString("pid", DEFAULT_PID);
     pumpModelCoeffs = preferences.getString("pmc", DEFAULT_PUMP_MODEL_COEFFS);
+    pumpSlipCoeffs = preferences.getString("psc", DEFAULT_PUMP_SLIP_COEFFS);
     wifiSsid = preferences.getString("ws", "");
     wifiPassword = preferences.getString("wp", "");
     wifiApPassword = preferences.getString("wap", "");
@@ -201,6 +202,11 @@ void Settings::setPid(const String &pid) {
 
 void Settings::setPumpModelCoeffs(const String &pumpModelCoeffs) {
     this->pumpModelCoeffs = pumpModelCoeffs;
+    save();
+}
+
+void Settings::setPumpSlipCoeffs(const String &pumpSlipCoeffs) {
+    this->pumpSlipCoeffs = pumpSlipCoeffs;
     save();
 }
 
@@ -519,6 +525,7 @@ void Settings::doSave() {
     preferences.putFloat("ps", pressureScaling);
     preferences.putString("pid", pid);
     preferences.putString("pmc", pumpModelCoeffs);
+    preferences.putString("psc", pumpSlipCoeffs);
     preferences.putString("ws", wifiSsid);
     preferences.putString("wp", wifiPassword);
     preferences.putString("wap", wifiApPassword);

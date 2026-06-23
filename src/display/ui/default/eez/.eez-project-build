@@ -23,7 +23,7 @@
     "images/ui_image_gallery.c",
     "images/ui_image_indicator.c",
     "images/ui_image_indicator_small.c",
-    "images/ui_image_info_80x80.c",
+    "images/ui_image_info_40x40.c",
     "images/ui_image_list.c",
     "images/ui_image_logo.c",
     "images/ui_image_minus_small_40x40.c",

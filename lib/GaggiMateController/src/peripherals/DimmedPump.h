@@ -33,6 +33,7 @@ class DimmedPump : public Pump {
     void setPressureTarget(float targetPressure, float flowLimit);
     void setPumpFlowCoeff(float oneBarFlow, float nineBarFlow);
     void setPumpFlowPolyCoeffs(float a, float b, float c, float d);
+    void setPumpSlipPolyCoeffs(float a, float b, float c, float d);
     void setGains(float commutationGain, float convergenceGain, float integralGain);
     void stop();
     void fullPower();

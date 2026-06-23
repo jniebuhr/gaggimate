@@ -6,9 +6,7 @@
 
 static ImprovPlugin *instance = nullptr;
 
-static ImprovTypes::ChipFamily currentChipFamily() {
-    return ImprovTypes::CF_ESP32_S3;
-}
+static ImprovTypes::ChipFamily currentChipFamily() { return ImprovTypes::CF_ESP32_S3; }
 
 void ImprovPlugin::setup(Controller *_controller, PluginManager *pluginManager) {
     controller = _controller;

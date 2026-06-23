@@ -203,12 +203,12 @@ typedef struct _objects_t {
     lv_obj_t *btn_water_1;
     lv_obj_t *btn_grind_1;
     lv_obj_t *btn_settings_1;
-    lv_obj_t *btn_info_1;
     lv_obj_t *status_icons;
     lv_obj_t *obj10;
     lv_obj_t *obj11;
     lv_obj_t *obj12;
-    lv_obj_t *standby_button;
+    lv_obj_t *info_btn;
+    lv_obj_t *standby_btn;
     lv_obj_t *obj13;
     lv_obj_t *main_label5;
     lv_obj_t *image5_1;
