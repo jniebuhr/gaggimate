@@ -21,10 +21,22 @@ function AdjBtn({ icon, onClick, visible }) {
   );
 }
 
-function MetricCell({ label, current, target, unit, onDecrease, onIncrease, adjustable, inCard = false, compact = false }) {
+function MetricCell({
+  label,
+  current,
+  target,
+  unit,
+  onDecrease,
+  onIncrease,
+  adjustable,
+  inCard = false,
+  compact = false,
+}) {
   const showAdj = adjustable && !compact;
   return (
-    <div className={`flex flex-col items-center justify-between rounded-xl ${compact ? 'gap-0.5 p-1' : 'gap-1 p-2'} ${inCard ? 'bg-base-200/60' : 'card bg-base-100'}`}>
+    <div
+      className={`flex flex-col items-center justify-between rounded-xl ${compact ? 'gap-0.5 p-1' : 'gap-1 p-2'} ${inCard ? 'bg-base-200/60' : 'card bg-base-100'}`}
+    >
       <div className='text-base-content/50 text-[0.6rem] font-semibold tracking-wider uppercase'>
         {label}
       </div>
@@ -35,7 +47,10 @@ function MetricCell({ label, current, target, unit, onDecrease, onIncrease, adju
           {target != null && (
             <>
               <span className='text-base-content/30 mx-0.5 text-xs'>/</span>
-              <span className='text-success text-xs font-semibold'>{target}{unit}</span>
+              <span className='text-success text-xs font-semibold'>
+                {target}
+                {unit}
+              </span>
             </>
           )}
         </div>
@@ -96,8 +111,8 @@ export function MetricsGrid({ metrics = [], inCard = false, compact = false }) {
           <MetricCellItem key={m.id} m={m} inCard={inCard} compact={compact} />
         ))}
       </div>
-      {lastRow.length > 0 && (
-        lastRowFill === METRICS_LAST_ROW_FILLS.EVEN ? (
+      {lastRow.length > 0 &&
+        (lastRowFill === METRICS_LAST_ROW_FILLS.EVEN ? (
           <div className={`flex ${gap} ${compact ? 'mt-1' : 'mt-2'}`}>
             {lastRow.map(m => (
               <div key={m.id} style={{ flex: 1 }}>
@@ -114,8 +129,7 @@ export function MetricsGrid({ metrics = [], inCard = false, compact = false }) {
               <MetricCellItem key={m.id} m={m} inCard={inCard} compact={compact} />
             ))}
           </div>
-        )
-      )}
+        ))}
     </div>
   );
 }
@@ -123,16 +137,16 @@ export function MetricsGrid({ metrics = [], inCard = false, compact = false }) {
 MetricsGrid.propTypes = {
   metrics: PropTypes.arrayOf(
     PropTypes.shape({
-      id:         PropTypes.string.isRequired,
-      label:      PropTypes.string.isRequired,
-      current:    PropTypes.string,
-      target:     PropTypes.string,
-      unit:       PropTypes.string,
+      id: PropTypes.string.isRequired,
+      label: PropTypes.string.isRequired,
+      current: PropTypes.string,
+      target: PropTypes.string,
+      unit: PropTypes.string,
       adjustable: PropTypes.bool,
       onDecrease: PropTypes.func,
       onIncrease: PropTypes.func,
-    })
+    }),
   ).isRequired,
-  inCard:  PropTypes.bool,
+  inCard: PropTypes.bool,
   compact: PropTypes.bool,
 };

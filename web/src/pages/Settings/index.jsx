@@ -79,7 +79,8 @@ export function Settings() {
   // Fetch profiles via WebSocket (wait for connection)
   useSignalEffect(() => {
     if (!connected.value) return;
-    apiService.request({ tp: 'req:profiles:list', minimal: true })
+    apiService
+      .request({ tp: 'req:profiles:list', minimal: true })
       .then(res => setProfiles(res.profiles))
       .catch(() => {});
   });

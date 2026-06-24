@@ -29,7 +29,7 @@ export const PANEL_DEFINITIONS = [
     supportsCompact: true,
     available: () => true,
     component: ModeCard,
-    props: (ds) => ({
+    props: ds => ({
       mode: ds.mode,
       showGrindTab: ds.showGrindTab,
       changeMode: ds.changeMode,
@@ -42,7 +42,7 @@ export const PANEL_DEFINITIONS = [
     supportsCompact: true,
     available: () => true,
     component: ProfileCard,
-    props: (ds) => ({
+    props: ds => ({
       selectedProfile: ds.selectedProfile,
       selectedProfileId: ds.selectedProfileId,
       processInfo: ds.processInfo,
@@ -59,7 +59,7 @@ export const PANEL_DEFINITIONS = [
     supportsCompact: true,
     available: () => true,
     component: FavoriteProfilesCard,
-    props: (ds) => ({
+    props: ds => ({
       selectedProfileId: ds.selectedProfileId,
     }),
     containerClass: 'hidden [@media(min-height:900px)]:block',
@@ -71,16 +71,16 @@ export const PANEL_DEFINITIONS = [
     supportsCompact: true,
     available: () => true,
     component: MetricsPanelWrapper,
-    props: (ds) => ({ ds }),
+    props: ds => ({ ds }),
   },
   {
     id: 'watertank',
     label: 'Water Tank',
     required: false,
-    available: (ds) => ds.waterLevelPercent !== null,
-    availableInSettings: (status) => !!status.tofDistance,
+    available: ds => ds.waterLevelPercent !== null,
+    availableInSettings: status => !!status.tofDistance,
     component: WaterLevelCard,
-    props: (ds) => ({
+    props: ds => ({
       waterLevelPercent: ds.waterLevelPercent,
     }),
   },
@@ -88,10 +88,10 @@ export const PANEL_DEFINITIONS = [
     id: 'action',
     label: 'Shot Controls',
     required: true,
-    available: (ds) => ds.mode === 1 || ds.mode === 3 || (ds.isGrinding && ds.isGrindAvailable),
+    available: ds => ds.mode === 1 || ds.mode === 3 || (ds.isGrinding && ds.isGrindAvailable),
     availableInSettings: () => true,
     component: ActionCard,
-    props: (ds) => ({
+    props: ds => ({
       mode: ds.mode,
       isActive: ds.isActive,
       isFinished: ds.isFinished,

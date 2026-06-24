@@ -304,8 +304,8 @@ function getChartData(data) {
           text: isBrewActive
             ? `Brew Progress - ${Math.round(timeWindowMs / 1000)}s View`
             : phaseTransitions.length > 0
-              ? 'Temperature History - Recent Brew'
-              : 'Temperature History',
+              ? 'Metrics - Recent Brew'
+              : 'Live Metrics',
           font: {
             size: window.innerWidth < 640 ? 14 : 16,
           },

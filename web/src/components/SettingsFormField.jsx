@@ -68,7 +68,14 @@ export function ToggleField({ label, htmlFor, checked, onChange, helpText }) {
   );
 }
 
-export function SortableConfigurator({ order, definitions, hidden, onOrderChange, emptyMessage, extraControls }) {
+export function SortableConfigurator({
+  order,
+  definitions,
+  hidden,
+  onOrderChange,
+  emptyMessage,
+  extraControls,
+}) {
   const orderRef = useRef(order);
   orderRef.current = order;
 
@@ -124,9 +131,11 @@ export function SortableConfigurator({ order, definitions, hidden, onOrderChange
   return (
     <div className='grid grid-cols-2 gap-3'>
       <div>
-        <div className='mb-2 text-xs font-semibold uppercase tracking-wider opacity-50'>Visible</div>
+        <div className='mb-2 text-xs font-semibold tracking-wider uppercase opacity-50'>
+          Visible
+        </div>
         <div
-          className={`flex flex-col gap-1 rounded-lg transition-all duration-200${draggingSource === 'available' ? ' bg-primary/5 ring-1 ring-primary/40' : ''}`}
+          className={`flex flex-col gap-1 rounded-lg transition-all duration-200${draggingSource === 'available' ? 'bg-primary/5 ring-primary/40 ring-1' : ''}`}
           onDragOver={e => e.preventDefault()}
           onDrop={e => {
             e.preventDefault();
@@ -176,15 +185,15 @@ export function SortableConfigurator({ order, definitions, hidden, onOrderChange
                 }}
                 onDragEnd={endDrag}
                 className={[
-                  'flex min-h-14 items-center gap-2 rounded-lg border border-base-content/10 bg-base-100 px-2 py-1.5 transition-all duration-100',
-                  overPos === 'before' && 'border-t-2 border-t-primary',
-                  overPos === 'after' && 'border-b-2 border-b-primary',
+                  'border-base-content/10 bg-base-100 flex min-h-14 items-center gap-2 rounded-lg border px-2 py-1.5 transition-all duration-100',
+                  overPos === 'before' && 'border-t-primary border-t-2',
+                  overPos === 'after' && 'border-b-primary border-b-2',
                   isDragging && 'opacity-40',
                 ]
                   .filter(Boolean)
                   .join(' ')}
               >
-                <span className='cursor-grab select-none text-base-content/20'>⠿</span>
+                <span className='text-base-content/20 cursor-grab select-none'>⠿</span>
                 <span className='flex-1 text-sm'>{def.label}</span>
                 {extraControls?.(def)}
                 <div className='flex flex-col gap-px'>
@@ -207,13 +216,13 @@ export function SortableConfigurator({ order, definitions, hidden, onOrderChange
                 </div>
                 {def.required ? (
                   <div className='flex h-6 w-6 items-center justify-center'>
-                    <FontAwesomeIcon icon={faLock} className='h-3 w-3 text-base-content/20' />
+                    <FontAwesomeIcon icon={faLock} className='text-base-content/20 h-3 w-3' />
                   </div>
                 ) : (
                   <button
                     type='button'
                     onClick={() => remove(id)}
-                    className='btn btn-ghost btn-xs flex h-6 w-6 items-center justify-center rounded p-0 text-error'
+                    className='btn btn-ghost btn-xs text-error flex h-6 w-6 items-center justify-center rounded p-0'
                   >
                     <FontAwesomeIcon icon={faXmark} className='h-3.5 w-3.5' />
                   </button>
@@ -225,7 +234,7 @@ export function SortableConfigurator({ order, definitions, hidden, onOrderChange
       </div>
 
       <div>
-        <div className='mb-2 text-xs font-semibold uppercase tracking-wider opacity-50'>
+        <div className='mb-2 text-xs font-semibold tracking-wider uppercase opacity-50'>
           Hidden / Available
         </div>
         <div className='flex flex-col gap-1'>
@@ -235,14 +244,14 @@ export function SortableConfigurator({ order, definitions, hidden, onOrderChange
               draggable
               onDragStart={e => startDrag(e, def.id, 'available')}
               onDragEnd={endDrag}
-              className={`flex min-h-14 cursor-grab items-center gap-2 rounded-lg border border-base-content/10 bg-base-100 px-2 py-1.5 transition-all duration-150${draggingId === def.id ? ' opacity-40' : ''}`}
+              className={`border-base-content/10 bg-base-100 flex min-h-14 cursor-grab items-center gap-2 rounded-lg border px-2 py-1.5 transition-all duration-150${draggingId === def.id ? 'opacity-40' : ''}`}
             >
-              <span className='select-none text-base-content/20'>⠿</span>
+              <span className='text-base-content/20 select-none'>⠿</span>
               <span className='flex-1 text-sm'>{def.label}</span>
               <button
                 type='button'
                 onClick={() => add(def.id)}
-                className='btn btn-ghost btn-xs border border-base-content/20 text-xs'
+                className='btn btn-ghost btn-xs border-base-content/20 border text-xs'
               >
                 + Add
               </button>

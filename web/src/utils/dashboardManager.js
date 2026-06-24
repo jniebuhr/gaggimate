@@ -3,6 +3,8 @@ import { signal } from '@preact/signals';
 const DASHBOARD_LAYOUT_KEY = 'dashboardLayout';
 const DASHBOARD_CARD_MODE_KEY = 'dashboardCardMode';
 
+/* global globalThis */
+
 export const DASHBOARD_LAYOUTS = {
   ORDER_FIRST: 'order-first',
   ORDER_LAST: 'order-last',
@@ -78,7 +80,7 @@ export const getMetricOrder = () => {
 
 export const metricOrderSignal = signal(getMetricOrder());
 
-export const setMetricOrder = (ids) => {
+export const setMetricOrder = ids => {
   if (!Array.isArray(ids)) return false;
   try {
     localStorage.setItem(DASHBOARD_METRICS_KEY, JSON.stringify(ids));
@@ -109,7 +111,7 @@ export const getPanelOrder = () => {
 
 export const panelOrderSignal = signal(getPanelOrder());
 
-export const setPanelOrder = (ids) => {
+export const setPanelOrder = ids => {
   if (!Array.isArray(ids)) return false;
   try {
     localStorage.setItem(DASHBOARD_PANELS_KEY, JSON.stringify(ids));
@@ -135,7 +137,7 @@ export const getStickyBottom = () => {
 
 export const stickyBottomSignal = signal(getStickyBottom());
 
-export const setStickyBottom = (value) => {
+export const setStickyBottom = value => {
   try {
     localStorage.setItem(DASHBOARD_STICKY_BOTTOM_KEY, String(value));
     stickyBottomSignal.value = value;
@@ -160,7 +162,7 @@ export const getStickyTop = () => {
 
 export const stickyTopSignal = signal(getStickyTop());
 
-export const setStickyTop = (value) => {
+export const setStickyTop = value => {
   try {
     localStorage.setItem(DASHBOARD_STICKY_TOP_KEY, String(value));
     stickyTopSignal.value = value;
@@ -185,7 +187,7 @@ export const getShowRecentShots = () => {
 
 export const showRecentShotsSignal = signal(getShowRecentShots());
 
-export const setShowRecentShots = (value) => {
+export const setShowRecentShots = value => {
   try {
     localStorage.setItem(DASHBOARD_SHOW_RECENT_SHOTS_KEY, String(value));
     showRecentShotsSignal.value = value;
@@ -212,7 +214,7 @@ export const getMetricsColumns = () => {
 
 export const metricsColumnsSignal = signal(getMetricsColumns());
 
-export const setMetricsColumns = (n) => {
+export const setMetricsColumns = n => {
   if (!Number.isInteger(n) || n < 1 || n > 4) return false;
   try {
     localStorage.setItem(DASHBOARD_METRICS_COLUMNS_KEY, String(n));
@@ -239,7 +241,7 @@ export const getCompactPanels = () => {
 
 export const compactPanelsSignal = signal(getCompactPanels());
 
-export const setCompactPanels = (ids) => {
+export const setCompactPanels = ids => {
   if (!Array.isArray(ids)) return false;
   try {
     localStorage.setItem(DASHBOARD_COMPACT_PANELS_KEY, JSON.stringify(ids));
@@ -250,7 +252,7 @@ export const setCompactPanels = (ids) => {
   }
 };
 
-export const toggleCompactPanel = (id) => {
+export const toggleCompactPanel = id => {
   const current = compactPanelsSignal.value;
   const next = current.includes(id) ? current.filter(x => x !== id) : [...current, id];
   return setCompactPanels(next);
@@ -280,7 +282,7 @@ export const getMetricsLastRowFill = () => {
 
 export const metricsLastRowFillSignal = signal(getMetricsLastRowFill());
 
-export const setMetricsLastRowFill = (value) => {
+export const setMetricsLastRowFill = value => {
   if (!Object.values(METRICS_LAST_ROW_FILLS).includes(value)) return false;
   try {
     localStorage.setItem(DASHBOARD_METRICS_LAST_ROW_FILL_KEY, value);
@@ -308,7 +310,7 @@ export const getProfileChartHeight = () => {
 
 export const profileChartHeightSignal = signal(getProfileChartHeight());
 
-export const setProfileChartHeight = (n) => {
+export const setProfileChartHeight = n => {
   if (!Number.isInteger(n) || n < 64 || n > 256) return false;
   try {
     localStorage.setItem(DASHBOARD_PROFILE_CHART_HEIGHT_KEY, String(n));
@@ -324,7 +326,7 @@ export const setProfileChartHeight = (n) => {
 const DASHBOARD_COLUMN_SPACING_KEY = 'dashboardColumnSpacing';
 
 export const COLUMN_SPACINGS = {
-  START:   'start',
+  START: 'start',
   BETWEEN: 'between',
 };
 
@@ -343,7 +345,7 @@ export const getColumnSpacing = () => {
 
 export const columnSpacingSignal = signal(getColumnSpacing());
 
-export const setColumnSpacing = (value) => {
+export const setColumnSpacing = value => {
   if (!Object.values(COLUMN_SPACINGS).includes(value)) return false;
   try {
     localStorage.setItem(DASHBOARD_COLUMN_SPACING_KEY, value);
@@ -409,7 +411,7 @@ export const getRecentShotCount = () => {
 
 export const recentShotCountSignal = signal(getRecentShotCount());
 
-export const setRecentShotCount = (n) => {
+export const setRecentShotCount = n => {
   if (!Number.isInteger(n) || n < 1 || n > 8) return false;
   try {
     localStorage.setItem(DASHBOARD_RECENT_SHOT_COUNT_KEY, String(n));

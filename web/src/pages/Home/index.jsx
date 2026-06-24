@@ -28,20 +28,28 @@ export function Home() {
   const unified = dashboardCardModeSignal.value === DASHBOARD_CARD_MODES.SINGLE;
 
   return (
-    <div className='w-full landscape:max-lg:flex landscape:max-lg:h-full landscape:max-lg:flex-col lg:flex lg:h-full lg:flex-col'>
-      <div className='grid grid-cols-1 gap-4 lg:grid-cols-3 lg:flex-1 lg:min-h-0 lg:items-stretch landscape:max-lg:min-h-0 landscape:max-lg:flex-1 landscape:max-lg:grid-cols-10'>
+    <div className='w-full lg:flex lg:h-full lg:flex-col landscape:max-lg:flex landscape:max-lg:h-full landscape:max-lg:flex-col'>
+      <div className='grid grid-cols-1 gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-3 lg:items-stretch landscape:max-lg:min-h-0 landscape:max-lg:flex-1 landscape:max-lg:grid-cols-10'>
         {isOrderFirst ? (
           <>
             <div className='flex min-h-0 min-w-0 flex-col gap-2 lg:col-span-1 landscape:max-lg:col-span-5 landscape:max-lg:min-h-0'>
               <DashboardSidebar unified={unified} />
             </div>
-            <Card lg={2} className='landscape:max-lg:min-h-0 landscape:max-lg:col-span-5' fullHeight={true}>
+            <Card
+              lg={2}
+              className='landscape:max-lg:col-span-5 landscape:max-lg:min-h-0'
+              fullHeight={true}
+            >
               <OverviewChart />
             </Card>
           </>
         ) : (
           <>
-            <Card lg={2} className='landscape:max-lg:min-h-0 landscape:max-lg:col-span-5' fullHeight={true}>
+            <Card
+              lg={2}
+              className='landscape:max-lg:col-span-5 landscape:max-lg:min-h-0'
+              fullHeight={true}
+            >
               <OverviewChart />
             </Card>
             <div className='flex min-h-0 min-w-0 flex-col gap-2 lg:col-span-1 landscape:max-lg:col-span-5 landscape:max-lg:min-h-0'>
@@ -52,7 +60,7 @@ export function Home() {
       </div>
 
       {showRecentShotsSignal.value && (
-        <div className='hidden [@media(min-height:700px)]:block mt-4'>
+        <div className='mt-4 hidden [@media(min-height:700px)]:block'>
           <RecentShotsCard />
         </div>
       )}

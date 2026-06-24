@@ -315,7 +315,7 @@ export function ExtendedProfileChart({
 
   return (
     <ChartComponent
-      className='max-w-full min-h-0 flex-shrink flex-grow'
+      className='min-h-0 max-w-full flex-shrink flex-grow'
       chartClassName={className}
       data={config}
       style={style}
