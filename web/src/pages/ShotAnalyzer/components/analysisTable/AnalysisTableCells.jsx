@@ -103,6 +103,16 @@ function renderCellBoolean(value) {
   return <span className='text-base-content/55 font-medium'>-</span>;
 }
 
+function formatSystemCellValue(colId, value) {
+  if (colId === 'sys_scale_delay') {
+    return formatCellNumber(value, 0);
+  }
+  if (value == null || value === '') {
+    return '-';
+  }
+  return String(value);
+}
+
 function getMetricCellValue(stats, metricKey, partKey) {
   const metric = stats?.[metricKey];
   const parts = CELL_METRIC_PARTS[partKey];
@@ -159,12 +169,7 @@ function resolveCellValue({ data, stats, col, isSkipped = false }) {
   if (systemValueField) {
     const value = stats?.[col.id];
     return {
-      mainValue:
-        col.id === 'sys_scale_delay'
-          ? formatCellNumber(value, 0)
-          : value == null || value === ''
-            ? '-'
-            : String(value),
+      mainValue: formatSystemCellValue(col.id, value),
       unit: systemValueField.unit,
       isBoolean: false,
       booleanContent: null,
@@ -349,16 +354,17 @@ function renderMetricCellValue({
   warning = false,
 }) {
   const isStopValue = mainValueIsCalculated ? calcIsStopReason : isHit && !calcIsStopReason;
+  let style = {};
+  if (warning) {
+    style = { color: utilityColors.warningOrange };
+  } else if (isStopValue) {
+    style = { color: utilityColors.stopRed };
+  }
+
   return (
     <span
       className={isStopValue ? 'font-normal' : 'text-base-content/90 font-medium'}
-      style={
-        warning
-          ? { color: utilityColors.warningOrange }
-          : isStopValue
-            ? { color: utilityColors.stopRed }
-            : {}
-      }
+      style={style}
     >
       {mainValue} {unit}
     </span>

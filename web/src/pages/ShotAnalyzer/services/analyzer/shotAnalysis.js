@@ -20,6 +20,97 @@ import {
 
 const CONFIGURED_SCALE_DELAY_WARNING_THRESHOLD_MS = 1200;
 
+function buildPhaseNameMap(phaseTransitions = []) {
+  const transitions = Array.isArray(phaseTransitions) ? phaseTransitions : [];
+  return transitions.reduce((map, pt) => {
+    map[pt.phaseNumber] = pt.phaseName;
+    return map;
+  }, {});
+}
+
+function groupSamplesByPhase(samples) {
+  return samples.reduce((groups, sample) => {
+    const pNum = sample.phaseNumber;
+    if (!groups[pNum]) groups[pNum] = [];
+    groups[pNum].push(sample);
+    return groups;
+  }, {});
+}
+
+function calculateWaterVolume(samples) {
+  let water = 0;
+  for (let i = 1; i < samples.length; i++) {
+    const dt = (samples[i].t - samples[i - 1].t) / 1000;
+    water += samples[i].fl * dt;
+  }
+  return water;
+}
+
+function applyConfiguredScaleDelayWarning(analyzedPhases, configuredScaleDelayMs) {
+  const configuredHighScaleDelay =
+    configuredScaleDelayMs > CONFIGURED_SCALE_DELAY_WARNING_THRESHOLD_MS;
+  const lastExecutedPhase = analyzedPhases.at(-1);
+
+  if (configuredHighScaleDelay && lastExecutedPhase) {
+    lastExecutedPhase.highScaleDelay = true;
+    lastExecutedPhase.estimatedScaleDelayMs = Math.max(
+      lastExecutedPhase.estimatedScaleDelayMs || 0,
+      configuredScaleDelayMs,
+    );
+  }
+
+  return configuredHighScaleDelay;
+}
+
+function applySkippedPhaseSystemStats(analyzedPhases, brewModeLabel, configuredScaleDelayMs) {
+  analyzedPhases.forEach(phase => {
+    if (!phase.skipped) return;
+    phase.stats.sys_brew_mode = brewModeLabel;
+    phase.stats.sys_recorded_stop_reason = 'Not recorded';
+    phase.stats.sys_scale_delay = configuredScaleDelayMs;
+  });
+}
+
+function getAverageDelaySettings({ delayTotals, isAutoAdjusted, scaleDelayMs, sensorDelayMs }) {
+  if (!isAutoAdjusted) {
+    return { avgScaleDelay: scaleDelayMs, avgSensorDelay: sensorDelayMs };
+  }
+
+  const avgScaleDelay =
+    delayTotals.countScaleHits > 0
+      ? Math.round(delayTotals.sumScaleDelay / delayTotals.countScaleHits / 50) * 50
+      : scaleDelayMs;
+  const avgSensorDelay =
+    delayTotals.countSensorHits > 0
+      ? Math.round(delayTotals.sumSensorDelay / delayTotals.countSensorHits / 50) * 50
+      : sensorDelayMs;
+
+  return { avgScaleDelay, avgSensorDelay };
+}
+
+function getDelayReviewSummary(analyzedPhases) {
+  const delayReviewPhases = analyzedPhases
+    .map((phase, idx) => ({ ...phase, tablePhaseNumber: idx + 1 }))
+    .filter(phase => phase.delayReviewHint);
+  const primaryDelayReview =
+    delayReviewPhases.length > 0
+      ? [...delayReviewPhases].sort((a, b) => (b.delayReviewMs || 0) - (a.delayReviewMs || 0))[0]
+      : null;
+  const hideLastPhaseDelayReview = primaryDelayReview?.tablePhaseNumber === analyzedPhases.length;
+  const shouldExposeDelayReview = Boolean(primaryDelayReview) && !hideLastPhaseDelayReview;
+  const delayReviewPhaseNumber = shouldExposeDelayReview
+    ? primaryDelayReview.tablePhaseNumber
+    : null;
+  const delayReviewMs = shouldExposeDelayReview ? primaryDelayReview.delayReviewMs : null;
+
+  return {
+    delayReviewHint: shouldExposeDelayReview,
+    delayReviewPhaseNumber,
+    delayReviewMs,
+    delayReviewMessage: getDelayReviewMessage(delayReviewPhaseNumber, delayReviewMs),
+  };
+}
+
 /**
  * Main Analysis Function
  * Calculates all metrics for a shot with optional profile comparison
@@ -43,20 +134,8 @@ export function calculateShotMetrics(shotData, profileData, settings) {
   const globalStartTime = gSamples[0].t;
 
   // --- 1. PHASE SEPARATION ---
-  const phases = {};
-  const phaseNameMap = {};
-
-  if (shotData.phaseTransitions) {
-    shotData.phaseTransitions.forEach(pt => {
-      phaseNameMap[pt.phaseNumber] = pt.phaseName;
-    });
-  }
-
-  gSamples.forEach(sample => {
-    const pNum = sample.phaseNumber;
-    if (!phases[pNum]) phases[pNum] = [];
-    phases[pNum].push(sample);
-  });
+  const phaseNameMap = buildPhaseNameMap(shotData.phaseTransitions);
+  const phases = groupSamplesByPhase(gSamples);
 
   const sortedPhaseKeys = Object.keys(phases).sort((a, b) => a - b);
   const lastPhaseKey = sortedPhaseKeys.at(-1);
@@ -76,15 +155,9 @@ export function calculateShotMetrics(shotData, profileData, settings) {
   }
 
   // --- 3. GLOBAL TOTALS ---
-  let gDuration = (gSamples.at(-1).t - gSamples[0].t) / 1000;
-
-  let gWater = 0;
-  for (let i = 1; i < gSamples.length; i++) {
-    const dt = (gSamples[i].t - gSamples[i - 1].t) / 1000;
-    gWater += gSamples[i].fl * dt;
-  }
-
-  let gWeight = gSamples.at(-1).v;
+  const gDuration = (gSamples.at(-1).t - gSamples[0].t) / 1000;
+  const gWater = calculateWaterVolume(gSamples);
+  const gWeight = gSamples.at(-1).v;
 
   // --- 4. PHASE-BY-PHASE ANALYSIS ---
   const analyzedPhases = [];
@@ -113,39 +186,22 @@ export function calculateShotMetrics(shotData, profileData, settings) {
     scaleConnectionBrokenPermanently = result.scaleConnectionBrokenPermanently;
   }
 
-  const configuredHighScaleDelay =
-    configuredScaleDelayMs > CONFIGURED_SCALE_DELAY_WARNING_THRESHOLD_MS;
-  const lastExecutedPhase = analyzedPhases.at(-1);
-  if (configuredHighScaleDelay && lastExecutedPhase) {
-    lastExecutedPhase.highScaleDelay = true;
-    lastExecutedPhase.estimatedScaleDelayMs = Math.max(
-      lastExecutedPhase.estimatedScaleDelayMs || 0,
-      configuredScaleDelayMs,
-    );
-  }
+  const configuredHighScaleDelay = applyConfiguredScaleDelayWarning(
+    analyzedPhases,
+    configuredScaleDelayMs,
+  );
 
   // --- 4b. DETECT SKIPPED PHASES (phases defined in profile but absent from shot) ---
   mergeSkippedProfilePhases({ analyzedPhases, phases, profileData });
-  analyzedPhases.forEach(phase => {
-    if (!phase.skipped) return;
-    phase.stats.sys_brew_mode = brewModeLabel;
-    phase.stats.sys_recorded_stop_reason = 'Not recorded';
-    phase.stats.sys_scale_delay = configuredScaleDelayMs;
-  });
+  applySkippedPhaseSystemStats(analyzedPhases, brewModeLabel, configuredScaleDelayMs);
 
   // Calculate distinct Average Delays
-  let avgScaleDelay = scaleDelayMs;
-  let avgSensorDelay = sensorDelayMs;
-
-  if (isAutoAdjusted) {
-    if (delayTotals.countScaleHits > 0) {
-      avgScaleDelay = Math.round(delayTotals.sumScaleDelay / delayTotals.countScaleHits / 50) * 50;
-    }
-    if (delayTotals.countSensorHits > 0) {
-      avgSensorDelay =
-        Math.round(delayTotals.sumSensorDelay / delayTotals.countSensorHits / 50) * 50;
-    }
-  }
+  const { avgScaleDelay, avgSensorDelay } = getAverageDelaySettings({
+    delayTotals,
+    isAutoAdjusted,
+    scaleDelayMs,
+    sensorDelayMs,
+  });
 
   analyzerDebug(debugEnabled, 'Auto-delay summary', {
     shotId: shotData.id,
@@ -188,30 +244,17 @@ export function calculateShotMetrics(shotData, profileData, settings) {
   const highScaleDelayMs = hasHighScaleDelay
     ? Math.max(...highScaleDelayPhases.map(p => p.estimatedScaleDelayMs || 0))
     : null;
-  const delayReviewPhases = analyzedPhases
-    .map((phase, idx) => ({ ...phase, tablePhaseNumber: idx + 1 }))
-    .filter(phase => phase.delayReviewHint);
-  const hasDelayReviewHint = delayReviewPhases.length > 0;
-  const primaryDelayReview = hasDelayReviewHint
-    ? [...delayReviewPhases].sort((a, b) => (b.delayReviewMs || 0) - (a.delayReviewMs || 0))[0]
-    : null;
-  const hideLastPhaseDelayReview = primaryDelayReview?.tablePhaseNumber === analyzedPhases.length;
-  const shouldExposeDelayReview = Boolean(primaryDelayReview) && !hideLastPhaseDelayReview;
-  const delayReviewPhaseNumber = shouldExposeDelayReview
-    ? primaryDelayReview.tablePhaseNumber
-    : null;
-  const delayReviewMs = shouldExposeDelayReview ? primaryDelayReview.delayReviewMs : null;
-  const delayReviewMessage = getDelayReviewMessage(delayReviewPhaseNumber, delayReviewMs);
+  const delayReviewSummary = getDelayReviewSummary(analyzedPhases);
 
   return {
     isBrewByWeight,
     globalScaleLost,
     highScaleDelay: hasHighScaleDelay,
     highScaleDelayMs,
-    delayReviewHint: shouldExposeDelayReview,
-    delayReviewPhaseNumber,
-    delayReviewMs,
-    delayReviewMessage,
+    delayReviewHint: delayReviewSummary.delayReviewHint,
+    delayReviewPhaseNumber: delayReviewSummary.delayReviewPhaseNumber,
+    delayReviewMs: delayReviewSummary.delayReviewMs,
+    delayReviewMessage: delayReviewSummary.delayReviewMessage,
     isAutoAdjusted,
     brewModeLabel,
     completionLabel: getBrewCompletionLabel(isBrewByWeight, finalExitReasonCode),
