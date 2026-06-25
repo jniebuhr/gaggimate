@@ -124,7 +124,9 @@ function createSkippedPhase(profilePhase, profileIndex, skipInfo) {
     weight: 0,
     stats: createEmptyPhaseStats(),
     exit: {
+      code: 0,
       reason: skipInfo.reason,
+      source: 'inferred',
       type: skipInfo.type || 'unknown',
     },
     profilePhase,
@@ -137,6 +139,7 @@ function createSkippedPhase(profilePhase, profileIndex, skipInfo) {
     delayReviewMs: null,
     prediction: { finalWeight: null },
     targetCalcValues: buildSkippedTargetCalcValues(skipInfo.type, skipInfo.value),
+    isFinalExecuted: false,
     skipped: true,
   };
 }

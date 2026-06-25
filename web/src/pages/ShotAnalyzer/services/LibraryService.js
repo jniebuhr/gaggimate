@@ -11,96 +11,7 @@ import { parseBinaryShot } from '../../ShotHistory/parseBinaryShot';
 import { indexedDBService } from './IndexedDBService';
 import { notesService } from './NotesService';
 import { getProfileDisplayLabel, getShotStorageKey } from '../utils/analyzerUtils';
-
-const HISTORY_NOTES_DEFAULTS = {
-  id: '',
-  rating: 0,
-  beanType: '',
-  doseIn: '',
-  doseOut: '',
-  ratio: '',
-  grindSetting: '',
-  balanceTaste: 'balanced',
-  notes: '',
-};
-
-function round2(v) {
-  if (v == null || Number.isNaN(v)) return v;
-  return Math.round((v + Number.EPSILON) * 100) / 100;
-}
-
-function normalizeShotSampleForHistoryExport(sample = {}) {
-  return {
-    t: sample.t,
-    tt: round2(sample.tt),
-    ct: round2(sample.ct),
-    tp: round2(sample.tp),
-    cp: round2(sample.cp),
-    fl: round2(sample.fl),
-    tf: round2(sample.tf),
-    pf: round2(sample.pf),
-    vf: round2(sample.vf),
-    v: round2(sample.v),
-    ev: round2(sample.ev),
-    pr: round2(sample.pr),
-    systemInfo: sample.systemInfo,
-    phaseNumber: sample.phaseNumber,
-    phaseDisplayNumber: sample.phaseDisplayNumber,
-  };
-}
-
-function normalizeNotesForHistoryExport(notes, shotId) {
-  const merged = {
-    ...HISTORY_NOTES_DEFAULTS,
-    ...notes,
-    id: String(shotId ?? notes?.id ?? ''),
-  };
-
-  return {
-    id: merged.id,
-    rating: merged.rating ?? 0,
-    beanType: merged.beanType ?? '',
-    doseIn: merged.doseIn ?? '',
-    doseOut: merged.doseOut ?? '',
-    ratio: merged.ratio ?? '',
-    grindSetting: merged.grindSetting ?? '',
-    balanceTaste: merged.balanceTaste ?? 'balanced',
-    notes: merged.notes ?? '',
-  };
-}
-
-function buildHistoryLikeShotExport(rawShot, listItem, notes) {
-  const shotId = rawShot?.id ?? listItem?.id ?? listItem?.name ?? '';
-
-  const base = {
-    id: String(shotId),
-    profile: rawShot?.profile || listItem?.profile || '',
-    profileId: rawShot?.profileId || listItem?.profileId || '',
-    timestamp: rawShot?.timestamp,
-    duration: rawShot?.duration,
-    samples: Array.isArray(rawShot?.samples)
-      ? rawShot.samples.map(normalizeShotSampleForHistoryExport)
-      : [],
-    volume: listItem?.volume ?? rawShot?.volume ?? null,
-    rating: listItem?.rating ?? null,
-    incomplete: listItem?.incomplete ?? rawShot?.incomplete ?? false,
-    notes: normalizeNotesForHistoryExport(notes, shotId),
-    loaded: true,
-    data: null,
-  };
-
-  return {
-    ...base,
-    ...rawShot,
-    samples: base.samples,
-    volume: round2(base.volume),
-    rating: base.rating,
-    incomplete: base.incomplete,
-    notes: base.notes,
-    loaded: true,
-    data: null,
-  };
-}
+import { buildShotExport } from '../../../utils/shotExport.js';
 
 const PROFILE_EXPORT_METADATA_FIELDS = [
   'id',
@@ -133,8 +44,8 @@ function getProfileExportFilename(profile, fallback = 'profile') {
 }
 
 function getShotExportFilename(item) {
-  if (item?.exportName) return ensureJsonFilename(item.exportName);
   if (item?.id) return ensureJsonFilename(`shot-${item.id}`);
+  if (item?.exportName) return ensureJsonFilename(item.exportName);
   return ensureJsonFilename(item?.storageKey || item?.fileName || item?.name || 'shot');
 }
 
@@ -391,7 +302,15 @@ class LibraryService {
         delete fullShot.source;
 
         const notes = await notesService.loadNotes(loadId, 'gaggimate');
-        exportData = buildHistoryLikeShotExport(fullShot, item, notes);
+        exportData = buildShotExport(
+          {
+            ...fullShot,
+            volume: item.volume ?? fullShot.volume,
+            rating: item.rating ?? fullShot.rating ?? null,
+            incomplete: item.incomplete ?? fullShot.incomplete ?? false,
+          },
+          notes,
+        );
       } else {
         // PROFILE EXPORT (GM):
         // Load fresh from controller using the hidden profileId
@@ -414,7 +333,15 @@ class LibraryService {
 
       const shotNotesKey = getShotStorageKey(item);
       const notes = await notesService.loadNotes(shotNotesKey, 'browser');
-      exportData = buildHistoryLikeShotExport(exportShot, item, notes);
+      exportData = buildShotExport(
+        {
+          ...exportShot,
+          volume: item.volume ?? exportShot.volume,
+          rating: item.rating ?? exportShot.rating ?? null,
+          incomplete: item.incomplete ?? exportShot.incomplete ?? false,
+        },
+        notes,
+      );
     } else {
       const rawProfile = item.data || item;
       filename = getProfileExportFilename(

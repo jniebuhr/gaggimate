@@ -9,6 +9,16 @@ import {
 import { getMetricStats } from './metricStats';
 import { analyzeExecutedPhase } from './phaseAnalysis';
 import { mergeSkippedProfilePhases } from './skippedPhases';
+import {
+  buildRecordedExitReasonByPhase,
+  getBrewCompletionLabel,
+  getBrewModeLabel,
+  getPhaseExitReasonMeta,
+  isSafetyExitReason,
+  normalizePhaseExitReasonCode,
+} from './exitReasons.js';
+
+const CONFIGURED_SCALE_DELAY_WARNING_THRESHOLD_MS = 1200;
 
 /**
  * Main Analysis Function
@@ -50,10 +60,15 @@ export function calculateShotMetrics(shotData, profileData, settings) {
 
   const sortedPhaseKeys = Object.keys(phases).sort((a, b) => a - b);
   const lastPhaseKey = sortedPhaseKeys.at(-1);
+  const recordedExitReasonByPhase = buildRecordedExitReasonByPhase(shotData);
 
   // --- 2. BREW MODE DETECTION ---
   const startSysInfo = gSamples[0].systemInfo || {};
   const isBrewByWeight = startSysInfo.shotStartedVolumetric === true;
+  const brewModeLabel = getBrewModeLabel(isBrewByWeight);
+  const configuredScaleDelayMs = Math.max(0, Number(shotData.brewDelay) || 0);
+  const finalExitReasonCode = normalizePhaseExitReasonCode(shotData.finalExitReason);
+  const finalExitReasonLabel = getPhaseExitReasonMeta(finalExitReasonCode).label;
 
   let globalScaleLost = false;
   if (isBrewByWeight) {
@@ -88,6 +103,7 @@ export function calculateShotMetrics(shotData, profileData, settings) {
       phaseNum,
       phases,
       profileData,
+      recordedExitReasonCode: recordedExitReasonByPhase.get(String(phaseNum)) || 0,
       scaleConnectionBrokenPermanently,
       settings,
       shotData,
@@ -97,8 +113,25 @@ export function calculateShotMetrics(shotData, profileData, settings) {
     scaleConnectionBrokenPermanently = result.scaleConnectionBrokenPermanently;
   }
 
+  const configuredHighScaleDelay =
+    configuredScaleDelayMs > CONFIGURED_SCALE_DELAY_WARNING_THRESHOLD_MS;
+  const lastExecutedPhase = analyzedPhases.at(-1);
+  if (configuredHighScaleDelay && lastExecutedPhase) {
+    lastExecutedPhase.highScaleDelay = true;
+    lastExecutedPhase.estimatedScaleDelayMs = Math.max(
+      lastExecutedPhase.estimatedScaleDelayMs || 0,
+      configuredScaleDelayMs,
+    );
+  }
+
   // --- 4b. DETECT SKIPPED PHASES (phases defined in profile but absent from shot) ---
   mergeSkippedProfilePhases({ analyzedPhases, phases, profileData });
+  analyzedPhases.forEach(phase => {
+    if (!phase.skipped) return;
+    phase.stats.sys_brew_mode = brewModeLabel;
+    phase.stats.sys_recorded_stop_reason = 'Not recorded';
+    phase.stats.sys_scale_delay = configuredScaleDelayMs;
+  });
 
   // Calculate distinct Average Delays
   let avgScaleDelay = scaleDelayMs;
@@ -145,6 +178,9 @@ export function calculateShotMetrics(shotData, profileData, settings) {
     sys_scale: finalSysInfo.bluetoothScaleConnected,
     sys_vol_avail: finalSysInfo.volumetricAvailable,
     sys_ext: finalSysInfo.extendedRecording,
+    sys_brew_mode: brewModeLabel,
+    sys_recorded_stop_reason: finalExitReasonLabel,
+    sys_scale_delay: configuredScaleDelayMs,
   };
 
   const highScaleDelayPhases = analyzedPhases.filter(p => p.highScaleDelay);
@@ -177,6 +213,13 @@ export function calculateShotMetrics(shotData, profileData, settings) {
     delayReviewMs,
     delayReviewMessage,
     isAutoAdjusted,
+    brewModeLabel,
+    completionLabel: getBrewCompletionLabel(isBrewByWeight, finalExitReasonCode),
+    completionTone: isSafetyExitReason(finalExitReasonCode) ? 'warning' : 'default',
+    configuredHighScaleDelay,
+    configuredScaleDelayMs,
+    finalExitReasonCode,
+    finalExitReasonLabel,
     usedSettings: {
       scaleDelayMs: avgScaleDelay,
       sensorDelayMs: avgSensorDelay,

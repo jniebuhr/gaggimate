@@ -5,6 +5,7 @@ import { faDroplet } from '@fortawesome/free-solid-svg-icons/faDroplet';
 import { faFaucet } from '@fortawesome/free-solid-svg-icons/faFaucet';
 import { faGauge } from '@fortawesome/free-solid-svg-icons/faGauge';
 import { faScaleBalanced } from '@fortawesome/free-solid-svg-icons/faScaleBalanced';
+import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons/faTriangleExclamation';
 import { getPhaseName } from '../helpers';
 import { getDisplayStopReasonParts } from '../../../utils/analyzerUtils';
 
@@ -60,6 +61,7 @@ function getStopUnit(exitType) {
 }
 
 function formatStopValue(value, unit) {
+  if (value == null) return '-';
   const numeric = Number(value);
   if (!Number.isFinite(numeric)) return '-';
   const formattedValue = numeric.toFixed(1);
@@ -164,6 +166,7 @@ const STOP_ICON_BY_TYPE = {
   volumetric: faScaleBalanced,
   duration: faClock,
   pumped: faDroplet,
+  safety: faTriangleExclamation,
 };
 const WEIGHT_STOP_LEFT_X_ADJUST = -STOP_BADGE_X_ADJUST;
 const WEIGHT_STOP_LEFT_Y_ADJUST = STOP_BADGE_Y_ADJUST;
@@ -306,6 +309,7 @@ function createStopLabelAnnotation({
   yAdjust,
   fontSize,
   calloutBorderWidth,
+  color = '#dc2626',
 }) {
   return {
     type: 'label',
@@ -315,10 +319,10 @@ function createStopLabelAnnotation({
     yValue,
     display: false,
     content: [String(displayNumber)],
-    backgroundColor: '#dc2626',
+    backgroundColor: color,
     borderRadius: 999,
     borderWidth: 0,
-    color: '#dc2626',
+    color,
     font: { size: fontSize, weight: 'bold' },
     padding: getStopBadgePadding(displayNumber),
     callout: {
@@ -327,7 +331,7 @@ function createStopLabelAnnotation({
       side: calloutSide,
       start: '50%',
       margin: 6,
-      borderColor: '#dc2626',
+      borderColor: color,
       borderWidth: calloutBorderWidth,
     },
     xAdjust,
@@ -344,6 +348,7 @@ function addStopIconOverlay({
   yScaleID,
   xOffset,
   yOffset,
+  color = '#ffffff',
 }) {
   const stopIcon = STOP_ICON_BY_TYPE[exitType];
   if (!stopIcon) return;
@@ -357,7 +362,7 @@ function addStopIconOverlay({
     yScaleID,
     xOffset,
     yOffset,
-    color: '#ffffff',
+    color,
   });
 }
 
@@ -372,12 +377,14 @@ function addTransitionStopAnnotation({
   visibility,
   resolvePhaseNumber,
   timeInSeconds,
+  colors,
 }) {
   const endedPhase = findResultPhaseForTransition(results, previousTransition);
   if (!endedPhase?.exit?.reason) return;
 
   const stopSample = transition.sampleIndex === undefined ? null : samples[transition.sampleIndex];
   const exitType = endedPhase.exit.type || '';
+  const stopColor = exitType === 'safety' ? colors.warning : colors.stopLabel;
   const { yValue, yScaleID } = getStopPosition({ exitType, stopSample, samples });
   const stopPhaseNum = resolvePhaseNumber(
     previousTransition.phaseNumber,
@@ -397,6 +404,7 @@ function addTransitionStopAnnotation({
     yAdjust: STOP_BADGE_Y_ADJUST,
     fontSize: 12,
     calloutBorderWidth: 2.5,
+    color: stopColor,
   });
 
   addStopIconOverlay({
@@ -408,6 +416,7 @@ function addTransitionStopAnnotation({
     yScaleID,
     xOffset: STOP_BADGE_X_ADJUST,
     yOffset: STOP_BADGE_Y_ADJUST,
+    color: '#ffffff',
   });
 }
 
@@ -460,6 +469,7 @@ function addPhaseSeparatorAndStops({
         visibility,
         resolvePhaseNumber,
         timeInSeconds,
+        colors,
       });
     }
   }
@@ -607,7 +617,7 @@ function resolveFinalStopAnnotationContext({
   const resultPhases = Array.isArray(results?.phases) ? results.phases : [];
   if (resultPhases.length === 0) return null;
 
-  const lastPhase = resultPhases.at(-1);
+  const lastPhase = resultPhases.find(phase => phase?.isFinalExecuted) || resultPhases.at(-1);
   if (!lastPhase?.exit?.reason) return null;
 
   const exitType = lastPhase.exit.type || '';
@@ -646,6 +656,7 @@ function addFinalStopAnnotations({
   visibility,
   finalWeightSample,
   resolvePhaseNumber,
+  colors,
 }) {
   const context = resolveFinalStopAnnotationContext({
     finalWeightSample,
@@ -657,6 +668,7 @@ function addFinalStopAnnotations({
   if (!context) return;
 
   const { exitType, isWeightStop, lastPhaseDisplayNum, stopTimeSec, yScaleID, yValue } = context;
+  const stopColor = exitType === 'safety' ? colors.warning : colors.stopLabel;
   const xAdjust = isWeightStop ? WEIGHT_STOP_LEFT_X_ADJUST : -STOP_BADGE_X_ADJUST;
   const yAdjust = isWeightStop ? WEIGHT_STOP_LEFT_Y_ADJUST : STOP_BADGE_Y_ADJUST;
 
@@ -675,6 +687,7 @@ function addFinalStopAnnotations({
     yAdjust,
     fontSize: 10,
     calloutBorderWidth: 1.5,
+    color: stopColor,
   });
 
   addStopIconOverlay({
@@ -686,6 +699,7 @@ function addFinalStopAnnotations({
     yScaleID,
     xOffset: xAdjust,
     yOffset: yAdjust,
+    color: '#ffffff',
   });
 }
 
@@ -813,6 +827,7 @@ export function buildPhaseAnnotations({
     visibility,
     finalWeightSample,
     resolvePhaseNumber,
+    colors,
   });
 
   return phaseAnnotations;

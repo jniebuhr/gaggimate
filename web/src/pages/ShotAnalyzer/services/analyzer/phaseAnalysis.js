@@ -25,6 +25,12 @@ import {
   getSampleInstantWeightRate,
   isPositiveFiniteRate,
 } from './weightRate';
+import {
+  getBrewModeLabel,
+  getPhaseExitReasonMeta,
+  isKnownPhaseExitReason,
+  normalizePhaseExitReasonCode,
+} from './exitReasons.js';
 
 function getPhaseSysAnomalies(samples, sysInfo) {
   const sysFieldMap = [
@@ -169,11 +175,24 @@ function findPhaseTargetMatch({
 
 function createExitState() {
   return {
+    exitCode: 0,
     exitReason: null,
+    exitSource: null,
     exitType: null,
     finalPredictedWeight: null,
     targetCalcValues: null,
   };
+}
+
+function applyRecordedExitReason(exitState, recordedExitReasonCode) {
+  if (!isKnownPhaseExitReason(recordedExitReasonCode)) return false;
+
+  const metadata = getPhaseExitReasonMeta(recordedExitReasonCode);
+  exitState.exitCode = normalizePhaseExitReasonCode(recordedExitReasonCode);
+  exitState.exitReason = metadata.stopReason;
+  exitState.exitSource = 'recorded';
+  exitState.exitType = metadata.exitType;
+  return true;
 }
 
 function applyTimeLimitExit(exitState, duration, profilePhase) {
@@ -502,7 +521,7 @@ function analyzePhaseTargets({
   }
 }
 
-function getPhaseStats(samples, sysInfo, sysAnomalies) {
+function getPhaseStats(samples, sysInfo, sysAnomalies, analyzerSystemInfo) {
   return {
     p: getMetricStats(samples, 'cp'),
     tp: getMetricStats(samples, 'tp'),
@@ -519,6 +538,9 @@ function getPhaseStats(samples, sysInfo, sysAnomalies) {
     sys_scale: sysInfo.bluetoothScaleConnected,
     sys_vol_avail: sysInfo.volumetricAvailable,
     sys_ext: sysInfo.extendedRecording,
+    sys_brew_mode: analyzerSystemInfo.brewModeLabel,
+    sys_recorded_stop_reason: analyzerSystemInfo.recordedStopReason,
+    sys_scale_delay: analyzerSystemInfo.configuredScaleDelayMs,
     sys_anomalies: Object.keys(sysAnomalies).length > 0 ? sysAnomalies : undefined,
   };
 }
@@ -534,6 +556,7 @@ export function analyzeExecutedPhase({
   phaseNum,
   phases,
   profileData,
+  recordedExitReasonCode,
   scaleConnectionBrokenPermanently,
   settings,
   shotData,
@@ -555,8 +578,13 @@ export function analyzeExecutedPhase({
   const delayTracker = createPhaseDelayTracker(isLastPhase);
   const exitState = createExitState();
   const profilePhase = findProfilePhase(profileData, rawName);
+  const normalizedRecordedExitReasonCode = normalizePhaseExitReasonCode(recordedExitReasonCode);
+  const hasRecordedExitReason = applyRecordedExitReason(
+    exitState,
+    normalizedRecordedExitReasonCode,
+  );
 
-  if (profilePhase) {
+  if (profilePhase && !hasRecordedExitReason) {
     analyzePhaseTargets({
       debugEnabled,
       delayTracker,
@@ -589,9 +617,15 @@ export function analyzeExecutedPhase({
       duration,
       water: getPumpedWaterUntilIndex(samples, samples.length - 1),
       weight: getPhaseEndSample(samples).v,
-      stats: getPhaseStats(samples, sysInfo, sysAnomalies),
+      stats: getPhaseStats(samples, sysInfo, sysAnomalies, {
+        brewModeLabel: getBrewModeLabel(isBrewByWeight),
+        configuredScaleDelayMs: Math.max(0, Number(shotData.brewDelay) || 0),
+        recordedStopReason: getPhaseExitReasonMeta(normalizedRecordedExitReasonCode).label,
+      }),
       exit: {
+        code: exitState.exitCode,
         reason: exitState.exitReason,
+        source: exitState.exitSource || (exitState.exitReason ? 'inferred' : null),
         type: exitState.exitType,
       },
       profilePhase,
@@ -606,6 +640,7 @@ export function analyzeExecutedPhase({
         finalWeight: exitState.finalPredictedWeight,
       },
       targetCalcValues: exitState.targetCalcValues,
+      isFinalExecuted: isLastPhase,
     },
     scaleConnectionBrokenPermanently: nextScaleConnectionBroken,
   };

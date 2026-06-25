@@ -326,6 +326,7 @@ function buildPhaseTooltipSummaries({ xValue, phaseTooltipGroups, showPhaseNames
     const stopReason = showStops ? row.stopReason || '' : '';
     const stopValue = showStops ? row.stopValue || '' : '';
     const stopTargetValue = showStops ? row.stopTargetValue || '' : '';
+    const stopType = showStops ? row.stopType || '' : '';
 
     if (!phaseLabel && !skipNotice && !stopReason && !stopValue && !stopTargetValue) {
       return summaries;
@@ -337,6 +338,7 @@ function buildPhaseTooltipSummaries({ xValue, phaseTooltipGroups, showPhaseNames
       stopReason: stopReason && stopReason !== '-' ? stopReason : '',
       stopValue: stopValue && stopValue !== '-' ? stopValue : '',
       stopTargetValue,
+      stopType,
       shotLabel: group.shotLabel || '',
       shotNumber: group.shotNumber ?? null,
       color: group.color || null,

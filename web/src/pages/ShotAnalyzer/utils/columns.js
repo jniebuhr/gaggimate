@@ -4,6 +4,7 @@ export const COLUMN_TYPES = {
   MM: 'mm',
   AVG: 'avg',
   BOOL: 'bool',
+  TEXT: 'text',
 };
 
 export function createColumn({ id, label, type, group, default: isDefault = false, targetType }) {
@@ -159,6 +160,24 @@ export const columnConfig = [
     label: 'Target Temp (℃)',
     type: COLUMN_TYPES.AVG,
     group: 'target_temp',
+  }),
+  createColumn({
+    id: 'sys_brew_mode',
+    label: 'Brew Mode',
+    type: COLUMN_TYPES.TEXT,
+    group: 'system',
+  }),
+  createColumn({
+    id: 'sys_recorded_stop_reason',
+    label: 'Recorded Stop Reason',
+    type: COLUMN_TYPES.TEXT,
+    group: 'system',
+  }),
+  createColumn({
+    id: 'sys_scale_delay',
+    label: 'Configured Scale Delay (ms)',
+    type: COLUMN_TYPES.VAL,
+    group: 'system',
   }),
   createColumn({
     id: 'sys_raw',

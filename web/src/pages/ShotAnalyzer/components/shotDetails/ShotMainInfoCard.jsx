@@ -3,7 +3,6 @@ import { faCircleNotch } from '@fortawesome/free-solid-svg-icons/faCircleNotch';
 import { faEye } from '@fortawesome/free-solid-svg-icons/faEye';
 import { cleanName } from '../../utils/analyzerUtils';
 import { SourceMarker } from '../SourceMarker';
-import { BREW_BY_TIME_TEXT, BREW_BY_WEIGHT_TEXT } from '../shotChart/constants';
 import { getAnalyzerShotDisplayName, getShotDateTimeLabel } from '../useShotNotesState';
 import { ShotSummaryMetricsRow } from './ShotMetricCards';
 
@@ -149,7 +148,15 @@ export function ShotMainInfoCard({
       <div className='mt-3 flex items-center justify-between'>
         <span className='text-base-content/45 text-xs italic'>{dateLabel}</span>
         <span className='text-base-content/45 text-xs italic'>
-          {entry?.results?.isBrewByWeight ? BREW_BY_WEIGHT_TEXT : BREW_BY_TIME_TEXT}
+          <span
+            style={
+              entry?.results?.completionTone === 'warning'
+                ? { color: 'var(--analyzer-warning-orange)' }
+                : undefined
+            }
+          >
+            {entry?.results?.completionLabel || entry?.results?.brewModeLabel}
+          </span>
         </span>
       </div>
     </div>

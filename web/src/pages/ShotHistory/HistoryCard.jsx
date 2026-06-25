@@ -19,11 +19,7 @@ import VisualizerUploadModal from '../../components/VisualizerUploadModal.jsx';
 import { visualizerService } from '../../services/VisualizerService.js';
 import { ApiServiceContext } from '../../services/ApiService.js';
 import { Tooltip } from '../../components/Tooltip.jsx';
-
-function round2(v) {
-  if (v == null || Number.isNaN(v)) return v;
-  return Math.round((v + Number.EPSILON) * 100) / 100;
-}
+import { buildShotExport } from '../../utils/shotExport.js';
 
 export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) {
   const apiService = useContext(ApiServiceContext);
@@ -37,27 +33,7 @@ export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) 
 
   const onExport = useCallback(() => {
     if (!shot.loaded) return; // Only export loaded data
-    const exportData = { ...shot, notes: shotNotes };
-    if (Array.isArray(exportData.samples)) {
-      exportData.samples = exportData.samples.map(s => ({
-        t: s.t,
-        tt: round2(s.tt),
-        ct: round2(s.ct),
-        tp: round2(s.tp),
-        cp: round2(s.cp),
-        fl: round2(s.fl),
-        tf: round2(s.tf),
-        pf: round2(s.pf),
-        vf: round2(s.vf),
-        v: round2(s.v),
-        ev: round2(s.ev),
-        pr: round2(s.pr),
-        systemInfo: s.systemInfo,
-        phaseNumber: s.phaseNumber,
-        phaseDisplayNumber: s.phaseDisplayNumber,
-      }));
-    }
-    exportData.volume = round2(exportData.volume);
+    const exportData = buildShotExport(shot, shotNotes);
     // duration left as integer ms
     downloadJson(exportData, 'shot-' + shot.id + '.json');
   }, [shot, shotNotes]);

@@ -2,6 +2,10 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { getShotChartDisplayLabel, getShotChartLabelIcon } from '../labelVisuals';
 import { TooltipShotBadge } from './TooltipPrimitives';
 
+function getStopReasonClassName(summary) {
+  return `shot-chart-tooltip__phase-reason${summary?.stopType === 'safety' ? ' shot-chart-tooltip__phase-reason--warning' : ''}`;
+}
+
 function FloatingTooltipTitle({ state }) {
   if (!state.visible || state.titleLines.length === 0) return null;
   return (
@@ -65,7 +69,7 @@ function FloatingStopSummary({ phaseSummary, index }) {
           <span className='shot-chart-tooltip__phase-skip-notice'>{phaseSummary.skipNotice}</span>
         ) : null}
         {phaseSummary.stopReason ? (
-          <span className='shot-chart-tooltip__phase-reason'>
+          <span className={getStopReasonClassName(phaseSummary)}>
             {phaseSummary.stopReason}
             {phaseSummary.stopValue ? ': ' : ''}
           </span>

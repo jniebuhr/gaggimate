@@ -191,11 +191,7 @@ export function AnalysisTable({
                           <td
                             className={`px-2 py-2 text-left whitespace-nowrap ${strongDividerClass}`}
                           >
-                            <ComparePhaseLabel
-                              phase={phase}
-                              phaseIndex={phaseIndex}
-                              results={entry.results}
-                            />
+                            <ComparePhaseLabel phase={phase} results={entry.results} />
                           </td>
                           {visibleColumns.map(col => (
                             <td
@@ -291,7 +287,7 @@ export function AnalysisTable({
                         {idx + 1}
                       </td>
                       <td className={`px-2 py-2 text-left whitespace-nowrap ${strongDividerClass}`}>
-                        <ComparePhaseLabel phase={phase} phaseIndex={idx} results={results} />
+                        <ComparePhaseLabel phase={phase} results={results} />
                       </td>
                       {visibleColumns.map(col => (
                         <td
