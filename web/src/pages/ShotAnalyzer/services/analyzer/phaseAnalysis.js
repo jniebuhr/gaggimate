@@ -86,6 +86,19 @@ function getPumpedWaterUntilIndex(samples, endIndex) {
   return pumped;
 }
 
+function getRecordedStopValue(exitType, samples, phaseStartTime) {
+  const stopIndex = getLastNonExtendedIndex(samples);
+  const stopSample = stopIndex >= 0 ? samples[stopIndex] : getPhaseEndSample(samples);
+  if (!stopSample) return null;
+
+  if (exitType === 'weight' || exitType === 'volumetric') return stopSample.v;
+  if (exitType === 'pressure') return stopSample.cp;
+  if (exitType === 'flow') return stopSample.fl;
+  if (exitType === 'pumped') return getPumpedWaterUntilIndex(samples, stopIndex);
+  if (exitType === 'duration') return (stopSample.t - phaseStartTime) / 1000;
+  return null;
+}
+
 function buildPhaseTargetContext({
   isBrewByWeight,
   isLastPhase,
@@ -583,6 +596,9 @@ export function analyzeExecutedPhase({
     exitState,
     normalizedRecordedExitReasonCode,
   );
+  const recordedStopValue = hasRecordedExitReason
+    ? getRecordedStopValue(exitState.exitType, samples, samples[0].t)
+    : null;
 
   if (profilePhase && !hasRecordedExitReason) {
     analyzePhaseTargets({
@@ -627,6 +643,7 @@ export function analyzeExecutedPhase({
         reason: exitState.exitReason,
         source: exitState.exitSource || (exitState.exitReason ? 'inferred' : null),
         type: exitState.exitType,
+        actualValue: recordedStopValue,
       },
       profilePhase,
       scaleLost: scaleLostInThisPhase,

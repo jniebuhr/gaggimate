@@ -13,8 +13,18 @@ function isWeightStopType(type) {
   return type === 'weight' || type === 'volumetric';
 }
 
+function getRecordedStopActualValue(phase) {
+  if (phase?.exit?.source !== 'recorded') return null;
+
+  const value = Number(phase.exit.actualValue);
+  return phase.exit.actualValue != null && Number.isFinite(value) ? value : null;
+}
+
 function getStopActualValue(phase, exitType) {
   if (!phase || !exitType) return null;
+
+  const recordedValue = getRecordedStopActualValue(phase);
+  if (recordedValue != null) return recordedValue;
 
   let calcValue = phase.targetCalcValues?.[exitType]?.value;
   if (!Number.isFinite(Number(calcValue)) && isWeightStopType(exitType)) {
