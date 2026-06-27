@@ -98,8 +98,8 @@ void WebSocketHandler::setup(Controller *_controller, PluginManager *_pluginMana
         broadcastJson(doc);
     });
 
-    // Subscribe to Bluetooth scale weight updates
-    pluginManager->on("controller:volumetric-measurement:bluetooth:change",
+    // Subscribe to the selected scale (hardware, Bluetooth, or estimation).
+    pluginManager->on("controller:volumetric-measurement:active:change",
                       [this](Event const &event) { this->currentBluetoothWeight = event.getFloat("value"); });
 }
 
@@ -245,6 +245,8 @@ void WebSocketHandler::handleWebSocketData(AsyncWebSocket *server, AsyncWebSocke
                     client->text(toWsBuffer(resp));
                 } else if (msgType == "req:flush:start") {
                     handleFlushStart(client->id(), doc);
+                } else if (msgType == "req:scale:tare") {
+                    controller->getClientController()->tare();
                 } else if (msgType == "req:flush:stop") {
                     handleFlushStop(client->id(), doc);
                 }
@@ -358,6 +360,8 @@ void WebSocketHandler::publishState(unsigned long now) {
     doc["cp"] = caps.pressure;
     doc["cd"] = caps.dimming;
     doc["gp"] = caps.hasAddon(7);
+    doc["hs"] = caps.hwScale;
+    doc["scaleSource"] = controller->getActiveScaleSourceName();
     doc["led"] = caps.ledControl;
     doc["tw"] = profile.getTotalVolume(); // total target weight for the process
     doc["bta"] = controller->isVolumetricAvailable() ? 1 : 0;
@@ -420,7 +424,7 @@ void WebSocketHandler::publishTelemetry() {
     statusDoc["rtx"] = controller->getClientController()->getRetransmits(); // comms frames resent since boot
     const bool bleConnected = BLEScales.isConnected();
     statusDoc["bw"] = bleConnected ? this->currentBluetoothWeight : 0; // current bluetooth weight
-    statusDoc["cw"] = bleConnected ? this->currentBluetoothWeight : 0; // Use 'currentWeight' for forward compatbility
+    statusDoc["cw"] = this->currentBluetoothWeight; // Active scale weight; renamed below with the scale integration.
     // Explicit null/zero so merging clients drop a finished process instead of keeping the last one.
     statusDoc["process"] = nullptr;
     statusDoc["pkr"] = 0;

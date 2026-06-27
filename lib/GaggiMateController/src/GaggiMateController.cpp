@@ -8,6 +8,9 @@
 #include <peripherals/NtcThermistor.h>
 #include <utility>
 
+constexpr uint32_t ADDON_GEARPUMP = 7;
+constexpr uint32_t ADDON_HW_SCALE = 8;
+
 GaggiMateController::GaggiMateController(String version) : _version(std::move(version)) {
     configs.push_back(GM_STANDARD_REV_1X);
     configs.push_back(GM_STANDARD_REV_2X);
@@ -80,6 +83,14 @@ void GaggiMateController::setup() {
     if (_config.waterButtonPin != 0) {
         waterBtn = new DigitalInput(_config.waterButtonPin, [this](const bool state) { _comms.sendButtonState(2, state); });
     }
+    this->hardwareScale = new HardwareScale(
+        _config.scaleSdaPin, _config.scaleSda1Pin, _config.scaleSclPin,
+        [this](float weight) {
+            if (_comms.isConnected()) {
+                _comms.sendVolumetricMeasurement(weight);
+            }
+        },
+        [](float, float) {});
 
     // 4-Pin peripheral port
     if (!_config.capabilites.dualBoiler) {
@@ -105,11 +116,25 @@ void GaggiMateController::setup() {
     capabilities.tof = _config.capabilites.tof;
     capabilities.led_control = _config.capabilites.ledControls;
     capabilities.dual_boiler = _config.capabilites.dualBoiler;
+
+    this->hardwareScale->setup();
+
+    auto addAddon = [&capabilities](uint32_t type) {
+        const auto maxAddons = sizeof(capabilities.addons) / sizeof(capabilities.addons[0]);
+        if (capabilities.addons_count >= maxAddons) {
+            return;
+        }
+        capabilities.addons[capabilities.addons_count] = gaggimate_Addon_init_zero;
+        capabilities.addons[capabilities.addons_count].type = type;
+        capabilities.addons_count++;
+    };
     if (this->gearpumpAddon != nullptr) {
-        capabilities.addons_count = 1;
-        capabilities.addons[0] = gaggimate_Addon_init_zero;
-        capabilities.addons[0].type = 7;
+        addAddon(ADDON_GEARPUMP);
     }
+    if (this->hardwareScale->isAvailable()) {
+        addAddon(ADDON_HW_SCALE);
+    }
+
     // Steam switch held at power-on opens the BLE pairing window; read it here since steamBtn->setup() runs later.
     _comms.init("GPBLS", _config.name.c_str(), _version, capabilities, isSteamSwitchOn());
 
@@ -284,11 +309,20 @@ void GaggiMateController::setup() {
         this->heater->autotune(static_cast<int>(testTimeSec), static_cast<int>(windowSize), static_cast<int>(heaterWattage));
     });
     _comms.onTare([this]() {
+        if (hardwareScale != nullptr && hardwareScale->isAvailable()) {
+            hardwareScale->tare();
+        }
         if (!_config.capabilites.dimming) {
             return;
         }
         auto dimmedPump = static_cast<DimmedPump *>(pump);
         dimmedPump->tare();
+    });
+    _comms.onScaleFactors([this](float scaleFactor1, float scaleFactor2) {
+        if (hardwareScale == nullptr || !hardwareScale->isAvailable()) {
+            return;
+        }
+        hardwareScale->setScaleFactors(scaleFactor1, scaleFactor2);
     });
     ESP_LOGI(LOG_TAG, "Initialization done");
 }

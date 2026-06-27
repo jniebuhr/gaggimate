@@ -79,6 +79,9 @@ class Settings {
     int getTemperatureOffset() const { return temperatureOffset.get(); }
     float getPressureOffset() const { return pressureOffset.get(); }
     float getPressureScaling() const { return pressureScaling.get(); }
+    float getScaleFactor1() const { return scaleFactor1.get(); }
+    float getScaleFactor2() const { return scaleFactor2.get(); }
+    String getPreferredScaleSource() const { return preferredScaleSource.get(); }
     double getTargetGrindVolume() const { return targetGrindVolume.get(); }
     int getTargetGrindDuration() const { return targetGrindDuration.get(); }
     int getStartupMode() const { return startupMode.get(); }
@@ -174,6 +177,8 @@ class Settings {
     void setTemperatureOffset(int temperature_offset);
     void setPressureOffset(float pressure_offset);
     void setPressureScaling(float pressure_scaling);
+    void setScaleFactors(float scale_factor_1, float scale_factor_2);
+    void setPreferredScaleSource(const String &scaleSource);
     void setTargetGrindVolume(double target_grind_volume);
     void setTargetGrindDuration(int target_duration);
     void setStartupMode(int startup_mode);
@@ -265,6 +270,9 @@ class Settings {
     Property<int> temperatureOffset{registry, "to", DEFAULT_TEMPERATURE_OFFSET};
     Property<float> pressureOffset{registry, "poff", DEFAULT_PRESSURE_OFFSET};
     Property<float> pressureScaling{registry, "ps", DEFAULT_PRESSURE_SCALING};
+    Property<float> scaleFactor1{registry, "sf1", 0.0f};
+    Property<float> scaleFactor2{registry, "sf2", 0.0f};
+    Property<String> preferredScaleSource{registry, "pss", "hardware"};
     Property<double> targetGrindVolume{registry, "tgv", 18.0};
     Property<int> targetGrindDuration{registry, "tgd", 25000};
     Property<double> brewDelay{registry, "del_br", 800.0};

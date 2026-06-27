@@ -191,6 +191,7 @@ export default class ApiService {
     map('gact', 'grindActive', v => v || false);
     map('cw', 'currentWeight', v => v || 0);
     map('bc', 'bluetoothConnected', v => v || false);
+    map('scaleSource', 'activeScaleSource', v => v || 'inactive');
     map('sbat', 'scaleBattery', v => v ?? null);
     map('process', 'process', v => v || null);
     map('rssi', 'rssi', v => v || 0);
@@ -214,6 +215,7 @@ export default class ApiService {
     if (has('led')) capabilities.ledControl = message.led;
     if (has('gp')) capabilities.gearpumpAddon = !!message.gp;
     if (has('db')) capabilities.dualBoiler = message.db;
+    if (has('hs')) capabilities.hardwareScale = !!message.hs;
 
     // Only telemetry frames extend the chart history; state-only frames would duplicate points.
     let history = machine.value.history;
@@ -257,6 +259,7 @@ export const machine = signal({
     pressure: false,
     dimming: false,
     dualBoiler: false,
+    hardwareScale: false,
   },
   history: [],
 });

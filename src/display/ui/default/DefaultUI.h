@@ -125,7 +125,7 @@ class DefaultUI {
     float currentSteamTemp = 0.0f;
     float targetTemp = 0.0f;
     float targetSteamTemp = 0.0f;
-    double bluetoothWeight = 0.0;
+    double activeWeight = 0.0;
     BrewScreenState brewScreenState = BrewScreenState::Brew;
 
     // EEZ Structs

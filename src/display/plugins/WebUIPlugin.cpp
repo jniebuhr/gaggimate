@@ -314,6 +314,19 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setPressureOffset(request->arg("pressureOffset").toFloat());
             if (request->hasArg("pressureScaling"))
                 settings->setPressureScaling(request->arg("pressureScaling").toFloat());
+            if (request->hasArg("scaleFactor1") || request->hasArg("scaleFactor2")) {
+                float sf1 = settings->getScaleFactor1();
+                float sf2 = settings->getScaleFactor2();
+                if (request->hasArg("scaleFactor1")) {
+                    sf1 = request->arg("scaleFactor1").toFloat();
+                }
+                if (request->hasArg("scaleFactor2")) {
+                    sf2 = request->arg("scaleFactor2").toFloat();
+                }
+                settings->setScaleFactors(sf1, sf2);
+            }
+            if (request->hasArg("preferredScaleSource"))
+                settings->setPreferredScaleSource(request->arg("preferredScaleSource"));
             if (request->hasArg("pid"))
                 settings->setPid(request->arg("pid"));
             if (request->hasArg("pumpModelCoeffs"))
@@ -470,6 +483,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
         });
         pluginManager->trigger("settings:changed");
         controller->setTargetTemp(controller->getTargetTemp());
+        controller->setScaleFactors();
         controller->setPumpModelCoeffs();
     }
 
@@ -497,6 +511,9 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["temperatureOffset"] = String(settings.getTemperatureOffset());
     doc["pressureOffset"] = String(settings.getPressureOffset());
     doc["pressureScaling"] = String(settings.getPressureScaling());
+    doc["scaleFactor1"] = settings.getScaleFactor1();
+    doc["scaleFactor2"] = settings.getScaleFactor2();
+    doc["preferredScaleSource"] = settings.getPreferredScaleSource();
     doc["boilerFillActive"] = settings.isBoilerFillActive();
     doc["startupFillTime"] = settings.getStartupFillTime() / 1000;
     doc["steamFillTime"] = settings.getSteamFillTime() / 1000;
