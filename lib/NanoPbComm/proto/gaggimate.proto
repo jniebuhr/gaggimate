@@ -44,6 +44,7 @@ message Payload {
         PressureScale pressure_scale = 9;
         Tare tare = 10;
         LedControl led = 11;
+        ScaleFactors scale_factors = 12;
 
         // Responses: controller -> display
         SystemInfo system_info = 20;
@@ -139,6 +140,11 @@ message PressureScale {
 }
 
 message Tare {}
+
+message ScaleFactors {
+    float scale_factor1 = 1;
+    float scale_factor2 = 2;
+}
 
 // One LED output's target brightness.
 message LedChannel {

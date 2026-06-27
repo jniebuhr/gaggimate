@@ -7,6 +7,9 @@
 
 #include <utility>
 
+constexpr uint32_t ADDON_GEARPUMP = 7;
+constexpr uint32_t ADDON_HW_SCALE = 8;
+
 GaggiMateController::GaggiMateController(String version) : _version(std::move(version)) {
     configs.push_back(GM_STANDARD_REV_1X);
     configs.push_back(GM_STANDARD_REV_2X);
@@ -44,6 +47,14 @@ void GaggiMateController::setup() {
     }
     this->brewBtn = new DigitalInput(_config.brewButtonPin, [this](const bool state) { _comms.sendButtonState(0, state); });
     this->steamBtn = new DigitalInput(_config.steamButtonPin, [this](const bool state) { _comms.sendButtonState(1, state); });
+    this->hardwareScale = new HardwareScale(
+        _config.scaleSdaPin, _config.scaleSda1Pin, _config.scaleSclPin,
+        [this](float weight) {
+            if (_comms.isConnected()) {
+                _comms.sendVolumetricMeasurement(weight);
+            }
+        },
+        [](float, float) {});
 
     // 4-Pin peripheral port
     albaComms = new SoftWire(_config.sunriseSdaPin, _config.sunriseSclPin);
@@ -65,11 +76,25 @@ void GaggiMateController::setup() {
     capabilities.pressure = _config.capabilites.pressure;
     capabilities.tof = _config.capabilites.tof;
     capabilities.led_control = _config.capabilites.ledControls;
+
+    this->hardwareScale->setup();
+
+    auto addAddon = [&capabilities](uint32_t type) {
+        const auto maxAddons = sizeof(capabilities.addons) / sizeof(capabilities.addons[0]);
+        if (capabilities.addons_count >= maxAddons) {
+            return;
+        }
+        capabilities.addons[capabilities.addons_count] = gaggimate_Addon_init_zero;
+        capabilities.addons[capabilities.addons_count].type = type;
+        capabilities.addons_count++;
+    };
     if (this->gearpumpAddon != nullptr) {
-        capabilities.addons_count = 1;
-        capabilities.addons[0] = gaggimate_Addon_init_zero;
-        capabilities.addons[0].type = 7;
+        addAddon(ADDON_GEARPUMP);
     }
+    if (this->hardwareScale->isAvailable()) {
+        addAddon(ADDON_HW_SCALE);
+    }
+
     _comms.init("GPBLS", _config.name.c_str(), _version, capabilities);
 
     if (_config.capabilites.ledControls) {
@@ -211,11 +236,20 @@ void GaggiMateController::setup() {
         this->heater->autotune(static_cast<int>(testTimeSec), static_cast<int>(windowSize), static_cast<int>(heaterWattage));
     });
     _comms.onTare([this]() {
+        if (hardwareScale != nullptr && hardwareScale->isAvailable()) {
+            hardwareScale->tare();
+        }
         if (!_config.capabilites.dimming) {
             return;
         }
         auto dimmedPump = static_cast<DimmedPump *>(pump);
         dimmedPump->tare();
+    });
+    _comms.onScaleFactors([this](float scaleFactor1, float scaleFactor2) {
+        if (hardwareScale == nullptr || !hardwareScale->isAvailable()) {
+            return;
+        }
+        hardwareScale->setScaleFactors(scaleFactor1, scaleFactor2);
     });
     ESP_LOGI(LOG_TAG, "Initialization done");
 }

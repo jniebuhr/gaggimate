@@ -183,6 +183,7 @@ export default class ApiService {
       grindActive: message.gact || false,
       currentWeight: message.cw || 0,
       bluetoothConnected: message.bc || false,
+      activeScaleSource: message.scaleSource || 'inactive',
       process: message.process || null,
       timestamp: new Date(),
       rssi: message.rssi || 0,
@@ -209,6 +210,7 @@ export default class ApiService {
         pressure: message.cp,
         ledControl: message.led,
         gearpumpAddon: !!message.gp,
+        hardwareScale: !!message.hs,
       },
       history: [...machine.value.history, historyEntry],
     };
@@ -240,6 +242,7 @@ export const machine = signal({
   capabilities: {
     pressure: false,
     dimming: false,
+    hardwareScale: false,
   },
   history: [],
 });

@@ -26,6 +26,7 @@ using PumpSettings = gaggimate_PumpSettings;
 using AutotuneRequest = gaggimate_AutotuneRequest;
 using PressureScale = gaggimate_PressureScale;
 using Tare = gaggimate_Tare;
+using ScaleFactors = gaggimate_ScaleFactors;
 using LedChannel = gaggimate_LedChannel;
 using LedControl = gaggimate_LedControl;
 

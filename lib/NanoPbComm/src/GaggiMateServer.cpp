@@ -171,6 +171,10 @@ void GaggiMateServer::registerHandlers() {
         if (_tareCb)
             _tareCb();
     });
+    _endpoint.on(gaggimate_Payload_scale_factors_tag, [this](const gm::Payload &p) {
+        if (_scaleFactorsCb)
+            _scaleFactorsCb(p.content.scale_factors.scale_factor1, p.content.scale_factors.scale_factor2);
+    });
     _endpoint.on(gaggimate_Payload_led_tag, [this](const gm::Payload &p) {
         if (!_ledCb)
             return;
