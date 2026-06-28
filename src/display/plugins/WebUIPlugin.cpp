@@ -330,6 +330,15 @@ void WebUIPlugin::setupServer() {
             request->send(404, "text/plain", "Index not found");
         }
     });
+    server.on("/api/history/recent.bin", HTTP_GET, [this, fs](AsyncWebServerRequest *request) {
+        // Serve the rolling recent-shots buffer directly; 404 until the first
+        // shot completes after this feature ships (file is created lazily).
+        if (fs->exists("/h/recent.bin")) {
+            request->send(*fs, "/h/recent.bin", "application/octet-stream");
+        } else {
+            request->send(404, "text/plain", "Recent shots index not found");
+        }
+    });
     server.on("/api/core-dump", HTTP_GET, [this](AsyncWebServerRequest *request) { handleCoreDumpDownload(request); });
     // The web UI is embedded in firmware flash and served from the memory-mapped blob (see serveWebAsset). It is no
     // longer in LittleFS, so OTA never touches the partition holding profiles/shots. The catch-all onNotFound handles
