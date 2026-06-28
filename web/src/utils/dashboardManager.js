@@ -67,9 +67,16 @@ const DASHBOARD_METRICS_KEY = 'dashboardMetrics';
 const DEFAULT_METRIC_ORDER = ['pressure', 'flow', 'temp', 'weight'];
 const DEFAULT_METRIC_ORDER_MOBILE = ['pressure', 'temp', 'weight'];
 
+// Matches narrow portrait phones (max-width) as well as phones rotated into
+// landscape, where width grows past the portrait breakpoint but height stays small.
+const isMobileViewport = () =>
+  !!globalThis.window?.matchMedia(
+    '(max-width: 768px), (max-height: 768px) and (orientation: landscape)'
+  ).matches;
+
 export const getMetricOrder = () => {
 
-  const isMobile = globalThis.window?.matchMedia('(max-width: 768px)').matches;
+  const isMobile = isMobileViewport();
   const defaultOrder = isMobile ? [...DEFAULT_METRIC_ORDER_MOBILE] : [... DEFAULT_METRIC_ORDER];
 
   if (!globalThis.window?.localStorage) {
@@ -236,7 +243,7 @@ const DASHBOARD_COMPACT_PANELS_KEY = 'dashboardCompactPanels';
 const DEFAULT_COMPACT_PANELS_MOBILE = ['profile', 'favorites', 'metrics'];
 
 export const getCompactPanels = () => {
-  const isMobile = globalThis.window?.matchMedia('(max-width: 768px)').matches;
+  const isMobile = isMobileViewport();
   const defaultPanels = isMobile ? [...DEFAULT_COMPACT_PANELS_MOBILE] : [];
 
   if (!globalThis.window?.localStorage) return defaultPanels;
