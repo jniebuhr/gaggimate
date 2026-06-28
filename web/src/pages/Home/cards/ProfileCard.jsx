@@ -8,6 +8,7 @@ import { ProcessProfileChart } from '../../../components/ProcessProfileChart.jsx
 import { profileChartHeightSignal } from '../../../utils/dashboardManager.js';
 import { SkeletonBlock } from '../../../components/SkeletonBlock.jsx';
 import { fmtElapsed, fmtPhaseTarget, getPhaseLabel } from '../utils.js';
+import { parseRecentShotsIndex } from '../../ShotHistory/parseRecentShotsIndex.js';
 
 function ProgressCard({ processInfo, isBrewing, isGrinding, selectedProfile }) {
   const p = processInfo;
@@ -73,7 +74,7 @@ function FinishedProcessCard({ processInfo, isBrewing, selectedProfile, stats, w
         <FontAwesomeIcon icon={faCheck} />
         Finished · {selectedProfile || 'Default'}
       </div>
-      <span className='text-base-content text-2xl font-bold tabular-nums'>
+      <span className='text-base-content text-center text-2xl font-bold tabular-nums'>
         {fmtElapsed(p?.e)}
       </span>
       {items.length > 0 && (
@@ -137,6 +138,28 @@ export function ProfileCard({
   useEffect(() => {
     if (isActive) setFinishedStats(null);
   }, [isActive]);
+
+  // Fallback for a page reload landing directly on an already-finished shot:
+  // the live evt:shot-finished-stats event only fires once, at the moment the
+  // shot stopped, so a fresh mount never receives it. Recent.bin always has
+  // the same stats for the most recently completed shot, so use that instead.
+  useEffect(() => {
+    if (!isFinished || !isBrewing || finishedStats !== null) return;
+    let cancelled = false;
+    fetch('/api/history/recent.bin')
+      .then(resp => (resp.ok ? resp.arrayBuffer() : null))
+      .then(buf => {
+        if (cancelled || !buf) return;
+        const [latest] = parseRecentShotsIndex(buf);
+        if (latest) {
+          setFinishedStats({ maxPressure: latest.maxPressure, avgFlow: latest.avgFlow });
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [isFinished, isBrewing, finishedStats]);
 
   useEffect(() => {
     if (!selectedProfileId || !apiService) {
