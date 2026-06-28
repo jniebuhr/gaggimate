@@ -224,22 +224,25 @@ export function DashboardSettings() {
               persistPanelOrder(ids);
             }}
             emptyMessage='All available panels are visible.'
-            extraControls={def =>
-              def.supportsCompact ? (
+            extraControls={def => {
+              if (!def.supportsCompact) return null;
+              const isCompact = compactPanels.includes(def.id);
+              return (
                 <button
                   type='button'
-                  title={
-                    compactPanels.includes(def.id)
-                      ? 'Switch to full view'
-                      : 'Switch to compact view'
-                  }
+                  title={isCompact ? 'Switch to full view' : 'Switch to compact view'}
                   onClick={() => handleToggleCompact(def.id)}
-                  className={`btn btn-ghost btn-xs flex h-6 w-6 items-center justify-center rounded p-0 ${compactPanels.includes(def.id) ? 'text-primary' : 'text-base-content/30'}`}
+                  className={`btn btn-xs flex h-6 items-center justify-center gap-1 rounded-full px-2 ${
+                    isCompact
+                      ? 'btn-primary'
+                      : 'border-base-content/20 bg-base-200/60 text-base-content/60 border'
+                  }`}
                 >
                   <FontAwesomeIcon icon={faCompress} className='h-3 w-3' />
+                  <span className='hidden @md:inline'>{isCompact ? 'Compact' : 'Full'}</span>
                 </button>
-              ) : null
-            }
+              );
+            }}
           />
           {!compactPanels.includes('profile') && panelOrder.includes('profile') && (
             <SettingsFormField label='Profile Chart Height' htmlFor='profileChartHeight'>
