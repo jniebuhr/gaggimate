@@ -1,8 +1,9 @@
 import { useContext, useEffect, useState } from 'preact/hooks';
-import { ApiServiceContext } from '../../../services/ApiService.js';
+import { ApiServiceContext, machine } from '../../../services/ApiService.js';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faRectangleList } from '@fortawesome/free-solid-svg-icons/faRectangleList';
+import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
 import { ProcessProfileChart } from '../../../components/ProcessProfileChart.jsx';
 import { profileChartHeightSignal } from '../../../utils/dashboardManager.js';
 import { SkeletonBlock } from '../../../components/SkeletonBlock.jsx';
@@ -54,6 +55,54 @@ ProgressCard.propTypes = {
   selectedProfile: PropTypes.string,
 };
 
+function FinishedProcessCard({ processInfo, isBrewing, selectedProfile, stats, weight }) {
+  const p = processInfo;
+  const weightLabel = weight != null && weight > 0 ? `${weight.toFixed(1)}g` : null;
+  const pressureLabel =
+    isBrewing && stats?.maxPressure != null ? `${stats.maxPressure.toFixed(1)} bar` : null;
+  const flowLabel = isBrewing && stats?.avgFlow != null ? `${stats.avgFlow.toFixed(2)} ml/s` : null;
+  const items = [
+    weightLabel && { key: 'weight', label: 'Weight', value: weightLabel },
+    pressureLabel && { key: 'pressure', label: 'Pressure', value: pressureLabel },
+    flowLabel && { key: 'flow', label: 'Flow', value: flowLabel },
+  ].filter(Boolean);
+
+  return (
+    <div className='card bg-success/10 border-success/30 flex flex-col gap-1 rounded-xl border p-3'>
+      <div className='text-success flex items-center gap-1.5 text-[0.65rem] font-semibold tracking-wider uppercase'>
+        <FontAwesomeIcon icon={faCheck} />
+        Finished · {selectedProfile || 'Default'}
+      </div>
+      <span className='text-base-content text-2xl font-bold tabular-nums'>
+        {fmtElapsed(p?.e)}
+      </span>
+      {items.length > 0 && (
+        <div className='mt-1 flex gap-3'>
+          {items.map(item => (
+            <div key={item.key} className='flex-1 text-center'>
+              <div className='text-base-content text-sm font-bold tabular-nums'>{item.value}</div>
+              <div className='text-base-content/50 text-[0.6rem] font-semibold tracking-wider uppercase'>
+                {item.label}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+FinishedProcessCard.propTypes = {
+  processInfo: PropTypes.object,
+  isBrewing: PropTypes.bool.isRequired,
+  selectedProfile: PropTypes.string,
+  stats: PropTypes.shape({
+    maxPressure: PropTypes.number,
+    avgFlow: PropTypes.number,
+  }),
+  weight: PropTypes.number,
+};
+
 export function ProfileCard({
   selectedProfile,
   selectedProfileId,
@@ -68,6 +117,26 @@ export function ProfileCard({
   const apiService = useContext(ApiServiceContext);
   const [profileData, setProfileData] = useState(null);
   const [profileLoading, setProfileLoading] = useState(false);
+  const [finishedStats, setFinishedStats] = useState(null);
+
+  // Always mounted (unlike the finished view itself), so this can't miss the
+  // event if it arrives before the next status update flips isFinished true.
+  useEffect(() => {
+    if (!apiService) return;
+    const listenerId = apiService.on('evt:shot-finished-stats', msg => {
+      setFinishedStats({
+        maxPressure: msg.maxPressure > 0 ? msg.maxPressure : null,
+        avgFlow: msg.avgFlow > 0 ? msg.avgFlow : null,
+      });
+    });
+    return () => apiService.off('evt:shot-finished-stats', listenerId);
+  }, [apiService]);
+
+  // Clear stale stats the moment a new shot starts, so a missed/dropped
+  // websocket message can never leave a previous shot's numbers visible.
+  useEffect(() => {
+    if (isActive) setFinishedStats(null);
+  }, [isActive]);
 
   useEffect(() => {
     if (!selectedProfileId || !apiService) {
@@ -96,6 +165,17 @@ export function ProfileCard({
   const showProgress = (isBrewing || isGrinding) && (isActive || isFinished);
 
   if (showProgress) {
+    if (isFinished) {
+      return (
+        <FinishedProcessCard
+          processInfo={processInfo}
+          isBrewing={isBrewing}
+          selectedProfile={selectedProfile}
+          stats={finishedStats}
+          weight={machine.value.status?.currentWeight}
+        />
+      );
+    }
     return (
       <ProgressCard
         processInfo={processInfo}
