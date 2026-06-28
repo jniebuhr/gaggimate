@@ -2,6 +2,7 @@
 #define HARDWARESCALE_H
 
 #include <Arduino.h>
+#include <atomic>
 #include <functional>
 
 constexpr int SCALE_READ_INTERVAL_MS = 100;
@@ -32,21 +33,22 @@ class HardwareScale {
     void tare();
 
   private:
-    bool _initialized = false;
-    bool _scaleFactorsReady = false;
+    std::atomic<bool> _initialized{false};
+    std::atomic<bool> _scaleFactorsReady{false};
     uint8_t _dataPin1;
     uint8_t _dataPin2;
     uint8_t _clockPin;
     RawReading _rawWeight;
-    float _weight = 0.0f;
+    std::atomic<float> _weight{0.0f};
     float _scaleFactor1;
     float _scaleFactor2;
     float _offset1;
     float _offset2;
-    bool _isTaringOrCalibrating;
     scale_reading_callback_t _readingCallback;
     scale_configuration_callback_t _configurationCallback;
     xTaskHandle taskHandle;
+    SemaphoreHandle_t _operationMutex;
+    portMUX_TYPE _readMux = portMUX_INITIALIZER_UNLOCKED;
 
     const char *LOG_TAG = "HardwareScale";
     static void loopTask(void *arg);
