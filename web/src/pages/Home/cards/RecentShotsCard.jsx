@@ -212,20 +212,33 @@ export function RecentShotsCard() {
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
   const prevFinishedRef = useRef(false);
+  const finishedMountedRef = useRef(false);
+  const countMountedRef = useRef(false);
   const slots = shotMetricSlotsSignal.value;
 
-  // Trigger a refresh when a shot transitions to finished or the count setting changes
+  // Trigger a refresh when a shot transitions to finished or the count setting changes.
+  // Guarded so each effect's initial mount-time subscribe call doesn't itself
+  // count as a "change" and trigger a redundant fetch alongside the mount-time
+  // fetch already performed by the useEffect below.
   useSignalEffect(() => {
     const finished = isFinished.value;
-    if (finished && !prevFinishedRef.current) {
-      setRefreshKey(k => k + 1);
+    if (finishedMountedRef.current) {
+      if (finished && !prevFinishedRef.current) {
+        setRefreshKey(k => k + 1);
+      }
+    } else {
+      finishedMountedRef.current = true;
     }
     prevFinishedRef.current = finished;
   });
 
   useSignalEffect(() => {
     void recentShotCountSignal.value;
-    setRefreshKey(k => k + 1);
+    if (countMountedRef.current) {
+      setRefreshKey(k => k + 1);
+    } else {
+      countMountedRef.current = true;
+    }
   });
 
   useEffect(() => {
