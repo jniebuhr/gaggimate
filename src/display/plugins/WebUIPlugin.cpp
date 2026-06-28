@@ -107,6 +107,17 @@ void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) 
         broadcastJson(doc);
     });
 
+    // Forward live shot-finished stats (pressure/flow) to WebSocket clients, so
+    // the dashboard's finished card can show them without waiting for the
+    // history file write.
+    pluginManager->on("evt:shot-finished-stats", [this](Event const &event) {
+        JsonDocument doc(&psramAllocator);
+        doc["tp"] = "evt:shot-finished-stats";
+        doc["maxPressure"] = event.getFloat("maxPressure");
+        doc["avgFlow"] = event.getFloat("avgFlow");
+        broadcastJson(doc);
+    });
+
     // Subscribe to Bluetooth scale weight updates
     pluginManager->on("controller:volumetric-measurement:bluetooth:change",
                       [this](Event const &event) { this->currentBluetoothWeight = event.getFloat("value"); });

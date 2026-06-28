@@ -374,6 +374,21 @@ void ShotHistoryPlugin::endRecording() {
         lastWeightChangeTime = 0;
     }
 
+    // Notify clients immediately, without waiting for the history file write
+    // (which can lag behind by the extended-recording window above). Pressure
+    // and flow are already final at this point: the pump is off, so any
+    // further samples recorded during extended recording have cp/fl at or
+    // near zero and cannot change the running max/average.
+    if (pluginManager) {
+        Event statsEvent;
+        statsEvent.id = "evt:shot-finished-stats";
+        statsEvent.setFloat("maxPressure", maxPressureScaled > 0 ? maxPressureScaled / PRESSURE_SCALE : 0.0f);
+        statsEvent.setFloat("avgFlow", positiveFlowCount > 0
+                                           ? (flowSumScaled / static_cast<float>(positiveFlowCount)) / FLOW_SCALE
+                                           : 0.0f);
+        pluginManager->trigger(statsEvent);
+    }
+
     recording = false;
 }
 
