@@ -292,6 +292,18 @@ void ShotHistoryPlugin::record() {
             strncpy(recentEntry.profileName, indexEntry.profileName, sizeof(recentEntry.profileName) - 1);
             recentEntry.profileName[sizeof(recentEntry.profileName) - 1] = '\0';
             appendToRecentShots(recentEntry);
+
+            // Notify clients the shot is actually persisted. The brew process's
+            // isActive/isFinished state (used elsewhere for UI) can go inactive
+            // well before extended recording (BLE scale weight settling, see
+            // endRecording()) finishes writing this entry, so the dashboard
+            // listens for this event instead of inferring timing from that state.
+            if (pluginManager) {
+                Event savedEvent;
+                savedEvent.id = "evt:history-shot-saved";
+                savedEvent.setInt("id", indexEntry.id);
+                pluginManager->trigger(savedEvent);
+            }
         }
     }
 }

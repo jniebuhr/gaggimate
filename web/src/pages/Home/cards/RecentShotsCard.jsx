@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState } from 'preact/hooks';
-import { computed, useSignalEffect } from '@preact/signals';
+import { useContext, useEffect, useRef, useState } from 'preact/hooks';
+import { useSignalEffect } from '@preact/signals';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMagnifyingGlassChart } from '@fortawesome/free-solid-svg-icons/faMagnifyingGlassChart';
 import { parseRecentShotsIndex } from '../../ShotHistory/parseRecentShotsIndex.js';
-import { machine } from '../../../services/ApiService.js';
+import { ApiServiceContext } from '../../../services/ApiService.js';
 import { cleanName } from '../../ShotAnalyzer/utils/analyzerUtils.js';
 import {
   shotMetricSlotsSignal,
@@ -12,11 +12,6 @@ import {
 } from '../../../utils/dashboardManager.js';
 import PropTypes from 'prop-types';
 import { SkeletonBlock } from '../../../components/SkeletonBlock.jsx';
-
-const isFinished = computed(() => {
-  const p = machine.value.status?.process;
-  return !!p?.e && !p?.a;
-});
 
 // Compares calendar dates, not raw milliseconds, so 11:59 PM yesterday
 // correctly reads as "Yesterday" even if less than 24 h ago.
@@ -170,30 +165,30 @@ ShotMiniCardSkeleton.propTypes = {
 };
 
 export function RecentShotsCard() {
+  const apiService = useContext(ApiServiceContext);
   const [shots, setShots] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
-  const prevFinishedRef = useRef(false);
-  const finishedMountedRef = useRef(false);
   const countMountedRef = useRef(false);
   const slots = shotMetricSlotsSignal.value;
 
-  // Trigger a refresh when a shot transitions to finished or the count setting changes.
-  // Guarded so each effect's initial mount-time subscribe call doesn't itself
-  // count as a "change" and trigger a redundant fetch alongside the mount-time
-  // fetch already performed by the useEffect below.
-  useSignalEffect(() => {
-    const finished = isFinished.value;
-    if (finishedMountedRef.current) {
-      if (finished && !prevFinishedRef.current) {
-        setRefreshKey(k => k + 1);
-      }
-    } else {
-      finishedMountedRef.current = true;
-    }
-    prevFinishedRef.current = finished;
-  });
+  // Trigger a refresh once the firmware confirms a shot was actually
+  // persisted to history. Brew-process state (isActive/isFinished) can go
+  // inactive well before extended recording (BLE scale weight settling)
+  // finishes writing the entry, so we listen for the explicit save event
+  // instead of inferring timing from process state.
+  useEffect(() => {
+    if (!apiService) return;
+    const listenerId = apiService.on('evt:history-shot-saved', () => {
+      setRefreshKey(k => k + 1);
+    });
+    return () => apiService.off('evt:history-shot-saved', listenerId);
+  }, [apiService]);
 
+  // Trigger a refresh when the count setting changes.
+  // Guarded so the initial mount-time subscribe call doesn't itself count as
+  // a "change" and trigger a redundant fetch alongside the mount-time fetch
+  // already performed by the useEffect below.
   useSignalEffect(() => {
     void recentShotCountSignal.value;
     if (countMountedRef.current) {

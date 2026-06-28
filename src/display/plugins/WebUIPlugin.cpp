@@ -98,6 +98,15 @@ void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) 
         broadcastJson(doc);
     });
 
+    // Forward "shot saved to history" events to WebSocket clients, so the
+    // dashboard can refetch the recent-shots buffer at the right time.
+    pluginManager->on("evt:history-shot-saved", [this](Event const &event) {
+        JsonDocument doc(&psramAllocator);
+        doc["tp"] = "evt:history-shot-saved";
+        doc["id"] = event.getInt("id");
+        broadcastJson(doc);
+    });
+
     // Subscribe to Bluetooth scale weight updates
     pluginManager->on("controller:volumetric-measurement:bluetooth:change",
                       [this](Event const &event) { this->currentBluetoothWeight = event.getFloat("value"); });
