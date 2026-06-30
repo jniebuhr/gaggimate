@@ -244,7 +244,7 @@ function makeChartData(data, selectedPhase, phaseRanges, onPhaseClick, isDarkMod
   };
 
   // Add highlighting box only if a phase is selected
-  if (selectedPhase !== null && phases.length > 0) {
+  if (selectedPhase !== null && phaseRanges[selectedPhase]) {
     const start = phaseRanges[selectedPhase].start;
     const end = phaseRanges[selectedPhase].end;
 
@@ -327,7 +327,7 @@ function makeChartData(data, selectedPhase, phaseRanges, onPhaseClick, isDarkMod
           return true;
         },
         click() {
-          onPhaseClick(i);
+          if (onPhaseClick) onPhaseClick(i);
           return true;
         },
       });
