@@ -116,7 +116,7 @@ function prepareData(phases, target) {
   return data;
 }
 
-function makeChartData(data, selectedPhase, isDarkMode = false) {
+function makeChartData(data, selectedPhase, phaseRanges, onPhaseClick, isDarkMode = false) {
   const phases = Array.isArray(data?.phases) ? data.phases : [];
   let duration = 0;
   for (const phase of phases) {
@@ -245,16 +245,14 @@ function makeChartData(data, selectedPhase, isDarkMode = false) {
 
   // Add highlighting box only if a phase is selected
   if (selectedPhase !== null && phases.length > 0) {
-    let start = 0;
-    for (let i = 0; i < selectedPhase; i++) {
-      start += Number.parseFloat(phases[i].duration);
-    }
-    let end = start + Number.parseFloat(phases[selectedPhase].duration);
+    const start = phaseRanges[selectedPhase].start;
+    const end = phaseRanges[selectedPhase].end;
+
     chartData.options.plugins.annotation.annotations.push({
       id: 'box1',
       type: 'box',
       xMin: start + 0.1,
-      xMax: end + 0.1,
+      xMax: end - 0.1,
       backgroundColor: 'rgba(0,105,255,0.2)',
       borderColor: 'rgba(100, 100, 100, 0)',
     });
@@ -263,17 +261,16 @@ function makeChartData(data, selectedPhase, isDarkMode = false) {
   const chartWidth = window.innerWidth;
   const showLabels = chartWidth >= 520;
   const isSmall = window.innerWidth < 640;
-  const yMax = chartData.options.scales.y.max ?? 12;
+  // const yMax = chartData.options.scales.y.max ?? 12;
 
-  let phaseStart = 0;
   for (let i = 0; i < phases.length; i++) {
     const phase = phases[i];
     const phaseName = phase.name || `Phase ${i + 1}`;
 
     chartData.options.plugins.annotation.annotations.push({
       type: 'line',
-      xMin: phaseStart,
-      xMax: phaseStart,
+      xMin: phaseRanges[i].start,
+      xMax: phaseRanges[i].start,
       borderColor: 'rgb(128,128,128)',
       borderWidth: 1,
       label: showLabels
@@ -297,24 +294,85 @@ function makeChartData(data, selectedPhase, isDarkMode = false) {
         : undefined,
     });
 
-    phaseStart += Number.parseFloat(phase.duration);
   }
+
+  // If we are in the edit profile page (we have phases and a phase is selected) set the hover effect and onPhaseClick()
+  if (selectedPhase !== null && phases.length > 0) {
+    chartData.options.plugins.annotation.interaction = {
+      intersect: false,
+      mode: 'x',
+      axis: 'x',
+    };
+
+    const hoverEnterColor = 'rgb(0 105 255 / 0.07)';
+    const hoverLeaveColor = 'rgb(0 0 0 / 0)';
+
+    for (let i = 0; i < phaseRanges.length; i++) {
+      const start = phaseRanges[i].start;
+      const end = phaseRanges[i].end;
+      chartData.options.plugins.annotation.annotations.push({
+        id: `phase${i}`,
+        type: 'box',
+        xMin: start + 0.1,
+        xMax: end - 0.1,
+        backgroundColor: hoverLeaveColor,
+        borderColor: 'rgba(100, 100, 100, 0)',
+        clip: true,
+        enter({ element }) {
+          element.options.backgroundColor = hoverEnterColor;
+          return true;
+        },
+        leave({ element }) {
+          element.options.backgroundColor = hoverLeaveColor;
+          return true;
+        },
+        click() {
+          onPhaseClick(i);
+          return true;
+        },
+      });
+    }
+  }
+
   return chartData;
+}
+
+function buildPhaseRanges(phases) {
+  const ranges = [];
+  let start = 0;
+  for (const phase of phases) {
+    const duration = Number.parseFloat(phase.duration);
+    ranges.push({ start, end: start + duration });
+    start += duration;
+  }
+  return ranges;
+}
+
+function getPhaseIndexForX(phaseRanges, xValue) {
+  for (let i = 0; i < phaseRanges.length; i++) {
+    if (xValue <= phaseRanges[i].end) return i;
+  }
+  return -1;
 }
 
 export function ExtendedProfileChart({
   data,
   className = 'max-h-36 w-full',
   selectedPhase = null,
+  onPhaseClick = null,
 }) {
   const isDarkMode = () =>
     window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-  const config = makeChartData(data, selectedPhase, isDarkMode());
+  const phases = Array.isArray(data?.phases) ? data.phases : [];
+  const phaseRanges = buildPhaseRanges(phases);
+  const phaseRangesRef = useRef(phaseRanges);
+  phaseRangesRef.current = phaseRanges;
+  const config = makeChartData(data, selectedPhase, phaseRanges, onPhaseClick, isDarkMode());
 
   return (
     <ChartComponent
       className='max-w-full flex-shrink flex-grow'
-      chartClassName={className}
+      chartClassName={`${className}${onPhaseClick ? ' cursor-pointer' : ''}`}
       data={config}
     />
   );
