@@ -1,13 +1,14 @@
 #include "ShotHistoryPlugin.h"
 
+#include <LittleFS.h>
 #include <SD_MMC.h>
-#include <SPIFFS.h>
 #include <cmath>
 #include <display/core/Controller.h>
 #include <display/core/ProfileManager.h>
 #include <display/core/process/BrewProcess.h>
 #include <display/core/utils.h>
 #include <display/models/shot_log_format.h>
+#include <display/util/PsramAllocator.h>
 
 namespace {
 constexpr float TEMP_SCALE = 10.0f;
@@ -22,6 +23,13 @@ constexpr uint16_t WEIGHT_MAX_VALUE = 10000; // 1000.0 g
 constexpr uint16_t RESISTANCE_MAX_VALUE = 0xFFFF;
 constexpr int16_t FLOW_MIN_VALUE = -2000; // -20.00 ml/s
 constexpr int16_t FLOW_MAX_VALUE = 2000;  //  20.00 ml/s
+
+// Largest believable change in scale weight within one sample interval. A real
+// espresso never adds >5 g in 250 ms (that is already 20 ml/s, the saturation
+// point of the vf field); anything larger is a scale/BLE glitch and must not be
+// folded into the flow EMA, where a single bad reading would otherwise pin vf at
+// the ±20 floor for seconds while the EMA bleeds off. See GM-110.
+constexpr float MAX_PLAUSIBLE_WEIGHT_DELTA = 5.0f; // grams per sample
 
 uint16_t encodeUnsigned(float value, float scale, uint16_t maxValue) {
     if (!std::isfinite(value)) {
@@ -120,10 +128,17 @@ void ShotHistoryPlugin::record() {
                 currentFile.write(reinterpret_cast<const uint8_t *>(&header), sizeof(header));
             }
         }
-        float btDiff = currentBluetoothWeight - lastBluetoothWeight;
-        float btFlow = btDiff / 0.25f;
-        currentBluetoothFlow = currentBluetoothFlow * 0.75f + btFlow * 0.25f;
-        lastBluetoothWeight = currentBluetoothWeight;
+        // Bluetooth weight flow (vf): derive from the same non-negative weight we
+        // store in sample.v so the two can never disagree, and skip the EMA update
+        // on an implausible single-sample jump so one bad scale/BLE reading cannot
+        // saturate vf for seconds. See GM-110.
+        const float btWeight = currentBluetoothWeight > 0.0f ? currentBluetoothWeight : 0.0f;
+        const float btDiff = btWeight - lastBluetoothWeight;
+        if (fabsf(btDiff) <= MAX_PLAUSIBLE_WEIGHT_DELTA) {
+            const float btFlow = btDiff / (SHOT_LOG_SAMPLE_INTERVAL_MS / 1000.0f);
+            currentBluetoothFlow = currentBluetoothFlow * 0.75f + btFlow * 0.25f;
+        }
+        lastBluetoothWeight = btWeight;
 
         ShotLogSample sample{};
         uint32_t tick = sampleCount <= 0xFFFF ? sampleCount : 0xFFFF;
@@ -136,7 +151,7 @@ void ShotHistoryPlugin::record() {
         sample.tf = encodeSigned(controller->getTargetFlow(), FLOW_SCALE, FLOW_MIN_VALUE, FLOW_MAX_VALUE);
         sample.pf = encodeSigned(controller->getCurrentPuckFlow(), FLOW_SCALE, FLOW_MIN_VALUE, FLOW_MAX_VALUE);
         sample.vf = encodeSigned(currentBluetoothFlow, FLOW_SCALE, FLOW_MIN_VALUE, FLOW_MAX_VALUE);
-        sample.v = encodeUnsigned(currentBluetoothWeight, WEIGHT_SCALE, WEIGHT_MAX_VALUE);
+        sample.v = encodeUnsigned(btWeight, WEIGHT_SCALE, WEIGHT_MAX_VALUE);
         sample.ev = encodeUnsigned(currentEstimatedWeight, WEIGHT_SCALE, WEIGHT_MAX_VALUE);
         sample.pr = encodeUnsigned(currentPuckResistance, RESISTANCE_SCALE, RESISTANCE_MAX_VALUE);
         sample.si = getSystemInfo(); // Pack system state information
@@ -270,6 +285,7 @@ void ShotHistoryPlugin::startRecording() {
     lastStableWeight = 0.0f;
     currentEstimatedWeight = 0.0f;
     currentBluetoothFlow = 0.0f;
+    lastBluetoothWeight = 0.0f;
     currentProfileName = controller->getProfileManager()->getSelectedProfile().label;
     recording = true;
     extendedRecording = false;
@@ -428,8 +444,8 @@ size_t ShotHistoryPlugin::getFreeSpace() {
         // Cap to size_t max for consistency
         return free > SIZE_MAX ? SIZE_MAX : static_cast<size_t>(free);
     }
-    size_t total = SPIFFS.totalBytes();
-    size_t used = SPIFFS.usedBytes();
+    size_t total = LittleFS.totalBytes();
+    size_t used = LittleFS.usedBytes();
     return total > used ? (total - used) : 0;
 }
 
@@ -472,9 +488,12 @@ void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &respo
                         }
                     }
                 }
+                file.close();
                 file = root.openNextFile();
             }
         }
+        if (root)
+            root.close();
     } else if (type == "req:history:get") {
         // Return error: binary must be fetched via HTTP endpoint
         response["error"] = "use HTTP /api/history?id=<id>";
@@ -493,12 +512,13 @@ void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &respo
         response["msg"] = "Ok";
     } else if (type == "req:history:notes:get") {
         auto id = request["id"].as<String>();
-        JsonDocument notes;
+        JsonDocument notes(&psramAllocator);
         loadNotes(id, notes);
         response["notes"] = notes;
     } else if (type == "req:history:notes:save") {
         auto id = request["id"].as<String>();
-        auto notes = request["notes"];
+        JsonDocument notes; // explicit document: variant->const JsonDocument& is ambiguous on clang
+        notes.set(request["notes"]);
         saveNotes(id, notes);
 
         // Update rating and volume in index
@@ -785,6 +805,8 @@ void ShotHistoryPlugin::rebuildIndex() {
     File directory = fs->open("/h");
     if (!directory || !directory.isDirectory()) {
         ESP_LOGW("ShotHistoryPlugin", "No history directory found");
+        if (directory)
+            directory.close();
         // Emit completion event even if no directory exists
         if (pluginManager) {
             Event completedEvent;
@@ -805,6 +827,7 @@ void ShotHistoryPlugin::rebuildIndex() {
         if (fname.endsWith(".slog")) {
             slogFiles.push_back(fname);
         }
+        file.close();
         file = directory.openNextFile();
     }
     directory.close();
@@ -825,6 +848,7 @@ void ShotHistoryPlugin::rebuildIndex() {
     }
 
     int currentIndex = 0;
+    uint32_t maxId = controller->getSettings().getHistoryIndex();
     for (const String &fileName : slogFiles) {
         currentIndex++;
         File shotFile = fs->open("/h/" + fileName, "r");
@@ -844,6 +868,9 @@ void ShotHistoryPlugin::rebuildIndex() {
         int start = fileName.lastIndexOf('/') + 1;
         int end = fileName.lastIndexOf('.');
         uint32_t shotId = fileName.substring(start, end).toInt();
+        if (shotId > maxId) {
+            maxId = shotId;
+        }
 
         // Create index entry
         ShotIndexEntry entry{};
@@ -873,7 +900,7 @@ void ShotHistoryPlugin::rebuildIndex() {
                 String notesStr = notesFile.readString();
                 notesFile.close();
 
-                JsonDocument notesDoc;
+                JsonDocument notesDoc(&psramAllocator);
                 if (deserializeJson(notesDoc, notesStr) == DeserializationError::Ok) {
                     entry.rating = notesDoc["rating"].as<uint8_t>();
 
@@ -908,6 +935,10 @@ void ShotHistoryPlugin::rebuildIndex() {
             // Small delay to allow UI updates and prevent overwhelming the system
             vTaskDelay(pdMS_TO_TICKS(10));
         }
+    }
+
+    if (maxId > controller->getSettings().getHistoryIndex()) {
+        controller->getSettings().setHistoryIndex(maxId);
     }
 
     // Emit completion event

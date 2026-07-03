@@ -1,0 +1,2293 @@
+{
+  "navigation": {
+    "selectedUserPageObject": "[gaggimate.eez-project]:/userPages/4",
+    "selectedUserWidgetObject": "[gaggimate.eez-project]:/userWidgets/0",
+    "selectedActionObject": "[gaggimate.eez-project]:/actions/36",
+    "selectedGlobalVariableObject": "[gaggimate.eez-project]:/variables/globalVariables/3",
+    "selectedStructureObject": "[gaggimate.eez-project]:/variables/structures/2",
+    "selectedThemeObject": "[gaggimate.eez-project]:/themes/0",
+    "selectedThemeColorObject": "[gaggimate.eez-project]:/colors/2",
+    "selectedBitmapObject": "[gaggimate.eez-project]:/bitmaps/11",
+    "subnavigationSelectedItems": {
+      "variables-tab/sub-navigation/selected-item": "Structs"
+    }
+  },
+  "layoutModel": {
+    "rootEditor": {
+      "version": 115,
+      "json": {
+        "global": {
+          "splitterSize": 4,
+          "splitterExtra": 4,
+          "tabEnableRename": false,
+          "borderEnableAutoHide": true
+        },
+        "borders": [
+          {
+            "type": "border",
+            "location": "top",
+            "children": []
+          },
+          {
+            "type": "border",
+            "selected": 3,
+            "size": 255.5,
+            "location": "right",
+            "children": [
+              {
+                "type": "tab",
+                "id": "styles",
+                "name": "Styles",
+                "component": "styles",
+                "enableClose": false,
+                "icon": "material:format_color_fill"
+              },
+              {
+                "type": "tab",
+                "id": "fonts",
+                "name": "Fonts",
+                "component": "fonts",
+                "enableClose": false,
+                "icon": "material:font_download"
+              },
+              {
+                "type": "tab",
+                "id": "bitmaps",
+                "name": "Bitmaps",
+                "component": "bitmaps",
+                "enableClose": false,
+                "icon": "material:image"
+              },
+              {
+                "type": "tab",
+                "id": "themes",
+                "name": "Themes",
+                "component": "themesSideView",
+                "enableClose": false,
+                "icon": "svg:palette"
+              },
+              {
+                "type": "tab",
+                "id": "lvgl-groups",
+                "name": "Groups",
+                "component": "lvgl-groups",
+                "enableClose": false,
+                "icon": "material:view_compact"
+              }
+            ]
+          },
+          {
+            "type": "border",
+            "selected": 1,
+            "size": 154.5,
+            "location": "bottom",
+            "children": [
+              {
+                "type": "tab",
+                "id": "CHECKS",
+                "name": "Checks",
+                "component": "checksMessages",
+                "enableClose": false
+              },
+              {
+                "type": "tab",
+                "id": "OUTPUT",
+                "name": "Output",
+                "component": "outputMessages",
+                "enableClose": false
+              },
+              {
+                "type": "tab",
+                "id": "SEARCH",
+                "name": "Search",
+                "component": "search",
+                "enableClose": false
+              },
+              {
+                "type": "tab",
+                "id": "REFERENCES",
+                "name": "References",
+                "component": "references",
+                "enableClose": false
+              }
+            ]
+          },
+          {
+            "type": "border",
+            "size": 240,
+            "location": "left",
+            "children": []
+          }
+        ],
+        "layout": {
+          "type": "row",
+          "id": "#50827b76-0691-47cb-9e74-70716d22581f",
+          "children": [
+            {
+              "type": "row",
+              "id": "#4914c888-fc94-4321-8827-8a4e9e3492bc",
+              "weight": 25.81110960198166,
+              "children": [
+                {
+                  "type": "tabset",
+                  "id": "#62043989-83c1-428b-8417-b89c3070fb5a",
+                  "weight": 0.5267379679144385,
+                  "enableClose": false,
+                  "children": [
+                    {
+                      "type": "tab",
+                      "id": "PAGES",
+                      "name": "Pages",
+                      "component": "pages",
+                      "enableClose": false,
+                      "icon": "svg:pages"
+                    },
+                    {
+                      "type": "tab",
+                      "id": "WIDGETS",
+                      "name": "User Widgets",
+                      "component": "widgets",
+                      "enableClose": false,
+                      "icon": "svg:user_widgets"
+                    },
+                    {
+                      "type": "tab",
+                      "id": "ACTIONS",
+                      "name": "User Actions",
+                      "component": "actions",
+                      "enableClose": false,
+                      "icon": "material:code"
+                    }
+                  ]
+                },
+                {
+                  "type": "tabset",
+                  "id": "#1772268a-caef-47ce-b38c-4534effa318c",
+                  "weight": 0.9050702414277769,
+                  "children": [
+                    {
+                      "type": "tab",
+                      "id": "#edc08ed6-e3fc-4f2d-b0d0-d1ad5f010115",
+                      "name": "Widgets Structure",
+                      "component": "flow-structure",
+                      "enableClose": false,
+                      "icon": "svg:hierarchy"
+                    }
+                  ]
+                },
+                {
+                  "type": "tabset",
+                  "id": "#68ba0d96-0a7c-461d-96e1-5a9b9f9aca40",
+                  "weight": 0.5917766963181618,
+                  "enableClose": false,
+                  "children": [
+                    {
+                      "type": "tab",
+                      "id": "VARIABLES",
+                      "name": "Variables",
+                      "component": "variables",
+                      "enableClose": false,
+                      "icon": "svg:variable"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "tabset",
+              "id": "EDITORS",
+              "weight": 46.47304077762655,
+              "selected": 1,
+              "enableDeleteWhenEmpty": false,
+              "enableClose": false,
+              "children": [
+                {
+                  "type": "tab",
+                  "id": "#2aa7402a-95e1-481f-87cc-ef596a51e84a",
+                  "name": "SteamScreen",
+                  "component": "editor",
+                  "config": {
+                    "objectPath": "[gaggimate.eez-project]:/userPages/5",
+                    "permanent": false
+                  },
+                  "icon": "svg:page"
+                },
+                {
+                  "type": "tab",
+                  "id": "#e4422c6b-7edb-415d-87c6-346b00545887",
+                  "name": "MenuScreenNew",
+                  "component": "editor",
+                  "config": {
+                    "objectPath": "[gaggimate.eez-project]:/userPages/4",
+                    "permanent": true
+                  },
+                  "icon": "svg:page"
+                },
+                {
+                  "type": "tab",
+                  "id": "#e5e97650-2a73-4b11-ad4f-8f229477178e",
+                  "name": "MenuScreen",
+                  "component": "editor",
+                  "config": {
+                    "objectPath": "[gaggimate.eez-project]:/userPages/3",
+                    "permanent": true
+                  },
+                  "icon": "svg:page"
+                },
+                {
+                  "type": "tab",
+                  "id": "#acbf425d-f9ac-457e-90c1-4ea068d04b16",
+                  "name": "onInfoScreen",
+                  "component": "editor",
+                  "config": {
+                    "objectPath": "[gaggimate.eez-project]:/actions/36",
+                    "permanent": false
+                  },
+                  "icon": "material:code"
+                },
+                {
+                  "type": "tab",
+                  "id": "#07a87284-0adf-47ce-9994-8cc743141d5f",
+                  "name": "InfoScreen",
+                  "component": "editor",
+                  "config": {
+                    "objectPath": "[gaggimate.eez-project]:/userPages/9",
+                    "permanent": true
+                  },
+                  "icon": "svg:page"
+                },
+                {
+                  "type": "tab",
+                  "id": "#dc5c25f1-246c-491e-a1d2-3205251f4306",
+                  "name": "Settings",
+                  "component": "editor",
+                  "config": {
+                    "objectPath": "[gaggimate.eez-project]:/settings",
+                    "subObjectPath": "[gaggimate.eez-project]:/settings",
+                    "permanent": false
+                  },
+                  "icon": "material:settings"
+                },
+                {
+                  "type": "tab",
+                  "id": "#da6b7a7d-a559-40c2-ac4a-7bd06a3c82e6",
+                  "name": "dials",
+                  "component": "editor",
+                  "config": {
+                    "objectPath": "[gaggimate.eez-project]:/userWidgets/0",
+                    "permanent": true
+                  },
+                  "icon": "svg:user_widget"
+                },
+                {
+                  "type": "tab",
+                  "id": "#c60bcd4b-9cca-4b7a-b219-3299251afca2",
+                  "name": "StandbyScreen",
+                  "component": "editor",
+                  "config": {
+                    "objectPath": "[gaggimate.eez-project]:/userPages/0",
+                    "permanent": true
+                  },
+                  "icon": "svg:page"
+                }
+              ],
+              "active": true
+            },
+            {
+              "type": "row",
+              "id": "#637fbaf6-72c7-42e6-9b87-09bfb5acd9bf",
+              "weight": 27.715849620391737,
+              "children": [
+                {
+                  "type": "tabset",
+                  "id": "#da1c153c-5495-4c9f-aca9-8eccce2d12bc",
+                  "weight": 2.264244426094137,
+                  "children": [
+                    {
+                      "type": "tab",
+                      "id": "PROPERTIES",
+                      "name": "Properties",
+                      "component": "propertiesPanel",
+                      "enableClose": false,
+                      "icon": "svg:properties"
+                    }
+                  ]
+                },
+                {
+                  "type": "tabset",
+                  "id": "#a97904cf-24ac-486c-ac4e-26f50624c731",
+                  "weight": 0.7357555739058629,
+                  "children": [
+                    {
+                      "type": "tab",
+                      "id": "COMPONENTS_PALETTE",
+                      "name": "Components Palette",
+                      "component": "componentsPalette",
+                      "enableClose": false,
+                      "icon": "svg:components"
+                    },
+                    {
+                      "type": "tab",
+                      "id": "BREAKPOINTS_PALETTE",
+                      "name": "Breakpoints",
+                      "component": "breakpointsPanel",
+                      "enableClose": false,
+                      "icon": "svg:breakpoints_panel"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "rootEditorForIEXT": {
+      "version": 5,
+      "json": {
+        "global": {
+          "splitterSize": 4,
+          "splitterExtra": 4,
+          "tabEnableRename": false,
+          "borderEnableAutoHide": true
+        },
+        "borders": [
+          {
+            "type": "border",
+            "location": "top",
+            "children": []
+          },
+          {
+            "type": "border",
+            "size": 240,
+            "location": "right",
+            "children": []
+          },
+          {
+            "type": "border",
+            "location": "bottom",
+            "children": [
+              {
+                "type": "tab",
+                "id": "CHECKS",
+                "name": "Checks",
+                "component": "checksMessages",
+                "enableClose": false
+              },
+              {
+                "type": "tab",
+                "id": "OUTPUT",
+                "name": "Output",
+                "component": "outputMessages",
+                "enableClose": false
+              },
+              {
+                "type": "tab",
+                "id": "SEARCH",
+                "name": "Search",
+                "component": "search",
+                "enableClose": false
+              },
+              {
+                "type": "tab",
+                "id": "REFERENCES",
+                "name": "References",
+                "component": "references",
+                "enableClose": false
+              }
+            ]
+          },
+          {
+            "type": "border",
+            "size": 240,
+            "location": "left",
+            "children": []
+          }
+        ],
+        "layout": {
+          "type": "row",
+          "id": "#e585ad56-56dd-43b3-bb8d-64938c7f5f08",
+          "children": [
+            {
+              "type": "tabset",
+              "id": "#6223ed64-f994-4082-b838-cacccd037238",
+              "weight": 0,
+              "enableClose": false,
+              "children": [
+                {
+                  "type": "tab",
+                  "id": "iext",
+                  "name": "IEXT",
+                  "component": "extension-definitions",
+                  "enableClose": false,
+                  "icon": "material:extension"
+                }
+              ]
+            },
+            {
+              "type": "tabset",
+              "id": "EDITORS",
+              "weight": 1,
+              "selected": -1,
+              "enableDeleteWhenEmpty": false,
+              "enableClose": false,
+              "children": []
+            },
+            {
+              "type": "tabset",
+              "id": "#ec0a80fb-1548-4d4f-b557-edb493c070ac",
+              "weight": 0,
+              "children": [
+                {
+                  "type": "tab",
+                  "id": "PROPERTIES",
+                  "name": "Properties",
+                  "component": "propertiesPanel",
+                  "enableClose": false,
+                  "icon": "svg:properties"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "rootRuntime": {
+      "version": 54,
+      "json": {
+        "global": {
+          "splitterSize": 4,
+          "splitterExtra": 4,
+          "tabEnableRename": false,
+          "borderEnableAutoHide": true
+        },
+        "borders": [],
+        "layout": {
+          "type": "row",
+          "id": "#1a6ee786-4a57-4e9a-880a-1368ecb42050",
+          "children": [
+            {
+              "type": "row",
+              "id": "#e7452fb7-612f-421f-b589-8c0048fc846b",
+              "weight": 0,
+              "width": 320,
+              "children": [
+                {
+                  "type": "tabset",
+                  "id": "#d11c5faa-9d55-4eed-bf0b-5e978715989a",
+                  "weight": 1,
+                  "children": [
+                    {
+                      "type": "tab",
+                      "id": "PAGES",
+                      "name": "Pages",
+                      "component": "pages",
+                      "enableClose": false,
+                      "icon": "svg:pages"
+                    },
+                    {
+                      "type": "tab",
+                      "id": "WIDGETS",
+                      "name": "User Widgets",
+                      "component": "widgets",
+                      "enableClose": false,
+                      "icon": "svg:user_widgets"
+                    },
+                    {
+                      "type": "tab",
+                      "id": "ACTIONS",
+                      "name": "User Actions",
+                      "component": "actions",
+                      "enableClose": false,
+                      "icon": "material:code"
+                    }
+                  ]
+                },
+                {
+                  "type": "tabset",
+                  "id": "#10a31ba4-40c4-4152-8651-b9297621f471",
+                  "weight": 1,
+                  "children": [
+                    {
+                      "type": "tab",
+                      "id": "#4359cbc0-b3ce-48d4-9a30-29c1b510c3ed",
+                      "name": "Active Flows",
+                      "component": "active-flows",
+                      "enableClose": false,
+                      "icon": "svg:active_flows_panel"
+                    }
+                  ]
+                },
+                {
+                  "type": "tabset",
+                  "id": "#93629340-bd08-4e45-ab19-29f075d938db",
+                  "weight": 2,
+                  "children": [
+                    {
+                      "type": "tab",
+                      "id": "#13e306bb-1835-4b20-8a70-ae3e5b113a35",
+                      "name": "Watch",
+                      "component": "watch",
+                      "enableClose": false,
+                      "icon": "svg:watch_panel"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "tabset",
+              "id": "RUNTIME-EDITORS",
+              "weight": 0.6235714285714286,
+              "enableDeleteWhenEmpty": false,
+              "enableClose": false,
+              "children": [
+                {
+                  "type": "tab",
+                  "id": "#2876bb61-c92f-48b7-a518-1ca3767f32f6",
+                  "name": "MenuScreen_1",
+                  "component": "editor",
+                  "config": {
+                    "objectPath": "[gaggimate.eez-project]:/userPages/0",
+                    "permanent": false
+                  },
+                  "icon": "svg:page"
+                },
+                {
+                  "type": "tab",
+                  "id": "#beeffec2-8ef2-4270-b23f-a8c264937543",
+                  "name": "dials",
+                  "component": "editor",
+                  "config": {
+                    "objectPath": "[gaggimate.eez-project]:/userWidgets/0",
+                    "permanent": false
+                  },
+                  "icon": "svg:user_widget"
+                }
+              ],
+              "active": true
+            },
+            {
+              "type": "row",
+              "id": "#c363d79c-ebd8-47aa-b02d-abf14926a4ad",
+              "weight": 0.37642857142857145,
+              "width": 527,
+              "children": [
+                {
+                  "type": "tabset",
+                  "id": "#fb7ae3ad-b932-481f-8c6e-b9f20549490a",
+                  "weight": 1,
+                  "children": [
+                    {
+                      "type": "tab",
+                      "id": "#eb32ecfe-78c9-4244-b90d-c9187db50130",
+                      "name": "Queue",
+                      "component": "queue",
+                      "enableClose": false,
+                      "icon": "svg:queue_panel"
+                    },
+                    {
+                      "type": "tab",
+                      "id": "BREAKPOINTS_PALETTE",
+                      "name": "Breakpoints",
+                      "component": "breakpointsPanel",
+                      "enableClose": false,
+                      "icon": "svg:breakpoints_panel"
+                    }
+                  ]
+                },
+                {
+                  "type": "tabset",
+                  "id": "#a57e35fa-5dec-4d67-b72a-b0c14a7bbf05",
+                  "weight": 2,
+                  "children": [
+                    {
+                      "type": "tab",
+                      "id": "DEBUGGER_LOGS",
+                      "name": "Logs",
+                      "component": "logs",
+                      "enableClose": false,
+                      "icon": "svg:log"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "rootDockerSimulator": {
+      "version": 1,
+      "json": {
+        "global": {
+          "splitterSize": 4,
+          "splitterExtra": 4,
+          "tabEnableRename": false,
+          "borderEnableAutoHide": true
+        },
+        "borders": [],
+        "layout": {
+          "type": "row",
+          "id": "#f6d9d5d6-367a-43bf-a43f-3fe1aa7c9399",
+          "children": [
+            {
+              "type": "tabset",
+              "id": "#a2c47389-b611-4ae6-b259-26fa8810b214",
+              "weight": 70,
+              "enableDrop": false,
+              "enableDrag": false,
+              "enableClose": false,
+              "enableTabStrip": true,
+              "children": [
+                {
+                  "type": "tab",
+                  "id": "DOCKER_SIMULATOR_PREVIEW",
+                  "name": "Preview",
+                  "component": "dockerSimulatorPreview",
+                  "enableClose": false,
+                  "icon": "material:computer"
+                }
+              ]
+            },
+            {
+              "type": "row",
+              "id": "#1ecfacca-4d4d-4ca5-af41-e95c9f40a891",
+              "weight": 30,
+              "children": [
+                {
+                  "type": "tabset",
+                  "id": "#53b4dd61-621a-44b7-93d2-f342b8c90cbc",
+                  "weight": 50,
+                  "enableDrop": false,
+                  "enableDrag": false,
+                  "enableClose": false,
+                  "enableTabStrip": true,
+                  "children": [
+                    {
+                      "type": "tab",
+                      "id": "DOCKER_SIMULATOR_LOGS",
+                      "name": "Build Logs",
+                      "component": "dockerSimulatorLogs",
+                      "enableClose": false,
+                      "icon": "svg:log"
+                    }
+                  ],
+                  "active": true
+                },
+                {
+                  "type": "tabset",
+                  "id": "#4cbf36fe-d6bd-4b86-b953-942d030b1eb0",
+                  "weight": 50,
+                  "enableDrop": false,
+                  "enableDrag": false,
+                  "enableClose": false,
+                  "enableTabStrip": true,
+                  "children": [
+                    {
+                      "type": "tab",
+                      "id": "DOCKER_SIMULATOR_PREVIEW_LOGS",
+                      "name": "Preview Logs",
+                      "component": "dockerSimulatorPreviewLogs",
+                      "enableClose": false,
+                      "icon": "svg:log"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "bitmaps": {
+      "version": 2,
+      "json": {
+        "global": {
+          "splitterSize": 4,
+          "splitterExtra": 4,
+          "tabEnableRename": false,
+          "borderEnableAutoHide": true
+        },
+        "borders": [],
+        "layout": {
+          "type": "row",
+          "id": "#565e73d1-f872-467c-ba1c-993ca010b4b6",
+          "children": [
+            {
+              "type": "row",
+              "id": "#152af87b-fdfe-431d-89e8-7364b04f991a",
+              "children": [
+                {
+                  "type": "tabset",
+                  "id": "#fe6a49a3-b2ba-4048-b83e-7e16ec8e4630",
+                  "weight": 75,
+                  "enableDrop": false,
+                  "enableDrag": false,
+                  "enableClose": false,
+                  "enableTabStrip": false,
+                  "children": [
+                    {
+                      "type": "tab",
+                      "id": "#afabfd73-f99f-4a62-8588-f1506146e43b",
+                      "name": "Bitmaps",
+                      "component": "bitmaps",
+                      "enableClose": false
+                    }
+                  ],
+                  "active": true
+                },
+                {
+                  "type": "tabset",
+                  "id": "#18ea0f49-2ab9-4ea4-bb58-29260a682733",
+                  "weight": 25,
+                  "enableDrop": false,
+                  "enableDrag": false,
+                  "enableClose": false,
+                  "enableTabStrip": false,
+                  "children": [
+                    {
+                      "type": "tab",
+                      "id": "#61064f0e-fa79-4098-ac59-418f189caf6d",
+                      "name": "Preview",
+                      "component": "preview",
+                      "enableClose": false
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "fonts": {
+      "version": 1,
+      "json": {
+        "global": {
+          "splitterSize": 4,
+          "splitterExtra": 4,
+          "tabEnableRename": false,
+          "borderEnableAutoHide": true
+        },
+        "borders": [],
+        "layout": {
+          "type": "row",
+          "id": "#6766b3ef-5d0c-41e3-8673-e90b5803dbc6",
+          "children": [
+            {
+              "type": "tabset",
+              "id": "#a10e96ce-2ad9-4486-b4a1-9562ffe4ea50",
+              "enableDrop": false,
+              "enableDrag": false,
+              "enableClose": false,
+              "enableTabStrip": false,
+              "children": [
+                {
+                  "type": "tab",
+                  "id": "#294e1759-d5fb-4cec-a34e-49f81ad772e2",
+                  "component": "glyphs",
+                  "enableClose": false
+                }
+              ]
+            },
+            {
+              "type": "tabset",
+              "id": "#d4a96e49-fa39-4fd0-a1c1-7cc368b6e5bf",
+              "enableDrop": false,
+              "enableDrag": false,
+              "enableClose": false,
+              "enableTabStrip": false,
+              "children": [
+                {
+                  "type": "tab",
+                  "id": "#56674835-8650-48cb-aa3f-99aab2efa65a",
+                  "component": "editor",
+                  "enableClose": false
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "scpi": {
+      "version": 3,
+      "json": {
+        "global": {
+          "splitterSize": 4,
+          "splitterExtra": 4,
+          "tabEnableRename": false,
+          "borderEnableAutoHide": true
+        },
+        "borders": [],
+        "layout": {
+          "type": "row",
+          "id": "#4f4acf64-2fde-4b2d-aab9-29d831686496",
+          "children": [
+            {
+              "type": "row",
+              "id": "#28bcbabb-737a-4820-800f-fbb6eebfd936",
+              "children": [
+                {
+                  "type": "tabset",
+                  "id": "#5e81d43c-32d0-4807-b732-0641f6998b25",
+                  "children": [
+                    {
+                      "type": "tab",
+                      "id": "SCPI_SUBSYSTEMS",
+                      "name": "Subsystems",
+                      "component": "subsystems",
+                      "enableClose": false
+                    },
+                    {
+                      "type": "tab",
+                      "id": "SCPI_ENUMS",
+                      "name": "Enums",
+                      "component": "enums",
+                      "enableClose": false
+                    }
+                  ]
+                },
+                {
+                  "type": "tabset",
+                  "id": "#0d98307c-df90-40e4-9d9c-3a231104acd8",
+                  "children": [
+                    {
+                      "type": "tab",
+                      "id": "SCPI_COMMANDS",
+                      "name": "Commands",
+                      "component": "commands",
+                      "enableClose": false
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "styles": {
+      "version": 2,
+      "json": {
+        "global": {
+          "splitterSize": 4,
+          "splitterExtra": 4,
+          "tabEnableRename": false,
+          "borderEnableAutoHide": true
+        },
+        "borders": [],
+        "layout": {
+          "type": "row",
+          "id": "#02105c87-1106-46a1-9cfb-923a4e42a164",
+          "children": [
+            {
+              "type": "row",
+              "id": "#35c938ae-242e-42db-998b-f3cf8a66b766",
+              "children": [
+                {
+                  "type": "tabset",
+                  "id": "#3479389a-ae7b-4f5c-bc1a-c4512c5041d7",
+                  "weight": 75,
+                  "enableDrop": false,
+                  "enableDrag": false,
+                  "enableClose": false,
+                  "enableTabStrip": false,
+                  "children": [
+                    {
+                      "type": "tab",
+                      "id": "#130bfd75-87f2-46fb-af3e-416db1b6ab67",
+                      "name": "Styles",
+                      "component": "styles",
+                      "enableClose": false
+                    }
+                  ]
+                },
+                {
+                  "type": "tabset",
+                  "id": "#8219c697-f2b8-4d25-bc42-0715b40540e9",
+                  "weight": 25,
+                  "enableDrop": false,
+                  "enableDrag": false,
+                  "enableClose": false,
+                  "enableTabStrip": false,
+                  "children": [
+                    {
+                      "type": "tab",
+                      "id": "#829a01ca-4fa7-4e79-8e20-5aba3b3e76fb",
+                      "name": "Preview",
+                      "component": "preview",
+                      "enableClose": false
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "lvglStyles": {
+      "version": 1,
+      "json": {
+        "global": {
+          "splitterSize": 4,
+          "splitterExtra": 4,
+          "tabEnableRename": false,
+          "borderEnableAutoHide": true
+        },
+        "borders": [],
+        "layout": {
+          "type": "row",
+          "id": "#7e8a58c9-860a-4c2d-82a7-994d2408224f",
+          "children": [
+            {
+              "type": "row",
+              "id": "#240697dc-2d9c-4458-863b-ea00e0905445",
+              "children": [
+                {
+                  "type": "tabset",
+                  "id": "#91378c25-b0b4-46ab-ad00-c6d2bcbdf980",
+                  "weight": 75,
+                  "enableDrop": false,
+                  "enableDrag": false,
+                  "enableClose": false,
+                  "enableTabStrip": false,
+                  "children": [
+                    {
+                      "type": "tab",
+                      "id": "#6efd12fb-aebf-4966-ad92-bcd3140805c0",
+                      "name": "Styles",
+                      "component": "styles",
+                      "enableClose": false
+                    }
+                  ],
+                  "active": true
+                },
+                {
+                  "type": "tabset",
+                  "id": "#02944140-1b7f-45fb-b22e-7448378fe866",
+                  "weight": 25,
+                  "enableDrop": false,
+                  "enableDrag": false,
+                  "enableClose": false,
+                  "enableTabStrip": false,
+                  "children": [
+                    {
+                      "type": "tab",
+                      "id": "#056cef12-b5fc-49ca-a585-b33a50aacb32",
+                      "name": "Preview",
+                      "component": "preview",
+                      "enableClose": false
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "themes": {
+      "version": 1,
+      "json": {
+        "global": {
+          "splitterSize": 4,
+          "splitterExtra": 4,
+          "tabEnableRename": false,
+          "borderEnableAutoHide": true
+        },
+        "borders": [],
+        "layout": {
+          "type": "row",
+          "id": "#9a5d28fc-e54e-4a52-be66-f63616f14bc8",
+          "children": [
+            {
+              "type": "row",
+              "id": "#2349ae19-5bef-48f8-9751-e42fbed28e3a",
+              "children": [
+                {
+                  "type": "tabset",
+                  "id": "#ffec66c2-b524-4570-9e0e-6456cdea5421",
+                  "enableDrop": false,
+                  "enableDrag": false,
+                  "enableClose": false,
+                  "enableTabStrip": false,
+                  "children": [
+                    {
+                      "type": "tab",
+                      "id": "#dbb39cea-3462-4d01-8e89-d87378ca4ded",
+                      "component": "themes",
+                      "enableClose": false
+                    }
+                  ],
+                  "active": true
+                },
+                {
+                  "type": "tabset",
+                  "id": "#37ea1e11-91f4-47f8-933d-c762a756fae3",
+                  "enableDrop": false,
+                  "enableDrag": false,
+                  "enableClose": false,
+                  "enableTabStrip": false,
+                  "children": [
+                    {
+                      "type": "tab",
+                      "id": "#7c513632-3b17-4dc1-9f1b-c4fc124647d7",
+                      "component": "colors",
+                      "enableClose": false
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "texts": {
+      "version": 7,
+      "json": {
+        "global": {
+          "splitterSize": 4,
+          "splitterExtra": 4,
+          "tabEnableRename": false,
+          "borderEnableAutoHide": true
+        },
+        "borders": [],
+        "layout": {
+          "type": "row",
+          "id": "#832a5993-cb38-47e9-84b9-65b70acd52db",
+          "children": [
+            {
+              "type": "row",
+              "id": "#66d27140-7222-4e76-86f9-4d46106da6e3",
+              "children": [
+                {
+                  "type": "tabset",
+                  "id": "#09ab6204-4e28-4125-86aa-25e76d792d28",
+                  "children": [
+                    {
+                      "type": "tab",
+                      "id": "TEXT_RESOURCES",
+                      "name": "Text resources",
+                      "component": "resources",
+                      "enableClose": false
+                    }
+                  ]
+                },
+                {
+                  "type": "tabset",
+                  "id": "#cbc3d58d-c5c5-46bb-8cb1-53cb45bd3d78",
+                  "children": [
+                    {
+                      "type": "tab",
+                      "id": "LANGUAGES",
+                      "name": "Languages",
+                      "component": "languages",
+                      "enableClose": false
+                    }
+                  ]
+                },
+                {
+                  "type": "tabset",
+                  "id": "#2c38211a-b0ca-471e-927d-8c24d82cbb76",
+                  "children": [
+                    {
+                      "type": "tab",
+                      "id": "TEXTS_STATISTICS",
+                      "name": "Statistics",
+                      "component": "statistics",
+                      "enableClose": false
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "lvglGroups": {
+      "version": 3,
+      "json": {
+        "global": {
+          "splitterSize": 4,
+          "splitterExtra": 4,
+          "tabEnableRename": false,
+          "borderEnableAutoHide": true
+        },
+        "borders": [],
+        "layout": {
+          "type": "row",
+          "id": "#7e4be864-2d17-4d18-8601-9076a0d49672",
+          "children": [
+            {
+              "type": "row",
+              "id": "#d3e7f2f6-d2f5-4fa3-9e50-2e0b6377c8c6",
+              "children": [
+                {
+                  "type": "tabset",
+                  "id": "#682113c0-f287-4a9b-9285-db3ae2de0144",
+                  "weight": 50,
+                  "enableDrop": false,
+                  "enableDrag": false,
+                  "enableClose": false,
+                  "enableTabStrip": true,
+                  "children": [
+                    {
+                      "type": "tab",
+                      "id": "#c4925eab-f7ac-40de-9248-c06d3c5db004",
+                      "name": "Groups",
+                      "component": "groups",
+                      "enableClose": false
+                    }
+                  ]
+                },
+                {
+                  "type": "tabset",
+                  "id": "#b91bf6a4-d24d-4d80-a1d6-7c1974b75cc5",
+                  "weight": 50,
+                  "enableDrop": false,
+                  "enableDrag": false,
+                  "enableClose": false,
+                  "enableTabStrip": true,
+                  "children": [
+                    {
+                      "type": "tab",
+                      "id": "#c9d52740-4675-4631-9750-04f6e168b8ff",
+                      "name": "Group Widgets",
+                      "component": "order",
+                      "enableClose": false
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  "selectedBuildConfiguration": "Default",
+  "features": {},
+  "objects": {
+    "[gaggimate.eez-project]:/userPages/0[flow-state]": {
+      "selection": {
+        "0": {}
+      },
+      "transform": {
+        "translate": {
+          "x": -224,
+          "y": -252.000244140625
+        },
+        "scale": 0.8
+      },
+      "timeline": {
+        "isEditorActive": false,
+        "position": 0,
+        "secondToPx": 200,
+        "scrollLeft": 0
+      },
+      "selectionFront": {},
+      "selectionBack": {
+        "0": {
+          "0": {},
+          "1": {},
+          "3": {
+            "0": {
+              "$selected": true
+            }
+          }
+        }
+      }
+    },
+    "[gaggimate.eez-project]:/userPages/1[flow-state]": {
+      "selection": {
+        "0": {
+          "1": {},
+          "2": {
+            "$selected": true
+          }
+        }
+      },
+      "transform": {
+        "translate": {
+          "x": -224,
+          "y": -252.000244140625
+        },
+        "scale": 1
+      },
+      "timeline": {
+        "isEditorActive": false,
+        "position": 0,
+        "secondToPx": 200,
+        "scrollLeft": 0
+      },
+      "selectionFront": {},
+      "selectionBack": {
+        "0": {
+          "0": {},
+          "1": {
+            "0": {},
+            "2": {
+              "1": {
+                "1": {
+                  "1": {}
+                }
+              },
+              "2": {
+                "0": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "[gaggimate.eez-project]:/userPages/2[flow-state]": {
+      "selection": {
+        "0": {
+          "0": {
+            "$selected": true
+          },
+          "1": {},
+          "2": {}
+        }
+      },
+      "transform": {
+        "translate": {
+          "x": -240,
+          "y": -516.5838623046875
+        },
+        "scale": 0.8
+      },
+      "timeline": {
+        "isEditorActive": false,
+        "position": 0,
+        "secondToPx": 200,
+        "scrollLeft": 0
+      },
+      "selectionFront": {},
+      "selectionBack": {
+        "0": {
+          "0": {},
+          "1": {
+            "0": {},
+            "2": {},
+            "8": {}
+          }
+        }
+      }
+    },
+    "[gaggimate.eez-project]:/userWidgets/0[flow-state]": {
+      "selection": {
+        "0": {
+          "0": {},
+          "2": {},
+          "3": {}
+        }
+      },
+      "transform": {
+        "translate": {
+          "x": -239.5,
+          "y": -345.729248046875
+        },
+        "scale": 0.8
+      },
+      "timeline": {
+        "isEditorActive": false,
+        "position": 0,
+        "secondToPx": 200,
+        "scrollLeft": 0
+      },
+      "selectionFront": {},
+      "selectionBack": {
+        "3": {
+          "$selected": true
+        },
+        "4": {},
+        "7": {},
+        "8": {}
+      }
+    },
+    "[gaggimate.eez-project]:/lvglStyles/styles[tree-state]": {
+      "0": {},
+      "2": {
+        "$selected": true
+      },
+      "3": {},
+      "4": {}
+    },
+    "[gaggimate.eez-project]:/userPages/3[flow-state]": {
+      "selection": {
+        "0": {
+          "1": {
+            "$selected": true
+          },
+          "2": {
+            "4": {},
+            "8": {},
+            "9": {
+              "0": {}
+            }
+          }
+        }
+      },
+      "transform": {
+        "translate": {
+          "x": -240,
+          "y": -247
+        },
+        "scale": 0.8
+      },
+      "timeline": {
+        "isEditorActive": false,
+        "position": 0,
+        "secondToPx": 200,
+        "scrollLeft": 0
+      },
+      "selectionFront": {},
+      "selectionBack": {
+        "0": {
+          "0": {
+            "$selected": true
+          },
+          "1": {
+            "1": {},
+            "2": {},
+            "3": {}
+          }
+        }
+      }
+    },
+    "[gaggimate.eez-project]:/userPages/4[flow-state]": {
+      "selection": {
+        "0": {
+          "1": {
+            "$selected": true
+          },
+          "2": {
+            "1": {},
+            "2": {
+              "0": {},
+              "1": {
+                "1": {}
+              }
+            }
+          }
+        }
+      },
+      "transform": {
+        "translate": {
+          "x": -213.60000000000002,
+          "y": -215.655859375
+        },
+        "scale": 0.8
+      },
+      "timeline": {
+        "isEditorActive": false,
+        "position": 0,
+        "secondToPx": 200,
+        "scrollLeft": 0
+      },
+      "selectionFront": {},
+      "selectionBack": {
+        "0": {
+          "0": {},
+          "1": {
+            "0": {},
+            "2": {},
+            "4": {}
+          },
+          "2": {
+            "0": {},
+            "1": {}
+          }
+        }
+      }
+    },
+    "[gaggimate.eez-project]:/userPages/5[flow-state]": {
+      "selection": {
+        "0": {
+          "1": {
+            "$selected": true
+          }
+        }
+      },
+      "transform": {
+        "translate": {
+          "x": -240,
+          "y": -240
+        },
+        "scale": 0.8
+      },
+      "timeline": {
+        "isEditorActive": false,
+        "position": 0,
+        "secondToPx": 200,
+        "scrollLeft": 0
+      },
+      "selectionFront": {},
+      "selectionBack": {
+        "0": {
+          "0": {
+            "$selected": true
+          },
+          "1": {
+            "0": {},
+            "1": {},
+            "2": {}
+          }
+        }
+      }
+    },
+    "[gaggimate.eez-project]:/userPages/6[flow-state]": {
+      "selection": {
+        "0": {
+          "0": {},
+          "2": {
+            "5": {}
+          }
+        }
+      },
+      "transform": {
+        "translate": {
+          "x": -240,
+          "y": -247
+        },
+        "scale": 1
+      },
+      "timeline": {
+        "isEditorActive": false,
+        "position": 0,
+        "secondToPx": 200,
+        "scrollLeft": 0
+      },
+      "selectionFront": {},
+      "selectionBack": {
+        "0": {
+          "0": {
+            "$selected": true
+          },
+          "1": {
+            "1": {
+              "1": {},
+              "2": {}
+            },
+            "2": {}
+          }
+        }
+      }
+    },
+    "[eez-ui.eez-project]:/userPages/3[flow-state]": {
+      "selection": {
+        "0": {
+          "0": {},
+          "1": {
+            "0": {},
+            "2": {}
+          }
+        }
+      },
+      "transform": {
+        "translate": {
+          "x": -244,
+          "y": -264.4244384765625
+        },
+        "scale": 1
+      },
+      "timeline": {
+        "isEditorActive": false,
+        "position": 0,
+        "secondToPx": 200,
+        "scrollLeft": 0
+      },
+      "selectionFront": {},
+      "selectionBack": {
+        "0": {
+          "2": {
+            "0": {
+              "0": {
+                "$selected": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "[eez-ui.eez-project]:/userPages/0[flow-state]": {
+      "selection": {
+        "0": {
+          "0": {},
+          "1": {}
+        }
+      },
+      "transform": {
+        "translate": {
+          "x": -244,
+          "y": -301.4244384765625
+        },
+        "scale": 1
+      },
+      "timeline": {
+        "isEditorActive": false,
+        "position": 0,
+        "secondToPx": 200,
+        "scrollLeft": 0
+      },
+      "selectionFront": {},
+      "selectionBack": {
+        "0": {
+          "0": {},
+          "1": {}
+        }
+      }
+    },
+    "[eez-ui.eez-project]:/userPages/2[flow-state]": {
+      "selection": {
+        "0": {
+          "1": {
+            "0": {},
+            "3": {}
+          }
+        }
+      },
+      "transform": {
+        "translate": {
+          "x": -244,
+          "y": -301.4244384765625
+        },
+        "scale": 1
+      },
+      "timeline": {
+        "isEditorActive": false,
+        "position": 0,
+        "secondToPx": 200,
+        "scrollLeft": 0
+      },
+      "selectionFront": {},
+      "selectionBack": {
+        "0": {
+          "0": {},
+          "1": {
+            "0": {},
+            "2": {
+              "0": {},
+              "1": {
+                "1": {},
+                "$selected": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "[eez-ui.eez-project]:/userPages/1[flow-state]": {
+      "selection": {
+        "0": {
+          "0": {
+            "$selected": true
+          },
+          "1": {}
+        }
+      },
+      "transform": {
+        "translate": {
+          "x": -242.55998046875004,
+          "y": -268.9677734375
+        },
+        "scale": 1
+      },
+      "timeline": {
+        "isEditorActive": false,
+        "position": 0,
+        "secondToPx": 200,
+        "scrollLeft": 0
+      },
+      "selectionFront": {},
+      "selectionBack": {
+        "0": {
+          "0": {
+            "$selected": true
+          },
+          "1": {}
+        }
+      }
+    },
+    "[eez-ui.eez-project]:/userWidgets/0[flow-state]": {
+      "selection": {
+        "0": {},
+        "2": {
+          "$selected": true
+        }
+      },
+      "transform": {
+        "translate": {
+          "x": -257,
+          "y": -282
+        },
+        "scale": 1
+      },
+      "timeline": {
+        "isEditorActive": false,
+        "position": 0,
+        "secondToPx": 200,
+        "scrollLeft": 0
+      },
+      "selectionFront": {},
+      "selectionBack": {
+        "1": {},
+        "3": {},
+        "4": {},
+        "5": {},
+        "6": {
+          "$selected": true
+        }
+      }
+    },
+    "[eez-ui.eez-project]:/lvglStyles/styles[tree-state]": {
+      "0": {
+        "$selected": true
+      },
+      "1": {
+        "$selected": true
+      },
+      "2": {
+        "$selected": true
+      }
+    },
+    "[eez-ui.eez-project]:/userPages/4[flow-state]": {
+      "selection": {
+        "0": {
+          "0": {},
+          "1": {}
+        }
+      },
+      "transform": {
+        "translate": {
+          "x": -175.55650000000003,
+          "y": -238.63013685191765
+        },
+        "scale": 1
+      },
+      "timeline": {
+        "isEditorActive": false,
+        "position": 0,
+        "secondToPx": 200,
+        "scrollLeft": 0
+      },
+      "selectionFront": {},
+      "selectionBack": {
+        "0": {
+          "1": {},
+          "2": {},
+          "5": {},
+          "9": {
+            "$selected": true
+          }
+        }
+      }
+    },
+    "[eez-ui.eez-project]:/userPages/5[flow-state]": {
+      "selection": {
+        "0": {
+          "1": {},
+          "2": {}
+        }
+      },
+      "transform": {
+        "translate": {
+          "x": -175.55650000000003,
+          "y": -571.6301368519177
+        },
+        "scale": 1
+      },
+      "timeline": {
+        "isEditorActive": false,
+        "position": 0,
+        "secondToPx": 200,
+        "scrollLeft": 0
+      },
+      "selectionFront": {},
+      "selectionBack": {
+        "0": {
+          "0": {}
+        }
+      }
+    },
+    "[eez-ui.eez-project]:/actions/0[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": 0,
+          "y": 0
+        },
+        "scale": 1
+      }
+    },
+    "[eez-ui.eez-project]:/actions/1[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": -8,
+          "y": 0
+        },
+        "scale": 1
+      }
+    },
+    "[eez-ui.eez-project]:/actions/2[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": 0,
+          "y": 0
+        },
+        "scale": 1
+      }
+    },
+    "[eez-ui.eez-project]:/actions/3[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": 0,
+          "y": 0
+        },
+        "scale": 1
+      }
+    },
+    "[eez-ui.eez-project]:/actions/4[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": 0,
+          "y": 0
+        },
+        "scale": 1
+      }
+    },
+    "[eez-ui.eez-project]:/actions/5[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": 0,
+          "y": 0
+        },
+        "scale": 1
+      }
+    },
+    "[eez-ui.eez-project]:/actions/7[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": 0,
+          "y": 0
+        },
+        "scale": 1
+      }
+    },
+    "[eez-ui.eez-project]:/actions/6[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": 0,
+          "y": 0
+        },
+        "scale": 1
+      }
+    },
+    "[eez-ui.eez-project]:/actions/8[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": 0,
+          "y": 0
+        },
+        "scale": 1
+      }
+    },
+    "[eez-ui.eez-project]:/actions/9[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": 0,
+          "y": 0
+        },
+        "scale": 1
+      }
+    },
+    "[eez-ui.eez-project]:/actions/10[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": 0,
+          "y": 0
+        },
+        "scale": 1
+      }
+    },
+    "[eez-ui.eez-project]:/actions/11[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": 0,
+          "y": 0
+        },
+        "scale": 1
+      }
+    },
+    "[eez-ui.eez-project]:/actions/12[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": 0,
+          "y": 0
+        },
+        "scale": 1
+      }
+    },
+    "[eez-ui.eez-project]:/actions/13[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": 0,
+          "y": 0
+        },
+        "scale": 1
+      }
+    },
+    "[eez-ui.eez-project]:/actions/14[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": 0,
+          "y": 0
+        },
+        "scale": 1
+      }
+    },
+    "[eez-ui.eez-project]:/actions/20[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": 0,
+          "y": 0
+        },
+        "scale": 1
+      }
+    },
+    "[eez-ui.eez-project]:/actions/19[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": 0,
+          "y": 0
+        },
+        "scale": 1
+      }
+    },
+    "[eez-ui.eez-project]:/actions/21[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": 0,
+          "y": 0
+        },
+        "scale": 1
+      }
+    },
+    "[eez-ui.eez-project]:/actions/18[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": 0,
+          "y": 0
+        },
+        "scale": 1
+      }
+    },
+    "[gaggimate.eez-project]:/actions/22[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": 0,
+          "y": 0
+        },
+        "scale": 1
+      }
+    },
+    "[gaggimate.eez-project]:/actions/23[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": 0,
+          "y": 0
+        },
+        "scale": 1
+      }
+    },
+    "[gaggimate.eez-project]:/actions/24[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": 0,
+          "y": 0
+        },
+        "scale": 1
+      }
+    },
+    "[gaggimate.eez-project]:/actions/21[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": 0,
+          "y": 0
+        },
+        "scale": 1
+      }
+    },
+    "[gaggimate.eez-project]:/userPages/7[flow-state]": {
+      "selectionFront": {},
+      "selectionBack": {
+        "0": {
+          "0": {},
+          "1": {
+            "1": {
+              "0": {
+                "$selected": true
+              }
+            },
+            "2": {},
+            "3": {},
+            "4": {}
+          }
+        }
+      },
+      "transform": {
+        "translate": {
+          "x": -240,
+          "y": -562.4315185546875
+        },
+        "scale": 1
+      },
+      "timeline": {
+        "isEditorActive": false,
+        "position": 0,
+        "secondToPx": 200,
+        "scrollLeft": 0
+      }
+    },
+    "[gaggimate.eez-project]:/actions/25[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": 0,
+          "y": 0
+        },
+        "scale": 1
+      }
+    },
+    "[gaggimate.eez-project]:/actions/26[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": 0,
+          "y": 0
+        },
+        "scale": 1
+      }
+    },
+    "[gaggimate.eez-project]:/actions/27[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": 0,
+          "y": 0
+        },
+        "scale": 1
+      }
+    },
+    "[gaggimate.eez-project]:/actions/28[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": 0,
+          "y": 0
+        },
+        "scale": 1
+      }
+    },
+    "[gaggimate.eez-project]:/actions/29[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": 0,
+          "y": 0
+        },
+        "scale": 1
+      }
+    },
+    "[gaggimate.eez-project]:/userPages/8[flow-state]": {
+      "selectionFront": {},
+      "selectionBack": {
+        "0": {
+          "0": {}
+        }
+      },
+      "transform": {
+        "translate": {
+          "x": -233,
+          "y": -226.1632080078125
+        },
+        "scale": 1
+      },
+      "timeline": {
+        "isEditorActive": false,
+        "position": 0,
+        "secondToPx": 200,
+        "scrollLeft": 0
+      }
+    },
+    "[gaggimate.eez-project]:/actions/15[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": 0,
+          "y": 0
+        },
+        "scale": 1
+      }
+    },
+    "[gaggimate.eez-project]:/actions/30[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": 0,
+          "y": 0
+        },
+        "scale": 1
+      }
+    },
+    "[gaggimate.eez-project]:/actions/8[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": 0,
+          "y": 0
+        },
+        "scale": 1
+      }
+    },
+    "[gaggimate.eez-project]:/actions/31[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": 0,
+          "y": 0
+        },
+        "scale": 1
+      }
+    },
+    "[gaggimate.eez-project]:/userPages/9[flow-state]": {
+      "selectionFront": {},
+      "selectionBack": {
+        "0": {
+          "1": {
+            "0": {
+              "0": {},
+              "2": {}
+            },
+            "3": {},
+            "4": {},
+            "5": {},
+            "6": {}
+          }
+        }
+      },
+      "transform": {
+        "translate": {
+          "x": -240,
+          "y": -240
+        },
+        "scale": 0.8
+      },
+      "timeline": {
+        "isEditorActive": false,
+        "position": 0,
+        "secondToPx": 200,
+        "scrollLeft": 0
+      }
+    },
+    "[gaggimate.eez-project]:/userPages/10[flow-state]": {
+      "selectionFront": {},
+      "selectionBack": {
+        "0": {
+          "1": {
+            "0": {},
+            "3": {},
+            "5": {}
+          },
+          "2": {
+            "0": {
+              "0": {}
+            }
+          },
+          "4": {}
+        }
+      },
+      "transform": {
+        "translate": {
+          "x": -240,
+          "y": -357.786865234375
+        },
+        "scale": 1
+      },
+      "timeline": {
+        "isEditorActive": false,
+        "position": 0,
+        "secondToPx": 200,
+        "scrollLeft": 0
+      }
+    },
+    "[gaggimate.eez-project]:/actions/1[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": 0,
+          "y": 0
+        },
+        "scale": 1
+      }
+    },
+    "[gaggimate.eez-project]:/actions/33[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": 0,
+          "y": 0
+        },
+        "scale": 1
+      }
+    },
+    "[gaggimate.eez-project]:/actions/34[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": 0,
+          "y": 0
+        },
+        "scale": 1
+      }
+    },
+    "[gaggimate.eez-project]:/actions/4[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": 0,
+          "y": 0
+        },
+        "scale": 1
+      }
+    },
+    "[gaggimate.eez-project]:/actions/3[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": 0,
+          "y": 0
+        },
+        "scale": 1
+      }
+    },
+    "[gaggimate.eez-project]:/actions/10[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": 0,
+          "y": 0
+        },
+        "scale": 1
+      }
+    },
+    "[gaggimate.eez-project]:/actions/2[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": 0,
+          "y": 0
+        },
+        "scale": 1
+      }
+    },
+    "[gaggimate.eez-project]:/actions/35[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": 0,
+          "y": 0
+        },
+        "scale": 1
+      }
+    },
+    "[gaggimate.eez-project]:/actions/36[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": 0,
+          "y": 0
+        },
+        "scale": 1
+      }
+    },
+    "[gaggimate.eez-project]:/userPages/11[flow-state]": {
+      "selectionFront": {},
+      "selectionBack": {},
+      "transform": {
+        "translate": {
+          "x": -240,
+          "y": -240
+        },
+        "scale": 1
+      },
+      "timeline": {
+        "isEditorActive": false,
+        "position": 0,
+        "secondToPx": 200,
+        "scrollLeft": 0
+      }
+    }
+  },
+  "activeOutputSection": 0,
+  "searchPattern": "",
+  "searchMatchCase": false,
+  "searchMatchWholeWord": false,
+  "replaceEnabled": false,
+  "replaceText": "",
+  "pageRuntimeFrontFace": true,
+  "breakpoints": {},
+  "watchExpressions": [],
+  "showComponentDescriptions": true,
+  "logsPanelFilter": "all",
+  "selectedStylePropertyName": "",
+  "lvglPart": "MAIN",
+  "lvglState": "DEFAULT",
+  "lvglExpandedPropertiesGroup": [
+    "POSITION AND SIZE",
+    "IMAGE",
+    "SHADOW",
+    "OUTLINE",
+    "TEXT",
+    "ARC",
+    "LINE",
+    "PADDING",
+    "BACKGROUND",
+    "BORDER",
+    "LAYOUT",
+    "MISCELLANEOUS"
+  ],
+  "showInactiveFlowsInDebugger": true,
+  "globalFlowZoom": true,
+  "flowZoom": 0.8,
+  "implementationLanguage": "C++",
+  "openDialogDefaultPath": "/Users/jniebuhr/Downloads/qrcode-information-2.png"
+}

@@ -2,7 +2,8 @@
 module.exports = {
   content: ["./web/**/*.{html,js}"],
   theme: {
-    extend: {},
+    extend: {
+    },
     fontFamily: {
       logo: ['Montserrat']
     }
