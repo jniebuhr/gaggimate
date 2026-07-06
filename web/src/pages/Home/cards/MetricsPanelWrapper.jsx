@@ -22,6 +22,7 @@ export function MetricsPanelWrapper({ ds, inCard = false, compact = false }) {
       target: m.getTarget ? m.getTarget(ds) : null,
       unit: m.unit,
       adjustable: m.adjustable(ds),
+      disabled: m.disabled ? m.disabled(ds) : false,
       onDecrease: m.onDecrease ? m.onDecrease(ds) : undefined,
       onIncrease: m.onIncrease ? m.onIncrease(ds) : undefined,
     }));

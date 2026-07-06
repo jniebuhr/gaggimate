@@ -9,11 +9,12 @@ import {
   METRICS_LAST_ROW_FILLS,
 } from '../../../utils/dashboardManager.js';
 
-function AdjBtn({ icon, onClick, visible }) {
+function AdjBtn({ icon, onClick, visible, disabled }) {
   if (!visible) return <span className='h-6 w-6 shrink-0' />;
   return (
     <button
       onClick={onClick}
+      disabled={disabled}
       className='btn btn-ghost btn-xs flex h-6 w-6 items-center justify-center rounded-full p-0'
     >
       <FontAwesomeIcon icon={icon} className='h-2.5 w-2.5' />
@@ -29,6 +30,7 @@ function MetricCell({
   onDecrease,
   onIncrease,
   adjustable,
+  disabled = false,
   inCard = false,
   compact = false,
 }) {
@@ -41,7 +43,7 @@ function MetricCell({
         {label}
       </div>
       <div className='flex w-full items-center justify-between'>
-        {!compact && <AdjBtn icon={faMinus} onClick={onDecrease} visible={showAdj} />}
+        {!compact && <AdjBtn icon={faMinus} onClick={onDecrease} visible={showAdj} disabled={disabled} />}
         <div className='flex-1 text-center tabular-nums'>
           <span className='text-base-content text-sm font-bold'>{current}</span>
           {target != null && (
@@ -54,7 +56,7 @@ function MetricCell({
             </>
           )}
         </div>
-        {!compact && <AdjBtn icon={faPlus} onClick={onIncrease} visible={showAdj} />}
+        {!compact && <AdjBtn icon={faPlus} onClick={onIncrease} visible={showAdj} disabled={disabled} />}
       </div>
     </div>
   );
@@ -68,6 +70,7 @@ function MetricCellItem({ m, inCard, compact }) {
       target={m.target}
       unit={m.unit}
       adjustable={m.adjustable}
+      disabled={m.disabled}
       onDecrease={m.onDecrease}
       onIncrease={m.onIncrease}
       inCard={inCard}
@@ -143,6 +146,7 @@ MetricsGrid.propTypes = {
       target: PropTypes.string,
       unit: PropTypes.string,
       adjustable: PropTypes.bool,
+      disabled: PropTypes.bool,
       onDecrease: PropTypes.func,
       onIncrease: PropTypes.func,
     }),
