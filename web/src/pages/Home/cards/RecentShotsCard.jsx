@@ -1,10 +1,9 @@
-import { useEffect, useRef, useState } from 'preact/hooks';
-import { computed, useSignalEffect } from '@preact/signals';
+import { useContext, useEffect, useRef, useState } from 'preact/hooks';
+import { useSignalEffect } from '@preact/signals';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMagnifyingGlassChart } from '@fortawesome/free-solid-svg-icons/faMagnifyingGlassChart';
-import { parseBinaryIndex, indexToShotList } from '../../ShotHistory/parseBinaryIndex.js';
-import { parseBinaryShot } from '../../ShotHistory/parseBinaryShot.js';
-import { machine } from '../../../services/ApiService.js';
+import { parseRecentShotsIndex } from '../../ShotHistory/parseRecentShotsIndex.js';
+import { ApiServiceContext } from '../../../services/ApiService.js';
 import { cleanName } from '../../ShotAnalyzer/utils/analyzerUtils.js';
 import {
   shotMetricSlotsSignal,
@@ -13,11 +12,6 @@ import {
 } from '../../../utils/dashboardManager.js';
 import PropTypes from 'prop-types';
 import { SkeletonBlock } from '../../../components/SkeletonBlock.jsx';
-
-const isFinished = computed(() => {
-  const p = machine.value.status?.process;
-  return !!p?.e && !p?.a;
-});
 
 // Compares calendar dates, not raw milliseconds, so 11:59 PM yesterday
 // correctly reads as "Yesterday" even if less than 24 h ago.
@@ -45,48 +39,11 @@ function formatShotDateTime(timestamp, hour12) {
   });
 }
 
-async function loadShotIndex(recentShotCount) {
-  const resp = await fetch('/api/history/index.bin');
-  if (!resp.ok) return null;
+async function loadRecentShots(recentShotCount) {
+  const resp = await fetch('/api/history/recent.bin');
+  if (!resp.ok) return [];
   const buf = await resp.arrayBuffer();
-  return indexToShotList(parseBinaryIndex(buf)).slice(0, recentShotCount);
-}
-
-function computeSlogMetrics(samples, { needsAvgTemp, needsMaxPressure, needsAvgFlow }) {
-  const update = {};
-  if (needsMaxPressure) {
-    update.maxPressure = samples.length > 0 ? Math.max(...samples.map(s => s.cp ?? 0)) : null;
-  }
-  if (needsAvgTemp) {
-    const ctSamples = samples.filter(s => s.ct != null);
-    update.avgTemp =
-      ctSamples.length > 0 ? ctSamples.reduce((sum, s) => sum + s.ct, 0) / ctSamples.length : null;
-  }
-  if (needsAvgFlow) {
-    const flSamples = samples.filter(s => s.fl != null && s.fl > 0);
-    update.avgFlow =
-      flSamples.length > 0 ? flSamples.reduce((sum, s) => sum + s.fl, 0) / flSamples.length : null;
-  }
-  return update;
-}
-
-// Loads slog binaries sequentially (not in parallel) to avoid overwhelming the ESP32
-async function enrichShotsWithSlog(shots, neededMetrics, isCancelled, onShotUpdate) {
-  for (const shot of shots) {
-    if (isCancelled()) break;
-    try {
-      const paddedId = shot.id.toString().padStart(6, '0');
-      const slogResp = await fetch(`/api/history/${paddedId}.slog`);
-      if (!slogResp.ok || isCancelled()) continue;
-      const slogBuf = await slogResp.arrayBuffer();
-      const parsed = parseBinaryShot(slogBuf, shot.id);
-      const update = computeSlogMetrics(parsed.samples ?? [], neededMetrics);
-      if (isCancelled()) break;
-      onShotUpdate(shot.id, update);
-    } catch {
-      // Skip shot if binary load fails
-    }
-  }
+  return parseRecentShotsIndex(buf).slice(0, recentShotCount);
 }
 
 const METRIC_DEFS = {
@@ -208,24 +165,37 @@ ShotMiniCardSkeleton.propTypes = {
 };
 
 export function RecentShotsCard() {
+  const apiService = useContext(ApiServiceContext);
   const [shots, setShots] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
-  const prevFinishedRef = useRef(false);
+  const countMountedRef = useRef(false);
   const slots = shotMetricSlotsSignal.value;
 
-  // Trigger a refresh when a shot transitions to finished or the count setting changes
-  useSignalEffect(() => {
-    const finished = isFinished.value;
-    if (finished && !prevFinishedRef.current) {
+  // Trigger a refresh once the firmware confirms a shot was actually
+  // persisted to history. Brew-process state (isActive/isFinished) can go
+  // inactive well before extended recording (BLE scale weight settling)
+  // finishes writing the entry, so we listen for the explicit save event
+  // instead of inferring timing from process state.
+  useEffect(() => {
+    if (!apiService) return;
+    const listenerId = apiService.on('evt:history-shot-saved', () => {
       setRefreshKey(k => k + 1);
-    }
-    prevFinishedRef.current = finished;
-  });
+    });
+    return () => apiService.off('evt:history-shot-saved', listenerId);
+  }, [apiService]);
 
+  // Trigger a refresh when the count setting changes.
+  // Guarded so the initial mount-time subscribe call doesn't itself count as
+  // a "change" and trigger a redundant fetch alongside the mount-time fetch
+  // already performed by the useEffect below.
   useSignalEffect(() => {
     void recentShotCountSignal.value;
-    setRefreshKey(k => k + 1);
+    if (countMountedRef.current) {
+      setRefreshKey(k => k + 1);
+    } else {
+      countMountedRef.current = true;
+    }
   });
 
   useEffect(() => {
@@ -234,32 +204,10 @@ export function RecentShotsCard() {
 
     (async () => {
       try {
-        const list = await loadShotIndex(recentShotCountSignal.value);
+        const list = await loadRecentShots(recentShotCountSignal.value);
         if (cancelled) return;
-        if (!list) {
-          setLoading(false);
-          return;
-        }
         setShots(list);
         setLoading(false);
-
-        const neededMetrics = {
-          needsAvgTemp: slots.includes('avgTemp'),
-          needsMaxPressure: slots.includes('maxPressure'),
-          needsAvgFlow: slots.includes('avgFlow'),
-        };
-        const needsSlog =
-          neededMetrics.needsAvgTemp ||
-          neededMetrics.needsMaxPressure ||
-          neededMetrics.needsAvgFlow;
-        if (!needsSlog) return;
-
-        await enrichShotsWithSlog(
-          list,
-          neededMetrics,
-          () => cancelled,
-          (id, update) => setShots(prev => prev.map(s => (s.id === id ? { ...s, ...update } : s))),
-        );
       } catch {
         if (!cancelled) setLoading(false);
       }
@@ -268,7 +216,7 @@ export function RecentShotsCard() {
     return () => {
       cancelled = true;
     };
-  }, [refreshKey, slots]);
+  }, [refreshKey]);
 
   if (loading) {
     return (

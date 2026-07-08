@@ -13,6 +13,8 @@
  *   getTarget  — (ds) => string|null — secondary target value (shown as "/target unit"). Omit if none.
  *   unit       — string appended to the target value (e.g. ' bar', '°C')
  *   adjustable — (ds) => bool — whether +/- buttons are rendered
+ *   disabled   — (ds) => bool — whether the rendered +/- buttons are disabled. Omit if never
+ *                disabled. Defaults to false.
  *   onDecrease — (ds) => function — handler for the minus button. Omit if not adjustable.
  *   onIncrease — (ds) => function — handler for the plus button. Omit if not adjustable.
  */
@@ -46,6 +48,7 @@ export const METRIC_DEFINITIONS = [
     getTarget: ds => (ds.targetTemperature ?? 0).toFixed(0),
     unit: '°C',
     adjustable: () => true,
+    disabled: ds => ds.isBrewing && ds.isActive,
     onDecrease: ds => ds.lowerTemp,
     onIncrease: ds => ds.raiseTemp,
   },
@@ -121,6 +124,7 @@ export const METRIC_DEFINITIONS = [
     getTarget: ds => (ds.brewTarget && ds.targetWeight != null ? ds.targetWeight.toFixed(0) : null),
     unit: 'g',
     adjustable: ds => ds.volumetricAvailable,
+    disabled: ds => ds.isBrewing && ds.isActive,
     onDecrease: ds => ds.lowerTarget,
     onIncrease: ds => ds.raiseTarget,
   },

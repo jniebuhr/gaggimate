@@ -62,7 +62,6 @@ export const PANEL_DEFINITIONS = [
     props: ds => ({
       selectedProfileId: ds.selectedProfileId,
     }),
-    containerClass: 'hidden [@media(min-height:900px)]:block',
   },
   {
     id: 'metrics',

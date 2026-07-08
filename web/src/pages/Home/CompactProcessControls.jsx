@@ -22,10 +22,7 @@ const Metric = ({ icon, current, target, unit }) => (
   <div className='flex items-center gap-1.5'>
     <FontAwesomeIcon icon={icon} className='text-base-content/60 text-xs' />
     <span className='text-base-content tabular-nums'>{current}</span>
-    <span className='text-success font-semibold tabular-nums'>
-      / {target}
-      {unit}
-    </span>
+    <span className='text-success font-semibold tabular-nums'>/ {target}{unit}</span>
   </div>
 );
 
