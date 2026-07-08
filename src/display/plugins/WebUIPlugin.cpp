@@ -98,6 +98,26 @@ void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) 
         broadcastJson(doc);
     });
 
+    // Forward "shot saved to history" events to WebSocket clients, so the
+    // dashboard can refetch the recent-shots buffer at the right time.
+    pluginManager->on("evt:history-shot-saved", [this](Event const &event) {
+        JsonDocument doc(&psramAllocator);
+        doc["tp"] = "evt:history-shot-saved";
+        doc["id"] = event.getInt("id");
+        broadcastJson(doc);
+    });
+
+    // Forward live shot-finished stats (pressure/flow) to WebSocket clients, so
+    // the dashboard's finished card can show them without waiting for the
+    // history file write.
+    pluginManager->on("evt:shot-finished-stats", [this](Event const &event) {
+        JsonDocument doc(&psramAllocator);
+        doc["tp"] = "evt:shot-finished-stats";
+        doc["maxPressure"] = event.getFloat("maxPressure");
+        doc["avgFlow"] = event.getFloat("avgFlow");
+        broadcastJson(doc);
+    });
+
     // Subscribe to Bluetooth scale weight updates
     pluginManager->on("controller:volumetric-measurement:bluetooth:change",
                       [this](Event const &event) { this->currentBluetoothWeight = event.getFloat("value"); });
@@ -328,6 +348,15 @@ void WebUIPlugin::setupServer() {
             request->send(*fs, "/h/index.bin", "application/octet-stream");
         } else {
             request->send(404, "text/plain", "Index not found");
+        }
+    });
+    server.on("/api/history/recent.bin", HTTP_GET, [this, fs](AsyncWebServerRequest *request) {
+        // Serve the rolling recent-shots buffer directly; 404 until the first
+        // shot completes after this feature ships (file is created lazily).
+        if (fs->exists("/h/recent.bin")) {
+            request->send(*fs, "/h/recent.bin", "application/octet-stream");
+        } else {
+            request->send(404, "text/plain", "Recent shots index not found");
         }
     });
     server.on("/api/core-dump", HTTP_GET, [this](AsyncWebServerRequest *request) { handleCoreDumpDownload(request); });
