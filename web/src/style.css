@@ -446,6 +446,35 @@ html[data-theme='coffee'] {
 
 @source inline("{,sm:,md:,lg:,xl:}col-span-{1..12}");
 
+/* iOS Safari zooms focused text controls below 16px. Keep page zoom enabled
+   and raise only editable controls on touch-based iOS devices. */
+@layer base {
+  @supports (-webkit-touch-callout: none) {
+    @media (hover: none) and (pointer: coarse) {
+      input:not(
+        :is(
+          [type='button'],
+          [type='checkbox'],
+          [type='color'],
+          [type='file'],
+          [type='hidden'],
+          [type='image'],
+          [type='radio'],
+          [type='range'],
+          [type='reset'],
+          [type='submit']
+        )
+      ),
+      textarea,
+      select,
+      [contenteditable='true'],
+      [role='textbox'] {
+        font-size: 16px !important;
+      }
+    }
+  }
+}
+
 /* Portal-based tooltip styles (used by Tooltip.jsx) */
 .tooltip-portal {
   @apply bg-neutral text-neutral-content rounded-md px-2 py-1 text-sm;
