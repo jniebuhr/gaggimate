@@ -10,7 +10,7 @@ import { parseBinaryIndex, indexToShotList } from '../../ShotHistory/parseBinary
 import { parseBinaryShot } from '../../ShotHistory/parseBinaryShot';
 import { indexedDBService } from './IndexedDBService';
 import { notesService } from './NotesService';
-import { getProfileDisplayLabel } from '../utils/analyzerUtils';
+import { getProfileDisplayLabel, getShotStorageKey } from '../utils/analyzerUtils';
 
 const HISTORY_NOTES_DEFAULTS = {
   id: '',
@@ -52,7 +52,7 @@ function normalizeShotSampleForHistoryExport(sample = {}) {
 function normalizeNotesForHistoryExport(notes, shotId) {
   const merged = {
     ...HISTORY_NOTES_DEFAULTS,
-    ...(notes || {}),
+    ...notes,
     id: String(shotId ?? notes?.id ?? ''),
   };
 
@@ -132,8 +132,14 @@ function getProfileExportFilename(profile, fallback = 'profile') {
   return ensureJsonFilename(label || fallback || 'profile');
 }
 
+function getShotExportFilename(item) {
+  if (item?.exportName) return ensureJsonFilename(item.exportName);
+  if (item?.id) return ensureJsonFilename(`shot-${item.id}`);
+  return ensureJsonFilename(item?.storageKey || item?.fileName || item?.name || 'shot');
+}
+
 function cleanProfileForExport(profile, fallbackProfile = null) {
-  const clean = { ...(profile || {}) };
+  const clean = { ...profile };
   if (!clean.label && fallbackProfile) {
     clean.label = getProfileDisplayLabel(fallbackProfile, '');
   }
@@ -146,9 +152,7 @@ function cleanProfileForExport(profile, fallbackProfile = null) {
 }
 
 class LibraryService {
-  constructor() {
-    this.apiService = null;
-  }
+  apiService = null;
 
   /**
    * Set API service reference
@@ -168,8 +172,6 @@ class LibraryService {
 
       if (!response.ok) {
         if (response.status === 404) {
-          // No shots yet
-          console.log('No shot index found on GM');
           return [];
         }
         throw new Error(`HTTP ${response.status}`);
@@ -198,7 +200,7 @@ class LibraryService {
    */
   async getBrowserShots() {
     try {
-      const shots = await indexedDBService.getAllShots();
+      const shots = await Promise.resolve(indexedDBService.getAllShots());
       return shots.map(shot => ({
         ...shot,
         storageKey: shot.storageKey || shot.name || String(shot.id || ''),
@@ -237,12 +239,7 @@ class LibraryService {
    * @returns {Promise<Object[]>} List of GaggiMate profiles with source tag
    */
   async getGaggiMateProfiles() {
-    if (
-      !this.apiService ||
-      !this.apiService.socket ||
-      this.apiService.socket.readyState !== WebSocket.OPEN
-    ) {
-      console.log('WebSocket not ready, skipping GM profiles');
+    if (this.apiService?.socket?.readyState !== WebSocket.OPEN) {
       return [];
     }
 
@@ -275,7 +272,7 @@ class LibraryService {
    */
   async getBrowserProfiles() {
     try {
-      return await indexedDBService.getAllProfiles();
+      return await Promise.resolve(indexedDBService.getAllProfiles());
     } catch (error) {
       console.error('Failed to load browser profiles:', error);
       return [];
@@ -344,11 +341,7 @@ class LibraryService {
    */
   async loadProfile(nameOrId, source) {
     if (source === 'gaggimate') {
-      if (
-        !this.apiService ||
-        !this.apiService.socket ||
-        this.apiService.socket.readyState !== WebSocket.OPEN
-      ) {
+      if (this.apiService?.socket?.readyState !== WebSocket.OPEN) {
         throw new Error('WebSocket not connected');
       }
 
@@ -381,14 +374,10 @@ class LibraryService {
    * @returns {Promise<{ exportData: Object, filename: string }>} Export payload and filename
    */
   async exportItem(item, isShot) {
-    console.log('Service Exporting:', item);
-
     let exportData = null;
-    // 1. Prefer specific exportName (e.g. shot-123.json), else item.name/id
-    let filename = item.exportName || item.name || item.id || 'export.json';
-
-    // Ensure extension .json (or .slog if preferred)
-    filename = ensureJsonFilename(filename);
+    let filename = isShot
+      ? getShotExportFilename(item)
+      : ensureJsonFilename(item.exportName || item.name || item.id || 'export.json');
 
     if (item.source === 'gaggimate') {
       if (isShot) {
@@ -423,7 +412,7 @@ class LibraryService {
       delete exportShot.source;
       delete exportShot.uploadedAt;
 
-      const shotNotesKey = item.storageKey || item.name || item.id;
+      const shotNotesKey = getShotStorageKey(item);
       const notes = await notesService.loadNotes(shotNotesKey, 'browser');
       exportData = buildHistoryLikeShotExport(exportShot, item, notes);
     } else {
