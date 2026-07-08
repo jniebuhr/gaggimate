@@ -39,6 +39,12 @@ class ShotHistoryPlugin : public Plugin {
     bool readEntryAtPosition(File &indexFile, size_t position, ShotIndexEntry &entry);
     bool writeEntryAtPosition(File &indexFile, size_t position, const ShotIndexEntry &entry);
     bool createEarlyIndexEntry();
+
+    // Rolling "recent shots" buffer helpers (separate from the main index)
+    bool ensureRecentShotsExists();
+    void appendToRecentShots(const RecentShotEntry &entry);
+    void updateRecentShotMetadata(uint32_t shotId, uint8_t rating, uint16_t volume);
+    void removeFromRecentShots(uint32_t shotId);
     void saveNotes(const String &id, const JsonDocument &notes);
     void loadNotes(const String &id, JsonDocument &notes);
     void startRecording();
@@ -86,6 +92,14 @@ class ShotHistoryPlugin : public Plugin {
     // Phase transition tracking (v5+)
     uint8_t lastRecordedPhase = 0xFF; // Invalid initial value to detect first phase
     uint8_t finalExitReason = 0;      // Reason the shot ended (PhaseExitReason); captured at brew end
+
+    // Running aggregates for the current shot, used to populate RecentShotEntry
+    // at completion without re-parsing the .slog file (see record()).
+    uint32_t tempSumScaled = 0;     // sum of sample.ct (°C * 10)
+    uint32_t tempSampleCount = 0;
+    uint16_t maxPressureScaled = 0; // max of sample.cp (bar * 10)
+    uint32_t flowSumScaled = 0;     // sum of positive sample.fl (ml/s * 100)
+    uint32_t positiveFlowCount = 0;
 
     // Async rebuild state
     bool rebuildInProgress = false;

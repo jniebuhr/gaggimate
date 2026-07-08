@@ -18,8 +18,8 @@ export const ModeTab = ({ mode, active, onClick, rotation = 0, compact = false }
         <FontAwesomeIcon icon={mode.icon} className='h-3.5 w-3.5' rotation={rotation} />
       ) : (
         <>
-          <span className='hidden md:contents'>{mode.label}</span>
-          <span className='md:hidden'>
+          <span className='hidden @sm:contents'>{mode.label}</span>
+          <span className='@sm:hidden'>
             <FontAwesomeIcon icon={mode.icon} className='h-3.5 w-3.5' rotation={rotation} />
           </span>
         </>

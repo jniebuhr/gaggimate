@@ -2,6 +2,7 @@ import { useState } from 'preact/hooks';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCompress } from '@fortawesome/free-solid-svg-icons/faCompress';
 import Card from '../../components/Card.jsx';
+import { Tooltip } from '../../components/Tooltip.jsx';
 import {
   SettingsFormField,
   SortableConfigurator,
@@ -102,7 +103,12 @@ export function DashboardSettings() {
               <option value={DASHBOARD_LAYOUTS.ORDER_LAST}>Chart First</option>
             </select>
           </SettingsFormField>
-          <SettingsFormField label='Control Column Style' htmlFor='dashboardCardMode' noMargin>
+          <SettingsFormField
+            label='Control Column Style'
+            htmlFor='dashboardCardMode'
+            helpText='Show the control column panels as separate cards, or group them into a single unified card.'
+            noMargin
+          >
             <select
               id='dashboardCardMode'
               className='select select-bordered w-full'
@@ -201,7 +207,11 @@ export function DashboardSettings() {
               setStickyBottom(e.target.checked);
             }}
           />
-          <SettingsFormField label='Column Spacing' htmlFor='columnSpacing'>
+          <SettingsFormField
+            label='Column Spacing'
+            htmlFor='columnSpacing'
+            helpText='Controls how panels are distributed vertically: pack them to the top, or space them evenly across the column.'
+          >
             <select
               id='columnSpacing'
               className='select select-bordered w-full'
@@ -224,25 +234,40 @@ export function DashboardSettings() {
               persistPanelOrder(ids);
             }}
             emptyMessage='All available panels are visible.'
-            extraControls={def =>
-              def.supportsCompact ? (
-                <button
-                  type='button'
-                  title={
-                    compactPanels.includes(def.id)
-                      ? 'Switch to full view'
-                      : 'Switch to compact view'
+            extraControls={def => {
+              if (!def.supportsCompact) return null;
+              const isCompact = compactPanels.includes(def.id);
+              return (
+                <Tooltip
+                  content={
+                    isCompact
+                      ? 'Compact mode is on — click to show the full panel'
+                      : 'Enables compact mode for this panel'
                   }
-                  onClick={() => handleToggleCompact(def.id)}
-                  className={`btn btn-ghost btn-xs flex h-6 w-6 items-center justify-center rounded p-0 ${compactPanels.includes(def.id) ? 'text-primary' : 'text-base-content/30'}`}
                 >
-                  <FontAwesomeIcon icon={faCompress} className='h-3 w-3' />
-                </button>
-              ) : null
-            }
+                  <button
+                    type='button'
+                    aria-label={isCompact ? 'Switch to full view' : 'Switch to compact view'}
+                    onClick={() => handleToggleCompact(def.id)}
+                    className={`btn btn-xs flex h-6 items-center justify-center gap-1 rounded-full px-2 ${
+                      isCompact
+                        ? 'btn-primary'
+                        : 'border-base-content/20 bg-base-200/60 text-base-content/60 border'
+                    }`}
+                  >
+                    <FontAwesomeIcon icon={faCompress} className='h-3 w-3' />
+                    <span className='hidden @md:inline'>{isCompact ? 'Compact' : 'Full'}</span>
+                  </button>
+                </Tooltip>
+              );
+            }}
           />
           {!compactPanels.includes('profile') && panelOrder.includes('profile') && (
-            <SettingsFormField label='Profile Chart Height' htmlFor='profileChartHeight'>
+            <SettingsFormField
+              label='Profile Chart Height'
+              htmlFor='profileChartHeight'
+              helpText='Sets the height of the profile chart preview shown in the Profile Selector panel.'
+            >
               <div className='flex items-center gap-3'>
                 <input
                   id='profileChartHeight'
@@ -266,7 +291,11 @@ export function DashboardSettings() {
 
         {/* ── Card 4: Metric Selection ──────────────────────────────────── */}
         <Card sm={10} lg={5} title='Metric Selection'>
-          <SettingsFormField label='Metrics Columns' htmlFor='metricsColumns'>
+          <SettingsFormField
+            label='Metrics Columns'
+            htmlFor='metricsColumns'
+            helpText='Sets the maximum number of columns. On smaller screens, fewer columns are used to keep metrics readable.'
+          >
             <div className='flex items-center gap-3'>
               <input
                 id='metricsColumns'
@@ -287,7 +316,11 @@ export function DashboardSettings() {
               </span>
             </div>
           </SettingsFormField>
-          <SettingsFormField label='Last Row Fill' htmlFor='metricsLastRowFill'>
+          <SettingsFormField
+            label='Last Row Fill'
+            htmlFor='metricsLastRowFill'
+            helpText='Controls how the last, incomplete row of metrics is laid out: stretch items evenly to fill the row, or keep them aligned to the column grid.'
+          >
             <select
               id='metricsLastRowFill'
               className='select select-bordered w-full'
