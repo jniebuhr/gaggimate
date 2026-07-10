@@ -1,19 +1,22 @@
 const THEME_STORAGE_KEY = 'gaggimate-daisyui-theme';
-const AVAILABLE_THEMES = ['light', 'dark', 'coffee', 'nord'];
+const SYSTEM_THEME = 'system';
+const EXPLICIT_THEME_LIST = ['light', 'dark', 'coffee', 'nord'];
+const EXPLICIT_THEMES = new Set(EXPLICIT_THEME_LIST);
+const AVAILABLE_THEMES = new Set([SYSTEM_THEME, ...EXPLICIT_THEME_LIST]);
 
 export function getStoredTheme() {
   try {
     const stored = localStorage.getItem(THEME_STORAGE_KEY);
-    return stored && AVAILABLE_THEMES.includes(stored) ? stored : 'light';
+    return stored && AVAILABLE_THEMES.has(stored) ? stored : SYSTEM_THEME;
   } catch (error) {
     console.warn('Failed to get stored theme:', error);
-    return 'light';
+    return SYSTEM_THEME;
   }
 }
 
 export function setStoredTheme(theme) {
   try {
-    if (AVAILABLE_THEMES.includes(theme)) {
+    if (AVAILABLE_THEMES.has(theme)) {
       localStorage.setItem(THEME_STORAGE_KEY, theme);
       applyTheme(theme);
       return true;
@@ -26,16 +29,24 @@ export function setStoredTheme(theme) {
 }
 
 export function applyTheme(theme) {
-  if (AVAILABLE_THEMES.includes(theme)) {
-    document.documentElement.setAttribute('data-theme', theme);
+  if (theme === SYSTEM_THEME) {
+    delete document.documentElement.dataset.theme;
+    return;
+  }
+
+  if (EXPLICIT_THEMES.has(theme)) {
+    document.documentElement.dataset.theme = theme;
   }
 }
 
 export function getAvailableThemes() {
-  return AVAILABLE_THEMES.map(theme => ({
-    value: theme,
-    label: theme.charAt(0).toUpperCase() + theme.slice(1),
-  }));
+  return [
+    { value: SYSTEM_THEME, label: 'System' },
+    ...EXPLICIT_THEME_LIST.map(theme => ({
+      value: theme,
+      label: theme.charAt(0).toUpperCase() + theme.slice(1),
+    })),
+  ];
 }
 
 // Initialize theme on load

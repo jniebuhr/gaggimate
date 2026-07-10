@@ -291,6 +291,71 @@
   }
 }
 
+html[data-theme='light'] {
+  --analyzer-pressure-text: #0066cc;
+  --analyzer-pressure-anchor: #0066cc;
+  --analyzer-target-pressure-text: #0066cc;
+  --analyzer-target-pressure-anchor: #0066cc;
+  --analyzer-flow-text: #63993d;
+  --analyzer-flow-anchor: #63993d;
+  --analyzer-target-flow-text: #63993d;
+  --analyzer-target-flow-anchor: #63993d;
+  --analyzer-puckflow-text: #059669;
+  --analyzer-puckflow-anchor: #059669;
+  --analyzer-temp-text: #f0561d;
+  --analyzer-temp-anchor: #f0561d;
+  --analyzer-target-temp-text: #731f00;
+  --analyzer-target-temp-anchor: #731f00;
+  --analyzer-weight-text: #8b5cf6;
+  --analyzer-weight-anchor: #8b5cf6;
+  --analyzer-weight-det-text: #8b5cf6;
+  --analyzer-weight-det-anchor: #8b5cf6;
+  --analyzer-weightflow-text: #6d28d9;
+  --analyzer-weightflow-anchor: #6d28d9;
+  --analyzer-pred-stop-red: #dc2626;
+  --analyzer-pred-info-blue: #2563eb;
+  --analyzer-warning-orange: #ea7a2f;
+  --analyzer-warning-orange-strong: #c95f1d;
+  --analyzer-warning-orange-shadow: rgba(234, 122, 47, 0.3);
+  --analyzer-brew-by-time-label-bg: #475569;
+  --analyzer-brew-by-time-label-border: #334155;
+  --analyzer-brew-by-time-label-text: #ffffff;
+  --analyzer-brew-by-weight-label-bg: #8b5cf6;
+  --analyzer-brew-by-weight-label-border: #6d3fe0;
+  --analyzer-brew-by-weight-label-text: #ffffff;
+  --analyzer-notes-taste-bitter: #b16a3c;
+  --analyzer-notes-taste-balanced: #5f8a57;
+  --analyzer-notes-taste-sour: #b7963f;
+  --analyzer-phase-line: rgba(107, 114, 128, 0.5);
+  --analyzer-stop-label: rgba(220, 38, 38, 0.85);
+  --analyzer-hover-tooltip-bg: rgba(20, 20, 20, 0.92);
+  --analyzer-hover-tooltip-border: rgba(255, 255, 255, 0.08);
+  --analyzer-hover-tooltip-text: #ffffff;
+  --analyzer-hover-tooltip-shadow: rgba(15, 23, 42, 0.26);
+  --statistics-trend-duration: #64748b;
+  --statistics-trend-water: #0ea5e9;
+  --statistics-trend-shots-brown: #8b5e3c;
+  --statistics-trend-axis-tick: #888888;
+  --statistics-trend-grid: rgba(200, 200, 200, 0.1);
+  --statistics-trend-tooltip-bg: rgba(20, 20, 20, 0.9);
+  --statistics-summary-shots-brown: #8b5e3c;
+  --statistics-summary-water: #0ea5e9;
+  --statistics-summary-duration: #64748b;
+  --statistics-summary-surface-strong: color-mix(
+    in srgb,
+    var(--color-base-100) 92%,
+    var(--color-base-content) 2%
+  );
+  --statistics-summary-surface-muted: color-mix(
+    in srgb,
+    var(--color-base-100) 97%,
+    var(--color-base-content) 1%
+  );
+  --statistics-summary-border: color-mix(in srgb, var(--color-base-content) 10%, transparent);
+  --statistics-summary-shadow: rgba(15, 23, 42, 0.08);
+  --analyzer-source-web-badge-text: #5b7aa7;
+}
+
 html[data-theme='nord'] {
   --analyzer-pressure-text: #0066cc;
   --analyzer-pressure-anchor: #0066cc;
