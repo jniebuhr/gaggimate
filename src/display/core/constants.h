@@ -2,7 +2,7 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
-#define PING_INTERVAL 1000
+#define PING_INTERVAL 2000 // keepalive ping cadence (ms); feeds the controller's connection watchdog
 #define PROGRESS_INTERVAL 100
 #define HOT_WATER_SAFETY_DURATION_MS 120000
 #define STEAM_SAFETY_DURATION_MS 600000
@@ -18,6 +18,7 @@
 #define DEFAULT_PRESSURE_SCALING 16.0f
 #define DEFAULT_PID "58.397,1.027,249.055,0.0"
 #define DEFAULT_PUMP_MODEL_COEFFS "10.205,5.521"
+#define DEFAULT_PUMP_SLIP_COEFFS "0,0,0,0"
 #define DEFAULT_MDNS_NAME "gaggimate"
 #define DEFAULT_OTA_CHANNEL "latest"
 #define DEFAULT_TIMEZONE "Europe/Rome"
@@ -25,6 +26,10 @@
 #define DEFAULT_STEAM_PUMP_PERCENTAGE 4.f
 #define DEFAULT_STEAM_PUMP_CUTOFF 2.f
 #define WIFI_CONNECT_ATTEMPTS 20
+
+#define DEFAULT_COMMUTATION_GAIN 0.7f
+#define DEFAULT_CONVERGENCE_GAIN 1.0f
+#define DEFAULT_INTEGRAL_GAIN 0.25f
 
 #define MODE_STANDBY 0
 #define MODE_BREW 1
@@ -39,5 +44,7 @@
 
 #define WIFI_CONNECT_TIMEOUT_MS 30000
 #define DEFAULT_WIFI_AP_TIMEOUT_MS 600000
+#define DEFAULT_WIFI_AP_PASSWORD_LENGTH 10 // generated AP password length (alphanumeric)
+#define WIFI_AP_PASSWORD_MIN_LENGTH 8      // WPA2 minimum passphrase length
 
 #endif // CONSTANTS_H

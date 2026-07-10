@@ -163,7 +163,7 @@ export function aggregateTrendsByGranularity(trends, metricKey, granularity) {
   return points;
 }
 
-function formatDateLocal(ms, options) {
+export function formatDateLocal(ms, options) {
   if (!Number.isFinite(ms)) return '';
   try {
     return new Date(ms).toLocaleDateString([], options);

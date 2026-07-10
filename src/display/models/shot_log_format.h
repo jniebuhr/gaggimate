@@ -40,14 +40,27 @@ static constexpr uint32_t SHOT_LOG_FIELD_SI = 0x1000; // system info (bit 12)
 // Bits 13-31 available for future fields
 
 // Phase transition structure for version 5+ headers
+// transitionReason was a reserved/padding byte through v5; repurposing it keeps the struct byte-identical,
+// so old readers (firmware + web parser) ignore it and old files read back as PHASE_EXIT_REASON_NONE (0).
 #pragma pack(push, 1)
 struct PhaseTransition {
-    uint16_t sampleIndex; // Sample index when phase changed
-    uint8_t phaseNumber;  // Phase number (0-based)
-    uint8_t reserved;     // Padding for alignment
-    char phaseName[25];   // Phase name (24 chars + null terminator)
+    uint16_t sampleIndex;     // Sample index when phase changed
+    uint8_t phaseNumber;      // Phase number (0-based)
+    uint8_t transitionReason; // Why the previous phase ended (PhaseExitReason / PHASE_EXIT_REASON_*; 0 = unknown/legacy)
+    char phaseName[25];       // Phase name (24 chars + null terminator)
 }; // 29 bytes per transition
 #pragma pack(pop)
+
+// Phase exit reason codes stored in PhaseTransition.transitionReason.
+// Must stay in sync with enum class PhaseExitReason in models/profile.h.
+static constexpr uint8_t PHASE_EXIT_REASON_NONE = 0;              // unknown / legacy shot file
+static constexpr uint8_t PHASE_EXIT_REASON_TARGET_VOLUMETRIC = 1; // volumetric target reached
+static constexpr uint8_t PHASE_EXIT_REASON_TARGET_PRESSURE = 2;   // pressure target reached
+static constexpr uint8_t PHASE_EXIT_REASON_TARGET_FLOW = 3;       // flow target reached
+static constexpr uint8_t PHASE_EXIT_REASON_TARGET_PUMPED = 4;     // pumped-water target reached
+static constexpr uint8_t PHASE_EXIT_REASON_DURATION = 5;          // phase duration elapsed
+static constexpr uint8_t PHASE_EXIT_REASON_SAFETY = 6;            // brew safety timeout
+static constexpr uint8_t PHASE_EXIT_REASON_ABORTED = 7;           // shot manually stopped before finishing
 
 #pragma pack(push, 1)
 struct ShotLogHeader {
@@ -69,8 +82,15 @@ struct ShotLogHeader {
     PhaseTransition phaseTransitions[12]; // 12 × 29 = 348 bytes
     uint8_t phaseTransitionCount;         // 1 byte
 
+    // Reason the shot itself ended = how the final phase exited (PhaseExitReason / PHASE_EXIT_REASON_*).
+    uint8_t finalExitReason; // 1 byte
+
+    // Brew delay (predictive volumetric lead time, ms) the shot ran with, from Settings::getBrewDelay().
+    // Carved from the v5 reserved padding; old files have 0 here and old readers ignore it.
+    uint16_t brewDelayMs; // 2 bytes
+
     // Future expansion - pad to 512 bytes total
-    uint8_t reserved_v5[53]; // Manual padding to reach 512 bytes
+    uint8_t reserved_v5[50]; // Manual padding to reach 512 bytes
 };
 #pragma pack(pop)
 
@@ -148,5 +168,47 @@ struct ShotIndexEntry {
 
 static_assert(sizeof(ShotIndexHeader) == SHOT_INDEX_HEADER_SIZE, "ShotIndexHeader size mismatch");
 static_assert(sizeof(ShotIndexEntry) == SHOT_INDEX_ENTRY_SIZE, "ShotIndexEntry size mismatch");
+
+// Lightweight rolling buffer of the most recent completed shots, purpose-built
+// for the dashboard's Recent Shots widget. Fixed capacity — never grows — so
+// the frontend can fetch it in one small, constant-size request regardless of
+// total shot history size. Written only at shot completion (no early/partial
+// entries, no upsert-by-id): every entry that exists always has the full
+// aggregates populated.
+// File: /h/recent.bin
+
+static constexpr uint32_t RECENT_SHOTS_MAGIC = 0x58444952; // 'R''I''D''X' little-endian
+static constexpr uint16_t RECENT_SHOTS_VERSION = 1;
+static constexpr uint8_t RECENT_SHOTS_CAPACITY = 8; // matches dashboard's max "Max Recent Shots" setting
+static constexpr uint16_t RECENT_SHOT_ENTRY_SIZE = 80;
+
+#pragma pack(push, 1)
+struct RecentShotsHeader {
+    uint32_t magic;     // RECENT_SHOTS_MAGIC
+    uint16_t version;   // RECENT_SHOTS_VERSION
+    uint16_t entrySize; // RECENT_SHOT_ENTRY_SIZE
+    uint8_t capacity;   // RECENT_SHOTS_CAPACITY
+    uint8_t count;      // valid entries currently stored (<= capacity)
+    uint8_t head;       // circular write cursor: index of the next slot to write
+    uint8_t reserved[5];
+};
+
+struct RecentShotEntry {
+    uint32_t id;
+    uint32_t timestamp;
+    uint32_t duration;
+    uint16_t volume;      // final weight, g * 10
+    uint8_t rating;       // 0-5, 0 = none
+    uint8_t flags;        // SHOT_FLAG_COMPLETED / SHOT_FLAG_HAS_NOTES (no DELETED — holes are id == 0)
+    uint16_t avgTemp;     // °C * 10
+    uint16_t maxPressure; // bar * 10
+    uint16_t avgFlow;     // ml/s * 100
+    char profileName[48]; // null-terminated
+    uint8_t reserved[10];
+};
+#pragma pack(pop)
+
+static_assert(sizeof(RecentShotsHeader) == 16, "RecentShotsHeader size mismatch");
+static_assert(sizeof(RecentShotEntry) == RECENT_SHOT_ENTRY_SIZE, "RecentShotEntry size mismatch");
 
 #endif // SHOT_LOG_FORMAT_H

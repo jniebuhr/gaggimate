@@ -1,187 +1,295 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "Espresso Profile Schema",
+  "$id": "https://github.com/jniebuhr/gaggimate/schema/profile/v1.json",
+  "title": "GaggiMate Espresso Profile",
+  "description": "Profile definition consumed by the GaggiMate firmware. A profile is an ordered sequence of phases that the machine executes end-to-end. Each phase runs until one of its stop conditions fires (duration timeout, or any matched target). This schema is authored from the C++ parser at `src/display/models/profile.h` and is intended to be used as both the validation contract and the canonical documentation for the file format. When the schema and the parser disagree, the parser wins and the schema is a bug.",
   "type": "object",
   "additionalProperties": false,
+  "patternProperties": {
+    "^_": {
+      "$comment": "Reserved for user annotations (e.g. _notes, _source, _bean). Ignored by the firmware parser; preserved in on-disk JSON but not round-tripped through the save path."
+    }
+  },
+  "required": ["label", "type", "description", "phases"],
   "properties": {
     "id": {
       "type": "string",
-      "format": "uuid"
+      "pattern": "^[A-Za-z0-9_-]+$",
+      "readOnly": true,
+      "description": "Firmware-managed identifier used as the on-disk filename (`<id>.json`) and referenced by shot history entries. **Do not set this in hand-authored or imported profiles.** The web UI deletes this field on new imports, exports, and duplicates; a fresh id is generated server-side via `generateShortID()` (`src/display/core/utils.cpp:9`) when the firmware saves a profile without an id. Present only in profiles exported by the firmware itself — the pattern constraint documents what shape the firmware produces. Must be filesystem-safe — only letters, digits, underscore, and hyphen.",
+      "examples": ["9bar", "adapt", "aB3xYz90Pq"]
     },
     "label": {
-      "type": "string"
+      "type": "string",
+      "minLength": 1,
+      "description": "Human-readable name shown in the touchscreen and web UI profile lists.",
+      "examples": ["9 Bar Espresso", "Adaptive v2", "[Utility] Backflush"]
     },
     "type": {
       "type": "string",
-      "enum": [
-        "standard",
-        "pro"
+      "description": "Profile category. Affects both the edit UI (simple vs. extended) and runtime behavior. In `standard` profiles, a volumetric target *blocks* the phase-duration timeout — the phase waits for weight to be reached. In `pro` profiles, the phase-duration timeout always applies as a hard cap (`src/display/models/profile.h:109–111`).",
+      "oneOf": [
+        { "const": "standard", "title": "Standard", "description": "Simple profile (one phase, one volumetric target, simple pump percent). Edited via the `StandardProfileForm`. Volumetric target blocks duration timeout at runtime." },
+        { "const": "pro",      "title": "Pro",      "description": "Extended profile supporting multi-phase, pressure/flow control with ramps, and multiple per-phase targets. Edited via the `ExtendedProfileForm`. Duration is always a hard cap." }
+      ],
+      "enum": ["standard", "pro"],
+      "enumDescriptions": [
+        "Simple profile. Volumetric target overrides duration timeout.",
+        "Pro profile. Duration is a hard cap regardless of volumetric target."
       ]
     },
     "description": {
-      "type": "string"
+      "type": "string",
+      "description": "Free-form description shown in the UI under the profile label. May be empty."
     },
     "temperature": {
-      "type": "number"
+      "type": "number",
+      "minimum": 0,
+      "maximum": 150,
+      "description": "Boiler setpoint in °C for the whole profile. Individual phases override this by setting a non-zero `phase.temperature`. Web UI accepts 0–150 °C; firmware hard limits are `MIN_TEMP=0` and `MAX_TEMP=160` (`src/display/core/constants.h:15-16`) — the parser itself does not clamp at load time, so profiles outside this range should be treated as invalid by validators even though the firmware will parse them."
     },
     "favorite": {
-      "type": "boolean"
+      "type": "boolean",
+      "default": false,
+      "description": "Marks the profile as a favorite in the UI. The on-disk value is **not authoritative** — it is overwritten at load time from the device-level favorites list (`src/display/core/ProfileManager.cpp:105`). Safe to omit from hand-authored profiles."
     },
     "selected": {
-      "type": "boolean"
+      "type": "boolean",
+      "default": false,
+      "description": "Marks the profile as currently active. The on-disk value is **not authoritative** — it is overwritten at load time from the device-level selected-profile pointer (`src/display/core/ProfileManager.cpp:103`). Safe to omit from hand-authored profiles."
+    },
+    "utility": {
+      "type": "boolean",
+      "default": false,
+      "description": "`true` = utility profile (e.g. backflush, flush routines). Utility profiles are excluded from brew-flow treatment at runtime (`BrewProcess::isUtility()` — `src/display/core/process/BrewProcess.h:69`). Set this on non-brew routines like backflush."
     },
     "phases": {
       "type": "array",
-      "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "phase": {
-            "type": "string",
-            "enum": [
-              "preinfusion",
-              "brew"
-            ]
-          },
-          "valve": {
-            "type": "integer",
-            "enum": [
-              0,
-              1
-            ]
-          },
-          "duration": {
-            "type": "number",
-            "minimum": 0
-          },
-          "transition": {
-            "type": "object",
-            "properties": {
-              "type": {
-                "type": "string",
-                "enum": [
-                  "instant",
-                  "linear",
-                  "ease-in",
-                  "ease-out",
-                  "ease-in-out"
-                ]
-              },
-              "duration": {
-                "type": "number"
-              },
-              "adaptive": {
-                "type": "integer",
-                "enum": [
-                  0,
-                  1
-                ]
-              }
-            },
-            "required": [
-              "type",
-              "duration"
-            ]
-          },
-          "temperature": {
-            "type": "number",
-            "description": "When this is set it will override the temperature of the profile while running",
-            "minimum": 0,
-            "maximum": 165
-          },
-          "pump": {
-            "oneOf": [
-              {
-                "type": "number",
-                "enum": [
-                  0,
-                  1
-                ]
-              },
-              {
-                "type": "object",
-                "additionalProperties": false,
-                "properties": {
-                  "target": {
-                    "type": "string",
-                    "enum": [
-                      "pressure",
-                      "flow"
-                    ]
-                  },
-                  "pressure": {
-                    "type": "number",
-                    "description": "The target or limit pressure of the phase. If it's set to -1, it will use the current pressure at the start of the phase",
-                    "minimum": -1
-                  },
-                  "flow": {
-                    "type": "number",
-                    "description": "The target or limit flow of the phase. If it's set to -1, it will use the current flow at the start of the phase",
-                    "minimum": -1
-                  }
-                },
-                "required": [
-                  "target",
-                  "pressure",
-                  "flow"
-                ]
-              }
-            ]
-          },
-          "targets": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "additionalProperties": false,
-              "properties": {
-                "type": {
-                  "type": "string",
-                  "enum": [
-                    "volumetric",
-                    "pressure",
-                    "flow",
-                    "pumped"
-                  ]
-                },
-                "operator": {
-                  "type": "string",
-                  "description": "Whether the target should hit if greater than or less than. Default is gt",
-                  "enum": [
-                    "gte",
-                    "lte"
-                  ],
-                  "default": "gte"
-                },
-                "value": {
-                  "type": "number",
-                  "minimum": 0
-                }
-              },
-              "required": [
-                "type",
-                "value"
-              ]
-            }
-          }
-        },
-        "required": [
-          "name",
-          "phase",
-          "valve",
-          "duration",
-          "pump"
-        ]
-      }
+      "minItems": 1,
+      "description": "Ordered list of phases executed sequentially. Each phase's pump setpoints, duration, and stop conditions are defined in the item schema below. A profile with zero phases will crash at brew start (`BrewProcess` constructor calls `profile.phases.at(0)` — `src/display/core/process/BrewProcess.h:30`).",
+      "items": { "$ref": "#/definitions/phase" }
     }
   },
-  "required": [
-    "id",
-    "label",
-    "type",
-    "description",
-    "phases"
-  ]
+  "definitions": {
+    "phase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "phase", "valve", "duration", "pump"],
+      "description": "One step in the profile. The phase ends when any configured target fires OR when `duration` elapses — whichever comes first — subject to a firmware-wide 300-second hard cap per phase (`BREW_SAFETY_DURATION_MS` in `src/display/core/constants.h:10–11`). Exception: for `type: \"standard\"` profiles, a volumetric target prevents the duration-based exit.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Display name shown on the brew screen while the phase is active."
+        },
+        "phase": {
+          "type": "string",
+          "description": "Phase category. Used to group pre-infusion vs. brew phases in UI and to scope the `adjustDuration`/`adjustVolumetricTarget` helpers (which only touch `brew` phases — `src/display/models/profile.h:180-201`). Unknown strings silently fall back to `\"brew\"` in the parser.",
+          "oneOf": [
+            { "const": "preinfusion", "title": "Pre-infusion", "description": "Low-pressure wetting or saturation phase." },
+            { "const": "brew",        "title": "Brew",        "description": "Main extraction phase." }
+          ],
+          "enum": ["preinfusion", "brew"],
+          "enumDescriptions": [
+            "Low-pressure wetting / saturation phase.",
+            "Main extraction phase."
+          ]
+        },
+        "valve": {
+          "type": "integer",
+          "description": "Three-way solenoid valve state during this phase. Return value drives the relay at `BrewProcess::isRelayActive()` (`src/display/core/process/BrewProcess.h:94`).",
+          "oneOf": [
+            { "const": 0, "title": "Closed", "description": "Solenoid closed: no depressurization, used for backflush and closed-system pressure holds." },
+            { "const": 1, "title": "Open",   "description": "Solenoid open: water flows to the group head. Default for all brew phases." }
+          ],
+          "enum": [0, 1]
+        },
+        "duration": {
+          "type": "number",
+          "minimum": 0.5,
+          "maximum": 300,
+          "description": "Phase duration (hard cap) in **seconds**. The phase exits when duration elapses if no target fires first. Firmware caps each phase at 300 s via `BREW_SAFETY_DURATION_MS` (`src/display/core/constants.h:10–11`). Minimum enforced by the helper `adjustDuration` is `0.5s` (`src/display/models/profile.h:71`); the web UI enforces `min=1`."
+        },
+        "temperature": {
+          "default": 0,
+          "description": "Per-phase boiler setpoint in °C. Either the `0` sentinel (inherit the profile's top-level `temperature`) or an explicit positive value up to the firmware cap.",
+          "oneOf": [
+            {
+              "const": 0,
+              "title": "Use profile default",
+              "description": "Sentinel: inherit the profile-level `temperature` field for the duration of this phase (`src/display/core/process/BrewProcess.h:128-133`). This is the default for new phases."
+            },
+            {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 160,
+              "title": "Override temperature in °C",
+              "description": "Explicit phase temperature in °C. Firmware safety cap MAX_TEMP=160 (`src/display/core/constants.h:16`). Typical espresso range is 85–96 °C."
+            }
+          ]
+        },
+        "transition": {
+          "$ref": "#/definitions/transition",
+          "description": "How the pump setpoint ramps from its previous value to this phase's target. Omit for an immediate jump (same as `{ \"type\": \"instant\", \"duration\": 0, \"adaptive\": false }`)."
+        },
+        "pump": {
+          "$ref": "#/definitions/pump"
+        },
+        "targets": {
+          "type": "array",
+          "description": "Stop conditions evaluated every 100 ms. Targets are OR-combined — the first target whose comparison fires ends the phase. Omit or leave empty to run the phase for its full `duration`.",
+          "items": { "$ref": "#/definitions/target" }
+        }
+      }
+    },
+    "transition": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Easing definition for ramping the pump's active setpoint (pressure or flow) across the `transition.duration` at the start of the phase.",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Easing function. Parser literally matches these four strings — any other value (including `\"instant\"` — which is the *default*) silently becomes `INSTANT` (`src/display/models/profile.h:253-263`).",
+          "oneOf": [
+            { "const": "instant",     "title": "Instant",     "description": "Step change at phase start. No ramp." },
+            { "const": "linear",      "title": "Linear",      "description": "Constant rate of change from start value to target value." },
+            { "const": "ease-in",     "title": "Ease in",     "description": "Starts slowly, accelerates toward the target." },
+            { "const": "ease-out",    "title": "Ease out",    "description": "Starts quickly, decelerates near the target." },
+            { "const": "ease-in-out", "title": "Ease in-out", "description": "Accelerates at the start and decelerates at the end." }
+          ],
+          "enum": ["instant", "linear", "ease-in", "ease-out", "ease-in-out"],
+          "enumDescriptions": [
+            "Step change at phase start.",
+            "Constant rate of change.",
+            "Starts slowly, accelerates to target.",
+            "Starts fast, decelerates to target.",
+            "Accelerates at start, decelerates at end."
+          ]
+        },
+        "duration": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Ramp length in **seconds**. If `0` (or omitted), the ramp collapses to instant. If greater than the phase `duration`, the runtime uses the phase duration instead (`src/display/core/process/BrewProcess.h:217-221`)."
+        },
+        "adaptive": {
+          "type": "boolean",
+          "default": false,
+          "description": "If `true`, the ramp *starts from the measured value* (pressure or flow) at phase entry. If `false`, it starts from the previous phase's setpoint. Useful for smooth hand-off after preinfusion where the measured pressure may differ from the setpoint. The legacy schema declared this as `integer 0|1`; the parser reads it as a boolean via `.as<bool>()` (`src/display/models/profile.h:265`) — always write a JSON boolean."
+        }
+      },
+      "required": ["type", "duration", "adaptive"]
+    },
+    "pump": {
+      "description": "Pump command for the phase. Two forms: a **simple integer percent** (`0`–`100` duty cycle, for utility profiles like backflush) OR an **advanced object** with closed-loop pressure/flow control. The parser branches on `p[\"pump\"].is<int>()` (`src/display/models/profile.h:237`).",
+      "oneOf": [
+        { "$ref": "#/definitions/pumpSimple" },
+        { "$ref": "#/definitions/pumpAdvanced" }
+      ]
+    },
+    "pumpSimple": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "Simple pump duty cycle (percent). `0` = off, `100` = full power. Used for utility routines (backflush) and as-is by `BrewProcess::getPumpValue()` (`src/display/core/process/BrewProcess.h:99-104`). The legacy schema restricted this to `enum: [0, 1]` — that was a bug; real profiles use `0` and `100`, and the web UI accepts the full 0..100 range (`web/src/pages/ProfileEdit/ExtendedPhase.jsx:273-274`)."
+    },
+    "pumpAdvanced": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target", "pressure", "flow"],
+      "description": "Closed-loop pump control. One of `pressure` or `flow` is the *active setpoint* (per `target`), the other acts as a *soft limit*. Sentinel values: `-1` on either field means \"hold the measured value at phase entry\" (`BrewProcess.h:206-209`); `0` on the **limit** field (the one not selected by `target`) means \"ignore this limit\".",
+      "properties": {
+        "target": {
+          "type": "string",
+          "description": "Selects which variable is the closed-loop setpoint. The other becomes a soft limit.",
+          "oneOf": [
+            { "const": "pressure", "title": "Pressure-controlled", "description": "Pump drives to the `pressure` value in bar. `flow` is a cap (0 = ignore)." },
+            { "const": "flow",     "title": "Flow-controlled",     "description": "Pump drives to the `flow` value in g/s. `pressure` is a cap (0 = ignore)." }
+          ],
+          "enum": ["pressure", "flow"],
+          "enumDescriptions": [
+            "Pressure is the active setpoint (in bar); flow is the soft limit (0 = ignore).",
+            "Flow is the active setpoint (in g/s); pressure is the soft limit (0 = ignore)."
+          ]
+        },
+        "pressure": {
+          "description": "Pressure value in **bar**. Role depends on `target`: setpoint when `target=\"pressure\"`, soft upper limit when `target=\"flow\"`. Either a positive bar value or the `-1` sentinel — intermediate negative values are not meaningful.",
+          "oneOf": [
+            {
+              "const": -1,
+              "title": "Maintain current pressure",
+              "description": "Sentinel: hold the pressure measured at phase entry. The pump carries over whatever pressure existed when the phase started rather than driving toward a fixed setpoint (`src/display/core/process/BrewProcess.h:206-209`)."
+            },
+            {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 12,
+              "title": "Explicit pressure in bar",
+              "description": "Numeric pressure setpoint (or limit) in bar. Physical hardware typically caps at 9–12 bar; the parser does not validate this range. A value of `0` is only meaningful as a limit (i.e. when this field is the non-target side, meaning \"ignore this limit\")."
+            }
+          ]
+        },
+        "flow": {
+          "description": "Flow value in **g/s** (internally treated as ml/s for water — 1 g ≈ 1 mL). Role depends on `target`: setpoint when `target=\"flow\"`, soft upper limit when `target=\"pressure\"`. Either a positive flow value or the `-1` sentinel — intermediate negative values are not meaningful. Note the unit discrepancy with `targets[].type=\"flow\"`, which the UI labels as `ml/s`; firmware treats them as the same quantity.",
+          "oneOf": [
+            {
+              "const": -1,
+              "title": "Maintain current flow",
+              "description": "Sentinel: hold the flow measured at phase entry. The pump carries over whatever flow existed when the phase started rather than driving toward a fixed setpoint (`src/display/core/process/BrewProcess.h:206-209`)."
+            },
+            {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 15,
+              "title": "Explicit flow in g/s",
+              "description": "Numeric flow setpoint (or limit) in g/s. A value of `0` is only meaningful as a limit (i.e. when this field is the non-target side, meaning \"ignore this limit\")."
+            }
+          ]
+        }
+      }
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "value"],
+      "description": "A single stop condition. Parser is strict — only the four `type` strings below are accepted; any other string (including `\"weight\"`) is silently dropped by `continue;` at `src/display/models/profile.h:287-289`. The web UI shot analyzer treats `\"weight\"` and `\"volumetric\"` as aliases for display only, which can mislead users into thinking `\"weight\"` works as a target type.",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "What measured variable this target watches. All four are strict string matches; unknown strings drop the target without error.",
+          "oneOf": [
+            { "const": "volumetric", "title": "Volumetric (scale weight)", "description": "Compares scale weight in grams. Volumetric targets require a connected Bluetooth scale AND the brew-by-weight mode toggle active (see `BrewProcess` enableVolumetric flag). A `value` of `0` is treated as 'no target' — the phase will run for its full `duration` (`src/display/models/profile.h:55`). The web UI renders this as 'Weight'." },
+            { "const": "pressure",   "title": "Pressure",                  "description": "Compares current pressure in bar." },
+            { "const": "flow",       "title": "Flow",                      "description": "Compares current flow rate. UI labels this in ml/s; firmware uses same value as pump.flow (g/s)." },
+            { "const": "pumped",     "title": "Pumped water",              "description": "Compares cumulative water pumped in this phase in ml. Reset to 0 at each phase boundary (`BrewProcess.h:141`)." }
+          ],
+          "enum": ["volumetric", "pressure", "flow", "pumped"],
+          "enumDescriptions": [
+            "Scale weight in grams.",
+            "Current pressure in bar.",
+            "Current flow rate in ml/s.",
+            "Cumulative water pumped in this phase, in ml."
+          ]
+        },
+        "operator": {
+          "type": "string",
+          "default": "gte",
+          "description": "Comparison direction. `gte` fires when the measured value reaches or exceeds `value`; `lte` fires when it drops to or below. Default is `gte`. **Warning**: the parser's default when `operator` is an unknown string (e.g. `\"gt\"`, `\"GTE\"`) is `LTE`, not `GTE` (`src/display/models/profile.h:291`) — always spell `gte` or `lte` lowercase.",
+          "oneOf": [
+            { "const": "gte", "title": "Greater than or equal", "description": "Fires when measured ≥ value." },
+            { "const": "lte", "title": "Less than or equal",    "description": "Fires when measured ≤ value." }
+          ],
+          "enum": ["gte", "lte"],
+          "enumDescriptions": [
+            "Fires when the measured value is ≥ `value`.",
+            "Fires when the measured value is ≤ `value`."
+          ]
+        },
+        "value": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Threshold. Units depend on `type`: `volumetric` = grams, `pressure` = bar, `flow` = ml/s, `pumped` = ml. For `volumetric` specifically, `value: 0` is treated as 'no target — run full duration'."
+        }
+      }
+    }
+  }
 }

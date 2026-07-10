@@ -10,6 +10,7 @@ import { parseBinaryIndex, indexToShotList } from '../../ShotHistory/parseBinary
 import { parseBinaryShot } from '../../ShotHistory/parseBinaryShot';
 import { indexedDBService } from './IndexedDBService';
 import { notesService } from './NotesService';
+import { getProfileDisplayLabel, getShotStorageKey } from '../utils/analyzerUtils';
 
 const HISTORY_NOTES_DEFAULTS = {
   id: '',
@@ -51,7 +52,7 @@ function normalizeShotSampleForHistoryExport(sample = {}) {
 function normalizeNotesForHistoryExport(notes, shotId) {
   const merged = {
     ...HISTORY_NOTES_DEFAULTS,
-    ...(notes || {}),
+    ...notes,
     id: String(shotId ?? notes?.id ?? ''),
   };
 
@@ -101,10 +102,57 @@ function buildHistoryLikeShotExport(rawShot, listItem, notes) {
   };
 }
 
-class LibraryService {
-  constructor() {
-    this.apiService = null;
+const PROFILE_EXPORT_METADATA_FIELDS = [
+  'id',
+  'selected',
+  'favorite',
+  'name',
+  'source',
+  'uploadedAt',
+  'exportName',
+  'fileName',
+  'profileId',
+  'storageKey',
+  'data',
+];
+
+function ensureJsonFilename(filename) {
+  const resolvedFilename = String(filename || 'export.json');
+  if (
+    resolvedFilename.toLowerCase().endsWith('.json') ||
+    resolvedFilename.toLowerCase().endsWith('.slog')
+  ) {
+    return resolvedFilename;
   }
+  return `${resolvedFilename}.json`;
+}
+
+function getProfileExportFilename(profile, fallback = 'profile') {
+  const label = getProfileDisplayLabel(profile, fallback);
+  return ensureJsonFilename(label || fallback || 'profile');
+}
+
+function getShotExportFilename(item) {
+  if (item?.exportName) return ensureJsonFilename(item.exportName);
+  if (item?.id) return ensureJsonFilename(`shot-${item.id}`);
+  return ensureJsonFilename(item?.storageKey || item?.fileName || item?.name || 'shot');
+}
+
+function cleanProfileForExport(profile, fallbackProfile = null) {
+  const clean = { ...profile };
+  if (!clean.label && fallbackProfile) {
+    clean.label = getProfileDisplayLabel(fallbackProfile, '');
+  }
+
+  PROFILE_EXPORT_METADATA_FIELDS.forEach(field => {
+    delete clean[field];
+  });
+
+  return clean;
+}
+
+class LibraryService {
+  apiService = null;
 
   /**
    * Set API service reference
@@ -124,8 +172,6 @@ class LibraryService {
 
       if (!response.ok) {
         if (response.status === 404) {
-          // No shots yet
-          console.log('No shot index found on GM');
           return [];
         }
         throw new Error(`HTTP ${response.status}`);
@@ -154,7 +200,7 @@ class LibraryService {
    */
   async getBrowserShots() {
     try {
-      const shots = await indexedDBService.getAllShots();
+      const shots = await Promise.resolve(indexedDBService.getAllShots());
       return shots.map(shot => ({
         ...shot,
         storageKey: shot.storageKey || shot.name || String(shot.id || ''),
@@ -193,12 +239,7 @@ class LibraryService {
    * @returns {Promise<Object[]>} List of GaggiMate profiles with source tag
    */
   async getGaggiMateProfiles() {
-    if (
-      !this.apiService ||
-      !this.apiService.socket ||
-      this.apiService.socket.readyState !== WebSocket.OPEN
-    ) {
-      console.log('WebSocket not ready, skipping GM profiles');
+    if (this.apiService?.socket?.readyState !== WebSocket.OPEN) {
       return [];
     }
 
@@ -211,11 +252,10 @@ class LibraryService {
         return [];
       }
 
-      // Add source tag and normalize name property
+      // Add source tag and preserve the API id for req:profiles:load.
       return response.profiles.map(profile => ({
         ...profile,
-        name: profile.label || profile.name || 'Unknown', // Display name
-        exportName: `${profile.label || profile.name}.json`, // Filename
+        exportName: getProfileExportFilename(profile),
         profileId: profile.id, // Keep real API id for req:profiles:load
         label: profile.label,
         source: 'gaggimate',
@@ -232,7 +272,7 @@ class LibraryService {
    */
   async getBrowserProfiles() {
     try {
-      return await indexedDBService.getAllProfiles();
+      return await Promise.resolve(indexedDBService.getAllProfiles());
     } catch (error) {
       console.error('Failed to load browser profiles:', error);
       return [];
@@ -257,7 +297,9 @@ class LibraryService {
     const results = await Promise.all(promises);
     const merged = results.flat();
 
-    return merged.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    return merged.sort((a, b) =>
+      getProfileDisplayLabel(a, '').localeCompare(getProfileDisplayLabel(b, '')),
+    );
   }
 
   /**
@@ -299,11 +341,7 @@ class LibraryService {
    */
   async loadProfile(nameOrId, source) {
     if (source === 'gaggimate') {
-      if (
-        !this.apiService ||
-        !this.apiService.socket ||
-        this.apiService.socket.readyState !== WebSocket.OPEN
-      ) {
+      if (this.apiService?.socket?.readyState !== WebSocket.OPEN) {
         throw new Error('WebSocket not connected');
       }
 
@@ -318,7 +356,6 @@ class LibraryService {
 
       return {
         ...response.profile,
-        name: response.profile.label || response.profile.name || nameOrId,
         source: 'gaggimate',
       };
     }
@@ -337,16 +374,10 @@ class LibraryService {
    * @returns {Promise<{ exportData: Object, filename: string }>} Export payload and filename
    */
   async exportItem(item, isShot) {
-    console.log('Service Exporting:', item);
-
     let exportData = null;
-    // 1. Prefer specific exportName (e.g. shot-123.json), else item.name/id
-    let filename = item.exportName || item.name || item.id || 'export.json';
-
-    // Ensure extension .json (or .slog if preferred)
-    if (!filename.toLowerCase().endsWith('.json') && !filename.toLowerCase().endsWith('.slog')) {
-      filename += '.json';
-    }
+    let filename = isShot
+      ? getShotExportFilename(item)
+      : ensureJsonFilename(item.exportName || item.name || item.id || 'export.json');
 
     if (item.source === 'gaggimate') {
       if (isShot) {
@@ -368,13 +399,11 @@ class LibraryService {
         if (!loadId) throw new Error('Profile ID missing for export');
 
         const raw = await this.loadProfile(loadId, 'gaggimate');
-        const clean = { ...raw };
-
-        // Cleanup internal metadata before export
-        delete clean.source;
-        // delete clean.name; // Use caution removing name, usually needed inside the file
-        delete clean.id; // Remove internal ID (e.g. "QtQdQjBeav")
-        exportData = clean;
+        filename = getProfileExportFilename(
+          raw,
+          item.label || item.name || item.fileName || item.exportName || item.id || 'profile',
+        );
+        exportData = cleanProfileForExport(raw, item);
       }
     } else if (isShot) {
       // BROWSER EXPORT:
@@ -383,13 +412,16 @@ class LibraryService {
       delete exportShot.source;
       delete exportShot.uploadedAt;
 
-      const shotNotesKey = item.storageKey || item.name || item.id;
+      const shotNotesKey = getShotStorageKey(item);
       const notes = await notesService.loadNotes(shotNotesKey, 'browser');
       exportData = buildHistoryLikeShotExport(exportShot, item, notes);
     } else {
-      exportData = { ...(item.data || item) };
-      delete exportData.source;
-      delete exportData.uploadedAt;
+      const rawProfile = item.data || item;
+      filename = getProfileExportFilename(
+        rawProfile,
+        item.label || item.name || item.fileName || item.exportName || item.id || 'profile',
+      );
+      exportData = cleanProfileForExport(rawProfile, item);
     }
 
     // Return raw object

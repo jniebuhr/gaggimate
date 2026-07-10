@@ -12,6 +12,8 @@ class SimplePump : public Pump {
     void setup() override;
     void loop() override;
     void setPower(float setpoint) override;
+    float *getPumpPowerPtr() override { return &_setpoint; } // For external pump control
+    float getPowerTarget() const override { return _setpoint; }
 
   private:
     int _pin;

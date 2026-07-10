@@ -304,8 +304,8 @@ function getChartData(data) {
           text: isBrewActive
             ? `Brew Progress - ${Math.round(timeWindowMs / 1000)}s View`
             : phaseTransitions.length > 0
-              ? 'Temperature History - Recent Brew'
-              : 'Temperature History',
+              ? 'Metrics - Recent Brew'
+              : 'Live Metrics',
           font: {
             size: window.innerWidth < 640 ? 14 : 16,
           },
@@ -414,7 +414,7 @@ export function OverviewChart() {
 
   return (
     <ChartComponent
-      className='h-full min-h-[200px] w-full flex-1 lg:min-h-[350px]'
+      className='h-full min-h-[200px] w-full flex-1 lg:min-h-[350px] landscape:max-lg:min-h-0'
       chartClassName='h-full w-full'
       data={chartData}
     />

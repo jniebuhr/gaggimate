@@ -1,0 +1,479 @@
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faEye } from '@fortawesome/free-solid-svg-icons/faEye';
+import { faEyeSlash } from '@fortawesome/free-solid-svg-icons/faEyeSlash';
+import { timezones } from '../../../config/zones.js';
+import { DASHBOARD_LAYOUTS } from '../../../utils/dashboardManager.js';
+import Section from '../../../components/Card.jsx';
+
+function ButtonBehaviorSelect({ id, label, value, onChange, profiles }) {
+  return (
+    <div className='form-control'>
+      <label htmlFor={id} className='mb-2 block text-sm font-medium'>
+        {label}
+      </label>
+      <select
+        id={id}
+        name={id}
+        className='select select-bordered w-full'
+        value={value}
+        onChange={onChange}
+      >
+        <option value='none'>None</option>
+        <option value='brew'>Brew button</option>
+        <option value='steam'>Steam button</option>
+        <option value='water'>Water button</option>
+        <option value='flush'>Flush</option>
+        {profiles.map(p => (
+          <option key={p.id} value={p.id}>
+            Profile: {p.label}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+export function GeneralTab({
+  formData,
+  onChange,
+  profiles,
+  currentTheme,
+  setCurrentTheme,
+  handleThemeChange,
+  showWifiPassword,
+  setShowWifiPassword,
+  showApPassword,
+  setShowApPassword,
+}) {
+  return (
+    <div className='space-y-4 sm:space-y-6'>
+      {/* User Preferences */}
+      <Section title='User Preferences'>
+        <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+          <div className='form-control'>
+            <label htmlFor='startup-mode' className='mb-2 block text-sm font-medium'>
+              Startup Mode
+            </label>
+            <select
+              id='startup-mode'
+              name='startupMode'
+              className='select select-bordered w-full'
+              onChange={onChange('startupMode')}
+            >
+              <option value='standby' selected={formData.startupMode === 'standby'}>
+                Standby
+              </option>
+              <option value='brew' selected={formData.startupMode === 'brew'}>
+                Brew
+              </option>
+            </select>
+          </div>
+          <div className='form-control'>
+            <label htmlFor='startup-profile' className='mb-2 block text-sm font-medium'>
+              Startup Profile
+            </label>
+            <select
+              id='startup-profile'
+              name='startupProfile'
+              className='select select-bordered w-full'
+              value={formData.startupProfile || ''}
+              onChange={onChange('startupProfile')}
+            >
+              <option value=''>Last used profile</option>
+              {profiles.map(profile => (
+                <option key={profile.id} value={profile.id}>
+                  {profile.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className='form-control'>
+            <label htmlFor='standbyTimeout' className='mb-2 block text-sm font-medium'>
+              Standby Timeout
+            </label>
+            <div className='input-group'>
+              <label htmlFor='standbyTimeout' className='input w-full'>
+                <input
+                  id='standbyTimeout'
+                  name='standbyTimeout'
+                  type='number'
+                  placeholder='0'
+                  value={formData.standbyTimeout}
+                  onChange={onChange('standbyTimeout')}
+                />
+                <span aria-label='seconds'>s</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        {/* Predictive Scale Delay */}
+        <div className='border-base-content/5 mt-6 border-t pt-6'>
+          <h3 className='text-md text-base-content mb-2 font-semibold'>Predictive Scale Delay</h3>
+          <p className='text-base-content/85 mb-4 text-sm opacity-70'>
+            Shuts off the process ahead of time based on the flow rate to account for any dripping
+            or delays in the control.
+          </p>
+          <div className='form-control mb-4'>
+            <label className='label cursor-pointer justify-start gap-4'>
+              <span className='label-text'>Auto Adjust</span>
+              <input
+                id='delayAdjust'
+                name='delayAdjust'
+                type='checkbox'
+                className='toggle toggle-primary'
+                checked={!!formData.delayAdjust}
+                onChange={onChange('delayAdjust')}
+              />
+            </label>
+          </div>
+          <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+            <div className='form-control'>
+              <label htmlFor='brewDelay' className='mb-2 block text-sm font-medium'>
+                Brew
+              </label>
+              <div className='input-group'>
+                <label htmlFor='brewDelay' className='input w-full'>
+                  <input
+                    id='brewDelay'
+                    name='brewDelay'
+                    type='number'
+                    step='any'
+                    className='grow'
+                    placeholder='0'
+                    value={formData.brewDelay}
+                    onChange={onChange('brewDelay')}
+                  />
+                  <span aria-label='milliseconds'>ms</span>
+                </label>
+              </div>
+            </div>
+            <div className='form-control'>
+              <label htmlFor='grindDelay' className='mb-2 block text-sm font-medium'>
+                Grind
+              </label>
+              <div className='input-group'>
+                <label htmlFor='grindDelay' className='input w-full'>
+                  <input
+                    id='grindDelay'
+                    name='grindDelay'
+                    type='number'
+                    step='any'
+                    className='grow'
+                    placeholder='0'
+                    value={formData.grindDelay}
+                    onChange={onChange('grindDelay')}
+                  />
+                  <span aria-label='milliseconds'>ms</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Buttons */}
+        <div className='border-base-content/5 mt-6 border-t pt-6'>
+          <h3 className='text-md text-base-content mb-2 font-semibold'>Physical Buttons</h3>
+          <p className='text-base-content/85 mb-4 text-sm opacity-70'>
+            Define behavior for physical buttons when pressed. Make sure they are wired to the Alt
+            Relay Header.
+          </p>
+          <div className='form-control mb-4'>
+            <label className='label cursor-pointer justify-start gap-4'>
+              <span className='label-text font-medium'>Momentary Buttons</span>
+              <input
+                id='momentaryButtons'
+                name='momentaryButtons'
+                type='checkbox'
+                className='toggle toggle-primary'
+                checked={!!formData.momentaryButtons}
+                onChange={onChange('momentaryButtons')}
+              />
+            </label>
+          </div>
+          <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
+            <ButtonBehaviorSelect
+              id='button0'
+              label='Brew Button Behavior'
+              value={formData.button0}
+              onChange={onChange('button0')}
+              profiles={profiles}
+            />
+            <ButtonBehaviorSelect
+              id='button1'
+              label='Steam Button Behavior'
+              value={formData.button1}
+              onChange={onChange('button1')}
+              profiles={profiles}
+            />
+            <ButtonBehaviorSelect
+              id='button2'
+              label='Water Button Behavior'
+              value={formData.button2}
+              onChange={onChange('button2')}
+              profiles={profiles}
+            />
+          </div>
+        </div>
+      </Section>
+
+      {/* Display Settings */}
+      <Section title='Display Settings'>
+        <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+          <div className='form-control'>
+            <label htmlFor='mainBrightness' className='mb-2 block text-sm font-medium'>
+              Main Brightness (1-16)
+            </label>
+            <input
+              id='mainBrightness'
+              name='mainBrightness'
+              type='number'
+              className='input input-bordered w-full'
+              placeholder='16'
+              min='1'
+              max='16'
+              value={formData.mainBrightness}
+              onChange={onChange('mainBrightness')}
+            />
+          </div>
+          <div className='form-control'>
+            <label htmlFor='themeMode' className='mb-2 block text-sm font-medium'>
+              Display Theme
+            </label>
+            <select
+              id='themeMode'
+              name='themeMode'
+              className='select select-bordered w-full'
+              value={formData.themeMode}
+              onChange={onChange('themeMode')}
+            >
+              <option value={0}>Dark Theme</option>
+              <option value={1}>Light Theme</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Standby Display */}
+        <div className='border-base-content/5 mt-6 border-t pt-6'>
+          <div className='form-control mb-4'>
+            <label className='label cursor-pointer justify-start gap-4'>
+              <span className='label-text font-medium'>Enable standby display</span>
+              <input
+                id='standbyDisplayEnabled'
+                name='standbyDisplayEnabled'
+                type='checkbox'
+                className='toggle toggle-primary'
+                checked={!!formData.standbyDisplayEnabled}
+                onChange={onChange('standbyDisplayEnabled')}
+              />
+            </label>
+          </div>
+          <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+            <div className='form-control'>
+              <label htmlFor='standbyBrightness' className='mb-2 block text-sm font-medium'>
+                Standby Brightness (0-16)
+              </label>
+              <input
+                id='standbyBrightness'
+                name='standbyBrightness'
+                type='number'
+                className='input input-bordered w-full'
+                placeholder='8'
+                min='0'
+                max='16'
+                disabled={!formData.standbyDisplayEnabled}
+                value={formData.standbyDisplayEnabled ? formData.standbyBrightness : 0}
+                onChange={onChange('standbyBrightness')}
+              />
+              <div className='mt-2 text-xs opacity-70'>
+                When the toggle is off, brightness will be set to 0
+              </div>
+            </div>
+            <div className='form-control'>
+              <label htmlFor='standbyBrightnessTimeout' className='mb-2 block text-sm font-medium'>
+                Standby Brightness Timeout
+              </label>
+              <div className='input-group'>
+                <label htmlFor='standbyBrightnessTimeout' className='input w-full'>
+                  <input
+                    id='standbyBrightnessTimeout'
+                    name='standbyBrightnessTimeout'
+                    type='number'
+                    min='1'
+                    placeholder='60'
+                    value={formData.standbyBrightnessTimeout}
+                    onChange={onChange('standbyBrightnessTimeout')}
+                  />
+                  <span aria-label='seconds'>s</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Section>
+
+      {/* Web Settings */}
+      <Section title='Web Settings'>
+        <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+          <div className='form-control'>
+            <label htmlFor='webui-theme' className='mb-2 block text-sm font-medium'>
+              Theme
+            </label>
+            <select
+              id='webui-theme'
+              name='webui-theme'
+              className='select select-bordered w-full'
+              value={currentTheme}
+              onChange={e => {
+                setCurrentTheme(e.target.value);
+                handleThemeChange(e);
+              }}
+            >
+              <option value='system'>System</option>
+              <option value='light'>Light</option>
+              <option value='dark'>Dark</option>
+              <option value='coffee'>Coffee</option>
+              <option value='nord'>Nord</option>
+            </select>
+          </div>
+          <div className='form-control'>
+            <label htmlFor='dashboardLayout' className='mb-2 block text-sm font-medium'>
+              Dashboard Layout
+            </label>
+            <select
+              id='dashboardLayout'
+              name='dashboardLayout'
+              className='select select-bordered w-full'
+              value={formData.dashboardLayout || DASHBOARD_LAYOUTS.ORDER_FIRST}
+              onChange={e => {
+                onChange('dashboardLayout')(e);
+              }}
+            >
+              <option value={DASHBOARD_LAYOUTS.ORDER_FIRST}>Process Controls First</option>
+              <option value={DASHBOARD_LAYOUTS.ORDER_LAST}>Chart First</option>
+            </select>
+          </div>
+        </div>
+      </Section>
+
+      {/* Network / System Preferences */}
+      <Section title='System & Network'>
+        <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+          <div className='form-control'>
+            <label htmlFor='wifiSsid' className='mb-2 block text-sm font-medium'>
+              Wi-Fi SSID
+            </label>
+            <input
+              id='wifiSsid'
+              name='wifiSsid'
+              type='text'
+              className='input input-bordered w-full'
+              placeholder='Wi-Fi SSID'
+              value={formData.wifiSsid}
+              onChange={onChange('wifiSsid')}
+            />
+          </div>
+          <div className='form-control'>
+            <label htmlFor='wifiPassword' className='mb-2 block text-sm font-medium'>
+              Wi-Fi Password
+            </label>
+            <label className='input w-full'>
+              <input
+                id='wifiPassword'
+                name='wifiPassword'
+                type={showWifiPassword ? 'text' : 'password'}
+                placeholder='Wi-Fi Password'
+                value={formData.wifiPassword}
+                onChange={onChange('wifiPassword')}
+              />
+              <button
+                type='button'
+                className='hover:text-primary cursor-pointer focus:outline-none'
+                aria-label='Show Password'
+                onClick={() => setShowWifiPassword(!showWifiPassword)}
+              >
+                <FontAwesomeIcon icon={showWifiPassword ? faEyeSlash : faEye} />
+              </button>
+            </label>
+          </div>
+          <div className='form-control'>
+            <label htmlFor='apPassword' className='mb-2 block text-sm font-medium'>
+              Access Point Password
+            </label>
+            <label className='input w-full'>
+              <input
+                id='apPassword'
+                name='apPassword'
+                type={showApPassword ? 'text' : 'password'}
+                placeholder='Access Point Password'
+                minLength={8}
+                maxLength={63}
+                value={formData.apPassword}
+                onChange={onChange('apPassword')}
+              />
+              <button
+                type='button'
+                className='hover:text-primary cursor-pointer focus:outline-none'
+                aria-label='Show Password'
+                onClick={() => setShowApPassword(!showApPassword)}
+              >
+                <FontAwesomeIcon icon={showApPassword ? faEyeSlash : faEye} />
+              </button>
+            </label>
+            <div className='mt-2 text-xs opacity-70'>
+              Used for the GaggiMate hotspot when no Wi-Fi is configured (min. 8 characters).
+            </div>
+          </div>
+          <div className='form-control'>
+            <label htmlFor='mdnsName' className='mb-2 block text-sm font-medium'>
+              Hostname
+            </label>
+            <input
+              id='mdnsName'
+              name='mdnsName'
+              type='text'
+              className='input input-bordered w-full'
+              placeholder='Hostname'
+              value={formData.mdnsName}
+              onChange={onChange('mdnsName')}
+            />
+          </div>
+          <div className='form-control'>
+            <label htmlFor='timezone' className='mb-2 block text-sm font-medium'>
+              Time Zone
+            </label>
+            <select
+              id='timezone'
+              name='timezone'
+              className='select select-bordered w-full'
+              onChange={onChange('timezone')}
+            >
+              {timezones.map(tz => (
+                <option key={tz} value={tz} selected={formData.timezone === tz}>
+                  {tz}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Clock */}
+        <div className='border-base-content/5 mt-6 border-t pt-6'>
+          <div className='form-control'>
+            <label className='label cursor-pointer justify-start gap-4'>
+              <span className='label-text font-medium'>Use 24h Format</span>
+              <input
+                id='clock24hFormat'
+                name='clock24hFormat'
+                type='checkbox'
+                className='toggle toggle-primary'
+                checked={!!formData.clock24hFormat}
+                onChange={onChange('clock24hFormat')}
+              />
+            </label>
+          </div>
+        </div>
+      </Section>
+    </div>
+  );
+}
