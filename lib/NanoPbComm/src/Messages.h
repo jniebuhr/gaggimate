@@ -32,6 +32,7 @@ using BoilerReading = gaggimate_BoilerReading;
 using ButtonState = gaggimate_ButtonState;
 using AutotuneResult = gaggimate_AutotuneResult;
 using VolumetricMeasurement = gaggimate_VolumetricMeasurement;
+using ScaleMeasurement = gaggimate_ScaleMeasurement;
 using TofMeasurement = gaggimate_TofMeasurement;
 using Error = gaggimate_Error;
 
