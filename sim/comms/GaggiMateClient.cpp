@@ -102,7 +102,7 @@ void GaggiMateClient::sendPumpControl(uint8_t index, PumpControlMode mode, float
 }
 void GaggiMateClient::sendRelayControl(uint8_t index, bool open) { send(buildRelayControl(index, open)); }
 void GaggiMateClient::sendPidSettings(float, float, float, float) {}
-void GaggiMateClient::sendPumpSettings(float, float, float, float, float, float, float, float) {}
+void GaggiMateClient::sendPumpSettings(float, float, float, float, float, float, float, float, float, float, float, float) {}
 void GaggiMateClient::sendAutotune(uint32_t, uint32_t, uint32_t) {
     _autotunePending = true;
     _autotuneDueMs = millis() + 1500;
