@@ -41,7 +41,6 @@ void MockController::update() {
     const float tau = targetTemp > 0.0f ? 12.0f : 90.0f;
     const float dest = targetTemp > 0.0f ? targetTemp : ambient;
     const float gain = (dest - temperature) * (1.0f - expf(-dt / tau));
-    ESP_LOGI("MockController", "gain=%f", gain);
     temperature += gain;
 
     // The pump is "active" when the display asks for any drive.
@@ -70,7 +69,7 @@ void MockController::update() {
         lastSensorMs = now;
         const float puckResistance = flow > 0.05f ? pressure / flow : 0.0f;
         if (onSensor)
-            onSensor(temperature, pressure, flow, flow, puckResistance, pumpPower, constrain(gain, 0.0f, 100.0f));
+            onSensor(temperature, pressure, flow, flow, puckResistance, pumpPower, constrain(gain * 100.0, 0.0f, 100.0f));
         if (onVolumetric)
             onVolumetric(weight);
     }

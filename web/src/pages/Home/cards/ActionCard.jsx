@@ -2,6 +2,7 @@ import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTint } from '@fortawesome/free-solid-svg-icons/faTint';
 import { getPrimaryIcon, getPrimaryLabel } from '../utils.js';
+import { useEffect, useState } from 'preact/hooks';
 
 export function ActionCard({
   mode,
@@ -16,8 +17,13 @@ export function ActionCard({
   clear,
   startFlush,
   inCard = false,
+  currentTemperature,
+  targetTemperature,
 }) {
-  const showPrimary = mode === 1 || mode === 3 || (isGrinding && isGrindAvailable);
+  const [preheated, setPreheated] = useState(false);
+  const showPrimary = mode === 1 || mode === 3 || mode === 4;
+  const showStandby = mode === 0;
+  const showSteam = mode === 2;
 
   const showFlush = isBrewing && !isActive && !isFinished;
 
@@ -27,9 +33,16 @@ export function ActionCard({
     else activate();
   };
 
-  if (!showPrimary && !showFlush) return null;
-
   const primaryLabel = getPrimaryLabel(isActive, isFinished);
+
+  useEffect(() => {
+    setPreheated(false);
+  }, [targetTemperature, mode]);
+  useEffect(() => {
+    console.log('Current Temp: ', currentTemperature);
+    console.log('Target Temp: ', targetTemperature);
+    if (Math.abs(targetTemperature - currentTemperature) < 5) setPreheated(true);
+  }, [currentTemperature, targetTemperature]);
 
   return (
     <div
@@ -46,6 +59,14 @@ export function ActionCard({
         >
           <FontAwesomeIcon icon={getPrimaryIcon(isActive, isFinished)} className='text-2xl' />
         </button>
+      )}
+      {showStandby && (
+        <span className='text-base-content/70 py-2 text-sm'>Machine is ready, wake up to use</span>
+      )}
+      {showSteam && (
+        <span className='text-base-content/70 py-2 text-sm'>
+          {!preheated ? 'Preheating...' : 'Ready to steam, open wand'}
+        </span>
       )}
       <div className='flex justify-end'>
         {showFlush && (

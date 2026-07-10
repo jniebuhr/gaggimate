@@ -172,10 +172,10 @@ export function ProfileCard({
       .request({ tp: 'req:profiles:load', id: selectedProfileId })
       .then(res => {
         if (cancelled) return;
-        setProfileData(res.profile?.type === 'pro' ? res.profile : null);
+        setProfileData(res.profile);
         setProfileLoading(false);
       })
-      .catch(() => {
+      .catch(e => {
         if (cancelled) return;
         setProfileData(null);
         setProfileLoading(false);

@@ -87,7 +87,7 @@ export const PANEL_DEFINITIONS = [
     id: 'action',
     label: 'Shot Controls',
     required: true,
-    available: ds => ds.mode === 1 || ds.mode === 3 || (ds.isGrinding && ds.isGrindAvailable),
+    available: ds => true,
     availableInSettings: () => true,
     component: ActionCard,
     props: ds => ({
@@ -102,6 +102,8 @@ export const PANEL_DEFINITIONS = [
       deactivate: ds.deactivate,
       clear: ds.clear,
       startFlush: ds.startFlush,
+      currentTemperature: ds.currentTemperature,
+      targetTemperature: ds.targetTemperature,
     }),
   },
 ];

@@ -67,10 +67,9 @@ const NAVIGATION_SECTIONS = [
     ],
   },
   {
-    id: 'devices',
+    id: 'settings',
     showDivider: true,
     items: [
-      { label: 'PID Autotune', link: '/settings/machine', icon: faTemperatureHalf },
       { label: 'Bluetooth Devices', link: '/settings/bluetooth', icon: faBluetoothB },
       { label: 'Settings', link: '/settings', icon: faCog },
     ],
