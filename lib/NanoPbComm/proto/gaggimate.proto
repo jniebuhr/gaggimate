@@ -54,6 +54,7 @@ message Payload {
         VolumetricMeasurement volumetric = 24;
         TofMeasurement tof = 25;
         Error error = 26;
+        ScaleMeasurement scale = 27;
     }
 }
 
@@ -214,6 +215,13 @@ message AutotuneResult {
 
 message VolumetricMeasurement {
     float volume = 1;
+}
+
+// Hardware-scale weight, sent on its own channel (distinct from the pump-derived
+// VolumetricMeasurement estimate) so the display can offer both as independently
+// selectable volumetric sources.
+message ScaleMeasurement {
+    float weight = 1;
 }
 
 message TofMeasurement {

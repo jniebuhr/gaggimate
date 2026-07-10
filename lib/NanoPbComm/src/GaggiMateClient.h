@@ -29,6 +29,7 @@ class GaggiMateClient {
     using ButtonCallback = std::function<void(uint8_t index, bool pressed)>;
     using AutotuneResultCallback = std::function<void(float kp, float ki, float kd, float kf)>;
     using VolumetricCallback = std::function<void(float volume)>;
+    using ScaleCallback = std::function<void(float weight)>;
     using TofCallback = std::function<void(uint32_t distance)>;
     using ErrorCallback = std::function<void(int code)>;
 
@@ -112,6 +113,7 @@ class GaggiMateClient {
     void onButtonState(ButtonCallback cb) { _buttonCb = std::move(cb); }
     void onAutotuneResult(AutotuneResultCallback cb) { _autotuneResultCb = std::move(cb); }
     void onVolumetricMeasurement(VolumetricCallback cb) { _volumetricCb = std::move(cb); }
+    void onScaleMeasurement(ScaleCallback cb) { _scaleCb = std::move(cb); }
     void onTofMeasurement(TofCallback cb) { _tofCb = std::move(cb); }
     void onError(ErrorCallback cb) { _errorCb = std::move(cb); }
 
@@ -126,6 +128,7 @@ class GaggiMateClient {
     ButtonCallback _buttonCb;
     AutotuneResultCallback _autotuneResultCb;
     VolumetricCallback _volumetricCb;
+    ScaleCallback _scaleCb;
     TofCallback _tofCb;
     ErrorCallback _errorCb;
 

@@ -51,7 +51,7 @@ void GaggiMateController::setup() {
         _config.scaleSdaPin, _config.scaleSda1Pin, _config.scaleSclPin,
         [this](float weight) {
             if (_comms.isConnected()) {
-                _comms.sendVolumetricMeasurement(weight);
+                _comms.sendScaleMeasurement(weight);
             }
         },
         [](float, float) {});

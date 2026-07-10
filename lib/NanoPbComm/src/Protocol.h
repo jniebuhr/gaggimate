@@ -21,7 +21,7 @@ static constexpr const char *INFO_CHAR_UUID = "f8d7203b-e00c-48e2-83ba-37ff49cdb
 // Protocol/schema version. Bump on any breaking change to gaggimate.proto so a
 // display talking to an out-of-date controller (or vice versa) can detect the
 // mismatch. Carried in SystemInfo.protocol_version.
-static constexpr uint32_t PROTOCOL_VERSION = 3;
+static constexpr uint32_t PROTOCOL_VERSION = 4;
 
 // Outbound priorities (higher wins in the queue).
 enum Priority : uint8_t {
@@ -73,6 +73,7 @@ inline uint8_t defaultPriority(pb_size_t which) {
         return PRIO_CONTROL;
     case gaggimate_Payload_sensor_tag:
     case gaggimate_Payload_volumetric_tag:
+    case gaggimate_Payload_scale_tag:
     case gaggimate_Payload_tof_tag:
         return PRIO_LOW;
     default:

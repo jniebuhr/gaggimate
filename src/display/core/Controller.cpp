@@ -354,10 +354,11 @@ void Controller::setupBluetooth() {
         autotuning = false;
     });
     comms.onVolumetricMeasurement([this](float value) {
-        const auto source = systemInfo.capabilities.hwScale ? VolumetricMeasurementSource::HARDWARE
-                                                            : VolumetricMeasurementSource::FLOW_ESTIMATION;
-        onVolumetricMeasurement(value, source);
+        // The controller's volumetric channel now carries only the pump-derived
+        // flow estimate; the hardware scale reports via onScaleMeasurement below.
+        onVolumetricMeasurement(value, VolumetricMeasurementSource::FLOW_ESTIMATION);
     });
+    comms.onScaleMeasurement([this](float value) { onVolumetricMeasurement(value, VolumetricMeasurementSource::HARDWARE); });
     comms.onTofMeasurement([this](uint32_t value) {
         tofDistance = static_cast<int>(value);
         ESP_LOGV(LOG_TAG, "Received new TOF distance: %d", tofDistance);
