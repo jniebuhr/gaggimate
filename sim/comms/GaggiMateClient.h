@@ -83,7 +83,7 @@ class GaggiMateClient {
     void sendRelayControl(uint8_t index, bool open);
     void sendPidSettings(float kp, float ki, float kd, float kf);
     void sendPumpSettings(float a, float b, float c, float d, float commutationGain, float convergenceGain, float integralGain,
-                          float maxPower);
+                          float maxPower, float slipA, float slipB, float slipC, float slipD);
     void sendAutotune(uint32_t testTime, uint32_t samples, uint32_t heaterWattage);
     void sendPressureScale(float scale);
     void tare();

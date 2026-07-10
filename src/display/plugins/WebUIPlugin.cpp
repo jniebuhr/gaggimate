@@ -11,6 +11,7 @@
 #include <display/plugins/BLEScalePlugin.h>
 #include <display/plugins/ShotHistoryPlugin.h>
 #include <display/util/PsramStlAllocator.h>
+#include <display/util/PsramWsBuffer.h>
 #include <display/webassets/web_ui_manifest.h>
 #include <esp_core_dump.h>
 #include <esp_err.h>
@@ -30,16 +31,16 @@ using PsramString = std::basic_string<char, std::char_traits<char>, PsramStlAllo
 static std::unordered_map<uint32_t, PsramString> rxBuffers;
 static WebUIPlugin *g_webUIPlugin = nullptr;
 
-// Route mbedTLS allocations to PSRAM. The Arduino-ESP32 sdkconfig sets
-// CONFIG_MBEDTLS_INTERNAL_MEM_ALLOC=y, pinning TLS handshake buffers (~32 KB) to the
-// scarce internal DRAM that WiFi + BLE already leave near ~60 KB free. A CA-verified OTA
-// update check then drives internal free toward zero and crypto allocations start failing
-// (esp-sha/esp-aes "Failed to allocate"). mbedTLS is built with MBEDTLS_PLATFORM_MEMORY
-// (function-pointer allocator), so this runtime override moves those buffers to the 8 MB
-// PSRAM. Falls back to internal DRAM if PSRAM is exhausted so TLS still functions;
-// heap_caps_free handles pointers from either heap. The void* parameter/return types below are
-// dictated by the mbedtls_platform_set_calloc_free() callback contract and cannot be narrowed
-// (cpp:S5008 is a false positive here; retyping or casting the function pointers would be UB).
+// Serialize a JsonDocument straight into a PSRAM-backed WebSocket message
+// buffer — one exact-sized allocation, off the internal heap. [GM-139]
+static AsyncWebSocketSharedBuffer toWsBuffer(JsonDocument &doc) {
+    const size_t len = measureJson(doc);
+    auto buffer = makePsramWsBuffer(len);
+    serializeJson(doc, buffer->data(), len);
+    return buffer;
+}
+
+// Route mbedTLS allocations to PSRAM.
 static void *mbedtlsPsramCalloc(size_t n, size_t size) { // NOSONAR
     void *p = heap_caps_calloc(n, size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
     if (p == nullptr) {
@@ -465,18 +466,12 @@ void WebUIPlugin::handleWebSocketData(AsyncWebSocket *server, AsyncWebSocketClie
                         resp["rid"] = doc["rid"];
                     }
                     resp["msg"] = "Rebuild started";
-                    size_t bufferSize = measureJson(resp);
-                    auto *buffer = ws.makeBuffer(bufferSize);
-                    serializeJson(resp, buffer->get(), bufferSize);
-                    client->text(buffer);
+                    client->text(toWsBuffer(resp));
                     ShotHistory.startAsyncRebuild();
                 } else if (msgType.startsWith("req:history")) {
                     JsonDocument resp(&psramAllocator);
                     ShotHistory.handleRequest(doc, resp);
-                    size_t bufferSize = measureJson(resp);
-                    auto *buffer = ws.makeBuffer(bufferSize);
-                    serializeJson(resp, buffer->get(), bufferSize);
-                    client->text(buffer);
+                    client->text(toWsBuffer(resp));
                 } else if (msgType == "req:flush:start") {
                     handleFlushStart(client->id(), doc);
                 }
@@ -595,10 +590,7 @@ void WebUIPlugin::handleProfileRequest(uint32_t clientId, JsonDocument &request)
         }
     }
 
-    size_t bufferSize = measureJson(response);
-    auto *buffer = ws.makeBuffer(bufferSize);
-    serializeJson(response, buffer->get(), bufferSize);
-    ws.text(clientId, buffer);
+    ws.text(clientId, toWsBuffer(response));
 }
 
 void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
@@ -966,13 +958,7 @@ void WebUIPlugin::broadcastJson(JsonDocument &doc) {
     if (ws.getClients().empty()) {
         return;
     }
-    const size_t len = measureJson(doc);
-    auto *buffer = ws.makeBuffer(len);
-    if (buffer == nullptr) {
-        return; // out of buffers; drop this broadcast rather than churn the heap
-    }
-    serializeJson(doc, buffer->get(), len);
-    ws.textAll(buffer);
+    ws.textAll(toWsBuffer(doc));
 }
 
 void WebUIPlugin::sendAutotuneResult() {
@@ -997,10 +983,7 @@ void WebUIPlugin::handleFlushStart(uint32_t clientId, JsonDocument &request) {
     response["tp"] = "res:flush:start";
     response["rid"] = request["rid"];
     response["success"] = true;
-
-    String msg;
-    serializeJson(response, msg);
-    ws.text(clientId, msg);
+    ws.text(clientId, toWsBuffer(response));
 }
 
 void WebUIPlugin::handleCoreDumpDownload(AsyncWebServerRequest *request) {

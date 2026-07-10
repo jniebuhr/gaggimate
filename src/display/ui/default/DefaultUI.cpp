@@ -546,7 +546,8 @@ void DefaultUI::updateSystemStatus() {
     if (getLocalTime(&timeinfo, 5)) {
         const ::Settings &settings = controller->getSettings();
         strftime(timeBuf, sizeof(timeBuf), settings.isClock24hFormat() ? "%H:%M" : "%I:%M %p", &timeinfo);
-        if (!settings.isClock24hFormat() && timeBuf[0] == '0') timeBuf[0] = ' ';
+        if (!settings.isClock24hFormat() && timeBuf[0] == '0')
+            timeBuf[0] = ' ';
     }
     systemStatus.time(timeBuf);
 }

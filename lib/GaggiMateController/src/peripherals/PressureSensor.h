@@ -9,7 +9,7 @@
 constexpr float PRESSURE_KF_SAMPLE_TIME_S = ADC_READ_INTERVAL_MS / 1000.0f;
 constexpr float PRESSURE_KF_MEASUREMENT_NOISE = 0.01f; // R, (0.1 bar)^2 incl. pump ripple
 constexpr float PRESSURE_KF_ACCEL_NOISE = 0.5f;        // Q scale; raise to track faster, lower to smooth more
-constexpr float PRESSURE_KF_RATE_LEAK = 0.98f;         // damps overshoot where a ramp flattens into a hold
+constexpr float PRESSURE_KF_RATE_LEAK = 0.95f;         // damps overshoot and low-frequency wave amplification
 constexpr int SENSOR_READ_INTERVAL_MS = 100;
 
 class PressureSensor {
