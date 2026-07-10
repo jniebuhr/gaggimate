@@ -95,6 +95,10 @@ void ShotHistoryPlugin::setup(Controller *c, PluginManager *pm) {
     pm->on("pump:puck-resistance:change", [this](Event const &event) { currentPuckResistance = event.getFloat("value"); });
     // Initialize rebuild state
     rebuildInProgress = false;
+    // Leftover from the abandoned separate recent-shots index; aggregates now live in index.bin.
+    if (fs->exists("/h/recent.bin")) {
+        fs->remove("/h/recent.bin");
+    }
     xTaskCreatePinnedToCore(loopTask, "ShotHistoryPlugin::loop", configMINIMAL_STACK_SIZE * 6, this, 1, &taskHandle, 0);
 }
 
@@ -274,24 +278,13 @@ void ShotHistoryPlugin::record() {
             indexEntry.profileId[sizeof(indexEntry.profileId) - 1] = '\0';
             strncpy(indexEntry.profileName, header.profileName, sizeof(indexEntry.profileName) - 1);
             indexEntry.profileName[sizeof(indexEntry.profileName) - 1] = '\0';
+            indexEntry.avgTemp = tempSampleCount ? static_cast<uint16_t>(tempSumScaled / tempSampleCount) : 0;
+            indexEntry.maxPressure = maxPressureScaled;
+            indexEntry.avgFlow = positiveFlowCount ? static_cast<uint16_t>(flowSumScaled / positiveFlowCount) : 0;
 
             if (!appendToIndex(indexEntry)) {
                 ESP_LOGE("ShotHistoryPlugin", "CRITICAL: Failed to add completed shot %u to index", indexEntry.id);
             }
-
-            RecentShotEntry recentEntry{};
-            recentEntry.id = indexEntry.id;
-            recentEntry.timestamp = indexEntry.timestamp;
-            recentEntry.duration = indexEntry.duration;
-            recentEntry.volume = indexEntry.volume;
-            recentEntry.rating = indexEntry.rating;
-            recentEntry.flags = indexEntry.flags;
-            recentEntry.avgTemp = tempSampleCount ? static_cast<uint16_t>(tempSumScaled / tempSampleCount) : 0;
-            recentEntry.maxPressure = maxPressureScaled;
-            recentEntry.avgFlow = positiveFlowCount ? static_cast<uint16_t>(flowSumScaled / positiveFlowCount) : 0;
-            strncpy(recentEntry.profileName, indexEntry.profileName, sizeof(recentEntry.profileName) - 1);
-            recentEntry.profileName[sizeof(recentEntry.profileName) - 1] = '\0';
-            appendToRecentShots(recentEntry);
 
             // Notify clients the shot is actually persisted. The brew process's
             // isActive/isFinished state (used elsewhere for UI) can go inactive
@@ -383,9 +376,8 @@ void ShotHistoryPlugin::endRecording() {
         Event statsEvent;
         statsEvent.id = "evt:shot-finished-stats";
         statsEvent.setFloat("maxPressure", maxPressureScaled > 0 ? maxPressureScaled / PRESSURE_SCALE : 0.0f);
-        statsEvent.setFloat("avgFlow", positiveFlowCount > 0
-                                           ? (flowSumScaled / static_cast<float>(positiveFlowCount)) / FLOW_SCALE
-                                           : 0.0f);
+        statsEvent.setFloat("avgFlow",
+                            positiveFlowCount > 0 ? (flowSumScaled / static_cast<float>(positiveFlowCount)) / FLOW_SCALE : 0.0f);
         pluginManager->trigger(statsEvent);
     }
 
@@ -736,8 +728,6 @@ void ShotHistoryPlugin::updateIndexMetadata(uint32_t shotId, uint8_t rating, uin
     }
 
     indexFile.close();
-
-    updateRecentShotMetadata(shotId, rating, volume);
 }
 
 void ShotHistoryPlugin::markIndexDeleted(uint32_t shotId) {
@@ -780,163 +770,36 @@ void ShotHistoryPlugin::markIndexDeleted(uint32_t shotId) {
     }
 
     indexFile.close();
-
-    removeFromRecentShots(shotId);
 }
 
-// Rolling "recent shots" buffer (separate fixed-size file, see shot_log_format.h)
-
-bool ShotHistoryPlugin::ensureRecentShotsExists() {
-    if (fs->exists("/h/recent.bin")) {
-        File recentFile = fs->open("/h/recent.bin", "r");
-        if (recentFile) {
-            RecentShotsHeader hdr{};
-            bool valid = (recentFile.read(reinterpret_cast<uint8_t *>(&hdr), sizeof(hdr)) == sizeof(hdr) &&
-                          hdr.magic == RECENT_SHOTS_MAGIC);
-            recentFile.close();
-            if (valid) {
-                return true;
-            }
-            ESP_LOGW("ShotHistoryPlugin", "Corrupt recent shots file detected (bad magic), recreating");
-            fs->remove("/h/recent.bin");
-        }
+size_t ShotHistoryPlugin::readRecentEntries(ShotIndexEntry *outEntries, size_t maxCount) {
+    File indexFile = fs->open("/h/index.bin", "r");
+    if (!indexFile) {
+        return 0;
     }
 
-    File recentFile = fs->open("/h/recent.bin", FILE_WRITE);
-    if (!recentFile) {
-        ESP_LOGE("ShotHistoryPlugin", "Failed to create recent shots file");
-        return false;
+    ShotIndexHeader header{};
+    if (!readIndexHeader(indexFile, header)) {
+        indexFile.close();
+        return 0;
     }
 
-    RecentShotsHeader header{};
-    header.magic = RECENT_SHOTS_MAGIC;
-    header.version = RECENT_SHOTS_VERSION;
-    header.entrySize = RECENT_SHOT_ENTRY_SIZE;
-    header.capacity = RECENT_SHOTS_CAPACITY;
-    header.count = 0;
-    header.head = 0;
-
-    recentFile.write(reinterpret_cast<const uint8_t *>(&header), sizeof(header));
-    RecentShotEntry blank{};
-    for (uint8_t i = 0; i < RECENT_SHOTS_CAPACITY; i++) {
-        recentFile.write(reinterpret_cast<const uint8_t *>(&blank), sizeof(blank));
-    }
-    recentFile.close();
-
-    ESP_LOGI("ShotHistoryPlugin", "Created new recent shots file");
-    return true;
-}
-
-void ShotHistoryPlugin::appendToRecentShots(const RecentShotEntry &entry) {
-    if (!ensureRecentShotsExists()) {
-        return;
-    }
-
-    File recentFile = fs->open("/h/recent.bin", "r+");
-    if (!recentFile) {
-        ESP_LOGE("ShotHistoryPlugin", "Failed to open recent shots file for append");
-        return;
-    }
-
-    RecentShotsHeader header{};
-    if (recentFile.read(reinterpret_cast<uint8_t *>(&header), sizeof(header)) != sizeof(header)) {
-        ESP_LOGE("ShotHistoryPlugin", "Failed to read recent shots header");
-        recentFile.close();
-        return;
-    }
-
-    size_t entryPos = sizeof(RecentShotsHeader) + static_cast<size_t>(header.head) * sizeof(RecentShotEntry);
-    recentFile.seek(entryPos, SeekSet);
-    recentFile.write(reinterpret_cast<const uint8_t *>(&entry), sizeof(entry));
-
-    header.head = (header.head + 1) % header.capacity;
-    if (header.count < header.capacity) {
-        header.count++;
-    }
-    recentFile.seek(0, SeekSet);
-    recentFile.write(reinterpret_cast<const uint8_t *>(&header), sizeof(header));
-
-    recentFile.close();
-    ESP_LOGD("ShotHistoryPlugin", "Appended shot %u to recent shots buffer", entry.id);
-}
-
-void ShotHistoryPlugin::updateRecentShotMetadata(uint32_t shotId, uint8_t rating, uint16_t volume) {
-    if (!fs->exists("/h/recent.bin")) {
-        return;
-    }
-    File recentFile = fs->open("/h/recent.bin", "r+");
-    if (!recentFile) {
-        return;
-    }
-
-    RecentShotsHeader header{};
-    if (recentFile.read(reinterpret_cast<uint8_t *>(&header), sizeof(header)) != sizeof(header) ||
-        header.magic != RECENT_SHOTS_MAGIC) {
-        recentFile.close();
-        return;
-    }
-
-    for (uint8_t i = 0; i < header.capacity; i++) {
-        size_t entryPos = sizeof(RecentShotsHeader) + static_cast<size_t>(i) * sizeof(RecentShotEntry);
-        RecentShotEntry entry{};
-        recentFile.seek(entryPos, SeekSet);
-        if (recentFile.read(reinterpret_cast<uint8_t *>(&entry), sizeof(entry)) != sizeof(entry)) {
-            continue;
-        }
-        if (entry.id == shotId) {
-            entry.rating = rating;
-            if (volume > 0) {
-                entry.volume = volume;
-            }
-            if (rating > 0) {
-                entry.flags |= SHOT_FLAG_HAS_NOTES;
-            }
-            recentFile.seek(entryPos, SeekSet);
-            recentFile.write(reinterpret_cast<const uint8_t *>(&entry), sizeof(entry));
+    // Entries are appended in id order, so walking backwards yields newest first.
+    size_t found = 0;
+    for (uint32_t i = header.entryCount; i > 0 && found < maxCount; i--) {
+        size_t entryPos = sizeof(ShotIndexHeader) + (i - 1) * sizeof(ShotIndexEntry);
+        ShotIndexEntry entry{};
+        if (!readEntryAtPosition(indexFile, entryPos, entry)) {
             break;
         }
-    }
-
-    recentFile.close();
-}
-
-void ShotHistoryPlugin::removeFromRecentShots(uint32_t shotId) {
-    if (!fs->exists("/h/recent.bin")) {
-        return;
-    }
-    File recentFile = fs->open("/h/recent.bin", "r+");
-    if (!recentFile) {
-        return;
-    }
-
-    RecentShotsHeader header{};
-    if (recentFile.read(reinterpret_cast<uint8_t *>(&header), sizeof(header)) != sizeof(header) ||
-        header.magic != RECENT_SHOTS_MAGIC) {
-        recentFile.close();
-        return;
-    }
-
-    for (uint8_t i = 0; i < header.capacity; i++) {
-        size_t entryPos = sizeof(RecentShotsHeader) + static_cast<size_t>(i) * sizeof(RecentShotEntry);
-        RecentShotEntry entry{};
-        recentFile.seek(entryPos, SeekSet);
-        if (recentFile.read(reinterpret_cast<uint8_t *>(&entry), sizeof(entry)) != sizeof(entry)) {
+        if (entry.flags & SHOT_FLAG_DELETED) {
             continue;
         }
-        if (entry.id == shotId) {
-            // Leave a hole: id == 0 tells the frontend parser to skip this slot.
-            // header.count is NOT decremented here — it tracks how many of the
-            // capacity slots have ever been written (needed by the frontend's
-            // backward walk from head-1 to visit every written slot, holes
-            // included), not how many currently hold non-deleted data.
-            RecentShotEntry blank{};
-            recentFile.seek(entryPos, SeekSet);
-            recentFile.write(reinterpret_cast<const uint8_t *>(&blank), sizeof(blank));
-            break;
-        }
+        outEntries[found++] = entry;
     }
 
-    recentFile.close();
+    indexFile.close();
+    return found;
 }
 
 void ShotHistoryPlugin::startAsyncRebuild() {
@@ -1081,6 +944,32 @@ void ShotHistoryPlugin::rebuildIndex() {
         // Check for incomplete shots
         if (shotHeader.sampleCount == 0) {
             entry.flags &= ~SHOT_FLAG_COMPLETED;
+        }
+
+        // Recompute the per-shot aggregates from the sample records (same math
+        // as the running sums in record()).
+        {
+            uint32_t tempSum = 0, tempCount = 0, flowSum = 0, flowCount = 0;
+            uint16_t maxPressure = 0;
+            ShotLogSample sample{};
+            shotFile.seek(shotHeader.headerSize, SeekSet);
+            for (uint32_t s = 0; s < shotHeader.sampleCount; s++) {
+                if (shotFile.read(reinterpret_cast<uint8_t *>(&sample), sizeof(sample)) != sizeof(sample)) {
+                    break;
+                }
+                tempSum += sample.ct;
+                tempCount++;
+                if (sample.cp > maxPressure) {
+                    maxPressure = sample.cp;
+                }
+                if (sample.fl > 0) {
+                    flowSum += sample.fl;
+                    flowCount++;
+                }
+            }
+            entry.avgTemp = tempCount ? static_cast<uint16_t>(tempSum / tempCount) : 0;
+            entry.maxPressure = maxPressure;
+            entry.avgFlow = flowCount ? static_cast<uint16_t>(flowSum / flowCount) : 0;
         }
 
         // Check for notes and extract rating and volume override

@@ -351,14 +351,36 @@ void WebUIPlugin::setupServer() {
             request->send(404, "text/plain", "Index not found");
         }
     });
-    server.on("/api/history/recent.bin", HTTP_GET, [this, fs](AsyncWebServerRequest *request) {
-        // Serve the rolling recent-shots buffer directly; 404 until the first
-        // shot completes after this feature ships (file is created lazily).
-        if (fs->exists("/h/recent.bin")) {
-            request->send(*fs, "/h/recent.bin", "application/octet-stream");
-        } else {
-            request->send(404, "text/plain", "Recent shots index not found");
+    server.on("/api/history/recent.bin", HTTP_GET, [this](AsyncWebServerRequest *request) {
+        // The most recent non-deleted shots, newest first, as a regular shot
+        // index (SIDX header + entries) — same binary format as index.bin,
+        // just truncated, so clients reuse the index.bin parser.
+        constexpr long MAX_RECENT_LIMIT = 50;
+        long limit = 8;
+        if (request->hasArg("limit")) {
+            limit = constrain(request->arg("limit").toInt(), 1L, MAX_RECENT_LIMIT);
         }
+
+        auto *entries = static_cast<ShotIndexEntry *>(ps_malloc(limit * sizeof(ShotIndexEntry)));
+        if (entries == nullptr) {
+            request->send(500, "text/plain", "Out of memory");
+            return;
+        }
+        size_t count = ShotHistory.readRecentEntries(entries, limit);
+
+        ShotIndexHeader header{};
+        header.magic = SHOT_INDEX_MAGIC;
+        header.version = SHOT_INDEX_VERSION;
+        header.entrySize = SHOT_INDEX_ENTRY_SIZE;
+        header.entryCount = count;
+        header.nextId = 0; // meaningless for a partial view
+
+        AsyncResponseStream *response = request->beginResponseStream("application/octet-stream");
+        response->addHeader("Cache-Control", "no-store");
+        response->write(reinterpret_cast<const uint8_t *>(&header), sizeof(header));
+        response->write(reinterpret_cast<const uint8_t *>(entries), count * sizeof(ShotIndexEntry));
+        free(entries);
+        request->send(response);
     });
     server.on("/api/core-dump", HTTP_GET, [this](AsyncWebServerRequest *request) { handleCoreDumpDownload(request); });
     // The web UI is embedded in firmware flash and served from the memory-mapped blob (see serveWebAsset). It is no

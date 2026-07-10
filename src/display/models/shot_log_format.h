@@ -162,53 +162,19 @@ struct ShotIndexEntry {
     uint8_t flags;        // Bit flags (completed, deleted, etc.)
     char profileId[32];   // Profile ID, null-terminated
     char profileName[48]; // Profile name, null-terminated
-    uint8_t reserved[32]; // Future expansion
+
+    // Per-shot aggregates (carved from the former reserved padding, so entry
+    // size and index version are unchanged; entries written before these
+    // fields existed read back as 0 = not recorded).
+    uint16_t avgTemp;     // °C * 10
+    uint16_t maxPressure; // bar * 10
+    uint16_t avgFlow;     // ml/s * 100
+
+    uint8_t reserved[26]; // Future expansion
 };
 #pragma pack(pop)
 
 static_assert(sizeof(ShotIndexHeader) == SHOT_INDEX_HEADER_SIZE, "ShotIndexHeader size mismatch");
 static_assert(sizeof(ShotIndexEntry) == SHOT_INDEX_ENTRY_SIZE, "ShotIndexEntry size mismatch");
-
-// Lightweight rolling buffer of the most recent completed shots, purpose-built
-// for the dashboard's Recent Shots widget. Fixed capacity — never grows — so
-// the frontend can fetch it in one small, constant-size request regardless of
-// total shot history size. Written only at shot completion (no early/partial
-// entries, no upsert-by-id): every entry that exists always has the full
-// aggregates populated.
-// File: /h/recent.bin
-
-static constexpr uint32_t RECENT_SHOTS_MAGIC = 0x58444952; // 'R''I''D''X' little-endian
-static constexpr uint16_t RECENT_SHOTS_VERSION = 1;
-static constexpr uint8_t RECENT_SHOTS_CAPACITY = 8; // matches dashboard's max "Max Recent Shots" setting
-static constexpr uint16_t RECENT_SHOT_ENTRY_SIZE = 80;
-
-#pragma pack(push, 1)
-struct RecentShotsHeader {
-    uint32_t magic;     // RECENT_SHOTS_MAGIC
-    uint16_t version;   // RECENT_SHOTS_VERSION
-    uint16_t entrySize; // RECENT_SHOT_ENTRY_SIZE
-    uint8_t capacity;   // RECENT_SHOTS_CAPACITY
-    uint8_t count;      // valid entries currently stored (<= capacity)
-    uint8_t head;       // circular write cursor: index of the next slot to write
-    uint8_t reserved[5];
-};
-
-struct RecentShotEntry {
-    uint32_t id;
-    uint32_t timestamp;
-    uint32_t duration;
-    uint16_t volume;      // final weight, g * 10
-    uint8_t rating;       // 0-5, 0 = none
-    uint8_t flags;        // SHOT_FLAG_COMPLETED / SHOT_FLAG_HAS_NOTES (no DELETED — holes are id == 0)
-    uint16_t avgTemp;     // °C * 10
-    uint16_t maxPressure; // bar * 10
-    uint16_t avgFlow;     // ml/s * 100
-    char profileName[48]; // null-terminated
-    uint8_t reserved[10];
-};
-#pragma pack(pop)
-
-static_assert(sizeof(RecentShotsHeader) == 16, "RecentShotsHeader size mismatch");
-static_assert(sizeof(RecentShotEntry) == RECENT_SHOT_ENTRY_SIZE, "RecentShotEntry size mismatch");
 
 #endif // SHOT_LOG_FORMAT_H

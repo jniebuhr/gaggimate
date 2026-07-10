@@ -2,7 +2,7 @@ import { useContext, useEffect, useRef, useState } from 'preact/hooks';
 import { useSignalEffect } from '@preact/signals';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMagnifyingGlassChart } from '@fortawesome/free-solid-svg-icons/faMagnifyingGlassChart';
-import { parseRecentShotsIndex } from '../../ShotHistory/parseRecentShotsIndex.js';
+import { parseBinaryIndex, indexToShotList } from '../../ShotHistory/parseBinaryIndex.js';
 import { ApiServiceContext } from '../../../services/ApiService.js';
 import { cleanName } from '../../ShotAnalyzer/utils/analyzerUtils.js';
 import {
@@ -40,10 +40,11 @@ function formatShotDateTime(timestamp, hour12) {
 }
 
 async function loadRecentShots(recentShotCount) {
-  const resp = await fetch('/api/history/recent.bin');
+  // Same binary format as index.bin, truncated server-side to the newest entries.
+  const resp = await fetch(`/api/history/recent.bin?limit=${recentShotCount}`);
   if (!resp.ok) return [];
   const buf = await resp.arrayBuffer();
-  return parseRecentShotsIndex(buf).slice(0, recentShotCount);
+  return indexToShotList(parseBinaryIndex(buf)).slice(0, recentShotCount);
 }
 
 const METRIC_DEFS = {

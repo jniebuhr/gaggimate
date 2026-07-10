@@ -8,7 +8,7 @@ import { ProcessProfileChart } from '../../../components/ProcessProfileChart.jsx
 import { profileChartHeightSignal } from '../../../utils/dashboardManager.js';
 import { SkeletonBlock } from '../../../components/SkeletonBlock.jsx';
 import { fmtElapsed, fmtPhaseTarget, getPhaseLabel } from '../utils.js';
-import { parseRecentShotsIndex } from '../../ShotHistory/parseRecentShotsIndex.js';
+import { parseBinaryIndex, indexToShotList } from '../../ShotHistory/parseBinaryIndex.js';
 
 function ProgressCard({ processInfo, isBrewing, isGrinding, selectedProfile }) {
   const p = processInfo;
@@ -141,16 +141,16 @@ export function ProfileCard({
 
   // Fallback for a page reload landing directly on an already-finished shot:
   // the live evt:shot-finished-stats event only fires once, at the moment the
-  // shot stopped, so a fresh mount never receives it. Recent.bin always has
-  // the same stats for the most recently completed shot, so use that instead.
+  // shot stopped, so a fresh mount never receives it. The recent-shots index
+  // always has the same stats for the most recently completed shot.
   useEffect(() => {
     if (!isFinished || !isBrewing || finishedStats !== null) return;
     let cancelled = false;
-    fetch('/api/history/recent.bin')
+    fetch('/api/history/recent.bin?limit=1')
       .then(resp => (resp.ok ? resp.arrayBuffer() : null))
       .then(buf => {
         if (cancelled || !buf) return;
-        const [latest] = parseRecentShotsIndex(buf);
+        const [latest] = indexToShotList(parseBinaryIndex(buf));
         if (latest) {
           setFinishedStats({ maxPressure: latest.maxPressure, avgFlow: latest.avgFlow });
         }
