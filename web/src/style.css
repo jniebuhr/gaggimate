@@ -532,6 +532,68 @@ html[data-theme='coffee'] {
   .profile-card-container.drop-highlight {
     @apply bg-primary/10;
   }
+  .scrollbar-none {
+    scrollbar-width: none;
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+}
+
+/* Let a card host an open action dropdown without clipping it */
+.card:has(.action-dropdown-open) {
+  position: relative !important;
+  z-index: 50 !important;
+  overflow: visible !important;
+}
+
+/* ── Action dropdown transitions (fully decoupled from DaisyUI) ── */
+.action-dropdown {
+  display: inline-block;
+  position: relative;
+}
+
+/* Menu panel: always in the DOM, hidden via opacity+visibility+transform.
+   No display:none — that kills CSS transitions. */
+.action-dropdown .action-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 999;
+
+  /* Closed state */
+  opacity: 0;
+  visibility: hidden;
+  transform: scale(0.95) translateY(-4px);
+  pointer-events: none;
+
+  /* Exit: 120ms (~20% faster than entrance) */
+  transition:
+    transform 120ms cubic-bezier(0.23, 1, 0.32, 1),
+    opacity 120ms cubic-bezier(0.23, 1, 0.32, 1),
+    visibility 120ms step-end;
+  transform-origin: top right;
+  will-change: transform, opacity;
+}
+
+/* Open state */
+.action-dropdown.action-dropdown-open .action-dropdown-menu {
+  opacity: 1;
+  visibility: visible;
+  transform: scale(1) translateY(0);
+  pointer-events: auto;
+
+  /* Enter: 150ms */
+  transition:
+    transform 150ms cubic-bezier(0.23, 1, 0.32, 1),
+    opacity 150ms cubic-bezier(0.23, 1, 0.32, 1),
+    visibility 150ms step-start;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .action-dropdown .action-dropdown-menu {
+    transition: none;
+  }
 }
 
 @custom-variant hmd {
