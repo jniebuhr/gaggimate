@@ -87,7 +87,7 @@ export const PANEL_DEFINITIONS = [
     id: 'action',
     label: 'Shot Controls',
     required: true,
-    available: ds => true,
+    available: () => true,
     availableInSettings: () => true,
     component: ActionCard,
     props: ds => ({
