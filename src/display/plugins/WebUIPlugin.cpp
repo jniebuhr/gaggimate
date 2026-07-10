@@ -3,6 +3,7 @@
 #include <LittleFS.h>
 #include <SD_MMC.h>
 #include <algorithm>
+#include <esp32-hal-psram.h>
 #include <display/core/Controller.h>
 #include <display/core/ProfileManager.h>
 #include <display/core/process/BrewProcess.h>

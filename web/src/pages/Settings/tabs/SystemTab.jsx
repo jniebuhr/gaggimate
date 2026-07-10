@@ -327,7 +327,7 @@ export function SystemTab() {
                 </option>
               </select>
               <button type='submit' className='btn btn-secondary' disabled={submitting}>
-                Save Channel
+                Save Channel & Refresh
               </button>
             </div>
           </div>

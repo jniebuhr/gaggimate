@@ -39,8 +39,6 @@ export function ActionCard({
     setPreheated(false);
   }, [targetTemperature, mode]);
   useEffect(() => {
-    console.log('Current Temp: ', currentTemperature);
-    console.log('Target Temp: ', targetTemperature);
     if (Math.abs(targetTemperature - currentTemperature) < 5) setPreheated(true);
   }, [currentTemperature, targetTemperature]);
 
