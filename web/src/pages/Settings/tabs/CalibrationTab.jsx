@@ -3,8 +3,9 @@ import { ApiServiceContext } from '../../../services/ApiService.js';
 import { OverviewChart } from '../../../components/OverviewChart.jsx';
 import { Spinner } from '../../../components/Spinner.jsx';
 import Section from '../../../components/Card.jsx';
+import PumpFlowCalibration from '../../../components/PumpFlowCalibration/index.jsx';
 
-export function CalibrationTab() {
+export function CalibrationTab({ formData, onChange }) {
   const apiService = useContext(ApiServiceContext);
 
   // Autotune state
@@ -202,6 +203,11 @@ export function CalibrationTab() {
             </div>
           </div>
         )}
+      </Section>
+
+      {/* Pump Flow Tuning Section */}
+      <Section title='Pump Flow Calibration'>
+        <PumpFlowCalibration currentCoeffs={formData.pumpModelCoeffs} />
       </Section>
     </div>
   );

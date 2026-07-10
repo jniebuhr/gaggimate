@@ -3,15 +3,7 @@ import { faSpinner } from '@fortawesome/free-solid-svg-icons/faSpinner';
 import { PrimaryButton, SecondaryButton } from './Buttons.jsx';
 import { PHASE } from './constants.js';
 
-export default function ModalFooter({
-  phase,
-  saving,
-  saved,
-  connected,
-  onClose,
-  onStart,
-  onApply,
-}) {
+export default function Footer({ phase, saving, saved, connected, onClose, onStart, onApply }) {
   return (
     <div className='mt-5 flex justify-end gap-3'>
       {phase === PHASE.IDLE && (
@@ -44,7 +36,7 @@ export default function ModalFooter({
       {phase === PHASE.DONE && saved && <PrimaryButton onClick={onClose}>Done</PrimaryButton>}
       {phase === PHASE.ERROR && (
         <>
-          <SecondaryButton onClick={onClose}>Close</SecondaryButton>
+          <SecondaryButton onClick={onClose}>Back</SecondaryButton>
           <PrimaryButton onClick={onStart}>Retry</PrimaryButton>
         </>
       )}
