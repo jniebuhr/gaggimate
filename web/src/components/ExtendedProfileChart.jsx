@@ -116,7 +116,7 @@ function prepareData(phases, target) {
   return data;
 }
 
-function makeChartData(data, selectedPhase, phaseRanges, onPhaseClick, isDarkMode = false) {
+function makeChartData(data, selectedPhase, phaseRanges, onPhaseClick, isDarkMode = false, showPhaseLabels = true) {
   const phases = Array.isArray(data?.phases) ? data.phases : [];
   let duration = 0;
   for (const phase of phases) {
@@ -259,7 +259,7 @@ function makeChartData(data, selectedPhase, phaseRanges, onPhaseClick, isDarkMod
   }
 
   const chartWidth = window.innerWidth;
-  const showLabels = chartWidth >= 520;
+  const showLabels = showPhaseLabels && chartWidth >= 520;
   const isSmall = window.innerWidth < 640;
   // const yMax = chartData.options.scales.y.max ?? 12;
 
@@ -367,13 +367,14 @@ export function ExtendedProfileChart({
   const phaseRanges = buildPhaseRanges(phases);
   const phaseRangesRef = useRef(phaseRanges);
   phaseRangesRef.current = phaseRanges;
-  const config = makeChartData(data, selectedPhase, phaseRanges, onPhaseClick, isDarkMode());
+  const config = makeChartData(data, selectedPhase, phaseRanges, onPhaseClick, isDarkMode(), showPhaseLabels);
 
   return (
     <ChartComponent
-      className='max-w-full flex-shrink flex-grow'
+      className='min-h-0 max-w-full flex-shrink flex-grow'
       chartClassName={`${className}${onPhaseClick ? ' cursor-pointer' : ''}`}
       data={config}
+      style={style}
     />
   );
 }

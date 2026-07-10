@@ -39,9 +39,10 @@ class GaggiMateClient {
     using IncompatibleCallback = std::function<void(const String &info)>;
     using SystemInfoCallback =
         std::function<void(const char *hardware, const char *version, uint32_t protocolVersion, bool dimming, bool pressure,
-                           bool ledControl, bool tof, std::vector<uint32_t> addons)>;
+        bool ledControl, bool tof, std::vector<uint32_t> addons)>;
     using SensorCallback =
-        std::function<void(float temperature, float pressure, float puckFlow, float pumpFlow, float puckResistance)>;
+        std::function<void(float temperature, float pressure, float puckFlow, float pumpFlow, float puckResistance,
+                           float pumpPower, float heaterPower)>;
     using ButtonCallback = std::function<void(uint8_t index, bool pressed)>;
     using AutotuneResultCallback = std::function<void(float kp, float ki, float kd, float kf)>;
     using VolumetricCallback = std::function<void(float volume)>;
@@ -83,7 +84,7 @@ class GaggiMateClient {
     void sendRelayControl(uint8_t index, bool open);
     void sendPidSettings(float kp, float ki, float kd, float kf);
     void sendPumpSettings(float a, float b, float c, float d, float commutationGain, float convergenceGain, float integralGain,
-                          float maxPower);
+                          float maxPower, float slipA, float slipB, float slipC, float slipD);
     void sendAutotune(uint32_t testTime, uint32_t samples, uint32_t heaterWattage);
     void sendPressureScale(float scale);
     void tare();

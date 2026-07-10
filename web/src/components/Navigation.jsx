@@ -11,10 +11,12 @@ import { faMagnifyingGlassChart } from '@fortawesome/free-solid-svg-icons/faMagn
 import { faChartSimple } from '@fortawesome/free-solid-svg-icons/faChartSimple';
 import { faCircleChevronLeft } from '@fortawesome/free-solid-svg-icons/faCircleChevronLeft';
 import { faCircleChevronRight } from '@fortawesome/free-solid-svg-icons/faCircleChevronRight';
+import { faPen } from '@fortawesome/free-solid-svg-icons/faPen';
 import { GmLogoIcon } from '../pages/ShotAnalyzer/components/SourceMarker.jsx';
 import { faGithub } from '@fortawesome/free-brands-svg-icons/faGithub';
 import { faDiscord } from '@fortawesome/free-brands-svg-icons/faDiscord';
-import { useCallback, useEffect, useMemo, useRef } from 'preact/hooks';
+import { useEffect, useMemo, useRef } from 'preact/hooks';
+import { faPencil } from '@fortawesome/free-solid-svg-icons/faPencil';
 
 // List of random icons to display - add your icons here (SVG strings, text, or emojis)
 const RANDOM_ICONS = [
@@ -44,7 +46,15 @@ const NAVIGATION_SECTIONS = [
   {
     id: 'dashboard',
     showDivider: true,
-    items: [{ label: 'Dashboard', link: '/', icon: faHome }],
+    items: [
+      {
+        label: 'Dashboard',
+        link: '/',
+        icon: faHome,
+        editLink: '/dashboard-settings',
+        editIcon: faPencil,
+      },
+    ],
   },
   {
     id: 'analysis',
@@ -57,51 +67,74 @@ const NAVIGATION_SECTIONS = [
     ],
   },
   {
-    id: 'devices',
+    id: 'settings',
     showDivider: true,
     items: [
-      { label: 'PID Autotune', link: '/pidtune', icon: faTemperatureHalf },
-      { label: 'Bluetooth Devices', link: '/scales', icon: faBluetoothB },
+      { label: 'Bluetooth Devices', link: '/settings/bluetooth', icon: faBluetoothB },
       { label: 'Settings', link: '/settings', icon: faCog },
     ],
   },
   {
     id: 'updates',
     showDivider: true,
-    items: [{ label: 'System & Updates', link: '/ota', icon: faRotate }],
+    items: [{ label: 'System & Updates', link: '/settings/system', icon: faRotate }],
   },
 ];
 
-function MenuItem({ collapsed = false, icon, isNew = false, label, link }) {
+function MenuItem({ collapsed = false, icon, isNew = false, label, link, editLink, editIcon }) {
   const { path } = useLocation();
   const isActive = path === link;
+  const editActive = path === editLink;
   const isExpanded = collapsed === false;
+  const commonClasses = 'btn btn-md border-none h-12 rounded-none';
   const baseClassName = collapsed
-    ? 'btn btn-square btn-md h-12 min-h-0 w-12 min-w-0 rounded-xl border-none bg-transparent px-0 text-base-content hover:bg-base-content/10 hover:text-base-content'
-    : 'btn btn-md justify-start h-12 gap-3 w-full text-base-content hover:text-base-content hover:bg-base-content/10 bg-transparent border-none px-2';
+    ? 'btn-square min-h-0 min-w-0 bg-transparent px-0 text-base-content hover:bg-base-content/10 hover:text-base-content'
+    : 'justify-start gap-3 text-base-content hover:text-base-content hover:bg-base-content/10 bg-transparent border-none px-2';
   const activeClassName = collapsed
-    ? 'btn btn-square btn-md h-12 min-h-0 w-12 min-w-0 rounded-xl border-none bg-primary px-0 text-primary-content hover:bg-primary hover:text-primary-content'
-    : 'btn btn-md justify-start h-12 gap-3 w-full bg-primary text-primary-content hover:bg-primary hover:text-primary-content px-2';
-  const className = isActive ? activeClassName : baseClassName;
+    ? 'btn-square min-h-0 min-w-0 bg-primary px-0 text-primary-content hover:bg-primary hover:text-primary-content'
+    : 'justify-start gap-3 bg-primary text-primary-content hover:bg-primary hover:text-primary-content px-2';
+  const className = `${commonClasses} ${isActive ? activeClassName : baseClassName}`;
+
+  const editLinkEnabled = editLink && editIcon && !collapsed;
 
   return (
-    <a
-      href={link}
-      className={className}
-      aria-label={collapsed ? label : undefined}
-      aria-current={isActive ? 'page' : undefined}
-      title={collapsed ? label : undefined}
+    <div
+      className={`flex h-12 flex-row overflow-hidden rounded-xl ${collapsed ? 'w-12' : 'w-full'}`}
     >
-      <FontAwesomeIcon size='md' icon={icon} />
-      {isExpanded ? (
-        <div className='indicator'>
-          {isNew ? (
-            <span className='indicator-item text-success pl-8 text-xs font-bold'>NEW</span>
-          ) : null}
-          <span>{label}</span>
-        </div>
-      ) : null}
-    </a>
+      <a
+        href={link}
+        className={`flex-grow ${className}`}
+        aria-label={collapsed ? label : undefined}
+        aria-current={isActive ? 'page' : undefined}
+        title={collapsed ? label : undefined}
+      >
+        <FontAwesomeIcon size='md' icon={icon} />
+        {isExpanded ? (
+          <div className='indicator'>
+            {isNew ? (
+              <span className='indicator-item text-success pl-8 text-xs font-bold'>NEW</span>
+            ) : null}
+            <span>{label}</span>
+          </div>
+        ) : null}
+      </a>
+      {editLinkEnabled && (
+        <a
+          href={editLink}
+          aria-label='Settings'
+          title='Settings'
+          className={`flex items-center justify-center px-2.5 ${
+            editActive
+              ? 'bg-primary text-primary-content'
+              : isActive
+                ? 'bg-primary text-primary-content/50 hover:text-primary-content'
+                : 'text-base-content/30 hover:bg-base-content/10 hover:text-base-content bg-transparent'
+          }`}
+        >
+          <FontAwesomeIcon icon={editIcon} className='h-3 w-3' />
+        </a>
+      )}
+    </div>
   );
 }
 
@@ -228,9 +261,9 @@ export function Navigation({ collapsed = false, onToggleCollapsed }) {
             <div key={section.id}>
               {section.showDivider ? <hr className='h-5 border-0' /> : null}
               <div className='space-y-1.5'>
-                {section.items.map(item => (
-                  <MenuItem key={item.link} collapsed={collapsed} {...item} />
-                ))}
+                {section.items.map(item => {
+                  return <MenuItem key={item.link} collapsed={collapsed} {...item} />;
+                })}
               </div>
             </div>
           ))}
