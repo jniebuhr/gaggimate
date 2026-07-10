@@ -164,7 +164,7 @@ class LibraryService {
    */
   async getGaggiMateShots() {
     try {
-      const response = await fetch('/api/history/index.bin');
+      const response = await fetch('/api/history/index.bin', { credentials: 'include' });
 
       if (!response.ok) {
         if (response.status === 404) {
@@ -316,7 +316,7 @@ class LibraryService {
 
     if (source === 'gaggimate') {
       const paddedId = idStr.padStart(6, '0');
-      const response = await fetch(`/api/history/${paddedId}.slog`);
+      const response = await fetch(`/api/history/${paddedId}.slog`, { credentials: 'include' });
 
       if (!response.ok) {
         throw new Error(`Failed to load shot ${idStr}: HTTP ${response.status}`);
