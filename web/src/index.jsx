@@ -107,7 +107,7 @@ export function App() {
                       {/* Legacy routes now live in settings tabs */}
                       <Route path='/ota' component={RedirectTo('/settings/system')} />
                       <Route path='/scales' component={RedirectTo('/settings/bluetooth')} />
-                      <Route path='/pidtune' component={RedirectTo('/settings/machine')} />
+                      <Route path='/pidtune' component={RedirectTo('/settings/calibration')} />
                       <Route path='/history' component={ShotHistory} />
                       <Route path='/analyzer' component={ShotAnalyzer} />
                       <Route path='/statistics' component={StatisticsPage} />

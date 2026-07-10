@@ -217,6 +217,101 @@ export function GeneralTab({
         </div>
       </Section>
 
+      {/* Display Settings */}
+      <Section title='Display Settings'>
+        <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+          <div className='form-control'>
+            <label htmlFor='mainBrightness' className='mb-2 block text-sm font-medium'>
+              Main Brightness (1-16)
+            </label>
+            <input
+              id='mainBrightness'
+              name='mainBrightness'
+              type='number'
+              className='input input-bordered w-full'
+              placeholder='16'
+              min='1'
+              max='16'
+              value={formData.mainBrightness}
+              onChange={onChange('mainBrightness')}
+            />
+          </div>
+          <div className='form-control'>
+            <label htmlFor='themeMode' className='mb-2 block text-sm font-medium'>
+              Display Theme
+            </label>
+            <select
+              id='themeMode'
+              name='themeMode'
+              className='select select-bordered w-full'
+              value={formData.themeMode}
+              onChange={onChange('themeMode')}
+            >
+              <option value={0}>Dark Theme</option>
+              <option value={1}>Light Theme</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Standby Display */}
+        <div className='border-base-content/5 mt-6 border-t pt-6'>
+          <div className='form-control mb-4'>
+            <label className='label cursor-pointer justify-start gap-4'>
+              <span className='label-text font-medium'>Enable standby display</span>
+              <input
+                id='standbyDisplayEnabled'
+                name='standbyDisplayEnabled'
+                type='checkbox'
+                className='toggle toggle-primary'
+                checked={!!formData.standbyDisplayEnabled}
+                onChange={onChange('standbyDisplayEnabled')}
+              />
+            </label>
+          </div>
+          <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+            <div className='form-control'>
+              <label htmlFor='standbyBrightness' className='mb-2 block text-sm font-medium'>
+                Standby Brightness (0-16)
+              </label>
+              <input
+                id='standbyBrightness'
+                name='standbyBrightness'
+                type='number'
+                className='input input-bordered w-full'
+                placeholder='8'
+                min='0'
+                max='16'
+                disabled={!formData.standbyDisplayEnabled}
+                value={formData.standbyDisplayEnabled ? formData.standbyBrightness : 0}
+                onChange={onChange('standbyBrightness')}
+              />
+              <div className='mt-2 text-xs opacity-70'>
+                When the toggle is off, brightness will be set to 0
+              </div>
+            </div>
+            <div className='form-control'>
+              <label htmlFor='standbyBrightnessTimeout' className='mb-2 block text-sm font-medium'>
+                Standby Brightness Timeout
+              </label>
+              <div className='input-group'>
+                <label htmlFor='standbyBrightnessTimeout' className='input w-full'>
+                  <input
+                    id='standbyBrightnessTimeout'
+                    name='standbyBrightnessTimeout'
+                    type='number'
+                    min='1'
+                    placeholder='60'
+                    value={formData.standbyBrightnessTimeout}
+                    onChange={onChange('standbyBrightnessTimeout')}
+                  />
+                  <span aria-label='seconds'>s</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Section>
+
       {/* Web Settings */}
       <Section title='Web Settings'>
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>

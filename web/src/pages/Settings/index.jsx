@@ -36,11 +36,15 @@ import {
 import { GeneralTab } from './tabs/GeneralTab.jsx';
 
 const LazyMachineTab = lazy(() => import('./tabs/MachineTab.jsx').then(m => m.MachineTab));
+const LazyCalibrationTab = lazy(() =>
+  import('./tabs/CalibrationTab.jsx').then(m => m.CalibrationTab),
+);
 const LazyPluginsTab = lazy(() => import('./tabs/PluginsTab.jsx').then(m => m.PluginsTab));
 const LazyBluetoothTab = lazy(() => import('./tabs/BluetoothTab.jsx').then(m => m.BluetoothTab));
 const LazySystemTab = lazy(() => import('./tabs/SystemTab.jsx').then(m => m.SystemTab));
 
 const loadMachineTab = () => import('./tabs/MachineTab.jsx');
+const loadCalibrationTab = () => import('./tabs/CalibrationTab.jsx');
 const loadPluginsTab = () => import('./tabs/PluginsTab.jsx');
 const loadBluetoothTab = () => import('./tabs/BluetoothTab.jsx');
 const loadSystemTab = () => import('./tabs/SystemTab.jsx');
@@ -48,6 +52,7 @@ const loadSystemTab = () => import('./tabs/SystemTab.jsx');
 // Icons
 import { faSliders } from '@fortawesome/free-solid-svg-icons/faSliders';
 import { faTemperatureHalf } from '@fortawesome/free-solid-svg-icons/faTemperatureHalf';
+import { faCrosshairs } from '@fortawesome/free-solid-svg-icons/faCrosshairs';
 import { faPuzzlePiece } from '@fortawesome/free-solid-svg-icons/faPuzzlePiece';
 import { faBluetoothB } from '@fortawesome/free-brands-svg-icons/faBluetoothB';
 import { faRotate } from '@fortawesome/free-solid-svg-icons/faRotate';
@@ -374,6 +379,7 @@ export function Settings() {
   const settingsTabs = [
     { id: 'general', label: 'General', icon: faSliders },
     { id: 'machine', label: 'Machine', icon: faTemperatureHalf, preload: loadMachineTab },
+    { id: 'calibration', label: 'Calibration', icon: faCrosshairs, preload: loadCalibrationTab },
     { id: 'plugins', label: 'Plugins', icon: faPuzzlePiece, preload: loadPluginsTab },
     { id: 'bluetooth', label: 'Bluetooth', icon: faBluetoothB, preload: loadBluetoothTab },
     { id: 'system', label: 'System', icon: faRotate, preload: loadSystemTab },
@@ -490,6 +496,7 @@ export function Settings() {
         )}
       </form>
 
+      {tab === 'calibration' && <LazyCalibrationTab />}
       {tab === 'bluetooth' && (isLoading ? <BluetoothTabSkeleton /> : <LazyBluetoothTab />)}
       {tab === 'system' && (isLoading ? <SystemTabSkeleton /> : <LazySystemTab />)}
     </PageLayout>
