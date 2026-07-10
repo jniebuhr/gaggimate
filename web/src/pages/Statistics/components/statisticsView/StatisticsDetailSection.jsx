@@ -5,6 +5,7 @@ import { MetricsTable } from '../MetricsTable';
 import { ProfileGroupTable } from '../ProfileGroupTable';
 import { PhaseStatistics } from '../PhaseStatistics';
 import { TrendChart } from '../TrendChart';
+import { ActivityHeatmap } from '../ActivityHeatmap';
 
 const STATISTICS_SECTION_TITLE_CLASS = 'text-xs font-semibold uppercase tracking-widest opacity-90';
 
@@ -98,7 +99,10 @@ export function StatisticsDetailSectionPanel({
       )}
 
       {hasTrendStatistics && resolvedStatisticsDetailSection === 'trends' && (
-        <TrendChart key={`statistics-trends-${chartRunKey}`} trends={result.trends} />
+        <div className='space-y-4'>
+          <TrendChart key={`statistics-trends-${chartRunKey}`} trends={result.trends} />
+          <ActivityHeatmap trends={result.trends} />
+        </div>
       )}
 
       {hasProfileGroupStatistics && resolvedStatisticsDetailSection === 'profile' && (
