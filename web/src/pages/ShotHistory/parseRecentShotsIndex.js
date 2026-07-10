@@ -49,7 +49,9 @@ export function parseRecentShotsIndex(arrayBuffer) {
 
   const expectedSize = HEADER_SIZE + capacity * ENTRY_SIZE;
   if (view.byteLength < expectedSize) {
-    throw new Error(`Recent shots file truncated: ${view.byteLength} bytes (expected ${expectedSize})`);
+    throw new Error(
+      `Recent shots file truncated: ${view.byteLength} bytes (expected ${expectedSize})`,
+    );
   }
 
   const shots = [];

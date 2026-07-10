@@ -185,7 +185,7 @@ export function SortableConfigurator({
                 }}
                 onDragEnd={endDrag}
                 className={[
-                  '@container border-base-content/10 bg-base-100 flex min-h-14 items-center gap-2 rounded-lg border px-2 py-1.5 transition-all duration-100',
+                  'border-base-content/10 bg-base-100 @container flex min-h-14 items-center gap-2 rounded-lg border px-2 py-1.5 transition-all duration-100',
                   overPos === 'before' && 'border-t-primary border-t-2',
                   overPos === 'after' && 'border-b-primary border-b-2',
                   isDragging && 'opacity-40',

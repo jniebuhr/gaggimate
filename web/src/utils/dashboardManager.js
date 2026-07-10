@@ -71,13 +71,12 @@ const DEFAULT_METRIC_ORDER_MOBILE = ['pressure', 'temp', 'weight'];
 // landscape, where width grows past the portrait breakpoint but height stays small.
 const isMobileViewport = () =>
   !!globalThis.window?.matchMedia(
-    '(max-width: 768px), (max-height: 768px) and (orientation: landscape)'
+    '(max-width: 768px), (max-height: 768px) and (orientation: landscape)',
   ).matches;
 
 export const getMetricOrder = () => {
-
   const isMobile = isMobileViewport();
-  const defaultOrder = isMobile ? [...DEFAULT_METRIC_ORDER_MOBILE] : [... DEFAULT_METRIC_ORDER];
+  const defaultOrder = isMobile ? [...DEFAULT_METRIC_ORDER_MOBILE] : [...DEFAULT_METRIC_ORDER];
 
   if (!globalThis.window?.localStorage) {
     return [...defaultOrder];

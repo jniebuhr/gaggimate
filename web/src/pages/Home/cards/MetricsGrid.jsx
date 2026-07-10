@@ -43,7 +43,9 @@ function MetricCell({
         {label}
       </div>
       <div className='flex w-full items-center justify-between'>
-        {!compact && <AdjBtn icon={faMinus} onClick={onDecrease} visible={showAdj} disabled={disabled} />}
+        {!compact && (
+          <AdjBtn icon={faMinus} onClick={onDecrease} visible={showAdj} disabled={disabled} />
+        )}
         <div className='flex-1 text-center tabular-nums'>
           <span className='text-base-content text-sm font-bold'>{current}</span>
           {target != null && (
@@ -56,7 +58,9 @@ function MetricCell({
             </>
           )}
         </div>
-        {!compact && <AdjBtn icon={faPlus} onClick={onIncrease} visible={showAdj} disabled={disabled} />}
+        {!compact && (
+          <AdjBtn icon={faPlus} onClick={onIncrease} visible={showAdj} disabled={disabled} />
+        )}
       </div>
     </div>
   );
