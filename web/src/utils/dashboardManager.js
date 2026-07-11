@@ -436,3 +436,118 @@ export const setRecentShotCount = n => {
     return false;
   }
 };
+
+// ── Dashboard mode (Simple / Advanced / Customize) ─────────────────────────
+
+const DASHBOARD_MODE_KEY = 'dashboardMode';
+
+export const DASHBOARD_MODES = {
+  SIMPLE: 'simple',
+  ADVANCED: 'advanced',
+  CUSTOM: 'custom',
+};
+
+// Preset values per mode; function values are resolved at apply time so
+// viewport-dependent choices track the device the preset is applied on.
+const DASHBOARD_PRESETS = {
+  [DASHBOARD_MODES.SIMPLE]: {
+    // Matches the pre-preset default dashboard.
+    layout: DASHBOARD_LAYOUTS.ORDER_FIRST,
+    cardMode: DASHBOARD_CARD_MODES.SINGLE,
+    metricOrder: () =>
+      isMobileViewport() ? [...DEFAULT_METRIC_ORDER_MOBILE] : [...DEFAULT_METRIC_ORDER],
+    panelOrder: DEFAULT_PANEL_ORDER,
+    stickyTop: false,
+    stickyBottom: true,
+    showRecentShots: false,
+    recentShotCount: 4,
+    metricsColumns: 3,
+    metricsLastRowFill: METRICS_LAST_ROW_FILLS.EVEN,
+    compactPanels: () => (isMobileViewport() ? [...DEFAULT_COMPACT_PANELS_MOBILE] : []),
+    profileChartHeight: 128,
+    columnSpacing: COLUMN_SPACINGS.START,
+    shotMetricSlots: DEFAULT_SHOT_METRIC_SLOTS,
+  },
+  [DASHBOARD_MODES.ADVANCED]: {
+    layout: DASHBOARD_LAYOUTS.ORDER_FIRST,
+    cardMode: DASHBOARD_CARD_MODES.SINGLE,
+    metricOrder: () =>
+      isMobileViewport()
+        ? ['pressure', 'flow', 'temp', 'weight']
+        : ['pressure', 'flow', 'temp', 'weight', 'pumppower', 'heaterpower'],
+    panelOrder: ['mode', 'profile', 'favorites', 'metrics', 'watertank', 'action'],
+    stickyTop: false,
+    stickyBottom: true,
+    showRecentShots: true,
+    recentShotCount: 4,
+    metricsColumns: 3,
+    metricsLastRowFill: METRICS_LAST_ROW_FILLS.EVEN,
+    compactPanels: () => (isMobileViewport() ? [...DEFAULT_COMPACT_PANELS_MOBILE] : []),
+    profileChartHeight: 128,
+    columnSpacing: COLUMN_SPACINGS.START,
+    shotMetricSlots: DEFAULT_SHOT_METRIC_SLOTS,
+  },
+};
+
+// Binds each preset key to its signal and its stored-customization getter.
+const DASHBOARD_SETTING_BINDINGS = [
+  { key: 'layout', signal: dashboardLayoutSignal, get: getDashboardLayout },
+  { key: 'cardMode', signal: dashboardCardModeSignal, get: getDashboardCardMode },
+  { key: 'metricOrder', signal: metricOrderSignal, get: getMetricOrder },
+  { key: 'panelOrder', signal: panelOrderSignal, get: getPanelOrder },
+  { key: 'stickyTop', signal: stickyTopSignal, get: getStickyTop },
+  { key: 'stickyBottom', signal: stickyBottomSignal, get: getStickyBottom },
+  { key: 'showRecentShots', signal: showRecentShotsSignal, get: getShowRecentShots },
+  { key: 'recentShotCount', signal: recentShotCountSignal, get: getRecentShotCount },
+  { key: 'metricsColumns', signal: metricsColumnsSignal, get: getMetricsColumns },
+  { key: 'metricsLastRowFill', signal: metricsLastRowFillSignal, get: getMetricsLastRowFill },
+  { key: 'compactPanels', signal: compactPanelsSignal, get: getCompactPanels },
+  { key: 'profileChartHeight', signal: profileChartHeightSignal, get: getProfileChartHeight },
+  { key: 'columnSpacing', signal: columnSpacingSignal, get: getColumnSpacing },
+  { key: 'shotMetricSlots', signal: shotMetricSlotsSignal, get: getShotMetricSlots },
+];
+
+export const getDashboardMode = () => {
+  if (!globalThis.window?.localStorage) return DASHBOARD_MODES.SIMPLE;
+  try {
+    const stored = localStorage.getItem(DASHBOARD_MODE_KEY);
+    if (Object.values(DASHBOARD_MODES).includes(stored)) return stored;
+    // No mode stored yet: keep existing customizations on Customize; new users
+    // start on the Simple preset (identical to the previous default dashboard).
+    const hasCustomization = Object.keys(localStorage).some(
+      k => k.startsWith('dashboard') && k !== DASHBOARD_MODE_KEY,
+    );
+    return hasCustomization ? DASHBOARD_MODES.CUSTOM : DASHBOARD_MODES.SIMPLE;
+  } catch {
+    return DASHBOARD_MODES.SIMPLE;
+  }
+};
+
+export const dashboardModeSignal = signal(getDashboardMode());
+
+// Points the setting signals at the preset values (Simple/Advanced) or back at
+// the stored customization (Customize). Stored per-setting keys are never
+// overwritten, so switching to a preset and back restores the customization.
+const applyDashboardSettings = mode => {
+  const preset = DASHBOARD_PRESETS[mode];
+  for (const binding of DASHBOARD_SETTING_BINDINGS) {
+    const value = preset ? preset[binding.key] : binding.get();
+    const resolved = typeof value === 'function' ? value() : value;
+    binding.signal.value = Array.isArray(resolved) ? [...resolved] : resolved;
+  }
+};
+
+export const setDashboardMode = mode => {
+  if (!Object.values(DASHBOARD_MODES).includes(mode)) return false;
+  try {
+    localStorage.setItem(DASHBOARD_MODE_KEY, mode);
+  } catch {
+    // Persisting failed — still apply the mode for this session.
+  }
+  dashboardModeSignal.value = mode;
+  applyDashboardSettings(mode);
+  return true;
+};
+
+// A preset may be active from a previous session — apply it on load.
+applyDashboardSettings(dashboardModeSignal.value);

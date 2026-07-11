@@ -81,7 +81,7 @@ function ShotMiniCard({ shot, slots }) {
   const dateLabel = formatShotDateTime(shot.timestamp, !clock24hSignal.value);
 
   return (
-    <div className='app-card-surface bg-base-200 flex min-w-0 flex-row items-center gap-3 rounded-xl p-3 sm:flex-col sm:items-stretch lg:p-2.5 xl:p-3'>
+    <div className='bg-base-200 flex min-w-0 flex-row items-center gap-3 rounded-xl p-3 sm:flex-col sm:items-stretch lg:p-2.5 xl:p-3'>
       {/* Identity — left on mobile, top on sm+ */}
       <div className='flex min-w-0 flex-1 items-start gap-2'>
         <div className='min-w-0 flex-1'>

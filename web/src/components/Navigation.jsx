@@ -3,7 +3,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHome } from '@fortawesome/free-solid-svg-icons/faHome';
 import { faList } from '@fortawesome/free-solid-svg-icons/faList';
 import { faTimeline } from '@fortawesome/free-solid-svg-icons/faTimeline';
-import { faTemperatureHalf } from '@fortawesome/free-solid-svg-icons/faTemperatureHalf';
 import { faBluetoothB } from '@fortawesome/free-brands-svg-icons/faBluetoothB';
 import { faCog } from '@fortawesome/free-solid-svg-icons/faCog';
 import { faRotate } from '@fortawesome/free-solid-svg-icons/faRotate';
@@ -11,12 +10,17 @@ import { faMagnifyingGlassChart } from '@fortawesome/free-solid-svg-icons/faMagn
 import { faChartSimple } from '@fortawesome/free-solid-svg-icons/faChartSimple';
 import { faCircleChevronLeft } from '@fortawesome/free-solid-svg-icons/faCircleChevronLeft';
 import { faCircleChevronRight } from '@fortawesome/free-solid-svg-icons/faCircleChevronRight';
-import { faPen } from '@fortawesome/free-solid-svg-icons/faPen';
 import { GmLogoIcon } from '../pages/ShotAnalyzer/components/SourceMarker.jsx';
 import { faGithub } from '@fortawesome/free-brands-svg-icons/faGithub';
 import { faDiscord } from '@fortawesome/free-brands-svg-icons/faDiscord';
 import { useEffect, useMemo, useRef } from 'preact/hooks';
 import { faPencil } from '@fortawesome/free-solid-svg-icons/faPencil';
+import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
+import {
+  DASHBOARD_MODES,
+  dashboardModeSignal,
+  setDashboardMode,
+} from '../utils/dashboardManager.js';
 
 // List of random icons to display - add your icons here (SVG strings, text, or emojis)
 const RANDOM_ICONS = [
@@ -81,12 +85,73 @@ const NAVIGATION_SECTIONS = [
   },
 ];
 
+function DashboardModeDropdown({ editLink, editIcon, editActive, isActive }) {
+  const mode = dashboardModeSignal.value;
+
+  // daisyUI dropdowns are focus-driven — blur to close after a selection.
+  const selectMode = value => {
+    setDashboardMode(value);
+    document.activeElement?.blur();
+  };
+
+  const options = [
+    { value: DASHBOARD_MODES.SIMPLE, label: 'Simple' },
+    { value: DASHBOARD_MODES.ADVANCED, label: 'Advanced' },
+  ];
+
+  return (
+    <div className='dropdown dropdown-end h-full'>
+      {/* div+tabindex instead of <button>: Safari doesn't focus buttons on click,
+          which daisyUI's focus-driven dropdown relies on. */}
+      <div
+        tabIndex={0}
+        role='button'
+        aria-label='Dashboard view'
+        title='Dashboard view'
+        className={`flex h-full cursor-pointer items-center justify-center rounded-r-xl px-2.5 ${
+          editActive
+            ? 'bg-primary text-primary-content'
+            : isActive
+              ? 'bg-primary text-primary-content/50 hover:text-primary-content'
+              : 'text-base-content/30 hover:bg-base-content/10 hover:text-base-content bg-transparent'
+        }`}
+      >
+        <FontAwesomeIcon icon={editIcon} className='h-3 w-3' />
+      </div>
+      <ul
+        tabIndex={0}
+        className='dropdown-content menu bg-base-100 rounded-box border-base-300 z-10 mt-1 w-44 border p-2 shadow-lg'
+      >
+        {options.map(option => (
+          <li key={option.value}>
+            <button type='button' onClick={() => selectMode(option.value)}>
+              <span className='flex-grow'>{option.label}</span>
+              {mode === option.value && <FontAwesomeIcon icon={faCheck} className='h-3 w-3' />}
+            </button>
+          </li>
+        ))}
+        <li>
+          <a href={editLink} onClick={() => selectMode(DASHBOARD_MODES.CUSTOM)}>
+            <span className='flex-grow'>Customize</span>
+            {mode === DASHBOARD_MODES.CUSTOM && (
+              <FontAwesomeIcon icon={faCheck} className='h-3 w-3' />
+            )}
+          </a>
+        </li>
+      </ul>
+    </div>
+  );
+}
+
 function MenuItem({ collapsed = false, icon, isNew = false, label, link, editLink, editIcon }) {
   const { path } = useLocation();
   const isActive = path === link;
   const editActive = path === editLink;
   const isExpanded = collapsed === false;
-  const commonClasses = 'btn btn-md border-none h-12 rounded-none';
+  const editLinkEnabled = editLink && editIcon && !collapsed;
+  // Rounding lives on the children — the row wrapper can't use overflow-hidden
+  // or it would clip the dashboard-mode dropdown.
+  const commonClasses = `btn btn-md border-none h-12 ${editLinkEnabled ? 'rounded-l-xl rounded-r-none' : 'rounded-xl'}`;
   const baseClassName = collapsed
     ? 'btn-square min-h-0 min-w-0 bg-transparent px-0 text-base-content hover:bg-base-content/10 hover:text-base-content'
     : 'justify-start gap-3 text-base-content hover:text-base-content hover:bg-base-content/10 bg-transparent border-none px-2';
@@ -95,12 +160,8 @@ function MenuItem({ collapsed = false, icon, isNew = false, label, link, editLin
     : 'justify-start gap-3 bg-primary text-primary-content hover:bg-primary hover:text-primary-content px-2';
   const className = `${commonClasses} ${isActive ? activeClassName : baseClassName}`;
 
-  const editLinkEnabled = editLink && editIcon && !collapsed;
-
   return (
-    <div
-      className={`flex h-12 flex-row overflow-hidden rounded-xl ${collapsed ? 'w-12' : 'w-full'}`}
-    >
+    <div className={`flex h-12 flex-row ${collapsed ? 'w-12' : 'w-full'}`}>
       <a
         href={link}
         className={`flex-grow ${className}`}
@@ -119,20 +180,12 @@ function MenuItem({ collapsed = false, icon, isNew = false, label, link, editLin
         ) : null}
       </a>
       {editLinkEnabled && (
-        <a
-          href={editLink}
-          aria-label='Settings'
-          title='Settings'
-          className={`flex items-center justify-center px-2.5 ${
-            editActive
-              ? 'bg-primary text-primary-content'
-              : isActive
-                ? 'bg-primary text-primary-content/50 hover:text-primary-content'
-                : 'text-base-content/30 hover:bg-base-content/10 hover:text-base-content bg-transparent'
-          }`}
-        >
-          <FontAwesomeIcon icon={editIcon} className='h-3 w-3' />
-        </a>
+        <DashboardModeDropdown
+          editLink={editLink}
+          editIcon={editIcon}
+          editActive={editActive}
+          isActive={isActive}
+        />
       )}
     </div>
   );
@@ -165,7 +218,7 @@ export function Navigation({ collapsed = false, onToggleCollapsed }) {
         <div
           className='fixed end-0 top-0 bottom-0 left-0 z-9998 cursor-pointer backdrop-blur-sm backdrop-brightness-50 md:hidden'
           onClick={onToggleCollapsed}
-        ></div>
+        />
       )}
       <aside
         className={`sidebar border-base-300 bg-base-100 fixed top-0 left-0 z-9999 flex h-screen flex-col overflow-y-auto border-r p-5 md:static landscape:static ${

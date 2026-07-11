@@ -1,4 +1,4 @@
-import { useState } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCompress } from '@fortawesome/free-solid-svg-icons/faCompress';
 import Card from '../../components/Card.jsx';
@@ -42,6 +42,9 @@ import {
   setColumnSpacing,
   getShotMetricSlots,
   setShotMetricSlots,
+  DASHBOARD_MODES,
+  getDashboardMode,
+  setDashboardMode,
 } from '../../utils/dashboardManager.js';
 import { METRIC_DEFINITIONS } from '../../utils/metricDefinitions.js';
 import { PANEL_DEFINITIONS } from '../../utils/panelDefinitions.js';
@@ -63,6 +66,18 @@ export function DashboardSettings() {
   const [metricOrder, setMetricOrderState] = useState(() => getMetricOrder());
   const [metricsColumns, setMetricsColumnsState] = useState(() => getMetricsColumns());
   const [metricsLastRowFill, setMetricsLastRowFillState] = useState(() => getMetricsLastRowFill());
+
+  // Editing here means customizing — leave any active preset and show the stored values.
+  useEffect(() => {
+    setDashboardMode(DASHBOARD_MODES.CUSTOM);
+  }, []);
+
+  // Covers a preset being selected from the nav dropdown while this page stays mounted.
+  const markCustomized = () => {
+    if (getDashboardMode() !== DASHBOARD_MODES.CUSTOM) {
+      setDashboardMode(DASHBOARD_MODES.CUSTOM);
+    }
+  };
 
   const hiddenMetrics = METRIC_DEFINITIONS.filter(
     m => !m.required && !metricOrder.includes(m.id) && m.available(machine.value.status),
@@ -86,7 +101,11 @@ export function DashboardSettings() {
         <h2 className='flex-grow text-2xl font-bold sm:text-3xl'>Dashboard Settings</h2>
       </div>
 
-      <div className='grid grid-cols-1 gap-4 lg:grid-cols-10'>
+      <div
+        className='grid grid-cols-1 gap-4 lg:grid-cols-10'
+        onChangeCapture={markCustomized}
+        onClickCapture={markCustomized}
+      >
         {/* ── Card 1: General Settings ─────────────────────────────────── */}
         <Card sm={10} lg={5} title='General Settings'>
           <SettingsFormField label='Dashboard Layout' htmlFor='dashboardLayout'>
