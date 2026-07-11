@@ -74,7 +74,9 @@ export function DashboardSidebar({ unified = false }) {
             </div>
           </div>
         )}
-        <div className={`flex min-h-0 flex-1 flex-col overflow-y-auto ${hasSpacer ? '' : justifyClass}`}>
+        <div
+          className={`flex min-h-0 flex-1 flex-col overflow-y-auto ${hasSpacer ? '' : justifyClass}`}
+        >
           {hasSpacer ? (
             <>
               {topGroup.map((panel, i) => (
@@ -144,14 +146,19 @@ export function DashboardSidebar({ unified = false }) {
           />
         </div>
       )}
-      <div className={`flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto ${hasSpacer ? '' : justifyClass}`}>
+      <div
+        className={`flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto ${hasSpacer ? '' : justifyClass}`}
+      >
         {hasSpacer ? (
           <>
             {topGroup.length > 0 && (
               <div className='flex flex-col gap-2'>
                 {topGroup.map(panel => (
                   <div key={panel.id} className={panel.containerClass ?? ''}>
-                    <panel.component {...panel.props(ds)} compact={compactPanels.includes(panel.id)} />
+                    <panel.component
+                      {...panel.props(ds)}
+                      compact={compactPanels.includes(panel.id)}
+                    />
                   </div>
                 ))}
               </div>
@@ -161,7 +168,10 @@ export function DashboardSidebar({ unified = false }) {
               <div className='flex flex-col gap-2'>
                 {bottomGroup.map(panel => (
                   <div key={panel.id} className={panel.containerClass ?? ''}>
-                    <panel.component {...panel.props(ds)} compact={compactPanels.includes(panel.id)} />
+                    <panel.component
+                      {...panel.props(ds)}
+                      compact={compactPanels.includes(panel.id)}
+                    />
                   </div>
                 ))}
               </div>

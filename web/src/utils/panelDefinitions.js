@@ -29,7 +29,12 @@ export const SPACER_ID = '__spacer__';
  * top-packed group and a bottom-packed group. Deliberately has no
  * component/props/containerClass since it's never rendered as a real panel.
  */
-export const SPACER_DEFINITION = { id: SPACER_ID, label: 'Flexible Space', required: false, available: () => true };
+export const SPACER_DEFINITION = {
+  id: SPACER_ID,
+  label: 'Flexible Space',
+  required: false,
+  available: () => true,
+};
 
 export const PANEL_DEFINITIONS = [
   {
@@ -50,7 +55,7 @@ export const PANEL_DEFINITIONS = [
     label: 'Profile Selector',
     required: false,
     supportsCompact: true,
-    available: () => true,
+    available: ds => ds.mode !== 4,
     component: ProfileCard,
     props: ds => ({
       selectedProfile: ds.selectedProfile,
@@ -67,7 +72,7 @@ export const PANEL_DEFINITIONS = [
     label: 'Quick Select',
     required: false,
     supportsCompact: true,
-    available: () => true,
+    available: ds => ds.mode !== 4,
     component: FavoriteProfilesCard,
     props: ds => ({
       selectedProfileId: ds.selectedProfileId,
@@ -114,6 +119,13 @@ export const PANEL_DEFINITIONS = [
       startFlush: ds.startFlush,
       currentTemperature: ds.currentTemperature,
       targetTemperature: ds.targetTemperature,
+      changeTarget: ds.changeTarget,
+      grindTarget: ds.grindTarget,
+      grindTargetDuration: ds.grindTargetDuration,
+      grindTargetVolume: ds.grindTargetVolume,
+      raiseTarget: ds.raiseTarget,
+      lowerTarget: ds.lowerTarget,
+      volumetricAvailable: ds.volumetricAvailable,
     }),
   },
 ];

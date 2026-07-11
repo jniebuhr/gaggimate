@@ -3,6 +3,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTint } from '@fortawesome/free-solid-svg-icons/faTint';
 import { getPrimaryIcon, getPrimaryLabel } from '../utils.js';
 import { useEffect, useState } from 'preact/hooks';
+import TargetToggle from '../TargetToggle.jsx';
+import Adjuster from '../Adjuster.jsx';
 
 export function ActionCard({
   mode,
@@ -19,6 +21,13 @@ export function ActionCard({
   inCard = false,
   currentTemperature,
   targetTemperature,
+  changeTarget,
+  grindTarget,
+  volumetricAvailable,
+  grindTargetDuration,
+  grindTargetVolume,
+  raiseTarget,
+  lowerTarget,
 }) {
   const [preheated, setPreheated] = useState(false);
   const showPrimary = mode === 1 || mode === 3 || mode === 4;
@@ -26,6 +35,10 @@ export function ActionCard({
   const showSteam = mode === 2;
 
   const showFlush = isBrewing && !isActive && !isFinished;
+  const grindValue =
+    grindTarget === 1 && volumetricAvailable
+      ? `${grindTargetVolume}g`
+      : `${Math.round(grindTargetDuration / 1000)}s`;
 
   const handlePrimary = () => {
     if (isActive) deactivate();
@@ -46,7 +59,20 @@ export function ActionCard({
     <div
       className={`grid grid-cols-[1fr_auto_1fr] items-center ${inCard ? '' : 'card bg-base-100 rounded-xl p-3'}`}
     >
-      <div />
+      {isGrinding && (
+        <div className='col-span-full mb-4 flex flex-col gap-4'>
+          <div className='flex justify-center'>
+            <TargetToggle value={grindTarget ? 1 : 0} onChange={changeTarget} />
+          </div>
+          <Adjuster
+            label='Grind target'
+            value={grindValue}
+            onDecrease={lowerTarget}
+            onIncrease={raiseTarget}
+          />
+        </div>
+      )}
+      <div className='flex justify-start'></div>
       {showPrimary && (
         <button
           type='button'

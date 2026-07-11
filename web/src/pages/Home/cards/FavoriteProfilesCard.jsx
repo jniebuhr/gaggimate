@@ -23,7 +23,7 @@ function ProfileMiniCard({ profile, isSelected, onSelect }) {
     <button
       type='button'
       onClick={() => onSelect(profile.id)}
-      className={`flex w-full flex-col gap-1.5 rounded-lg p-2 text-left transition-colors ${
+      className={`flex w-full cursor-pointer flex-col gap-1.5 rounded-lg p-2 text-left transition-colors ${
         isSelected ? 'bg-primary/15 ring-primary/40 ring-1' : 'bg-base-200 hover:bg-base-300'
       }`}
     >

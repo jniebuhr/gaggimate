@@ -29,41 +29,6 @@ const Metric = ({ icon, current, target, unit }) => (
   </div>
 );
 
-const TargetToggle = ({ value, onChange }) => {
-  const pill = on =>
-    `flex min-w-0 flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-full px-2 py-1 text-xs transition-all duration-200 ${on ? 'bg-primary text-primary-content font-medium' : 'text-base-content/60 hover:text-base-content'}`;
-  return (
-    <div className='bg-base-200/70 flex w-full min-w-0 rounded-full p-1'>
-      <button className={pill(value === 0)} onClick={() => onChange(0)}>
-        <FontAwesomeIcon icon={faClock} className='text-[0.65rem]' /> <span>Time</span>
-      </button>
-      <button className={pill(value === 1)} onClick={() => onChange(1)}>
-        <FontAwesomeIcon icon={faWeightScale} className='text-[0.65rem]' /> <span>Weight</span>
-      </button>
-    </div>
-  );
-};
-
-const Adjuster = ({ label, value, onDecrease, onIncrease }) => {
-  const btn = 'btn btn-ghost btn-sm flex h-8 w-8 items-center justify-center rounded-full p-0';
-  return (
-    <div className='flex flex-col items-center gap-1'>
-      <div className='text-base-content/60 text-[0.65rem] font-light tracking-wider'>{label}</div>
-      <div className='flex items-center space-x-2'>
-        <button onClick={onDecrease} className={btn}>
-          <FontAwesomeIcon icon={faMinus} className='h-3 w-3' />
-        </button>
-        <div className='text-base-content min-w-[72px] text-center text-lg font-bold tabular-nums'>
-          {value}
-        </div>
-        <button onClick={onIncrease} className={btn}>
-          <FontAwesomeIcon icon={faPlus} className='h-3 w-3' />
-        </button>
-      </div>
-    </div>
-  );
-};
-
 const FinishedView = ({ elapsed }) => (
   <div className='space-y-1 text-center'>
     <div className='text-base-content text-lg font-bold'>Finished</div>

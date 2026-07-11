@@ -48,7 +48,7 @@ export const METRIC_DEFINITIONS = [
     getTarget: ds => (ds.targetTemperature ?? 0).toFixed(0),
     unit: '°C',
     adjustable: () => true,
-    disabled: ds => ds.isBrewing && ds.isActive,
+    disabled: ds => (ds.isBrewing && ds.isActive) || ds.mode === 0,
     onDecrease: ds => ds.lowerTemp,
     onIncrease: ds => ds.raiseTemp,
   },
@@ -124,7 +124,13 @@ export const METRIC_DEFINITIONS = [
     getTarget: ds => (ds.brewTarget && ds.targetWeight != null ? ds.targetWeight.toFixed(0) : null),
     unit: 'g',
     adjustable: ds => ds.volumetricAvailable,
-    disabled: ds => ds.isBrewing && ds.isActive,
+    disabled: ds =>
+      (ds.isBrewing && ds.isActive) ||
+      ds.mode === 0 ||
+      ds.mode === 2 ||
+      ds.mode === 3 ||
+      ds.mode === 4 ||
+      !ds.targetWeight,
     onDecrease: ds => ds.lowerTarget,
     onIncrease: ds => ds.raiseTarget,
   },

@@ -116,7 +116,14 @@ function prepareData(phases, target) {
   return data;
 }
 
-function makeChartData(data, selectedPhase, phaseRanges, onPhaseClick, isDarkMode = false, showPhaseLabels = true) {
+function makeChartData(
+  data,
+  selectedPhase,
+  phaseRanges,
+  onPhaseClick,
+  isDarkMode = false,
+  showPhaseLabels = true,
+) {
   const phases = Array.isArray(data?.phases) ? data.phases : [];
   let duration = 0;
   for (const phase of phases) {
@@ -293,7 +300,6 @@ function makeChartData(data, selectedPhase, phaseRanges, onPhaseClick, isDarkMod
           }
         : undefined,
     });
-
   }
 
   // If we are in the edit profile page (we have phases and a phase is selected) set the hover effect and onPhaseClick()
@@ -360,6 +366,8 @@ export function ExtendedProfileChart({
   className = 'max-h-36 w-full',
   selectedPhase = null,
   onPhaseClick = null,
+  showPhaseLabels = true,
+  style,
 }) {
   const isDarkMode = () =>
     window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -367,7 +375,14 @@ export function ExtendedProfileChart({
   const phaseRanges = buildPhaseRanges(phases);
   const phaseRangesRef = useRef(phaseRanges);
   phaseRangesRef.current = phaseRanges;
-  const config = makeChartData(data, selectedPhase, phaseRanges, onPhaseClick, isDarkMode(), showPhaseLabels);
+  const config = makeChartData(
+    data,
+    selectedPhase,
+    phaseRanges,
+    onPhaseClick,
+    isDarkMode(),
+    showPhaseLabels,
+  );
 
   return (
     <ChartComponent
