@@ -480,6 +480,11 @@ void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &respo
                         o["profileId"] = hdr.profileId;
                         o["samples"] = hdr.sampleCount;
                         o["duration"] = hdr.durationMs;
+
+                        if ((recording || extendedRecording) && currentBluetoothWeight > 0 && (id == currentId)) {
+                            finalWeight = currentBluetoothWeight;
+                        }
+
                         if (finalWeight > 0.0f) {
                             o["volume"] = finalWeight;
                         }
