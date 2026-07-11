@@ -417,13 +417,16 @@ void DefaultUI::setupState() {
                           &wifiConnected, &apActive);
     effect_mgr.use_effect([this]() { return currentScreen == SCREEN_ID_MENU_SCREEN_NEW; },
                           [this]() {
-                              int step = 360 / (grindAvailable ? 5 : 4);
-                              int offset = grindAvailable ? 1 : 0;
-                              positionMenuIcon(objects.btn_steam_1, 0, 145);
-                              positionMenuIcon(objects.btn_water_1, step, 145);
-                              positionMenuIcon(objects.btn_grind_1, step * 2, 145);
-                              positionMenuIcon(objects.btn_info_1, step * (2 + offset), 145);
-                              positionMenuIcon(objects.btn_brew_1, step * (3 + offset), 145);
+                              int radius = 135;
+                              int count = grindAvailable ? 4 : 3;
+                              int step = 360 / (grindAvailable ? 4 : 3);
+                              int iconOffset = grindAvailable ? 1 : 0;
+                              int rotationOffset = count == 4 ? 45 : 0;
+                              positionMenuIcon(objects.btn_brew_1, step * 0 - rotationOffset, radius);
+                              positionMenuIcon(objects.btn_steam_1, step * 1 - rotationOffset, radius);
+                              positionMenuIcon(objects.btn_water_1, step * 2 - rotationOffset, radius);
+                              positionMenuIcon(objects.btn_grind_1, step * 3 - rotationOffset, radius);
+                              // positionMenuIcon(objects.btn_settings_1, step * (3 + iconOffset) - rotationOffset, radius);
                           },
                           &grindAvailable);
 }
@@ -530,7 +533,7 @@ void DefaultUI::updateSystemStatus() {
     systemStatus.controller_version(controller->getSystemInfo().version.c_str());
     systemStatus.display_version(BUILD_GIT_VERSION);
     systemStatus.update_available(updateAvailable);
-    systemStatus.in_menu(currentScreen == SCREEN_ID_MENU_SCREEN);
+    systemStatus.in_menu(currentScreen == SCREEN_ID_MENU_SCREEN_NEW);
     systemStatus.pressure_available(pressureAvailable);
     systemStatus.grind_available(grindAvailable);
     systemStatus.mode(mode);
@@ -543,6 +546,8 @@ void DefaultUI::updateSystemStatus() {
     if (getLocalTime(&timeinfo, 5)) {
         const ::Settings &settings = controller->getSettings();
         strftime(timeBuf, sizeof(timeBuf), settings.isClock24hFormat() ? "%H:%M" : "%I:%M %p", &timeinfo);
+        if (!settings.isClock24hFormat() && timeBuf[0] == '0')
+            timeBuf[0] = ' ';
     }
     systemStatus.time(timeBuf);
 }

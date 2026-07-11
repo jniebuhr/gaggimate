@@ -454,6 +454,24 @@ export function PluginCard({
                 onChange={onChange('maxPumpPower')}
               />
             </div>
+            <div className='form-control'>
+              <label htmlFor='pumpSlipCoeffs' className='mb-2 block text-sm font-medium'>
+                Pump Slip Coefficients
+              </label>
+              <input
+                id='pumpSlipCoeffs'
+                name='pumpSlipCoeffs'
+                type='text'
+                className='input input-bordered w-full'
+                placeholder='0,0,0,0'
+                value={formData.pumpSlipCoeffs}
+                onChange={onChange('pumpSlipCoeffs')}
+              />
+              <span className='mt-1 text-xs opacity-70'>
+                Pressure polynomial (a,b,c,d) for vane-/gear-pump internal leakage. Leave at 0,0,0,0 if
+                uncalibrated.
+              </span>
+            </div>
           </div>
         </div>
       )}

@@ -34,6 +34,7 @@
 #ifdef GAGGIMATE_SIM
 #include <SdlDriver.h> // desktop SDL panel stands in for the hardware drivers
 #else
+#include <Preferences.h>
 #include <display/drivers/AmoledDisplayDriver.h>
 #include <display/drivers/LilyGoDriver.h>
 #include <display/drivers/WaveshareDriver.h>
@@ -144,23 +145,56 @@ void Controller::connect() {
 }
 
 #ifndef GAGGIMATE_HEADLESS
+// NVS values for the cached panel detection result (GM-140) — only append, never renumber
+enum PanelModel : uint8_t { PANEL_UNKNOWN = 0, PANEL_LILYGO = 1, PANEL_AMOLED = 2, PANEL_WAVESHARE = 3 };
+
 void Controller::setupPanel() {
 #ifdef GAGGIMATE_SIM
     driver = SdlDriver::getInstance(); // desktop SDL panel
-#else
-    if (LilyGoDriver::getInstance()->isCompatible()) {
-        driver = LilyGoDriver::getInstance();
-    } else if (AmoledDisplayDriver::getInstance()->isCompatible()) {
-        driver = AmoledDisplayDriver::getInstance();
-    } else if (WaveshareDriver::getInstance()->isCompatible()) {
-        driver = WaveshareDriver::getInstance();
-    } else {
-        Serial.println("No compatible display driver found");
-        delay(10000);
-        ESP.restart();
-    }
-#endif
     driver->init();
+#else
+    // The panel can't change after flashing, so cache the detection result in NVS
+    // and skip the multi-second probing chain on subsequent boots (GM-140).
+    Preferences panelPrefs;
+    panelPrefs.begin("panel", false);
+    uint8_t model = panelPrefs.getUChar("driver", PANEL_UNKNOWN);
+    if (model != PANEL_UNKNOWN) {
+        // Drop the cache before init so a crash here falls back to full detection
+        panelPrefs.remove("driver");
+        switch (model) {
+        case PANEL_LILYGO:
+            driver = LilyGoDriver::getInstance();
+            break;
+        case PANEL_AMOLED:
+            if (AmoledDisplayDriver::getInstance()->selectVariant(panelPrefs.getChar("variant", -1)))
+                driver = AmoledDisplayDriver::getInstance();
+            break;
+        case PANEL_WAVESHARE:
+            driver = WaveshareDriver::getInstance();
+            break;
+        }
+    }
+    if (driver == nullptr) {
+        if (LilyGoDriver::getInstance()->isCompatible()) {
+            driver = LilyGoDriver::getInstance();
+            model = PANEL_LILYGO;
+        } else if (AmoledDisplayDriver::getInstance()->isCompatible()) {
+            driver = AmoledDisplayDriver::getInstance();
+            model = PANEL_AMOLED;
+            panelPrefs.putChar("variant", AmoledDisplayDriver::getInstance()->getVariant());
+        } else if (WaveshareDriver::getInstance()->isCompatible()) {
+            driver = WaveshareDriver::getInstance();
+            model = PANEL_WAVESHARE;
+        } else {
+            Serial.println("No compatible display driver found");
+            delay(10000);
+            ESP.restart();
+        }
+    }
+    driver->init();
+    panelPrefs.putUChar("driver", model);
+    panelPrefs.end();
+#endif
 }
 #endif
 
@@ -727,10 +761,16 @@ void Controller::setPumpModelCoeffs(void) {
         float coeffs[4];
         parseFloatCsv(settings.getPumpModelCoeffs(), coeffs, 4, NAN);
         bool gearpumpEnabled = systemInfo.capabilities.hasAddon(7);
+        // Slip is gear-pump only; send zeros otherwise so it stays a no-op.
+        float slip[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+        if (gearpumpEnabled) {
+            parseFloatCsv(settings.getPumpSlipCoeffs(), slip, 4, 0.0f);
+        }
         comms.sendPumpSettings(coeffs[0], coeffs[1], coeffs[2], coeffs[3],
                                gearpumpEnabled ? settings.getCommutationGain() : DEFAULT_COMMUTATION_GAIN,
                                gearpumpEnabled ? settings.getConvergenceGain() : DEFAULT_CONVERGENCE_GAIN,
-                               gearpumpEnabled ? settings.getIntegralGain() : DEFAULT_INTEGRAL_GAIN, settings.getMaxPumpPower());
+                               gearpumpEnabled ? settings.getIntegralGain() : DEFAULT_INTEGRAL_GAIN, settings.getMaxPumpPower(),
+                               slip[0], slip[1], slip[2], slip[3]);
     }
 }
 

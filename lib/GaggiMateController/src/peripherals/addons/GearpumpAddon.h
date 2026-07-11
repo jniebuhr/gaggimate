@@ -26,6 +26,7 @@ class GearpumpAddon {
     MCP4725 *mcp;
 
     const char *LOG_TAG = "GearpumpAddon";
+    void ensureSafePowerOnState();
     static void loopTask(void *arg);
     xTaskHandle taskHandle;
 };

@@ -42,7 +42,7 @@ extern const lv_img_dsc_t img_list;
 extern const lv_img_dsc_t img_clock_future_past_40x40;
 extern const lv_img_dsc_t img_indicator;
 extern const lv_img_dsc_t img_settings_80x80;
-extern const lv_img_dsc_t img_info_80x80;
+extern const lv_img_dsc_t img_info_40x40;
 
 #ifndef EXT_IMG_DESC_T
 #define EXT_IMG_DESC_T
