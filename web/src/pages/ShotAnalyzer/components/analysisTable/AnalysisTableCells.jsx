@@ -1,17 +1,15 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faExclamationTriangle, faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { getDisplayStopReasonParts, utilityColors } from '../../utils/analyzerUtils';
+import { isSafetyExitReason } from '../../services/analyzer/exitReasons.js';
 
-function getBrewModeLabel(isBrewByWeight) {
-  return isBrewByWeight ? 'Brew by Weight' : 'Brew by Time';
-}
-
-export function ComparePhaseLabel({ phase, phaseIndex, results }) {
+export function ComparePhaseLabel({ phase, results }) {
   if (!phase) {
     return <div className='text-base-content/45 leading-tight font-medium'>-</div>;
   }
 
   const { skipNotice, stopReason } = getDisplayStopReasonParts(phase.exit?.reason);
+  const safetyStop = isSafetyExitReason(phase.exit?.code);
 
   return (
     <>
@@ -27,16 +25,25 @@ export function ComparePhaseLabel({ phase, phaseIndex, results }) {
         </div>
       ) : null}
       {stopReason ? (
-        <div className='font-normal' style={{ fontSize: '0.85em', color: utilityColors.stopRed }}>
+        <div
+          className='font-normal'
+          style={{
+            fontSize: '0.85em',
+            color: safetyStop ? utilityColors.warningOrange : utilityColors.stopRed,
+          }}
+        >
           {stopReason}
         </div>
       ) : null}
-      {phaseIndex === (results?.phases?.length || 0) - 1 && (
+      {phase.isFinalExecuted && (
         <div
           className='text-base-content/55 leading-tight font-medium'
-          style={{ fontSize: '0.8em' }}
+          style={{
+            fontSize: '0.8em',
+            color: results?.completionTone === 'warning' ? utilityColors.warningOrange : undefined,
+          }}
         >
-          {getBrewModeLabel(results.isBrewByWeight)}
+          {results?.completionLabel || results?.brewModeLabel}
         </div>
       )}
     </>
@@ -75,6 +82,12 @@ const BOOLEAN_CELL_FIELDS = {
   sys_ext: 'sys_ext',
 };
 
+const SYSTEM_VALUE_CELL_FIELDS = {
+  sys_brew_mode: { unit: '' },
+  sys_recorded_stop_reason: { unit: '' },
+  sys_scale_delay: { unit: 'ms' },
+};
+
 function formatCellNumber(value, digits = 1) {
   const numericValue = Number(value);
   return value != null && Number.isFinite(numericValue) ? numericValue.toFixed(digits) : '-';
@@ -88,6 +101,16 @@ function renderCellBoolean(value) {
     return <FontAwesomeIcon icon={faTimes} className='text-error text-[1em]' />;
   }
   return <span className='text-base-content/55 font-medium'>-</span>;
+}
+
+function formatSystemCellValue(colId, value) {
+  if (colId === 'sys_scale_delay') {
+    return formatCellNumber(value, 0);
+  }
+  if (value == null || value === '') {
+    return '-';
+  }
+  return String(value);
 }
 
 function getMetricCellValue(stats, metricKey, partKey) {
@@ -106,7 +129,12 @@ function getMetricCellValue(stats, metricKey, partKey) {
 }
 
 function resolveCellValue({ data, stats, col, isSkipped = false }) {
-  if (isSkipped && col.id !== 'sys_raw' && !BOOLEAN_CELL_FIELDS[col.id]) {
+  if (
+    isSkipped &&
+    col.id !== 'sys_raw' &&
+    !BOOLEAN_CELL_FIELDS[col.id] &&
+    !SYSTEM_VALUE_CELL_FIELDS[col.id]
+  ) {
     const metricMatch = /^([a-z]+)_(se|mm|avg)$/.exec(col.id);
     return {
       mainValue: '-',
@@ -132,6 +160,17 @@ function resolveCellValue({ data, stats, col, isSkipped = false }) {
     return {
       mainValue: stats?.sys_raw ?? '-',
       unit: '',
+      isBoolean: false,
+      booleanContent: null,
+    };
+  }
+
+  const systemValueField = SYSTEM_VALUE_CELL_FIELDS[col.id];
+  if (systemValueField) {
+    const value = stats?.[col.id];
+    return {
+      mainValue: formatSystemCellValue(col.id, value),
+      unit: systemValueField.unit,
       isBoolean: false,
       booleanContent: null,
     };
@@ -263,10 +302,13 @@ function getWeightWarnings({ phase, isWeightCol, subTextSize }) {
   return warnings;
 }
 
-function renderTotalCellContent({ isBoolean, booleanContent, mainValue, unit }) {
+function renderTotalCellContent({ isBoolean, booleanContent, mainValue, unit, warning = false }) {
   if (isBoolean) return <div className='flex justify-end'>{booleanContent}</div>;
   return (
-    <span className='text-base-content/90 font-medium'>
+    <span
+      className='text-base-content/90 font-medium'
+      style={warning ? { color: utilityColors.warningOrange } : undefined}
+    >
       {mainValue} {unit}
     </span>
   );
@@ -276,6 +318,7 @@ function getCellHitState({ phase, col }) {
   if (col.id === 'weight') {
     return phase.exit?.type === 'weight' || phase.exit?.type === 'volumetric';
   }
+  if (!col.targetType) return false;
   return phase.exit?.type === col.targetType;
 }
 
@@ -308,12 +351,20 @@ function renderMetricCellValue({
   mainValue,
   unit,
   mainValueIsCalculated,
+  warning = false,
 }) {
   const isStopValue = mainValueIsCalculated ? calcIsStopReason : isHit && !calcIsStopReason;
+  let style = {};
+  if (warning) {
+    style = { color: utilityColors.warningOrange };
+  } else if (isStopValue) {
+    style = { color: utilityColors.stopRed };
+  }
+
   return (
     <span
       className={isStopValue ? 'font-normal' : 'text-base-content/90 font-medium'}
-      style={isStopValue ? { color: utilityColors.stopRed } : {}}
+      style={style}
     >
       {mainValue} {unit}
     </span>
@@ -332,9 +383,18 @@ export function CellContent({ phase, col, results, isTotal = false }) {
     col,
     isSkipped: Boolean(phase?.skipped),
   });
+  const safetyStopReason =
+    col.id === 'sys_recorded_stop_reason' &&
+    isSafetyExitReason(isTotal ? results?.finalExitReasonCode : phase?.exit?.code);
 
   if (isTotal) {
-    return renderTotalCellContent({ isBoolean, booleanContent, mainValue, unit });
+    return renderTotalCellContent({
+      isBoolean,
+      booleanContent,
+      mainValue,
+      unit,
+      warning: safetyStopReason,
+    });
   }
 
   const isWeightCol = col.id === 'weight';
@@ -367,6 +427,7 @@ export function CellContent({ phase, col, results, isTotal = false }) {
             mainValue: displayMainValue,
             unit,
             mainValueIsCalculated,
+            warning: safetyStopReason,
           })}
       {targetDisplay}
       {warningDisplays}

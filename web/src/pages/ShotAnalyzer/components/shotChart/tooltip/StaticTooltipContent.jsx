@@ -11,6 +11,10 @@ import { getShotChartDisplayLabel, getShotChartLabelIcon } from '../labelVisuals
 import { getTooltipRowTextKey } from './tooltipState';
 import { TooltipShotBadge } from './TooltipPrimitives';
 
+function getStopReasonClassName(summary) {
+  return `shot-chart-tooltip__phase-reason${summary?.stopType === 'safety' ? ' shot-chart-tooltip__phase-reason--warning' : ''}`;
+}
+
 function StaticTooltipPhaseSummary({ phaseSummary, index }) {
   return (
     <div
@@ -46,7 +50,7 @@ function StaticTooltipStopSummary({ phaseSummary, index }) {
           <span className='shot-chart-tooltip__phase-skip-notice'>{phaseSummary.skipNotice}</span>
         ) : null}
         {phaseSummary.stopReason ? (
-          <span className='shot-chart-tooltip__phase-reason'>
+          <span className={getStopReasonClassName(phaseSummary)}>
             {phaseSummary.stopReason}
             {phaseSummary.stopValue ? ': ' : ''}
           </span>
@@ -264,7 +268,7 @@ function CompactStopLine({ summary, index }) {
         {summary.skipNotice ? (
           <span className='shot-chart-tooltip__phase-skip-notice'>{summary.skipNotice}</span>
         ) : null}
-        {stopText ? <span className='shot-chart-tooltip__phase-reason'>{stopText}</span> : null}
+        {stopText ? <span className={getStopReasonClassName(summary)}>{stopText}</span> : null}
         {summary.stopTargetValue ? (
           <span className='shot-chart-tooltip__phase-target'>
             {' '}
@@ -335,7 +339,7 @@ function CompareCompactStopColumn({ summary }) {
         {summary?.skipNotice ? (
           <span className='shot-chart-tooltip__phase-skip-notice'>{summary.skipNotice}</span>
         ) : null}
-        {stopText ? <span className='shot-chart-tooltip__phase-reason'>{stopText}</span> : '-'}
+        {stopText ? <span className={getStopReasonClassName(summary)}>{stopText}</span> : '-'}
       </div>
       <div className='shot-chart-tooltip__compare-compact-stop-target'>
         {targetText ? `Target ${targetText}` : ''}
@@ -458,7 +462,7 @@ function SinglePagedContext({ state }) {
         {phaseSummary?.skipNotice ? (
           <span className='shot-chart-tooltip__phase-skip-notice'>{phaseSummary.skipNotice}</span>
         ) : null}
-        {stopText ? <span className='shot-chart-tooltip__phase-reason'>{stopText}</span> : '-'}
+        {stopText ? <span className={getStopReasonClassName(phaseSummary)}>{stopText}</span> : '-'}
       </div>
       <div className='shot-chart-tooltip__single-paged-target'>
         {targetText ? `Target ${targetText}` : ''}

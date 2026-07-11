@@ -5,8 +5,8 @@ export const THIN_LINE_WIDTH = STANDARD_LINE_WIDTH / 2;
 
 export const BREW_BY_TIME_LABEL = '\u23F1';
 export const BREW_BY_WEIGHT_LABEL = '\u2696';
-export const BREW_BY_TIME_TEXT = 'Brew by Time';
-export const BREW_BY_WEIGHT_TEXT = 'Brew by Weight';
+export const BREW_BY_TIME_TEXT = 'Brewed by Time';
+export const BREW_BY_WEIGHT_TEXT = 'Brewed by Weight';
 
 export const SINGLE_METRIC_PAGE_KEYS = {
   BASICS: 'basics',
@@ -77,6 +77,7 @@ export const CHART_COLOR_FALLBACKS = {
   weightFlow: '#6d28d9',
   phaseLine: 'rgba(107, 114, 128, 0.5)',
   stopLabel: 'rgba(220, 38, 38, 0.85)',
+  warning: '#f59e0b',
 };
 
 export const CHART_COLOR_TOKEN_MAP = {
@@ -89,6 +90,7 @@ export const CHART_COLOR_TOKEN_MAP = {
   weightFlow: '--analyzer-weightflow-anchor',
   phaseLine: '--analyzer-phase-line',
   stopLabel: '--analyzer-stop-label',
+  warning: '--analyzer-warning-orange',
 };
 
 export const WATER_DRAWN_PHASE_LABEL = 'Pumped Water (Phase)';

@@ -397,6 +397,10 @@
   font-weight: 600;
 }
 
+.shot-chart-tooltip__phase-reason--warning {
+  color: var(--analyzer-warning-orange, #f59e0b);
+}
+
 .shot-chart-tooltip__phase-skip-notice {
   display: block;
   min-width: 0;

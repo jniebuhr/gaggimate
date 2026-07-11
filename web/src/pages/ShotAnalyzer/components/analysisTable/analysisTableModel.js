@@ -1,14 +1,14 @@
 import { utilityColors } from '../../utils/analyzerUtils';
 
 const NEUTRAL_STATUS_BADGE_CLASS = 'bg-base-content/10 text-base-content/80 border-base-content/15';
-const WARNING_BADGE_HIGH_SCALE_LABEL = 'HIGH SCALE DELAY OR MANUAL STOP (ADJUSTMENT)';
+const WARNING_BADGE_HIGH_SCALE_LABEL = 'HIGH SCALE DELAY';
 const WARNING_BADGE_SCALE_LOST_LABEL = 'SCALE LOST';
 
 const WARNING_HELP_COPY = {
   delayReview:
     'Review the stop reason for this phase. The algorithm was only able to identify it after several intermediate calculations.',
   highScaleDelay:
-    'This may indicate an incorrectly configured scale delay in the GaggiMate settings, a shot that was manually stopped near the target, or an adjusted target weight.',
+    'The configured or inferred scale delay is unusually high. Review the scale-delay setting before relying on predictive weight stops.',
   scaleLost:
     'Shown when the scale briefly loses connection during the brew. In this case, weight is ignored for stop detection for that brew, even if the scale reconnects later.',
 };
@@ -36,9 +36,10 @@ export function buildAnalysisWarningBadges(results) {
   }
 
   if (results?.highScaleDelay) {
+    const delaySuffix = results.highScaleDelayMs ? ` (${results.highScaleDelayMs} ms)` : '';
     badges.push({
       key: 'high-scale-delay',
-      label: WARNING_BADGE_HIGH_SCALE_LABEL,
+      label: `${WARNING_BADGE_HIGH_SCALE_LABEL}${delaySuffix}`,
       colorClass: 'text-white shadow-sm',
       details: WARNING_HELP_COPY.highScaleDelay,
       style: {
@@ -116,5 +117,5 @@ export function getMaxComparePhaseCount(compareMode, compareEntries) {
 }
 
 export function hasAnalysisProfilePhaseStops(results) {
-  return Boolean(results?.phases?.some(phase => phase.profilePhase));
+  return Boolean(results?.phases?.some(phase => phase.exit?.reason));
 }
