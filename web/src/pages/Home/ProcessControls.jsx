@@ -19,6 +19,7 @@ import { faMinus } from '@fortawesome/free-solid-svg-icons/faMinus';
 import { Tooltip } from '../../components/Tooltip.jsx';
 import { MODES } from './utils.js';
 import { ModeTab } from './ModeTab.jsx';
+import { WaterDot } from '../../components/WaterDot.jsx';
 
 const status = computed(() => machine.value.status);
 
@@ -300,8 +301,8 @@ const ProcessControls = props => {
 
   return (
     <div className={`flex h-full min-h-[250px] flex-col justify-between lg:min-h-[350px]`}>
-      <div className='mb-2 flex justify-center'>
-        <div className='bg-base-200/70 flex h-9 w-full shrink-0 gap-0.5 rounded-full p-0.5'>
+      <div className='mb-2 flex items-center justify-center gap-2'>
+        <div className='bg-base-200/70 flex h-9 shrink-0 gap-0.5 rounded-full p-0.5'>
           {MODES.filter(m => m.id !== 4 || showGrindTab).map(m => (
             <ModeTab
               key={m.id}
@@ -312,6 +313,7 @@ const ProcessControls = props => {
             />
           ))}
         </div>
+        <WaterDot />
       </div>
 
       <div className='mt-1 mb-2 flex flex-col items-center justify-between space-y-2 sm:flex-row sm:space-y-0'>

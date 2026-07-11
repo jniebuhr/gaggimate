@@ -21,6 +21,7 @@ import { useQuery } from 'preact-fetching';
 import PropTypes from 'prop-types';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
 import { ModeTab } from './ModeTab.jsx';
+import { WaterDot } from '../../components/WaterDot.jsx';
 import {
   fmtElapsed,
   fmtPhaseTarget,
@@ -251,16 +252,19 @@ export default function CompactProcessControls({ brew, mode, changeMode }) {
 
   return (
     <div className='flex h-full min-h-0 w-full min-w-0 flex-col gap-2 overflow-hidden'>
-      <div className='bg-base-200/70 flex h-9 w-full shrink-0 gap-0.5 rounded-full p-0.5'>
-        {MODES.filter(m => m.id !== 4 || showGrindTab).map(m => (
-          <ModeTab
-            key={m.id}
-            mode={m}
-            active={mode === m.id}
-            onClick={() => changeMode(m.id)}
-            rotation={m.iconRotation}
-          />
-        ))}
+      <div className='flex h-9 w-full shrink-0 items-center gap-1.5'>
+        <div className='bg-base-200/70 flex flex-1 gap-0.5 rounded-full p-0.5'>
+          {MODES.filter(m => m.id !== 4 || showGrindTab).map(m => (
+            <ModeTab
+              key={m.id}
+              mode={m}
+              active={mode === m.id}
+              onClick={() => changeMode(m.id)}
+              rotation={m.iconRotation}
+            />
+          ))}
+        </div>
+        <WaterDot />
       </div>
 
       <div className='flex shrink-0 items-center justify-between gap-3 text-[0.65rem]'>

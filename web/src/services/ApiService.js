@@ -187,6 +187,9 @@ export default class ApiService {
       rssi: message.rssi || 0,
       lat: message.lat || 0,
       tofDistance: message.tof || 0,
+      waterLevel: message.wl ?? -1,
+      sunriseIdle: message.sr_idle || '#00FFFF',
+      sunriseError: message.sr_err || '#FF0000',
     };
     const historyEntry = { ...newStatus };
     delete historyEntry.process;
@@ -202,6 +205,7 @@ export default class ApiService {
         dimming: message.cd,
         pressure: message.cp,
         ledControl: message.led,
+        tof: !!message.tof_cap,
         gearpumpAddon: !!message.gp,
       },
       history: [...machine.value.history, historyEntry],
@@ -228,10 +232,12 @@ export const machine = signal({
     grindTarget: 0,
     grindActive: false,
     process: null,
+    waterLevel: -1,
   },
   capabilities: {
     pressure: false,
     dimming: false,
+    tof: false,
   },
   history: [],
 });

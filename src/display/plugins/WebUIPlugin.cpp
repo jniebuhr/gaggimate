@@ -157,6 +157,9 @@ void WebUIPlugin::loop() {
         statusDoc["gact"] = controller->isGrindActive() ? 1 : 0;
         statusDoc["wl"] = controller->getWaterLevel();
         statusDoc["tof"] = controller->getTofDistance();
+        statusDoc["tof_cap"] = controller->getSystemInfo().capabilities.tof;
+        statusDoc["sr_idle"] = controller->getSettings().getSunriseIdle();
+        statusDoc["sr_err"] = controller->getSettings().getSunriseError();
         statusDoc["rssi"] = 0;
         statusDoc["lat"] = -1; // BLE round-trip latency (ms); -1 = not yet measured
 
