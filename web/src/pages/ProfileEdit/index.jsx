@@ -1,5 +1,16 @@
 import { useLocation, useRoute } from 'preact-iso';
 import { useCallback, useEffect, useState, useContext } from 'preact/hooks';
+import {
+  CategoryScale,
+  Chart,
+  Filler,
+  Legend,
+  LinearScale,
+  LineController,
+  LineElement,
+  PointElement,
+  TimeScale,
+} from 'chart.js';
 import { ProfileTypeSelection } from './ProfileTypeSelection.jsx';
 import { StandardProfileForm } from './StandardProfileForm.jsx';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
@@ -8,6 +19,17 @@ import { Spinner } from '../../components/Spinner.jsx';
 import { ExtendedProfileForm } from './ExtendedProfileForm.jsx';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
+
+Chart.register(
+  LineController,
+  TimeScale,
+  LinearScale,
+  CategoryScale,
+  PointElement,
+  LineElement,
+  Filler,
+  Legend,
+);
 
 const connected = computed(() => machine.value.connected);
 const pressureAvailable = computed(() => machine.value.capabilities.pressure);
