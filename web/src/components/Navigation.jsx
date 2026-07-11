@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHome } from '@fortawesome/free-solid-svg-icons/faHome';
 import { faList } from '@fortawesome/free-solid-svg-icons/faList';
 import { faTimeline } from '@fortawesome/free-solid-svg-icons/faTimeline';
+import { faTemperatureHalf } from '@fortawesome/free-solid-svg-icons/faTemperatureHalf';
 import { faBluetoothB } from '@fortawesome/free-brands-svg-icons/faBluetoothB';
 import { faCog } from '@fortawesome/free-solid-svg-icons/faCog';
 import { faRotate } from '@fortawesome/free-solid-svg-icons/faRotate';
@@ -13,14 +14,7 @@ import { faCircleChevronRight } from '@fortawesome/free-solid-svg-icons/faCircle
 import { GmLogoIcon } from '../pages/ShotAnalyzer/components/SourceMarker.jsx';
 import { faGithub } from '@fortawesome/free-brands-svg-icons/faGithub';
 import { faDiscord } from '@fortawesome/free-brands-svg-icons/faDiscord';
-import { useEffect, useMemo, useRef } from 'preact/hooks';
-import { faPencil } from '@fortawesome/free-solid-svg-icons/faPencil';
-import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
-import {
-  DASHBOARD_MODES,
-  dashboardModeSignal,
-  setDashboardMode,
-} from '../utils/dashboardManager.js';
+import { useCallback, useEffect, useMemo, useRef } from 'preact/hooks';
 
 // List of random icons to display - add your icons here (SVG strings, text, or emojis)
 const RANDOM_ICONS = [
@@ -50,15 +44,7 @@ const NAVIGATION_SECTIONS = [
   {
     id: 'dashboard',
     showDivider: true,
-    items: [
-      {
-        label: 'Dashboard',
-        link: '/',
-        icon: faHome,
-        editLink: '/dashboard-settings',
-        editIcon: faPencil,
-      },
-    ],
+    items: [{ label: 'Dashboard', link: '/', icon: faHome }],
   },
   {
     id: 'analysis',
@@ -71,123 +57,51 @@ const NAVIGATION_SECTIONS = [
     ],
   },
   {
-    id: 'settings',
+    id: 'devices',
     showDivider: true,
     items: [
-      { label: 'Bluetooth Devices', link: '/settings/bluetooth', icon: faBluetoothB },
+      { label: 'PID Autotune', link: '/pidtune', icon: faTemperatureHalf },
+      { label: 'Bluetooth Devices', link: '/scales', icon: faBluetoothB },
       { label: 'Settings', link: '/settings', icon: faCog },
     ],
   },
   {
     id: 'updates',
     showDivider: true,
-    items: [{ label: 'System & Updates', link: '/settings/system', icon: faRotate }],
+    items: [{ label: 'System & Updates', link: '/ota', icon: faRotate }],
   },
 ];
 
-function DashboardModeDropdown({ editLink, editIcon, editActive, isActive }) {
-  const mode = dashboardModeSignal.value;
-
-  // daisyUI dropdowns are focus-driven — blur to close after a selection.
-  const selectMode = value => {
-    setDashboardMode(value);
-    document.activeElement?.blur();
-  };
-
-  const options = [
-    { value: DASHBOARD_MODES.SIMPLE, label: 'Simple' },
-    { value: DASHBOARD_MODES.ADVANCED, label: 'Advanced' },
-  ];
-
-  return (
-    <div className='dropdown dropdown-end h-full'>
-      {/* div+tabindex instead of <button>: Safari doesn't focus buttons on click,
-          which daisyUI's focus-driven dropdown relies on. */}
-      <div
-        tabIndex={0}
-        role='button'
-        aria-label='Dashboard view'
-        title='Dashboard view'
-        className={`flex h-full cursor-pointer items-center justify-center rounded-r-xl px-2.5 ${
-          editActive
-            ? 'bg-primary text-primary-content'
-            : isActive
-              ? 'bg-primary text-primary-content/50 hover:text-primary-content'
-              : 'text-base-content/30 hover:bg-base-content/10 hover:text-base-content bg-transparent'
-        }`}
-      >
-        <FontAwesomeIcon icon={editIcon} className='h-3 w-3' />
-      </div>
-      <ul
-        tabIndex={0}
-        className='dropdown-content menu bg-base-100 rounded-box border-base-300 z-10 mt-1 w-44 border p-2 shadow-lg'
-      >
-        {options.map(option => (
-          <li key={option.value}>
-            <button type='button' onClick={() => selectMode(option.value)}>
-              <span className='flex-grow'>{option.label}</span>
-              {mode === option.value && <FontAwesomeIcon icon={faCheck} className='h-3 w-3' />}
-            </button>
-          </li>
-        ))}
-        <li>
-          <a href={editLink} onClick={() => selectMode(DASHBOARD_MODES.CUSTOM)}>
-            <span className='flex-grow'>Customize</span>
-            {mode === DASHBOARD_MODES.CUSTOM && (
-              <FontAwesomeIcon icon={faCheck} className='h-3 w-3' />
-            )}
-          </a>
-        </li>
-      </ul>
-    </div>
-  );
-}
-
-function MenuItem({ collapsed = false, icon, isNew = false, label, link, editLink, editIcon }) {
+function MenuItem({ collapsed = false, icon, isNew = false, label, link }) {
   const { path } = useLocation();
   const isActive = path === link;
-  const editActive = path === editLink;
   const isExpanded = collapsed === false;
-  const editLinkEnabled = editLink && editIcon && !collapsed;
-  // Rounding lives on the children — the row wrapper can't use overflow-hidden
-  // or it would clip the dashboard-mode dropdown.
-  const commonClasses = `btn btn-md border-none h-12 ${editLinkEnabled ? 'rounded-l-xl rounded-r-none' : 'rounded-xl'}`;
   const baseClassName = collapsed
-    ? 'btn-square min-h-0 min-w-0 bg-transparent px-0 text-base-content hover:bg-base-content/10 hover:text-base-content'
-    : 'justify-start gap-3 text-base-content hover:text-base-content hover:bg-base-content/10 bg-transparent border-none px-2';
+    ? 'btn btn-square btn-md h-12 min-h-0 w-12 min-w-0 rounded-xl border-none bg-transparent px-0 text-base-content hover:bg-base-content/10 hover:text-base-content'
+    : 'btn btn-md justify-start h-12 gap-3 w-full text-base-content hover:text-base-content hover:bg-base-content/10 bg-transparent border-none px-2';
   const activeClassName = collapsed
-    ? 'btn-square min-h-0 min-w-0 bg-primary px-0 text-primary-content hover:bg-primary hover:text-primary-content'
-    : 'justify-start gap-3 bg-primary text-primary-content hover:bg-primary hover:text-primary-content px-2';
-  const className = `${commonClasses} ${isActive ? activeClassName : baseClassName}`;
+    ? 'btn btn-square btn-md h-12 min-h-0 w-12 min-w-0 rounded-xl border-none bg-primary px-0 text-primary-content hover:bg-primary hover:text-primary-content'
+    : 'btn btn-md justify-start h-12 gap-3 w-full bg-primary text-primary-content hover:bg-primary hover:text-primary-content px-2';
+  const className = isActive ? activeClassName : baseClassName;
 
   return (
-    <div className={`flex h-12 flex-row ${collapsed ? 'w-12' : 'w-full'}`}>
-      <a
-        href={link}
-        className={`flex-grow ${className}`}
-        aria-label={collapsed ? label : undefined}
-        aria-current={isActive ? 'page' : undefined}
-        title={collapsed ? label : undefined}
-      >
-        <FontAwesomeIcon size='md' icon={icon} />
-        {isExpanded ? (
-          <div className='indicator'>
-            {isNew ? (
-              <span className='indicator-item text-success pl-8 text-xs font-bold'>NEW</span>
-            ) : null}
-            <span>{label}</span>
-          </div>
-        ) : null}
-      </a>
-      {editLinkEnabled && (
-        <DashboardModeDropdown
-          editLink={editLink}
-          editIcon={editIcon}
-          editActive={editActive}
-          isActive={isActive}
-        />
-      )}
-    </div>
+    <a
+      href={link}
+      className={className}
+      aria-label={collapsed ? label : undefined}
+      aria-current={isActive ? 'page' : undefined}
+      title={collapsed ? label : undefined}
+    >
+      <FontAwesomeIcon size='md' icon={icon} />
+      {isExpanded ? (
+        <div className='indicator'>
+          {isNew ? (
+            <span className='indicator-item text-success pl-8 text-xs font-bold'>NEW</span>
+          ) : null}
+          <span>{label}</span>
+        </div>
+      ) : null}
+    </a>
   );
 }
 
@@ -218,7 +132,7 @@ export function Navigation({ collapsed = false, onToggleCollapsed }) {
         <div
           className='fixed end-0 top-0 bottom-0 left-0 z-9998 cursor-pointer backdrop-blur-sm backdrop-brightness-50 md:hidden'
           onClick={onToggleCollapsed}
-        />
+        ></div>
       )}
       <aside
         className={`sidebar border-base-300 bg-base-100 fixed top-0 left-0 z-9999 flex h-screen flex-col overflow-y-auto border-r p-5 md:static landscape:static ${
@@ -314,9 +228,9 @@ export function Navigation({ collapsed = false, onToggleCollapsed }) {
             <div key={section.id}>
               {section.showDivider ? <hr className='h-5 border-0' /> : null}
               <div className='space-y-1.5'>
-                {section.items.map(item => {
-                  return <MenuItem key={item.link} collapsed={collapsed} {...item} />;
-                })}
+                {section.items.map(item => (
+                  <MenuItem key={item.link} collapsed={collapsed} {...item} />
+                ))}
               </div>
             </div>
           ))}

@@ -3,7 +3,6 @@
 #include <LittleFS.h>
 #include <SD_MMC.h>
 #include <algorithm>
-#include <esp32-hal-psram.h>
 #include <display/core/Controller.h>
 #include <display/core/ProfileManager.h>
 #include <display/core/process/BrewProcess.h>
@@ -100,26 +99,6 @@ void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) 
         broadcastJson(doc);
     });
 
-    // Forward "shot saved to history" events to WebSocket clients, so the
-    // dashboard can refetch the recent-shots buffer at the right time.
-    pluginManager->on("evt:history-shot-saved", [this](Event const &event) {
-        JsonDocument doc(&psramAllocator);
-        doc["tp"] = "evt:history-shot-saved";
-        doc["id"] = event.getInt("id");
-        broadcastJson(doc);
-    });
-
-    // Forward live shot-finished stats (pressure/flow) to WebSocket clients, so
-    // the dashboard's finished card can show them without waiting for the
-    // history file write.
-    pluginManager->on("evt:shot-finished-stats", [this](Event const &event) {
-        JsonDocument doc(&psramAllocator);
-        doc["tp"] = "evt:shot-finished-stats";
-        doc["maxPressure"] = event.getFloat("maxPressure");
-        doc["avgFlow"] = event.getFloat("avgFlow");
-        broadcastJson(doc);
-    });
-
     // Subscribe to Bluetooth scale weight updates
     pluginManager->on("controller:volumetric-measurement:bluetooth:change",
                       [this](Event const &event) { this->currentBluetoothWeight = event.getFloat("value"); });
@@ -180,8 +159,6 @@ void WebUIPlugin::loop() {
         statusDoc["tof"] = controller->getTofDistance();
         statusDoc["rssi"] = 0;
         statusDoc["lat"] = -1; // BLE round-trip latency (ms); -1 = not yet measured
-        statusDoc["pw"] = controller->getCurrentPumpPower();
-        statusDoc["hp"] = controller->getCurrentHeaterPower();
 
         if (controller->getClientController()->getClient()->isConnected()) {
             statusDoc["rssi"] = controller->getClientController()->getClient()->getRssi();
@@ -213,9 +190,6 @@ void WebUIPlugin::loop() {
         if (process != nullptr) {
             auto pObj = statusDoc["process"].to<JsonObject>();
             pObj["a"] = controller->isActive() ? 1 : 0;
-            statusDoc["pkr"] = controller->getCurrentPuckResistance();
-            statusDoc["pf"] = controller->getCurrentPuckFlow();
-            statusDoc["tf"] = controller->getTargetFlow();
             if (process->getType() == MODE_BREW) {
                 auto *brew = static_cast<BrewProcess *>(process);
                 unsigned long ts = brew->isActive() && controller->isActive() ? millis() : brew->finished;
@@ -352,37 +326,6 @@ void WebUIPlugin::setupServer() {
             request->send(404, "text/plain", "Index not found");
         }
     });
-    server.on("/api/history/recent.bin", HTTP_GET, [this](AsyncWebServerRequest *request) {
-        // The most recent non-deleted shots, newest first, as a regular shot
-        // index (SIDX header + entries) — same binary format as index.bin,
-        // just truncated, so clients reuse the index.bin parser.
-        constexpr long MAX_RECENT_LIMIT = 50;
-        long limit = 8;
-        if (request->hasArg("limit")) {
-            limit = constrain(request->arg("limit").toInt(), 1L, MAX_RECENT_LIMIT);
-        }
-
-        auto *entries = static_cast<ShotIndexEntry *>(ps_malloc(limit * sizeof(ShotIndexEntry)));
-        if (entries == nullptr) {
-            request->send(500, "text/plain", "Out of memory");
-            return;
-        }
-        size_t count = ShotHistory.readRecentEntries(entries, limit);
-
-        ShotIndexHeader header{};
-        header.magic = SHOT_INDEX_MAGIC;
-        header.version = SHOT_INDEX_VERSION;
-        header.entrySize = SHOT_INDEX_ENTRY_SIZE;
-        header.entryCount = count;
-        header.nextId = 0; // meaningless for a partial view
-
-        AsyncResponseStream *response = request->beginResponseStream("application/octet-stream");
-        response->addHeader("Cache-Control", "no-store");
-        response->write(reinterpret_cast<const uint8_t *>(&header), sizeof(header));
-        response->write(reinterpret_cast<const uint8_t *>(entries), count * sizeof(ShotIndexEntry));
-        free(entries);
-        request->send(response);
-    });
     server.on("/api/core-dump", HTTP_GET, [this](AsyncWebServerRequest *request) { handleCoreDumpDownload(request); });
     // The web UI is embedded in firmware flash and served from the memory-mapped blob (see serveWebAsset). It is no
     // longer in LittleFS, so OTA never touches the partition holding profiles/shots. The catch-all onNotFound handles
@@ -503,10 +446,6 @@ void WebUIPlugin::handleWebSocketData(AsyncWebSocket *server, AsyncWebSocketClie
                     controller->raiseGrindTarget();
                 } else if (msgType == "req:lower-grind-target") {
                     controller->lowerGrindTarget();
-                } else if (msgType == "req:raise-brew-target") {
-                    controller->raiseBrewTarget();
-                } else if (msgType == "req:lower-brew-target") {
-                    controller->lowerBrewTarget();
                 } else if (msgType == "req:change-mode") {
                     if (doc["mode"].is<uint8_t>()) {
                         auto mode = doc["mode"].as<uint8_t>();

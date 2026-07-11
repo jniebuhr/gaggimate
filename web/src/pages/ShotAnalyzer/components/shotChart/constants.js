@@ -3,26 +3,13 @@ export const TARGET_PRESSURE_MAX = 16;
 export const STANDARD_LINE_WIDTH = 4;
 export const THIN_LINE_WIDTH = STANDARD_LINE_WIDTH / 2;
 
-export const BREW_BY_TIME_LABEL = '\u23F1';
-export const BREW_BY_WEIGHT_LABEL = '\u2696';
-export const BREW_BY_TIME_TEXT = 'Brew by Time';
-export const BREW_BY_WEIGHT_TEXT = 'Brew by Weight';
+export const BREW_BY_TIME_LABEL = 'BREW BY TIME';
+export const BREW_BY_WEIGHT_LABEL = 'BREW BY WEIGHT';
 
-export const SINGLE_METRIC_PAGE_KEYS = {
-  BASICS: 'basics',
-  PRESSURE_FLOW: 'pressureFlow',
-  FLOW_VOLUME: 'flowVolume',
-  TEMPERATURE: 'temperature',
-};
-
-export const COMPARE_DETAIL_METRIC_PAGE_KEYS = {
-  PUMP_FLOW: 'pumpFlow',
-  PUMPED_WATER: 'pumpedWater',
-};
-
-export const MAIN_CHART_HEIGHT_DEFAULT = 280;
-export const TEMP_CHART_HEIGHT_RATIO = 80 / 280;
-export const TEMP_CHART_HEIGHT_MIN = 72;
+export const MAIN_CHART_HEIGHT_SMALL = 280;
+export const MAIN_CHART_HEIGHT_BIG = 560;
+export const MAIN_CHART_HEIGHT_DEFAULT = MAIN_CHART_HEIGHT_SMALL;
+export const TEMP_CHART_HEIGHT_RATIO = 80 / MAIN_CHART_HEIGHT_SMALL;
 
 export const REPLAY_TARGET_FPS = 30;
 export const REPLAY_FRAME_INTERVAL_MS = 1000 / REPLAY_TARGET_FPS;
@@ -91,10 +78,10 @@ export const CHART_COLOR_TOKEN_MAP = {
   stopLabel: '--analyzer-stop-label',
 };
 
-export const WATER_DRAWN_PHASE_LABEL = 'Pumped Water (Phase)';
-export const WATER_DRAWN_TOTAL_LABEL = 'Pumped Water (Total)';
+export const WATER_DRAWN_PHASE_LABEL = 'Water Drawn (Phase)';
+export const WATER_DRAWN_TOTAL_LABEL = 'Water Drawn (Total)';
 
-export const LEGEND_BLOCK_LABELS = new Set(['Phases', 'Stops']);
+export const LEGEND_BLOCK_LABELS = new Set(['Phase Names', 'Stops']);
 export const LEGEND_DASHED_LABELS = new Set(['Target T', 'Target P', 'Target F']);
 export const LEGEND_THIN_LINE_LABELS = new Set([
   'Target T',
@@ -106,13 +93,14 @@ export const LEGEND_THIN_LINE_LABELS = new Set([
 ]);
 
 export const TOOLTIP_WATER_LABELS = new Set([WATER_DRAWN_PHASE_LABEL, WATER_DRAWN_TOTAL_LABEL]);
+export const TOOLTIP_BOTTOM_LABELS = new Set(['Temp', 'Target T']);
 
 export const LEGEND_ORDER = [
-  'Phases',
+  'Phase Names',
   'Stops',
   'Pressure',
   'Target P',
-  'Pump Flow',
+  'Flow',
   'Target F',
   'Puck Flow',
   'Weight',
@@ -121,12 +109,12 @@ export const LEGEND_ORDER = [
   'Target T',
 ];
 
-const TOOLTIP_ORDER = [
-  'Phases',
+export const TOOLTIP_ORDER = [
+  'Phase Names',
   'Stops',
   'Pressure',
   'Target P',
-  'Pump Flow',
+  'Flow',
   'Target F',
   'Puck Flow',
   'Weight Flow',
@@ -145,7 +133,7 @@ export const TOOLTIP_INDEX = TOOLTIP_ORDER.reduce((acc, label, index) => {
 export const TOOLTIP_GROUP_BY_LABEL = {
   Pressure: 'pressure',
   'Target P': 'pressure',
-  'Pump Flow': 'flow',
+  Flow: 'flow',
   'Target F': 'flow',
   'Puck Flow': 'flow',
   Weight: 'weight',
@@ -157,13 +145,13 @@ export const TOOLTIP_GROUP_BY_LABEL = {
 };
 
 export const VISIBILITY_KEY_BY_LABEL = {
-  Phases: 'phaseNames',
+  'Phase Names': 'phaseNames',
   Stops: 'stops',
   Temp: 'temp',
   'Target T': 'targetTemp',
   Pressure: 'pressure',
   'Target P': 'targetPressure',
-  'Pump Flow': 'flow',
+  Flow: 'flow',
   'Target F': 'targetFlow',
   'Puck Flow': 'puckFlow',
   Weight: 'weight',
@@ -190,7 +178,7 @@ export const UNIT_BY_LABEL = {
   'Target T': '°C',
   Pressure: 'bar',
   'Target P': 'bar',
-  'Pump Flow': 'ml/s',
+  Flow: 'ml/s',
   'Target F': 'ml/s',
   'Puck Flow': 'ml/s',
   Weight: 'g',

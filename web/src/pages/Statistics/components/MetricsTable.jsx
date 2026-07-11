@@ -1,15 +1,13 @@
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBullseye } from '@fortawesome/free-solid-svg-icons/faBullseye';
 import { faClock } from '@fortawesome/free-solid-svg-icons/faClock';
 import { faDroplet } from '@fortawesome/free-solid-svg-icons/faDroplet';
 import { faFaucet } from '@fortawesome/free-solid-svg-icons/faFaucet';
 import { faFilter } from '@fortawesome/free-solid-svg-icons/faFilter';
 import { faGauge } from '@fortawesome/free-solid-svg-icons/faGauge';
-import { faGaugeHigh } from '@fortawesome/free-solid-svg-icons/faGaugeHigh';
 import { faScaleBalanced } from '@fortawesome/free-solid-svg-icons/faScaleBalanced';
 import { faTemperatureHalf } from '@fortawesome/free-solid-svg-icons/faTemperatureHalf';
 import { fmt } from '../utils/format';
-import { StatisticsMetricHeader } from './StatisticsMetricHeader';
-import { STATISTICS_DENSE_VALUE_CLASS, STATISTICS_SMALL_LABEL_CLASS } from './statisticsUi';
 
 const METRIC_ROWS = [
   {
@@ -22,6 +20,15 @@ const METRIC_ROWS = [
     averageDescription: 'Final shot weight average',
   },
   {
+    key: 'water',
+    label: 'Water',
+    unit: 'ml',
+    colorClass: 'text-[var(--statistics-summary-water)]',
+    accentColor: 'var(--statistics-summary-water)',
+    icon: faDroplet,
+    averageDescription: 'Per-shot water drawn average',
+  },
+  {
     key: 'duration',
     label: 'Duration',
     unit: 's',
@@ -29,15 +36,6 @@ const METRIC_ROWS = [
     accentColor: 'var(--statistics-summary-duration)',
     icon: faClock,
     averageDescription: 'Per-shot duration average',
-  },
-  {
-    key: 'tt',
-    label: 'Avg. Target Temperature',
-    unit: '\u2103',
-    colorClass: 'text-[var(--analyzer-target-temp-text)]',
-    accentColor: 'var(--analyzer-target-temp-text)',
-    icon: faBullseye,
-    averageDescription: 'Time-weighted average target temperature',
   },
   {
     key: 't',
@@ -68,31 +66,13 @@ const METRIC_ROWS = [
     averageDescription: 'Time-weighted average pressure',
   },
   {
-    key: 'pPeak',
-    label: 'Avg. Peak Pressure',
-    unit: 'bar',
-    colorClass: 'text-[var(--analyzer-pressure-text)]',
-    accentColor: 'var(--analyzer-pressure-text)',
-    icon: faGaugeHigh,
-    averageDescription: 'Average of each shot peak pressure',
-  },
-  {
     key: 'f',
-    label: 'Pump Flow',
+    label: 'Flow',
     unit: 'ml/s',
     colorClass: 'text-[var(--analyzer-flow-text)]',
     accentColor: 'var(--analyzer-flow-text)',
     icon: faFaucet,
     averageDescription: 'Time-weighted average flow',
-  },
-  {
-    key: 'water',
-    label: 'Pumped Water',
-    unit: 'ml',
-    colorClass: 'text-[var(--statistics-summary-water)]',
-    accentColor: 'var(--statistics-summary-water)',
-    icon: faDroplet,
-    averageDescription: 'Per-shot water drawn average',
   },
   {
     key: 'pf',
@@ -169,33 +149,54 @@ function MetricRangeViz({ row, metric }) {
   const stdBandPct = Math.round(14 + spreadRatio * 26);
 
   return (
-    <div className='app-card-surface flex h-full min-h-[11rem] flex-col rounded-xl p-3 transition-shadow'>
-      <StatisticsMetricHeader
-        accentColor={row.accentColor}
-        icon={row.icon}
-        label={row.label}
-        unit={row.unit}
-        value={formatMetricValue(metric.avg, row)}
-      />
+    <div
+      className='flex h-full min-h-[11.5rem] flex-col rounded-2xl p-3 shadow-sm transition-shadow sm:p-3.5'
+      style={{
+        background: 'var(--statistics-summary-surface-muted)',
+        boxShadow: '0 8px 22px var(--statistics-summary-shadow)',
+      }}
+    >
+      <div className='flex items-center gap-3'>
+        <div
+          className='flex h-12 w-12 shrink-0 items-center justify-center sm:h-14 sm:w-14'
+          style={{
+            color: row.accentColor,
+          }}
+        >
+          <FontAwesomeIcon icon={row.icon} className='text-2xl sm:text-[1.65rem]' />
+        </div>
+
+        <div className='min-w-0 flex-1'>
+          <div
+            className={`truncate text-[10px] font-semibold tracking-wide uppercase ${row.colorClass}`}
+          >
+            {row.label}
+          </div>
+          <div className='mt-1 flex items-end gap-1.5'>
+            <span className='truncate font-mono text-xl leading-tight font-bold sm:text-2xl'>
+              {formatMetricValue(metric.avg, row)}
+            </span>
+            <span className='pb-0.5 text-xs opacity-65'>{row.unit}</span>
+          </div>
+        </div>
+      </div>
 
       <div
-        className='mt-3 rounded-lg px-3 py-2 shadow-sm'
+        className='mt-3 rounded-xl px-3 py-2 shadow-sm'
         style={{
           background: 'var(--statistics-summary-surface-strong)',
         }}
       >
         <div className='flex items-center justify-between gap-2'>
-          <div className={STATISTICS_SMALL_LABEL_CLASS}>Range</div>
+          <div className='text-[10px] font-semibold tracking-wide uppercase opacity-60'>Range</div>
           <div className='text-right'>
-            <div className='text-base-content/60 text-[10px]'>Std Dev</div>
-            <div className={`text-xs ${STATISTICS_DENSE_VALUE_CLASS}`}>
-              {fmt(metric.stdDev, row.digits)}
-            </div>
+            <div className='text-[10px] opacity-55'>Std Dev</div>
+            <div className='font-mono text-xs'>{fmt(metric.stdDev, row.digits)}</div>
           </div>
         </div>
 
         <div className='mt-2 flex items-center gap-2'>
-          <div className={`shrink-0 text-[11px] opacity-65 ${STATISTICS_DENSE_VALUE_CLASS}`}>
+          <div className='shrink-0 font-mono text-[11px] opacity-65'>
             {fmt(metric.min, row.digits)}
           </div>
           <div className='relative h-5 min-w-0 flex-1'>
@@ -225,7 +226,7 @@ function MetricRangeViz({ row, metric }) {
               }}
             />
           </div>
-          <div className={`shrink-0 text-[11px] opacity-65 ${STATISTICS_DENSE_VALUE_CLASS}`}>
+          <div className='shrink-0 font-mono text-[11px] opacity-65'>
             {fmt(metric.max, row.digits)}
           </div>
         </div>
@@ -237,10 +238,15 @@ function MetricRangeViz({ row, metric }) {
 export function MetricsTable({ metrics }) {
   if (!metrics || Object.keys(metrics).length === 0) return null;
 
+  const metricCardRows = [
+    ...METRIC_ROWS.filter(row => row.key === 't'),
+    ...METRIC_ROWS.filter(row => row.key !== 't'),
+  ];
+
   return (
     <div>
       <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4'>
-        {METRIC_ROWS.map(row => {
+        {metricCardRows.map(row => {
           const metric = metrics[row.key];
           if (!metric) return null;
           return <MetricRangeViz key={row.key} row={row} metric={metric} />;

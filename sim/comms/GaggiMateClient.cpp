@@ -2,9 +2,9 @@
 
 GaggiMateClient::GaggiMateClient() {
     // Forward the mock's telemetry to whatever the firmware registered.
-    _mock.onSensor = [this](float t, float p, float pf, float mf, float pr, float pp, float hp) {
+    _mock.onSensor = [this](float t, float p, float pf, float mf, float pr) {
         if (_sensorCb)
-            _sensorCb(t, p, pf, mf, pr, pp, hp);
+            _sensorCb(t, p, pf, mf, pr);
     };
     _mock.onVolumetric = [this](float v) {
         if (_volumetricCb)

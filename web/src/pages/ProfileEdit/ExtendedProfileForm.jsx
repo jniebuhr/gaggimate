@@ -126,7 +126,6 @@ export function ExtendedProfileForm(props) {
             data={{ ...data, phases }}
             selectedPhase={currentPhaseIndex}
             className='max-h-72 w-full'
-            onPhaseClick={setCurrentPhaseIndex}
           />
         </Card>
         <Card sm={10}>

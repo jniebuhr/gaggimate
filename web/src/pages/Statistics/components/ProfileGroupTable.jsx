@@ -1,5 +1,5 @@
 import { fmt } from '../utils/format';
-import { STATISTICS_SECTION_TITLE_CLASS, STATISTICS_TABLE_NUMBER_CLASS } from './statisticsUi';
+import { STATISTICS_SECTION_TITLE_CLASS } from './statisticsUi';
 
 export function ProfileGroupTable({ profileGroups, showTitle = true }) {
   if (!profileGroups || profileGroups.length === 0) return null;
@@ -17,21 +17,21 @@ export function ProfileGroupTable({ profileGroups, showTitle = true }) {
               <th className='text-right'>Shots</th>
               <th className='text-right'>Avg Duration</th>
               <th className='text-right'>Avg Weight</th>
-              <th className='text-right'>Avg Pumped Water</th>
+              <th className='text-right'>Avg Water</th>
               <th className='text-right'>Avg Pressure</th>
-              <th className='text-right'>Avg Pump Flow</th>
+              <th className='text-right'>Avg Flow</th>
             </tr>
           </thead>
           <tbody>
             {profileGroups.map(group => (
               <tr key={group.profileName}>
                 <td className='font-semibold'>{group.profileName}</td>
-                <td className={STATISTICS_TABLE_NUMBER_CLASS}>{group.shotCount}</td>
-                <td className={STATISTICS_TABLE_NUMBER_CLASS}>{fmt(group.avgDuration)}s</td>
-                <td className={STATISTICS_TABLE_NUMBER_CLASS}>{fmt(group.avgWeight)}g</td>
-                <td className={STATISTICS_TABLE_NUMBER_CLASS}>{fmt(group.avgWater)}ml</td>
-                <td className={STATISTICS_TABLE_NUMBER_CLASS}>{fmt(group.metrics.p?.avg)} bar</td>
-                <td className={STATISTICS_TABLE_NUMBER_CLASS}>{fmt(group.metrics.f?.avg)} ml/s</td>
+                <td className='text-right font-mono'>{group.shotCount}</td>
+                <td className='text-right font-mono'>{fmt(group.avgDuration)}s</td>
+                <td className='text-right font-mono'>{fmt(group.avgWeight)}g</td>
+                <td className='text-right font-mono'>{fmt(group.avgWater)}ml</td>
+                <td className='text-right font-mono'>{fmt(group.metrics.p?.avg)} bar</td>
+                <td className='text-right font-mono'>{fmt(group.metrics.f?.avg)} ml/s</td>
               </tr>
             ))}
           </tbody>

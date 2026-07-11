@@ -13,19 +13,6 @@ enum class PumpTarget {
 enum class PhaseType { PHASE_TYPE_PREINFUSION, PHASE_TYPE_BREW };
 enum class TransitionType { INSTANT, LINEAR, EASE_IN, EASE_OUT, EASE_IN_OUT };
 
-// Why a phase ended; persisted as uint8_t in the .slog phase transitions, so values must stay stable.
-// NONE (0) doubles as "still running" and as the legacy/unknown value in old shot files.
-enum class PhaseExitReason : uint8_t {
-    NONE = 0,              // phase not finished (or unknown, e.g. legacy shot files)
-    TARGET_VOLUMETRIC = 1, // volumetric target reached
-    TARGET_PRESSURE = 2,   // pressure target reached
-    TARGET_FLOW = 3,       // flow target reached
-    TARGET_PUMPED = 4,     // pumped-water target reached
-    DURATION = 5,          // phase duration elapsed
-    SAFETY = 6,            // brew safety timeout (set by BrewProcess, not Phase::isFinished)
-    ABORTED = 7,           // shot manually stopped before the process finished
-};
-
 struct Target {
     TargetType type;
     TargetOperator operator_;
@@ -91,39 +78,38 @@ struct Phase {
         }
     }
 
-    // Returns the reason the phase finished, or PhaseExitReason::NONE if it is still running.
-    PhaseExitReason isFinished(bool enableVolumetric, float volume, float time_in_phase, float current_flow,
-                               float current_pressure, float water_pumped, String type) const {
+    bool isFinished(bool enableVolumetric, float volume, float time_in_phase, float current_flow, float current_pressure,
+                    float water_pumped, String type) const {
         bool volumetricTested = false;
         for (const auto &target : targets) {
             switch (target.type) {
             case TargetType::TARGET_TYPE_VOLUMETRIC:
                 volumetricTested = enableVolumetric;
                 if (enableVolumetric && target.isReached(volume)) {
-                    return PhaseExitReason::TARGET_VOLUMETRIC;
+                    return true;
                 }
                 break;
             case TargetType::TARGET_TYPE_PRESSURE:
                 if (target.isReached(current_pressure)) {
-                    return PhaseExitReason::TARGET_PRESSURE;
+                    return true;
                 }
                 break;
             case TargetType::TARGET_TYPE_FLOW:
                 if (target.isReached(current_flow)) {
-                    return PhaseExitReason::TARGET_FLOW;
+                    return true;
                 }
                 break;
             case TargetType::TARGET_TYPE_PUMPED:
                 if (target.isReached(water_pumped)) {
-                    return PhaseExitReason::TARGET_PUMPED;
+                    return true;
                 }
                 break;
             }
         }
         if (type == "standard" && volumetricTested) {
-            return PhaseExitReason::NONE;
+            return false;
         }
-        return time_in_phase > duration ? PhaseExitReason::DURATION : PhaseExitReason::NONE;
+        return time_in_phase > duration;
     }
 
     void removeVolumetricTarget() {

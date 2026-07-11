@@ -3,13 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMinus } from '@fortawesome/free-solid-svg-icons/faMinus';
 import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import { fmt } from '../utils/format';
-import {
-  STATISTICS_CARD_HEADING_CLASS,
-  STATISTICS_DENSE_VALUE_CLASS,
-  STATISTICS_SECTION_TITLE_CLASS,
-  STATISTICS_SMALL_LABEL_CLASS,
-  STATISTICS_TABLE_NUMBER_CLASS,
-} from './statisticsUi';
+import { STATISTICS_SECTION_TITLE_CLASS } from './statisticsUi';
 
 const DELTA_COLOR = 'var(--analyzer-pred-info-blue)';
 const EXIT_REASON_UNKNOWN_STYLE = {
@@ -51,9 +45,9 @@ function fmtDelta(val) {
 }
 
 function TargetDeltaCell({ entry, unit }) {
-  if (!entry) return <td className={STATISTICS_TABLE_NUMBER_CLASS}>-</td>;
+  if (!entry) return <td className='text-right font-mono'>-</td>;
   return (
-    <td className={STATISTICS_TABLE_NUMBER_CLASS} style={{ color: DELTA_COLOR }}>
+    <td className='text-right font-mono' style={{ color: DELTA_COLOR }}>
       {fmt(entry.target)}
       {unit} ({fmtDelta(entry.delta)})
     </td>
@@ -65,14 +59,15 @@ function PhaseSection({ phase, hideExitReasons = false }) {
   const td = phase.targetDeltas || {};
 
   return (
-    <div className='app-card-surface rounded-xl transition-shadow'>
+    <div
+      className={`border-base-content/5 rounded-lg border ${phase.isTotal ? 'bg-base-300/40 border-base-content/10' : 'bg-base-200/30'}`}
+    >
       <button
         type='button'
-        className='flex w-full cursor-pointer items-center justify-between px-3 py-3 text-left'
+        className='flex w-full cursor-pointer items-center justify-between px-3 py-2 text-left'
         onClick={() => setOpen(o => !o)}
-        aria-expanded={open}
       >
-        <span className={phase.isTotal ? STATISTICS_CARD_HEADING_CLASS : 'text-sm font-medium'}>
+        <span className={`text-sm ${phase.isTotal ? 'font-bold' : 'font-semibold'}`}>
           {phase.phaseName}
           <span className='ml-2 text-xs opacity-50'>({phase.shotCount} entries)</span>
         </span>
@@ -86,28 +81,20 @@ function PhaseSection({ phase, hideExitReasons = false }) {
           <div className='flex flex-wrap items-center gap-4'>
             <div className='flex items-center gap-1.5'>
               <span className='text-xs opacity-50'>Avg Duration:</span>
-              <span className={`text-xs ${STATISTICS_DENSE_VALUE_CLASS}`}>
-                {fmt(phase.avgDuration)}s
-              </span>
+              <span className='font-mono text-xs font-semibold'>{fmt(phase.avgDuration)}s</span>
               {td.duration && (
-                <span
-                  className={`text-xs ${STATISTICS_DENSE_VALUE_CLASS}`}
-                  style={{ color: DELTA_COLOR }}
-                >
+                <span className='font-mono text-xs' style={{ color: DELTA_COLOR }}>
                   (target {fmt(td.duration.target)}s, {fmtDelta(td.duration.delta)}s)
                 </span>
               )}
             </div>
             <div className='flex items-center gap-1.5'>
-              <span className='text-xs opacity-50'>Avg Pumped Water:</span>
-              <span className={`text-xs ${STATISTICS_DENSE_VALUE_CLASS}`}>
+              <span className='text-xs opacity-50'>Avg Water Drawn:</span>
+              <span className='font-mono text-xs font-semibold'>
                 {fmt(td.water ? td.water.actual : phase.avgWater)}ml
               </span>
               {td.water && (
-                <span
-                  className={`text-xs ${STATISTICS_DENSE_VALUE_CLASS}`}
-                  style={{ color: DELTA_COLOR }}
-                >
+                <span className='font-mono text-xs' style={{ color: DELTA_COLOR }}>
                   (target {fmt(td.water.target)}ml, {fmtDelta(td.water.delta)}ml)
                 </span>
               )}
@@ -132,7 +119,7 @@ function PhaseSection({ phase, hideExitReasons = false }) {
               <tbody>
                 {[
                   { key: 'p', label: 'Pressure', unit: 'bar' },
-                  { key: 'f', label: 'Pump Flow', unit: 'ml/s' },
+                  { key: 'f', label: 'Flow', unit: 'ml/s' },
                   { key: 'pf', label: 'Puck Flow', unit: 'ml/s' },
                   { key: 't', label: 'Temp', unit: '\u2103' },
                   { key: 'w', label: 'Weight', unit: 'g' },
@@ -144,9 +131,9 @@ function PhaseSection({ phase, hideExitReasons = false }) {
                       <td className='font-semibold'>
                         {row.label} <span className='opacity-50'>({row.unit})</span>
                       </td>
-                      <td className={STATISTICS_TABLE_NUMBER_CLASS}>{fmt(m.avg)}</td>
-                      <td className={STATISTICS_TABLE_NUMBER_CLASS}>{fmt(m.min)}</td>
-                      <td className={STATISTICS_TABLE_NUMBER_CLASS}>{fmt(m.max)}</td>
+                      <td className='text-right font-mono'>{fmt(m.avg)}</td>
+                      <td className='text-right font-mono'>{fmt(m.min)}</td>
+                      <td className='text-right font-mono'>{fmt(m.max)}</td>
                       <TargetDeltaCell entry={td[row.key]} unit={row.unit} />
                     </tr>
                   );
@@ -157,7 +144,9 @@ function PhaseSection({ phase, hideExitReasons = false }) {
 
           {!hideExitReasons && (
             <div>
-              <div className={`mb-1 opacity-55 ${STATISTICS_SMALL_LABEL_CLASS}`}>Exit Reasons</div>
+              <div className='mb-1 text-[10px] font-semibold uppercase opacity-50'>
+                Exit Reasons
+              </div>
               <div className='flex flex-wrap gap-1'>
                 {Object.entries(phase.exitReasonDistribution ?? {})
                   .sort((a, b) => b[1] - a[1])
@@ -191,7 +180,7 @@ export function PhaseStatistics({ phaseStats, showTitle = true, hideExitReasons 
       {showTitle && (
         <h3 className={`mb-2 ${STATISTICS_SECTION_TITLE_CLASS}`}>Per-phase statistics</h3>
       )}
-      <div className='space-y-3'>
+      <div className='space-y-2'>
         {phases.map(phase => (
           <PhaseSection key={phase.phaseName} phase={phase} hideExitReasons={hideExitReasons} />
         ))}

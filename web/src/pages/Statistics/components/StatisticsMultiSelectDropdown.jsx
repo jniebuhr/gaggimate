@@ -11,21 +11,11 @@ import {
   STATISTICS_DROPDOWN_PANEL_SURFACE_STYLE,
 } from './statisticsDropdownSurface';
 
-/* global globalThis */
-
 const LONG_PRESS_MS = 220;
 const MOVE_CANCEL_PX = 10;
 const STATISTICS_MULTISELECT_PANEL_CLASS = `absolute top-full left-0 mt-2 w-[min(92vw,28rem)] ${STATISTICS_DROPDOWN_PANEL_SURFACE_CLASS}`;
 
 // Reusable multiselect dropdown with desktop modifiers and touch "paint" selection.
-function getBrowserWindow() {
-  return globalThis.window;
-}
-
-function getBrowserDocument() {
-  return globalThis.document;
-}
-
 function normalizeSearchText(value) {
   return String(value ?? '')
     .toLowerCase()
@@ -171,13 +161,11 @@ export function StatisticsMultiSelectDropdown({
   const suppressRowClickRef = useRef(false);
   const touchStateRef = useRef(null);
   const latestSelectedSetRef = useRef(new Set());
-  const onChangeRef = useRef(onChange);
 
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [showPinnedOnly, setShowPinnedOnly] = useState(false);
 
-  onChangeRef.current = onChange;
   const selectedSet = useMemo(() => new Set(selectedIds || []), [selectedIds]);
   latestSelectedSetRef.current = selectedSet;
   const normalizedSearchTerm = normalizeSearchText(searchTerm);
@@ -201,7 +189,7 @@ export function StatisticsMultiSelectDropdown({
   const commitSelection = nextSet => {
     latestSelectedSetRef.current = new Set(nextSet);
     const next = buildOrderedSelection(items || [], nextSet);
-    onChangeRef.current?.(next);
+    onChange?.(next);
   };
 
   const setSingleSelection = (id, index) => {
@@ -281,11 +269,10 @@ export function StatisticsMultiSelectDropdown({
       clearTimeout(state.timer);
     }
 
-    const browserWindow = getBrowserWindow();
-    if (browserWindow) {
-      browserWindow.removeEventListener('pointermove', state.onMove);
-      browserWindow.removeEventListener('pointerup', state.onUp);
-      browserWindow.removeEventListener('pointercancel', state.onCancel);
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('pointermove', state.onMove);
+      window.removeEventListener('pointerup', state.onUp);
+      window.removeEventListener('pointercancel', state.onCancel);
     }
 
     touchStateRef.current = null;
@@ -337,7 +324,7 @@ export function StatisticsMultiSelectDropdown({
         return;
       }
 
-      const el = getBrowserDocument()?.elementFromPoint(moveEvent.clientX, moveEvent.clientY);
+      const el = document.elementFromPoint(moveEvent.clientX, moveEvent.clientY);
       const row = el?.closest?.('[data-stat-multi-item-id]');
       const hitId = row?.getAttribute?.('data-stat-multi-item-id');
       if (!hitId || current.visitedIds.has(hitId)) return;
@@ -357,15 +344,14 @@ export function StatisticsMultiSelectDropdown({
     state.onCancel = endGesture;
     // Long-press turns the selection circle into a touch-friendly "paint"
     // gesture so users can sweep across many rows without modifier keys.
-    state.timer = getBrowserWindow()?.setTimeout(() => beginPaintMode(state), LONG_PRESS_MS);
+    state.timer = window.setTimeout(() => beginPaintMode(state), LONG_PRESS_MS);
 
     touchStateRef.current = state;
 
-    const browserWindow = getBrowserWindow();
-    if (browserWindow) {
-      browserWindow.addEventListener('pointermove', onMove, { passive: true });
-      browserWindow.addEventListener('pointerup', endGesture, { passive: true });
-      browserWindow.addEventListener('pointercancel', endGesture, { passive: true });
+    if (typeof window !== 'undefined') {
+      window.addEventListener('pointermove', onMove, { passive: true });
+      window.addEventListener('pointerup', endGesture, { passive: true });
+      window.addEventListener('pointercancel', endGesture, { passive: true });
     }
   };
 
@@ -388,12 +374,11 @@ export function StatisticsMultiSelectDropdown({
       }
     };
 
-    const browserDocument = getBrowserDocument();
-    browserDocument?.addEventListener('pointerdown', handleDocumentPointerDown);
-    browserDocument?.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('pointerdown', handleDocumentPointerDown);
+    document.addEventListener('keydown', handleKeyDown);
     return () => {
-      browserDocument?.removeEventListener('pointerdown', handleDocumentPointerDown);
-      browserDocument?.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('pointerdown', handleDocumentPointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
     };
   }, [open]);
 
@@ -406,23 +391,22 @@ export function StatisticsMultiSelectDropdown({
 
   useEffect(() => {
     if (!open) return;
-    const timer = getBrowserWindow()?.setTimeout(() => {
+    const timer = window.setTimeout(() => {
       listRef.current?.querySelector?.('input')?.focus?.();
     }, 0);
-    return () => {
-      if (timer) clearTimeout(timer);
-    };
+    return () => clearTimeout(timer);
   }, [open]);
 
   // Prune stale selections when the available items change (e.g. after a source switch).
-  // The latest callback is read from a ref so this effect only tracks data changes.
+  // onChange is intentionally excluded: it is not memoized and including it would cause
+  // this effect to run on every render without any actual item/selection change.
   useEffect(() => {
     const validIds = new Set((items || []).map(item => item.id).filter(Boolean));
     const pruned = (selectedIds || []).filter(id => validIds.has(id));
     if (pruned.length !== (selectedIds || []).length) {
-      onChangeRef.current?.(pruned);
+      onChange?.(pruned);
     }
-  }, [items, selectedIds]);
+  }, [items, selectedIds]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const selectedCount = selectedSet.size;
   const triggerText = selectedCount > 0 ? `${label} (${selectedCount})` : emptyText;
@@ -434,7 +418,6 @@ export function StatisticsMultiSelectDropdown({
       <button
         ref={triggerRef}
         type='button'
-        data-statistics-multiselect-trigger
         disabled={disabled}
         aria-expanded={open}
         aria-haspopup='menu'
