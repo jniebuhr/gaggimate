@@ -26,10 +26,8 @@ function normalizeStoredProfile(profile = {}) {
 }
 
 class IndexedDBService {
-  constructor() {
-    this.db = null;
-    this._initPromise = null;
-  }
+  db = null;
+  _initPromise = null;
 
   /**
    * Initialize the database.
@@ -97,7 +95,7 @@ class IndexedDBService {
 
   /**
    * Get all browser-uploaded shots
-   * @returns {Array} List of shots
+   * @returns {Promise<Array>} List of shots
    */
   async getAllShots() {
     const db = await this.init();
@@ -153,7 +151,7 @@ class IndexedDBService {
 
   /**
    * Get all browser-uploaded profiles
-   * @returns {Array} List of profiles
+   * @returns {Promise<Array>} List of profiles
    */
   async getAllProfiles() {
     const db = await this.init();
