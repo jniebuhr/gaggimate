@@ -4,7 +4,7 @@ import Section from '../../../components/Card.jsx';
 import { Tooltip } from '../../../components/Tooltip.jsx';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCrosshairs } from '@fortawesome/free-solid-svg-icons/faCrosshairs';
-import { InputGroupField, SettingsFormField } from '../../../components/SettingsFormField.jsx';
+import { InputGroupField, SettingsFormField, ToggleField } from '../../../components/SettingsFormField.jsx';
 
 const ledControl = computed(() => machine.value.capabilities.ledControl);
 const pressureAvailable = computed(() => machine.value.capabilities.pressure);
@@ -314,6 +314,14 @@ export function MachineTab({ formData, onChange, setField }) {
               onChange={onChange('sunriseExtBrightness')}
             />
           </SettingsFormField>
+          <div className='mt-6'>
+            <ToggleField
+              label='Show Water Level Dot on Gaggimate Display'
+              htmlFor='showWaterLevelDot'
+              checked={!!formData.showWaterLevelDot}
+              onChange={onChange('showWaterLevelDot')}
+            />
+          </div>
           <div className='border-base-content/5 mt-6 grid grid-cols-1 gap-4 border-t pt-6 md:grid-cols-2'>
             <TankDistanceField
               id='emptyTankDistance'

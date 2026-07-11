@@ -247,6 +247,7 @@ void DefaultUI::loop() {
         updateTempStableFlag();
 
         updateState();
+        updateWaterDot();
         // Fill the EEZ data models before handleScreenChange() creates/ticks a screen (undefined fields abort the flow).
         updateSystemStatus();
         updateProfileInfo();
@@ -265,8 +266,6 @@ void DefaultUI::loop() {
         handleScreenChange();
         currentScreen = static_cast<ScreensEnum>(eez_flow_get_current_screen());
         effect_mgr.evaluate_all();
-
-        updateWaterDot();
 
         if (currentScreen == SCREEN_ID_STANDBY_SCREEN) {
             if (standbyEnterTime > 0) {
@@ -699,26 +698,28 @@ static uint32_t parseHexColor(const String &hex) { return strtol(hex.c_str() + 1
 static lv_obj_t *createWaterDot(lv_obj_t *parent, int y) {
     lv_obj_t *dot = lv_obj_create(parent);
     lv_obj_set_size(dot, 14, 14);
-    lv_obj_set_style_align(dot, LV_ALIGN_CENTER, 0);
-    lv_obj_set_pos(dot, 0, y);
     lv_obj_set_style_radius(dot, LV_RADIUS_CIRCLE, 0);
-    lv_obj_set_style_border_width(dot, 1, 0);
-    lv_obj_set_style_border_color(dot, lv_color_make(128, 128, 128), 0);
+    lv_obj_set_style_border_width(dot, 0, 0);
     lv_obj_set_style_pad_all(dot, 0, 0);
-    lv_obj_clear_flag(dot, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_align(dot, LV_ALIGN_CENTER, 0, y);
     return dot;
 }
 
 void DefaultUI::updateWaterDot() {
-    if (!tofAvailable) {
-        waterDot = nullptr;
-        waterDotMenu = nullptr;
+    if (!tofAvailable || !controller->getSettings().isShowWaterLevelDot()) {
+        if (waterDot != nullptr) {
+            lv_obj_del(waterDot);
+            waterDot = nullptr;
+        }
+        if (waterDotMenu != nullptr) {
+            lv_obj_del(waterDotMenu);
+            waterDotMenu = nullptr;
+        }
         return;
     }
-
     lv_obj_t *scr = lv_scr_act();
-
-    if (currentScreen == SCREEN_ID_MENU_SCREEN_NEW) {
+    if (currentScreen == SCREEN_ID_MENU_SCREEN_NEW || currentScreen == SCREEN_ID_INFO_SCREEN ||
+        currentScreen == SCREEN_ID_PROFILE_SCREEN) {
         waterDot = nullptr;
         if (waterDotMenu == nullptr || !lv_obj_is_valid(waterDotMenu)) {
             waterDotMenu = createWaterDot(scr, -230);
@@ -740,8 +741,14 @@ void DefaultUI::updateWaterDot() {
         lv_obj_set_style_bg_color(waterDot, color, 0);
         lv_obj_set_style_bg_opa(waterDot, LV_OPA_COVER, 0);
     } else {
-        waterDot = nullptr;
-        waterDotMenu = nullptr;
+        if (waterDot != nullptr) {
+            lv_obj_del(waterDot);
+            waterDot = nullptr;
+        }
+        if (waterDotMenu != nullptr) {
+            lv_obj_del(waterDotMenu);
+            waterDotMenu = nullptr;
+        }
     }
 }
 
