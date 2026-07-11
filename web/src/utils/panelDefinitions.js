@@ -21,6 +21,16 @@ import { ActionCard } from '../pages/Home/cards/ActionCard.jsx';
  *   props            — (ds) => object — props passed to component (inCard is injected by sidebar)
  *   containerClass   — optional CSS classes added to the wrapper div (e.g. flex height constraints)
  */
+export const SPACER_ID = '__spacer__';
+
+/**
+ * Synthetic pseudo-panel: a flexible gap the user can place anywhere in the
+ * panel order (Dashboard Settings) to split the middle panels into a
+ * top-packed group and a bottom-packed group. Deliberately has no
+ * component/props/containerClass since it's never rendered as a real panel.
+ */
+export const SPACER_DEFINITION = { id: SPACER_ID, label: 'Flexible Space', required: false, available: () => true };
+
 export const PANEL_DEFINITIONS = [
   {
     id: 'mode',

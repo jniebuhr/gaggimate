@@ -47,7 +47,7 @@ import {
   setDashboardMode,
 } from '../../utils/dashboardManager.js';
 import { METRIC_DEFINITIONS } from '../../utils/metricDefinitions.js';
-import { PANEL_DEFINITIONS } from '../../utils/panelDefinitions.js';
+import { PANEL_DEFINITIONS, SPACER_ID, SPACER_DEFINITION } from '../../utils/panelDefinitions.js';
 
 export function DashboardSettings() {
   const [dashboardLayout, setDashboardLayoutState] = useState(() => getDashboardLayout());
@@ -83,12 +83,15 @@ export function DashboardSettings() {
     m => !m.required && !metricOrder.includes(m.id) && m.available(machine.value.status),
   );
 
-  const hiddenPanels = PANEL_DEFINITIONS.filter(def => {
-    if (def.required) return false;
-    if (panelOrder.includes(def.id)) return false;
-    const availFn = def.availableInSettings ?? def.available;
-    return availFn(machine.value.status);
-  });
+  const hiddenPanels = [
+    ...PANEL_DEFINITIONS.filter(def => {
+      if (def.required) return false;
+      if (panelOrder.includes(def.id)) return false;
+      const availFn = def.availableInSettings ?? def.available;
+      return availFn(machine.value.status);
+    }),
+    ...(panelOrder.includes(SPACER_ID) ? [] : [SPACER_DEFINITION]),
+  ];
 
   const handleToggleCompact = id => {
     toggleCompactPanel(id);
@@ -229,7 +232,11 @@ export function DashboardSettings() {
           <SettingsFormField
             label='Column Spacing'
             htmlFor='columnSpacing'
-            helpText='Controls how panels are distributed vertically: pack them to the top, or space them evenly across the column.'
+            helpText={
+              panelOrder.includes(SPACER_ID)
+                ? 'Ignored while a Flexible Space item is present in the panel list below.'
+                : 'Controls how panels are distributed vertically: pack them to the top, or space them evenly across the column.'
+            }
           >
             <select
               id='columnSpacing'
@@ -246,7 +253,7 @@ export function DashboardSettings() {
           </SettingsFormField>
           <SortableConfigurator
             order={panelOrder}
-            definitions={PANEL_DEFINITIONS}
+            definitions={[...PANEL_DEFINITIONS, SPACER_DEFINITION]}
             hidden={hiddenPanels}
             onOrderChange={ids => {
               setPanelOrderState(ids);
