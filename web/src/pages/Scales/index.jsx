@@ -30,11 +30,35 @@ function batteryColorClass(pct) {
   return 'text-base-content/60'; // everyday — same tone as RSSI
 }
 
+// Map firmware-emitted connect:error `reason` codes to user-readable text.
+// Stays in sync with BLEScalePlugin::emitConnectError call sites.
+function describeConnectErrorReason(reason) {
+  switch (reason) {
+    case 'device_not_found':
+      return "Device disappeared before connection could complete. Try scanning again.";
+    case 'ble_connect_failed':
+      return 'BLE connection refused. Power-cycle the scale and try again.';
+    case 'factory_create_failed':
+    case 'factory_null':
+      return 'Scale driver unavailable. This model may not be supported.';
+    case 'request_failed':
+      return 'Network request failed. Check the device is reachable.';
+    default:
+      return 'Connection failed. See logs for details.';
+  }
+}
+
 export function Scales() {
   const [key, setKey] = useState(0);
   const [scaleData, setScaleData] = useState([]);
-  const [isScanning, setIsScanning] = useState(false);
+  const [connectError, setConnectError] = useState(null);
+  const [disconnectedAt, setDisconnectedAt] = useState(0);
   const mode = machine.value.status.mode;
+  // Firmware-driven scan state: the back end emits evt:scale:scan:complete
+  // SCAN_DURATION_MS (~5 s) after a scan starts, and ApiService writes
+  // machine.scale.scanning. We mirror that here so the spinner stays up
+  // for the actual scan window, not just until the HTTP POST returns.
+  const isScanning = !!machine.value.scale?.scanning;
 
   useEffect(() => {
     const intervalHandle = setInterval(() => {
@@ -50,6 +74,9 @@ export function Scales() {
     data: fetchedScales = [],
   } = useQuery(`scales-${key}`, async () => {
     const response = await fetch(`/api/scales/list`);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
     const data = await response.json();
     return data;
   });
@@ -60,47 +87,129 @@ export function Scales() {
     data: connectedScale = [],
   } = useQuery(`scale-info-${key}`, async () => {
     const response = await fetch(`/api/scales/info`);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
     const data = await response.json();
     return data;
   });
 
   useEffect(() => {
-    if (!connectedScale || fetchedScales.length === 0) {
+    // If a scale is already connected (e.g. auto-reconnected to the last
+    // known scale at boot), show it even when the discovery list is empty.
+    // The prior `fetchedScales.length === 0` early-return meant a connected
+    // scale silently disappeared from /scales whenever no scan had populated
+    // the list yet — even though it was correctly streaming weight to the
+    // dashboard.
+    if (!connectedScale) {
+      setScaleData(fetchedScales);
       return;
     }
-    const scales = connectedScale.connected ? [connectedScale] : fetchedScales;
-    setScaleData(scales);
+    if (connectedScale.connected) {
+      setScaleData([connectedScale]);
+      // Belt-and-suspenders: if a connect-success WS event was missed
+      // (e.g. WS reconnected mid-event), the 10 s /api/scales/info poll
+      // is our other source-of-truth for "scale is now connected." Clear
+      // the stale disconnect banner + lingering connect error here too.
+      setDisconnectedAt(0);
+      setConnectError(null);
+    } else {
+      setScaleData(fetchedScales);
+    }
   }, [connectedScale, fetchedScales]);
 
   const onScan = useCallback(async () => {
-    setIsScanning(true);
+    // Optimistically flip scanning=true so the UI updates immediately;
+    // the firmware will flip it back to false via evt:scale:scan:complete
+    // when the scan window closes (or sooner if a connect attempt aborts
+    // the scan).
+    machine.value = {
+      ...machine.value,
+      scale: { ...machine.value.scale, scanning: true },
+    };
+    setConnectError(null);
     try {
-      await fetch('/api/scales/scan', {
+      const response = await fetch('/api/scales/scan', {
         method: 'post',
       });
-      // Refresh the data after scan
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      // Refresh the displayed list after scan kicks off; the firmware
+      // event drives the spinner-off transition independently.
       setKey(Date.now().valueOf());
     } catch (error) {
       console.error('Scan failed:', error);
-    } finally {
-      setIsScanning(false);
+      machine.value = {
+        ...machine.value,
+        scale: { ...machine.value.scale, scanning: false },
+      };
     }
-  }, [setIsScanning]);
+  }, []);
 
   const onConnect = useCallback(async uuid => {
+    setConnectError(null);
     try {
       const data = new FormData();
       data.append('uuid', uuid);
-      await fetch('/api/scales/connect', {
+      const response = await fetch('/api/scales/connect', {
         method: 'post',
         body: data,
       });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
       // Refresh the data after connection
       setKey(Date.now().valueOf());
     } catch (error) {
       console.error('Connection failed:', error);
+      setConnectError({ address: uuid, reason: 'request_failed' });
     }
   }, []);
+
+  // Mirror firmware-emitted scale events into local state for banners.
+  // The machine.scale signal updates from ApiService when the WS event
+  // arrives; we copy into setConnectError to scope per-page dismissal.
+  useEffect(() => {
+    const err = machine.value.scale?.lastConnectError;
+    if (err?.at) {
+      setConnectError(err);
+    }
+  }, [machine.value.scale?.lastConnectError?.at]);
+
+  useEffect(() => {
+    const ts = machine.value.scale?.lastDisconnectAt;
+    if (ts) {
+      setDisconnectedAt(ts);
+    }
+  }, [machine.value.scale?.lastDisconnectAt]);
+
+  // Force the disconnect banner to auto-clear at the 60 s deadline so it
+  // doesn't sit stuck on screen if the user idles. The render-time
+  // `Date.now() - disconnectedAt < 60000` check only re-evaluates on
+  // parent state changes; without this timer the banner would stay
+  // visible past its intended dismissal window.
+  useEffect(() => {
+    if (disconnectedAt === 0) return;
+    const elapsed = Date.now() - disconnectedAt;
+    if (elapsed >= 60000) {
+      setDisconnectedAt(0);
+      return;
+    }
+    const handle = setTimeout(() => setDisconnectedAt(0), 60000 - elapsed);
+    return () => clearTimeout(handle);
+  }, [disconnectedAt]);
+
+  // Clear residual banners when the device enters standby. Without this
+  // a "scale disconnected" or "connect failed" notice persists into a
+  // mode where the user has no actionable response (scan is disabled),
+  // confusing the dashboard until they navigate away and back.
+  useEffect(() => {
+    if (mode === 0) {
+      setDisconnectedAt(0);
+      setConnectError(null);
+    }
+  }, [mode]);
 
   const loading = isLoading || isInfoLoading || isScanning;
 
@@ -113,6 +222,34 @@ export function Scales() {
           {mode > 0 && loading && <Spinner size={8} className='ml-4' />}
         </button>
       </div>
+
+      {connectError && (
+        <div role='alert' className='alert alert-error mb-4'>
+          <div className='flex-1'>
+            <span className='font-semibold'>Connection failed.</span>{' '}
+            <span className='opacity-80'>{describeConnectErrorReason(connectError.reason)}</span>
+            {connectError.address && (
+              <span className='ml-2 font-mono text-xs opacity-60'>({connectError.address})</span>
+            )}
+          </div>
+          <button type='button' className='btn btn-sm' onClick={() => setConnectError(null)}>
+            Dismiss
+          </button>
+        </div>
+      )}
+      {disconnectedAt > 0 && Date.now() - disconnectedAt < 60000 && (
+        <div role='alert' className='alert alert-warning mb-4'>
+          <div className='flex-1'>
+            <span className='font-semibold'>Scale disconnected.</span>{' '}
+            <span className='opacity-80'>
+              Reconnection attempts were exhausted. Re-scan or check the scale's power.
+            </span>
+          </div>
+          <button type='button' className='btn btn-sm' onClick={() => setDisconnectedAt(0)}>
+            Dismiss
+          </button>
+        </div>
+      )}
 
       <div className='grid grid-cols-1 gap-4 lg:grid-cols-12'>
         <Card sm={12} title='Available Devices'>
