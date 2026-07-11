@@ -3,10 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHome } from '@fortawesome/free-solid-svg-icons/faHome';
 import { faList } from '@fortawesome/free-solid-svg-icons/faList';
 import { faTimeline } from '@fortawesome/free-solid-svg-icons/faTimeline';
-import { faTemperatureHalf } from '@fortawesome/free-solid-svg-icons/faTemperatureHalf';
-import { faBluetoothB } from '@fortawesome/free-brands-svg-icons/faBluetoothB';
 import { faCog } from '@fortawesome/free-solid-svg-icons/faCog';
-import { faRotate } from '@fortawesome/free-solid-svg-icons/faRotate';
 import { faMagnifyingGlassChart } from '@fortawesome/free-solid-svg-icons/faMagnifyingGlassChart';
 import { faChartSimple } from '@fortawesome/free-solid-svg-icons/faChartSimple';
 import { faCircleChevronLeft } from '@fortawesome/free-solid-svg-icons/faCircleChevronLeft';
@@ -60,15 +57,8 @@ const NAVIGATION_SECTIONS = [
     id: 'devices',
     showDivider: true,
     items: [
-      { label: 'PID Autotune', link: '/pidtune', icon: faTemperatureHalf },
-      { label: 'Bluetooth Devices', link: '/scales', icon: faBluetoothB },
       { label: 'Settings', link: '/settings', icon: faCog },
     ],
-  },
-  {
-    id: 'updates',
-    showDivider: true,
-    items: [{ label: 'System & Updates', link: '/ota', icon: faRotate }],
   },
 ];
 
