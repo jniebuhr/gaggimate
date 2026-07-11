@@ -4,6 +4,7 @@ import { OverviewChart } from '../../../components/OverviewChart.jsx';
 import { Spinner } from '../../../components/Spinner.jsx';
 import Section from '../../../components/Card.jsx';
 import PumpFlowCalibration from '../../../components/PumpFlowCalibration/index.jsx';
+import { SettingsFormField } from '../../../components/SettingsFormField.jsx';
 
 export function CalibrationTab({ formData, onChange }) {
   const apiService = useContext(ApiServiceContext);
@@ -124,10 +125,12 @@ export function CalibrationTab({ formData, onChange }) {
             </div>
 
             <div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>
-              <div className='form-control'>
-                <label htmlFor='testTime' className='mb-2 block text-sm font-medium'>
-                  Test Duration (seconds)
-                </label>
+              <SettingsFormField
+                label='Test Duration (seconds)'
+                htmlFor='testTime'
+                helpText='Upper bound on the identification test. Most espresso boilers resolve within 60–120 s. Extend if Autotune fails before peak slope is detected.'
+                noMargin
+              >
                 <input
                   id='testTime'
                   type='number'
@@ -138,16 +141,13 @@ export function CalibrationTab({ formData, onChange }) {
                   onChange={e => setAutotuneTime(Number.parseInt(e.target.value, 10) || 0)}
                   placeholder='120'
                 />
-                <div className='text-base-content/80 mt-2 text-xs opacity-70'>
-                  Upper bound on the identification test. Most espresso boilers resolve within
-                  60–120 s. Extend if Autotune fails before peak slope is detected.
-                </div>
-              </div>
-
-              <div className='form-control'>
-                <label htmlFor='slopeWindow' className='mb-2 block text-sm font-medium'>
-                  Slope Window
-                </label>
+              </SettingsFormField>
+              <SettingsFormField
+                label='Slope Window'
+                htmlFor='slopeWindow'
+                helpText='Moving-window length (samples) used for slope estimation. Larger values smooth MAX31855 quantisation but lag the inflection. 6 is the sweet spot.'
+                noMargin
+              >
                 <input
                   id='slopeWindow'
                   type='number'
@@ -158,16 +158,13 @@ export function CalibrationTab({ formData, onChange }) {
                   onChange={e => setAutotuneSamples(Number.parseInt(e.target.value, 10) || 4)}
                   placeholder='6'
                 />
-                <div className='text-base-content/80 mt-2 text-xs opacity-70'>
-                  Moving-window length (samples) used for slope estimation. Larger values smooth
-                  MAX31855 quantisation but lag the inflection. 6 is the sweet spot.
-                </div>
-              </div>
-
-              <div className='form-control'>
-                <label htmlFor='heaterWattage' className='mb-2 block text-sm font-medium'>
-                  Heater Wattage (W)
-                </label>
+              </SettingsFormField>
+              <SettingsFormField
+                label='Heater Wattage (W)'
+                htmlFor='heaterWattage'
+                helpText='Heater wattage in Watts (e.g. 680 W).'
+                noMargin
+              >
                 <input
                   id='heaterWattage'
                   type='number'
@@ -178,10 +175,7 @@ export function CalibrationTab({ formData, onChange }) {
                   onChange={e => setAutotuneWattage(Number.parseInt(e.target.value, 10) || 0)}
                   placeholder='680'
                 />
-                <div className='text-base-content/80 mt-2 text-xs opacity-70'>
-                  Heater wattage in Watts (e.g. 680 W).
-                </div>
-              </div>
+              </SettingsFormField>
             </div>
 
             <div className='pt-2'>

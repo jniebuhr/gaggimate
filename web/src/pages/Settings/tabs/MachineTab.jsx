@@ -4,6 +4,7 @@ import Section from '../../../components/Card.jsx';
 import { Tooltip } from '../../../components/Tooltip.jsx';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCrosshairs } from '@fortawesome/free-solid-svg-icons/faCrosshairs';
+import { InputGroupField, SettingsFormField } from '../../../components/SettingsFormField.jsx';
 
 const ledControl = computed(() => machine.value.capabilities.ledControl);
 const pressureAvailable = computed(() => machine.value.capabilities.pressure);
@@ -11,10 +12,7 @@ const tofDistance = computed(() => machine.value.status.tofDistance);
 
 function SunriseColorField({ id, label, value, fallback, onChange }) {
   return (
-    <div className='form-control'>
-      <label htmlFor={id} className='mb-2 block text-sm font-medium'>
-        {label}
-      </label>
+    <SettingsFormField label={label} htmlFor={id} noMargin>
       <label className='input input-bordered w-full cursor-pointer p-1' htmlFor={id}>
         <div className='h-full w-full rounded-sm' style={{ backgroundColor: value || fallback }}>
           <input
@@ -27,16 +25,13 @@ function SunriseColorField({ id, label, value, fallback, onChange }) {
           />
         </div>
       </label>
-    </div>
+    </SettingsFormField>
   );
 }
 
 function TankDistanceField({ id, label, value, onChange, onUseCurrent }) {
   return (
-    <div className='form-control'>
-      <label htmlFor={id} className='mb-2 block text-sm font-medium'>
-        {label}
-      </label>
+    <SettingsFormField label={label} htmlFor={id} noMargin>
       <div className='flex flex-row gap-2'>
         <div className='input-group flex-grow'>
           <label htmlFor={id} className='input w-full'>
@@ -58,7 +53,7 @@ function TankDistanceField({ id, label, value, onChange, onUseCurrent }) {
           </button>
         </Tooltip>
       </div>
-    </div>
+    </SettingsFormField>
   );
 }
 
@@ -68,99 +63,92 @@ export function MachineTab({ formData, onChange, setField }) {
       {/* Temperature Settings */}
       <Section title='Temperature Settings'>
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-          <div className='form-control'>
-            <label htmlFor='targetSteamTemp' className='mb-2 block text-sm font-medium'>
-              Default Steam Temperature
-            </label>
-            <div className='input-group'>
-              <label htmlFor='targetSteamTemp' className='input w-full'>
-                <input
-                  id='targetSteamTemp'
-                  name='targetSteamTemp'
-                  type='number'
-                  placeholder='135'
-                  value={formData.targetSteamTemp}
-                  onChange={onChange('targetSteamTemp')}
-                />
-                <span aria-label='celsius'>°C</span>
-              </label>
-            </div>
-          </div>
-          <div className='form-control'>
-            <label htmlFor='targetWaterTemp' className='mb-2 block text-sm font-medium'>
-              Default Water Temperature
-            </label>
-            <div className='input-group'>
-              <label htmlFor='targetWaterTemp' className='input w-full'>
-                <input
-                  id='targetWaterTemp'
-                  name='targetWaterTemp'
-                  type='number'
-                  placeholder='80'
-                  value={formData.targetWaterTemp}
-                  onChange={onChange('targetWaterTemp')}
-                />
-                <span aria-label='celsius'>°C</span>
-              </label>
-            </div>
-          </div>
+          <InputGroupField
+            label='Default Steam Temperature'
+            htmlFor='targetSteamTemp'
+            unit='°C'
+            unitAriaLabel='celsius'
+            noMargin
+          >
+            <input
+              id='targetSteamTemp'
+              name='targetSteamTemp'
+              type='number'
+              placeholder='135'
+              value={formData.targetSteamTemp}
+              onChange={onChange('targetSteamTemp')}
+            />
+          </InputGroupField>
+          <InputGroupField
+            label='Default Water Temperature'
+            htmlFor='targetWaterTemp'
+            unit='°C'
+            unitAriaLabel='celsius'
+            noMargin
+          >
+            <input
+              id='targetWaterTemp'
+              name='targetWaterTemp'
+              type='number'
+              placeholder='80'
+              value={formData.targetWaterTemp}
+              onChange={onChange('targetWaterTemp')}
+            />
+          </InputGroupField>
         </div>
       </Section>
 
       {/* Machine Hardware Settings */}
       <Section title='Machine Settings'>
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-          <div className='form-control'>
-            <label htmlFor='pid' className='mb-2 block text-sm font-medium'>
-              PID Values
-            </label>
-            <div className='input-group'>
-              <label htmlFor='pid' className='input w-full'>
-                <input
-                  id='pid'
-                  name='pid'
-                  type='text'
-                  className='grow'
-                  placeholder='2.0, 0.1, 0.01'
-                  value={formData.pid}
-                  onChange={onChange('pid')}
-                />
-                <span>
-                  K<sub>p</sub>, K<sub>i</sub>, K<sub>d</sub>
-                </span>
-              </label>
-            </div>
-          </div>
-          <div className='form-control'>
-            <label htmlFor='kf' className='mb-2 block text-sm font-medium'>
-              Thermal Feedforward Gain
-            </label>
-            <div className='input-group'>
-              <label htmlFor='kf' className='input w-full'>
-                <input
-                  id='kf'
-                  name='kf'
-                  type='number'
-                  step='0.001'
-                  className='grow'
-                  placeholder='0.600'
-                  value={formData.kf}
-                  onChange={onChange('kf')}
-                />
-                <span>
-                  K<sub>ff</sub>
-                </span>
-              </label>
-            </div>
-            <div className='mt-2 text-xs opacity-75'>Set to 0 to disable feedforward control.</div>
-          </div>
-          <div className='form-control'>
-            <label htmlFor='pumpModelCoeffs' className='mb-2 block text-sm font-medium'>
-              Pump Flow Coefficients
-            </label>
-            <div className='mb-2 text-xs opacity-70'>
-              Enter 2 values (flow at 1 bar, flow at 9 bar)
-            </div>
+          <InputGroupField
+            label='PID Values'
+            htmlFor='pid'
+            unit={
+              <>
+                K<sub>p</sub>, K<sub>i</sub>, K<sub>d</sub>
+              </>
+            }
+            noMargin
+          >
+            <input
+              id='pid'
+              name='pid'
+              type='text'
+              className='grow'
+              placeholder='2.0, 0.1, 0.01'
+              value={formData.pid}
+              onChange={onChange('pid')}
+            />
+          </InputGroupField>
+          <InputGroupField
+            label='Thermal Feedforward Gain'
+            htmlFor='kf'
+            unit={
+              <>
+                K<sub>ff</sub>
+              </>
+            }
+            helpText='Set to 0 to disable feedforward control.'
+            noMargin
+          >
+            <input
+              id='kf'
+              name='kf'
+              type='number'
+              step='0.001'
+              className='grow'
+              placeholder='0.600'
+              value={formData.kf}
+              onChange={onChange('kf')}
+            />
+          </InputGroupField>
+          <SettingsFormField
+            label='Pump Flow Coefficients'
+            htmlFor='pumpModelCoeffs'
+            helpText='Enter 2 values (flow at 1 bar, flow at 9 bar)'
+            noMargin
+          >
             <input
               id='pumpModelCoeffs'
               name='pumpModelCoeffs'
@@ -170,113 +158,94 @@ export function MachineTab({ formData, onChange, setField }) {
               value={formData.pumpModelCoeffs}
               onChange={onChange('pumpModelCoeffs')}
             />
-          </div>
-          <div className='form-control'>
-            <label htmlFor='temperatureOffset' className='mb-2 block text-sm font-medium'>
-              Temperature Offset (°C)
-            </label>
-            <div className='input-group'>
-              <label htmlFor='temperatureOffset' className='input w-full'>
-                <input
-                  id='temperatureOffset'
-                  name='temperatureOffset'
-                  type='number'
-                  step='any'
-                  placeholder='0'
-                  value={formData.temperatureOffset}
-                  onChange={onChange('temperatureOffset')}
-                />
-                <span aria-label='celsius'>°C</span>
-              </label>
-            </div>
-          </div>
+          </SettingsFormField>
+          <InputGroupField
+            label='Temperature Offset (°C)'
+            htmlFor='temperatureOffset'
+            unit='°C'
+            unitAriaLabel='celsius'
+            noMargin
+          >
+            <input
+              id='temperatureOffset'
+              name='temperatureOffset'
+              type='number'
+              step='any'
+              className='grow'
+              placeholder='0'
+              value={formData.temperatureOffset}
+              onChange={onChange('temperatureOffset')}
+            />
+          </InputGroupField>
           {pressureAvailable.value && (
-            <div className='form-control'>
-              <label htmlFor='pressureScaling' className='mb-2 block text-sm font-medium'>
-                Pressure Sensor Rating
-              </label>
-              <div className='input-group'>
-                <label htmlFor='pressureScaling' className='input w-full'>
-                  <input
-                    id='pressureScaling'
-                    name='pressureScaling'
-                    type='number'
-                    step='any'
-                    className='grow'
-                    placeholder='0.0'
-                    value={formData.pressureScaling}
-                    onChange={onChange('pressureScaling')}
-                  />
-                  <span>bar</span>
-                </label>
-              </div>
-              <div className='mt-2 text-xs opacity-70'>
-                Enter the bar rating of the pressure sensor being used
-              </div>
-            </div>
+            <InputGroupField
+              label='Pressure Sensor Rating'
+              htmlFor='pressureScaling'
+              unit='bar'
+              helpText='Enter the bar rating of the pressure sensor being used'
+              noMargin
+            >
+              <input
+                id='pressureScaling'
+                name='pressureScaling'
+                type='number'
+                step='any'
+                className='grow'
+                placeholder='0.0'
+                value={formData.pressureScaling}
+                onChange={onChange('pressureScaling')}
+              />
+            </InputGroupField>
           )}
-          <div className='form-control'>
-            <label htmlFor='steamPumpPercentage' className='mb-2 block text-sm font-medium'>
-              Steam Pump Assist
-            </label>
-            <div className='input-group'>
-              <label htmlFor='steamPumpPercentage' className='input w-full'>
-                <input
-                  id='steamPumpPercentage'
-                  name='steamPumpPercentage'
-                  type='number'
-                  step='0.1'
-                  className='grow'
-                  placeholder={pressureAvailable.value ? '0.0' : '0.0 %'}
-                  value={String(formData.steamPumpPercentage * (pressureAvailable.value ? 0.1 : 1))}
-                  onBlur={e =>
-                    setField(
-                      'steamPumpPercentage',
-                      (parseFloat(e.target.value) * (pressureAvailable.value ? 10 : 1)).toFixed(0),
-                    )
-                  }
-                />
-                <span aria-label={pressureAvailable.value ? 'milliliter per second' : 'percent'}>
-                  {pressureAvailable.value ? 'ml/s' : '%'}
-                </span>
-              </label>
-            </div>
-            <div className='mt-2 text-xs opacity-70'>
-              {pressureAvailable.value
+          <InputGroupField
+            label='Steam Pump Assist'
+            htmlFor='steamPumpPercentage'
+            unit={pressureAvailable.value ? 'ml/s' : '%'}
+            unitAriaLabel={pressureAvailable.value ? 'milliliter per second' : 'percent'}
+            helpText={
+              pressureAvailable.value
                 ? 'How many ml/s to pump into the boiler during steaming'
-                : 'What percentage to run the pump at during steaming'}
-            </div>
-          </div>
+                : 'What percentage to run the pump at during steaming'
+            }
+            noMargin
+          >
+            <input
+              id='steamPumpPercentage'
+              name='steamPumpPercentage'
+              type='number'
+              step='0.1'
+              className='grow'
+              placeholder={pressureAvailable.value ? '0.0' : '0.0 %'}
+              value={String(formData.steamPumpPercentage * (pressureAvailable.value ? 0.1 : 1))}
+              onBlur={e =>
+                setField(
+                  'steamPumpPercentage',
+                  (parseFloat(e.target.value) * (pressureAvailable.value ? 10 : 1)).toFixed(0),
+                )
+              }
+            />
+          </InputGroupField>
           {pressureAvailable.value && (
-            <div className='form-control'>
-              <label htmlFor='steamPumpCutoff' className='mb-2 block text-sm font-medium'>
-                Pump Assist Cutoff
-              </label>
-              <div className='input-group'>
-                <label htmlFor='steamPumpCutoff' className='input w-full'>
-                  <input
-                    id='steamPumpCutoff'
-                    name='steamPumpCutoff'
-                    type='number'
-                    step='any'
-                    className='grow'
-                    placeholder='0.0'
-                    value={formData.steamPumpCutoff}
-                    onChange={onChange('steamPumpCutoff')}
-                  />
-                  <span>bar</span>
-                </label>
-              </div>
-              <div className='mt-2 text-xs opacity-70'>
-                At how many bars should the pump assist stop. This makes it so the pump will only
-                run when steam is flowing.
-              </div>
-            </div>
+            <InputGroupField
+              label='Pump Assist Cutoff'
+              htmlFor='steamPumpCutoff'
+              unit='bar'
+              helpText='At how many bars should the pump assist stop. This makes it so the pump will only run when steam is flowing.'
+              noMargin
+            >
+              <input
+                id='steamPumpCutoff'
+                name='steamPumpCutoff'
+                type='number'
+                step='any'
+                className='grow'
+                placeholder='0.0'
+                value={formData.steamPumpCutoff}
+                onChange={onChange('steamPumpCutoff')}
+              />
+            </InputGroupField>
           )}
-          <div className='form-control'>
-            <label htmlFor='altRelayFunction' className='mb-2 block text-sm font-medium'>
-              Alt Relay / SSR2 Function
-            </label>
+          <SettingsFormField label='Alt Relay / SSR2 Function' htmlFor='altRelayFunction' noMargin>
             <select
               id='altRelayFunction'
               name='altRelayFunction'
@@ -290,7 +259,7 @@ export function MachineTab({ formData, onChange, setField }) {
                 Steam Boiler (Coming Soon)
               </option>
             </select>
-          </div>
+          </SettingsFormField>
         </div>
       </Section>
 
@@ -327,10 +296,12 @@ export function MachineTab({ formData, onChange, setField }) {
               onChange={onChange('sunriseError')}
             />
           </div>
-          <div className='form-control mt-4'>
-            <label htmlFor='sunriseExtBrightness' className='mb-2 block text-sm font-medium'>
-              {`External LED (${((formData.sunriseExtBrightness / 255) * 100).toFixed(0)}%)`}
-            </label>
+          <SettingsFormField
+            label={`External LED (${((formData.sunriseExtBrightness / 255) * 100).toFixed(0)}%)`}
+            htmlFor='sunriseExtBrightness'
+            className='mt-4'
+            noMargin
+          >
             <input
               id='sunriseExtBrightness'
               name='sunriseExtBrightness'
@@ -342,7 +313,7 @@ export function MachineTab({ formData, onChange, setField }) {
               value={formData.sunriseExtBrightness}
               onChange={onChange('sunriseExtBrightness')}
             />
-          </div>
+          </SettingsFormField>
           <div className='border-base-content/5 mt-6 grid grid-cols-1 gap-4 border-t pt-6 md:grid-cols-2'>
             <TankDistanceField
               id='emptyTankDistance'

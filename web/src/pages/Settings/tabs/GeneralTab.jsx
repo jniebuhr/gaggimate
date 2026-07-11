@@ -4,13 +4,15 @@ import { faEyeSlash } from '@fortawesome/free-solid-svg-icons/faEyeSlash';
 import { timezones } from '../../../config/zones.js';
 import { DASHBOARD_LAYOUTS } from '../../../utils/dashboardManager.js';
 import Section from '../../../components/Card.jsx';
+import {
+  InputGroupField,
+  SettingsFormField,
+  ToggleField,
+} from '../../../components/SettingsFormField.jsx';
 
 function ButtonBehaviorSelect({ id, label, value, onChange, profiles }) {
   return (
-    <div className='form-control'>
-      <label htmlFor={id} className='mb-2 block text-sm font-medium'>
-        {label}
-      </label>
+    <SettingsFormField label={label} htmlFor={id} noMargin>
       <select
         id={id}
         name={id}
@@ -29,7 +31,31 @@ function ButtonBehaviorSelect({ id, label, value, onChange, profiles }) {
           </option>
         ))}
       </select>
-    </div>
+    </SettingsFormField>
+  );
+}
+
+function PasswordField({ id, label, placeholder, value, onChange, shown, setShown, ...rest }) {
+  return (
+    <label className='input w-full'>
+      <input
+        id={id}
+        name={id}
+        type={shown ? 'text' : 'password'}
+        placeholder={placeholder ?? label}
+        value={value}
+        onChange={onChange}
+        {...rest}
+      />
+      <button
+        type='button'
+        className='hover:text-primary cursor-pointer focus:outline-none'
+        aria-label='Show Password'
+        onClick={() => setShown(!shown)}
+      >
+        <FontAwesomeIcon icon={shown ? faEyeSlash : faEye} />
+      </button>
+    </label>
   );
 }
 
@@ -50,10 +76,7 @@ export function GeneralTab({
       {/* User Preferences */}
       <Section title='User Preferences'>
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-          <div className='form-control'>
-            <label htmlFor='startup-mode' className='mb-2 block text-sm font-medium'>
-              Startup Mode
-            </label>
+          <SettingsFormField label='Startup Mode' htmlFor='startup-mode' noMargin>
             <select
               id='startup-mode'
               name='startupMode'
@@ -67,11 +90,8 @@ export function GeneralTab({
                 Brew
               </option>
             </select>
-          </div>
-          <div className='form-control'>
-            <label htmlFor='startup-profile' className='mb-2 block text-sm font-medium'>
-              Startup Profile
-            </label>
+          </SettingsFormField>
+          <SettingsFormField label='Startup Profile' htmlFor='startup-profile' noMargin>
             <select
               id='startup-profile'
               name='startupProfile'
@@ -86,25 +106,23 @@ export function GeneralTab({
                 </option>
               ))}
             </select>
-          </div>
-          <div className='form-control'>
-            <label htmlFor='standbyTimeout' className='mb-2 block text-sm font-medium'>
-              Standby Timeout
-            </label>
-            <div className='input-group'>
-              <label htmlFor='standbyTimeout' className='input w-full'>
-                <input
-                  id='standbyTimeout'
-                  name='standbyTimeout'
-                  type='number'
-                  placeholder='0'
-                  value={formData.standbyTimeout}
-                  onChange={onChange('standbyTimeout')}
-                />
-                <span aria-label='seconds'>s</span>
-              </label>
-            </div>
-          </div>
+          </SettingsFormField>
+          <InputGroupField
+            label='Standby Timeout'
+            htmlFor='standbyTimeout'
+            unit='s'
+            unitAriaLabel='seconds'
+            noMargin
+          >
+            <input
+              id='standbyTimeout'
+              name='standbyTimeout'
+              type='number'
+              placeholder='0'
+              value={formData.standbyTimeout}
+              onChange={onChange('standbyTimeout')}
+            />
+          </InputGroupField>
         </div>
 
         {/* Predictive Scale Delay */}
@@ -114,60 +132,51 @@ export function GeneralTab({
             Shuts off the process ahead of time based on the flow rate to account for any dripping
             or delays in the control.
           </p>
-          <div className='form-control mb-4'>
-            <label className='label cursor-pointer justify-start gap-4'>
-              <span className='label-text'>Auto Adjust</span>
-              <input
-                id='delayAdjust'
-                name='delayAdjust'
-                type='checkbox'
-                className='toggle toggle-primary'
-                checked={!!formData.delayAdjust}
-                onChange={onChange('delayAdjust')}
-              />
-            </label>
+          <div className='mb-4'>
+            <ToggleField
+              label='Auto Adjust'
+              htmlFor='delayAdjust'
+              checked={!!formData.delayAdjust}
+              onChange={onChange('delayAdjust')}
+            />
           </div>
           <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-            <div className='form-control'>
-              <label htmlFor='brewDelay' className='mb-2 block text-sm font-medium'>
-                Brew
-              </label>
-              <div className='input-group'>
-                <label htmlFor='brewDelay' className='input w-full'>
-                  <input
-                    id='brewDelay'
-                    name='brewDelay'
-                    type='number'
-                    step='any'
-                    className='grow'
-                    placeholder='0'
-                    value={formData.brewDelay}
-                    onChange={onChange('brewDelay')}
-                  />
-                  <span aria-label='milliseconds'>ms</span>
-                </label>
-              </div>
-            </div>
-            <div className='form-control'>
-              <label htmlFor='grindDelay' className='mb-2 block text-sm font-medium'>
-                Grind
-              </label>
-              <div className='input-group'>
-                <label htmlFor='grindDelay' className='input w-full'>
-                  <input
-                    id='grindDelay'
-                    name='grindDelay'
-                    type='number'
-                    step='any'
-                    className='grow'
-                    placeholder='0'
-                    value={formData.grindDelay}
-                    onChange={onChange('grindDelay')}
-                  />
-                  <span aria-label='milliseconds'>ms</span>
-                </label>
-              </div>
-            </div>
+            <InputGroupField
+              label='Brew'
+              htmlFor='brewDelay'
+              unit='ms'
+              unitAriaLabel='milliseconds'
+              noMargin
+            >
+              <input
+                id='brewDelay'
+                name='brewDelay'
+                type='number'
+                step='any'
+                className='grow'
+                placeholder='0'
+                value={formData.brewDelay}
+                onChange={onChange('brewDelay')}
+              />
+            </InputGroupField>
+            <InputGroupField
+              label='Grind'
+              htmlFor='grindDelay'
+              unit='ms'
+              unitAriaLabel='milliseconds'
+              noMargin
+            >
+              <input
+                id='grindDelay'
+                name='grindDelay'
+                type='number'
+                step='any'
+                className='grow'
+                placeholder='0'
+                value={formData.grindDelay}
+                onChange={onChange('grindDelay')}
+              />
+            </InputGroupField>
           </div>
         </div>
 
@@ -178,18 +187,13 @@ export function GeneralTab({
             Define behavior for physical buttons when pressed. Make sure they are wired to the Alt
             Relay Header.
           </p>
-          <div className='form-control mb-4'>
-            <label className='label cursor-pointer justify-start gap-4'>
-              <span className='label-text font-medium'>Momentary Buttons</span>
-              <input
-                id='momentaryButtons'
-                name='momentaryButtons'
-                type='checkbox'
-                className='toggle toggle-primary'
-                checked={!!formData.momentaryButtons}
-                onChange={onChange('momentaryButtons')}
-              />
-            </label>
+          <div className='mb-4'>
+            <ToggleField
+              label='Momentary Buttons'
+              htmlFor='momentaryButtons'
+              checked={!!formData.momentaryButtons}
+              onChange={onChange('momentaryButtons')}
+            />
           </div>
           <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
             <ButtonBehaviorSelect
@@ -220,10 +224,7 @@ export function GeneralTab({
       {/* Display Settings */}
       <Section title='Display Settings'>
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-          <div className='form-control'>
-            <label htmlFor='mainBrightness' className='mb-2 block text-sm font-medium'>
-              Main Brightness (1-16)
-            </label>
+          <SettingsFormField label='Main Brightness (1-16)' htmlFor='mainBrightness' noMargin>
             <input
               id='mainBrightness'
               name='mainBrightness'
@@ -235,11 +236,8 @@ export function GeneralTab({
               value={formData.mainBrightness}
               onChange={onChange('mainBrightness')}
             />
-          </div>
-          <div className='form-control'>
-            <label htmlFor='themeMode' className='mb-2 block text-sm font-medium'>
-              Display Theme
-            </label>
+          </SettingsFormField>
+          <SettingsFormField label='Display Theme' htmlFor='themeMode' noMargin>
             <select
               id='themeMode'
               name='themeMode'
@@ -250,29 +248,26 @@ export function GeneralTab({
               <option value={0}>Dark Theme</option>
               <option value={1}>Light Theme</option>
             </select>
-          </div>
+          </SettingsFormField>
         </div>
 
         {/* Standby Display */}
         <div className='border-base-content/5 mt-6 border-t pt-6'>
-          <div className='form-control mb-4'>
-            <label className='label cursor-pointer justify-start gap-4'>
-              <span className='label-text font-medium'>Enable standby display</span>
-              <input
-                id='standbyDisplayEnabled'
-                name='standbyDisplayEnabled'
-                type='checkbox'
-                className='toggle toggle-primary'
-                checked={!!formData.standbyDisplayEnabled}
-                onChange={onChange('standbyDisplayEnabled')}
-              />
-            </label>
+          <div className='mb-4'>
+            <ToggleField
+              label='Enable standby display'
+              htmlFor='standbyDisplayEnabled'
+              checked={!!formData.standbyDisplayEnabled}
+              onChange={onChange('standbyDisplayEnabled')}
+            />
           </div>
           <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-            <div className='form-control'>
-              <label htmlFor='standbyBrightness' className='mb-2 block text-sm font-medium'>
-                Standby Brightness (0-16)
-              </label>
+            <SettingsFormField
+              label='Standby Brightness (0-16)'
+              htmlFor='standbyBrightness'
+              helpText='When the toggle is off, brightness will be set to 0'
+              noMargin
+            >
               <input
                 id='standbyBrightness'
                 name='standbyBrightness'
@@ -285,29 +280,24 @@ export function GeneralTab({
                 value={formData.standbyDisplayEnabled ? formData.standbyBrightness : 0}
                 onChange={onChange('standbyBrightness')}
               />
-              <div className='mt-2 text-xs opacity-70'>
-                When the toggle is off, brightness will be set to 0
-              </div>
-            </div>
-            <div className='form-control'>
-              <label htmlFor='standbyBrightnessTimeout' className='mb-2 block text-sm font-medium'>
-                Standby Brightness Timeout
-              </label>
-              <div className='input-group'>
-                <label htmlFor='standbyBrightnessTimeout' className='input w-full'>
-                  <input
-                    id='standbyBrightnessTimeout'
-                    name='standbyBrightnessTimeout'
-                    type='number'
-                    min='1'
-                    placeholder='60'
-                    value={formData.standbyBrightnessTimeout}
-                    onChange={onChange('standbyBrightnessTimeout')}
-                  />
-                  <span aria-label='seconds'>s</span>
-                </label>
-              </div>
-            </div>
+            </SettingsFormField>
+            <InputGroupField
+              label='Standby Brightness Timeout'
+              htmlFor='standbyBrightnessTimeout'
+              unit='s'
+              unitAriaLabel='seconds'
+              noMargin
+            >
+              <input
+                id='standbyBrightnessTimeout'
+                name='standbyBrightnessTimeout'
+                type='number'
+                min='1'
+                placeholder='60'
+                value={formData.standbyBrightnessTimeout}
+                onChange={onChange('standbyBrightnessTimeout')}
+              />
+            </InputGroupField>
           </div>
         </div>
       </Section>
@@ -315,10 +305,7 @@ export function GeneralTab({
       {/* Web Settings */}
       <Section title='Web Settings'>
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-          <div className='form-control'>
-            <label htmlFor='webui-theme' className='mb-2 block text-sm font-medium'>
-              Theme
-            </label>
+          <SettingsFormField label='Theme' htmlFor='webui-theme' noMargin>
             <select
               id='webui-theme'
               name='webui-theme'
@@ -335,11 +322,8 @@ export function GeneralTab({
               <option value='coffee'>Coffee</option>
               <option value='nord'>Nord</option>
             </select>
-          </div>
-          <div className='form-control'>
-            <label htmlFor='dashboardLayout' className='mb-2 block text-sm font-medium'>
-              Dashboard Layout
-            </label>
+          </SettingsFormField>
+          <SettingsFormField label='Dashboard Layout' htmlFor='dashboardLayout' noMargin>
             <select
               id='dashboardLayout'
               name='dashboardLayout'
@@ -352,17 +336,14 @@ export function GeneralTab({
               <option value={DASHBOARD_LAYOUTS.ORDER_FIRST}>Process Controls First</option>
               <option value={DASHBOARD_LAYOUTS.ORDER_LAST}>Chart First</option>
             </select>
-          </div>
+          </SettingsFormField>
         </div>
       </Section>
 
       {/* Network / System Preferences */}
       <Section title='System & Network'>
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-          <div className='form-control'>
-            <label htmlFor='wifiSsid' className='mb-2 block text-sm font-medium'>
-              Wi-Fi SSID
-            </label>
+          <SettingsFormField label='Wi-Fi SSID' htmlFor='wifiSsid' noMargin>
             <input
               id='wifiSsid'
               name='wifiSsid'
@@ -372,62 +353,35 @@ export function GeneralTab({
               value={formData.wifiSsid}
               onChange={onChange('wifiSsid')}
             />
-          </div>
-          <div className='form-control'>
-            <label htmlFor='wifiPassword' className='mb-2 block text-sm font-medium'>
-              Wi-Fi Password
-            </label>
-            <label className='input w-full'>
-              <input
-                id='wifiPassword'
-                name='wifiPassword'
-                type={showWifiPassword ? 'text' : 'password'}
-                placeholder='Wi-Fi Password'
-                value={formData.wifiPassword}
-                onChange={onChange('wifiPassword')}
-              />
-              <button
-                type='button'
-                className='hover:text-primary cursor-pointer focus:outline-none'
-                aria-label='Show Password'
-                onClick={() => setShowWifiPassword(!showWifiPassword)}
-              >
-                <FontAwesomeIcon icon={showWifiPassword ? faEyeSlash : faEye} />
-              </button>
-            </label>
-          </div>
-          <div className='form-control'>
-            <label htmlFor='apPassword' className='mb-2 block text-sm font-medium'>
-              Access Point Password
-            </label>
-            <label className='input w-full'>
-              <input
-                id='apPassword'
-                name='apPassword'
-                type={showApPassword ? 'text' : 'password'}
-                placeholder='Access Point Password'
-                minLength={8}
-                maxLength={63}
-                value={formData.apPassword}
-                onChange={onChange('apPassword')}
-              />
-              <button
-                type='button'
-                className='hover:text-primary cursor-pointer focus:outline-none'
-                aria-label='Show Password'
-                onClick={() => setShowApPassword(!showApPassword)}
-              >
-                <FontAwesomeIcon icon={showApPassword ? faEyeSlash : faEye} />
-              </button>
-            </label>
-            <div className='mt-2 text-xs opacity-70'>
-              Used for the GaggiMate hotspot when no Wi-Fi is configured (min. 8 characters).
-            </div>
-          </div>
-          <div className='form-control'>
-            <label htmlFor='mdnsName' className='mb-2 block text-sm font-medium'>
-              Hostname
-            </label>
+          </SettingsFormField>
+          <SettingsFormField label='Wi-Fi Password' htmlFor='wifiPassword' noMargin>
+            <PasswordField
+              id='wifiPassword'
+              label='Wi-Fi Password'
+              value={formData.wifiPassword}
+              onChange={onChange('wifiPassword')}
+              shown={showWifiPassword}
+              setShown={setShowWifiPassword}
+            />
+          </SettingsFormField>
+          <SettingsFormField
+            label='Access Point Password'
+            htmlFor='apPassword'
+            helpText='Used for the GaggiMate hotspot when no Wi-Fi is configured (min. 8 characters).'
+            noMargin
+          >
+            <PasswordField
+              id='apPassword'
+              label='Access Point Password'
+              minLength={8}
+              maxLength={63}
+              value={formData.apPassword}
+              onChange={onChange('apPassword')}
+              shown={showApPassword}
+              setShown={setShowApPassword}
+            />
+          </SettingsFormField>
+          <SettingsFormField label='Hostname' htmlFor='mdnsName' noMargin>
             <input
               id='mdnsName'
               name='mdnsName'
@@ -437,11 +391,8 @@ export function GeneralTab({
               value={formData.mdnsName}
               onChange={onChange('mdnsName')}
             />
-          </div>
-          <div className='form-control'>
-            <label htmlFor='timezone' className='mb-2 block text-sm font-medium'>
-              Time Zone
-            </label>
+          </SettingsFormField>
+          <SettingsFormField label='Time Zone' htmlFor='timezone' noMargin>
             <select
               id='timezone'
               name='timezone'
@@ -454,24 +405,17 @@ export function GeneralTab({
                 </option>
               ))}
             </select>
-          </div>
+          </SettingsFormField>
         </div>
 
         {/* Clock */}
         <div className='border-base-content/5 mt-6 border-t pt-6'>
-          <div className='form-control'>
-            <label className='label cursor-pointer justify-start gap-4'>
-              <span className='label-text font-medium'>Use 24h Format</span>
-              <input
-                id='clock24hFormat'
-                name='clock24hFormat'
-                type='checkbox'
-                className='toggle toggle-primary'
-                checked={!!formData.clock24hFormat}
-                onChange={onChange('clock24hFormat')}
-              />
-            </label>
-          </div>
+          <ToggleField
+            label='Use 24h Format'
+            htmlFor='clock24hFormat'
+            checked={!!formData.clock24hFormat}
+            onChange={onChange('clock24hFormat')}
+          />
         </div>
       </Section>
     </div>
