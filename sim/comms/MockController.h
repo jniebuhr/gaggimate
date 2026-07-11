@@ -8,7 +8,7 @@
 
 class MockController {
   public:
-    using SensorFn = std::function<void(float temp, float pressure, float puckFlow, float pumpFlow, float puckResistance)>;
+    using SensorFn = std::function<void(float temp, float pressure, float puckFlow, float pumpFlow, float puckResistance, float pumpPower, float heaterPower)>;
     using VolumetricFn = std::function<void(float volume)>;
     using TofFn = std::function<void(uint32_t distance)>;
 
