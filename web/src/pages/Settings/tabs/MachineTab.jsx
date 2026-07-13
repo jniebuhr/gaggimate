@@ -1,3 +1,4 @@
+import { useState } from 'preact/hooks';
 import { computed } from '@preact/signals';
 import { machine } from '../../../services/ApiService.js';
 import Section from '../../../components/Card.jsx';
@@ -58,6 +59,8 @@ function TankDistanceField({ id, label, value, onChange, onUseCurrent }) {
 }
 
 export function MachineTab({ formData, onChange, setField }) {
+  const [steamPumpDraft, setSteamPumpDraft] = useState(null);
+
   return (
     <div className='space-y-4 sm:space-y-6'>
       {/* Temperature Settings */}
@@ -216,13 +219,18 @@ export function MachineTab({ formData, onChange, setField }) {
               step='0.1'
               className='grow'
               placeholder={pressureAvailable.value ? '0.0' : '0.0 %'}
-              value={String(formData.steamPumpPercentage * (pressureAvailable.value ? 0.1 : 1))}
-              onBlur={e =>
+              value={
+                steamPumpDraft ??
+                String(formData.steamPumpPercentage / (pressureAvailable.value ? 10 : 1))
+              }
+              onChange={e => setSteamPumpDraft(e.target.value)}
+              onBlur={e => {
+                setSteamPumpDraft(null);
                 setField(
                   'steamPumpPercentage',
                   (parseFloat(e.target.value) * (pressureAvailable.value ? 10 : 1)).toFixed(0),
-                )
-              }
+                );
+              }}
             />
           </InputGroupField>
           {pressureAvailable.value && (
