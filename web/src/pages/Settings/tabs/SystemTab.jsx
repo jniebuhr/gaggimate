@@ -172,7 +172,7 @@ function MaintenanceSection({
             rebuildProgress.status === 'scanning' ||
             rebuildProgress.total === 0
               ? 'Scanning shot history files...'
-              : `Processing shot history files (${rebuildProgress.current}/{rebuildProgress.total})`}
+              : `Processing shot history files (${rebuildProgress.current}/${rebuildProgress.total})`}
           </div>
           <div className='bg-base-300 h-2 w-full overflow-hidden rounded'>
             <div
