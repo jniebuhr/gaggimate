@@ -8,6 +8,8 @@
 #include <WiFi.h>
 #include <display/core/ProfileManager.h>
 #include <display/core/process/Process.h>
+#include <mutex>
+#include <vector>
 #ifndef GAGGIMATE_HEADLESS
 #include <display/drivers/Driver.h>
 #include <display/ui/default/DefaultUI.h>
@@ -62,8 +64,11 @@ class Controller {
 
     void autotune(int testTime, int samples, int heaterWattage);
     void startProcess(Process *process);
+    // Dereferencing the returned pointers requires holding getProcessLock() — the
+    // logic task and control entry points delete them at any time (GM-147).
     Process *getProcess() const { return currentProcess; }
     Process *getLastProcess() const { return lastProcess; }
+    std::recursive_mutex &getProcessLock() const { return processMutex; }
     Settings &getSettings() { return settings; }
     ProfileManager *getProfileManager() { return profileManager; }
 #ifndef GAGGIMATE_HEADLESS
@@ -132,6 +137,15 @@ class Controller {
     // force re-applies even if the desired state is unchanged (use on connect).
     void applyConnectionPriority(bool force = false);
 
+    // Process lifecycle (GM-147): the *Locked helpers assume processMutex is held and
+    // collect the event ids to fire; the public wrappers dispatch them after unlocking
+    // so plugin handlers never run under the lock (avoids lock-order inversions).
+    bool isActiveLocked() const { return currentProcess != nullptr && currentProcess->isActive(); }
+    void startProcessLocked(Process *process, std::vector<const char *> &events);
+    void deactivateLocked(std::vector<const char *> &events);
+    void clearLocked(std::vector<const char *> &events);
+    void dispatchEvents(const std::vector<const char *> &events);
+
     // Event handlers
     void onTempRead(float temperature);
 
@@ -180,6 +194,9 @@ class Controller {
     // idle (frees radio airtime for Wi-Fi). Tracks the last requested state.
     bool connLowLatency = false;
 
+    // Guards currentProcess/lastProcess lifecycle across tasks (UI, AsyncTCP, BLE
+    // callbacks, logic task). Recursive: locked composites call locked primitives.
+    mutable std::recursive_mutex processMutex;
     Process *currentProcess = nullptr;
     Process *lastProcess = nullptr;
 

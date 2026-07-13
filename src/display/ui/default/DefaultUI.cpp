@@ -42,6 +42,11 @@ static void formatDuration(unsigned long ms, char *buf, size_t len) {
 
 static float clampPercentage(float pct) { return pct < 0.0f ? 0.0f : (pct > 100.0f ? 100.0f : pct); }
 
+// EEZ string setters allocate a fresh StringRef on the LVGL heap each call; skip unchanged text to cut churn.
+static bool stringChanged(const char *current, const char *next) {
+    return current == nullptr || next == nullptr || strcmp(current, next) != 0;
+}
+
 int16_t calculate_angle(int set_temp, int range, int offset) {
     const double percentage = static_cast<double>(set_temp) / static_cast<double>(MAX_TEMP);
     return (percentage * ((double)range)) - range / 2 - offset;
@@ -257,8 +262,10 @@ void DefaultUI::loop() {
 
         char timeBuf[12];
         formatDuration(controller->getSettings().getTargetGrindDuration(), timeBuf, sizeof(timeBuf));
-        grindTimeTarget = StringValue(timeBuf);
-        eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_GRIND_TIME_TARGET, grindTimeTarget);
+        if (stringChanged(grindTimeTarget.getString(), timeBuf)) {
+            grindTimeTarget = StringValue(timeBuf);
+            eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_GRIND_TIME_TARGET, grindTimeTarget);
+        }
         grindWeightTarget = FloatValue(controller->getSettings().getTargetGrindVolume());
         eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_GRIND_WEIGHT_TARGET, grindWeightTarget);
 
@@ -283,20 +290,26 @@ void DefaultUI::loop() {
 
 void DefaultUI::loopProfiles() {
     if (!profileLoaded) {
+        // Build into locals and swap under the lock — the UI task reads these concurrently (GM-147).
         const auto favoritedIds = profileManager->getFavoritedProfiles();
-        favoritedProfileIds.clear();
-        favoritedProfiles.clear();
-        favoritedProfileIds.reserve(favoritedIds.size() + 1);
-        favoritedProfileIds.emplace_back(controller->getSettings().getSelectedProfile());
+        std::vector<String> ids;
+        ids.reserve(favoritedIds.size() + 1);
+        ids.emplace_back(controller->getSettings().getSelectedProfile());
         for (const auto &id : favoritedIds) {
-            if (std::find(favoritedProfileIds.begin(), favoritedProfileIds.end(), id) == favoritedProfileIds.end())
-                favoritedProfileIds.emplace_back(id);
+            if (std::find(ids.begin(), ids.end(), id) == ids.end())
+                ids.emplace_back(id);
         }
-        favoritedProfiles.reserve(favoritedProfileIds.size());
-        for (const auto &profileId : favoritedProfileIds) {
+        std::vector<Profile> profiles;
+        profiles.reserve(ids.size());
+        for (const auto &profileId : ids) {
             Profile profile{};
             profileManager->loadProfile(profileId, profile);
-            favoritedProfiles.emplace_back(std::move(profile));
+            profiles.emplace_back(std::move(profile));
+        }
+        {
+            std::lock_guard<std::mutex> guard(profilesMutex);
+            favoritedProfileIds = std::move(ids);
+            favoritedProfiles = std::move(profiles);
         }
         profileLoaded = 1;
     }
@@ -320,7 +333,8 @@ void DefaultUI::onProfileSwitch() {
 }
 
 void DefaultUI::onNextProfile() {
-    if (currentProfileIdx < favoritedProfileIds.size() - 1) {
+    std::lock_guard<std::mutex> guard(profilesMutex);
+    if (currentProfileIdx + 1 < static_cast<int>(favoritedProfileIds.size())) {
         currentProfileIdx++;
     }
     rerender = true;
@@ -334,7 +348,16 @@ void DefaultUI::onPreviousProfile() {
 }
 
 void DefaultUI::onProfileSelect() {
-    profileManager->selectProfile(favoritedProfileIds[currentProfileIdx]);
+    String id;
+    {
+        std::lock_guard<std::mutex> guard(profilesMutex);
+        if (currentProfileIdx >= 0 && currentProfileIdx < static_cast<int>(favoritedProfileIds.size())) {
+            id = favoritedProfileIds[currentProfileIdx];
+        }
+    }
+    if (!id.isEmpty()) {
+        profileManager->selectProfile(id);
+    }
     profileDirty = false;
     changeScreen(SCREEN_ID_BREW_SCREEN);
 }
@@ -502,7 +525,7 @@ void DefaultUI::positionMenuIcon(lv_obj_t *obj, int angle, int radius) {
 }
 
 void DefaultUI::updateState() {
-    auto settings = controller->getSettings();
+    const auto &settings = controller->getSettings();
     mode = controller->getMode();
     currentTemp = static_cast<int>(controller->getCurrentTemp());
     targetTemp = static_cast<int>(controller->getTargetTemp());
@@ -513,51 +536,65 @@ void DefaultUI::updateState() {
     uiFlags.brew_adjustments(brewScreenState == BrewScreenState::Settings);
     uiFlags.active(controller->isActive());
     uiFlags.grind_active(controller->isGrindActive());
-    uiFlags.grind_volumetric(controller->isVolumetricAvailable() && controller->getSettings().isVolumetricTarget());
+    uiFlags.grind_volumetric(controller->isVolumetricAvailable() && settings.isVolumetricTarget());
     uiFlags.heating_flash(heatingFlash);
     uiFlags.temperature_stable(isTemperatureStable);
     uiFlags.has_prev_profile(currentProfileIdx > 0);
-    uiFlags.has_next_profile(currentProfileIdx < favoritedProfileIds.size() - 1);
+    {
+        std::lock_guard<std::mutex> guard(profilesMutex);
+        uiFlags.has_next_profile(currentProfileIdx + 1 < static_cast<int>(favoritedProfileIds.size()));
+    }
 }
 
 void DefaultUI::updateSystemStatus() {
-    auto settings = controller->getSettings();
+    const auto &settings = controller->getSettings();
     systemStatus.bluetooth(controller->getClientController()->isConnected());
     systemStatus.wifi(!apActive && WiFi.status() == WL_CONNECTED);
     bool error = !initialized || waitingForController || controller->isErrorState() || controller->isUpdating() ||
                  controller->isAutotuning() || controller->getSystemInfo().protocolMismatch || !controller->isReady();
     systemStatus.error(error);
-    systemStatus.error_label(error ? getErrorMessage().c_str() : "");
+    const String errorLabel = error ? getErrorMessage() : "";
+    if (stringChanged(systemStatus.error_label(), errorLabel.c_str()))
+        systemStatus.error_label(errorLabel.c_str());
     systemStatus.volumetric_available(controller->isVolumetricAvailable());
     systemStatus.bluetooth_scales(controller->isBluetoothScaleHealthy());
-    systemStatus.controller_version(controller->getSystemInfo().version.c_str());
-    systemStatus.display_version(BUILD_GIT_VERSION);
+    const String controllerVersion = controller->getSystemInfo().version;
+    if (stringChanged(systemStatus.controller_version(), controllerVersion.c_str()))
+        systemStatus.controller_version(controllerVersion.c_str());
+    if (stringChanged(systemStatus.display_version(), BUILD_GIT_VERSION))
+        systemStatus.display_version(BUILD_GIT_VERSION);
     systemStatus.update_available(updateAvailable);
     systemStatus.in_menu(currentScreen == SCREEN_ID_MENU_SCREEN_NEW);
     systemStatus.pressure_available(pressureAvailable);
     systemStatus.grind_available(grindAvailable);
     systemStatus.mode(mode);
-    systemStatus.ip(apActive ? "4.4.4.1" : WiFi.localIP().toString().c_str());
-    systemStatus.network(apActive ? "GaggiMate" : systemStatus.wifi() ? settings.getWifiSsid().c_str() : "Disconnected");
+    const String ip = apActive ? String("4.4.4.1") : WiFi.localIP().toString();
+    if (stringChanged(systemStatus.ip(), ip.c_str()))
+        systemStatus.ip(ip.c_str());
+    const String network = apActive ? String("GaggiMate") : systemStatus.wifi() ? settings.getWifiSsid() : String("Disconnected");
+    if (stringChanged(systemStatus.network(), network.c_str()))
+        systemStatus.network(network.c_str());
     systemStatus.ap_active(apActive);
 
     char timeBuf[12] = "";
     struct tm timeinfo;
     if (getLocalTime(&timeinfo, 5)) {
-        const ::Settings &settings = controller->getSettings();
         strftime(timeBuf, sizeof(timeBuf), settings.isClock24hFormat() ? "%H:%M" : "%I:%M %p", &timeinfo);
         if (!settings.isClock24hFormat() && timeBuf[0] == '0')
             timeBuf[0] = ' ';
     }
-    systemStatus.time(timeBuf);
+    if (stringChanged(systemStatus.time(), timeBuf))
+        systemStatus.time(timeBuf);
 }
 
 static void populateProfileInfo(ProfileInfoValue &info, const Profile &profile, bool isCurrent) {
     char timeBuf[12];
     formatDuration(static_cast<unsigned long>(profile.getTotalDuration() * 1000.0f), timeBuf, sizeof(timeBuf));
-    info.name(profile.label.c_str());
+    if (stringChanged(info.name(), profile.label.c_str()))
+        info.name(profile.label.c_str());
     info.temperature(profile.temperature);
-    info.time(timeBuf);
+    if (stringChanged(info.time(), timeBuf))
+        info.time(timeBuf);
     info.phases(static_cast<int>(profile.getPhaseCount()));
     info.steps(static_cast<int>(profile.phases.size()));
     info.is_volumetric(profile.isVolumetric());
@@ -572,10 +609,18 @@ void DefaultUI::updateProfileInfo() {
     populateProfileInfo(selectedProfileInfo, profileManager->getSelectedProfile(), true);
     selectedProfileInfo.dirty(profileDirty);
 
-    // Preview backs the ProfileScreen carousel (index 0 = selected); bounds-check as the list is built on another task.
-    if (!favoritedProfiles.empty() && currentProfileIdx >= 0 && currentProfileIdx < static_cast<int>(favoritedProfiles.size())) {
-        populateProfileInfo(previewProfileInfo, favoritedProfiles[currentProfileIdx], currentProfileIdx == 0);
-    } else {
+    // Preview backs the ProfileScreen carousel (index 0 = selected); hold the lock while
+    // reading the vector — the profile task rebuilds it concurrently (GM-147).
+    bool populated = false;
+    {
+        std::lock_guard<std::mutex> guard(profilesMutex);
+        if (!favoritedProfiles.empty() && currentProfileIdx >= 0 &&
+            currentProfileIdx < static_cast<int>(favoritedProfiles.size())) {
+            populateProfileInfo(previewProfileInfo, favoritedProfiles[currentProfileIdx], currentProfileIdx == 0);
+            populated = true;
+        }
+    }
+    if (!populated) {
         populateProfileInfo(previewProfileInfo, profileManager->getSelectedProfile(), true);
     }
 }
@@ -602,7 +647,8 @@ void DefaultUI::updateBrewProcess() {
     // Profile-derived defaults so the struct is valid even before a process runs.
     formatDuration(static_cast<unsigned long>(selected.getTotalDuration() * 1000.0f), buf, sizeof(buf));
     brewProcess.profile_temperature(selected.temperature);
-    brewProcess.profile_time(buf);
+    if (stringChanged(brewProcess.profile_time(), buf))
+        brewProcess.profile_time(buf);
     brewProcess.profile_phases(static_cast<int>(selected.getPhaseCount()));
     brewProcess.profile_steps(static_cast<int>(selected.phases.size()));
     brewProcess.profile_is_volumetric(selected.isVolumetric());
@@ -610,20 +656,24 @@ void DefaultUI::updateBrewProcess() {
     brewProcess.profile_target_weight(selected.getTotalVolume());
     brewProcess.boiler_target_temperature(controller->getTargetTemp());
 
-    // Copy + re-validate the process pointer against the controller before dereferencing (control task may swap it).
+    // Hold the process lock across every deref below — the logic/AsyncTCP/BLE tasks delete
+    // the process at any time (GM-147).
+    std::lock_guard<std::recursive_mutex> guard(controller->getProcessLock());
     Process *process = controller->getProcess();
     if (process == nullptr) {
         process = controller->getLastProcess();
     }
-    const bool validBrew = process != nullptr && process->getType() == MODE_BREW &&
-                           (process == controller->getProcess() || process == controller->getLastProcess());
+    const bool validBrew = process != nullptr && process->getType() == MODE_BREW;
     if (!validBrew) {
-        brewProcess.phase_type("");
-        brewProcess.phase_name("");
+        if (stringChanged(brewProcess.phase_type(), ""))
+            brewProcess.phase_type("");
+        if (stringChanged(brewProcess.phase_name(), ""))
+            brewProcess.phase_name("");
         brewProcess.phase_value_current(0.0f);
         brewProcess.phase_value_target(0.0f);
         brewProcess.phase_value_is_weight(false);
-        brewProcess.elapsed_time("0:00");
+        if (stringChanged(brewProcess.elapsed_time(), "0:00"))
+            brewProcess.elapsed_time("0:00");
         brewProcess.elapsed_percentage(0.0f);
         brewProcess.is_complete(false);
         return;
@@ -641,7 +691,8 @@ void DefaultUI::updateBrewProcess() {
     // Live profile fields from the running process.
     formatDuration(bp->getTotalDuration(), buf, sizeof(buf));
     brewProcess.profile_temperature(bp->profile.temperature);
-    brewProcess.profile_time(buf);
+    if (stringChanged(brewProcess.profile_time(), buf))
+        brewProcess.profile_time(buf);
     brewProcess.profile_phases(static_cast<int>(bp->profile.getPhaseCount()));
     brewProcess.profile_steps(static_cast<int>(bp->profile.phases.size()));
     brewProcess.profile_is_volumetric(bp->target == ProcessTarget::VOLUMETRIC);
@@ -649,7 +700,9 @@ void DefaultUI::updateBrewProcess() {
     brewProcess.boiler_target_temperature(bp->getTemperature());
     brewProcess.current_volume(bp->currentVolume);
 
-    brewProcess.phase_type(phase.phase == PhaseType::PHASE_TYPE_BREW ? "BREW" : "INFUSION");
+    const char *phaseType = phase.phase == PhaseType::PHASE_TYPE_BREW ? "BREW" : "INFUSION";
+    if (stringChanged(brewProcess.phase_type(), phaseType))
+        brewProcess.phase_type(phaseType);
 
     String phaseName = "Finished";
     if (active) {
@@ -657,7 +710,8 @@ void DefaultUI::updateBrewProcess() {
     } else if (controller->getSettings().isDelayAdjust() && !process->isComplete()) {
         phaseName = "Calibrating...";
     }
-    brewProcess.phase_name(phaseName.c_str());
+    if (stringChanged(brewProcess.phase_name(), phaseName.c_str()))
+        brewProcess.phase_name(phaseName.c_str());
 
     unsigned long now = ::millis();
     if (!active && bp->finished > 0) {
@@ -665,7 +719,8 @@ void DefaultUI::updateBrewProcess() {
     }
     const unsigned long elapsedMs = (bp->processStarted > 0 && now >= bp->processStarted) ? now - bp->processStarted : 0;
     formatDuration(elapsedMs, buf, sizeof(buf));
-    brewProcess.elapsed_time(buf);
+    if (stringChanged(brewProcess.elapsed_time(), buf))
+        brewProcess.elapsed_time(buf);
 
     const bool weightTarget = bp->target == ProcessTarget::VOLUMETRIC && phase.hasVolumetricTarget();
     brewProcess.phase_value_is_weight(weightTarget);

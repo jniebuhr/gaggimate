@@ -256,8 +256,8 @@ void Controller::setupBluetooth() {
         }
     });
     pluginManager->on("ota:update:end", [this](Event const &) { applyConnectionPriority(true); });
-    comms.onSensorData([this](float temp, float pressure, float puckFlow, float pumpFlow, float puckResistance,
-                               float pumpPower, float heaterPower) {
+    comms.onSensorData([this](float temp, float pressure, float puckFlow, float pumpFlow, float puckResistance, float pumpPower,
+                              float heaterPower) {
         onTempRead(temp);
         this->pressure = pressure;
         this->currentPuckFlow = puckFlow;
@@ -587,42 +587,52 @@ void Controller::loopLogic() {
         steamReady = true;
     }
 
-    // Handle current process
-    if (currentProcess != nullptr) {
-        updateLastAction();
-        if (currentProcess->getType() == MODE_BREW) {
-            auto brewProcess = static_cast<BrewProcess *>(currentProcess);
-            brewProcess->updatePressure(pressure);
-            brewProcess->updateFlow(currentPumpFlow);
-        }
-        currentProcess->progress();
-        if (!isActive()) {
-            deactivate();
-        }
-    }
+    // Process lifecycle under the lock (GM-147); events and NVS writes deferred past unlock.
+    std::vector<const char *> events;
+    double newBrewDelay = -1.0;
+    double newGrindDelay = -1.0;
+    {
+        std::lock_guard<std::recursive_mutex> guard(processMutex);
 
-    // Handle last process - Calculate auto delay
-    if (lastProcess != nullptr && !lastProcess->isComplete()) {
-        lastProcess->progress();
-    }
-    if (lastProcess != nullptr && lastProcess->isComplete() && !processCompleted && settings.isDelayAdjust()) {
-        processCompleted = true;
-        if (lastProcess->getType() == MODE_BREW) {
-            if (auto *brewProcess = static_cast<BrewProcess *>(lastProcess); brewProcess->target == ProcessTarget::VOLUMETRIC) {
-                double newDelay = brewProcess->getNewDelayTime();
-                if (newDelay >= 0) {
-                    settings.setBrewDelay(newDelay);
-                }
+        // Handle current process
+        if (currentProcess != nullptr) {
+            updateLastAction();
+            if (currentProcess->getType() == MODE_BREW) {
+                auto brewProcess = static_cast<BrewProcess *>(currentProcess);
+                brewProcess->updatePressure(pressure);
+                brewProcess->updateFlow(currentPumpFlow);
             }
-        } else if (lastProcess->getType() == MODE_GRIND) {
-            if (auto *grindProcess = static_cast<GrindProcess *>(lastProcess);
-                grindProcess->target == ProcessTarget::VOLUMETRIC) {
-                double newDelay = grindProcess->getNewDelayTime();
-                if (newDelay >= 0) {
-                    settings.setGrindDelay(newDelay);
+            currentProcess->progress();
+            if (!isActiveLocked()) {
+                deactivateLocked(events);
+            }
+        }
+
+        // Handle last process - Calculate auto delay
+        if (lastProcess != nullptr && !lastProcess->isComplete()) {
+            lastProcess->progress();
+        }
+        if (lastProcess != nullptr && lastProcess->isComplete() && !processCompleted && settings.isDelayAdjust()) {
+            processCompleted = true;
+            if (lastProcess->getType() == MODE_BREW) {
+                if (auto *brewProcess = static_cast<BrewProcess *>(lastProcess);
+                    brewProcess->target == ProcessTarget::VOLUMETRIC) {
+                    newBrewDelay = brewProcess->getNewDelayTime();
+                }
+            } else if (lastProcess->getType() == MODE_GRIND) {
+                if (auto *grindProcess = static_cast<GrindProcess *>(lastProcess);
+                    grindProcess->target == ProcessTarget::VOLUMETRIC) {
+                    newGrindDelay = grindProcess->getNewDelayTime();
                 }
             }
         }
+    }
+    dispatchEvents(events);
+    if (newBrewDelay >= 0) {
+        settings.setBrewDelay(newBrewDelay);
+    }
+    if (newGrindDelay >= 0) {
+        settings.setGrindDelay(newGrindDelay);
     }
 
     unsigned long now = millis();
@@ -679,15 +689,30 @@ void Controller::autotune(int testTime, int samples, int heaterWattage) {
 }
 
 void Controller::startProcess(Process *process) {
-    if (isActive() || !isReady()) {
+    std::vector<const char *> events;
+    {
+        std::lock_guard<std::recursive_mutex> guard(processMutex);
+        startProcessLocked(process, events);
+    }
+    dispatchEvents(events);
+}
+
+void Controller::startProcessLocked(Process *process, std::vector<const char *> &events) {
+    if (isActiveLocked() || !isReady()) {
         delete process;
         return;
     }
     processCompleted = false;
     this->currentProcess = process;
     applyConnectionPriority(); // shot started -> tight BLE interval
-    pluginManager->trigger("controller:process:start");
+    events.push_back("controller:process:start");
     updateLastAction();
+}
+
+void Controller::dispatchEvents(const std::vector<const char *> &events) {
+    for (const auto *eventId : events) {
+        pluginManager->trigger(eventId);
+    }
 }
 
 void Controller::applyConnectionPriority(bool force) {
@@ -710,15 +735,17 @@ void Controller::applyConnectionPriority(bool force) {
 }
 
 float Controller::getTargetTemp() const {
-    Process *proc = currentProcess;
     switch (mode) {
     case MODE_BREW:
-    case MODE_GRIND:
+    case MODE_GRIND: {
+        std::lock_guard<std::recursive_mutex> guard(processMutex);
+        Process *proc = currentProcess;
         if (proc != nullptr && proc->isActive() && proc->getType() == MODE_BREW) {
             auto brewProcess = static_cast<BrewProcess *>(proc);
             return brewProcess->getTemperature();
         }
         return profileManager->getSelectedProfile().temperature;
+    }
     case MODE_STEAM:
         return settings.getTargetSteamTemp();
     case MODE_WATER:
@@ -861,9 +888,12 @@ void Controller::updateControl() {
         return;
     }
 
-    // Local capture to avoid race condition with deactivate() running on another core
+    // Hold the process lock across the deref: deactivate()/clear() on other tasks
+    // can delete the process mid-computation (GM-147). comms sends are queued
+    // (pumped from comms.loop()), so no cross-task blocking happens under the lock.
+    std::lock_guard<std::recursive_mutex> guard(processMutex);
     Process *proc = currentProcess;
-    bool active = isActive();
+    bool active = isActiveLocked();
 
     float targetTemp = getTargetTemp();
     if (targetTemp > .0f) {
@@ -980,12 +1010,26 @@ void Controller::activate() {
         break;
     default:;
     }
-    if (currentProcess != nullptr && currentProcess->getType() == MODE_BREW) {
+    bool brewStarted;
+    {
+        std::lock_guard<std::recursive_mutex> guard(processMutex);
+        brewStarted = currentProcess != nullptr && currentProcess->getType() == MODE_BREW;
+    }
+    if (brewStarted) {
         pluginManager->trigger("controller:brew:start");
     }
 }
 
 void Controller::deactivate() {
+    std::vector<const char *> events;
+    {
+        std::lock_guard<std::recursive_mutex> guard(processMutex);
+        deactivateLocked(events);
+    }
+    dispatchEvents(events);
+}
+
+void Controller::deactivateLocked(std::vector<const char *> &events) {
     if (currentProcess == nullptr) {
         return;
     }
@@ -994,18 +1038,27 @@ void Controller::deactivate() {
     currentProcess = nullptr;
     applyConnectionPriority(); // shot ended -> relaxed BLE interval
     if (lastProcess->getType() == MODE_BREW) {
-        pluginManager->trigger("controller:brew:end");
+        events.push_back("controller:brew:end");
     } else if (lastProcess->getType() == MODE_GRIND) {
-        pluginManager->trigger("controller:grind:end");
+        events.push_back("controller:grind:end");
     }
-    pluginManager->trigger("controller:process:end");
+    events.push_back("controller:process:end");
     updateLastAction();
 }
 
 void Controller::clear() {
+    std::vector<const char *> events;
+    {
+        std::lock_guard<std::recursive_mutex> guard(processMutex);
+        clearLocked(events);
+    }
+    dispatchEvents(events);
+}
+
+void Controller::clearLocked(std::vector<const char *> &events) {
     processCompleted = true;
     if (lastProcess != nullptr && lastProcess->getType() == MODE_BREW) {
-        pluginManager->trigger("controller:brew:clear");
+        events.push_back("controller:brew:clear");
     }
     delete lastProcess;
     lastProcess = nullptr;
@@ -1042,13 +1095,13 @@ void Controller::deactivateStandby() {
 }
 
 bool Controller::isActive() const {
-    Process *proc = currentProcess;
-    return proc != nullptr && proc->isActive();
+    std::lock_guard<std::recursive_mutex> guard(processMutex);
+    return isActiveLocked();
 }
 
 bool Controller::isGrindActive() const {
-    Process *proc = currentProcess;
-    return proc != nullptr && proc->isActive() && proc->getType() == MODE_GRIND;
+    std::lock_guard<std::recursive_mutex> guard(processMutex);
+    return currentProcess != nullptr && currentProcess->isActive() && currentProcess->getType() == MODE_GRIND;
 }
 
 int Controller::getMode() const { return mode; }
@@ -1103,19 +1156,14 @@ void Controller::onVolumetricMeasurement(double measurement, VolumetricMeasureme
         ESP_LOGD(LOG_TAG, "Ignoring volumetric measurement, source does not match");
         return;
     }
-    // Local capture to avoid use-after-free with deactivate() / clear() running
-    // on another core. This callback fires from the NimBLE task on core 0 each
-    // time the BLE scale reports weight; deactivate() / clear() run on core 1
-    // (AsyncTCP/LVGL) and can `delete lastProcess` between our nullptr check
-    // and the dereference. Mirrors the same capture pattern used in
-    // updateControl() above (see comment around line 560).
-    Process *curr = currentProcess;
-    Process *last = lastProcess;
-    if (curr != nullptr) {
-        curr->updateVolume(measurement);
+    // This callback fires from the NimBLE task on core 0; deactivate()/clear() on
+    // other tasks can delete the processes, so hold the lock across the deref (GM-147).
+    std::lock_guard<std::recursive_mutex> guard(processMutex);
+    if (currentProcess != nullptr) {
+        currentProcess->updateVolume(measurement);
     }
-    if (last != nullptr && !last->isComplete()) {
-        last->updateVolume(measurement);
+    if (lastProcess != nullptr && !lastProcess->isComplete()) {
+        lastProcess->updateVolume(measurement);
     }
 }
 
@@ -1125,12 +1173,20 @@ bool Controller::isBluetoothScaleHealthy() const {
 }
 
 void Controller::onFlush() {
-    if (isActive()) {
-        return;
+    // Allocate outside the lock; reachable from the UI, AsyncTCP and BLE tasks (GM-147).
+    auto *flush = new BrewProcess(FLUSH_PROFILE, ProcessTarget::TIME, settings.getBrewDelay());
+    std::vector<const char *> events;
+    {
+        std::lock_guard<std::recursive_mutex> guard(processMutex);
+        if (isActiveLocked()) {
+            delete flush;
+            return;
+        }
+        clearLocked(events);
+        startProcessLocked(flush, events);
+        events.push_back("controller:brew:start");
     }
-    clear();
-    startProcess(new BrewProcess(FLUSH_PROFILE, ProcessTarget::TIME, settings.getBrewDelay()));
-    pluginManager->trigger("controller:brew:start");
+    dispatchEvents(events);
 }
 
 void Controller::onVolumetricDelete() {

@@ -165,6 +165,8 @@ void ShotHistoryPlugin::record() {
 
         // Track phase transitions
         if (controller->getMode() == MODE_BREW) {
+            // Deref under the process lock — other tasks delete the process at any time (GM-147).
+            std::lock_guard<std::recursive_mutex> guard(controller->getProcessLock());
             Process *process = controller->getProcess();
             if (process != nullptr && process->getType() == MODE_BREW) {
                 auto *brewProcess = static_cast<BrewProcess *>(process);
@@ -302,16 +304,20 @@ void ShotHistoryPlugin::record() {
 }
 
 void ShotHistoryPlugin::startRecording() {
-    Process *process = controller->getProcess();
-    if (process != nullptr && process->getType() == MODE_BREW) {
-        BrewProcess *brewProcess = static_cast<BrewProcess *>(process);
-        if (brewProcess->isUtility()) {
-            return;
+    {
+        // Deref under the process lock — other tasks delete the process at any time (GM-147).
+        std::lock_guard<std::recursive_mutex> guard(controller->getProcessLock());
+        Process *process = controller->getProcess();
+        if (process != nullptr && process->getType() == MODE_BREW) {
+            BrewProcess *brewProcess = static_cast<BrewProcess *>(process);
+            if (brewProcess->isUtility()) {
+                return;
+            }
+            // Capture initial volumetric mode state (brew by weight vs brew by time)
+            shotStartedVolumetric = brewProcess->target == ProcessTarget::VOLUMETRIC;
+            // Capture the brew delay the shot runs with (fixed at process construction)
+            currentBrewDelay = brewProcess->brewDelay;
         }
-        // Capture initial volumetric mode state (brew by weight vs brew by time)
-        shotStartedVolumetric = brewProcess->target == ProcessTarget::VOLUMETRIC;
-        // Capture the brew delay the shot runs with (fixed at process construction)
-        currentBrewDelay = brewProcess->brewDelay;
     }
     currentId = padId(String(controller->getSettings().getHistoryIndex()));
     shotStart = millis();
@@ -350,6 +356,8 @@ void ShotHistoryPlugin::endRecording() {
     // if it was still running when stopped, the user aborted it. getLastProcess() is the just-ended brew
     // process here (deactivate() moves currentProcess -> lastProcess before firing controller:brew:end).
     if (controller != nullptr) {
+        // Deref under the process lock — other tasks delete the process at any time (GM-147).
+        std::lock_guard<std::recursive_mutex> guard(controller->getProcessLock());
         Process *last = controller->getLastProcess();
         if (last != nullptr && last->getType() == MODE_BREW) {
             auto *brewProcess = static_cast<BrewProcess *>(last);
@@ -429,6 +437,8 @@ uint16_t ShotHistoryPlugin::getSystemInfo() {
 
     // Bit 1: Currently in volumetric mode (check current process if active)
     if (controller != nullptr) {
+        // Deref under the process lock — other tasks delete the process at any time (GM-147).
+        std::lock_guard<std::recursive_mutex> guard(controller->getProcessLock());
         Process *process = controller->getProcess();
         if (process != nullptr && process->getType() == MODE_BREW) {
             auto *brewProcess = static_cast<BrewProcess *>(process);

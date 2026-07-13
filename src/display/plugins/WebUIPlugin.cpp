@@ -3,7 +3,6 @@
 #include <LittleFS.h>
 #include <SD_MMC.h>
 #include <algorithm>
-#include <esp32-hal-psram.h>
 #include <display/core/Controller.h>
 #include <display/core/ProfileManager.h>
 #include <display/core/process/BrewProcess.h>
@@ -14,6 +13,7 @@
 #include <display/util/PsramStlAllocator.h>
 #include <display/util/PsramWsBuffer.h>
 #include <display/webassets/web_ui_manifest.h>
+#include <esp32-hal-psram.h>
 #include <esp_core_dump.h>
 #include <esp_err.h>
 #include <esp_heap_caps.h>
@@ -206,6 +206,9 @@ void WebUIPlugin::loop() {
             }
         }
 
+        // Deref under the process lock — other tasks delete the process at any time (GM-147).
+        // Released before broadcastJson so the ws send never runs under the lock.
+        std::unique_lock<std::recursive_mutex> processGuard(controller->getProcessLock());
         Process *process = controller->getProcess();
         if (process == nullptr) {
             process = controller->getLastProcess();
@@ -250,6 +253,7 @@ void WebUIPlugin::loop() {
                 }
             }
         }
+        processGuard.unlock();
 
         broadcastJson(statusDoc);
     }
