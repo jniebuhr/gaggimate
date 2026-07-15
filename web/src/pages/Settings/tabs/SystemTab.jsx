@@ -277,7 +277,7 @@ export function SystemTab() {
       setSubmitting(true);
       const form = formRef.current;
       const data = new FormData(form);
-      apiService.send({ tp: 'req:ota-settings', update: true, channel: data.get('channel'), customOTAURL: formData.get('customOTAURL') });
+      apiService.send({ tp: 'req:ota-settings', update: true, channel: data.get('channel'), customOTAURL: data.get('customOTAURL') });
     },
     [apiService],
   );
