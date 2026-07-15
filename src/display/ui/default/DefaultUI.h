@@ -1,6 +1,7 @@
 #ifndef DEFAULTUI_H
 #define DEFAULTUI_H
 
+#include <atomic>
 #include <display/core/PluginManager.h>
 #include <display/core/ProfileManager.h>
 #include <display/core/constants.h>
@@ -8,6 +9,7 @@
 #include <display/models/profile.h>
 #include <display/ui/default/eez/screens.h>
 #include <display/ui/default/eez/structs.h>
+#include <mutex>
 
 class Controller;
 
@@ -62,11 +64,21 @@ class DefaultUI {
 
     void handleScreenChange();
 
+    // Animate the dial meters' tick length on screen change (short on profile/new-menu, long elsewhere).
+    void animateGaugeTicks(ScreensEnum from, ScreensEnum to);
+    void collectMeters(lv_obj_t *obj);
+    void setGaugeTickLength(int32_t len);
+    static void gaugeTickAnimCb(void *var, int32_t v);
+    lv_obj_t *gaugeMeters[4] = {nullptr};
+    uint8_t gaugeCount = 0;
+    void positionMenuIcon(lv_obj_t *obj, int angle, int radius);
+
     void updateState();
     void updateSystemStatus();
     void updateProfileInfo();
     void updateBoiler();
     void updateBrewProcess();
+    void updateMenuScreen();
     String getErrorMessage();
 
     void adjustDials(lv_obj_t *dials);
@@ -91,8 +103,10 @@ class DefaultUI {
     // Screen state
     int updateAvailable = false;
     int apActive = false;
+    int wifiConnected = false;
     int waitingForController = false;
     int initialized = false;
+    int grindAvailable = false;
 
     // Seasonal flags
     int christmasMode = false;
@@ -123,7 +137,9 @@ class DefaultUI {
 
     int profileDirty = 0;
     int currentProfileIdx = 0;
-    int profileLoaded = 0;
+    std::atomic<int> profileLoaded{0}; // cleared from event callbacks on arbitrary tasks
+    // The profile task (core 0) rebuilds these while the UI task reads them (GM-147).
+    std::mutex profilesMutex;
     std::vector<String> favoritedProfileIds;
     std::vector<Profile> favoritedProfiles;
     int currentThemeMode = -1; // Force applyTheme on first loop

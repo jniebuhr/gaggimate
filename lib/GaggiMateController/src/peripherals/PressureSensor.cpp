@@ -3,7 +3,7 @@
 
 PressureSensor::PressureSensor(ADSAdc *adc, float pressure_scale, float voltage_floor, float voltage_ceil, uint8_t channel)
     : _pressure_scale(pressure_scale), _adc(adc), _channel(channel),
-      _filter(PRESSURE_KF_MEASUREMENT_NOISE, PRESSURE_KF_ESTIMATE_ERROR, PRESSURE_KF_PROCESS_NOISE) {
+      _filter(PRESSURE_KF_SAMPLE_TIME_S, PRESSURE_KF_MEASUREMENT_NOISE, PRESSURE_KF_ACCEL_NOISE, PRESSURE_KF_RATE_LEAK) {
     _adc_floor = static_cast<int16_t>(voltage_floor / ADC_STEP);
     _pressure_adc_range = (voltage_ceil - voltage_floor) / ADC_STEP;
     _pressure_step = pressure_scale / _pressure_adc_range;

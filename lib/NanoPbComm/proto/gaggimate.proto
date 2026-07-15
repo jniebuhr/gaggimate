@@ -120,6 +120,12 @@ message PumpSettings {
 
     // BLDC pumps only
     float maxBLDCPower = 8;
+
+    // Rotary-vane slip polynomial coefficients (gear pump only; 0 = no slip).
+    float slipA = 9;
+    float slipB = 10;
+    float slipC = 11;
+    float slipD = 12;
 }
 
 message AutotuneRequest {
@@ -184,6 +190,8 @@ message SensorData {
     float puck_flow = 2;
     float pump_flow = 3;
     float puck_resistance = 4;
+    float pump_power = 5;   // pump power 0..100 %
+    float heater_power = 6; // heater power 0..100 %
 }
 
 message ButtonState {

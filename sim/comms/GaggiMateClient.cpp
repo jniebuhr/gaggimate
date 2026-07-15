@@ -2,9 +2,9 @@
 
 GaggiMateClient::GaggiMateClient() {
     // Forward the mock's telemetry to whatever the firmware registered.
-    _mock.onSensor = [this](float t, float p, float pf, float mf, float pr) {
+    _mock.onSensor = [this](float t, float p, float pf, float mf, float pr, float pp, float hp) {
         if (_sensorCb)
-            _sensorCb(t, p, pf, mf, pr);
+            _sensorCb(t, p, pf, mf, pr, pp, hp);
     };
     _mock.onVolumetric = [this](float v) {
         if (_volumetricCb)
@@ -102,7 +102,7 @@ void GaggiMateClient::sendPumpControl(uint8_t index, PumpControlMode mode, float
 }
 void GaggiMateClient::sendRelayControl(uint8_t index, bool open) { send(buildRelayControl(index, open)); }
 void GaggiMateClient::sendPidSettings(float, float, float, float) {}
-void GaggiMateClient::sendPumpSettings(float, float, float, float, float, float, float, float) {}
+void GaggiMateClient::sendPumpSettings(float, float, float, float, float, float, float, float, float, float, float, float) {}
 void GaggiMateClient::sendAutotune(uint32_t, uint32_t, uint32_t) {
     _autotunePending = true;
     _autotuneDueMs = millis() + 1500;

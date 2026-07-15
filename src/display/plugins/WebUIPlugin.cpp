@@ -11,7 +11,9 @@
 #include <display/plugins/BLEScalePlugin.h>
 #include <display/plugins/ShotHistoryPlugin.h>
 #include <display/util/PsramStlAllocator.h>
+#include <display/util/PsramWsBuffer.h>
 #include <display/webassets/web_ui_manifest.h>
+#include <esp32-hal-psram.h>
 #include <esp_core_dump.h>
 #include <esp_err.h>
 #include <esp_heap_caps.h>
@@ -30,16 +32,16 @@ using PsramString = std::basic_string<char, std::char_traits<char>, PsramStlAllo
 static std::unordered_map<uint32_t, PsramString> rxBuffers;
 static WebUIPlugin *g_webUIPlugin = nullptr;
 
-// Route mbedTLS allocations to PSRAM. The Arduino-ESP32 sdkconfig sets
-// CONFIG_MBEDTLS_INTERNAL_MEM_ALLOC=y, pinning TLS handshake buffers (~32 KB) to the
-// scarce internal DRAM that WiFi + BLE already leave near ~60 KB free. A CA-verified OTA
-// update check then drives internal free toward zero and crypto allocations start failing
-// (esp-sha/esp-aes "Failed to allocate"). mbedTLS is built with MBEDTLS_PLATFORM_MEMORY
-// (function-pointer allocator), so this runtime override moves those buffers to the 8 MB
-// PSRAM. Falls back to internal DRAM if PSRAM is exhausted so TLS still functions;
-// heap_caps_free handles pointers from either heap. The void* parameter/return types below are
-// dictated by the mbedtls_platform_set_calloc_free() callback contract and cannot be narrowed
-// (cpp:S5008 is a false positive here; retyping or casting the function pointers would be UB).
+// Serialize a JsonDocument straight into a PSRAM-backed WebSocket message
+// buffer — one exact-sized allocation, off the internal heap. [GM-139]
+static AsyncWebSocketSharedBuffer toWsBuffer(JsonDocument &doc) {
+    const size_t len = measureJson(doc);
+    auto buffer = makePsramWsBuffer(len);
+    serializeJson(doc, buffer->data(), len);
+    return buffer;
+}
+
+// Route mbedTLS allocations to PSRAM.
 static void *mbedtlsPsramCalloc(size_t n, size_t size) { // NOSONAR
     void *p = heap_caps_calloc(n, size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
     if (p == nullptr) {
@@ -95,6 +97,26 @@ void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) 
         doc["total"] = event.getInt("total");
         doc["current"] = event.getInt("current");
         doc["status"] = event.getString("status");
+        broadcastJson(doc);
+    });
+
+    // Forward "shot saved to history" events to WebSocket clients, so the
+    // dashboard can refetch the recent-shots buffer at the right time.
+    pluginManager->on("evt:history-shot-saved", [this](Event const &event) {
+        JsonDocument doc(&psramAllocator);
+        doc["tp"] = "evt:history-shot-saved";
+        doc["id"] = event.getInt("id");
+        broadcastJson(doc);
+    });
+
+    // Forward live shot-finished stats (pressure/flow) to WebSocket clients, so
+    // the dashboard's finished card can show them without waiting for the
+    // history file write.
+    pluginManager->on("evt:shot-finished-stats", [this](Event const &event) {
+        JsonDocument doc(&psramAllocator);
+        doc["tp"] = "evt:shot-finished-stats";
+        doc["maxPressure"] = event.getFloat("maxPressure");
+        doc["avgFlow"] = event.getFloat("avgFlow");
         broadcastJson(doc);
     });
 
@@ -166,6 +188,8 @@ void WebUIPlugin::loop() {
         statusDoc["tof"] = controller->getTofDistance();
         statusDoc["rssi"] = 0;
         statusDoc["lat"] = -1; // BLE round-trip latency (ms); -1 = not yet measured
+        statusDoc["pw"] = controller->getCurrentPumpPower();
+        statusDoc["hp"] = controller->getCurrentHeaterPower();
 
         if (controller->getClientController()->getClient()->isConnected()) {
             statusDoc["rssi"] = controller->getClientController()->getClient()->getRssi();
@@ -190,6 +214,9 @@ void WebUIPlugin::loop() {
             }
         }
 
+        // Deref under the process lock — other tasks delete the process at any time (GM-147).
+        // Released before broadcastJson so the ws send never runs under the lock.
+        std::unique_lock<std::recursive_mutex> processGuard(controller->getProcessLock());
         Process *process = controller->getProcess();
         if (process == nullptr) {
             process = controller->getLastProcess();
@@ -197,6 +224,9 @@ void WebUIPlugin::loop() {
         if (process != nullptr) {
             auto pObj = statusDoc["process"].to<JsonObject>();
             pObj["a"] = controller->isActive() ? 1 : 0;
+            statusDoc["pkr"] = controller->getCurrentPuckResistance();
+            statusDoc["pf"] = controller->getCurrentPuckFlow();
+            statusDoc["tf"] = controller->getTargetFlow();
             if (process->getType() == MODE_BREW) {
                 auto *brew = static_cast<BrewProcess *>(process);
                 unsigned long ts = brew->isActive() && controller->isActive() ? millis() : brew->finished;
@@ -231,6 +261,7 @@ void WebUIPlugin::loop() {
                 }
             }
         }
+        processGuard.unlock();
 
         broadcastJson(statusDoc);
     }
@@ -332,6 +363,37 @@ void WebUIPlugin::setupServer() {
         } else {
             request->send(404, "text/plain", "Index not found");
         }
+    });
+    server.on("/api/history/recent.bin", HTTP_GET, [this](AsyncWebServerRequest *request) {
+        // The most recent non-deleted shots, newest first, as a regular shot
+        // index (SIDX header + entries) — same binary format as index.bin,
+        // just truncated, so clients reuse the index.bin parser.
+        constexpr long MAX_RECENT_LIMIT = 50;
+        long limit = 8;
+        if (request->hasArg("limit")) {
+            limit = constrain(request->arg("limit").toInt(), 1L, MAX_RECENT_LIMIT);
+        }
+
+        auto *entries = static_cast<ShotIndexEntry *>(ps_malloc(limit * sizeof(ShotIndexEntry)));
+        if (entries == nullptr) {
+            request->send(500, "text/plain", "Out of memory");
+            return;
+        }
+        size_t count = ShotHistory.readRecentEntries(entries, limit);
+
+        ShotIndexHeader header{};
+        header.magic = SHOT_INDEX_MAGIC;
+        header.version = SHOT_INDEX_VERSION;
+        header.entrySize = SHOT_INDEX_ENTRY_SIZE;
+        header.entryCount = count;
+        header.nextId = 0; // meaningless for a partial view
+
+        AsyncResponseStream *response = request->beginResponseStream("application/octet-stream");
+        response->addHeader("Cache-Control", "no-store");
+        response->write(reinterpret_cast<const uint8_t *>(&header), sizeof(header));
+        response->write(reinterpret_cast<const uint8_t *>(entries), count * sizeof(ShotIndexEntry));
+        free(entries);
+        request->send(response);
     });
     server.on("/api/core-dump", HTTP_GET, [this](AsyncWebServerRequest *request) { handleCoreDumpDownload(request); });
     // The web UI is embedded in firmware flash and served from the memory-mapped blob (see serveWebAsset). It is no
@@ -453,6 +515,10 @@ void WebUIPlugin::handleWebSocketData(AsyncWebSocket *server, AsyncWebSocketClie
                     controller->raiseGrindTarget();
                 } else if (msgType == "req:lower-grind-target") {
                     controller->lowerGrindTarget();
+                } else if (msgType == "req:raise-brew-target") {
+                    controller->raiseBrewTarget();
+                } else if (msgType == "req:lower-brew-target") {
+                    controller->lowerBrewTarget();
                 } else if (msgType == "req:change-mode") {
                     if (doc["mode"].is<uint8_t>()) {
                         auto mode = doc["mode"].as<uint8_t>();
@@ -473,18 +539,12 @@ void WebUIPlugin::handleWebSocketData(AsyncWebSocket *server, AsyncWebSocketClie
                         resp["rid"] = doc["rid"];
                     }
                     resp["msg"] = "Rebuild started";
-                    size_t bufferSize = measureJson(resp);
-                    auto *buffer = ws.makeBuffer(bufferSize);
-                    serializeJson(resp, buffer->get(), bufferSize);
-                    client->text(buffer);
+                    client->text(toWsBuffer(resp));
                     ShotHistory.startAsyncRebuild();
                 } else if (msgType.startsWith("req:history")) {
                     JsonDocument resp(&psramAllocator);
                     ShotHistory.handleRequest(doc, resp);
-                    size_t bufferSize = measureJson(resp);
-                    auto *buffer = ws.makeBuffer(bufferSize);
-                    serializeJson(resp, buffer->get(), bufferSize);
-                    client->text(buffer);
+                    client->text(toWsBuffer(resp));
                 } else if (msgType == "req:flush:start") {
                     handleFlushStart(client->id(), doc);
                 }
@@ -607,10 +667,7 @@ void WebUIPlugin::handleProfileRequest(uint32_t clientId, JsonDocument &request)
         }
     }
 
-    size_t bufferSize = measureJson(response);
-    auto *buffer = ws.makeBuffer(bufferSize);
-    serializeJson(response, buffer->get(), bufferSize);
-    ws.text(clientId, buffer);
+    ws.text(clientId, toWsBuffer(response));
 }
 
 void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) {
@@ -632,12 +689,16 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) {
                 settings->setPid(request->arg("pid"));
             if (request->hasArg("pumpModelCoeffs"))
                 settings->setPumpModelCoeffs(request->arg("pumpModelCoeffs"));
+            if (request->hasArg("pumpSlipCoeffs"))
+                settings->setPumpSlipCoeffs(request->arg("pumpSlipCoeffs"));
             if (request->hasArg("wifiSsid"))
                 settings->setWifiSsid(request->arg("wifiSsid"));
             if (request->hasArg("mdnsName"))
                 settings->setMdnsName(request->arg("mdnsName"));
             if (request->hasArg("wifiPassword") && request->arg("wifiPassword") != "---unchanged---")
                 settings->setWifiPassword(request->arg("wifiPassword"));
+            if (request->hasArg("apPassword") && request->arg("apPassword").length() >= WIFI_AP_PASSWORD_MIN_LENGTH)
+                settings->setWifiApPassword(request->arg("apPassword"));
             settings->setHomekit(request->hasArg("homekit"));
             settings->setBoilerFillActive(request->hasArg("boilerFillActive"));
             if (request->hasArg("startupFillTime"))
@@ -714,6 +775,8 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) {
                 settings->setIntegralGain(request->arg("integralGain").toFloat());
             if (request->hasArg("maxPumpPower"))
                 settings->setMaxPumpPower(request->arg("maxPumpPower").toFloat());
+            if (request->hasArg("savedScale"))
+                settings->setSavedScale(request->arg("savedScale"));
             settings->setAutoWakeupEnabled(request->hasArg("autowakeupEnabled"));
             if (request->hasArg("autowakeupSchedules")) {
                 // Handle schedule format with days
@@ -780,8 +843,10 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) {
     doc["haTopic"] = settings.getHomeAssistantTopic();
     doc["pid"] = settings.getPid();
     doc["pumpModelCoeffs"] = settings.getPumpModelCoeffs();
+    doc["pumpSlipCoeffs"] = settings.getPumpSlipCoeffs();
     doc["wifiSsid"] = settings.getWifiSsid();
     doc["wifiPassword"] = apMode ? "---unchanged---" : settings.getWifiPassword();
+    doc["apPassword"] = settings.getWifiApPassword();
     doc["mdnsName"] = settings.getMdnsName();
     doc["temperatureOffset"] = String(settings.getTemperatureOffset());
     doc["pressureScaling"] = String(settings.getPressureScaling());
@@ -819,6 +884,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) {
     doc["convergenceGain"] = settings.getConvergenceGain();
     doc["integralGain"] = settings.getIntegralGain();
     doc["maxPumpPower"] = settings.getMaxPumpPower();
+    doc["savedScale"] = settings.getSavedScale();
 
     doc["customOTAURL"] = settings.getCustomOTAURL();
 
@@ -977,13 +1043,7 @@ void WebUIPlugin::broadcastJson(JsonDocument &doc) {
     if (ws.getClients().empty()) {
         return;
     }
-    const size_t len = measureJson(doc);
-    auto *buffer = ws.makeBuffer(len);
-    if (buffer == nullptr) {
-        return; // out of buffers; drop this broadcast rather than churn the heap
-    }
-    serializeJson(doc, buffer->get(), len);
-    ws.textAll(buffer);
+    ws.textAll(toWsBuffer(doc));
 }
 
 void WebUIPlugin::sendAutotuneResult() {
@@ -1008,10 +1068,7 @@ void WebUIPlugin::handleFlushStart(uint32_t clientId, JsonDocument &request) {
     response["tp"] = "res:flush:start";
     response["rid"] = request["rid"];
     response["success"] = true;
-
-    String msg;
-    serializeJson(response, msg);
-    ws.text(clientId, msg);
+    ws.text(clientId, toWsBuffer(response));
 }
 
 void WebUIPlugin::handleCoreDumpDownload(AsyncWebServerRequest *request) {

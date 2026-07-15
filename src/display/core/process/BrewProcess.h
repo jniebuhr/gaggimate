@@ -19,7 +19,8 @@ class BrewProcess : public Process {
     unsigned long currentPhaseStarted = 0;
     unsigned long previousPhaseFinished = 0;
     unsigned long finished = 0;
-    double currentVolume = 0; // most recent volume pushed
+    PhaseExitReason lastExitReason = PhaseExitReason::NONE; // why the most recent phase ended (for shot history)
+    double currentVolume = 0;                               // most recent volume pushed
     float currentFlow = 0.0f;
     float currentPressure = 0.0f;
     float waterPumped = 0.0f;
@@ -50,9 +51,10 @@ class BrewProcess : public Process {
 
     unsigned long getPhaseDuration() const { return static_cast<long>(currentPhase.duration) * 1000L; }
 
-    bool isCurrentPhaseFinished() {
+    // Reason the current phase is done, or PhaseExitReason::NONE if it should keep running.
+    PhaseExitReason currentPhaseExitReason() {
         if (millis() - currentPhaseStarted > BREW_SAFETY_DURATION_MS) {
-            return true;
+            return PhaseExitReason::SAFETY;
         }
         double volume = currentVolume;
         if (volume > 0.0) {
@@ -65,6 +67,8 @@ class BrewProcess : public Process {
         return currentPhase.isFinished(target == ProcessTarget::VOLUMETRIC, volume, timeInPhase, currentFlow, currentPressure,
                                        waterPumped, profile.type);
     }
+
+    bool isCurrentPhaseFinished() { return currentPhaseExitReason() != PhaseExitReason::NONE; }
 
     bool isUtility() const { return profile.utility; }
 
@@ -135,8 +139,10 @@ class BrewProcess : public Process {
     void progress() override {
         // Progress should be called around every 100ms, as defined in PROGRESS_INTERVAL, while the Process is active
         waterPumped += currentFlow / 10.0f; // Add current flow divided to 100ms to water pumped counter
-        while (isCurrentPhaseFinished() && processPhase == ProcessPhase::RUNNING) {
+        PhaseExitReason reason;
+        while ((reason = currentPhaseExitReason()) != PhaseExitReason::NONE && processPhase == ProcessPhase::RUNNING) {
             previousPhaseFinished = millis();
+            lastExitReason = reason; // record why this phase ended for the shot history transition
             if (phaseIndex + 1 < profile.phases.size()) {
                 waterPumped = 0.0f;
                 phaseIndex++;

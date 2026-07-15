@@ -12,7 +12,7 @@
 #include <display/util/PsramAllocator.h>
 
 constexpr size_t UPDATE_CHECK_INTERVAL = 30 * 60 * 1000;
-constexpr size_t CLEANUP_PERIOD = 5 * 1000;
+constexpr size_t CLEANUP_PERIOD = 1000;
 constexpr size_t STATUS_PERIOD = 500;
 constexpr size_t DNS_PERIOD = 50;
 
@@ -56,13 +56,6 @@ class WebUIPlugin : public Plugin {
     void sendAutotuneResult();
     void sendAutotuneFailed();
 
-    // Broadcast a JsonDocument to all WebSocket clients with a single internal
-    // allocation. `doc.as<String>()` builds an Arduino String on the internal
-    // heap via doubling reallocs and then textAll() copies it into a message
-    // buffer — two-plus allocations per broadcast, dropped into the middle of
-    // the file-serving burst during a statistics build, which generates heap
-    // fragmentation. measureJson + makeBuffer + serializeJson writes straight
-    // into one exact-sized buffer instead. [GM-90]
     void broadcastJson(JsonDocument &doc);
 
     // Core dump download

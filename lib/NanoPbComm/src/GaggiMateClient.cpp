@@ -66,7 +66,8 @@ gm::Payload GaggiMateClient::buildPidSettings(float kp, float ki, float kd, floa
 }
 
 gm::Payload GaggiMateClient::buildPumpSettings(float a, float b, float c, float d, float commutationGain, float convergenceGain,
-                                               float integralGain, float maxPower) {
+                                               float integralGain, float maxPower, float slipA, float slipB, float slipC,
+                                               float slipD) {
     gm::Payload p = gaggimate_Payload_init_zero;
     p.which_content = gaggimate_Payload_pump_model_tag;
     p.content.pump_model.a = a;
@@ -77,6 +78,10 @@ gm::Payload GaggiMateClient::buildPumpSettings(float a, float b, float c, float 
     p.content.pump_model.convergenceGain = convergenceGain;
     p.content.pump_model.integralGain = integralGain;
     p.content.pump_model.maxBLDCPower = maxPower;
+    p.content.pump_model.slipA = slipA;
+    p.content.pump_model.slipB = slipB;
+    p.content.pump_model.slipC = slipC;
+    p.content.pump_model.slipD = slipD;
     return p;
 }
 
@@ -135,8 +140,9 @@ void GaggiMateClient::sendPidSettings(float kp, float ki, float kd, float kf) {
 }
 
 void GaggiMateClient::sendPumpSettings(float a, float b, float c, float d, float commutationGain, float convergenceGain,
-                                       float integralGain, float maxPower) {
-    _endpoint.send(buildPumpSettings(a, b, c, d, commutationGain, convergenceGain, integralGain, maxPower));
+                                       float integralGain, float maxPower, float slipA, float slipB, float slipC, float slipD) {
+    _endpoint.send(
+        buildPumpSettings(a, b, c, d, commutationGain, convergenceGain, integralGain, maxPower, slipA, slipB, slipC, slipD));
 }
 
 void GaggiMateClient::sendAutotune(uint32_t testTime, uint32_t samples, uint32_t heaterWattage) {
@@ -176,7 +182,7 @@ void GaggiMateClient::registerHandlers() {
             pressure = p.content.sensor.boilers[0].pressure;
         }
         _sensorCb(temperature, pressure, p.content.sensor.puck_flow, p.content.sensor.pump_flow,
-                  p.content.sensor.puck_resistance);
+                  p.content.sensor.puck_resistance, p.content.sensor.pump_power, p.content.sensor.heater_power);
     });
     _endpoint.on(gaggimate_Payload_button_tag, [this](const gm::Payload &p) {
         if (_buttonCb)

@@ -45,6 +45,11 @@ enum SystemStatusFlowStructureFields {
     FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_PRESSURE_AVAILABLE = 10,
     FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_BLUETOOTH_SCALES = 11,
     FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_GRIND_AVAILABLE = 12,
+    FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_MODE = 13,
+    FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_QRCODE_CONTENT = 14,
+    FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_NETWORK = 15,
+    FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_IP = 16,
+    FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_AP_ACTIVE = 17,
     FLOW_STRUCTURE_SYSTEM_STATUS_NUM_FIELDS
 };
 
@@ -178,6 +183,29 @@ struct SystemStatusValue {
     bool grind_available() { return value.getArray()->values[FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_GRIND_AVAILABLE].getBoolean(); }
     void grind_available(bool grind_available) {
         value.getArray()->values[FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_GRIND_AVAILABLE] = BooleanValue(grind_available);
+    }
+
+    int mode() { return value.getArray()->values[FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_MODE].getInt(); }
+    void mode(int mode) { value.getArray()->values[FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_MODE] = IntegerValue(mode); }
+
+    const char *qrcodeContent() {
+        return value.getArray()->values[FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_QRCODE_CONTENT].getString();
+    }
+    void qrcodeContent(const char *qrcodeContent) {
+        value.getArray()->values[FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_QRCODE_CONTENT] = StringValue(qrcodeContent);
+    }
+
+    const char *network() { return value.getArray()->values[FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_NETWORK].getString(); }
+    void network(const char *network) {
+        value.getArray()->values[FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_NETWORK] = StringValue(network);
+    }
+
+    const char *ip() { return value.getArray()->values[FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_IP].getString(); }
+    void ip(const char *ip) { value.getArray()->values[FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_IP] = StringValue(ip); }
+
+    bool ap_active() { return value.getArray()->values[FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_AP_ACTIVE].getBoolean(); }
+    void ap_active(bool ap_active) {
+        value.getArray()->values[FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_AP_ACTIVE] = BooleanValue(ap_active);
     }
 };
 

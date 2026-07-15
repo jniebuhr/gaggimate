@@ -23,6 +23,7 @@
 #ifndef GAGGIMATE_SIM // network/BLE plugins are device-only
 #include <display/plugins/BLEScalePlugin.h>
 #include <display/plugins/HomekitPlugin.h>
+#include <display/plugins/ImprovPlugin.h>
 #include <display/plugins/MQTTPlugin.h>
 #include <display/plugins/NetworkWatchdogPlugin.h>
 #include <display/plugins/WifiStaWatchdogPlugin.h>
@@ -33,6 +34,7 @@
 #ifdef GAGGIMATE_SIM
 #include <SdlDriver.h> // desktop SDL panel stands in for the hardware drivers
 #else
+#include <Preferences.h>
 #include <display/drivers/AmoledDisplayDriver.h>
 #include <display/drivers/LilyGoDriver.h>
 #include <display/drivers/WaveshareDriver.h>
@@ -94,6 +96,7 @@ void Controller::setup() {
 #ifndef GAGGIMATE_SIM // WiFi watchdogs and BLE scales are device-only
     pluginManager->registerPlugin(new NetworkWatchdogPlugin());
     pluginManager->registerPlugin(new WifiStaWatchdogPlugin());
+    pluginManager->registerPlugin(new ImprovPlugin());
 #endif
     pluginManager->registerPlugin(&ShotHistory);
 #ifndef GAGGIMATE_SIM
@@ -142,23 +145,56 @@ void Controller::connect() {
 }
 
 #ifndef GAGGIMATE_HEADLESS
+// NVS values for the cached panel detection result (GM-140) — only append, never renumber
+enum PanelModel : uint8_t { PANEL_UNKNOWN = 0, PANEL_LILYGO = 1, PANEL_AMOLED = 2, PANEL_WAVESHARE = 3 };
+
 void Controller::setupPanel() {
 #ifdef GAGGIMATE_SIM
     driver = SdlDriver::getInstance(); // desktop SDL panel
-#else
-    if (LilyGoDriver::getInstance()->isCompatible()) {
-        driver = LilyGoDriver::getInstance();
-    } else if (AmoledDisplayDriver::getInstance()->isCompatible()) {
-        driver = AmoledDisplayDriver::getInstance();
-    } else if (WaveshareDriver::getInstance()->isCompatible()) {
-        driver = WaveshareDriver::getInstance();
-    } else {
-        Serial.println("No compatible display driver found");
-        delay(10000);
-        ESP.restart();
-    }
-#endif
     driver->init();
+#else
+    // The panel can't change after flashing, so cache the detection result in NVS
+    // and skip the multi-second probing chain on subsequent boots (GM-140).
+    Preferences panelPrefs;
+    panelPrefs.begin("panel", false);
+    uint8_t model = panelPrefs.getUChar("driver", PANEL_UNKNOWN);
+    if (model != PANEL_UNKNOWN) {
+        // Drop the cache before init so a crash here falls back to full detection
+        panelPrefs.remove("driver");
+        switch (model) {
+        case PANEL_LILYGO:
+            driver = LilyGoDriver::getInstance();
+            break;
+        case PANEL_AMOLED:
+            if (AmoledDisplayDriver::getInstance()->selectVariant(panelPrefs.getChar("variant", -1)))
+                driver = AmoledDisplayDriver::getInstance();
+            break;
+        case PANEL_WAVESHARE:
+            driver = WaveshareDriver::getInstance();
+            break;
+        }
+    }
+    if (driver == nullptr) {
+        if (LilyGoDriver::getInstance()->isCompatible()) {
+            driver = LilyGoDriver::getInstance();
+            model = PANEL_LILYGO;
+        } else if (AmoledDisplayDriver::getInstance()->isCompatible()) {
+            driver = AmoledDisplayDriver::getInstance();
+            model = PANEL_AMOLED;
+            panelPrefs.putChar("variant", AmoledDisplayDriver::getInstance()->getVariant());
+        } else if (WaveshareDriver::getInstance()->isCompatible()) {
+            driver = WaveshareDriver::getInstance();
+            model = PANEL_WAVESHARE;
+        } else {
+            Serial.println("No compatible display driver found");
+            delay(10000);
+            ESP.restart();
+        }
+    }
+    driver->init();
+    panelPrefs.putUChar("driver", model);
+    panelPrefs.end();
+#endif
 }
 #endif
 
@@ -220,11 +256,15 @@ void Controller::setupBluetooth() {
         }
     });
     pluginManager->on("ota:update:end", [this](Event const &) { applyConnectionPriority(true); });
-    comms.onSensorData([this](float temp, float pressure, float puckFlow, float pumpFlow, float puckResistance) {
+    comms.onSensorData([this](float temp, float pressure, float puckFlow, float pumpFlow, float puckResistance, float pumpPower,
+                              float heaterPower) {
         onTempRead(temp);
         this->pressure = pressure;
         this->currentPuckFlow = puckFlow;
         this->currentPumpFlow = pumpFlow;
+        this->currentPumpPower = pumpPower;
+        this->currentHeaterPower = heaterPower;
+        this->currentPuckResistance = puckResistance;
         pluginManager->trigger("boiler:pressure:change", "value", pressure);
         pluginManager->trigger("pump:puck-flow:change", "value", puckFlow);
         pluginManager->trigger("pump:flow:change", "value", pumpFlow);
@@ -340,19 +380,15 @@ void Controller::onSystemInfo(const char *hardware, const char *version, uint32_
     ESP_LOGI(LOG_TAG, "System info: %s %s (proto=%u local=%u dm=%d ps=%d led=%d tof=%d)", hardware, version, protocolVersion,
              gm_proto::PROTOCOL_VERSION, dimming, pressure, ledControl, tof);
     if (mismatch) {
-        // Mixed-firmware links are not wire-compatible, so don't push config and
-        // don't drive control (updateControl() also bails on protocolMismatch).
-        // We still fire controller:ready below so OTA can init -- that's the
-        // recovery path to update the out-of-date side.
         ESP_LOGW(LOG_TAG, "Protocol version mismatch: controller=%u display=%u -- control inhibited, OTA only", protocolVersion,
                  gm_proto::PROTOCOL_VERSION);
         pluginManager->trigger("controller:protocol:mismatch", "value", static_cast<int>(protocolVersion));
     } else {
-        // Capability-dependent setup that the old protocol ran synchronously right
-        // after connect, now driven by the asynchronous SystemInfo push.
         setPressureScale();
         setPidSettings();
         setPumpModelCoeffs();
+        configResendUntil = millis() + CONFIG_RESEND_WINDOW_MS;
+        lastConfigResend = millis();
     }
 
     if (!loaded) {
@@ -366,12 +402,6 @@ void Controller::onSystemInfo(const char *hardware, const char *version, uint32_
 }
 
 void Controller::onIncompatibleController(const String &infoJson) {
-    // An old controller (no framed-comms characteristics) is, for our purposes,
-    // a protocol mismatch: reuse the exact same path. We force protocolVersion 0
-    // (it cannot speak the framed protocol), so onSystemInfo() inhibits control
-    // but still fires controller:ready so OTA can flash the controller back into
-    // compatibility. The real hardware/version/capabilities come from the legacy
-    // read-only INFO characteristic the old controller still exposes.
     waitingForController = false;
 
     JsonDocument doc;
@@ -392,16 +422,17 @@ void Controller::onIncompatibleController(const String &infoJson) {
 }
 
 void Controller::setupWifi() {
+    // Generate and persist a WPA2 AP password on first start
+    if (settings.getWifiApPassword().isEmpty()) {
+        settings.setWifiApPassword(generateShortID(DEFAULT_WIFI_AP_PASSWORD_LENGTH));
+    }
+
     if (settings.getWifiSsid() != "" && settings.getWifiPassword() != "") {
         WiFi.setHostname(settings.getMdnsName().c_str());
         WiFi.mode(WIFI_STA);
         WiFi.setAutoReconnect(true);
         WiFi.config(INADDR_NONE, INADDR_NONE, INADDR_NONE, INADDR_NONE);
 
-        // Register WiFi event handlers BEFORE begin() so STA_CONNECTED and
-        // STA_GOT_IP from the boot connect fire through them too. Handlers
-        // run in the Arduino WiFi event task (small stack), so they only log
-        // and flag; loop() fires plugin events on the main loop.
         WiFi.onEvent(
             [this](WiFiEvent_t, WiFiEventInfo_t info) {
                 const auto &g = info.got_ip.ip_info;
@@ -413,10 +444,6 @@ void Controller::setupWifi() {
                 wifiConnectedPending = true;
             },
             WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_GOT_IP);
-        // setMinSecurity() is a scan filter, not an auth ceiling -- the SDK
-        // can still negotiate WPA3-SAE on a WPA3-transition AP, so log the
-        // authmode it actually chose, the BSSID of the AP we landed on
-        // (useful in multi-AP topologies), and the channel.
         WiFi.onEvent(
             [](WiFiEvent_t, WiFiEventInfo_t info) {
                 const auto &c = info.wifi_sta_connected;
@@ -425,9 +452,6 @@ void Controller::setupWifi() {
                          c.channel, c.authmode);
             },
             WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_CONNECTED);
-        // Log numeric reason explicitly -- disconnectReasonName() returns NULL
-        // for vendor codes (UniFi 168), which made earlier logs read
-        // "Reason:" with empty body and obscured the root cause.
         WiFi.onEvent(
             [this](WiFiEvent_t, WiFiEventInfo_t info) {
                 const auto &d = info.wifi_sta_disconnected;
@@ -474,11 +498,24 @@ void Controller::setupWifi() {
     }
     if (WiFi.status() != WL_CONNECTED) {
         isApConnection = true;
+        const String apPassword = settings.getWifiApPassword();
+        // WPA2 requires >= 8 chars; fall back to an open AP if somehow shorter.
+        const bool secured = apPassword.length() >= WIFI_AP_PASSWORD_MIN_LENGTH;
         WiFi.mode(WIFI_AP);
         WiFi.softAPConfig(WIFI_AP_IP, WIFI_AP_IP, WIFI_SUBNET_MASK);
-        WiFi.softAP(WIFI_AP_SSID);
+        WiFi.softAP(WIFI_AP_SSID, secured ? apPassword.c_str() : nullptr);
         WiFi.setTxPower(WIFI_POWER_19_5dBm);
-        ESP_LOGI(LOG_TAG, "Started WiFi AP %s", WIFI_AP_SSID);
+        // Credentials block so headless users can read the AP login from serial.
+        ESP_LOGI(LOG_TAG, "========================================");
+        ESP_LOGI(LOG_TAG, "  WiFi Access Point started");
+        ESP_LOGI(LOG_TAG, "  SSID:     %s", WIFI_AP_SSID);
+        if (secured) {
+            ESP_LOGI(LOG_TAG, "  Password: %s", apPassword.c_str());
+        } else {
+            ESP_LOGI(LOG_TAG, "  Password: <open network>");
+        }
+        ESP_LOGI(LOG_TAG, "  Web UI:   http://%s/", WIFI_AP_IP.toString().c_str());
+        ESP_LOGI(LOG_TAG, "========================================");
     }
 
     pluginManager->on("ota:update:start", [this](Event const &) { this->updating = true; });
@@ -516,6 +553,15 @@ void Controller::loop() {
 
     unsigned long now = millis();
 
+    // A config burst right after a reconnect can be lost in the unstable BLE window,
+    // and a spurious ACK then stops the reliable layer retrying. Re-send until it lands.
+    if (comms.isConnected() && now < configResendUntil && (now - lastConfigResend) >= CONFIG_RESEND_INTERVAL_MS) {
+        setPressureScale();
+        setPidSettings();
+        setPumpModelCoeffs();
+        lastConfigResend = now;
+    }
+
     // If BLE scanning has been running for a while without finding the controller,
     // notify the UI so it can update the startup label accordingly.
     if (!waitingForController && initialized && !comms.isConnected() &&
@@ -541,42 +587,52 @@ void Controller::loopLogic() {
         steamReady = true;
     }
 
-    // Handle current process
-    if (currentProcess != nullptr) {
-        updateLastAction();
-        if (currentProcess->getType() == MODE_BREW) {
-            auto brewProcess = static_cast<BrewProcess *>(currentProcess);
-            brewProcess->updatePressure(pressure);
-            brewProcess->updateFlow(currentPumpFlow);
-        }
-        currentProcess->progress();
-        if (!isActive()) {
-            deactivate();
-        }
-    }
+    // Process lifecycle under the lock (GM-147); events and NVS writes deferred past unlock.
+    std::vector<const char *> events;
+    double newBrewDelay = -1.0;
+    double newGrindDelay = -1.0;
+    {
+        std::lock_guard<std::recursive_mutex> guard(processMutex);
 
-    // Handle last process - Calculate auto delay
-    if (lastProcess != nullptr && !lastProcess->isComplete()) {
-        lastProcess->progress();
-    }
-    if (lastProcess != nullptr && lastProcess->isComplete() && !processCompleted && settings.isDelayAdjust()) {
-        processCompleted = true;
-        if (lastProcess->getType() == MODE_BREW) {
-            if (auto *brewProcess = static_cast<BrewProcess *>(lastProcess); brewProcess->target == ProcessTarget::VOLUMETRIC) {
-                double newDelay = brewProcess->getNewDelayTime();
-                if (newDelay >= 0) {
-                    settings.setBrewDelay(newDelay);
-                }
+        // Handle current process
+        if (currentProcess != nullptr) {
+            updateLastAction();
+            if (currentProcess->getType() == MODE_BREW) {
+                auto brewProcess = static_cast<BrewProcess *>(currentProcess);
+                brewProcess->updatePressure(pressure);
+                brewProcess->updateFlow(currentPumpFlow);
             }
-        } else if (lastProcess->getType() == MODE_GRIND) {
-            if (auto *grindProcess = static_cast<GrindProcess *>(lastProcess);
-                grindProcess->target == ProcessTarget::VOLUMETRIC) {
-                double newDelay = grindProcess->getNewDelayTime();
-                if (newDelay >= 0) {
-                    settings.setGrindDelay(newDelay);
+            currentProcess->progress();
+            if (!isActiveLocked()) {
+                deactivateLocked(events);
+            }
+        }
+
+        // Handle last process - Calculate auto delay
+        if (lastProcess != nullptr && !lastProcess->isComplete()) {
+            lastProcess->progress();
+        }
+        if (lastProcess != nullptr && lastProcess->isComplete() && !processCompleted && settings.isDelayAdjust()) {
+            processCompleted = true;
+            if (lastProcess->getType() == MODE_BREW) {
+                if (auto *brewProcess = static_cast<BrewProcess *>(lastProcess);
+                    brewProcess->target == ProcessTarget::VOLUMETRIC) {
+                    newBrewDelay = brewProcess->getNewDelayTime();
+                }
+            } else if (lastProcess->getType() == MODE_GRIND) {
+                if (auto *grindProcess = static_cast<GrindProcess *>(lastProcess);
+                    grindProcess->target == ProcessTarget::VOLUMETRIC) {
+                    newGrindDelay = grindProcess->getNewDelayTime();
                 }
             }
         }
+    }
+    dispatchEvents(events);
+    if (newBrewDelay >= 0) {
+        settings.setBrewDelay(newBrewDelay);
+    }
+    if (newGrindDelay >= 0) {
+        settings.setGrindDelay(newGrindDelay);
     }
 
     unsigned long now = millis();
@@ -633,15 +689,30 @@ void Controller::autotune(int testTime, int samples, int heaterWattage) {
 }
 
 void Controller::startProcess(Process *process) {
-    if (isActive() || !isReady()) {
+    std::vector<const char *> events;
+    {
+        std::lock_guard<std::recursive_mutex> guard(processMutex);
+        startProcessLocked(process, events);
+    }
+    dispatchEvents(events);
+}
+
+void Controller::startProcessLocked(Process *process, std::vector<const char *> &events) {
+    if (isActiveLocked() || !isReady()) {
         delete process;
         return;
     }
     processCompleted = false;
     this->currentProcess = process;
     applyConnectionPriority(); // shot started -> tight BLE interval
-    pluginManager->trigger("controller:process:start");
+    events.push_back("controller:process:start");
     updateLastAction();
+}
+
+void Controller::dispatchEvents(const std::vector<const char *> &events) {
+    for (const auto *eventId : events) {
+        pluginManager->trigger(eventId);
+    }
 }
 
 void Controller::applyConnectionPriority(bool force) {
@@ -664,15 +735,17 @@ void Controller::applyConnectionPriority(bool force) {
 }
 
 float Controller::getTargetTemp() const {
-    Process *proc = currentProcess;
     switch (mode) {
     case MODE_BREW:
-    case MODE_GRIND:
+    case MODE_GRIND: {
+        std::lock_guard<std::recursive_mutex> guard(processMutex);
+        Process *proc = currentProcess;
         if (proc != nullptr && proc->isActive() && proc->getType() == MODE_BREW) {
             auto brewProcess = static_cast<BrewProcess *>(proc);
             return brewProcess->getTemperature();
         }
         return profileManager->getSelectedProfile().temperature;
+    }
     case MODE_STEAM:
         return settings.getTargetSteamTemp();
     case MODE_WATER:
@@ -713,10 +786,16 @@ void Controller::setPumpModelCoeffs(void) {
         float coeffs[4];
         parseFloatCsv(settings.getPumpModelCoeffs(), coeffs, 4, NAN);
         bool gearpumpEnabled = systemInfo.capabilities.hasAddon(7);
+        // Slip is gear-pump only; send zeros otherwise so it stays a no-op.
+        float slip[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+        if (gearpumpEnabled) {
+            parseFloatCsv(settings.getPumpSlipCoeffs(), slip, 4, 0.0f);
+        }
         comms.sendPumpSettings(coeffs[0], coeffs[1], coeffs[2], coeffs[3],
                                gearpumpEnabled ? settings.getCommutationGain() : DEFAULT_COMMUTATION_GAIN,
                                gearpumpEnabled ? settings.getConvergenceGain() : DEFAULT_CONVERGENCE_GAIN,
-                               gearpumpEnabled ? settings.getIntegralGain() : DEFAULT_INTEGRAL_GAIN, settings.getMaxPumpPower());
+                               gearpumpEnabled ? settings.getIntegralGain() : DEFAULT_INTEGRAL_GAIN, settings.getMaxPumpPower(),
+                               slip[0], slip[1], slip[2], slip[3]);
     }
 }
 
@@ -809,9 +888,12 @@ void Controller::updateControl() {
         return;
     }
 
-    // Local capture to avoid race condition with deactivate() running on another core
+    // Hold the process lock across the deref: deactivate()/clear() on other tasks
+    // can delete the process mid-computation (GM-147). comms sends are queued
+    // (pumped from comms.loop()), so no cross-task blocking happens under the lock.
+    std::lock_guard<std::recursive_mutex> guard(processMutex);
     Process *proc = currentProcess;
-    bool active = isActive();
+    bool active = isActiveLocked();
 
     float targetTemp = getTargetTemp();
     if (targetTemp > .0f) {
@@ -928,12 +1010,26 @@ void Controller::activate() {
         break;
     default:;
     }
-    if (currentProcess != nullptr && currentProcess->getType() == MODE_BREW) {
+    bool brewStarted;
+    {
+        std::lock_guard<std::recursive_mutex> guard(processMutex);
+        brewStarted = currentProcess != nullptr && currentProcess->getType() == MODE_BREW;
+    }
+    if (brewStarted) {
         pluginManager->trigger("controller:brew:start");
     }
 }
 
 void Controller::deactivate() {
+    std::vector<const char *> events;
+    {
+        std::lock_guard<std::recursive_mutex> guard(processMutex);
+        deactivateLocked(events);
+    }
+    dispatchEvents(events);
+}
+
+void Controller::deactivateLocked(std::vector<const char *> &events) {
     if (currentProcess == nullptr) {
         return;
     }
@@ -942,18 +1038,27 @@ void Controller::deactivate() {
     currentProcess = nullptr;
     applyConnectionPriority(); // shot ended -> relaxed BLE interval
     if (lastProcess->getType() == MODE_BREW) {
-        pluginManager->trigger("controller:brew:end");
+        events.push_back("controller:brew:end");
     } else if (lastProcess->getType() == MODE_GRIND) {
-        pluginManager->trigger("controller:grind:end");
+        events.push_back("controller:grind:end");
     }
-    pluginManager->trigger("controller:process:end");
+    events.push_back("controller:process:end");
     updateLastAction();
 }
 
 void Controller::clear() {
+    std::vector<const char *> events;
+    {
+        std::lock_guard<std::recursive_mutex> guard(processMutex);
+        clearLocked(events);
+    }
+    dispatchEvents(events);
+}
+
+void Controller::clearLocked(std::vector<const char *> &events) {
     processCompleted = true;
     if (lastProcess != nullptr && lastProcess->getType() == MODE_BREW) {
-        pluginManager->trigger("controller:brew:clear");
+        events.push_back("controller:brew:clear");
     }
     delete lastProcess;
     lastProcess = nullptr;
@@ -990,13 +1095,13 @@ void Controller::deactivateStandby() {
 }
 
 bool Controller::isActive() const {
-    Process *proc = currentProcess;
-    return proc != nullptr && proc->isActive();
+    std::lock_guard<std::recursive_mutex> guard(processMutex);
+    return isActiveLocked();
 }
 
 bool Controller::isGrindActive() const {
-    Process *proc = currentProcess;
-    return proc != nullptr && proc->isActive() && proc->getType() == MODE_GRIND;
+    std::lock_guard<std::recursive_mutex> guard(processMutex);
+    return currentProcess != nullptr && currentProcess->isActive() && currentProcess->getType() == MODE_GRIND;
 }
 
 int Controller::getMode() const { return mode; }
@@ -1036,6 +1141,9 @@ void Controller::onProfileSaveAsNew() {
 }
 
 void Controller::onVolumetricMeasurement(double measurement, VolumetricMeasurementSource source) {
+    if (source == VolumetricMeasurementSource::FLOW_ESTIMATION) {
+        currentCoffeeVolume = static_cast<float>(measurement);
+    }
     pluginManager->trigger(source == VolumetricMeasurementSource::FLOW_ESTIMATION
                                ? F("controller:volumetric-measurement:estimation:change")
                                : F("controller:volumetric-measurement:bluetooth:change"),
@@ -1048,19 +1156,14 @@ void Controller::onVolumetricMeasurement(double measurement, VolumetricMeasureme
         ESP_LOGD(LOG_TAG, "Ignoring volumetric measurement, source does not match");
         return;
     }
-    // Local capture to avoid use-after-free with deactivate() / clear() running
-    // on another core. This callback fires from the NimBLE task on core 0 each
-    // time the BLE scale reports weight; deactivate() / clear() run on core 1
-    // (AsyncTCP/LVGL) and can `delete lastProcess` between our nullptr check
-    // and the dereference. Mirrors the same capture pattern used in
-    // updateControl() above (see comment around line 560).
-    Process *curr = currentProcess;
-    Process *last = lastProcess;
-    if (curr != nullptr) {
-        curr->updateVolume(measurement);
+    // This callback fires from the NimBLE task on core 0; deactivate()/clear() on
+    // other tasks can delete the processes, so hold the lock across the deref (GM-147).
+    std::lock_guard<std::recursive_mutex> guard(processMutex);
+    if (currentProcess != nullptr) {
+        currentProcess->updateVolume(measurement);
     }
-    if (last != nullptr && !last->isComplete()) {
-        last->updateVolume(measurement);
+    if (lastProcess != nullptr && !lastProcess->isComplete()) {
+        lastProcess->updateVolume(measurement);
     }
 }
 
@@ -1070,12 +1173,20 @@ bool Controller::isBluetoothScaleHealthy() const {
 }
 
 void Controller::onFlush() {
-    if (isActive()) {
-        return;
+    // Allocate outside the lock; reachable from the UI, AsyncTCP and BLE tasks (GM-147).
+    auto *flush = new BrewProcess(FLUSH_PROFILE, ProcessTarget::TIME, settings.getBrewDelay());
+    std::vector<const char *> events;
+    {
+        std::lock_guard<std::recursive_mutex> guard(processMutex);
+        if (isActiveLocked()) {
+            delete flush;
+            return;
+        }
+        clearLocked(events);
+        startProcessLocked(flush, events);
+        events.push_back("controller:brew:start");
     }
-    clear();
-    startProcess(new BrewProcess(FLUSH_PROFILE, ProcessTarget::TIME, settings.getBrewDelay()));
-    pluginManager->trigger("controller:brew:start");
+    dispatchEvents(events);
 }
 
 void Controller::onVolumetricDelete() {

@@ -29,8 +29,14 @@ void LedControlPlugin::updateControl() {
         sendControl(settings.getSunriseActive(), settings.getSunriseExtBrightness());
         return;
     }
-    if (this->controller->getLastProcess() != nullptr && this->controller->getLastProcess()->getType() == MODE_BREW &&
-        mode == MODE_BREW) {
+    bool lastWasBrew;
+    {
+        // Deref under the process lock — other tasks delete the process at any time (GM-147).
+        std::lock_guard<std::recursive_mutex> guard(controller->getProcessLock());
+        Process *last = controller->getLastProcess();
+        lastWasBrew = last != nullptr && last->getType() == MODE_BREW;
+    }
+    if (lastWasBrew && mode == MODE_BREW) {
         sendControl(settings.getSunriseFinished(), settings.getSunriseExtBrightness());
         return;
     }
