@@ -1,6 +1,6 @@
 #include "images.h"
 
-const ext_img_desc_t images[36] = {
+const ext_img_desc_t images[37] = {
     {"angle-down-40x40", &img_angle_down_40x40},
     {"angle-left-40x40", &img_angle_left_40x40},
     {"angle-right-40x40", &img_angle_right_40x40},
@@ -37,4 +37,5 @@ const ext_img_desc_t images[36] = {
     {"indicator", &img_indicator},
     {"settings-80x80", &img_settings_80x80},
     {"info-40x40", &img_info_40x40},
+    {"infinity", &img_infinity},
 };

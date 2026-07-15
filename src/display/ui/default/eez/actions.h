@@ -44,6 +44,8 @@ extern void action_on_standby(lv_event_t *e);
 extern void action_on_screen_load(lv_event_t *e);
 extern void action_on_screen_swipe(lv_event_t *e);
 extern void action_on_info_screen(lv_event_t *e);
+extern void action_on_water_lower(lv_event_t *e);
+extern void action_on_water_raise(lv_event_t *e);
 
 #ifdef __cplusplus
 }

@@ -193,6 +193,10 @@ void action_on_grind_time_lower(lv_event_t *e) { controller.lowerGrindTarget(); 
 
 void action_on_grind_time_raise(lv_event_t *e) { controller.raiseGrindTarget(); };
 
+void action_on_water_lower(lv_event_t *e) { controller.lowerWaterTarget(); };
+
+void action_on_water_raise(lv_event_t *e) { controller.raiseWaterTarget(); };
+
 void action_on_timed_click(lv_event_t *e) {
 
 };

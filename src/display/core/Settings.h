@@ -77,6 +77,8 @@ class Settings {
     float getPressureScaling() const { return pressureScaling.get(); }
     double getTargetGrindVolume() const { return targetGrindVolume.get(); }
     int getTargetGrindDuration() const { return targetGrindDuration.get(); }
+    double getTargetWaterVolume() const { return targetWaterVolume.get(); }
+    int getTargetWaterDuration() const { return targetWaterDuration.get(); }
     int getStartupMode() const { return startupMode.get(); }
     int getStandbyTimeout() const { return standbyTimeout.get(); }
     double getBrewDelay() const { return brewDelay.get(); }
@@ -164,6 +166,8 @@ class Settings {
     void setPressureScaling(float pressure_scaling);
     void setTargetGrindVolume(double target_grind_volume);
     void setTargetGrindDuration(int target_duration);
+    void setTargetWaterVolume(double target_water_volume);
+    void setTargetWaterDuration(int target_duration);
     void setStartupMode(int startup_mode);
     void setStandbyTimeout(int standby_timeout);
     void setBrewDelay(double brewDelay);
@@ -247,6 +251,8 @@ class Settings {
     Property<float> pressureScaling{registry, "ps", DEFAULT_PRESSURE_SCALING};
     Property<double> targetGrindVolume{registry, "tgv", 18.0};
     Property<int> targetGrindDuration{registry, "tgd", 25000};
+    Property<double> targetWaterVolume{registry, "twv", 80.0};
+    Property<int> targetWaterDuration{registry, "twd", 25000};
     Property<double> brewDelay{registry, "del_br", 800.0};
     Property<double> grindDelay{registry, "del_gd", 1000.0};
     Property<bool> delayAdjust{registry, "del_ad", true};

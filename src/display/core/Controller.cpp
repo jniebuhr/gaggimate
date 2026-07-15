@@ -819,6 +819,18 @@ void Controller::setTargetGrindVolume(double volume) {
     updateLastAction();
 }
 
+void Controller::setTargetWaterDuration(int duration) {
+    Event event = pluginManager->trigger("controller:waterDuration:change", "value", duration);
+    settings.setTargetWaterDuration(event.getInt("value"));
+    updateLastAction();
+}
+
+void Controller::setTargetWaterVolume(double volume) {
+    Event event = pluginManager->trigger("controller:waterVolume:change", "value", static_cast<float>(volume));
+    settings.setTargetWaterVolume(event.getFloat("value"));
+    updateLastAction();
+}
+
 void Controller::raiseTemp() {
     float temp = getTargetTemp();
     temp = constrain(temp + 1.0f, MIN_TEMP, MAX_TEMP);
@@ -878,6 +890,26 @@ void Controller::lowerGrindTarget() {
             newDuration = BREW_MIN_DURATION_MS;
         }
         setTargetGrindDuration(newDuration);
+    }
+}
+
+int Controller::getTargetWaterDuration() { return settings.getTargetWaterDuration(); }
+
+double Controller::getTargetWaterVolume() { return settings.getTargetWaterVolume(); }
+
+void Controller::raiseWaterTarget() {
+    if (settings.isVolumetricTarget() && isVolumetricAvailable()) {
+        setTargetWaterVolume(constrain(getTargetWaterVolume() + 1, HOT_WATER_MIN_VOLUMETRIC, HOT_WATER_MAX_VOLUMETRIC));
+    } else {
+        setTargetWaterDuration(constrain(getTargetWaterDuration() + 1000, HOT_WATER_MIN_DURATION_MS, HOT_WATER_MAX_DURATION_MS));
+    }
+}
+
+void Controller::lowerWaterTarget() {
+    if (settings.isVolumetricTarget() && isVolumetricAvailable()) {
+        setTargetWaterVolume(constrain(getTargetWaterVolume() - 1, HOT_WATER_MIN_VOLUMETRIC, HOT_WATER_MAX_VOLUMETRIC));
+    } else {
+        setTargetWaterDuration(constrain(getTargetWaterDuration() - 1000, HOT_WATER_MIN_DURATION_MS, HOT_WATER_MAX_DURATION_MS));
     }
 }
 
@@ -1006,7 +1038,11 @@ void Controller::activate() {
         startProcess(new SteamProcess(STEAM_SAFETY_DURATION_MS, settings.getSteamPumpPercentage()));
         break;
     case MODE_WATER:
-        startProcess(new PumpProcess());
+        if (settings.isVolumetricTarget() && isVolumetricAvailable()) {
+            startProcess(new PumpProcess(ProcessTarget::VOLUMETRIC, 0, settings.getTargetWaterVolume()));
+        } else {
+            startProcess(new PumpProcess(ProcessTarget::TIME, settings.getTargetWaterDuration(), 0.0));
+        }
         break;
     default:;
     }
