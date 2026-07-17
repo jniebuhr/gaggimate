@@ -20,7 +20,8 @@ class BrewProcess : public Process {
     unsigned long previousPhaseFinished = 0;
     unsigned long finished = 0;
     PhaseExitReason lastExitReason = PhaseExitReason::NONE; // why the most recent phase ended (for shot history)
-    double currentVolume = 0;                               // most recent volume pushed
+    double phaseStartVolume = 0;
+    double currentVolume = 0; // most recent volume pushed
     float currentFlow = 0.0f;
     float currentPressure = 0.0f;
     float waterPumped = 0.0f;
@@ -147,6 +148,7 @@ class BrewProcess : public Process {
                 waterPumped = 0.0f;
                 phaseIndex++;
                 Phase nextPhase = profile.phases.at(phaseIndex);
+                phaseStartVolume = currentVolume;
                 phaseStartPressure = nextPhase.transition.adaptive ? currentPressure : getPumpPressure();
                 phaseStartFlow = nextPhase.transition.adaptive ? currentFlow : getPumpFlow();
                 currentPhase = nextPhase;
@@ -220,7 +222,12 @@ class BrewProcess : public Process {
         }
     }
 
-    float transitionAlpha() const {
+    float transitionAlpha(float startValue, float endValue) const {
+        float t = startValue / endValue;
+        return applyEasing(t, currentPhase.transition.type);
+    }
+
+    float transitionAlphaByTime() const {
         float dur_s = currentPhase.transition.duration;
         if (dur_s <= 0.0f) {
             dur_s = currentPhase.duration; // If the transition has no duration, use the phase duration
@@ -229,8 +236,28 @@ class BrewProcess : public Process {
             return 1.0f;
         }
         const unsigned long elapsedMs = millis() - currentPhaseStarted;
-        float t = float(elapsedMs) / (dur_s * 1000.0f);
-        return applyEasing(t, currentPhase.transition.type);
+        return transitionAlpha(elapsedMs, dur_s * 1000.0f);
+    }
+
+    float transitionAlpha() const {
+        if (currentPhase.transition.target == TransitionTarget::VOLUMETRIC && target == ProcessTarget::VOLUMETRIC) {
+            float endValue = currentPhase.transition.duration;
+            if (endValue <= 0.0f && currentPhase.hasVolumetricTarget()) {
+                endValue = currentPhase.getVolumetricTarget().value;
+            }
+            return transitionAlpha(max(0.0, currentVolume - phaseStartVolume), endValue);
+        }
+        if (currentPhase.transition.target == TransitionTarget::PUMPED) {
+
+            float endValue = currentPhase.transition.duration;
+            if (endValue <= 0.0f && currentPhase.hasVolumetricTarget()) {
+                endValue = currentPhase.getVolumetricTarget().value;
+            }
+            if (endValue > 0.0f) {
+                return transitionAlpha(waterPumped, endValue);
+            }
+        }
+        return transitionAlphaByTime();
     }
 };
 

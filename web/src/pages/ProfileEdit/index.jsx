@@ -110,6 +110,7 @@ export function ProfileEdit() {
   const onSave = useCallback(
     async data => {
       setSaving(true);
+      console.log(data);
       const response = await apiService.request({ tp: 'req:profiles:save', profile: data });
       setData(response.profile);
       setSaving(false);

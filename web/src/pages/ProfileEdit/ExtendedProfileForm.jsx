@@ -44,6 +44,7 @@ export function ExtendedProfileForm(props) {
             type: 'instant',
             duration: 0,
             adaptive: true,
+            target: 'time',
           },
           targets: [],
         },

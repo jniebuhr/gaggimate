@@ -8,7 +8,7 @@ export const ModeTab = ({ mode, active, onClick, rotation = 0, compact = false }
       aria-label={mode.label}
       aria-pressed={active}
       onClick={onClick}
-      className={`flex h-8 min-w-0 flex-1 items-center justify-center rounded-full transition-colors duration-150 ${
+      className={`flex h-8 min-w-0 flex-1 items-center justify-center rounded-full transition-colors duration-150 cursor-pointer ${
         active
           ? 'bg-primary text-primary-content shadow-sm'
           : 'text-base-content/50 hover:text-base-content'

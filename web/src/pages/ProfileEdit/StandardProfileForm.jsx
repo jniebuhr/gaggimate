@@ -175,7 +175,7 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
   };
 
   const onVolumetricTargetChange = value => {
-    if (value === 0) {
+    if (!Number.isFinite(value) || value <= 0) {
       onChange({
         ...phase,
         targets: [],

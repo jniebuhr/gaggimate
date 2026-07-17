@@ -53,6 +53,10 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
     t => !targets.find(t2 => t2.type === t.type && t2.operator === t.operator),
   );
 
+  let rampUnit = 's';
+  if (phase.transition?.target === 'volumetric') rampUnit = 'g';
+  if (phase.transition?.target === 'pumped') rampUnit = 'ml';
+
   return (
     <div
       className='grid grid-cols-1 gap-2 p-2'
@@ -407,65 +411,113 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
         </div>
       </div>
       {phase.transition?.type !== 'instant' && (
-        <div className='grid grid-cols-1 gap-4'>
-          <div className='form-control'>
-            <label
-              htmlFor={`phase-${index}-transition-duration`}
-              className='mb-2 block text-sm font-medium'
-            >
-              Ramp Duration
-            </label>
-            <div className='input-group'>
-              <label htmlFor={`phase-${index}-transition-duration`} className='input w-full'>
-                <input
-                  id={`phase-${index}-transition-duration`}
-                  className='grow'
-                  type='number'
-                  value={phase.transition?.duration || 0}
-                  onChange={e =>
-                    onFieldChange('transition', {
-                      ...phase.transition,
-                      duration: parseFloat(e.target.value),
-                    })
-                  }
-                  aria-label='Transition duration in seconds'
-                  min='0'
-                  step='0.1'
-                />
-                <span aria-label='grams'>s</span>
-              </label>
+        <>
+          <div className='grid grid-cols-1 gap-4'>
+            <div className='form-control'>
+              <fieldset>
+                <legend className='mb-2 block text-sm font-medium'>Ramp Target</legend>
+                <div
+                  className='join max-sm:join-vertical min-w-[50%]'
+                  role='group'
+                  aria-label='Ramp target selection'
+                >
+                  <button
+                    type='button'
+                    className={`join-item btn btn-sm ${(phase.transition?.target || 'time') === 'time' ? 'btn-primary' : 'btn-outline'}`}
+                    onClick={() =>
+                      onFieldChange('transition', { ...phase.transition, target: 'time' })
+                    }
+                    aria-pressed={(phase.transition?.target || 'time') === 'time'}
+                    aria-label='Time'
+                  >
+                    Time
+                  </button>
+                  <button
+                    type='button'
+                    className={`join-item btn btn-sm ${phase.transition?.target === 'volumetric' ? 'btn-primary' : 'btn-outline'}`}
+                    onClick={() =>
+                      onFieldChange('transition', { ...phase.transition, target: 'volumetric' })
+                    }
+                    aria-pressed={phase.transition?.target === 'volumetric'}
+                    aria-label='Weight in phase'
+                  >
+                    Weight in phase
+                  </button>
+                  <button
+                    type='button'
+                    className={`join-item btn btn-sm ${phase.transition?.target === 'pumped' ? 'btn-primary' : 'btn-outline'}`}
+                    onClick={() =>
+                      onFieldChange('transition', { ...phase.transition, target: 'pumped' })
+                    }
+                    aria-pressed={phase.transition?.target === 'pumped'}
+                    aria-label='Water pumped'
+                  >
+                    Water pumped in phase
+                  </button>
+                </div>
+              </fieldset>
             </div>
           </div>
-          <div className='form-control'>
-            <fieldset>
-              <legend className='mb-2 block text-sm font-medium'>Start Ramp from</legend>
-              <div className='join' role='group' aria-label='Start Ramp from'>
-                <button
-                  type='button'
-                  className={`join-item btn btn-sm ${!phase.transition?.adaptive ? 'btn-primary' : 'btn-outline'}`}
-                  onClick={() =>
-                    onFieldChange('transition', { ...phase.transition, adaptive: false })
-                  }
-                  aria-pressed={!phase.transition?.adaptive}
-                  aria-label='Start from previous setpoint'
-                >
-                  Previous target
-                </button>
-                <button
-                  type='button'
-                  className={`join-item btn btn-sm ${!!phase.transition?.adaptive ? 'btn-primary' : 'btn-outline'}`}
-                  onClick={() =>
-                    onFieldChange('transition', { ...phase.transition, adaptive: true })
-                  }
-                  aria-pressed={!!phase.transition?.adaptive}
-                  aria-label='Linear'
-                >
-                  Current value
-                </button>
+          <div className='grid grid-cols-1 gap-4'>
+            <div className='form-control'>
+              <label
+                htmlFor={`phase-${index}-transition-duration`}
+                className='mb-2 block text-sm font-medium'
+              >
+                Ramp Length
+              </label>
+              <div className='input-group'>
+                <label htmlFor={`phase-${index}-transition-duration`} className='input w-full'>
+                  <input
+                    id={`phase-${index}-transition-duration`}
+                    className='grow'
+                    type='number'
+                    value={phase.transition?.duration || 0}
+                    onChange={e =>
+                      onFieldChange('transition', {
+                        ...phase.transition,
+                        duration: parseFloat(e.target.value),
+                      })
+                    }
+                    aria-label={`Transition duration in ${rampUnit}`}
+                    min='0'
+                    step='0.1'
+                  />
+                  <span aria-label={rampUnit}>{rampUnit}</span>
+                </label>
               </div>
-            </fieldset>
+            </div>
+            <div className='form-control'>
+              <fieldset>
+                <legend className='mb-2 block text-sm font-medium'>Start Ramp from</legend>
+                <div className='join' role='group' aria-label='Start Ramp from'>
+                  <button
+                    type='button'
+                    className={`join-item btn btn-sm ${!phase.transition?.adaptive ? 'btn-primary' : 'btn-outline'}`}
+                    onClick={() =>
+                      onFieldChange('transition', { ...phase.transition, adaptive: false })
+                    }
+                    aria-pressed={!phase.transition?.adaptive}
+                    aria-label='Start from previous setpoint'
+                  >
+                    Previous target
+                  </button>
+                  <button
+                    type='button'
+                    className={`join-item btn btn-sm ${!!phase.transition?.adaptive ? 'btn-primary' : 'btn-outline'}`}
+                    onClick={() =>
+                      onFieldChange('transition', { ...phase.transition, adaptive: true })
+                    }
+                    aria-pressed={!!phase.transition?.adaptive}
+                    aria-label='Linear'
+                  >
+                    Current value
+                  </button>
+                </div>
+              </fieldset>
+            </div>
           </div>
-        </div>
+        </>
       )}
 
       <div className='mt-2 flex flex-row gap-4'>
