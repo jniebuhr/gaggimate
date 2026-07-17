@@ -47,9 +47,9 @@ export function CalibrationTab({ formData, onChange }) {
   }, [apiService]);
 
   return (
-    <div className='space-y-4 sm:space-y-6'>
+    <div className='space-y-4 sm:space-y-6 lg:grid lg:grid-cols-2 lg:gap-4'>
       {/* PID Autotune Section */}
-      <Section title='PID Autotune'>
+      <Section title='PID Autotune' className='h-full'>
         {autotuneActive && (
           <div className='space-y-4'>
             <div className='w-full'>
@@ -200,7 +200,7 @@ export function CalibrationTab({ formData, onChange }) {
       </Section>
 
       {/* Pump Flow Tuning Section */}
-      <Section title='Pump Flow Calibration'>
+      <Section title='Pump Flow Calibration' className='h-full'>
         <PumpFlowCalibration currentCoeffs={formData.pumpModelCoeffs} />
       </Section>
     </div>

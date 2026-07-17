@@ -446,6 +446,7 @@ export function Settings() {
       />
 
       <form
+        id='settings-page-form'
         key='settings'
         ref={formRef}
         method='post'

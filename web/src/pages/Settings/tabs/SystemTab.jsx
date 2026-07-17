@@ -60,8 +60,8 @@ function OtaProgressView({ phase, progress }) {
 
 function StorageAndMemorySection({ formData }) {
   return (
-    <Section title='Storage & Memory'>
-      <div className='grid grid-cols-1 gap-6 md:grid-cols-3'>
+    <Section title='Storage & Memory' className='h-full'>
+      <div className='grid grid-cols-1 gap-6 '>
         {formData.spiffsTotal !== undefined && (
           <div className='flex flex-col space-y-2'>
             <span className='text-base-content/70 text-sm font-medium'>Storage (LittleFS)</span>
@@ -134,7 +134,7 @@ function MaintenanceSection({
   rebuildProgress,
 }) {
   return (
-    <Section title='Maintenance & Support'>
+    <Section title='Maintenance & Support' className='h-full'>
       <div className='flex flex-col flex-wrap gap-4 sm:flex-row'>
         <button type='button' className='btn btn-outline btn-sm' onClick={downloadSupportData}>
           Download Support Data
@@ -309,15 +309,15 @@ export function SystemTab() {
   }
 
   return (
-    <div className='space-y-4 sm:space-y-6'>
+    <div className='space-y-4 sm:space-y-6 lg:grid lg:grid-cols-2 lg:gap-4'>
       {/* Firmware updates channel */}
-      <Section title='System Version & Updates'>
+      <Section title='System Version & Updates' className='h-full'>
         <form ref={formRef} onSubmit={onSubmit} className='space-y-4'>
           <div className='form-control max-w-md'>
             <label htmlFor='channel' className='mb-2 block text-sm font-medium'>
               Update Channel
             </label>
-            <div className='flex items-center gap-2'>
+            <div className='flex items-center gap-2 w-full'>
               <select id='channel' name='channel' className='select select-bordered grow'>
                 <option value='latest' selected={formData.channel === 'latest'}>
                   Stable
@@ -345,7 +345,7 @@ export function SystemTab() {
             </span>
             <span className='text-base-content flex items-center gap-2 font-semibold'>
               {rssi}dB (Roundtrip: {lat} ms)
-              <span className={`indicator-item status ${getRssiStatusClass(rssi)}`}></span>
+              <span className={`indicator-item status ${getRssiStatusClass(rssi)}`}/>
             </span>
           </div>
 
