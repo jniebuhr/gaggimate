@@ -243,7 +243,7 @@ class BrewProcess : public Process {
         if (currentPhase.transition.target == TransitionTarget::VOLUMETRIC && target == ProcessTarget::VOLUMETRIC) {
             float endValue = currentPhase.transition.duration;
             if (endValue <= 0.0f && currentPhase.hasVolumetricTarget()) {
-                endValue = currentPhase.getVolumetricTarget().value;
+                endValue = currentPhase.getVolumetricTarget().value - phaseStartVolume;
             }
             return transitionAlpha(max(0.0, currentVolume - phaseStartVolume), endValue);
         }
