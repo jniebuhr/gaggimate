@@ -10,8 +10,7 @@ void BoilerFillPlugin::setup(Controller *controller, PluginManager *pluginManage
         this->controller->startProcess(new PumpProcess(this->controller->getSettings().getStartupFillTime()));
     });
     pluginManager->on("controller:mode:change", [this](Event const &event) {
-        int newMode = event.getInt("value");
-        if (newMode == MODE_BREW && this->controller->getMode() == MODE_STEAM) {
+        if (this->controller->getMode() == MODE_STEAM) {
             this->controller->startProcess(new PumpProcess(this->controller->getSettings().getSteamFillTime()));
         }
     });
