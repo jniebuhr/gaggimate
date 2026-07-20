@@ -746,6 +746,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setEmptyTankDistance(request->arg("emptyTankDistance").toInt());
             if (request->hasArg("fullTankDistance"))
                 settings->setFullTankDistance(request->arg("fullTankDistance").toInt());
+            settings->setShowWaterLevelDot(request->hasArg("showWaterLevelDot"));
             if (request->hasArg("altRelayFunction"))
                 settings->setAltRelayFunction(request->arg("altRelayFunction").toInt());
             if (request->hasArg("buttonBehavior"))
@@ -860,6 +861,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["emptyTankDistance"] = settings.getEmptyTankDistance();
     doc["fullTankDistance"] = settings.getFullTankDistance();
     doc["altRelayFunction"] = settings.getAltRelayFunction();
+    doc["showWaterLevelDot"] = settings.isShowWaterLevelDot();
     // Add auto-wakeup settings to response
     doc["autowakeupEnabled"] = settings.isAutoWakeupEnabled();
     doc["buttonBehavior"] = implode(settings.getButtonBehaviorList(), ",");

@@ -252,6 +252,7 @@ void DefaultUI::loop() {
         updateTempStableFlag();
 
         updateState();
+        updateWaterDot();
         // Fill the EEZ data models before handleScreenChange() creates/ticks a screen (undefined fields abort the flow).
         updateSystemStatus();
         updateProfileInfo();
@@ -530,6 +531,8 @@ void DefaultUI::updateState() {
     currentTemp = static_cast<int>(controller->getCurrentTemp());
     targetTemp = static_cast<int>(controller->getTargetTemp());
     pressureAvailable = controller->getSystemInfo().capabilities.pressure ? 1 : 0;
+    tofAvailable = controller->getSystemInfo().capabilities.tof;
+    waterLevel = tofAvailable ? controller->getWaterLevel() : 0;
     wifiConnected = WiFi.status() == WL_CONNECTED;
     grindAvailable = settings.isSmartGrindActive() || settings.getAltRelayFunction() == ALT_RELAY_GRIND;
 
@@ -744,6 +747,65 @@ void DefaultUI::updateBrewProcess() {
 }
 
 void DefaultUI::updateMenuScreen() {}
+
+static uint32_t parseHexColor(const String &hex) { return strtol(hex.c_str() + 1, nullptr, 16); }
+
+static lv_obj_t *createWaterDot(lv_obj_t *parent, int y) {
+    lv_obj_t *dot = lv_obj_create(parent);
+    lv_obj_set_size(dot, 14, 14);
+    lv_obj_set_style_radius(dot, LV_RADIUS_CIRCLE, 0);
+    lv_obj_set_style_border_width(dot, 0, 0);
+    lv_obj_set_style_pad_all(dot, 0, 0);
+    lv_obj_align(dot, LV_ALIGN_CENTER, 0, y);
+    return dot;
+}
+
+void DefaultUI::updateWaterDot() {
+    if (!tofAvailable || !controller->getSettings().isShowWaterLevelDot()) {
+        if (waterDot != nullptr) {
+            lv_obj_del(waterDot);
+            waterDot = nullptr;
+        }
+        if (waterDotMenu != nullptr) {
+            lv_obj_del(waterDotMenu);
+            waterDotMenu = nullptr;
+        }
+        return;
+    }
+    lv_obj_t *scr = lv_scr_act();
+    if (currentScreen == SCREEN_ID_MENU_SCREEN_NEW || currentScreen == SCREEN_ID_INFO_SCREEN ||
+        currentScreen == SCREEN_ID_PROFILE_SCREEN) {
+        waterDot = nullptr;
+        if (waterDotMenu == nullptr || !lv_obj_is_valid(waterDotMenu)) {
+            waterDotMenu = createWaterDot(scr, -230);
+        }
+        lv_color_t color =
+            lv_color_hex(controller->isLowWaterLevel() ? parseHexColor(controller->getSettings().getSunriseError())
+                                                       : parseHexColor(controller->getSettings().getSunriseIdle()));
+        lv_obj_set_style_bg_color(waterDotMenu, color, 0);
+        lv_obj_set_style_bg_opa(waterDotMenu, LV_OPA_COVER, 0);
+    } else if (currentScreen == SCREEN_ID_BREW_SCREEN || currentScreen == SCREEN_ID_STEAM_SCREEN ||
+               currentScreen == SCREEN_ID_WATER_SCREEN) {
+        waterDotMenu = nullptr;
+        if (waterDot == nullptr || !lv_obj_is_valid(waterDot)) {
+            waterDot = createWaterDot(scr, -230);
+        }
+        lv_color_t color =
+            lv_color_hex(controller->isLowWaterLevel() ? parseHexColor(controller->getSettings().getSunriseError())
+                                                       : parseHexColor(controller->getSettings().getSunriseIdle()));
+        lv_obj_set_style_bg_color(waterDot, color, 0);
+        lv_obj_set_style_bg_opa(waterDot, LV_OPA_COVER, 0);
+    } else {
+        if (waterDot != nullptr) {
+            lv_obj_del(waterDot);
+            waterDot = nullptr;
+        }
+        if (waterDotMenu != nullptr) {
+            lv_obj_del(waterDotMenu);
+            waterDotMenu = nullptr;
+        }
+    }
+}
 
 String DefaultUI::getErrorMessage() {
     if (controller->isUpdating()) {

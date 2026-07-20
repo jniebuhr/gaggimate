@@ -79,6 +79,7 @@ class DefaultUI {
     void updateBoiler();
     void updateBrewProcess();
     void updateMenuScreen();
+    void updateWaterDot();
     String getErrorMessage();
 
     void adjustDials(lv_obj_t *dials);
@@ -134,6 +135,11 @@ class DefaultUI {
     Value steamReady = BooleanValue(false);
     Value grindWeightTarget = FloatValue(18.0);
     Value grindTimeTarget = StringValue("0:15");
+
+    int waterLevel = 0;
+    bool tofAvailable = false;
+    lv_obj_t *waterDot = nullptr;
+    lv_obj_t *waterDotMenu = nullptr;
 
     int profileDirty = 0;
     int currentProfileIdx = 0;

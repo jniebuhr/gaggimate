@@ -126,6 +126,7 @@ function buildSubmitFormData(formData, autowakeupSchedules, restart) {
     'clock24hFormat',
     'autowakeupEnabled',
     'smartGrindToggle',
+    'showWaterLevelDot',
   ];
 
   for (const [key, value] of Object.entries(formData)) {
@@ -262,6 +263,7 @@ export function Settings() {
           'delayAdjust',
           'clock24hFormat',
           'autowakeupEnabled',
+          'showWaterLevelDot',
         ].includes(key)
       ) {
         value = !formData[key];

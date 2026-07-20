@@ -243,6 +243,7 @@ void Settings::setEmptyTankDistance(int empty_tank_distance) { emptyTankDistance
 void Settings::setFullTankDistance(int full_tank_distance) { fullTankDistance.set(full_tank_distance); }
 
 void Settings::setAltRelayFunction(int alt_relay_function) { altRelayFunction.set(alt_relay_function); }
+void Settings::setShowWaterLevelDot(bool show) { showWaterLevelDot.set(show); }
 
 void Settings::setAutoWakeupEnabled(bool enabled) { autowakeupEnabled.set(enabled); }
 

@@ -145,6 +145,7 @@ class Settings {
     int getEmptyTankDistance() const { return emptyTankDistance.get(); }
     int getFullTankDistance() const { return fullTankDistance.get(); }
     int getAltRelayFunction() const { return altRelayFunction.get(); }
+    bool isShowWaterLevelDot() const { return showWaterLevelDot.get(); }
     bool isAutoWakeupEnabled() const { return autowakeupEnabled.get(); }
     std::vector<AutoWakeupSchedule> getAutoWakeupSchedules() const { return autowakeupSchedules.get(); }
     String getButtonBehavior(int index) const {
@@ -225,6 +226,7 @@ class Settings {
     void setEmptyTankDistance(int empty_tank_distance);
     void setFullTankDistance(int full_tank_distance);
     void setAltRelayFunction(int alt_relay_function);
+    void setShowWaterLevelDot(bool show);
     void setAutoWakeupEnabled(bool enabled);
     void setAutoWakeupSchedules(const std::vector<AutoWakeupSchedule> &schedules);
     void setButtonBehavior(int index, String behavior);
@@ -305,6 +307,7 @@ class Settings {
     Property<int> emptyTankDistance{registry, "sr_ed", 210};
     Property<int> fullTankDistance{registry, "sr_fd", 30};
 
+    Property<bool> showWaterLevelDot{registry, "wld", true};
     Property<int> altRelayFunction{registry, "alt_relay", ALT_RELAY_GRIND}; // Default to grind
     Property<std::vector<String>> buttonBehavior{registry, "btnb", {"brew", "steam", "water"}};
 
