@@ -1090,8 +1090,9 @@ void Controller::activateGrind() {
     if (isGrindActive())
         return;
     clear();
-    if (settings.isVolumetricTarget() && isVolumetricAvailable()) {
-        currentVolumetricSource = getActiveScaleSource();
+    const auto grindScaleSource = getGrindScaleSource();
+    if (settings.isVolumetricTarget() && grindScaleSource != VolumetricMeasurementSource::INACTIVE) {
+        currentVolumetricSource = grindScaleSource;
         startProcess(new GrindProcess(ProcessTarget::VOLUMETRIC, 0, settings.getTargetGrindVolume(), settings.getGrindDelay()));
     } else {
         startProcess(
@@ -1209,6 +1210,11 @@ VolumetricMeasurementSource Controller::getPreferredScaleSource() const {
 }
 
 VolumetricMeasurementSource Controller::getActiveScaleSource() const {
+    // Always use BT scale for grinding
+    if (mode == MODE_GRIND) {
+        return getGrindScaleSource();
+    }
+
     const auto preferred = getPreferredScaleSource();
 
     if (preferred == VolumetricMeasurementSource::HARDWARE && isHardwareScaleHealthy()) {
@@ -1229,6 +1235,11 @@ VolumetricMeasurementSource Controller::getActiveScaleSource() const {
 #else
     return VolumetricMeasurementSource::INACTIVE;
 #endif
+}
+
+VolumetricMeasurementSource Controller::getGrindScaleSource() const {
+    return isBluetoothScaleHealthy() ? VolumetricMeasurementSource::BLUETOOTH
+                                     : VolumetricMeasurementSource::INACTIVE;
 }
 
 bool Controller::isScaleSourceHealthy(VolumetricMeasurementSource source) const {
