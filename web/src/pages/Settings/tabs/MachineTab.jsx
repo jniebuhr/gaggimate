@@ -1,15 +1,18 @@
-import { useState } from 'preact/hooks';
+import { useCallback, useContext, useState } from 'preact/hooks';
 import { computed } from '@preact/signals';
-import { machine } from '../../../services/ApiService.js';
+import { ApiServiceContext, machine } from '../../../services/ApiService.js';
 import Section from '../../../components/Card.jsx';
 import { Tooltip } from '../../../components/Tooltip.jsx';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCrosshairs } from '@fortawesome/free-solid-svg-icons/faCrosshairs';
+import { faWeightScale } from '@fortawesome/free-solid-svg-icons/faWeightScale';
 import { InputGroupField, SettingsFormField } from '../../../components/SettingsFormField.jsx';
 
 const ledControl = computed(() => machine.value.capabilities.ledControl);
 const pressureAvailable = computed(() => machine.value.capabilities.pressure);
 const tofDistance = computed(() => machine.value.status.tofDistance);
+const hardwareScaleAvailable = computed(() => !!machine.value.capabilities.hardwareScale);
+const status = computed(() => machine.value.status);
 
 function SunriseColorField({ id, label, value, fallback, onChange }) {
   return (
@@ -59,7 +62,35 @@ function TankDistanceField({ id, label, value, onChange, onUseCurrent }) {
 }
 
 export function MachineTab({ formData, onChange, setField }) {
+  const apiService = useContext(ApiServiceContext);
   const [steamPumpDraft, setSteamPumpDraft] = useState(null);
+  const [calibrationWeight, setCalibrationWeight] = useState('');
+
+  const tareScale = useCallback(() => {
+    apiService.send({ tp: 'req:scale:tare' });
+  }, [apiService]);
+
+  const calibrateLoadCell = useCallback(
+    cellNumber => {
+      const measuredWeight = status.value?.currentWeight;
+      const actualWeight = Number.parseFloat(calibrationWeight);
+      if (!measuredWeight || !actualWeight || actualWeight <= 0) {
+        window.alert(
+          'Please ensure the scale is showing a weight and enter a valid calibration weight.',
+        );
+        return;
+      }
+
+      const currentFactor =
+        cellNumber === 1
+          ? Number.parseFloat(formData.scaleFactor1) || 1
+          : Number.parseFloat(formData.scaleFactor2) || 1;
+      const newFactor = (measuredWeight * currentFactor) / actualWeight;
+      setField(`scaleFactor${cellNumber}`, newFactor.toFixed(2));
+      setCalibrationWeight('');
+    },
+    [calibrationWeight, formData.scaleFactor1, formData.scaleFactor2, setField],
+  );
 
   return (
     <div className='space-y-4 sm:space-y-6 lg:grid lg:grid-cols-2 lg:gap-4'>
@@ -269,6 +300,121 @@ export function MachineTab({ formData, onChange, setField }) {
           </InputGroupField>
         </div>
       </Section>
+
+      <Section title='Scales'>
+        <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+          <SettingsFormField
+            label='Preferred Scale Source'
+            htmlFor='preferredScaleSource'
+            helpText='Choose which source to prefer when both hardware and Bluetooth scales are available.'
+            noMargin
+          >
+            <select
+              id='preferredScaleSource'
+              name='preferredScaleSource'
+              className='select select-bordered w-full'
+              value={formData.preferredScaleSource || 'hardware'}
+              onChange={onChange('preferredScaleSource')}
+            >
+              <option value='hardware'>Prefer Hardware Scale (Built-in)</option>
+              <option value='bluetooth'>Prefer Bluetooth Scale</option>
+              <option value='auto'>Auto (best available)</option>
+            </select>
+          </SettingsFormField>
+        </div>
+
+        {hardwareScaleAvailable.value && (
+          <div className='border-base-content/5 mt-6 space-y-4 border-t pt-6'>
+            <div>
+              <h3 className='font-medium'>Hardware Scale Calibration</h3>
+              <p className='text-base-content/60 mt-1 text-sm'>
+                Tare the scale, then place a known weight and calibrate each load cell.
+              </p>
+            </div>
+
+            <div className='bg-base-200 flex items-center justify-between rounded-lg p-3'>
+              <div className='flex items-center gap-2'>
+                <FontAwesomeIcon icon={faWeightScale} className='text-primary' />
+                <span className='text-2xl font-bold'>
+                  {status.value?.currentWeight?.toFixed(1) || '0.0'}g
+                </span>
+              </div>
+              <button type='button' className='btn btn-outline btn-sm' onClick={tareScale}>
+                Tare
+              </button>
+            </div>
+
+            <SettingsFormField
+              label='Actual Weight of Calibration Object'
+              htmlFor='calibrationWeight'
+              noMargin
+            >
+              <label className='input input-bordered w-full'>
+                <input
+                  id='calibrationWeight'
+                  type='number'
+                  className='grow'
+                  placeholder='100.0'
+                  min='0.1'
+                  step='0.1'
+                  value={calibrationWeight}
+                  onChange={event => setCalibrationWeight(event.currentTarget.value)}
+                />
+                <span>g</span>
+              </label>
+            </SettingsFormField>
+
+            <div className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
+              <button
+                type='button'
+                className='btn btn-primary btn-sm'
+                onClick={() => calibrateLoadCell(1)}
+                disabled={!status.value?.currentWeight || !calibrationWeight}
+              >
+                Calibrate Load Cell 1
+              </button>
+              <button
+                type='button'
+                className='btn btn-primary btn-sm'
+                onClick={() => calibrateLoadCell(2)}
+                disabled={!status.value?.currentWeight || !calibrationWeight}
+              >
+                Calibrate Load Cell 2
+              </button>
+            </div>
+
+            <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+              <SettingsFormField label='Load Cell 1 Scale Factor' htmlFor='scaleFactor1' noMargin>
+                <input
+                  id='scaleFactor1'
+                  name='scaleFactor1'
+                  type='number'
+                  className='input input-bordered w-full'
+                  min='-50000'
+                  max='50000'
+                  step='0.01'
+                  value={formData.scaleFactor1}
+                  onChange={onChange('scaleFactor1')}
+                />
+              </SettingsFormField>
+              <SettingsFormField label='Load Cell 2 Scale Factor' htmlFor='scaleFactor2' noMargin>
+                <input
+                  id='scaleFactor2'
+                  name='scaleFactor2'
+                  type='number'
+                  className='input input-bordered w-full'
+                  min='-50000'
+                  max='50000'
+                  step='0.01'
+                  value={formData.scaleFactor2}
+                  onChange={onChange('scaleFactor2')}
+                />
+              </SettingsFormField>
+            </div>
+          </div>
+        )}
+      </Section>
+
       {/* Alba Settings */}
       {ledControl.value && (
         <Section title='Alba Settings' className='h-full'>
