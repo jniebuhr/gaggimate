@@ -79,6 +79,9 @@ const FORM_ONLY_KEYS = [
   'dashboardLayout',
 ];
 
+const DEFAULT_SCALE_FACTOR_1 = -2500.0;
+const DEFAULT_SCALE_FACTOR_2 = 2500.0;
+
 function splitPidString(pidString) {
   if (!pidString) return { pid: pidString, kf: '0.000' };
   const parts = pidString.split(',');
@@ -127,6 +130,13 @@ function transformFetchedSettings(fetchedSettings) {
         : fetchedSettings.standbyBrightness > 0,
     dashboardLayout: fetchedSettings.dashboardLayout || DASHBOARD_LAYOUTS.ORDER_FIRST,
   };
+
+  const sf1 = Number(fetchedSettings.scaleFactor1);
+  const sf2 = Number(fetchedSettings.scaleFactor2);
+  settingsWithToggle.scaleFactor1 =
+    Number.isFinite(sf1) && Math.abs(sf1) > 0.001 ? sf1 : DEFAULT_SCALE_FACTOR_1;
+  settingsWithToggle.scaleFactor2 =
+    Number.isFinite(sf2) && Math.abs(sf2) > 0.001 ? sf2 : DEFAULT_SCALE_FACTOR_2;
 
   if (fetchedSettings.pid) {
     const split = splitPidString(fetchedSettings.pid);
@@ -617,4 +627,3 @@ export function Settings() {
     </PageLayout>
   );
 }
-
