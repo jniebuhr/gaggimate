@@ -4,6 +4,8 @@ import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faRectangleList } from '@fortawesome/free-solid-svg-icons/faRectangleList';
 import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
+import { faLemon } from '@fortawesome/free-solid-svg-icons/faLemon';
+import { faSoap } from '@fortawesome/free-solid-svg-icons/faSoap';
 import { ProcessProfileChart } from '../../../components/ProcessProfileChart.jsx';
 import { profileChartHeightSignal } from '../../../utils/dashboardManager.js';
 import { SkeletonBlock } from '../../../components/SkeletonBlock.jsx';
@@ -112,6 +114,10 @@ export function ProfileCard({
   isFinished,
   isBrewing,
   isGrinding,
+  backflushDue = false,
+  descalingDue = false,
+  startBackflush,
+  startDescaling,
   inCard = false,
   compact = false,
 }) {
@@ -216,12 +222,34 @@ export function ProfileCard({
         <span className='text-base-content truncate text-sm font-semibold'>
           {selectedProfile || 'Default'}
         </span>
-        <a href='/profiles'>
-          <FontAwesomeIcon
-            icon={faRectangleList}
-            className='text-base-content/40 shrink-0 text-sm'
-          />
-        </a>
+        <div className='flex items-center gap-1'>
+          {backflushDue && (
+            <button
+              type='button'
+              className='btn btn-ghost btn-xs text-warning'
+              title='Backflush due - load backflush profile'
+              onClick={startBackflush}
+            >
+              <FontAwesomeIcon icon={faSoap} className='text-xs' />
+            </button>
+          )}
+          {descalingDue && (
+            <button
+              type='button'
+              className='btn btn-ghost btn-xs text-warning'
+              title='Descaling due - load descaling profile'
+              onClick={startDescaling}
+            >
+              <FontAwesomeIcon icon={faLemon} className='text-xs' />
+            </button>
+          )}
+          <a href='/profiles'>
+            <FontAwesomeIcon
+              icon={faRectangleList}
+              className='text-base-content/40 shrink-0 text-sm'
+            />
+          </a>
+        </div>
       </div>
       {!compact &&
         (profileLoading || (!!selectedProfileId && !profileData) ? (
@@ -255,6 +283,10 @@ ProfileCard.propTypes = {
   isFinished: PropTypes.bool.isRequired,
   isBrewing: PropTypes.bool.isRequired,
   isGrinding: PropTypes.bool.isRequired,
+  backflushDue: PropTypes.bool,
+  descalingDue: PropTypes.bool,
+  startBackflush: PropTypes.func,
+  startDescaling: PropTypes.func,
   inCard: PropTypes.bool,
   compact: PropTypes.bool,
 };
