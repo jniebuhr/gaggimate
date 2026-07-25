@@ -174,6 +174,7 @@ export function ProfileCard({
     }
     let cancelled = false;
     setProfileLoading(true);
+    setProfileData(null);
     apiService
       .request({ tp: 'req:profiles:load', id: selectedProfileId })
       .then(res => {
@@ -252,7 +253,7 @@ export function ProfileCard({
         </div>
       </div>
       {!compact &&
-        (profileLoading || (!!selectedProfileId && !profileData) ? (
+        (profileLoading ? (
           <SkeletonBlock
             className='mt-1 w-full rounded-xl'
             style={{ height: `${profileChartHeightSignal.value}px` }}
