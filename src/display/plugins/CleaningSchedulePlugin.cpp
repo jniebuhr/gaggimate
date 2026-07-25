@@ -262,19 +262,22 @@ Profile CleaningSchedulePlugin::createDescalingProfile() const {
     phase1.targets.push_back(target1);
     profile.phases.push_back(phase1);
 
-    // Phase 2: Wait
-    Phase phase2{};
-    phase2.name = "Wait";
-    phase2.phase = PhaseType::PHASE_TYPE_PREINFUSION;
-    phase2.valve = 0;
-    phase2.duration = 600.0f;
-    phase2.temperature = 0.0f;
-    phase2.transition.type = TransitionType::INSTANT;
-    phase2.transition.duration = 0.0f;
-    phase2.transition.adaptive = false;
-    phase2.pumpIsSimple = true;
-    phase2.pumpSimple = 0;
-    profile.phases.push_back(phase2);
+    // Keep each wait phase below the firmware's 300-second brew safety limit.
+    // Together these phases preserve the original 10-minute soak.
+    for (int waitIndex = 1; waitIndex <= 3; waitIndex++) {
+        Phase waitPhase{};
+        waitPhase.name = "Wait " + String(waitIndex) + " of 3";
+        waitPhase.phase = PhaseType::PHASE_TYPE_PREINFUSION;
+        waitPhase.valve = 0;
+        waitPhase.duration = 200.0f;
+        waitPhase.temperature = 0.0f;
+        waitPhase.transition.type = TransitionType::INSTANT;
+        waitPhase.transition.duration = 0.0f;
+        waitPhase.transition.adaptive = false;
+        waitPhase.pumpIsSimple = true;
+        waitPhase.pumpSimple = 0;
+        profile.phases.push_back(waitPhase);
+    }
 
     // Phase 3: 300ml Steam Flush
     Phase phase3{};
@@ -336,19 +339,42 @@ Profile CleaningSchedulePlugin::createDescalingProfile() const {
 void CleaningSchedulePlugin::ensureCleaningProfilesExist() {
     ProfileManager *profileManager = controller->getProfileManager();
 
-    // Create backflush profile if it doesn't exist
-    if (!profileManager->profileExists(BACKFLUSH_PROFILE_ID)) {
-        Profile backflushProfile = createBackflushProfile();
-        profileManager->saveProfile(backflushProfile);
-        ESP_LOGI("CleaningSchedulePlugin", "Created backflush profile");
-    }
+    auto ensureProfile = [profileManager](Profile expectedProfile, const char *profileName, bool replaceOversizedPhases) {
+        Profile existingProfile{};
+        const bool exists = profileManager->profileExists(expectedProfile.id);
+        const bool loaded = exists && profileManager->loadProfile(expectedProfile.id, existingProfile);
 
-    // Create descaling profile if it doesn't exist
-    if (!profileManager->profileExists(DESCALING_PROFILE_ID)) {
-        Profile descalingProfile = createDescalingProfile();
-        profileManager->saveProfile(descalingProfile);
-        ESP_LOGI("CleaningSchedulePlugin", "Created descaling profile");
-    }
+        bool hasOversizedPhase = false;
+        if (loaded && replaceOversizedPhases) {
+            for (const Phase &phase : existingProfile.phases) {
+                if (phase.duration > BREW_MAX_DURATION_MS / 1000.0f) {
+                    hasOversizedPhase = true;
+                    break;
+                }
+            }
+        }
+
+        if (!loaded || hasOversizedPhase) {
+            if (profileManager->saveProfile(expectedProfile)) {
+                ESP_LOGI("CleaningSchedulePlugin", "%s %s profile", loaded ? "Updated" : "Created", profileName);
+            } else {
+                ESP_LOGE("CleaningSchedulePlugin", "Failed to save %s profile", profileName);
+            }
+            return;
+        }
+
+        if (!existingProfile.utility) {
+            existingProfile.utility = true;
+            if (profileManager->saveProfile(existingProfile)) {
+                ESP_LOGI("CleaningSchedulePlugin", "Marked existing %s profile as utility", profileName);
+            } else {
+                ESP_LOGE("CleaningSchedulePlugin", "Failed to update %s utility flag", profileName);
+            }
+        }
+    };
+
+    ensureProfile(createBackflushProfile(), "backflush", false);
+    ensureProfile(createDescalingProfile(), "descaling", true);
 }
 
 void CleaningSchedulePlugin::loadCleaningProfile(const String &profileId) {
