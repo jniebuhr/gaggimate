@@ -77,17 +77,17 @@ function OtaProgressView({ phase, progress }) {
   );
 }
 
-// A disabled <button> swallows mouse events in most browsers, so hover never
-// reaches the tooltip wrapper. pointer-events-none hands them back; the button
-// is unclickable anyway.
+// aria-disabled rather than disabled: a truly disabled button can't be focused
+// and swallows mouse events, so neither keyboard nor pointer users can read the
+// reason. Same approach as the pin buttons in ShotAnalyzer/Statistics.
 function UpdateButton({ label, reason, onClick }) {
   const button = (
     <button
       type='button'
-      className={`btn btn-secondary btn-sm${reason ? ' pointer-events-none' : ''}`}
-      disabled={!!reason}
+      className={`btn btn-secondary btn-sm${reason ? ' cursor-not-allowed opacity-50' : ''}`}
+      aria-disabled={!!reason}
       title={reason || undefined}
-      onClick={onClick}
+      onClick={reason ? undefined : onClick}
     >
       {label}
     </button>
