@@ -6,6 +6,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
 import { Spinner } from '../../../components/Spinner.jsx';
 import Section from '../../../components/Card.jsx';
+import { Tooltip } from '../../../components/Tooltip.jsx';
 
 const imageUrlToBase64 = async blob => {
   return new Promise((onSuccess, onError) => {
@@ -22,6 +23,24 @@ const imageUrlToBase64 = async blob => {
       onError(e instanceof Error ? e : new Error(String(e)));
     }
   });
+};
+
+// Why an update button is disabled, so hovering it explains itself instead of
+// looking broken. Returns null when the button is enabled.
+const getUpdateDisabledReason = (component, formData, submitting) => {
+  const isController = component === 'controller';
+  if (formData[isController ? 'controllerUpdateAvailable' : 'displayUpdateAvailable']) {
+    return submitting ? 'Checking for updates…' : null;
+  }
+  if (submitting) return 'Checking for updates…';
+  if (isController && !formData.controllerVersion) {
+    return 'No controller connected, so its version is unknown.';
+  }
+  if (!formData.latestVersion) {
+    return 'No release info yet. The update check runs every 30 minutes and is skipped while the machine is busy.';
+  }
+  const current = formData[isController ? 'controllerVersion' : 'displayVersion'];
+  return `Already up to date (${current}).`;
 };
 
 const getRssiStatusClass = rssi => {
@@ -56,6 +75,24 @@ function OtaProgressView({ phase, progress }) {
       )}
     </div>
   );
+}
+
+// A disabled <button> swallows mouse events in most browsers, so hover never
+// reaches the tooltip wrapper. pointer-events-none hands them back; the button
+// is unclickable anyway.
+function UpdateButton({ label, reason, onClick }) {
+  const button = (
+    <button
+      type='button'
+      className={`btn btn-secondary btn-sm${reason ? ' pointer-events-none' : ''}`}
+      disabled={!!reason}
+      title={reason || undefined}
+      onClick={onClick}
+    >
+      {label}
+    </button>
+  );
+  return reason ? <Tooltip content={reason}>{button}</Tooltip> : button;
 }
 
 function StorageAndMemorySection({ formData }) {
@@ -360,14 +397,11 @@ export function SystemTab() {
                   Update available: {formData.latestVersion}
                 </span>
               )}
-              <button
-                type='button'
-                className='btn btn-secondary btn-sm'
-                disabled={!formData.controllerUpdateAvailable || submitting}
+              <UpdateButton
+                label='Update Controller'
+                reason={getUpdateDisabledReason('controller', formData, submitting)}
                 onClick={() => onUpdate('controller')}
-              >
-                Update Controller
-              </button>
+              />
             </div>
           </div>
 
@@ -382,14 +416,11 @@ export function SystemTab() {
                   Update available: {formData.latestVersion}
                 </span>
               )}
-              <button
-                type='button'
-                className='btn btn-secondary btn-sm'
-                disabled={!formData.displayUpdateAvailable || submitting}
+              <UpdateButton
+                label='Update Display'
+                reason={getUpdateDisabledReason('display', formData, submitting)}
                 onClick={() => onUpdate('display')}
-              >
-                Update Display
-              </button>
+              />
             </div>
           </div>
         </div>
