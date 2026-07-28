@@ -94,6 +94,8 @@ export function ShotAnalyzer() {
   const compareSelectionRequestIdRef = useRef(0);
   const primarySelectionAbortRef = useRef(null);
   const handledDeepLinkKeyRef = useRef('');
+  const clearPendingPrimarySelectionRef = useRef(null);
+  const handleShotSelectRef = useRef(null);
   const currentShotRef = useRef(currentShot);
   const compareShotsRef = useRef(compareShots);
   const pendingPrimarySelectionRef = useRef(pendingPrimarySelection);
@@ -576,6 +578,9 @@ export function ShotAnalyzer() {
     ],
   );
 
+  clearPendingPrimarySelectionRef.current = clearPendingPrimarySelection;
+  handleShotSelectRef.current = handleShotSelect;
+
   useEffect(() => {
     if (!params.source || !params.id) {
       handledDeepLinkKeyRef.current = '';
@@ -591,7 +596,7 @@ export function ShotAnalyzer() {
     if (handledDeepLinkKeyRef.current === deepLinkKey) return undefined;
     handledDeepLinkKeyRef.current = deepLinkKey;
 
-    const requestId = handleShotSelect({
+    const requestId = handleShotSelectRef.current({
       item: {
         id: params.id,
         source: serviceSource,
@@ -602,9 +607,9 @@ export function ShotAnalyzer() {
 
     return () => {
       if (requestId == null || requestId !== primarySelectionRequestIdRef.current) return;
-      clearPendingPrimarySelection();
+      clearPendingPrimarySelectionRef.current();
     };
-  }, [apiService, clearPendingPrimarySelection, handleShotSelect, params.id, params.source]);
+  }, [apiService, params.id, params.source]);
 
   const handleProfileLoad = (data, name, source) => {
     cancelPrimaryProfileSearch();
