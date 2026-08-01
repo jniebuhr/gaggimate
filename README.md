@@ -31,7 +31,7 @@ This project upgrades a Gaggia espresso machine with smart controls to improve y
 
 ### How to buy
 
-The shop is now open for preorders and you can buy your kit on https://shop.gaggimate.eu/
+You can buy your kit on https://shop.gaggimate.eu/
 
 ## How It Works
 

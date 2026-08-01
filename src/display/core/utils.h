@@ -23,5 +23,7 @@ extern uint8_t randomByte();
 extern String generateShortID(uint8_t length = 10);
 extern std::vector<String> explode(const String &input, char delim);
 extern String implode(const std::vector<String> &strings, String delim);
+extern void measure_heap(const String &label, std::function<void()> callback);
+extern bool is_task_healthy(const eTaskState task_state);
 
 #endif // UTILS_H

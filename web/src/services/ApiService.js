@@ -93,7 +93,12 @@ export default class ApiService {
   }
 
   _onMessage(event) {
-    const message = JSON.parse(event.data);
+    let message;
+    try {
+      message = JSON.parse(event.data);
+    } catch {
+      return; // Discard malformed messages to avoid crashing the WS handler.
+    }
     const listeners = Object.values(this.listeners[message.tp] || {});
     if (message.tp === 'evt:status') {
       this._onStatus(message);
@@ -120,10 +125,13 @@ export default class ApiService {
     const rid = uuidv4();
     const message = { ...data, rid };
     return new Promise((resolve, reject) => {
+      let timeoutId;
+
       // Create a listener for the response with matching rid
       const listenerId = this.on(returnType, response => {
         if (response.rid === rid) {
-          // Clean up the listener
+          // Clean up the listener and cancel the timeout to free the closure.
+          clearTimeout(timeoutId);
           this.off(returnType, listenerId);
           resolve(response);
         }
@@ -132,8 +140,8 @@ export default class ApiService {
       // Send the request
       this.send(message);
 
-      // Optional: Add timeout
-      setTimeout(() => {
+      // Timeout: reject if no matching response arrives within 30 seconds
+      timeoutId = setTimeout(() => {
         this.off(returnType, listenerId);
         reject(new Error(`Request ${data.tp} timed out`));
       }, 30000); // 30 second timeout
@@ -162,6 +170,7 @@ export default class ApiService {
       targetWeight: message.tw || 0,
       activeTargetWeight: (message?.process?.a && message.tw) || 0,
       currentFlow: message.fl,
+      targetFlow: message.tf || 0,
       mode: message.m,
       selectedProfile: message.p,
       selectedProfileId: message.puid,
@@ -176,6 +185,14 @@ export default class ApiService {
       bluetoothConnected: message.bc || false,
       process: message.process || null,
       timestamp: new Date(),
+      rssi: message.rssi || 0,
+      lat: message.lat || 0,
+      tofDistance: message.tof || 0,
+      currentPumpPower: message.pw ?? 0,
+      currentBoilerPower: message.hp ?? 0,
+      currentPuckResistance: message.pkr ?? 0,
+      currentPuckFlow: message.pf ?? 0,
+      currentCoffeeVolume: message.cv ?? 0,
     };
     const historyEntry = { ...newStatus };
     delete historyEntry.process;
@@ -191,6 +208,7 @@ export default class ApiService {
         dimming: message.cd,
         pressure: message.cp,
         ledControl: message.led,
+        gearpumpAddon: !!message.gp,
       },
       history: [...machine.value.history, historyEntry],
     };
@@ -206,6 +224,8 @@ export const machine = signal({
   status: {
     currentTemperature: 0,
     targetTemperature: 0,
+    currentFlow: 0,
+    targetFlow: 0,
     mode: 0,
     selectedProfile: '',
     selectedProfileId: null,
@@ -223,3 +243,39 @@ export const machine = signal({
   },
   history: [],
 });
+
+let settingsCache = null;
+let settingsData = null;
+
+export const prefetchSettings = () => {
+  if (!settingsCache) {
+    settingsCache = fetch('/api/settings')
+      .then(res => {
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        return res.json();
+      })
+      .then(data => {
+        settingsData = data;
+        return data;
+      })
+      .catch(err => {
+        settingsCache = null;
+        throw err;
+      });
+  }
+  return settingsCache;
+};
+
+export const getCachedSettings = () => settingsData;
+
+export const updateSettingsCache = data => {
+  settingsData = data;
+  settingsCache = Promise.resolve(data);
+};
+
+export const invalidateSettingsCache = () => {
+  settingsData = null;
+  settingsCache = null;
+};

@@ -1,5 +1,16 @@
 import { useLocation, useRoute } from 'preact-iso';
 import { useCallback, useEffect, useState, useContext } from 'preact/hooks';
+import {
+  CategoryScale,
+  Chart,
+  Filler,
+  Legend,
+  LinearScale,
+  LineController,
+  LineElement,
+  PointElement,
+  TimeScale,
+} from 'chart.js';
 import { ProfileTypeSelection } from './ProfileTypeSelection.jsx';
 import { StandardProfileForm } from './StandardProfileForm.jsx';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
@@ -8,6 +19,17 @@ import { Spinner } from '../../components/Spinner.jsx';
 import { ExtendedProfileForm } from './ExtendedProfileForm.jsx';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
+
+Chart.register(
+  LineController,
+  TimeScale,
+  LinearScale,
+  CategoryScale,
+  PointElement,
+  LineElement,
+  Filler,
+  Legend,
+);
 
 const connected = computed(() => machine.value.connected);
 const pressureAvailable = computed(() => machine.value.capabilities.pressure);
@@ -76,7 +98,10 @@ export function ProfileEdit() {
         setLoading(false);
       } else if (connected.value) {
         const response = await apiService.request({ tp: 'req:profiles:load', id: params.id });
-        setData(response.profile);
+        setData({
+          ...response.profile,
+          phases: Array.isArray(response.profile?.phases) ? response.profile.phases : [],
+        });
         setLoading(false);
       }
     }
@@ -85,6 +110,7 @@ export function ProfileEdit() {
   const onSave = useCallback(
     async data => {
       setSaving(true);
+      console.log(data);
       const response = await apiService.request({ tp: 'req:profiles:save', profile: data });
       setData(response.profile);
       setSaving(false);

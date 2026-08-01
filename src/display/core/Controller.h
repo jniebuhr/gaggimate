@@ -1,13 +1,15 @@
 #ifndef CONTROLLER_H
 #define CONTROLLER_H
 
-#include "NimBLEClientController.h"
-#include "NimBLEComm.h"
+#include "GaggiMateClient.h"
 #include "PluginManager.h"
 #include "Settings.h"
+#include "SystemInfo.h"
 #include <WiFi.h>
 #include <display/core/ProfileManager.h>
 #include <display/core/process/Process.h>
+#include <mutex>
+#include <vector>
 #ifndef GAGGIMATE_HEADLESS
 #include <display/drivers/Driver.h>
 #include <display/ui/default/DefaultUI.h>
@@ -25,12 +27,14 @@ class Controller {
     void setup();
     void connect();
     void loop();
+    void loopLogic();
     void loopControl();
 
     void setMode(int newMode);
     void setTargetTemp(float temperature);
     void setPressureScale();
     void setPumpModelCoeffs();
+    void setPidSettings();
     void setTargetGrindDuration(int duration);
     void setTargetGrindVolume(double volume);
 
@@ -51,11 +55,20 @@ class Controller {
     virtual float getCurrentPressure() const { return pressure; }
     virtual float getCurrentPuckFlow() const { return currentPuckFlow; }
     virtual float getCurrentPumpFlow() const { return currentPumpFlow; }
+    virtual float getCurrentPumpPower() const { return currentPumpPower; }
+    virtual float getCurrentHeaterPower() const { return currentHeaterPower; }
+    virtual float getCurrentPuckResistance() const { return currentPuckResistance; }
+    virtual float getCurrentCoffeeVolume() const { return currentCoffeeVolume; }
 
-    void autotune(int testTime, int samples);
+    bool isTaskHealthy() const { return is_task_healthy(eTaskGetState(logicTaskHandle)); }
+
+    void autotune(int testTime, int samples, int heaterWattage);
     void startProcess(Process *process);
+    // Dereferencing the returned pointers requires holding getProcessLock() — the
+    // logic task and control entry points delete them at any time (GM-147).
     Process *getProcess() const { return currentProcess; }
     Process *getLastProcess() const { return lastProcess; }
+    std::recursive_mutex &getProcessLock() const { return processMutex; }
     Settings &getSettings() { return settings; }
     ProfileManager *getProfileManager() { return profileManager; }
 #ifndef GAGGIMATE_HEADLESS
@@ -92,14 +105,17 @@ class Controller {
     int getWaterLevel() const {
         float reversedLevel = static_cast<float>(settings.getEmptyTankDistance()) -
                               static_cast<float>(std::min(settings.getEmptyTankDistance(), tofDistance));
-        return static_cast<int>((reversedLevel - settings.getFullTankDistance()) /
-                                static_cast<float>(settings.getEmptyTankDistance() - settings.getFullTankDistance()) * 100.0f);
+        float range = static_cast<float>(settings.getEmptyTankDistance() - settings.getFullTankDistance());
+        return static_cast<int>(std::min(reversedLevel / range * 100.0f, 100.0f));
     };
+    int getTofDistance() const { return tofDistance; }
+
+    void onVolumetricDelete();
     bool isLowWaterLevel() const { return getWaterLevel() < 20; };
 
     SystemInfo getSystemInfo() const { return systemInfo; }
 
-    NimBLEClientController *getClientController() { return &clientController; }
+    GaggiMateClient *getClientController() { return &comms; }
 
   private:
     // Initialization methods
@@ -107,20 +123,36 @@ class Controller {
     void setupPanel();
 #endif
     void setupBluetooth();
-    void setupInfos();
+    void onSystemInfo(const char *hardware, const char *version, uint32_t protocolVersion, bool dimming, bool pressure,
+                      bool ledControl, bool tof, std::vector<uint32_t> addons);
+    // Connected to a controller too old to speak the framed protocol: drive the
+    // same path as a protocol-version mismatch (OTA recovery only). infoJson is
+    // the legacy INFO characteristic contents (hardware/version/capabilities).
+    void onIncompatibleController(const String &infoJson);
     void setupWifi();
 
     // Functional methods
     void updateControl();
+    // Switch the BLE connection interval based on whether a process is running.
+    // force re-applies even if the desired state is unchanged (use on connect).
+    void applyConnectionPriority(bool force = false);
+
+    // Process lifecycle (GM-147): the *Locked helpers assume processMutex is held and
+    // collect the event ids to fire; the public wrappers dispatch them after unlocking
+    // so plugin handlers never run under the lock (avoids lock-order inversions).
+    bool isActiveLocked() const { return currentProcess != nullptr && currentProcess->isActive(); }
+    void startProcessLocked(Process *process, std::vector<const char *> &events);
+    void deactivateLocked(std::vector<const char *> &events);
+    void clearLocked(std::vector<const char *> &events);
+    void dispatchEvents(const std::vector<const char *> &events);
 
     // Event handlers
     void onTempRead(float temperature);
 
-    // brew button
     void handleBrewButton(int brewButtonStatus);
-
-    // steam button
     void handleSteamButton(int steamButtonStatus);
+    void handleWaterButton(int buttonStatus);
+    void handleProfileButton(int buttonStatus, String id);
     void handleProfileUpdate();
 
     // Private Attributes
@@ -128,7 +160,7 @@ class Controller {
     DefaultUI *ui = nullptr;
     Driver *driver = nullptr;
 #endif
-    NimBLEClientController clientController;
+    GaggiMateClient comms;
     hw_timer_t *timer = nullptr;
     Settings settings;
     PluginManager *pluginManager{};
@@ -140,11 +172,31 @@ class Controller {
     float targetPressure = 0.0f;
     float currentPuckFlow = 0.0f;
     float currentPumpFlow = 0.0f;
+    float currentPumpPower = 0.0f;
+    float currentHeaterPower = 0.0f;
+    float currentPuckResistance = 0.0f;
+    float currentCoffeeVolume = 0.0f;
     float targetFlow = 0.0f;
     int tofDistance = 0;
 
     SystemInfo systemInfo{};
 
+    // Last control values sent to the controller. updateControl() only
+    // transmits components that differ from these (the controller is stateful
+    // and delivery is acknowledged). Reset on (re)connect to force a full resend.
+    BoilerCommand lastBoiler{};
+    PumpCommand lastPump{};
+    RelayCommand lastRelay{};
+    bool lastAlt = false;
+    bool controlStateSent = false;
+
+    // BLE connection-interval priority: tight while a process runs, relaxed when
+    // idle (frees radio airtime for Wi-Fi). Tracks the last requested state.
+    bool connLowLatency = false;
+
+    // Guards currentProcess/lastProcess lifecycle across tasks (UI, AsyncTCP, BLE
+    // callbacks, logic task). Recursive: locked composites call locked primitives.
+    mutable std::recursive_mutex processMutex;
     Process *currentProcess = nullptr;
     Process *lastProcess = nullptr;
 
@@ -156,11 +208,20 @@ class Controller {
     bool updating = false;
     bool autotuning = false;
     bool isApConnection = false;
+    // WiFi up/down is signalled (flag only) from the Arduino WiFi event task and
+    // acted on in loop(): doing server/socket/mDNS start-stop in that small-stack
+    // callback corrupted the heap under load. See setupWifi() + loop().
+    volatile bool wifiConnectedPending = false;
+    volatile bool wifiDisconnectedPending = false;
     bool initialized = false;
     bool screenReady = false;
     bool waitingForController = false;
     unsigned long connectStartTime = 0;
-    unsigned long lastScanTime = 0;
+    // Re-send the config burst for a few seconds after a (re)connect (see loop()).
+    unsigned long configResendUntil = 0;
+    unsigned long lastConfigResend = 0;
+    static const unsigned long CONFIG_RESEND_WINDOW_MS = 8000;
+    static const unsigned long CONFIG_RESEND_INTERVAL_MS = 1000;
     bool volumetricOverride = false;
     bool processCompleted = false;
     bool steamReady = false;
@@ -173,9 +234,9 @@ class Controller {
     static const unsigned long BLUETOOTH_GRACE_PERIOD_MS = 1500; // 1.5 second grace period
     static const unsigned long CONTROLLER_WAITING_TIMEOUT_MS = 10000;
 
-    xTaskHandle taskHandle;
+    xTaskHandle logicTaskHandle;
 
-    static void loopTask(void *arg);
+    static void loopLogicTask(void *arg);
 };
 
 #endif // CONTROLLER_H

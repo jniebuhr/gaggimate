@@ -1,3 +1,10 @@
+import Sortable, { MultiDrag } from 'sortablejs';
+try {
+  Sortable?.mount(new MultiDrag());
+} catch (error) {
+  // to avoid error when vite is reloading the page in dev mode
+}
+
 import {
   CategoryScale,
   Chart,
@@ -21,8 +28,6 @@ import Card from '../../components/Card.jsx';
 import { parseProfile } from './utils.js';
 import { downloadJson } from '../../utils/download.js';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowUp } from '@fortawesome/free-solid-svg-icons/faArrowUp';
-import { faArrowDown } from '@fortawesome/free-solid-svg-icons/faArrowDown';
 import { faStar } from '@fortawesome/free-solid-svg-icons/faStar';
 import { faPen } from '@fortawesome/free-solid-svg-icons/faPen';
 import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
@@ -38,6 +43,7 @@ import { faTemperatureFull } from '@fortawesome/free-solid-svg-icons/faTemperatu
 import { faClock } from '@fortawesome/free-solid-svg-icons/faClock';
 import { faScaleBalanced } from '@fortawesome/free-solid-svg-icons/faScaleBalanced';
 import { faSearch } from '@fortawesome/free-solid-svg-icons/faSearch';
+import { faAnglesDown, faAnglesUp, faGripVertical } from '@fortawesome/free-solid-svg-icons';
 import { buildStatisticsProfileHref } from '../Statistics/utils/statisticsRoute.js';
 
 Chart.register(
@@ -67,12 +73,28 @@ function ProfileCard({
   onDuplicate,
   favoriteDisabled,
   unfavoriteDisabled,
-  onMoveUp,
-  onMoveDown,
+  disabledDrag,
+  isDragging,
+  onMoveTop,
+  onMoveBottom,
   isFirst,
   isLast,
 }) {
   const { armed: confirmDelete, armOrRun: confirmOrDelete } = useConfirmAction(4000);
+  const [tooltipsDisabled, setTooltipsDisabled] = useState(false);
+
+  const handleMoveTop = useCallback(() => {
+    setTooltipsDisabled(true);
+    onMoveTop(data.id);
+    setTimeout(() => setTooltipsDisabled(false), 500);
+  }, [onMoveTop, data.id]);
+
+  const handleMoveBottom = useCallback(() => {
+    setTooltipsDisabled(true);
+    onMoveBottom(data.id);
+    setTimeout(() => setTooltipsDisabled(false), 500);
+  }, [onMoveBottom, data.id]);
+
   const bookmarkClass = data.favorite ? 'text-warning' : 'text-base-content/60';
   const typeText = data.type === 'pro' ? 'Pro' : 'Simple';
   const typeClass = data.type === 'pro' ? 'badge badge-primary' : 'badge badge-neutral';
@@ -102,12 +124,17 @@ function ProfileCard({
   const chevronRotation = detailsCollapsed ? '' : 'rotate-90';
   const detailsSectionId = `profile-${data.id}-summary`;
 
-  // Sum total duration from phases (in seconds)
-  const totalDurationSeconds = Array.isArray(data?.phases)
-    ? data.phases.reduce((sum, p) => sum + (Number.isFinite(p?.duration) ? p.duration : 0), 0)
-    : 0;
+  const phases = Array.isArray(data?.phases) ? data.phases : [];
 
-  // Popover (mobile actions) state and positioning
+  // Sum total duration from phases (in seconds)
+  const totalDurationSeconds = phases.reduce(
+    (sum, p) => sum + (Number.isFinite(p?.duration) ? p.duration : 0),
+    0,
+  );
+
+  // Mobile actions menu — state-driven (was using the Popover API which isn't
+  // supported in Safari <17 / Firefox <125, leaving the menu broken on most
+  // iPads and many phones).
   const kebabRef = useRef(null);
   const popoverRef = useRef(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -117,88 +144,62 @@ function ProfileCard({
     const pop = popoverRef.current;
     if (!btn || !pop) return;
     const rect = btn.getBoundingClientRect();
-    // Ensure width is measured: temporarily show if needed
-    if (!pop.matches(':popover-open')) {
-      try {
-        pop.showPopover();
-      } catch (_) {}
-    }
-    // Measure size
     const w = pop.offsetWidth || 224; // ~w-56
     const h = pop.offsetHeight || 0;
-    // Preferred to the right-end of button, below it
     const gap = 6;
     let top = rect.bottom + gap;
-    let left = rect.right - w; // right align
-    // Clamp within viewport with small margin
+    let left = rect.right - w; // right-aligned to the button
     const margin = 8;
     if (left < margin) left = margin;
     const maxLeft = window.innerWidth - w - margin;
     if (left > maxLeft) left = maxLeft;
     const maxTop = window.innerHeight - h - margin;
     if (top > maxTop) top = Math.max(margin, rect.top - h - gap);
-
     pop.style.position = 'fixed';
     pop.style.inset = 'auto auto auto auto';
     pop.style.left = `${left}px`;
     pop.style.top = `${top}px`;
   }, []);
 
-  const closeMenu = useCallback(() => {
-    const pop = popoverRef.current;
-    if (pop && pop.matches(':popover-open')) {
-      try {
-        pop.hidePopover();
-      } catch (_) {}
-    }
-    setMenuOpen(false);
+  const closeMenu = useCallback(() => setMenuOpen(false), []);
+
+  const toggleMenu = useCallback(e => {
+    e?.preventDefault?.();
+    setMenuOpen(v => !v);
   }, []);
 
-  const toggleMenu = useCallback(
-    e => {
-      e?.preventDefault?.();
-      const pop = popoverRef.current;
-      if (!pop) return;
-      if (pop.matches(':popover-open')) {
-        closeMenu();
-      } else {
-        positionPopover();
-        try {
-          pop.showPopover();
-          setMenuOpen(true);
-        } catch (_) {}
-      }
-    },
-    [closeMenu, positionPopover],
-  );
-
   useEffect(() => {
-    const pop = popoverRef.current;
-    if (!pop) return;
-
-    const onToggle = () => {
-      const isOpen = pop.matches(':popover-open');
-      setMenuOpen(isOpen);
-      if (isOpen) positionPopover();
+    if (!menuOpen) return;
+    // Position now (DOM is mounted because the conditional render put the div
+    // in the tree this tick) and then re-position on resize/scroll.
+    positionPopover();
+    const onResize = () => positionPopover();
+    const onDocClick = e => {
+      const pop = popoverRef.current;
+      const btn = kebabRef.current;
+      if (!pop || !btn) return;
+      if (pop.contains(e.target) || btn.contains(e.target)) return;
+      setMenuOpen(false);
     };
-
-    const onResize = () => {
-      if (pop.matches(':popover-open')) positionPopover();
+    const onKey = e => {
+      if (e.key === 'Escape') setMenuOpen(false);
     };
-
-    pop.addEventListener('toggle', onToggle);
     window.addEventListener('resize', onResize);
     window.addEventListener('scroll', onResize, true);
-
+    document.addEventListener('mousedown', onDocClick);
+    document.addEventListener('touchstart', onDocClick, { passive: true });
+    document.addEventListener('keydown', onKey);
     return () => {
-      pop.removeEventListener('toggle', onToggle);
       window.removeEventListener('resize', onResize);
       window.removeEventListener('scroll', onResize, true);
+      document.removeEventListener('mousedown', onDocClick);
+      document.removeEventListener('touchstart', onDocClick);
+      document.removeEventListener('keydown', onKey);
     };
-  }, [positionPopover]);
+  }, [menuOpen, positionPopover]);
 
   return (
-    <Card sm={12} role='listitem'>
+    <Card sm={12} role='listitem' className='profile-card-container mb-2'>
       <div
         className='flex flex-row items-center'
         role='group'
@@ -266,111 +267,112 @@ function ProfileCard({
                   >
                     <FontAwesomeIcon icon={faEllipsisVertical} />
                   </button>
-                  <div
-                    id={`profile-${data.id}-menu`}
-                    ref={popoverRef}
-                    popover='auto'
-                    role='menu'
-                    className='bg-base-100 rounded-box z-50 w-56 p-2 shadow'
-                    onKeyDown={e => {
-                      if (e.key === 'Escape') closeMenu();
-                    }}
-                  >
-                    <ul className='menu' role='none'>
-                      <li role='none'>
-                        <button
-                          role='menuitem'
-                          onClick={() => {
-                            onFavoriteToggle();
-                            closeMenu();
-                          }}
-                          disabled={favoriteToggleDisabled}
-                          className={`justify-start ${favoriteToggleClass}`}
-                          aria-label={
-                            data.favorite
-                              ? `Remove ${data.label} from favorites`
-                              : `Add ${data.label} to favorites`
-                          }
-                          aria-pressed={data.favorite}
-                        >
-                          <FontAwesomeIcon icon={faStar} className={bookmarkClass} />
-                          <span>{data.favorite ? 'Unfavorite' : 'Favorite'}</span>
-                        </button>
-                      </li>
-                      <li role='none'>
-                        <a
-                          role='menuitem'
-                          href={`/profiles/${data.id}`}
-                          onClick={closeMenu}
-                          aria-label={`Edit ${data.label} profile`}
-                        >
-                          <FontAwesomeIcon icon={faPen} />
-                          <span>Edit</span>
-                        </a>
-                      </li>
-                      <li role='none'>
-                        <a
-                          role='menuitem'
-                          href={statsHref}
-                          onClick={closeMenu}
-                          className='text-success justify-start'
-                          aria-label={`View statistics for ${data.label} profile`}
-                        >
-                          <FontAwesomeIcon icon={faChartSimple} />
-                          <span>Statistics</span>
-                        </a>
-                      </li>
-                      <li role='none'>
-                        <button
-                          role='menuitem'
-                          onClick={() => {
-                            onDownload();
-                            closeMenu();
-                          }}
-                          className='text-primary justify-start'
-                          aria-label={`Export ${data.label} profile`}
-                        >
-                          <FontAwesomeIcon icon={faFileExport} />
-                          <span>Export</span>
-                        </button>
-                      </li>
-                      <li role='none'>
-                        <button
-                          role='menuitem'
-                          onClick={() => {
-                            onDuplicate(data.id);
-                            closeMenu();
-                          }}
-                          className='text-success justify-start'
-                          aria-label={`Duplicate ${data.label} profile`}
-                        >
-                          <FontAwesomeIcon icon={faCopy} />
-                          <span>Duplicate</span>
-                        </button>
-                      </li>
-                      <li role='none'>
-                        <button
-                          role='menuitem'
-                          onClick={() => {
-                            confirmOrDelete(() => {
-                              onDelete(data.id);
+                  {menuOpen && (
+                    <div
+                      id={`profile-${data.id}-menu`}
+                      ref={popoverRef}
+                      role='menu'
+                      className='bg-base-100 rounded-box z-50 w-56 p-2 shadow'
+                      onKeyDown={e => {
+                        if (e.key === 'Escape') closeMenu();
+                      }}
+                    >
+                      <ul className='menu' role='none'>
+                        <li role='none'>
+                          <button
+                            role='menuitem'
+                            onClick={() => {
+                              onFavoriteToggle();
                               closeMenu();
-                            });
-                          }}
-                          className={`justify-start ${confirmDelete ? 'bg-error text-error-content rounded font-semibold' : 'text-error'}`}
-                          aria-label={
-                            confirmDelete
-                              ? `Confirm deletion of ${data.label} profile`
-                              : `Delete ${data.label} profile`
-                          }
-                          title={confirmDelete ? 'Click to confirm delete' : 'Delete profile'}
-                        >
-                          <FontAwesomeIcon icon={faTrashCan} />
-                          <span>{confirmDelete ? 'Confirm' : 'Delete'}</span>
-                        </button>
-                      </li>
-                    </ul>
-                  </div>
+                            }}
+                            disabled={favoriteToggleDisabled}
+                            className={`justify-start ${favoriteToggleClass}`}
+                            aria-label={
+                              data.favorite
+                                ? `Remove ${data.label} from favorites`
+                                : `Add ${data.label} to favorites`
+                            }
+                            aria-pressed={data.favorite}
+                          >
+                            <FontAwesomeIcon icon={faStar} className={bookmarkClass} />
+                            <span>{data.favorite ? 'Unfavorite' : 'Favorite'}</span>
+                          </button>
+                        </li>
+                        <li role='none'>
+                          <a
+                            role='menuitem'
+                            href={`/profiles/${data.id}`}
+                            onClick={closeMenu}
+                            aria-label={`Edit ${data.label} profile`}
+                          >
+                            <FontAwesomeIcon icon={faPen} />
+                            <span>Edit</span>
+                          </a>
+                        </li>
+                        <li role='none'>
+                          <a
+                            role='menuitem'
+                            href={statsHref}
+                            onClick={closeMenu}
+                            className='text-success justify-start'
+                            aria-label={`View statistics for ${data.label} profile`}
+                          >
+                            <FontAwesomeIcon icon={faChartSimple} />
+                            <span>Statistics</span>
+                          </a>
+                        </li>
+                        <li role='none'>
+                          <button
+                            role='menuitem'
+                            onClick={() => {
+                              onDownload();
+                              closeMenu();
+                            }}
+                            className='text-primary justify-start'
+                            aria-label={`Export ${data.label} profile`}
+                          >
+                            <FontAwesomeIcon icon={faFileExport} />
+                            <span>Export</span>
+                          </button>
+                        </li>
+                        <li role='none'>
+                          <button
+                            role='menuitem'
+                            onClick={() => {
+                              onDuplicate(data.id);
+                              closeMenu();
+                            }}
+                            className='text-success justify-start'
+                            aria-label={`Duplicate ${data.label} profile`}
+                          >
+                            <FontAwesomeIcon icon={faCopy} />
+                            <span>Duplicate</span>
+                          </button>
+                        </li>
+                        <li role='none'>
+                          <button
+                            role='menuitem'
+                            onClick={() => {
+                              confirmOrDelete(() => {
+                                onDelete(data.id);
+                                closeMenu();
+                              });
+                            }}
+                            className={`justify-start ${confirmDelete ? 'bg-error text-error-content rounded font-semibold' : 'text-error'}`}
+                            aria-label={
+                              confirmDelete
+                                ? `Confirm deletion of ${data.label} profile`
+                                : `Delete ${data.label} profile`
+                            }
+                            title={confirmDelete ? 'Click to confirm delete' : 'Delete profile'}
+                          >
+                            <FontAwesomeIcon icon={faTrashCan} />
+                            <span>{confirmDelete ? 'Confirm' : 'Delete'}</span>
+                          </button>
+                        </li>
+                      </ul>
+                    </div>
+                  )}
                 </div>
 
                 {/* Desktop: inline actions */}
@@ -450,67 +452,79 @@ function ProfileCard({
               </div>
             </div>
           </div>
-          {!detailsCollapsed && (
-            <div id={detailsSectionId} className='mx-2 mt-2 flex flex-col items-start gap-2'>
-              <span className='text-base-content/60 text-xs md:text-sm'>{data.description}</span>
-              <div className='flex flex-row gap-2'>
-                <span className='text-base-content/60 badge badge-xs md:badge-sm badge-outline'>
-                  <FontAwesomeIcon icon={faTemperatureFull} />
-                  {data.temperature}°C
-                </span>
-                <span className='text-base-content/60 badge badge-xs md:badge-sm badge-outline'>
-                  <FontAwesomeIcon icon={faClock} />
-                  {totalDurationSeconds}s
-                </span>
-                {data.phases.length > 0 &&
-                  data.phases.at(-1)?.targets?.some(target => target.type === 'volumetric') && (
+          <div className={`${isDragging ? 'hidden' : ''}`}>
+            {!detailsCollapsed && (
+              <div id={detailsSectionId} className='mx-2 mt-2 flex flex-col items-start gap-2'>
+                <span className='text-base-content/60 text-xs md:text-sm'>{data.description}</span>
+                <div className='flex flex-row gap-2'>
+                  <span className='text-base-content/60 badge badge-xs md:badge-sm badge-outline'>
+                    <FontAwesomeIcon icon={faTemperatureFull} />
+                    {data.temperature}°C
+                  </span>
+                  <span className='text-base-content/60 badge badge-xs md:badge-sm badge-outline'>
+                    <FontAwesomeIcon icon={faClock} />
+                    {totalDurationSeconds}s
+                  </span>
+                  {phases.length > 0 &&
+                    phases[phases.length - 1]?.targets?.some(t => t.type === 'volumetric') && (
+                      <span className='text-base-content/60 badge badge-xs md:badge-sm badge-outline'>
+                        <FontAwesomeIcon icon={faScaleBalanced} />
+                        {`${phases[phases.length - 1].targets.find(t => t.type === 'volumetric').value}g`}
+                      </span>
+                    )}
+                  {phases.length > 0 && (
                     <span className='text-base-content/60 badge badge-xs md:badge-sm badge-outline'>
-                      <FontAwesomeIcon icon={faScaleBalanced} />
-                      {`${data.phases.at(-1).targets.find(target => target.type === 'volumetric').value}g`}
+                      {phases.length} phase{phases.length === 1 ? '' : 's'}
                     </span>
                   )}
-                {data.phases.length > 0 && (
-                  <span className='text-base-content/60 badge badge-xs md:badge-sm badge-outline'>
-                    {data.phases.length} phase{data.phases.length === 1 ? '' : 's'}
-                  </span>
+                </div>
+              </div>
+            )}
+            <div
+              className='flex flex-row gap-2 py-2'
+              aria-label={`Profile details for ${data.label}`}
+            >
+              <div className='flex flex-col justify-evenly pr-1'>
+                <Tooltip content='Move to top' disabled={isDragging || tooltipsDisabled}>
+                  <button
+                    onClick={handleMoveTop}
+                    disabled={isFirst}
+                    className='drag-to-top btn btn-sm btn-ghost'
+                    aria-label={`Move ${data.label} to top`}
+                    aria-disabled={isFirst}
+                  >
+                    <FontAwesomeIcon icon={faAnglesUp} />
+                  </button>
+                </Tooltip>
+                <Tooltip
+                  content={`${disabledDrag ? 'Drag disabled on search result' : 'Drag to reorder'}`}
+                  disabled={isDragging}
+                >
+                  <div
+                    className={`drag-handle btn btn-sm btn-ghost ${disabledDrag ? 'cursor-not-allowed' : 'cursor-grab active:cursor-grabbing'}`}
+                  >
+                    <FontAwesomeIcon icon={faGripVertical} />
+                  </div>
+                </Tooltip>
+                <Tooltip content='Move to bottom' disabled={isDragging || tooltipsDisabled}>
+                  <button
+                    onClick={handleMoveBottom}
+                    disabled={isLast}
+                    className='drag-to-bottom btn btn-sm btn-ghost'
+                    aria-label={`Move ${data.label} to bottom`}
+                    aria-disabled={isLast}
+                  >
+                    <FontAwesomeIcon icon={faAnglesDown} />
+                  </button>
+                </Tooltip>
+              </div>
+              <div className='flex-grow overflow-x-auto'>
+                {data.type === 'pro' ? (
+                  <ExtendedProfileChart data={{ ...data, phases }} className='max-h-36' />
+                ) : (
+                  <SimpleContent phases={phases} />
                 )}
               </div>
-            </div>
-          )}
-          <div
-            className='flex flex-row gap-2 py-2'
-            aria-label={`Profile details for ${data.label}`}
-          >
-            <div className='flex flex-col justify-evenly'>
-              <Tooltip content='Move up'>
-                <button
-                  onClick={() => onMoveUp(data.id)}
-                  disabled={isFirst}
-                  className='btn btn-xs btn-ghost'
-                  aria-label={`Move ${data.label} up`}
-                  aria-disabled={isFirst}
-                >
-                  <FontAwesomeIcon icon={faArrowUp} />
-                </button>
-              </Tooltip>
-              <Tooltip content='Move down'>
-                <button
-                  onClick={() => onMoveDown(data.id)}
-                  disabled={isLast}
-                  className='btn btn-xs btn-ghost'
-                  aria-label={`Move ${data.label} down`}
-                  aria-disabled={isLast}
-                >
-                  <FontAwesomeIcon icon={faArrowDown} />
-                </button>
-              </Tooltip>
-            </div>
-            <div className='flex-grow overflow-x-auto'>
-              {data.type === 'pro' ? (
-                <ExtendedProfileChart data={data} className='max-h-36' />
-              ) : (
-                <SimpleContent data={data} />
-              )}
             </div>
           </div>
         </div>
@@ -519,10 +533,14 @@ function ProfileCard({
   );
 }
 
-function SimpleContent({ data }) {
+function SimpleContent({ phases }) {
+  if (phases.length === 0) {
+    return <div className='text-base-content/60 text-sm'>No phases</div>;
+  }
+
   return (
     <div className='flex flex-row items-center gap-2' role='list' aria-label='Brew phases'>
-      {data.phases.map((phase, i) => (
+      {phases.map((phase, i) => (
         <div key={i} className='flex flex-row items-center gap-2' role='listitem'>
           {i > 0 && <SimpleDivider />}
           <SimpleStep
@@ -569,6 +587,8 @@ export function ProfileList() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('extraction');
+  const [isDragging, setIsDragging] = useState(false);
+  const containerRef = useRef(null);
   const favoriteCount = profiles.map(p => (p.favorite ? 1 : 0)).reduce((a, b) => a + b, 0);
   const unfavoriteDisabled = favoriteCount <= 1;
   const favoriteDisabled = favoriteCount >= 10;
@@ -624,37 +644,166 @@ export function ProfileList() {
     };
   }, [apiService]);
 
-  const moveProfileUp = useCallback(
+  // Filtered profiles
+  const profilesToShow = useMemo(() => {
+    // Apply search filter
+    if (searchTerm.trim()) {
+      const search = searchTerm.toLowerCase().trim();
+      return profiles.filter(
+        profile =>
+          profile.label?.toLowerCase().includes(search) ||
+          profile.description?.toLowerCase().includes(search),
+      );
+    }
+    return profiles;
+  }, [profiles, searchTerm]);
+
+  const clearDropHighlights = useCallback(() => {
+    if (!containerRef.current) return;
+    const highlighted = containerRef.current.querySelectorAll('.drop-highlight');
+    highlighted.forEach(el => {
+      el.classList.remove('drop-highlight');
+    });
+  }, []);
+
+  const moveProfileTop = useCallback(
     id => {
       setProfiles(prev => {
         const idx = prev.findIndex(p => p.id === id);
-        if (idx > 0) {
-          const next = [...prev];
-          [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
-          persistProfileOrder(next);
-          return next;
-        }
-        return prev;
+        if (idx <= 0) return prev;
+
+        const item = prev[idx];
+        const reordered = [item, ...prev.slice(0, idx), ...prev.slice(idx + 1)];
+
+        const normalized = [
+          ...reordered.filter(p => !p.utility),
+          ...reordered.filter(p => p.utility),
+        ];
+
+        persistProfileOrder(normalized);
+        return normalized;
       });
     },
     [persistProfileOrder],
   );
 
-  const moveProfileDown = useCallback(
+  const moveProfileBottom = useCallback(
     id => {
       setProfiles(prev => {
         const idx = prev.findIndex(p => p.id === id);
-        if (idx !== -1 && idx < prev.length - 1) {
-          const next = [...prev];
-          [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
-          persistProfileOrder(next);
-          return next;
+        if (idx === -1 || idx === prev.length - 1) {
+          return prev;
         }
-        return prev;
+
+        const item = prev[idx];
+        const reordered = [...prev.slice(0, idx), ...prev.slice(idx + 1), item];
+
+        const normalized = [
+          ...reordered.filter(p => !p.utility),
+          ...reordered.filter(p => p.utility),
+        ];
+
+        persistProfileOrder(normalized);
+        return normalized;
       });
     },
     [persistProfileOrder],
   );
+
+  const onDragStart = useCallback(() => {
+    setIsDragging(true);
+    if (!containerRef.current) return;
+
+    // Clear any previous drop highlights
+    clearDropHighlights();
+  }, [clearDropHighlights]);
+
+  const onDragChange = useCallback(
+    evt => {
+      const { newIndex, oldIndex } = evt;
+      if (newIndex == null || oldIndex == null) return;
+      const container = containerRef.current;
+      if (!container) return;
+
+      // Clear previous highlights
+      clearDropHighlights();
+
+      // Resolve the card element at newIndex among visible items
+      const cards = container.querySelectorAll('.profile-card-container');
+      const targetElement = cards && cards[newIndex];
+      if (!targetElement) return;
+      // highlight the element's new position in the list
+      targetElement.classList.add('drop-highlight');
+    },
+    [clearDropHighlights],
+  );
+
+  const onDragEnd = useCallback(
+    evt => {
+      setIsDragging(false);
+
+      // Clear any drop highlights
+      clearDropHighlights();
+
+      const { oldIndex, newIndex, oldIndicies } = evt;
+      if (oldIndex === newIndex) return;
+
+      setProfiles(prev => {
+        const displayedProfiles = prev.filter(p =>
+          activeTab === 'utility' ? p.utility : !p.utility,
+        );
+
+        const movedItems = (
+          oldIndicies && oldIndicies.length > 0 ? oldIndicies : [{ index: oldIndex }]
+        )
+          .map(({ index }) => displayedProfiles[index])
+          .filter(Boolean); // filter all falsey
+
+        if (movedItems.length === 0) return prev;
+
+        const movedIds = new Set(movedItems.map(p => p.id));
+        const remainingVisible = displayedProfiles.filter(p => !movedIds.has(p.id));
+
+        const insertAt = Math.min(newIndex, remainingVisible.length);
+        const reorderedVisible = [
+          ...remainingVisible.slice(0, insertAt),
+          ...movedItems,
+          ...remainingVisible.slice(insertAt),
+        ];
+
+        const next =
+          activeTab === 'utility'
+            ? [...prev.filter(p => !p.utility), ...reorderedVisible]
+            : [...reorderedVisible, ...prev.filter(p => p.utility)];
+
+        persistProfileOrder(next);
+        return next;
+      });
+    },
+    [activeTab, clearDropHighlights, persistProfileOrder],
+  );
+
+  // Sorting via SortableJS
+  useEffect(() => {
+    if (loading || !containerRef.current) return;
+
+    const isFiltered = !!searchTerm.trim();
+
+    const sortable = Sortable.create(containerRef.current, {
+      multiDrag: true,
+      selectedClass: 'profile-list-drag-selected-item',
+      animation: 150,
+      handle: '.drag-handle',
+      disabled: isFiltered,
+      onStart: onDragStart,
+      onChange: onDragChange,
+      onEnd: onDragEnd,
+    });
+
+    return () => {
+      sortable.destroy();
+    };
+  }, [loading, searchTerm, onDragStart, onDragChange, onDragEnd]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
@@ -745,9 +894,14 @@ export function ProfileList() {
       reader.onload = async e => {
         const result = e.target.result;
         if (typeof result === 'string') {
-          const profiles = parseProfile(result);
-          for (const p of profiles) {
-            await apiService.request({ tp: 'req:profiles:save', profile: p });
+          setLoading(true);
+          try {
+            const profiles = parseProfile(result);
+            for (const p of profiles) {
+              await apiService.request({ tp: 'req:profiles:save', profile: p });
+            }
+          } catch {
+            // Individual save errors are surfaced by WS timeout; continue to reload list.
           }
           await loadProfiles();
         }
@@ -757,27 +911,14 @@ export function ProfileList() {
   };
 
   const onClear = useCallback(async () => {
+    setLoading(true);
     for (const p of profiles) {
       if (!p.selected) {
         await apiService.request({ tp: 'req:profiles:delete', id: p.id });
       }
-      await loadProfiles();
     }
+    await loadProfiles();
   }, [profiles, apiService]);
-
-  // Filtered profiles
-  const profilesToShow = useMemo(() => {
-    // Apply search filter
-    if (searchTerm.trim()) {
-      const search = searchTerm.toLowerCase().trim();
-      return profiles.filter(
-        profile =>
-          profile.label?.toLowerCase().includes(search) ||
-          profile.description?.toLowerCase().includes(search),
-      );
-    }
-    return profiles;
-  }, [profiles, searchTerm]);
 
   if (loading) {
     return (
@@ -818,6 +959,7 @@ export function ProfileList() {
         <div className='flex flex-grow items-center justify-end gap-2'>
           <Tooltip content='Export all profiles'>
             <button
+              id='export-profiles'
               onClick={onExport}
               className='btn btn-ghost btn-sm'
               aria-label='Export all profiles'
@@ -873,7 +1015,12 @@ export function ProfileList() {
           </button>
         </div>
       )}
-      <div className='grid grid-cols-1 gap-4 lg:grid-cols-12' role='list' aria-label='Profile list'>
+      <div
+        className='grid grid-cols-1 gap-4 lg:grid-cols-12'
+        role='list'
+        aria-label='Profile list'
+        ref={containerRef}
+      >
         {profilesToShow
           .filter(p => (activeTab === 'utility' ? p.utility : !p.utility))
           .map((data, idx, filtered) => (
@@ -887,8 +1034,10 @@ export function ProfileList() {
               onUnfavorite={onUnfavorite}
               onFavorite={onFavorite}
               onDuplicate={onDuplicate}
-              onMoveUp={moveProfileUp}
-              onMoveDown={moveProfileDown}
+              disabledDrag={!!searchTerm.trim()}
+              isDragging={isDragging}
+              onMoveTop={moveProfileTop}
+              onMoveBottom={moveProfileBottom}
               isFirst={idx === 0}
               isLast={idx === filtered.length - 1}
             />

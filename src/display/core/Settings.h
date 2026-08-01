@@ -4,6 +4,7 @@
 
 #include <Arduino.h>
 #include <Preferences.h>
+#include <display/core/Property.h>
 #include <display/core/constants.h>
 #include <display/core/utils.h>
 #include <vector>
@@ -41,6 +42,22 @@ struct AutoWakeupSchedule {
             days[dayOfWeek - 1] = enabled;
         }
     }
+
+    bool operator==(const AutoWakeupSchedule &other) const {
+        if (time != other.time)
+            return false;
+        for (int i = 0; i < 7; i++) {
+            if (days[i] != other.days[i])
+                return false;
+        }
+        return true;
+    }
+};
+
+// Serialized as "time1|days1;time2|days2" where days is a 7-bit string (e.g. "1111100" for weekdays)
+template <> struct PreferencesCodec<std::vector<AutoWakeupSchedule>> {
+    static std::vector<AutoWakeupSchedule> read(Preferences &prefs, const char *key, const std::vector<AutoWakeupSchedule> &def);
+    static void write(Preferences &prefs, const char *key, const std::vector<AutoWakeupSchedule> &value);
 };
 
 class Settings;
@@ -54,62 +71,93 @@ class Settings {
     void save(bool noDelay = false);
 
     // Getters and setters
-    int getTargetSteamTemp() const { return targetSteamTemp; }
-    int getTargetWaterTemp() const { return targetWaterTemp; }
-    int getTemperatureOffset() const { return temperatureOffset; }
-    float getPressureScaling() const { return pressureScaling; }
-    double getTargetGrindVolume() const { return targetGrindVolume; }
-    int getTargetGrindDuration() const { return targetGrindDuration; }
-    int getStartupMode() const { return startupMode; }
-    int getStandbyTimeout() const { return standbyTimeout; }
-    double getBrewDelay() const { return brewDelay; }
-    double getGrindDelay() const { return grindDelay; }
-    bool isDelayAdjust() const { return delayAdjust; }
-    String getPid() const { return pid; }
-    String getPumpModelCoeffs() const { return pumpModelCoeffs; }
-    String getWifiSsid() const { return wifiSsid; }
-    String getWifiPassword() const { return wifiPassword; }
-    String getMdnsName() const { return mdnsName; }
-    bool isHomekit() const { return homekit; }
-    bool isVolumetricTarget() const { return volumetricTarget; }
-    String getOTAChannel() const { return otaChannel; }
-    String getSavedScale() const { return savedScale; }
-    bool isBoilerFillActive() const { return boilerFillActive; }
-    int getStartupFillTime() const { return startupFillTime; }
-    int getSteamFillTime() const { return steamFillTime; }
-    bool isSmartGrindActive() const { return smartGrindActive; }
-    int getSmartGrindMode() const { return smartGrindMode; }
-    String getSmartGrindIp() const { return smartGrindIp; }
-    bool isHomeAssistant() const { return homeAssistant; }
-    String getHomeAssistantIP() const { return homeAssistantIP; }
-    String getHomeAssistantUser() const { return homeAssistantUser; }
-    String getHomeAssistantPassword() const { return homeAssistantPassword; }
-    int getHomeAssistantPort() const { return homeAssistantPort; }
-    String getHomeAssistantTopic() const { return homeAssistantTopic; }
-    bool isMomentaryButtons() const { return momentaryButtons; }
-    String getTimezone() const { return timezone; }
-    bool isClock24hFormat() const { return clock24hFormat; }
-    String getSelectedProfile() const { return selectedProfile; }
-    std::vector<String> getFavoritedProfiles() const { return favoritedProfiles; }
-    std::vector<String> getProfileOrder() const { return profileOrder; }
-    int getMainBrightness() const { return mainBrightness; }
-    int getStandbyBrightness() const { return standbyBrightness; }
-    int getStandbyBrightnessTimeout() const { return standbyBrightnessTimeout; }
-    int getWifiApTimeout() const { return wifiApTimeout; }
-    float getSteamPumpPercentage() const { return steamPumpPercentage; }
-    float getSteamPumpCutoff() const { return steamPumpCutoff; }
-    int getThemeMode() const { return themeMode; }
-    int getHistoryIndex() const { return historyIndex; }
-    int getSunriseR() const { return sunriseR; }
-    int getSunriseG() const { return sunriseG; }
-    int getSunriseB() const { return sunriseB; }
-    int getSunriseW() const { return sunriseW; }
-    int getSunriseExtBrightness() const { return sunriseExtBrightness; }
-    int getEmptyTankDistance() const { return emptyTankDistance; }
-    int getFullTankDistance() const { return fullTankDistance; }
-    int getAltRelayFunction() const { return altRelayFunction; }
-    bool isAutoWakeupEnabled() const { return autowakeupEnabled; }
-    std::vector<AutoWakeupSchedule> getAutoWakeupSchedules() const { return autowakeupSchedules; }
+    int getTargetSteamTemp() const { return targetSteamTemp.get(); }
+    int getTargetWaterTemp() const { return targetWaterTemp.get(); }
+    int getTemperatureOffset() const { return temperatureOffset.get(); }
+    float getPressureScaling() const { return pressureScaling.get(); }
+    double getTargetGrindVolume() const { return targetGrindVolume.get(); }
+    int getTargetGrindDuration() const { return targetGrindDuration.get(); }
+    int getStartupMode() const { return startupMode.get(); }
+    int getStandbyTimeout() const { return standbyTimeout.get(); }
+    double getBrewDelay() const { return brewDelay.get(); }
+    double getGrindDelay() const { return grindDelay.get(); }
+    bool isDelayAdjust() const { return delayAdjust.get(); }
+    String getPid() const { return pid.get(); }
+    String getPumpModelCoeffs() const { return pumpModelCoeffs.get(); }
+    String getPumpSlipCoeffs() const { return pumpSlipCoeffs.get(); }
+    String getWifiSsid() const { return wifiSsid.get(); }
+    String getWifiPassword() const { return wifiPassword.get(); }
+    String getWifiApPassword() const { return wifiApPassword.get(); }
+    String getMdnsName() const { return mdnsName.get(); }
+    bool isHomekit() const { return homekit.get(); }
+    bool isVolumetricTarget() const { return volumetricTarget.get(); }
+    String getOTAChannel() const { return otaChannel.get(); }
+    String getSavedScale() const { return savedScale.get(); }
+    bool isBoilerFillActive() const { return boilerFillActive.get(); }
+    int getStartupFillTime() const { return startupFillTime.get(); }
+    int getSteamFillTime() const { return steamFillTime.get(); }
+    bool isSmartGrindActive() const { return smartGrindActive.get(); }
+    int getSmartGrindMode() const { return smartGrindMode.get(); }
+    String getSmartGrindIp() const { return smartGrindIp.get(); }
+    bool isHomeAssistant() const { return homeAssistant.get(); }
+    String getHomeAssistantIP() const { return homeAssistantIP.get(); }
+    String getHomeAssistantUser() const { return homeAssistantUser.get(); }
+    String getHomeAssistantPassword() const { return homeAssistantPassword.get(); }
+    int getHomeAssistantPort() const { return homeAssistantPort.get(); }
+    String getHomeAssistantTopic() const { return homeAssistantTopic.get(); }
+    bool isMomentaryButtons() const { return momentaryButtons.get(); }
+    String getTimezone() const { return timezone.get(); }
+    bool isClock24hFormat() const { return clock24hFormat.get(); }
+    String getSelectedProfile() const { return selectedProfile.get(); }
+    String getStartupProfile() const { return startupProfile.get(); }
+    const std::vector<String> &getFavoritedProfiles() const { return favoritedProfiles.get(); }
+    std::vector<String> getProfileOrder() const { return profileOrder.get(); }
+    int getMainBrightness() const { return mainBrightness.get(); }
+    int getStandbyBrightness() const { return standbyBrightness.get(); }
+    int getStandbyBrightnessTimeout() const { return standbyBrightnessTimeout.get(); }
+    int getWifiApTimeout() const { return wifiApTimeout.get(); }
+    float getSteamPumpPercentage() const { return steamPumpPercentage.get(); }
+    float getSteamPumpCutoff() const { return steamPumpCutoff.get(); }
+    int getThemeMode() const { return themeMode.get(); }
+    int getHistoryIndex() const { return historyIndex.get(); }
+
+    [[deprecated]]
+    int getSunriseR() const {
+        return sunriseR;
+    }
+    [[deprecated]]
+    int getSunriseG() const {
+        return sunriseG;
+    }
+    [[deprecated]]
+    int getSunriseB() const {
+        return sunriseB;
+    }
+    [[deprecated]]
+    int getSunriseW() const {
+        return sunriseW;
+    }
+    String getSunriseIdle() const { return sunriseIdle.get(); }
+    String getSunriseActive() const { return sunriseActive.get(); }
+    String getSunriseFinished() const { return sunriseFinished.get(); }
+    String getSunriseError() const { return sunriseError.get(); }
+    int getSunriseExtBrightness() const { return sunriseExtBrightness.get(); }
+    int getEmptyTankDistance() const { return emptyTankDistance.get(); }
+    int getFullTankDistance() const { return fullTankDistance.get(); }
+    int getAltRelayFunction() const { return altRelayFunction.get(); }
+    bool isAutoWakeupEnabled() const { return autowakeupEnabled.get(); }
+    std::vector<AutoWakeupSchedule> getAutoWakeupSchedules() const { return autowakeupSchedules.get(); }
+    String getButtonBehavior(int index) const {
+        if (index >= 0 && index < buttonBehavior.get().size())
+            return buttonBehavior.get()[index];
+        return "";
+    };
+    std::vector<String> getButtonBehaviorList() const { return buttonBehavior.get(); }
+    float getCommutationGain() const { return commutationGain.get(); }
+    float getConvergenceGain() const { return convergenceGain.get(); }
+    float getIntegralGain() const { return integralGain.get(); }
+    float getMaxPumpPower() const { return maxPumpPower.get(); }
+
     void setTargetSteamTemp(int target_steam_temp);
     void setTargetWaterTemp(int target_water_temp);
     void setTemperatureOffset(int temperature_offset);
@@ -123,8 +171,10 @@ class Settings {
     void setDelayAdjust(bool delay_adjust);
     void setPid(const String &pid);
     void setPumpModelCoeffs(const String &pumpModelCoeffs);
+    void setPumpSlipCoeffs(const String &pumpSlipCoeffs);
     void setWifiSsid(const String &wifiSsid);
     void setWifiPassword(const String &wifiPassword);
+    void setWifiApPassword(const String &wifiApPassword);
     void setMdnsName(const String &mdnsName);
     void setHomekit(bool homekit);
     void setVolumetricTarget(bool volumetric_target);
@@ -146,6 +196,7 @@ class Settings {
     void setTimezone(String timezone);
     void setClockFormat(bool format_24h);
     void setSelectedProfile(String selected_profile);
+    void setStartupProfile(String startup_profile);
     void setFavoritedProfiles(std::vector<String> favorited_profiles);
     void addFavoritedProfile(String profile);
     void removeFavoritedProfile(String profile);
@@ -158,86 +209,116 @@ class Settings {
     void setSteamPumpCutoff(float steam_pump_cutoff);
     void setThemeMode(int theme_mode);
     void setHistoryIndex(int history_index);
+    [[deprecated]]
     void setSunriseR(int sunrise_r);
+    [[deprecated]]
     void setSunriseG(int sunrise_g);
+    [[deprecated]]
     void setSunriseB(int sunrise_b);
+    [[deprecated]]
     void setSunriseW(int sunrise_w);
+    void setSunriseIdle(String hexColor);
+    void setSunriseActive(String hexColor);
+    void setSunriseFinished(String hexColor);
+    void setSunriseError(String hexColor);
     void setSunriseExtBrightness(int sunrise_ext_brightness);
     void setEmptyTankDistance(int empty_tank_distance);
     void setFullTankDistance(int full_tank_distance);
     void setAltRelayFunction(int alt_relay_function);
     void setAutoWakeupEnabled(bool enabled);
     void setAutoWakeupSchedules(const std::vector<AutoWakeupSchedule> &schedules);
+    void setButtonBehavior(int index, String behavior);
+    void setButtonBehaviorList(const std::vector<String> &behavior_list);
+
+    void setCommutationGain(float commutationGain);
+    void setConvergenceGain(float convergenceGain);
+    void setIntegralGain(float integralGain);
+    void setMaxPumpPower(float maxPumpPower);
 
   private:
     Preferences preferences;
-    bool dirty = false;
+    PropertyRegistry registry; // must precede the properties, they register themselves here
 
-    String selectedProfile;
-    int targetSteamTemp = 155;
-    int targetWaterTemp = 80;
-    int temperatureOffset = DEFAULT_TEMPERATURE_OFFSET;
-    float pressureScaling = DEFAULT_PRESSURE_SCALING;
-    double targetGrindVolume = 18;
-    int targetGrindDuration = 25000;
-    double brewDelay = 1000.0;
-    double grindDelay = 1000.0;
-    bool delayAdjust = true;
-    int startupMode = MODE_STANDBY;
-    bool autowakeupEnabled = false;
-    std::vector<AutoWakeupSchedule> autowakeupSchedules;
-    int standbyTimeout = DEFAULT_STANDBY_TIMEOUT_MS;
-    String pid = DEFAULT_PID;
-    String pumpModelCoeffs = DEFAULT_PUMP_MODEL_COEFFS;
-    String wifiSsid = "";
-    String wifiPassword = "";
-    String mdnsName = DEFAULT_MDNS_NAME;
-    String savedScale = "";
-    bool homekit = false;
-    bool volumetricTarget = false;
-    bool boilerFillActive = false;
-    int startupFillTime = 0;
-    int steamFillTime = 0;
-    bool smartGrindActive = false;
-    bool smartGrindToggle = false;
-    int smartGrindMode = 0;
-    String smartGrindIp = "";
-    bool homeAssistant = false;
-    String homeAssistantUser = "";
-    String homeAssistantPassword = "";
-    String homeAssistantIP = "";
-    int homeAssistantPort = 1883;
-    String homeAssistantTopic = DEFAULT_HOME_ASSISTANT_TOPIC;
-    bool momentaryButtons = false;
-    String timezone = DEFAULT_TIMEZONE;
-    bool clock24hFormat = true;
-    String otaChannel = DEFAULT_OTA_CHANNEL;
-    std::vector<String> favoritedProfiles;
-    std::vector<String> profileOrder; // persisted profile ordering
-    float steamPumpPercentage = DEFAULT_STEAM_PUMP_PERCENTAGE;
-    float steamPumpCutoff = DEFAULT_STEAM_PUMP_CUTOFF;
-    int historyIndex = 0;
+    Property<String> selectedProfile{registry, "sp", ""};
+    Property<String> startupProfile{registry, "sup", ""}; // Empty = last used profile, otherwise profile ID
+    Property<int> targetSteamTemp{registry, "ts", 145};
+    Property<int> targetWaterTemp{registry, "tw", 80};
+    Property<int> temperatureOffset{registry, "to", DEFAULT_TEMPERATURE_OFFSET};
+    Property<float> pressureScaling{registry, "ps", DEFAULT_PRESSURE_SCALING};
+    Property<double> targetGrindVolume{registry, "tgv", 18.0};
+    Property<int> targetGrindDuration{registry, "tgd", 25000};
+    Property<double> brewDelay{registry, "del_br", 800.0};
+    Property<double> grindDelay{registry, "del_gd", 1000.0};
+    Property<bool> delayAdjust{registry, "del_ad", true};
+    Property<int> startupMode{registry, "sm", MODE_STANDBY};
+    Property<bool> autowakeupEnabled{registry, "ab_en", false};
+    Property<std::vector<AutoWakeupSchedule>> autowakeupSchedules{registry, "ab_schedules", {AutoWakeupSchedule("07:00")}};
+    Property<int> standbyTimeout{registry, "sbt", DEFAULT_STANDBY_TIMEOUT_MS};
+    Property<String> pid{registry, "pid", DEFAULT_PID};
+    Property<String> wifiSsid{registry, "ws", ""};
+    Property<String> wifiPassword{registry, "wp", ""};
+    Property<String> wifiApPassword{registry, "wap", ""}; // empty until generated on first start
+    Property<String> mdnsName{registry, "mn", DEFAULT_MDNS_NAME};
+    Property<String> savedScale{registry, "ssc", ""};
+    Property<bool> homekit{registry, "hk", false};
+    Property<bool> volumetricTarget{registry, "vt", false};
+    Property<bool> boilerFillActive{registry, "bf_a", false};
+    Property<int> startupFillTime{registry, "bf_su", 5000};
+    Property<int> steamFillTime{registry, "bf_st", 5000};
+    Property<bool> smartGrindActive{registry, "sg_a", false};
+    Property<bool> smartGrindToggle{registry, "sg_t", false}; // legacy, seeds the smartGrindMode default
+    Property<int> smartGrindMode{registry, "sg_m", 0};
+    Property<String> smartGrindIp{registry, "sg_i", ""};
+    Property<bool> homeAssistant{registry, "ha_a", false};
+    Property<String> homeAssistantUser{registry, "ha_u", ""};
+    Property<String> homeAssistantPassword{registry, "ha_pw", ""};
+    Property<String> homeAssistantIP{registry, "ha_i", ""};
+    Property<int> homeAssistantPort{registry, "ha_p", 1883};
+    Property<String> homeAssistantTopic{registry, "ha_t", DEFAULT_HOME_ASSISTANT_TOPIC};
+    Property<bool> momentaryButtons{registry, "mb", false};
+    Property<String> timezone{registry, "tz", DEFAULT_TIMEZONE};
+    Property<bool> clock24hFormat{registry, "clk_24h", true};
+    Property<String> otaChannel{registry, "oc", DEFAULT_OTA_CHANNEL};
+    Property<std::vector<String>> favoritedProfiles{registry, "fp", {}};
+    Property<std::vector<String>> profileOrder{registry, "po", {}}; // persisted profile ordering
+    Property<float> steamPumpPercentage{registry, "spp", DEFAULT_STEAM_PUMP_PERCENTAGE};
+    Property<float> steamPumpCutoff{registry, "spc", DEFAULT_STEAM_PUMP_CUTOFF};
+    Property<int> historyIndex{registry, "hi", 0};
 
     // Display settings
-    int mainBrightness = 16;
-    int standbyBrightness = 8;
-    int standbyBrightnessTimeout = 60000; // 60 seconds default
-    int wifiApTimeout = DEFAULT_WIFI_AP_TIMEOUT_MS;
-    int themeMode = 0;
+    Property<int> mainBrightness{registry, "main_b", 16};
+    Property<int> standbyBrightness{registry, "standby_b", 8};
+    Property<int> standbyBrightnessTimeout{registry, "standby_bt", 60000}; // 60 seconds default
+    Property<int> wifiApTimeout{registry, "wifi_apt", DEFAULT_WIFI_AP_TIMEOUT_MS};
+    Property<int> themeMode{registry, "theme", 0};
 
-    // Sunrise settings
+    // Sunrise settings (r/g/b/w are legacy load-only values that seed the idle color default)
     int sunriseR = 0;
-    int sunriseG = 0;
-    int sunriseB = 255;
-    int sunriseW = 50;
-    int sunriseExtBrightness = 255;
-    int emptyTankDistance = 200;
-    int fullTankDistance = 50;
-    int altRelayFunction = ALT_RELAY_GRIND; // Default to grind
+    int sunriseG = 250;
+    int sunriseB = 150;
+    int sunriseW = 255;
+    Property<String> sunriseIdle{registry, "sr_i", "#00FFFF"};
+    Property<String> sunriseActive{registry, "sr_a", "#0000FF"};
+    Property<String> sunriseFinished{registry, "sr_f", "#00FF00"};
+    Property<String> sunriseError{registry, "sr_e", "#FF0000"};
+    Property<int> sunriseExtBrightness{registry, "sr_exb", 75};
+    Property<int> emptyTankDistance{registry, "sr_ed", 210};
+    Property<int> fullTankDistance{registry, "sr_fd", 30};
+
+    Property<int> altRelayFunction{registry, "alt_relay", ALT_RELAY_GRIND}; // Default to grind
+    Property<std::vector<String>> buttonBehavior{registry, "btnb", {"brew", "steam", "water"}};
+
+    // Pump settings
+    Property<String> pumpModelCoeffs{registry, "pmc", DEFAULT_PUMP_MODEL_COEFFS};
+    Property<String> pumpSlipCoeffs{registry, "psc", DEFAULT_PUMP_SLIP_COEFFS};
+    Property<float> commutationGain{registry, "p_cm", DEFAULT_COMMUTATION_GAIN};
+    Property<float> convergenceGain{registry, "p_cv", DEFAULT_CONVERGENCE_GAIN};
+    Property<float> integralGain{registry, "p_ig", DEFAULT_INTEGRAL_GAIN};
+    Property<float> maxPumpPower{registry, "p_mp", 1.0f};
 
     void doSave();
     xTaskHandle taskHandle;
-    static void loopTask(void *arg);
+    [[noreturn]] static void loopTask(void *arg);
 };
 
 #endif // SETTINGS_H

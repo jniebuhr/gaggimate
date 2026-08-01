@@ -1,4 +1,7 @@
 // Shared route helpers keep Analyzer/ProfileList -> Statistics deep links consistent.
+export const VALID_STATISTICS_SOURCES = ['gaggimate', 'browser'];
+export const VALID_STATISTICS_SOURCE_SELECTIONS = ['gaggimate', 'browser', 'both'];
+
 const SOURCE_ALIAS_TO_SOURCE = {
   internal: 'gaggimate',
   gm: 'gaggimate',
@@ -13,16 +16,32 @@ const SOURCE_TO_ALIAS = {
   browser: 'external',
 };
 
+export const STATISTICS_SOURCE_FALLBACK = {
+  gaggimate: 'browser',
+  browser: 'gaggimate',
+};
+
 const INVALID_PROFILE_NAMES = new Set(['no profile loaded']);
 
 export function mapStatisticsSourceAliasToSource(alias) {
-  const normalized = String(alias || '').trim().toLowerCase();
+  const normalized = String(alias || '')
+    .trim()
+    .toLowerCase();
   return SOURCE_ALIAS_TO_SOURCE[normalized] || null;
 }
 
 export function mapSourceToStatisticsAlias(source) {
-  const normalized = String(source || '').trim().toLowerCase();
+  const normalized = String(source || '')
+    .trim()
+    .toLowerCase();
   return SOURCE_TO_ALIAS[normalized] || null;
+}
+
+export function normalizeStatisticsSourceSelection(source, fallback = 'both') {
+  const normalized = String(source || '')
+    .trim()
+    .toLowerCase();
+  return VALID_STATISTICS_SOURCE_SELECTIONS.includes(normalized) ? normalized : fallback;
 }
 
 export function buildStatisticsProfileHref({ source, profileName }) {
