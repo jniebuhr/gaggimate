@@ -1,9 +1,20 @@
 #include "BleClientTransport.h"
+#include <Preferences.h>
+
+// NVS storage for the paired controller's address. Deliberately independent of
+// NimBLE's bond store: that store is shared with BLE scales (max 3 entries,
+// oldest evicted), so bond presence alone must never gate controller selection.
+static constexpr const char *NVS_NAMESPACE = "gmble";
+static constexpr const char *NVS_PEER_KEY = "peer";
 
 void BleClientTransport::init(const String &deviceName) {
     NimBLEDevice::init(deviceName.c_str());
     NimBLEDevice::setPower(ESP_PWR_LVL_P9);
     NimBLEDevice::setMTU(256);
+    // Just Works bonding with LE Secure Connections, mirroring the controller.
+    NimBLEDevice::setSecurityAuth(true, false, true);
+    NimBLEDevice::setSecurityIOCap(BLE_HS_IO_NO_INPUT_OUTPUT);
+    loadPairedPeer();
     _client = NimBLEDevice::createClient();
     _scanner = NimBLEDevice::getScan();
     if (_client == nullptr) {
@@ -55,6 +66,30 @@ bool BleClientTransport::connectToServer() {
     } while (!_client->isConnected());
     applyConnParams(); // baseline for the new connection (idle unless set active)
 
+    // Encrypt (and on first contact, bond) before touching the GATT table --
+    // the controller's comms characteristics require an encrypted link. The
+    // call's return value alone is unreliable: a concurrently completed
+    // procedure makes it report failure (EALREADY), so always re-check the
+    // actual link state before treating this as a real pairing failure.
+    if (!isEncrypted() && !_client->secureConnection() && !isEncrypted()) {
+        if (NimBLEDevice::isBonded(_serverAddress)) {
+            // Stale bond: the controller was re-flashed and lost its keys, so
+            // the encryption restart fails. Drop our copy and pair freshly.
+            ESP_LOGW(LOG_TAG, "Encryption with stored key failed, re-pairing");
+            NimBLEDevice::deleteBond(_serverAddress);
+            if (!_client->secureConnection() && !isEncrypted()) {
+                ESP_LOGE(LOG_TAG, "Pairing failed, rescanning");
+                _client->disconnect();
+                scan();
+                return false;
+            }
+        } else {
+            // Old controller firmware may not pair; keep the link so the
+            // incompatible/OTA-recovery path below still works.
+            ESP_LOGW(LOG_TAG, "Securing link failed, continuing unencrypted");
+        }
+    }
+
     NimBLERemoteService *service = _client->getService(NimBLEUUID(gm_proto::SERVICE_UUID));
     if (service == nullptr) {
         ESP_LOGE(LOG_TAG, "Service not found");
@@ -100,9 +135,57 @@ bool BleClientTransport::connectToServer() {
 
     _readyForConnection = false;
     _incompatible = false;
+    // Persist the pairing only once a bond exists (i.e. both sides run pairing-
+    // capable firmware); until then the display keeps connecting openly.
+    if (NimBLEDevice::isBonded(_serverAddress))
+        savePairedPeer(_serverAddress);
     ESP_LOGI(LOG_TAG, "Connected, MTU: %d", _client->getMTU());
     emitConnection(true);
     return true;
+}
+
+void BleClientTransport::loadPairedPeer() {
+    Preferences prefs;
+    if (!prefs.begin(NVS_NAMESPACE, true))
+        return;
+    uint8_t buf[7];
+    if (prefs.getBytes(NVS_PEER_KEY, buf, sizeof(buf)) == sizeof(buf)) {
+        _pairedPeer = NimBLEAddress(buf, buf[6]);
+        _havePairedPeer = true;
+        ESP_LOGI(LOG_TAG, "Paired to controller %s", _pairedPeer.toString().c_str());
+    }
+    prefs.end();
+}
+
+void BleClientTransport::savePairedPeer(const NimBLEAddress &address) {
+    if (_havePairedPeer && _pairedPeer == address)
+        return;
+    Preferences prefs;
+    if (!prefs.begin(NVS_NAMESPACE, false))
+        return;
+    uint8_t buf[7];
+    memcpy(buf, address.getNative(), 6);
+    buf[6] = address.getType();
+    prefs.putBytes(NVS_PEER_KEY, buf, sizeof(buf));
+    prefs.end();
+    _pairedPeer = address;
+    _havePairedPeer = true;
+    ESP_LOGI(LOG_TAG, "Locked to controller %s", address.toString().c_str());
+}
+
+void BleClientTransport::clearBonds() {
+    // Only forget the controller; bonds a BLE scale may hold stay intact.
+    if (_havePairedPeer)
+        NimBLEDevice::deleteBond(_pairedPeer);
+    Preferences prefs;
+    if (prefs.begin(NVS_NAMESPACE, false)) {
+        prefs.remove(NVS_PEER_KEY);
+        prefs.end();
+    }
+    _havePairedPeer = false;
+    ESP_LOGW(LOG_TAG, "Pairing cleared, will pair with the next controller found");
+    if (_client && _client->isConnected())
+        disconnect(); // onDisconnect restarts the (now unfiltered) scan
 }
 
 void BleClientTransport::disconnect() {
@@ -134,10 +217,24 @@ bool BleClientTransport::send(const uint8_t *data, size_t length) {
 
 bool BleClientTransport::isConnected() const { return _client != nullptr && _client->isConnected(); }
 
+bool BleClientTransport::isEncrypted() const {
+    if (_client == nullptr || !_client->isConnected())
+        return false;
+    ble_gap_conn_desc desc;
+    if (ble_gap_conn_find(_client->getConnId(), &desc) != 0)
+        return false;
+    return desc.sec_state.encrypted;
+}
+
 void BleClientTransport::onResult(NimBLEAdvertisedDevice *advertisedDevice) {
     if (!advertisedDevice->haveServiceUUID())
         return;
     if (advertisedDevice->isAdvertisingService(NimBLEUUID(gm_proto::SERVICE_UUID))) {
+        // Once paired, this display only talks to its own controller.
+        if (_havePairedPeer && advertisedDevice->getAddress() != _pairedPeer) {
+            ESP_LOGD(LOG_TAG, "Ignoring foreign controller %s", advertisedDevice->getAddress().toString().c_str());
+            return;
+        }
         ESP_LOGI(LOG_TAG, "Found controller, ready to connect");
         _scanner->stop();
         // Take a value copy of the address now -- the device object is freed as

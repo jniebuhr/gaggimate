@@ -13,6 +13,11 @@
  * (outbound datagrams). Mirrors the connection/scan behaviour of the previous
  * client controller, including the low-duty passive scan tuned for Wi-Fi
  * coexistence.
+ *
+ * Pairing model: bonds to the first controller it connects to (Just Works +
+ * LE Secure Connections); afterwards scan results from any other controller
+ * are ignored until clearBonds() is called. The link is encrypted before any
+ * GATT traffic.
  */
 class BleClientTransport : public Transport, public NimBLEAdvertisedDeviceCallbacks, public NimBLEClientCallbacks {
   public:
@@ -24,6 +29,9 @@ class BleClientTransport : public Transport, public NimBLEAdvertisedDeviceCallba
     bool connectToServer(); // returns true once connected + subscribed
     bool isReadyForConnection() const { return _readyForConnection; }
     void disconnect();
+
+    // Forget the paired controller so the display can pair to a different one.
+    void clearBonds();
 
     bool send(const uint8_t *data, size_t length) override;
     bool isConnected() const override;
@@ -55,6 +63,12 @@ class BleClientTransport : public Transport, public NimBLEAdvertisedDeviceCallba
     // while the device is still alive is safe and survives the deletion.
     NimBLEAddress _serverAddress{};
     bool _haveServerAddress = false;
+    // Paired controller identity, persisted in our own NVS namespace. NOT
+    // derived from NimBLE's bond store: that store is shared with BLE scales
+    // and limited to 3 entries with eviction, so it cannot be the source of
+    // truth for which controller this display belongs to.
+    NimBLEAddress _pairedPeer{};
+    bool _havePairedPeer = false;
     NimBLERemoteCharacteristic *_writeChar = nullptr;  // to server (RX_CHAR_UUID)
     NimBLERemoteCharacteristic *_notifyChar = nullptr; // from server (TX_CHAR_UUID)
     bool _readyForConnection = false;
@@ -63,6 +77,11 @@ class BleClientTransport : public Transport, public NimBLEAdvertisedDeviceCallba
     std::function<void(const String &info)> _onIncompatible = nullptr;
 
     void applyConnParams();
+    // True link-layer encryption state; the source of truth for pairing success
+    // (secureConnection() reports false when it loses an initiation race).
+    bool isEncrypted() const;
+    void loadPairedPeer();
+    void savePairedPeer(const NimBLEAddress &address);
 
     // Connection-interval units are 1.25ms; supervision timeout units are 10ms.
     static constexpr uint16_t ACTIVE_MIN_INTERVAL = 6; // 7.5 ms

@@ -43,6 +43,9 @@ class GaggiMateClient {
     bool isConnected() const { return _endpoint.isConnected(); }
     void disconnect() { _transport.disconnect(); }
 
+    // Forget the paired controller so the display can pair to a different one.
+    void clearBonds() { _transport.clearBonds(); }
+
     // BLE round-trip latency (ms) measured by the reliability layer (send -> ACK).
     // EWMA-smoothed; refreshed at least every ~2s by the keep-alive ping plus on
     // every control update. hasLatency() is false until the first ACK of a link.

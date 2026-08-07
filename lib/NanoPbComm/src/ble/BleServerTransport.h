@@ -13,6 +13,11 @@
  * characteristic (notifies the display). Each write / notification is one whole
  * datagram. Also hosts the OTA DFU service on the same NimBLE server, exactly
  * as the previous controller transport did.
+ *
+ * Pairing model: on first boot the controller advertises openly and bonds to
+ * the first display that connects (Just Works + LE Secure Connections). From
+ * then on advertising is whitelist-only, so the PCB is tied to that screen
+ * until clearBonds() is called. Comms characteristics require encryption.
  */
 class BleServerTransport : public Transport, public NimBLEServerCallbacks, public NimBLECharacteristicCallbacks {
   public:
@@ -35,8 +40,13 @@ class BleServerTransport : public Transport, public NimBLEServerCallbacks, publi
     // the disconnect and rebuilds the link from scratch.
     void disconnect();
 
+    // Forget the paired display: wipe bonds + whitelist and advertise openly
+    // again so a (new) screen can pair. Escape hatch for replaced hardware.
+    void clearBonds();
+
   private:
     bool _connected = false;
+    bool _whitelistOnly = false;
     uint16_t _connHandle = BLE_HS_CONN_HANDLE_NONE;
     NimBLEServer *_server = nullptr;
     NimBLEAdvertising *_advertising = nullptr;
@@ -46,8 +56,12 @@ class BleServerTransport : public Transport, public NimBLEServerCallbacks, publi
     String _info;
     BLE_OTA_DFU _otaDfu;
 
+    void enableWhitelist();
+    void whitelistPeer(const NimBLEAddress &address);
+
     void onConnect(NimBLEServer *server) override;
     void onConnect(NimBLEServer *server, ble_gap_conn_desc *desc) override;
+    void onAuthenticationComplete(ble_gap_conn_desc *desc) override;
     void onDisconnect(NimBLEServer *server) override;
     void onWrite(NimBLECharacteristic *characteristic) override;
     void onSubscribe(NimBLECharacteristic *pCharacteristic, ble_gap_conn_desc *desc, uint16_t subValue) override;

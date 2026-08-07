@@ -59,6 +59,10 @@ class GaggiMateServer {
     // sees a real disconnect instead of having to interpret an in-band error.
     void disconnect() { _transport.disconnect(); }
 
+    // Forget the paired display and advertise openly again (re-pairing escape
+    // hatch, e.g. after a screen swap).
+    void clearBonds() { _transport.clearBonds(); }
+
     // Send a pre-built payload / batch of payloads (one frame).
     void send(const gm::Payload &payload) { _endpoint.send(payload); }
     void sendBatch(const gm::Payload *payloads, size_t count) { _endpoint.sendBatch(payloads, count); }
