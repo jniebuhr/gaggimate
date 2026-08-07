@@ -150,7 +150,13 @@ void BleClientTransport::loadPairedPeer() {
         return;
     uint8_t buf[7];
     if (prefs.getBytes(NVS_PEER_KEY, buf, sizeof(buf)) == sizeof(buf)) {
-        _pairedPeer = NimBLEAddress(buf, buf[6]);
+        // Bytes are stored in NimBLE-native (inverse) order from getNative().
+        // Reconstruct via ble_addr_t: the uint8_t[6] constructor would
+        // reverse-copy and yield a byte-swapped address.
+        ble_addr_t addr;
+        memcpy(addr.val, buf, 6);
+        addr.type = buf[6];
+        _pairedPeer = NimBLEAddress(addr);
         _havePairedPeer = true;
         ESP_LOGI(LOG_TAG, "Paired to controller %s", _pairedPeer.toString().c_str());
     }

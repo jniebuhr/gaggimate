@@ -15,9 +15,10 @@
  * as the previous controller transport did.
  *
  * Pairing model: on first boot the controller advertises openly and bonds to
- * the first display that connects (Just Works + LE Secure Connections). From
- * then on advertising is whitelist-only, so the PCB is tied to that screen
- * until clearBonds() is called. Comms characteristics require encryption.
+ * the first display that connects (Just Works + LE Secure Connections). That
+ * one display's address is persisted in NVS; from then on advertising is
+ * whitelist-only for exactly that screen (foreign bonds are pruned) until
+ * clearBonds() is called. Comms characteristics require encryption.
  */
 class BleServerTransport : public Transport, public NimBLEServerCallbacks, public NimBLECharacteristicCallbacks {
   public:
@@ -47,6 +48,10 @@ class BleServerTransport : public Transport, public NimBLEServerCallbacks, publi
   private:
     bool _connected = false;
     bool _whitelistOnly = false;
+    // The single display this PCB is paired to, persisted in NVS. Source of
+    // truth for the whitelist; the NimBLE bond store is pruned to match.
+    NimBLEAddress _pairedPeer{};
+    bool _havePairedPeer = false;
     uint16_t _connHandle = BLE_HS_CONN_HANDLE_NONE;
     NimBLEServer *_server = nullptr;
     NimBLEAdvertising *_advertising = nullptr;
@@ -57,7 +62,10 @@ class BleServerTransport : public Transport, public NimBLEServerCallbacks, publi
     BLE_OTA_DFU _otaDfu;
 
     void enableWhitelist();
-    void whitelistPeer(const NimBLEAddress &address);
+    void adoptPeer(const NimBLEAddress &address);
+    void pruneForeignBonds(const NimBLEAddress &keep);
+    void loadPairedPeer();
+    void savePairedPeer(const NimBLEAddress &address);
 
     void onConnect(NimBLEServer *server) override;
     void onConnect(NimBLEServer *server, ble_gap_conn_desc *desc) override;

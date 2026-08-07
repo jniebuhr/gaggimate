@@ -1,4 +1,11 @@
 #include "BleServerTransport.h"
+#include <Preferences.h>
+
+// NVS storage for the paired display's address. The NimBLE bond store alone is
+// not authoritative: earlier builds allowed several bonded displays, and the
+// pairing model is strictly one PCB <-> one screen.
+static constexpr const char *NVS_NAMESPACE = "gmble";
+static constexpr const char *NVS_PEER_KEY = "peer";
 
 void BleServerTransport::init(const String &deviceName) {
     NimBLEDevice::init(deviceName.c_str());
@@ -34,10 +41,22 @@ void BleServerTransport::init(const String &deviceName) {
     _advertising->addServiceUUID(gm_proto::SERVICE_UUID);
     _advertising->setScanResponse(true);
     // First boot pairs openly; once a display has bonded, only it may connect.
-    for (int i = 0; i < NimBLEDevice::getNumBonds(); i++)
-        NimBLEDevice::whiteListAdd(NimBLEDevice::getBondedAddress(i));
-    if (NimBLEDevice::getWhiteListCount() > 0)
+    loadPairedPeer();
+    if (_havePairedPeer) {
+        NimBLEDevice::whiteListAdd(_pairedPeer);
         enableWhitelist();
+        pruneForeignBonds(_pairedPeer);
+        ESP_LOGI(LOG_TAG, "Paired to display %s", _pairedPeer.toString().c_str());
+    } else if (NimBLEDevice::getNumBonds() > 0) {
+        // Migration from builds that whitelisted every bond: allow all bonded
+        // displays for now and adopt the first one that encrypts as THE peer.
+        for (int i = 0; i < NimBLEDevice::getNumBonds(); i++) {
+            NimBLEAddress addr = NimBLEDevice::getBondedAddress(i);
+            NimBLEDevice::whiteListAdd(addr);
+            ESP_LOGW(LOG_TAG, "Legacy bond %s allowed until one display is adopted", addr.toString().c_str());
+        }
+        enableWhitelist();
+    }
     _advertising->start();
     ESP_LOGI(LOG_TAG, "BLE server started, advertising %s", _whitelistOnly ? "(whitelist only)" : "(open, pairing mode)");
 }
@@ -47,15 +66,70 @@ void BleServerTransport::enableWhitelist() {
     _advertising->setScanFilter(true, true);
 }
 
-void BleServerTransport::whitelistPeer(const NimBLEAddress &address) {
-    for (size_t i = 0; i < NimBLEDevice::getWhiteListCount(); i++) {
-        if (NimBLEDevice::getWhiteListAddress(i) == address)
-            return; // already paired to this display
+void BleServerTransport::adoptPeer(const NimBLEAddress &address) {
+    if (_havePairedPeer) {
+        if (_pairedPeer == address)
+            return; // our display, nothing to do
+        // Whitelisting should make this impossible; refuse the interloper.
+        ESP_LOGW(LOG_TAG, "Rejecting bond from foreign display %s", address.toString().c_str());
+        NimBLEDevice::deleteBond(address);
+        disconnect();
+        return;
     }
-    if (NimBLEDevice::whiteListAdd(address)) {
-        enableWhitelist();
-        ESP_LOGI(LOG_TAG, "Bonded to %s, advertising is now whitelist-only", address.toString().c_str());
+    savePairedPeer(address);
+    pruneForeignBonds(address);
+    // Reduce the whitelist (possibly holding legacy multi-bond entries) to
+    // exactly this display. Advertising is stopped while connected, so the
+    // controller-level whitelist can be rewritten safely here.
+    while (NimBLEDevice::getWhiteListCount() > 0)
+        NimBLEDevice::whiteListRemove(NimBLEDevice::getWhiteListAddress(0));
+    NimBLEDevice::whiteListAdd(address);
+    enableWhitelist();
+    ESP_LOGI(LOG_TAG, "Bonded to display %s, advertising is now whitelist-only", address.toString().c_str());
+}
+
+void BleServerTransport::pruneForeignBonds(const NimBLEAddress &keep) {
+    std::vector<NimBLEAddress> foreign;
+    for (int i = 0; i < NimBLEDevice::getNumBonds(); i++) {
+        NimBLEAddress addr = NimBLEDevice::getBondedAddress(i);
+        if (addr != keep)
+            foreign.push_back(addr);
     }
+    for (auto &addr : foreign) {
+        ESP_LOGW(LOG_TAG, "Removing stale bond %s", addr.toString().c_str());
+        NimBLEDevice::deleteBond(addr);
+    }
+}
+
+void BleServerTransport::loadPairedPeer() {
+    Preferences prefs;
+    if (!prefs.begin(NVS_NAMESPACE, true))
+        return;
+    uint8_t buf[7];
+    if (prefs.getBytes(NVS_PEER_KEY, buf, sizeof(buf)) == sizeof(buf)) {
+        // Bytes are stored in NimBLE-native (inverse) order from getNative().
+        // Reconstruct via ble_addr_t: the uint8_t[6] constructor would
+        // reverse-copy and yield a byte-swapped address.
+        ble_addr_t addr;
+        memcpy(addr.val, buf, 6);
+        addr.type = buf[6];
+        _pairedPeer = NimBLEAddress(addr);
+        _havePairedPeer = true;
+    }
+    prefs.end();
+}
+
+void BleServerTransport::savePairedPeer(const NimBLEAddress &address) {
+    Preferences prefs;
+    if (!prefs.begin(NVS_NAMESPACE, false))
+        return;
+    uint8_t buf[7];
+    memcpy(buf, address.getNative(), 6);
+    buf[6] = address.getType();
+    prefs.putBytes(NVS_PEER_KEY, buf, sizeof(buf));
+    prefs.end();
+    _pairedPeer = address;
+    _havePairedPeer = true;
 }
 
 void BleServerTransport::clearBonds() {
@@ -65,6 +139,12 @@ void BleServerTransport::clearBonds() {
     while (NimBLEDevice::getWhiteListCount() > 0)
         NimBLEDevice::whiteListRemove(NimBLEDevice::getWhiteListAddress(0));
     NimBLEDevice::deleteAllBonds();
+    Preferences prefs;
+    if (prefs.begin(NVS_NAMESPACE, false)) {
+        prefs.remove(NVS_PEER_KEY);
+        prefs.end();
+    }
+    _havePairedPeer = false;
     _whitelistOnly = false;
     if (_advertising)
         _advertising->setScanFilter(false, false);
@@ -125,7 +205,7 @@ void BleServerTransport::onAuthenticationComplete(ble_gap_conn_desc *desc) {
         return;
     }
     if (desc->sec_state.bonded)
-        whitelistPeer(NimBLEAddress(desc->peer_id_addr));
+        adoptPeer(NimBLEAddress(desc->peer_id_addr));
 }
 
 void BleServerTransport::onDisconnect(NimBLEServer *server) {
