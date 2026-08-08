@@ -12,6 +12,8 @@
 #include <display/drivers/common/LV_Helper.h>
 #endif
 #include <display/main.h>
+#include <display/plugins/ShotUploadPlugin.h>
+#include <display/ui/default/eez/images.h>
 #include <display/ui/utils/effects.h>
 #include <utility>
 
@@ -210,6 +212,7 @@ void DefaultUI::init() {
     });
     pluginManager->on("controller:autotune:start", [this](Event const &) { changeScreen(SCREEN_ID_STANDBY_SCREEN); });
     pluginManager->on("controller:autotune:result", [this](Event const &) { changeScreen(SCREEN_ID_STANDBY_SCREEN); });
+    pluginManager->on("shot:completed", [this](Event const &) { rerender = true; });
 
     pluginManager->on("profiles:profile:select", [this](Event const &event) {
         reloadProfiles();
@@ -544,6 +547,62 @@ void DefaultUI::updateState() {
         std::lock_guard<std::mutex> guard(profilesMutex);
         uiFlags.has_next_profile(currentProfileIdx + 1 < static_cast<int>(favoritedProfileIds.size()));
     }
+    updateUploadButton();
+}
+
+void DefaultUI::setupUploadButton() {
+    if (uploadButton != nullptr || objects.check_button == nullptr) {
+        return;
+    }
+    lv_obj_t *parent = lv_obj_get_parent(objects.check_button);
+    if (parent == nullptr) {
+        return;
+    }
+
+    uploadButton = lv_imgbtn_create(parent);
+    lv_obj_set_size(uploadButton, 40, 40);
+    lv_imgbtn_set_src(uploadButton, LV_IMGBTN_STATE_RELEASED, nullptr, &img_refresh_20x20, nullptr);
+    lv_img_set_zoom(uploadButton, 200);
+    lv_obj_set_style_align(uploadButton, LV_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_pos(uploadButton, 50, 130);
+    lv_obj_set_style_img_recolor(uploadButton, lv_color_hex(theme_colors[eez_flow_get_selected_theme_index()][0]),
+                                 LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_img_recolor_opa(uploadButton, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_ext_click_area(uploadButton, 25);
+    lv_obj_add_flag(uploadButton, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_event_cb(
+        uploadButton,
+        [](lv_event_t *e) {
+            if (lv_event_get_code(e) == LV_EVENT_CLICKED) {
+                ShotUpload.uploadPending();
+            }
+        },
+        LV_EVENT_CLICKED, nullptr);
+}
+
+void DefaultUI::updateUploadButton() {
+#ifndef GAGGIMATE_SIM
+    setupUploadButton();
+    if (uploadButton == nullptr || objects.check_button == nullptr) {
+        return;
+    }
+
+    const bool checkVisible = !lv_obj_has_flag(objects.check_button, LV_OBJ_FLAG_HIDDEN);
+    const bool showUpload = checkVisible && controller->getSettings().isShotUploadActive() && ShotUpload.hasPendingUpload();
+
+    if (showUpload) {
+        lv_obj_clear_flag(uploadButton, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_set_pos(objects.check_button, -50, 130);
+        lv_obj_set_pos(uploadButton, 50, 130);
+        lv_obj_set_style_img_recolor(uploadButton, lv_color_hex(theme_colors[eez_flow_get_selected_theme_index()][0]),
+                                     LV_PART_MAIN | LV_STATE_DEFAULT);
+    } else {
+        lv_obj_add_flag(uploadButton, LV_OBJ_FLAG_HIDDEN);
+        if (checkVisible) {
+            lv_obj_set_pos(objects.check_button, 0, 130);
+        }
+    }
+#endif
 }
 
 void DefaultUI::updateSystemStatus() {

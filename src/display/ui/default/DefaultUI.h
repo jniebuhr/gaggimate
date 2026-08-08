@@ -79,6 +79,8 @@ class DefaultUI {
     void updateBoiler();
     void updateBrewProcess();
     void updateMenuScreen();
+    void setupUploadButton();
+    void updateUploadButton();
     String getErrorMessage();
 
     void adjustDials(lv_obj_t *dials);
@@ -117,6 +119,7 @@ class DefaultUI {
     int mode = MODE_STANDBY;
     bool pressureAvailable = false;
     int heatingFlash = 0;
+    lv_obj_t *uploadButton = nullptr;
     float pressure = 0.0f;
     float currentTemp = 0.0f;
     float targetTemp = 0.0f;

@@ -270,6 +270,60 @@ export function PluginCard({
 
       <div className='bg-base-200 rounded-lg p-4'>
         <div className='flex items-center justify-between'>
+          <span className='text-xl font-medium'>Shot Upload (Shotlog)</span>
+          <input
+            id='shotUploadActive'
+            name='shotUploadActive'
+            value='shotUploadActive'
+            type='checkbox'
+            className='toggle toggle-primary'
+            checked={!!formData.shotUploadActive}
+            onChange={onChange('shotUploadActive')}
+            aria-label='Enable Shot Upload'
+          />
+        </div>
+        {formData.shotUploadActive && (
+          <div className='border-base-300 mt-4 space-y-4 border-t pt-4'>
+            <p className='text-sm opacity-70'>
+              After a shot finishes, show an upload button next to the checkmark on the status
+              screen. Configure the full shots URL (for example
+              https://shotlog.example.com/api/v1/shots) and the Bearer token from Shotlog. The
+              plugin can wake a sleeping host via /up before uploading.
+            </p>
+            <div className='form-control'>
+              <label htmlFor='shotUploadUrl' className='mb-2 block text-sm font-medium'>
+                Upload URL
+              </label>
+              <input
+                id='shotUploadUrl'
+                name='shotUploadUrl'
+                type='text'
+                className='input input-bordered w-full'
+                placeholder='https://example.com/api/v1/shots'
+                value={formData.shotUploadUrl}
+                onChange={onChange('shotUploadUrl')}
+              />
+            </div>
+            <div className='form-control'>
+              <label htmlFor='shotUploadToken' className='mb-2 block text-sm font-medium'>
+                API token
+              </label>
+              <input
+                id='shotUploadToken'
+                name='shotUploadToken'
+                type='password'
+                className='input input-bordered w-full'
+                placeholder='Bearer token'
+                value={formData.shotUploadToken}
+                onChange={onChange('shotUploadToken')}
+              />
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className='bg-base-200 rounded-lg p-4'>
+        <div className='flex items-center justify-between'>
           <span className='text-xl font-medium'>Home Assistant over MQTT (Deprecated)</span>
           <input
             id='homeAssistant'

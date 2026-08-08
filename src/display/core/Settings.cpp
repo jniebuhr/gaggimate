@@ -147,6 +147,12 @@ void Settings::setSmartGrindIp(String smart_grind_ip) { smartGrindIp.set(smart_g
 
 void Settings::setSmartGrindMode(int smart_grind_mode) { smartGrindMode.set(smart_grind_mode); }
 
+void Settings::setShotUploadActive(bool shot_upload_active) { shotUploadActive.set(shot_upload_active); }
+
+void Settings::setShotUploadUrl(String shot_upload_url) { shotUploadUrl.set(std::move(shot_upload_url)); }
+
+void Settings::setShotUploadToken(String shot_upload_token) { shotUploadToken.set(std::move(shot_upload_token)); }
+
 void Settings::setHomeAssistant(const bool homeAssistant) { this->homeAssistant.set(homeAssistant); }
 
 void Settings::setHomeAssistantIP(const String &homeAssistantIP) { this->homeAssistantIP.set(homeAssistantIP); }

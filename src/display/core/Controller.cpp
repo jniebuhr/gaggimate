@@ -19,6 +19,7 @@
 #include <display/plugins/LedControlPlugin.h>
 #include <display/plugins/ShotHistoryPlugin.h>
 #include <display/plugins/SmartGrindPlugin.h>
+#include <display/plugins/ShotUploadPlugin.h>
 #include <display/plugins/WebUIPlugin.h>
 #ifndef GAGGIMATE_SIM // network/BLE plugins are device-only
 #include <display/plugins/BLEScalePlugin.h>
@@ -87,6 +88,9 @@ void Controller::setup() {
     if (settings.isSmartGrindActive()) {
         pluginManager->registerPlugin(new SmartGrindPlugin());
     }
+#ifndef GAGGIMATE_SIM
+    pluginManager->registerPlugin(&ShotUpload);
+#endif
 #ifndef GAGGIMATE_SIM // MQTT/HomeAssistant is device-only
     if (settings.isHomeAssistant()) {
         pluginManager->registerPlugin(new MQTTPlugin());

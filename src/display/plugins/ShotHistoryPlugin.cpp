@@ -286,6 +286,8 @@ void ShotHistoryPlugin::record() {
 
             if (!appendToIndex(indexEntry)) {
                 ESP_LOGE("ShotHistoryPlugin", "CRITICAL: Failed to add completed shot %u to index", indexEntry.id);
+            } else if (pluginManager != nullptr) {
+                pluginManager->trigger("shot:completed", "id", currentId);
             }
 
             // Notify clients the shot is actually persisted. The brew process's

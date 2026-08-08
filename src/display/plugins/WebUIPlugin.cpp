@@ -698,6 +698,11 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setSmartGrindIp(request->arg("smartGrindIp"));
             if (request->hasArg("smartGrindMode"))
                 settings->setSmartGrindMode(request->arg("smartGrindMode").toInt());
+            settings->setShotUploadActive(request->hasArg("shotUploadActive"));
+            if (request->hasArg("shotUploadUrl"))
+                settings->setShotUploadUrl(request->arg("shotUploadUrl"));
+            if (request->hasArg("shotUploadToken") && request->arg("shotUploadToken") != "---unchanged---")
+                settings->setShotUploadToken(request->arg("shotUploadToken"));
             settings->setHomeAssistant(request->hasArg("homeAssistant"));
             if (request->hasArg("haUser"))
                 settings->setHomeAssistantUser(request->arg("haUser"));
@@ -839,6 +844,9 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["smartGrindActive"] = settings.isSmartGrindActive();
     doc["smartGrindIp"] = settings.getSmartGrindIp();
     doc["smartGrindMode"] = settings.getSmartGrindMode();
+    doc["shotUploadActive"] = settings.isShotUploadActive();
+    doc["shotUploadUrl"] = settings.getShotUploadUrl();
+    doc["shotUploadToken"] = settings.getShotUploadToken().isEmpty() ? "" : "---unchanged---";
     doc["momentaryButtons"] = settings.isMomentaryButtons();
     doc["brewDelay"] = settings.getBrewDelay();
     doc["grindDelay"] = settings.getGrindDelay();
