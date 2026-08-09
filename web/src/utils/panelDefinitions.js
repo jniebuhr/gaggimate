@@ -91,11 +91,20 @@ export const PANEL_DEFINITIONS = [
     id: 'watertank',
     label: 'Water Tank',
     required: false,
-    available: ds => ds.waterLevelPercent !== null,
-    availableInSettings: status => !!status.tofDistance,
+    available: ds =>
+      ds.waterLevelPercent !== null ||
+      (!!ds.waterReminder?.enabled && !ds.waterReminder.suspendedByWaterSensor),
+    availableInSettings: status =>
+      !!status.tofDistance ||
+      (!!status.waterReminder?.enabled && !status.waterReminder.suspendedByWaterSensor),
     component: WaterLevelCard,
     props: ds => ({
       waterLevelPercent: ds.waterLevelPercent,
+      reminder: ds.waterReminder,
+      onLater: ds.waterReminderLater,
+      onRefill: ds.waterReminderRefill,
+      onResetCalibration: ds.waterReminderResetCalibration,
+      onTomorrow: ds.waterReminderTomorrow,
     }),
   },
   {

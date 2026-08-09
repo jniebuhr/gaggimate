@@ -33,11 +33,12 @@ export function useDashboardState() {
 
   // ── water level (Alba) ────────────────────────────────────
   const ledControl = caps?.ledControl || false;
+  const tofAvailable = caps?.tof || false;
   const emptyTankDistance = settings?.emptyTankDistance || 0;
   const fullTankDistance = settings?.fullTankDistance || 0;
   const albaCalibrated = emptyTankDistance > 0 && fullTankDistance > 0;
   const waterLevelPercent =
-    ledControl && albaCalibrated
+    tofAvailable && albaCalibrated
       ? Math.max(
           0,
           Math.min(
@@ -106,6 +107,7 @@ export function useDashboardState() {
     selectedProfileId: s.selectedProfileId,
     processInfo: p,
     tofDistance: s.tofDistance,
+    waterReminder: s.waterReminder,
     // derived
     isActive,
     isFinished,
@@ -115,6 +117,7 @@ export function useDashboardState() {
     showGrindTab,
     // water level
     ledControl,
+    tofAvailable,
     albaCalibrated,
     waterLevelPercent,
     // settings
@@ -122,6 +125,8 @@ export function useDashboardState() {
     altRelayFunction,
     emptyTankDistance,
     fullTankDistance,
+    waterReminderWarningCount: settings?.waterReminderWarningCount ?? 4,
+    waterReminderCriticalCount: settings?.waterReminderCriticalCount ?? 5,
     // action state
     isFlushing,
     // handlers
@@ -135,5 +140,9 @@ export function useDashboardState() {
     raiseTarget,
     lowerTarget,
     changeTarget,
+    waterReminderLater: () => send('req:water-reminder:later'),
+    waterReminderRefill: () => send('req:water-reminder:refill'),
+    waterReminderResetCalibration: () => send('req:water-reminder:reset-calibration'),
+    waterReminderTomorrow: () => send('req:water-reminder:tomorrow'),
   };
 }
