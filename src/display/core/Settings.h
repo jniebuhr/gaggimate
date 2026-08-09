@@ -120,6 +120,13 @@ class Settings {
     float getSteamPumpCutoff() const { return steamPumpCutoff.get(); }
     int getThemeMode() const { return themeMode.get(); }
     int getHistoryIndex() const { return historyIndex.get(); }
+    bool isWaterReminderEnabled() const { return waterReminderEnabled.get(); }
+    int getWaterReminderWarningCount() const { return waterReminderWarningCount.get(); }
+    int getWaterReminderCriticalCount() const { return waterReminderCriticalCount.get(); }
+    bool isWaterReminderStorageWarningAccepted() const { return waterReminderStorageWarningAccepted.get(); }
+    int getWaterReminderMode() const { return waterReminderMode.get(); }
+    int getWaterReminderScheduleDays() const { return waterReminderScheduleDays.get(); }
+    String getWaterReminderScheduleTime() const { return waterReminderScheduleTime.get(); }
 
     [[deprecated]]
     int getSunriseR() const {
@@ -209,6 +216,13 @@ class Settings {
     void setSteamPumpCutoff(float steam_pump_cutoff);
     void setThemeMode(int theme_mode);
     void setHistoryIndex(int history_index);
+    void setWaterReminderEnabled(bool enabled);
+    void setWaterReminderWarningCount(int count);
+    void setWaterReminderCriticalCount(int count);
+    void setWaterReminderStorageWarningAccepted(bool accepted);
+    void setWaterReminderMode(int mode);
+    void setWaterReminderScheduleDays(int days);
+    void setWaterReminderScheduleTime(const String &time);
     [[deprecated]]
     void setSunriseR(int sunrise_r);
     [[deprecated]]
@@ -284,6 +298,13 @@ class Settings {
     Property<float> steamPumpPercentage{registry, "spp", DEFAULT_STEAM_PUMP_PERCENTAGE};
     Property<float> steamPumpCutoff{registry, "spc", DEFAULT_STEAM_PUMP_CUTOFF};
     Property<int> historyIndex{registry, "hi", 0};
+    Property<bool> waterReminderEnabled{registry, "wr_en", false};
+    Property<int> waterReminderWarningCount{registry, "wr_warn", 4};
+    Property<int> waterReminderCriticalCount{registry, "wr_crit", 5};
+    Property<bool> waterReminderStorageWarningAccepted{registry, "wr_fs_ack", false};
+    Property<int> waterReminderMode{registry, "wr_mode", 0};
+    Property<int> waterReminderScheduleDays{registry, "wr_days", 4};
+    Property<String> waterReminderScheduleTime{registry, "wr_time", "20:00"};
 
     // Display settings
     Property<int> mainBrightness{registry, "main_b", 16};
