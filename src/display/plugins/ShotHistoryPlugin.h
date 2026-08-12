@@ -26,7 +26,7 @@ class ShotHistoryPlugin : public Plugin {
 
     // Index management methods
     bool appendToIndex(const ShotIndexEntry &entry);
-    void updateIndexMetadata(uint32_t shotId, uint8_t rating, uint16_t volume);
+    void updateIndexMetadata(uint32_t shotId, uint8_t rating, uint16_t volume, bool isDirtyNotes);
     void markIndexDeleted(uint32_t shotId);
     void rebuildIndex();
     void startAsyncRebuild();
