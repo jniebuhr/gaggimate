@@ -556,8 +556,9 @@ void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &respo
         auto id = request["id"].as<String>();
         JsonDocument notes; // explicit document: variant->const JsonDocument& is ambiguous on clang
         notes.set(request["notes"]);
-        saveNotes(id, notes);
-        isDirtyNotes = true; // when notes are saved the json is created even nothing has been changed (in fact taste notes are saved)
+        if (saveNotes(id, notes)) {
+            isDirtyNotes = true; // when notes are saved the json is created even if nothing has been changed (but in fact taste notes are saved)
+        }
 
         // Update rating and volume in index
         uint8_t rating = notes["rating"].as<uint8_t>();
@@ -582,14 +583,18 @@ void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &respo
     }
 }
 
-void ShotHistoryPlugin::saveNotes(const String &id, const JsonDocument &notes) {
+bool ShotHistoryPlugin::saveNotes(const String &id, const JsonDocument &notes) {
     File file = fs->open("/h/" + id + ".json", FILE_WRITE);
-    if (file) {
-        String notesStr;
-        serializeJson(notes, notesStr);
-        file.print(notesStr);
-        file.close();
+    if (!file) {
+        return false;
     }
+
+    String notesStr;
+    serializeJson(notes, notesStr);
+    size_t written = file.print(notesStr);
+    file.close();
+
+    return written == notesStr.length();
 }
 
 void ShotHistoryPlugin::loadNotes(const String &id, JsonDocument &notes) {
@@ -706,7 +711,7 @@ bool ShotHistoryPlugin::appendToIndex(const ShotIndexEntry &entry) {
     return true;
 }
 
-void ShotHistoryPlugin::updateIndexMetadata(uint32_t shotId, uint8_t rating, uint16_t volume, bool isDirtyNotes = false) {
+void ShotHistoryPlugin::updateIndexMetadata(uint32_t shotId, uint8_t rating, uint16_t volume, bool isDirtyNotes) {
     File indexFile = fs->open("/h/index.bin", "r+");
     if (!indexFile) {
         ESP_LOGE("ShotHistoryPlugin", "Failed to open index file for metadata update");
