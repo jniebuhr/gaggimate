@@ -5,6 +5,7 @@
 #include <display/core/process/BrewProcess.h>
 #include <display/core/process/Process.h>
 #include <display/core/zones.h>
+#include <display/plugins/BLEScalePlugin.h>
 #ifndef GAGGIMATE_SIM // hardware panel drivers are device-only
 #include <display/drivers/AmoledDisplayDriver.h>
 #include <display/drivers/LilyGoDriver.h>
@@ -26,6 +27,11 @@ static constexpr uint32_t STARTUP_FADE_MS = 1000; // standby fade-in duration on
 static constexpr int32_t GAUGE_TICK_LONG = 25;      // meter tick length on most screens
 static constexpr int32_t GAUGE_TICK_SHORT = 10;     // shortened tick length on profile / new-menu screens
 static constexpr uint32_t GAUGE_TICK_ANIM_MS = 300; // tick length transition duration
+
+// After the first weight sample on a freshly connected scale, wait before
+// starting the shot so tare/notifications can finish (GATT connect alone is
+// not enough — see Controller::activate).
+static constexpr unsigned long SCALE_READY_SETTLE_MS = 500;
 
 // Profile and the new menu screen show shortened meter ticks.
 static bool isShortTickScreen(ScreensEnum s) {
@@ -131,6 +137,7 @@ void DefaultUI::init() {
     pluginManager->on("controller:process:end", triggerRender);
     pluginManager->on("controller:process:start", triggerRender);
     pluginManager->on("controller:mode:change", [this](Event const &event) {
+        scaleWaitDismiss = true;
         mode = event.getInt("value");
         switch (mode) {
         case MODE_STANDBY:
@@ -152,7 +159,15 @@ void DefaultUI::init() {
             break;
         };
     });
-    pluginManager->on("controller:brew:start", [this](Event const &event) { changeScreen(SCREEN_ID_STATUS_SCREEN); });
+    pluginManager->on("controller:brew:start", [this](Event const &event) {
+        scaleWaitDismiss = true;
+        changeScreen(SCREEN_ID_STATUS_SCREEN);
+    });
+    pluginManager->on("controller:brew:scale-missing", [this](Event const &) {
+        scaleWaitReadyAt = 0;
+        scaleWaitArmed = true;
+        scaleWaitShow = true;
+    });
     pluginManager->on("controller:brew:clear", [this](Event const &event) {
         if (eez_flow_get_current_screen() == SCREEN_ID_STATUS_SCREEN) {
             changeScreen(SCREEN_ID_BREW_SCREEN);
@@ -224,6 +239,11 @@ void DefaultUI::init() {
             bluetoothWeight = newWeight;
             rerender = true;
         }
+        // Record the first sample after the wait dialog opened. Do not touch
+        // LVGL here — this callback can run on the NimBLE task.
+        if (scaleWaitArmed && scaleWaitReadyAt == 0) {
+            scaleWaitReadyAt = ::millis();
+        }
     });
     xTaskCreatePinnedToCore(profileLoopTask, "DefaultUI::loopProfiles", configMINIMAL_STACK_SIZE * 4, this, 1, &profileTaskHandle,
                             0);
@@ -232,6 +252,8 @@ void DefaultUI::init() {
 void DefaultUI::loop() {
     const unsigned long now = ::millis();
     const unsigned long diff = now - lastRender;
+
+    updateScaleWaitModal();
 
     if (now - lastTempLog > TEMP_HISTORY_INTERVAL) {
         updateTempHistory();
@@ -361,6 +383,159 @@ void DefaultUI::onProfileSelect() {
     profileDirty = false;
     changeScreen(SCREEN_ID_BREW_SCREEN);
 }
+
+static lv_color_t scaleWaitFg() { return lv_color_hex(theme_colors[eez_flow_get_selected_theme_index()][COLOR_ID_NICE_WHITE]); }
+
+static lv_color_t scaleWaitBg() { return lv_color_hex(theme_colors[eez_flow_get_selected_theme_index()][COLOR_ID_DARK]); }
+
+void DefaultUI::showScaleWaitModal() {
+    if (scaleWaitModal != nullptr) {
+        return;
+    }
+    scaleWaitAnnouncedReady = false;
+
+    lv_obj_t *overlay = lv_obj_create(lv_layer_top());
+    scaleWaitModal = overlay;
+    lv_obj_set_size(overlay, LV_PCT(100), LV_PCT(100));
+    lv_obj_set_style_bg_color(overlay, lv_color_black(), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(overlay, LV_OPA_50, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(overlay, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_all(overlay, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_radius(overlay, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_clear_flag(overlay, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_add_flag(overlay, LV_OBJ_FLAG_CLICKABLE);
+
+    lv_obj_t *card = lv_obj_create(overlay);
+    lv_obj_set_size(card, 300, 210);
+    lv_obj_center(card);
+    lv_obj_set_style_bg_color(card, scaleWaitBg(), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(card, LV_OPA_COVER, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(card, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_color(card, scaleWaitFg(), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_radius(card, 20, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_all(card, 18, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_clear_flag(card, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_flex_flow(card, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_flex_align(card, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_set_style_pad_row(card, 12, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    lv_obj_t *title = lv_label_create(card);
+    lv_label_set_text(title, "Weighing Scale");
+    lv_obj_set_style_text_font(title, &lv_font_montserrat_24, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(title, scaleWaitFg(), LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    scaleWaitStatusLabel = lv_label_create(card);
+    lv_label_set_text(scaleWaitStatusLabel, "Waiting for scale to connect...");
+    lv_label_set_long_mode(scaleWaitStatusLabel, LV_LABEL_LONG_WRAP);
+    lv_obj_set_width(scaleWaitStatusLabel, 260);
+    lv_obj_set_style_text_align(scaleWaitStatusLabel, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(scaleWaitStatusLabel, &lv_font_montserrat_18, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(scaleWaitStatusLabel, scaleWaitFg(), LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    lv_obj_t *buttons = lv_obj_create(card);
+    lv_obj_set_size(buttons, 260, 48);
+    lv_obj_set_style_bg_opa(buttons, LV_OPA_TRANSP, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(buttons, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_all(buttons, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_clear_flag(buttons, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_flex_flow(buttons, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(buttons, LV_FLEX_ALIGN_SPACE_EVENLY, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+
+    auto makeButton = [this](lv_obj_t *parent, const char *label, bool filled, lv_event_cb_t cb) {
+        lv_obj_t *btn = lv_btn_create(parent);
+        lv_obj_set_size(btn, 110, 42);
+        lv_obj_set_style_radius(btn, 12, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_shadow_width(btn, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+        if (filled) {
+            lv_obj_set_style_bg_color(btn, scaleWaitFg(), LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_color(btn, scaleWaitBg(), LV_PART_MAIN | LV_STATE_DEFAULT);
+        } else {
+            lv_obj_set_style_bg_opa(btn, LV_OPA_TRANSP, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_border_width(btn, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_border_color(btn, scaleWaitFg(), LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_color(btn, scaleWaitFg(), LV_PART_MAIN | LV_STATE_DEFAULT);
+        }
+        lv_obj_t *text = lv_label_create(btn);
+        lv_label_set_text(text, label);
+        lv_obj_set_style_text_font(text, &lv_font_montserrat_18, LV_PART_MAIN | LV_STATE_DEFAULT);
+        if (filled) {
+            lv_obj_set_style_text_color(text, scaleWaitBg(), LV_PART_MAIN | LV_STATE_DEFAULT);
+        } else {
+            lv_obj_set_style_text_color(text, scaleWaitFg(), LV_PART_MAIN | LV_STATE_DEFAULT);
+        }
+        lv_obj_center(text);
+        lv_obj_add_event_cb(btn, cb, LV_EVENT_CLICKED, this);
+        return btn;
+    };
+
+    makeButton(buttons, "Ignore", true, [](lv_event_t *e) {
+        auto *ui = static_cast<DefaultUI *>(lv_event_get_user_data(e));
+        ui->onScaleWaitIgnore();
+    });
+    makeButton(buttons, "Cancel", false, [](lv_event_t *e) {
+        auto *ui = static_cast<DefaultUI *>(lv_event_get_user_data(e));
+        ui->onScaleWaitCancel();
+    });
+}
+
+void DefaultUI::closeScaleWaitModal() {
+    scaleWaitArmed = false;
+    scaleWaitShow = false;
+    scaleWaitDismiss = false;
+    scaleWaitReadyAt = 0;
+    scaleWaitAnnouncedReady = false;
+    scaleWaitStatusLabel = nullptr;
+    if (scaleWaitModal == nullptr) {
+        return;
+    }
+    lv_obj_t *modal = scaleWaitModal;
+    scaleWaitModal = nullptr;
+    lv_obj_del(modal);
+}
+
+void DefaultUI::updateScaleWaitModal() {
+    if (scaleWaitDismiss.exchange(false)) {
+        closeScaleWaitModal();
+        return;
+    }
+    if (scaleWaitShow.exchange(false) && scaleWaitModal == nullptr) {
+        showScaleWaitModal();
+    }
+    if (scaleWaitModal == nullptr) {
+        return;
+    }
+
+    if (!BLEScales.isConnected()) {
+        if (scaleWaitAnnouncedReady || scaleWaitReadyAt != 0) {
+            scaleWaitReadyAt = 0;
+            scaleWaitAnnouncedReady = false;
+            if (scaleWaitStatusLabel != nullptr) {
+                lv_label_set_text(scaleWaitStatusLabel, "Waiting for scale to connect...");
+            }
+        }
+        return;
+    }
+
+    const unsigned long readyAt = scaleWaitReadyAt;
+    if (readyAt == 0) {
+        return;
+    }
+    if (!scaleWaitAnnouncedReady && scaleWaitStatusLabel != nullptr) {
+        lv_label_set_text(scaleWaitStatusLabel, "Scale connected, starting...");
+        scaleWaitAnnouncedReady = true;
+    }
+    if (::millis() - readyAt >= SCALE_READY_SETTLE_MS) {
+        closeScaleWaitModal();
+        controller->activate(false);
+    }
+}
+
+void DefaultUI::onScaleWaitIgnore() {
+    closeScaleWaitModal();
+    controller->activate(true);
+}
+
+void DefaultUI::onScaleWaitCancel() { closeScaleWaitModal(); }
 
 void DefaultUI::onVolumetricDelete() {
     controller->onVolumetricDelete();
