@@ -20,7 +20,7 @@ function SunriseColorField({ id, label, value, fallback, onChange }) {
             id={id}
             name={id}
             type='color'
-            className='input input-bordered invisible w-full'
+            className='input cursor-pointer opacity-0'
             value={value || fallback}
             onChange={onChange}
           />
