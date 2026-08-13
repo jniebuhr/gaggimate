@@ -11,8 +11,6 @@ import {
   STATISTICS_DROPDOWN_PANEL_SURFACE_STYLE,
 } from './statisticsDropdownSurface';
 
-/* global globalThis */
-
 const LONG_PRESS_MS = 220;
 const MOVE_CANCEL_PX = 10;
 const STATISTICS_MULTISELECT_PANEL_CLASS = `absolute top-full left-0 mt-2 w-[min(92vw,28rem)] ${STATISTICS_DROPDOWN_PANEL_SURFACE_CLASS}`;

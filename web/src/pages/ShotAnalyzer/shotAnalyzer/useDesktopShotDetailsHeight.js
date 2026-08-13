@@ -1,5 +1,3 @@
-/* global globalThis */
-
 import { useLayoutEffect, useState } from 'preact/hooks';
 
 function resetMeasuredDesktopDetailsHeight(setDesktopSingleDetailsHeight) {

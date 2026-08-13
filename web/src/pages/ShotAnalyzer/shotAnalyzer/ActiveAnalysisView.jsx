@@ -1,7 +1,5 @@
 /** Renders the responsive chart, details, and analysis-table composition. */
 
-/* global globalThis */
-
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronLeft } from '@fortawesome/free-solid-svg-icons/faChevronLeft';

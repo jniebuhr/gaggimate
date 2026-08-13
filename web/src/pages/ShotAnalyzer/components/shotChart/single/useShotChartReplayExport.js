@@ -1,4 +1,3 @@
-/* global globalThis */
 /**
  * useShotChartReplayExport.js
  *

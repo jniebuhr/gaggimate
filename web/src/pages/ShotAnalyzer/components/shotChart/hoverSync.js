@@ -5,8 +5,6 @@
  * temperature charts visually aligned and hover-synchronized.
  */
 
-/* global globalThis */
-
 function clearTooltipState(chart) {
   if (!chart) return;
   chart.$fixedTooltipPointerY = null;

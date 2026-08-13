@@ -1,5 +1,3 @@
-/* global globalThis */
-
 import {
   COMPARE_STYLE_FADE,
   COMPARE_STYLE_LINE_PATTERN,
