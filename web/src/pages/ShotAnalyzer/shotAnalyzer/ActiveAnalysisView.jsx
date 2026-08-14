@@ -174,6 +174,7 @@ export function ActiveAnalysisView({
   compareCollectionWithAccents,
   compareTargetDisplayMode,
   currentShot,
+  currentProfile,
   handleSwapCompareSlots,
   isCompareActive,
   mobileSubpageNavigation,
@@ -286,6 +287,7 @@ export function ActiveAnalysisView({
             >
               <ShotChart
                 shotData={currentShot}
+                profileData={currentProfile}
                 results={analysisResults}
                 compareEntries={compareCollectionWithAccents}
                 isCompareActive={isCompareActive}
