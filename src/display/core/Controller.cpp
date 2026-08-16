@@ -226,15 +226,10 @@ void Controller::setupBluetooth() {
         // starts with no state and updateControl() otherwise only sends deltas.
         controlStateSent = false;
         if (connected) {
-            if (!loaded) {
-                controllerInfoFallbackStartedAt = millis();
-                controllerInfoFallbackPending = true;
-            }
             // Re-assert the connection interval for the fresh link (e.g. tight
             // again if we reconnected mid-shot).
             applyConnectionPriority(true);
         } else if (initialized) {
-            controllerInfoFallbackPending = false;
             pluginManager->trigger("controller:bluetooth:disconnect");
             waitingForController = true;
             setMode(MODE_STANDBY);
@@ -369,7 +364,6 @@ void Controller::setupBluetooth() {
 
 void Controller::onSystemInfo(const char *hardware, const char *version, uint32_t protocolVersion, bool dimming, bool pressure,
                               bool ledControl, bool tof, vector<uint32_t> addons) {
-    controllerInfoFallbackPending = false;
     const bool mismatch = protocolVersion != gm_proto::PROTOCOL_VERSION;
     systemInfo = SystemInfo{.hardware = String(hardware),
                             .version = String(version),
@@ -407,11 +401,7 @@ void Controller::onSystemInfo(const char *hardware, const char *version, uint32_
     pluginManager->trigger("controller:bluetooth:connect");
 }
 
-void Controller::onIncompatibleController(const String &infoJson) { onControllerInfoJson(infoJson, false); }
-
-void Controller::onControllerInfoFallback(const String &infoJson) { onControllerInfoJson(infoJson, true); }
-
-void Controller::onControllerInfoJson(const String &infoJson, bool trustProtocolVersion) {
+void Controller::onIncompatibleController(const String &infoJson) {
     waitingForController = false;
 
     JsonDocument doc;
@@ -427,8 +417,7 @@ void Controller::onControllerInfoJson(const String &infoJson, bool trustProtocol
         hardware = "Legacy controller";
     if (version.isEmpty())
         version = "0.0.0";
-    const uint32_t protocolVersion = trustProtocolVersion ? (doc["pv"] | 0) : 0;
-    onSystemInfo(hardware.c_str(), version.c_str(), protocolVersion, doc["cp"]["dm"].as<bool>(), doc["cp"]["ps"].as<bool>(),
+    onSystemInfo(hardware.c_str(), version.c_str(), 0, doc["cp"]["dm"].as<bool>(), doc["cp"]["ps"].as<bool>(),
                  doc["cp"]["led"].as<bool>(), doc["cp"]["tof"].as<bool>(), {});
 }
 
@@ -563,19 +552,6 @@ void Controller::loop() {
     }
 
     unsigned long now = millis();
-
-    if (comms.isConnected() && !loaded && controllerInfoFallbackPending &&
-        (now - controllerInfoFallbackStartedAt) >= CONTROLLER_INFO_FALLBACK_MS) {
-        controllerInfoFallbackPending = false;
-        const String info = comms.readControllerInfo();
-        if (!info.isEmpty()) {
-            ESP_LOGW(LOG_TAG, "Pushed system info missing after connect; recovering from INFO characteristic");
-            onControllerInfoFallback(info);
-        } else {
-            ESP_LOGW(LOG_TAG, "Controller INFO unavailable after connect; reconnecting");
-            comms.disconnect();
-        }
-    }
 
     // A config burst right after a reconnect can be lost in the unstable BLE window,
     // and a spurious ACK then stops the reliable layer retrying. Re-send until it lands.
