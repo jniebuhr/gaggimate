@@ -201,6 +201,18 @@ void BleClientTransport::disconnect() {
         _client->disconnect();
 }
 
+String BleClientTransport::readInfo() {
+    if (_client == nullptr || !_client->isConnected())
+        return "";
+    NimBLERemoteService *service = _client->getService(NimBLEUUID(gm_proto::SERVICE_UUID));
+    if (service == nullptr)
+        return "";
+    NimBLERemoteCharacteristic *info = service->getCharacteristic(NimBLEUUID(gm_proto::INFO_CHAR_UUID));
+    if (info == nullptr || !info->canRead())
+        return "";
+    return String(info->readValue().c_str());
+}
+
 void BleClientTransport::setLowLatency(bool active) {
     _lowLatency = active;
     applyConnParams();

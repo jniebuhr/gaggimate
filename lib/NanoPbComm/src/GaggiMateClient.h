@@ -42,6 +42,7 @@ class GaggiMateClient {
     bool connectToServer() { return _transport.connectToServer(); }
     bool isConnected() const { return _endpoint.isConnected(); }
     void disconnect() { _transport.disconnect(); }
+    String readControllerInfo() { return _transport.readInfo(); }
 
     // Forget the paired controller so the display can pair to a different one.
     void clearBonds() { _transport.clearBonds(); }

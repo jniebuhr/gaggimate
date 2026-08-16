@@ -129,6 +129,11 @@ class Controller {
     // same path as a protocol-version mismatch (OTA recovery only). infoJson is
     // the legacy INFO characteristic contents (hardware/version/capabilities).
     void onIncompatibleController(const String &infoJson);
+    // Startup recovery for a current controller whose pushed SystemInfo was
+    // missed during subscription. Unlike the incompatible path, this trusts
+    // the protocol version advertised by the INFO characteristic.
+    void onControllerInfoFallback(const String &infoJson);
+    void onControllerInfoJson(const String &infoJson, bool trustProtocolVersion);
     void setupWifi();
 
     // Functional methods
@@ -217,6 +222,10 @@ class Controller {
     bool screenReady = false;
     bool waitingForController = false;
     unsigned long connectStartTime = 0;
+    // A freshly encrypted link can deliver telemetry while the one-shot pushed
+    // SystemInfo notification is lost during subscription. Read the legacy INFO
+    // characteristic after this deadline so startup cannot wait forever.
+    unsigned long controllerInfoFallbackAt = 0;
     // Re-send the config burst for a few seconds after a (re)connect (see loop()).
     unsigned long configResendUntil = 0;
     unsigned long lastConfigResend = 0;
@@ -233,6 +242,7 @@ class Controller {
     unsigned long lastBluetoothMeasurement = 0;
     static const unsigned long BLUETOOTH_GRACE_PERIOD_MS = 1500; // 1.5 second grace period
     static const unsigned long CONTROLLER_WAITING_TIMEOUT_MS = 10000;
+    static const unsigned long CONTROLLER_INFO_FALLBACK_MS = 1500;
 
     xTaskHandle logicTaskHandle;
 

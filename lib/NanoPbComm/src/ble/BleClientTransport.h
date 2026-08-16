@@ -29,6 +29,10 @@ class BleClientTransport : public Transport, public NimBLEAdvertisedDeviceCallba
     bool connectToServer(); // returns true once connected + subscribed
     bool isReadyForConnection() const { return _readyForConnection; }
     void disconnect();
+    // Read the controller's unencrypted legacy INFO characteristic. This is a
+    // startup fallback when the pushed SystemInfo notification loses the race
+    // with CCCD subscription during an encrypted reconnect.
+    String readInfo();
 
     // Forget the paired controller so the display can pair to a different one.
     void clearBonds();

@@ -57,6 +57,10 @@ class GaggiMateClient {
     bool connectToServer();
     bool isConnected() const { return _connected; }
     void disconnect() { _connected = false; }
+    String readControllerInfo() const {
+        return String("{\"hw\":\"Simulator\",\"v\":\"sim\",\"pv\":") + String(gm_proto::PROTOCOL_VERSION) +
+               String(",\"cp\":{\"ps\":true,\"dm\":true,\"led\":false,\"tof\":false}}");
+    }
 
     uint32_t getLatencyMs() const { return 18; }
     uint32_t getLastLatencyMs() const { return 18; }
