@@ -4,7 +4,6 @@
 #include "../Protocol.h"
 #include "../Transport.h"
 #include <NimBLEDevice.h>
-#include <atomic>
 #include <ble_ota_dfu.hpp>
 
 /**
@@ -26,9 +25,6 @@ class BleServerTransport : public Transport, public NimBLEServerCallbacks, publi
     BleServerTransport() = default;
 
     void init(const String &deviceName);
-    // Dispatch a completed notification subscription outside NimBLE's callback
-    // so the client has finished installing its notification handler first.
-    void maintain();
     void startAdvertising();
 
     // Publish system info on the legacy read-only INFO characteristic (kept so
@@ -51,7 +47,6 @@ class BleServerTransport : public Transport, public NimBLEServerCallbacks, publi
 
   private:
     bool _connected = false;
-    std::atomic<bool> _notifyReadyPending{false};
     bool _whitelistOnly = false;
     // The single display this PCB is paired to, persisted in NVS. Source of
     // truth for the whitelist; the NimBLE bond store is pruned to match.

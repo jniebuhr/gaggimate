@@ -26,7 +26,6 @@ void GaggiMateServer::pumpTask(void *arg) {
     auto *self = static_cast<GaggiMateServer *>(arg);
     TickType_t lastWake = xTaskGetTickCount();
     for (;;) {
-        self->_transport.maintain();
         self->_endpoint.loop();
         xTaskDelayUntil(&lastWake, pdMS_TO_TICKS(15));
     }

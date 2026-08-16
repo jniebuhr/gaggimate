@@ -159,13 +159,6 @@ void BleServerTransport::startAdvertising() {
         _advertising->start();
 }
 
-void BleServerTransport::maintain() {
-    if (!_notifyReadyPending.exchange(false) || !_connected)
-        return;
-    ESP_LOGI(LOG_TAG, "Notification subscription ready");
-    emitConnection(true);
-}
-
 void BleServerTransport::setInfo(const String &info) {
     _info = info;
     if (_infoChar)
@@ -186,9 +179,7 @@ void BleServerTransport::onConnect(NimBLEServer *server) {
     _connected = true;
     server->stopAdvertising();
     ESP_LOGI(LOG_TAG, "Client connected");
-    // Do not announce the protocol connection yet. SystemInfo is pushed by the
-    // Endpoint connection callback, and notifying from here races the client's
-    // CCCD subscription.
+    emitConnection(true);
 }
 
 void BleServerTransport::onConnect(NimBLEServer *server, ble_gap_conn_desc *desc) {
@@ -219,7 +210,6 @@ void BleServerTransport::onAuthenticationComplete(ble_gap_conn_desc *desc) {
 
 void BleServerTransport::onDisconnect(NimBLEServer *server) {
     _connected = false;
-    _notifyReadyPending.store(false);
     _connHandle = BLE_HS_CONN_HANDLE_NONE;
     ESP_LOGI(LOG_TAG, "Client disconnected");
     emitConnection(false);
@@ -242,6 +232,5 @@ void BleServerTransport::onWrite(NimBLECharacteristic *characteristic) {
 }
 
 void BleServerTransport::onSubscribe(NimBLECharacteristic *pCharacteristic, ble_gap_conn_desc *desc, uint16_t subValue) {
-    if (pCharacteristic == _txChar && subValue != 0)
-        _notifyReadyPending.store(true);
+    emitConnection(true);
 }

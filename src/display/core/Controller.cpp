@@ -226,13 +226,15 @@ void Controller::setupBluetooth() {
         // starts with no state and updateControl() otherwise only sends deltas.
         controlStateSent = false;
         if (connected) {
-            if (!loaded)
-                controllerInfoFallbackAt = millis() + CONTROLLER_INFO_FALLBACK_MS;
+            if (!loaded) {
+                controllerInfoFallbackStartedAt = millis();
+                controllerInfoFallbackPending = true;
+            }
             // Re-assert the connection interval for the fresh link (e.g. tight
             // again if we reconnected mid-shot).
             applyConnectionPriority(true);
         } else if (initialized) {
-            controllerInfoFallbackAt = 0;
+            controllerInfoFallbackPending = false;
             pluginManager->trigger("controller:bluetooth:disconnect");
             waitingForController = true;
             setMode(MODE_STANDBY);
@@ -367,7 +369,7 @@ void Controller::setupBluetooth() {
 
 void Controller::onSystemInfo(const char *hardware, const char *version, uint32_t protocolVersion, bool dimming, bool pressure,
                               bool ledControl, bool tof, vector<uint32_t> addons) {
-    controllerInfoFallbackAt = 0;
+    controllerInfoFallbackPending = false;
     const bool mismatch = protocolVersion != gm_proto::PROTOCOL_VERSION;
     systemInfo = SystemInfo{.hardware = String(hardware),
                             .version = String(version),
@@ -562,8 +564,9 @@ void Controller::loop() {
 
     unsigned long now = millis();
 
-    if (comms.isConnected() && !loaded && controllerInfoFallbackAt != 0 && now >= controllerInfoFallbackAt) {
-        controllerInfoFallbackAt = 0;
+    if (comms.isConnected() && !loaded && controllerInfoFallbackPending &&
+        (now - controllerInfoFallbackStartedAt) >= CONTROLLER_INFO_FALLBACK_MS) {
+        controllerInfoFallbackPending = false;
         const String info = comms.readControllerInfo();
         if (!info.isEmpty()) {
             ESP_LOGW(LOG_TAG, "Pushed system info missing after connect; recovering from INFO characteristic");

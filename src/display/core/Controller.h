@@ -224,8 +224,9 @@ class Controller {
     unsigned long connectStartTime = 0;
     // A freshly encrypted link can deliver telemetry while the one-shot pushed
     // SystemInfo notification is lost during subscription. Read the legacy INFO
-    // characteristic after this deadline so startup cannot wait forever.
-    unsigned long controllerInfoFallbackAt = 0;
+    // characteristic after the elapsed delay so startup cannot wait forever.
+    unsigned long controllerInfoFallbackStartedAt = 0;
+    bool controllerInfoFallbackPending = false;
     // Re-send the config burst for a few seconds after a (re)connect (see loop()).
     unsigned long configResendUntil = 0;
     unsigned long lastConfigResend = 0;
