@@ -122,21 +122,10 @@ bool BleClientTransport::connectToServer() {
         return true; // link intentionally kept; do not disconnect/rescan
     }
 
-    // Reset the endpoint's per-link delivery state before enabling notifications.
-    // subscribe() can synchronously trigger the controller's onSubscribe(), which
-    // immediately sends reliable SystemInfo. Emitting the connection afterwards
-    // could therefore clear an already queued and ACKed SystemInfo payload.
-    if (!_notifyChar->canNotify()) {
-        ESP_LOGE(LOG_TAG, "TX characteristic cannot notify");
-        _client->disconnect();
-        scan();
-        return false;
-    }
-    emitConnection(true);
-
     // Without the notify subscription we would connect but never receive data;
     // treat a failed subscribe as a failed connection.
-    if (!_notifyChar->subscribe(true, std::bind(&BleClientTransport::notifyCallback, this, std::placeholders::_1,
+    if (!_notifyChar->canNotify() ||
+        !_notifyChar->subscribe(true, std::bind(&BleClientTransport::notifyCallback, this, std::placeholders::_1,
                                                 std::placeholders::_2, std::placeholders::_3, std::placeholders::_4))) {
         ESP_LOGE(LOG_TAG, "Failed to subscribe to TX characteristic");
         _client->disconnect();
@@ -151,6 +140,7 @@ bool BleClientTransport::connectToServer() {
     if (NimBLEDevice::isBonded(_serverAddress))
         savePairedPeer(_serverAddress);
     ESP_LOGI(LOG_TAG, "Connected, MTU: %d", _client->getMTU());
+    emitConnection(true);
     return true;
 }
 
