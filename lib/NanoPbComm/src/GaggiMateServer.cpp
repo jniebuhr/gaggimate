@@ -10,6 +10,7 @@ void GaggiMateServer::init(const String &deviceName, const String &hardware, con
     setSystemInfo(hardware, version, capabilities);
     registerHandlers();
     _endpoint.onConnection([this](bool connected) {
+        _sentSystemInfoAfterHandshake = false;
         if (connected)
             pushSystemInfo();
     });
@@ -134,6 +135,14 @@ void GaggiMateServer::sendError(int code) { _endpoint.send(buildError(code)); }
 
 void GaggiMateServer::registerHandlers() {
     _endpoint.on(gaggimate_Payload_ping_tag, [this](const gm::Payload &) {
+        // A SystemInfo notification sent synchronously from the BLE subscribe
+        // callback can beat the client's notification handler. Once a ping has
+        // crossed the framed protocol, the link is fully established; resend
+        // SystemInfo once so reliable delivery starts from a usable session.
+        if (!_sentSystemInfoAfterHandshake) {
+            _sentSystemInfoAfterHandshake = true;
+            pushSystemInfo();
+        }
         if (_pingCb)
             _pingCb();
     });

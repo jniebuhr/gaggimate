@@ -87,6 +87,10 @@ class GaggiMateServer {
     BleServerTransport _transport;
     Endpoint _endpoint;
     gm::SystemInfo _systemInfo = gaggimate_SystemInfo_init_zero;
+    // The BLE subscribe callback can run before the client has finished
+    // installing its notification handler. The first received ping is the
+    // application-level proof that the new session is ready in both directions.
+    bool _sentSystemInfoAfterHandshake = false;
 
     PingCallback _pingCb;
     BoilerCallback _boilerCb;
