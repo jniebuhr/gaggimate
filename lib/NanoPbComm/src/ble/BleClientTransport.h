@@ -82,6 +82,7 @@ class BleClientTransport : public Transport, public NimBLEAdvertisedDeviceCallba
     bool isEncrypted() const;
     void loadPairedPeer();
     void savePairedPeer(const NimBLEAddress &address);
+    bool isLockedToOther(NimBLEAdvertisedDevice *advertisedDevice) const;
 
     // Connection-interval units are 1.25ms; supervision timeout units are 10ms.
     static constexpr uint16_t ACTIVE_MIN_INTERVAL = 6; // 7.5 ms

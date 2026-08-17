@@ -233,22 +233,57 @@ bool BleClientTransport::isEncrypted() const {
 }
 
 void BleClientTransport::onResult(NimBLEAdvertisedDevice *advertisedDevice) {
-    if (!advertisedDevice->haveServiceUUID())
-        return;
-    if (advertisedDevice->isAdvertisingService(NimBLEUUID(gm_proto::SERVICE_UUID))) {
-        // Once paired, this display only talks to its own controller.
-        if (_havePairedPeer && advertisedDevice->getAddress() != _pairedPeer) {
-            ESP_LOGD(LOG_TAG, "Ignoring foreign controller %s", advertisedDevice->getAddress().toString().c_str());
+    if (_havePairedPeer) {
+        // Our controller advertises directed PDUs, which carry no payload (no
+        // service UUID) -- match on address alone. Anything else is not ours.
+        if (advertisedDevice->getAddress() != _pairedPeer)
+            return;
+    } else {
+        const bool gmService =
+            advertisedDevice->haveServiceUUID() && advertisedDevice->isAdvertisingService(NimBLEUUID(gm_proto::SERVICE_UUID));
+        // A directed advert reaching this radio is always addressed to us: it
+        // means a controller still paired to this display (we lost our NVS).
+        // Connect and let the stale-bond path re-pair.
+        const bool directedAtUs = advertisedDevice->getAdvType() == BLE_HCI_ADV_RPT_EVTYPE_DIR_IND;
+        if (!gmService && !directedAtUs)
+            return;
+        // Skip open-advertising controllers locked to a different display
+        // (mixed-firmware safety net; paired controllers normally advertise
+        // directed and are invisible to us in the first place).
+        if (gmService && isLockedToOther(advertisedDevice)) {
+            ESP_LOGD(LOG_TAG, "Skipping controller %s (paired to another display)",
+                     advertisedDevice->getAddress().toString().c_str());
             return;
         }
-        ESP_LOGI(LOG_TAG, "Found controller, ready to connect");
-        _scanner->stop();
-        // Take a value copy of the address now -- the device object is freed as
-        // soon as this callback returns (see _serverAddress note in the header).
-        _serverAddress = advertisedDevice->getAddress();
-        _haveServerAddress = true;
-        _readyForConnection = true;
     }
+    ESP_LOGI(LOG_TAG, "Found controller, ready to connect");
+    _scanner->stop();
+    // Take a value copy of the address now -- the device object is freed as
+    // soon as this callback returns (see _serverAddress note in the header).
+    _serverAddress = advertisedDevice->getAddress();
+    _haveServerAddress = true;
+    _readyForConnection = true;
+}
+
+bool BleClientTransport::isLockedToOther(NimBLEAdvertisedDevice *advertisedDevice) const {
+    // Controllers broadcast their lock owner as manufacturer data: 0xFFFF
+    // company id + the paired display's address in native byte order (zeros
+    // when unpaired). Absent/malformed data means an old controller firmware
+    // without whitelisting -> treat as open.
+    if (!advertisedDevice->haveManufacturerData())
+        return false;
+    const std::string mfg = advertisedDevice->getManufacturerData();
+    if (mfg.length() != 8 || static_cast<uint8_t>(mfg[0]) != 0xFF || static_cast<uint8_t>(mfg[1]) != 0xFF)
+        return false;
+    static constexpr uint8_t zeros[6] = {0, 0, 0, 0, 0, 0};
+    const uint8_t *owner = reinterpret_cast<const uint8_t *>(mfg.data()) + 2;
+    if (memcmp(owner, zeros, sizeof(zeros)) == 0)
+        return false; // open for pairing
+    // Locked to us is fine: happens when this display lost its NVS but the
+    // controller still holds the pairing; connecting re-pairs via the
+    // stale-bond path. Compare in native order on both sides -- never
+    // reconstruct a NimBLEAddress from raw bytes here (byte-order trap).
+    return memcmp(owner, NimBLEDevice::getAddress().getNative(), sizeof(zeros)) != 0;
 }
 
 void BleClientTransport::onDisconnect(NimBLEClient *client) {

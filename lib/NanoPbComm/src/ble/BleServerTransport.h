@@ -16,8 +16,9 @@
  *
  * Pairing model: on first boot the controller advertises openly and bonds to
  * the first display that connects (Just Works + LE Secure Connections). That
- * one display's address is persisted in NVS; from then on advertising is
- * whitelist-only for exactly that screen (foreign bonds are pruned) until
+ * one display's address is persisted in NVS; from then on the controller uses
+ * low-duty directed advertising to exactly that screen -- invisible to every
+ * other scanner -- with the whitelist kept as defense in depth, until
  * clearBonds() is called. Comms characteristics require encryption.
  */
 class BleServerTransport : public Transport, public NimBLEServerCallbacks, public NimBLECharacteristicCallbacks {
@@ -59,9 +60,12 @@ class BleServerTransport : public Transport, public NimBLEServerCallbacks, publi
     NimBLECharacteristic *_txChar = nullptr;   // server -> client (notify)
     NimBLECharacteristic *_infoChar = nullptr; // legacy read-only system info
     String _info;
+    String _deviceName;
     BLE_OTA_DFU _otaDfu;
 
     void enableWhitelist();
+    void applyAdvertisingData();
+    void startAdv(); // directed at the paired display, or open when unpaired
     void adoptPeer(const NimBLEAddress &address);
     void pruneForeignBonds(const NimBLEAddress &keep);
     void loadPairedPeer();

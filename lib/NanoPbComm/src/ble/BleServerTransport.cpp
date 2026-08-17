@@ -20,6 +20,9 @@ void BleServerTransport::init(const String &deviceName) {
 
     _server = NimBLEDevice::createServer();
     _server->setCallbacks(this);
+    // We restart advertising ourselves in onDisconnect: the automatic restart
+    // would advertise undirected, bypassing the directed/paired mode.
+    _server->advertiseOnDisconnect(false);
 
     NimBLEService *service = _server->createService(gm_proto::SERVICE_UUID);
     _rxChar = service->createCharacteristic(gm_proto::RX_CHAR_UUID,
@@ -37,8 +40,8 @@ void BleServerTransport::init(const String &deviceName) {
     _otaDfu.configure_OTA(_server);
     _otaDfu.start_OTA();
 
+    _deviceName = deviceName;
     _advertising = NimBLEDevice::getAdvertising();
-    _advertising->addServiceUUID(gm_proto::SERVICE_UUID);
     _advertising->setScanResponse(true);
     // First boot pairs openly; once a display has bonded, only it may connect.
     loadPairedPeer();
@@ -57,8 +60,45 @@ void BleServerTransport::init(const String &deviceName) {
         }
         enableWhitelist();
     }
-    _advertising->start();
-    ESP_LOGI(LOG_TAG, "BLE server started, advertising %s", _whitelistOnly ? "(whitelist only)" : "(open, pairing mode)");
+    applyAdvertisingData();
+    startAdv();
+    ESP_LOGI(LOG_TAG, "BLE server started, advertising %s",
+             _havePairedPeer ? "(directed to paired display)" : (_whitelistOnly ? "(whitelist only)" : "(open, pairing mode)"));
+}
+
+void BleServerTransport::startAdv() {
+    if (_advertising == nullptr || _advertising->isAdvertising())
+        return;
+    if (_havePairedPeer) {
+        // Low-duty directed advertising: ADV_DIRECT_IND carries no payload and
+        // every radio except the paired display's drops it at the link layer,
+        // so a paired controller is completely invisible to other scanners.
+        _advertising->setAdvertisementType(BLE_GAP_CONN_MODE_DIR);
+        _advertising->start(0, nullptr, &_pairedPeer);
+    } else {
+        _advertising->setAdvertisementType(BLE_GAP_CONN_MODE_UND);
+        _advertising->start();
+    }
+}
+
+void BleServerTransport::applyAdvertisingData() {
+    // Primary packet (31 bytes exactly): flags + service UUID + lock owner in
+    // manufacturer data (0xFFFF + paired display's address in native byte
+    // order, zeros when unpaired). Unpaired displays use the owner field to
+    // skip controllers that would whitelist-filter them anyway, instead of
+    // burning connect attempts. Must be in the primary packet: displays scan
+    // passively and never receive the scan response (which carries the name).
+    std::vector<uint8_t> mfg = {0xFF, 0xFF, 0, 0, 0, 0, 0, 0};
+    if (_havePairedPeer)
+        memcpy(&mfg[2], _pairedPeer.getNative(), 6);
+    NimBLEAdvertisementData advData;
+    advData.setFlags(BLE_HS_ADV_F_DISC_GEN | BLE_HS_ADV_F_BREDR_UNSUP);
+    advData.setCompleteServices(NimBLEUUID(gm_proto::SERVICE_UUID));
+    advData.setManufacturerData(mfg);
+    _advertising->setAdvertisementData(advData);
+    NimBLEAdvertisementData scanResp;
+    scanResp.setName(std::string(_deviceName.c_str()));
+    _advertising->setScanResponseData(scanResp);
 }
 
 void BleServerTransport::enableWhitelist() {
@@ -85,6 +125,7 @@ void BleServerTransport::adoptPeer(const NimBLEAddress &address) {
         NimBLEDevice::whiteListRemove(NimBLEDevice::getWhiteListAddress(0));
     NimBLEDevice::whiteListAdd(address);
     enableWhitelist();
+    applyAdvertisingData(); // broadcast the new lock owner from the next adv start
     ESP_LOGI(LOG_TAG, "Bonded to display %s, advertising is now whitelist-only", address.toString().c_str());
 }
 
@@ -146,18 +187,17 @@ void BleServerTransport::clearBonds() {
     }
     _havePairedPeer = false;
     _whitelistOnly = false;
-    if (_advertising)
+    if (_advertising) {
         _advertising->setScanFilter(false, false);
+        applyAdvertisingData(); // owner field back to zeros (open for pairing)
+    }
     ESP_LOGW(LOG_TAG, "Bonds cleared, open for pairing");
     disconnect(); // drop the current peer (if any) so the next link re-pairs
     if (wasAdvertising)
-        _advertising->start();
+        startAdv();
 }
 
-void BleServerTransport::startAdvertising() {
-    if (_advertising && !_advertising->isAdvertising())
-        _advertising->start();
-}
+void BleServerTransport::startAdvertising() { startAdv(); }
 
 void BleServerTransport::setInfo(const String &info) {
     _info = info;
@@ -213,7 +253,7 @@ void BleServerTransport::onDisconnect(NimBLEServer *server) {
     _connHandle = BLE_HS_CONN_HANDLE_NONE;
     ESP_LOGI(LOG_TAG, "Client disconnected");
     emitConnection(false);
-    server->startAdvertising();
+    startAdv();
 }
 
 void BleServerTransport::disconnect() {
