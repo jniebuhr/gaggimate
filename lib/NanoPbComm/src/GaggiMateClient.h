@@ -7,15 +7,8 @@
 #include <Arduino.h>
 #include <functional>
 
-/**
- * Display-side protocol facade.
- *
- * Owns a BLE client transport + Endpoint and exposes semantic send methods and
- * typed response callbacks. The connect sequence is asynchronous: the link is
- * established via connectToServer(), and the controller's SystemInfo arrives as
- * a pushed message (onSystemInfo) which is when capability-dependent setup
- * should run.
- */
+// Display-side protocol facade: owns transport + Endpoint, exposes semantic sends and typed response callbacks.
+// Connecting is async: capability-dependent setup belongs in onSystemInfo, pushed by the controller after connect.
 class GaggiMateClient {
   public:
     using ConnectionCallback = std::function<void(bool connected)>;
@@ -46,19 +39,15 @@ class GaggiMateClient {
     // Forget the paired controller so the display can pair to a different one.
     void clearBonds() { _transport.clearBonds(); }
 
-    // BLE round-trip latency (ms) measured by the reliability layer (send -> ACK).
-    // EWMA-smoothed; refreshed at least every ~2s by the keep-alive ping plus on
-    // every control update. hasLatency() is false until the first ACK of a link.
+    // EWMA-smoothed send->ACK round-trip (ms); hasLatency() is false until the first ACK of a link.
     uint32_t getLatencyMs() const { return _endpoint.latencyMs(); }
     uint32_t getLastLatencyMs() const { return _endpoint.lastLatencyMs(); }
     bool hasLatency() const { return _endpoint.hasLatency(); }
 
-    // Tight connection interval (responsive control) while active; relaxed when
-    // idle to give the shared radio back to Wi-Fi.
+    // Tight connection interval while active; relaxed when idle to give the shared radio back to Wi-Fi.
     void setLowLatency(bool active) { _transport.setLowLatency(active); }
 
-    // Native NimBLE client handle, used by ControllerOTA / status RSSI (OTA uses
-    // its own BLE service, independent of this protocol).
+    // Native NimBLE client handle for ControllerOTA / status RSSI (OTA uses its own BLE service).
     NimBLEClient *getClient() const { return _transport.getNativeClient(); }
 
     // Build a payload without sending (compose your own batch, then send()).
@@ -72,8 +61,7 @@ class GaggiMateClient {
     gm::Payload buildAutotune(uint32_t testTime, uint32_t samples, uint32_t heaterWattage);
     gm::Payload buildPressureScale(float scale);
     gm::Payload buildTare();
-    // Pack channel/brightness pairs into one LedControl payload; entries beyond
-    // the schema's per-message cap (LedControl.channels max_count) are dropped.
+    // Pack channel/brightness pairs into one LedControl payload; entries beyond the schema's max_count are dropped.
     gm::Payload buildLedControl(const LedChannelCommand *channels, size_t count);
 
     // Commands (display -> controller)
@@ -87,17 +75,14 @@ class GaggiMateClient {
     void sendAutotune(uint32_t testTime, uint32_t samples, uint32_t heaterWattage);
     void sendPressureScale(float scale);
     void tare();
-    // Drive several LED channels in one message (avoids per-channel sends that
-    // the outbound queue would coalesce down to a single channel).
+    // Drive several LED channels in one message; per-channel sends would coalesce down to a single channel.
     void sendLedControl(const LedChannelCommand *channels, size_t count);
 
-    // Send a pre-built payload / batch of payloads (one frame). Compose batches
-    // from build*() helpers -- e.g. the display's delta-based control update.
+    // Send a pre-built payload / batch of payloads (one frame), composed from the build*() helpers.
     void send(const gm::Payload &payload) { _endpoint.send(payload); }
     void sendBatch(const gm::Payload *payloads, size_t count) { _endpoint.sendBatch(payloads, count); }
 
-    // Fired when the connected controller is missing the framed-comms
-    // characteristics (old / incompatible firmware); link is kept for OTA.
+    // Fired when the controller lacks the framed-comms characteristics (old firmware); link is kept for OTA.
     void onIncompatibleController(IncompatibleCallback cb) { _incompatibleCb = std::move(cb); }
 
     // Response registrations (controller -> display)
