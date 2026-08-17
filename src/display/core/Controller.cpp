@@ -977,9 +977,31 @@ void Controller::updateControl() {
     controlStateSent = true;
 }
 
-void Controller::activate() {
+void Controller::activate(bool ignoreScale) {
     if (isActive())
         return;
+
+#ifndef GAGGIMATE_SIM
+    // A paired scale or a volumetric profile needs a live scale. GATT connect is
+    // not enough: until the first weight sample arrives, isBluetoothScaleHealthy()
+    // is false, isVolumetricAvailable() is false, and the brew would start as a
+    // timed shot that then ignores later BLE samples (source stays INACTIVE).
+    if (!ignoreScale && mode == MODE_BREW) {
+        const bool scaleRequired = !settings.getSavedScale().isEmpty() || profileManager->getSelectedProfile().isVolumetric();
+        const bool scaleReady = BLEScales.isConnected() && isBluetoothScaleHealthy();
+        if (scaleRequired && !scaleReady) {
+            ESP_LOGI(LOG_TAG, "Scale not ready for brew (saved=%s volumetric=%d connected=%d)", settings.getSavedScale().c_str(),
+                     profileManager->getSelectedProfile().isVolumetric(), BLEScales.isConnected());
+            // Drop stale health so a previous connection's grace period cannot
+            // make the next activate() succeed before a fresh sample arrives.
+            lastBluetoothMeasurement = 0;
+            volumetricOverride = false;
+            pluginManager->trigger("controller:brew:scale-missing");
+            return;
+        }
+    }
+#endif
+
     clear();
     comms.tare();
     if (isVolumetricAvailable()) {

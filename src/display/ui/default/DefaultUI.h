@@ -54,6 +54,9 @@ class DefaultUI {
 
     void applyTheme();
 
+    void onScaleWaitIgnore();
+    void onScaleWaitCancel();
+
     bool isTaskHealthy() const {
         return is_task_healthy(eTaskGetState(taskHandle)) && is_task_healthy(eTaskGetState(profileTaskHandle));
     }
@@ -94,6 +97,10 @@ class DefaultUI {
     void updateTempHistory();
     void updateTempStableFlag();
     void reloadProfiles();
+
+    void showScaleWaitModal();
+    void closeScaleWaitModal();
+    void updateScaleWaitModal();
 
     Driver *panelDriver = nullptr;
     Controller *controller;
@@ -150,6 +157,15 @@ class DefaultUI {
 
     // Standby brightness control
     unsigned long standbyEnterTime = 0;
+
+    // Transient overlay (not an EEZ screen): wait for a paired/required scale.
+    lv_obj_t *scaleWaitModal = nullptr;
+    lv_obj_t *scaleWaitStatusLabel = nullptr;
+    std::atomic<bool> scaleWaitShow{false};
+    std::atomic<bool> scaleWaitDismiss{false};
+    std::atomic<bool> scaleWaitArmed{false};
+    std::atomic<unsigned long> scaleWaitReadyAt{0};
+    bool scaleWaitAnnouncedReady = false;
 
     xTaskHandle taskHandle;
     static void loopTask(void *arg);

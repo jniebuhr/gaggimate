@@ -85,7 +85,7 @@ class Controller {
     void lowerBrewTarget();
     void raiseGrindTarget();
     void lowerGrindTarget();
-    void activate();
+    void activate(bool ignoreScale = false);
     void deactivate();
     void clear();
     void activateGrind();
