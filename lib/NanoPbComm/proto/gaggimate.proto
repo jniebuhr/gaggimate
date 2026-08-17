@@ -44,6 +44,7 @@ message Payload {
         PressureScale pressure_scale = 9;
         Tare tare = 10;
         LedControl led = 11;
+        ScaleFactors scale_factors = 12;
 
         // Responses: controller -> display
         SystemInfo system_info = 20;
@@ -53,6 +54,7 @@ message Payload {
         VolumetricMeasurement volumetric = 24;
         TofMeasurement tof = 25;
         Error error = 26;
+        ScaleMeasurement scale = 27;
     }
 }
 
@@ -140,6 +142,11 @@ message PressureScale {
 
 message Tare {}
 
+message ScaleFactors {
+    float scale_factor1 = 1;
+    float scale_factor2 = 2;
+}
+
 // One LED output's target brightness.
 message LedChannel {
     uint32 channel = 1;    // PCA9634 output index (0..7)
@@ -208,6 +215,13 @@ message AutotuneResult {
 
 message VolumetricMeasurement {
     float volume = 1;
+}
+
+// Hardware-scale weight, sent on its own channel (distinct from the pump-derived
+// VolumetricMeasurement estimate) so the display can offer both as independently
+// selectable volumetric sources.
+message ScaleMeasurement {
+    float weight = 1;
 }
 
 message TofMeasurement {

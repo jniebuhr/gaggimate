@@ -99,6 +99,17 @@ void Settings::setTemperatureOffset(const int temperature_offset) { temperatureO
 
 void Settings::setPressureScaling(const float pressure_scaling) { pressureScaling.set(pressure_scaling); }
 
+void Settings::setScaleFactors(float scale_factor_1, float scale_factor_2) {
+    scaleFactor1.set(scale_factor_1);
+    scaleFactor2.set(scale_factor_2);
+}
+
+void Settings::setPreferredScaleSource(const String &scaleSource) {
+    if (scaleSource == "hardware" || scaleSource == "bluetooth" || scaleSource == "auto") {
+        preferredScaleSource.set(scaleSource);
+    }
+}
+
 void Settings::setTargetGrindVolume(double target_grind_volume) { targetGrindVolume.set(target_grind_volume); }
 
 void Settings::setTargetGrindDuration(const int target_duration) { targetGrindDuration.set(target_duration); }

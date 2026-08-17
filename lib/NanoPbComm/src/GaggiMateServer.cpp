@@ -97,6 +97,13 @@ gm::Payload GaggiMateServer::buildVolumetricMeasurement(float volume) {
     return p;
 }
 
+gm::Payload GaggiMateServer::buildScaleMeasurement(float weight) {
+    gm::Payload p = gaggimate_Payload_init_zero;
+    p.which_content = gaggimate_Payload_scale_tag;
+    p.content.scale.weight = weight;
+    return p;
+}
+
 gm::Payload GaggiMateServer::buildTofMeasurement(uint32_t distance) {
     gm::Payload p = gaggimate_Payload_init_zero;
     p.which_content = gaggimate_Payload_tof_tag;
@@ -127,6 +134,8 @@ void GaggiMateServer::sendAutotuneResult(float kp, float ki, float kd, float kf)
 }
 
 void GaggiMateServer::sendVolumetricMeasurement(float volume) { _endpoint.sendUnreliable(buildVolumetricMeasurement(volume)); }
+
+void GaggiMateServer::sendScaleMeasurement(float weight) { _endpoint.sendUnreliable(buildScaleMeasurement(weight)); }
 
 void GaggiMateServer::sendTofMeasurement(uint32_t distance) { _endpoint.sendUnreliable(buildTofMeasurement(distance)); }
 
@@ -170,6 +179,10 @@ void GaggiMateServer::registerHandlers() {
     _endpoint.on(gaggimate_Payload_tare_tag, [this](const gm::Payload &) {
         if (_tareCb)
             _tareCb();
+    });
+    _endpoint.on(gaggimate_Payload_scale_factors_tag, [this](const gm::Payload &p) {
+        if (_scaleFactorsCb)
+            _scaleFactorsCb(p.content.scale_factors.scale_factor1, p.content.scale_factors.scale_factor2);
     });
     _endpoint.on(gaggimate_Payload_led_tag, [this](const gm::Payload &p) {
         if (!_ledCb)

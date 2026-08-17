@@ -5,6 +5,7 @@
 #include <peripherals/DigitalInput.h>
 #include <peripherals/DistanceSensor.h>
 #include <peripherals/FlowSensor.h>
+#include <peripherals/HardwareScale.h>
 #include <peripherals/Heater.h>
 #include <peripherals/LedController.h>
 #include <peripherals/Max31855Thermocouple.h>
@@ -53,6 +54,7 @@ class GaggiMateController {
     DistanceSensor *distanceSensor = nullptr;
     ADSAdc *adc = nullptr;
     FlowSensor *flowSensor = nullptr;
+    HardwareScale *hardwareScale = nullptr;
 
     GearpumpAddon *gearpumpAddon = nullptr;
 

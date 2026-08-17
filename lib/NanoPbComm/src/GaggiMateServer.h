@@ -25,6 +25,7 @@ class GaggiMateServer {
     using AutotuneCallback = std::function<void(uint32_t testTime, uint32_t samples, uint32_t heaterWattage)>;
     using PressureScaleCallback = std::function<void(float scale)>;
     using TareCallback = std::function<void()>;
+    using ScaleFactorsCallback = std::function<void(float scaleFactor1, float scaleFactor2)>;
     using LedCallback = std::function<void(uint8_t channel, uint8_t brightness)>;
 
     GaggiMateServer();
@@ -43,6 +44,7 @@ class GaggiMateServer {
     gm::Payload buildButtonState(uint8_t index, bool pressed);
     gm::Payload buildAutotuneResult(float kp, float ki, float kd, float kf);
     gm::Payload buildVolumetricMeasurement(float volume);
+    gm::Payload buildScaleMeasurement(float weight);
     gm::Payload buildTofMeasurement(uint32_t distance);
     gm::Payload buildError(int code);
 
@@ -52,6 +54,7 @@ class GaggiMateServer {
     void sendButtonState(uint8_t index, bool pressed);
     void sendAutotuneResult(float kp, float ki, float kd, float kf);
     void sendVolumetricMeasurement(float volume);
+    void sendScaleMeasurement(float weight);
     void sendTofMeasurement(uint32_t distance);
     void sendError(int code);
 
@@ -81,6 +84,7 @@ class GaggiMateServer {
     void onAutotune(AutotuneCallback cb) { _autotuneCb = std::move(cb); }
     void onPressureScale(PressureScaleCallback cb) { _pressureScaleCb = std::move(cb); }
     void onTare(TareCallback cb) { _tareCb = std::move(cb); }
+    void onScaleFactors(ScaleFactorsCallback cb) { _scaleFactorsCb = std::move(cb); }
     void onLedControl(LedCallback cb) { _ledCb = std::move(cb); }
 
   private:
@@ -97,6 +101,7 @@ class GaggiMateServer {
     AutotuneCallback _autotuneCb;
     PressureScaleCallback _pressureScaleCb;
     TareCallback _tareCb;
+    ScaleFactorsCallback _scaleFactorsCb;
     LedCallback _ledCb;
 
     void registerHandlers();

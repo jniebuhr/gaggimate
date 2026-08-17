@@ -197,6 +197,10 @@ void GaggiMateClient::registerHandlers() {
         if (_volumetricCb)
             _volumetricCb(p.content.volumetric.volume);
     });
+    _endpoint.on(gaggimate_Payload_scale_tag, [this](const gm::Payload &p) {
+        if (_scaleCb)
+            _scaleCb(p.content.scale.weight);
+    });
     _endpoint.on(gaggimate_Payload_tof_tag, [this](const gm::Payload &p) {
         if (_tofCb)
             _tofCb(p.content.tof.distance);

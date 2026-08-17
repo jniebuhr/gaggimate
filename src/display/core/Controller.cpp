@@ -42,6 +42,7 @@
 #endif
 
 const String LOG_TAG = F("Controller");
+constexpr uint32_t ADDON_HW_SCALE = 8;
 
 void Controller::setup() {
     mode = MODE_STANDBY;
@@ -352,8 +353,12 @@ void Controller::setupBluetooth() {
         pluginManager->trigger("controller:autotune:result");
         autotuning = false;
     });
-    comms.onVolumetricMeasurement(
-        [this](float value) { onVolumetricMeasurement(value, VolumetricMeasurementSource::FLOW_ESTIMATION); });
+    comms.onVolumetricMeasurement([this](float value) {
+        // The controller's volumetric channel now carries only the pump-derived
+        // flow estimate; the hardware scale reports via onScaleMeasurement below.
+        onVolumetricMeasurement(value, VolumetricMeasurementSource::FLOW_ESTIMATION);
+    });
+    comms.onScaleMeasurement([this](float value) { onVolumetricMeasurement(value, VolumetricMeasurementSource::HARDWARE); });
     comms.onTofMeasurement([this](uint32_t value) {
         tofDistance = static_cast<int>(value);
         ESP_LOGV(LOG_TAG, "Received new TOF distance: %d", tofDistance);
@@ -377,6 +382,7 @@ void Controller::onSystemInfo(const char *hardware, const char *version, uint32_
                                 },
                             .protocolVersion = protocolVersion,
                             .protocolMismatch = mismatch};
+    systemInfo.capabilities.hwScale = systemInfo.capabilities.hasAddon(ADDON_HW_SCALE);
     ESP_LOGI(LOG_TAG, "System info: %s %s (proto=%u local=%u dm=%d ps=%d led=%d tof=%d)", hardware, version, protocolVersion,
              gm_proto::PROTOCOL_VERSION, dimming, pressure, ledControl, tof);
     if (mismatch) {
@@ -385,6 +391,7 @@ void Controller::onSystemInfo(const char *hardware, const char *version, uint32_
         pluginManager->trigger("controller:protocol:mismatch", "value", static_cast<int>(protocolVersion));
     } else {
         setPressureScale();
+        setScaleFactors();
         setPidSettings();
         setPumpModelCoeffs();
         configResendUntil = millis() + CONFIG_RESEND_WINDOW_MS;
@@ -419,6 +426,7 @@ void Controller::onIncompatibleController(const String &infoJson) {
         version = "0.0.0";
     onSystemInfo(hardware.c_str(), version.c_str(), 0, doc["cp"]["dm"].as<bool>(), doc["cp"]["ps"].as<bool>(),
                  doc["cp"]["led"].as<bool>(), doc["cp"]["tof"].as<bool>(), {});
+    systemInfo.capabilities.hwScale = doc["cp"]["hs"].as<bool>();
 }
 
 void Controller::setupWifi() {
@@ -670,9 +678,9 @@ bool Controller::isReady() const { return !isUpdating() && !isErrorState() && !i
 
 bool Controller::isVolumetricAvailable() const {
 #ifdef NIGHTLY_BUILD
-    return isBluetoothScaleHealthy() || systemInfo.capabilities.dimming;
+    return isBluetoothScaleHealthy() || isHardwareScaleHealthy() || systemInfo.capabilities.dimming;
 #else
-    return isBluetoothScaleHealthy();
+    return isBluetoothScaleHealthy() || isHardwareScaleHealthy();
 #endif
 }
 
@@ -777,6 +785,23 @@ void Controller::setPressureScale(void) {
     if (systemInfo.capabilities.pressure) {
         comms.sendPressureScale(settings.getPressureScaling());
     }
+}
+
+void Controller::setScaleFactors() {
+    if (!systemInfo.capabilities.hwScale) {
+        return;
+    }
+
+    const float scaleFactor1 = settings.getScaleFactor1();
+    const float scaleFactor2 = settings.getScaleFactor2();
+
+    if (!std::isfinite(scaleFactor1) || !std::isfinite(scaleFactor2) || std::abs(scaleFactor1) < 0.001f ||
+        std::abs(scaleFactor2) < 0.001f) {
+        ESP_LOGW(LOG_TAG, "Skipping invalid scale factors: %.3f, %.3f", scaleFactor1, scaleFactor2);
+        return;
+    }
+
+    comms.sendScaleFactors(scaleFactor1, scaleFactor2);
 }
 
 void Controller::setPumpModelCoeffs(void) {
@@ -983,12 +1008,7 @@ void Controller::activate() {
     clear();
     comms.tare();
     if (isVolumetricAvailable()) {
-#ifdef NIGHTLY_BUILD
-        currentVolumetricSource =
-            isBluetoothScaleHealthy() ? VolumetricMeasurementSource::BLUETOOTH : VolumetricMeasurementSource::FLOW_ESTIMATION;
-#else
-        currentVolumetricSource = VolumetricMeasurementSource::BLUETOOTH;
-#endif
+        currentVolumetricSource = getActiveScaleSource();
         if (mode == MODE_BREW) {
             pluginManager->trigger("controller:brew:prestart");
         }
@@ -1070,8 +1090,9 @@ void Controller::activateGrind() {
     if (isGrindActive())
         return;
     clear();
-    if (settings.isVolumetricTarget() && isVolumetricAvailable()) {
-        currentVolumetricSource = VolumetricMeasurementSource::BLUETOOTH;
+    const auto grindScaleSource = getGrindScaleSource();
+    if (settings.isVolumetricTarget() && grindScaleSource != VolumetricMeasurementSource::INACTIVE) {
+        currentVolumetricSource = grindScaleSource;
         startProcess(new GrindProcess(ProcessTarget::VOLUMETRIC, 0, settings.getTargetGrindVolume(), settings.getGrindDelay()));
     } else {
         startProcess(
@@ -1141,15 +1162,25 @@ void Controller::onProfileSaveAsNew() {
 }
 
 void Controller::onVolumetricMeasurement(double measurement, VolumetricMeasurementSource source) {
+#ifndef NIGHTLY_BUILD
     if (source == VolumetricMeasurementSource::FLOW_ESTIMATION) {
-        currentCoffeeVolume = static_cast<float>(measurement);
+        return;
     }
-    pluginManager->trigger(source == VolumetricMeasurementSource::FLOW_ESTIMATION
-                               ? F("controller:volumetric-measurement:estimation:change")
-                               : F("controller:volumetric-measurement:bluetooth:change"),
-                           "value", static_cast<float>(measurement));
+#endif
+
+    if (source == VolumetricMeasurementSource::FLOW_ESTIMATION) {
+        pluginManager->trigger(F("controller:volumetric-measurement:estimation:change"), "value", static_cast<float>(measurement));
+    } else if (source == VolumetricMeasurementSource::HARDWARE) {
+        pluginManager->trigger(F("controller:volumetric-measurement:hardware:change"), "value", static_cast<float>(measurement));
+    } else {
+        pluginManager->trigger(F("controller:volumetric-measurement:bluetooth:change"), "value", static_cast<float>(measurement));
+    }
+    pluginManager->trigger(F("controller:volumetric-measurement:active:change"), "value", static_cast<float>(measurement));
+
     if (source == VolumetricMeasurementSource::BLUETOOTH) {
         lastBluetoothMeasurement = millis();
+    } else if (source == VolumetricMeasurementSource::HARDWARE) {
+        lastHardwareMeasurement = millis();
     }
 
     if (currentVolumetricSource != source) {
@@ -1167,9 +1198,88 @@ void Controller::onVolumetricMeasurement(double measurement, VolumetricMeasureme
     }
 }
 
+VolumetricMeasurementSource Controller::getPreferredScaleSource() const {
+    const String preferred = settings.getPreferredScaleSource();
+    if (preferred == "hardware") {
+        return VolumetricMeasurementSource::HARDWARE;
+    }
+    if (preferred == "bluetooth") {
+        return VolumetricMeasurementSource::BLUETOOTH;
+    }
+    return VolumetricMeasurementSource::FLOW_ESTIMATION;
+}
+
+VolumetricMeasurementSource Controller::getActiveScaleSource() const {
+    // Always use BT scale for grinding
+    if (mode == MODE_GRIND) {
+        return getGrindScaleSource();
+    }
+
+    const auto preferred = getPreferredScaleSource();
+
+    if (preferred == VolumetricMeasurementSource::HARDWARE && isHardwareScaleHealthy()) {
+        return VolumetricMeasurementSource::HARDWARE;
+    }
+    if (preferred == VolumetricMeasurementSource::BLUETOOTH && isBluetoothScaleHealthy()) {
+        return VolumetricMeasurementSource::BLUETOOTH;
+    }
+    if (isHardwareScaleHealthy()) {
+        return VolumetricMeasurementSource::HARDWARE;
+    }
+    if (isBluetoothScaleHealthy()) {
+        return VolumetricMeasurementSource::BLUETOOTH;
+    }
+
+#ifdef NIGHTLY_BUILD
+    return VolumetricMeasurementSource::FLOW_ESTIMATION;
+#else
+    return VolumetricMeasurementSource::INACTIVE;
+#endif
+}
+
+VolumetricMeasurementSource Controller::getGrindScaleSource() const {
+    return isBluetoothScaleHealthy() ? VolumetricMeasurementSource::BLUETOOTH
+                                     : VolumetricMeasurementSource::INACTIVE;
+}
+
+bool Controller::isScaleSourceHealthy(VolumetricMeasurementSource source) const {
+    if (source == VolumetricMeasurementSource::HARDWARE) {
+        return isHardwareScaleHealthy();
+    }
+    if (source == VolumetricMeasurementSource::BLUETOOTH) {
+        return isBluetoothScaleHealthy();
+    }
+    return true;
+}
+
+String Controller::getActiveScaleSourceName() const {
+    const auto source = getActiveScaleSource();
+    if (source == VolumetricMeasurementSource::HARDWARE) {
+        return "hardware";
+    }
+    if (source == VolumetricMeasurementSource::BLUETOOTH) {
+        return "bluetooth";
+    }
+    if (source == VolumetricMeasurementSource::FLOW_ESTIMATION) {
+        return "estimation";
+    }
+    return "inactive";
+}
+
 bool Controller::isBluetoothScaleHealthy() const {
     unsigned long timeSinceLastBluetooth = millis() - lastBluetoothMeasurement;
     return (timeSinceLastBluetooth < BLUETOOTH_GRACE_PERIOD_MS) || volumetricOverride;
+}
+
+bool Controller::isHardwareScaleHealthy() const {
+    if (!systemInfo.capabilities.hwScale) {
+        return false;
+    }
+    if (volumetricOverride) {
+        return true;
+    }
+    unsigned long timeSinceLastHardware = millis() - lastHardwareMeasurement;
+    return timeSinceLastHardware < HARDWARE_GRACE_PERIOD_MS;
 }
 
 void Controller::onFlush() {
