@@ -111,10 +111,7 @@ gm::Payload GaggiMateServer::buildError(int code) {
     return p;
 }
 
-// Telemetry (sensor / volumetric / ToF) is sent fire-and-forget: it is
-// high-rate and self-refreshing, so a dropped sample is replaced by the next
-// one. This avoids the constant ACK chatter on the high-rate path. Button /
-// autotune-result / error / system-info stay reliable.
+// Telemetry (sensor / volumetric / ToF) is fire-and-forget: self-refreshing, so skip ACK chatter; the rest stays reliable.
 void GaggiMateServer::sendSensorData(float temperature, float pressure, float puckFlow, float pumpFlow, float puckResistance,
                                      float pumpPower, float heaterPower) {
     _endpoint.sendUnreliable(buildSensorData(temperature, pressure, puckFlow, pumpFlow, puckResistance, pumpPower, heaterPower));
