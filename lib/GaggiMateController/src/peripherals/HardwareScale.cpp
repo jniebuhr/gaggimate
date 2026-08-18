@@ -6,7 +6,7 @@
 #include <cmath>
 
 #define HX711_GAIN 128
-#define MAX_SCALE_GRAMS 750.0f
+#define MAX_SCALE_GRAMS 2000.0f
 #define MAX_WAIT_READ_MS 250
 #define MAX_STARTUP_WAIT_MS 1200
 

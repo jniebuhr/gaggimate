@@ -10,8 +10,8 @@ constexpr float HARDWARE_SCALE_UNAVAILABLE = -9999.0f;  // Sentinel value to sig
 
 // Conditional outlier rejection handles isolated spikes, so both idle weighing
 // and brewing can remain responsive without a slow stationary EMA.
-constexpr float SCALE_FILTER_ALPHA_IDLE = 0.70f;
-constexpr float SCALE_FILTER_ALPHA_ACTIVE = 0.70f;
+constexpr float SCALE_FILTER_ALPHA_IDLE = 0.80f;
+constexpr float SCALE_FILTER_ALPHA_ACTIVE = 0.80f;
 constexpr uint8_t SCALE_TARE_SAMPLES = 5;
 
 // Idle publishing uses spatial hysteresis rather than more temporal filtering,
