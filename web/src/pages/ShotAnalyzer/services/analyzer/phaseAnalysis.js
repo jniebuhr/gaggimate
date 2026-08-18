@@ -36,7 +36,7 @@ function getPhaseSysAnomalies(samples, sysInfo) {
   const sysFieldMap = [
     ['sys_shot_vol', 'shotStartedVolumetric'],
     ['sys_curr_vol', 'currentlyVolumetric'],
-    ['sys_scale', 'bluetoothScaleConnected'],
+    ['sys_scale', 'activeScaleConnected'],
     ['sys_vol_avail', 'volumetricAvailable'],
     ['sys_ext', 'extendedRecording'],
   ];
@@ -548,7 +548,7 @@ function getPhaseStats(samples, sysInfo, sysAnomalies, analyzerSystemInfo) {
     sys_raw: sysInfo.raw,
     sys_shot_vol: sysInfo.shotStartedVolumetric,
     sys_curr_vol: sysInfo.currentlyVolumetric,
-    sys_scale: sysInfo.bluetoothScaleConnected,
+    sys_scale: sysInfo.activeScaleConnected,
     sys_vol_avail: sysInfo.volumetricAvailable,
     sys_ext: sysInfo.extendedRecording,
     sys_brew_mode: analyzerSystemInfo.brewModeLabel,
@@ -586,7 +586,7 @@ export function analyzeExecutedPhase({
   const sysInfo = getPhaseEndSample(samples).systemInfo || {};
   const sysAnomalies = getPhaseSysAnomalies(samples, sysInfo);
   const scaleLostInThisPhase =
-    isBrewByWeight && samples.some(s => s.systemInfo?.bluetoothScaleConnected === false);
+    isBrewByWeight && samples.some(s => s.systemInfo?.activeScaleConnected === false);
   const nextScaleConnectionBroken = scaleConnectionBrokenPermanently || scaleLostInThisPhase;
   const delayTracker = createPhaseDelayTracker(isLastPhase);
   const exitState = createExitState();

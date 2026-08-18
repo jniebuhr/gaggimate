@@ -43,6 +43,13 @@
 
 const String LOG_TAG = F("Controller");
 constexpr uint32_t ADDON_HW_SCALE = 8;
+constexpr double DISPLAY_NEGATIVE_WEIGHT_THRESHOLD = -0.1;
+
+float normalizeWeightForDisplay(double measurement) {
+    return measurement <= 0.0 && measurement > DISPLAY_NEGATIVE_WEIGHT_THRESHOLD
+               ? 0.0f
+               : static_cast<float>(measurement);
+}
 
 void Controller::setup() {
     mode = MODE_STANDBY;
@@ -358,7 +365,13 @@ void Controller::setupBluetooth() {
         // flow estimate; the hardware scale reports via onScaleMeasurement below.
         onVolumetricMeasurement(value, VolumetricMeasurementSource::FLOW_ESTIMATION);
     });
-    comms.onScaleMeasurement([this](float value) { onVolumetricMeasurement(value, VolumetricMeasurementSource::HARDWARE); });
+    comms.onScaleMeasurement([this](float value, float cell1Weight, float cell2Weight, bool cell1Valid, bool cell2Valid) {
+        hardwareScaleCell1Weight.store(normalizeWeightForDisplay(cell1Weight));
+        hardwareScaleCell2Weight.store(normalizeWeightForDisplay(cell2Weight));
+        hardwareScaleCell1Valid.store(cell1Valid);
+        hardwareScaleCell2Valid.store(cell2Valid);
+        onVolumetricMeasurement(value, VolumetricMeasurementSource::HARDWARE);
+    });
     comms.onTofMeasurement([this](uint32_t value) {
         tofDistance = static_cast<int>(value);
         ESP_LOGV(LOG_TAG, "Received new TOF distance: %d", tofDistance);
@@ -801,7 +814,8 @@ void Controller::setScaleFactors() {
         return;
     }
 
-    comms.sendScaleFactors(scaleFactor1, scaleFactor2);
+    comms.sendScaleFactors(scaleFactor1, scaleFactor2, settings.getHardwareScaleSampleRateSps(),
+                           settings.getHardwareScaleIdleAlpha(), settings.getHardwareScaleActiveAlpha());
 }
 
 void Controller::setPumpModelCoeffs(void) {
@@ -1175,7 +1189,8 @@ void Controller::onVolumetricMeasurement(double measurement, VolumetricMeasureme
     } else {
         pluginManager->trigger(F("controller:volumetric-measurement:bluetooth:change"), "value", static_cast<float>(measurement));
     }
-    pluginManager->trigger(F("controller:volumetric-measurement:active:change"), "value", static_cast<float>(measurement));
+    pluginManager->trigger(F("controller:volumetric-measurement:active:change"), "value",
+                           normalizeWeightForDisplay(measurement));
 
     if (source == VolumetricMeasurementSource::BLUETOOTH) {
         lastBluetoothMeasurement = millis();

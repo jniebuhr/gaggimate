@@ -45,7 +45,8 @@ class GaggiMateClient {
     using ButtonCallback = std::function<void(uint8_t index, bool pressed)>;
     using AutotuneResultCallback = std::function<void(float kp, float ki, float kd, float kf)>;
     using VolumetricCallback = std::function<void(float volume)>;
-    using ScaleCallback = std::function<void(float weight)>;
+    using ScaleCallback = std::function<void(float weight, float cell1Weight, float cell2Weight,
+                                             bool cell1Valid, bool cell2Valid)>;
     using TofCallback = std::function<void(uint32_t distance)>;
     using ErrorCallback = std::function<void(int code)>;
 

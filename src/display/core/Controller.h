@@ -8,6 +8,7 @@
 #include <WiFi.h>
 #include <display/core/ProfileManager.h>
 #include <display/core/process/Process.h>
+#include <atomic>
 #include <mutex>
 #include <vector>
 #ifndef GAGGIMATE_HEADLESS
@@ -108,6 +109,10 @@ class Controller {
     String getActiveScaleSourceName() const;
     bool isBluetoothScaleHealthy() const;
     bool isHardwareScaleHealthy() const;
+    float getHardwareScaleCell1Weight() const { return hardwareScaleCell1Weight.load(); }
+    float getHardwareScaleCell2Weight() const { return hardwareScaleCell2Weight.load(); }
+    bool isHardwareScaleCell1Valid() const { return hardwareScaleCell1Valid.load(); }
+    bool isHardwareScaleCell2Valid() const { return hardwareScaleCell2Valid.load(); }
     void onFlush();
     int getWaterLevel() const {
         float reversedLevel = static_cast<float>(settings.getEmptyTankDistance()) -
@@ -239,6 +244,10 @@ class Controller {
     VolumetricMeasurementSource currentVolumetricSource = VolumetricMeasurementSource::INACTIVE;
     unsigned long lastBluetoothMeasurement = 0;
     unsigned long lastHardwareMeasurement = 0;
+    std::atomic<float> hardwareScaleCell1Weight{0.0f};
+    std::atomic<float> hardwareScaleCell2Weight{0.0f};
+    std::atomic<bool> hardwareScaleCell1Valid{false};
+    std::atomic<bool> hardwareScaleCell2Valid{false};
     static const unsigned long BLUETOOTH_GRACE_PERIOD_MS = 1500; // 1.5 second grace period
     static const unsigned long HARDWARE_GRACE_PERIOD_MS = 1500;
     static const unsigned long CONTROLLER_WAITING_TIMEOUT_MS = 10000;

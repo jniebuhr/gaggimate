@@ -151,7 +151,7 @@ export function calculateShotMetrics(shotData, profileData, settings) {
 
   let globalScaleLost = false;
   if (isBrewByWeight) {
-    globalScaleLost = gSamples.some(s => s.systemInfo?.bluetoothScaleConnected === false);
+    globalScaleLost = gSamples.some(s => s.systemInfo?.activeScaleConnected === false);
   }
 
   // --- 3. GLOBAL TOTALS ---
@@ -231,7 +231,7 @@ export function calculateShotMetrics(shotData, profileData, settings) {
     sys_raw: finalSysInfo.raw,
     sys_shot_vol: finalSysInfo.shotStartedVolumetric,
     sys_curr_vol: finalSysInfo.currentlyVolumetric,
-    sys_scale: finalSysInfo.bluetoothScaleConnected,
+    sys_scale: finalSysInfo.activeScaleConnected,
     sys_vol_avail: finalSysInfo.volumetricAvailable,
     sys_ext: finalSysInfo.extendedRecording,
     sys_brew_mode: brewModeLabel,

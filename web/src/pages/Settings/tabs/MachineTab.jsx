@@ -70,11 +70,35 @@ export function MachineTab({ formData, onChange, setField }) {
     apiService.send({ tp: 'req:scale:tare' });
   }, [apiService]);
 
+  const changeHardwareScaleSampleRate = useCallback(
+    event => {
+      const sampleRate = Number.parseInt(event.currentTarget.value, 10) === 80 ? 80 : 10;
+      const defaultAlpha = sampleRate === 80 ? '0.40' : '0.80';
+      setField('hardwareScaleSampleRateSps', sampleRate);
+      setField('hardwareScaleIdleAlpha', defaultAlpha);
+      setField('hardwareScaleActiveAlpha', defaultAlpha);
+    },
+    [setField],
+  );
+
   const calibrateLoadCell = useCallback(
     cellNumber => {
-      const measuredWeight = status.value?.currentWeight;
+      const measuredWeight =
+        cellNumber === 1
+          ? status.value?.hardwareScaleCell1Weight
+          : status.value?.hardwareScaleCell2Weight;
+      const measurementValid =
+        cellNumber === 1
+          ? status.value?.hardwareScaleCell1Valid
+          : status.value?.hardwareScaleCell2Valid;
       const actualWeight = Number.parseFloat(calibrationWeight);
-      if (!measuredWeight || !actualWeight || actualWeight <= 0) {
+      if (
+        !measurementValid ||
+        !Number.isFinite(measuredWeight) ||
+        Math.abs(measuredWeight) < 0.01 ||
+        !Number.isFinite(actualWeight) ||
+        actualWeight <= 0
+      ) {
         window.alert(
           'Please ensure the scale is showing a weight and enter a valid calibration weight.',
         );
@@ -326,7 +350,77 @@ export function MachineTab({ formData, onChange, setField }) {
         {hardwareScaleAvailable.value && (
           <div className='border-base-content/5 mt-6 space-y-4 border-t pt-6'>
             <div>
-              <h3 className='font-medium'>Hardware Scale Calibration</h3>
+              <h3 className='font-medium'>Hardware Scale</h3>
+              <p className='text-base-content/60 mt-1 text-sm'>
+                Configure acquisition and filtering, then tare and calibrate each load cell.
+              </p>
+            </div>
+
+            <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
+              <SettingsFormField
+                label='HX711 Sample Rate'
+                htmlFor='hardwareScaleSampleRateSps'
+                helpText='Must match the physical RATE-jumper configuration on the HX711 board. This setting does not switch the RATE pin.'
+                noMargin
+              >
+                <select
+                  id='hardwareScaleSampleRateSps'
+                  name='hardwareScaleSampleRateSps'
+                  className='select select-bordered w-full'
+                  value={formData.hardwareScaleSampleRateSps || 10}
+                  onChange={changeHardwareScaleSampleRate}
+                >
+                  <option value='10'>10 SPS</option>
+                  <option value='80'>80 SPS</option>
+                </select>
+              </SettingsFormField>
+              <SettingsFormField
+                label='Idle Filter Alpha'
+                htmlFor='hardwareScaleIdleAlpha'
+                helpText='Larger alpha responds faster with less smoothing; smaller alpha is smoother but slower.'
+                noMargin
+              >
+                <input
+                  id='hardwareScaleIdleAlpha'
+                  name='hardwareScaleIdleAlpha'
+                  type='number'
+                  className='input input-bordered w-full'
+                  min='0.05'
+                  max='1'
+                  step='0.01'
+                  value={formData.hardwareScaleIdleAlpha}
+                  onChange={onChange('hardwareScaleIdleAlpha')}
+                />
+              </SettingsFormField>
+              <SettingsFormField
+                label='Brewing Filter Alpha'
+                htmlFor='hardwareScaleActiveAlpha'
+                helpText='Larger alpha responds faster with less smoothing; smaller alpha is smoother but slower.'
+                noMargin
+              >
+                <input
+                  id='hardwareScaleActiveAlpha'
+                  name='hardwareScaleActiveAlpha'
+                  type='number'
+                  className='input input-bordered w-full'
+                  min='0.05'
+                  max='1'
+                  step='0.01'
+                  value={formData.hardwareScaleActiveAlpha}
+                  onChange={onChange('hardwareScaleActiveAlpha')}
+                />
+              </SettingsFormField>
+            </div>
+
+            <p className='text-base-content/60 text-xs'>
+              A given alpha behaves faster in time at 80 SPS because it is applied more often. Tune
+              the two alpha values independently for your installed sample rate. Changing sample
+              rate resets both values to 0.80 at 10 SPS or 0.40 at 80 SPS as sensible starting
+              points.
+            </p>
+
+            <div>
+              <h4 className='font-medium'>Calibration</h4>
               <p className='text-base-content/60 mt-1 text-sm'>
                 Tare the scale, then place a known weight and calibrate each load cell.
               </p>
@@ -369,7 +463,7 @@ export function MachineTab({ formData, onChange, setField }) {
                 type='button'
                 className='btn btn-primary btn-sm'
                 onClick={() => calibrateLoadCell(1)}
-                disabled={!status.value?.currentWeight || !calibrationWeight}
+                disabled={!status.value?.hardwareScaleCell1Valid || !calibrationWeight}
               >
                 Calibrate Load Cell 1
               </button>
@@ -377,39 +471,55 @@ export function MachineTab({ formData, onChange, setField }) {
                 type='button'
                 className='btn btn-primary btn-sm'
                 onClick={() => calibrateLoadCell(2)}
-                disabled={!status.value?.currentWeight || !calibrationWeight}
+                disabled={!status.value?.hardwareScaleCell2Valid || !calibrationWeight}
               >
                 Calibrate Load Cell 2
               </button>
             </div>
 
             <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-              <SettingsFormField label='Load Cell 1 Scale Factor' htmlFor='scaleFactor1' noMargin>
-                <input
-                  id='scaleFactor1'
-                  name='scaleFactor1'
-                  type='number'
-                  className='input input-bordered w-full'
-                  min='-50000'
-                  max='50000'
-                  step='0.01'
-                  value={formData.scaleFactor1}
-                  onChange={onChange('scaleFactor1')}
-                />
-              </SettingsFormField>
-              <SettingsFormField label='Load Cell 2 Scale Factor' htmlFor='scaleFactor2' noMargin>
-                <input
-                  id='scaleFactor2'
-                  name='scaleFactor2'
-                  type='number'
-                  className='input input-bordered w-full'
-                  min='-50000'
-                  max='50000'
-                  step='0.01'
-                  value={formData.scaleFactor2}
-                  onChange={onChange('scaleFactor2')}
-                />
-              </SettingsFormField>
+              <div>
+                <p className='text-base-content/60 mb-1 text-xs'>
+                  Current:{' '}
+                  {status.value?.hardwareScaleCell1Valid
+                    ? `${status.value.hardwareScaleCell1Weight.toFixed(1)} g`
+                    : 'Unavailable / uncalibrated'}
+                </p>
+                <SettingsFormField label='Load Cell 1 Scale Factor' htmlFor='scaleFactor1' noMargin>
+                  <input
+                    id='scaleFactor1'
+                    name='scaleFactor1'
+                    type='number'
+                    className='input input-bordered w-full'
+                    min='-50000'
+                    max='50000'
+                    step='0.01'
+                    value={formData.scaleFactor1}
+                    onChange={onChange('scaleFactor1')}
+                  />
+                </SettingsFormField>
+              </div>
+              <div>
+                <p className='text-base-content/60 mb-1 text-xs'>
+                  Current:{' '}
+                  {status.value?.hardwareScaleCell2Valid
+                    ? `${status.value.hardwareScaleCell2Weight.toFixed(1)} g`
+                    : 'Unavailable / uncalibrated'}
+                </p>
+                <SettingsFormField label='Load Cell 2 Scale Factor' htmlFor='scaleFactor2' noMargin>
+                  <input
+                    id='scaleFactor2'
+                    name='scaleFactor2'
+                    type='number'
+                    className='input input-bordered w-full'
+                    min='-50000'
+                    max='50000'
+                    step='0.01'
+                    value={formData.scaleFactor2}
+                    onChange={onChange('scaleFactor2')}
+                  />
+                </SettingsFormField>
+              </div>
             </div>
           </div>
         )}

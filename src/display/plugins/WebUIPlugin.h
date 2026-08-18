@@ -14,6 +14,7 @@
 constexpr size_t UPDATE_CHECK_INTERVAL = 30 * 60 * 1000;
 constexpr size_t CLEANUP_PERIOD = 1000;
 constexpr size_t STATUS_PERIOD = 500;
+constexpr size_t HARDWARE_SCALE_DIAGNOSTIC_PERIOD = 200;
 constexpr size_t DNS_PERIOD = 50;
 
 const String LOCAL_URL = "http://4.4.4.1/";
@@ -70,6 +71,7 @@ class WebUIPlugin : public Plugin {
 
     long lastUpdateCheck = 0;
     long lastStatus = 0;
+    long lastHardwareScaleDiagnostic = 0;
     long lastCleanup = 0;
     long lastDns = 0;
     bool updating = false;
@@ -83,6 +85,9 @@ class WebUIPlugin : public Plugin {
     // stall mid-asset-serve). Keeping one doc lets its underlying pool grow
     // once and stay put.
     JsonDocument statusDoc{&psramAllocator};
+    // Small, independent 5-Hz stream used only by the calibration indicators;
+    // it avoids raising the rate of the much larger general status document.
+    JsonDocument hardwareScaleDiagnosticDoc{&psramAllocator};
 };
 
 #endif // WEBUIPLUGIN_H

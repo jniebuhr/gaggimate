@@ -59,6 +59,8 @@ import { faRotate } from '@fortawesome/free-solid-svg-icons/faRotate';
 
 const DEFAULT_SCALE_FACTOR_1 = -2500.0;
 const DEFAULT_SCALE_FACTOR_2 = 2500.0;
+const DEFAULT_HARDWARE_SCALE_SAMPLE_RATE_SPS = 10;
+const DEFAULT_HARDWARE_SCALE_FILTER_ALPHA = 0.8;
 
 function splitPidString(pidString) {
   if (!pidString) return { pid: pidString, kf: '0.000' };
@@ -115,6 +117,19 @@ function transformFetchedSettings(fetchedSettings) {
     Number.isFinite(sf1) && Math.abs(sf1) > 0.001 ? sf1 : DEFAULT_SCALE_FACTOR_1;
   settingsWithToggle.scaleFactor2 =
     Number.isFinite(sf2) && Math.abs(sf2) > 0.001 ? sf2 : DEFAULT_SCALE_FACTOR_2;
+  const sampleRate = Number(fetchedSettings.hardwareScaleSampleRateSps);
+  settingsWithToggle.hardwareScaleSampleRateSps =
+    sampleRate === 80 ? 80 : DEFAULT_HARDWARE_SCALE_SAMPLE_RATE_SPS;
+  const idleAlpha = Number(fetchedSettings.hardwareScaleIdleAlpha);
+  settingsWithToggle.hardwareScaleIdleAlpha =
+    Number.isFinite(idleAlpha) && idleAlpha > 0 && idleAlpha <= 1
+      ? idleAlpha
+      : DEFAULT_HARDWARE_SCALE_FILTER_ALPHA;
+  const activeAlpha = Number(fetchedSettings.hardwareScaleActiveAlpha);
+  settingsWithToggle.hardwareScaleActiveAlpha =
+    Number.isFinite(activeAlpha) && activeAlpha > 0 && activeAlpha <= 1
+      ? activeAlpha
+      : DEFAULT_HARDWARE_SCALE_FILTER_ALPHA;
 
   if (fetchedSettings.pid) {
     const split = splitPidString(fetchedSettings.pid);

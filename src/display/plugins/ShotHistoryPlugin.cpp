@@ -465,6 +465,32 @@ uint16_t ShotHistoryPlugin::getSystemInfo() {
         systemInfo |= SYSTEM_INFO_EXTENDED_RECORDING;
     }
 
+    // Bits 5-7: Brew process/target state used by v6 analysis.
+    if (controller != nullptr) {
+        std::lock_guard<std::recursive_mutex> guard(controller->getProcessLock());
+        Process *process = controller->getProcess();
+        if (process != nullptr && process->getType() == MODE_BREW) {
+            systemInfo |= SYSTEM_INFO_PROCESS_IS_BREW;
+            auto *brewProcess = static_cast<BrewProcess *>(process);
+            if (brewProcess->target == ProcessTarget::VOLUMETRIC) {
+                systemInfo |= SYSTEM_INFO_TARGET_IS_VOLUMETRIC;
+            }
+            if (brewProcess->currentPhase.hasVolumetricTarget()) {
+                systemInfo |= SYSTEM_INFO_PHASE_HAS_VOLUMETRIC;
+            }
+        }
+    }
+
+    // Bit 8: Active scale source connected/healthy (hardware or Bluetooth).
+    if (controller != nullptr) {
+        const VolumetricMeasurementSource activeSource = controller->getActiveScaleSource();
+        if ((activeSource == VolumetricMeasurementSource::HARDWARE ||
+             activeSource == VolumetricMeasurementSource::BLUETOOTH) &&
+            controller->isScaleSourceHealthy(activeSource)) {
+            systemInfo |= SYSTEM_INFO_ACTIVE_SCALE_CONNECTED;
+        }
+    }
+
     return systemInfo;
 }
 

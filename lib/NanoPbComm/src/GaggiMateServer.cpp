@@ -97,10 +97,15 @@ gm::Payload GaggiMateServer::buildVolumetricMeasurement(float volume) {
     return p;
 }
 
-gm::Payload GaggiMateServer::buildScaleMeasurement(float weight) {
+gm::Payload GaggiMateServer::buildScaleMeasurement(float weight, float cell1Weight, float cell2Weight,
+                                                   bool cell1Valid, bool cell2Valid) {
     gm::Payload p = gaggimate_Payload_init_zero;
     p.which_content = gaggimate_Payload_scale_tag;
     p.content.scale.weight = weight;
+    p.content.scale.cell1_weight = cell1Weight;
+    p.content.scale.cell2_weight = cell2Weight;
+    p.content.scale.cell1_valid = cell1Valid;
+    p.content.scale.cell2_valid = cell2Valid;
     return p;
 }
 
@@ -135,7 +140,10 @@ void GaggiMateServer::sendAutotuneResult(float kp, float ki, float kd, float kf)
 
 void GaggiMateServer::sendVolumetricMeasurement(float volume) { _endpoint.sendUnreliable(buildVolumetricMeasurement(volume)); }
 
-void GaggiMateServer::sendScaleMeasurement(float weight) { _endpoint.sendUnreliable(buildScaleMeasurement(weight)); }
+void GaggiMateServer::sendScaleMeasurement(float weight, float cell1Weight, float cell2Weight, bool cell1Valid,
+                                           bool cell2Valid) {
+    _endpoint.sendUnreliable(buildScaleMeasurement(weight, cell1Weight, cell2Weight, cell1Valid, cell2Valid));
+}
 
 void GaggiMateServer::sendTofMeasurement(uint32_t distance) { _endpoint.sendUnreliable(buildTofMeasurement(distance)); }
 
@@ -182,7 +190,10 @@ void GaggiMateServer::registerHandlers() {
     });
     _endpoint.on(gaggimate_Payload_scale_factors_tag, [this](const gm::Payload &p) {
         if (_scaleFactorsCb)
-            _scaleFactorsCb(p.content.scale_factors.scale_factor1, p.content.scale_factors.scale_factor2);
+            _scaleFactorsCb(p.content.scale_factors.scale_factor1, p.content.scale_factors.scale_factor2,
+                            static_cast<uint16_t>(p.content.scale_factors.sample_rate_sps),
+                            p.content.scale_factors.idle_filter_alpha,
+                            p.content.scale_factors.active_filter_alpha);
     });
     _endpoint.on(gaggimate_Payload_led_tag, [this](const gm::Payload &p) {
         if (!_ledCb)
