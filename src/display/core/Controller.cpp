@@ -1022,7 +1022,11 @@ void Controller::activate() {
     clear();
     comms.tare();
     if (isVolumetricAvailable()) {
-        currentVolumetricSource = getActiveScaleSource();
+        const auto source = getActiveScaleSource();
+        {
+            std::lock_guard<std::recursive_mutex> guard(processMutex);
+            currentVolumetricSource = source;
+        }
         if (mode == MODE_BREW) {
             pluginManager->trigger("controller:brew:prestart");
         }
@@ -1106,7 +1110,10 @@ void Controller::activateGrind() {
     clear();
     const auto grindScaleSource = getGrindScaleSource();
     if (settings.isVolumetricTarget() && grindScaleSource != VolumetricMeasurementSource::INACTIVE) {
-        currentVolumetricSource = grindScaleSource;
+        {
+            std::lock_guard<std::recursive_mutex> guard(processMutex);
+            currentVolumetricSource = grindScaleSource;
+        }
         startProcess(new GrindProcess(ProcessTarget::VOLUMETRIC, 0, settings.getTargetGrindVolume(), settings.getGrindDelay()));
     } else {
         startProcess(
@@ -1196,22 +1203,22 @@ void Controller::onVolumetricMeasurement(double measurement, VolumetricMeasureme
         pluginManager->trigger(F("controller:volumetric-measurement:bluetooth:change"), "value", static_cast<float>(measurement));
     }
 
-    // Only the source selected by the controller may update the unified
-    // measurement stream consumed by shot history, the UI, and WebUI. Without
-    // this gate, simultaneous hardware and Bluetooth reports race and the last
-    // callback wins regardless of the configured source.
-    if (source == getActiveScaleSource()) {
+    // Keep the unified stream on the source selected when the process started.
+    // Live health-based selection is only used while no process source is
+    // locked. This keeps shot history, the UI, and process volume in agreement
+    // if another scale remains healthy after the selected scale stops reporting.
+    if (source == getEffectiveScaleSource()) {
         pluginManager->trigger(F("controller:volumetric-measurement:active:change"), "value",
                                normalizeWeightForDisplay(measurement));
     }
 
+    // This callback fires from the NimBLE task on core 0; deactivate()/clear() on
+    // other tasks can delete the processes, so hold the lock across the deref (GM-147).
+    std::lock_guard<std::recursive_mutex> guard(processMutex);
     if (currentVolumetricSource != source) {
         ESP_LOGD(LOG_TAG, "Ignoring volumetric measurement, source does not match");
         return;
     }
-    // This callback fires from the NimBLE task on core 0; deactivate()/clear() on
-    // other tasks can delete the processes, so hold the lock across the deref (GM-147).
-    std::lock_guard<std::recursive_mutex> guard(processMutex);
     if (currentProcess != nullptr) {
         currentProcess->updateVolume(measurement);
     }
@@ -1259,6 +1266,15 @@ VolumetricMeasurementSource Controller::getActiveScaleSource() const {
 #endif
 }
 
+VolumetricMeasurementSource Controller::getEffectiveScaleSource() const {
+    VolumetricMeasurementSource processSource;
+    {
+        std::lock_guard<std::recursive_mutex> guard(processMutex);
+        processSource = currentVolumetricSource;
+    }
+    return processSource != VolumetricMeasurementSource::INACTIVE ? processSource : getActiveScaleSource();
+}
+
 VolumetricMeasurementSource Controller::getGrindScaleSource() const {
     return isBluetoothScaleHealthy() ? VolumetricMeasurementSource::BLUETOOTH
                                      : VolumetricMeasurementSource::INACTIVE;
@@ -1275,7 +1291,7 @@ bool Controller::isScaleSourceHealthy(VolumetricMeasurementSource source) const 
 }
 
 String Controller::getActiveScaleSourceName() const {
-    const auto source = getActiveScaleSource();
+    const auto source = getEffectiveScaleSource();
     if (source == VolumetricMeasurementSource::HARDWARE) {
         return "hardware";
     }

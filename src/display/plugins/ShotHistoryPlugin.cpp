@@ -489,9 +489,9 @@ uint16_t ShotHistoryPlugin::getSystemInfo() {
         }
     }
 
-    // Bit 8: Active scale source connected/healthy (hardware or Bluetooth).
+    // Bit 8: Effective scale source connected/healthy (hardware or Bluetooth).
     if (controller != nullptr) {
-        const VolumetricMeasurementSource activeSource = controller->getActiveScaleSource();
+        const VolumetricMeasurementSource activeSource = controller->getEffectiveScaleSource();
         if ((activeSource == VolumetricMeasurementSource::HARDWARE ||
              activeSource == VolumetricMeasurementSource::BLUETOOTH) &&
             controller->isScaleSourceHealthy(activeSource)) {

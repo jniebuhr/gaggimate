@@ -557,7 +557,7 @@ void DefaultUI::updateSystemStatus() {
     if (stringChanged(systemStatus.error_label(), errorLabel.c_str()))
         systemStatus.error_label(errorLabel.c_str());
     systemStatus.volumetric_available(controller->isVolumetricAvailable());
-    systemStatus.bluetooth_scales(controller->isScaleSourceHealthy(controller->getActiveScaleSource()));
+    systemStatus.bluetooth_scales(controller->isScaleSourceHealthy(controller->getEffectiveScaleSource()));
     systemStatus.controller_version(controller->getSystemInfo().version.c_str());
     systemStatus.display_version(BUILD_GIT_VERSION);
     systemStatus.update_available(updateAvailable);

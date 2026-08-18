@@ -103,6 +103,7 @@ class Controller {
     void onVolumetricMeasurement(double measurement, VolumetricMeasurementSource source);
     void setVolumetricOverride(bool override) { volumetricOverride = override; }
     VolumetricMeasurementSource getActiveScaleSource() const;
+    VolumetricMeasurementSource getEffectiveScaleSource() const;
     VolumetricMeasurementSource getGrindScaleSource() const;
     VolumetricMeasurementSource getPreferredScaleSource() const;
     bool isScaleSourceHealthy(VolumetricMeasurementSource source) const;
