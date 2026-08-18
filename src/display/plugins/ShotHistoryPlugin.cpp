@@ -141,7 +141,8 @@ void ShotHistoryPlugin::record() {
         // saturate vf for seconds. See GM-110.
         const float activeWeight = currentActiveWeight > 0.0f ? currentActiveWeight : 0.0f;
         const float activeDiff = activeWeight - lastActiveWeight;
-        if (fabsf(activeDiff) <= MAX_PLAUSIBLE_WEIGHT_DELTA) {
+        const bool plausibleActiveDelta = fabsf(activeDiff) <= MAX_PLAUSIBLE_WEIGHT_DELTA;
+        if (plausibleActiveDelta) {
             const float activeFlow = activeDiff / (SHOT_LOG_SAMPLE_INTERVAL_MS / 1000.0f);
             currentActiveFlow = currentActiveFlow * 0.75f + activeFlow * 0.25f;
         }
@@ -162,7 +163,10 @@ void ShotHistoryPlugin::record() {
         sample.ev = encodeUnsigned(currentEstimatedWeight, WEIGHT_SCALE, WEIGHT_MAX_VALUE);
         sample.pr = encodeUnsigned(currentPuckResistance, RESISTANCE_SCALE, RESISTANCE_MAX_VALUE);
         sample.si = getSystemInfo(); // Pack system state information
-        if (activeWeight > maxRecordedWeight) {
+        // Apply the same spike rejection to the final-weight maximum. A real
+        // sustained step is accepted on the following stable sample, whereas a
+        // one-sample excursion cannot permanently inflate the shot total.
+        if (plausibleActiveDelta && activeWeight > maxRecordedWeight) {
             maxRecordedWeight = activeWeight;
         }
 
