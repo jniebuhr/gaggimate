@@ -7,20 +7,30 @@
 
 #define HX711_GAIN 128
 #define MAX_SCALE_GRAMS 2000.0f
-#define MAX_WAIT_READ_MS 250
 #define MAX_STARTUP_WAIT_MS 1200
 
 namespace {
 constexpr float MIN_ABS_SCALE_FACTOR = 1.0f;
 constexpr float TARE_MAX_SPREAD_GRAMS = 0.50f;
 constexpr uint8_t TARE_MAX_ATTEMPTS = 2;
-constexpr uint8_t READ_FAILURES_BEFORE_FAULT = 3;
+constexpr uint8_t MAX_TARE_SAMPLES = 20;
+constexpr uint8_t MAX_CALIBRATION_SAMPLES = 40;
+constexpr unsigned long READ_FAULT_DELAY_MS = 750;
+// Slightly below 100 ms so a nominal 10-SPS converter whose millis() spacing
+// occasionally rounds to 99 ms is not accidentally published at only 5 SPS.
+constexpr unsigned long SCALE_PUBLICATION_INTERVAL_MS = 90;
+constexpr unsigned long ZERO_TRACKING_OBSERVATION_INTERVAL_MS = 100;
+constexpr unsigned long INTERVAL_DIAGNOSTIC_PERIOD_MS = 5000;
 constexpr unsigned long ACTIVE_FILTER_LINGER_MS = 5000;
 constexpr float ACTIVE_OUTLIER_THRESHOLD_GRAMS = 0.75f;
 
 bool validScaleFactor(float factor) { return std::isfinite(factor) && std::fabs(factor) >= MIN_ABS_SCALE_FACTOR; }
 
 bool saturatedReading(long value) { return value == 0x7FFFFF || value == -0x800000; }
+
+bool validSampleRate(uint16_t sampleRateSps) { return sampleRateSps == 10 || sampleRateSps == 80; }
+
+bool validAlpha(float alpha) { return std::isfinite(alpha) && alpha > 0.0f && alpha <= 1.0f; }
 } // namespace
 
 HardwareScale::HardwareScale(uint8_t data_pin1, uint8_t data_pin2, uint8_t clock_pin,
@@ -65,7 +75,7 @@ void HardwareScale::setup() {
     // do a warm-up of 5 readings
     for (int i = 0; i < 5; i++) {
         long start = millis();
-        while (!isReady() && (millis() - start) < MAX_WAIT_READ_MS) {
+        while (!isReady() && (millis() - start) < readyTimeoutMs()) {
             delay(10);
         }
         if (!isReady()) {
@@ -75,8 +85,11 @@ void HardwareScale::setup() {
         }
         readRaw();
     }
-    if (!tare()) {
-        ESP_LOGE(LOG_TAG, "Unable to obtain a stable initial tare");
+    // A noisy boot window must not make otherwise responsive HX711 hardware
+    // unavailable. Unlike a user-requested tare, startup may use a trimmed-mean
+    // fallback from a complete sample set when the stability check fails.
+    if (!tareInternal(true)) {
+        ESP_LOGE(LOG_TAG, "Unable to read enough samples for the initial tare");
         is_initialized = false;
         return;
     }
@@ -154,20 +167,21 @@ HardwareScale::RawReading HardwareScale::readRaw() {
     return {static_cast<long>(value1), static_cast<long>(value2)};
 }
 
-bool HardwareScale::convertRawToWeight(const RawReading &raw, float &weight) const {
+bool HardwareScale::convertRawToWeight(const RawReading &raw, float &weight, float &cell1Weight,
+                                       float &cell2Weight) const {
     if (saturatedReading(raw.value1) || saturatedReading(raw.value2) || !validScaleFactor(_scale_factor1) ||
         !validScaleFactor(_scale_factor2)) {
         return false;
     }
 
-    const float weight1 = (static_cast<float>(raw.value1) - _offset1) / _scale_factor1;
-    const float weight2 = (static_cast<float>(raw.value2) - _offset2) / _scale_factor2;
-    if (!std::isfinite(weight1) || !std::isfinite(weight2) || std::fabs(weight1) > MAX_SCALE_GRAMS ||
-        std::fabs(weight2) > MAX_SCALE_GRAMS) {
+    cell1Weight = (static_cast<float>(raw.value1) - _offset1) / _scale_factor1;
+    cell2Weight = (static_cast<float>(raw.value2) - _offset2) / _scale_factor2;
+    if (!std::isfinite(cell1Weight) || !std::isfinite(cell2Weight) || std::fabs(cell1Weight) > MAX_SCALE_GRAMS ||
+        std::fabs(cell2Weight) > MAX_SCALE_GRAMS) {
         return false;
     }
 
-    const float combined = weight1 + weight2;
+    const float combined = cell1Weight + cell2Weight;
     if (!std::isfinite(combined) || std::fabs(combined) > MAX_SCALE_GRAMS) {
         return false;
     }
@@ -201,6 +215,47 @@ void HardwareScale::resetZeroTrackingHistory() {
     _zero_median_index = 0;
     _zero_stability_count = 0;
     _zero_stability_index = 0;
+    _last_zero_tracking_observation_ms = 0;
+}
+
+unsigned long HardwareScale::readyTimeoutMs() const {
+    // Allow several expected conversion periods while still detecting a dead
+    // converter promptly. DOUT readiness, not this estimate, gates every read.
+    const unsigned long expectedMs = (1000UL + _config.sampleRateSps - 1) / _config.sampleRateSps;
+    return std::max(100UL, expectedMs * 3UL);
+}
+
+uint8_t HardwareScale::tareSampleCount() const { return _config.sampleRateSps == 80 ? MAX_TARE_SAMPLES : 5; }
+
+uint8_t HardwareScale::calibrationSampleCount() const {
+    return _config.sampleRateSps == 80 ? MAX_CALIBRATION_SAMPLES : 10;
+}
+
+void HardwareScale::recordConversionInterval() {
+    const unsigned long nowUs = micros();
+    if (_last_conversion_us != 0) {
+        const uint32_t intervalUs = nowUs - _last_conversion_us;
+        _interval_total_us += intervalUs;
+        _interval_count++;
+        _interval_min_us = std::min(_interval_min_us, intervalUs);
+        _interval_max_us = std::max(_interval_max_us, intervalUs);
+    }
+    _last_conversion_us = nowUs;
+
+    const unsigned long nowMs = millis();
+    if (_interval_log_started_ms == 0) {
+        _interval_log_started_ms = nowMs;
+    } else if (nowMs - _interval_log_started_ms >= INTERVAL_DIAGNOSTIC_PERIOD_MS && _interval_count > 0) {
+        ESP_LOGV(LOG_TAG, "HX711 conversion intervals: configured=%u SPS, n=%lu, avg=%.2f ms, min=%.2f ms, max=%.2f ms",
+                 _config.sampleRateSps, static_cast<unsigned long>(_interval_count),
+                 static_cast<double>(_interval_total_us) / _interval_count / 1000.0,
+                 static_cast<double>(_interval_min_us) / 1000.0, static_cast<double>(_interval_max_us) / 1000.0);
+        _interval_log_started_ms = nowMs;
+        _interval_count = 0;
+        _interval_total_us = 0;
+        _interval_min_us = UINT32_MAX;
+        _interval_max_us = 0;
+    }
 }
 
 bool HardwareScale::acceptReading(float reading, float &accepted) {
@@ -234,6 +289,8 @@ bool HardwareScale::acceptReading(float reading, float &accepted) {
     } else if (_has_pending_outlier && std::fabs(reading - _pending_outlier) <= threshold) {
         // A second reading near the first confirms a real step (for example a
         // cup being placed) rather than an isolated electrical/mechanical spike.
+        // This is intentionally consecutive-conversion logic: at 80 SPS a real
+        // step is confirmed sooner, while a one-conversion glitch is still held.
         _has_pending_outlier = false;
     } else {
         _pending_outlier = reading;
@@ -254,7 +311,7 @@ float HardwareScale::getWeight() const {
 void HardwareScale::loop() {
     // Send sentinel value if scale is not initialized
     if (!is_initialized) {
-        _reading_callback(HARDWARE_SCALE_UNAVAILABLE); // Sentinel value to signal scale unavailable
+        _reading_callback(HARDWARE_SCALE_UNAVAILABLE, 0.0f, 0.0f, false, false);
         return;
     }
 
@@ -275,34 +332,44 @@ void HardwareScale::loop() {
     }
 
     xSemaphoreTake(_operation_mutex, portMAX_DELAY);
-    if (!waitUntilReady(MAX_WAIT_READ_MS)) {
+    if (!waitUntilReady(readyTimeoutMs())) {
         xSemaphoreGive(_operation_mutex);
-        _consecutive_read_failures++;
-        if (_consecutive_read_failures >= READ_FAILURES_BEFORE_FAULT && !_read_fault_reported) {
+        if (_read_failure_started_ms == 0) {
+            _read_failure_started_ms = millis();
+        }
+        if (millis() - _read_failure_started_ms >= READ_FAULT_DELAY_MS && !_read_fault_reported) {
             ESP_LOGE(LOG_TAG, "HX711 runtime timeout (%d, %d); marking scale unavailable until readings recover",
                      digitalRead(_data_pin1), digitalRead(_data_pin2));
             _read_fault_reported = true;
-            _reading_callback(HARDWARE_SCALE_UNAVAILABLE);
+            _reading_callback(HARDWARE_SCALE_UNAVAILABLE, 0.0f, 0.0f, false, false);
         }
         return;
     }
 
     _raw_weight = readRaw();
-    ESP_LOGV(LOG_TAG, "Raw Scale Reading: %ld, %ld", _raw_weight.value1, _raw_weight.value2);
+    recordConversionInterval();
     float reading = 0.0f;
     float accepted = 0.0f;
-    if (!convertRawToWeight(_raw_weight, reading)) {
+    float cell1Weight = 0.0f;
+    float cell2Weight = 0.0f;
+    if (!convertRawToWeight(_raw_weight, reading, cell1Weight, cell2Weight)) {
         xSemaphoreGive(_operation_mutex);
-        _consecutive_read_failures++;
-        if (_consecutive_read_failures == 1 || _consecutive_read_failures == READ_FAILURES_BEFORE_FAULT) {
+        if (_read_failure_started_ms == 0) {
+            _read_failure_started_ms = millis();
             ESP_LOGW(LOG_TAG, "Rejected invalid HX711 sample: %ld, %ld", _raw_weight.value1, _raw_weight.value2);
         }
-        if (_consecutive_read_failures >= READ_FAILURES_BEFORE_FAULT && !_read_fault_reported) {
+        if (millis() - _read_failure_started_ms >= READ_FAULT_DELAY_MS && !_read_fault_reported) {
             _read_fault_reported = true;
-            _reading_callback(HARDWARE_SCALE_UNAVAILABLE);
+            _reading_callback(HARDWARE_SCALE_UNAVAILABLE, 0.0f, 0.0f, false, false);
         }
         return;
     }
+
+    if (_read_fault_reported) {
+        ESP_LOGI(LOG_TAG, "HX711 readings recovered");
+    }
+    _read_failure_started_ms = 0;
+    _read_fault_reported = false;
 
     if (!acceptReading(reading, accepted)) {
         xSemaphoreGive(_operation_mutex);
@@ -319,7 +386,9 @@ void HardwareScale::loop() {
     // add latency to the reported scale measurement.
     if (responsive) {
         resetZeroTrackingHistory();
-    } else {
+    } else if (_last_zero_tracking_observation_ms == 0 ||
+               millis() - _last_zero_tracking_observation_ms >= ZERO_TRACKING_OBSERVATION_INTERVAL_MS) {
+        _last_zero_tracking_observation_ms = millis();
         _zero_median_samples[_zero_median_index] = accepted;
         _zero_median_index = (_zero_median_index + 1) % SCALE_ZERO_TRACK_MEDIAN_SAMPLES;
         if (_zero_median_count < SCALE_ZERO_TRACK_MEDIAN_SAMPLES) {
@@ -372,7 +441,7 @@ void HardwareScale::loop() {
         }
     }
 
-    const float alpha = responsive ? SCALE_FILTER_ALPHA_ACTIVE : SCALE_FILTER_ALPHA_IDLE;
+    const float alpha = responsive ? _config.activeAlpha : _config.idleAlpha;
     const float filtered_weight = alpha * corrected + (1.0f - alpha) * _weight.load();
     _weight.store(filtered_weight);
 
@@ -393,85 +462,137 @@ void HardwareScale::loop() {
     }
     xSemaphoreGive(_operation_mutex);
 
-    if (_read_fault_reported) {
-        ESP_LOGI(LOG_TAG, "HX711 readings recovered");
-    }
-    _consecutive_read_failures = 0;
-    _read_fault_reported = false;
     ESP_LOGV(LOG_TAG, "Scale Reading: %0.2f, Corrected: %0.2f, Filtered: %0.2f, Published: %0.2f, alpha: %.2f",
              reading, corrected, filtered_weight, output_weight, alpha);
-    _reading_callback(output_weight);
+    const unsigned long now = millis();
+    if (_last_publish_ms == 0 || now - _last_publish_ms >= SCALE_PUBLICATION_INTERVAL_MS) {
+        _last_publish_ms = now;
+        _reading_callback(output_weight, cell1Weight, cell2Weight, true, true);
+    }
 }
 
 void HardwareScale::setScaleFactors(float scale_factor1, float scale_factor2) {
-    if (!validScaleFactor(scale_factor1) || !validScaleFactor(scale_factor2)) {
-        ESP_LOGE(LOG_TAG, "Rejected invalid scale factors: %.3f, %.3f", scale_factor1, scale_factor2);
-        return;
+    setConfiguration(scale_factor1, scale_factor2, _config.sampleRateSps, _config.idleAlpha, _config.activeAlpha);
+}
+
+void HardwareScale::setConfiguration(float scale_factor1, float scale_factor2, uint16_t sample_rate_sps,
+                                     float idle_alpha, float active_alpha) {
+    if (!validScaleFactor(scale_factor1)) {
+        ESP_LOGW(LOG_TAG, "Invalid scale factor 1 %.3f; using -2500 counts/g", scale_factor1);
+        scale_factor1 = -2500.0f;
+    }
+    if (!validScaleFactor(scale_factor2)) {
+        ESP_LOGW(LOG_TAG, "Invalid scale factor 2 %.3f; using 2500 counts/g", scale_factor2);
+        scale_factor2 = 2500.0f;
+    }
+    if (!validSampleRate(sample_rate_sps)) {
+        ESP_LOGW(LOG_TAG, "Invalid/missing HX711 sample rate %u; using 10 SPS", sample_rate_sps);
+        sample_rate_sps = HARDWARE_SCALE_DEFAULT_SAMPLE_RATE_SPS;
+    }
+    if (!validAlpha(idle_alpha)) {
+        ESP_LOGW(LOG_TAG, "Invalid/missing idle filter alpha %.3f; using %.2f", idle_alpha,
+                 HARDWARE_SCALE_DEFAULT_FILTER_ALPHA_IDLE);
+        idle_alpha = HARDWARE_SCALE_DEFAULT_FILTER_ALPHA_IDLE;
+    }
+    if (!validAlpha(active_alpha)) {
+        ESP_LOGW(LOG_TAG, "Invalid/missing brewing filter alpha %.3f; using %.2f", active_alpha,
+                 HARDWARE_SCALE_DEFAULT_FILTER_ALPHA_ACTIVE);
+        active_alpha = HARDWARE_SCALE_DEFAULT_FILTER_ALPHA_ACTIVE;
     }
     xSemaphoreTake(_operation_mutex, portMAX_DELAY);
     _scale_factor1 = scale_factor1;
     _scale_factor2 = scale_factor2;
+    _config = {sample_rate_sps, idle_alpha, active_alpha};
+    _last_conversion_us = 0;
+    _interval_log_started_ms = 0;
+    _interval_count = 0;
+    _interval_total_us = 0;
+    _interval_min_us = UINT32_MAX;
+    _interval_max_us = 0;
     // Zero correction is expressed in grams and is no longer valid after the
     // raw-counts-per-gram calibration changes.
     _zero_bias = 0.0f;
     resetZeroTrackingHistory();
     xSemaphoreGive(_operation_mutex);
     _scale_factors_ready = true;
-    ESP_LOGI(LOG_TAG, "✓ Scale factors received and applied: %.3f, %.3f - scale readings now calibrated", _scale_factor1, _scale_factor2);
+    ESP_LOGI(LOG_TAG, "Hardware scale configuration: sample rate=%u SPS, idle alpha=%.2f, active alpha=%.2f, scale factors=(%.3f, %.3f)",
+             _config.sampleRateSps, _config.idleAlpha, _config.activeAlpha, _scale_factor1, _scale_factor2);
 }
 
-bool HardwareScale::tare() {
+bool HardwareScale::tare() { return tareInternal(false); }
+
+bool HardwareScale::tareInternal(bool allowUnstableFallback) {
     xSemaphoreTake(_operation_mutex, portMAX_DELAY);
 
-    RawReading samples[SCALE_TARE_SAMPLES]{};
+    RawReading samples[MAX_TARE_SAMPLES]{};
+    const uint8_t sampleCount = tareSampleCount();
     bool stable = false;
+    bool haveCompleteSamples = false;
+    float lastSpread = NAN;
     for (uint8_t attempt = 0; attempt < TARE_MAX_ATTEMPTS && !stable; ++attempt) {
+        RawReading attemptSamples[MAX_TARE_SAMPLES]{};
         bool complete = true;
-        for (uint8_t i = 0; i < SCALE_TARE_SAMPLES; ++i) {
-            if (!waitUntilReady(MAX_WAIT_READ_MS)) {
+        for (uint8_t i = 0; i < sampleCount; ++i) {
+            if (!waitUntilReady(readyTimeoutMs())) {
                 complete = false;
                 break;
             }
-            samples[i] = readRaw();
+            attemptSamples[i] = readRaw();
         }
         if (!complete) {
             ESP_LOGW(LOG_TAG, "Tare attempt %u timed out waiting for HX711 data", attempt + 1);
             continue;
         }
+        haveCompleteSamples = true;
+        std::copy(attemptSamples, attemptSamples + sampleCount, samples);
 
         const auto [min1, max1] = std::minmax_element(
-            samples, samples + SCALE_TARE_SAMPLES, [](const RawReading &a, const RawReading &b) { return a.value1 < b.value1; });
+            samples, samples + sampleCount, [](const RawReading &a, const RawReading &b) { return a.value1 < b.value1; });
         const auto [min2, max2] = std::minmax_element(
-            samples, samples + SCALE_TARE_SAMPLES, [](const RawReading &a, const RawReading &b) { return a.value2 < b.value2; });
-        const float spread = std::fabs(static_cast<float>(max1->value1 - min1->value1) / _scale_factor1) +
-                             std::fabs(static_cast<float>(max2->value2 - min2->value2) / _scale_factor2);
-        stable = std::isfinite(spread) && spread <= TARE_MAX_SPREAD_GRAMS;
+            samples, samples + sampleCount, [](const RawReading &a, const RawReading &b) { return a.value2 < b.value2; });
+        lastSpread = std::fabs(static_cast<float>(max1->value1 - min1->value1) / _scale_factor1) +
+                     std::fabs(static_cast<float>(max2->value2 - min2->value2) / _scale_factor2);
+        stable = std::isfinite(lastSpread) && lastSpread <= TARE_MAX_SPREAD_GRAMS;
         if (!stable) {
-            ESP_LOGW(LOG_TAG, "Tare attempt %u unstable (%.3fg spread)", attempt + 1, spread);
+            ESP_LOGW(LOG_TAG, "Tare attempt %u unstable (%.3fg spread)", attempt + 1, lastSpread);
         }
     }
 
-    if (!stable) {
+    if (!stable && (!allowUnstableFallback || !haveCompleteSamples)) {
         xSemaphoreGive(_operation_mutex);
         ESP_LOGE(LOG_TAG, "Tare rejected after %u unstable/timeout attempts; preserving previous offsets", TARE_MAX_ATTEMPTS);
         return false;
     }
 
-    long values1[SCALE_TARE_SAMPLES];
-    long values2[SCALE_TARE_SAMPLES];
-    for (uint8_t i = 0; i < SCALE_TARE_SAMPLES; ++i) {
+    if (!stable) {
+        ESP_LOGW(LOG_TAG,
+                 "Initial tare exceeded the %.2fg stability limit (%.3fg spread); using robust offsets so scale acquisition can start",
+                 TARE_MAX_SPREAD_GRAMS, lastSpread);
+    }
+
+    long values1[MAX_TARE_SAMPLES];
+    long values2[MAX_TARE_SAMPLES];
+    for (uint8_t i = 0; i < sampleCount; ++i) {
         values1[i] = samples[i].value1;
         values2[i] = samples[i].value2;
     }
-    std::sort(values1, values1 + SCALE_TARE_SAMPLES);
-    std::sort(values2, values2 + SCALE_TARE_SAMPLES);
-    // Trim the high and low sample from each cell, then average the middle three.
-    _offset1 = static_cast<float>(static_cast<int64_t>(values1[1]) + values1[2] + values1[3]) / 3.0f;
-    _offset2 = static_cast<float>(static_cast<int64_t>(values2[1]) + values2[2] + values2[3]) / 3.0f;
+    std::sort(values1, values1 + sampleCount);
+    std::sort(values2, values2 + sampleCount);
+    // Trim one high and low sample from each cell, then average the remainder.
+    int64_t sum1 = 0;
+    int64_t sum2 = 0;
+    for (uint8_t i = 1; i + 1 < sampleCount; ++i) {
+        sum1 += values1[i];
+        sum2 += values2[i];
+    }
+    _offset1 = static_cast<float>(sum1) / (sampleCount - 2);
+    _offset2 = static_cast<float>(sum2) / (sampleCount - 2);
     _weight.store(0.0f); // Reset weight to zero after tare
     resetFilterState();
+    _last_conversion_us = 0;
     xSemaphoreGive(_operation_mutex);
-    ESP_LOGI(LOG_TAG, "Tared scale offsets from %u stable samples: %.3f, %.3f", SCALE_TARE_SAMPLES, _offset1, _offset2);
+    ESP_LOGI(LOG_TAG, "Tared scale offsets from %u %s samples: %.3f, %.3f", sampleCount,
+             stable ? "stable" : "startup fallback", _offset1, _offset2);
     return true;
 }
 
@@ -483,18 +604,21 @@ void HardwareScale::calibrateScale(uint8_t scale, float calibrationWeight) {
     xSemaphoreTake(_operation_mutex, portMAX_DELAY);
 
     int64_t value = 0;
-    for (int i = 0; i < 10; i++) {
-        if (!waitUntilReady(MAX_WAIT_READ_MS)) {
+    const uint8_t sampleCount = calibrationSampleCount();
+    for (uint8_t i = 0; i < sampleCount; i++) {
+        if (!waitUntilReady(readyTimeoutMs())) {
+            _last_conversion_us = 0;
             xSemaphoreGive(_operation_mutex);
             ESP_LOGE(LOG_TAG, "Calibration timed out waiting for HX711 data");
             return;
         }
         value += (scale == 0) ? readRaw().value1 : readRaw().value2; // Read from the first scale
     }
-    value /= 10;
+    value /= sampleCount;
 
     const float factor = (static_cast<float>(value) - (scale == 0 ? _offset1 : _offset2)) / calibrationWeight;
     if (!validScaleFactor(factor)) {
+        _last_conversion_us = 0;
         xSemaphoreGive(_operation_mutex);
         ESP_LOGE(LOG_TAG, "Rejected invalid calculated scale factor: %.3f", factor);
         return;
@@ -505,16 +629,19 @@ void HardwareScale::calibrateScale(uint8_t scale, float calibrationWeight) {
         _scale_factor2 = factor;
     }
 
+    _last_conversion_us = 0;
     xSemaphoreGive(_operation_mutex);
     ESP_LOGI(LOG_TAG, "Calibrated scale %d with factor: %.3f", scale, (scale == 0 ? _scale_factor1 : _scale_factor2));
     _configuration_callback(_scale_factor1, _scale_factor2);
 }
 
 [[noreturn]] void HardwareScale::loopTask(void *arg) {
-    TickType_t lastWake = xTaskGetTickCount();
     auto *scale = static_cast<HardwareScale *>(arg);
     while (true) {
+        // loop() waits cooperatively for both DOUT pins to indicate a completed
+        // conversion. This consumes every 10- or 80-SPS conversion without a
+        // fixed polling cadence or a CPU-burning busy loop.
         scale->loop();
-        xTaskDelayUntil(&lastWake, pdMS_TO_TICKS(SCALE_READ_INTERVAL_MS));
+        taskYIELD();
     }
 }

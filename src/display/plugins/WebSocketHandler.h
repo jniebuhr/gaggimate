@@ -57,6 +57,7 @@ class WebSocketHandler {
     long lastStatus = 0;
     long lastStateSent = 0;
     long lastCleanup = 0;
+    unsigned long lastHardwareScaleDiagnostic = 0;
     AsyncWebSocketSharedBuffer lastStateBuffer; // last slow-state frame, replayed to new clients
     float currentBluetoothWeight = 0.0f;
     // Reused for every 500ms status broadcast. Allocating a fresh JsonDocument
@@ -65,6 +66,8 @@ class WebSocketHandler {
     // stall mid-asset-serve). Keeping one doc lets its underlying pool grow
     // once and stay put.
     JsonDocument statusDoc{&psramAllocator};
+    // Independent 5 Hz calibration stream, without increasing general status traffic.
+    JsonDocument hardwareScaleDiagnosticDoc{&psramAllocator};
 };
 
 #endif // WEBSOCKETHANDLER_H

@@ -325,6 +325,19 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 }
                 settings->setScaleFactors(sf1, sf2);
             }
+            if (request->hasArg("hardwareScaleSampleRateSps") || request->hasArg("hardwareScaleIdleAlpha") ||
+                request->hasArg("hardwareScaleActiveAlpha")) {
+                const uint16_t sampleRate = request->hasArg("hardwareScaleSampleRateSps")
+                                                ? static_cast<uint16_t>(request->arg("hardwareScaleSampleRateSps").toInt())
+                                                : settings->getHardwareScaleSampleRateSps();
+                const float idleAlpha = request->hasArg("hardwareScaleIdleAlpha")
+                                            ? request->arg("hardwareScaleIdleAlpha").toFloat()
+                                            : settings->getHardwareScaleIdleAlpha();
+                const float activeAlpha = request->hasArg("hardwareScaleActiveAlpha")
+                                              ? request->arg("hardwareScaleActiveAlpha").toFloat()
+                                              : settings->getHardwareScaleActiveAlpha();
+                settings->setHardwareScaleConfiguration(sampleRate, idleAlpha, activeAlpha);
+            }
             if (request->hasArg("preferredScaleSource"))
                 settings->setPreferredScaleSource(request->arg("preferredScaleSource"));
             if (request->hasArg("pid"))
@@ -513,6 +526,9 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["pressureScaling"] = String(settings.getPressureScaling());
     doc["scaleFactor1"] = settings.getScaleFactor1();
     doc["scaleFactor2"] = settings.getScaleFactor2();
+    doc["hardwareScaleSampleRateSps"] = settings.getHardwareScaleSampleRateSps();
+    doc["hardwareScaleIdleAlpha"] = settings.getHardwareScaleIdleAlpha();
+    doc["hardwareScaleActiveAlpha"] = settings.getHardwareScaleActiveAlpha();
     doc["preferredScaleSource"] = settings.getPreferredScaleSource();
     doc["boilerFillActive"] = settings.isBoilerFillActive();
     doc["startupFillTime"] = settings.getStartupFillTime() / 1000;

@@ -85,9 +85,9 @@ void GaggiMateController::setup() {
     }
     this->hardwareScale = new HardwareScale(
         _config.scaleSdaPin, _config.scaleSda1Pin, _config.scaleSclPin,
-        [this](float weight) {
+        [this](float weight, float cell1Weight, float cell2Weight, bool cell1Valid, bool cell2Valid) {
             if (_comms.isConnected()) {
-                _comms.sendScaleMeasurement(weight);
+                _comms.sendScaleMeasurement(weight, cell1Weight, cell2Weight, cell1Valid, cell2Valid);
             }
         },
         [](float, float) {});
@@ -109,7 +109,6 @@ void GaggiMateController::setup() {
             _comms.onLedControl([this](uint8_t channel, uint8_t brightness) { ledController->setChannel(channel, brightness); });
         }
     }
-
     gm::DeviceCapabilities capabilities = gaggimate_Capabilities_init_zero;
     capabilities.dimming = _config.capabilites.dimming;
     capabilities.pressure = _config.capabilites.pressure;
@@ -318,11 +317,13 @@ void GaggiMateController::setup() {
         auto dimmedPump = static_cast<DimmedPump *>(pump);
         dimmedPump->tare();
     });
-    _comms.onScaleFactors([this](float scaleFactor1, float scaleFactor2) {
+    _comms.onScaleFactors([this](float scaleFactor1, float scaleFactor2, uint16_t sampleRateSps,
+                                float idleFilterAlpha, float activeFilterAlpha) {
         if (hardwareScale == nullptr || !hardwareScale->isAvailable()) {
             return;
         }
-        hardwareScale->setScaleFactors(scaleFactor1, scaleFactor2);
+        hardwareScale->setConfiguration(scaleFactor1, scaleFactor2, sampleRateSps, idleFilterAlpha,
+                                        activeFilterAlpha);
     });
     ESP_LOGI(LOG_TAG, "Initialization done");
 }

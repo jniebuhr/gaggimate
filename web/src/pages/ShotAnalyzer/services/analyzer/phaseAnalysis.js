@@ -42,7 +42,7 @@ function getPhaseSysAnomalies(samples, sysInfo) {
   const sysFieldMap = [
     ['sys_shot_vol', 'shotStartedVolumetric'],
     ['sys_curr_vol', 'currentlyVolumetric'],
-    ['sys_scale', 'bluetoothScaleConnected'],
+    ['sys_scale', 'activeScaleConnected'],
     ['sys_vol_avail', 'volumetricAvailable'],
     ['sys_ext', 'extendedRecording'],
   ];
@@ -554,7 +554,7 @@ function getPhaseStats(samples, weightSamples, sysInfo, sysAnomalies, analyzerSy
     sys_raw: sysInfo.raw,
     sys_shot_vol: sysInfo.shotStartedVolumetric,
     sys_curr_vol: sysInfo.currentlyVolumetric,
-    sys_scale: sysInfo.bluetoothScaleConnected,
+    sys_scale: sysInfo.activeScaleConnected,
     sys_vol_avail: sysInfo.volumetricAvailable,
     sys_ext: sysInfo.extendedRecording,
     sys_brew_mode: analyzerSystemInfo.brewModeLabel,

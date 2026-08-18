@@ -62,6 +62,10 @@ const FIELD_DEFS = {
       bluetoothScaleConnected: !!(val & 0x0004),
       volumetricAvailable: !!(val & 0x0008),
       extendedRecording: !!(val & 0x0010),
+      processIsBrew: !!(val & 0x0020),
+      targetIsVolumetric: !!(val & 0x0040),
+      phaseHasVolumetric: !!(val & 0x0080),
+      activeScaleConnected: !!(val & 0x0100),
     }),
   },
   [FIELD_BITS.WP]: { name: 'wp', type: 'uint16', scale: WEIGHT_SCALE },
@@ -289,6 +293,12 @@ export function parseBinaryShot(arrayBuffer, id) {
       sample.phaseNumber = currentPhase;
       sample.phaseDisplayNumber = currentPhase + 1; // 1-based for display
       sample.phaseName = phaseName;
+    }
+
+    // v1-v5 only recorded the Bluetooth-specific scale bit. Preserve their
+    // original meaning while presenting one source-neutral field to analysis.
+    if (sample.systemInfo && version < 6) {
+      sample.systemInfo.activeScaleConnected = sample.systemInfo.bluetoothScaleConnected;
     }
 
     samples.push(sample);
