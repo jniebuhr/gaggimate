@@ -1182,6 +1182,12 @@ void Controller::onVolumetricMeasurement(double measurement, VolumetricMeasureme
     }
 #endif
 
+    if (source == VolumetricMeasurementSource::BLUETOOTH) {
+        lastBluetoothMeasurement = millis();
+    } else if (source == VolumetricMeasurementSource::HARDWARE) {
+        lastHardwareMeasurement = millis();
+    }
+
     if (source == VolumetricMeasurementSource::FLOW_ESTIMATION) {
         pluginManager->trigger(F("controller:volumetric-measurement:estimation:change"), "value", static_cast<float>(measurement));
     } else if (source == VolumetricMeasurementSource::HARDWARE) {
@@ -1189,13 +1195,14 @@ void Controller::onVolumetricMeasurement(double measurement, VolumetricMeasureme
     } else {
         pluginManager->trigger(F("controller:volumetric-measurement:bluetooth:change"), "value", static_cast<float>(measurement));
     }
-    pluginManager->trigger(F("controller:volumetric-measurement:active:change"), "value",
-                           normalizeWeightForDisplay(measurement));
 
-    if (source == VolumetricMeasurementSource::BLUETOOTH) {
-        lastBluetoothMeasurement = millis();
-    } else if (source == VolumetricMeasurementSource::HARDWARE) {
-        lastHardwareMeasurement = millis();
+    // Only the source selected by the controller may update the unified
+    // measurement stream consumed by shot history, the UI, and WebUI. Without
+    // this gate, simultaneous hardware and Bluetooth reports race and the last
+    // callback wins regardless of the configured source.
+    if (source == getActiveScaleSource()) {
+        pluginManager->trigger(F("controller:volumetric-measurement:active:change"), "value",
+                               normalizeWeightForDisplay(measurement));
     }
 
     if (currentVolumetricSource != source) {

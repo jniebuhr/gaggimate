@@ -111,8 +111,8 @@ struct ShotLogSample {
     int16_t fl;  // current pump flow * 100 (allows small negatives)
     int16_t tf;  // target flow * 100
     int16_t pf;  // puck flow * 100
-    int16_t vf;  // bluetooth flow * 100
-    uint16_t v;  // bluetooth weight * 10
+    int16_t vf;  // active scale weight flow * 100
+    uint16_t v;  // active scale weight * 10
     uint16_t ev; // estimated weight * 10
     uint16_t pr; // puck resistance * 100
     uint16_t si; // system info bit-packed
