@@ -370,7 +370,12 @@ void Controller::setupBluetooth() {
         hardwareScaleCell2Weight.store(normalizeWeightForDisplay(cell2Weight));
         hardwareScaleCell1Valid.store(cell1Valid);
         hardwareScaleCell2Valid.store(cell2Valid);
-        onVolumetricMeasurement(value, VolumetricMeasurementSource::HARDWARE);
+        // An unavailable/faulted controller-side scale sends invalid cell flags.
+        // Do not treat that sentinel message as fresh weight data; otherwise the
+        // display-side health timeout can never expire.
+        if (cell1Valid && cell2Valid) {
+            onVolumetricMeasurement(value, VolumetricMeasurementSource::HARDWARE);
+        }
     });
     comms.onTofMeasurement([this](uint32_t value) {
         tofDistance = static_cast<int>(value);
@@ -1101,6 +1106,15 @@ void Controller::clearLocked(std::vector<const char *> &events) {
     delete lastProcess;
     lastProcess = nullptr;
     currentVolumetricSource = VolumetricMeasurementSource::INACTIVE;
+#ifdef NIGHTLY_BUILD
+    latestFlowEstimation = 0.0;
+    estimatorAtLastPhysicalMeasurement = 0.0;
+    lastPhysicalMeasurement = 0.0;
+    flowEstimationOffset = 0.0;
+    flowEstimationValid = false;
+    physicalMeasurementValid = false;
+    physicalEstimatorBaselineValid = false;
+#endif
 }
 
 void Controller::activateGrind() {
@@ -1190,10 +1204,55 @@ void Controller::onVolumetricMeasurement(double measurement, VolumetricMeasureme
 #endif
 
     if (source == VolumetricMeasurementSource::BLUETOOTH) {
-        lastBluetoothMeasurement = millis();
+        lastBluetoothMeasurement.store(millis());
     } else if (source == VolumetricMeasurementSource::HARDWARE) {
-        lastHardwareMeasurement = millis();
+        lastHardwareMeasurement.store(millis());
     }
+
+    double effectiveMeasurement = measurement;
+#ifdef NIGHTLY_BUILD
+    bool switchedToFlowEstimation = false;
+    {
+        std::lock_guard<std::recursive_mutex> guard(processMutex);
+        const bool physicalSourceSelected =
+            currentVolumetricSource == VolumetricMeasurementSource::HARDWARE ||
+            currentVolumetricSource == VolumetricMeasurementSource::BLUETOOTH;
+        const bool activeBrew = currentProcess != nullptr && currentProcess->getType() == MODE_BREW && currentProcess->isActive();
+
+        if (source == VolumetricMeasurementSource::FLOW_ESTIMATION) {
+            latestFlowEstimation = measurement;
+            flowEstimationValid = true;
+
+            if (activeBrew && physicalSourceSelected && !isScaleSourceHealthy(currentVolumetricSource)) {
+                // Continue from the last physical weight, including the virtual
+                // weight accumulated during the physical source's timeout.
+                flowEstimationOffset =
+                    physicalMeasurementValid
+                        ? lastPhysicalMeasurement -
+                              (physicalEstimatorBaselineValid ? estimatorAtLastPhysicalMeasurement : measurement)
+                        : 0.0;
+                currentVolumetricSource = VolumetricMeasurementSource::FLOW_ESTIMATION;
+                switchedToFlowEstimation = true;
+            }
+
+            if (currentVolumetricSource == VolumetricMeasurementSource::FLOW_ESTIMATION) {
+                effectiveMeasurement = measurement + flowEstimationOffset;
+            }
+        } else if (physicalSourceSelected && source == currentVolumetricSource) {
+            lastPhysicalMeasurement = measurement;
+            physicalMeasurementValid = true;
+            if (flowEstimationValid) {
+                estimatorAtLastPhysicalMeasurement = latestFlowEstimation;
+                physicalEstimatorBaselineValid = true;
+            }
+        }
+    }
+
+    if (switchedToFlowEstimation) {
+        ESP_LOGW(LOG_TAG, "Selected physical scale stopped reporting; continuing shot with flow estimation (offset %.3f g)",
+                 flowEstimationOffset);
+    }
+#endif
 
     if (source == VolumetricMeasurementSource::FLOW_ESTIMATION) {
         pluginManager->trigger(F("controller:volumetric-measurement:estimation:change"), "value", static_cast<float>(measurement));
@@ -1209,7 +1268,7 @@ void Controller::onVolumetricMeasurement(double measurement, VolumetricMeasureme
     // if another scale remains healthy after the selected scale stops reporting.
     if (source == getEffectiveScaleSource()) {
         pluginManager->trigger(F("controller:volumetric-measurement:active:change"), "value",
-                               normalizeWeightForDisplay(measurement));
+                               normalizeWeightForDisplay(effectiveMeasurement));
     }
 
     // This callback fires from the NimBLE task on core 0; deactivate()/clear() on
@@ -1220,10 +1279,10 @@ void Controller::onVolumetricMeasurement(double measurement, VolumetricMeasureme
         return;
     }
     if (currentProcess != nullptr) {
-        currentProcess->updateVolume(measurement);
+        currentProcess->updateVolume(effectiveMeasurement);
     }
     if (lastProcess != nullptr && !lastProcess->isComplete()) {
-        lastProcess->updateVolume(measurement);
+        lastProcess->updateVolume(effectiveMeasurement);
     }
 }
 
@@ -1305,19 +1364,16 @@ String Controller::getActiveScaleSourceName() const {
 }
 
 bool Controller::isBluetoothScaleHealthy() const {
-    unsigned long timeSinceLastBluetooth = millis() - lastBluetoothMeasurement;
-    return (timeSinceLastBluetooth < BLUETOOTH_GRACE_PERIOD_MS) || volumetricOverride;
+    const unsigned long lastMeasurement = lastBluetoothMeasurement.load();
+    return lastMeasurement != 0 && millis() - lastMeasurement < BLUETOOTH_GRACE_PERIOD_MS;
 }
 
 bool Controller::isHardwareScaleHealthy() const {
     if (!systemInfo.capabilities.hwScale) {
         return false;
     }
-    if (volumetricOverride) {
-        return true;
-    }
-    unsigned long timeSinceLastHardware = millis() - lastHardwareMeasurement;
-    return timeSinceLastHardware < HARDWARE_GRACE_PERIOD_MS;
+    const unsigned long lastMeasurement = lastHardwareMeasurement.load();
+    return lastMeasurement != 0 && millis() - lastMeasurement < HARDWARE_GRACE_PERIOD_MS;
 }
 
 void Controller::onFlush() {
