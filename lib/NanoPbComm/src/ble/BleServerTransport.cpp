@@ -1,9 +1,7 @@
 #include "BleServerTransport.h"
 #include <Preferences.h>
 
-// NVS storage for the paired display's address. The NimBLE bond store alone is
-// not authoritative: earlier builds allowed several bonded displays, and the
-// pairing model is strictly one PCB <-> one screen.
+// Paired display address in our own NVS; the pairing is strictly one PCB <-> one screen, unlike the bond store.
 static constexpr const char *NVS_NAMESPACE = "gmble";
 static constexpr const char *NVS_PEER_KEY = "peer";
 
@@ -12,14 +10,14 @@ void BleServerTransport::init(const String &deviceName) {
     NimBLEDevice::setPower(ESP_PWR_LVL_P9);
     NimBLEDevice::setMTU(256); // headroom for batched frames
 
-    // Just Works bonding with LE Secure Connections: neither board has IO for a
-    // passkey (no MITM protection), but the link is encrypted and the keys
-    // persist in NVS so the pairing survives reboots.
+    // Just Works bonding + LE Secure Connections (no IO -> no MITM); keys persist in NVS across reboots.
     NimBLEDevice::setSecurityAuth(true, false, true);
     NimBLEDevice::setSecurityIOCap(BLE_HS_IO_NO_INPUT_OUTPUT);
 
     _server = NimBLEDevice::createServer();
     _server->setCallbacks(this);
+    // Restart advertising ourselves in onDisconnect; the automatic restart would bypass the directed/paired mode.
+    _server->advertiseOnDisconnect(false);
 
     NimBLEService *service = _server->createService(gm_proto::SERVICE_UUID);
     _rxChar = service->createCharacteristic(gm_proto::RX_CHAR_UUID,
@@ -37,8 +35,8 @@ void BleServerTransport::init(const String &deviceName) {
     _otaDfu.configure_OTA(_server);
     _otaDfu.start_OTA();
 
+    _deviceName = deviceName;
     _advertising = NimBLEDevice::getAdvertising();
-    _advertising->addServiceUUID(gm_proto::SERVICE_UUID);
     _advertising->setScanResponse(true);
     // First boot pairs openly; once a display has bonded, only it may connect.
     loadPairedPeer();
@@ -48,8 +46,7 @@ void BleServerTransport::init(const String &deviceName) {
         pruneForeignBonds(_pairedPeer);
         ESP_LOGI(LOG_TAG, "Paired to display %s", _pairedPeer.toString().c_str());
     } else if (NimBLEDevice::getNumBonds() > 0) {
-        // Migration from builds that whitelisted every bond: allow all bonded
-        // displays for now and adopt the first one that encrypts as THE peer.
+        // Migration from multi-bond builds: allow all bonded displays and adopt the first one that encrypts.
         for (int i = 0; i < NimBLEDevice::getNumBonds(); i++) {
             NimBLEAddress addr = NimBLEDevice::getBondedAddress(i);
             NimBLEDevice::whiteListAdd(addr);
@@ -57,8 +54,38 @@ void BleServerTransport::init(const String &deviceName) {
         }
         enableWhitelist();
     }
-    _advertising->start();
-    ESP_LOGI(LOG_TAG, "BLE server started, advertising %s", _whitelistOnly ? "(whitelist only)" : "(open, pairing mode)");
+    applyAdvertisingData();
+    startAdv();
+    ESP_LOGI(LOG_TAG, "BLE server started, advertising %s",
+             _havePairedPeer ? "(directed to paired display)" : (_whitelistOnly ? "(whitelist only)" : "(open, pairing mode)"));
+}
+
+void BleServerTransport::startAdv() {
+    if (_advertising == nullptr || _advertising->isAdvertising())
+        return;
+    if (_havePairedPeer) {
+        // Low-duty directed adverts are LL-dropped by every radio except the paired display's -- invisible to other scanners.
+        _advertising->setAdvertisementType(BLE_GAP_CONN_MODE_DIR);
+        _advertising->start(0, nullptr, &_pairedPeer);
+    } else {
+        _advertising->setAdvertisementType(BLE_GAP_CONN_MODE_UND);
+        _advertising->start();
+    }
+}
+
+void BleServerTransport::applyAdvertisingData() {
+    // Primary adv packet (31B): flags + service UUID + lock-owner mfg data; owner must be primary, displays scan passively.
+    std::vector<uint8_t> mfg = {0xFF, 0xFF, 0, 0, 0, 0, 0, 0};
+    if (_havePairedPeer)
+        memcpy(&mfg[2], _pairedPeer.getNative(), 6);
+    NimBLEAdvertisementData advData;
+    advData.setFlags(BLE_HS_ADV_F_DISC_GEN | BLE_HS_ADV_F_BREDR_UNSUP);
+    advData.setCompleteServices(NimBLEUUID(gm_proto::SERVICE_UUID));
+    advData.setManufacturerData(mfg);
+    _advertising->setAdvertisementData(advData);
+    NimBLEAdvertisementData scanResp;
+    scanResp.setName(std::string(_deviceName.c_str()));
+    _advertising->setScanResponseData(scanResp);
 }
 
 void BleServerTransport::enableWhitelist() {
@@ -78,13 +105,12 @@ void BleServerTransport::adoptPeer(const NimBLEAddress &address) {
     }
     savePairedPeer(address);
     pruneForeignBonds(address);
-    // Reduce the whitelist (possibly holding legacy multi-bond entries) to
-    // exactly this display. Advertising is stopped while connected, so the
-    // controller-level whitelist can be rewritten safely here.
+    // Reduce the (possibly legacy multi-bond) whitelist to this display; safe while connected, advertising is stopped.
     while (NimBLEDevice::getWhiteListCount() > 0)
         NimBLEDevice::whiteListRemove(NimBLEDevice::getWhiteListAddress(0));
     NimBLEDevice::whiteListAdd(address);
     enableWhitelist();
+    applyAdvertisingData(); // broadcast the new lock owner from the next adv start
     ESP_LOGI(LOG_TAG, "Bonded to display %s, advertising is now whitelist-only", address.toString().c_str());
 }
 
@@ -107,9 +133,7 @@ void BleServerTransport::loadPairedPeer() {
         return;
     uint8_t buf[7];
     if (prefs.getBytes(NVS_PEER_KEY, buf, sizeof(buf)) == sizeof(buf)) {
-        // Bytes are stored in NimBLE-native (inverse) order from getNative().
-        // Reconstruct via ble_addr_t: the uint8_t[6] constructor would
-        // reverse-copy and yield a byte-swapped address.
+        // Bytes are native order from getNative(); the uint8_t[6] ctor would reverse them, so restore via ble_addr_t.
         ble_addr_t addr;
         memcpy(addr.val, buf, 6);
         addr.type = buf[6];
@@ -146,18 +170,17 @@ void BleServerTransport::clearBonds() {
     }
     _havePairedPeer = false;
     _whitelistOnly = false;
-    if (_advertising)
+    if (_advertising) {
         _advertising->setScanFilter(false, false);
+        applyAdvertisingData(); // owner field back to zeros (open for pairing)
+    }
     ESP_LOGW(LOG_TAG, "Bonds cleared, open for pairing");
     disconnect(); // drop the current peer (if any) so the next link re-pairs
     if (wasAdvertising)
-        _advertising->start();
+        startAdv();
 }
 
-void BleServerTransport::startAdvertising() {
-    if (_advertising && !_advertising->isAdvertising())
-        _advertising->start();
-}
+void BleServerTransport::startAdvertising() { startAdv(); }
 
 void BleServerTransport::setInfo(const String &info) {
     _info = info;
@@ -185,21 +208,16 @@ void BleServerTransport::onConnect(NimBLEServer *server) {
 void BleServerTransport::onConnect(NimBLEServer *server, ble_gap_conn_desc *desc) {
     // NimBLE 1.x dispatches both onConnect overloads; this one carries the conn
     // handle we need for an explicit disconnect() when the ping watchdog fires.
-    if (desc) {
+    // Deliberately no startSecurity() here: the display is the sole initiator (dual initiation raced via EALREADY).
+    if (desc)
         _connHandle = desc->conn_handle;
-        // Deliberately no startSecurity() here: the display is the sole security
-        // initiator. Dual initiation raced (EALREADY) and could stall pairing
-        // until the SMP timeout. Old displays without an initiator still elevate
-        // via NimBLE's insufficient-auth retry on the encrypted RX writes.
-    }
 }
 
 void BleServerTransport::onAuthenticationComplete(ble_gap_conn_desc *desc) {
     if (desc == nullptr)
         return;
     if (!desc->sec_state.encrypted) {
-        // Comms characteristics require encryption anyway; drop peers that
-        // cannot pair instead of leaving a half-usable link up.
+        // Comms characteristics require encryption anyway; drop peers that cannot pair rather than keep a half-usable link.
         ESP_LOGW(LOG_TAG, "Pairing/encryption failed, dropping connection");
         _server->disconnect(desc->conn_handle);
         return;
@@ -213,7 +231,7 @@ void BleServerTransport::onDisconnect(NimBLEServer *server) {
     _connHandle = BLE_HS_CONN_HANDLE_NONE;
     ESP_LOGI(LOG_TAG, "Client disconnected");
     emitConnection(false);
-    server->startAdvertising();
+    startAdv();
 }
 
 void BleServerTransport::disconnect() {

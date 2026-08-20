@@ -240,22 +240,22 @@ class BrewProcess : public Process {
     }
 
     float transitionAlpha() const {
+        float endValue = currentPhase.transition.duration;
+        float startValue = 0.0f;
         if (currentPhase.transition.target == TransitionTarget::VOLUMETRIC && target == ProcessTarget::VOLUMETRIC) {
-            float endValue = currentPhase.transition.duration;
             if (endValue <= 0.0f && currentPhase.hasVolumetricTarget()) {
                 endValue = currentPhase.getVolumetricTarget().value - phaseStartVolume;
             }
-            return transitionAlpha(max(0.0, currentVolume - phaseStartVolume), endValue);
+            startValue = max(0.0, currentVolume - phaseStartVolume);
         }
         if (currentPhase.transition.target == TransitionTarget::PUMPED) {
-
-            float endValue = currentPhase.transition.duration;
-            if (endValue <= 0.0f && currentPhase.hasVolumetricTarget()) {
-                endValue = currentPhase.getVolumetricTarget().value;
+            if (endValue <= 0.0f && currentPhase.hasPumpedTarget()) {
+                endValue = currentPhase.getPumpedTarget().value;
             }
-            if (endValue > 0.0f) {
-                return transitionAlpha(waterPumped, endValue);
-            }
+            startValue = waterPumped;
+        }
+        if (endValue > 0.0f) {
+            return transitionAlpha(startValue, endValue);
         }
         return transitionAlphaByTime();
     }
