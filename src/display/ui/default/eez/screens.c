@@ -14,7 +14,7 @@ objects_t objects;
 
 static const char *screen_names[] = {"StandbyScreen", "BrewScreen",  "StatusScreen",    "MenuScreen",
                                      "MenuScreenNew", "SteamScreen", "WaterScreen",     "ProfileScreen",
-                                     "GrindScreen",   "InfoScreen",  "NewProfileScreen"};
+                                     "GrindScreen",   "InfoScreen",  "NewProfileScreen", "WaterReminderScreen"};
 static const char *object_names[] = {"standby_screen",
                                      "brew_screen",
                                      "status_screen",
@@ -296,7 +296,21 @@ static const char *object_names[] = {"standby_screen",
                                      "obj65",
                                      "obj66",
                                      "obj67",
-                                     "obj68"};
+                                     "obj68",
+                                     "water_reminder_icon",
+                                     "water_reminder_icon_1",
+                                     "water_reminder_screen",
+                                     "water_reminder_status",
+                                     "water_reminder_title",
+                                     "water_reminder_detail",
+                                     "water_reminder_confirmation",
+                                     "water_reminder_confirmation_title",
+                                     "water_reminder_confirmation_detail",
+                                     "water_reminder_image",
+                                     "water_reminder_secondary_button",
+                                     "water_reminder_secondary_button_label",
+                                     "water_reminder_primary_button",
+                                     "water_reminder_primary_button_label"};
 
 screen_brew_screen_state_t screen_brew_screen_state;
 screen_status_screen_state_t screen_status_screen_state;
@@ -322,6 +336,34 @@ static void event_handler_cb_standby_screen_standby_screen(lv_event_t *e) {
     if (event == LV_EVENT_CLICKED) {
         e->user_data = (void *)0;
         action_on_wakeup(e);
+    }
+}
+
+static void event_handler_cb_water_reminder_open(lv_event_t *e) {
+    if (lv_event_get_code(e) == LV_EVENT_CLICKED) {
+        e->user_data = (void *)0;
+        action_on_water_reminder_open(e);
+    }
+}
+
+static void event_handler_cb_water_reminder_screen(lv_event_t *e) {
+    if (lv_event_get_code(e) == LV_EVENT_SCREEN_LOADED) {
+        e->user_data = (void *)0;
+        action_on_screen_load(e);
+    }
+}
+
+static void event_handler_cb_water_reminder_secondary(lv_event_t *e) {
+    if (lv_event_get_code(e) == LV_EVENT_CLICKED) {
+        e->user_data = (void *)0;
+        action_on_water_reminder_secondary(e);
+    }
+}
+
+static void event_handler_cb_water_reminder_primary(lv_event_t *e) {
+    if (lv_event_get_code(e) == LV_EVENT_CLICKED) {
+        e->user_data = (void *)0;
+        action_on_water_reminder_primary(e);
     }
 }
 
@@ -1174,6 +1216,20 @@ void create_screen_standby_screen() {
                                                  LV_PART_MAIN | LV_STATE_DEFAULT);
                     lv_obj_set_style_img_recolor_opa(obj, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
                 }
+                {
+                    // waterReminderIcon
+                    lv_obj_t *obj = lv_img_create(parent_obj);
+                    objects.water_reminder_icon = obj;
+                    lv_obj_set_pos(obj, 0, 0);
+                    lv_obj_set_size(obj, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+                    lv_img_set_src(obj, &img_water_drop_20x20);
+                    lv_obj_add_event_cb(obj, event_handler_cb_water_reminder_open, LV_EVENT_ALL, flowState);
+                    lv_obj_add_flag(obj, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_HIDDEN);
+                    lv_obj_set_style_border_width(obj, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
+                    lv_obj_set_style_border_opa(obj, LV_OPA_TRANSP, LV_PART_MAIN | LV_STATE_DEFAULT);
+                    lv_obj_set_style_img_recolor(obj, lv_color_white(), LV_PART_MAIN | LV_STATE_DEFAULT);
+                    lv_obj_set_style_img_recolor_opa(obj, LV_OPA_COVER, LV_PART_MAIN | LV_STATE_DEFAULT);
+                }
             }
         }
         {
@@ -1204,6 +1260,7 @@ void delete_screen_standby_screen() {
     objects.wifi_icon = 0;
     objects.bluetooth_icon = 0;
     objects.update_icon = 0;
+    objects.water_reminder_icon = 0;
     objects.status = 0;
     deletePageFlowState(0);
 }
@@ -4679,7 +4736,7 @@ void create_screen_info_screen() {
                     // standbyIcons_1
                     lv_obj_t *obj = lv_obj_create(parent_obj);
                     objects.standby_icons_1 = obj;
-                    lv_obj_set_pos(obj, 0, -210);
+                    lv_obj_set_pos(obj, 0, -180);
                     lv_obj_set_size(obj, 300, 20);
                     lv_obj_set_style_pad_left(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
                     lv_obj_set_style_pad_top(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -4737,6 +4794,20 @@ void create_screen_info_screen() {
                             lv_obj_set_style_img_recolor(obj, lv_color_hex(theme_colors[eez_flow_get_selected_theme_index()][0]),
                                                          LV_PART_MAIN | LV_STATE_DEFAULT);
                             lv_obj_set_style_img_recolor_opa(obj, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+                        }
+                        {
+                            // waterReminderIcon_1
+                            lv_obj_t *obj = lv_img_create(parent_obj);
+                            objects.water_reminder_icon_1 = obj;
+                            lv_obj_set_pos(obj, 0, 0);
+                            lv_obj_set_size(obj, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+                            lv_img_set_src(obj, &img_water_drop_20x20);
+                            lv_obj_add_event_cb(obj, event_handler_cb_water_reminder_open, LV_EVENT_ALL, flowState);
+                            lv_obj_add_flag(obj, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_HIDDEN);
+                            lv_obj_set_style_border_width(obj, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
+                            lv_obj_set_style_border_opa(obj, LV_OPA_TRANSP, LV_PART_MAIN | LV_STATE_DEFAULT);
+                            lv_obj_set_style_img_recolor(obj, lv_color_white(), LV_PART_MAIN | LV_STATE_DEFAULT);
+                            lv_obj_set_style_img_recolor_opa(obj, LV_OPA_COVER, LV_PART_MAIN | LV_STATE_DEFAULT);
                         }
                     }
                 }
@@ -4849,6 +4920,7 @@ void delete_screen_info_screen() {
     objects.wifi_icon_1 = 0;
     objects.bluetooth_icon_1 = 0;
     objects.update_icon_1 = 0;
+    objects.water_reminder_icon_1 = 0;
     objects.obj27 = 0;
     objects.obj28 = 0;
     objects.obj29 = 0;
@@ -5889,6 +5961,181 @@ void tick_screen_new_profile_screen() {
     (void)flowState;
 }
 
+void create_screen_water_reminder_screen() {
+    void *flowState = 0;
+    lv_obj_t *obj = lv_obj_create(0);
+    objects.water_reminder_screen = obj;
+    lv_obj_set_pos(obj, 0, 0);
+    lv_obj_set_size(obj, 480, 480);
+    lv_obj_add_event_cb(obj, event_handler_cb_water_reminder_screen, LV_EVENT_ALL, flowState);
+    lv_obj_clear_flag(obj, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_style_bg_color(obj, lv_color_hex(theme_colors[eez_flow_get_selected_theme_index()][1]),
+                              LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_align(obj, LV_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+    {
+        lv_obj_t *parent_obj = obj;
+        {
+            // waterReminderStatus
+            lv_obj_t *obj = lv_obj_create(parent_obj);
+            objects.water_reminder_status = obj;
+            lv_obj_set_pos(obj, 0, 0);
+            lv_obj_set_size(obj, 480, 480);
+            lv_obj_set_style_pad_all(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_border_width(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_clear_flag(obj, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE);
+            lv_obj_set_style_align(obj, LV_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_bg_opa(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_radius(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+            {
+                lv_obj_t *parent_obj = obj;
+                {
+                    // waterReminderTitle
+                    lv_obj_t *obj = lv_label_create(parent_obj);
+                    objects.water_reminder_title = obj;
+                    lv_obj_set_pos(obj, 0, -25);
+                    lv_obj_set_size(obj, 310, LV_SIZE_CONTENT);
+                    lv_obj_set_style_align(obj, LV_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+                    lv_obj_set_style_text_color(obj, lv_color_hex(theme_colors[eez_flow_get_selected_theme_index()][0]),
+                                                LV_PART_MAIN | LV_STATE_DEFAULT);
+                    lv_obj_set_style_text_font(obj, &lv_font_montserrat_24, LV_PART_MAIN | LV_STATE_DEFAULT);
+                    lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+                    lv_label_set_text_static(obj, "Water tracking");
+                }
+                {
+                    // waterReminderDetail
+                    lv_obj_t *obj = lv_label_create(parent_obj);
+                    objects.water_reminder_detail = obj;
+                    lv_obj_set_pos(obj, 0, 30);
+                    lv_obj_set_size(obj, 300, LV_SIZE_CONTENT);
+                    lv_obj_set_style_align(obj, LV_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+                    lv_obj_set_style_text_color(obj, lv_color_hex(theme_colors[eez_flow_get_selected_theme_index()][0]),
+                                                LV_PART_MAIN | LV_STATE_DEFAULT);
+                    lv_obj_set_style_text_font(obj, &lv_font_montserrat_18, LV_PART_MAIN | LV_STATE_DEFAULT);
+                    lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+                    lv_label_set_text_static(obj, "0 drinks since the last refill.");
+                }
+            }
+        }
+        {
+            // waterReminderConfirmation
+            lv_obj_t *obj = lv_obj_create(parent_obj);
+            objects.water_reminder_confirmation = obj;
+            lv_obj_set_pos(obj, 0, 0);
+            lv_obj_set_size(obj, 480, 480);
+            lv_obj_set_style_pad_all(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_border_width(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_add_flag(obj, LV_OBJ_FLAG_HIDDEN);
+            lv_obj_clear_flag(obj, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE);
+            lv_obj_set_style_align(obj, LV_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_bg_opa(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_radius(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+            {
+                lv_obj_t *parent_obj = obj;
+                {
+                    // waterReminderConfirmationTitle
+                    lv_obj_t *obj = lv_label_create(parent_obj);
+                    objects.water_reminder_confirmation_title = obj;
+                    lv_obj_set_pos(obj, 0, -32);
+                    lv_obj_set_size(obj, 310, LV_SIZE_CONTENT);
+                    lv_obj_set_style_align(obj, LV_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+                    lv_obj_set_style_text_color(obj, lv_color_hex(theme_colors[eez_flow_get_selected_theme_index()][0]),
+                                                LV_PART_MAIN | LV_STATE_DEFAULT);
+                    lv_obj_set_style_text_font(obj, &lv_font_montserrat_20, LV_PART_MAIN | LV_STATE_DEFAULT);
+                    lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+                    lv_label_set_text_static(obj, "Continue without\nrefilling?");
+                }
+                {
+                    // waterReminderConfirmationDetail
+                    lv_obj_t *obj = lv_label_create(parent_obj);
+                    objects.water_reminder_confirmation_detail = obj;
+                    lv_obj_set_pos(obj, 0, 35);
+                    lv_obj_set_size(obj, 300, LV_SIZE_CONTENT);
+                    lv_obj_set_style_align(obj, LV_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+                    lv_obj_set_style_text_color(obj, lv_color_hex(theme_colors[eez_flow_get_selected_theme_index()][0]),
+                                                LV_PART_MAIN | LV_STATE_DEFAULT);
+                    lv_obj_set_style_text_font(obj, &lv_font_montserrat_16, LV_PART_MAIN | LV_STATE_DEFAULT);
+                    lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+                    lv_label_set_text_static(obj, "Running the tank dry can put\nair in the pressure-sensor line\nand require it to be bled again.");
+                }
+            }
+        }
+        {
+            // waterReminderImage
+            lv_obj_t *obj = lv_img_create(parent_obj);
+            objects.water_reminder_image = obj;
+            lv_obj_set_pos(obj, 0, -110);
+            lv_obj_set_size(obj, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+            lv_img_set_src(obj, &img_raindrops_80x80);
+            lv_obj_set_style_align(obj, LV_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_img_recolor(obj, lv_color_hex(theme_colors[eez_flow_get_selected_theme_index()][7]),
+                                         LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_img_recolor_opa(obj, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+        }
+        {
+            // waterReminderSecondaryButton
+            lv_obj_t *obj = lv_btn_create(parent_obj);
+            objects.water_reminder_secondary_button = obj;
+            lv_obj_set_pos(obj, -68, 105);
+            lv_obj_set_size(obj, 120, 48);
+            lv_obj_add_event_cb(obj, event_handler_cb_water_reminder_secondary, LV_EVENT_ALL, flowState);
+            lv_obj_set_style_align(obj, LV_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_radius(obj, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_border_width(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+            {
+                lv_obj_t *parent_obj = obj;
+                lv_obj_t *obj = lv_label_create(parent_obj);
+                objects.water_reminder_secondary_button_label = obj;
+                lv_obj_set_pos(obj, 0, 0);
+                lv_obj_set_size(obj, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+                lv_obj_set_style_align(obj, LV_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+                lv_obj_set_style_text_font(obj, &lv_font_montserrat_16, LV_PART_MAIN | LV_STATE_DEFAULT);
+                lv_label_set_text_static(obj, "Later");
+            }
+        }
+        {
+            // waterReminderPrimaryButton
+            lv_obj_t *obj = lv_btn_create(parent_obj);
+            objects.water_reminder_primary_button = obj;
+            lv_obj_set_pos(obj, 78, 105);
+            lv_obj_set_size(obj, 150, 48);
+            lv_obj_add_event_cb(obj, event_handler_cb_water_reminder_primary, LV_EVENT_ALL, flowState);
+            lv_obj_set_style_align(obj, LV_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_radius(obj, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_border_width(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+            {
+                lv_obj_t *parent_obj = obj;
+                lv_obj_t *obj = lv_label_create(parent_obj);
+                objects.water_reminder_primary_button_label = obj;
+                lv_obj_set_pos(obj, 0, 0);
+                lv_obj_set_size(obj, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+                lv_obj_set_style_align(obj, LV_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+                lv_obj_set_style_text_font(obj, &lv_font_montserrat_16, LV_PART_MAIN | LV_STATE_DEFAULT);
+                lv_label_set_text_static(obj, "Water refilled");
+            }
+        }
+    }
+
+    tick_screen_water_reminder_screen();
+}
+
+void delete_screen_water_reminder_screen() {
+    lv_obj_del(objects.water_reminder_screen);
+    objects.water_reminder_screen = 0;
+    objects.water_reminder_image = 0;
+    objects.water_reminder_status = 0;
+    objects.water_reminder_title = 0;
+    objects.water_reminder_detail = 0;
+    objects.water_reminder_confirmation = 0;
+    objects.water_reminder_confirmation_title = 0;
+    objects.water_reminder_confirmation_detail = 0;
+    objects.water_reminder_secondary_button = 0;
+    objects.water_reminder_secondary_button_label = 0;
+    objects.water_reminder_primary_button = 0;
+    objects.water_reminder_primary_button_label = 0;
+}
+
+void tick_screen_water_reminder_screen() {}
+
 void create_user_widget_dials(lv_obj_t *parent_obj, void *flowState, int startWidgetIndex, user_widget_dials_state_t *state) {
     (void)flowState;
     (void)startWidgetIndex;
@@ -6346,7 +6593,7 @@ typedef void (*create_screen_func_t)();
 create_screen_func_t create_screen_funcs[] = {
     create_screen_standby_screen,  create_screen_brew_screen,  create_screen_status_screen,      create_screen_menu_screen,
     create_screen_menu_screen_new, create_screen_steam_screen, create_screen_water_screen,       create_screen_profile_screen,
-    create_screen_grind_screen,    create_screen_info_screen,  create_screen_new_profile_screen,
+    create_screen_grind_screen,    create_screen_info_screen,  create_screen_new_profile_screen, create_screen_water_reminder_screen,
 };
 void create_screen(int screen_index) { create_screen_funcs[screen_index](); }
 void create_screen_by_id(enum ScreensEnum screenId) { create_screen_funcs[screenId - 1](); }
@@ -6356,6 +6603,7 @@ delete_screen_func_t delete_screen_funcs[] = {
     delete_screen_standby_screen,  delete_screen_brew_screen,  delete_screen_status_screen,      delete_screen_menu_screen,
     delete_screen_menu_screen_new, delete_screen_steam_screen, delete_screen_water_screen,       delete_screen_profile_screen,
     delete_screen_grind_screen,    delete_screen_info_screen,  delete_screen_new_profile_screen,
+    delete_screen_water_reminder_screen,
 };
 void delete_screen(int screen_index) { delete_screen_funcs[screen_index](); }
 void delete_screen_by_id(enum ScreensEnum screenId) { delete_screen_funcs[screenId - 1](); }
@@ -6364,10 +6612,10 @@ typedef void (*tick_screen_func_t)();
 tick_screen_func_t tick_screen_funcs[] = {
     tick_screen_standby_screen,  tick_screen_brew_screen,  tick_screen_status_screen,      tick_screen_menu_screen,
     tick_screen_menu_screen_new, tick_screen_steam_screen, tick_screen_water_screen,       tick_screen_profile_screen,
-    tick_screen_grind_screen,    tick_screen_info_screen,  tick_screen_new_profile_screen,
+    tick_screen_grind_screen,    tick_screen_info_screen,  tick_screen_new_profile_screen, tick_screen_water_reminder_screen,
 };
 void tick_screen(int screen_index) {
-    if (screen_index >= 0 && screen_index < 11) {
+    if (screen_index >= 0 && screen_index < 12) {
         tick_screen_funcs[screen_index]();
     }
 }
@@ -7579,4 +7827,5 @@ void create_screens() {
     create_screen_profile_screen();
     create_screen_grind_screen();
     create_screen_info_screen();
+    create_screen_water_reminder_screen();
 }

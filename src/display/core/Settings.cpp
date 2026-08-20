@@ -1,6 +1,7 @@
 #include "Settings.h"
 
 #include <algorithm>
+#include <cctype>
 #include <display/util/ColorConversion.h>
 #include <utility>
 
@@ -219,6 +220,31 @@ void Settings::setSteamPumpCutoff(float steam_pump_cutoff) { steamPumpCutoff.set
 void Settings::setThemeMode(int theme_mode) { themeMode.set(theme_mode); }
 
 void Settings::setHistoryIndex(int history_index) { historyIndex.set(history_index); }
+
+void Settings::setWaterReminderEnabled(bool enabled) { waterReminderEnabled.set(enabled); }
+
+void Settings::setWaterReminderWarningCount(int count) { waterReminderWarningCount.set(std::clamp(count, 1, 65534)); }
+
+void Settings::setWaterReminderCriticalCount(int count) { waterReminderCriticalCount.set(std::clamp(count, 2, 65535)); }
+
+void Settings::setWaterReminderStorageWarningAccepted(bool accepted) { waterReminderStorageWarningAccepted.set(accepted); }
+
+void Settings::setWaterReminderMode(int mode) { waterReminderMode.set(std::clamp(mode, 0, 1)); }
+
+void Settings::setWaterReminderScheduleDays(int days) { waterReminderScheduleDays.set(std::clamp(days, 1, 30)); }
+
+void Settings::setWaterReminderScheduleTime(const String &time) {
+    if (time.length() != 5 || time.charAt(2) != ':' || !std::isdigit(static_cast<unsigned char>(time.charAt(0))) ||
+        !std::isdigit(static_cast<unsigned char>(time.charAt(1))) || !std::isdigit(static_cast<unsigned char>(time.charAt(3))) ||
+        !std::isdigit(static_cast<unsigned char>(time.charAt(4)))) {
+        return;
+    }
+    const int hour = time.substring(0, 2).toInt();
+    const int minute = time.substring(3, 5).toInt();
+    if (hour >= 0 && hour < 24 && minute >= 0 && minute < 60) {
+        waterReminderScheduleTime.set(time);
+    }
+}
 
 void Settings::setSunriseR(int sunrise_r) { sunriseR = sunrise_r; }
 

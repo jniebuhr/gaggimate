@@ -270,6 +270,8 @@ void action_on_screen_load(lv_event_t *e) {
     applyClickArea(objects.grind_dials__menu_icon, 20);
     applyClickArea(objects.profile_dials__menu_icon, 20);
     applyClickArea(objects.info_menu_icon, 20);
+    applyClickArea(objects.water_reminder_icon, 12);
+    applyClickArea(objects.water_reminder_icon_1, 12);
     applyClickArea(objects.start_button, 25);
     applyClickArea(objects.water_start_button, 25);
     applyClickArea(objects.grind_start_button, 25);
@@ -316,3 +318,9 @@ void action_on_screen_swipe(lv_event_t *e) {
 }
 
 void action_on_info_screen(lv_event_t *e) { controller.getUI()->changeScreen(SCREEN_ID_INFO_SCREEN); }
+
+void action_on_water_reminder_open(lv_event_t *e) { controller.getUI()->openWaterReminder(); }
+
+void action_on_water_reminder_secondary(lv_event_t *e) { controller.getUI()->onWaterReminderSecondary(); }
+
+void action_on_water_reminder_primary(lv_event_t *e) { controller.getUI()->onWaterReminderPrimary(); }

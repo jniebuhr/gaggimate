@@ -193,6 +193,21 @@ export default class ApiService {
       currentPuckResistance: message.pkr ?? 0,
       currentPuckFlow: message.pf ?? 0,
       currentCoffeeVolume: message.cv ?? 0,
+      waterReminder: {
+        enabled: !!message.wre,
+        mode: message.wrm ?? 0,
+        severity: message.wrs ?? 0,
+        drinks: message.wrd ?? 0,
+        calibrated: !!message.wrc,
+        warningPending: !!message.wrn,
+        pumpLed: !!message.wrl,
+        scheduleDue: !!message.wrq,
+        clockReady: !!message.wrk,
+        daysSinceRefill: message.wra ?? 0,
+        nextReminderAt: message.wrx ?? 0,
+        suspendedByWaterSensor: !!message.wrt,
+        setupRequired: !!message.wru,
+      },
     };
     const historyEntry = { ...newStatus };
     delete historyEntry.process;
@@ -236,6 +251,21 @@ export const machine = signal({
     grindTarget: 0,
     grindActive: false,
     process: null,
+    waterReminder: {
+      enabled: false,
+      mode: 0,
+      severity: 0,
+      drinks: 0,
+      calibrated: false,
+      warningPending: false,
+      pumpLed: false,
+      scheduleDue: false,
+      clockReady: false,
+      daysSinceRefill: 0,
+      nextReminderAt: 0,
+      suspendedByWaterSensor: false,
+      setupRequired: true,
+    },
   },
   capabilities: {
     pressure: false,

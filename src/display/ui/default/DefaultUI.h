@@ -7,6 +7,7 @@
 #include <display/core/constants.h>
 #include <display/drivers/Driver.h>
 #include <display/models/profile.h>
+#include <display/plugins/WaterRefillReminderPlugin.h>
 #include <display/ui/default/eez/screens.h>
 #include <display/ui/default/eez/structs.h>
 #include <mutex>
@@ -47,6 +48,9 @@ class DefaultUI {
     };
 
     void onVolumetricDelete();
+    void openWaterReminder();
+    void onWaterReminderSecondary();
+    void onWaterReminderPrimary();
 
     void markDirty() { rerender = true; }
     void markProfileDirty() { profileDirty = true; }
@@ -63,6 +67,14 @@ class DefaultUI {
     void setupState();
 
     void handleScreenChange();
+    void updateWaterReminderUI(unsigned long now);
+    void showWaterReminder(bool automatic = false);
+    void closeWaterReminder();
+    void renderWaterReminder(const WaterReminderState &state);
+    void renderWaterReminderStatus(const WaterReminderState &state);
+    void renderWaterReminderConfirmation();
+    void setWaterReminderButton(lv_obj_t *button, lv_color_t background, lv_color_t foreground);
+    bool canPresentWaterReminder() const;
 
     // Animate the dial meters' tick length on screen change (short on profile/new-menu, long elsewhere).
     void animateGaugeTicks(ScreensEnum from, ScreensEnum to);
@@ -150,6 +162,10 @@ class DefaultUI {
 
     // Standby brightness control
     unsigned long standbyEnterTime = 0;
+    unsigned long waterReminderShownAt = 0;
+    ScreensEnum waterReminderReturnScreen = SCREEN_ID_STANDBY_SCREEN;
+    bool waterReminderVisible = false;
+    bool waterReminderCriticalConfirmation = false;
 
     xTaskHandle taskHandle;
     static void loopTask(void *arg);

@@ -1,5 +1,6 @@
 import { PluginCard } from '../PluginCard.jsx';
 import Section from '../../../components/Card.jsx';
+import { WaterReminderSetup } from '../WaterReminderSetup.jsx';
 
 export function PluginsTab({
   formData,
@@ -21,6 +22,9 @@ export function PluginsTab({
         updateAutoWakeupTime={updateAutoWakeupTime}
         updateAutoWakeupDay={updateAutoWakeupDay}
       />
+      <div className='mt-4'>
+        <WaterReminderSetup formData={formData} onChange={onChange} />
+      </div>
     </Section>
   );
 }

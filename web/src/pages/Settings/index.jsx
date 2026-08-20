@@ -126,6 +126,8 @@ function buildSubmitFormData(formData, autowakeupSchedules, restart) {
     'clock24hFormat',
     'autowakeupEnabled',
     'smartGrindToggle',
+    'waterReminderEnabled',
+    'waterReminderTankFullConfirmed',
   ];
 
   for (const [key, value] of Object.entries(formData)) {
@@ -139,6 +141,8 @@ function buildSubmitFormData(formData, autowakeupSchedules, restart) {
       formDataToSubmit.set(key, String(value));
     }
   }
+
+  formDataToSubmit.set('waterReminderEnabledPresent', '1');
 
   formDataToSubmit.set('steamPumpPercentage', String(formData.steamPumpPercentage ?? 0));
   formDataToSubmit.set(
@@ -262,6 +266,9 @@ export function Settings() {
           'delayAdjust',
           'clock24hFormat',
           'autowakeupEnabled',
+          'waterReminderEnabled',
+          'waterReminderStorageWarningAccepted',
+          'waterReminderTankFullConfirmed',
         ].includes(key)
       ) {
         value = !formData[key];

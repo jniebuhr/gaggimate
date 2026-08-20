@@ -19,6 +19,7 @@
 #include <display/plugins/LedControlPlugin.h>
 #include <display/plugins/ShotHistoryPlugin.h>
 #include <display/plugins/SmartGrindPlugin.h>
+#include <display/plugins/WaterRefillReminderPlugin.h>
 #include <display/plugins/WebUIPlugin.h>
 #ifndef GAGGIMATE_SIM // network/BLE plugins are device-only
 #include <display/plugins/BLEScalePlugin.h>
@@ -99,6 +100,7 @@ void Controller::setup() {
     pluginManager->registerPlugin(new ImprovPlugin());
 #endif
     pluginManager->registerPlugin(&ShotHistory);
+    pluginManager->registerPlugin(&WaterRefillReminderTracker);
 #ifndef GAGGIMATE_SIM
     pluginManager->registerPlugin(&BLEScales);
 #endif

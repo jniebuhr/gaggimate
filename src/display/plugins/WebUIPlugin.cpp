@@ -10,6 +10,7 @@
 #include <display/models/profile.h>
 #include <display/plugins/BLEScalePlugin.h>
 #include <display/plugins/ShotHistoryPlugin.h>
+#include <display/plugins/WaterRefillReminderPlugin.h>
 #include <display/util/PsramStlAllocator.h>
 #include <display/util/PsramWsBuffer.h>
 #include <display/webassets/web_ui_manifest.h>
@@ -182,6 +183,23 @@ void WebUIPlugin::loop() {
         statusDoc["lat"] = -1; // BLE round-trip latency (ms); -1 = not yet measured
         statusDoc["pw"] = controller->getCurrentPumpPower();
         statusDoc["hp"] = controller->getCurrentHeaterPower();
+        WaterReminderState waterReminder = WaterRefillReminderTracker.getState();
+        statusDoc["wre"] = waterReminder.enabled;
+        statusDoc["wrm"] = static_cast<uint8_t>(waterReminder.mode);
+        statusDoc["wrs"] = static_cast<uint8_t>(waterReminder.severity);
+        statusDoc["wrn"] = waterReminder.warningPending;
+        statusDoc["wrt"] = waterReminder.suspendedByWaterSensor;
+        statusDoc["wru"] = waterReminder.setupRequired;
+        if (waterReminder.mode == WaterReminderMode::USAGE) {
+            statusDoc["wrd"] = waterReminder.drinks;
+            statusDoc["wrc"] = waterReminder.calibrated;
+            statusDoc["wrl"] = waterReminder.pumpLed;
+        } else {
+            statusDoc["wrq"] = waterReminder.scheduleDue;
+            statusDoc["wrk"] = waterReminder.clockReady;
+            statusDoc["wra"] = waterReminder.daysSinceRefill;
+            statusDoc["wrx"] = static_cast<int64_t>(waterReminder.nextReminderAt);
+        }
 
         if (controller->getClientController()->getClient()->isConnected()) {
             statusDoc["rssi"] = controller->getClientController()->getClient()->getRssi();
@@ -539,6 +557,14 @@ void WebUIPlugin::handleWebSocketData(AsyncWebSocket *server, AsyncWebSocketClie
                     client->text(toWsBuffer(resp));
                 } else if (msgType == "req:flush:start") {
                     handleFlushStart(client->id(), doc);
+                } else if (msgType == "req:water-reminder:later") {
+                    WaterRefillReminderTracker.acknowledge();
+                } else if (msgType == "req:water-reminder:refill") {
+                    WaterRefillReminderTracker.refill();
+                } else if (msgType == "req:water-reminder:reset-calibration") {
+                    WaterRefillReminderTracker.resetCalibration();
+                } else if (msgType == "req:water-reminder:tomorrow") {
+                    WaterRefillReminderTracker.snoozeUntilTomorrow();
                 }
             }
         }
@@ -660,6 +686,14 @@ void WebUIPlugin::handleProfileRequest(uint32_t clientId, JsonDocument &request)
 
 void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     if (request->method() == HTTP_POST) {
+        const int requestedWaterReminderMode = request->hasArg("waterReminderMode")
+                                                   ? request->arg("waterReminderMode").toInt()
+                                                   : controller->getSettings().getWaterReminderMode();
+        if (requestedWaterReminderMode != controller->getSettings().getWaterReminderMode() &&
+            !request->hasArg("waterReminderTankFullConfirmed")) {
+            request->send(400, "application/json", "{\"error\":\"Confirm a full tank before changing reminder mode\"}");
+            return;
+        }
         controller->getSettings().batchUpdate([request](Settings *settings) {
             if (request->hasArg("startupMode"))
                 settings->setStartupMode(request->arg("startupMode") == "brew" ? MODE_BREW : MODE_STANDBY);
@@ -760,6 +794,29 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setMaxPumpPower(request->arg("maxPumpPower").toFloat());
             if (request->hasArg("savedScale"))
                 settings->setSavedScale(request->arg("savedScale"));
+            if (request->hasArg("waterReminderEnabledPresent")) {
+                const bool requestedEnabled = request->hasArg("waterReminderEnabled");
+                if (!requestedEnabled || settings->isWaterReminderEnabled() ||
+                    !WaterRefillReminderTracker.getState().setupRequired || request->hasArg("waterReminderTankFullConfirmed")) {
+                    settings->setWaterReminderEnabled(requestedEnabled);
+                }
+            }
+            if (request->hasArg("waterReminderWarningCount") && request->hasArg("waterReminderCriticalCount")) {
+                const int warningCount = request->arg("waterReminderWarningCount").toInt();
+                const int criticalCount = request->arg("waterReminderCriticalCount").toInt();
+                if (warningCount >= 1 && criticalCount > warningCount) {
+                    settings->setWaterReminderWarningCount(warningCount);
+                    settings->setWaterReminderCriticalCount(criticalCount);
+                }
+            }
+            if (request->hasArg("waterReminderStorageWarningAccepted"))
+                settings->setWaterReminderStorageWarningAccepted(request->arg("waterReminderStorageWarningAccepted") == "true");
+            if (request->hasArg("waterReminderMode"))
+                settings->setWaterReminderMode(request->arg("waterReminderMode").toInt());
+            if (request->hasArg("waterReminderScheduleDays"))
+                settings->setWaterReminderScheduleDays(request->arg("waterReminderScheduleDays").toInt());
+            if (request->hasArg("waterReminderScheduleTime"))
+                settings->setWaterReminderScheduleTime(request->arg("waterReminderScheduleTime"));
             settings->setAutoWakeupEnabled(request->hasArg("autowakeupEnabled"));
             if (request->hasArg("autowakeupSchedules")) {
                 // Handle schedule format with days
@@ -806,6 +863,9 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
             settings->save(true);
         });
         pluginManager->trigger("settings:changed");
+        if (request->hasArg("waterReminderTankFullConfirmed") && controller->getSettings().isWaterReminderEnabled()) {
+            WaterRefillReminderTracker.initialize();
+        }
         controller->setTargetTemp(controller->getTargetTemp());
         controller->setPumpModelCoeffs();
     }
@@ -868,6 +928,18 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["integralGain"] = settings.getIntegralGain();
     doc["maxPumpPower"] = settings.getMaxPumpPower();
     doc["savedScale"] = settings.getSavedScale();
+    doc["waterReminderEnabled"] = settings.isWaterReminderEnabled();
+    doc["waterReminderWarningCount"] = settings.getWaterReminderWarningCount();
+    doc["waterReminderCriticalCount"] = settings.getWaterReminderCriticalCount();
+    doc["waterReminderStorageWarningAccepted"] = settings.isWaterReminderStorageWarningAccepted();
+    doc["waterReminderMode"] = settings.getWaterReminderMode();
+    doc["waterReminderSavedMode"] = settings.getWaterReminderMode();
+    doc["waterReminderScheduleDays"] = settings.getWaterReminderScheduleDays();
+    doc["waterReminderScheduleTime"] = settings.getWaterReminderScheduleTime();
+    doc["waterReminderSdAvailable"] = controller->isSDCard();
+    doc["waterReminderHardwareSensorAvailable"] = controller->getSystemInfo().capabilities.tof;
+    doc["waterReminderSetupRequired"] = WaterRefillReminderTracker.getState().setupRequired;
+    doc["waterReminderClockReady"] = WaterRefillReminderTracker.getState().clockReady;
 
     // Add schedule format with days
     std::vector<AutoWakeupSchedule> autowakeupSchedules = settings.getAutoWakeupSchedules();

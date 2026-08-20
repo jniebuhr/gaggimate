@@ -17,6 +17,7 @@
 
 #include "esp_sntp.h"
 
+#include <display/ui/default/eez/images.h>
 #include <display/ui/default/eez/ui.h>
 
 static EffectManager effect_mgr;
@@ -26,6 +27,59 @@ static constexpr uint32_t STARTUP_FADE_MS = 1000; // standby fade-in duration on
 static constexpr int32_t GAUGE_TICK_LONG = 25;      // meter tick length on most screens
 static constexpr int32_t GAUGE_TICK_SHORT = 10;     // shortened tick length on profile / new-menu screens
 static constexpr uint32_t GAUGE_TICK_ANIM_MS = 300; // tick length transition duration
+static constexpr uint32_t WATER_REMINDER_BRIGHT_MS = 60000;
+
+static bool shouldPresentWaterReminder(const WaterReminderState &state) {
+    return state.enabled && !state.suspendedByWaterSensor && state.warningPending;
+}
+
+struct WaterReminderPresentation {
+    const char *title;
+    const char *secondary;
+    char detail[96]{};
+};
+
+static WaterReminderPresentation makeSchedulePresentation(const WaterReminderState &state, const Settings &settings) {
+    WaterReminderPresentation presentation{state.scheduleDue ? "Time to refill water" : "Water reminder",
+                                           state.scheduleDue ? "Tomorrow" : "Back"};
+    if (!state.clockReady) {
+        snprintf(presentation.detail, sizeof(presentation.detail), "Waiting for clock sync.");
+        return presentation;
+    }
+    if (state.scheduleDue) {
+        snprintf(presentation.detail, sizeof(presentation.detail), "%u day%s since the last refill.", state.daysSinceRefill,
+                 state.daysSinceRefill == 1 ? "" : "s");
+        return presentation;
+    }
+
+    tm next{};
+    localtime_r(&state.nextReminderAt, &next);
+    char date[16];
+    char time[16];
+    const bool clock24h = settings.isClock24hFormat();
+    strftime(date, sizeof(date), "%b %e", &next);
+    strftime(time, sizeof(time), clock24h ? "%H:%M" : "%I:%M %p", &next);
+    const char *displayTime = !clock24h && time[0] == '0' ? time + 1 : time;
+    snprintf(presentation.detail, sizeof(presentation.detail), "Next reminder\n%s at %s", date, displayTime);
+    return presentation;
+}
+
+static WaterReminderPresentation makeUsagePresentation(const WaterReminderState &state) {
+    static constexpr const char *TITLES[] = {"Water tracking", "Refill water soon", "Refill water now"};
+    const bool warning = state.severity == WaterReminderSeverity::WARNING;
+    const bool critical = state.severity == WaterReminderSeverity::CRITICAL;
+    WaterReminderPresentation presentation{TITLES[static_cast<uint8_t>(state.severity)], "Back"};
+    if (state.warningPending) {
+        presentation.secondary = critical ? "Not now" : "Later";
+    }
+    if ((warning || critical) && state.pumpLed) {
+        snprintf(presentation.detail, sizeof(presentation.detail), "Recent water use suggests\nthe tank may be getting low.");
+    } else {
+        snprintf(presentation.detail, sizeof(presentation.detail), "%u drink%s since the last refill.", state.drinks,
+                 state.drinks == 1 ? "" : "s");
+    }
+    return presentation;
+}
 
 // Profile and the new menu screen show shortened meter ticks.
 static bool isShortTickScreen(ScreensEnum s) {
@@ -225,6 +279,9 @@ void DefaultUI::init() {
             rerender = true;
         }
     });
+    if (shouldPresentWaterReminder(WaterRefillReminderTracker.getState()) && canPresentWaterReminder()) {
+        showWaterReminder(true);
+    }
     xTaskCreatePinnedToCore(profileLoopTask, "DefaultUI::loopProfiles", configMINIMAL_STACK_SIZE * 4, this, 1, &profileTaskHandle,
                             0);
 }
@@ -270,7 +327,9 @@ void DefaultUI::loop() {
         eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_GRIND_WEIGHT_TARGET, grindWeightTarget);
 
         handleScreenChange();
-        currentScreen = static_cast<ScreensEnum>(eez_flow_get_current_screen());
+        currentScreen = lv_scr_act() == objects.water_reminder_screen ? SCREEN_ID_WATER_REMINDER_SCREEN
+                                                                      : static_cast<ScreensEnum>(eez_flow_get_current_screen());
+        updateWaterReminderUI(now);
         effect_mgr.evaluate_all();
 
         if (currentScreen == SCREEN_ID_STANDBY_SCREEN) {
@@ -278,7 +337,13 @@ void DefaultUI::loop() {
                 const Settings &settings = controller->getSettings();
                 const unsigned long now = millis();
                 if (now - standbyEnterTime >= settings.getStandbyBrightnessTimeout()) {
-                    setBrightness(settings.getStandbyBrightness());
+                    WaterReminderState state = WaterRefillReminderTracker.getState();
+                    if (shouldPresentWaterReminder(state) && !waterReminderVisible && canPresentWaterReminder()) {
+                        showWaterReminder(true);
+                    }
+                    setBrightness(waterReminderVisible && now - waterReminderShownAt < WATER_REMINDER_BRIGHT_MS
+                                      ? settings.getMainBrightness()
+                                      : settings.getStandbyBrightness());
                 }
             }
         }
@@ -316,6 +381,10 @@ void DefaultUI::loopProfiles() {
 }
 
 void DefaultUI::changeScreen(ScreensEnum screen) {
+    if (currentScreen == SCREEN_ID_WATER_REMINDER_SCREEN && screen != SCREEN_ID_WATER_REMINDER_SCREEN) {
+        waterReminderVisible = false;
+        waterReminderCriticalConfirmation = false;
+    }
     targetScreen = screen;
     brewScreenState = BrewScreenState::Brew;
     rerender = true;
@@ -462,10 +531,192 @@ void DefaultUI::handleScreenChange() {
             const ::Settings &settings = controller->getSettings();
             setBrightness(settings.getMainBrightness());
         }
-        eez_flow_set_screen(targetScreen, LV_SCR_LOAD_ANIM_NONE, 0, 0);
+        if (targetScreen == SCREEN_ID_WATER_REMINDER_SCREEN) {
+            lv_scr_load(objects.water_reminder_screen);
+        } else {
+            eez_flow_set_screen(targetScreen, LV_SCR_LOAD_ANIM_NONE, 0, 0);
+        }
         animateGaugeTicks(currentScreen, targetScreen);
         rerender = true;
     }
+}
+
+void DefaultUI::updateWaterReminderUI(unsigned long now) {
+    const WaterReminderState state = WaterRefillReminderTracker.getState();
+    const bool showIcon = state.enabled && !state.suspendedByWaterSensor;
+    const int theme = eez_flow_get_selected_theme_index();
+    lv_color_t accent = lv_color_white();
+    if (state.mode == WaterReminderMode::SCHEDULE && state.scheduleDue) {
+        accent = lv_color_hex(theme_colors[theme][7]);
+    } else if (state.severity == WaterReminderSeverity::CRITICAL) {
+        accent = lv_color_hex(0xD83B3B);
+    } else if (state.severity == WaterReminderSeverity::WARNING) {
+        accent = lv_color_hex(0xE6B422);
+    }
+    for (lv_obj_t *icon : {objects.water_reminder_icon, objects.water_reminder_icon_1}) {
+        if (icon == nullptr) {
+            continue;
+        }
+        lv_obj_set_style_img_recolor(icon, accent, LV_PART_MAIN);
+        showIcon ? lv_obj_clear_flag(icon, LV_OBJ_FLAG_HIDDEN) : lv_obj_add_flag(icon, LV_OBJ_FLAG_HIDDEN);
+    }
+
+    if (!waterReminderVisible || currentScreen != SCREEN_ID_WATER_REMINDER_SCREEN) {
+        return;
+    }
+    if (!showIcon || controller->isActive()) {
+        closeWaterReminder();
+        return;
+    }
+    renderWaterReminder(state);
+
+    if (waterReminderReturnScreen == SCREEN_ID_STANDBY_SCREEN && now - waterReminderShownAt >= WATER_REMINDER_BRIGHT_MS) {
+        setBrightness(controller->getSettings().getStandbyBrightness());
+    }
+}
+
+void DefaultUI::openWaterReminder() { showWaterReminder(); }
+
+void DefaultUI::showWaterReminder(bool automatic) {
+    if (objects.water_reminder_screen == nullptr || (automatic && !canPresentWaterReminder())) {
+        return;
+    }
+    if (currentScreen != SCREEN_ID_STANDBY_SCREEN && currentScreen != SCREEN_ID_INFO_SCREEN) {
+        return;
+    }
+    waterReminderReturnScreen = currentScreen;
+    waterReminderCriticalConfirmation = false;
+    waterReminderVisible = true;
+    waterReminderShownAt = millis();
+    targetScreen = SCREEN_ID_WATER_REMINDER_SCREEN;
+    setBrightness(controller->getSettings().getMainBrightness());
+    rerender = true;
+}
+
+void DefaultUI::closeWaterReminder() {
+    waterReminderCriticalConfirmation = false;
+    waterReminderVisible = false;
+    targetScreen = waterReminderReturnScreen;
+    if (waterReminderReturnScreen == SCREEN_ID_STANDBY_SCREEN) {
+        setBrightness(controller->getSettings().getStandbyBrightness());
+    }
+    rerender = true;
+}
+
+bool DefaultUI::canPresentWaterReminder() const {
+    return currentScreen == SCREEN_ID_STANDBY_SCREEN && targetScreen == SCREEN_ID_STANDBY_SCREEN && !controller->isActive() &&
+           !controller->isErrorState() && !controller->isUpdating() && !controller->isAutotuning();
+}
+
+void DefaultUI::renderWaterReminder(const WaterReminderState &state) {
+    if (waterReminderCriticalConfirmation && state.severity == WaterReminderSeverity::CRITICAL) {
+        renderWaterReminderConfirmation();
+    } else {
+        renderWaterReminderStatus(state);
+    }
+    lv_obj_move_foreground(objects.water_reminder_image);
+    lv_obj_move_foreground(objects.water_reminder_secondary_button);
+    lv_obj_move_foreground(objects.water_reminder_primary_button);
+}
+
+void DefaultUI::renderWaterReminderStatus(const WaterReminderState &state) {
+    const bool warning = state.severity == WaterReminderSeverity::WARNING;
+    const bool critical = state.severity == WaterReminderSeverity::CRITICAL;
+    const bool schedule = state.mode == WaterReminderMode::SCHEDULE;
+    const int theme = eez_flow_get_selected_theme_index();
+    lv_color_t background = lv_color_hex(theme_colors[theme][1]);
+    lv_color_t foreground = lv_color_hex(theme_colors[theme][0]);
+    if (critical) {
+        background = lv_color_hex(0xC93636);
+        foreground = lv_color_white();
+    } else if (warning) {
+        background = lv_color_hex(0xE9B832);
+        foreground = lv_color_hex(0x211B0D);
+    }
+    const lv_color_t blue = lv_color_hex(theme_colors[theme][7]);
+    const lv_color_t charcoal = lv_color_hex(0x242424);
+
+    lv_obj_clear_flag(objects.water_reminder_status, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(objects.water_reminder_confirmation, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_set_style_bg_color(objects.water_reminder_screen, background, LV_PART_MAIN);
+    lv_obj_set_style_img_recolor(objects.water_reminder_image, warning || critical ? foreground : blue, LV_PART_MAIN);
+    lv_obj_set_style_text_color(objects.water_reminder_title, foreground, LV_PART_MAIN);
+    lv_obj_set_style_text_color(objects.water_reminder_detail, foreground, LV_PART_MAIN);
+
+    const WaterReminderPresentation presentation =
+        schedule ? makeSchedulePresentation(state, controller->getSettings()) : makeUsagePresentation(state);
+    lv_label_set_text(objects.water_reminder_title, presentation.title);
+    lv_label_set_text(objects.water_reminder_detail, presentation.detail);
+    lv_label_set_text(objects.water_reminder_secondary_button_label, presentation.secondary);
+    lv_label_set_text(objects.water_reminder_primary_button_label, "Water refilled");
+    lv_color_t secondaryBackground = lv_color_white();
+    lv_color_t secondaryForeground = charcoal;
+    if (!schedule && state.warningPending) {
+        secondaryBackground = warning ? lv_color_hex(0xB3261E) : lv_color_hex(0x666666);
+        secondaryForeground = lv_color_white();
+    }
+    setWaterReminderButton(objects.water_reminder_secondary_button, secondaryBackground, secondaryForeground);
+    setWaterReminderButton(objects.water_reminder_primary_button, blue, lv_color_white());
+}
+
+void DefaultUI::renderWaterReminderConfirmation() {
+    const lv_color_t charcoal = lv_color_hex(0x242424);
+    lv_obj_add_flag(objects.water_reminder_status, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_clear_flag(objects.water_reminder_confirmation, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_set_style_bg_color(objects.water_reminder_screen, lv_color_hex(0xC93636), LV_PART_MAIN);
+    lv_obj_set_style_img_recolor(objects.water_reminder_image, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(objects.water_reminder_confirmation_title, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(objects.water_reminder_confirmation_detail, lv_color_white(), LV_PART_MAIN);
+    lv_label_set_text(objects.water_reminder_secondary_button_label, "Go back");
+    lv_label_set_text(objects.water_reminder_primary_button_label, "Proceed anyway");
+    setWaterReminderButton(objects.water_reminder_secondary_button, lv_color_white(), charcoal);
+    setWaterReminderButton(objects.water_reminder_primary_button, lv_color_hex(0xB3261E), lv_color_white());
+}
+
+void DefaultUI::setWaterReminderButton(lv_obj_t *button, lv_color_t background, lv_color_t foreground) {
+    lv_obj_set_style_bg_opa(button, LV_OPA_COVER, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(button, background, LV_PART_MAIN);
+    lv_obj_set_style_border_width(button, 0, LV_PART_MAIN);
+    lv_obj_t *label = button == objects.water_reminder_secondary_button ? objects.water_reminder_secondary_button_label
+                                                                        : objects.water_reminder_primary_button_label;
+    lv_obj_set_style_text_color(label, foreground, LV_PART_MAIN);
+}
+
+void DefaultUI::onWaterReminderSecondary() {
+    const WaterReminderState state = WaterRefillReminderTracker.getState();
+    if (state.mode == WaterReminderMode::SCHEDULE) {
+        if (state.scheduleDue) {
+            WaterRefillReminderTracker.snoozeUntilTomorrow();
+        }
+        closeWaterReminder();
+        return;
+    }
+    if (waterReminderCriticalConfirmation) {
+        waterReminderCriticalConfirmation = false;
+        renderWaterReminder(state);
+        return;
+    }
+    if (state.severity == WaterReminderSeverity::CRITICAL && state.warningPending) {
+        waterReminderCriticalConfirmation = true;
+        renderWaterReminder(state);
+        return;
+    }
+    if (!state.warningPending) {
+        closeWaterReminder();
+        return;
+    }
+    WaterRefillReminderTracker.acknowledge();
+    closeWaterReminder();
+}
+
+void DefaultUI::onWaterReminderPrimary() {
+    if (waterReminderCriticalConfirmation) {
+        WaterRefillReminderTracker.acknowledge();
+        closeWaterReminder();
+        return;
+    }
+    WaterRefillReminderTracker.refill();
+    closeWaterReminder();
 }
 
 // Collect every lv_meter under obj (the dial gauges) so their tick length can be animated together.

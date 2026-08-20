@@ -877,6 +877,36 @@
       "userProperties": [],
       "name": "onInfoScreen",
       "implementationType": "native"
+    },
+    {
+      "objID": "50510d14-9a18-4296-b066-b6a790e07028",
+      "components": [],
+      "connectionLines": [],
+      "localVariables": [],
+      "componentGroups": [],
+      "userProperties": [],
+      "name": "onWaterReminderOpen",
+      "implementationType": "native"
+    },
+    {
+      "objID": "e94746ba-ec2a-4eee-aed2-51a009948f2a",
+      "components": [],
+      "connectionLines": [],
+      "localVariables": [],
+      "componentGroups": [],
+      "userProperties": [],
+      "name": "onWaterReminderSecondary",
+      "implementationType": "native"
+    },
+    {
+      "objID": "eac3464e-3fa1-4ce3-a5e0-acfb66aa0ad2",
+      "components": [],
+      "connectionLines": [],
+      "localVariables": [],
+      "componentGroups": [],
+      "userProperties": [],
+      "name": "onWaterReminderPrimary",
+      "implementationType": "native"
     }
   ],
   "userPages": [
@@ -1288,6 +1318,74 @@
                   "angle": 0,
                   "innerAlign": "CENTER",
                   "sizeMode": "VIRTUAL"
+                },
+                {
+                  "objID": "969a01ee-bd59-41a3-83ce-5013c8a14a86",
+                  "type": "LVGLImageWidget",
+                  "left": 0,
+                  "top": 0,
+                  "width": 40,
+                  "height": 40,
+                  "customInputs": [],
+                  "customOutputs": [],
+                  "style": {
+                    "objID": "e7905168-dd00-48d7-93eb-8ecf2191513c",
+                    "useStyle": "default",
+                    "conditionalStyles": [],
+                    "childStyles": []
+                  },
+                  "hiddenInEditor": false,
+                  "timeline": [],
+                  "eventHandlers": [
+                    {
+                      "objID": "2a7b213d-4b2e-4e5f-9f8e-cd46b36538f4",
+                      "eventName": "CLICKED",
+                      "handlerType": "action",
+                      "action": "onWaterReminderOpen",
+                      "userData": 0
+                    }
+                  ],
+                  "identifier": "waterReminderIcon",
+                  "leftUnit": "px",
+                  "topUnit": "px",
+                  "widthUnit": "content",
+                  "heightUnit": "content",
+                  "children": [],
+                  "widgetFlags": "ADV_HITTEST|CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLLABLE|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_WITH_ARROW|SNAPPABLE",
+                  "hiddenFlag": true,
+                  "hiddenFlagType": "literal",
+                  "clickableFlagType": "literal",
+                  "flagScrollbarMode": "",
+                  "flagScrollDirection": "",
+                  "scrollSnapX": "",
+                  "scrollSnapY": "",
+                  "checkedStateType": "literal",
+                  "disabledStateType": "literal",
+                  "states": "",
+                  "localStyles": {
+                    "objID": "b0eccf52-b9a7-4084-a89e-f3c5f1ce48eb",
+                    "definition": {
+                      "MAIN": {
+                        "DEFAULT": {
+                          "border_color": "Dark",
+                          "border_width": 10,
+                          "img_recolor": "NiceWhite",
+                          "img_recolor_opa": 255
+                        }
+                      }
+                    }
+                  },
+                  "group": "",
+                  "groupIndex": 0,
+                  "image": "water-drop-20x20",
+                  "setPivot": false,
+                  "pivotX": 0,
+                  "pivotY": 0,
+                  "zoom": 256,
+                  "angle": 0,
+                  "innerAlign": "CENTER",
+                  "sizeMode": "VIRTUAL",
+                  "clickableFlag": true
                 }
               ],
               "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLLABLE|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_WITH_ARROW|SNAPPABLE",
@@ -9328,7 +9426,7 @@
                   "objID": "723660dc-dca0-4eaf-8995-bb98c7d2f787",
                   "type": "LVGLContainerWidget",
                   "left": 0,
-                  "top": -210,
+                  "top": -180,
                   "width": 300,
                   "height": 20,
                   "customInputs": [],
@@ -9520,6 +9618,73 @@
                       "angle": 0,
                       "innerAlign": "CENTER",
                       "sizeMode": "VIRTUAL"
+                    },
+                    {
+                      "objID": "af404048-d713-45b0-a44d-880359170ec8",
+                      "type": "LVGLImageWidget",
+                      "left": 0,
+                      "top": 0,
+                      "width": 40,
+                      "height": 40,
+                      "customInputs": [],
+                      "customOutputs": [],
+                      "style": {
+                        "objID": "3bdae93d-5fca-48a6-9828-6f0f907a7aec",
+                        "useStyle": "default",
+                        "conditionalStyles": [],
+                        "childStyles": []
+                      },
+                      "timeline": [],
+                      "eventHandlers": [
+                        {
+                          "objID": "482cf561-0db0-414a-b1ac-bbe33255f65b",
+                          "eventName": "CLICKED",
+                          "handlerType": "action",
+                          "action": "onWaterReminderOpen",
+                          "userData": 0
+                        }
+                      ],
+                      "identifier": "waterReminderIcon_1",
+                      "leftUnit": "px",
+                      "topUnit": "px",
+                      "widthUnit": "content",
+                      "heightUnit": "content",
+                      "children": [],
+                      "widgetFlags": "ADV_HITTEST|CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLLABLE|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_WITH_ARROW|SNAPPABLE",
+                      "hiddenFlag": true,
+                      "hiddenFlagType": "literal",
+                      "clickableFlagType": "literal",
+                      "flagScrollbarMode": "",
+                      "flagScrollDirection": "",
+                      "scrollSnapX": "",
+                      "scrollSnapY": "",
+                      "checkedStateType": "literal",
+                      "disabledStateType": "literal",
+                      "states": "",
+                      "localStyles": {
+                        "objID": "36433ab3-6b31-4c0f-a2ae-e56d150fd0ef",
+                        "definition": {
+                          "MAIN": {
+                            "DEFAULT": {
+                              "border_color": "Dark",
+                              "border_width": 10,
+                              "img_recolor": "NiceWhite",
+                              "img_recolor_opa": 255
+                            }
+                          }
+                        }
+                      },
+                      "group": "",
+                      "groupIndex": 0,
+                      "image": "water-drop-20x20",
+                      "setPivot": false,
+                      "pivotX": 0,
+                      "pivotY": 0,
+                      "zoom": 256,
+                      "angle": 0,
+                      "innerAlign": "CENTER",
+                      "sizeMode": "VIRTUAL",
+                      "clickableFlag": true
                     }
                   ],
                   "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLLABLE|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_WITH_ARROW|SNAPPABLE",
@@ -13356,6 +13521,674 @@
       "isUsedAsUserWidget": false,
       "createAtStart": false,
       "deleteOnScreenUnload": false
+    },
+    {
+      "objID": "aad2ee35-f62a-454d-bec7-a2ad2d048fec",
+      "components": [
+        {
+          "objID": "153afa0d-db76-4712-8069-20dc7a4f6ef2",
+          "type": "LVGLScreenWidget",
+          "left": 0,
+          "top": 0,
+          "width": 480,
+          "height": 480,
+          "customInputs": [],
+          "customOutputs": [],
+          "style": {
+            "objID": "d717352b-ab31-4827-8121-6802c1ad4c0e",
+            "useStyle": "default",
+            "conditionalStyles": [],
+            "childStyles": []
+          },
+          "timeline": [],
+          "eventHandlers": [
+            {
+              "objID": "65f155e5-9d32-4a53-9de5-1fca92631843",
+              "eventName": "SCREEN_LOADED",
+              "handlerType": "action",
+              "action": "onScreenLoad",
+              "userData": 0
+            }
+          ],
+          "leftUnit": "px",
+          "topUnit": "px",
+          "widthUnit": "px",
+          "heightUnit": "px",
+          "children": [
+            {
+              "objID": "01c453de-f97a-46dc-8eba-d0907a79dd39",
+              "type": "LVGLContainerWidget",
+              "left": 0,
+              "top": 0,
+              "width": 480,
+              "height": 480,
+              "customInputs": [],
+              "customOutputs": [],
+              "style": {
+                "objID": "cadee350-3615-4bbd-9140-43a49f08bd0e",
+                "useStyle": "default",
+                "conditionalStyles": [],
+                "childStyles": []
+              },
+              "timeline": [],
+              "eventHandlers": [],
+              "leftUnit": "px",
+              "topUnit": "px",
+              "widthUnit": "px",
+              "heightUnit": "px",
+              "children": [
+                {
+                  "objID": "6ee50833-8281-413f-9a0d-47b4db6be9dd",
+                  "type": "LVGLLabelWidget",
+                  "left": 0,
+                  "top": -25,
+                  "width": 310,
+                  "height": 27,
+                  "customInputs": [],
+                  "customOutputs": [],
+                  "style": {
+                    "objID": "5e8d42fa-0e19-4b72-9a90-1c9b655bc860",
+                    "useStyle": "default",
+                    "conditionalStyles": [],
+                    "childStyles": []
+                  },
+                  "timeline": [],
+                  "eventHandlers": [],
+                  "leftUnit": "px",
+                  "topUnit": "px",
+                  "widthUnit": "px",
+                  "heightUnit": "content",
+                  "children": [],
+                  "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLLABLE|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_WITH_ARROW|SNAPPABLE",
+                  "hiddenFlagType": "literal",
+                  "clickableFlagType": "literal",
+                  "flagScrollbarMode": "",
+                  "flagScrollDirection": "",
+                  "scrollSnapX": "",
+                  "scrollSnapY": "",
+                  "checkedStateType": "literal",
+                  "disabledStateType": "literal",
+                  "states": "",
+                  "localStyles": {
+                    "objID": "c797598d-7f93-47f1-a4d0-4db2ebe04ba9",
+                    "definition": {
+                      "MAIN": {
+                        "DEFAULT": {
+                          "align": "CENTER",
+                          "text_color": "NiceWhite",
+                          "text_font": "MONTSERRAT_24",
+                          "text_align": "CENTER"
+                        }
+                      }
+                    }
+                  },
+                  "group": "",
+                  "groupIndex": 0,
+                  "text": "Water tracking",
+                  "textType": "literal",
+                  "longMode": "WRAP",
+                  "recolor": false,
+                  "identifier": "waterReminderTitle"
+                },
+                {
+                  "objID": "69c19c68-4ab8-4933-8ec1-f740a68948a9",
+                  "type": "LVGLLabelWidget",
+                  "left": 0,
+                  "top": 30,
+                  "width": 300,
+                  "height": 27,
+                  "customInputs": [],
+                  "customOutputs": [],
+                  "style": {
+                    "objID": "f03e80b7-7714-4ec4-aca4-cac8590677dd",
+                    "useStyle": "default",
+                    "conditionalStyles": [],
+                    "childStyles": []
+                  },
+                  "timeline": [],
+                  "eventHandlers": [],
+                  "leftUnit": "px",
+                  "topUnit": "px",
+                  "widthUnit": "px",
+                  "heightUnit": "content",
+                  "children": [],
+                  "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLLABLE|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_WITH_ARROW|SNAPPABLE",
+                  "hiddenFlagType": "literal",
+                  "clickableFlagType": "literal",
+                  "flagScrollbarMode": "",
+                  "flagScrollDirection": "",
+                  "scrollSnapX": "",
+                  "scrollSnapY": "",
+                  "checkedStateType": "literal",
+                  "disabledStateType": "literal",
+                  "states": "",
+                  "localStyles": {
+                    "objID": "0a23fb8c-1512-498a-8cd7-9296e626b83c",
+                    "definition": {
+                      "MAIN": {
+                        "DEFAULT": {
+                          "align": "CENTER",
+                          "text_color": "NiceWhite",
+                          "text_font": "MONTSERRAT_18",
+                          "text_align": "CENTER"
+                        }
+                      }
+                    }
+                  },
+                  "group": "",
+                  "groupIndex": 0,
+                  "text": "0 drinks since the last refill.",
+                  "textType": "literal",
+                  "longMode": "WRAP",
+                  "recolor": false,
+                  "identifier": "waterReminderDetail"
+                }
+              ],
+              "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_WITH_ARROW|SNAPPABLE",
+              "hiddenFlagType": "literal",
+              "clickableFlag": false,
+              "clickableFlagType": "literal",
+              "flagScrollbarMode": "",
+              "flagScrollDirection": "",
+              "scrollSnapX": "",
+              "scrollSnapY": "",
+              "checkedStateType": "literal",
+              "disabledStateType": "literal",
+              "states": "",
+              "localStyles": {
+                "objID": "0b150a7a-d067-4bb2-a5ff-0c8776ff5c97",
+                "definition": {
+                  "MAIN": {
+                    "DEFAULT": {
+                      "align": "CENTER",
+                      "bg_opa": 0,
+                      "radius": 0
+                    }
+                  }
+                }
+              },
+              "group": "",
+              "groupIndex": 0,
+              "identifier": "waterReminderStatus",
+              "hiddenFlag": false
+            },
+            {
+              "objID": "efa23203-99d4-433d-ae96-9afeacd9f6fb",
+              "type": "LVGLContainerWidget",
+              "left": 0,
+              "top": 0,
+              "width": 480,
+              "height": 480,
+              "customInputs": [],
+              "customOutputs": [],
+              "style": {
+                "objID": "e7dfdb03-e853-4172-a61c-ba9ff7d8451b",
+                "useStyle": "default",
+                "conditionalStyles": [],
+                "childStyles": []
+              },
+              "timeline": [],
+              "eventHandlers": [],
+              "leftUnit": "px",
+              "topUnit": "px",
+              "widthUnit": "px",
+              "heightUnit": "px",
+              "children": [
+                {
+                  "objID": "963c2e80-9640-443d-8ab1-5eed65527f55",
+                  "type": "LVGLLabelWidget",
+                  "left": 0,
+                  "top": -32,
+                  "width": 310,
+                  "height": 27,
+                  "customInputs": [],
+                  "customOutputs": [],
+                  "style": {
+                    "objID": "ad694452-fc67-44e5-8736-9b809e79ba65",
+                    "useStyle": "default",
+                    "conditionalStyles": [],
+                    "childStyles": []
+                  },
+                  "timeline": [],
+                  "eventHandlers": [],
+                  "leftUnit": "px",
+                  "topUnit": "px",
+                  "widthUnit": "px",
+                  "heightUnit": "content",
+                  "children": [],
+                  "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLLABLE|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_WITH_ARROW|SNAPPABLE",
+                  "hiddenFlagType": "literal",
+                  "clickableFlagType": "literal",
+                  "flagScrollbarMode": "",
+                  "flagScrollDirection": "",
+                  "scrollSnapX": "",
+                  "scrollSnapY": "",
+                  "checkedStateType": "literal",
+                  "disabledStateType": "literal",
+                  "states": "",
+                  "localStyles": {
+                    "objID": "ea740ebf-64a8-48e0-bb06-b3c51d603b46",
+                    "definition": {
+                      "MAIN": {
+                        "DEFAULT": {
+                          "align": "CENTER",
+                          "text_color": "NiceWhite",
+                          "text_font": "MONTSERRAT_20",
+                          "text_align": "CENTER"
+                        }
+                      }
+                    }
+                  },
+                  "group": "",
+                  "groupIndex": 0,
+                  "text": "Continue without\nrefilling?",
+                  "textType": "literal",
+                  "longMode": "WRAP",
+                  "recolor": false,
+                  "identifier": "waterReminderConfirmationTitle"
+                },
+                {
+                  "objID": "725340e4-43f7-4ccc-bd4b-b527b2e45cb7",
+                  "type": "LVGLLabelWidget",
+                  "left": 0,
+                  "top": 35,
+                  "width": 300,
+                  "height": 27,
+                  "customInputs": [],
+                  "customOutputs": [],
+                  "style": {
+                    "objID": "7f460fba-9c28-4f9b-b11a-d7de66bdcd8e",
+                    "useStyle": "default",
+                    "conditionalStyles": [],
+                    "childStyles": []
+                  },
+                  "timeline": [],
+                  "eventHandlers": [],
+                  "leftUnit": "px",
+                  "topUnit": "px",
+                  "widthUnit": "px",
+                  "heightUnit": "content",
+                  "children": [],
+                  "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLLABLE|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_WITH_ARROW|SNAPPABLE",
+                  "hiddenFlagType": "literal",
+                  "clickableFlagType": "literal",
+                  "flagScrollbarMode": "",
+                  "flagScrollDirection": "",
+                  "scrollSnapX": "",
+                  "scrollSnapY": "",
+                  "checkedStateType": "literal",
+                  "disabledStateType": "literal",
+                  "states": "",
+                  "localStyles": {
+                    "objID": "e2da9a92-17aa-4f42-9afa-b26fc78b00e0",
+                    "definition": {
+                      "MAIN": {
+                        "DEFAULT": {
+                          "align": "CENTER",
+                          "text_color": "NiceWhite",
+                          "text_font": "MONTSERRAT_16",
+                          "text_align": "CENTER"
+                        }
+                      }
+                    }
+                  },
+                  "group": "",
+                  "groupIndex": 0,
+                  "text": "Running the tank dry can put\nair in the pressure-sensor line\nand require it to be bled again.",
+                  "textType": "literal",
+                  "longMode": "WRAP",
+                  "recolor": false,
+                  "identifier": "waterReminderConfirmationDetail"
+                }
+              ],
+              "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_WITH_ARROW|SNAPPABLE",
+              "hiddenFlagType": "literal",
+              "clickableFlag": false,
+              "clickableFlagType": "literal",
+              "flagScrollbarMode": "",
+              "flagScrollDirection": "",
+              "scrollSnapX": "",
+              "scrollSnapY": "",
+              "checkedStateType": "literal",
+              "disabledStateType": "literal",
+              "states": "",
+              "localStyles": {
+                "objID": "0dab25d0-ea5c-4db0-9ff6-def8983731ac",
+                "definition": {
+                  "MAIN": {
+                    "DEFAULT": {
+                      "align": "CENTER",
+                      "bg_opa": 0,
+                      "radius": 0
+                    }
+                  }
+                }
+              },
+              "group": "",
+              "groupIndex": 0,
+              "identifier": "waterReminderConfirmation",
+              "hiddenFlag": true
+            },
+            {
+              "objID": "9393edc2-8235-4c27-82e4-834db3763c19",
+              "type": "LVGLImageWidget",
+              "left": 0,
+              "top": -110,
+              "width": 40,
+              "height": 40,
+              "customInputs": [],
+              "customOutputs": [],
+              "style": {
+                "objID": "6121176b-b6a5-4e3a-af3e-1bbd66d26995",
+                "useStyle": "default",
+                "conditionalStyles": [],
+                "childStyles": []
+              },
+              "timeline": [],
+              "eventHandlers": [],
+              "identifier": "waterReminderImage",
+              "leftUnit": "px",
+              "topUnit": "px",
+              "widthUnit": "content",
+              "heightUnit": "content",
+              "children": [],
+              "widgetFlags": "ADV_HITTEST|CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLLABLE|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_WITH_ARROW|SNAPPABLE",
+              "hiddenFlagType": "literal",
+              "clickableFlag": false,
+              "clickableFlagType": "literal",
+              "flagScrollbarMode": "",
+              "flagScrollDirection": "",
+              "scrollSnapX": "",
+              "scrollSnapY": "",
+              "checkedStateType": "literal",
+              "disabledStateType": "literal",
+              "states": "",
+              "localStyles": {
+                "objID": "a33e6207-ed4e-4f88-888c-2fb9f0cd2463",
+                "definition": {
+                  "MAIN": {
+                    "DEFAULT": {
+                      "align": "CENTER",
+                      "img_recolor": "Pressure",
+                      "img_recolor_opa": 255
+                    }
+                  }
+                }
+              },
+              "group": "",
+              "groupIndex": 0,
+              "image": "raindrops-80x80",
+              "setPivot": false,
+              "pivotX": 0,
+              "pivotY": 0,
+              "zoom": 256,
+              "angle": 0,
+              "innerAlign": "CENTER",
+              "sizeMode": "VIRTUAL",
+              "value": 0,
+              "valueType": "literal",
+              "previewValue": 0
+            },
+            {
+              "objID": "3d808526-2b96-4d66-af5f-3fa29bbaf922",
+              "type": "LVGLButtonWidget",
+              "left": -68,
+              "top": 105,
+              "width": 120,
+              "height": 48,
+              "customInputs": [],
+              "customOutputs": [],
+              "style": {
+                "objID": "47d7ec1c-eed0-4550-8a36-a6367b595946",
+                "useStyle": "default",
+                "conditionalStyles": [],
+                "childStyles": []
+              },
+              "hiddenInEditor": false,
+              "timeline": [],
+              "eventHandlers": [
+                {
+                  "objID": "d399660e-de38-4a6b-989e-cea8a4a00f75",
+                  "eventName": "CLICKED",
+                  "handlerType": "action",
+                  "action": "onWaterReminderSecondary",
+                  "userData": 0
+                }
+              ],
+              "leftUnit": "px",
+              "topUnit": "px",
+              "widthUnit": "px",
+              "heightUnit": "px",
+              "children": [
+                {
+                  "objID": "1687cf9f-5a50-489a-919b-4da6c81a4472",
+                  "type": "LVGLLabelWidget",
+                  "left": 0,
+                  "top": 0,
+                  "width": 9,
+                  "height": 18,
+                  "customInputs": [],
+                  "customOutputs": [],
+                  "style": {
+                    "objID": "c32b53f5-74b3-4280-a5ee-802f80f3731b",
+                    "useStyle": "default",
+                    "conditionalStyles": [],
+                    "childStyles": []
+                  },
+                  "hiddenInEditor": false,
+                  "timeline": [],
+                  "eventHandlers": [],
+                  "leftUnit": "px",
+                  "topUnit": "px",
+                  "widthUnit": "content",
+                  "heightUnit": "content",
+                  "children": [],
+                  "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLLABLE|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_WITH_ARROW|SNAPPABLE",
+                  "hiddenFlagType": "literal",
+                  "clickableFlagType": "literal",
+                  "flagScrollbarMode": "",
+                  "flagScrollDirection": "",
+                  "scrollSnapX": "",
+                  "scrollSnapY": "",
+                  "checkedStateType": "literal",
+                  "disabledStateType": "literal",
+                  "states": "",
+                  "localStyles": {
+                    "objID": "26434141-4f01-4ee1-841c-2bd6244d1496",
+                    "definition": {
+                      "MAIN": {
+                        "DEFAULT": {
+                          "align": "CENTER",
+                          "text_font": "MONTSERRAT_16"
+                        }
+                      }
+                    }
+                  },
+                  "group": "",
+                  "groupIndex": 0,
+                  "text": "Later",
+                  "textType": "literal",
+                  "longMode": "WRAP",
+                  "recolor": false,
+                  "identifier": "waterReminderSecondaryButtonLabel"
+                }
+              ],
+              "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_ON_FOCUS|SCROLL_WITH_ARROW|SNAPPABLE",
+              "hiddenFlagType": "literal",
+              "clickableFlag": true,
+              "clickableFlagType": "literal",
+              "flagScrollbarMode": "",
+              "flagScrollDirection": "",
+              "scrollSnapX": "",
+              "scrollSnapY": "",
+              "checkedStateType": "literal",
+              "disabledStateType": "literal",
+              "states": "",
+              "localStyles": {
+                "objID": "1bf324b1-465c-4deb-93f7-35b5026a3aac",
+                "definition": {
+                  "MAIN": {
+                    "DEFAULT": {
+                      "align": "CENTER",
+                      "radius": 8,
+                      "border_width": 0,
+                      "bg_color": "NiceWhite",
+                      "text_color": "Dark"
+                    }
+                  }
+                }
+              },
+              "group": "",
+              "groupIndex": 0,
+              "identifier": "waterReminderSecondaryButton"
+            },
+            {
+              "objID": "9b13ffef-77fa-4fae-9a70-beb5d0dcd46b",
+              "type": "LVGLButtonWidget",
+              "left": 78,
+              "top": 105,
+              "width": 150,
+              "height": 48,
+              "customInputs": [],
+              "customOutputs": [],
+              "style": {
+                "objID": "c60b7e28-e0b3-4e82-8e2b-de12be67cd7d",
+                "useStyle": "default",
+                "conditionalStyles": [],
+                "childStyles": []
+              },
+              "hiddenInEditor": false,
+              "timeline": [],
+              "eventHandlers": [
+                {
+                  "objID": "8938771f-1879-47d3-b839-f68a3b1a54e1",
+                  "eventName": "CLICKED",
+                  "handlerType": "action",
+                  "action": "onWaterReminderPrimary",
+                  "userData": 0
+                }
+              ],
+              "leftUnit": "px",
+              "topUnit": "px",
+              "widthUnit": "px",
+              "heightUnit": "px",
+              "children": [
+                {
+                  "objID": "6aa4336f-3804-4e68-935d-58f5b06b079d",
+                  "type": "LVGLLabelWidget",
+                  "left": 0,
+                  "top": 0,
+                  "width": 9,
+                  "height": 18,
+                  "customInputs": [],
+                  "customOutputs": [],
+                  "style": {
+                    "objID": "7ed27e87-6e52-4533-8b10-ccd3272e5b9a",
+                    "useStyle": "default",
+                    "conditionalStyles": [],
+                    "childStyles": []
+                  },
+                  "hiddenInEditor": false,
+                  "timeline": [],
+                  "eventHandlers": [],
+                  "leftUnit": "px",
+                  "topUnit": "px",
+                  "widthUnit": "content",
+                  "heightUnit": "content",
+                  "children": [],
+                  "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLLABLE|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_WITH_ARROW|SNAPPABLE",
+                  "hiddenFlagType": "literal",
+                  "clickableFlagType": "literal",
+                  "flagScrollbarMode": "",
+                  "flagScrollDirection": "",
+                  "scrollSnapX": "",
+                  "scrollSnapY": "",
+                  "checkedStateType": "literal",
+                  "disabledStateType": "literal",
+                  "states": "",
+                  "localStyles": {
+                    "objID": "4f8918e2-e575-4901-b7c6-f942ae0f81a0",
+                    "definition": {
+                      "MAIN": {
+                        "DEFAULT": {
+                          "align": "CENTER",
+                          "text_font": "MONTSERRAT_16"
+                        }
+                      }
+                    }
+                  },
+                  "group": "",
+                  "groupIndex": 0,
+                  "text": "Water refilled",
+                  "textType": "literal",
+                  "longMode": "WRAP",
+                  "recolor": false,
+                  "identifier": "waterReminderPrimaryButtonLabel"
+                }
+              ],
+              "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_ON_FOCUS|SCROLL_WITH_ARROW|SNAPPABLE",
+              "hiddenFlagType": "literal",
+              "clickableFlag": true,
+              "clickableFlagType": "literal",
+              "flagScrollbarMode": "",
+              "flagScrollDirection": "",
+              "scrollSnapX": "",
+              "scrollSnapY": "",
+              "checkedStateType": "literal",
+              "disabledStateType": "literal",
+              "states": "",
+              "localStyles": {
+                "objID": "749d80b9-09af-4806-98a6-13e3418c7325",
+                "definition": {
+                  "MAIN": {
+                    "DEFAULT": {
+                      "align": "CENTER",
+                      "radius": 8,
+                      "border_width": 0,
+                      "bg_color": "NiceWhite",
+                      "text_color": "Dark"
+                    }
+                  }
+                }
+              },
+              "group": "",
+              "groupIndex": 0,
+              "identifier": "waterReminderPrimaryButton"
+            }
+          ],
+          "widgetFlags": "CLICKABLE|PRESS_LOCK|CLICK_FOCUSABLE|GESTURE_BUBBLE|SNAPPABLE|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER",
+          "hiddenFlagType": "literal",
+          "clickableFlag": true,
+          "clickableFlagType": "literal",
+          "checkedStateType": "literal",
+          "disabledStateType": "literal",
+          "states": "",
+          "localStyles": {
+            "objID": "dd47e2a2-733d-4a01-9717-4db04443198f",
+            "definition": {
+              "MAIN": {
+                "DEFAULT": {
+                  "bg_color": "Dark",
+                  "align": "CENTER"
+                }
+              }
+            }
+          },
+          "groupIndex": 0
+        }
+      ],
+      "connectionLines": [],
+      "localVariables": [],
+      "componentGroups": [],
+      "userProperties": [],
+      "name": "WaterReminderScreen",
+      "left": 0,
+      "top": 0,
+      "width": 480,
+      "height": 480,
+      "isUsedAsUserWidget": false,
+      "createAtStart": true,
+      "deleteOnScreenUnload": false
     }
   ],
   "userWidgets": [
@@ -14379,6 +15212,15 @@
       "objID": "030fc66e-b797-46e9-c6a7-57d0ccd59a58",
       "name": "raindrops-80x80",
       "image": "data:image/png;base64,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",
+      "bpp": 32,
+      "alwaysBuild": false,
+      "lvglBinaryOutputFormat": 3,
+      "lvglDither": false
+    },
+    {
+      "objID": "4c89ce92-a4b4-4c50-aedd-b5074219f425",
+      "name": "water-drop-20x20",
+      "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAAAXNSR0IArs4c6QAAAHhlWElmTU0AKgAAAAgABAEaAAUAAAABAAAAPgEbAAUAAAABAAAARgEoAAMAAAABAAIAAIdpAAQAAAABAAAATgAAAAAAAAAPAAAAAQAAAA8AAAABAAOgAQADAAAAAQABAACgAgAEAAAAAQAAABSgAwAEAAAAAQAAABQAAAAAwwGm2QAAAAlwSFlzAAACTwAAAk8B95E4kAAAAWRpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IlhNUCBDb3JlIDYuMC4wIj4KICAgPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4KICAgICAgPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIKICAgICAgICAgICAgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIj4KICAgICAgICAgPHhtcDpDcmVhdG9yVG9vbD53d3cuaW5rc2NhcGUub3JnPC94bXA6Q3JlYXRvclRvb2w+CiAgICAgIDwvcmRmOkRlc2NyaXB0aW9uPgogICA8L3JkZjpSREY+CjwveDp4bXBtZXRhPgqyyWIhAAAB8klEQVQ4EZ2UPUiWURiGvyylHxwKkkrCQiMEJVoSamtp0EAKMknaxCGoFqHNoaIgJKihpYaWhopo0KCExiDSJdTAIRoaMhTFrPwp7brqvHp4OS+YN1zfec79nL/v/Lyl0qq2EvbCV+hatQujOjJv4C0czLeqwHgKyzATyh7KIu0n8Ql+Bz5THoAV2dnBbkANvAj1k5R5bcLoBwdrhhOwCAOwEUr1MAcaNlZ7wFnHoBJiOYiT34rM68Fr13sFztBkJdIFYju2RJ7hXfgF+yBTNYFbNVHGzzH4Dh8h1kioVMUm8RT412LfeDN8gNIVcCUXrUR6SLwEhyPPsAFmwc5n4QwMg9t2CP7u0TtKB70Pl6Av1B9QZvJkd4ZKG+U42EcmoANWVEP0DNwbG3yD2+Dd9FAegznvaCeo3XAKToN7mFQt7hHwlDPdIXASVz8EC3AU1qXj9HKwJ6G3l3caBmFL8NZceGp2nAS3JNNlAifJH2KWLyw9QTt251q4svfgxd+eyxVWN5B5DV9gR6LVeTwnO5fIJS0Hca8eJbP/TtV7dy+f96Wk5MP3mmxLJfH8Ovla5gvySfs5rk+yMZG9hudfbknkCq0mMj/AN94Ku6AOroKD+VFxpf8lX4GvwwG8Pj9D/JLSl7Iu7aXXTXC1o+Ak5ZDUH0SSbQnd264TAAAAAElFTkSuQmCC",
       "bpp": 32,
       "alwaysBuild": false,
       "lvglBinaryOutputFormat": 3,

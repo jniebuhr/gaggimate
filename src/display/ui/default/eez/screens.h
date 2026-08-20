@@ -22,7 +22,8 @@ enum ScreensEnum {
     SCREEN_ID_GRIND_SCREEN = 9,
     SCREEN_ID_INFO_SCREEN = 10,
     SCREEN_ID_NEW_PROFILE_SCREEN = 11,
-    _SCREEN_ID_LAST = 11
+    SCREEN_ID_WATER_REMINDER_SCREEN = 12,
+    _SCREEN_ID_LAST = 12
 };
 
 typedef struct _objects_t {
@@ -308,6 +309,20 @@ typedef struct _objects_t {
     lv_obj_t *obj66;
     lv_obj_t *obj67;
     lv_obj_t *obj68;
+    lv_obj_t *water_reminder_icon;
+    lv_obj_t *water_reminder_icon_1;
+    lv_obj_t *water_reminder_screen;
+    lv_obj_t *water_reminder_status;
+    lv_obj_t *water_reminder_title;
+    lv_obj_t *water_reminder_detail;
+    lv_obj_t *water_reminder_confirmation;
+    lv_obj_t *water_reminder_confirmation_title;
+    lv_obj_t *water_reminder_confirmation_detail;
+    lv_obj_t *water_reminder_image;
+    lv_obj_t *water_reminder_secondary_button;
+    lv_obj_t *water_reminder_secondary_button_label;
+    lv_obj_t *water_reminder_primary_button;
+    lv_obj_t *water_reminder_primary_button_label;
 } objects_t;
 
 extern objects_t objects;
@@ -413,6 +428,10 @@ void tick_screen_info_screen();
 void create_screen_new_profile_screen();
 void delete_screen_new_profile_screen();
 void tick_screen_new_profile_screen();
+
+void create_screen_water_reminder_screen();
+void delete_screen_water_reminder_screen();
+void tick_screen_water_reminder_screen();
 
 void create_user_widget_dials(lv_obj_t *parent_obj, void *flowState, int startWidgetIndex, user_widget_dials_state_t *state);
 void tick_user_widget_dials(void *flowState, int startWidgetIndex, user_widget_dials_state_t *state);
