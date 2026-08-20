@@ -27,9 +27,11 @@
  *     typed handlers -- no run-time type erasure.
  *
  * Threading: decode + ACK/dedup + the send pump run on the transport's callback
- * thread, but registered handlers are invoked on a dedicated dispatch task (fed
- * by an inbound payload queue) so slow application callbacks never block the BLE
- * host task. If the inbound queue is full the frame is left un-ACKed, which
+ * thread, but registered handlers and connection callbacks are invoked on a
+ * dedicated dispatch task (fed by an inbound event queue) so slow application
+ * callbacks never block the BLE host task. Serializing both event types also
+ * prevents payload handlers from crossing a connection-session boundary. If
+ * the inbound queue is full the frame is left un-ACKed, which
  * back-pressures the sender into retransmitting. Queue + in-flight state are
  * guarded by a mutex; handlers run with the mutex released, so a handler may
  * call send() re-entrantly.
@@ -122,8 +124,16 @@ class Endpoint {
 
     ConnectionHandler _connHandler = nullptr;
 
-    // Inbound payloads decoded on the transport thread, drained by the dispatch
-    // task so handlers never run on the BLE host task.
+    struct DispatchEvent {
+        gm::Payload payload{};
+        bool isConnection = false;
+        bool connected = false;
+    };
+
+    // Inbound payloads and connection changes originate on the transport
+    // thread, then drain through one dispatch task. A connection change resets
+    // the queue before its event is inserted, so no queued payload from the old
+    // session can run after the new session callback.
     QueueHandle_t _rxQueue = nullptr;
     TaskHandle_t _dispatchTask = nullptr;
 

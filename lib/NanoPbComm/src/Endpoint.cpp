@@ -8,7 +8,7 @@ static const char *ENDPOINT_TAG = "Endpoint";
 
 Endpoint::Endpoint(Transport &transport) : _transport(transport) {
     _mutex = xSemaphoreCreateRecursiveMutex();
-    _rxQueue = xQueueCreate(RX_QUEUE_DEPTH, sizeof(gm::Payload));
+    _rxQueue = xQueueCreate(RX_QUEUE_DEPTH, sizeof(DispatchEvent));
     if (_mutex == nullptr || _rxQueue == nullptr)
         ESP_LOGE(ENDPOINT_TAG, "Failed to allocate endpoint resources (out of memory)");
 }
@@ -42,10 +42,16 @@ void Endpoint::begin() {
 
 void Endpoint::dispatchTaskFn(void *arg) {
     auto *self = static_cast<Endpoint *>(arg);
-    gm::Payload payload;
+    DispatchEvent event;
     for (;;) {
-        if (xQueueReceive(self->_rxQueue, &payload, portMAX_DELAY) == pdTRUE)
-            self->dispatch(payload);
+        if (xQueueReceive(self->_rxQueue, &event, portMAX_DELAY) != pdTRUE)
+            continue;
+        if (event.isConnection) {
+            if (self->_connHandler)
+                self->_connHandler(event.connected);
+        } else {
+            self->dispatch(event.payload);
+        }
     }
 }
 
@@ -232,8 +238,11 @@ void Endpoint::handleData(const uint8_t *data, size_t length) {
         if (static_cast<pb_size_t>(uxQueueSpacesAvailable(_rxQueue)) < n) {
             accepted = false;
         } else {
-            for (pb_size_t i = 0; i < n; i++)
-                xQueueSend(_rxQueue, &_rxFrame.payloads[i], 0);
+            for (pb_size_t i = 0; i < n; i++) {
+                DispatchEvent event;
+                event.payload = _rxFrame.payloads[i];
+                xQueueSend(_rxQueue, &event, 0);
+            }
         }
     }
 
@@ -264,9 +273,15 @@ void Endpoint::handleConnection(bool connected) {
     _queue.clear();
     unlock();
 
-    if (_rxQueue)
-        xQueueReset(_rxQueue); // drop any inbound payloads from a previous session
-
-    if (_connHandler)
-        _connHandler(connected); // e.g. push SystemInfo on connect
+    if (_rxQueue) {
+        // Drop queued payloads from the previous session, then serialize the
+        // application connection callback with payload dispatch. A payload
+        // already executing finishes before this event, so it cannot mutate
+        // per-session application state after the callback resets it.
+        xQueueReset(_rxQueue);
+        DispatchEvent event;
+        event.isConnection = true;
+        event.connected = connected;
+        xQueueSend(_rxQueue, &event, 0);
+    }
 }

@@ -5,20 +5,8 @@
 #include "../Transport.h"
 #include <NimBLEDevice.h>
 
-/**
- * BLE central (client) transport for the display.
- *
- * Scans for the controller's service, connects, subscribes to its TX
- * characteristic (inbound datagrams) and writes to its RX characteristic
- * (outbound datagrams). Mirrors the connection/scan behaviour of the previous
- * client controller, including the low-duty passive scan tuned for Wi-Fi
- * coexistence.
- *
- * Pairing model: bonds to the first controller it connects to (Just Works +
- * LE Secure Connections); afterwards scan results from any other controller
- * are ignored until clearBonds() is called. The link is encrypted before any
- * GATT traffic.
- */
+// BLE central (client) transport for the display: scans, connects, subscribes TX / writes RX (one datagram per op).
+// Pairing: bonds to the first controller found, then connects only to it until clearBonds(); links encrypted before GATT use.
 class BleClientTransport : public Transport, public NimBLEAdvertisedDeviceCallbacks, public NimBLEClientCallbacks {
   public:
     BleClientTransport() = default;
@@ -36,37 +24,22 @@ class BleClientTransport : public Transport, public NimBLEAdvertisedDeviceCallba
     bool send(const uint8_t *data, size_t length) override;
     bool isConnected() const override;
 
-    // Choose the connection interval: low-latency (tight, ~7.5-10ms) while a
-    // shot is running for responsive control, relaxed (~30-50ms) when idle so
-    // the shared 2.4GHz radio leaves more contiguous airtime for Wi-Fi.
+    // Tight ~7.5-10ms conn interval while a shot runs, relaxed ~30-50ms when idle to leave airtime for Wi-Fi.
     void setLowLatency(bool active);
 
     // Native client handle, needed by ControllerOTA (OTA uses its own service).
     NimBLEClient *getNativeClient() const { return _client; }
 
-    // Fired when we connect to a GaggiMate controller that advertises the
-    // service but is missing the framed-comms characteristics (an old /
-    // incompatible firmware). The BLE link is intentionally kept up so the
-    // separate OTA service stays reachable. The argument is the raw value of the
-    // legacy read-only INFO characteristic (JSON), if readable.
+    // Fired on old firmware missing the comms chars; link kept for OTA, arg is the legacy INFO characteristic (JSON).
     void onIncompatible(std::function<void(const String &info)> cb) { _onIncompatible = std::move(cb); }
 
   private:
     NimBLEClient *_client = nullptr;
     NimBLEScan *_scanner = nullptr;
-    // Copy of the controller's address taken in onResult(). We must NOT keep the
-    // NimBLEAdvertisedDevice* itself: with setMaxResults(0) NimBLE deletes that
-    // object the moment onResult() returns (NimBLEScan erase()), so dereferencing
-    // it later in connectToServer() -- which runs on the main loop task -- is a
-    // use-after-free that reads whatever string now occupies the freed heap slot
-    // back as a bogus peer address. NimBLEAddress is a value type, so copying it
-    // while the device is still alive is safe and survives the deletion.
+    // Value copy taken in onResult(); with setMaxResults(0) the advertised-device object is freed there (use-after-free trap).
     NimBLEAddress _serverAddress{};
     bool _haveServerAddress = false;
-    // Paired controller identity, persisted in our own NVS namespace. NOT
-    // derived from NimBLE's bond store: that store is shared with BLE scales
-    // and limited to 3 entries with eviction, so it cannot be the source of
-    // truth for which controller this display belongs to.
+    // Paired controller identity from our own NVS; the scale-shared, evicting NimBLE bond store can't be the source of truth.
     NimBLEAddress _pairedPeer{};
     bool _havePairedPeer = false;
     NimBLERemoteCharacteristic *_writeChar = nullptr;  // to server (RX_CHAR_UUID)
@@ -77,11 +50,11 @@ class BleClientTransport : public Transport, public NimBLEAdvertisedDeviceCallba
     std::function<void(const String &info)> _onIncompatible = nullptr;
 
     void applyConnParams();
-    // True link-layer encryption state; the source of truth for pairing success
-    // (secureConnection() reports false when it loses an initiation race).
+    // True link-layer encryption state; secureConnection()'s rc lies when it loses an initiation race.
     bool isEncrypted() const;
     void loadPairedPeer();
     void savePairedPeer(const NimBLEAddress &address);
+    bool isLockedToOther(NimBLEAdvertisedDevice *advertisedDevice) const;
 
     // Connection-interval units are 1.25ms; supervision timeout units are 10ms.
     static constexpr uint16_t ACTIVE_MIN_INTERVAL = 6; // 7.5 ms

@@ -7,17 +7,8 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/semphr.h>
 
-// Transport that runs the protocol over a serial link. Unlike BLE there's no
-// server/client split (both ends are just a UART), so one class does both.
-//
-// It frames datagrams as COBS( datagram || crc16 ) || 0x00 -- see UartFraming.h.
-// The CRC matters here: a raw UART has no integrity check of its own, so without
-// it a flipped bit could decode into a valid-looking command.
-//
-// "Connected" means we've heard a valid frame within LINK_TIMEOUT_MS. The
-// Endpoint only sends while connected, so loop() also sends a keepalive (an
-// empty datagram) on a timer regardless of state -- otherwise two idle ends
-// would each wait for the other and the link would never come up.
+// Serial transport, one class for both ends (no server/client split); frames per UartFraming.h, CRC guards the raw UART.
+// "Connected" = valid frame heard within LINK_TIMEOUT_MS; loop() always keepalives so two idle ends can find each other.
 //
 // No RX interrupt like NimBLE, so loop() has to be called regularly (same place
 // as Endpoint::loop()). Caller sets up the serial port; we just take a Stream.
