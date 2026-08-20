@@ -232,7 +232,7 @@ class BrewProcess : public Process {
         if (dur_s <= 0.0f) {
             dur_s = currentPhase.duration; // If the transition has no duration, use the phase duration
         }
-        if (currentPhase.transition.type == TransitionType::INSTANT || dur_s <= 0.0f) {
+        if (dur_s <= 0.0f) {
             return 1.0f;
         }
         const unsigned long elapsedMs = millis() - currentPhaseStarted;
@@ -240,15 +240,20 @@ class BrewProcess : public Process {
     }
 
     float transitionAlpha() const {
-        float endValue = currentPhase.transition.duration;
+        if (currentPhase.transition.type == TransitionType::INSTANT) {
+            return 1.0f;
+        }
+        float endValue = 0.0f;
         float startValue = 0.0f;
         if (currentPhase.transition.target == TransitionTarget::VOLUMETRIC && target == ProcessTarget::VOLUMETRIC) {
+            endValue = currentPhase.transition.duration;
             if (endValue <= 0.0f && currentPhase.hasVolumetricTarget()) {
                 endValue = currentPhase.getVolumetricTarget().value - phaseStartVolume;
             }
             startValue = max(0.0, currentVolume - phaseStartVolume);
         }
         if (currentPhase.transition.target == TransitionTarget::PUMPED) {
+            endValue = currentPhase.transition.duration;
             if (endValue <= 0.0f && currentPhase.hasPumpedTarget()) {
                 endValue = currentPhase.getPumpedTarget().value;
             }
