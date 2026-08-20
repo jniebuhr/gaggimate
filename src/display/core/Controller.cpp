@@ -978,7 +978,10 @@ void Controller::updateControl() {
 }
 
 void Controller::activate() {
-    if (isActive())
+    // Never create a process while startup is incomplete or the controller is
+    // absent. The UI can be reached by tapping through the startup screen, and
+    // previously its Start action ran against a half-initialized BLE session.
+    if (isActive() || !loaded || !comms.isConnected() || !isReady())
         return;
     clear();
     comms.tare();

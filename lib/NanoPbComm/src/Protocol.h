@@ -7,9 +7,7 @@
 // Shared protocol UUIDs and helpers used by both ends.
 namespace gm_proto {
 
-// BLE service + characteristics. A single TX/RX pair carries framed nanopb
-// datagrams (replacing the old one-characteristic-per-message design). The
-// service UUID is kept so the display scan logic is unchanged.
+// BLE service + chars: one TX/RX pair carries framed nanopb datagrams; the service UUID predates the framed protocol.
 static constexpr const char *SERVICE_UUID = "e75bc5b6-ff6e-4337-9d31-0c128f2e6e68";
 // Controller (server) -> display (client) notifications.
 static constexpr const char *TX_CHAR_UUID = "87654321-4321-8765-4321-cba987654321";
@@ -18,9 +16,7 @@ static constexpr const char *RX_CHAR_UUID = "12345678-1234-5678-1234-123456789ab
 // Legacy read-only system-info characteristic (JSON), kept for external readers.
 static constexpr const char *INFO_CHAR_UUID = "f8d7203b-e00c-48e2-83ba-37ff49cdba74";
 
-// Protocol/schema version. Bump on any breaking change to gaggimate.proto so a
-// display talking to an out-of-date controller (or vice versa) can detect the
-// mismatch. Carried in SystemInfo.protocol_version.
+// Bump on any breaking gaggimate.proto change; carried in SystemInfo.protocol_version for mismatch detection.
 static constexpr uint32_t PROTOCOL_VERSION = 3;
 
 // Outbound priorities (higher wins in the queue).
@@ -31,13 +27,10 @@ enum Priority : uint8_t {
     PRIO_HIGH = 200,    // ping, error
 };
 
-// Per-family device-index space for the coalescing key. Keeps keys dense so the
-// queue's reverse-lookup table stays small.
+// Per-family device-index space for the coalescing key; keeps keys dense so the queue's reverse-lookup stays small.
 static constexpr uint16_t MAX_DEVICES = 8;
 
-// Coalescing key: a (message family, device index) pair so repeated updates for
-// the same component collapse to the latest value. Device-less messages map to
-// index 0. Keys stay below which_content_max * MAX_DEVICES.
+// Coalescing key (family, device index): repeated updates for one component collapse to the latest value.
 inline uint16_t coalescingKey(const gm::Payload &p) {
     uint16_t index = 0;
     switch (p.which_content) {
