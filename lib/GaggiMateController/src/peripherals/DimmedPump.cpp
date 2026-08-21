@@ -45,7 +45,10 @@ float DimmedPump::getPuckFlow() { return _pressureController.getCoffeeFlowRate()
 
 float DimmedPump::getPuckResistance() { return _pressureController.getPuckResistance(); }
 
-void DimmedPump::tare() { _pressureController.tare(); }
+void DimmedPump::tare() {
+    _pressureController.tare();
+    _pressureController.reset();
+}
 
 void DimmedPump::loopTask(void *arg) {
     auto *pump = static_cast<DimmedPump *>(arg);

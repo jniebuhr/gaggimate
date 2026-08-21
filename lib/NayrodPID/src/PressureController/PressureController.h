@@ -24,13 +24,7 @@ class PressureController {
     void setPressureLimit(float lim) { /* Pressure limit not currently implemented */ };
 
     void update(ControlMode mode);
-    // Full reset for a new shot (volumetric tare): composes reset() with the
-    // estimator-output fields that only tare() owns. Call this alone; it
-    // covers reset()'s state too. See PressureController.cpp for the exact
-    // field ownership split.
     void tare();
-    // Control-loop + puck-arming-state reset. Safe to call standalone if a
-    // future caller needs to reset control state without a full tare.
     void reset();
 
     float getCoffeeOutputEstimate() { return std::fmax(0.0f, _coffeeOutput); };

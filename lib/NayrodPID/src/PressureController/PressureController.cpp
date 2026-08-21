@@ -147,14 +147,21 @@ void PressureController::setGains(float commutationGain, float convergenceGain, 
 }
 
 void PressureController::tare() {
-    // reset() owns the control-loop and puck-arming-state fields (including
-    // the IIR-filtered accumulators that, unreset, used to carry a shot's
-    // end-of-brew depressurization transient into the next shot's puck-
-    // conductance-derivative arming signature — GH #839). tare() adds the
-    // estimator-output fields that are specific to starting a fresh shot.
-    reset();
     _coffeeOutput = 0.0f;
     _pumpVolume = 0.0f;
+    _puckSaturationVolume = 0.0f;
+    _puckState[0] = false;
+    _puckState[1] = false;
+    _puckState[2] = false;
+    _puckCounter = 0;
+    _pumpFlowRate = 0.0f;
+    // IIR-filtered accumulators: unreset, these carry a shot's end-of-brew
+    // depressurization transient into the next shot's puck-conductance-
+    // derivative arming signature, suppressing arming — GH #839.
+    _filteredPressureDerivative = 0.0f;
+    _waterThroughPuckFlowRate = 0.0f;
+    _lastPuckConductance = 0.0f;
+    _puckConductance = 0.0f;
     _puckConductanceDerivative = 0.0f;
     _coffeeFlowRate = 0.0f;
     _puckResistance = INFINITY;
@@ -307,9 +314,5 @@ void PressureController::reset() {
     _puckState[1] = false;
     _puckState[2] = false;
     _puckCounter = 0;
-    _filteredPressureDerivative = 0.0f;
-    _waterThroughPuckFlowRate = 0.0f;
-    _lastPuckConductance = 0.0f;
-    _puckConductance = 0.0f;
     ESP_LOGI("", "RESET");
 }

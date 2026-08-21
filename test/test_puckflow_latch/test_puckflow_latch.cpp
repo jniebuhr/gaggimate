@@ -108,10 +108,10 @@ static void test_first_shot_arms_estimator() {
     TEST_ASSERT_TRUE_MESSAGE(rig.runBrewWindow(), "puck-flow estimator should arm during the first shot's brew window");
 }
 
-// GH #839: a second shot, separated from the first only by the BLE
-// tare()/reset() the display sends at brew start, should also arm within its
-// own brew window. Before the fix, tare()/reset() clear the puck-state
-// machine but leave _filteredPressureDerivative and _waterThroughPuckFlowRate
+// GH #839: a second shot, separated from the first only by the BLE tare()
+// the display sends at brew start, should also arm within its own brew
+// window. Before the fix, tare()/reset() clear the puck-state machine but
+// leave _filteredPressureDerivative and _waterThroughPuckFlowRate
 // un-reset, so the first shot's end-of-brew depressurization transient leaks
 // into the second shot and suppresses the puck-conductance-derivative
 // signature the state machine arms on — reproducing the "pf/pr zero on shots
@@ -131,8 +131,8 @@ static void test_second_shot_arms_estimator_after_tare() {
 // Unity entrypoint
 // ---------------------------------------------------------------------------
 
-void setUp(void) {}
-void tearDown(void) {}
+void setUp(void) { /* No shared fixture state. */ }
+void tearDown(void) { /* No shared fixture state. */ }
 
 int main(int argc, char **argv) {
     UNITY_BEGIN();
