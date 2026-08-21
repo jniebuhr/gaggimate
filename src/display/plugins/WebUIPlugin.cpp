@@ -12,6 +12,7 @@
 #include <display/plugins/ShotHistoryPlugin.h>
 #include <display/util/PsramStlAllocator.h>
 #include <display/util/PsramWsBuffer.h>
+#include <display/util/mathutils.h>
 #include <display/webassets/web_ui_manifest.h>
 #include <esp32-hal-psram.h>
 #include <esp_core_dump.h>
@@ -155,10 +156,10 @@ void WebUIPlugin::loop() {
         lastStatus = now;
         statusDoc.clear();
         statusDoc["tp"] = "evt:status";
-        statusDoc["ct"] = controller->getCurrentTemp();
+        statusDoc["ct"] = round_to(controller->getCurrentTemp(), 3);
         statusDoc["tt"] = controller->getTargetTemp();
-        statusDoc["pr"] = controller->getCurrentPressure();
-        statusDoc["fl"] = controller->getCurrentPumpFlow();
+        statusDoc["pr"] = round_to(controller->getCurrentPressure(), 3);
+        statusDoc["fl"] = round_to(controller->getCurrentPumpFlow(), 3);
         statusDoc["pt"] = controller->getTargetPressure();
         statusDoc["m"] = controller->getMode();
         statusDoc["p"] = controller->getProfileManager()->getSelectedProfile().label;
@@ -181,7 +182,7 @@ void WebUIPlugin::loop() {
         statusDoc["rssi"] = 0;
         statusDoc["lat"] = -1; // BLE round-trip latency (ms); -1 = not yet measured
         statusDoc["pw"] = controller->getCurrentPumpPower();
-        statusDoc["hp"] = controller->getCurrentHeaterPower();
+        statusDoc["hp"] = round_to(controller->getCurrentHeaterPower(), 3);
 
         if (controller->getClientController()->getClient()->isConnected()) {
             statusDoc["rssi"] = controller->getClientController()->getClient()->getRssi();
@@ -216,8 +217,8 @@ void WebUIPlugin::loop() {
         if (process != nullptr) {
             auto pObj = statusDoc["process"].to<JsonObject>();
             pObj["a"] = controller->isActive() ? 1 : 0;
-            statusDoc["pkr"] = controller->getCurrentPuckResistance();
-            statusDoc["pf"] = controller->getCurrentPuckFlow();
+            statusDoc["pkr"] = round_to(controller->getCurrentPuckResistance(), 3);
+            statusDoc["pf"] = round_to(controller->getCurrentPuckFlow(), 3);
             statusDoc["tf"] = controller->getTargetFlow();
             if (process->getType() == MODE_BREW) {
                 auto *brew = static_cast<BrewProcess *>(process);
