@@ -10,7 +10,7 @@ void MockController::begin() {
 }
 
 void MockController::setBoiler(const BoilerCommand &c) {
-    if (c.mode == BoilerControlMode::Temperature)
+    if (c.mode == BoilerControlMode::Temperature && c.index == 0)
         targetTemp = c.setpoint;
 }
 
