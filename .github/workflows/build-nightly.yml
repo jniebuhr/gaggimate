@@ -39,6 +39,7 @@ jobs:
           mkdir -p upload/headless
           mkdir -p upload/controller
           git tag -d nightly
+          git tag -d db
           git describe --tags --dirty > out/version.txt
       - name: Build Web
         run: ./scripts/build_webui.sh

@@ -3,8 +3,7 @@
 
 #include <cstdint>
 
-// Public protocol vocabulary shared by GaggiMateClient and GaggiMateServer.
-// Firmware code only ever sees these plain types -- never the nanopb structs.
+// Public protocol vocabulary shared by GaggiMateClient and GaggiMateServer; firmware never sees the nanopb structs.
 
 // Pump control mode. Integer values match gaggimate_PumpMode in the schema.
 enum class PumpControlMode : uint8_t {
@@ -19,9 +18,7 @@ enum class BoilerControlMode : uint8_t {
     Pressure = 1,    // setpoint is a target pressure in bar
 };
 
-// Per-component commands, used to drive several components atomically in one
-// frame and to detect changes (callers can compare against the last value sent
-// and only transmit what actually changed).
+// Per-component commands: drive several components atomically in one frame, comparable so callers send only deltas.
 struct BoilerCommand {
     uint8_t index = 0;
     BoilerControlMode mode = BoilerControlMode::Temperature;
@@ -46,9 +43,7 @@ struct RelayCommand {
     bool operator==(const RelayCommand &o) const { return index == o.index && open == o.open; }
     bool operator!=(const RelayCommand &o) const { return !(*this == o); }
 };
-// One LED output's target brightness. Several are packed into a single
-// LedControl message so a multi-channel update can't be split (and coalesced)
-// into separate frames.
+// One LED output's target brightness; packed into a single LedControl message so multi-channel updates can't be split.
 struct LedChannelCommand {
     uint8_t channel = 0;
     uint8_t brightness = 0;
@@ -56,17 +51,14 @@ struct LedChannelCommand {
     bool operator!=(const LedChannelCommand &o) const { return !(*this == o); }
 };
 
-// Error codes. Values match the gaggimate.ErrorCode enum and the codes the old
-// string protocol used, so existing firmware comparisons keep working.
+// Error codes; values match gaggimate.ErrorCode and the old string protocol so existing comparisons keep working.
 constexpr int ERROR_CODE_NONE = 0;
 constexpr int ERROR_CODE_COMM_SEND = 1;
 constexpr int ERROR_CODE_COMM_RCV = 2;
 constexpr int ERROR_CODE_PROTO_ERR = 3;
 constexpr int ERROR_CODE_RUNAWAY = 4;
 constexpr int ERROR_CODE_TIMEOUT = 5;
-// Autotune hit its test-duration window without detecting a reaction. The
-// controller skips the NVS PID persist; the display surfaces it without a
-// watchdog-disconnect UX. Distinct from the generic TIMEOUT.
+// Autotune saw no reaction within its test window (distinct from TIMEOUT): no PID persist, no watchdog-disconnect UX.
 constexpr int ERROR_CODE_AUTOTUNE_TIMEOUT = 6;
 
 #endif // GAGGIMATE_COMM_H

@@ -78,8 +78,11 @@ void PressureController::update(ControlMode mode) {
 }
 
 float PressureController::pumpFlowModel(float alpha) const {
-    const float availableFlow = getAvailableFlow();
-    return availableFlow * alpha / 100.0f;
+    // Positive-displacement model: net = duty * Q_geo - slip (affine in duty).
+    // With slip = 0 this reduces to the previous proportional model.
+    const float duty = alpha / 100.0f;
+    const float slip = getSlip();
+    return std::max(0.0f, duty * getGeometricFlow() - slip);
 }
 
 float PressureController::getAvailableFlow() const {
@@ -92,12 +95,25 @@ float PressureController::getAvailableFlow() const {
     return Q;
 }
 
+float PressureController::getSlip() const {
+    const float P = _filteredPressureSensor;
+    const float P2 = P * P;
+    const float P3 = P2 * P;
+    const float slip =
+        _pumpSlipCoefficients[0] * P3 + _pumpSlipCoefficients[1] * P2 + _pumpSlipCoefficients[2] * P + _pumpSlipCoefficients[3];
+    return std::max(0.0f, slip); // leakage is never negative
+}
+
+// Full-drive curve is the duty=1 slice (Q_geo - slip), so Q_geo = full-drive + slip.
+float PressureController::getGeometricFlow() const { return getAvailableFlow() + getSlip(); }
+
 float PressureController::getPumpDutyCycleForFlowRate() const {
-    const float availableFlow = getAvailableFlow();
-    if (availableFlow <= 0.0f) {
+    const float geometricFlow = getGeometricFlow();
+    if (geometricFlow <= 0.0f) {
         return 0.0f;
     }
-    float duty = (*_rawFlowSetpoint / availableFlow) * 100.0f;
+    // Feedforward duty to hit the target flow, accounting for slip (incl. Q_t = 0 hold duty).
+    float duty = ((*_rawFlowSetpoint + getSlip()) / geometricFlow) * 100.0f;
     return std::clamp(duty, 0.0f, 100.0f);
 }
 
@@ -114,6 +130,13 @@ void PressureController::setPumpFlowPolyCoeffs(float a, float b, float c, float 
     _pumpFlowCoefficients[1] = b;
     _pumpFlowCoefficients[2] = c;
     _pumpFlowCoefficients[3] = d;
+}
+
+void PressureController::setPumpSlipPolyCoeffs(float a, float b, float c, float d) {
+    _pumpSlipCoefficients[0] = a;
+    _pumpSlipCoefficients[1] = b;
+    _pumpSlipCoefficients[2] = c;
+    _pumpSlipCoefficients[3] = d;
 }
 
 void PressureController::setGains(float commutationGain, float convergenceGain, float integralGain) {
@@ -256,7 +279,9 @@ float PressureController::getPumpDutyCycleForPressure() {
     _errorIntegral += error * _dt;
     float iterm = Ki * _errorIntegral;
 
-    float Qa = getAvailableFlow();
+    // Plant-gain inversion: Qa is the duty->flow slope (d Q_in / d duty), which is the
+    // geometric flow Q_geo under the affine model. Reduces to the full-drive curve when slip = 0.
+    float Qa = getGeometricFlow();
     Qa = fmaxf(Qa, 1e-3f);
     float Ceq = _systemCompliance;
     float K = _commutationGain / denominator * Qa / Ceq;

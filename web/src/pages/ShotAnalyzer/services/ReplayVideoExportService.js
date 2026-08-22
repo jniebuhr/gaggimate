@@ -1,3 +1,5 @@
+/* global globalThis */
+
 import { REPLAY_TARGET_FPS } from '../components/shotChart/constants';
 
 const EXPORT_FPS = REPLAY_TARGET_FPS;
@@ -11,10 +13,28 @@ const EXPORT_LEGEND_ROW_GAP = 12;
 const EXPORT_CARD_SHADOW_BLUR = 28;
 const EXPORT_OVERLAY_LANDSCAPE = { width: 1920, height: 1080 };
 const EXPORT_OVERLAY_PORTRAIT = { width: 1080, height: 1920 };
+
+function getBrowserWindow() {
+  return globalThis.window;
+}
+
+function getMediaRecorderConstructor() {
+  return getBrowserWindow()?.MediaRecorder;
+}
+
+function createExportCanvas() {
+  const browserDocument = getBrowserWindow()?.document;
+  if (browserDocument === undefined) {
+    throw new TypeError('Canvas export is not supported in this environment.');
+  }
+  return browserDocument.createElement('canvas');
+}
+
 function isLikelySafariBrowser() {
-  if (typeof window === 'undefined' || typeof window.navigator === 'undefined') return false;
-  const userAgent = window.navigator.userAgent || '';
-  const vendor = window.navigator.vendor || '';
+  const browserNavigator = getBrowserWindow()?.navigator;
+  if (browserNavigator === undefined) return false;
+  const userAgent = browserNavigator.userAgent || '';
+  const vendor = browserNavigator.vendor || '';
   return (
     /Safari/i.test(userAgent) &&
     /Apple/i.test(vendor) &&
@@ -29,8 +49,9 @@ function throwIfAborted(signal) {
 }
 
 function getNowMs() {
-  if (typeof performance !== 'undefined' && typeof performance.now === 'function') {
-    return performance.now();
+  const performanceApi = globalThis.performance;
+  if (typeof performanceApi?.now === 'function') {
+    return performanceApi.now();
   }
   return Date.now();
 }
@@ -38,11 +59,16 @@ function getNowMs() {
 function wait(ms, signal) {
   return new Promise((resolve, reject) => {
     throwIfAborted(signal);
+    const browserWindow = getBrowserWindow();
+    if (!browserWindow) {
+      reject(new TypeError('Replay export timers are not supported in this environment.'));
+      return;
+    }
     const handleAbort = () => {
-      window.clearTimeout(timerId);
+      browserWindow.clearTimeout(timerId);
       reject(new DOMException('Replay export aborted.', 'AbortError'));
     };
-    const timerId = window.setTimeout(
+    const timerId = browserWindow.setTimeout(
       () => {
         signal?.removeEventListener('abort', handleAbort);
         resolve();
@@ -57,11 +83,16 @@ function wait(ms, signal) {
 function waitForAnimationFrame(signal) {
   return new Promise((resolve, reject) => {
     throwIfAborted(signal);
+    const browserWindow = getBrowserWindow();
+    if (!browserWindow) {
+      reject(new TypeError('Animation frames are not supported in this environment.'));
+      return;
+    }
     const handleAbort = () => {
-      window.cancelAnimationFrame(frameId);
+      browserWindow.cancelAnimationFrame(frameId);
       reject(new DOMException('Replay export aborted.', 'AbortError'));
     };
-    const frameId = window.requestAnimationFrame(() => {
+    const frameId = browserWindow.requestAnimationFrame(() => {
       signal?.removeEventListener('abort', handleAbort);
       resolve();
     });
@@ -76,9 +107,11 @@ function makeEven(value) {
 }
 
 function readCssVar(variableName, fallback) {
-  if (typeof window === 'undefined' || !window.document?.documentElement) return fallback;
-  const value = window
-    .getComputedStyle(window.document.documentElement)
+  const browserWindow = getBrowserWindow();
+  const documentElement = browserWindow?.document?.documentElement;
+  if (!documentElement) return fallback;
+  const value = browserWindow
+    .getComputedStyle(documentElement)
     .getPropertyValue(variableName)
     .trim();
   return value || fallback;
@@ -275,7 +308,7 @@ function resolveCompositionLayout({ config, mainCanvas, tempCanvas, legendItems 
   const colors = getExportThemeColors();
   let legendSectionHeight = 0;
   if (config.includeLegend && legendItems.length > 0) {
-    const measurementCanvas = document.createElement('canvas');
+    const measurementCanvas = createExportCanvas();
     const measurementCtx = measurementCanvas.getContext('2d');
     if (measurementCtx) {
       measurementCtx.font = '600 14px Montserrat, sans-serif';
@@ -411,7 +444,7 @@ function renderCompositionFrame(ctx, layout, { config, mainCanvas, tempCanvas, l
 }
 
 function createCompositionCanvas({ mainCanvas, tempCanvas, legendItems, config }) {
-  const compositionCanvas = document.createElement('canvas');
+  const compositionCanvas = createExportCanvas();
   const layout = resolveCompositionLayout({
     config,
     mainCanvas,
@@ -441,7 +474,8 @@ function canvasToBlob(canvas, mimeType) {
 }
 
 function resolveRecorderMimeType(targetFormat) {
-  if (typeof window === 'undefined' || typeof window.MediaRecorder === 'undefined') return null;
+  const MediaRecorderCtor = getMediaRecorderConstructor();
+  if (MediaRecorderCtor === undefined) return null;
   const candidates =
     targetFormat === 'mp4'
       ? ['video/mp4;codecs=avc1.42E01E', 'video/mp4;codecs=h264', 'video/mp4']
@@ -449,8 +483,8 @@ function resolveRecorderMimeType(targetFormat) {
 
   return (
     candidates.find(mimeType => {
-      if (typeof window.MediaRecorder.isTypeSupported !== 'function') return true;
-      return window.MediaRecorder.isTypeSupported(mimeType);
+      if (typeof MediaRecorderCtor.isTypeSupported !== 'function') return true;
+      return MediaRecorderCtor.isTypeSupported(mimeType);
     }) || null
   );
 }
@@ -458,8 +492,8 @@ function resolveRecorderMimeType(targetFormat) {
 export function getVideoExportCapabilities() {
   const preferredMp4MimeType = resolveRecorderMimeType('mp4');
   const preferredWebmMimeType = resolveRecorderMimeType('webm');
-  const canRecordMp4 = Boolean(preferredMp4MimeType && preferredMp4MimeType.includes('mp4'));
-  const canRecordWebm = Boolean(preferredWebmMimeType && preferredWebmMimeType.includes('webm'));
+  const canRecordMp4 = Boolean(preferredMp4MimeType?.includes('mp4'));
+  const canRecordWebm = Boolean(preferredWebmMimeType?.includes('webm'));
   const shouldHideWebmOption = isLikelySafariBrowser() || !canRecordWebm;
 
   // Keep capability detection centralized so the UI and the recorder agree on which formats are
@@ -474,10 +508,11 @@ export function getVideoExportCapabilities() {
 
 async function recordCanvas(canvas, fps, renderFrames, signal, recorderMimeType) {
   if (typeof canvas.captureStream !== 'function') {
-    throw new Error('Canvas capture is not supported in this browser.');
+    throw new TypeError('Canvas capture is not supported in this browser.');
   }
-  if (typeof window === 'undefined' || typeof window.MediaRecorder === 'undefined') {
-    throw new Error('MediaRecorder is not supported in this browser.');
+  const MediaRecorderCtor = getMediaRecorderConstructor();
+  if (MediaRecorderCtor === undefined) {
+    throw new TypeError('MediaRecorder is not supported in this browser.');
   }
 
   const stream = canvas.captureStream(fps);
@@ -488,11 +523,11 @@ async function recordCanvas(canvas, fps, renderFrames, signal, recorderMimeType)
   let dataHandler = null;
 
   const recorder = recorderMimeType
-    ? new MediaRecorder(stream, {
+    ? new MediaRecorderCtor(stream, {
         mimeType: recorderMimeType,
         videoBitsPerSecond: 10_000_000,
       })
-    : new MediaRecorder(stream, {
+    : new MediaRecorderCtor(stream, {
         videoBitsPerSecond: 10_000_000,
       });
 

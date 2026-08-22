@@ -12,6 +12,20 @@ enum class PumpTarget {
 };
 enum class PhaseType { PHASE_TYPE_PREINFUSION, PHASE_TYPE_BREW };
 enum class TransitionType { INSTANT, LINEAR, EASE_IN, EASE_OUT, EASE_IN_OUT };
+enum class TransitionTarget { TIME, VOLUMETRIC, PUMPED };
+
+// Why a phase ended; persisted as uint8_t in the .slog phase transitions, so values must stay stable.
+// NONE (0) doubles as "still running" and as the legacy/unknown value in old shot files.
+enum class PhaseExitReason : uint8_t {
+    NONE = 0,              // phase not finished (or unknown, e.g. legacy shot files)
+    TARGET_VOLUMETRIC = 1, // volumetric target reached
+    TARGET_PRESSURE = 2,   // pressure target reached
+    TARGET_FLOW = 3,       // flow target reached
+    TARGET_PUMPED = 4,     // pumped-water target reached
+    DURATION = 5,          // phase duration elapsed
+    SAFETY = 6,            // brew safety timeout (set by BrewProcess, not Phase::isFinished)
+    ABORTED = 7,           // shot manually stopped before the process finished
+};
 
 struct Target {
     TargetType type;
@@ -34,6 +48,7 @@ struct PumpAdvanced {
 
 struct Transition {
     TransitionType type;
+    TransitionTarget target;
     float duration;
     bool adaptive;
 };
@@ -68,6 +83,24 @@ struct Phase {
         return Target{};
     }
 
+    bool hasPumpedTarget() const {
+        for (const auto &target : targets) {
+            if (target.type == TargetType::TARGET_TYPE_PUMPED && target.value > 0.0f) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    Target getPumpedTarget() const {
+        for (auto &target : targets) {
+            if (target.type == TargetType::TARGET_TYPE_PUMPED) {
+                return target;
+            }
+        }
+        return Target{};
+    }
+
     void adjustDuration(float amount) { duration = std::max(0.5f, duration + amount); }
 
     void adjustVolumetricTarget(float factor) {
@@ -78,38 +111,42 @@ struct Phase {
         }
     }
 
-    bool isFinished(bool enableVolumetric, float volume, float time_in_phase, float current_flow, float current_pressure,
-                    float water_pumped, String type) const {
+    // Returns the reason the phase finished, or PhaseExitReason::NONE if it is still running.
+    PhaseExitReason isFinished(bool enableVolumetric, float volume, float time_in_phase, float current_flow,
+                               float current_pressure, float water_pumped, String type) const {
         bool volumetricTested = false;
         for (const auto &target : targets) {
             switch (target.type) {
             case TargetType::TARGET_TYPE_VOLUMETRIC:
+                if (target.value <= 0.0f) {
+                    break;
+                }
                 volumetricTested = enableVolumetric;
                 if (enableVolumetric && target.isReached(volume)) {
-                    return true;
+                    return PhaseExitReason::TARGET_VOLUMETRIC;
                 }
                 break;
             case TargetType::TARGET_TYPE_PRESSURE:
                 if (target.isReached(current_pressure)) {
-                    return true;
+                    return PhaseExitReason::TARGET_PRESSURE;
                 }
                 break;
             case TargetType::TARGET_TYPE_FLOW:
                 if (target.isReached(current_flow)) {
-                    return true;
+                    return PhaseExitReason::TARGET_FLOW;
                 }
                 break;
             case TargetType::TARGET_TYPE_PUMPED:
                 if (target.isReached(water_pumped)) {
-                    return true;
+                    return PhaseExitReason::TARGET_PUMPED;
                 }
                 break;
             }
         }
         if (type == "standard" && volumetricTested) {
-            return false;
+            return PhaseExitReason::NONE;
         }
-        return time_in_phase > duration;
+        return time_in_phase > duration ? PhaseExitReason::DURATION : PhaseExitReason::NONE;
     }
 
     void removeVolumetricTarget() {
@@ -282,11 +319,20 @@ inline bool parseProfile(const JsonObject &obj, Profile &profile) {
             } else {
                 phase.transition.type = TransitionType::INSTANT;
             }
+            String target = transition["target"].as<String>();
+            if (target == "volumetric") {
+                phase.transition.target = TransitionTarget::VOLUMETRIC;
+            } else if (target == "pumped") {
+                phase.transition.target = TransitionTarget::PUMPED;
+            } else {
+                phase.transition.target = TransitionTarget::TIME;
+            }
             phase.transition.duration = transition["duration"].as<float>();
             phase.transition.adaptive = transition["adaptive"].as<bool>();
         } else {
             phase.transition = Transition{
                 .type = TransitionType::INSTANT,
+                .target = TransitionTarget::TIME,
                 .duration = 0,
                 .adaptive = false,
             };
@@ -366,6 +412,13 @@ inline void writeProfile(JsonObject &obj, const Profile &profile) {
         default:
             transition["type"] = "instant";
             break;
+        }
+        if (phase.transition.target == TransitionTarget::VOLUMETRIC) {
+            transition["target"] = "volumetric";
+        } else if (phase.transition.target == TransitionTarget::PUMPED) {
+            transition["target"] = "pumped";
+        } else {
+            transition["target"] = "time";
         }
         transition["duration"] = phase.transition.duration;
         transition["adaptive"] = phase.transition.adaptive;

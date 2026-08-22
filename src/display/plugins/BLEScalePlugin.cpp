@@ -92,8 +92,6 @@ void BLEScalePlugin::setup(Controller *controller, PluginManager *manager) {
     manager->on("controller:bluetooth:disconnect", [this](Event const &) {
         ESP_LOGW("BLEScalePlugin", "Controller disconnected, stopping BLE scan");
         active = false;
-        disconnect();
-        scanner->stopAsyncScan();
     });
     manager->on("controller:brew:prestart", [this](Event const &) { onProcessStart(); });
     manager->on("controller:brew:end", [this](Event const &) {
@@ -109,11 +107,6 @@ void BLEScalePlugin::setup(Controller *controller, PluginManager *manager) {
             active = true;
         } else {
             active = false;
-            disconnect();
-            if (scanner != nullptr) {
-                scanner->stopAsyncScan();
-            }
-            ESP_LOGI("BLEScalePlugin", "Stopping scanning, disconnecting");
         }
     });
 }
@@ -121,6 +114,14 @@ void BLEScalePlugin::setup(Controller *controller, PluginManager *manager) {
 void BLEScalePlugin::loop() {
     if (doConnect && scale == nullptr) {
         establishConnection();
+    }
+    if (!active) {
+        if (scale != nullptr) {
+            disconnect();
+        }
+        if (scanner->isScanRunning()) {
+            scanner->stopAsyncScan();
+        }
     }
     const unsigned long now = millis();
     if (now - lastUpdate > UPDATE_INTERVAL_MS) {

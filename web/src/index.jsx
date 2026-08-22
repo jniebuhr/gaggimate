@@ -8,7 +8,7 @@ if (import.meta.env.DEV) {
 
 import { render } from 'preact';
 import { useEffect, useState } from 'preact/hooks';
-import { LocationProvider, Router, Route, ErrorBoundary } from 'preact-iso';
+import { LocationProvider, Router, Route, ErrorBoundary, useLocation } from 'preact-iso';
 import lazy from 'preact-iso/lazy';
 
 import ApiService, { ApiServiceContext } from './services/ApiService.js';
@@ -23,15 +23,15 @@ import { faBars } from '@fortawesome/free-solid-svg-icons/faBars';
 const Home = lazy(() => import('./pages/Home/index.jsx').then(m => m.Home));
 const NotFound = lazy(() => import('./pages/_404.jsx').then(m => m.NotFound));
 const Settings = lazy(() => import('./pages/Settings/index.jsx').then(m => m.Settings));
-const OTA = lazy(() => import('./pages/OTA/index.jsx').then(m => m.OTA));
-const Scales = lazy(() => import('./pages/Scales/index.jsx').then(m => m.Scales));
 const ProfileList = lazy(() => import('./pages/ProfileList/index.jsx').then(m => m.ProfileList));
 const ProfileEdit = lazy(() => import('./pages/ProfileEdit/index.jsx').then(m => m.ProfileEdit));
-const Autotune = lazy(() => import('./pages/Autotune/index.jsx').then(m => m.Autotune));
 const ShotHistory = lazy(() => import('./pages/ShotHistory/index.jsx').then(m => m.ShotHistory));
 const ShotAnalyzer = lazy(() => import('./pages/ShotAnalyzer/index.jsx').then(m => m.ShotAnalyzer));
 const StatisticsPage = lazy(() =>
   import('./pages/Statistics/index.jsx').then(m => m.StatisticsPage),
+);
+const DashboardSettings = lazy(() =>
+  import('./pages/DashboardSettings/index.jsx').then(m => m.DashboardSettings),
 );
 
 const apiService = new ApiService();
@@ -47,6 +47,15 @@ function readInitialDesktopNavCollapsed() {
     return true;
   }
 }
+
+const RedirectTo = to =>
+  function Redirect() {
+    const loc = useLocation();
+    useEffect(() => {
+      loc.route(to, true);
+    }, [loc]);
+    return null;
+  };
 
 function RouteFallback() {
   return (
@@ -70,6 +79,12 @@ export function App() {
     }
   }, [navCollapsed]);
 
+  useEffect(() => {
+    const handleOpenNav = () => setNavCollapsed(false);
+    window.addEventListener('open-mobile-nav', handleOpenNav);
+    return () => window.removeEventListener('open-mobile-nav', handleOpenNav);
+  }, []);
+
   return (
     <LocationProvider>
       <ApiServiceContext.Provider value={apiService}>
@@ -79,18 +94,20 @@ export function App() {
             onToggleCollapsed={() => setNavCollapsed(collapsed => !collapsed)}
           />
           <div className='flex flex-1 flex-col overflow-x-hidden overflow-y-auto'>
-            <div className='mx-auto flex min-h-0 w-full max-w-(--breakpoint-2xl) flex-1 flex-col p-4'>
+            <div className='flex min-h-0 w-full flex-1 flex-col p-4'>
               <div className='grid min-h-0 flex-1 grid-cols-1'>
                 <div className='min-h-0'>
                   <ErrorBoundary>
                     <Router>
                       <Route path='/' component={Home} />
+                      <Route path='/dashboard-settings' component={DashboardSettings} />
                       <Route path='/profiles' component={ProfileList} />
                       <Route path='/profiles/:id' component={ProfileEdit} />
-                      <Route path='/settings' component={Settings} />
-                      <Route path='/ota' component={OTA} />
-                      <Route path='/scales' component={Scales} />
-                      <Route path='/pidtune' component={Autotune} />
+                      <Route path='/settings/:tab?' component={Settings} />
+                      {/* Legacy routes now live in settings tabs */}
+                      <Route path='/ota' component={RedirectTo('/settings/system')} />
+                      <Route path='/scales' component={RedirectTo('/settings/bluetooth')} />
+                      <Route path='/pidtune' component={RedirectTo('/settings/calibration')} />
                       <Route path='/history' component={ShotHistory} />
                       <Route path='/analyzer' component={ShotAnalyzer} />
                       <Route path='/statistics' component={StatisticsPage} />

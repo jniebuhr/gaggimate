@@ -78,14 +78,28 @@ void GearpumpAddon::setup(float *power) {
     }
     ESP_LOGI(LOG_TAG, "MCP4725 initialized");
     mcp->setMaxVoltage(MCP_VOLTAGE);
+    ensureSafePowerOnState();
     mcp->setPercentage(0);
 
     xTaskCreate(loopTask, "GearpumpAddon::loop", configMINIMAL_STACK_SIZE * 4, this, 1, &taskHandle);
 }
 
+// The MCP4725 loads its output from EEPROM at power-on, before the firmware can
+// reach it. Program the EEPROM once with a safe default (value 0 + 1k power-down
+// pull-down) so the pump stays off at startup, then return the live DAC register
+// to normal mode so it stays controllable (EEPROM only governs the next boot).
+void GearpumpAddon::ensureSafePowerOnState() {
+    if (mcp->readEEPROM() != 0 || mcp->readPowerDownModeEEPROM() != MCP4725_PDMODE_1K) {
+        ESP_LOGI(LOG_TAG, "Writing safe power-on default to MCP4725 EEPROM");
+        mcp->writeDAC(0, false);                          // clear cached value
+        mcp->writePowerDownMode(MCP4725_PDMODE_1K, true); // value 0 + 1k pull-down -> DAC & EEPROM
+    }
+    mcp->writePowerDownMode(MCP4725_PDMODE_NORMAL, false); // wake live DAC for runtime control
+}
+
 void GearpumpAddon::loop() {
     if (_power != nullptr) {
-        _currentPower = *_power * 0.05f + _currentPower * 0.95f;
+        _currentPower = *_power;
         float voltage = MCP_VOLTAGE * (_currentPower / 100.0f * _maxPower);
         mcp->setVoltage(voltage);
     }

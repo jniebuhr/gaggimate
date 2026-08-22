@@ -26,6 +26,7 @@ class Heater {
 
     void setSetpoint(float setpoint);
     float getSetpoint() { return setpoint; };
+    float getDutyCycle() const { return output / TUNER_OUTPUT_SPAN * 100.0f; }
     void setTunings(float Kp, float Ki, float Kd);
     void autotune(int testTimeSec, int windowSize, int heaterWattage);
 

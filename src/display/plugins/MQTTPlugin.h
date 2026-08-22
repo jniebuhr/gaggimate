@@ -12,7 +12,7 @@ class MQTTPlugin : public Plugin {
     void setup(Controller *controller, PluginManager *pluginManager) override;
     bool connect(Controller *controller);
     void loop() override {
-        // Event based plugin, no loop needed
+        client.loop();
     };
 
   private:

@@ -10,6 +10,7 @@ void GaggiMateServer::init(const String &deviceName, const String &hardware, con
     setSystemInfo(hardware, version, capabilities);
     registerHandlers();
     _endpoint.onConnection([this](bool connected) {
+        _sentSystemInfoAfterHandshake = false;
         if (connected)
             pushSystemInfo();
     });
@@ -57,7 +58,7 @@ void GaggiMateServer::pushSystemInfo() {
 }
 
 gm::Payload GaggiMateServer::buildSensorData(float temperature, float pressure, float puckFlow, float pumpFlow,
-                                             float puckResistance) {
+                                             float puckResistance, float pumpPower, float heaterPower) {
     gm::Payload p = gaggimate_Payload_init_zero;
     p.which_content = gaggimate_Payload_sensor_tag;
     p.content.sensor.boilers_count = 1; // boiler 0; schema allows more
@@ -67,6 +68,8 @@ gm::Payload GaggiMateServer::buildSensorData(float temperature, float pressure, 
     p.content.sensor.puck_flow = puckFlow;
     p.content.sensor.pump_flow = pumpFlow;
     p.content.sensor.puck_resistance = puckResistance;
+    p.content.sensor.pump_power = pumpPower;
+    p.content.sensor.heater_power = heaterPower;
     return p;
 }
 
@@ -109,12 +112,10 @@ gm::Payload GaggiMateServer::buildError(int code) {
     return p;
 }
 
-// Telemetry (sensor / volumetric / ToF) is sent fire-and-forget: it is
-// high-rate and self-refreshing, so a dropped sample is replaced by the next
-// one. This avoids the constant ACK chatter on the high-rate path. Button /
-// autotune-result / error / system-info stay reliable.
-void GaggiMateServer::sendSensorData(float temperature, float pressure, float puckFlow, float pumpFlow, float puckResistance) {
-    _endpoint.sendUnreliable(buildSensorData(temperature, pressure, puckFlow, pumpFlow, puckResistance));
+// Telemetry (sensor / volumetric / ToF) is fire-and-forget: self-refreshing, so skip ACK chatter; the rest stays reliable.
+void GaggiMateServer::sendSensorData(float temperature, float pressure, float puckFlow, float pumpFlow, float puckResistance,
+                                     float pumpPower, float heaterPower) {
+    _endpoint.sendUnreliable(buildSensorData(temperature, pressure, puckFlow, pumpFlow, puckResistance, pumpPower, heaterPower));
 }
 
 void GaggiMateServer::sendButtonState(uint8_t index, bool pressed) { _endpoint.send(buildButtonState(index, pressed)); }
@@ -131,6 +132,14 @@ void GaggiMateServer::sendError(int code) { _endpoint.send(buildError(code)); }
 
 void GaggiMateServer::registerHandlers() {
     _endpoint.on(gaggimate_Payload_ping_tag, [this](const gm::Payload &) {
+        // A SystemInfo notification sent synchronously from the BLE subscribe
+        // callback can beat the client's notification handler. Once a ping has
+        // crossed the framed protocol, the link is fully established; resend
+        // SystemInfo once so reliable delivery starts from a usable session.
+        if (!_sentSystemInfoAfterHandshake) {
+            _sentSystemInfoAfterHandshake = true;
+            pushSystemInfo();
+        }
         if (_pingCb)
             _pingCb();
     });

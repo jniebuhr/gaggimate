@@ -25,11 +25,11 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://gaggimate.local/',
+        target: 'http://localhost:8080',
         changeOrigin: true,
       },
       '/ws': {
-        target: 'ws://gaggimate.local',
+        target: 'ws://localhost:8080',
         ws: true,
       },
     },

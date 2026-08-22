@@ -95,6 +95,10 @@ void ShotHistoryPlugin::setup(Controller *c, PluginManager *pm) {
     pm->on("pump:puck-resistance:change", [this](Event const &event) { currentPuckResistance = event.getFloat("value"); });
     // Initialize rebuild state
     rebuildInProgress = false;
+    // Leftover from the abandoned separate recent-shots index; aggregates now live in index.bin.
+    if (fs->exists("/h/recent.bin")) {
+        fs->remove("/h/recent.bin");
+    }
     xTaskCreatePinnedToCore(loopTask, "ShotHistoryPlugin::loop", configMINIMAL_STACK_SIZE * 6, this, 1, &taskHandle, 0);
 }
 
@@ -124,6 +128,9 @@ void ShotHistoryPlugin::record() {
                 strncpy(header.profileName, profile.label.c_str(), sizeof(header.profileName) - 1);
                 header.profileName[sizeof(header.profileName) - 1] = '\0';
                 header.phaseTransitionCount = 0; // Initialize phase transition count
+                // Brew delay (ms) the shot ran with; round and clamp into the uint16_t field
+                double delayMs = currentBrewDelay > 0.0 ? currentBrewDelay + 0.5 : 0.0;
+                header.brewDelayMs = delayMs > 65535.0 ? 65535 : static_cast<uint16_t>(delayMs);
                 // Write header placeholder
                 currentFile.write(reinterpret_cast<const uint8_t *>(&header), sizeof(header));
             }
@@ -158,6 +165,8 @@ void ShotHistoryPlugin::record() {
 
         // Track phase transitions
         if (controller->getMode() == MODE_BREW) {
+            // Deref under the process lock — other tasks delete the process at any time (GM-147).
+            std::lock_guard<std::recursive_mutex> guard(controller->getProcessLock());
             Process *process = controller->getProcess();
             if (process != nullptr && process->getType() == MODE_BREW) {
                 auto *brewProcess = static_cast<BrewProcess *>(process);
@@ -165,7 +174,7 @@ void ShotHistoryPlugin::record() {
 
                 // Check for phase transition
                 if (currentPhase != lastRecordedPhase) {
-                    recordPhaseTransition(currentPhase, sampleCount);
+                    recordPhaseTransition(currentPhase, sampleCount, static_cast<uint8_t>(brewProcess->lastExitReason));
                     lastRecordedPhase = currentPhase;
                 }
             }
@@ -178,6 +187,17 @@ void ShotHistoryPlugin::record() {
             memcpy(ioBuffer + ioBufferPos, &sample, sizeof(sample));
             ioBufferPos += sizeof(sample);
             sampleCount++;
+
+            // Track running aggregates for the rolling recent-shots buffer.
+            tempSumScaled += sample.ct;
+            tempSampleCount++;
+            if (sample.cp > maxPressureScaled) {
+                maxPressureScaled = sample.cp;
+            }
+            if (sample.fl > 0) {
+                flowSumScaled += sample.fl;
+                positiveFlowCount++;
+            }
         }
 
         // Check for early index insertion (once per shot after 7.5s)
@@ -227,6 +247,7 @@ void ShotHistoryPlugin::record() {
         // Patch header with sampleCount and duration
         header.sampleCount = sampleCount;
         header.durationMs = millis() - shotStart;
+        header.finalExitReason = finalExitReason; // why the shot ended (last phase exit or manual abort)
         float finalWeight = currentBluetoothWeight;
         header.finalWeight = finalWeight > 0.0f ? encodeUnsigned(finalWeight, WEIGHT_SCALE, WEIGHT_MAX_VALUE) : 0;
         currentFile.seek(0, SeekSet);
@@ -259,23 +280,44 @@ void ShotHistoryPlugin::record() {
             indexEntry.profileId[sizeof(indexEntry.profileId) - 1] = '\0';
             strncpy(indexEntry.profileName, header.profileName, sizeof(indexEntry.profileName) - 1);
             indexEntry.profileName[sizeof(indexEntry.profileName) - 1] = '\0';
+            indexEntry.avgTemp = tempSampleCount ? static_cast<uint16_t>(tempSumScaled / tempSampleCount) : 0;
+            indexEntry.maxPressure = maxPressureScaled;
+            indexEntry.avgFlow = positiveFlowCount ? static_cast<uint16_t>(flowSumScaled / positiveFlowCount) : 0;
 
             if (!appendToIndex(indexEntry)) {
                 ESP_LOGE("ShotHistoryPlugin", "CRITICAL: Failed to add completed shot %u to index", indexEntry.id);
+            }
+
+            // Notify clients the shot is actually persisted. The brew process's
+            // isActive/isFinished state (used elsewhere for UI) can go inactive
+            // well before extended recording (BLE scale weight settling, see
+            // endRecording()) finishes writing this entry, so the dashboard
+            // listens for this event instead of inferring timing from that state.
+            if (pluginManager) {
+                Event savedEvent;
+                savedEvent.id = "evt:history-shot-saved";
+                savedEvent.setInt("id", indexEntry.id);
+                pluginManager->trigger(savedEvent);
             }
         }
     }
 }
 
 void ShotHistoryPlugin::startRecording() {
-    Process *process = controller->getProcess();
-    if (process != nullptr && process->getType() == MODE_BREW) {
-        BrewProcess *brewProcess = static_cast<BrewProcess *>(process);
-        if (brewProcess->isUtility()) {
-            return;
+    {
+        // Deref under the process lock — other tasks delete the process at any time (GM-147).
+        std::lock_guard<std::recursive_mutex> guard(controller->getProcessLock());
+        Process *process = controller->getProcess();
+        if (process != nullptr && process->getType() == MODE_BREW) {
+            BrewProcess *brewProcess = static_cast<BrewProcess *>(process);
+            if (brewProcess->isUtility()) {
+                return;
+            }
+            // Capture initial volumetric mode state (brew by weight vs brew by time)
+            shotStartedVolumetric = brewProcess->target == ProcessTarget::VOLUMETRIC;
+            // Capture the brew delay the shot runs with (fixed at process construction)
+            currentBrewDelay = brewProcess->brewDelay;
         }
-        // Capture initial volumetric mode state (brew by weight vs brew by time)
-        shotStartedVolumetric = brewProcess->target == ProcessTarget::VOLUMETRIC;
     }
     currentId = padId(String(controller->getSettings().getHistoryIndex()));
     shotStart = millis();
@@ -292,9 +334,15 @@ void ShotHistoryPlugin::startRecording() {
     indexEntryCreated = false; // Reset flag for new shot
     sampleCount = 0;
     ioBufferPos = 0;
+    tempSumScaled = 0;
+    tempSampleCount = 0;
+    maxPressureScaled = 0;
+    flowSumScaled = 0;
+    positiveFlowCount = 0;
 
     // Reset phase tracking for new shot
-    lastRecordedPhase = 0xFF; // Invalid value to detect first phase
+    lastRecordedPhase = 0xFF;                                      // Invalid value to detect first phase
+    finalExitReason = static_cast<uint8_t>(PhaseExitReason::NONE); // Reset shot-end reason
 }
 
 unsigned long ShotHistoryPlugin::getTime() {
@@ -304,12 +352,41 @@ unsigned long ShotHistoryPlugin::getTime() {
 }
 
 void ShotHistoryPlugin::endRecording() {
+    // Capture how the shot ended: if the process ran to completion, reuse the last phase's exit reason;
+    // if it was still running when stopped, the user aborted it. getLastProcess() is the just-ended brew
+    // process here (deactivate() moves currentProcess -> lastProcess before firing controller:brew:end).
+    if (controller != nullptr) {
+        // Deref under the process lock — other tasks delete the process at any time (GM-147).
+        std::lock_guard<std::recursive_mutex> guard(controller->getProcessLock());
+        Process *last = controller->getLastProcess();
+        if (last != nullptr && last->getType() == MODE_BREW) {
+            auto *brewProcess = static_cast<BrewProcess *>(last);
+            PhaseExitReason reason =
+                brewProcess->processPhase == ProcessPhase::FINISHED ? brewProcess->lastExitReason : PhaseExitReason::ABORTED;
+            finalExitReason = static_cast<uint8_t>(reason);
+        }
+    }
+
     if (recording && controller && controller->isVolumetricAvailable() && currentBluetoothWeight > 0) {
         // Start extended recording for any shot with active weight data
         extendedRecording = true;
         extendedRecordingStart = millis();
         lastStableWeight = currentBluetoothWeight;
         lastWeightChangeTime = 0;
+    }
+
+    // Notify clients immediately, without waiting for the history file write
+    // (which can lag behind by the extended-recording window above). Pressure
+    // and flow are already final at this point: the pump is off, so any
+    // further samples recorded during extended recording have cp/fl at or
+    // near zero and cannot change the running max/average.
+    if (pluginManager) {
+        Event statsEvent;
+        statsEvent.id = "evt:shot-finished-stats";
+        statsEvent.setFloat("maxPressure", maxPressureScaled > 0 ? maxPressureScaled / PRESSURE_SCALE : 0.0f);
+        statsEvent.setFloat("avgFlow",
+                            positiveFlowCount > 0 ? (flowSumScaled / static_cast<float>(positiveFlowCount)) / FLOW_SCALE : 0.0f);
+        pluginManager->trigger(statsEvent);
     }
 
     recording = false;
@@ -321,7 +398,7 @@ void ShotHistoryPlugin::endExtendedRecording() {
     }
 }
 
-void ShotHistoryPlugin::recordPhaseTransition(uint8_t phaseNumber, uint16_t sampleIndex) {
+void ShotHistoryPlugin::recordPhaseTransition(uint8_t phaseNumber, uint16_t sampleIndex, uint8_t reason) {
     // Only record if we have space and a valid header
     if (header.phaseTransitionCount >= 12 || !isFileOpen) {
         return;
@@ -333,7 +410,7 @@ void ShotHistoryPlugin::recordPhaseTransition(uint8_t phaseNumber, uint16_t samp
 
     transition.sampleIndex = sampleIndex;
     transition.phaseNumber = phaseNumber;
-    transition.reserved = 0;
+    transition.transitionReason = reason; // PhaseExitReason for why the previous phase ended
 
     // Get phase name from profile
     if (phaseNumber < profile.phases.size()) {
@@ -360,6 +437,8 @@ uint16_t ShotHistoryPlugin::getSystemInfo() {
 
     // Bit 1: Currently in volumetric mode (check current process if active)
     if (controller != nullptr) {
+        // Deref under the process lock — other tasks delete the process at any time (GM-147).
+        std::lock_guard<std::recursive_mutex> guard(controller->getProcessLock());
         Process *process = controller->getProcess();
         if (process != nullptr && process->getType() == MODE_BREW) {
             auto *brewProcess = static_cast<BrewProcess *>(process);
@@ -454,50 +533,7 @@ void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &respo
     response["tp"] = String("res:") + type.substring(4);
     response["rid"] = request["rid"].as<String>();
 
-    if (type == "req:history:list") {
-        JsonArray arr = response["history"].to<JsonArray>();
-        File root = fs->open("/h");
-        if (root && root.isDirectory()) {
-            File file = root.openNextFile();
-            while (file) {
-                String fname = String(file.name());
-                if (fname.endsWith(".slog")) {
-                    // Read header only
-                    ShotLogHeader hdr{};
-                    if (file.read(reinterpret_cast<uint8_t *>(&hdr), sizeof(hdr)) == sizeof(hdr) && hdr.magic == SHOT_LOG_MAGIC) {
-                        float finalWeight = hdr.finalWeight > 0 ? static_cast<float>(hdr.finalWeight) / WEIGHT_SCALE : 0.0f;
-
-                        bool headerIncomplete = hdr.sampleCount == 0;
-
-                        auto o = arr.add<JsonObject>();
-                        int start = fname.lastIndexOf('/') + 1;
-                        int end = fname.lastIndexOf('.');
-                        String id = fname.substring(start, end);
-                        o["id"] = id;
-                        o["version"] = hdr.version;
-                        o["timestamp"] = hdr.startEpoch;
-                        o["profile"] = hdr.profileName;
-                        o["profileId"] = hdr.profileId;
-                        o["samples"] = hdr.sampleCount;
-                        o["duration"] = hdr.durationMs;
-                        if (finalWeight > 0.0f) {
-                            o["volume"] = finalWeight;
-                        }
-                        if (headerIncomplete) {
-                            o["incomplete"] = true; // flag partial shot
-                        }
-                    }
-                }
-                file.close();
-                file = root.openNextFile();
-            }
-        }
-        if (root)
-            root.close();
-    } else if (type == "req:history:get") {
-        // Return error: binary must be fetched via HTTP endpoint
-        response["error"] = "use HTTP /api/history?id=<id>";
-    } else if (type == "req:history:delete") {
+    if (type == "req:history:delete") {
         auto id = request["id"].as<String>();
         String paddedId = id;
         while (paddedId.length() < 6) {
@@ -746,6 +782,36 @@ void ShotHistoryPlugin::markIndexDeleted(uint32_t shotId) {
     indexFile.close();
 }
 
+size_t ShotHistoryPlugin::readRecentEntries(ShotIndexEntry *outEntries, size_t maxCount) {
+    File indexFile = fs->open("/h/index.bin", "r");
+    if (!indexFile) {
+        return 0;
+    }
+
+    ShotIndexHeader header{};
+    if (!readIndexHeader(indexFile, header)) {
+        indexFile.close();
+        return 0;
+    }
+
+    // Entries are appended in id order, so walking backwards yields newest first.
+    size_t found = 0;
+    for (uint32_t i = header.entryCount; i > 0 && found < maxCount; i--) {
+        size_t entryPos = sizeof(ShotIndexHeader) + (i - 1) * sizeof(ShotIndexEntry);
+        ShotIndexEntry entry{};
+        if (!readEntryAtPosition(indexFile, entryPos, entry)) {
+            break;
+        }
+        if (entry.flags & SHOT_FLAG_DELETED) {
+            continue;
+        }
+        outEntries[found++] = entry;
+    }
+
+    indexFile.close();
+    return found;
+}
+
 void ShotHistoryPlugin::startAsyncRebuild() {
     if (!rebuildInProgress) {
         rebuildInProgress = true; // Set immediately to prevent multiple rebuilds
@@ -888,6 +954,32 @@ void ShotHistoryPlugin::rebuildIndex() {
         // Check for incomplete shots
         if (shotHeader.sampleCount == 0) {
             entry.flags &= ~SHOT_FLAG_COMPLETED;
+        }
+
+        // Recompute the per-shot aggregates from the sample records (same math
+        // as the running sums in record()).
+        {
+            uint32_t tempSum = 0, tempCount = 0, flowSum = 0, flowCount = 0;
+            uint16_t maxPressure = 0;
+            ShotLogSample sample{};
+            shotFile.seek(shotHeader.headerSize, SeekSet);
+            for (uint32_t s = 0; s < shotHeader.sampleCount; s++) {
+                if (shotFile.read(reinterpret_cast<uint8_t *>(&sample), sizeof(sample)) != sizeof(sample)) {
+                    break;
+                }
+                tempSum += sample.ct;
+                tempCount++;
+                if (sample.cp > maxPressure) {
+                    maxPressure = sample.cp;
+                }
+                if (sample.fl > 0) {
+                    flowSum += sample.fl;
+                    flowCount++;
+                }
+            }
+            entry.avgTemp = tempCount ? static_cast<uint16_t>(tempSum / tempCount) : 0;
+            entry.maxPressure = maxPressure;
+            entry.avgFlow = flowCount ? static_cast<uint16_t>(flowSum / flowCount) : 0;
         }
 
         // Check for notes and extract rating and volume override

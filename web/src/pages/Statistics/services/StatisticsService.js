@@ -10,7 +10,7 @@
 function averageOf(values) {
   if (!values.length) return 0;
   let sum = 0;
-  for (let i = 0; i < values.length; i++) sum += values[i];
+  for (const value of values) sum += value;
   return sum / values.length;
 }
 
@@ -19,8 +19,8 @@ function averageOf(values) {
 function stdDevOf(values, mean) {
   if (values.length < 2) return 0;
   let sumSq = 0;
-  for (let i = 0; i < values.length; i++) {
-    const d = values[i] - mean;
+  for (const value of values) {
+    const d = value - mean;
     sumSq += d * d;
   }
   return Math.sqrt(sumSq / values.length);
@@ -66,61 +66,72 @@ function getTotalTempTargetDeviation(total) {
   return Math.abs(actualAvg - targetAvg);
 }
 
+function createSummaryAccumulator() {
+  return {
+    totalDuration: 0,
+    totalWater: 0,
+    totalWeight: 0,
+    earliest: Infinity,
+    latest: -Infinity,
+    gmCount: 0,
+    browserCount: 0,
+    tempAvgs: [],
+    tempTargetDeviations: [],
+  };
+}
+
+function addTotalSummaryValues(acc, total) {
+  if (!total) return;
+  if (Number.isFinite(total.duration)) acc.totalDuration += total.duration;
+  if (Number.isFinite(total.water)) acc.totalWater += total.water;
+  if (Number.isFinite(total.weight)) acc.totalWeight += total.weight;
+  if (Number.isFinite(total.t?.avg)) acc.tempAvgs.push(total.t.avg);
+  const tempTargetDeviation = getTotalTempTargetDeviation(total);
+  if (Number.isFinite(tempTargetDeviation)) acc.tempTargetDeviations.push(tempTargetDeviation);
+}
+
+function addMetaSummaryValues(acc, meta) {
+  if (Number.isFinite(meta.timestamp)) {
+    acc.earliest = Math.min(acc.earliest, meta.timestamp);
+    acc.latest = Math.max(acc.latest, meta.timestamp);
+  }
+  if (meta.source === 'gaggimate') acc.gmCount += 1;
+  else acc.browserCount += 1;
+}
+
 function computeSummary(entries) {
   const totalShots = entries.length;
-  let totalDuration = 0;
-  let totalWater = 0;
-  let totalWeight = 0;
-  let earliest = Infinity;
-  let latest = -Infinity;
-  let gmCount = 0;
-  let browserCount = 0;
-
-  const tempAvgs = [];
-  const tempTargetDeviations = [];
+  const acc = createSummaryAccumulator();
 
   for (const { analysis, meta } of entries) {
-    const total = analysis.total;
-    if (total) {
-      if (Number.isFinite(total.duration)) totalDuration += total.duration;
-      if (Number.isFinite(total.water)) totalWater += total.water;
-      if (Number.isFinite(total.weight)) totalWeight += total.weight;
-      if (total.t && Number.isFinite(total.t.avg)) tempAvgs.push(total.t.avg);
-      const tempTargetDeviation = getTotalTempTargetDeviation(total);
-      if (Number.isFinite(tempTargetDeviation)) tempTargetDeviations.push(tempTargetDeviation);
-    }
-    if (Number.isFinite(meta.timestamp)) {
-      if (meta.timestamp < earliest) earliest = meta.timestamp;
-      if (meta.timestamp > latest) latest = meta.timestamp;
-    }
-    if (meta.source === 'gaggimate') gmCount++;
-    else browserCount++;
+    addTotalSummaryValues(acc, analysis.total);
+    addMetaSummaryValues(acc, meta);
   }
 
-  const avgTemp = averageOf(tempAvgs);
-  const avgTempTargetDeviation = averageOf(tempTargetDeviations);
+  const avgTemp = averageOf(acc.tempAvgs);
+  const avgTempTargetDeviation = averageOf(acc.tempTargetDeviations);
 
   return {
     totalShots,
-    totalDuration,
-    totalWater,
-    totalWeight,
-    avgDuration: totalShots ? totalDuration / totalShots : 0,
-    avgWater: totalShots ? totalWater / totalShots : 0,
-    avgWeight: totalShots ? totalWeight / totalShots : 0,
+    totalDuration: acc.totalDuration,
+    totalWater: acc.totalWater,
+    totalWeight: acc.totalWeight,
+    avgDuration: totalShots ? acc.totalDuration / totalShots : 0,
+    avgWater: totalShots ? acc.totalWater / totalShots : 0,
+    avgWeight: totalShots ? acc.totalWeight / totalShots : 0,
     avgTemp,
     avgTempTargetDeviation,
     dateRange: {
-      earliest: earliest === Infinity ? null : earliest,
-      latest: latest === -Infinity ? null : latest,
+      earliest: acc.earliest === Infinity ? null : acc.earliest,
+      latest: acc.latest === -Infinity ? null : acc.latest,
     },
-    sourceBreakdown: { gaggimate: gmCount, browser: browserCount },
+    sourceBreakdown: { gaggimate: acc.gmCount, browser: acc.browserCount },
   };
 }
 
 function computeMetricAverages(entries) {
   const totals = entries.map(e => e.analysis.total).filter(Boolean);
-  const keys = ['p', 'f', 'pf', 't', 'w'];
+  const keys = ['p', 'f', 'pf', 'tt', 't', 'w'];
   const metrics = {};
   for (const key of keys) {
     metrics[key] =
@@ -131,6 +142,7 @@ function computeMetricAverages(entries) {
   metrics.water = aggregateValueStats(totals.map(total => total.water));
   metrics.duration = aggregateValueStats(totals.map(total => total.duration));
   metrics.ttDelta = aggregateValueStats(totals.map(getTotalTempTargetDeviation));
+  metrics.pPeak = aggregateValueStats(totals.map(total => total.p?.max));
   return metrics;
 }
 
@@ -178,9 +190,9 @@ function computeProfileGroups(entries) {
 /**
  * For a group of same-name phases across shots, compute the average
  * deviation from profile targets (duration, water/pumped, pressure, flow, weight, temp).
- * Uses delay-corrected targetCalcValues when available, falls back to raw measured values.
+ * Uses the measured values from the analyzed shot.
  */
-function computePhaseTargetDeltas(phases, calcMode) {
+function computePhaseTargetDeltas(phases) {
   const keys = ['duration', 'water', 'p', 'f', 't', 'w'];
   const actuals = {};
   const targets = {};
@@ -190,61 +202,7 @@ function computePhaseTargetDeltas(phases, calcMode) {
   }
 
   for (const phase of phases) {
-    const pp = phase.profilePhase;
-    if (!pp) continue;
-
-    // Duration
-    if (Number.isFinite(pp.duration) && Number.isFinite(phase.duration)) {
-      actuals.duration.push(phase.duration);
-      targets.duration.push(pp.duration);
-    }
-
-    // Water / pumped target
-    const pumpedTarget = pp.targets?.find(t => t.type === 'pumped');
-    if (pumpedTarget && Number.isFinite(phase.water)) {
-      const calcVal = calcMode ? phase.targetCalcValues?.pumped : null;
-      const actual = calcVal ? calcVal.value : phase.water;
-      actuals.water.push(actual);
-      targets.water.push(pumpedTarget.value);
-    }
-
-    // Weight target (weight or volumetric)
-    const weightTarget = pp.targets?.find(t => t.type === 'weight' || t.type === 'volumetric');
-    if (weightTarget && Number.isFinite(phase.weight)) {
-      const calcKey = weightTarget.type;
-      const calcVal = calcMode ? phase.targetCalcValues?.[calcKey] : null;
-      const actual = calcVal ? calcVal.value : (phase.prediction?.finalWeight ?? phase.weight);
-      actuals.w.push(actual);
-      targets.w.push(weightTarget.value);
-    }
-
-    // Pressure target
-    const pressureTarget = pp.targets?.find(t => t.type === 'pressure');
-    if (pressureTarget && phase.stats?.p) {
-      const calcVal = calcMode ? phase.targetCalcValues?.pressure : null;
-      const actual = calcVal ? calcVal.value : phase.stats.p.avg;
-      actuals.p.push(actual);
-      targets.p.push(pressureTarget.value);
-    }
-
-    // Flow target
-    const flowTarget = pp.targets?.find(t => t.type === 'flow');
-    if (flowTarget && phase.stats?.f) {
-      const calcVal = calcMode ? phase.targetCalcValues?.flow : null;
-      const actual = calcVal ? calcVal.value : phase.stats.f.avg;
-      actuals.f.push(actual);
-      targets.f.push(flowTarget.value);
-    }
-
-    // Temp: setpoint avg
-    if (phase.stats?.t && phase.stats?.tt) {
-      const tAvg = phase.stats.t.avg;
-      const ttAvg = phase.stats.tt.avg;
-      if (Number.isFinite(tAvg) && Number.isFinite(ttAvg)) {
-        actuals.t.push(tAvg);
-        targets.t.push(ttAvg);
-      }
-    }
+    addPhaseTargetDeltaValues({ phase, actuals, targets });
   }
 
   const result = {};
@@ -258,7 +216,96 @@ function computePhaseTargetDeltas(phases, calcMode) {
   return result;
 }
 
-function computePhaseStats(entries, calcMode) {
+function pushTargetDeltaValues({ actuals, targets, key, actual, target }) {
+  if (!Number.isFinite(actual) || !Number.isFinite(target)) return;
+  actuals[key].push(actual);
+  targets[key].push(target);
+}
+
+function findPhaseTarget(phase, predicate) {
+  const targets = Array.isArray(phase?.profilePhase?.targets) ? phase.profilePhase.targets : [];
+  return targets.find(predicate);
+}
+
+function addDurationTargetDelta({ phase, actuals, targets }) {
+  pushTargetDeltaValues({
+    actuals,
+    targets,
+    key: 'duration',
+    actual: phase.duration,
+    target: phase.profilePhase?.duration,
+  });
+}
+
+function addPumpedTargetDelta({ phase, actuals, targets }) {
+  const pumpedTarget = findPhaseTarget(phase, target => target.type === 'pumped');
+  pushTargetDeltaValues({
+    actuals,
+    targets,
+    key: 'water',
+    actual: phase.water,
+    target: pumpedTarget?.value,
+  });
+}
+
+function addWeightTargetDelta({ phase, actuals, targets }) {
+  const weightTarget = findPhaseTarget(
+    phase,
+    target => target.type === 'weight' || target.type === 'volumetric',
+  );
+  pushTargetDeltaValues({
+    actuals,
+    targets,
+    key: 'w',
+    actual: phase.prediction?.finalWeight ?? phase.weight,
+    target: weightTarget?.value,
+  });
+}
+
+function addMetricTargetDelta({ phase, actuals, targets, key, targetType }) {
+  const target = findPhaseTarget(phase, candidate => candidate.type === targetType);
+  pushTargetDeltaValues({
+    actuals,
+    targets,
+    key,
+    actual: phase.stats?.[key]?.avg,
+    target: target?.value,
+  });
+}
+
+function addTemperatureTargetDelta({ phase, actuals, targets }) {
+  pushTargetDeltaValues({
+    actuals,
+    targets,
+    key: 't',
+    actual: phase.stats?.t?.avg,
+    target: phase.stats?.tt?.avg,
+  });
+}
+
+function addPhaseTargetDeltaValues({ phase, actuals, targets }) {
+  if (!phase.profilePhase) return;
+  addDurationTargetDelta({ phase, actuals, targets });
+  addPumpedTargetDelta({ phase, actuals, targets });
+  addWeightTargetDelta({ phase, actuals, targets });
+  addMetricTargetDelta({
+    phase,
+    actuals,
+    targets,
+    key: 'p',
+    targetType: 'pressure',
+  });
+  addMetricTargetDelta({
+    phase,
+    actuals,
+    targets,
+    key: 'f',
+    targetType: 'flow',
+  });
+  addTemperatureTargetDelta({ phase, actuals, targets });
+}
+
+function buildPhaseMap(entries) {
   const phaseMap = new Map();
 
   for (const { analysis } of entries) {
@@ -272,6 +319,39 @@ function computePhaseStats(entries, calcMode) {
     }
   }
 
+  return phaseMap;
+}
+
+function addExitReasonCounts({ phases, phaseCounts, totalCounts }) {
+  for (const phase of phases) {
+    const reason = phase.exit?.reason || 'Unknown';
+    phaseCounts[reason] = (phaseCounts[reason] || 0) + 1;
+    totalCounts[reason] = (totalCounts[reason] || 0) + 1;
+  }
+}
+
+function aggregatePhaseMetrics({ statsArray, metricKeys, allStatsArrays }) {
+  const metrics = {};
+  for (const key of metricKeys) {
+    metrics[key] = aggregateMetricStats(statsArray, key);
+    if (!allStatsArrays[key]) allStatsArrays[key] = [];
+    allStatsArrays[key].push(...statsArray);
+  }
+  return metrics;
+}
+
+function buildTotalPhaseMetrics({ metricKeys, allStatsArrays }) {
+  const totalMetrics = {};
+  for (const key of metricKeys) {
+    totalMetrics[key] = allStatsArrays[key]
+      ? aggregateMetricStats(allStatsArrays[key], key)
+      : { avg: 0, min: 0, max: 0, stdDev: 0 };
+  }
+  return totalMetrics;
+}
+
+function computePhaseStats(entries) {
+  const phaseMap = buildPhaseMap(entries);
   const result = [];
   let totalDuration = 0;
   let totalWater = 0;
@@ -284,23 +364,14 @@ function computePhaseStats(entries, calcMode) {
     const durations = phases.map(p => p.duration).filter(Number.isFinite);
     const waters = phases.map(p => p.water).filter(Number.isFinite);
     const exitReasonDistribution = {};
-
-    for (const phase of phases) {
-      const reason = phase.exit?.reason || 'Unknown';
-      exitReasonDistribution[reason] = (exitReasonDistribution[reason] || 0) + 1;
-      totalExitReasons[reason] = (totalExitReasons[reason] || 0) + 1;
-    }
-
-    const metrics = {};
     const statsArray = phases.map(p => p.stats).filter(Boolean);
-    for (const key of metricKeys) {
-      metrics[key] = aggregateMetricStats(statsArray, key);
-      if (!allStatsArrays[key]) allStatsArrays[key] = [];
-      allStatsArrays[key].push(...statsArray);
-    }
-
-    // Compute target deltas
-    const targetDeltas = computePhaseTargetDeltas(phases, calcMode);
+    addExitReasonCounts({
+      phases,
+      phaseCounts: exitReasonDistribution,
+      totalCounts: totalExitReasons,
+    });
+    const metrics = aggregatePhaseMetrics({ statsArray, metricKeys, allStatsArrays });
+    const targetDeltas = computePhaseTargetDeltas(phases);
 
     const avgDur = averageOf(durations);
     const avgWat = averageOf(waters);
@@ -321,12 +392,7 @@ function computePhaseStats(entries, calcMode) {
   }
 
   // Add total row
-  const totalMetrics = {};
-  for (const key of metricKeys) {
-    totalMetrics[key] = allStatsArrays[key]
-      ? aggregateMetricStats(allStatsArrays[key], key)
-      : { avg: 0, min: 0, max: 0, stdDev: 0 };
-  }
+  const totalMetrics = buildTotalPhaseMetrics({ metricKeys, allStatsArrays });
 
   result.push({
     phaseName: 'Total',
@@ -361,7 +427,7 @@ function computeTrends(entries) {
   });
 }
 
-export function computeStatistics(entries, options = {}) {
+export function computeStatistics(entries) {
   if (!entries || entries.length === 0) {
     return {
       summary: {
@@ -388,7 +454,7 @@ export function computeStatistics(entries, options = {}) {
     summary: computeSummary(entries),
     metrics: computeMetricAverages(entries),
     profileGroups: computeProfileGroups(entries),
-    phaseStats: computePhaseStats(entries, !!options.calcMode),
+    phaseStats: computePhaseStats(entries),
     trends: computeTrends(entries),
   };
 }

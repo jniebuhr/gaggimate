@@ -4,7 +4,7 @@ import annotationPlugin from 'chartjs-plugin-annotation';
 
 Chart.register(annotationPlugin);
 
-export function ChartComponent({ data, className, chartClassName }) {
+export function ChartComponent({ data, className, chartClassName, style }) {
   const [chart, setChart] = useState(null);
   const ref = useRef();
 
@@ -117,7 +117,7 @@ export function ChartComponent({ data, className, chartClassName }) {
   }, [chart]);
 
   return (
-    <div className={className}>
+    <div className={className} style={style}>
       <canvas className={chartClassName} ref={ref} />
     </div>
   );

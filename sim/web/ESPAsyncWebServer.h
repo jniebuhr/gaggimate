@@ -102,15 +102,8 @@ class AsyncWebServerRequest {
 
 using ArRequestHandlerFunction = std::function<void(AsyncWebServerRequest *)>;
 
-class AsyncWebSocketMessageBuffer {
-  public:
-    explicit AsyncWebSocketMessageBuffer(size_t n) : _data(n) {}
-    uint8_t *get() { return _data.data(); }
-    size_t length() const { return _data.size(); }
-
-  private:
-    std::vector<uint8_t> _data;
-};
+// Matches the real library's queued-message payload type.
+using AsyncWebSocketSharedBuffer = std::shared_ptr<std::vector<uint8_t>>;
 
 class AsyncWebSocketClient {
   public:
@@ -118,7 +111,7 @@ class AsyncWebSocketClient {
     uint32_t id() const { return _id; }
     int fd() const { return _fd; }
     void setCloseClientOnQueueFull(bool) {}
-    void text(AsyncWebSocketMessageBuffer *buffer);
+    void text(AsyncWebSocketSharedBuffer buffer);
     void text(const String &message);
 
   private:
@@ -134,10 +127,9 @@ class AsyncWebSocket {
     explicit AsyncWebSocket(const String &url) : _url(url) {}
     const String &url() const { return _url; }
     void onEvent(AwsEventHandler handler) { _handler = std::move(handler); }
-    AsyncWebSocketMessageBuffer *makeBuffer(size_t size) { return new AsyncWebSocketMessageBuffer(size); }
     void text(uint32_t id, const String &message);
-    void text(uint32_t id, AsyncWebSocketMessageBuffer *buffer);
-    void textAll(AsyncWebSocketMessageBuffer *buffer);
+    void text(uint32_t id, AsyncWebSocketSharedBuffer buffer);
+    void textAll(AsyncWebSocketSharedBuffer buffer);
     void cleanupClients() {}
     void closeAll();
     const std::vector<AsyncWebSocketClient *> &getClients() const { return _clients; }

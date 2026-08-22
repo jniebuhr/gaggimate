@@ -248,6 +248,8 @@ void GaggiMateController::setup() {
             }
             if (this->gearpumpAddon != nullptr) {
                 dimmedPump->setGains(settings.commutationGain, settings.convergenceGain, settings.integralGain);
+                // Slip model is only meaningful for the positive-displacement gear/rotary-vane pump.
+                dimmedPump->setPumpSlipPolyCoeffs(settings.slipA, settings.slipB, settings.slipC, settings.slipD);
             }
         }
         if (this->gearpumpAddon != nullptr) {
@@ -383,6 +385,8 @@ void GaggiMateController::thermalRunawayShutdown() {
 }
 
 void GaggiMateController::sendSensorData() {
+    const float pumpPower = *pump->getPumpPowerPtr();
+    const float heaterPower = heater ? heater->getDutyCycle() : 0.0f;
     float puckFlow = 0.0f;
     float pumpFlow = 0.0f;
     float puckResistance = 0.0f;
@@ -400,7 +404,6 @@ void GaggiMateController::sendSensorData() {
                 batch[n++] = _comms.buildVolumetricMeasurement(dimmedPump->getCoffeeVolume());
             }
         }
-        _comms.sendUnreliableBatch(batch, n); // telemetry: fire-and-forget
     }
     gm::Payload p = gaggimate_Payload_init_zero;
     p.which_content = gaggimate_Payload_sensor_tag;
@@ -416,6 +419,8 @@ void GaggiMateController::sendSensorData() {
     p.content.sensor.puck_flow = puckFlow;
     p.content.sensor.pump_flow = pumpFlow;
     p.content.sensor.puck_resistance = puckResistance;
+    p.content.sensor.pump_power = pumpPower;
+    p.content.sensor.heater_power = heaterPower;
     batch[n++] = p;
     _comms.sendUnreliableBatch(batch, n);
 }

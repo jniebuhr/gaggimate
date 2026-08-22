@@ -161,10 +161,9 @@ void sendWsFrame(int fd, uint8_t opcode, const uint8_t *data, size_t len) {
 } // namespace
 
 // ---- WebSocket client/socket ----------------------------------------------
-void AsyncWebSocketClient::text(AsyncWebSocketMessageBuffer *buffer) {
+void AsyncWebSocketClient::text(AsyncWebSocketSharedBuffer buffer) {
     if (buffer) {
-        sendWsFrame(_fd, WS_TEXT, buffer->get(), buffer->length());
-        delete buffer;
+        sendWsFrame(_fd, WS_TEXT, buffer->data(), buffer->size());
     }
 }
 void AsyncWebSocketClient::text(const String &message) {
@@ -176,20 +175,18 @@ void AsyncWebSocket::text(uint32_t id, const String &message) {
         if (c->id() == id)
             c->text(message);
 }
-void AsyncWebSocket::text(uint32_t id, AsyncWebSocketMessageBuffer *buffer) {
+void AsyncWebSocket::text(uint32_t id, AsyncWebSocketSharedBuffer buffer) {
     if (!buffer)
         return;
     for (auto *c : _clients)
         if (c->id() == id)
-            sendWsFrame(c->fd(), WS_TEXT, buffer->get(), buffer->length());
-    delete buffer;
+            sendWsFrame(c->fd(), WS_TEXT, buffer->data(), buffer->size());
 }
-void AsyncWebSocket::textAll(AsyncWebSocketMessageBuffer *buffer) {
+void AsyncWebSocket::textAll(AsyncWebSocketSharedBuffer buffer) {
     if (!buffer)
         return;
     for (auto *c : _clients)
-        sendWsFrame(c->fd(), WS_TEXT, buffer->get(), buffer->length());
-    delete buffer;
+        sendWsFrame(c->fd(), WS_TEXT, buffer->data(), buffer->size());
 }
 void AsyncWebSocket::closeAll() {
     for (auto *c : _clients) {

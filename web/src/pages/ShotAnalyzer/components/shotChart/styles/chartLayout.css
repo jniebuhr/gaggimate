@@ -1,0 +1,182 @@
+/* Full-display mode is rendered via a body portal, so these styles define the overlay shell
+   independently from the analyzer page layout. */
+.shot-chart-full-display {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  width: 100vw;
+  height: 100dvh;
+  padding: 0.35rem;
+}
+
+.shot-chart-full-display__backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: color-mix(in srgb, var(--color-base-100) 28%, black 72%);
+  cursor: pointer;
+}
+
+.shot-chart-full-display__panel {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--color-base-content) 12%, transparent);
+  border-radius: 0.85rem;
+  background: color-mix(in srgb, var(--color-base-100) 94%, transparent);
+  color: var(--color-base-content);
+  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.18);
+  padding: 0.85rem 0.95rem 0.9rem;
+}
+
+.shot-chart-full-display__charts {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 0.15rem;
+}
+
+.shot-chart-hover-surface {
+  position: relative;
+  min-height: 0;
+}
+
+.shot-chart-hover-connector {
+  position: absolute;
+  z-index: 4;
+  width: 2.5px;
+  transform: translateX(-50%);
+  pointer-events: none;
+  border-radius: 999px;
+  background: var(--color-base-content);
+}
+
+.shot-chart-interaction-layer {
+  touch-action: pan-y;
+}
+
+.shot-chart-single-layout {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  flex-direction: column;
+}
+
+.shot-analyzer-page {
+  --analyzer-mobile-card-gap: 0.75rem;
+}
+
+@media (max-width: 1023px) {
+  .analyzer-mobile-stack-layer {
+    position: relative;
+  }
+
+  .analyzer-mobile-stack-layer--primary {
+    z-index: 0;
+    margin-bottom: var(--analyzer-mobile-card-gap);
+  }
+
+  .analyzer-mobile-stack-layer--chart {
+    z-index: 1;
+  }
+
+  .analyzer-mobile-stack-layer--details {
+    z-index: 2;
+  }
+
+  .analyzer-mobile-stack-layer--analysis {
+    z-index: 3;
+  }
+}
+
+@media (max-width: 640px) {
+  .shot-analyzer-page {
+    --analyzer-mobile-analysis-gap: 1rem;
+    --shot-chart-mobile-card-height: 90vh;
+    --shot-chart-mobile-card-height: 90dvh;
+    --shot-chart-mobile-compare-height-reduction: 3rem;
+  }
+
+  .analyzer-analysis-shell {
+    margin-top: var(--analyzer-mobile-analysis-gap);
+  }
+
+  .shot-mobile-primary-cards {
+    gap: var(--analyzer-mobile-card-gap);
+  }
+
+  .shot-chart-card-shell {
+    height: var(--shot-chart-mobile-card-height);
+    min-height: var(--shot-chart-mobile-card-height);
+    overflow: hidden;
+  }
+
+  .shot-chart-card-shell--compare {
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+  }
+
+  .shot-chart-card-shell > .select-none {
+    height: calc(var(--shot-chart-mobile-card-height) - 1rem);
+    min-height: calc(var(--shot-chart-mobile-card-height) - 1rem);
+  }
+
+  .shot-chart-card-shell--compare > .select-none {
+    height: auto;
+    min-height: 0;
+  }
+
+  .shot-chart-compare-main-card--mobile {
+    display: flex;
+    height: var(--shot-chart-mobile-card-height);
+    min-height: var(--shot-chart-mobile-card-height);
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .shot-chart-compare-main-card--mobile .shot-chart-compare-canvas-shell {
+    display: flex;
+    min-height: 0;
+    flex: 1 1 auto;
+    flex-direction: column;
+  }
+
+  .shot-chart-compare-main-card--mobile
+    .shot-chart-compare-canvas-shell
+    .shot-chart-interaction-layer {
+    height: auto !important;
+    min-height: 0;
+    flex: 1 1 auto;
+  }
+
+  .shot-chart-compare-mobile-stack--collapsed {
+    display: flex;
+    flex-direction: column;
+    gap: var(--analyzer-mobile-card-gap);
+  }
+
+  .shot-chart-compare-mobile-stack > * + * {
+    margin-top: var(--analyzer-mobile-card-gap);
+  }
+
+  .shot-chart-compare-mobile-stack--collapsed > * + * {
+    margin-top: 0;
+  }
+
+  .shot-chart-compare-mobile-stack--collapsed .shot-chart-compare-main-card--mobile {
+    flex: 0 0 auto;
+  }
+}
+
+:root {
+  --shot-chart-phase-card-gap: 1rem;
+}

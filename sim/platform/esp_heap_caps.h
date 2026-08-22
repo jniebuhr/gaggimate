@@ -24,6 +24,8 @@ static inline void *heap_caps_realloc(void *ptr, size_t size, uint32_t caps) {
     return realloc(ptr, size);
 }
 static inline void heap_caps_free(void *ptr) { free(ptr); }
+// No PSRAM/threshold split on the host; the libc heap is the only heap.
+static inline void heap_caps_malloc_extmem_enable(size_t limit) { (void)limit; }
 // Report a generous, fixed budget so memory-watching UI code stays happy.
 static inline size_t heap_caps_get_free_size(uint32_t caps) {
     (void)caps;

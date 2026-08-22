@@ -51,7 +51,7 @@ void NetworkWatchdogPlugin::logStats(const char *reason) {
     const unsigned minInt = heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL);
     const unsigned largestInt = heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL);
     const unsigned long sinceOk = millis() - _lastAlive;
-    ESP_LOGI(LOG_TAG, "[%s] internal heap: free=%u min=%u largest=%u | egress ok %lus ago (stage %u)", reason, freeInt, minInt,
+    ESP_LOGV(LOG_TAG, "[%s] internal heap: free=%u min=%u largest=%u | egress ok %lus ago (stage %u)", reason, freeInt, minInt,
              largestInt, sinceOk / 1000, _stage);
 }
 

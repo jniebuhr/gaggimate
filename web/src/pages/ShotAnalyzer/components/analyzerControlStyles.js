@@ -11,10 +11,10 @@ const baseInteractiveClasses =
 const hoverShellClasses = 'hover:bg-base-content/5';
 
 export const ANALYZER_COMPACT_CONTROL_HEIGHT_CLASS = 'h-5 min-h-0';
-export const ANALYZER_COMPACT_ICON_BUTTON_CLASS = `${ANALYZER_COMPACT_CONTROL_HEIGHT_CLASS} w-6`;
-export const ANALYZER_COMPACT_GROUP_CLASSES = 'flex items-center gap-px';
-export const ANALYZER_COMPACT_SEGMENTED_GROUP_CLASSES =
-  'flex items-center divide-x divide-base-content/10';
+export const ANALYZER_ACTION_ICON_CLASS = 'text-sm';
+export const ANALYZER_ACTION_ICON_STYLE = { width: '14px', height: '14px' };
+export const ANALYZER_ACTION_ICON_BUTTON_CLASS = 'h-8 w-8 p-0';
+export const ANALYZER_ACTION_GROUP_CLASSES = 'flex items-center gap-1';
 
 const iconToneClasses = {
   neutral: 'text-base-content/55 hover:text-primary',
