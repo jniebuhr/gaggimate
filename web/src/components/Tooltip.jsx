@@ -73,6 +73,9 @@ export function Tooltip({ content, children, placement = 'top', disabled = false
       document.body,
     );
 
+  // onFocusIn/onFocusOut in addition to onFocus/onBlur: Preact maps onFocus to
+  // the native 'focus' event, which does not bubble, so a focusable child (e.g. a
+  // wrapped button) never triggers it. focusin/focusout do bubble.
   return (
     <>
       <span
@@ -81,6 +84,8 @@ export function Tooltip({ content, children, placement = 'top', disabled = false
         onMouseLeave={hide}
         onFocus={show}
         onBlur={hide}
+        onFocusIn={show}
+        onFocusOut={hide}
         className='inline-flex'
       >
         {children}
