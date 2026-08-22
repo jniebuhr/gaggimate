@@ -172,6 +172,7 @@ class Controller {
     PumpCommand lastPump{};
     RelayCommand lastRelay{};
     RelayCommand lastRefill{};
+    RelayCommand lastWater{};
     bool lastAlt = false;
     bool controlStateSent = false;
 
@@ -202,6 +203,8 @@ class Controller {
     bool volumetricOverride = false;
     bool processCompleted = false;
     bool steamReady = false;
+    bool waterValveActive = false;
+    bool waterButtonPressed = false;
     bool sdcard = false;
     bool steamBoilerLow = false;
     int error = 0;

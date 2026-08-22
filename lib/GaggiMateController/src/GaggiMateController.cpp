@@ -192,7 +192,8 @@ void GaggiMateController::setup() {
             dimmedPump->setFlowTarget(flow, pressure);
         }
     });
-    // Binary outputs: index 0 = brew valve, index 1 = alt relay.
+    // Binary outputs: index 0 = brew valve, index 1 = alt relay,
+    // index 2 = steam refill, index 3 = steam-pressure hot-water valve.
     _comms.onRelayControl([this](uint8_t index, bool open) {
         handlePing();
         if (errorState != ERROR_CODE_NONE) {

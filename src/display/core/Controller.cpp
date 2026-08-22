@@ -874,6 +874,8 @@ void Controller::updateControl() {
     relay.index = 0;
     RelayCommand refill; // index 2 = refill valve
     refill.index = 2;
+    RelayCommand water; // index 3 = steam-pressure hot-water valve
+    water.index = 3;
 
     bool handled = false;
     if (active && systemInfo.capabilities.pressure) {
@@ -918,12 +920,16 @@ void Controller::updateControl() {
         pump.power = active ? proc->getPumpValue() : 0;
     }
 
+    // On dual-boiler machines, steam pressure supplies the hot water. Opening
+    // the dedicated valve must not start the brew pump or create a PumpProcess.
+    water.open = systemInfo.capabilities.dualBoiler && waterValveActive;
+
     // Only send components that changed since the last update. The controller is
     // stateful and every message is acknowledged, so re-sending unchanged values
     // each cycle is unnecessary; a periodic ping (see loop()) keeps the watchdog
     // fed when nothing changes. controlStateSent is reset on (re)connect to force
     // a full resend.
-    gm::Payload batch[6];
+    gm::Payload batch[7];
     size_t count = 0;
     if (!controlStateSent || boiler != lastBoiler)
         batch[count++] = comms.buildBoilerControl(boiler.index, boiler.mode, boiler.setpoint);
@@ -937,6 +943,8 @@ void Controller::updateControl() {
         batch[count++] = comms.buildRelayControl(1, altRelayActive); // index 1 = alt relay
     if (!controlStateSent || refill != lastRefill)
         batch[count++] = comms.buildRelayControl(refill.index, refill.open); // index 2 = refill relay
+    if (!controlStateSent || water != lastWater)
+        batch[count++] = comms.buildRelayControl(water.index, water.open); // index 3 = hot-water valve
 
     if (count > 0)
         comms.sendBatch(batch, count);
@@ -947,6 +955,7 @@ void Controller::updateControl() {
     lastRelay = relay;
     lastAlt = altRelayActive;
     lastRefill = refill;
+    lastWater = water;
     controlStateSent = true;
 }
 
@@ -1057,6 +1066,10 @@ bool Controller::isGrindActive() const {
 int Controller::getMode() const { return mode; }
 
 void Controller::setMode(int newMode) {
+    if (newMode == MODE_STANDBY) {
+        waterValveActive = false;
+        waterButtonPressed = false;
+    }
     Event modeEvent = pluginManager->trigger("controller:mode:change", "value", newMode);
     mode = modeEvent.getInt("value");
     steamReady = false;
@@ -1190,16 +1203,40 @@ void Controller::handleSteamButton(int steamButtonStatus) {
 }
 
 void Controller::handleWaterButton(int buttonStatus) {
+    if (systemInfo.capabilities.dualBoiler) {
+        if (getMode() == MODE_STANDBY) {
+            waterButtonPressed = false;
+            return;
+        }
+
+        if (buttonStatus) {
+            waterButtonPressed = true;
+            return;
+        }
+
+        if (!waterButtonPressed) {
+            return;
+        }
+        waterButtonPressed = false;
+        waterValveActive = !waterValveActive;
+        if (waterValveActive) {
+            pluginManager->trigger("controller:waterValve:activate");
+        } else {
+            pluginManager->trigger("controller:waterValve:deactivate");
+        }
+        return;
+    }
+
     if (buttonStatus) {
         switch (getMode()) {
-        case MODE_WATER:
-            if (!isActive()) {
-                activate();
-            }
-            break;
-        default:
-            setMode(MODE_WATER);
-            break;
+            case MODE_WATER:
+                if (!isActive()) {
+                    activate();
+                }
+                break;
+            default:
+                setMode(MODE_WATER);
+                break;
         }
     } else if (!settings.isMomentaryButtons() && getMode() == MODE_WATER && isActive()) {
         deactivate();
