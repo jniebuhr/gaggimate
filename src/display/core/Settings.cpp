@@ -267,6 +267,14 @@ void Settings::setIntegralGain(float integral_gain) { integralGain.set(integral_
 
 void Settings::setMaxPumpPower(float max_pump_power) { maxPumpPower.set(max_pump_power); }
 
+void Settings::setBackflushIntervalDays(int backflush_interval_days) { backflushIntervalDays.set(backflush_interval_days); }
+
+void Settings::setDescalingIntervalWeeks(int descaling_interval_weeks) { descalingIntervalWeeks.set(descaling_interval_weeks); }
+
+void Settings::setLastBackflushTime(unsigned long last_backflush_time) { lastBackflushTime.set(last_backflush_time); }
+
+void Settings::setLastDescalingTime(unsigned long last_descaling_time) { lastDescalingTime.set(last_descaling_time); }
+
 void Settings::doSave() {
     bool dirty = false;
     for (auto *property : registry) {

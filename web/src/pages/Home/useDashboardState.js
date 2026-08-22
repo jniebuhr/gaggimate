@@ -47,6 +47,18 @@ export function useDashboardState() {
         )
       : null;
 
+  const nowSeconds = Math.floor(Date.now() / 1000);
+  const backflushIntervalDays = settings?.backflushIntervalDays ?? 14;
+  const descalingIntervalWeeks = settings?.descalingIntervalWeeks ?? 6;
+  const lastBackflushTime = settings?.lastBackflushTime ?? 0;
+  const lastDescalingTime = settings?.lastDescalingTime ?? 0;
+  const backflushDue =
+    !!lastBackflushTime &&
+    (nowSeconds - lastBackflushTime) / (24 * 60 * 60) >= backflushIntervalDays;
+  const descalingDue =
+    !!lastDescalingTime &&
+    (nowSeconds - lastDescalingTime) / (7 * 24 * 60 * 60) >= descalingIntervalWeeks;
+
   // ── handlers ─────────────────────────────────────────────
   const send = tp => apiService.send({ tp });
 
@@ -80,6 +92,8 @@ export function useDashboardState() {
       tp: isGrinding ? 'req:change-grind-target' : 'req:change-brew-target',
       target,
     });
+  const startBackflush = () => send('req:cleaning:backflush:start');
+  const startDescaling = () => send('req:cleaning:descaling:start');
 
   return {
     // raw status
@@ -117,6 +131,8 @@ export function useDashboardState() {
     ledControl,
     albaCalibrated,
     waterLevelPercent,
+    backflushDue,
+    descalingDue,
     // settings
     isSmartGrindEnabled,
     altRelayFunction,
@@ -135,5 +151,7 @@ export function useDashboardState() {
     raiseTarget,
     lowerTarget,
     changeTarget,
+    startBackflush,
+    startDescaling,
   };
 }

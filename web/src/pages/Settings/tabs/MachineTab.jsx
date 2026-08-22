@@ -1,10 +1,13 @@
-import { useState } from 'preact/hooks';
+import { useCallback, useState } from 'preact/hooks';
 import { computed } from '@preact/signals';
 import { machine } from '../../../services/ApiService.js';
 import Section from '../../../components/Card.jsx';
 import { Tooltip } from '../../../components/Tooltip.jsx';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCrosshairs } from '@fortawesome/free-solid-svg-icons/faCrosshairs';
+import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
+import { faLemon } from '@fortawesome/free-solid-svg-icons/faLemon';
+import { faSoap } from '@fortawesome/free-solid-svg-icons/faSoap';
 import { InputGroupField, SettingsFormField } from '../../../components/SettingsFormField.jsx';
 
 const ledControl = computed(() => machine.value.capabilities.ledControl);
@@ -60,6 +63,28 @@ function TankDistanceField({ id, label, value, onChange, onUseCurrent }) {
 
 export function MachineTab({ formData, onChange, setField }) {
   const [steamPumpDraft, setSteamPumpDraft] = useState(null);
+
+  const markCleaningComplete = useCallback(
+    async field => {
+      const previousValue = formData[field];
+      const now = Math.floor(Date.now() / 1000);
+      setField(field, now);
+
+      const data = new FormData();
+      data.set(field, String(now));
+      try {
+        const response = await fetch('/api/settings', { method: 'post', body: data });
+        if (!response.ok) throw new Error(`Settings request failed (${response.status})`);
+      } catch (error) {
+        console.error('Failed to save cleaning timer change:', error);
+        setField(field, previousValue);
+      }
+    },
+    [formData, setField],
+  );
+
+  const formatCleaningTimestamp = timestamp =>
+    timestamp ? new Date(timestamp * 1000).toLocaleString() : 'Never';
 
   return (
     <div className='space-y-4 sm:space-y-6 lg:grid lg:grid-cols-2 lg:gap-4'>
@@ -267,6 +292,80 @@ export function MachineTab({ formData, onChange, setField }) {
               onChange={onChange('targetWaterTemp')}
             />
           </InputGroupField>
+        </div>
+      </Section>
+      <Section title='Cleaning Schedule'>
+        <p className='text-base-content/60 mb-4 text-sm'>
+          Configure reminder intervals and reset maintenance timers after completing each cleaning
+          cycle.
+        </p>
+        <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+          <InputGroupField
+            label='Backflush Interval'
+            htmlFor='backflushIntervalDays'
+            unit='days'
+            unitAriaLabel='days'
+            noMargin
+          >
+            <input
+              id='backflushIntervalDays'
+              name='backflushIntervalDays'
+              type='number'
+              min='1'
+              className='grow'
+              value={formData.backflushIntervalDays ?? 14}
+              onChange={onChange('backflushIntervalDays')}
+            />
+          </InputGroupField>
+          <InputGroupField
+            label='Descaling Interval'
+            htmlFor='descalingIntervalWeeks'
+            unit='weeks'
+            unitAriaLabel='weeks'
+            noMargin
+          >
+            <input
+              id='descalingIntervalWeeks'
+              name='descalingIntervalWeeks'
+              type='number'
+              min='1'
+              className='grow'
+              value={formData.descalingIntervalWeeks ?? 6}
+              onChange={onChange('descalingIntervalWeeks')}
+            />
+          </InputGroupField>
+        </div>
+        <div className='mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2'>
+          <div className='border-base-300 rounded-lg border p-3'>
+            <div className='mb-1 flex items-center gap-2 text-sm font-semibold'>
+              <FontAwesomeIcon icon={faSoap} className='text-warning' /> Backflush
+            </div>
+            <div className='text-base-content/60 text-sm'>
+              Last: {formatCleaningTimestamp(formData.lastBackflushTime)}
+            </div>
+            <button
+              type='button'
+              className='btn btn-warning btn-sm mt-2'
+              onClick={() => markCleaningComplete('lastBackflushTime')}
+            >
+              <FontAwesomeIcon icon={faCheck} /> Mark Complete
+            </button>
+          </div>
+          <div className='border-base-300 rounded-lg border p-3'>
+            <div className='mb-1 flex items-center gap-2 text-sm font-semibold'>
+              <FontAwesomeIcon icon={faLemon} className='text-warning' /> Descaling
+            </div>
+            <div className='text-base-content/60 text-sm'>
+              Last: {formatCleaningTimestamp(formData.lastDescalingTime)}
+            </div>
+            <button
+              type='button'
+              className='btn btn-warning btn-sm mt-2'
+              onClick={() => markCleaningComplete('lastDescalingTime')}
+            >
+              <FontAwesomeIcon icon={faCheck} /> Mark Complete
+            </button>
+          </div>
         </div>
       </Section>
       {/* Alba Settings */}

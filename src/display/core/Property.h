@@ -15,6 +15,11 @@ template <> struct PreferencesCodec<int> {
     static void write(Preferences &prefs, const char *key, const int &value) { prefs.putInt(key, value); }
 };
 
+template <> struct PreferencesCodec<unsigned long> {
+    static unsigned long read(Preferences &prefs, const char *key, const unsigned long &def) { return prefs.getULong(key, def); }
+    static void write(Preferences &prefs, const char *key, const unsigned long &value) { prefs.putULong(key, value); }
+};
+
 template <> struct PreferencesCodec<bool> {
     static bool read(Preferences &prefs, const char *key, const bool &def) { return prefs.getBool(key, def); }
     static void write(Preferences &prefs, const char *key, const bool &value) { prefs.putBool(key, value); }
