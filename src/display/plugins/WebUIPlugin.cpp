@@ -150,7 +150,7 @@ void WebUIPlugin::loop() {
         ota->checkForUpdates();
         pluginManager->trigger("ota:update:status", "value", ota->isUpdateAvailable());
         lastUpdateCheck = now;
-        updateOTAStatus(ota->getCurrentVersion());
+        updateOTAStatus();
     }
     if (now > lastStatus + STATUS_PERIOD && !ws.getClients().empty()) {
         lastStatus = now;
@@ -556,7 +556,7 @@ void WebUIPlugin::handleOTASettings(uint32_t clientId, JsonDocument &request) {
             lastUpdateCheck = 0;
         }
     }
-    updateOTAStatus("Checking...");
+    updateOTAStatus();
 }
 
 void WebUIPlugin::handleOTAStart(uint32_t clientId, JsonDocument &request) {
@@ -953,20 +953,24 @@ void WebUIPlugin::handleBLEScaleInfo(AsyncWebServerRequest *request) {
     request->send(response);
 }
 
-void WebUIPlugin::updateOTAStatus(const String &version) {
+void WebUIPlugin::updateOTAStatus() {
     if (ws.getClients().empty()) {
         return;
     }
     Settings const &settings = controller->getSettings();
+    const String controllerVersion = controller->getSystemInfo().version;
+    if (controllerVersion != lastSyncedControllerVersion) {
+        ota->setControllerVersion(controllerVersion);
+        lastSyncedControllerVersion = controllerVersion;
+    }
     JsonDocument doc(&psramAllocator);
-    doc["latestVersion"] = ota->getCurrentVersion();
     doc["tp"] = "res:ota-settings";
+    doc["latestVersion"] = ota->getCurrentVersion();
     doc["displayUpdateAvailable"] = ota->isUpdateAvailable(false);
     doc["controllerUpdateAvailable"] = ota->isUpdateAvailable(true);
     doc["displayVersion"] = BUILD_GIT_VERSION;
-    doc["controllerVersion"] = controller->getSystemInfo().version;
+    doc["controllerVersion"] = controllerVersion;
     doc["hardware"] = controller->getSystemInfo().hardware;
-    doc["latestVersion"] = ota->getCurrentVersion();
     doc["channel"] = settings.getOTAChannel();
     doc["updating"] = updating;
     // LittleFS usage metrics
