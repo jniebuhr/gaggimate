@@ -1,7 +1,5 @@
 /** Normalizes shot selections and loads shots with their preferred profiles. */
 
-/* global globalThis */
-
 import { calculateShotMetrics, detectAutoDelay } from '../services/AnalyzerService';
 import { libraryService } from '../services/LibraryService';
 import { cleanName, getProfileDisplayLabel, getShotStorageKey } from '../utils/analyzerUtils';

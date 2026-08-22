@@ -1,7 +1,5 @@
 /** Coordinates analyzer state, loading, matching, and compare workflows. */
 
-/* global globalThis */
-
 import { useState, useEffect, useContext, useRef, useCallback } from 'preact/hooks';
 import { useRoute } from 'preact-iso';
 import { LibraryPanel } from '../components/LibraryPanel';

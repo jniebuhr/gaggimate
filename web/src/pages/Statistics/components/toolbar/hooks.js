@@ -1,5 +1,3 @@
-/* global globalThis */
-
 // Custom hooks for StatisticsToolbar: keyboard shortcut registration
 import { useEffect } from 'preact/hooks';
 import { closeOpenToolbarDetails, isToolbarFloatingPanelTarget } from './helpers';

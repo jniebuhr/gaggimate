@@ -3,8 +3,6 @@ import { signal } from '@preact/signals';
 const DASHBOARD_LAYOUT_KEY = 'dashboardLayout';
 const DASHBOARD_CARD_MODE_KEY = 'dashboardCardMode';
 
-/* global globalThis */
-
 export const DASHBOARD_LAYOUTS = {
   ORDER_FIRST: 'order-first',
   ORDER_LAST: 'order-last',

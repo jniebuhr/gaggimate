@@ -1,5 +1,3 @@
-/* global globalThis */
-
 import { useEffect, useRef, useState } from 'preact/hooks';
 import Chart from 'chart.js/auto';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';

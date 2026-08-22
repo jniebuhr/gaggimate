@@ -6,8 +6,6 @@
  * main component so ShotChart.jsx can stay focused on chart orchestration.
  */
 
-/* global globalThis */
-
 import { useEffect, useState } from 'preact/hooks';
 import { MAIN_CHART_HEIGHT_DEFAULT } from '../constants';
 

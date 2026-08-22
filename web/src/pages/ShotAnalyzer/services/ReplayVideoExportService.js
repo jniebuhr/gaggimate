@@ -1,5 +1,3 @@
-/* global globalThis */
-
 import { REPLAY_TARGET_FPS } from '../components/shotChart/constants';
 
 const EXPORT_FPS = REPLAY_TARGET_FPS;

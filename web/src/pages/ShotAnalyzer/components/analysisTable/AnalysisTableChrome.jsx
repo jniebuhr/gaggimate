@@ -1,5 +1,3 @@
-/* global globalThis */
-
 /** Provides the table header, toolbar actions, and warning popover UI. */
 
 import { createPortal } from 'preact/compat';
