@@ -26,7 +26,7 @@ class ShotHistoryPlugin : public Plugin {
 
     // Index management methods
     bool appendToIndex(const ShotIndexEntry &entry);
-    void updateIndexMetadata(uint32_t shotId, uint8_t rating, uint16_t volume);
+    void updateIndexMetadata(uint32_t shotId, uint8_t rating, uint16_t volume, bool isDirtyNotes = false);
     void markIndexDeleted(uint32_t shotId);
     void rebuildIndex();
     void startAsyncRebuild();
@@ -44,7 +44,7 @@ class ShotHistoryPlugin : public Plugin {
     bool writeEntryAtPosition(File &indexFile, size_t position, const ShotIndexEntry &entry);
     bool createEarlyIndexEntry();
 
-    void saveNotes(const String &id, const JsonDocument &notes);
+    bool saveNotes(const String &id, const JsonDocument &notes);
     void loadNotes(const String &id, JsonDocument &notes);
     void startRecording();
 
