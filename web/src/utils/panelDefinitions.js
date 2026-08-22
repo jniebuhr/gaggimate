@@ -119,6 +119,8 @@ export const PANEL_DEFINITIONS = [
       startFlush: ds.startFlush,
       currentTemperature: ds.currentTemperature,
       targetTemperature: ds.targetTemperature,
+      currentSteamTemperature: ds.currentSteamTemperature,
+      targetSteamTemperature: ds.targetSteamTemperature,
       changeTarget: ds.changeTarget,
       grindTarget: ds.grindTarget,
       grindTargetDuration: ds.grindTargetDuration,

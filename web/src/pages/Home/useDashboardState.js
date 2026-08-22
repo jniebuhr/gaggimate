@@ -86,6 +86,8 @@ export function useDashboardState() {
     mode: s.mode,
     currentTemperature: s.currentTemperature,
     targetTemperature: s.targetTemperature,
+    currentSteamTemperature: s.currentSteamTemperature,
+    targetSteamTemperature: s.targetSteamTemperature,
     currentPressure: s.currentPressure,
     targetPressure: s.targetPressure,
     currentFlow: s.currentFlow,
@@ -106,6 +108,7 @@ export function useDashboardState() {
     selectedProfileId: s.selectedProfileId,
     processInfo: p,
     tofDistance: s.tofDistance,
+    dualBoiler: caps.dualBoiler,
     // derived
     isActive,
     isFinished,

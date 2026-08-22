@@ -43,13 +43,13 @@ void GaggiMateController::setup() {
     }
     heater = new Heater(
         this->brewTemperature, _config.heaterPin, [this]() { thermalRunawayShutdown(); },
-        [this](float Kp, float Ki, float Kd, float Kf) { _comms.sendAutotuneResult(Kp, Ki, Kd, Kf); } ,
+        [this](float Kp, float Ki, float Kd, float Kf) { _comms.sendAutotuneResult(Kp, Ki, Kd, Kf); },
         [this]() { _comms.sendError(ERROR_CODE_AUTOTUNE_TIMEOUT); });
     if (_config.capabilites.dualBoiler) {
         heater2 = new Heater(
             this->steamTemperature, _config.altPin, [this]() { thermalRunawayShutdown(); },
             [this](float Kp, float Ki, float Kd, float Kf) { _comms.sendAutotuneResult(Kp, Ki, Kd, Kf); },
-        [this]() { _comms.sendError(ERROR_CODE_AUTOTUNE_TIMEOUT); });
+            [this]() { _comms.sendError(ERROR_CODE_AUTOTUNE_TIMEOUT); });
         refill = new SimpleRelay(_config.refillPin, _config.valveOn);
         aux = new SimpleRelay(_config.auxPin, _config.valveOn);
         waterSense = new DigitalInput(_config.waterSensePin, [this](const bool state) { _comms.sendButtonState(3, state); }, 25);
@@ -151,7 +151,7 @@ void GaggiMateController::setup() {
     // arrives independently (or batched together in one frame for an atomic
     // update). Control messages feed the connection watchdog via handlePing().
     _comms.onBoilerControl([this](uint8_t index, BoilerControlMode mode, float setpoint) {
-        Heater* target = index == 0 ? this->heater : this->heater2;
+        Heater *target = index == 0 ? this->heater : this->heater2;
         lights->set(index == 0 && setpoint > 0.0f);
         handlePing();
         if (errorState != ERROR_CODE_NONE) {
@@ -201,15 +201,15 @@ void GaggiMateController::setup() {
         }
         if (_config.capabilites.dualBoiler) {
             switch (index) {
-                case 2:
-                    this->refill->set(open);
-                    return;
-                case 3:
-                    this->aux->set(open);
-                    return;
-                default:
-                    // noop
-                    break;
+            case 2:
+                this->refill->set(open);
+                return;
+            case 3:
+                this->aux->set(open);
+                return;
+            default:
+                // noop
+                break;
             }
         } else if (index == 1) {
             // Alt relay: independent function, no watchdog/error gating (matches

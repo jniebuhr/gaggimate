@@ -256,8 +256,8 @@ void Controller::setupBluetooth() {
         }
     });
     pluginManager->on("ota:update:end", [this](Event const &) { applyConnectionPriority(true); });
-    comms.onSensorData([this](float temp, float temp2, float pressure, float puckFlow, float pumpFlow, float puckResistance, float pumpPower,
-                              float heaterPower) {
+    comms.onSensorData([this](float temp, float temp2, float pressure, float puckFlow, float pumpFlow, float puckResistance,
+                              float pumpPower, float heaterPower) {
         onTempRead(temp);
         this->currentSteamTemp = temp2;
         this->pressure = pressure;
@@ -384,8 +384,8 @@ void Controller::onSystemInfo(const char *hardware, const char *version, uint32_
                                 },
                             .protocolVersion = protocolVersion,
                             .protocolMismatch = mismatch};
-    ESP_LOGI(LOG_TAG, "System info: %s %s (proto=%u local=%u dm=%d ps=%d led=%d tof=%d, db=%d)", hardware, version, protocolVersion,
-             gm_proto::PROTOCOL_VERSION, dimming, pressure, ledControl, tof, dualBoiler);
+    ESP_LOGI(LOG_TAG, "System info: %s %s (proto=%u local=%u dm=%d ps=%d led=%d tof=%d, db=%d)", hardware, version,
+             protocolVersion, gm_proto::PROTOCOL_VERSION, dimming, pressure, ledControl, tof, dualBoiler);
     if (mismatch) {
         ESP_LOGW(LOG_TAG, "Protocol version mismatch: controller=%u display=%u -- control inhibited, OTA only", protocolVersion,
                  gm_proto::PROTOCOL_VERSION);
@@ -742,26 +742,23 @@ void Controller::applyConnectionPriority(bool force) {
 }
 
 float Controller::getTargetTemp() const {
-    float brewTemp = 0.0f;
-    {
+    switch (mode) {
+    case MODE_STEAM:
+        // Dual boilers keep the brew boiler at brew temp while steaming.
+        if (!systemInfo.capabilities.dualBoiler) {
+            return settings.getTargetSteamTemp();
+        }
+        [[fallthrough]];
+    case MODE_BREW:
+    case MODE_GRIND: {
         std::lock_guard<std::recursive_mutex> guard(processMutex);
         Process *proc = currentProcess;
         if (proc != nullptr && proc->isActive() && proc->getType() == MODE_BREW) {
             auto brewProcess = static_cast<BrewProcess *>(proc);
-            brewTemp = brewProcess->getTemperature();
+            return brewProcess->getTemperature();
         }
-        brewTemp = profileManager->getSelectedProfile().temperature;
+        return profileManager->getSelectedProfile().temperature;
     }
-    switch (mode) {
-    case MODE_BREW:
-    case MODE_GRIND:
-        return brewTemp;
-    case MODE_STEAM:
-        if (systemInfo.capabilities.dualBoiler) {
-            return brewTemp;
-        } else {
-            return settings.getTargetSteamTemp();
-        }
     case MODE_WATER:
         return settings.getTargetWaterTemp();
     default:
@@ -772,9 +769,8 @@ float Controller::getTargetTemp() const {
 float Controller::getTargetSteamTemp() const {
     if (mode != MODE_STANDBY) {
         return settings.getTargetSteamTemp();
-    } else {
-        return 0.0f;
     }
+    return 0.0f;
 }
 
 void Controller::setTargetTemp(float temperature) {
@@ -985,7 +981,7 @@ void Controller::updateControl() {
         }
     }
 
-    if (!active && systemInfo.capabilities.dualBoiler && steamBoilerLow) {
+    if (!active && mode != MODE_STANDBY && systemInfo.capabilities.dualBoiler && steamBoilerLow) {
         targetPressure = 0.0f;
         targetFlow = 0.0f;
         relay.open = false;
@@ -1344,14 +1340,14 @@ void Controller::handleWaterButton(int buttonStatus) {
 
     if (buttonStatus) {
         switch (getMode()) {
-            case MODE_WATER:
-                if (!isActive()) {
-                    activate();
-                }
-                break;
-            default:
-                setMode(MODE_WATER);
-                break;
+        case MODE_WATER:
+            if (!isActive()) {
+                activate();
+            }
+            break;
+        default:
+            setMode(MODE_WATER);
+            break;
         }
     } else if (!settings.isMomentaryButtons() && getMode() == MODE_WATER && isActive()) {
         deactivate();

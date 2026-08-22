@@ -32,7 +32,9 @@ void action_on_brew_screen(lv_event_t *e) {
 
 void action_on_steam_screen(lv_event_t *e) {
     controller.getUI()->changeScreen(SCREEN_ID_STEAM_SCREEN);
-    controller.setMode(MODE_STEAM);
+    if (!controller.getSystemInfo().capabilities.dualBoiler) {
+        controller.setMode(MODE_STEAM);
+    }
     controller.deactivate();
 };
 
@@ -185,9 +187,21 @@ void action_on_meter_draw(lv_event_t *e) {
     }
 };
 
-void action_on_steam_temp_lower(lv_event_t *e) { controller.lowerTemp(); };
+void action_on_steam_temp_lower(lv_event_t *e) {
+    if (!controller.getSystemInfo().capabilities.dualBoiler) {
+        controller.lowerTemp();
+    } else {
+        controller.lowerSteamTemp();
+    }
+};
 
-void action_on_steam_temp_raise(lv_event_t *e) { controller.raiseTemp(); };
+void action_on_steam_temp_raise(lv_event_t *e) {
+    if (!controller.getSystemInfo().capabilities.dualBoiler) {
+        controller.raiseTemp();
+    } else {
+        controller.raiseSteamTemp();
+    }
+};
 
 void action_on_grind_time_lower(lv_event_t *e) { controller.lowerGrindTarget(); };
 
