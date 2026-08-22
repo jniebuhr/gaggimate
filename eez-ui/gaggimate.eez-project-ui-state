@@ -1,15 +1,15 @@
 {
   "navigation": {
-    "selectedUserPageObject": "[gaggimate.eez-project]:/userPages/4",
+    "selectedUserPageObject": "[gaggimate.eez-project]:/userPages/6",
     "selectedUserWidgetObject": "[gaggimate.eez-project]:/userWidgets/0",
-    "selectedActionObject": "[gaggimate.eez-project]:/actions/36",
-    "selectedGlobalVariableObject": "[gaggimate.eez-project]:/variables/globalVariables/3",
-    "selectedStructureObject": "[gaggimate.eez-project]:/variables/structures/2",
+    "selectedActionObject": "[gaggimate.eez-project]:/actions/5",
+    "selectedGlobalVariableObject": "[gaggimate.eez-project]:/variables/globalVariables/10",
+    "selectedStructureObject": "[gaggimate.eez-project]:/variables/structures/1",
     "selectedThemeObject": "[gaggimate.eez-project]:/themes/0",
-    "selectedThemeColorObject": "[gaggimate.eez-project]:/colors/2",
+    "selectedThemeColorObject": "[gaggimate.eez-project]:/colors/0",
     "selectedBitmapObject": "[gaggimate.eez-project]:/bitmaps/11",
     "subnavigationSelectedItems": {
-      "variables-tab/sub-navigation/selected-item": "Structs"
+      "variables-tab/sub-navigation/selected-item": "Global"
     }
   },
   "layoutModel": {
@@ -31,7 +31,7 @@
           {
             "type": "border",
             "selected": 3,
-            "size": 255.5,
+            "size": 262.5,
             "location": "right",
             "children": [
               {
@@ -78,7 +78,7 @@
           },
           {
             "type": "border",
-            "selected": 1,
+            "selected": 0,
             "size": 154.5,
             "location": "bottom",
             "children": [
@@ -197,96 +197,17 @@
               "type": "tabset",
               "id": "EDITORS",
               "weight": 46.47304077762655,
-              "selected": 1,
               "enableDeleteWhenEmpty": false,
               "enableClose": false,
               "children": [
                 {
                   "type": "tab",
-                  "id": "#2aa7402a-95e1-481f-87cc-ef596a51e84a",
-                  "name": "SteamScreen",
+                  "id": "#ba1e44f8-0159-4b14-82c6-52b132c70afa",
+                  "name": "WaterScreen",
                   "component": "editor",
                   "config": {
-                    "objectPath": "[gaggimate.eez-project]:/userPages/5",
+                    "objectPath": "[gaggimate.eez-project]:/userPages/6",
                     "permanent": false
-                  },
-                  "icon": "svg:page"
-                },
-                {
-                  "type": "tab",
-                  "id": "#e4422c6b-7edb-415d-87c6-346b00545887",
-                  "name": "MenuScreenNew",
-                  "component": "editor",
-                  "config": {
-                    "objectPath": "[gaggimate.eez-project]:/userPages/4",
-                    "permanent": true
-                  },
-                  "icon": "svg:page"
-                },
-                {
-                  "type": "tab",
-                  "id": "#e5e97650-2a73-4b11-ad4f-8f229477178e",
-                  "name": "MenuScreen",
-                  "component": "editor",
-                  "config": {
-                    "objectPath": "[gaggimate.eez-project]:/userPages/3",
-                    "permanent": true
-                  },
-                  "icon": "svg:page"
-                },
-                {
-                  "type": "tab",
-                  "id": "#acbf425d-f9ac-457e-90c1-4ea068d04b16",
-                  "name": "onInfoScreen",
-                  "component": "editor",
-                  "config": {
-                    "objectPath": "[gaggimate.eez-project]:/actions/36",
-                    "permanent": false
-                  },
-                  "icon": "material:code"
-                },
-                {
-                  "type": "tab",
-                  "id": "#07a87284-0adf-47ce-9994-8cc743141d5f",
-                  "name": "InfoScreen",
-                  "component": "editor",
-                  "config": {
-                    "objectPath": "[gaggimate.eez-project]:/userPages/9",
-                    "permanent": true
-                  },
-                  "icon": "svg:page"
-                },
-                {
-                  "type": "tab",
-                  "id": "#dc5c25f1-246c-491e-a1d2-3205251f4306",
-                  "name": "Settings",
-                  "component": "editor",
-                  "config": {
-                    "objectPath": "[gaggimate.eez-project]:/settings",
-                    "subObjectPath": "[gaggimate.eez-project]:/settings",
-                    "permanent": false
-                  },
-                  "icon": "material:settings"
-                },
-                {
-                  "type": "tab",
-                  "id": "#da6b7a7d-a559-40c2-ac4a-7bd06a3c82e6",
-                  "name": "dials",
-                  "component": "editor",
-                  "config": {
-                    "objectPath": "[gaggimate.eez-project]:/userWidgets/0",
-                    "permanent": true
-                  },
-                  "icon": "svg:user_widget"
-                },
-                {
-                  "type": "tab",
-                  "id": "#c60bcd4b-9cca-4b7a-b219-3299251afca2",
-                  "name": "StandbyScreen",
-                  "component": "editor",
-                  "config": {
-                    "objectPath": "[gaggimate.eez-project]:/userPages/0",
-                    "permanent": true
                   },
                   "icon": "svg:page"
                 }
@@ -545,7 +466,7 @@
                 {
                   "type": "tab",
                   "id": "#2876bb61-c92f-48b7-a518-1ca3767f32f6",
-                  "name": "MenuScreen_1",
+                  "name": "StandbyScreen",
                   "component": "editor",
                   "config": {
                     "objectPath": "[gaggimate.eez-project]:/userPages/0",
@@ -1182,7 +1103,7 @@
           "x": -224,
           "y": -252.000244140625
         },
-        "scale": 0.8
+        "scale": 1.25
       },
       "timeline": {
         "isEditorActive": false,
@@ -1193,12 +1114,12 @@
       "selectionFront": {},
       "selectionBack": {
         "0": {
-          "0": {},
+          "0": {
+            "$selected": true
+          },
           "1": {},
           "3": {
-            "0": {
-              "$selected": true
-            }
+            "0": {}
           }
         }
       }
@@ -1217,7 +1138,7 @@
           "x": -224,
           "y": -252.000244140625
         },
-        "scale": 1
+        "scale": 0.8
       },
       "timeline": {
         "isEditorActive": false,
@@ -1234,7 +1155,10 @@
             "2": {
               "1": {
                 "1": {
-                  "1": {}
+                  "1": {},
+                  "2": {
+                    "$selected": true
+                  }
                 }
               },
               "2": {
@@ -1293,7 +1217,7 @@
           "x": -239.5,
           "y": -345.729248046875
         },
-        "scale": 0.8
+        "scale": 1.25
       },
       "timeline": {
         "isEditorActive": false,
@@ -1339,7 +1263,7 @@
           "x": -240,
           "y": -247
         },
-        "scale": 0.8
+        "scale": 1.25
       },
       "timeline": {
         "isEditorActive": false,
@@ -1383,7 +1307,7 @@
           "x": -213.60000000000002,
           "y": -215.655859375
         },
-        "scale": 0.8
+        "scale": 1.25
       },
       "timeline": {
         "isEditorActive": false,
@@ -1431,13 +1355,15 @@
       "selectionFront": {},
       "selectionBack": {
         "0": {
-          "0": {
-            "$selected": true
-          },
+          "0": {},
           "1": {
             "0": {},
             "1": {},
-            "2": {}
+            "2": {
+              "2": {
+                "$selected": true
+              }
+            }
           }
         }
       }
@@ -1453,10 +1379,10 @@
       },
       "transform": {
         "translate": {
-          "x": -240,
-          "y": -247
+          "x": -313.2887834821429,
+          "y": -404.2834821428571
         },
-        "scale": 1
+        "scale": 1.25
       },
       "timeline": {
         "isEditorActive": false,
@@ -1467,15 +1393,19 @@
       "selectionFront": {},
       "selectionBack": {
         "0": {
-          "0": {
-            "$selected": true
-          },
+          "0": {},
           "1": {
-            "1": {
-              "1": {},
-              "2": {}
+            "1": {},
+            "2": {},
+            "3": {
+              "3": {},
+              "4": {
+                "$selected": true
+              }
             },
-            "2": {}
+            "5": {
+              "3": {}
+            }
           }
         }
       }
@@ -1966,9 +1896,9 @@
       "transform": {
         "translate": {
           "x": -240,
-          "y": -562.4315185546875
+          "y": -352.1033935546875
         },
-        "scale": 1
+        "scale": 1.25
       },
       "timeline": {
         "isEditorActive": false,
@@ -2031,7 +1961,27 @@
       "selectionFront": {},
       "selectionBack": {
         "0": {
-          "0": {}
+          "0": {},
+          "1": {
+            "2": {
+              "0": {},
+              "1": {}
+            },
+            "3": {
+              "0": {},
+              "1": {
+                "$selected": true
+              },
+              "2": {},
+              "3": {}
+            },
+            "4": {
+              "0": {},
+              "1": {},
+              "2": {},
+              "3": {}
+            }
+          }
         }
       },
       "transform": {
@@ -2039,7 +1989,7 @@
           "x": -233,
           "y": -226.1632080078125
         },
-        "scale": 1
+        "scale": 1.25
       },
       "timeline": {
         "isEditorActive": false,
@@ -2092,6 +2042,9 @@
       "selectionFront": {},
       "selectionBack": {
         "0": {
+          "0": {
+            "$selected": true
+          },
           "1": {
             "0": {
               "0": {},
@@ -2109,7 +2062,7 @@
           "x": -240,
           "y": -240
         },
-        "scale": 0.8
+        "scale": 1.25
       },
       "timeline": {
         "isEditorActive": false,
@@ -2140,7 +2093,7 @@
           "x": -240,
           "y": -357.786865234375
         },
-        "scale": 1
+        "scale": 0.8
       },
       "timeline": {
         "isEditorActive": false,
@@ -2241,19 +2194,71 @@
     },
     "[gaggimate.eez-project]:/userPages/11[flow-state]": {
       "selectionFront": {},
-      "selectionBack": {},
+      "selectionBack": {
+        "0": {
+          "1": {
+            "1": {
+              "0": {},
+              "2": {
+                "$selected": true
+              },
+              "3": {}
+            }
+          }
+        }
+      },
       "transform": {
         "translate": {
           "x": -240,
           "y": -240
         },
-        "scale": 1
+        "scale": 1.25
       },
       "timeline": {
         "isEditorActive": false,
         "position": 0,
         "secondToPx": 200,
         "scrollLeft": 0
+      }
+    },
+    "[gaggimate.eez-project]:/actions/37[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": 0,
+          "y": 0
+        },
+        "scale": 1
+      }
+    },
+    "[gaggimate.eez-project]:/actions/38[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": 0,
+          "y": 0
+        },
+        "scale": 1
+      }
+    },
+    "[gaggimate.eez-project]:/actions/39[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": 0,
+          "y": 0
+        },
+        "scale": 1
+      }
+    },
+    "[gaggimate.eez-project]:/actions/5[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": 0,
+          "y": 0
+        },
+        "scale": 1
       }
     }
   },
@@ -2263,7 +2268,8 @@
   "searchMatchWholeWord": false,
   "replaceEnabled": false,
   "replaceText": "",
-  "pageRuntimeFrontFace": true,
+  "pageEditorFrontFace": false,
+  "pageRuntimeFrontFace": false,
   "breakpoints": {},
   "watchExpressions": [],
   "showComponentDescriptions": true,
@@ -2287,7 +2293,7 @@
   ],
   "showInactiveFlowsInDebugger": true,
   "globalFlowZoom": true,
-  "flowZoom": 0.8,
+  "flowZoom": 1.25,
   "implementationLanguage": "C++",
   "openDialogDefaultPath": "/Users/jniebuhr/Downloads/qrcode-information-2.png"
 }

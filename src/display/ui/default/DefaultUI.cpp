@@ -269,6 +269,12 @@ void DefaultUI::loop() {
         grindWeightTarget = FloatValue(controller->getSettings().getTargetGrindVolume());
         eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_GRIND_WEIGHT_TARGET, grindWeightTarget);
 
+        formatDuration(controller->getSettings().getTargetWaterDuration(), timeBuf, sizeof(timeBuf));
+        waterTimeTarget = StringValue(timeBuf);
+        eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_WATER_TIME_TARGET, waterTimeTarget);
+        waterWeightTarget = FloatValue(controller->getSettings().getTargetWaterVolume());
+        eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_WATER_WEIGHT_TARGET, waterWeightTarget);
+
         handleScreenChange();
         currentScreen = static_cast<ScreensEnum>(eez_flow_get_current_screen());
         effect_mgr.evaluate_all();
@@ -394,6 +400,8 @@ void DefaultUI::setupState() {
     eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_SCALE_WEIGHT_CURRENT, currentWeight);
     eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_GRIND_WEIGHT_TARGET, grindWeightTarget);
     eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_GRIND_TIME_TARGET, grindTimeTarget);
+    eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_WATER_WEIGHT_TARGET, waterWeightTarget);
+    eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_WATER_TIME_TARGET, waterTimeTarget);
 
     eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_SYSTEM, systemStatus);
     eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_PREVIEW_PROFILE, previewProfileInfo);

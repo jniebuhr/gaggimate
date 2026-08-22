@@ -43,6 +43,7 @@ extern const lv_img_dsc_t img_clock_future_past_40x40;
 extern const lv_img_dsc_t img_indicator;
 extern const lv_img_dsc_t img_settings_80x80;
 extern const lv_img_dsc_t img_info_40x40;
+extern const lv_img_dsc_t img_infinity;
 
 #ifndef EXT_IMG_DESC_T
 #define EXT_IMG_DESC_T
@@ -52,7 +53,7 @@ typedef struct _ext_img_desc_t {
 } ext_img_desc_t;
 #endif
 
-extern const ext_img_desc_t images[36];
+extern const ext_img_desc_t images[37];
 
 #ifdef __cplusplus
 }
