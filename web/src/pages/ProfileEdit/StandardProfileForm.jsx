@@ -1,6 +1,5 @@
 import Card from '../../components/Card.jsx';
 import { Spinner } from '../../components/Spinner.jsx';
-import { isNumber } from 'chart.js/helpers';
 import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
@@ -8,6 +7,11 @@ import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
 import { Tooltip } from '../../components/Tooltip.jsx';
 import { ProfileMainInformation } from './ProfileMainInformation.jsx';
 import { getProfilePhases, removePhaseAt, updatePhaseAt } from './profilePhases.js';
+import {
+  getPumpInputState,
+  getPumpPowerInputProps,
+  normalizeProfilePumpPowers,
+} from './pumpInput.js';
 
 export function StandardProfileForm(props) {
   const { data, onChange, onSave, saving = true, pressureAvailable = false } = props;
@@ -55,7 +59,7 @@ export function StandardProfileForm(props) {
     <form
       onSubmit={e => {
         e.preventDefault();
-        onSave(data);
+        onSave(normalizeProfilePumpPowers(data));
       }}
     >
       <div className='grid grid-cols-1 gap-4 lg:grid-cols-10'>
@@ -154,10 +158,9 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
   const volumetricTarget = targets.find(t => t.type === 'volumetric') || {};
   const targetWeight = volumetricTarget?.value || 0;
 
-  const pumpPower = isNumber(phase.pump) ? phase.pump : 100;
-  const pressure = !isNumber(phase.pump) ? phase.pump.pressure : 0;
-  const flow = !isNumber(phase.pump) ? phase.pump.flow : 0;
-  const mode = isNumber(phase.pump) ? (phase.pump === 0 ? 'off' : 'power') : phase.pump.target;
+  const pumpInput = getPumpInputState(phase.pump);
+  const pumpPowerProps = getPumpPowerInputProps(phase.pump, value => onFieldChange('pump', value));
+  const mode = pumpInput.mode;
 
   return (
     <div
@@ -307,8 +310,8 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
                     mode !== 'pressure' &&
                     onFieldChange('pump', {
                       target: 'pressure',
-                      pressure: phase.pump?.pressure || 0,
-                      flow: phase.pump?.flow || 0,
+                      pressure: pumpInput.pressure,
+                      flow: pumpInput.flow,
                     })
                   }
                   aria-pressed={mode === 'pressure'}
@@ -323,8 +326,8 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
                     mode !== 'flow' &&
                     onFieldChange('pump', {
                       target: 'flow',
-                      pressure: phase.pump?.pressure || 0,
-                      flow: phase.pump?.flow || 0,
+                      pressure: pumpInput.pressure,
+                      flow: pumpInput.flow,
                     })
                   }
                   aria-pressed={mode === 'flow'}
@@ -352,8 +355,7 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
                 step='1'
                 min={0}
                 max={100}
-                value={pumpPower}
-                onChange={e => onFieldChange('pump', parseFloat(e.target.value))}
+                {...pumpPowerProps}
                 aria-label='Pump power as percentage'
               />
               <span aria-label='percent'>%</span>
@@ -375,9 +377,13 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
                   className='grow'
                   type='number'
                   step='0.01'
-                  value={pressure}
+                  value={pumpInput.pressure}
                   onChange={e =>
-                    onFieldChange('pump', { ...phase.pump, pressure: parseFloat(e.target.value) })
+                    onFieldChange('pump', {
+                      ...phase.pump,
+                      pressure:
+                        e.target.value === '' ? 0 : Number.parseFloat(e.target.value),
+                    })
                   }
                   aria-label='Pressure in bar'
                   min='0'
@@ -397,9 +403,12 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
                   className='grow'
                   type='number'
                   step='0.01'
-                  value={flow}
+                  value={pumpInput.flow}
                   onChange={e =>
-                    onFieldChange('pump', { ...phase.pump, flow: parseFloat(e.target.value) })
+                    onFieldChange('pump', {
+                      ...phase.pump,
+                      flow: e.target.value === '' ? 0 : Number.parseFloat(e.target.value),
+                    })
                   }
                   aria-label='Flow rate in grams per second'
                   min='0'
