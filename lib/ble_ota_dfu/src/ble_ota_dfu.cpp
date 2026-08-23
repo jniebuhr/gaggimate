@@ -376,7 +376,9 @@ bool BLE_OTA_DFU::begin(String local_name) {
         return false;
     }
 
-    this->configure_OTA(pServer);
+    if (!this->configure_OTA(pServer)) {
+        return false;
+    }
 
     // Start advertising
     pServer->getAdvertising()->addServiceUUID(pServiceOTA->getUUID());
