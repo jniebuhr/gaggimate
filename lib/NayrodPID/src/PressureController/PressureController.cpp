@@ -108,6 +108,9 @@ float PressureController::getSlip() const {
 float PressureController::getGeometricFlow() const { return getAvailableFlow() + getSlip(); }
 
 float PressureController::getPumpDutyCycleForFlowRate() const {
+    if (*_rawFlowSetpoint <= 0.0f) {
+        return 0.0f;
+    }
     const float geometricFlow = getGeometricFlow();
     if (geometricFlow <= 0.0f) {
         return 0.0f;
