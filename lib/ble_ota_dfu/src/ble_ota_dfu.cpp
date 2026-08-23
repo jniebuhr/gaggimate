@@ -307,7 +307,7 @@ void BLEOverTheAirDeviceFirmwareUpdate::onWrite(BLECharacteristic *pCharacterist
 
 bool BLE_OTA_DFU::configure_OTA(NimBLEServer *pServer) {
     // Init FLASH (LittleFS on the board's filesystem partition)
-    if (!LittleFS.begin(FORMAT_FLASH_IF_MOUNT_FAILED)) {
+    if (!LittleFS.begin(FORMAT_FLASH_IF_MOUNT_FAILED, "/littlefs", 10, "spiffs")) {
         ESP_LOGE(TAG, "LittleFS Mount Failed");
         return false;
     }
