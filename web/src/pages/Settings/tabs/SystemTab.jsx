@@ -61,7 +61,7 @@ function OtaProgressView({ phase, progress }) {
 function StorageAndMemorySection({ formData }) {
   return (
     <Section title='Storage & Memory' className='h-full'>
-      <div className='grid grid-cols-1 gap-6 '>
+      <div className='grid grid-cols-1 gap-6'>
         {formData.spiffsTotal !== undefined && (
           <div className='flex flex-col space-y-2'>
             <span className='text-base-content/70 text-sm font-medium'>Storage (LittleFS)</span>
@@ -317,7 +317,7 @@ export function SystemTab() {
             <label htmlFor='channel' className='mb-2 block text-sm font-medium'>
               Update Channel
             </label>
-            <div className='flex items-center gap-2 w-full'>
+            <div className='flex w-full items-center gap-2'>
               <select id='channel' name='channel' className='select select-bordered grow'>
                 <option value='latest' selected={formData.channel === 'latest'}>
                   Stable
@@ -345,7 +345,7 @@ export function SystemTab() {
             </span>
             <span className='text-base-content flex items-center gap-2 font-semibold'>
               {rssi}dB (Roundtrip: {lat} ms)
-              <span className={`indicator-item status ${getRssiStatusClass(rssi)}`}/>
+              <span className={`indicator-item status ${getRssiStatusClass(rssi)}`} />
             </span>
           </div>
 

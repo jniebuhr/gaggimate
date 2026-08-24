@@ -52,6 +52,8 @@ class GitHubOTA {
     ControllerOTA _controller_ota;
     phase_callback_t _phase_callback = nullptr;
     progress_callback_t _progress_callback = nullptr;
+    bool _controller_update_required = false;
+    bool _screen_update_required = false;
 };
 
 #endif

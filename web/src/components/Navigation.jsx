@@ -21,6 +21,8 @@ import {
   dashboardModeSignal,
   setDashboardMode,
 } from '../utils/dashboardManager.js';
+import { machine } from '../services/ApiService.js';
+import { computed } from '@preact/signals';
 
 // List of random icons to display - add your icons here (SVG strings, text, or emojis)
 const RANDOM_ICONS = [
@@ -46,6 +48,8 @@ function getRandomIcon() {
   return RANDOM_ICONS[randomIndex];
 }
 
+const update = computed(() => machine.value.status.update);
+
 const NAVIGATION_SECTIONS = [
   {
     id: 'dashboard',
@@ -66,22 +70,14 @@ const NAVIGATION_SECTIONS = [
     items: [
       { label: 'Profiles', link: '/profiles', icon: faList },
       { label: 'Shot History', link: '/history', icon: faTimeline },
-      { label: 'Shot Analyzer', link: '/analyzer', icon: faMagnifyingGlassChart, isNew: true },
-      { label: 'Statistics', link: '/statistics', icon: faChartSimple, isNew: true },
+      { label: 'Shot Analyzer', link: '/analyzer', icon: faMagnifyingGlassChart, isNew: false },
+      { label: 'Statistics', link: '/statistics', icon: faChartSimple, isNew: false },
     ],
   },
   {
     id: 'settings',
     showDivider: true,
-    items: [
-      { label: 'Bluetooth Devices', link: '/settings/bluetooth', icon: faBluetoothB },
-      { label: 'Settings', link: '/settings', icon: faCog },
-    ],
-  },
-  {
-    id: 'updates',
-    showDivider: true,
-    items: [{ label: 'System & Updates', link: '/settings/system', icon: faRotate }],
+    items: [{ label: 'Settings', link: '/settings', icon: faCog }],
   },
 ];
 
@@ -143,7 +139,16 @@ function DashboardModeDropdown({ editLink, editIcon, editActive, isActive }) {
   );
 }
 
-function MenuItem({ collapsed = false, icon, isNew = false, label, link, editLink, editIcon }) {
+function MenuItem({
+  collapsed = false,
+  icon,
+  isNew = false,
+  isUnread = false,
+  label,
+  link,
+  editLink,
+  editIcon,
+}) {
   const { path } = useLocation();
   const isActive = path === link;
   const editActive = path === editLink;
@@ -164,12 +169,15 @@ function MenuItem({ collapsed = false, icon, isNew = false, label, link, editLin
     <div className={`flex h-12 flex-row ${collapsed ? 'w-12' : 'w-full'}`}>
       <a
         href={link}
-        className={`flex-grow ${className}`}
+        className={`flex-grow ${className} relative`}
         aria-label={collapsed ? label : undefined}
         aria-current={isActive ? 'page' : undefined}
         title={collapsed ? label : undefined}
       >
         <FontAwesomeIcon size='md' icon={icon} />
+        {isUnread && (
+          <span className='indicator-item status status-warning absolute -top-0 -right-0'></span>
+        )}
         {isExpanded ? (
           <div className='indicator'>
             {isNew ? (
@@ -315,7 +323,14 @@ export function Navigation({ collapsed = false, onToggleCollapsed }) {
               {section.showDivider ? <hr className='h-5 border-0' /> : null}
               <div className='space-y-1.5'>
                 {section.items.map(item => {
-                  return <MenuItem key={item.link} collapsed={collapsed} {...item} />;
+                  return (
+                    <MenuItem
+                      key={item.link}
+                      collapsed={collapsed}
+                      isUnread={item.link === '/settings' && update.value}
+                      {...item}
+                    />
+                  );
                 })}
               </div>
             </div>
