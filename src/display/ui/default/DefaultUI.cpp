@@ -463,6 +463,12 @@ void DefaultUI::handleScreenChange() {
             setBrightness(settings.getMainBrightness());
         }
         eez_flow_set_screen(targetScreen, LV_SCR_LOAD_ANIM_NONE, 0, 0);
+
+        // Trigger an event for main menu load
+        if (targetScreen == SCREEN_ID_MENU_SCREEN_NEW) {
+            pluginManager->trigger("ui:screen:menu");
+        }
+
         animateGaugeTicks(currentScreen, targetScreen);
         rerender = true;
     }

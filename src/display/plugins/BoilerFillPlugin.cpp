@@ -10,9 +10,15 @@ void BoilerFillPlugin::setup(Controller *controller, PluginManager *pluginManage
         this->controller->startProcess(new PumpProcess(this->controller->getSettings().getStartupFillTime()));
     });
     pluginManager->on("controller:mode:change", [this](Event const &event) {
-        int newMode = event.getInt("value");
-        if (newMode == MODE_BREW && this->controller->getMode() == MODE_STEAM) {
+        if (this->controller->getMode() == MODE_STEAM) {
             this->controller->startProcess(new PumpProcess(this->controller->getSettings().getSteamFillTime()));
+        }
+    });
+    // Main Menu load event handler
+    pluginManager->on("ui:screen:menu", [this](Event const &) {
+        // If mode is STEAM and refill on startup is 0 start refill on main menu to avoid starting with empty boiler
+        if (this->controller->getSettings().getStartupFillTime() == 0 && this->controller->getMode() == MODE_STEAM) {
+             this->controller->startProcess(new PumpProcess(this->controller->getSettings().getSteamFillTime()));
         }
     });
 }
