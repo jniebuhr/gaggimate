@@ -161,6 +161,20 @@ void Settings::setHomeAssistantPassword(const String &homeAssistantPassword) {
     this->homeAssistantPassword.set(homeAssistantPassword);
 }
 
+void Settings::setShotUploadEnabled(const bool shotUploadEnabled) { this->shotUploadEnabled.set(shotUploadEnabled); }
+
+void Settings::setShotUploadServer(const String &shotUploadServer) { this->shotUploadServer.set(shotUploadServer); }
+
+void Settings::setShotUploadEndpoint(const String &shotUploadEndpoint) { this->shotUploadEndpoint.set(shotUploadEndpoint); }
+
+void Settings::setShotUploadMachineId(const String &shotUploadMachineId) {
+    this->shotUploadMachineId.set(shotUploadMachineId);
+}
+
+void Settings::setShotUploadRetries(const int shotUploadRetries) {
+    this->shotUploadRetries.set(std::clamp(shotUploadRetries, 0, 10));
+}
+
 void Settings::setMomentaryButtons(bool momentary_buttons) { momentaryButtons.set(momentary_buttons); }
 
 void Settings::setTimezone(String timezone) { this->timezone.set(timezone); }

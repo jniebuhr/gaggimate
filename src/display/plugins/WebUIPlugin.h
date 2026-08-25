@@ -40,6 +40,7 @@ class WebUIPlugin : public Plugin {
     void handleAutotuneStart(uint32_t clientId, JsonDocument &request);
     void handleProfileRequest(uint32_t clientId, JsonDocument &request);
     void handleFlushStart(uint32_t clientId, JsonDocument &request);
+    void handleShotUploadStart(uint32_t clientId, JsonDocument &request);
 
     // HTTP handlers
     // Serves the web UI from the firmware-embedded, memory-mapped flash blob
