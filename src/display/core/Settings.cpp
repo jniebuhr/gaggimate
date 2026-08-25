@@ -103,6 +103,10 @@ void Settings::setTargetGrindVolume(double target_grind_volume) { targetGrindVol
 
 void Settings::setTargetGrindDuration(const int target_duration) { targetGrindDuration.set(target_duration); }
 
+void Settings::setTargetWaterVolume(double target_water_volume) { targetWaterVolume.set(target_water_volume); }
+
+void Settings::setTargetWaterDuration(const int target_duration) { targetWaterDuration.set(target_duration); }
+
 void Settings::setBrewDelay(double brew_Delay) { brewDelay.set(std::clamp(brew_Delay, 0.0, 4000.0)); }
 
 void Settings::setGrindDelay(double grind_Delay) { grindDelay.set(std::clamp(grind_Delay, 0.0, 4000.0)); }

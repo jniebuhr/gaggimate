@@ -53,6 +53,7 @@ convert "disk.svg" 30
 convert "floppy-disks.svg" 30
 convert "meter-droplet.svg" 40
 convert "time-check.svg" 40
+convert "infinity.svg" 40
 
   $command -w "$size" -h "$size" "$input" -o "$output"
 }

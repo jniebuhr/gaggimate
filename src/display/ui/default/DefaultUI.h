@@ -134,6 +134,8 @@ class DefaultUI {
     Value steamReady = BooleanValue(false);
     Value grindWeightTarget = FloatValue(18.0);
     Value grindTimeTarget = StringValue("0:15");
+    Value waterWeightTarget = FloatValue(80.0);
+    Value waterTimeTarget = StringValue("0:00");
 
     int profileDirty = 0;
     int currentProfileIdx = 0;

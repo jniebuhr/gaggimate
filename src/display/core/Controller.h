@@ -37,6 +37,8 @@ class Controller {
     void setPidSettings();
     void setTargetGrindDuration(int duration);
     void setTargetGrindVolume(double volume);
+    void setTargetWaterDuration(int duration);
+    void setTargetWaterVolume(double volume);
 
     int getMode() const;
 
@@ -85,6 +87,10 @@ class Controller {
     void lowerBrewTarget();
     void raiseGrindTarget();
     void lowerGrindTarget();
+    int getTargetWaterDuration();
+    double getTargetWaterVolume();
+    void raiseWaterTarget();
+    void lowerWaterTarget();
     void activate();
     void deactivate();
     void clear();
