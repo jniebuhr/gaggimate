@@ -102,6 +102,7 @@ struct ShotLogHeader {
 //   v / ev: weight in g * 10 (0.1 g resolution)
 //   pr: puck resistance * 100 (0.01 step, saturates at uint16_t max)
 //   si: system info bit-packed (see SYSTEM_INFO_* constants)
+//   wp: water pumped * 10 (0.1 ml resolution)
 struct ShotLogSample {
     uint16_t t;  // sample index (0.25 s ticks)
     uint16_t tt; // target temp * 10
@@ -116,6 +117,7 @@ struct ShotLogSample {
     uint16_t ev; // estimated weight * 10
     uint16_t pr; // puck resistance * 100
     uint16_t si; // system info bit-packed
+    uint16_t wp; // water pumped * 10
 };
 
 static_assert(sizeof(ShotLogHeader) == SHOT_LOG_HEADER_SIZE, "ShotLogHeader size mismatch");

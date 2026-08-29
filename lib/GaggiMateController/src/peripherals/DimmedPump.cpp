@@ -46,6 +46,7 @@ float DimmedPump::getPuckFlow() { return _pressureController.getCoffeeFlowRate()
 float DimmedPump::getPuckResistance() { return _pressureController.getPuckResistance(); }
 
 void DimmedPump::tare() {
+    _pumpedWater = 0.0f;
     _pressureController.tare();
     _pressureController.reset();
 }
@@ -60,6 +61,12 @@ void DimmedPump::loopTask(void *arg) {
 }
 
 void DimmedPump::updatePower() {
+    if (_binaryMode) {
+        _pumpedWater += _currentFlow * 0.03f;
+    } else {
+        _pumpedWater += _currentFlow / static_cast<float>(_cps) * static_cast<float>(_psm.getCounter());
+        _psm.resetCounter();
+    }
     _pressureController.update(static_cast<PressureController::ControlMode>(_mode));
     if (_mode != ControlMode::POWER) {
         _power = _controllerPower;
