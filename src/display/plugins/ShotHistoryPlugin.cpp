@@ -148,8 +148,10 @@ void ShotHistoryPlugin::record() {
         lastBluetoothWeight = btWeight;
 
         ShotLogSample sample{};
-        uint32_t tick = sampleCount <= 0xFFFF ? sampleCount : 0xFFFF;
-        sample.t = static_cast<uint16_t>(tick);
+        // Capture when this sampling pass actually runs. Older formats inferred
+        // time from sampleCount, which compressed the chart whenever task/SD
+        // overhead made the nominal 250 ms loop run late.
+        sample.t = millis() - shotStart;
         sample.tt = encodeUnsigned(controller->getTargetTemp(), TEMP_SCALE, TEMP_MAX_VALUE);
         sample.ct = encodeUnsigned(currentTemperature, TEMP_SCALE, TEMP_MAX_VALUE);
         sample.tp = encodeUnsigned(controller->getTargetPressure(), PRESSURE_SCALE, PRESSURE_MAX_VALUE);
@@ -601,10 +603,24 @@ void ShotHistoryPlugin::loadNotes(const String &id, JsonDocument &notes) {
 
 void ShotHistoryPlugin::loopTask(void *arg) {
     auto *plugin = static_cast<ShotHistoryPlugin *>(arg);
+    TickType_t lastWakeTime = xTaskGetTickCount();
+    const TickType_t interval = pdMS_TO_TICKS(SHOT_LOG_SAMPLE_INTERVAL_MS);
     while (true) {
         plugin->record();
-        // Use canonical interval from shot log format to avoid divergence.
-        vTaskDelay(SHOT_LOG_SAMPLE_INTERVAL_MS / portTICK_PERIOD_MS);
+
+        // If record() ran past the next deadline, the measurements that should
+        // have occurred during that gap cannot be recovered. Rebase the cadence
+        // from now instead of running immediate catch-up passes with nearly
+        // identical capture times. The v6 timestamps preserve the visible gap.
+        const TickType_t now = xTaskGetTickCount();
+        const TickType_t nextDeadline = lastWakeTime + interval;
+        if (static_cast<int32_t>(now - nextDeadline) >= 0) {
+            lastWakeTime = now;
+        }
+
+        // Keep the cadence tied to an absolute schedule so time spent in
+        // record() does not accumulate into every subsequent interval.
+        vTaskDelayUntil(&lastWakeTime, interval);
     }
 }
 
@@ -964,9 +980,20 @@ void ShotHistoryPlugin::rebuildIndex() {
             ShotLogSample sample{};
             shotFile.seek(shotHeader.headerSize, SeekSet);
             for (uint32_t s = 0; s < shotHeader.sampleCount; s++) {
-                if (shotFile.read(reinterpret_cast<uint8_t *>(&sample), sizeof(sample)) != sizeof(sample)) {
+                // v1-v5 used a 26-byte record with a 16-bit t field. The
+                // aggregate fields begin two bytes later in v6 because t is
+                // now uint32_t; decode both layouts while rebuilding indexes.
+                const size_t expectedSampleSize = shotHeader.version >= 6 ? 28 : 26;
+                const size_t sampleSize = shotHeader.reserved0 ? shotHeader.reserved0 : expectedSampleSize;
+                if (sampleSize != expectedSampleSize) {
                     break;
                 }
+                uint8_t raw[sizeof(ShotLogSample)]{};
+                if (shotFile.read(raw, sampleSize) != sampleSize) {
+                    break;
+                }
+                const size_t valueOffset = shotHeader.version >= 6 ? 4 : 2;
+                memcpy(reinterpret_cast<uint8_t *>(&sample.tt), raw + valueOffset, sampleSize - valueOffset);
                 tempSum += sample.ct;
                 tempCount++;
                 if (sample.cp > maxPressure) {

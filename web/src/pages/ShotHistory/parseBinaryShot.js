@@ -190,9 +190,10 @@ export function parseBinaryShot(arrayBuffer, id) {
     brewDelay = view.getUint16(110 + 12 * 29 + 2, true);
   }
 
-  // Calculate expected sample size from fieldsMask
+  // v6 stores the timestamp as uint32 elapsed milliseconds. Older versions
+  // store a uint16 sample index which is multiplied by sampleInterval.
   const fieldCount = countSetBits(fieldsMask);
-  const expectedSampleSize = fieldCount * 2; // Each field is 16 bits = 2 bytes
+  const expectedSampleSize = fieldCount * 2 + (version >= 6 ? 2 : 0);
 
   if (deviceSampleSize !== expectedSampleSize) {
     throw new Error(
@@ -238,20 +239,25 @@ export function parseBinaryShot(arrayBuffer, id) {
     const base = headerSize + i * sampleSize;
     const sample = {};
 
-    // Parse each field dynamically
+    // Parse each field dynamically. The first field grew from 2 to 4 bytes in
+    // v6; all remaining fields retain their existing order and width.
+    let offset = base;
     for (let fieldIdx = 0; fieldIdx < fieldLayout.length; fieldIdx++) {
       const field = fieldLayout[fieldIdx];
-      const offset = base + fieldIdx * 2; // Each field is 2 bytes
 
       let rawValue;
-      if (field.type === 'int16') {
+      if (version >= 6 && field.bitPos === FIELD_BITS.T) {
+        rawValue = view.getUint32(offset, true);
+      } else if (field.type === 'int16') {
         rawValue = view.getInt16(offset, true);
       } else {
         rawValue = view.getUint16(offset, true);
       }
 
       let finalValue;
-      if (field.transform) {
+      if (version >= 6 && field.bitPos === FIELD_BITS.T) {
+        finalValue = rawValue;
+      } else if (field.transform) {
         finalValue = field.transform(rawValue, sampleInterval);
       } else if (field.scale) {
         finalValue = rawValue / field.scale;
@@ -260,6 +266,7 @@ export function parseBinaryShot(arrayBuffer, id) {
       }
 
       sample[field.name] = finalValue;
+      offset += version >= 6 && field.bitPos === FIELD_BITS.T ? 4 : 2;
     }
 
     // For v5+ files, reconstruct phase information from transitions
