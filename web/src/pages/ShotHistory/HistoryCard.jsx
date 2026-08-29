@@ -52,6 +52,7 @@ export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) 
         v: round2(s.v),
         ev: round2(s.ev),
         pr: round2(s.pr),
+        wp: round2(s.wp),
         systemInfo: s.systemInfo,
         phaseNumber: s.phaseNumber,
         phaseDisplayNumber: s.phaseDisplayNumber,
