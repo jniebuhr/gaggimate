@@ -15,7 +15,7 @@ export function CalibrationTab({ formData, onChange }) {
   const [autotuneFailed, setAutotuneFailed] = useState(false);
   const [autotuneTime, setAutotuneTime] = useState(120);
   const [autotuneSamples, setAutotuneSamples] = useState(6);
-  const [autotuneWattage, setAutotuneWattage] = useState(680);
+  const [autotuneWattage, setAutotuneWattage] = useState(1360);
 
   const onStartAutotune = useCallback(() => {
     apiService.send({
@@ -162,7 +162,7 @@ export function CalibrationTab({ formData, onChange }) {
               <SettingsFormField
                 label='Heater Wattage (W)'
                 htmlFor='heaterWattage'
-                helpText='Heater wattage in Watts (e.g. 680 W).'
+                helpText='Heater wattage in Watts (e.g. Gaggia Classic: 1360 W, Rancilio Silvia 120V: 950W, Rancilio Silvia 230V: 1100W).'
                 noMargin
               >
                 <input
@@ -173,7 +173,7 @@ export function CalibrationTab({ formData, onChange }) {
                   className='input input-bordered w-full'
                   value={autotuneWattage}
                   onChange={e => setAutotuneWattage(Number.parseInt(e.target.value, 10) || 0)}
-                  placeholder='680'
+                  placeholder='1360'
                 />
               </SettingsFormField>
             </div>

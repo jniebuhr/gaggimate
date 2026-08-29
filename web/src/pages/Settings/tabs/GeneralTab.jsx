@@ -12,7 +12,7 @@ import {
 
 function ButtonBehaviorSelect({ id, label, value, onChange, profiles }) {
   return (
-    <SettingsFormField label={label} htmlFor={id} noMargin >
+    <SettingsFormField label={label} htmlFor={id} noMargin>
       <select
         id={id}
         name={id}
@@ -74,7 +74,7 @@ export function GeneralTab({
   return (
     <div className='space-y-4 sm:space-y-6 lg:grid lg:grid-cols-2 lg:gap-4'>
       {/* User Preferences */}
-      <Section title='User Preferences' className='h-full' >
+      <Section title='User Preferences' className='h-full'>
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
           <SettingsFormField label='Startup Mode' htmlFor='startup-mode' noMargin>
             <select
@@ -184,8 +184,8 @@ export function GeneralTab({
         <div className='border-base-content/5 mt-6 border-t pt-6'>
           <h3 className='text-md text-base-content mb-2 font-semibold'>Physical Buttons</h3>
           <p className='text-base-content/85 mb-4 text-sm opacity-70'>
-            Define behavior for physical buttons when pressed. Make sure they are wired to the Alt
-            Relay Header.
+            Define behavior for physical buttons when pressed. Make sure they are wired to the
+            buttons header.
           </p>
           <div className='mb-4'>
             <ToggleField
@@ -195,6 +195,9 @@ export function GeneralTab({
               onChange={onChange('momentaryButtons')}
             />
           </div>
+          <p className='text-base-content/85 mb-4 text-sm opacity-70'>
+            Activate this if your coffee machine is equipped with momentary buttons.
+          </p>
           <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
             <ButtonBehaviorSelect
               id='button0'
@@ -222,7 +225,7 @@ export function GeneralTab({
       </Section>
 
       {/* Display Settings */}
-      <Section title='Display Settings' className='h-full' >
+      <Section title='Display Settings' className='h-full'>
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
           <SettingsFormField label='Main Brightness (1-16)' htmlFor='mainBrightness' noMargin>
             <input
@@ -303,7 +306,7 @@ export function GeneralTab({
       </Section>
 
       {/* Web Settings */}
-      <Section title='Web Settings' className='h-full' >
+      <Section title='Web Settings' className='h-full'>
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
           <SettingsFormField label='Theme' htmlFor='webui-theme' noMargin>
             <select
@@ -341,7 +344,7 @@ export function GeneralTab({
       </Section>
 
       {/* Network / System Preferences */}
-      <Section title='System & Network' className='h-full' >
+      <Section title='System & Network' className='h-full'>
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
           <SettingsFormField label='Wi-Fi SSID' htmlFor='wifiSsid' noMargin>
             <input

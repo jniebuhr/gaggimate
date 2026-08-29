@@ -10,13 +10,6 @@ export default function PageHeader({ title, actions, tabs, className = '', noSta
     <div className={`flex flex-col ${tabs ? '-mb-2 lg:-mb-4' : ''} ${className}`}>
       <div className={flexClasses}>
         <div className='flex flex-row items-center gap-3'>
-          <button
-            className='btn btn-ghost btn-circle text-base-content/70 -ml-3 md:hidden landscape:hidden'
-            onClick={() => window.dispatchEvent(new Event('open-mobile-nav'))}
-            aria-label='Open menu'
-          >
-            <FontAwesomeIcon icon={faBars} size='xl' />
-          </button>
           <h1 className='text-base-content text-2xl font-bold tracking-tight sm:text-3xl'>
             {title}
           </h1>
