@@ -202,11 +202,6 @@ void ShotHistoryPlugin::record() {
             }
         }
 
-        // Check for early index insertion (once per shot after 7.5s)
-        if (!indexEntryCreated && (millis() - shotStart) > 7500) {
-            indexEntryCreated = createEarlyIndexEntry();
-        }
-
         // Check for weight stabilization during extended recording
         if (extendedRecording) {
             const unsigned long now = millis();
@@ -259,11 +254,6 @@ void ShotHistoryPlugin::record() {
         unsigned long duration = header.durationMs;
         if (duration <= 7500) { // Exclude failed shots and flushes
             fs->remove("/h/" + currentId + ".slog");
-
-            // If we created an early index entry, mark it as deleted
-            if (indexEntryCreated) {
-                markIndexDeleted(currentId.toInt());
-            }
         } else {
             controller->getSettings().setHistoryIndex(controller->getSettings().getHistoryIndex() + 1);
             cleanupHistory();
@@ -333,7 +323,6 @@ void ShotHistoryPlugin::startRecording() {
     currentProfileName = controller->getProfileManager()->getSelectedProfile().label;
     recording = true;
     extendedRecording = false;
-    indexEntryCreated = false; // Reset flag for new shot
     sampleCount = 0;
     ioBufferPos = 0;
     tempSumScaled = 0;
@@ -1120,28 +1109,4 @@ bool ShotHistoryPlugin::writeEntryAtPosition(File &indexFile, size_t position, c
         return false;
     }
     return true;
-}
-
-bool ShotHistoryPlugin::createEarlyIndexEntry() {
-    Profile profile = controller->getProfileManager()->getSelectedProfile();
-
-    ShotIndexEntry indexEntry{};
-    indexEntry.id = currentId.toInt();
-    indexEntry.timestamp = header.startEpoch;
-    indexEntry.duration = 0; // Will be overwritten on completion
-    indexEntry.volume = 0;   // Will be overwritten on completion
-    indexEntry.rating = 0;
-    indexEntry.flags = 0; // No SHOT_FLAG_COMPLETED - indicates in-progress shot
-    strncpy(indexEntry.profileId, profile.id.c_str(), sizeof(indexEntry.profileId) - 1);
-    indexEntry.profileId[sizeof(indexEntry.profileId) - 1] = '\0';
-    strncpy(indexEntry.profileName, profile.label.c_str(), sizeof(indexEntry.profileName) - 1);
-    indexEntry.profileName[sizeof(indexEntry.profileName) - 1] = '\0';
-
-    bool success = appendToIndex(indexEntry);
-    if (success) {
-        ESP_LOGD("ShotHistoryPlugin", "Created early index entry for shot %u", indexEntry.id);
-    } else {
-        ESP_LOGE("ShotHistoryPlugin", "Failed to create early index entry for shot %u", indexEntry.id);
-    }
-    return success;
 }
