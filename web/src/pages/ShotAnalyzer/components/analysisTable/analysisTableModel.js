@@ -3,6 +3,7 @@ import { utilityColors } from '../../utils/analyzerUtils';
 const NEUTRAL_STATUS_BADGE_CLASS = 'bg-base-content/10 text-base-content/80 border-base-content/15';
 const WARNING_BADGE_HIGH_SCALE_LABEL = 'HIGH SCALE DELAY';
 const WARNING_BADGE_SCALE_LOST_LABEL = 'SCALE LOST';
+const WARNING_BADGE_SLOW_SAMPLING_LABEL = 'SLOW SAMPLING';
 
 const WARNING_HELP_COPY = {
   delayReview:
@@ -11,6 +12,8 @@ const WARNING_HELP_COPY = {
     'The configured or inferred scale delay is unusually high. Review the scale-delay setting before relying on predictive weight stops.',
   scaleLost:
     'Shown when the scale briefly loses connection during the brew. In this case, weight is ignored for stop detection for that brew, even if the scale reconnects later.',
+  slowSampling:
+    'Excessive delay while writing samples. Possible causes include a slow SD card or high OS/system load.',
 };
 
 function getDelayReviewLabel(results) {
@@ -21,6 +24,25 @@ function getDelayReviewLabel(results) {
 
 export function buildAnalysisWarningBadges(results) {
   const badges = [];
+
+  if (results?.hasSlowSampleInterval) {
+    const rawMaxIntervalMs = results.maxSampleIntervalMs;
+    const maxIntervalMs = rawMaxIntervalMs == null ? null : Number(rawMaxIntervalMs);
+    const intervalSuffix =
+      Number.isFinite(maxIntervalMs) && maxIntervalMs > 0
+        ? ` (${Math.round(maxIntervalMs)} ms)`
+        : '';
+    badges.push({
+      key: 'slow-sampling',
+      label: `${WARNING_BADGE_SLOW_SAMPLING_LABEL}${intervalSuffix}`,
+      colorClass: 'text-white shadow-sm',
+      details: WARNING_HELP_COPY.slowSampling,
+      style: {
+        backgroundColor: utilityColors.warningOrange,
+        borderColor: utilityColors.warningOrange,
+      },
+    });
+  }
 
   if (results?.globalScaleLost) {
     badges.push({
