@@ -8,7 +8,11 @@ import {
 } from './delayTracking';
 import { getMetricStats } from './metricStats';
 import { analyzeExecutedPhase } from './phaseAnalysis';
+import { getBluetoothScaleConnectionState } from './scaleConnection';
+import { getSlowSampleIntervalSummary } from './sampleIntervals';
 import { mergeSkippedProfilePhases } from './skippedPhases';
+import { calculatePumpedWater, createPumpedWaterSource } from './waterIntegration';
+import { getSamplesThroughLastNonExtended } from './weightRate';
 import {
   buildRecordedExitReasonByPhase,
   getBrewCompletionLabel,
@@ -35,15 +39,6 @@ function groupSamplesByPhase(samples) {
     groups[pNum].push(sample);
     return groups;
   }, {});
-}
-
-function calculateWaterVolume(samples) {
-  let water = 0;
-  for (let i = 1; i < samples.length; i++) {
-    const dt = (samples[i].t - samples[i - 1].t) / 1000;
-    water += samples[i].fl * dt;
-  }
-  return water;
 }
 
 function applyConfiguredScaleDelayWarning(analyzedPhases, configuredScaleDelayMs) {
@@ -132,6 +127,7 @@ export function calculateShotMetrics(shotData, profileData, settings) {
   const debugEnabled = isAnalyzerDebugEnabled();
   const gSamples = shotData.samples;
   const globalStartTime = gSamples[0].t;
+  const pumpedWaterSource = createPumpedWaterSource(gSamples);
 
   // --- 1. PHASE SEPARATION ---
   const phaseNameMap = buildPhaseNameMap(shotData.phaseTransitions);
@@ -149,19 +145,19 @@ export function calculateShotMetrics(shotData, profileData, settings) {
   const finalExitReasonCode = normalizePhaseExitReasonCode(shotData.finalExitReason);
   const finalExitReasonLabel = getPhaseExitReasonMeta(finalExitReasonCode).label;
 
-  let globalScaleLost = false;
-  if (isBrewByWeight) {
-    globalScaleLost = gSamples.some(s => s.systemInfo?.bluetoothScaleConnected === false);
-  }
+  const globalScaleLost = isBrewByWeight && getBluetoothScaleConnectionState(gSamples).scaleLost;
+  const { hasSlowSampleInterval, maxSampleIntervalMs } = getSlowSampleIntervalSummary(gSamples);
 
   // --- 3. GLOBAL TOTALS ---
   const gDuration = (gSamples.at(-1).t - gSamples[0].t) / 1000;
-  const gWater = calculateWaterVolume(gSamples);
-  const gWeight = gSamples.at(-1).v;
+  const gWater = calculatePumpedWater(gSamples, gSamples.length - 1, null, pumpedWaterSource);
+  const gWeightSamples = getSamplesThroughLastNonExtended(gSamples);
+  const gWeight = (gWeightSamples.at(-1) || gSamples.at(-1)).v;
 
   // --- 4. PHASE-BY-PHASE ANALYSIS ---
   const analyzedPhases = [];
   const delayTotals = createDelayTotals();
+  let bluetoothScaleWasConnected = false;
   let scaleConnectionBrokenPermanently = false;
 
   for (const phaseNum of sortedPhaseKeys) {
@@ -176,13 +172,16 @@ export function calculateShotMetrics(shotData, profileData, settings) {
       phaseNum,
       phases,
       profileData,
+      pumpedWaterSource,
       recordedExitReasonCode: recordedExitReasonByPhase.get(String(phaseNum)) || 0,
+      bluetoothScaleWasConnected,
       scaleConnectionBrokenPermanently,
       settings,
       shotData,
       sortedPhaseKeys,
     });
     analyzedPhases.push(result.phase);
+    bluetoothScaleWasConnected = result.bluetoothScaleWasConnected;
     scaleConnectionBrokenPermanently = result.scaleConnectionBrokenPermanently;
   }
 
@@ -226,7 +225,7 @@ export function calculateShotMetrics(shotData, profileData, settings) {
     tf: getMetricStats(gSamples, 'tf'),
     t: getMetricStats(gSamples, 'ct'),
     tt: getMetricStats(gSamples, 'tt'),
-    w: getMetricStats(gSamples, 'v'),
+    w: getMetricStats(gWeightSamples, 'v'),
     wf: getMetricStats(gSamples, 'vf'),
     sys_raw: finalSysInfo.raw,
     sys_shot_vol: finalSysInfo.shotStartedVolumetric,
@@ -249,6 +248,8 @@ export function calculateShotMetrics(shotData, profileData, settings) {
   return {
     isBrewByWeight,
     globalScaleLost,
+    hasSlowSampleInterval,
+    maxSampleIntervalMs,
     highScaleDelay: hasHighScaleDelay,
     highScaleDelayMs,
     delayReviewHint: delayReviewSummary.delayReviewHint,
