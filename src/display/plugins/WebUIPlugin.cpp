@@ -86,7 +86,7 @@ void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) 
     });
     pluginManager->on("controller:ready", [this](Event const &) {
         ota->setControllerVersion(controller->getSystemInfo().version);
-        ota->init(controller->getClientController()->getClient());
+        ota->init();
     });
     pluginManager->on("controller:autotune:result", [this](Event const &event) { sendAutotuneResult(); });
     pluginManager->on("controller:autotune:failed", [this](Event const &) { sendAutotuneFailed(); });
@@ -134,7 +134,7 @@ void WebUIPlugin::loop() {
         // firmware over BLE (wants a low-latency link), a display update is over
         // Wi-Fi (wants BLE to stay out of the radio's way). "" = both.
         pluginManager->trigger("ota:update:start", "component", updateComponent);
-        ota->update(updateComponent != "display", updateComponent != "controller");
+        ota->update(updateComponent != "display", updateComponent != "controller", controller->getClientController()->getClient());
         pluginManager->trigger("ota:update:end");
         updating = false;
     }

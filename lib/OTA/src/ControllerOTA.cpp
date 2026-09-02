@@ -2,33 +2,72 @@
 #include <HTTPClient.h>
 #include <LittleFS.h>
 
-void ControllerOTA::init(NimBLEClient *client, const ctr_progress_callback_t &progress_callback) {
-    this->client = client;
+void ControllerOTA::init(const ctr_progress_callback_t &progress_callback) {
+    ESP_LOGI("ControllerOTA", "Initializing ControllerOTA");
     progressCallback = progress_callback;
+}
+
+bool ControllerOTA::resolveCharacteristics() {
+    rxChar = nullptr;
+    txChar = nullptr;
+    if (client == nullptr || !client->isConnected()) {
+        ESP_LOGE("ControllerOTA", "No BLE connection to the controller");
+        return false;
+    }
     NimBLERemoteService *pRemoteService = client->getService(NimBLEUUID(SERVICE_OTA_BLE_UUID));
     if (pRemoteService == nullptr) {
         ESP_LOGE("ControllerOTA", "OTA BLE service not found");
-        return;
+        return false;
     }
-    rxChar = pRemoteService->getCharacteristic(NimBLEUUID(CHARACTERISTIC_OTA_BL_UUID_RX));
-    txChar = pRemoteService->getCharacteristic(NimBLEUUID(CHARACTERISTIC_OTA_BL_UUID_TX));
-    if (txChar != nullptr && txChar->canNotify()) {
-        txChar->subscribe(true, std::bind(&ControllerOTA::onReceive, this, std::placeholders::_1, std::placeholders::_2,
-                                          std::placeholders::_3, std::placeholders::_4));
+    NimBLERemoteCharacteristic *rx = pRemoteService->getCharacteristic(NimBLEUUID(CHARACTERISTIC_OTA_BL_UUID_RX));
+    NimBLERemoteCharacteristic *tx = pRemoteService->getCharacteristic(NimBLEUUID(CHARACTERISTIC_OTA_BL_UUID_TX));
+    if (rx == nullptr || tx == nullptr) {
+        ESP_LOGE("ControllerOTA", "OTA BLE characteristics not found");
+        return false;
     }
+    if (!tx->canNotify() ||
+        !tx->subscribe(true, std::bind(&ControllerOTA::onReceive, this, std::placeholders::_1, std::placeholders::_2,
+                                       std::placeholders::_3, std::placeholders::_4))) {
+        ESP_LOGE("ControllerOTA", "Failed to subscribe to the OTA notification characteristic");
+        return false;
+    }
+    rxChar = rx;
+    txChar = tx;
+    lastSignal = 0x00;
+    return true;
 }
 
-void ControllerOTA::update(WiFiClientSecure &wifi_client, const String &release_url) {
+void ControllerOTA::update(NimBLEClient *ble_client, WiFiClientSecure &wifi_client, const String &release_url) {
+    // Fail before the download
+    this->client = ble_client;
+    if (client == nullptr || !client->isConnected()) {
+        ESP_LOGE("ControllerOTA", "Controller not connected, skipping update");
+        return;
+    }
     if (LittleFS.exists("/board-firmware.bin")) {
         ESP_LOGI("ControllerOTA", "Removing previous update file");
         LittleFS.remove("/board-firmware.bin");
     }
     if (!downloadFile(wifi_client, release_url)) {
         ESP_LOGE("ControllerOTA", "Download of firmware file failed");
+        return;
+    }
+    if (!resolveCharacteristics()) {
+        ESP_LOGE("ControllerOTA", "Could not reach the controller OTA service, aborting");
+        return;
     }
     File file = LittleFS.open("/board-firmware.bin", FILE_READ);
+    if (!file) {
+        ESP_LOGE("ControllerOTA", "Could not open the downloaded firmware file");
+        rxChar = nullptr;
+        txChar = nullptr;
+        return;
+    }
     runUpdate(file, file.size());
     file.close();
+    // Drop the pointers again; the next update re-resolves them against the live connection.
+    rxChar = nullptr;
+    txChar = nullptr;
 }
 
 bool ControllerOTA::downloadFile(WiFiClientSecure &wifi_client, const String &release_url) {
@@ -98,7 +137,6 @@ void ControllerOTA::runUpdate(Stream &in, uint32_t size) {
         static_cast<uint8_t>((size >> 8) & 0xFF),
         static_cast<uint8_t>(size & 0xFF),
     };
-    sendData(fileLengthBytes, 5);
     uint8_t partsAndMTU[] = {
         0xFF,
         static_cast<uint8_t>(fileParts / 256),
@@ -106,9 +144,11 @@ void ControllerOTA::runUpdate(Stream &in, uint32_t size) {
         static_cast<uint8_t>(MTU / 256),
         static_cast<uint8_t>(MTU % 256),
     };
-    sendData(partsAndMTU, 5);
     uint8_t updateStart[] = {0xFD};
-    sendData(updateStart, 1);
+    if (!sendData(fileLengthBytes, 5) || !sendData(partsAndMTU, 5) || !sendData(updateStart, 1)) {
+        ESP_LOGE("ControllerOTA", "Failed to send update instructions, aborting");
+        return;
+    }
     ESP_LOGI("ControllerOTA", "Waiting for signal from controller");
 
     while (client->isConnected()) {
@@ -117,7 +157,10 @@ void ControllerOTA::runUpdate(Stream &in, uint32_t size) {
         if (signal == 0xAA || signal == 0xF1) {
             // Start update or send next part
             ESP_LOGV("ControllerOTA", "Sending part %d / %d", currentPart + 1, fileParts);
-            sendPart(in, size);
+            if (!sendPart(in, size)) {
+                ESP_LOGE("ControllerOTA", "Transfer aborted at part %d / %d", currentPart + 1, fileParts);
+                return;
+            }
             currentPart++;
             notifyUpdate();
         } else if (signal == 0xF2 || signal == 0xFF) {
@@ -128,13 +171,22 @@ void ControllerOTA::runUpdate(Stream &in, uint32_t size) {
     ESP_LOGI("ControllerOTA", "Controller update finished");
 }
 
-void ControllerOTA::sendData(uint8_t *data, uint16_t len) const {
+bool ControllerOTA::sendData(uint8_t *data, uint16_t len) const {
     if (rxChar == nullptr) {
-        ESP_LOGI("ControllerOTA", "RX Char uninitialized");
-        return;
+        ESP_LOGE("ControllerOTA", "RX Char uninitialized");
+        return false;
     }
-    rxChar->writeValue(data, len, true);
+    // The characteristic belongs to the connection; a dropped link makes it stale, so re-check before every write.
+    if (client == nullptr || !client->isConnected()) {
+        ESP_LOGE("ControllerOTA", "Controller disconnected during transfer");
+        return false;
+    }
+    if (!rxChar->writeValue(data, len, true)) {
+        ESP_LOGE("ControllerOTA", "BLE write failed");
+        return false;
+    }
     delay(50);
+    return true;
 }
 
 void ControllerOTA::fillBuffer(Stream &in, uint8_t *buffer, uint16_t len) const {
@@ -167,7 +219,7 @@ void ControllerOTA::notifyUpdate() const {
     progressCallback(static_cast<int>(progress));
 }
 
-void ControllerOTA::sendPart(Stream &in, uint32_t totalSize) const {
+bool ControllerOTA::sendPart(Stream &in, uint32_t totalSize) const {
     uint8_t partData[MTU + 2];
     uint8_t buffer[MTU];
     partData[0] = 0xFB;
@@ -183,7 +235,8 @@ void ControllerOTA::sendPart(Stream &in, uint32_t totalSize) const {
             partData[i + 2] = buffer[i];
         }
         ESP_LOGV("ControllerOTA", "Sending part %d / %d - package %d / %d", currentPart + 1, fileParts, part + 1, parts);
-        sendData(partData, MTU + 2);
+        if (!sendData(partData, MTU + 2))
+            return false;
     }
     if (partLength % MTU > 0) {
         uint32_t remaining = partLength % MTU;
@@ -194,7 +247,8 @@ void ControllerOTA::sendPart(Stream &in, uint32_t totalSize) const {
         for (uint32_t i = 0; i < remaining; i++) {
             remainingData[i + 2] = buffer[i];
         }
-        sendData(remainingData, remaining + 2);
+        if (!sendData(remainingData, remaining + 2))
+            return false;
     }
     uint8_t footer[5];
     footer[0] = 0xFC;
@@ -202,7 +256,7 @@ void ControllerOTA::sendPart(Stream &in, uint32_t totalSize) const {
     footer[2] = partLength % 256;
     footer[3] = currentPart / 256;
     footer[4] = currentPart % 256;
-    sendData(footer, sizeof(footer));
+    return sendData(footer, sizeof(footer));
 }
 
 void ControllerOTA::onReceive(NimBLERemoteCharacteristic *pRemoteCharacteristic, uint8_t *pData, size_t length, bool isNotify) {

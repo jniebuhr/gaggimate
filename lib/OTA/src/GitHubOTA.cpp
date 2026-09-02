@@ -37,8 +37,8 @@ GitHubOTA::GitHubOTA(const String &display_version, const String &controller_ver
     Updater.setFollowRedirects(HTTPC_FORCE_FOLLOW_REDIRECTS);
 }
 
-void GitHubOTA::init(NimBLEClient *client) {
-    _controller_ota.init(client, [this](int progress) { _progress_callback(PHASE_CONTROLLER_FW, progress); });
+void GitHubOTA::init() {
+    _controller_ota.init([this](int progress) { _progress_callback(PHASE_CONTROLLER_FW, progress); });
 }
 
 void GitHubOTA::checkForUpdates() {
@@ -90,7 +90,7 @@ bool GitHubOTA::isUpdateAvailable(bool controller) const {
     return _screen_update_required;
 }
 
-void GitHubOTA::update(bool controller, bool display) {
+void GitHubOTA::update(bool controller, bool display, NimBLEClient *client) {
     const char *TAG = "update";
 
     bool updateExecuted = false;
@@ -99,7 +99,7 @@ void GitHubOTA::update(bool controller, bool display) {
         ESP_LOGI(TAG, "Controller update is required, running firmware update.");
         this->phase = PHASE_CONTROLLER_FW;
         this->_phase_callback(PHASE_CONTROLLER_FW);
-        _controller_ota.update(_wifi_client, _latest_url + _controller_firmware_name);
+        _controller_ota.update(client, _wifi_client, _latest_url + _controller_firmware_name);
         ESP_LOGI(TAG, "Controller update successful. Restarting...\n");
         updateExecuted = true;
     }
