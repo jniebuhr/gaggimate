@@ -1043,6 +1043,7 @@ void Controller::deactivateLocked(std::vector<const char *> &events) {
     delete lastProcess;
     lastProcess = currentProcess;
     currentProcess = nullptr;
+    comms.tare();
     applyConnectionPriority(); // shot ended -> relaxed BLE interval
     if (lastProcess->getType() == MODE_BREW) {
         events.push_back("controller:brew:end");

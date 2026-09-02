@@ -62,12 +62,16 @@ void DimmedPump::loopTask(void *arg) {
 }
 
 void DimmedPump::updatePower() {
+    _pumpedWater += _currentFlow * 0.03f;
+    // This is the more precise logic but some bug is happening with the PSM counter
+    /*
     if (_binaryMode) {
         _pumpedWater += _currentFlow * 0.03f;
     } else {
         _pumpedWater += _currentFlow / static_cast<float>(_cps) * static_cast<float>(_psm.getCounter());
         _psm.resetCounter();
     }
+    */
     _pressureController.update(static_cast<PressureController::ControlMode>(_mode));
     if (_mode != ControlMode::POWER) {
         _power = _controllerPower;
