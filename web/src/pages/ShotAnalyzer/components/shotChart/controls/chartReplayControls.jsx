@@ -1,8 +1,8 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faArrowUpRightFromSquare } from '@fortawesome/free-solid-svg-icons/faArrowUpRightFromSquare';
 import { faCircleInfo } from '@fortawesome/free-solid-svg-icons/faCircleInfo';
 import { faDownLeftAndUpRightToCenter } from '@fortawesome/free-solid-svg-icons/faDownLeftAndUpRightToCenter';
 import { faPause } from '@fortawesome/free-solid-svg-icons/faPause';
-import { faPhotoFilm } from '@fortawesome/free-solid-svg-icons/faPhotoFilm';
 import { faPlay } from '@fortawesome/free-solid-svg-icons/faPlay';
 import { faStop } from '@fortawesome/free-solid-svg-icons/faStop';
 import { faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons/faUpRightAndDownLeftFromCenter';
@@ -34,6 +34,7 @@ function ShotMediaExportMenu({
   onCloseExportMenu,
   onExportAction,
   onExportMenuToggle,
+  profileExportAvailable,
   onExportTypeChange,
   onExportFormatChange,
   onExportFormatInfoToggle,
@@ -45,6 +46,17 @@ function ShotMediaExportMenu({
   buttonIconStyle = ANALYZER_ACTION_ICON_STYLE,
   menuClassName = 'absolute top-full right-0 z-[70] mt-2',
 }) {
+  const fileExportTypes = ['shot', 'profile'].filter(type =>
+    exportMenuState.exportType?.includes(type),
+  );
+
+  const handleFileExportTypeToggle = fileExportType => {
+    const nextExportType = fileExportTypes.includes(fileExportType)
+      ? fileExportTypes.filter(type => type !== fileExportType)
+      : [...fileExportTypes, fileExportType];
+    onExportTypeChange(nextExportType.join('+') || null);
+  };
+
   return (
     <div ref={exportMenuRef} className='relative flex'>
       <button
@@ -52,12 +64,12 @@ function ShotMediaExportMenu({
         onClick={onExportMenuToggle}
         className={`${buttonClassName} ${exportMenuState.open ? 'text-base-content/90' : ''}`}
         disabled={isControlsLocked}
-        aria-label='Open media export menu'
+        aria-label='Share'
         aria-expanded={exportMenuState.open}
-        title='Open media export menu'
+        title='Share'
       >
         <FontAwesomeIcon
-          icon={faPhotoFilm}
+          icon={faArrowUpRightFromSquare}
           className={buttonIconClassName}
           style={buttonIconStyle}
         />
@@ -111,6 +123,29 @@ function ShotMediaExportMenu({
             />
             <span className='text-sm'>Include legend</span>
           </label>
+          <div className='mt-3 mb-2 text-xs font-medium opacity-60'>Export File</div>
+          {[
+            { value: 'shot', label: 'Shot', disabled: false },
+            { value: 'profile', label: 'Profile', disabled: !profileExportAvailable },
+          ].map(option => (
+            <label
+              key={option.value}
+              className={getAnalyzerSurfaceTriggerClasses({
+                className: `flex w-full items-center gap-2 px-2 py-1.5 ${
+                  option.disabled ? 'cursor-not-allowed opacity-30' : 'cursor-pointer'
+                }`,
+              })}
+            >
+              <input
+                type='checkbox'
+                className='checkbox checkbox-xs'
+                checked={fileExportTypes.includes(option.value)}
+                disabled={option.disabled}
+                onChange={() => handleFileExportTypeToggle(option.value)}
+              />
+              <span className='text-sm'>{option.label}</span>
+            </label>
+          ))}
           {exportMenuState.exportType === 'video' && shouldShowWebmToggle ? (
             <div
               className={getAnalyzerSurfaceTriggerClasses({
@@ -242,6 +277,7 @@ function ReplayAndExportActions({
   onCloseExportMenu,
   onExportAction,
   onExportMenuToggle,
+  profileExportAvailable,
   onExportTypeChange,
   onExportFormatChange,
   onExportFormatInfoToggle,
@@ -286,6 +322,7 @@ function ReplayAndExportActions({
             onCloseExportMenu={onCloseExportMenu}
             onExportAction={onExportAction}
             onExportMenuToggle={onExportMenuToggle}
+            profileExportAvailable={profileExportAvailable}
             onExportTypeChange={onExportTypeChange}
             onExportFormatChange={onExportFormatChange}
             onExportFormatInfoToggle={onExportFormatInfoToggle}
@@ -313,6 +350,7 @@ export function ShotChartMobileReplayActions({
   onCloseExportMenu,
   onExportAction,
   onExportMenuToggle,
+  profileExportAvailable,
   onExportTypeChange,
   onExportFormatChange,
   onExportFormatInfoToggle,
@@ -356,6 +394,7 @@ export function ShotChartMobileReplayActions({
           onCloseExportMenu={onCloseExportMenu}
           onExportAction={onExportAction}
           onExportMenuToggle={onExportMenuToggle}
+          profileExportAvailable={profileExportAvailable}
           onExportTypeChange={onExportTypeChange}
           onExportFormatChange={onExportFormatChange}
           onExportFormatInfoToggle={onExportFormatInfoToggle}
@@ -418,6 +457,7 @@ export function ChartActionGroup({
   onCloseExportMenu,
   onExportAction,
   onExportMenuToggle,
+  profileExportAvailable,
   onExportTypeChange,
   onExportFormatChange,
   onExportFormatInfoToggle,
@@ -450,6 +490,7 @@ export function ChartActionGroup({
           onCloseExportMenu={onCloseExportMenu}
           onExportAction={onExportAction}
           onExportMenuToggle={onExportMenuToggle}
+          profileExportAvailable={profileExportAvailable}
           onExportTypeChange={onExportTypeChange}
           onExportFormatChange={onExportFormatChange}
           onExportFormatInfoToggle={onExportFormatInfoToggle}

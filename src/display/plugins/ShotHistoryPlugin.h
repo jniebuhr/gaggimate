@@ -42,8 +42,6 @@ class ShotHistoryPlugin : public Plugin {
     int findEntryPosition(File &indexFile, const ShotIndexHeader &header, uint32_t shotId);
     bool readEntryAtPosition(File &indexFile, size_t position, ShotIndexEntry &entry);
     bool writeEntryAtPosition(File &indexFile, size_t position, const ShotIndexEntry &entry);
-    bool createEarlyIndexEntry();
-
     void saveNotes(const String &id, const JsonDocument &notes);
     void loadNotes(const String &id, JsonDocument &notes);
     void startRecording();
@@ -73,7 +71,6 @@ class ShotHistoryPlugin : public Plugin {
 
     bool recording = false;
     bool extendedRecording = false;
-    bool indexEntryCreated = false;     // Track if early index entry was created
     bool shotStartedVolumetric = false; // Track initial volumetric mode
     double currentBrewDelay = 0.0;      // Brew delay (ms) the active shot was started with
     unsigned long shotStart = 0;

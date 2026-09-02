@@ -384,7 +384,7 @@ export function Settings() {
     { id: 'calibration', label: 'Calibration', icon: faCrosshairs, preload: loadCalibrationTab },
     { id: 'plugins', label: 'Plugins', icon: faPuzzlePiece, preload: loadPluginsTab },
     { id: 'bluetooth', label: 'Bluetooth', icon: faBluetoothB, preload: loadBluetoothTab },
-    { id: 'system', label: 'System', icon: faRotate, preload: loadSystemTab },
+    { id: 'system', label: 'System & Updates', icon: faRotate, preload: loadSystemTab },
   ];
 
   return (

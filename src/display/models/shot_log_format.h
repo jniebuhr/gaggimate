@@ -7,24 +7,25 @@
 // All values little-endian. Floats are IEEE-754 32-bit.
 // File extension: .slog
 // Layout:
-//   Header (fixed size = 128 bytes) followed by contiguous sample records.
+//   Header (v1-v4 = 128 bytes, v5+ = 512 bytes) followed by contiguous sample records.
 //   Header fields set at start; sampleCount & durationMs patched at end.
 // Per-sample record fields are ALWAYS present in fixed order.
-//   tick(uint16_t), tt(uint16_t), ct(uint16_t), tp(uint16_t), cp(uint16_t), fl(int16_t), tf(int16_t), pf(int16_t), vf(int16_t),
+//   elapsedMs(uint32_t), tt(uint16_t), ct(uint16_t), tp(uint16_t), cp(uint16_t), fl(int16_t), tf(int16_t), pf(int16_t), vf(int16_t),
 //   v(uint16_t), ev(uint16_t), pr(uint16_t), si(uint16_t)
 // Values are stored as scaled integers (see comments per field below).
-// Sample size = 13 fields * 2 bytes = 26 bytes (v5+ format). Phase data moved to header transitions.
+// Sample size: v1-v5 = 26 bytes (13 x uint16_t); v6 = 28 bytes because t is uint32_t.
+// Phase data moved to header transitions in v5.
 // Older files may have fewer fields - use fieldsMask to determine layout.
 
 static constexpr uint32_t SHOT_LOG_MAGIC = 0x544F4853; // 'S''H''O''T' little-endian 0x54 0x4F 0x48 0x53
-static constexpr uint8_t SHOT_LOG_VERSION = 5;
+static constexpr uint8_t SHOT_LOG_VERSION = 6;
 static constexpr uint16_t SHOT_LOG_HEADER_SIZE = 512;
 static constexpr uint16_t SHOT_LOG_SAMPLE_INTERVAL_MS = 250; // nominal recording interval
 static constexpr uint32_t SHOT_LOG_FIELDS_MASK_ALL = 0x1FFF; // 13 fields present (removed phase number)
-static constexpr uint32_t SHOT_LOG_SAMPLE_SIZE = 26;
+static constexpr uint32_t SHOT_LOG_SAMPLE_SIZE = 28;
 
 // Field bit positions (for future expansion)
-static constexpr uint32_t SHOT_LOG_FIELD_T = 0x0001;  // tick (bit 0)
+static constexpr uint32_t SHOT_LOG_FIELD_T = 0x0001;  // elapsed time (bit 0)
 static constexpr uint32_t SHOT_LOG_FIELD_TT = 0x0002; // target temp (bit 1)
 static constexpr uint32_t SHOT_LOG_FIELD_CT = 0x0004; // current temp (bit 2)
 static constexpr uint32_t SHOT_LOG_FIELD_TP = 0x0008; // target pressure (bit 3)
@@ -95,15 +96,17 @@ struct ShotLogHeader {
 #pragma pack(pop)
 
 // Scaled values:
-//   tick: sample index (0.25 s steps) -> milliseconds = tick * SHOT_LOG_SAMPLE_INTERVAL_MS
+//   t: actual elapsed milliseconds from shotStart (v6+). In v1-v5 this was a
+//      uint16_t sample index converted with sampleInterval.
 //   tt / ct: temperature in °C * 10 (0.1 °C resolution)
 //   tp / cp: pressure in bar * 10 (0.1 bar resolution)
 //   fl / tf / pf / vf: flow in ml/s * 100 (0.01 ml/s resolution)
 //   v / ev: weight in g * 10 (0.1 g resolution)
 //   pr: puck resistance * 100 (0.01 step, saturates at uint16_t max)
 //   si: system info bit-packed (see SYSTEM_INFO_* constants)
+#pragma pack(push, 1)
 struct ShotLogSample {
-    uint16_t t;  // sample index (0.25 s ticks)
+    uint32_t t;  // actual elapsed milliseconds from shotStart
     uint16_t tt; // target temp * 10
     uint16_t ct; // current temp * 10
     uint16_t tp; // target pressure * 10
@@ -117,6 +120,7 @@ struct ShotLogSample {
     uint16_t pr; // puck resistance * 100
     uint16_t si; // system info bit-packed
 };
+#pragma pack(pop)
 
 static_assert(sizeof(ShotLogHeader) == SHOT_LOG_HEADER_SIZE, "ShotLogHeader size mismatch");
 static_assert(sizeof(ShotLogSample) == SHOT_LOG_SAMPLE_SIZE, "ShotLogSample size mismatch");

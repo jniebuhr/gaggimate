@@ -232,7 +232,7 @@ class BrewProcess : public Process {
         if (dur_s <= 0.0f) {
             dur_s = currentPhase.duration; // If the transition has no duration, use the phase duration
         }
-        if (currentPhase.transition.type == TransitionType::INSTANT || dur_s <= 0.0f) {
+        if (dur_s <= 0.0f) {
             return 1.0f;
         }
         const unsigned long elapsedMs = millis() - currentPhaseStarted;
@@ -240,22 +240,27 @@ class BrewProcess : public Process {
     }
 
     float transitionAlpha() const {
+        if (currentPhase.transition.type == TransitionType::INSTANT) {
+            return 1.0f;
+        }
+        float endValue = 0.0f;
+        float startValue = 0.0f;
         if (currentPhase.transition.target == TransitionTarget::VOLUMETRIC && target == ProcessTarget::VOLUMETRIC) {
-            float endValue = currentPhase.transition.duration;
+            endValue = currentPhase.transition.duration;
             if (endValue <= 0.0f && currentPhase.hasVolumetricTarget()) {
                 endValue = currentPhase.getVolumetricTarget().value - phaseStartVolume;
             }
-            return transitionAlpha(max(0.0, currentVolume - phaseStartVolume), endValue);
+            startValue = max(0.0, currentVolume - phaseStartVolume);
         }
         if (currentPhase.transition.target == TransitionTarget::PUMPED) {
-
-            float endValue = currentPhase.transition.duration;
-            if (endValue <= 0.0f && currentPhase.hasVolumetricTarget()) {
-                endValue = currentPhase.getVolumetricTarget().value;
+            endValue = currentPhase.transition.duration;
+            if (endValue <= 0.0f && currentPhase.hasPumpedTarget()) {
+                endValue = currentPhase.getPumpedTarget().value;
             }
-            if (endValue > 0.0f) {
-                return transitionAlpha(waterPumped, endValue);
-            }
+            startValue = waterPumped;
+        }
+        if (endValue > 0.0f) {
+            return transitionAlpha(startValue, endValue);
         }
         return transitionAlphaByTime();
     }

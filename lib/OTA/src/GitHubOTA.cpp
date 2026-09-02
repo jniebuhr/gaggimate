@@ -15,6 +15,7 @@ GitHubOTA::GitHubOTA(const String &display_version, const String &controller_ver
 
     _version = from_string(display_version.substring(1).c_str());
     _controller_version = from_string(controller_version.substring(1).c_str());
+
     _release_url = release_url;
     _firmware_name = firmware_name;
     _filesystem_name = filesystem_name;
@@ -59,6 +60,8 @@ void GitHubOTA::checkForUpdates() {
         _latest_version_string = semver_str;
         semver_free(&_latest_version);
         _latest_version = from_string(semver_str.c_str());
+        _screen_update_required = update_required(_latest_version, _version);
+        _controller_update_required = update_required(_latest_version, _controller_version);
     } else {
         _latest_url = _release_url + "/";
         _latest_url.replace("tag", "download");
@@ -73,6 +76,8 @@ void GitHubOTA::checkForUpdates() {
         _latest_version_string = version;
         semver_free(&_latest_version);
         _latest_version = from_string(version.c_str());
+        _screen_update_required = update_required(_latest_version, _version);
+        _controller_update_required = update_required(_latest_version, _controller_version);
     }
 }
 
@@ -80,9 +85,9 @@ String GitHubOTA::getCurrentVersion() const { return _latest_version_string; }
 
 bool GitHubOTA::isUpdateAvailable(bool controller) const {
     if (controller) {
-        return update_required(_latest_version, _controller_version);
+        return _controller_update_required;
     }
-    return update_required(_latest_version, _version);
+    return _screen_update_required;
 }
 
 void GitHubOTA::update(bool controller, bool display) {
@@ -144,4 +149,5 @@ HTTPUpdateResult GitHubOTA::update_firmware(const String &url) {
 void GitHubOTA::setControllerVersion(const String &controller_version) {
     semver_free(&_controller_version);
     _controller_version = from_string(controller_version.substring(1).c_str());
+    _controller_update_required = update_required(_latest_version, _controller_version);
 }
