@@ -164,6 +164,7 @@ void ShotHistoryPlugin::record() {
         sample.ev = encodeUnsigned(currentEstimatedWeight, WEIGHT_SCALE, WEIGHT_MAX_VALUE);
         sample.pr = encodeUnsigned(currentPuckResistance, RESISTANCE_SCALE, RESISTANCE_MAX_VALUE);
         sample.si = getSystemInfo(); // Pack system state information
+        sample.wp = encodeUnsigned(controller->getCurrentWaterPumped(), WEIGHT_SCALE, WEIGHT_MAX_VALUE);
 
         // Track phase transitions
         if (controller->getMode() == MODE_BREW) {

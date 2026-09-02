@@ -192,6 +192,7 @@ message SensorData {
     float puck_resistance = 4;
     float pump_power = 5;   // pump power 0..100 %
     float heater_power = 6; // heater power 0..100 %
+    float water_pumped = 7; // cumulative water pumped in ml
 }
 
 message ButtonState {

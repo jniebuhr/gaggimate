@@ -257,7 +257,7 @@ void Controller::setupBluetooth() {
     });
     pluginManager->on("ota:update:end", [this](Event const &) { applyConnectionPriority(true); });
     comms.onSensorData([this](float temp, float pressure, float puckFlow, float pumpFlow, float puckResistance, float pumpPower,
-                              float heaterPower) {
+                              float heaterPower, float waterPumped) {
         onTempRead(temp);
         this->pressure = pressure;
         this->currentPuckFlow = puckFlow;
@@ -265,10 +265,12 @@ void Controller::setupBluetooth() {
         this->currentPumpPower = pumpPower;
         this->currentHeaterPower = heaterPower;
         this->currentPuckResistance = puckResistance;
+        this->currentWaterPumped = waterPumped;
         pluginManager->trigger("boiler:pressure:change", "value", pressure);
         pluginManager->trigger("pump:puck-flow:change", "value", puckFlow);
         pluginManager->trigger("pump:flow:change", "value", pumpFlow);
         pluginManager->trigger("pump:puck-resistance:change", "value", puckResistance);
+        pluginManager->trigger("pump:volume:change", "value", waterPumped);
     });
     comms.onButtonState([this](uint8_t index, bool pressed) {
         const int status = pressed ? 1 : 0;
@@ -601,6 +603,7 @@ void Controller::loopLogic() {
                 auto brewProcess = static_cast<BrewProcess *>(currentProcess);
                 brewProcess->updatePressure(pressure);
                 brewProcess->updateFlow(currentPumpFlow);
+                brewProcess->updateWaterPumped(currentWaterPumped);
             }
             currentProcess->progress();
             if (!isActiveLocked()) {
@@ -985,6 +988,7 @@ void Controller::activate() {
         return;
     clear();
     comms.tare();
+    currentWaterPumped = 0.0f;
     if (isVolumetricAvailable()) {
 #ifdef NIGHTLY_BUILD
         currentVolumetricSource =
@@ -1039,6 +1043,7 @@ void Controller::deactivateLocked(std::vector<const char *> &events) {
     delete lastProcess;
     lastProcess = currentProcess;
     currentProcess = nullptr;
+    comms.tare();
     applyConnectionPriority(); // shot ended -> relaxed BLE interval
     if (lastProcess->getType() == MODE_BREW) {
         events.push_back("controller:brew:end");

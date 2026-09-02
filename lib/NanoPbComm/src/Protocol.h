@@ -17,7 +17,7 @@ static constexpr const char *RX_CHAR_UUID = "12345678-1234-5678-1234-123456789ab
 static constexpr const char *INFO_CHAR_UUID = "f8d7203b-e00c-48e2-83ba-37ff49cdba74";
 
 // Bump on any breaking gaggimate.proto change; carried in SystemInfo.protocol_version for mismatch detection.
-static constexpr uint32_t PROTOCOL_VERSION = 3;
+static constexpr uint32_t PROTOCOL_VERSION = 4;
 
 // Outbound priorities (higher wins in the queue).
 enum Priority : uint8_t {
