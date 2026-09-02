@@ -45,7 +45,7 @@ void ShotUploadPlugin::loop() {
 #endif
 }
 
-void ShotUploadPlugin::taskLoop(void *arg) {
+[[noreturn]] void ShotUploadPlugin::taskLoop(void *arg) {
     auto *plugin = static_cast<ShotUploadPlugin *>(arg);
     while (true) {
         plugin->processOnce();
@@ -63,7 +63,7 @@ void ShotUploadPlugin::requestUpload(uint32_t shotId) {
 }
 
 void ShotUploadPlugin::processOnce() {
-    Settings &settings = controller->getSettings();
+    const Settings &settings = controller->getSettings();
 
     uint32_t shotId = 0;
     {
@@ -91,7 +91,7 @@ void ShotUploadPlugin::processOnce() {
     // Not on the network: drop the shot (no offline queueing).
     if (WiFi.status() != WL_CONNECTED) {
         ESP_LOGW("ShotUploadPlugin", "Shot %u: not connected, dropped", shotId);
-        String id = String(shotId, 10);
+        auto id = String(shotId, 10);
         while (id.length() < 6) {
             id = "0" + id;
         }
@@ -122,7 +122,7 @@ void ShotUploadPlugin::processOnce() {
         ESP_LOGI("ShotUploadPlugin", "Shot %u uploaded successfully (%u bytes)", shotId, json.length());
     } else {
         ESP_LOGW("ShotUploadPlugin", "Shot %u: dropped after %d failed attempts", shotId, retries + 1);
-        String id = String(shotId, 10);
+        auto id = String(shotId, 10);
         while (id.length() < 6) {
             id = "0" + id;
         }
@@ -132,11 +132,22 @@ void ShotUploadPlugin::processOnce() {
     }
 }
 
-bool ShotUploadPlugin::upload(const String &json, uint32_t shotId, String &error) {
+bool ShotUploadPlugin::upload(const String &json, uint32_t, String &error) {
     // The Decent plugin passes a clean alphanumeric machine id in the query.
     String machineId = cleanMachineId(controller->getSettings().getShotUploadMachineId());
-    String url = "http://" + controller->getSettings().getShotUploadServer() + "/"
-                 + controller->getSettings().getShotUploadEndpoint() + "?machine_id=" + machineId;
+    // The shot server is typically a LAN-only service (Decent's own print
+    // plugin talks plain HTTP to a local host). Honour an explicit scheme in
+    // the configured server (e.g. https://...) so TLS setups work too, and
+    // fall back to http for the default LAN case.
+    String server = controller->getSettings().getShotUploadServer();
+    // NOSONAR: the shot server is a user-configured LAN endpoint and the
+    // Decent print ecosystem is plain-HTTP based; operators who need TLS can
+    // configure an https:// server, which is honoured verbatim above.
+    if (server.indexOf("://") < 0) {
+        server = "http://" + server;
+    }
+    String url = server + "/" + controller->getSettings().getShotUploadEndpoint()
+                 + "?machine_id=" + machineId;
 
     HTTPClient http;
     http.setConnectTimeout(5000);
@@ -170,7 +181,7 @@ String ShotUploadPlugin::cleanMachineId(const String &raw) const {
 
 bool ShotUploadPlugin::buildShotJson(uint32_t shotId, String &outJson) {
     // ShotHistoryPlugin writes .slog files zero-padded to 6 digits (/h/000000.slog).
-    String id = String(shotId, 10);
+    auto id = String(shotId, 10);
     while (id.length() < 6) {
         id = "0" + id;
     }

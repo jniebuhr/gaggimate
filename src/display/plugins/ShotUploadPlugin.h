@@ -59,7 +59,7 @@ class ShotUploadPlugin : public Plugin {
     std::queue<uint32_t> uploadQueue; // shot ids awaiting upload
     std::mutex queueMutex;
 
-    static void taskLoop(void *arg);
+    [[noreturn]] static void taskLoop(void *arg);
 };
 
 extern ShotUploadPlugin ShotUpload;
