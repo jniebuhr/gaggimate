@@ -164,11 +164,7 @@ void DefaultUI::init() {
     });
     pluginManager->on("controller:bluetooth:connect", [this](Event const &) {
         waitingForController = false;
-        rerender = true;
-        initialized = true;
-        // Stay on the standby screen when the controller is incompatible so the
-        // mismatch message remains visible instead of jumping into brew.
-        if (eez_flow_get_current_screen() == SCREEN_ID_STANDBY_SCREEN && !controller->getSystemInfo().protocolMismatch) {
+        if (eez_flow_get_current_screen() == SCREEN_ID_STANDBY_SCREEN && !controller->getSystemInfo().protocolMismatch && !initialized) {
             ::Settings &settings = controller->getSettings();
             if (settings.getStartupMode() == MODE_BREW) {
                 changeScreen(SCREEN_ID_BREW_SCREEN);
@@ -176,7 +172,9 @@ void DefaultUI::init() {
                 standbyEnterTime = ::millis();
             }
         }
+        initialized = true;
         pressureAvailable = controller->getSystemInfo().capabilities.pressure;
+        rerender = true;
     });
     pluginManager->on("controller:bluetooth:disconnect", [this](Event const &) {
         waitingForController = true;
