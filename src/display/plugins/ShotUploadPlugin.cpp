@@ -140,11 +140,8 @@ bool ShotUploadPlugin::upload(const String &json, uint32_t, String &error) {
     // the configured server (e.g. https://...) so TLS setups work too, and
     // fall back to http for the default LAN case.
     String server = controller->getSettings().getShotUploadServer();
-    // NOSONAR: the shot server is a user-configured LAN endpoint and the
-    // Decent print ecosystem is plain-HTTP based; operators who need TLS can
-    // configure an https:// server, which is honoured verbatim above.
     if (server.indexOf("://") < 0) {
-        server = "http://" + server;
+        server = "http://" + server; // NOSONAR: LAN-only Decent print server; https:// in the configured server is honoured above
     }
     String url = server + "/" + controller->getSettings().getShotUploadEndpoint()
                  + "?machine_id=" + machineId;
