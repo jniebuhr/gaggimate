@@ -10,8 +10,8 @@
 //   Header (v1-v4 = 128 bytes, v5+ = 512 bytes) followed by contiguous sample records.
 //   Header fields set at start; sampleCount & durationMs patched at end.
 // Per-sample record fields are ALWAYS present in fixed order.
-//   elapsedMs(uint32_t), tt(uint16_t), ct(uint16_t), tp(uint16_t), cp(uint16_t), fl(int16_t), tf(int16_t), pf(int16_t), vf(int16_t),
-//   v(uint16_t), ev(uint16_t), pr(uint16_t), si(uint16_t), wp(uint16_t)
+//   elapsedMs(uint32_t), tt(uint16_t), ct(uint16_t), tp(uint16_t), cp(uint16_t), fl(int16_t), tf(int16_t), pf(int16_t),
+//   vf(int16_t), v(uint16_t), ev(uint16_t), pr(uint16_t), si(uint16_t), wp(uint16_t)
 // Values are stored as scaled integers (see comments per field below).
 // Sample size: v1-v5 = 26 bytes; v6 = 28 bytes because t is uint32_t;
 // v7 = 30 bytes with cumulative water pumped.

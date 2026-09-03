@@ -113,6 +113,8 @@ class Controller {
 
     void onVolumetricDelete();
     bool isLowWaterLevel() const { return getWaterLevel() < 20; };
+    bool isSteamSwitchOn() const { return steamSwitchOn; }
+    bool isFlushPending() const { return flushPending; }
 
     SystemInfo getSystemInfo() const { return systemInfo; }
 
@@ -227,6 +229,8 @@ class Controller {
     bool volumetricOverride = false;
     bool processCompleted = false;
     bool steamReady = false;
+    bool steamSwitchOn = false;
+    bool flushPending = false; // no flush since entering brew mode, waking up, or the last shot
     bool sdcard = false;
     int error = 0;
 

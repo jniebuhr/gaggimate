@@ -12,6 +12,7 @@
 #include <display/drivers/common/LV_Helper.h>
 #endif
 #include <display/main.h>
+#include <display/plugins/BLEScalePlugin.h>
 #include <display/ui/utils/effects.h>
 #include <utility>
 
@@ -164,7 +165,8 @@ void DefaultUI::init() {
     });
     pluginManager->on("controller:bluetooth:connect", [this](Event const &) {
         waitingForController = false;
-        if (eez_flow_get_current_screen() == SCREEN_ID_STANDBY_SCREEN && !controller->getSystemInfo().protocolMismatch && !initialized) {
+        if (eez_flow_get_current_screen() == SCREEN_ID_STANDBY_SCREEN && !controller->getSystemInfo().protocolMismatch &&
+            !initialized) {
             ::Settings &settings = controller->getSettings();
             if (settings.getStartupMode() == MODE_BREW) {
                 changeScreen(SCREEN_ID_BREW_SCREEN);
@@ -252,6 +254,7 @@ void DefaultUI::loop() {
         updateState();
         // Fill the EEZ data models before handleScreenChange() creates/ticks a screen (undefined fields abort the flow).
         updateSystemStatus();
+        updateWarnings();
         updateProfileInfo();
         updateBoiler();
         updateBrewProcess();
@@ -371,8 +374,6 @@ void DefaultUI::setupPanel() {
     applyTheme();
     ui_tick();
 
-    // Polished power-up: ui_init() makes standby active instantly, so stage a black screen and
-    // fade standby in over it (lv_scr_load_anim no-ops when the target is already the active screen).
     lv_obj_t *standby = lv_scr_act();
     lv_obj_t *black = lv_obj_create(nullptr);
     lv_obj_set_style_bg_color(black, lv_color_black(), LV_PART_MAIN);
@@ -394,6 +395,7 @@ void DefaultUI::setupState() {
     eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_GRIND_TIME_TARGET, grindTimeTarget);
 
     eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_SYSTEM, systemStatus);
+    eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_WARNINGS, warnings);
     eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_PREVIEW_PROFILE, previewProfileInfo);
     eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_SELECTED_PROFILE, selectedProfileInfo);
     eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_BOILER, boiler);
@@ -454,6 +456,7 @@ void DefaultUI::setupState() {
 
 void DefaultUI::handleScreenChange() {
     if (currentScreen != targetScreen) {
+        brewConfirmVisible = false;
         if (targetScreen == SCREEN_ID_STANDBY_SCREEN) {
             standbyEnterTime = ::millis();
         } else if (currentScreen == SCREEN_ID_STANDBY_SCREEN) {
@@ -538,6 +541,7 @@ void DefaultUI::updateState() {
     uiFlags.heating_flash(heatingFlash);
     uiFlags.temperature_stable(isTemperatureStable);
     uiFlags.has_prev_profile(currentProfileIdx > 0);
+    uiFlags.brew_confirm_visible(brewConfirmVisible);
     {
         std::lock_guard<std::mutex> guard(profilesMutex);
         uiFlags.has_next_profile(currentProfileIdx + 1 < static_cast<int>(favoritedProfileIds.size()));
@@ -585,6 +589,54 @@ void DefaultUI::updateSystemStatus() {
         systemStatus.time(timeBuf);
 }
 
+void DefaultUI::updateWarnings() {
+    const ::Settings &settings = controller->getSettings();
+    const bool scaleConnected = BLEScales.isConnected();
+    const bool waterLow = controller->getSystemInfo().capabilities.tof && controller->isLowWaterLevel();
+    const bool flushDue = controller->isFlushPending();
+    const bool switchOn = controller->isSteamSwitchOn();
+    const bool scaleLost = !scaleConnected && settings.getSavedScale() != "";
+    const bool batteryLow = scaleConnected && BLEScales.hasBatteryLevel() && BLEScales.getBatteryLevel() < 20;
+    const bool tempUnstable = !isTemperatureStable;
+
+    String labels;
+    auto apply = [&](bool cond, int level, const char *label, bool &warn, bool &error) {
+        warn = cond && (level == WARNING_LEVEL_WARN || level == WARNING_LEVEL_ERROR);
+        error = cond && level == WARNING_LEVEL_ERROR;
+        if (warn || error) {
+            if (labels.length() > 0)
+                labels += "\n";
+            labels += label;
+        }
+    };
+    bool warn, error;
+    apply(waterLow, settings.getWarnWaterLevel(), "Water tank low", warn, error);
+    warnings.waterWarn(warn);
+    warnings.waterError(error);
+    apply(flushDue, settings.getWarnFlush(), "Flush recommended", warn, error);
+    warnings.flushWarn(warn);
+    warnings.flushError(error);
+    apply(switchOn, settings.getWarnSteamSwitch(), "Steam switch is on", warn, error);
+    warnings.switchWarn(warn);
+    warnings.switchError(error);
+    apply(scaleLost, settings.getWarnScaleConnected(), "Scale not connected", warn, error);
+    warnings.scaleConnectedWarn(warn);
+    warnings.scaleConnectedError(error);
+    apply(batteryLow, settings.getWarnScaleBattery(), "Scale battery low", warn, error);
+    warnings.scaleBatteryWarn(warn);
+    warnings.scaleBatteryError(error);
+    apply(tempUnstable, settings.getWarnTemperature(), "Temperature not stable", warn, error);
+    warnings.temperatureWarn(warn);
+    warnings.temperatureError(error);
+    if (stringChanged(warnings.labels(), labels.c_str()))
+        warnings.labels(labels.c_str());
+}
+
+bool DefaultUI::hasBrewErrorWarning() {
+    return warnings.waterError() || warnings.flushError() || warnings.switchError() || warnings.scaleConnectedError() ||
+           warnings.scaleBatteryError() || warnings.temperatureError();
+}
+
 static void populateProfileInfo(ProfileInfoValue &info, const Profile &profile, bool isCurrent) {
     char timeBuf[12];
     formatDuration(static_cast<unsigned long>(profile.getTotalDuration() * 1000.0f), timeBuf, sizeof(timeBuf));
@@ -607,8 +659,6 @@ void DefaultUI::updateProfileInfo() {
     populateProfileInfo(selectedProfileInfo, profileManager->getSelectedProfile(), true);
     selectedProfileInfo.dirty(profileDirty);
 
-    // Preview backs the ProfileScreen carousel (index 0 = selected); hold the lock while
-    // reading the vector — the profile task rebuilds it concurrently (GM-147).
     bool populated = false;
     {
         std::lock_guard<std::mutex> guard(profilesMutex);

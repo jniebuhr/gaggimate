@@ -35,6 +35,35 @@ function ButtonBehaviorSelect({ id, label, value, onChange, profiles }) {
   );
 }
 
+const WARNING_LEVELS = [
+  { value: 0, label: 'Ignore', activeClass: 'btn-primary' },
+  { value: 1, label: 'Warn', activeClass: 'btn-warning' },
+  { value: 2, label: 'Error', activeClass: 'btn-error' },
+];
+
+function WarningLevelSelect({ id, label, value, onChange }) {
+  const current = Number(value ?? 1);
+  return (
+    <SettingsFormField label={label} htmlFor={id} noMargin>
+      <div className='join w-full' role='group' aria-label={`${label} severity`}>
+        {WARNING_LEVELS.map(l => (
+          <button
+            key={l.value}
+            type='button'
+            id={l.value === current ? id : undefined}
+            value={l.value}
+            className={`join-item btn btn-sm flex-1 ${current === l.value ? l.activeClass : 'btn-outline'}`}
+            onClick={onChange}
+            aria-pressed={current === l.value}
+          >
+            {l.label}
+          </button>
+        ))}
+      </div>
+    </SettingsFormField>
+  );
+}
+
 function PasswordField({ id, label, placeholder, value, onChange, shown, setShown, ...rest }) {
   return (
     <label className='input w-full'>
@@ -418,6 +447,52 @@ export function GeneralTab({
             htmlFor='clock24hFormat'
             checked={!!formData.clock24hFormat}
             onChange={onChange('clock24hFormat')}
+          />
+        </div>
+      </Section>
+
+      {/* Warnings */}
+      <Section title='Warnings' className='h-full'>
+        <p className='text-base-content/70 mb-4 text-sm'>
+          Warnings are shown on the display. An error additionally asks for confirmation before a
+          brew starts.
+        </p>
+        <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+          <WarningLevelSelect
+            id='warnWaterLevel'
+            label='Water tank low'
+            value={formData.warnWaterLevel}
+            onChange={onChange('warnWaterLevel')}
+          />
+          <WarningLevelSelect
+            id='warnTemperature'
+            label='Temperature not stable'
+            value={formData.warnTemperature}
+            onChange={onChange('warnTemperature')}
+          />
+          <WarningLevelSelect
+            id='warnSteamSwitch'
+            label='Steam switch left on'
+            value={formData.warnSteamSwitch}
+            onChange={onChange('warnSteamSwitch')}
+          />
+          <WarningLevelSelect
+            id='warnFlush'
+            label='Flush recommended'
+            value={formData.warnFlush}
+            onChange={onChange('warnFlush')}
+          />
+          <WarningLevelSelect
+            id='warnScaleConnected'
+            label='Scale not connected'
+            value={formData.warnScaleConnected}
+            onChange={onChange('warnScaleConnected')}
+          />
+          <WarningLevelSelect
+            id='warnScaleBattery'
+            label='Scale battery low'
+            value={formData.warnScaleBattery}
+            onChange={onChange('warnScaleBattery')}
           />
         </div>
       </Section>

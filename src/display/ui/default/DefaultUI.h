@@ -48,6 +48,13 @@ class DefaultUI {
 
     void onVolumetricDelete();
 
+    // Brew confirmation overlay, shown when an error-level warning is active on brew start.
+    bool hasBrewErrorWarning();
+    void setBrewConfirmVisible(bool visible) {
+        brewConfirmVisible = visible;
+        rerender = true;
+    }
+
     void markDirty() { rerender = true; }
     void markProfileDirty() { profileDirty = true; }
     void markProfileClean() { profileDirty = false; }
@@ -75,6 +82,7 @@ class DefaultUI {
 
     void updateState();
     void updateSystemStatus();
+    void updateWarnings();
     void updateProfileInfo();
     void updateBoiler();
     void updateBrewProcess();
@@ -130,6 +138,8 @@ class DefaultUI {
     BoilerValue boiler;
     UIFlagsValue uiFlags;
     BrewProcessValue brewProcess;
+    WarningsValue warnings;
+    bool brewConfirmVisible = false;
     Value currentWeight = FloatValue(0.0);
     Value steamReady = BooleanValue(false);
     Value grindWeightTarget = FloatValue(18.0);
