@@ -134,7 +134,8 @@ void WebUIPlugin::loop() {
         // firmware over BLE (wants a low-latency link), a display update is over
         // Wi-Fi (wants BLE to stay out of the radio's way). "" = both.
         pluginManager->trigger("ota:update:start", "component", updateComponent);
-        ota->update(updateComponent != "display", updateComponent != "controller", controller->getClientController()->getClient());
+        ota->update(updateComponent != "display", updateComponent != "controller",
+                    controller->getClientController()->getClient());
         pluginManager->trigger("ota:update:end");
         updating = false;
     }
@@ -712,6 +713,18 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
             if (request->hasArg("haTopic"))
                 settings->setHomeAssistantTopic(request->arg("haTopic"));
             settings->setMomentaryButtons(request->hasArg("momentaryButtons"));
+            if (request->hasArg("warnWaterLevel"))
+                settings->setWarnWaterLevel(request->arg("warnWaterLevel").toInt());
+            if (request->hasArg("warnFlush"))
+                settings->setWarnFlush(request->arg("warnFlush").toInt());
+            if (request->hasArg("warnSteamSwitch"))
+                settings->setWarnSteamSwitch(request->arg("warnSteamSwitch").toInt());
+            if (request->hasArg("warnScaleConnected"))
+                settings->setWarnScaleConnected(request->arg("warnScaleConnected").toInt());
+            if (request->hasArg("warnScaleBattery"))
+                settings->setWarnScaleBattery(request->arg("warnScaleBattery").toInt());
+            if (request->hasArg("warnTemperature"))
+                settings->setWarnTemperature(request->arg("warnTemperature").toInt());
             settings->setDelayAdjust(request->hasArg("delayAdjust"));
             if (request->hasArg("brewDelay"))
                 settings->setBrewDelay(request->arg("brewDelay").toDouble());
@@ -842,6 +855,12 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["smartGrindIp"] = settings.getSmartGrindIp();
     doc["smartGrindMode"] = settings.getSmartGrindMode();
     doc["momentaryButtons"] = settings.isMomentaryButtons();
+    doc["warnWaterLevel"] = settings.getWarnWaterLevel();
+    doc["warnFlush"] = settings.getWarnFlush();
+    doc["warnSteamSwitch"] = settings.getWarnSteamSwitch();
+    doc["warnScaleConnected"] = settings.getWarnScaleConnected();
+    doc["warnScaleBattery"] = settings.getWarnScaleBattery();
+    doc["warnTemperature"] = settings.getWarnTemperature();
     doc["brewDelay"] = settings.getBrewDelay();
     doc["grindDelay"] = settings.getGrindDelay();
     doc["delayAdjust"] = settings.isDelayAdjust();
