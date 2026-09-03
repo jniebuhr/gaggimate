@@ -183,15 +183,17 @@ message BoilerReading {
     uint32 index = 1;
     float temperature = 2;
     float pressure = 3;
+    float power = 4; // heater power 0..100 %
 }
 
 message SensorData {
+    reserved 6;
+
     repeated BoilerReading boilers = 1;
     float puck_flow = 2;
     float pump_flow = 3;
     float puck_resistance = 4;
     float pump_power = 5;   // pump power 0..100 %
-    float heater_power = 6; // heater power 0..100 %
     float water_pumped = 7; // cumulative water pumped in ml
 }
 
