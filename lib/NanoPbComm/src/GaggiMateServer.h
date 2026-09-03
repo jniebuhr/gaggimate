@@ -34,7 +34,7 @@ class GaggiMateServer {
 
     // Build a payload without sending; sendSensorData reports boiler 0 (the wire format supports several).
     gm::Payload buildSensorData(float temperature, float pressure, float puckFlow, float pumpFlow, float puckResistance,
-                                float pumpPower = 0.0f, float heaterPower = 0.0f);
+                                float pumpPower = 0.0f, float heaterPower = 0.0f, float waterPumped = 0.0f);
     gm::Payload buildButtonState(uint8_t index, bool pressed);
     gm::Payload buildAutotuneResult(float kp, float ki, float kd, float kf);
     gm::Payload buildVolumetricMeasurement(float volume);

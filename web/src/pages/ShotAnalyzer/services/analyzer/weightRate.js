@@ -82,6 +82,15 @@ export function getLastNonExtendedIndex(samples) {
   return samples.length - 1;
 }
 
+/**
+ * Excludes only the post-shot extended-recording tail. A zero from the actual
+ * brew remains a valid measurement because it is retained when not extended.
+ */
+export function getSamplesThroughLastNonExtended(samples) {
+  const endIndex = getLastNonExtendedIndex(samples);
+  return endIndex >= 0 ? samples.slice(0, endIndex + 1) : [];
+}
+
 export function isPositiveFiniteRate(value) {
   return value != null && Number.isFinite(value) && value > 0.1;
 }

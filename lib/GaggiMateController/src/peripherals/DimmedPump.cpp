@@ -4,7 +4,7 @@
 #include <GaggiMateController.h>
 
 DimmedPump::DimmedPump(uint8_t ssr_pin, uint8_t sense_pin, PressureSensor *pressure_sensor)
-    : _ssr_pin(ssr_pin), _sense_pin(sense_pin), _psm(_sense_pin, _ssr_pin, 100, FALLING, 2, 4), _pressureSensor(pressure_sensor),
+    : _ssr_pin(ssr_pin), _sense_pin(sense_pin), _psm(_sense_pin, _ssr_pin, 100, FALLING, 1, 4), _pressureSensor(pressure_sensor),
       _pressureController(0.03f, &_ctrlPressure, &_ctrlFlow, &_currentPressure, &_controllerPower, &_valveStatus) {
     _psm.set(0);
 }
@@ -13,6 +13,7 @@ void DimmedPump::setup() {
     _cps = _psm.cps();
     if (_cps > 70) {
         _cps = _cps / 2;
+        _psm.setDivider(2);
     }
     xTaskCreate(loopTask, "DimmedPump::loop", configMINIMAL_STACK_SIZE * 4, this, 1, &taskHandle);
 }
@@ -46,6 +47,7 @@ float DimmedPump::getPuckFlow() { return _pressureController.getCoffeeFlowRate()
 float DimmedPump::getPuckResistance() { return _pressureController.getPuckResistance(); }
 
 void DimmedPump::tare() {
+    _pumpedWater = 0.0f;
     _pressureController.tare();
     _pressureController.reset();
 }
@@ -60,6 +62,16 @@ void DimmedPump::loopTask(void *arg) {
 }
 
 void DimmedPump::updatePower() {
+    _pumpedWater += _currentFlow * 0.03f;
+    // This is the more precise logic but some bug is happening with the PSM counter
+    /*
+    if (_binaryMode) {
+        _pumpedWater += _currentFlow * 0.03f;
+    } else {
+        _pumpedWater += _currentFlow / static_cast<float>(_cps) * static_cast<float>(_psm.getCounter());
+        _psm.resetCounter();
+    }
+    */
     _pressureController.update(static_cast<PressureController::ControlMode>(_mode));
     if (_mode != ControlMode::POWER) {
         _power = _controllerPower;

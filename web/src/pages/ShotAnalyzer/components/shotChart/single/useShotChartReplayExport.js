@@ -8,13 +8,13 @@
  */
 
 import { useEffect, useRef, useState } from 'preact/hooks';
-import { downloadBlob, downloadJson } from '../../../../../utils/download';
+import { downloadBlob } from '../../../../../utils/download';
 import {
   exportReplayImage,
   exportReplayVideo,
   getVideoExportCapabilities,
 } from '../../../services/ReplayVideoExportService';
-import { libraryService } from '../../../services/LibraryService';
+import { exportLibraryItems } from '../../../services/LibraryExportService';
 import {
   DEFAULT_REPLAY_EXPORT_CONFIG,
   getReplayExportStatusHint,
@@ -119,6 +119,7 @@ function setChartReplayReveal(chart, enabled, revealX) {
 
 export function useShotChartReplayExport({
   shotData,
+  profileData,
   exportMenuRef,
   chartRefs,
   legendColorByLabel,
@@ -734,27 +735,6 @@ export function useShotChartReplayExport({
     }
   };
 
-  const handleShotJsonExport = async () => {
-    beginExportSession('json');
-    setReplayExportStatusSafely({ status: 'preparingJson', error: null });
-
-    try {
-      // Keep JSON export routed through LibraryService so naming and file contents
-      // stay identical to the analyzer/library export path elsewhere in the app.
-      const { exportData, filename } = await libraryService.exportItem(shotData, true);
-      setReplayExportStatusSafely({ status: 'downloading', error: null });
-      downloadJson(exportData, filename);
-      setReplayExportStatusSafely({ status: 'idle', error: null });
-    } catch (error) {
-      setReplayExportStatusSafely({
-        status: 'error',
-        error: error?.message || 'Shot JSON export failed.',
-      });
-    } finally {
-      finishExportSession();
-    }
-  };
-
   const closeExportMenu = () => {
     setExportMenuState(prev => ({ ...prev, open: false }));
   };
@@ -822,8 +802,25 @@ export function useShotChartReplayExport({
     if (isExportingRef.current) return;
 
     closeExportMenu();
-    if (exportMenuState.exportType === 'json') {
-      await handleShotJsonExport();
+    const fileExportTypes = ['shot', 'profile'].filter(type =>
+      exportMenuState.exportType?.includes(type),
+    );
+    if (fileExportTypes.length > 0) {
+      try {
+        const items = fileExportTypes
+          .map(type => {
+            if (type === 'shot') return { item: shotData, isShot: true };
+            if (type === 'profile' && profileData) return { item: profileData, isShot: false };
+            return null;
+          })
+          .filter(Boolean);
+        await exportLibraryItems(items);
+      } catch (error) {
+        setReplayExportStatusSafely({
+          status: 'error',
+          error: error?.message || 'File export failed.',
+        });
+      }
       return;
     }
     if (exportMenuState.exportType === 'image') {

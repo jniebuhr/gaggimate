@@ -6,8 +6,8 @@
 #include <display/plugins/BLEScalePlugin.h>
 
 void action_on_wakeup(lv_event_t *e) {
-    if (controller.isUpdating() || controller.isErrorState() || controller.isAutotuning() ||
-        !controller.getClientController()->isConnected()) {
+    if (!controller.getClientController()->isConnected() || controller.getSystemInfo().protocolMismatch ||
+        !controller.isReady()) {
         return;
     }
     controller.getUI()->changeScreen(SCREEN_ID_BREW_SCREEN);
@@ -21,6 +21,7 @@ void action_on_load_started(lv_event_t *e) {
 
 void action_on_menu_click(lv_event_t *e) {
     controller.deactivate();
+    controller.setMode(MODE_BREW);
     controller.getUI()->changeScreen(SCREEN_ID_MENU_SCREEN_NEW);
 };
 
@@ -48,7 +49,13 @@ void action_on_grind_screen(lv_event_t *e) {
     controller.deactivate();
 };
 
-void action_on_brew_start(lv_event_t *e) { controller.activate(); };
+void action_on_brew_start(lv_event_t *e) {
+    if (controller.getUI()->hasBrewErrorWarning()) {
+        controller.getUI()->setBrewConfirmVisible(true);
+        return;
+    }
+    controller.activate();
+};
 
 void action_on_flush(lv_event_t *e) { controller.onFlush(); };
 
@@ -261,7 +268,7 @@ void action_on_screen_load(lv_event_t *e) {
     applyClickArea(objects.btn_grind_1, 15);
     applyClickArea(objects.btn_settings_1, 15);
     applyClickArea(objects.info_btn, 15);
-    applyClickArea(objects.menu_dials__standby_icon, 20);
+    applyClickArea(objects.new_menu_dials__standby_icon, 20);
     applyClickArea(objects.standby_btn, 20);
     applyClickArea(objects.brew_dials__menu_icon, 20);
     applyClickArea(objects.status_dials__menu_icon, 20);
@@ -316,3 +323,10 @@ void action_on_screen_swipe(lv_event_t *e) {
 }
 
 void action_on_info_screen(lv_event_t *e) { controller.getUI()->changeScreen(SCREEN_ID_INFO_SCREEN); }
+
+void action_on_warning_back(lv_event_t *e) { controller.getUI()->setBrewConfirmVisible(false); }
+
+void action_on_warning_ignore(lv_event_t *e) {
+    controller.getUI()->setBrewConfirmVisible(false);
+    controller.activate();
+}

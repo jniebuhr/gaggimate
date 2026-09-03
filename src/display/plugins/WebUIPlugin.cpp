@@ -12,6 +12,7 @@
 #include <display/plugins/ShotHistoryPlugin.h>
 #include <display/util/PsramStlAllocator.h>
 #include <display/util/PsramWsBuffer.h>
+#include <display/util/mathutils.h>
 #include <display/webassets/web_ui_manifest.h>
 #include <esp32-hal-psram.h>
 #include <esp_core_dump.h>
@@ -85,7 +86,7 @@ void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) 
     });
     pluginManager->on("controller:ready", [this](Event const &) {
         ota->setControllerVersion(controller->getSystemInfo().version);
-        ota->init(controller->getClientController()->getClient());
+        ota->init();
     });
     pluginManager->on("controller:autotune:result", [this](Event const &event) { sendAutotuneResult(); });
     pluginManager->on("controller:autotune:failed", [this](Event const &) { sendAutotuneFailed(); });
@@ -133,7 +134,8 @@ void WebUIPlugin::loop() {
         // firmware over BLE (wants a low-latency link), a display update is over
         // Wi-Fi (wants BLE to stay out of the radio's way). "" = both.
         pluginManager->trigger("ota:update:start", "component", updateComponent);
-        ota->update(updateComponent != "display", updateComponent != "controller");
+        ota->update(updateComponent != "display", updateComponent != "controller",
+                    controller->getClientController()->getClient());
         pluginManager->trigger("ota:update:end");
         updating = false;
     }
@@ -155,10 +157,10 @@ void WebUIPlugin::loop() {
         lastStatus = now;
         statusDoc.clear();
         statusDoc["tp"] = "evt:status";
-        statusDoc["ct"] = controller->getCurrentTemp();
+        statusDoc["ct"] = round_to(controller->getCurrentTemp(), 3);
         statusDoc["tt"] = controller->getTargetTemp();
-        statusDoc["pr"] = controller->getCurrentPressure();
-        statusDoc["fl"] = controller->getCurrentPumpFlow();
+        statusDoc["pr"] = round_to(controller->getCurrentPressure(), 3);
+        statusDoc["fl"] = round_to(controller->getCurrentPumpFlow(), 3);
         statusDoc["pt"] = controller->getTargetPressure();
         statusDoc["m"] = controller->getMode();
         statusDoc["p"] = controller->getProfileManager()->getSelectedProfile().label;
@@ -181,7 +183,8 @@ void WebUIPlugin::loop() {
         statusDoc["rssi"] = 0;
         statusDoc["lat"] = -1; // BLE round-trip latency (ms); -1 = not yet measured
         statusDoc["pw"] = controller->getCurrentPumpPower();
-        statusDoc["hp"] = controller->getCurrentHeaterPower();
+        statusDoc["hp"] = round_to(controller->getCurrentHeaterPower(), 3);
+        statusDoc["up"] = ota->isUpdateAvailable() || ota->isUpdateAvailable(true);
 
         if (controller->getClientController()->getClient()->isConnected()) {
             statusDoc["rssi"] = controller->getClientController()->getClient()->getRssi();
@@ -216,8 +219,8 @@ void WebUIPlugin::loop() {
         if (process != nullptr) {
             auto pObj = statusDoc["process"].to<JsonObject>();
             pObj["a"] = controller->isActive() ? 1 : 0;
-            statusDoc["pkr"] = controller->getCurrentPuckResistance();
-            statusDoc["pf"] = controller->getCurrentPuckFlow();
+            statusDoc["pkr"] = round_to(controller->getCurrentPuckResistance(), 3);
+            statusDoc["pf"] = round_to(controller->getCurrentPuckFlow(), 3);
             statusDoc["tf"] = controller->getTargetFlow();
             if (process->getType() == MODE_BREW) {
                 auto *brew = static_cast<BrewProcess *>(process);
@@ -710,6 +713,18 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
             if (request->hasArg("haTopic"))
                 settings->setHomeAssistantTopic(request->arg("haTopic"));
             settings->setMomentaryButtons(request->hasArg("momentaryButtons"));
+            if (request->hasArg("warnWaterLevel"))
+                settings->setWarnWaterLevel(request->arg("warnWaterLevel").toInt());
+            if (request->hasArg("warnFlush"))
+                settings->setWarnFlush(request->arg("warnFlush").toInt());
+            if (request->hasArg("warnSteamSwitch"))
+                settings->setWarnSteamSwitch(request->arg("warnSteamSwitch").toInt());
+            if (request->hasArg("warnScaleConnected"))
+                settings->setWarnScaleConnected(request->arg("warnScaleConnected").toInt());
+            if (request->hasArg("warnScaleBattery"))
+                settings->setWarnScaleBattery(request->arg("warnScaleBattery").toInt());
+            if (request->hasArg("warnTemperature"))
+                settings->setWarnTemperature(request->arg("warnTemperature").toInt());
             settings->setDelayAdjust(request->hasArg("delayAdjust"));
             if (request->hasArg("brewDelay"))
                 settings->setBrewDelay(request->arg("brewDelay").toDouble());
@@ -840,6 +855,12 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["smartGrindIp"] = settings.getSmartGrindIp();
     doc["smartGrindMode"] = settings.getSmartGrindMode();
     doc["momentaryButtons"] = settings.isMomentaryButtons();
+    doc["warnWaterLevel"] = settings.getWarnWaterLevel();
+    doc["warnFlush"] = settings.getWarnFlush();
+    doc["warnSteamSwitch"] = settings.getWarnSteamSwitch();
+    doc["warnScaleConnected"] = settings.getWarnScaleConnected();
+    doc["warnScaleBattery"] = settings.getWarnScaleBattery();
+    doc["warnTemperature"] = settings.getWarnTemperature();
     doc["brewDelay"] = settings.getBrewDelay();
     doc["grindDelay"] = settings.getGrindDelay();
     doc["delayAdjust"] = settings.isDelayAdjust();

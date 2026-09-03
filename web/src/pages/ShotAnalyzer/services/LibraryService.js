@@ -43,6 +43,7 @@ function normalizeShotSampleForHistoryExport(sample = {}) {
     v: round2(sample.v),
     ev: round2(sample.ev),
     pr: round2(sample.pr),
+    wp: round2(sample.wp),
     systemInfo: sample.systemInfo,
     phaseNumber: sample.phaseNumber,
     phaseDisplayNumber: sample.phaseDisplayNumber,
@@ -306,14 +307,15 @@ class LibraryService {
    * Load full shot data
    * @param {string} id - Shot ID
    * @param {string} source - 'gaggimate' or 'browser'
+   * @param {{ signal?: AbortSignal }} options - Optional request controls for GaggiMate fetches
    * @returns {Promise<Object>} Full shot data with samples
    */
-  async loadShot(id, source) {
+  async loadShot(id, source, { signal } = {}) {
     const idStr = String(id);
 
     if (source === 'gaggimate') {
       const paddedId = idStr.padStart(6, '0');
-      const response = await fetch(`/api/history/${paddedId}.slog`);
+      const response = await fetch(`/api/history/${paddedId}.slog`, { signal });
 
       if (!response.ok) {
         throw new Error(`Failed to load shot ${idStr}: HTTP ${response.status}`);

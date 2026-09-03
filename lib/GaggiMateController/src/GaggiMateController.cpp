@@ -330,6 +330,7 @@ void GaggiMateController::sendSensorData() {
         float puckFlow = 0.0f;
         float pumpFlow = 0.0f;
         float puckResistance = 0.0f;
+        float waterPumped = 0.0f;
         // Sensor + (optional) volumetric ride in one frame.
         gm::Payload batch[2];
         size_t n = 0;
@@ -338,12 +339,13 @@ void GaggiMateController::sendSensorData() {
             puckFlow = dimmedPump->getPuckFlow();
             pumpFlow = dimmedPump->getPumpFlow();
             puckResistance = dimmedPump->getPuckResistance();
+            waterPumped = dimmedPump->getPumpedWater();
             if (this->valve->getState()) {
                 batch[n++] = _comms.buildVolumetricMeasurement(dimmedPump->getCoffeeVolume());
             }
         }
         batch[n++] = _comms.buildSensorData(this->thermocouple->read(), this->pressureSensor->getPressure(), puckFlow, pumpFlow,
-                                            puckResistance, pumpPower, heaterPower);
+                                            puckResistance, pumpPower, heaterPower, waterPumped);
         _comms.sendUnreliableBatch(batch, n); // telemetry: fire-and-forget
     } else {
         _comms.sendSensorData(this->thermocouple->read(), 0.0f, 0.0f, 0.0f, 0.0f, pumpPower, heaterPower);

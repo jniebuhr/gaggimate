@@ -32,7 +32,6 @@ extern const lv_img_dsc_t img_raindrops_80x80;
 extern const lv_img_dsc_t img_refresh_20x20;
 extern const lv_img_dsc_t img_settings_40x40;
 extern const lv_img_dsc_t img_tachometer_fast_40x40;
-extern const lv_img_dsc_t img_tap_60x60;
 extern const lv_img_dsc_t img_thermometer_half_40x40;
 extern const lv_img_dsc_t img_wifi_20x20;
 extern const lv_img_dsc_t img_wind_40x40;
@@ -40,9 +39,15 @@ extern const lv_img_dsc_t img_wind_80x80;
 extern const lv_img_dsc_t img_gallery;
 extern const lv_img_dsc_t img_list;
 extern const lv_img_dsc_t img_clock_future_past_40x40;
-extern const lv_img_dsc_t img_indicator;
 extern const lv_img_dsc_t img_settings_80x80;
 extern const lv_img_dsc_t img_info_40x40;
+extern const lv_img_dsc_t img_light_switch_off_20x20;
+extern const lv_img_dsc_t img_link_slash_alt_20x20;
+extern const lv_img_dsc_t img_raindrops_filled_20x20;
+extern const lv_img_dsc_t img_high_temperature_alert_20x20;
+extern const lv_img_dsc_t img_tint_slash_20x20;
+extern const lv_img_dsc_t img_battery_exclamation_20x20;
+extern const lv_img_dsc_t img_tap_48x48;
 
 #ifndef EXT_IMG_DESC_T
 #define EXT_IMG_DESC_T
@@ -52,7 +57,7 @@ typedef struct _ext_img_desc_t {
 } ext_img_desc_t;
 #endif
 
-extern const ext_img_desc_t images[36];
+extern const ext_img_desc_t images[41];
 
 #ifdef __cplusplus
 }

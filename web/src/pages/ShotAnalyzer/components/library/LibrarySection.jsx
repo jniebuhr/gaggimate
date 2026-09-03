@@ -3,6 +3,7 @@
  */
 
 import { LibraryRow } from './LibraryRow';
+import { LibraryActionsMenu } from './LibraryActionsMenu';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown';
 import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
@@ -184,28 +185,23 @@ export function LibrarySection({
               {items.length}
             </span>
           </h3>
-          <div className='flex gap-2'>
-            <button
-              onClick={onExportAll}
-              className={getAnalyzerIconButtonClasses({
-                tone: 'subtle',
-                className: 'h-7 w-7 p-1.5',
-              })}
-              title='Export All'
-            >
-              <FontAwesomeIcon icon={faFileExport} size='sm' />
-            </button>
-            <button
-              onClick={onDeleteAll}
-              className={getAnalyzerIconButtonClasses({
+          <LibraryActionsMenu
+            ariaLabel={`Open ${title.toLowerCase()} actions menu`}
+            buttonClassName='h-7 w-7 p-1.5'
+            actions={[
+              {
+                label: 'Export All',
+                icon: faFileExport,
+                onSelect: onExportAll,
+              },
+              {
+                label: 'Delete All',
+                icon: faTrashCan,
                 tone: 'error',
-                className: 'h-7 w-7 p-1.5',
-              })}
-              title='Delete All'
-            >
-              <FontAwesomeIcon icon={faTrashCan} size='sm' />
-            </button>
-          </div>
+                onSelect: onDeleteAll,
+              },
+            ]}
+          />
         </div>
         <div className='flex min-w-0 gap-2'>
           <input

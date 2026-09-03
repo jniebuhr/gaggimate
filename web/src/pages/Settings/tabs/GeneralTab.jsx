@@ -12,7 +12,7 @@ import {
 
 function ButtonBehaviorSelect({ id, label, value, onChange, profiles }) {
   return (
-    <SettingsFormField label={label} htmlFor={id} noMargin >
+    <SettingsFormField label={label} htmlFor={id} noMargin>
       <select
         id={id}
         name={id}
@@ -31,6 +31,35 @@ function ButtonBehaviorSelect({ id, label, value, onChange, profiles }) {
           </option>
         ))}
       </select>
+    </SettingsFormField>
+  );
+}
+
+const WARNING_LEVELS = [
+  { value: 0, label: 'Ignore', activeClass: 'btn-primary' },
+  { value: 1, label: 'Warn', activeClass: 'btn-warning' },
+  { value: 2, label: 'Error', activeClass: 'btn-error' },
+];
+
+function WarningLevelSelect({ id, label, value, onChange }) {
+  const current = Number(value ?? 1);
+  return (
+    <SettingsFormField label={label} htmlFor={id} noMargin>
+      <div className='join w-full' role='group' aria-label={`${label} severity`}>
+        {WARNING_LEVELS.map(l => (
+          <button
+            key={l.value}
+            type='button'
+            id={l.value === current ? id : undefined}
+            value={l.value}
+            className={`join-item btn btn-sm flex-1 ${current === l.value ? l.activeClass : 'btn-outline'}`}
+            onClick={onChange}
+            aria-pressed={current === l.value}
+          >
+            {l.label}
+          </button>
+        ))}
+      </div>
     </SettingsFormField>
   );
 }
@@ -74,7 +103,7 @@ export function GeneralTab({
   return (
     <div className='space-y-4 sm:space-y-6 lg:grid lg:grid-cols-2 lg:gap-4'>
       {/* User Preferences */}
-      <Section title='User Preferences' className='h-full' >
+      <Section title='User Preferences' className='h-full'>
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
           <SettingsFormField label='Startup Mode' htmlFor='startup-mode' noMargin>
             <select
@@ -184,8 +213,8 @@ export function GeneralTab({
         <div className='border-base-content/5 mt-6 border-t pt-6'>
           <h3 className='text-md text-base-content mb-2 font-semibold'>Physical Buttons</h3>
           <p className='text-base-content/85 mb-4 text-sm opacity-70'>
-            Define behavior for physical buttons when pressed. Make sure they are wired to the Alt
-            Relay Header.
+            Define behavior for physical buttons when pressed. Make sure they are wired to the
+            buttons header.
           </p>
           <div className='mb-4'>
             <ToggleField
@@ -195,6 +224,9 @@ export function GeneralTab({
               onChange={onChange('momentaryButtons')}
             />
           </div>
+          <p className='text-base-content/85 mb-4 text-sm opacity-70'>
+            Activate this if your coffee machine is equipped with momentary buttons.
+          </p>
           <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
             <ButtonBehaviorSelect
               id='button0'
@@ -222,7 +254,7 @@ export function GeneralTab({
       </Section>
 
       {/* Display Settings */}
-      <Section title='Display Settings' className='h-full' >
+      <Section title='Display Settings' className='h-full'>
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
           <SettingsFormField label='Main Brightness (1-16)' htmlFor='mainBrightness' noMargin>
             <input
@@ -303,7 +335,7 @@ export function GeneralTab({
       </Section>
 
       {/* Web Settings */}
-      <Section title='Web Settings' className='h-full' >
+      <Section title='Web Settings' className='h-full'>
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
           <SettingsFormField label='Theme' htmlFor='webui-theme' noMargin>
             <select
@@ -341,7 +373,7 @@ export function GeneralTab({
       </Section>
 
       {/* Network / System Preferences */}
-      <Section title='System & Network' className='h-full' >
+      <Section title='System & Network' className='h-full'>
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
           <SettingsFormField label='Wi-Fi SSID' htmlFor='wifiSsid' noMargin>
             <input
@@ -415,6 +447,52 @@ export function GeneralTab({
             htmlFor='clock24hFormat'
             checked={!!formData.clock24hFormat}
             onChange={onChange('clock24hFormat')}
+          />
+        </div>
+      </Section>
+
+      {/* Warnings */}
+      <Section title='Warnings' className='h-full'>
+        <p className='text-base-content/70 mb-4 text-sm'>
+          Warnings are shown on the display. An error additionally asks for confirmation before a
+          brew starts.
+        </p>
+        <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+          <WarningLevelSelect
+            id='warnWaterLevel'
+            label='Water tank low'
+            value={formData.warnWaterLevel}
+            onChange={onChange('warnWaterLevel')}
+          />
+          <WarningLevelSelect
+            id='warnTemperature'
+            label='Temperature not stable'
+            value={formData.warnTemperature}
+            onChange={onChange('warnTemperature')}
+          />
+          <WarningLevelSelect
+            id='warnSteamSwitch'
+            label='Steam switch left on'
+            value={formData.warnSteamSwitch}
+            onChange={onChange('warnSteamSwitch')}
+          />
+          <WarningLevelSelect
+            id='warnFlush'
+            label='Flush recommended'
+            value={formData.warnFlush}
+            onChange={onChange('warnFlush')}
+          />
+          <WarningLevelSelect
+            id='warnScaleConnected'
+            label='Scale not connected'
+            value={formData.warnScaleConnected}
+            onChange={onChange('warnScaleConnected')}
+          />
+          <WarningLevelSelect
+            id='warnScaleBattery'
+            label='Scale battery low'
+            value={formData.warnScaleBattery}
+            onChange={onChange('warnScaleBattery')}
           />
         </div>
       </Section>

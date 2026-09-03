@@ -15,6 +15,7 @@ GitHubOTA::GitHubOTA(const String &display_version, const String &controller_ver
 
     _version = from_string(display_version.substring(1).c_str());
     _controller_version = from_string(controller_version.substring(1).c_str());
+
     _release_url = release_url;
     _firmware_name = firmware_name;
     _filesystem_name = filesystem_name;
@@ -36,8 +37,8 @@ GitHubOTA::GitHubOTA(const String &display_version, const String &controller_ver
     Updater.setFollowRedirects(HTTPC_FORCE_FOLLOW_REDIRECTS);
 }
 
-void GitHubOTA::init(NimBLEClient *client) {
-    _controller_ota.init(client, [this](int progress) { _progress_callback(PHASE_CONTROLLER_FW, progress); });
+void GitHubOTA::init() {
+    _controller_ota.init([this](int progress) { _progress_callback(PHASE_CONTROLLER_FW, progress); });
 }
 
 void GitHubOTA::checkForUpdates() {
@@ -59,6 +60,8 @@ void GitHubOTA::checkForUpdates() {
         _latest_version_string = semver_str;
         semver_free(&_latest_version);
         _latest_version = from_string(semver_str.c_str());
+        _screen_update_required = update_required(_latest_version, _version);
+        _controller_update_required = update_required(_latest_version, _controller_version);
     } else {
         _latest_url = _release_url + "/";
         _latest_url.replace("tag", "download");
@@ -73,6 +76,8 @@ void GitHubOTA::checkForUpdates() {
         _latest_version_string = version;
         semver_free(&_latest_version);
         _latest_version = from_string(version.c_str());
+        _screen_update_required = update_required(_latest_version, _version);
+        _controller_update_required = update_required(_latest_version, _controller_version);
     }
 }
 
@@ -80,12 +85,12 @@ String GitHubOTA::getCurrentVersion() const { return _latest_version_string; }
 
 bool GitHubOTA::isUpdateAvailable(bool controller) const {
     if (controller) {
-        return update_required(_latest_version, _controller_version);
+        return _controller_update_required;
     }
-    return update_required(_latest_version, _version);
+    return _screen_update_required;
 }
 
-void GitHubOTA::update(bool controller, bool display) {
+void GitHubOTA::update(bool controller, bool display, NimBLEClient *client) {
     const char *TAG = "update";
 
     bool updateExecuted = false;
@@ -94,7 +99,7 @@ void GitHubOTA::update(bool controller, bool display) {
         ESP_LOGI(TAG, "Controller update is required, running firmware update.");
         this->phase = PHASE_CONTROLLER_FW;
         this->_phase_callback(PHASE_CONTROLLER_FW);
-        _controller_ota.update(_wifi_client, _latest_url + _controller_firmware_name);
+        _controller_ota.update(client, _wifi_client, _latest_url + _controller_firmware_name);
         ESP_LOGI(TAG, "Controller update successful. Restarting...\n");
         updateExecuted = true;
     }
@@ -144,4 +149,5 @@ HTTPUpdateResult GitHubOTA::update_firmware(const String &url) {
 void GitHubOTA::setControllerVersion(const String &controller_version) {
     semver_free(&_controller_version);
     _controller_version = from_string(controller_version.substring(1).c_str());
+    _controller_update_required = update_required(_latest_version, _controller_version);
 }

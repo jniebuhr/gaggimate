@@ -25,6 +25,7 @@ class BrewProcess : public Process {
     float currentFlow = 0.0f;
     float currentPressure = 0.0f;
     float waterPumped = 0.0f;
+    float phaseStartedPumped = 0.0f;
     VolumetricRateCalculator volumetricRateCalculator{PREDICTIVE_TIME};
 
     explicit BrewProcess(Profile profile, ProcessTarget target, double brewDelay = 0.0)
@@ -48,6 +49,8 @@ class BrewProcess : public Process {
 
     void updateFlow(float flow) { currentFlow = flow; }
 
+    void updateWaterPumped(float waterPumped) { this->waterPumped = waterPumped; }
+
     unsigned long getTotalDuration() const { return profile.getTotalDuration() * 1000L; }
 
     unsigned long getPhaseDuration() const { return static_cast<long>(currentPhase.duration) * 1000L; }
@@ -66,7 +69,7 @@ class BrewProcess : public Process {
         }
         float timeInPhase = static_cast<float>(millis() - currentPhaseStarted) / 1000.0f;
         return currentPhase.isFinished(target == ProcessTarget::VOLUMETRIC, volume, timeInPhase, currentFlow, currentPressure,
-                                       waterPumped, profile.type);
+                                       waterPumped - phaseStartedPumped, profile.type);
     }
 
     bool isCurrentPhaseFinished() { return currentPhaseExitReason() != PhaseExitReason::NONE; }
@@ -139,13 +142,12 @@ class BrewProcess : public Process {
 
     void progress() override {
         // Progress should be called around every 100ms, as defined in PROGRESS_INTERVAL, while the Process is active
-        waterPumped += currentFlow / 10.0f; // Add current flow divided to 100ms to water pumped counter
         PhaseExitReason reason;
         while ((reason = currentPhaseExitReason()) != PhaseExitReason::NONE && processPhase == ProcessPhase::RUNNING) {
             previousPhaseFinished = millis();
             lastExitReason = reason; // record why this phase ended for the shot history transition
             if (phaseIndex + 1 < profile.phases.size()) {
-                waterPumped = 0.0f;
+                phaseStartedPumped = waterPumped;
                 phaseIndex++;
                 Phase nextPhase = profile.phases.at(phaseIndex);
                 phaseStartVolume = currentVolume;
@@ -232,7 +234,7 @@ class BrewProcess : public Process {
         if (dur_s <= 0.0f) {
             dur_s = currentPhase.duration; // If the transition has no duration, use the phase duration
         }
-        if (currentPhase.transition.type == TransitionType::INSTANT || dur_s <= 0.0f) {
+        if (dur_s <= 0.0f) {
             return 1.0f;
         }
         const unsigned long elapsedMs = millis() - currentPhaseStarted;
@@ -240,19 +242,24 @@ class BrewProcess : public Process {
     }
 
     float transitionAlpha() const {
-        float endValue = currentPhase.transition.duration;
+        if (currentPhase.transition.type == TransitionType::INSTANT) {
+            return 1.0f;
+        }
+        float endValue = 0.0f;
         float startValue = 0.0f;
         if (currentPhase.transition.target == TransitionTarget::VOLUMETRIC && target == ProcessTarget::VOLUMETRIC) {
+            endValue = currentPhase.transition.duration;
             if (endValue <= 0.0f && currentPhase.hasVolumetricTarget()) {
                 endValue = currentPhase.getVolumetricTarget().value - phaseStartVolume;
             }
             startValue = max(0.0, currentVolume - phaseStartVolume);
         }
         if (currentPhase.transition.target == TransitionTarget::PUMPED) {
+            endValue = currentPhase.transition.duration;
             if (endValue <= 0.0f && currentPhase.hasPumpedTarget()) {
                 endValue = currentPhase.getPumpedTarget().value;
             }
-            startValue = waterPumped;
+            startValue = waterPumped - phaseStartedPumped;
         }
         if (endValue > 0.0f) {
             return transitionAlpha(startValue, endValue);
