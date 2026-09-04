@@ -263,6 +263,16 @@ void Settings::setAltRelayFunction(int alt_relay_function) { altRelayFunction.se
 
 void Settings::setAutoWakeupEnabled(bool enabled) { autowakeupEnabled.set(enabled); }
 
+void Settings::setDoubleTapTareEnabled(bool enabled) { doubleTapTareEnabled.set(enabled); }
+
+void Settings::setDoubleTapTareActionEnabled(bool enabled) { doubleTapTareActionEnabled.set(enabled); }
+
+void Settings::setTripleTapTimerEnabled(bool enabled) { tripleTapTimerEnabled.set(enabled); }
+
+void Settings::setDoubleTapPeakG(int grams) { doubleTapPeakG.set(grams); }
+
+void Settings::setDoubleTapWindowMs(int milliseconds) { doubleTapWindowMs.set(milliseconds); }
+
 void Settings::setAutoWakeupSchedules(const std::vector<AutoWakeupSchedule> &schedules) { autowakeupSchedules.set(schedules); }
 
 void Settings::setButtonBehavior(int index, String behavior) {
