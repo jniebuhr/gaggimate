@@ -1,13 +1,14 @@
 {
   "navigation": {
-    "selectedUserPageObject": "[gaggimate.eez-project]:/userPages/4",
-    "selectedUserWidgetObject": "[gaggimate.eez-project]:/userWidgets/0",
-    "selectedActionObject": "[gaggimate.eez-project]:/actions/36",
-    "selectedGlobalVariableObject": "[gaggimate.eez-project]:/variables/globalVariables/3",
-    "selectedStructureObject": "[gaggimate.eez-project]:/variables/structures/2",
+    "selectedUserPageObject": "[gaggimate.eez-project]:/userPages/1",
+    "selectedUserWidgetObject": "[gaggimate.eez-project]:/userWidgets/1",
+    "selectedActionObject": "[gaggimate.eez-project]:/actions/38",
+    "selectedGlobalVariableObject": "[gaggimate.eez-project]:/variables/globalVariables/9",
+    "selectedStructureObject": "[gaggimate.eez-project]:/variables/structures/5",
+    "selectedEnumObject": "[gaggimate.eez-project]:/variables/enums/-1",
     "selectedThemeObject": "[gaggimate.eez-project]:/themes/0",
-    "selectedThemeColorObject": "[gaggimate.eez-project]:/colors/2",
-    "selectedBitmapObject": "[gaggimate.eez-project]:/bitmaps/11",
+    "selectedThemeColorObject": "[gaggimate.eez-project]:/colors/8",
+    "selectedBitmapObject": "[gaggimate.eez-project]:/bitmaps/5",
     "subnavigationSelectedItems": {
       "variables-tab/sub-navigation/selected-item": "Structs"
     }
@@ -203,11 +204,22 @@
               "children": [
                 {
                   "type": "tab",
-                  "id": "#2aa7402a-95e1-481f-87cc-ef596a51e84a",
-                  "name": "SteamScreen",
+                  "id": "#f318aa94-59de-454b-bb72-ed85300526f2",
+                  "name": "warnings",
                   "component": "editor",
                   "config": {
-                    "objectPath": "[gaggimate.eez-project]:/userPages/5",
+                    "objectPath": "[gaggimate.eez-project]:/userWidgets/1",
+                    "permanent": false
+                  },
+                  "icon": "svg:user_widget"
+                },
+                {
+                  "type": "tab",
+                  "id": "#2aa7402a-95e1-481f-87cc-ef596a51e84a",
+                  "name": "BrewScreen",
+                  "component": "editor",
+                  "config": {
+                    "objectPath": "[gaggimate.eez-project]:/userPages/1",
                     "permanent": false
                   },
                   "icon": "svg:page"
@@ -225,22 +237,11 @@
                 },
                 {
                   "type": "tab",
-                  "id": "#e5e97650-2a73-4b11-ad4f-8f229477178e",
-                  "name": "MenuScreen",
-                  "component": "editor",
-                  "config": {
-                    "objectPath": "[gaggimate.eez-project]:/userPages/3",
-                    "permanent": true
-                  },
-                  "icon": "svg:page"
-                },
-                {
-                  "type": "tab",
                   "id": "#acbf425d-f9ac-457e-90c1-4ea068d04b16",
-                  "name": "onInfoScreen",
+                  "name": "onWarningIgnore",
                   "component": "editor",
                   "config": {
-                    "objectPath": "[gaggimate.eez-project]:/actions/36",
+                    "objectPath": "[gaggimate.eez-project]:/actions/38",
                     "permanent": false
                   },
                   "icon": "material:code"
@@ -290,8 +291,7 @@
                   },
                   "icon": "svg:page"
                 }
-              ],
-              "active": true
+              ]
             },
             {
               "type": "row",
@@ -311,7 +311,8 @@
                       "enableClose": false,
                       "icon": "svg:properties"
                     }
-                  ]
+                  ],
+                  "active": true
                 },
                 {
                   "type": "tabset",
@@ -545,7 +546,7 @@
                 {
                   "type": "tab",
                   "id": "#2876bb61-c92f-48b7-a518-1ca3767f32f6",
-                  "name": "MenuScreen_1",
+                  "name": "StandbyScreen",
                   "component": "editor",
                   "config": {
                     "objectPath": "[gaggimate.eez-project]:/userPages/0",
@@ -1021,8 +1022,7 @@
                       "component": "themes",
                       "enableClose": false
                     }
-                  ],
-                  "active": true
+                  ]
                 },
                 {
                   "type": "tabset",
@@ -1038,7 +1038,8 @@
                       "component": "colors",
                       "enableClose": false
                     }
-                  ]
+                  ],
+                  "active": true
                 }
               ]
             }
@@ -1196,9 +1197,7 @@
           "0": {},
           "1": {},
           "3": {
-            "0": {
-              "$selected": true
-            }
+            "0": {}
           }
         }
       }
@@ -1215,9 +1214,9 @@
       "transform": {
         "translate": {
           "x": -224,
-          "y": -252.000244140625
+          "y": -267.5367431640625
         },
-        "scale": 1
+        "scale": 0.8
       },
       "timeline": {
         "isEditorActive": false,
@@ -1232,15 +1231,15 @@
           "1": {
             "0": {},
             "2": {
-              "1": {
-                "1": {
-                  "1": {}
-                }
-              },
-              "2": {
-                "0": {}
-              }
-            }
+              "0": {}
+            },
+            "4": {}
+          },
+          "2": {
+            "1": {
+              "$selected": true
+            },
+            "3": {}
           }
         }
       }
@@ -1291,7 +1290,7 @@
       "transform": {
         "translate": {
           "x": -239.5,
-          "y": -345.729248046875
+          "y": -216.89990234375
         },
         "scale": 0.8
       },
@@ -1303,9 +1302,10 @@
       },
       "selectionFront": {},
       "selectionBack": {
-        "3": {
+        "0": {
           "$selected": true
         },
+        "3": {},
         "4": {},
         "7": {},
         "8": {}
@@ -1336,8 +1336,8 @@
       },
       "transform": {
         "translate": {
-          "x": -240,
-          "y": -247
+          "x": -213.60000000000002,
+          "y": -235.17001953125
         },
         "scale": 0.8
       },
@@ -1350,13 +1350,15 @@
       "selectionFront": {},
       "selectionBack": {
         "0": {
-          "0": {
-            "$selected": true
-          },
+          "0": {},
           "1": {
-            "1": {},
+            "0": {},
             "2": {},
-            "3": {}
+            "4": {}
+          },
+          "2": {
+            "0": {},
+            "1": {}
           }
         }
       }
@@ -1381,7 +1383,7 @@
       "transform": {
         "translate": {
           "x": -213.60000000000002,
-          "y": -215.655859375
+          "y": -235.17001953125
         },
         "scale": 0.8
       },
@@ -1403,6 +1405,9 @@
           "2": {
             "0": {},
             "1": {}
+          },
+          "3": {
+            "$selected": true
           }
         }
       }
@@ -2031,15 +2036,24 @@
       "selectionFront": {},
       "selectionBack": {
         "0": {
-          "0": {}
+          "1": {
+            "0": {
+              "0": {},
+              "2": {}
+            },
+            "3": {},
+            "4": {},
+            "5": {},
+            "6": {}
+          }
         }
       },
       "transform": {
         "translate": {
-          "x": -233,
-          "y": -226.1632080078125
+          "x": -240,
+          "y": -240
         },
-        "scale": 1
+        "scale": 0.8
       },
       "timeline": {
         "isEditorActive": false,
@@ -2093,14 +2107,17 @@
       "selectionBack": {
         "0": {
           "1": {
-            "0": {
-              "0": {},
-              "2": {}
+            "0": {},
+            "2": {
+              "0": {
+                "5": {
+                  "$selected": true
+                }
+              }
             },
             "3": {},
             "4": {},
-            "5": {},
-            "6": {}
+            "5": {}
           }
         }
       },
@@ -2255,6 +2272,45 @@
         "secondToPx": 200,
         "scrollLeft": 0
       }
+    },
+    "[gaggimate.eez-project]:/userWidgets/1[flow-state]": {
+      "selectionFront": {},
+      "selectionBack": {
+        "0": {}
+      },
+      "transform": {
+        "translate": {
+          "x": -240,
+          "y": -97.047119140625
+        },
+        "scale": 0.8
+      },
+      "timeline": {
+        "isEditorActive": false,
+        "position": 0,
+        "secondToPx": 200,
+        "scrollLeft": 0
+      }
+    },
+    "[gaggimate.eez-project]:/actions/37[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": 0,
+          "y": 0
+        },
+        "scale": 1
+      }
+    },
+    "[gaggimate.eez-project]:/actions/38[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": 0,
+          "y": 0
+        },
+        "scale": 1
+      }
     }
   },
   "activeOutputSection": 0,
@@ -2289,5 +2345,5 @@
   "globalFlowZoom": true,
   "flowZoom": 0.8,
   "implementationLanguage": "C++",
-  "openDialogDefaultPath": "/Users/jniebuhr/Downloads/qrcode-information-2.png"
+  "openDialogDefaultPath": "/Users/jniebuhr/work/3d/projects/paros-control/icons/out/tap-48x48.png"
 }

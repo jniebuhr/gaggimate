@@ -14862,7 +14862,7 @@
       "objID": "0a88aea4-dfb7-48b3-a9d0-06e8bd908cb1",
       "name": "tachometer-fast-40x40",
       "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAYAAACM/rhtAAAACXBIWXMAAAEnAAABJwGNvPDMAAAAGXRFWHRTb2Z0d2FyZQB3d3cuaW5rc2NhcGUub3Jnm+48GgAAA01JREFUWIXt2G/IXnMYB/DP/Yxn5c8yGbaJUmJRIpryJ5G0zBTSHqM8L/CC8sKrIfJW+RNFlvKnlZLGKy82G/IKD5rZFvIQNuOxGRbbHvN48Tt3HWfX79zn3Pf9yAvfuuruXNf1vb7nnN/vus/14z+OzhA4TsASLCh+T2Mfvsc27BlCjVY4EsvwPL7CTA/7BmtwXZE7a5iH1fihgaic7cADOG6Ywjq4Q3pV/Qqr2o+4HSODiluITUMUVrU3cWK/4s7Htw0L/YGt2IC3MYGdDXO/K2q1wlL81oN4M+7DmfLd4AyMS0+qjmsPLmwq7mzs7iHsyqZkJZyHV2p4f5ZuthbH4LMMwTTuwZw+xJVxUyEmqrENx9Ylv5hJ/BVXDyisjNPwaabWc7mkyzIJ+/SxiBvgJHwe1PsLF1eDO/ggI3DlLIjrYol4M75XDbwqI+6pIYi4BGvxOE4O/Hdlal9eDno1CNiL+QOKuw2HSpxf4KhKzAi2BPXXdQPm4WAQ8NCQxXVteRC7Moj7XeoqVgTOaRw/gLjxjLgZXBTEj2IqiL2etDaqjndnSdzamrwXgvhHYH3guL8PYcuKIjlx69R/D44HOethMnBc21LcgxlRTcXBBUHel6RGXHUsbSFusXiTde21BuJgUZC7m/SpVHWc3kLg8hpxrzcUR+omh23W3Bft0S0E7qjxPSx1hCaYG1zbP4JdgWNhQ1L4WLGYK9hY+JpiUXDtlxHxEzi1BTHciGekgWoKzyp6WAucFVybhKcd/u5fbkk+DDwZ6FgDqwLHXrM8w1bQwdeBjltJ6+3PwLniXxR4TVD/kNK63BAEbDaEubUBOng/qL+pHHRzEDAjLf4c2iyBurZ1Q6b2qnLQEeJhaad0IFTGnfgJB6T5YbSm+Hy8Ib2uXRir+BeI5+fJQtM/MJa5k7ekJjoq7aqq/+4agY8F8Y9Kk+FcvJOpGY4ZneJuo4QJfJLxZacw+YF9orDIt7GGz2LtD4luqeFb3ZJrCqfUCSQNK/sbEj7Rg2sOXmrIdUCLE4sx6U8+R3ZQ2ixNca+413ZtWh/j7RXYHpB9qN33YheXiqe3rSojZhm9zqg70qnCOcXvj6TN0i+6fOdKJwhbCs6ZATj/Ry3+Bnd+LR0+FlPVAAAAAElFTkSuQmCC",
-      "bpp": 4,
+      "bpp": 32,
       "alwaysBuild": false,
       "lvglBinaryOutputFormat": 3,
       "lvglDither": false
