@@ -65,6 +65,10 @@ export const PANEL_DEFINITIONS = [
       isFinished: ds.isFinished,
       isBrewing: ds.isBrewing,
       isGrinding: ds.isGrinding,
+      backflushDue: ds.backflushDue,
+      descalingDue: ds.descalingDue,
+      startBackflush: ds.startBackflush,
+      startDescaling: ds.startDescaling,
     }),
   },
   {

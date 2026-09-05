@@ -166,6 +166,10 @@ class Settings {
     float getConvergenceGain() const { return convergenceGain.get(); }
     float getIntegralGain() const { return integralGain.get(); }
     float getMaxPumpPower() const { return maxPumpPower.get(); }
+    int getBackflushIntervalDays() const { return backflushIntervalDays.get(); }
+    int getDescalingIntervalWeeks() const { return descalingIntervalWeeks.get(); }
+    unsigned long getLastBackflushTime() const { return lastBackflushTime.get(); }
+    unsigned long getLastDescalingTime() const { return lastDescalingTime.get(); }
 
     void setTargetSteamTemp(int target_steam_temp);
     void setTargetWaterTemp(int target_water_temp);
@@ -249,6 +253,10 @@ class Settings {
     void setConvergenceGain(float convergenceGain);
     void setIntegralGain(float integralGain);
     void setMaxPumpPower(float maxPumpPower);
+    void setBackflushIntervalDays(int backflushIntervalDays);
+    void setDescalingIntervalWeeks(int descalingIntervalWeeks);
+    void setLastBackflushTime(unsigned long lastBackflushTime);
+    void setLastDescalingTime(unsigned long lastDescalingTime);
 
   private:
     Preferences preferences;
@@ -338,6 +346,12 @@ class Settings {
     Property<float> convergenceGain{registry, "p_cv", DEFAULT_CONVERGENCE_GAIN};
     Property<float> integralGain{registry, "p_ig", DEFAULT_INTEGRAL_GAIN};
     Property<float> maxPumpPower{registry, "p_mp", 1.0f};
+
+    // Cleaning schedule
+    Property<int> backflushIntervalDays{registry, "cl_bid", 14};
+    Property<int> descalingIntervalWeeks{registry, "cl_diw", 6};
+    Property<unsigned long> lastBackflushTime{registry, "cl_lbt", 0};
+    Property<unsigned long> lastDescalingTime{registry, "cl_ldt", 0};
 
     void doSave();
     xTaskHandle taskHandle;
