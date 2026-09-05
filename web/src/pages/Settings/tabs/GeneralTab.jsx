@@ -4,6 +4,8 @@ import { faEyeSlash } from '@fortawesome/free-solid-svg-icons/faEyeSlash';
 import { timezones } from '../../../config/zones.js';
 import { DASHBOARD_LAYOUTS } from '../../../utils/dashboardManager.js';
 import Section from '../../../components/Card.jsx';
+import { WarningIcon } from '../../../components/WarningIcon.jsx';
+import { WARNING_LEVELS, WARNINGS } from '../../../utils/warnings.js';
 import {
   InputGroupField,
   SettingsFormField,
@@ -35,16 +37,19 @@ function ButtonBehaviorSelect({ id, label, value, onChange, profiles }) {
   );
 }
 
-const WARNING_LEVELS = [
-  { value: 0, label: 'Ignore', activeClass: 'btn-primary' },
-  { value: 1, label: 'Warn', activeClass: 'btn-warning' },
-  { value: 2, label: 'Error', activeClass: 'btn-error' },
-];
-
-function WarningLevelSelect({ id, label, value, onChange }) {
+function WarningLevelSelect({ id, label, icon, value, onChange }) {
   const current = Number(value ?? 1);
   return (
-    <SettingsFormField label={label} htmlFor={id} noMargin>
+    <SettingsFormField
+      label={
+        <span className='flex items-center gap-2'>
+          <WarningIcon icon={icon} className='text-base-content/70 text-lg' />
+          {label}
+        </span>
+      }
+      htmlFor={id}
+      noMargin
+    >
       <div className='join w-full' role='group' aria-label={`${label} severity`}>
         {WARNING_LEVELS.map(l => (
           <button
@@ -458,42 +463,16 @@ export function GeneralTab({
           brew starts.
         </p>
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-          <WarningLevelSelect
-            id='warnWaterLevel'
-            label='Water tank low'
-            value={formData.warnWaterLevel}
-            onChange={onChange('warnWaterLevel')}
-          />
-          <WarningLevelSelect
-            id='warnTemperature'
-            label='Temperature not stable'
-            value={formData.warnTemperature}
-            onChange={onChange('warnTemperature')}
-          />
-          <WarningLevelSelect
-            id='warnSteamSwitch'
-            label='Steam switch left on'
-            value={formData.warnSteamSwitch}
-            onChange={onChange('warnSteamSwitch')}
-          />
-          <WarningLevelSelect
-            id='warnFlush'
-            label='Flush recommended'
-            value={formData.warnFlush}
-            onChange={onChange('warnFlush')}
-          />
-          <WarningLevelSelect
-            id='warnScaleConnected'
-            label='Scale not connected'
-            value={formData.warnScaleConnected}
-            onChange={onChange('warnScaleConnected')}
-          />
-          <WarningLevelSelect
-            id='warnScaleBattery'
-            label='Scale battery low'
-            value={formData.warnScaleBattery}
-            onChange={onChange('warnScaleBattery')}
-          />
+          {WARNINGS.map(w => (
+            <WarningLevelSelect
+              key={w.key}
+              id={w.settingKey}
+              label={w.label}
+              icon={w.icon}
+              value={formData[w.settingKey]}
+              onChange={onChange(w.settingKey)}
+            />
+          ))}
         </div>
       </Section>
     </div>

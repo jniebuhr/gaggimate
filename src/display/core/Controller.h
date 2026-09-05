@@ -7,6 +7,7 @@
 #include "SystemInfo.h"
 #include <WiFi.h>
 #include <display/core/ProfileManager.h>
+#include <display/core/WarningManager.h>
 #include <display/core/process/Process.h>
 #include <mutex>
 #include <vector>
@@ -86,7 +87,8 @@ class Controller {
     void lowerBrewTarget();
     void raiseGrindTarget();
     void lowerGrindTarget();
-    void activate();
+    void activate(bool ignoreWarnings = false);
+    void cancelBrewConfirm();
     void deactivate();
     void clear();
     void activateGrind();
@@ -115,6 +117,8 @@ class Controller {
     bool isLowWaterLevel() const { return getWaterLevel() < 20; };
     bool isSteamSwitchOn() const { return steamSwitchOn; }
     bool isFlushPending() const { return flushPending; }
+    WarningManager &getWarnings() { return warnings; }
+    const WarningManager &getWarnings() const { return warnings; }
 
     SystemInfo getSystemInfo() const { return systemInfo; }
 
@@ -168,6 +172,7 @@ class Controller {
     Settings settings;
     PluginManager *pluginManager{};
     ProfileManager *profileManager{};
+    WarningManager warnings;
 
     int mode = MODE_BREW;
     float currentTemp = 0;

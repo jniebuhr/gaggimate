@@ -1,4 +1,5 @@
 import { createContext } from 'preact';
+import { parseWarningStates } from '../utils/warnings.js';
 import { signal } from '@preact/signals';
 import uuidv4 from '../utils/uuid.js';
 
@@ -161,60 +162,64 @@ export default class ApiService {
     delete this.listeners[type][id];
   }
 
+  // evt:status frames are partial: fast telemetry every tick, slow state only when it changes
+  // (plus a full snapshot on connect and every 10 s). Merge onto the last known status.
   _onStatus(message) {
-    const newStatus = {
-      currentTemperature: message.ct,
-      targetTemperature: message.tt,
-      currentPressure: message.pr,
-      targetPressure: message.pt,
-      targetWeight: message.tw || 0,
-      activeTargetWeight: (message?.process?.a && message.tw) || 0,
-      currentFlow: message.fl,
-      targetFlow: message.tf || 0,
-      mode: message.m,
-      selectedProfile: message.p,
-      selectedProfileId: message.puid,
-      brewTarget: !!message.bt,
-      brewTargetDuration: message.btd || 0,
-      volumetricAvailable: message.bta || false,
-      grindTargetDuration: message.gtd || 0,
-      grindTargetVolume: message.gtv || 0,
-      grindTarget: message.gt || 0,
-      grindActive: message.gact || false,
-      currentWeight: message.cw || 0,
-      bluetoothConnected: message.bc || false,
-      process: message.process || null,
-      timestamp: new Date(),
-      rssi: message.rssi || 0,
-      lat: message.lat || 0,
-      tofDistance: message.tof || 0,
-      currentPumpPower: message.pw ?? 0,
-      currentBoilerPower: message.hp ?? 0,
-      currentPuckResistance: message.pkr ?? 0,
-      currentPuckFlow: message.pf ?? 0,
-      currentCoffeeVolume: message.cv ?? 0,
-      update: !!message.up,
+    const has = key => Object.prototype.hasOwnProperty.call(message, key);
+    const status = { ...machine.value.status };
+    const map = (key, name, convert = v => v) => {
+      if (has(key)) status[name] = convert(message[key]);
     };
-    const historyEntry = { ...newStatus };
-    delete historyEntry.process;
-    const newValue = {
-      ...machine.value,
-      connected: true,
-      status: {
-        ...machine.value.status,
-        ...newStatus,
-      },
-      capabilities: {
-        ...machine.value.capabilities,
-        dimming: message.cd,
-        pressure: message.cp,
-        ledControl: message.led,
-        gearpumpAddon: !!message.gp,
-      },
-      history: [...machine.value.history, historyEntry],
-    };
-    newValue.history = newValue.history.slice(-600);
-    machine.value = newValue;
+    map('ct', 'currentTemperature');
+    map('tt', 'targetTemperature');
+    map('pr', 'currentPressure');
+    map('pt', 'targetPressure');
+    map('tw', 'targetWeight', v => v || 0);
+    map('fl', 'currentFlow');
+    map('tf', 'targetFlow', v => v || 0);
+    map('m', 'mode');
+    map('p', 'selectedProfile');
+    map('puid', 'selectedProfileId');
+    map('bt', 'brewTarget', v => !!v);
+    map('btd', 'brewTargetDuration', v => v || 0);
+    map('bta', 'volumetricAvailable', v => v || false);
+    map('gtd', 'grindTargetDuration', v => v || 0);
+    map('gtv', 'grindTargetVolume', v => v || 0);
+    map('gt', 'grindTarget', v => v || 0);
+    map('gact', 'grindActive', v => v || false);
+    map('cw', 'currentWeight', v => v || 0);
+    map('bc', 'bluetoothConnected', v => v || false);
+    map('sbat', 'scaleBattery', v => v ?? null);
+    map('process', 'process', v => v || null);
+    map('rssi', 'rssi', v => v || 0);
+    map('lat', 'lat', v => v || 0);
+    map('tof', 'tofDistance', v => v || 0);
+    map('pw', 'currentPumpPower', v => v ?? 0);
+    map('hp', 'currentBoilerPower', v => v ?? 0);
+    map('pkr', 'currentPuckResistance', v => v ?? 0);
+    map('pf', 'currentPuckFlow', v => v ?? 0);
+    map('cv', 'currentCoffeeVolume', v => v ?? 0);
+    map('up', 'update', v => !!v);
+    map('warn', 'warnings', parseWarningStates);
+    status.activeTargetWeight = (status.process?.a && status.targetWeight) || 0;
+    status.timestamp = new Date();
+
+    const capabilities = { ...machine.value.capabilities };
+    if (has('cd')) capabilities.dimming = message.cd;
+    if (has('cp')) capabilities.pressure = message.cp;
+    if (has('led')) capabilities.ledControl = message.led;
+    if (has('gp')) capabilities.gearpumpAddon = !!message.gp;
+
+    // Only telemetry frames extend the chart history; state-only frames would duplicate points.
+    let history = machine.value.history;
+    if (has('ct')) {
+      const historyEntry = { ...status };
+      delete historyEntry.process;
+      delete historyEntry.warnings;
+      history = [...history, historyEntry].slice(-600);
+    }
+
+    machine.value = { ...machine.value, connected: true, status, capabilities, history };
   }
 }
 
@@ -238,6 +243,7 @@ export const machine = signal({
     grindActive: false,
     process: null,
     update: false,
+    warnings: [],
   },
   capabilities: {
     pressure: false,

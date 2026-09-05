@@ -9,11 +9,10 @@
 #include <ArduinoJson.h>
 #include <ESPAsyncWebServer.h>
 #include <display/core/Plugin.h>
+#include <display/plugins/WebSocketHandler.h>
 #include <display/util/PsramAllocator.h>
 
 constexpr size_t UPDATE_CHECK_INTERVAL = 30 * 60 * 1000;
-constexpr size_t CLEANUP_PERIOD = 1000;
-constexpr size_t STATUS_PERIOD = 500;
 constexpr size_t DNS_PERIOD = 50;
 
 const String LOCAL_URL = "http://4.4.4.1/";
@@ -32,14 +31,9 @@ class WebUIPlugin : public Plugin {
     void start();
     void stop();
 
-    // Websocket handlers
-    void handleWebSocketData(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data,
-                             size_t len);
-    void handleOTASettings(uint32_t clientId, JsonDocument &request);
-    void handleOTAStart(uint32_t clientId, JsonDocument &request);
-    void handleAutotuneStart(uint32_t clientId, JsonDocument &request);
-    void handleProfileRequest(uint32_t clientId, JsonDocument &request);
-    void handleFlushStart(uint32_t clientId, JsonDocument &request);
+    // OTA requests arrive over the WebSocket but are executed here, where GitHubOTA lives
+    void handleOTASettings(JsonDocument &request);
+    void handleOTAStart(JsonDocument &request);
 
     // HTTP handlers
     // Serves the web UI from the firmware-embedded, memory-mapped flash blob
@@ -52,37 +46,24 @@ class WebUIPlugin : public Plugin {
     void handleBLEScaleInfo(AsyncWebServerRequest *request);
     void updateOTAStatus(const String &version);
     void updateOTAProgress(uint8_t phase, int progress);
-    void sendAutotuneResult();
-    void sendAutotuneFailed();
-
-    void broadcastJson(JsonDocument &doc);
 
     // Core dump download
     void handleCoreDumpDownload(AsyncWebServerRequest *request);
 
     GitHubOTA *ota = nullptr;
     AsyncWebServer server;
-    AsyncWebSocket ws;
+    WebSocketHandler wsHandler;
     Controller *controller = nullptr;
     PluginManager *pluginManager = nullptr;
     DNSServer *dnsServer = nullptr;
     ProfileManager *profileManager = nullptr;
 
     long lastUpdateCheck = 0;
-    long lastStatus = 0;
-    long lastCleanup = 0;
     long lastDns = 0;
     bool updating = false;
     bool apMode = false;
     bool serverRunning = false;
     String updateComponent = "";
-    float currentBluetoothWeight = 0.0f;
-    // Reused for every 500ms status broadcast. Allocating a fresh JsonDocument
-    // each tick was a major contributor to internal-heap fragmentation
-    // (device reports 33%+ fragmentation, causing AsyncTCP buffer allocs to
-    // stall mid-asset-serve). Keeping one doc lets its underlying pool grow
-    // once and stay put.
-    JsonDocument statusDoc{&psramAllocator};
 };
 
 #endif // WEBUIPLUGIN_H

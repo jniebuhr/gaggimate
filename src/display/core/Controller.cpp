@@ -61,6 +61,7 @@ void Controller::setup() {
 #endif
 
     pluginManager = new PluginManager();
+    warnings.setup(this);
 #ifndef GAGGIMATE_HEADLESS
     ui = new DefaultUI(this, driver, pluginManager);
     if (driver->supportsSDCard() && driver->installSDCard()) {
@@ -543,6 +544,7 @@ void Controller::loop() {
         pluginManager->trigger("controller:wifi:connect", "AP", isApConnection ? 1 : 0);
     }
 
+    warnings.loop();
     pluginManager->loop();
 
     if (screenReady && !initialized) {
@@ -980,12 +982,17 @@ void Controller::updateControl() {
     controlStateSent = true;
 }
 
-void Controller::activate() {
+void Controller::activate(bool ignoreWarnings) {
     // Never create a process while startup is incomplete or the controller is
     // absent. The UI can be reached by tapping through the startup screen, and
     // previously its Start action ran against a half-initialized BLE session.
     if (isActive() || !loaded || !comms.isConnected() || !isReady())
         return;
+    // An error-level warning turns the start into a confirmation request; the UIs answer with activate(true).
+    if (mode == MODE_BREW && !ignoreWarnings && warnings.hasError()) {
+        pluginManager->trigger("controller:brew:confirm");
+        return;
+    }
     clear();
     comms.tare();
     currentWaterPumped = 0.0f;
@@ -1026,6 +1033,9 @@ void Controller::activate() {
         pluginManager->trigger("controller:brew:start");
     }
 }
+
+// A UI declined the brew confirmation; every UI showing it dismisses.
+void Controller::cancelBrewConfirm() { pluginManager->trigger("controller:brew:confirm:cancel"); }
 
 void Controller::deactivate() {
     std::vector<const char *> events;

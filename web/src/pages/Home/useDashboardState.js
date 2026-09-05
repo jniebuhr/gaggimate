@@ -106,6 +106,7 @@ export function useDashboardState() {
     selectedProfileId: s.selectedProfileId,
     processInfo: p,
     tofDistance: s.tofDistance,
+    warnings: s.warnings ?? [],
     // derived
     isActive,
     isFinished,

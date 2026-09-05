@@ -2,6 +2,8 @@ import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTint } from '@fortawesome/free-solid-svg-icons/faTint';
 import { getPrimaryIcon, getPrimaryLabel } from '../utils.js';
+import { WarningIcon } from '../../../components/WarningIcon.jsx';
+import { activeWarnings, WARNING_LEVEL } from '../../../utils/warnings.js';
 import { useEffect, useState } from 'preact/hooks';
 import TargetToggle from '../TargetToggle.jsx';
 import Adjuster from '../Adjuster.jsx';
@@ -28,6 +30,7 @@ export function ActionCard({
   grindTargetVolume,
   raiseTarget,
   lowerTarget,
+  warnings = [],
 }) {
   const [preheated, setPreheated] = useState(false);
   const showPrimary = mode === 1 || mode === 3 || mode === 4;
@@ -47,6 +50,7 @@ export function ActionCard({
   };
 
   const primaryLabel = getPrimaryLabel(isActive, isFinished);
+  const shownWarnings = activeWarnings(warnings);
 
   useEffect(() => {
     setPreheated(false);
@@ -72,7 +76,16 @@ export function ActionCard({
           />
         </div>
       )}
-      <div className='flex justify-start'></div>
+      <div className='flex items-center justify-start gap-2' aria-label='Active warnings'>
+        {shownWarnings.map(w => (
+          <WarningIcon
+            key={w.key}
+            icon={w.icon}
+            title={w.label}
+            className={`text-xl ${w.level === WARNING_LEVEL.ERROR ? 'text-error' : 'text-warning'}`}
+          />
+        ))}
+      </div>
       {showPrimary && (
         <button
           type='button'
@@ -122,4 +135,5 @@ ActionCard.propTypes = {
   clear: PropTypes.func.isRequired,
   startFlush: PropTypes.func.isRequired,
   inCard: PropTypes.bool,
+  warnings: PropTypes.array,
 };

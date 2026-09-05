@@ -7,6 +7,8 @@ import { faRectangleList } from '@fortawesome/free-solid-svg-icons/faRectangleLi
 import { faThermometerHalf } from '@fortawesome/free-solid-svg-icons/faThermometerHalf';
 import { faTint } from '@fortawesome/free-solid-svg-icons/faTint';
 import { faWeightScale } from '@fortawesome/free-solid-svg-icons/faWeightScale';
+import { WarningIcon } from '../../components/WarningIcon.jsx';
+import { activeWarnings, WARNING_LEVEL } from '../../utils/warnings.js';
 import { ModeTab } from './ModeTab.jsx';
 import { useDashboardState } from './useDashboardState.js';
 import {
@@ -109,6 +111,7 @@ export default function CompactProcessControls() {
     clear,
     startFlush,
     isFlushing,
+    warnings,
     raiseTemp,
     lowerTemp,
     raiseTarget,
@@ -120,6 +123,7 @@ export default function CompactProcessControls() {
   const showFlush = isBrewing && !isActive && !isFinished;
   const showWeight = volumetricAvailable && (mode === 1 || mode === 3) && brewTarget;
   const processRunning = (isActive || isFinished) && (isBrewing || isGrinding);
+  const shownWarnings = activeWarnings(warnings);
 
   const handlePrimary = () => {
     if (isActive) deactivate();
@@ -232,8 +236,18 @@ export default function CompactProcessControls() {
         {renderContent()}
       </div>
 
-      {(showPrimary || showFlush) && (
-        <div className='flex shrink-0 items-center justify-center gap-3'>
+      {(showPrimary || showFlush || shownWarnings.length > 0) && (
+        <div className='flex shrink-0 items-center gap-3'>
+          <div className='flex min-w-0 flex-1 items-center gap-2' aria-label='Active warnings'>
+            {shownWarnings.map(w => (
+              <WarningIcon
+                key={w.key}
+                icon={w.icon}
+                title={w.label}
+                className={`text-lg ${w.level === WARNING_LEVEL.ERROR ? 'text-error' : 'text-warning'}`}
+              />
+            ))}
+          </div>
           {showFlush && (
             <button
               className='btn btn-ghost btn-sm text-base-content/60 hover:text-base-content rounded-full text-xs'
@@ -254,6 +268,7 @@ export default function CompactProcessControls() {
               <FontAwesomeIcon icon={getPrimaryIcon(isActive, isFinished)} className='text-lg' />
             </button>
           )}
+          <div className='flex-1' aria-hidden='true' />
         </div>
       )}
     </div>

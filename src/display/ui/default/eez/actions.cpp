@@ -49,13 +49,7 @@ void action_on_grind_screen(lv_event_t *e) {
     controller.deactivate();
 };
 
-void action_on_brew_start(lv_event_t *e) {
-    if (controller.getUI()->hasBrewErrorWarning()) {
-        controller.getUI()->setBrewConfirmVisible(true);
-        return;
-    }
-    controller.activate();
-};
+void action_on_brew_start(lv_event_t *e) { controller.activate(); };
 
 void action_on_flush(lv_event_t *e) { controller.onFlush(); };
 
@@ -324,9 +318,9 @@ void action_on_screen_swipe(lv_event_t *e) {
 
 void action_on_info_screen(lv_event_t *e) { controller.getUI()->changeScreen(SCREEN_ID_INFO_SCREEN); }
 
-void action_on_warning_back(lv_event_t *e) { controller.getUI()->setBrewConfirmVisible(false); }
+void action_on_warning_back(lv_event_t *e) { controller.cancelBrewConfirm(); }
 
 void action_on_warning_ignore(lv_event_t *e) {
     controller.getUI()->setBrewConfirmVisible(false);
-    controller.activate();
+    controller.activate(true);
 }

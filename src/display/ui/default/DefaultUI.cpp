@@ -12,7 +12,6 @@
 #include <display/drivers/common/LV_Helper.h>
 #endif
 #include <display/main.h>
-#include <display/plugins/BLEScalePlugin.h>
 #include <display/ui/utils/effects.h>
 #include <utility>
 
@@ -51,46 +50,6 @@ static bool stringChanged(const char *current, const char *next) {
 int16_t calculate_angle(int set_temp, int range, int offset) {
     const double percentage = static_cast<double>(set_temp) / static_cast<double>(MAX_TEMP);
     return (percentage * ((double)range)) - range / 2 - offset;
-}
-
-void DefaultUI::updateTempHistory() {
-    if (currentTemp > 0) {
-        if (tempHistoryIndex >= TEMP_HISTORY_LENGTH) {
-            tempHistoryIndex = 0;
-            isTempHistoryInitialized = true;
-        }
-        tempHistory[tempHistoryIndex] = currentTemp;
-        tempHistoryIndex += 1;
-    }
-
-    if (tempHistoryIndex % 4 == 0) {
-        heatingFlash = !heatingFlash;
-        rerender = true;
-    }
-}
-
-void DefaultUI::updateTempStableFlag() {
-    if (isTempHistoryInitialized) {
-        float totalError = 0.0f;
-        float maxError = 0.0f;
-        for (uint16_t i = 0; i < TEMP_HISTORY_LENGTH; i++) {
-            float error = abs(tempHistory[i] - targetTemp);
-            totalError += error;
-            maxError = error > maxError ? error : maxError;
-        }
-
-        const float avgError = totalError / TEMP_HISTORY_LENGTH;
-        const float errorMargin = max(2.0f, static_cast<float>(targetTemp) * 0.02f);
-
-        isTemperatureStable = avgError < errorMargin && maxError <= errorMargin;
-    }
-
-    // instantly reset stability if setpoint has changed
-    if (prevTargetTemp != targetTemp) {
-        isTemperatureStable = false;
-    }
-
-    prevTargetTemp = targetTemp;
 }
 
 void DefaultUI::reloadProfiles() { profileLoaded = 0; }
@@ -163,6 +122,14 @@ void DefaultUI::init() {
         waitingForController = true;
         rerender = true;
     });
+    pluginManager->on("controller:brew:confirm", [this](Event const &) {
+        if (eez_flow_get_current_screen() != SCREEN_ID_BREW_SCREEN)
+            changeScreen(SCREEN_ID_BREW_SCREEN);
+        setBrewConfirmVisible(true);
+    });
+    // Answered elsewhere (web UI, other client): drop the overlay.
+    pluginManager->on("controller:brew:confirm:cancel", [this](Event const &) { setBrewConfirmVisible(false); });
+    pluginManager->on("controller:brew:start", [this](Event const &) { setBrewConfirmVisible(false); });
     pluginManager->on("controller:bluetooth:connect", [this](Event const &) {
         waitingForController = false;
         if (eez_flow_get_current_screen() == SCREEN_ID_STANDBY_SCREEN && !controller->getSystemInfo().protocolMismatch &&
@@ -234,8 +201,11 @@ void DefaultUI::loop() {
     const unsigned long diff = now - lastRender;
 
     if (now - lastTempLog > TEMP_HISTORY_INTERVAL) {
-        updateTempHistory();
         lastTempLog = now;
+        if (++heatingFlashTick % 4 == 0) {
+            heatingFlash = !heatingFlash;
+            rerender = true;
+        }
     }
 
     if ((controller->isActive() && diff > RERENDER_INTERVAL_ACTIVE) || diff > RERENDER_INTERVAL_IDLE) {
@@ -249,8 +219,6 @@ void DefaultUI::loop() {
         if (controller->isErrorState()) {
             changeScreen(SCREEN_ID_STANDBY_SCREEN);
         }
-        updateTempStableFlag();
-
         updateState();
         // Fill the EEZ data models before handleScreenChange() creates/ticks a screen (undefined fields abort the flow).
         updateSystemStatus();
@@ -456,7 +424,8 @@ void DefaultUI::setupState() {
 
 void DefaultUI::handleScreenChange() {
     if (currentScreen != targetScreen) {
-        brewConfirmVisible = false;
+        if (currentScreen == SCREEN_ID_BREW_SCREEN)
+            brewConfirmVisible = false; // leaving the brew screen dismisses the confirm overlay
         if (targetScreen == SCREEN_ID_STANDBY_SCREEN) {
             standbyEnterTime = ::millis();
         } else if (currentScreen == SCREEN_ID_STANDBY_SCREEN) {
@@ -539,7 +508,7 @@ void DefaultUI::updateState() {
     uiFlags.grind_active(controller->isGrindActive());
     uiFlags.grind_volumetric(controller->isVolumetricAvailable() && settings.isVolumetricTarget());
     uiFlags.heating_flash(heatingFlash);
-    uiFlags.temperature_stable(isTemperatureStable);
+    uiFlags.temperature_stable(controller->getWarnings().isTemperatureStable());
     uiFlags.has_prev_profile(currentProfileIdx > 0);
     uiFlags.brew_confirm_visible(brewConfirmVisible);
     {
@@ -590,51 +559,22 @@ void DefaultUI::updateSystemStatus() {
 }
 
 void DefaultUI::updateWarnings() {
-    const ::Settings &settings = controller->getSettings();
-    const bool scaleConnected = BLEScales.isConnected();
-    const bool waterLow = controller->getSystemInfo().capabilities.tof && controller->isLowWaterLevel();
-    const bool flushDue = controller->isFlushPending();
-    const bool switchOn = controller->isSteamSwitchOn();
-    const bool scaleLost = !scaleConnected && settings.getSavedScale() != "";
-    const bool batteryLow = scaleConnected && BLEScales.hasBatteryLevel() && BLEScales.getBatteryLevel() < 20;
-    const bool tempUnstable = !isTemperatureStable;
-
-    String labels;
-    auto apply = [&](bool cond, int level, const char *label, bool &warn, bool &error) {
-        warn = cond && (level == WARNING_LEVEL_WARN || level == WARNING_LEVEL_ERROR);
-        error = cond && level == WARNING_LEVEL_ERROR;
-        if (warn || error) {
-            if (labels.length() > 0)
-                labels += "\n";
-            labels += label;
-        }
-    };
-    bool warn, error;
-    apply(waterLow, settings.getWarnWaterLevel(), "Water tank low", warn, error);
-    warnings.waterWarn(warn);
-    warnings.waterError(error);
-    apply(flushDue, settings.getWarnFlush(), "Flush recommended", warn, error);
-    warnings.flushWarn(warn);
-    warnings.flushError(error);
-    apply(switchOn, settings.getWarnSteamSwitch(), "Steam switch is on", warn, error);
-    warnings.switchWarn(warn);
-    warnings.switchError(error);
-    apply(scaleLost, settings.getWarnScaleConnected(), "Scale not connected", warn, error);
-    warnings.scaleConnectedWarn(warn);
-    warnings.scaleConnectedError(error);
-    apply(batteryLow, settings.getWarnScaleBattery(), "Scale battery low", warn, error);
-    warnings.scaleBatteryWarn(warn);
-    warnings.scaleBatteryError(error);
-    apply(tempUnstable, settings.getWarnTemperature(), "Temperature not stable", warn, error);
-    warnings.temperatureWarn(warn);
-    warnings.temperatureError(error);
+    const WarningManager &wm = controller->getWarnings();
+    warnings.waterWarn(wm.isWarn(WARNING_WATER));
+    warnings.waterError(wm.isError(WARNING_WATER));
+    warnings.flushWarn(wm.isWarn(WARNING_FLUSH));
+    warnings.flushError(wm.isError(WARNING_FLUSH));
+    warnings.switchWarn(wm.isWarn(WARNING_SWITCH));
+    warnings.switchError(wm.isError(WARNING_SWITCH));
+    warnings.scaleConnectedWarn(wm.isWarn(WARNING_SCALE_CONNECTED));
+    warnings.scaleConnectedError(wm.isError(WARNING_SCALE_CONNECTED));
+    warnings.scaleBatteryWarn(wm.isWarn(WARNING_SCALE_BATTERY));
+    warnings.scaleBatteryError(wm.isError(WARNING_SCALE_BATTERY));
+    warnings.temperatureWarn(wm.isWarn(WARNING_TEMPERATURE));
+    warnings.temperatureError(wm.isError(WARNING_TEMPERATURE));
+    const String labels = wm.getLabels();
     if (stringChanged(warnings.labels(), labels.c_str()))
         warnings.labels(labels.c_str());
-}
-
-bool DefaultUI::hasBrewErrorWarning() {
-    return warnings.waterError() || warnings.flushError() || warnings.switchError() || warnings.scaleConnectedError() ||
-           warnings.scaleBatteryError() || warnings.temperatureError();
 }
 
 static void populateProfileInfo(ProfileInfoValue &info, const Profile &profile, bool isCurrent) {

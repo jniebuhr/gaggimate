@@ -17,7 +17,6 @@ constexpr int RERENDER_INTERVAL_IDLE = 2500;
 constexpr int RERENDER_INTERVAL_ACTIVE = 100;
 
 constexpr int TEMP_HISTORY_INTERVAL = 250;
-constexpr int TEMP_HISTORY_LENGTH = 20 * 1000 / TEMP_HISTORY_INTERVAL;
 
 int16_t calculate_angle(int set_temp, int range, int offset);
 
@@ -48,8 +47,7 @@ class DefaultUI {
 
     void onVolumetricDelete();
 
-    // Brew confirmation overlay, shown when an error-level warning is active on brew start.
-    bool hasBrewErrorWarning();
+    // Brew confirmation overlay, shown when the controller asks to confirm a brew start.
     void setBrewConfirmVisible(bool visible) {
         brewConfirmVisible = visible;
         rerender = true;
@@ -92,15 +90,8 @@ class DefaultUI {
     void adjustDials(lv_obj_t *dials);
     void adjustTarget(lv_obj_t *obj, double percentage, double start, double range) const;
 
-    int tempHistory[TEMP_HISTORY_LENGTH] = {0};
-    int tempHistoryIndex = 0;
-    int prevTargetTemp = 0;
-    bool isTempHistoryInitialized = false;
-    int isTemperatureStable = false;
     unsigned long lastTempLog = 0;
-
-    void updateTempHistory();
-    void updateTempStableFlag();
+    int heatingFlashTick = 0;
     void reloadProfiles();
 
     Driver *panelDriver = nullptr;

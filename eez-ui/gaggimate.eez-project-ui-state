@@ -1,13 +1,12 @@
 {
   "navigation": {
     "selectedUserPageObject": "[gaggimate.eez-project]:/userPages/0",
-    "selectedUserWidgetObject": "[gaggimate.eez-project]:/userWidgets/0",
+    "selectedUserWidgetObject": "[gaggimate.eez-project]:/userWidgets/1",
     "selectedActionObject": "[gaggimate.eez-project]:/actions/38",
     "selectedGlobalVariableObject": "[gaggimate.eez-project]:/variables/globalVariables/9",
     "selectedStructureObject": "[gaggimate.eez-project]:/variables/structures/5",
     "selectedThemeObject": "[gaggimate.eez-project]:/themes/0",
     "selectedThemeColorObject": "[gaggimate.eez-project]:/colors/8",
-    "selectedBitmapObject": "[gaggimate.eez-project]:/bitmaps/41",
     "subnavigationSelectedItems": {
       "variables-tab/sub-navigation/selected-item": "Structs"
     }
@@ -132,6 +131,7 @@
                   "type": "tabset",
                   "id": "#62043989-83c1-428b-8417-b89c3070fb5a",
                   "weight": 0.5267379679144385,
+                  "selected": 1,
                   "enableClose": false,
                   "children": [
                     {
@@ -197,7 +197,6 @@
               "type": "tabset",
               "id": "EDITORS",
               "weight": 46.47304077762655,
-              "selected": 7,
               "enableDeleteWhenEmpty": false,
               "enableClose": false,
               "children": [
