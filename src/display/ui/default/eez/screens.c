@@ -1298,19 +1298,6 @@ void tick_screen_standby_screen() {
         }
     }
     {
-        bool new_val = evalBooleanProperty(flowState, 4, 3, "Failed to evaluate Hidden flag");
-        bool cur_val = lv_obj_has_flag(objects.standby_icons, LV_OBJ_FLAG_HIDDEN);
-        if (new_val != cur_val) {
-            tick_value_change_obj = objects.standby_icons;
-            if (new_val) {
-                lv_obj_add_flag(objects.standby_icons, LV_OBJ_FLAG_HIDDEN);
-            } else {
-                lv_obj_clear_flag(objects.standby_icons, LV_OBJ_FLAG_HIDDEN);
-            }
-            tick_value_change_obj = NULL;
-        }
-    }
-    {
         bool new_val = evalBooleanProperty(flowState, 5, 3, "Failed to evaluate Hidden flag");
         bool cur_val = lv_obj_has_flag(objects.wifi_icon, LV_OBJ_FLAG_HIDDEN);
         if (new_val != cur_val) {

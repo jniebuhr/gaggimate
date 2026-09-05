@@ -1,14 +1,13 @@
 {
   "navigation": {
-    "selectedUserPageObject": "[gaggimate.eez-project]:/userPages/1",
-    "selectedUserWidgetObject": "[gaggimate.eez-project]:/userWidgets/1",
+    "selectedUserPageObject": "[gaggimate.eez-project]:/userPages/0",
+    "selectedUserWidgetObject": "[gaggimate.eez-project]:/userWidgets/0",
     "selectedActionObject": "[gaggimate.eez-project]:/actions/38",
     "selectedGlobalVariableObject": "[gaggimate.eez-project]:/variables/globalVariables/9",
     "selectedStructureObject": "[gaggimate.eez-project]:/variables/structures/5",
-    "selectedEnumObject": "[gaggimate.eez-project]:/variables/enums/-1",
     "selectedThemeObject": "[gaggimate.eez-project]:/themes/0",
     "selectedThemeColorObject": "[gaggimate.eez-project]:/colors/8",
-    "selectedBitmapObject": "[gaggimate.eez-project]:/bitmaps/5",
+    "selectedBitmapObject": "[gaggimate.eez-project]:/bitmaps/41",
     "subnavigationSelectedItems": {
       "variables-tab/sub-navigation/selected-item": "Structs"
     }
@@ -31,7 +30,7 @@
           },
           {
             "type": "border",
-            "selected": 3,
+            "selected": 2,
             "size": 255.5,
             "location": "right",
             "children": [
@@ -198,7 +197,7 @@
               "type": "tabset",
               "id": "EDITORS",
               "weight": 46.47304077762655,
-              "selected": 1,
+              "selected": 7,
               "enableDeleteWhenEmpty": false,
               "enableClose": false,
               "children": [
@@ -291,7 +290,8 @@
                   },
                   "icon": "svg:page"
                 }
-              ]
+              ],
+              "active": true
             },
             {
               "type": "row",
@@ -311,8 +311,7 @@
                       "enableClose": false,
                       "icon": "svg:properties"
                     }
-                  ],
-                  "active": true
+                  ]
                 },
                 {
                   "type": "tabset",
@@ -1180,8 +1179,8 @@
       },
       "transform": {
         "translate": {
-          "x": -224,
-          "y": -252.000244140625
+          "x": -205,
+          "y": -200.000244140625
         },
         "scale": 0.8
       },
@@ -1227,7 +1226,9 @@
       "selectionFront": {},
       "selectionBack": {
         "0": {
-          "0": {},
+          "0": {
+            "$selected": true
+          },
           "1": {
             "0": {},
             "2": {
@@ -1236,9 +1237,7 @@
             "4": {}
           },
           "2": {
-            "1": {
-              "$selected": true
-            },
+            "1": {},
             "3": {}
           }
         }
@@ -1302,9 +1301,7 @@
       },
       "selectionFront": {},
       "selectionBack": {
-        "0": {
-          "$selected": true
-        },
+        "0": {},
         "3": {},
         "4": {},
         "7": {},
@@ -1399,15 +1396,7 @@
           "0": {},
           "1": {
             "0": {},
-            "2": {},
-            "4": {}
-          },
-          "2": {
-            "0": {},
-            "1": {}
-          },
-          "3": {
-            "$selected": true
+            "2": {}
           }
         }
       }
@@ -2345,5 +2334,5 @@
   "globalFlowZoom": true,
   "flowZoom": 0.8,
   "implementationLanguage": "C++",
-  "openDialogDefaultPath": "/Users/jniebuhr/work/3d/projects/paros-control/icons/out/tap-48x48.png"
+  "openDialogDefaultPath": "/Users/jniebuhr/Downloads/Stylized_uwu_emoticon.svg.png"
 }
