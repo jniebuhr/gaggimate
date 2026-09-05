@@ -25,12 +25,17 @@ class ProfileManager {
     void addFavoritedProfile(String id);
     void removeFavoritedProfile(String id);
 
+    String getProfilesJsonCache(bool minimal);
+    void invalidateCache();
+
   private:
     Profile selectedProfile{};
     PluginManager *_plugin_manager;
     Settings &_settings;
     fs::FS *_fs;
     String _dir;
+    String _profilesCache;
+    String _minimalProfilesCache;
     bool ensureDirectory() const;
     String profilePath(const String &uuid) const;
     void migrate(const std::vector<String> &existingProfiles);
