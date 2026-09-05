@@ -32,8 +32,11 @@ void BleServerTransport::init(const String &deviceName) {
     service->start();
 
     // OTA DFU shares the same server (separate service/UUIDs).
-    _otaDfu.configure_OTA(_server);
-    _otaDfu.start_OTA();
+    if (_otaDfu.configure_OTA(_server)) {
+        _otaDfu.start_OTA();
+    } else {
+        ESP_LOGE(LOG_TAG, "OTA initialization failed");
+    }
 
     _deviceName = deviceName;
     _advertising = NimBLEDevice::getAdvertising();
