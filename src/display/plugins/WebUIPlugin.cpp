@@ -661,9 +661,9 @@ void WebUIPlugin::handleProfileRequest(uint32_t clientId, JsonDocument &request)
     ws.text(clientId, toWsBuffer(response));
 }
 
-void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
+void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) {
     if (request->method() == HTTP_POST) {
-        controller->getSettings().batchUpdate([request](Settings *settings) {
+        controller->getSettings().batchUpdate([request, this](Settings *settings) {
             if (request->hasArg("startupMode"))
                 settings->setStartupMode(request->arg("startupMode") == "brew" ? MODE_BREW : MODE_STANDBY);
             if (request->hasArg("startupProfile"))
@@ -677,7 +677,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
             if (request->hasArg("pressureScaling"))
                 settings->setPressureScaling(request->arg("pressureScaling").toFloat());
             if (request->hasArg("pid"))
-                settings->setPid(request->arg("pid"));
+                controller->updatePIDValues(request->arg("pid"));
             if (request->hasArg("pumpModelCoeffs"))
                 settings->setPumpModelCoeffs(request->arg("pumpModelCoeffs"));
             if (request->hasArg("pumpSlipCoeffs"))

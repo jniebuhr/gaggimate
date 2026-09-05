@@ -350,7 +350,7 @@ void Controller::setupBluetooth() {
         char pid[64];
         // Store in simplified format with combined Kf
         snprintf(pid, sizeof(pid), "%.3f,%.3f,%.3f,%.3f", Kp, Ki, Kd, Kf);
-        settings.setPid(String(pid));
+        updatePIDValues(String(pid));
         pluginManager->trigger("controller:autotune:result");
         autotuning = false;
     });
@@ -677,6 +677,11 @@ bool Controller::isVolumetricAvailable() const {
 #else
     return isBluetoothScaleHealthy();
 #endif
+}
+
+void Controller::updatePIDValues(String newValue){
+    settings.setPid(newValue);
+    setPidSettings();
 }
 
 void Controller::autotune(int testTime, int samples, int heaterWattage) {
