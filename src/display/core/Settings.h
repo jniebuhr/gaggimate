@@ -108,6 +108,11 @@ class Settings {
     String getHomeAssistantPassword() const { return homeAssistantPassword.get(); }
     int getHomeAssistantPort() const { return homeAssistantPort.get(); }
     String getHomeAssistantTopic() const { return homeAssistantTopic.get(); }
+    bool isShotUploadEnabled() const { return shotUploadEnabled.get(); }
+    String getShotUploadServer() const { return shotUploadServer.get(); }
+    String getShotUploadEndpoint() const { return shotUploadEndpoint.get(); }
+    String getShotUploadMachineId() const { return shotUploadMachineId.get(); }
+    int getShotUploadRetries() const { return shotUploadRetries.get(); }
     bool isMomentaryButtons() const { return momentaryButtons.get(); }
     String getTimezone() const { return timezone.get(); }
     bool isClock24hFormat() const { return clock24hFormat.get(); }
@@ -201,6 +206,11 @@ class Settings {
     void setHomeAssistantIP(const String &homeAssistantIP);
     void setHomeAssistantPort(int homeAssistantPort);
     void setHomeAssistantTopic(const String &homeAssistantTopic);
+    void setShotUploadEnabled(bool shotUploadEnabled);
+    void setShotUploadServer(const String &shotUploadServer);
+    void setShotUploadEndpoint(const String &shotUploadEndpoint);
+    void setShotUploadMachineId(const String &shotUploadMachineId);
+    void setShotUploadRetries(const int shotUploadRetries);
     void setMomentaryButtons(bool momentary_buttons);
     void setWarnWaterLevel(int level);
     void setWarnFlush(int level);
@@ -290,6 +300,11 @@ class Settings {
     Property<String> homeAssistantIP{registry, "ha_i", ""};
     Property<int> homeAssistantPort{registry, "ha_p", 1883};
     Property<String> homeAssistantTopic{registry, "ha_t", DEFAULT_HOME_ASSISTANT_TOPIC};
+    Property<bool> shotUploadEnabled{registry, "su_en", false};
+    Property<String> shotUploadServer{registry, "su_s", ""};
+    Property<String> shotUploadEndpoint{registry, "su_e", "upload"};
+    Property<String> shotUploadMachineId{registry, "su_m", "Gaggimate"};
+    Property<int> shotUploadRetries{registry, "su_r", 3};
     Property<bool> momentaryButtons{registry, "mb", false};
     Property<String> timezone{registry, "tz", DEFAULT_TIMEZONE};
     Property<bool> clock24hFormat{registry, "clk_24h", true};

@@ -10,6 +10,7 @@
 #include <display/models/profile.h>
 #include <display/plugins/BLEScalePlugin.h>
 #include <display/plugins/ShotHistoryPlugin.h>
+#include <display/plugins/ShotUploadPlugin.h>
 #include <display/util/PsramStlAllocator.h>
 #include <display/util/PsramWsBuffer.h>
 #include <display/util/mathutils.h>
@@ -542,6 +543,8 @@ void WebUIPlugin::handleWebSocketData(AsyncWebSocket *server, AsyncWebSocketClie
                     client->text(toWsBuffer(resp));
                 } else if (msgType == "req:flush:start") {
                     handleFlushStart(client->id(), doc);
+                } else if (msgType == "req:shot-upload:start") {
+                    handleShotUploadStart(client->id(), doc);
                 }
             }
         }
@@ -712,6 +715,15 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setHomeAssistantPort(request->arg("haPort").toInt());
             if (request->hasArg("haTopic"))
                 settings->setHomeAssistantTopic(request->arg("haTopic"));
+            settings->setShotUploadEnabled(request->hasArg("shotUploadEnabled"));
+            if (request->hasArg("shotUploadServer"))
+                settings->setShotUploadServer(request->arg("shotUploadServer"));
+            if (request->hasArg("shotUploadEndpoint"))
+                settings->setShotUploadEndpoint(request->arg("shotUploadEndpoint"));
+            if (request->hasArg("shotUploadMachineId"))
+                settings->setShotUploadMachineId(request->arg("shotUploadMachineId"));
+            if (request->hasArg("shotUploadRetries"))
+                settings->setShotUploadRetries(request->arg("shotUploadRetries").toInt());
             settings->setMomentaryButtons(request->hasArg("momentaryButtons"));
             if (request->hasArg("warnWaterLevel"))
                 settings->setWarnWaterLevel(request->arg("warnWaterLevel").toInt());
@@ -839,6 +851,11 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["haIP"] = settings.getHomeAssistantIP();
     doc["haPort"] = settings.getHomeAssistantPort();
     doc["haTopic"] = settings.getHomeAssistantTopic();
+    doc["shotUploadEnabled"] = settings.isShotUploadEnabled();
+    doc["shotUploadServer"] = settings.getShotUploadServer();
+    doc["shotUploadEndpoint"] = settings.getShotUploadEndpoint();
+    doc["shotUploadMachineId"] = settings.getShotUploadMachineId();
+    doc["shotUploadRetries"] = settings.getShotUploadRetries();
     doc["pid"] = settings.getPid();
     doc["pumpModelCoeffs"] = settings.getPumpModelCoeffs();
     doc["pumpSlipCoeffs"] = settings.getPumpSlipCoeffs();
@@ -1069,6 +1086,44 @@ void WebUIPlugin::handleFlushStart(uint32_t clientId, JsonDocument &request) {
     response["tp"] = "res:flush:start";
     response["rid"] = request["rid"];
     response["success"] = true;
+    ws.text(clientId, toWsBuffer(response));
+}
+
+void WebUIPlugin::handleShotUploadStart(uint32_t clientId, JsonDocument &request) {
+    // Manual "print this past shot" trigger: enqueue the requested shot, or the
+    // most recent one when no id is given. The upload itself runs on the
+    // ShotUpload plugin's task, so we just ack the enqueue here.
+    JsonDocument response(&psramAllocator);
+    response["tp"] = "res:shot-upload:start";
+    response["rid"] = request["rid"];
+    response["success"] = false;
+
+    uint32_t shotId = 0;
+    bool haveShotId = false;
+    if (request["id"].is<uint32_t>()) {
+        shotId = request["id"].as<uint32_t>();
+        haveShotId = true;
+    } else if (request["id"].is<const char *>()) {
+        shotId = strtoul(request["id"].as<const char *>(), nullptr, 10);
+        haveShotId = true;
+    } else {
+        // No id given: print the most recent shot.
+        ShotIndexEntry entry{};
+        if (ShotHistory.readRecentEntries(&entry, 1) > 0) {
+            shotId = entry.id;
+            haveShotId = true;
+        }
+    }
+
+    if (!haveShotId) {
+        response["msg"] = "No shots available";
+        ws.text(clientId, toWsBuffer(response));
+        return;
+    }
+
+    ShotUpload.requestUpload(shotId);
+    response["success"] = true;
+    response["shotId"] = shotId;
     ws.text(clientId, toWsBuffer(response));
 }
 

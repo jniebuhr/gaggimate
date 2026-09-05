@@ -161,6 +161,20 @@ void Settings::setHomeAssistantPassword(const String &homeAssistantPassword) {
     this->homeAssistantPassword.set(homeAssistantPassword);
 }
 
+void Settings::setShotUploadEnabled(const bool enabled) { this->shotUploadEnabled.set(enabled); }
+
+void Settings::setShotUploadServer(const String &server) { this->shotUploadServer.set(server); }
+
+void Settings::setShotUploadEndpoint(const String &endpoint) { this->shotUploadEndpoint.set(endpoint); }
+
+void Settings::setShotUploadMachineId(const String &machineId) {
+    this->shotUploadMachineId.set(machineId);
+}
+
+void Settings::setShotUploadRetries(const int retries) {
+    this->shotUploadRetries.set(std::clamp(retries, 0, 10));
+}
+
 void Settings::setMomentaryButtons(bool momentary_buttons) { momentaryButtons.set(momentary_buttons); }
 
 // Clamp to the WarningLevel range so a bad web value can't leave a warning in an undefined state.
