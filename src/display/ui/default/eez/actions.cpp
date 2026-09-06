@@ -49,9 +49,12 @@ void action_on_grind_screen(lv_event_t *e) {
     controller.deactivate();
 };
 
-void action_on_brew_start(lv_event_t *e) { controller.activate(); };
+void action_on_brew_start(lv_event_t *e) { controller.activate(); }; // SHORT_CLICKED in EEZ: never fires after a long press
 
-void action_on_flush(lv_event_t *e) { controller.onFlush(); };
+void action_on_flush(lv_event_t *e) {
+    controller.onFlush();
+    controller.getUI()->onTouchFlushStart();
+};
 
 void action_on_volumetric_hold(lv_event_t *e) {
     controller.getClientController()->tare();

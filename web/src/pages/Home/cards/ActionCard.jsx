@@ -1,12 +1,12 @@
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTint } from '@fortawesome/free-solid-svg-icons/faTint';
 import { getPrimaryIcon, getPrimaryLabel } from '../utils.js';
 import { WarningIcon } from '../../../components/WarningIcon.jsx';
 import { activeWarnings, WARNING_LEVEL } from '../../../utils/warnings.js';
 import { useEffect, useState } from 'preact/hooks';
 import TargetToggle from '../TargetToggle.jsx';
 import Adjuster from '../Adjuster.jsx';
+import { FlushButton } from '../FlushButton.jsx';
 
 export function ActionCard({
   mode,
@@ -20,6 +20,7 @@ export function ActionCard({
   deactivate,
   clear,
   startFlush,
+  stopFlush,
   inCard = false,
   currentTemperature,
   targetTemperature,
@@ -38,7 +39,7 @@ export function ActionCard({
   const showStandby = mode === 0;
   const showSteam = mode === 2;
 
-  const showFlush = isBrewing && !isActive && !isFinished;
+  const showFlush = isBrewing && (isFlushing || (!isActive && !isFinished)); // stays mounted while held
   const grindValue =
     grindTarget === 1 && volumetricAvailable
       ? `${grindTargetVolume}g`
@@ -113,15 +114,12 @@ export function ActionCard({
       {!showStandby && (
         <div className='flex justify-end'>
           {showFlush && (
-            <button
+            <FlushButton
               className='btn btn-ghost btn-sm text-base-content/60 hover:text-base-content rounded-full text-sm'
-              onClick={startFlush}
-              disabled={isFlushing}
-              aria-label='Flush water'
-            >
-              <FontAwesomeIcon icon={faTint} />
-              Flush
-            </button>
+              isFlushing={isFlushing}
+              startFlush={startFlush}
+              stopFlush={stopFlush}
+            />
           )}
         </div>
       )}
@@ -141,6 +139,7 @@ ActionCard.propTypes = {
   deactivate: PropTypes.func.isRequired,
   clear: PropTypes.func.isRequired,
   startFlush: PropTypes.func.isRequired,
+  stopFlush: PropTypes.func.isRequired,
   inCard: PropTypes.bool,
   warnings: PropTypes.array,
   systemMessage: PropTypes.string,

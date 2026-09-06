@@ -5,10 +5,10 @@ import { faMinus } from '@fortawesome/free-solid-svg-icons/faMinus';
 import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import { faRectangleList } from '@fortawesome/free-solid-svg-icons/faRectangleList';
 import { faThermometerHalf } from '@fortawesome/free-solid-svg-icons/faThermometerHalf';
-import { faTint } from '@fortawesome/free-solid-svg-icons/faTint';
 import { faWeightScale } from '@fortawesome/free-solid-svg-icons/faWeightScale';
 import { WarningIcon } from '../../components/WarningIcon.jsx';
 import { activeWarnings, WARNING_LEVEL } from '../../utils/warnings.js';
+import { FlushButton } from './FlushButton.jsx';
 import { ModeTab } from './ModeTab.jsx';
 import { useDashboardState } from './useDashboardState.js';
 import {
@@ -110,6 +110,7 @@ export default function CompactProcessControls() {
     deactivate,
     clear,
     startFlush,
+    stopFlush,
     isFlushing,
     warnings,
     systemReady,
@@ -122,7 +123,7 @@ export default function CompactProcessControls() {
   } = ds;
 
   const showPrimary = mode === 1 || mode === 3 || (isGrinding && isGrindAvailable);
-  const showFlush = isBrewing && !isActive && !isFinished;
+  const showFlush = isBrewing && (isFlushing || (!isActive && !isFinished)); // stays mounted while held
   const showWeight = volumetricAvailable && (mode === 1 || mode === 3) && brewTarget;
   const processRunning = (isActive || isFinished) && (isBrewing || isGrinding);
   const shownWarnings = mode === 0 ? [] : activeWarnings(warnings);
@@ -252,14 +253,12 @@ export default function CompactProcessControls() {
             ))}
           </div>
           {showFlush && (
-            <button
+            <FlushButton
               className='btn btn-ghost btn-sm text-base-content/60 hover:text-base-content rounded-full text-xs'
-              onClick={startFlush}
-              disabled={isFlushing}
-              aria-label='Flush water'
-            >
-              <FontAwesomeIcon icon={faTint} /> Flush
-            </button>
+              isFlushing={isFlushing}
+              startFlush={startFlush}
+              stopFlush={stopFlush}
+            />
           )}
           {showPrimary && (
             <button

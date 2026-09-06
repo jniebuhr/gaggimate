@@ -110,6 +110,7 @@ class Settings {
     int getHomeAssistantPort() const { return homeAssistantPort.get(); }
     String getHomeAssistantTopic() const { return homeAssistantTopic.get(); }
     bool isMomentaryButtons() const { return momentaryButtons.get(); }
+    int getFlushDuration() const { return flushDuration.get(); } // seconds, 0 = as long as the button is held
     String getTimezone() const { return timezone.get(); }
     bool isClock24hFormat() const { return clock24hFormat.get(); }
     String getSelectedProfile() const { return selectedProfile.get(); }
@@ -204,6 +205,7 @@ class Settings {
     void setHomeAssistantPort(int homeAssistantPort);
     void setHomeAssistantTopic(const String &homeAssistantTopic);
     void setMomentaryButtons(bool momentary_buttons);
+    void setFlushDuration(int seconds);
     void setWarnWaterLevel(int level);
     void setWarnFlush(int level);
     void setWarnSteamSwitch(int level);
@@ -294,6 +296,7 @@ class Settings {
     Property<int> homeAssistantPort{registry, "ha_p", 1883};
     Property<String> homeAssistantTopic{registry, "ha_t", DEFAULT_HOME_ASSISTANT_TOPIC};
     Property<bool> momentaryButtons{registry, "mb", false};
+    Property<int> flushDuration{registry, "fl_dur", DEFAULT_FLUSH_DURATION_S};
     Property<String> timezone{registry, "tz", DEFAULT_TIMEZONE};
     Property<bool> clock24hFormat{registry, "clk_24h", true};
     Property<String> otaChannel{registry, "oc", DEFAULT_OTA_CHANNEL};

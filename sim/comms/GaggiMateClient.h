@@ -97,6 +97,11 @@ class GaggiMateClient {
     void onSystemInfo(SystemInfoCallback cb) { _systemInfoCb = std::move(cb); }
     void onSensorData(SensorCallback cb) { _sensorCb = std::move(cb); }
     void onButtonState(ButtonCallback cb) { _buttonCb = std::move(cb); }
+    // Sim only: inject a physical button edge as if the controller board reported it.
+    void simulateButton(uint8_t index, bool pressed) {
+        if (_buttonCb)
+            _buttonCb(index, pressed);
+    }
     void onAutotuneResult(AutotuneResultCallback cb) { _autotuneResultCb = std::move(cb); }
     void onVolumetricMeasurement(VolumetricCallback cb) { _volumetricCb = std::move(cb); }
     void onTofMeasurement(TofCallback cb) { _tofCb = std::move(cb); }

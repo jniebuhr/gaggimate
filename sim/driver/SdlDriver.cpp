@@ -2,6 +2,7 @@
 
 #include <SDL.h>
 #include <cstdlib>
+#include <display/main.h>
 #include <lvgl.h>
 #include <vector>
 
@@ -108,6 +109,11 @@ void SdlDriver::pumpAndRender() {
         case SDL_MOUSEBUTTONUP:
             if (e.button.button == SDL_BUTTON_LEFT)
                 s_mousePressed = false;
+            break;
+        case SDL_KEYDOWN:
+        case SDL_KEYUP: // keys 1/2 act as the brew/steam inputs of the controller board
+            if (e.key.repeat == 0 && (e.key.keysym.sym == SDLK_1 || e.key.keysym.sym == SDLK_2))
+                controller.getClientController()->simulateButton(e.key.keysym.sym == SDLK_1 ? 0 : 1, e.type == SDL_KEYDOWN);
             break;
         default:
             break;

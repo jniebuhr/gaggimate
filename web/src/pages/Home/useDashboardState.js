@@ -1,5 +1,5 @@
 import { computed } from '@preact/signals';
-import { useContext, useState } from 'preact/hooks';
+import { useContext, useEffect, useState } from 'preact/hooks';
 import { useQuery } from 'preact-fetching';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
 
@@ -9,7 +9,7 @@ const connected = computed(() => machine.value.connected);
 
 export function useDashboardState() {
   const apiService = useContext(ApiServiceContext);
-  const [isFlushing, setIsFlushing] = useState(false);
+  const [flushPending, setFlushPending] = useState(false); // flush requested, status not caught up yet
 
   const s = status.value;
   const caps = capabilities.value;
@@ -36,6 +36,10 @@ export function useDashboardState() {
   const isFinished = !!p?.e && !isActive;
   const isBrewing = mode === 1;
   const isGrinding = mode === 4;
+  // The firmware flags a flush (utility process) so this state survives re-renders and reloads.
+  const flushRunning = !!p?.u && isActive;
+  const flushFinished = !!p?.u && isFinished;
+  const isFlushing = flushPending || flushRunning;
 
   const isSmartGrindEnabled = settings?.smartGrindActive || false;
   const altRelayFunction = settings?.altRelayFunction ?? 1;
@@ -71,19 +75,32 @@ export function useDashboardState() {
     send(isGrinding ? 'req:grind:deactivate' : 'req:process:deactivate');
     if (isFlushing) {
       send('req:process:clear');
-      setIsFlushing(false);
+      setFlushPending(false);
     }
   };
   const clear = () => {
     send('req:process:clear');
-    setIsFlushing(false);
+    setFlushPending(false);
   };
 
   const startFlush = () => {
     if (isFlushing) return;
-    setIsFlushing(true);
-    apiService.request({ tp: 'req:flush:start' }).catch(() => setIsFlushing(false));
+    setFlushPending(true);
+    apiService.request({ tp: 'req:flush:start' }).catch(() => setFlushPending(false));
   };
+  // Ends a hold-to-flush (flush duration 0); the firmware ignores it for a fixed-length flush.
+  const stopFlush = () => {
+    if (!isFlushing) return;
+    send('req:flush:stop');
+  };
+
+  useEffect(() => {
+    if (flushRunning) setFlushPending(false);
+  }, [flushRunning]);
+  // A finished flush clears itself; nobody wants to confirm a flush like a shot.
+  useEffect(() => {
+    if (flushFinished) apiService.send({ tp: 'req:process:clear' });
+  }, [flushFinished, apiService]);
 
   const raiseTemp = () => send('req:raise-temp');
   const lowerTemp = () => send('req:lower-temp');
@@ -147,6 +164,7 @@ export function useDashboardState() {
     deactivate,
     clear,
     startFlush,
+    stopFlush,
     raiseTemp,
     lowerTemp,
     raiseTarget,

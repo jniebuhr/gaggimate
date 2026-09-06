@@ -1,6 +1,6 @@
 {
   "navigation": {
-    "selectedUserPageObject": "[gaggimate.eez-project]:/userPages/0",
+    "selectedUserPageObject": "[gaggimate.eez-project]:/userPages/1",
     "selectedUserWidgetObject": "[gaggimate.eez-project]:/userWidgets/1",
     "selectedActionObject": "[gaggimate.eez-project]:/actions/38",
     "selectedGlobalVariableObject": "[gaggimate.eez-project]:/variables/globalVariables/9",
@@ -131,7 +131,6 @@
                   "type": "tabset",
                   "id": "#62043989-83c1-428b-8417-b89c3070fb5a",
                   "weight": 0.5267379679144385,
-                  "selected": 1,
                   "enableClose": false,
                   "children": [
                     {
@@ -197,6 +196,7 @@
               "type": "tabset",
               "id": "EDITORS",
               "weight": 46.47304077762655,
+              "selected": 1,
               "enableDeleteWhenEmpty": false,
               "enableClose": false,
               "children": [
@@ -1225,9 +1225,7 @@
       "selectionFront": {},
       "selectionBack": {
         "0": {
-          "0": {
-            "$selected": true
-          },
+          "0": {},
           "1": {
             "0": {},
             "2": {

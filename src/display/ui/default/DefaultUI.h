@@ -46,6 +46,8 @@ class DefaultUI {
     };
 
     void onVolumetricDelete();
+    // Flush started from the touch start button; loop() releases it once the pointer lifts (GM-201).
+    void onTouchFlushStart() { touchFlushHeld = true; }
 
     // Brew confirmation overlay, shown when the controller asks to confirm a brew start.
     void setBrewConfirmVisible(bool visible) {
@@ -111,6 +113,7 @@ class DefaultUI {
     int christmasMode = false;
 
     bool rerender = false;
+    bool touchFlushHeld = false;
     unsigned long lastRender = 0;
 
     int mode = MODE_STANDBY;

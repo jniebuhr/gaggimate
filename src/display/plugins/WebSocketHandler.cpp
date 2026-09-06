@@ -237,6 +237,8 @@ void WebSocketHandler::handleWebSocketData(AsyncWebSocket *server, AsyncWebSocke
                     client->text(toWsBuffer(resp));
                 } else if (msgType == "req:flush:start") {
                     handleFlushStart(client->id(), doc);
+                } else if (msgType == "req:flush:stop") {
+                    handleFlushStop(client->id(), doc);
                 }
             }
         }
@@ -432,6 +434,7 @@ void WebSocketHandler::publishTelemetry() {
             pObj["s"] = brew->currentPhase.phase == PhaseType::PHASE_TYPE_BREW ? "brew" : "infusion";
             pObj["l"] = brew->isActive() ? brew->currentPhase.name.c_str() : "Finished";
             pObj["e"] = ts - brew->processStarted;
+            pObj["u"] = brew->isUtility() ? 1 : 0;
             const bool isVolumetric = brew->target == ProcessTarget::VOLUMETRIC && brew->currentPhase.hasVolumetricTarget() &&
                                       controller->isVolumetricAvailable();
             pObj["tt"] = isVolumetric ? "volumetric" : "time";
@@ -492,6 +495,17 @@ void WebSocketHandler::handleFlushStart(uint32_t clientId, JsonDocument &request
 
     JsonDocument response(&psramAllocator);
     response["tp"] = "res:flush:start";
+    response["rid"] = request["rid"];
+    response["success"] = true;
+    ws.text(clientId, toWsBuffer(response));
+}
+
+// Ends a hold-to-flush (flush duration 0); a no-op while a fixed-length flush runs.
+void WebSocketHandler::handleFlushStop(uint32_t clientId, JsonDocument &request) {
+    controller->onFlushRelease();
+
+    JsonDocument response(&psramAllocator);
+    response["tp"] = "res:flush:stop";
     response["rid"] = request["rid"];
     response["success"] = true;
     ws.text(clientId, toWsBuffer(response));

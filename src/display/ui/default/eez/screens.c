@@ -345,7 +345,7 @@ static void event_handler_cb_brew_screen_start_button(lv_event_t *e) {
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
 
-    if (event == LV_EVENT_CLICKED) {
+    if (event == LV_EVENT_SHORT_CLICKED) {
         e->user_data = (void *)0;
         action_on_brew_start(e);
     }

@@ -117,6 +117,8 @@ void Controller::setup() {
 
     pluginManager->on("profiles:profile:select", [this](Event const &event) { this->handleProfileUpdate(); });
 
+    buttons.setCallback([this](uint8_t index, ButtonHandler::Event event) { onButtonEvent(index, event); });
+
 #ifndef GAGGIMATE_HEADLESS
     ui->init();
 #endif
@@ -224,12 +226,8 @@ static void parseFloatCsv(const String &csv, float *out, size_t count, float def
 void Controller::setupBluetooth() {
     comms.init("GPBLC");
     comms.onConnectionChanged([this](bool connected) {
-        // Force a full control resend after any (re)connect -- the controller
-        // starts with no state and updateControl() otherwise only sends deltas.
         controlStateSent = false;
         if (connected) {
-            // Re-assert the connection interval for the fresh link (e.g. tight
-            // again if we reconnected mid-shot).
             applyConnectionPriority(true);
         } else if (initialized) {
             pluginManager->trigger("controller:bluetooth:disconnect");
@@ -242,18 +240,10 @@ void Controller::setupBluetooth() {
         onSystemInfo(hardware, version, protocolVersion, dimming, pressure, ledControl, tof, addons);
     });
     comms.onIncompatibleController([this](const String &info) { onIncompatibleController(info); });
-    // A controller OTA streams the firmware over this BLE link; the relaxed idle
-    // interval makes that crawl. Force a low-latency interval for the duration of
-    // a controller flash, then restore. (A display OTA is Wi-Fi-bound, so leave
-    // BLE relaxed to keep radio airtime for the download.)
     pluginManager->on("ota:update:start", [this](Event const &event) {
         if (event.getString("component") != "display") {
             connLowLatency = true;
             comms.setLowLatency(true);
-            // Streaming firmware over BLE -> BLE must win the shared radio, same
-            // as during a shot. Without this it would run against the new
-            // idle WiFi-preference and crawl. Restored by applyConnectionPriority
-            // on ota:update:end. [GM-90]
             esp_coex_preference_set(ESP_COEX_PREFER_BT);
         }
     });
@@ -274,50 +264,9 @@ void Controller::setupBluetooth() {
         pluginManager->trigger("pump:volume:change", "value", waterPumped);
     });
     comms.onButtonState([this](uint8_t index, bool pressed) {
-        const int status = pressed ? 1 : 0;
-        String behavior = settings.getButtonBehavior(index);
-        ESP_LOGV("Controller", "Button %d changed to %d, behavior: %s", index, status, behavior);
-        if (behavior == "" || behavior == "none") {
-            return;
-        }
-        if (behavior == "brew") {
-            handleBrewButton(status);
-            return;
-        }
-        if (behavior == "steam") {
-            handleSteamButton(status);
-            return;
-        }
-        if (behavior == "water") {
-            handleWaterButton(status);
-            return;
-        }
-        if (behavior == "flush") {
-            // Flush is a one-shot fixed-duration BrewProcess. Trigger on
-            // press only; release does nothing so the user can't
-            // accidentally cancel mid-flush by letting go (push button)
-            // or flipping the rocker back. onFlush() itself is a no-op
-            // if a process is already active, so rapid presses don't
-            // queue.
-            //
-            // Ensure we land in MODE_BREW so the flush UI renders, but
-            // only when no other process is currently running. Mutating
-            // mode mid-process would orphan the active mode's UI while
-            // onFlush() silently no-ops on the re-entrancy guard. The
-            // setMode guard mirrors the pattern other button handlers
-            // use when they need to switch modes safely.
-            if (status) {
-                if (getMode() == MODE_STANDBY) {
-                    deactivateStandby();
-                }
-                if (getMode() != MODE_BREW && !isActive()) {
-                    setMode(MODE_BREW);
-                }
-                onFlush();
-            }
-            return;
-        }
-        handleProfileButton(status, behavior);
+        ESP_LOGV(LOG_TAG, "Button %d changed to %d", index, pressed);
+        buttons.setConfig(buttonConfig()); // settings may have changed since the last edge
+        buttons.onRawState(index, pressed, millis());
     });
     comms.onError([this](int error) {
         // Autotune timeout = info-level, not runaway. Controller already
@@ -546,6 +495,7 @@ void Controller::loop() {
 
     warnings.loop();
     pluginManager->loop();
+    buttons.loop(millis()); // deferred combo presses + long-press timing
 
     if (screenReady && !initialized) {
         connect();
@@ -1251,7 +1201,11 @@ bool Controller::isBluetoothScaleHealthy() const {
 
 void Controller::onFlush() {
     // Allocate outside the lock; reachable from the UI, AsyncTCP and BLE tasks (GM-147).
-    auto *flush = new BrewProcess(FLUSH_PROFILE, ProcessTarget::TIME, settings.getBrewDelay());
+    const int duration = settings.getFlushDuration();
+    Profile profile = FLUSH_PROFILE;
+    profile.phases[0].duration = duration > 0 ? duration : FLUSH_HOLD_MAX_DURATION_S; // 0 = hold, capped
+    auto *flush = new BrewProcess(profile, ProcessTarget::TIME, settings.getBrewDelay());
+    flush->holdPhase = duration == 0; // pump phase ends on onFlushRelease(), the drain phase still runs
     std::vector<const char *> events;
     {
         std::lock_guard<std::recursive_mutex> guard(processMutex);
@@ -1267,106 +1221,183 @@ void Controller::onFlush() {
     dispatchEvents(events);
 }
 
+// Every hold-to-flush source (physical button, touch, web) funnels its release through here.
+void Controller::onFlushRelease() {
+    std::lock_guard<std::recursive_mutex> guard(processMutex);
+    if (currentProcess != nullptr && currentProcess->getType() == MODE_BREW) {
+        static_cast<BrewProcess *>(currentProcess)->release();
+    }
+}
+
 void Controller::onVolumetricDelete() {
     if (profileManager->getSelectedProfile().isVolumetric()) {
         profileManager->getSelectedProfile().removeVolumetricTarget();
     }
 }
 
-void Controller::handleBrewButton(int brewButtonStatus) {
-    if (brewButtonStatus) {
-        switch (getMode()) {
-        case MODE_STANDBY:
-            deactivateStandby();
-            break;
-        case MODE_BREW:
-            if (!isActive()) {
-                deactivateStandby();
-                clear();
-                activate();
-            } else if (settings.isMomentaryButtons()) {
-                deactivate();
-                clear();
-            }
-            break;
-        case MODE_WATER:
-            activate();
-            break;
-        case MODE_STEAM:
-            deactivate();
-            setMode(MODE_BREW);
-        default:
-            break;
-        }
-    } else if (!settings.isMomentaryButtons()) {
+// A long press on a momentary button that starts a shot (brew or a profile) flushes instead.
+static bool longPressFlushes(const String &behavior) {
+    return behavior != "" && behavior != "none" && behavior != "steam" && behavior != "water" && behavior != "flush";
+}
+
+ButtonHandler::Config Controller::buttonConfig() const {
+    ButtonHandler::Config cfg;
+    cfg.momentary = settings.isMomentaryButtons();
+    const bool holdFlush = settings.getFlushDuration() == 0;
+    for (uint8_t i = 0; i < ButtonHandler::BUTTON_COUNT; i++) {
+        const String behavior = settings.getButtonBehavior(i);
+        cfg.longPress[i] = cfg.momentary && longPressFlushes(behavior);
+        cfg.clickOnPress[i] = holdFlush && behavior == "flush"; // a hold-to-flush has to start on press
+    }
+    // Only pay the combo window when the virtual third button does something
+    const String third = settings.getButtonBehavior(ButtonHandler::COMBO_BUTTON);
+    cfg.combo = third != "" && third != "none";
+    return cfg;
+}
+
+void Controller::onButtonEvent(uint8_t index, ButtonHandler::Event event) {
+    using Event = ButtonHandler::Event;
+    const String behavior = settings.getButtonBehavior(index);
+    ESP_LOGV(LOG_TAG, "Button %d event %d, behavior: %s", index, static_cast<int>(event), behavior.c_str());
+    switch (event) {
+    case Event::PRESS:
+    case Event::CLICK:
+        runButtonBehavior(behavior, true);
+        break;
+    case Event::RELEASE:
+        runButtonBehavior(behavior, false);
+        break;
+    case Event::LONG_PRESS:
+        handleFlushButton(true);
+        break;
+    case Event::LONG_PRESS_END:
+        handleFlushButton(false);
+        break;
+    case Event::CLICK_END: // momentary release only matters for a hold-to-flush
+        if (behavior == "flush")
+            onFlushRelease();
+        break;
+    }
+}
+
+void Controller::runButtonBehavior(const String &behavior, bool pressed) {
+    if (behavior == "" || behavior == "none") {
+        return;
+    }
+    if (behavior == "brew") {
+        handleBrewButton(pressed);
+    } else if (behavior == "steam") {
+        handleSteamButton(pressed);
+    } else if (behavior == "water") {
+        handleWaterButton(pressed);
+    } else if (behavior == "flush") {
+        handleFlushButton(pressed);
+    } else {
+        handleProfileButton(pressed, behavior); // anything else is a profile id
+    }
+}
+
+void Controller::handleBrewButton(bool pressed) {
+    if (!pressed) { // latching switch flipped off
         if (getMode() == MODE_BREW) {
-            if (isActive()) {
-                deactivate();
-                clear();
-            } else {
-                clear();
-            }
+            deactivate();
+            clear();
         } else if (getMode() == MODE_WATER) {
             deactivate();
         }
+        return;
+    }
+    switch (getMode()) {
+    case MODE_STANDBY:
+        deactivateStandby();
+        break;
+    case MODE_BREW:
+        if (!isActive()) {
+            activate();
+        } else if (settings.isMomentaryButtons()) { // second press stops the shot
+            deactivate();
+            clear();
+        }
+        break;
+    case MODE_WATER:
+        activate();
+        break;
+    case MODE_STEAM:
+        deactivate();
+        setMode(MODE_BREW);
+        break;
+    default:
+        break;
     }
 }
 
-void Controller::handleSteamButton(int steamButtonStatus) {
-    if (steamButtonStatus) {
+void Controller::handleSteamButton(bool pressed) {
+    if (pressed) {
         if (getMode() != MODE_STEAM) {
             setMode(MODE_STEAM);
+        } else if (settings.isMomentaryButtons()) { // second press leaves steam mode
+            deactivate();
+            setMode(MODE_BREW);
         }
-    } else if (!settings.isMomentaryButtons() && getMode() == MODE_STEAM) {
+    } else if (getMode() == MODE_STEAM) {
         deactivate();
         setMode(MODE_BREW);
     }
-    steamSwitchOn = steamButtonStatus;
+    if (!settings.isMomentaryButtons()) {
+        steamSwitchOn = pressed; // the "steam switch left on" warning only makes sense for a latching switch
+    }
 }
 
-void Controller::handleWaterButton(int buttonStatus) {
-    if (buttonStatus) {
-        switch (getMode()) {
-        case MODE_WATER:
-            if (!isActive()) {
-                activate();
-            }
-            break;
-        default:
+void Controller::handleWaterButton(bool pressed) {
+    if (pressed) {
+        if (getMode() != MODE_WATER) {
             setMode(MODE_WATER);
-            break;
+        } else if (!isActive()) {
+            activate();
+        } else if (settings.isMomentaryButtons()) { // second press stops the water
+            deactivate();
         }
-    } else if (!settings.isMomentaryButtons() && getMode() == MODE_WATER && isActive()) {
+    } else if (getMode() == MODE_WATER && isActive()) {
         deactivate();
     }
 }
 
-void Controller::handleProfileButton(int buttonStatus, String id) {
-    if (buttonStatus && getMode() == MODE_STANDBY) {
+void Controller::handleFlushButton(bool pressed) {
+    if (!pressed) {
+        onFlushRelease(); // ends a hold-to-flush, otherwise nothing: a release must not cut a flush short
+        return;
+    }
+    if (getMode() == MODE_STANDBY) {
+        deactivateStandby();
+    }
+    if (getMode() != MODE_BREW && !isActive()) {
+        setMode(MODE_BREW); // land in brew mode so the flush UI renders, never mid-process
+    }
+    onFlush(); // no-op while a process runs, so repeated presses don't queue
+}
+
+void Controller::handleProfileButton(bool pressed, const String &id) {
+    if (!pressed) { // latching switch flipped off
+        deactivate();
+        clear();
+        return;
+    }
+    if (getMode() == MODE_STANDBY) {
         deactivateStandby();
         return;
     }
-    if (!buttonStatus && !settings.isMomentaryButtons()) {
-        deactivate();
-        clear();
+    if (getMode() != MODE_BREW) {
+        setMode(MODE_BREW);
     }
-    if (settings.isMomentaryButtons() && buttonStatus && isActive()) {
+    if (isActive()) { // pressing again stops the running shot
         deactivate();
         clear();
-    } else if (buttonStatus) {
-        if (getMode() != MODE_BREW) {
-            setMode(MODE_BREW);
-        }
-        if (isActive()) {
-            deactivate();
-            clear();
-            return;
-        }
-        std::vector<String> profileIds = profileManager->listProfiles();
-        if (std::find(profileIds.begin(), profileIds.end(), id) != profileIds.end()) {
-            profileManager->selectProfile(id);
-            activate();
-        }
+        return;
+    }
+    std::vector<String> profileIds = profileManager->listProfiles();
+    if (std::find(profileIds.begin(), profileIds.end(), id) != profileIds.end()) {
+        profileManager->selectProfile(id);
+        activate();
     }
 }
 

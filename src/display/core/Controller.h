@@ -6,6 +6,7 @@
 #include "Settings.h"
 #include "SystemInfo.h"
 #include <WiFi.h>
+#include <display/core/ButtonHandler.h>
 #include <display/core/ProfileManager.h>
 #include <display/core/WarningManager.h>
 #include <display/core/process/Process.h>
@@ -120,6 +121,7 @@ class Controller {
     void setVolumetricOverride(bool override) { volumetricOverride = override; }
     bool isBluetoothScaleHealthy() const;
     void onFlush();
+    void onFlushRelease(); // ends a hold-to-flush; no-op otherwise
     int getWaterLevel() const {
         float reversedLevel = static_cast<float>(settings.getEmptyTankDistance()) -
                               static_cast<float>(std::min(settings.getEmptyTankDistance(), tofDistance));
@@ -172,10 +174,16 @@ class Controller {
     void onTempRead(float temperature);
     void onPressureRead(float pressure);
 
-    void handleBrewButton(int brewButtonStatus);
-    void handleSteamButton(int steamButtonStatus);
-    void handleWaterButton(int buttonStatus);
-    void handleProfileButton(int buttonStatus, String id);
+    // Physical buttons (GM-200): raw edges -> ButtonHandler -> behavior handlers. `pressed`
+    // false only reaches the handlers for latching switches; momentary presses toggle.
+    ButtonHandler::Config buttonConfig() const;
+    void onButtonEvent(uint8_t index, ButtonHandler::Event event);
+    void runButtonBehavior(const String &behavior, bool pressed);
+    void handleBrewButton(bool pressed);
+    void handleSteamButton(bool pressed);
+    void handleWaterButton(bool pressed);
+    void handleFlushButton(bool pressed);
+    void handleProfileButton(bool pressed, const String &id);
     void handleProfileUpdate();
 
     // Private Attributes
@@ -184,6 +192,7 @@ class Controller {
     Driver *driver = nullptr;
 #endif
     GaggiMateClient comms;
+    ButtonHandler buttons;
     hw_timer_t *timer = nullptr;
     Settings settings;
     PluginManager *pluginManager{};

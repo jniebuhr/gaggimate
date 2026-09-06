@@ -12,6 +12,8 @@ import {
   ToggleField,
 } from '../../../components/SettingsFormField.jsx';
 
+const FLUSH_DURATION_STEPS = [0, 5, 10, 15, 20];
+
 function ButtonBehaviorSelect({ id, label, value, onChange, profiles }) {
   return (
     <SettingsFormField label={label} htmlFor={id} noMargin>
@@ -105,6 +107,8 @@ export function GeneralTab({
   showApPassword,
   setShowApPassword,
 }) {
+  // Snap legacy free-form values onto the 5 s steps the slider offers.
+  const flushDuration = Math.min(20, Math.round(Number(formData.flushDuration ?? 5) / 5) * 5);
   return (
     <div className='space-y-4 sm:space-y-6 lg:grid lg:grid-cols-2 lg:gap-4'>
       {/* User Preferences */}
@@ -214,12 +218,41 @@ export function GeneralTab({
           </div>
         </div>
 
+        {/* Flush */}
+        <div className='border-base-content/5 mt-6 border-t pt-6'>
+          <h3 className='text-md text-base-content mb-2 font-semibold'>Flush</h3>
+          <SettingsFormField
+            label='Flush Duration'
+            htmlFor='flushDuration'
+            helpText='Hold runs the flush for as long as the button is held. The valve stays open for one more second after the pump stops.'
+            noMargin
+          >
+            <input
+              id='flushDuration'
+              name='flushDuration'
+              type='range'
+              className='range w-full'
+              min={0}
+              max={20}
+              step={5}
+              value={flushDuration}
+              onChange={onChange('flushDuration')}
+            />
+            <div className='mt-1 flex justify-between px-1 text-xs opacity-70' aria-hidden='true'>
+              {FLUSH_DURATION_STEPS.map(step => (
+                <span key={step}>{step === 0 ? 'Hold' : `${step}s`}</span>
+              ))}
+            </div>
+          </SettingsFormField>
+        </div>
+
         {/* Buttons */}
         <div className='border-base-content/5 mt-6 border-t pt-6'>
           <h3 className='text-md text-base-content mb-2 font-semibold'>Physical Buttons</h3>
           <p className='text-base-content/85 mb-4 text-sm opacity-70'>
             Define behavior for physical buttons when pressed. Make sure they are wired to the
-            buttons header.
+            buttons header. Pressing the brew and steam buttons together (or a third button wired to
+            both) triggers the water button behavior.
           </p>
           <div className='mb-4'>
             <ToggleField
@@ -230,7 +263,8 @@ export function GeneralTab({
             />
           </div>
           <p className='text-base-content/85 mb-4 text-sm opacity-70'>
-            Activate this if your coffee machine is equipped with momentary buttons.
+            Activate this if your coffee machine is equipped with momentary buttons. A momentary
+            button set to Brew or a profile starts a flush instead when held.
           </p>
           <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
             <ButtonBehaviorSelect

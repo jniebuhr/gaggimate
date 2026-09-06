@@ -196,9 +196,27 @@ void DefaultUI::init() {
                             0);
 }
 
+// True while any pointer input device (the touch panel) is pressed.
+static bool pointerPressed() {
+    for (lv_indev_t *indev = lv_indev_get_next(nullptr); indev != nullptr; indev = lv_indev_get_next(indev)) {
+        if (lv_indev_get_type(indev) == LV_INDEV_TYPE_POINTER && indev->proc.state == LV_INDEV_STATE_PRESSED)
+            return true;
+    }
+    return false;
+}
+
 void DefaultUI::loop() {
     const unsigned long now = ::millis();
     const unsigned long diff = now - lastRender;
+
+    if (touchFlushHeld) {
+        if (!controller->isActive()) {
+            touchFlushHeld = false;
+        } else if (!pointerPressed()) {
+            touchFlushHeld = false;
+            controller->onFlushRelease();
+        }
+    }
 
     if (now - lastTempLog > TEMP_HISTORY_INTERVAL) {
         lastTempLog = now;

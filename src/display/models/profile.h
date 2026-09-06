@@ -25,6 +25,7 @@ enum class PhaseExitReason : uint8_t {
     DURATION = 5,          // phase duration elapsed
     SAFETY = 6,            // brew safety timeout (set by BrewProcess, not Phase::isFinished)
     ABORTED = 7,           // shot manually stopped before the process finished
+    HOLD_RELEASED = 8,     // held phase ended because the button was released (hold-to-flush)
 };
 
 struct Target {

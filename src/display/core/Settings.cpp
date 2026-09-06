@@ -165,6 +165,8 @@ void Settings::setHomeAssistantPassword(const String &homeAssistantPassword) {
 
 void Settings::setMomentaryButtons(bool momentary_buttons) { momentaryButtons.set(momentary_buttons); }
 
+void Settings::setFlushDuration(int seconds) { flushDuration.set(std::clamp(seconds, 0, MAX_FLUSH_DURATION_S)); }
+
 // Clamp to the WarningLevel range so a bad web value can't leave a warning in an undefined state.
 static int clampWarningLevel(int level) {
     return level < WARNING_LEVEL_IGNORE ? WARNING_LEVEL_IGNORE : (level > WARNING_LEVEL_ERROR ? WARNING_LEVEL_ERROR : level);

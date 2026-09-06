@@ -342,6 +342,8 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
             if (request->hasArg("haTopic"))
                 settings->setHomeAssistantTopic(request->arg("haTopic"));
             settings->setMomentaryButtons(request->hasArg("momentaryButtons"));
+            if (request->hasArg("flushDuration"))
+                settings->setFlushDuration(request->arg("flushDuration").toInt());
             if (request->hasArg("warnWaterLevel"))
                 settings->setWarnWaterLevel(request->arg("warnWaterLevel").toInt());
             if (request->hasArg("warnFlush"))
@@ -485,6 +487,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["smartGrindIp"] = settings.getSmartGrindIp();
     doc["smartGrindMode"] = settings.getSmartGrindMode();
     doc["momentaryButtons"] = settings.isMomentaryButtons();
+    doc["flushDuration"] = settings.getFlushDuration();
     doc["warnWaterLevel"] = settings.getWarnWaterLevel();
     doc["warnFlush"] = settings.getWarnFlush();
     doc["warnSteamSwitch"] = settings.getWarnSteamSwitch();
