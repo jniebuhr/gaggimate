@@ -1,5 +1,4 @@
 #include "SimpleKalmanFilter.h"
-#include "Arduino.h"
 #include <math.h>
 
 SimpleKalmanFilter::SimpleKalmanFilter(float mea_e, float est_e, float q) {

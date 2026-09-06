@@ -13,6 +13,7 @@ import { cleanName, formatTimestamp, getProfileDisplayLabel } from '../../utils/
 import { buildStatisticsProfileHref } from '../../../Statistics/utils/statisticsRoute';
 import { SourceMarker } from '../SourceMarker';
 import { getAnalyzerIconButtonClasses } from '../analyzerControlStyles';
+import { LibraryActionsMenu } from './LibraryActionsMenu';
 
 const ACTIVE_ROW_CLASSES = 'bg-primary/18';
 const COMPARE_PENDING_ROW_CLASSES = 'bg-primary/10 opacity-75';
@@ -128,51 +129,38 @@ function LibraryActionsCell({
   onDelete,
   statisticsIcon,
 }) {
-  return (
-    <div className='flex justify-end gap-2'>
-      {!isShot && (
-        <a
-          href={profileStatsHref || '/statistics'}
-          onClick={event => {
-            stopRowClick(event);
-            onShowStats?.(item);
-          }}
-          className={getAnalyzerIconButtonClasses({
+  const actions = [
+    ...(!isShot
+      ? [
+          {
+            label: 'Profile Statistics',
+            icon: statisticsIcon,
             tone: 'success',
-            className: 'h-6 w-6',
-          })}
-          title='Profile statistics'
-        >
-          <FontAwesomeIcon icon={statisticsIcon} size='xs' />
-        </a>
-      )}
-      <button
-        type='button'
-        onClick={event => {
-          stopRowClick(event);
-          onExport(item);
-        }}
-        className={getAnalyzerIconButtonClasses({
-          tone: 'subtle',
-          className: 'h-6 w-6',
-        })}
-      >
-        <FontAwesomeIcon icon={faFileExport} size='xs' />
-      </button>
-      <button
-        type='button'
-        onClick={event => {
-          stopRowClick(event);
-          onDelete(item);
-        }}
-        className={getAnalyzerIconButtonClasses({
-          tone: 'error',
-          className: 'h-6 w-6',
-        })}
-      >
-        <FontAwesomeIcon icon={faTrashCan} size='xs' />
-      </button>
-    </div>
+            href: profileStatsHref || '/statistics',
+            onSelect: () => onShowStats?.(item),
+          },
+        ]
+      : []),
+    {
+      label: 'Export',
+      icon: faFileExport,
+      onSelect: () => onExport(item),
+    },
+    {
+      label: 'Delete',
+      icon: faTrashCan,
+      tone: 'error',
+      onSelect: () => onDelete(item),
+    },
+  ];
+
+  return (
+    <LibraryActionsMenu
+      actions={actions}
+      ariaLabel={`Open ${isShot ? 'shot' : 'profile'} actions menu`}
+      buttonClassName='h-6 w-6'
+      placement='top'
+    />
   );
 }
 

@@ -58,18 +58,19 @@ void GaggiMateServer::pushSystemInfo() {
 }
 
 gm::Payload GaggiMateServer::buildSensorData(float temperature, float pressure, float puckFlow, float pumpFlow,
-                                             float puckResistance, float pumpPower, float heaterPower) {
+                                             float puckResistance, float pumpPower, float heaterPower, float waterPumped) {
     gm::Payload p = gaggimate_Payload_init_zero;
     p.which_content = gaggimate_Payload_sensor_tag;
     p.content.sensor.boilers_count = 1; // boiler 0; schema allows more
     p.content.sensor.boilers[0].index = 0;
     p.content.sensor.boilers[0].temperature = temperature;
     p.content.sensor.boilers[0].pressure = pressure;
+    p.content.sensor.boilers[0].power = heaterPower;
     p.content.sensor.puck_flow = puckFlow;
     p.content.sensor.pump_flow = pumpFlow;
     p.content.sensor.puck_resistance = puckResistance;
     p.content.sensor.pump_power = pumpPower;
-    p.content.sensor.heater_power = heaterPower;
+    p.content.sensor.water_pumped = waterPumped;
     return p;
 }
 

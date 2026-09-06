@@ -25,6 +25,7 @@ export function buildPhaseHoverRanges(
         label: phase?.displayName || phase?.name || null,
         startAbs,
         endAbs,
+        phaseTotalWaterMl: Number.isFinite(Number(phase?.water)) ? Number(phase.water) : null,
         startCumWater:
           startSampleIndexFloor >= 0 ? cumulativeWaterTotalBySample[startSampleIndexFloor] || 0 : 0,
       };
@@ -39,7 +40,7 @@ export function createHoverWaterValueGetter({
 }) {
   return xValue => {
     if (!Number.isFinite(xValue) || sampleTimesSec.length === 0) {
-      return { totalWaterMl: null, phaseWaterMl: null };
+      return { totalWaterMl: null, phaseWaterMl: null, phaseTotalWaterMl: null };
     }
 
     const sampleIndex = findLastSampleIndexAtOrBeforeX(sampleTimesSec, xValue);
@@ -59,6 +60,7 @@ export function createHoverWaterValueGetter({
       phaseWaterMl: activePhase
         ? Math.max(0, totalWaterMl - (activePhase.startCumWater ?? 0))
         : null,
+      phaseTotalWaterMl: activePhase?.phaseTotalWaterMl ?? null,
     };
   };
 }

@@ -55,7 +55,11 @@ export function ProfileMainInformation(props) {
         </div>
       </div>
       <div className='form-control'>
-        <label htmlFor='utility' className='mb-2 block text-sm font-medium' aria-label='Utility profile toggle'>
+        <label
+          htmlFor='utility'
+          className='mb-2 block text-sm font-medium'
+          aria-label='Utility profile toggle'
+        >
           Utility profile
         </label>
         <input

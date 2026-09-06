@@ -13,6 +13,7 @@ import { OverviewChart } from '../../components/OverviewChart.jsx';
 import Card from '../../components/Card.jsx';
 import { DashboardSidebar } from './DashboardSidebar.jsx';
 import { RecentShotsCard } from './cards/RecentShotsCard.jsx';
+import { BrewConfirmHost } from './BrewConfirmHost.jsx';
 import {
   DASHBOARD_LAYOUTS,
   DASHBOARD_CARD_MODES,
@@ -29,6 +30,7 @@ export function Home() {
 
   return (
     <div className='w-full lg:flex lg:h-full lg:flex-col landscape:max-lg:flex landscape:max-lg:h-full landscape:max-lg:flex-col'>
+      <BrewConfirmHost />
       <div className='grid grid-cols-1 gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-3 lg:items-stretch landscape:max-lg:min-h-0 landscape:max-lg:flex-1 landscape:max-lg:grid-cols-10'>
         {isOrderFirst ? (
           <>

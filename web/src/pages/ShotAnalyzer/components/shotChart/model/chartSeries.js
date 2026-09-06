@@ -1,5 +1,6 @@
 import { TARGET_FLOW_MAX, TARGET_PRESSURE_MAX } from '../constants';
 import { getSpikeResistantSeriesMax, safeMax, safeMin, toNumberOrNull } from '../helpers';
+import { createPumpedWaterSource } from '../../../services/analyzer/waterIntegration';
 
 function getSampleValue(sample, keys) {
   for (const key of keys) {
@@ -12,14 +13,23 @@ function getFlowFromSample(sample) {
   return getSampleValue(sample, ['fl', 'f', 'flow']);
 }
 
+function getSampleTimeMs(sample) {
+  const time = Number(sample?.t);
+  return Number.isFinite(time) ? time : 0;
+}
+
 export function buildSampleTimeline(samples) {
   const sampleTimesSec = new Array(samples.length);
   const cumulativeWaterTotalBySample = new Array(samples.length);
+  const pumpedWaterSource = createPumpedWaterSource(samples);
+  const initialRecordedWater = pumpedWaterSource.usesRecordedPumpedWater
+    ? Number(samples[0]?.wp)
+    : 0;
   let cumulativeWaterTotal = 0;
 
   for (let i = 0; i < samples.length; i++) {
     const sample = samples[i] || {};
-    const tMs = Number(sample.t) || 0;
+    const tMs = getSampleTimeMs(sample);
     sampleTimesSec[i] = tMs / 1000;
 
     if (i === 0) {
@@ -27,17 +37,23 @@ export function buildSampleTimeline(samples) {
       continue;
     }
 
-    // Water totals are reconstructed from flow * dt so hover/export logic can query
-    // consistent cumulative values even when the original shot payload does not store them.
-    const prevTMs = Number(samples[i - 1]?.t) || tMs;
+    if (pumpedWaterSource.usesRecordedPumpedWater) {
+      cumulativeWaterTotalBySample[i] = Math.max(0, Number(sample.wp) - initialRecordedWater);
+      continue;
+    }
+
+    // The previous sample's flow was active during this interval. This also keeps
+    // t=0 valid instead of treating the first 250 ms as a zero-length interval.
+    const previousSample = samples[i - 1] || {};
+    const prevTMs = getSampleTimeMs(previousSample);
     const dt = Math.max(0, (tMs - prevTMs) / 1000);
-    const flow = Number(getFlowFromSample(sample));
+    const flow = Number(getFlowFromSample(previousSample));
     cumulativeWaterTotal += (Number.isFinite(flow) ? flow : 0) * dt;
     cumulativeWaterTotalBySample[i] = cumulativeWaterTotal;
   }
 
   return {
-    maxTime: samples.length > 0 ? (samples[samples.length - 1].t || 0) / 1000 : 0,
+    maxTime: samples.length > 0 ? getSampleTimeMs(samples[samples.length - 1]) / 1000 : 0,
     shotStartSec: sampleTimesSec[0] ?? 0,
     sampleTimesSec,
     cumulativeWaterTotalBySample,

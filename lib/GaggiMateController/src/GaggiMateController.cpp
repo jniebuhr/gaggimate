@@ -391,6 +391,7 @@ void GaggiMateController::sendSensorData() {
     float pumpFlow = 0.0f;
     float puckResistance = 0.0f;
     float pressure = 0.0f;
+    float waterPumped = 0.0f;
     gm::Payload batch[2];
     size_t n = 0;
     if (_config.capabilites.pressure) {
@@ -400,6 +401,7 @@ void GaggiMateController::sendSensorData() {
             puckFlow = dimmedPump->getPuckFlow();
             pumpFlow = dimmedPump->getPumpFlow();
             puckResistance = dimmedPump->getPuckResistance();
+            waterPumped = dimmedPump->getPumpedWater();
             if (this->valve->getState()) {
                 batch[n++] = _comms.buildVolumetricMeasurement(dimmedPump->getCoffeeVolume());
             }
@@ -411,6 +413,7 @@ void GaggiMateController::sendSensorData() {
     p.content.sensor.boilers[0].index = 0;
     p.content.sensor.boilers[0].temperature = this->brewTemperature->read();
     p.content.sensor.boilers[0].pressure = pressure;
+    p.content.sensor.boilers[0].power = heaterPower;
     if (_config.capabilites.dualBoiler) {
         p.content.sensor.boilers[1].index = 1;
         p.content.sensor.boilers[1].temperature = this->steamTemperature->read();
@@ -420,7 +423,7 @@ void GaggiMateController::sendSensorData() {
     p.content.sensor.pump_flow = pumpFlow;
     p.content.sensor.puck_resistance = puckResistance;
     p.content.sensor.pump_power = pumpPower;
-    p.content.sensor.heater_power = heaterPower;
+    p.content.sensor.water_pumped = waterPumped;
     batch[n++] = p;
     _comms.sendUnreliableBatch(batch, n);
 }

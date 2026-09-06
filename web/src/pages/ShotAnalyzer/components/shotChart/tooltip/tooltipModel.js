@@ -86,14 +86,30 @@ function buildCompareDifferenceRow(rows) {
   };
 }
 
-function buildCompareWaterRows({ shotLabel, shotOrder, phaseWaterMl, totalWaterMl, color }) {
+function formatWaterValue(value) {
+  return Number.isFinite(value) ? `${value.toFixed(1)} ml` : '-';
+}
+
+function formatPhaseWaterValue(phaseWaterMl, phaseTotalWaterMl) {
+  if (!Number.isFinite(phaseWaterMl) || !Number.isFinite(phaseTotalWaterMl)) return '-';
+  return `${formatWaterValue(phaseWaterMl)} → ${formatWaterValue(phaseTotalWaterMl)}`;
+}
+
+function buildCompareWaterRows({
+  shotLabel,
+  shotOrder,
+  phaseWaterMl,
+  phaseTotalWaterMl,
+  totalWaterMl,
+  color,
+}) {
   return [
     {
       shotLabel,
       shotOrder,
       label: WATER_DRAWN_PHASE_LABEL,
       displayLabel: getShotChartDisplayLabel(WATER_DRAWN_PHASE_LABEL),
-      valueText: Number.isFinite(phaseWaterMl) ? `${phaseWaterMl.toFixed(1)} ml` : '-',
+      valueText: formatPhaseWaterValue(phaseWaterMl, phaseTotalWaterMl),
       color,
     },
     {
@@ -101,7 +117,7 @@ function buildCompareWaterRows({ shotLabel, shotOrder, phaseWaterMl, totalWaterM
       shotOrder,
       label: WATER_DRAWN_TOTAL_LABEL,
       displayLabel: getShotChartDisplayLabel(WATER_DRAWN_TOTAL_LABEL),
-      valueText: Number.isFinite(totalWaterMl) ? `${totalWaterMl.toFixed(1)} ml` : '-',
+      valueText: formatWaterValue(totalWaterMl),
       color,
     },
   ];
@@ -126,9 +142,11 @@ function buildTooltipRowModel(tooltipItem, getHoverWaterValuesAtX, tooltipColorB
   let valueText = null;
   if (TOOLTIP_WATER_LABELS.has(label)) {
     const xValue = tooltipItem.parsed?.x;
-    const { totalWaterMl, phaseWaterMl } = getHoverWaterValuesAtX(xValue);
-    const waterValue = label === WATER_DRAWN_PHASE_LABEL ? phaseWaterMl : totalWaterMl;
-    valueText = Number.isFinite(waterValue) ? `${waterValue.toFixed(1)} ml` : '-';
+    const { totalWaterMl, phaseWaterMl, phaseTotalWaterMl } = getHoverWaterValuesAtX(xValue);
+    valueText =
+      label === WATER_DRAWN_PHASE_LABEL
+        ? formatPhaseWaterValue(phaseWaterMl, phaseTotalWaterMl)
+        : formatWaterValue(totalWaterMl);
   } else {
     const value = tooltipItem.parsed?.y;
     if (value === null || value === undefined) return null;
@@ -193,11 +211,12 @@ function buildCompareExternalTooltipRows({ chart, xValue }) {
       const shotLabel = `Shot ${shotOrder + 1}`;
       const waterGetter = dataset.compareTooltipGetHoverWaterValuesAtX;
       if (typeof waterGetter === 'function' && !waterByShotOrder.has(shotOrder)) {
-        const { totalWaterMl, phaseWaterMl } = waterGetter(xValue);
+        const { totalWaterMl, phaseWaterMl, phaseTotalWaterMl } = waterGetter(xValue);
         waterByShotOrder.set(shotOrder, {
           shotLabel,
           shotOrder,
           phaseWaterMl,
+          phaseTotalWaterMl,
           totalWaterMl,
           color: dataset.borderColor || '#94a3b8',
         });

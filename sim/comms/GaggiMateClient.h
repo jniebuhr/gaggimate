@@ -40,8 +40,9 @@ class GaggiMateClient {
     using SystemInfoCallback =
         std::function<void(const char *hardware, const char *version, uint32_t protocolVersion, bool dimming, bool pressure,
                            bool ledControl, bool tof, bool dualBoiler, std::vector<uint32_t> addons)>;
-    using SensorCallback = std::function<void(float temperature, float temperature2, float pressure, float puckFlow,
-                                              float pumpFlow, float puckResistance, float pumpPower, float heaterPower)>;
+    using SensorCallback =
+        std::function<void(float temperature, float temperature2, float pressure, float puckFlow, float pumpFlow,
+                           float puckResistance, float pumpPower, float heaterPower, float waterPumped)>;
     using ButtonCallback = std::function<void(uint8_t index, bool pressed)>;
     using AutotuneResultCallback = std::function<void(float kp, float ki, float kd, float kf)>;
     using VolumetricCallback = std::function<void(float volume)>;
@@ -97,6 +98,11 @@ class GaggiMateClient {
     void onSystemInfo(SystemInfoCallback cb) { _systemInfoCb = std::move(cb); }
     void onSensorData(SensorCallback cb) { _sensorCb = std::move(cb); }
     void onButtonState(ButtonCallback cb) { _buttonCb = std::move(cb); }
+    // Sim only: inject a physical button edge as if the controller board reported it.
+    void simulateButton(uint8_t index, bool pressed) {
+        if (_buttonCb)
+            _buttonCb(index, pressed);
+    }
     void onAutotuneResult(AutotuneResultCallback cb) { _autotuneResultCb = std::move(cb); }
     void onVolumetricMeasurement(VolumetricCallback cb) { _volumetricCb = std::move(cb); }
     void onTofMeasurement(TofCallback cb) { _tofCb = std::move(cb); }

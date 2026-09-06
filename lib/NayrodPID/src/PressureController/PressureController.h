@@ -7,6 +7,7 @@ static constexpr float M_PI = 3.14159265358979323846f;
 
 #include "SimpleKalmanFilter/SimpleKalmanFilter.h"
 #include <algorithm>
+#include <cmath> // std::fmax (getCoffeeOutputEstimate())
 
 class PressureController {
   private:

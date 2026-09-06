@@ -5,8 +5,10 @@ import { faMinus } from '@fortawesome/free-solid-svg-icons/faMinus';
 import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import { faRectangleList } from '@fortawesome/free-solid-svg-icons/faRectangleList';
 import { faThermometerHalf } from '@fortawesome/free-solid-svg-icons/faThermometerHalf';
-import { faTint } from '@fortawesome/free-solid-svg-icons/faTint';
 import { faWeightScale } from '@fortawesome/free-solid-svg-icons/faWeightScale';
+import { WarningIcon } from '../../components/WarningIcon.jsx';
+import { activeWarnings, WARNING_LEVEL } from '../../utils/warnings.js';
+import { FlushButton } from './FlushButton.jsx';
 import { ModeTab } from './ModeTab.jsx';
 import { useDashboardState } from './useDashboardState.js';
 import {
@@ -108,7 +110,11 @@ export default function CompactProcessControls() {
     deactivate,
     clear,
     startFlush,
+    stopFlush,
     isFlushing,
+    warnings,
+    systemReady,
+    systemMessage,
     raiseTemp,
     lowerTemp,
     raiseTarget,
@@ -117,9 +123,10 @@ export default function CompactProcessControls() {
   } = ds;
 
   const showPrimary = mode === 1 || mode === 3 || (isGrinding && isGrindAvailable);
-  const showFlush = isBrewing && !isActive && !isFinished;
+  const showFlush = isBrewing && (isFlushing || (!isActive && !isFinished)); // stays mounted while held
   const showWeight = volumetricAvailable && (mode === 1 || mode === 3) && brewTarget;
   const processRunning = (isActive || isFinished) && (isBrewing || isGrinding);
+  const shownWarnings = mode === 0 ? [] : activeWarnings(warnings);
 
   const handlePrimary = () => {
     if (isActive) deactivate();
@@ -135,7 +142,7 @@ export default function CompactProcessControls() {
   const renderContent = () => {
     if (processRunning && isFinished) return <FinishedView elapsed={fmtElapsed(p?.e)} />;
     if (processRunning) return <ActiveView p={p} grind={isGrinding} />;
-    if (mode === 0) return <InfoView title='Standby' hint='Machine is ready' />;
+    if (mode === 0) return <InfoView title='Standby' hint={systemMessage || 'Machine is ready'} />;
     if (mode === 1)
       return (
         <div className='flex w-full max-w-sm min-w-0 flex-col items-stretch gap-3'>
@@ -201,6 +208,7 @@ export default function CompactProcessControls() {
             active={mode === m.id}
             onClick={() => changeMode(m.id)}
             rotation={m.iconRotation}
+            disabled={!systemReady}
           />
         ))}
       </div>
@@ -232,17 +240,25 @@ export default function CompactProcessControls() {
         {renderContent()}
       </div>
 
-      {(showPrimary || showFlush) && (
-        <div className='flex shrink-0 items-center justify-center gap-3'>
+      {(showPrimary || showFlush || shownWarnings.length > 0) && (
+        <div className='flex shrink-0 items-center gap-3'>
+          <div className='flex min-w-0 flex-1 items-center gap-2' aria-label='Active warnings'>
+            {shownWarnings.map(w => (
+              <WarningIcon
+                key={w.key}
+                icon={w.icon}
+                title={w.label}
+                className={`text-lg ${w.level === WARNING_LEVEL.ERROR ? 'text-error' : 'text-warning'}`}
+              />
+            ))}
+          </div>
           {showFlush && (
-            <button
+            <FlushButton
               className='btn btn-ghost btn-sm text-base-content/60 hover:text-base-content rounded-full text-xs'
-              onClick={startFlush}
-              disabled={isFlushing}
-              aria-label='Flush water'
-            >
-              <FontAwesomeIcon icon={faTint} /> Flush
-            </button>
+              isFlushing={isFlushing}
+              startFlush={startFlush}
+              stopFlush={stopFlush}
+            />
           )}
           {showPrimary && (
             <button
@@ -254,6 +270,7 @@ export default function CompactProcessControls() {
               <FontAwesomeIcon icon={getPrimaryIcon(isActive, isFinished)} className='text-lg' />
             </button>
           )}
+          <div className='flex-1' aria-hidden='true' />
         </div>
       )}
     </div>

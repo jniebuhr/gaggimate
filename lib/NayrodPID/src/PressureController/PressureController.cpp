@@ -1,5 +1,6 @@
 #include "PressureController.h"
 #include "SimpleKalmanFilter/SimpleKalmanFilter.h"
+#include <Arduino.h> // ESP_LOGI (reset())
 #include <algorithm>
 #include <math.h>
 
@@ -108,6 +109,9 @@ float PressureController::getSlip() const {
 float PressureController::getGeometricFlow() const { return getAvailableFlow() + getSlip(); }
 
 float PressureController::getPumpDutyCycleForFlowRate() const {
+    if (*_rawFlowSetpoint <= 0.0f) {
+        return 0.0f;
+    }
     const float geometricFlow = getGeometricFlow();
     if (geometricFlow <= 0.0f) {
         return 0.0f;
@@ -154,6 +158,13 @@ void PressureController::tare() {
     _puckState[2] = false;
     _puckCounter = 0;
     _pumpFlowRate = 0.0f;
+    // IIR-filtered accumulators: unreset, these carry a shot's end-of-brew
+    // depressurization transient into the next shot's puck-conductance-
+    // derivative arming signature, suppressing arming — GH #839.
+    _filteredPressureDerivative = 0.0f;
+    _waterThroughPuckFlowRate = 0.0f;
+    _lastPuckConductance = 0.0f;
+    _puckConductance = 0.0f;
     _puckConductanceDerivative = 0.0f;
     _coffeeFlowRate = 0.0f;
     _puckResistance = INFINITY;

@@ -30,8 +30,8 @@
 
 .shot-analyzer-page .library-row-grid {
   --library-row-trailing-gap: 1rem;
-  --library-shot-actions-width: 3.5rem;
-  --library-profile-actions-width: 5.5rem;
+  --library-shot-actions-width: 1.5rem;
+  --library-profile-actions-width: 1.5rem;
   display: grid;
   min-width: 0;
   max-width: 100%;

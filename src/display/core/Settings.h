@@ -11,6 +11,9 @@
 
 #define PREFERENCES_KEY "controller"
 
+// Per-warning severity: hidden, shown as a warning, or shown as an error that needs confirmation before brewing.
+enum WarningLevel { WARNING_LEVEL_IGNORE = 0, WARNING_LEVEL_WARN = 1, WARNING_LEVEL_ERROR = 2 };
+
 struct AutoWakeupSchedule {
     String time;    // HH:MM format
     bool days[7]{}; // [Mon, Tue, Wed, Thu, Fri, Sat, Sun]
@@ -74,6 +77,7 @@ class Settings {
     int getTargetSteamTemp() const { return targetSteamTemp.get(); }
     int getTargetWaterTemp() const { return targetWaterTemp.get(); }
     int getTemperatureOffset() const { return temperatureOffset.get(); }
+    float getPressureOffset() const { return pressureOffset.get(); }
     float getPressureScaling() const { return pressureScaling.get(); }
     double getTargetGrindVolume() const { return targetGrindVolume.get(); }
     int getTargetGrindDuration() const { return targetGrindDuration.get(); }
@@ -106,6 +110,7 @@ class Settings {
     int getHomeAssistantPort() const { return homeAssistantPort.get(); }
     String getHomeAssistantTopic() const { return homeAssistantTopic.get(); }
     bool isMomentaryButtons() const { return momentaryButtons.get(); }
+    int getFlushDuration() const { return flushDuration.get(); } // seconds, 0 = as long as the button is held
     String getTimezone() const { return timezone.get(); }
     bool isClock24hFormat() const { return clock24hFormat.get(); }
     String getSelectedProfile() const { return selectedProfile.get(); }
@@ -115,6 +120,12 @@ class Settings {
     int getMainBrightness() const { return mainBrightness.get(); }
     int getStandbyBrightness() const { return standbyBrightness.get(); }
     int getStandbyBrightnessTimeout() const { return standbyBrightnessTimeout.get(); }
+    int getWarnWaterLevel() const { return warnWaterLevel.get(); }
+    int getWarnFlush() const { return warnFlush.get(); }
+    int getWarnSteamSwitch() const { return warnSteamSwitch.get(); }
+    int getWarnScaleConnected() const { return warnScaleConnected.get(); }
+    int getWarnScaleBattery() const { return warnScaleBattery.get(); }
+    int getWarnTemperature() const { return warnTemperature.get(); }
     int getWifiApTimeout() const { return wifiApTimeout.get(); }
     float getSteamPumpPercentage() const { return steamPumpPercentage.get(); }
     float getSteamPumpCutoff() const { return steamPumpCutoff.get(); }
@@ -161,6 +172,7 @@ class Settings {
     void setTargetSteamTemp(int target_steam_temp);
     void setTargetWaterTemp(int target_water_temp);
     void setTemperatureOffset(int temperature_offset);
+    void setPressureOffset(float pressure_offset);
     void setPressureScaling(float pressure_scaling);
     void setTargetGrindVolume(double target_grind_volume);
     void setTargetGrindDuration(int target_duration);
@@ -193,6 +205,13 @@ class Settings {
     void setHomeAssistantPort(int homeAssistantPort);
     void setHomeAssistantTopic(const String &homeAssistantTopic);
     void setMomentaryButtons(bool momentary_buttons);
+    void setFlushDuration(int seconds);
+    void setWarnWaterLevel(int level);
+    void setWarnFlush(int level);
+    void setWarnSteamSwitch(int level);
+    void setWarnScaleConnected(int level);
+    void setWarnScaleBattery(int level);
+    void setWarnTemperature(int level);
     void setTimezone(String timezone);
     void setClockFormat(bool format_24h);
     void setSelectedProfile(String selected_profile);
@@ -244,6 +263,7 @@ class Settings {
     Property<int> targetSteamTemp{registry, "ts", 145};
     Property<int> targetWaterTemp{registry, "tw", 80};
     Property<int> temperatureOffset{registry, "to", DEFAULT_TEMPERATURE_OFFSET};
+    Property<float> pressureOffset{registry, "poff", DEFAULT_PRESSURE_OFFSET};
     Property<float> pressureScaling{registry, "ps", DEFAULT_PRESSURE_SCALING};
     Property<double> targetGrindVolume{registry, "tgv", 18.0};
     Property<int> targetGrindDuration{registry, "tgd", 25000};
@@ -276,6 +296,7 @@ class Settings {
     Property<int> homeAssistantPort{registry, "ha_p", 1883};
     Property<String> homeAssistantTopic{registry, "ha_t", DEFAULT_HOME_ASSISTANT_TOPIC};
     Property<bool> momentaryButtons{registry, "mb", false};
+    Property<int> flushDuration{registry, "fl_dur", DEFAULT_FLUSH_DURATION_S};
     Property<String> timezone{registry, "tz", DEFAULT_TIMEZONE};
     Property<bool> clock24hFormat{registry, "clk_24h", true};
     Property<String> otaChannel{registry, "oc", DEFAULT_OTA_CHANNEL};
@@ -291,6 +312,14 @@ class Settings {
     Property<int> standbyBrightnessTimeout{registry, "standby_bt", 60000}; // 60 seconds default
     Property<int> wifiApTimeout{registry, "wifi_apt", DEFAULT_WIFI_AP_TIMEOUT_MS};
     Property<int> themeMode{registry, "theme", 0};
+
+    // Warning levels (WarningLevel)
+    Property<int> warnWaterLevel{registry, "wl_water", WARNING_LEVEL_WARN};
+    Property<int> warnFlush{registry, "wl_flush", WARNING_LEVEL_WARN};
+    Property<int> warnSteamSwitch{registry, "wl_switch", WARNING_LEVEL_WARN};
+    Property<int> warnScaleConnected{registry, "wl_scale", WARNING_LEVEL_WARN};
+    Property<int> warnScaleBattery{registry, "wl_scale_bat", WARNING_LEVEL_ERROR};
+    Property<int> warnTemperature{registry, "wl_temp", WARNING_LEVEL_WARN};
 
     // Sunrise settings (r/g/b/w are legacy load-only values that seed the idle color default)
     int sunriseR = 0;

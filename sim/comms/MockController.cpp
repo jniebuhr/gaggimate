@@ -70,7 +70,7 @@ void MockController::update() {
         const float puckResistance = flow > 0.05f ? pressure / flow : 0.0f;
         if (onSensor)
             onSensor(temperature, temperature + 40.0f, pressure, flow, flow, puckResistance, pumpPower,
-                     constrain(gain * 100.0, 0.0f, 100.0f));
+                     constrain(gain * 100.0, 0.0f, 100.0f), 0.0f);
         if (onVolumetric)
             onVolumetric(weight);
     }

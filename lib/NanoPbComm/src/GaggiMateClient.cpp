@@ -179,15 +179,17 @@ void GaggiMateClient::registerHandlers() {
         float temperature = 0.0f;
         float temp2 = 0.0f;
         float pressure = 0.0f;
+        float heater_power = 0.0f;
         if (p.content.sensor.boilers_count > 0) {
             temperature = p.content.sensor.boilers[0].temperature;
             pressure = p.content.sensor.boilers[0].pressure;
+            heater_power = p.content.sensor.boilers[0].power;
         }
         if (p.content.sensor.boilers_count > 1) {
             temp2 = p.content.sensor.boilers[1].temperature;
         }
         _sensorCb(temperature, temp2, pressure, p.content.sensor.puck_flow, p.content.sensor.pump_flow,
-                  p.content.sensor.puck_resistance, p.content.sensor.pump_power, p.content.sensor.heater_power);
+                  p.content.sensor.puck_resistance, p.content.sensor.pump_power, heater_power, p.content.sensor.water_pumped);
     });
     _endpoint.on(gaggimate_Payload_button_tag, [this](const gm::Payload &p) {
         if (_buttonCb)

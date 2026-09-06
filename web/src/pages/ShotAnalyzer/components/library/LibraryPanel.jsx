@@ -4,8 +4,7 @@
  */
 
 import { ApiServiceContext } from '../../../../services/ApiService';
-import { downloadJson } from '../../../../utils/download';
-import { libraryService } from '../../services/LibraryService';
+import { exportLibraryItems } from '../../services/LibraryExportService';
 import {
   ANALYZER_DB_KEYS,
   cleanName,
@@ -297,14 +296,9 @@ export function LibraryPanel({
     [getEffectiveShotPinBucketKey, getPinnedShotBucketKey, shotsPinnedFirst],
   );
 
-  // Uses libraryService.exportItem to fetch data, then uses UI helper 'downloadJson'
   const handleExport = async (item, isShot) => {
     try {
-      // 1. Fetch data via service (now returns { exportData, filename })
-      const { exportData, filename } = await libraryService.exportItem(item, isShot);
-
-      // 2. Use existing UI helper for consistent downloading
-      downloadJson(exportData, filename);
+      await exportLibraryItems([{ item, isShot }]);
     } catch (e) {
       alert(`Export failed: ${e.message}`);
       console.error(e);

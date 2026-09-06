@@ -20,7 +20,8 @@ enum FlowStructures {
     FLOW_STRUCTURE_PROFILE_INFO = 16385,
     FLOW_STRUCTURE_BOILER = 16386,
     FLOW_STRUCTURE_UI_FLAGS = 16387,
-    FLOW_STRUCTURE_BREW_PROCESS = 16388
+    FLOW_STRUCTURE_BREW_PROCESS = 16388,
+    FLOW_STRUCTURE_WARNINGS = 16389
 };
 
 enum FlowArrayOfStructures {
@@ -28,7 +29,8 @@ enum FlowArrayOfStructures {
     FLOW_ARRAY_OF_STRUCTURE_PROFILE_INFO = 81921,
     FLOW_ARRAY_OF_STRUCTURE_BOILER = 81922,
     FLOW_ARRAY_OF_STRUCTURE_UI_FLAGS = 81923,
-    FLOW_ARRAY_OF_STRUCTURE_BREW_PROCESS = 81924
+    FLOW_ARRAY_OF_STRUCTURE_BREW_PROCESS = 81924,
+    FLOW_ARRAY_OF_STRUCTURE_WARNINGS = 81925
 };
 
 enum SystemStatusFlowStructureFields {
@@ -85,6 +87,7 @@ enum UIFlagsFlowStructureFields {
     FLOW_STRUCTURE_UI_FLAGS_FIELD_TEMPERATURE_STABLE = 5,
     FLOW_STRUCTURE_UI_FLAGS_FIELD_HAS_PREV_PROFILE = 6,
     FLOW_STRUCTURE_UI_FLAGS_FIELD_HAS_NEXT_PROFILE = 7,
+    FLOW_STRUCTURE_UI_FLAGS_FIELD_BREW_CONFIRM_VISIBLE = 8,
     FLOW_STRUCTURE_UI_FLAGS_NUM_FIELDS
 };
 
@@ -107,6 +110,23 @@ enum BrewProcessFlowStructureFields {
     FLOW_STRUCTURE_BREW_PROCESS_FIELD_IS_COMPLETE = 15,
     FLOW_STRUCTURE_BREW_PROCESS_FIELD_CURRENT_VOLUME = 16,
     FLOW_STRUCTURE_BREW_PROCESS_NUM_FIELDS
+};
+
+enum WarningsFlowStructureFields {
+    FLOW_STRUCTURE_WARNINGS_FIELD_WATER_WARN = 0,
+    FLOW_STRUCTURE_WARNINGS_FIELD_WATER_ERROR = 1,
+    FLOW_STRUCTURE_WARNINGS_FIELD_FLUSH_WARN = 2,
+    FLOW_STRUCTURE_WARNINGS_FIELD_FLUSH_ERROR = 3,
+    FLOW_STRUCTURE_WARNINGS_FIELD_SWITCH_WARN = 4,
+    FLOW_STRUCTURE_WARNINGS_FIELD_SWITCH_ERROR = 5,
+    FLOW_STRUCTURE_WARNINGS_FIELD_SCALE_CONNECTED_WARN = 6,
+    FLOW_STRUCTURE_WARNINGS_FIELD_SCALE_CONNECTED_ERROR = 7,
+    FLOW_STRUCTURE_WARNINGS_FIELD_SCALE_BATTERY_WARN = 8,
+    FLOW_STRUCTURE_WARNINGS_FIELD_SCALE_BATTERY_ERROR = 9,
+    FLOW_STRUCTURE_WARNINGS_FIELD_TEMPERATURE_WARN = 10,
+    FLOW_STRUCTURE_WARNINGS_FIELD_TEMPERATURE_ERROR = 11,
+    FLOW_STRUCTURE_WARNINGS_FIELD_LABELS = 12,
+    FLOW_STRUCTURE_WARNINGS_NUM_FIELDS
 };
 
 struct SystemStatusValue {
@@ -349,6 +369,13 @@ struct UIFlagsValue {
     void has_next_profile(bool has_next_profile) {
         value.getArray()->values[FLOW_STRUCTURE_UI_FLAGS_FIELD_HAS_NEXT_PROFILE] = BooleanValue(has_next_profile);
     }
+
+    bool brew_confirm_visible() {
+        return value.getArray()->values[FLOW_STRUCTURE_UI_FLAGS_FIELD_BREW_CONFIRM_VISIBLE].getBoolean();
+    }
+    void brew_confirm_visible(bool brew_confirm_visible) {
+        value.getArray()->values[FLOW_STRUCTURE_UI_FLAGS_FIELD_BREW_CONFIRM_VISIBLE] = BooleanValue(brew_confirm_visible);
+    }
 };
 
 typedef ArrayOf<UIFlagsValue, FLOW_ARRAY_OF_STRUCTURE_UI_FLAGS> ArrayOfUIFlagsValue;
@@ -469,5 +496,85 @@ struct BrewProcessValue {
 };
 
 typedef ArrayOf<BrewProcessValue, FLOW_ARRAY_OF_STRUCTURE_BREW_PROCESS> ArrayOfBrewProcessValue;
+struct WarningsValue {
+    Value value;
+
+    WarningsValue() { value = Value::makeArrayRef(FLOW_STRUCTURE_WARNINGS_NUM_FIELDS, FLOW_STRUCTURE_WARNINGS, 0); }
+
+    WarningsValue(Value value) : value(value) {}
+
+    operator Value() const { return value; }
+
+    operator bool() const { return value.isArray(); }
+
+    bool waterWarn() { return value.getArray()->values[FLOW_STRUCTURE_WARNINGS_FIELD_WATER_WARN].getBoolean(); }
+    void waterWarn(bool waterWarn) {
+        value.getArray()->values[FLOW_STRUCTURE_WARNINGS_FIELD_WATER_WARN] = BooleanValue(waterWarn);
+    }
+
+    bool waterError() { return value.getArray()->values[FLOW_STRUCTURE_WARNINGS_FIELD_WATER_ERROR].getBoolean(); }
+    void waterError(bool waterError) {
+        value.getArray()->values[FLOW_STRUCTURE_WARNINGS_FIELD_WATER_ERROR] = BooleanValue(waterError);
+    }
+
+    bool flushWarn() { return value.getArray()->values[FLOW_STRUCTURE_WARNINGS_FIELD_FLUSH_WARN].getBoolean(); }
+    void flushWarn(bool flushWarn) {
+        value.getArray()->values[FLOW_STRUCTURE_WARNINGS_FIELD_FLUSH_WARN] = BooleanValue(flushWarn);
+    }
+
+    bool flushError() { return value.getArray()->values[FLOW_STRUCTURE_WARNINGS_FIELD_FLUSH_ERROR].getBoolean(); }
+    void flushError(bool flushError) {
+        value.getArray()->values[FLOW_STRUCTURE_WARNINGS_FIELD_FLUSH_ERROR] = BooleanValue(flushError);
+    }
+
+    bool switchWarn() { return value.getArray()->values[FLOW_STRUCTURE_WARNINGS_FIELD_SWITCH_WARN].getBoolean(); }
+    void switchWarn(bool switchWarn) {
+        value.getArray()->values[FLOW_STRUCTURE_WARNINGS_FIELD_SWITCH_WARN] = BooleanValue(switchWarn);
+    }
+
+    bool switchError() { return value.getArray()->values[FLOW_STRUCTURE_WARNINGS_FIELD_SWITCH_ERROR].getBoolean(); }
+    void switchError(bool switchError) {
+        value.getArray()->values[FLOW_STRUCTURE_WARNINGS_FIELD_SWITCH_ERROR] = BooleanValue(switchError);
+    }
+
+    bool scaleConnectedWarn() {
+        return value.getArray()->values[FLOW_STRUCTURE_WARNINGS_FIELD_SCALE_CONNECTED_WARN].getBoolean();
+    }
+    void scaleConnectedWarn(bool scaleConnectedWarn) {
+        value.getArray()->values[FLOW_STRUCTURE_WARNINGS_FIELD_SCALE_CONNECTED_WARN] = BooleanValue(scaleConnectedWarn);
+    }
+
+    bool scaleConnectedError() {
+        return value.getArray()->values[FLOW_STRUCTURE_WARNINGS_FIELD_SCALE_CONNECTED_ERROR].getBoolean();
+    }
+    void scaleConnectedError(bool scaleConnectedError) {
+        value.getArray()->values[FLOW_STRUCTURE_WARNINGS_FIELD_SCALE_CONNECTED_ERROR] = BooleanValue(scaleConnectedError);
+    }
+
+    bool scaleBatteryWarn() { return value.getArray()->values[FLOW_STRUCTURE_WARNINGS_FIELD_SCALE_BATTERY_WARN].getBoolean(); }
+    void scaleBatteryWarn(bool scaleBatteryWarn) {
+        value.getArray()->values[FLOW_STRUCTURE_WARNINGS_FIELD_SCALE_BATTERY_WARN] = BooleanValue(scaleBatteryWarn);
+    }
+
+    bool scaleBatteryError() { return value.getArray()->values[FLOW_STRUCTURE_WARNINGS_FIELD_SCALE_BATTERY_ERROR].getBoolean(); }
+    void scaleBatteryError(bool scaleBatteryError) {
+        value.getArray()->values[FLOW_STRUCTURE_WARNINGS_FIELD_SCALE_BATTERY_ERROR] = BooleanValue(scaleBatteryError);
+    }
+
+    bool temperatureWarn() { return value.getArray()->values[FLOW_STRUCTURE_WARNINGS_FIELD_TEMPERATURE_WARN].getBoolean(); }
+    void temperatureWarn(bool temperatureWarn) {
+        value.getArray()->values[FLOW_STRUCTURE_WARNINGS_FIELD_TEMPERATURE_WARN] = BooleanValue(temperatureWarn);
+    }
+
+    bool temperatureError() { return value.getArray()->values[FLOW_STRUCTURE_WARNINGS_FIELD_TEMPERATURE_ERROR].getBoolean(); }
+    void temperatureError(bool temperatureError) {
+        value.getArray()->values[FLOW_STRUCTURE_WARNINGS_FIELD_TEMPERATURE_ERROR] = BooleanValue(temperatureError);
+    }
+
+    const char *labels() { return value.getArray()->values[FLOW_STRUCTURE_WARNINGS_FIELD_LABELS].getString(); }
+    void labels(const char *labels) { value.getArray()->values[FLOW_STRUCTURE_WARNINGS_FIELD_LABELS] = StringValue(labels); }
+};
+
+typedef ArrayOf<WarningsValue, FLOW_ARRAY_OF_STRUCTURE_WARNINGS> ArrayOfWarningsValue;
 
 #endif /*EEZ_LVGL_UI_STRUCTS_H*/

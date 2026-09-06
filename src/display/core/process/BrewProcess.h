@@ -20,11 +20,14 @@ class BrewProcess : public Process {
     unsigned long previousPhaseFinished = 0;
     unsigned long finished = 0;
     PhaseExitReason lastExitReason = PhaseExitReason::NONE; // why the most recent phase ended (for shot history)
+    bool holdPhase = false;                                 // phase 0 runs until release() (hold-to-flush, GM-201)
+    bool releaseRequested = false;
     double phaseStartVolume = 0;
     double currentVolume = 0; // most recent volume pushed
     float currentFlow = 0.0f;
     float currentPressure = 0.0f;
     float waterPumped = 0.0f;
+    float phaseStartedPumped = 0.0f;
     VolumetricRateCalculator volumetricRateCalculator{PREDICTIVE_TIME};
 
     explicit BrewProcess(Profile profile, ProcessTarget target, double brewDelay = 0.0)
@@ -48,14 +51,25 @@ class BrewProcess : public Process {
 
     void updateFlow(float flow) { currentFlow = flow; }
 
+    void updateWaterPumped(float waterPumped) { this->waterPumped = waterPumped; }
+
     unsigned long getTotalDuration() const { return profile.getTotalDuration() * 1000L; }
 
     unsigned long getPhaseDuration() const { return static_cast<long>(currentPhase.duration) * 1000L; }
+
+    // Ends a held first phase; no-op for every other process so callers need not check.
+    void release() {
+        if (holdPhase && phaseIndex == 0)
+            releaseRequested = true;
+    }
 
     // Reason the current phase is done, or PhaseExitReason::NONE if it should keep running.
     PhaseExitReason currentPhaseExitReason() {
         if (millis() - currentPhaseStarted > BREW_SAFETY_DURATION_MS) {
             return PhaseExitReason::SAFETY;
+        }
+        if (releaseRequested) {
+            return PhaseExitReason::HOLD_RELEASED;
         }
         double volume = currentVolume;
         if (volume > 0.0) {
@@ -66,7 +80,7 @@ class BrewProcess : public Process {
         }
         float timeInPhase = static_cast<float>(millis() - currentPhaseStarted) / 1000.0f;
         return currentPhase.isFinished(target == ProcessTarget::VOLUMETRIC, volume, timeInPhase, currentFlow, currentPressure,
-                                       waterPumped, profile.type);
+                                       waterPumped - phaseStartedPumped, profile.type);
     }
 
     bool isCurrentPhaseFinished() { return currentPhaseExitReason() != PhaseExitReason::NONE; }
@@ -139,13 +153,13 @@ class BrewProcess : public Process {
 
     void progress() override {
         // Progress should be called around every 100ms, as defined in PROGRESS_INTERVAL, while the Process is active
-        waterPumped += currentFlow / 10.0f; // Add current flow divided to 100ms to water pumped counter
         PhaseExitReason reason;
         while ((reason = currentPhaseExitReason()) != PhaseExitReason::NONE && processPhase == ProcessPhase::RUNNING) {
             previousPhaseFinished = millis();
             lastExitReason = reason; // record why this phase ended for the shot history transition
+            releaseRequested = false;
             if (phaseIndex + 1 < profile.phases.size()) {
-                waterPumped = 0.0f;
+                phaseStartedPumped = waterPumped;
                 phaseIndex++;
                 Phase nextPhase = profile.phases.at(phaseIndex);
                 phaseStartVolume = currentVolume;
@@ -257,7 +271,7 @@ class BrewProcess : public Process {
             if (endValue <= 0.0f && currentPhase.hasPumpedTarget()) {
                 endValue = currentPhase.getPumpedTarget().value;
             }
-            startValue = waterPumped;
+            startValue = waterPumped - phaseStartedPumped;
         }
         if (endValue > 0.0f) {
             return transitionAlpha(startValue, endValue);

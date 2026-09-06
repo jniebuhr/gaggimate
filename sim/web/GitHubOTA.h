@@ -17,11 +17,11 @@ class GitHubOTA {
               const String & = "filesystem.bin", const String & = "controller.bin")
         : _version(display_version) {}
 
-    void init(NimBLEClient *) {}
+    void init() {}
     void checkForUpdates() {}
     bool isUpdateAvailable(bool = false) const { return false; }
     String getCurrentVersion() const { return _version; }
-    void update(bool = true, bool = true) {}
+    void update(bool = true, bool = true, NimBLEClient * = nullptr) {}
     void setReleaseUrl(const String &) {}
     void setControllerVersion(const String &) {}
 

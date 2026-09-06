@@ -52,6 +52,10 @@ function getTooltipStyle({ isStatic, layout }) {
   };
 }
 
+function hasTooltipContent(state) {
+  return state.titleLines.length > 0 || state.phaseSummaries.length > 0 || state.rows.length > 0;
+}
+
 export function ShotChartExternalTooltip({
   tooltipRef,
   state,
@@ -64,9 +68,10 @@ export function ShotChartExternalTooltip({
   emptyContent = null,
 }) {
   if (!state.visible && !isStatic) return null;
+  const hasVisibleContent = state.visible && hasTooltipContent(state);
   const isTitleOnly = state.visible && state.titleLines.length > 0 && state.rows.length === 0;
-  const shouldShowEmptyContent = isStatic && !state.visible && Boolean(emptyContent);
-  const shouldShowStaticContent = isStatic && state.visible;
+  const shouldShowEmptyContent = isStatic && !hasVisibleContent && Boolean(emptyContent);
+  const shouldShowStaticContent = isStatic && hasVisibleContent;
   const style = getTooltipStyle({ isStatic, layout });
 
   return (

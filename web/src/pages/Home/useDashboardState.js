@@ -1,18 +1,29 @@
 import { computed } from '@preact/signals';
-import { useContext, useState } from 'preact/hooks';
+import { useContext, useEffect, useState } from 'preact/hooks';
 import { useQuery } from 'preact-fetching';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
 
 const status = computed(() => machine.value.status);
 const capabilities = computed(() => machine.value.capabilities);
+const connected = computed(() => machine.value.connected);
 
 export function useDashboardState() {
   const apiService = useContext(ApiServiceContext);
-  const [isFlushing, setIsFlushing] = useState(false);
+  const [flushPending, setFlushPending] = useState(false); // flush requested, status not caught up yet
 
   const s = status.value;
   const caps = capabilities.value;
   const p = s.process;
+
+  // Anything but a ready controller locks the dashboard into standby, exactly like the touch UI.
+  const systemReady = connected.value && (!s.system || s.system.state === 'ready');
+  // Only a not-ready state carries a message; ready leaves the default standby text in place.
+  const systemMessage = !connected.value
+    ? 'Connecting to the machine...'
+    : systemReady
+      ? ''
+      : s.system.message || s.system.state;
+  const mode = systemReady ? s.mode : 0;
 
   const { data: settings } = useQuery(
     'settings-cache',
@@ -23,8 +34,12 @@ export function useDashboardState() {
   // ── derived ──────────────────────────────────────────────
   const isActive = !!p?.a;
   const isFinished = !!p?.e && !isActive;
-  const isBrewing = s.mode === 1;
-  const isGrinding = s.mode === 4;
+  const isBrewing = mode === 1;
+  const isGrinding = mode === 4;
+  // The firmware flags a flush (utility process) so this state survives re-renders and reloads.
+  const flushRunning = !!p?.u && isActive;
+  const flushFinished = !!p?.u && isFinished;
+  const isFlushing = flushPending || flushRunning;
 
   const isSmartGrindEnabled = settings?.smartGrindActive || false;
   const altRelayFunction = settings?.altRelayFunction ?? 1;
@@ -50,26 +65,42 @@ export function useDashboardState() {
   // ── handlers ─────────────────────────────────────────────
   const send = tp => apiService.send({ tp });
 
-  const changeMode = mode => apiService.send({ tp: 'req:change-mode', mode });
+  const changeMode = newMode => {
+    if (!systemReady) return; // locked in standby until the controller is ready
+    apiService.send({ tp: 'req:change-mode', mode: newMode });
+  };
 
   const activate = () => send(isGrinding ? 'req:grind:activate' : 'req:process:activate');
   const deactivate = () => {
     send(isGrinding ? 'req:grind:deactivate' : 'req:process:deactivate');
     if (isFlushing) {
       send('req:process:clear');
-      setIsFlushing(false);
+      setFlushPending(false);
     }
   };
   const clear = () => {
     send('req:process:clear');
-    setIsFlushing(false);
+    setFlushPending(false);
   };
 
   const startFlush = () => {
     if (isFlushing) return;
-    setIsFlushing(true);
-    apiService.request({ tp: 'req:flush:start' }).catch(() => setIsFlushing(false));
+    setFlushPending(true);
+    apiService.request({ tp: 'req:flush:start' }).catch(() => setFlushPending(false));
   };
+  // Ends a hold-to-flush (flush duration 0); the firmware ignores it for a fixed-length flush.
+  const stopFlush = () => {
+    if (!isFlushing) return;
+    send('req:flush:stop');
+  };
+
+  useEffect(() => {
+    if (flushRunning) setFlushPending(false);
+  }, [flushRunning]);
+  // A finished flush clears itself; nobody wants to confirm a flush like a shot.
+  useEffect(() => {
+    if (flushFinished) apiService.send({ tp: 'req:process:clear' });
+  }, [flushFinished, apiService]);
 
   const raiseTemp = () => send('req:raise-temp');
   const lowerTemp = () => send('req:lower-temp');
@@ -83,7 +114,9 @@ export function useDashboardState() {
 
   return {
     // raw status
-    mode: s.mode,
+    mode,
+    systemReady,
+    systemMessage,
     currentTemperature: s.currentTemperature,
     targetTemperature: s.targetTemperature,
     currentSteamTemperature: s.currentSteamTemperature,
@@ -108,6 +141,7 @@ export function useDashboardState() {
     selectedProfileId: s.selectedProfileId,
     processInfo: p,
     tofDistance: s.tofDistance,
+    warnings: s.warnings ?? [],
     dualBoiler: caps.dualBoiler,
     // derived
     isActive,
@@ -133,6 +167,7 @@ export function useDashboardState() {
     deactivate,
     clear,
     startFlush,
+    stopFlush,
     raiseTemp,
     lowerTemp,
     raiseTarget,

@@ -77,7 +77,7 @@ export function ActionBarStatisticsAction({
   const content = (
     <>
       <FontAwesomeIcon icon={statisticsIcon} className='text-sm' />
-      <span>{compareMode ? 'Multi-Compare' : 'Statistics'}</span>
+      <span>{compareMode ? 'Multi-Compare' : 'Profile Stats'}</span>
     </>
   );
 

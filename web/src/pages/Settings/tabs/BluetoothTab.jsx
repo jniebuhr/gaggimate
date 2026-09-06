@@ -126,7 +126,7 @@ export function BluetoothTab() {
                   <div>
                     <h3 className='text-base-content text-lg font-medium'>System in Standby</h3>
                     <p className='text-base-content/70 text-sm'>
-                      Please put GaggiMate in Brew or Grind mode to use Bluetooth scales.
+                      Please wake up GaggiMate from Standby to use Bluetooth scales.
                     </p>
                   </div>
                 </div>

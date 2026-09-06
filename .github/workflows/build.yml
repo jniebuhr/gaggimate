@@ -5,7 +5,10 @@ on:
 
 name: Build
 jobs:
+  ota-testbench:
+    uses: ./.github/workflows/ota-testbench.yml
   build:
+    needs: ota-testbench
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo

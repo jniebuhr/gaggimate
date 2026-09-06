@@ -71,6 +71,7 @@ export function AnalyzerActionBar({
         direction,
         listSnapshot: shotList,
         targetIndex,
+        debounceMs: 0,
       });
     },
     [onNavigate, shotList],

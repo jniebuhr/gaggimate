@@ -97,6 +97,8 @@ void Settings::setTargetWaterTemp(const int target_water_temp) { targetWaterTemp
 
 void Settings::setTemperatureOffset(const int temperature_offset) { temperatureOffset.set(temperature_offset); }
 
+void Settings::setPressureOffset(const float pressure_offset) { pressureOffset.set(pressure_offset); }
+
 void Settings::setPressureScaling(const float pressure_scaling) { pressureScaling.set(pressure_scaling); }
 
 void Settings::setTargetGrindVolume(double target_grind_volume) { targetGrindVolume.set(target_grind_volume); }
@@ -162,6 +164,25 @@ void Settings::setHomeAssistantPassword(const String &homeAssistantPassword) {
 }
 
 void Settings::setMomentaryButtons(bool momentary_buttons) { momentaryButtons.set(momentary_buttons); }
+
+void Settings::setFlushDuration(int seconds) { flushDuration.set(std::clamp(seconds, 0, MAX_FLUSH_DURATION_S)); }
+
+// Clamp to the WarningLevel range so a bad web value can't leave a warning in an undefined state.
+static int clampWarningLevel(int level) {
+    return level < WARNING_LEVEL_IGNORE ? WARNING_LEVEL_IGNORE : (level > WARNING_LEVEL_ERROR ? WARNING_LEVEL_ERROR : level);
+}
+
+void Settings::setWarnWaterLevel(int level) { warnWaterLevel.set(clampWarningLevel(level)); }
+
+void Settings::setWarnFlush(int level) { warnFlush.set(clampWarningLevel(level)); }
+
+void Settings::setWarnSteamSwitch(int level) { warnSteamSwitch.set(clampWarningLevel(level)); }
+
+void Settings::setWarnScaleConnected(int level) { warnScaleConnected.set(clampWarningLevel(level)); }
+
+void Settings::setWarnScaleBattery(int level) { warnScaleBattery.set(clampWarningLevel(level)); }
+
+void Settings::setWarnTemperature(int level) { warnTemperature.set(clampWarningLevel(level)); }
 
 void Settings::setTimezone(String timezone) { this->timezone.set(timezone); }
 

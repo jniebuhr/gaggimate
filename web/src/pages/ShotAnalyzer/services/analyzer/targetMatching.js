@@ -1,6 +1,9 @@
 /** Resolves profile exit targets against measured and delay-adjusted shot values. */
 
 import { LAST_PHASE_OVERSHOOT_MAX_G } from './delayTracking';
+import { calculatePumpedWaterAtSample } from './waterIntegration';
+
+export const PREDICTION_INTERVAL_MS = 100;
 
 function isDirectionallyValidLookAhead(operator, currentValue, nextValue) {
   if (!Number.isFinite(currentValue) || !Number.isFinite(nextValue)) return false;
@@ -43,11 +46,12 @@ function getTargetValue(target, values) {
   return undefined;
 }
 
-function createTargetMatch(target, value, delayMs) {
+function createTargetMatch(target, value, delayMs, observedSample = null) {
   return {
     target,
     delayMs,
     predictedWeight: isWeightTarget(target) ? value : null,
+    observedSample,
   };
 }
 
@@ -65,9 +69,8 @@ export function findTargetMatch(targets, values, delayMs, context) {
   return null;
 }
 
-function getLookAheadTargetValues(target, nextSample, nSteps, context) {
-  const horizon = nSteps * context.sampleIntervalSec;
-  const nextDt = (nextSample.t - context.anchor.t) / 1000;
+function getLookAheadTargetValues(target, nextSample, delayMs, context) {
+  const horizon = Math.max(0, delayMs) / 1000;
 
   if (target.type === 'pressure') {
     return {
@@ -92,38 +95,49 @@ function getLookAheadTargetValues(target, nextSample, nSteps, context) {
     };
   }
   if (target.type === 'pumped') {
+    const observedPumped = Array.isArray(context.phaseSamples)
+      ? calculatePumpedWaterAtSample(context.phaseSamples, nextSample, context.pumpedWaterSource)
+      : context.anchorPumped + context.anchor.fl * horizon;
     return {
       anchorValue: context.anchorPumped,
-      nextValue: context.anchorPumped + nextSample.fl * nextDt,
+      nextValue: observedPumped,
       predictedValue: context.anchorPumped + Math.max(0, context.anchor.fl) * horizon,
     };
   }
   return null;
 }
 
-export function findTargetMatchWithDirection(targets, nextSample, nSteps, context) {
+function getLookAheadMatchedValue(target, nextSample, delayMs, context) {
+  const values = getLookAheadTargetValues(target, nextSample, delayMs, context);
+  if (!values) return undefined;
+
+  const directionIsValid = isDirectionallyValidLookAhead(
+    target.operator,
+    values.anchorValue,
+    values.nextValue,
+  );
+  return directionIsValid ? values.nextValue : values.predictedValue;
+}
+
+export function findTargetMatchWithDirection(targets, nextSample, context) {
+  const rawDelayMs = Number(nextSample?.t) - Number(context.anchor?.t);
+  const delayMs = Number.isFinite(rawDelayMs) ? Math.max(0, rawDelayMs) : 0;
+
   for (const target of targets) {
     if (shouldSkipTarget(target, context)) continue;
 
-    const values = getLookAheadTargetValues(target, nextSample, nSteps, context);
-    if (!values) continue;
-
-    const directionIsValid = isDirectionallyValidLookAhead(
-      target.operator,
-      values.anchorValue,
-      values.nextValue,
-    );
-    const value = directionIsValid ? values.nextValue : values.predictedValue;
+    const value = getLookAheadMatchedValue(target, nextSample, delayMs, context);
+    if (value === undefined) continue;
 
     if (isTargetHit(target, value, context)) {
-      return createTargetMatch(target, value, nSteps * context.sampleInterval);
+      return createTargetMatch(target, value, delayMs, nextSample);
     }
   }
   return null;
 }
 
-export function predictTargetValuesAtStep(nSteps, context) {
-  const horizon = nSteps * context.sampleIntervalSec;
+export function predictTargetValuesAtDelay(delayMs, context) {
+  const horizon = Math.max(0, delayMs) / 1000;
   return {
     pressure: Math.max(0, context.anchor.cp + context.pressureSlope * horizon),
     flow: Math.max(0, context.anchor.fl + context.flowSlope * horizon),
@@ -178,34 +192,11 @@ export function findManualTargetMatch(targets, context) {
 }
 
 function getCalculatedTargetValueAtDelay(target, context) {
-  const matchStep = Math.round(context.matchDelayMs / context.sampleInterval);
-  const nextSampleIndex = matchStep - 1;
-  const hasNextSample =
-    context.isAutoAdjusted &&
-    nextSampleIndex >= 0 &&
-    nextSampleIndex < context.nextPhaseSamples.length;
-
-  if (hasNextSample) {
-    const values = getLookAheadTargetValues(
-      target,
-      context.nextPhaseSamples[nextSampleIndex],
-      matchStep,
-      context,
-    );
-    if (!values) return undefined;
-
-    const directionIsValid = isDirectionallyValidLookAhead(
-      target.operator,
-      values.anchorValue,
-      values.nextValue,
-    );
-    return directionIsValid ? values.nextValue : values.predictedValue;
+  if (context.observedSample) {
+    return getLookAheadMatchedValue(target, context.observedSample, context.matchDelayMs, context);
   }
 
-  return getTargetValue(
-    target,
-    predictTargetValuesAtStep(context.matchDelayMs / context.sampleInterval, context),
-  );
+  return getTargetValue(target, predictTargetValuesAtDelay(context.matchDelayMs, context));
 }
 
 export function buildTargetCalcValues(targets, match, context) {
@@ -215,6 +206,7 @@ export function buildTargetCalcValues(targets, match, context) {
   const calcContext = {
     ...context,
     matchDelayMs: match.delayMs,
+    observedSample: match.observedSample,
   };
 
   for (const target of targets) {

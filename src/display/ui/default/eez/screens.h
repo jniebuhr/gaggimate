@@ -14,22 +14,20 @@ enum ScreensEnum {
     SCREEN_ID_STANDBY_SCREEN = 1,
     SCREEN_ID_BREW_SCREEN = 2,
     SCREEN_ID_STATUS_SCREEN = 3,
-    SCREEN_ID_MENU_SCREEN = 4,
-    SCREEN_ID_MENU_SCREEN_NEW = 5,
-    SCREEN_ID_STEAM_SCREEN = 6,
-    SCREEN_ID_WATER_SCREEN = 7,
-    SCREEN_ID_PROFILE_SCREEN = 8,
-    SCREEN_ID_GRIND_SCREEN = 9,
-    SCREEN_ID_INFO_SCREEN = 10,
-    SCREEN_ID_NEW_PROFILE_SCREEN = 11,
-    _SCREEN_ID_LAST = 11
+    SCREEN_ID_MENU_SCREEN_NEW = 4,
+    SCREEN_ID_STEAM_SCREEN = 5,
+    SCREEN_ID_WATER_SCREEN = 6,
+    SCREEN_ID_PROFILE_SCREEN = 7,
+    SCREEN_ID_GRIND_SCREEN = 8,
+    SCREEN_ID_INFO_SCREEN = 9,
+    SCREEN_ID_NEW_PROFILE_SCREEN = 10,
+    _SCREEN_ID_LAST = 10
 };
 
 typedef struct _objects_t {
     lv_obj_t *standby_screen;
     lv_obj_t *brew_screen;
     lv_obj_t *status_screen;
-    lv_obj_t *menu_screen;
     lv_obj_t *menu_screen_new;
     lv_obj_t *steam_screen;
     lv_obj_t *water_screen;
@@ -48,6 +46,13 @@ typedef struct _objects_t {
     lv_obj_t *brew_dials__pressure_text;
     lv_obj_t *brew_dials__temp_text;
     lv_obj_t *brew_dials__temp_text_full;
+    lv_obj_t *obj0;
+    lv_obj_t *obj0__steam_switch_on;
+    lv_obj_t *obj0__scale_lost;
+    lv_obj_t *obj0__scale_battery;
+    lv_obj_t *obj0__flush_reminder;
+    lv_obj_t *obj0__water_low;
+    lv_obj_t *obj0__temp_unstable;
     lv_obj_t *status_dials;
     lv_obj_t *status_dials__temp_gauge;
     lv_obj_t *status_dials__temp_gauge_full;
@@ -59,17 +64,6 @@ typedef struct _objects_t {
     lv_obj_t *status_dials__pressure_text;
     lv_obj_t *status_dials__temp_text;
     lv_obj_t *status_dials__temp_text_full;
-    lv_obj_t *menu_dials;
-    lv_obj_t *menu_dials__temp_gauge;
-    lv_obj_t *menu_dials__temp_gauge_full;
-    lv_obj_t *menu_dials__pressure_gauge;
-    lv_obj_t *menu_dials__standby_icon;
-    lv_obj_t *menu_dials__menu_icon;
-    lv_obj_t *menu_dials__temp_icon;
-    lv_obj_t *menu_dials__pressure_icon;
-    lv_obj_t *menu_dials__pressure_text;
-    lv_obj_t *menu_dials__temp_text;
-    lv_obj_t *menu_dials__temp_text_full;
     lv_obj_t *new_menu_dials;
     lv_obj_t *new_menu_dials__temp_gauge;
     lv_obj_t *new_menu_dials__temp_gauge_full;
@@ -81,6 +75,13 @@ typedef struct _objects_t {
     lv_obj_t *new_menu_dials__pressure_text;
     lv_obj_t *new_menu_dials__temp_text;
     lv_obj_t *new_menu_dials__temp_text_full;
+    lv_obj_t *obj1;
+    lv_obj_t *obj1__steam_switch_on;
+    lv_obj_t *obj1__scale_lost;
+    lv_obj_t *obj1__scale_battery;
+    lv_obj_t *obj1__flush_reminder;
+    lv_obj_t *obj1__water_low;
+    lv_obj_t *obj1__temp_unstable;
     lv_obj_t *steam_dials;
     lv_obj_t *steam_dials__temp_gauge;
     lv_obj_t *steam_dials__temp_gauge_full;
@@ -125,18 +126,18 @@ typedef struct _objects_t {
     lv_obj_t *grind_dials__pressure_text;
     lv_obj_t *grind_dials__temp_text;
     lv_obj_t *grind_dials__temp_text_full;
-    lv_obj_t *obj0;
-    lv_obj_t *obj0__temp_gauge;
-    lv_obj_t *obj0__temp_gauge_full;
-    lv_obj_t *obj0__pressure_gauge;
-    lv_obj_t *obj0__standby_icon;
-    lv_obj_t *obj0__menu_icon;
-    lv_obj_t *obj0__temp_icon;
-    lv_obj_t *obj0__pressure_icon;
-    lv_obj_t *obj0__pressure_text;
-    lv_obj_t *obj0__temp_text;
-    lv_obj_t *obj0__temp_text_full;
-    lv_obj_t *obj1;
+    lv_obj_t *obj2;
+    lv_obj_t *obj2__temp_gauge;
+    lv_obj_t *obj2__temp_gauge_full;
+    lv_obj_t *obj2__pressure_gauge;
+    lv_obj_t *obj2__standby_icon;
+    lv_obj_t *obj2__menu_icon;
+    lv_obj_t *obj2__temp_icon;
+    lv_obj_t *obj2__pressure_icon;
+    lv_obj_t *obj2__pressure_text;
+    lv_obj_t *obj2__temp_text;
+    lv_obj_t *obj2__temp_text_full;
+    lv_obj_t *obj3;
     lv_obj_t *touch_icon;
     lv_obj_t *time;
     lv_obj_t *standby_icons;
@@ -144,8 +145,8 @@ typedef struct _objects_t {
     lv_obj_t *bluetooth_icon;
     lv_obj_t *update_icon;
     lv_obj_t *status;
-    lv_obj_t *obj2;
-    lv_obj_t *obj3;
+    lv_obj_t *obj4;
+    lv_obj_t *obj5;
     lv_obj_t *start_button;
     lv_obj_t *control_container;
     lv_obj_t *mode_switch;
@@ -153,7 +154,7 @@ typedef struct _objects_t {
     lv_obj_t *flow_prediction_icon;
     lv_obj_t *weight_label;
     lv_obj_t *profile_info;
-    lv_obj_t *obj4;
+    lv_obj_t *obj6;
     lv_obj_t *profile_select_button;
     lv_obj_t *profile_name;
     lv_obj_t *settings_button;
@@ -162,23 +163,28 @@ typedef struct _objects_t {
     lv_obj_t *target_temp;
     lv_obj_t *down_temp_button;
     lv_obj_t *up_temp_button;
-    lv_obj_t *obj5;
+    lv_obj_t *obj7;
     lv_obj_t *brew_target_time_container;
     lv_obj_t *target_duration;
-    lv_obj_t *obj6;
+    lv_obj_t *obj8;
     lv_obj_t *up_duration_button;
     lv_obj_t *down_duration_button;
     lv_obj_t *brew_target_weight_container;
     lv_obj_t *target_weight_1;
-    lv_obj_t *obj7;
+    lv_obj_t *obj9;
     lv_obj_t *up_weight_button;
     lv_obj_t *down_weight_button;
     lv_obj_t *remove_volumetric_button;
     lv_obj_t *save_button;
     lv_obj_t *accept_button;
     lv_obj_t *save_as_new_button;
-    lv_obj_t *obj8;
-    lv_obj_t *obj9;
+    lv_obj_t *confirm_dialog;
+    lv_obj_t *obj10;
+    lv_obj_t *obj11;
+    lv_obj_t *confirm_back_button;
+    lv_obj_t *confirm_ignore_button;
+    lv_obj_t *obj12;
+    lv_obj_t *obj13;
     lv_obj_t *target_duration_1;
     lv_obj_t *target_weight_2;
     lv_obj_t *target_temp_1;
@@ -194,53 +200,48 @@ typedef struct _objects_t {
     lv_obj_t *brew_bar;
     lv_obj_t *phase_progress;
     lv_obj_t *process_volume;
-    lv_obj_t *btn_brew;
-    lv_obj_t *btn_steam;
-    lv_obj_t *btn_water;
-    lv_obj_t *btn_grind;
     lv_obj_t *btn_brew_1;
     lv_obj_t *btn_steam_1;
     lv_obj_t *btn_water_1;
     lv_obj_t *btn_grind_1;
     lv_obj_t *btn_settings_1;
     lv_obj_t *status_icons;
-    lv_obj_t *obj10;
-    lv_obj_t *obj11;
-    lv_obj_t *obj12;
+    lv_obj_t *obj14;
+    lv_obj_t *obj15;
+    lv_obj_t *obj16;
     lv_obj_t *info_btn;
     lv_obj_t *standby_btn;
-    lv_obj_t *obj13;
     lv_obj_t *main_label5;
     lv_obj_t *image5_1;
     lv_obj_t *target_temp2;
     lv_obj_t *steam_down_temp_button;
     lv_obj_t *steam_up_temp_button;
-    lv_obj_t *obj14;
+    lv_obj_t *obj17;
     lv_obj_t *main_label6;
     lv_obj_t *water_down_temp_button;
     lv_obj_t *target_temp3;
     lv_obj_t *image10;
     lv_obj_t *water_up_temp_button;
     lv_obj_t *water_start_button;
-    lv_obj_t *obj15;
-    lv_obj_t *obj16;
-    lv_obj_t *profile_name_1;
-    lv_obj_t *profile_temp_time;
-    lv_obj_t *obj17;
     lv_obj_t *obj18;
     lv_obj_t *obj19;
+    lv_obj_t *profile_name_1;
+    lv_obj_t *profile_temp_time;
     lv_obj_t *obj20;
     lv_obj_t *obj21;
     lv_obj_t *obj22;
     lv_obj_t *obj23;
+    lv_obj_t *obj24;
+    lv_obj_t *obj25;
+    lv_obj_t *obj26;
     lv_obj_t *select_profile;
     lv_obj_t *previous_profile;
     lv_obj_t *next_profile;
     lv_obj_t *main_label4;
     lv_obj_t *grind_start_button;
     lv_obj_t *mode_switch1;
-    lv_obj_t *obj24;
-    lv_obj_t *obj25;
+    lv_obj_t *obj27;
+    lv_obj_t *obj28;
     lv_obj_t *target_weight;
     lv_obj_t *target_duration3_1;
     lv_obj_t *target_symbol_1;
@@ -251,39 +252,36 @@ typedef struct _objects_t {
     lv_obj_t *target_symbol;
     lv_obj_t *grind_down_duration_button;
     lv_obj_t *grind_up_duration_button;
-    lv_obj_t *obj26;
+    lv_obj_t *obj29;
     lv_obj_t *standby_icons_1;
     lv_obj_t *wifi_icon_1;
     lv_obj_t *bluetooth_icon_1;
     lv_obj_t *update_icon_1;
-    lv_obj_t *obj27;
-    lv_obj_t *obj28;
-    lv_obj_t *obj29;
     lv_obj_t *obj30;
-    lv_obj_t *qrcode;
     lv_obj_t *obj31;
-    lv_obj_t *info_menu_icon;
     lv_obj_t *obj32;
+    lv_obj_t *obj33;
+    lv_obj_t *qrcode;
+    lv_obj_t *obj34;
+    lv_obj_t *info_menu_icon;
+    lv_obj_t *obj35;
     lv_obj_t *single_view;
     lv_obj_t *prev_button;
-    lv_obj_t *obj33;
-    lv_obj_t *phase_preview;
-    lv_obj_t *obj34;
-    lv_obj_t *obj35;
     lv_obj_t *obj36;
+    lv_obj_t *phase_preview;
     lv_obj_t *obj37;
     lv_obj_t *obj38;
     lv_obj_t *obj39;
     lv_obj_t *obj40;
+    lv_obj_t *obj41;
+    lv_obj_t *obj42;
+    lv_obj_t *obj43;
     lv_obj_t *image_preview;
     lv_obj_t *profile_preview;
-    lv_obj_t *obj41;
+    lv_obj_t *obj44;
     lv_obj_t *select_button;
     lv_obj_t *next_button;
     lv_obj_t *list_view;
-    lv_obj_t *obj42;
-    lv_obj_t *obj43;
-    lv_obj_t *obj44;
     lv_obj_t *obj45;
     lv_obj_t *obj46;
     lv_obj_t *obj47;
@@ -308,6 +306,9 @@ typedef struct _objects_t {
     lv_obj_t *obj66;
     lv_obj_t *obj67;
     lv_obj_t *obj68;
+    lv_obj_t *obj69;
+    lv_obj_t *obj70;
+    lv_obj_t *obj71;
 } objects_t;
 
 extern objects_t objects;
@@ -331,10 +332,6 @@ typedef struct {
 typedef struct {
     user_widget_dials_state_t status_dials;
 } screen_status_screen_state_t;
-
-typedef struct {
-    user_widget_dials_state_t menu_dials;
-} screen_menu_screen_state_t;
 
 typedef struct {
     user_widget_dials_state_t new_menu_dials;
@@ -362,7 +359,6 @@ typedef struct {
 
 extern screen_brew_screen_state_t screen_brew_screen_state;
 extern screen_status_screen_state_t screen_status_screen_state;
-extern screen_menu_screen_state_t screen_menu_screen_state;
 extern screen_menu_screen_new_state_t screen_menu_screen_new_state;
 extern screen_steam_screen_state_t screen_steam_screen_state;
 extern screen_water_screen_state_t screen_water_screen_state;
@@ -381,10 +377,6 @@ void tick_screen_brew_screen();
 void create_screen_status_screen();
 void delete_screen_status_screen();
 void tick_screen_status_screen();
-
-void create_screen_menu_screen();
-void delete_screen_menu_screen();
-void tick_screen_menu_screen();
 
 void create_screen_menu_screen_new();
 void delete_screen_menu_screen_new();
@@ -417,6 +409,9 @@ void tick_screen_new_profile_screen();
 void create_user_widget_dials(lv_obj_t *parent_obj, void *flowState, int startWidgetIndex, user_widget_dials_state_t *state);
 void tick_user_widget_dials(void *flowState, int startWidgetIndex, user_widget_dials_state_t *state);
 
+void create_user_widget_warnings(lv_obj_t *parent_obj, void *flowState, int startWidgetIndex);
+void tick_user_widget_warnings(void *flowState, int startWidgetIndex);
+
 void create_screen_by_id(enum ScreensEnum screenId);
 void delete_screen_by_id(enum ScreensEnum screenId);
 void tick_screen_by_id(enum ScreensEnum screenId);
@@ -440,9 +435,10 @@ enum Colors {
     COLOR_ID_TICKS,
     COLOR_ID_TEMPERATURE,
     COLOR_ID_PRESSURE,
+    COLOR_ID_WARNING,
 };
 void change_color_theme(uint32_t themeIndex);
-extern uint32_t theme_colors[3][8];
+extern uint32_t theme_colors[3][9];
 
 #ifdef __cplusplus
 }

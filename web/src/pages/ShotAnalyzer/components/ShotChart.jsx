@@ -6,6 +6,7 @@ import './ShotChart.css';
 
 export function ShotChart({
   shotData,
+  profileData,
   results,
   compareEntries = [],
   isCompareActive = false,
@@ -28,6 +29,11 @@ export function ShotChart({
   }
 
   return (
-    <SingleShotChart shotData={shotData} results={results} desktopCardHeight={desktopCardHeight} />
+    <SingleShotChart
+      shotData={shotData}
+      profileData={profileData}
+      results={results}
+      desktopCardHeight={desktopCardHeight}
+    />
   );
 }

@@ -126,8 +126,8 @@ function getStatusBarViewModel({
     profileBadgeClasses,
     activeBadgeIconButtonClasses,
     compareBadgeClasses: getCompareSlotBadgeClasses({ currentShot, ghosted }),
-    showShotChevron: !currentShot,
-    showProfileChevron: !currentProfile && !isSearchingProfile,
+    showShotChevron: true,
+    showProfileChevron: Boolean(currentProfile) || !isSearchingProfile,
   };
 }
 

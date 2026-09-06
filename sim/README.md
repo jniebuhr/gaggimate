@@ -39,7 +39,9 @@ pio run -e display-sim -t run          # build + launch (also: ./.pio/build/disp
 IDE (CLion/VSCode) it shows up under the `display-sim` environment as the
 **Run Simulator** task, so you can build and launch the sim with one click.
 
-- **Interact** with the mouse (it acts as the touchscreen).
+- **Interact** with the mouse (it acts as the touchscreen). Keys `1` and `2` press
+  and release the brew and steam inputs of the controller board (hold both for
+  the combined third button, hold one for a long press).
 - **WebUI**: open <http://localhost:8080/> while it runs (port 80 is remapped to
   8080 so it needs no root). Live status streams over the WebSocket just like on
   the device.

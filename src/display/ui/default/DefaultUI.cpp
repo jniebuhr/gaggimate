@@ -52,46 +52,6 @@ int16_t calculate_angle(int set_temp, int range, int offset) {
     return (percentage * ((double)range)) - range / 2 - offset;
 }
 
-void DefaultUI::updateTempHistory() {
-    if (currentTemp > 0) {
-        if (tempHistoryIndex >= TEMP_HISTORY_LENGTH) {
-            tempHistoryIndex = 0;
-            isTempHistoryInitialized = true;
-        }
-        tempHistory[tempHistoryIndex] = currentTemp;
-        tempHistoryIndex += 1;
-    }
-
-    if (tempHistoryIndex % 4 == 0) {
-        heatingFlash = !heatingFlash;
-        rerender = true;
-    }
-}
-
-void DefaultUI::updateTempStableFlag() {
-    if (isTempHistoryInitialized) {
-        float totalError = 0.0f;
-        float maxError = 0.0f;
-        for (uint16_t i = 0; i < TEMP_HISTORY_LENGTH; i++) {
-            float error = abs(tempHistory[i] - targetTemp);
-            totalError += error;
-            maxError = error > maxError ? error : maxError;
-        }
-
-        const float avgError = totalError / TEMP_HISTORY_LENGTH;
-        const float errorMargin = max(2.0f, static_cast<float>(targetTemp) * 0.02f);
-
-        isTemperatureStable = avgError < errorMargin && maxError <= errorMargin;
-    }
-
-    // instantly reset stability if setpoint has changed
-    if (prevTargetTemp != targetTemp) {
-        isTemperatureStable = false;
-    }
-
-    prevTargetTemp = targetTemp;
-}
-
 void DefaultUI::reloadProfiles() { profileLoaded = 0; }
 
 DefaultUI::DefaultUI(Controller *controller, Driver *driver, PluginManager *pluginManager)
@@ -162,13 +122,18 @@ void DefaultUI::init() {
         waitingForController = true;
         rerender = true;
     });
+    pluginManager->on("controller:brew:confirm", [this](Event const &) {
+        if (eez_flow_get_current_screen() != SCREEN_ID_BREW_SCREEN)
+            changeScreen(SCREEN_ID_BREW_SCREEN);
+        setBrewConfirmVisible(true);
+    });
+    // Answered elsewhere (web UI, other client): drop the overlay.
+    pluginManager->on("controller:brew:confirm:cancel", [this](Event const &) { setBrewConfirmVisible(false); });
+    pluginManager->on("controller:brew:start", [this](Event const &) { setBrewConfirmVisible(false); });
     pluginManager->on("controller:bluetooth:connect", [this](Event const &) {
         waitingForController = false;
-        rerender = true;
-        initialized = true;
-        // Stay on the standby screen when the controller is incompatible so the
-        // mismatch message remains visible instead of jumping into brew.
-        if (eez_flow_get_current_screen() == SCREEN_ID_STANDBY_SCREEN && !controller->getSystemInfo().protocolMismatch) {
+        if (eez_flow_get_current_screen() == SCREEN_ID_STANDBY_SCREEN && !controller->getSystemInfo().protocolMismatch &&
+            !initialized) {
             ::Settings &settings = controller->getSettings();
             if (settings.getStartupMode() == MODE_BREW) {
                 changeScreen(SCREEN_ID_BREW_SCREEN);
@@ -176,7 +141,9 @@ void DefaultUI::init() {
                 standbyEnterTime = ::millis();
             }
         }
+        initialized = true;
         pressureAvailable = controller->getSystemInfo().capabilities.pressure;
+        rerender = true;
     });
     pluginManager->on("controller:bluetooth:disconnect", [this](Event const &) {
         waitingForController = true;
@@ -229,13 +196,34 @@ void DefaultUI::init() {
                             0);
 }
 
+// True while any pointer input device (the touch panel) is pressed.
+static bool pointerPressed() {
+    for (lv_indev_t *indev = lv_indev_get_next(nullptr); indev != nullptr; indev = lv_indev_get_next(indev)) {
+        if (lv_indev_get_type(indev) == LV_INDEV_TYPE_POINTER && indev->proc.state == LV_INDEV_STATE_PRESSED)
+            return true;
+    }
+    return false;
+}
+
 void DefaultUI::loop() {
     const unsigned long now = ::millis();
     const unsigned long diff = now - lastRender;
 
+    if (touchFlushHeld) {
+        if (!controller->isActive()) {
+            touchFlushHeld = false;
+        } else if (!pointerPressed()) {
+            touchFlushHeld = false;
+            controller->onFlushRelease();
+        }
+    }
+
     if (now - lastTempLog > TEMP_HISTORY_INTERVAL) {
-        updateTempHistory();
         lastTempLog = now;
+        if (++heatingFlashTick % 4 == 0) {
+            heatingFlash = !heatingFlash;
+            rerender = true;
+        }
     }
 
     if ((controller->isActive() && diff > RERENDER_INTERVAL_ACTIVE) || diff > RERENDER_INTERVAL_IDLE) {
@@ -249,11 +237,10 @@ void DefaultUI::loop() {
         if (controller->isErrorState()) {
             changeScreen(SCREEN_ID_STANDBY_SCREEN);
         }
-        updateTempStableFlag();
-
         updateState();
         // Fill the EEZ data models before handleScreenChange() creates/ticks a screen (undefined fields abort the flow).
         updateSystemStatus();
+        updateWarnings();
         updateProfileInfo();
         updateBoiler();
         updateBrewProcess();
@@ -373,8 +360,6 @@ void DefaultUI::setupPanel() {
     applyTheme();
     ui_tick();
 
-    // Polished power-up: ui_init() makes standby active instantly, so stage a black screen and
-    // fade standby in over it (lv_scr_load_anim no-ops when the target is already the active screen).
     lv_obj_t *standby = lv_scr_act();
     lv_obj_t *black = lv_obj_create(nullptr);
     lv_obj_set_style_bg_color(black, lv_color_black(), LV_PART_MAIN);
@@ -396,6 +381,7 @@ void DefaultUI::setupState() {
     eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_GRIND_TIME_TARGET, grindTimeTarget);
 
     eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_SYSTEM, systemStatus);
+    eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_WARNINGS, warnings);
     eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_PREVIEW_PROFILE, previewProfileInfo);
     eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_SELECTED_PROFILE, selectedProfileInfo);
     eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_BOILER, boiler);
@@ -456,6 +442,8 @@ void DefaultUI::setupState() {
 
 void DefaultUI::handleScreenChange() {
     if (currentScreen != targetScreen) {
+        if (currentScreen == SCREEN_ID_BREW_SCREEN)
+            brewConfirmVisible = false; // leaving the brew screen dismisses the confirm overlay
         if (targetScreen == SCREEN_ID_STANDBY_SCREEN) {
             standbyEnterTime = ::millis();
         } else if (currentScreen == SCREEN_ID_STANDBY_SCREEN) {
@@ -539,8 +527,9 @@ void DefaultUI::updateState() {
     uiFlags.grind_active(controller->isGrindActive());
     uiFlags.grind_volumetric(controller->isVolumetricAvailable() && settings.isVolumetricTarget());
     uiFlags.heating_flash(heatingFlash);
-    uiFlags.temperature_stable(isTemperatureStable);
+    uiFlags.temperature_stable(controller->getWarnings().isTemperatureStable());
     uiFlags.has_prev_profile(currentProfileIdx > 0);
+    uiFlags.brew_confirm_visible(brewConfirmVisible);
     {
         std::lock_guard<std::mutex> guard(profilesMutex);
         uiFlags.has_next_profile(currentProfileIdx + 1 < static_cast<int>(favoritedProfileIds.size()));
@@ -551,8 +540,7 @@ void DefaultUI::updateSystemStatus() {
     const auto &settings = controller->getSettings();
     systemStatus.bluetooth(controller->getClientController()->isConnected());
     systemStatus.wifi(!apActive && WiFi.status() == WL_CONNECTED);
-    bool error = !initialized || waitingForController || controller->isErrorState() || controller->isUpdating() ||
-                 controller->isAutotuning() || controller->getSystemInfo().protocolMismatch || !controller->isReady();
+    const bool error = controller->getSystemState() != SYSTEM_READY;
     systemStatus.error(error);
     const String errorLabel = error ? getErrorMessage() : "";
     if (stringChanged(systemStatus.error_label(), errorLabel.c_str()))
@@ -588,6 +576,25 @@ void DefaultUI::updateSystemStatus() {
         systemStatus.time(timeBuf);
 }
 
+void DefaultUI::updateWarnings() {
+    const WarningManager &wm = controller->getWarnings();
+    warnings.waterWarn(wm.isWarn(WARNING_WATER));
+    warnings.waterError(wm.isError(WARNING_WATER));
+    warnings.flushWarn(wm.isWarn(WARNING_FLUSH));
+    warnings.flushError(wm.isError(WARNING_FLUSH));
+    warnings.switchWarn(wm.isWarn(WARNING_SWITCH));
+    warnings.switchError(wm.isError(WARNING_SWITCH));
+    warnings.scaleConnectedWarn(wm.isWarn(WARNING_SCALE_CONNECTED));
+    warnings.scaleConnectedError(wm.isError(WARNING_SCALE_CONNECTED));
+    warnings.scaleBatteryWarn(wm.isWarn(WARNING_SCALE_BATTERY));
+    warnings.scaleBatteryError(wm.isError(WARNING_SCALE_BATTERY));
+    warnings.temperatureWarn(wm.isWarn(WARNING_TEMPERATURE));
+    warnings.temperatureError(wm.isError(WARNING_TEMPERATURE));
+    const String labels = wm.getLabels();
+    if (stringChanged(warnings.labels(), labels.c_str()))
+        warnings.labels(labels.c_str());
+}
+
 static void populateProfileInfo(ProfileInfoValue &info, const Profile &profile, bool isCurrent) {
     char timeBuf[12];
     formatDuration(static_cast<unsigned long>(profile.getTotalDuration() * 1000.0f), timeBuf, sizeof(timeBuf));
@@ -610,8 +617,6 @@ void DefaultUI::updateProfileInfo() {
     populateProfileInfo(selectedProfileInfo, profileManager->getSelectedProfile(), true);
     selectedProfileInfo.dirty(profileDirty);
 
-    // Preview backs the ProfileScreen carousel (index 0 = selected); hold the lock while
-    // reading the vector — the profile task rebuilds it concurrently (GM-147).
     bool populated = false;
     {
         std::lock_guard<std::mutex> guard(profilesMutex);
@@ -747,30 +752,7 @@ void DefaultUI::updateBrewProcess() {
 
 void DefaultUI::updateMenuScreen() {}
 
-String DefaultUI::getErrorMessage() {
-    if (controller->isUpdating()) {
-        return "Updating...";
-    }
-    if (controller->isAutotuning()) {
-        return "Autotuning...";
-    }
-    if (controller->getSystemInfo().protocolMismatch) {
-        return controller->getSystemInfo().protocolVersion > gm_proto::PROTOCOL_VERSION ? "Version mismatch, update display"
-                                                                                        : "Version mismatch, update controller";
-    }
-    if (controller->isErrorState()) {
-        switch (controller->getError()) {
-        case ERROR_CODE_RUNAWAY:
-            return "Temperature error, restart...";
-        default:
-            return "Unknown error";
-        }
-    }
-    if (waitingForController) {
-        return "Waiting for controller...";
-    }
-    return initialized ? "" : "Starting...";
-}
+String DefaultUI::getErrorMessage() { return controller->getSystemStateMessage(); }
 
 void DefaultUI::applyTheme() {
     const ::Settings &settings = controller->getSettings();

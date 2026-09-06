@@ -81,7 +81,7 @@ import {
 
 Chart.register(annotationPlugin);
 
-export function SingleShotChart({ shotData, results, desktopCardHeight = 0 }) {
+export function SingleShotChart({ shotData, profileData, results, desktopCardHeight = 0 }) {
   // These refs point to the mounted DOM and Chart.js instances. They stay local
   // to the component because only the top-level orchestrator owns mounting and teardown.
   const hoverAreaRef = useRef(null);
@@ -218,6 +218,7 @@ export function SingleShotChart({ shotData, results, desktopCardHeight = 0 }) {
     abortActiveExport,
   } = useShotChartReplayExport({
     shotData,
+    profileData,
     exportMenuRef,
     chartRefs: { mainChartInstance, tempChartInstance, hoverAreaRef },
     legendColorByLabel,
@@ -688,6 +689,7 @@ export function SingleShotChart({ shotData, results, desktopCardHeight = 0 }) {
       onCloseExportMenu={closeExportMenu}
       onExportAction={handleExportAction}
       onExportMenuToggle={toggleExportMenu}
+      profileExportAvailable={Boolean(profileData)}
       onExportTypeChange={handleExportTypeChange}
       onExportFormatChange={handleExportFormatChange}
       onExportFormatInfoToggle={handleExportFormatInfoToggle}
@@ -792,6 +794,7 @@ export function SingleShotChart({ shotData, results, desktopCardHeight = 0 }) {
             onCloseExportMenu={closeExportMenu}
             onExportAction={handleExportAction}
             onExportMenuToggle={toggleExportMenu}
+            profileExportAvailable={Boolean(profileData)}
             onExportTypeChange={handleExportTypeChange}
             onExportFormatChange={handleExportFormatChange}
             onExportFormatInfoToggle={handleExportFormatInfoToggle}

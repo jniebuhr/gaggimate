@@ -1,8 +1,6 @@
 #ifndef SimpleKalmanFilter_h
 #define SimpleKalmanFilter_h
 
-#include "Arduino.h"
-
 class SimpleKalmanFilter {
   public:
     // Constructor

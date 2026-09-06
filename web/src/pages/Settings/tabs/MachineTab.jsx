@@ -144,6 +144,26 @@ export function MachineTab({ formData, onChange, setField }) {
           </InputGroupField>
           {pressureAvailable.value && (
             <InputGroupField
+              label='Pressure Offset'
+              htmlFor='pressureOffset'
+              unit='bar'
+              helpText='Cracking pressure of a grouphead mushroom valve (e.g. 4.0 on Delonghi machines). Subtracted from readings and added to targets only while a brew is running. Leave at 0.0 for a 3-way solenoid.'
+              noMargin
+            >
+              <input
+                id='pressureOffset'
+                name='pressureOffset'
+                type='number'
+                step='any'
+                className='grow'
+                placeholder='0.0'
+                value={formData.pressureOffset}
+                onChange={onChange('pressureOffset')}
+              />
+            </InputGroupField>
+          )}
+          {pressureAvailable.value && (
+            <InputGroupField
               label='Pressure Sensor Rating'
               htmlFor='pressureScaling'
               unit='bar'
