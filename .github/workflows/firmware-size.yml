@@ -57,9 +57,6 @@ jobs:
       - name: Build controller
         run: pio run -e controller
 
-      - name: Build display FS
-        run: pio run --disable-auto-clean -t buildfs -e display
-
       - name: Build display
         run: pio run --disable-auto-clean -e display
 
@@ -97,7 +94,7 @@ jobs:
           fi
           echo "path=" >> "$GITHUB_OUTPUT"
 
-      - name: Measure and check sizes
+      - name: Measure sizes
         env:
           BASELINE_PATH: ${{ steps.baseline.outputs.path }}
         run: |
