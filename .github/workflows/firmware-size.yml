@@ -58,13 +58,13 @@ jobs:
         run: pio run -e controller
 
       - name: Build display FS
-        run: pio run -t buildfs -e display
+        run: pio run --disable-auto-clean -t buildfs -e display
 
       - name: Build display
-        run: pio run -e display
+        run: pio run --disable-auto-clean -e display
 
       - name: Build headless
-        run: pio run -e display-headless
+        run: pio run --disable-auto-clean -e display-headless
 
       - name: Fetch master baseline
         id: baseline
@@ -121,11 +121,16 @@ jobs:
           retention-days: 90
           if-no-files-found: error
 
+      - name: Write job summary
+        if: always()
+        run: |
+          if [[ -f out/sizes.md ]]; then
+            cat out/sizes.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+
       - name: Upsert PR comment
-        if: >-
-          always()
-          && github.event_name == 'pull_request'
-          && github.event.pull_request.head.repo.full_name == github.repository
+        if: always() && github.event_name == 'pull_request'
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}

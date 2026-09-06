@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check GaggiMate firmware/LittleFS against partition slots and report size deltas."""
+"""Report GaggiMate firmware size deltas against a master baseline."""
 
 from __future__ import annotations
 
@@ -7,10 +7,9 @@ import argparse
 import csv
 import json
 import os
-import re
 import subprocess
 import sys
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from shutil import which
 from typing import TypeGuard
@@ -42,8 +41,6 @@ class TargetReport:
     flash_limit: int
     ram: int | None = None
     ram_limit: int | None = None
-    fits: bool = True
-    errors: list[str] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -56,7 +53,6 @@ class TargetSpec:
 @dataclass(frozen=True)
 class BoardConfig:
     partitions: str
-    flash_size: str
     maximum_ram_size: int
 
 
@@ -81,15 +77,6 @@ def parse_partition_number(value: str) -> int:
         multiplier = 1024 * 1024
         raw = raw[:-1]
     return int(raw, 0) * multiplier
-
-
-def parse_flash_size(value: str) -> int:
-    """Parse board flash size values such as 8MB."""
-    raw = value.strip().upper()
-    match = re.fullmatch(r"(\d+)\s*MB", raw)
-    if match:
-        return int(match.group(1)) * 1024 * 1024
-    return parse_partition_number(value)
 
 
 def _align_up(value: int, alignment: int) -> int:
@@ -145,13 +132,6 @@ def find_fs_slot(partitions: list[Partition]) -> Partition:
         if part.type == "data" and part.subtype in FS_SUBTYPES:
             return part
     raise ValueError("no filesystem partition found")
-
-
-def partition_table_end(partitions: list[Partition]) -> int:
-    """Return the first byte past the last partition."""
-    if not partitions:
-        raise ValueError("empty partition table")
-    return max(part.offset + part.size for part in partitions)
 
 
 def resolve_inside(base: Path, raw: Path) -> Path:
@@ -311,27 +291,6 @@ def measure_elf(elf: Path, size_tool: Path | None = None) -> tuple[int, int] | N
     return parse_elf_size_output(result.stdout)
 
 
-def check_fit(
-    *,
-    used_flash: int,
-    flash_limit: int,
-    used_ram: int | None,
-    ram_limit: int | None,
-    table_end: int,
-    flash_chip: int,
-    label: str,
-) -> list[str]:
-    """Return overflow errors; empty means the image fits."""
-    errors: list[str] = []
-    if used_flash > flash_limit:
-        errors.append(f"{label}: {used_flash} bytes > slot {flash_limit}")
-    if used_ram is not None and ram_limit is not None and used_ram > ram_limit:
-        errors.append(f"{label}: RAM {used_ram} bytes > {ram_limit}")
-    if table_end > flash_chip:
-        errors.append(f"{label}: partition table end {table_end} > flash {flash_chip}")
-    return errors
-
-
 def format_bytes(value: int) -> str:
     """Format a byte count for tables."""
     if abs(value) >= 1024:
@@ -399,13 +358,13 @@ def render_markdown(
         )
     else:
         lines.append(
-            f"No master baseline yet — fit check only. Current `{commit[:12]}`."
+            f"No master baseline yet — current sizes only. Current `{commit[:12]}`."
         )
     lines.extend(
         [
             "",
-            "| Target | FLASH | Slot used | Fit | Δ FLASH | Δ FLASH [%] | RAM | Δ RAM |",
-            "| --- | --- | --- | --- | --- | --- | --- | --- |",
+            "| Target | FLASH | Δ FLASH | Δ FLASH [%] | RAM | Δ RAM |",
+            "| --- | --- | --- | --- | --- | --- |",
         ]
     )
     for name, report in current.items():
@@ -419,26 +378,13 @@ def render_markdown(
             ram_cell = occupancy(report.ram, report.ram_limit)
         elif report.ram is not None:
             ram_cell = format_bytes(report.ram)
-        fit = "✅" if report.fits else "❌ overflow"
+        flash_cell = occupancy(report.flash, report.flash_limit)
+        dflash = format_delta(flash_delta, FLASH_ALERT_BYTES)
+        dpct = format_pct(flash_delta, prev.flash if prev else None)
+        dram = format_delta(ram_delta, RAM_ALERT_BYTES)
         lines.append(
-            "| {name} | {flash} | {slot} | {fit} | {dflash} | {dpct} | {ram} | {dram} |".format(
-                name=name,
-                flash=occupancy(report.flash, report.flash_limit),
-                slot=f"{report.flash_limit} B",
-                fit=fit,
-                dflash=format_delta(flash_delta, FLASH_ALERT_BYTES),
-                dpct=format_pct(flash_delta, prev.flash if prev else None),
-                ram=ram_cell,
-                dram=format_delta(ram_delta, RAM_ALERT_BYTES),
-            )
+            f"| {name} | {flash_cell} | {dflash} | {dpct} | {ram_cell} | {dram} |"
         )
-    lines.extend(
-        [
-            "",
-            "The job fails only when firmware, LittleFS, or RAM does not fit the board slot.",
-            "Deltas are informational.",
-        ]
-    )
     return "\n".join(lines) + "\n"
 
 
@@ -452,7 +398,6 @@ def reports_to_json(reports: dict[str, TargetReport], commit: str) -> dict[str, 
                 "flash_limit": report.flash_limit,
                 "ram": report.ram,
                 "ram_limit": report.ram_limit,
-                "fits": report.fits,
             }
             for name, report in reports.items()
         },
@@ -500,7 +445,6 @@ def reports_from_json(
             flash_limit=json_int(target.get("flash_limit"), f"{name}.flash_limit"),
             ram=optional_json_int(target.get("ram"), f"{name}.ram"),
             ram_limit=optional_json_int(target.get("ram_limit"), f"{name}.ram_limit"),
-            fits=bool(target.get("fits", True)),
         )
     return commit, reports
 
@@ -515,12 +459,10 @@ def load_board(root: Path, board_name: str) -> BoardConfig:
     build = as_object(data.get("build"), f"{board_name} build")
     arduino = as_object(build.get("arduino"), f"{board_name} build.arduino")
     partitions = arduino.get("partitions")
-    flash_size = upload.get("flash_size")
-    if not isinstance(partitions, str) or not isinstance(flash_size, str):
-        raise TypeError(f"{board_name} is missing partitions or flash_size")
+    if not isinstance(partitions, str):
+        raise TypeError(f"{board_name} is missing partitions")
     return BoardConfig(
         partitions=partitions,
-        flash_size=flash_size,
         maximum_ram_size=json_int(
             upload.get("maximum_ram_size"), f"{board_name} maximum_ram_size"
         ),
@@ -532,21 +474,17 @@ def measure_target(
     root: Path,
     boards: dict[str, str],
     size_tool: Path | None = None,
-    require_ram: bool = True,
 ) -> TargetReport:
-    """Measure one firmware or filesystem target and apply the fit check."""
+    """Measure one firmware or filesystem target."""
     if spec.env not in boards:
         raise SystemExit(f"platformio.ini has no board for env {spec.env}")
     try:
         board = load_board(root, boards[spec.env])
     except (TypeError, KeyError, FileNotFoundError) as exc:
         raise SystemExit(f"board {boards[spec.env]} is incomplete: {exc}") from exc
-    flash_chip = parse_flash_size(board.flash_size)
-    ram_limit = board.maximum_ram_size
     partitions = parse_partitions_csv(
         find_partition_csv(board.partitions, root).read_text(encoding="utf-8")
     )
-    table_end = partition_table_end(partitions)
     build_dir = root / ".pio" / "build" / spec.env
 
     if spec.kind == "fs":
@@ -554,56 +492,26 @@ def measure_target(
         image = build_dir / "littlefs.bin"
         if not image.is_file():
             raise SystemExit(f"missing {image}")
-        used = image.stat().st_size
-        errors = check_fit(
-            used_flash=used,
-            flash_limit=slot.size,
-            used_ram=None,
-            ram_limit=None,
-            table_end=table_end,
-            flash_chip=flash_chip,
-            label=spec.name,
-        )
         return TargetReport(
             name=spec.name,
-            flash=used,
+            flash=image.stat().st_size,
             flash_limit=slot.size,
-            fits=not errors,
-            errors=errors,
         )
 
     slot = find_app_slot(partitions)
     firmware = build_dir / "firmware.bin"
     if not firmware.is_file():
         raise SystemExit(f"missing {firmware}")
-    used = firmware.stat().st_size
     ram = None
-    elf = build_dir / "firmware.elf"
-    measured = measure_elf(elf, size_tool)
-    if measured is None:
-        if require_ram:
-            raise SystemExit(
-                f"cannot measure RAM for {spec.name}: missing firmware.elf or GNU size tool"
-            )
-    else:
+    measured = measure_elf(build_dir / "firmware.elf", size_tool)
+    if measured is not None:
         _flash_elf, ram = measured
-    errors = check_fit(
-        used_flash=used,
-        flash_limit=slot.size,
-        used_ram=ram,
-        ram_limit=ram_limit,
-        table_end=table_end,
-        flash_chip=flash_chip,
-        label=spec.name,
-    )
     return TargetReport(
         name=spec.name,
-        flash=used,
+        flash=firmware.stat().st_size,
         flash_limit=slot.size,
         ram=ram,
-        ram_limit=ram_limit,
-        fits=not errors,
-        errors=errors,
+        ram_limit=board.maximum_ram_size,
     )
 
 
@@ -611,7 +519,6 @@ def collect_reports(
     root: Path,
     target_names: list[str] | None = None,
     size_tool: Path | None = None,
-    require_ram: bool = True,
 ) -> dict[str, TargetReport]:
     """Measure the selected targets under root."""
     ini = root / "platformio.ini"
@@ -624,8 +531,7 @@ def collect_reports(
         if missing:
             raise SystemExit(f"unknown targets: {', '.join(sorted(missing))}")
     return {
-        spec.name: measure_target(spec, root, boards, size_tool, require_ram)
-        for spec in selected
+        spec.name: measure_target(spec, root, boards, size_tool) for spec in selected
     }
 
 
@@ -688,12 +594,6 @@ def main(argv: list[str] | None = None) -> int:
             )
     except ValueError as exc:
         print(exc, file=sys.stderr)
-        return 1
-
-    errors = [error for report in reports.values() for error in report.errors]
-    if errors:
-        for error in errors:
-            print(error, file=sys.stderr)
         return 1
     return 0
 

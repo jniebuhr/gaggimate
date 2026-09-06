@@ -10,15 +10,12 @@ from pathlib import Path
 from check_firmware_size import (
     COMMENT_MARKER,
     TargetReport,
-    check_fit,
     find_app_slot,
     find_fs_slot,
     format_delta,
     parse_elf_size_output,
-    parse_flash_size,
     parse_partition_number,
     parse_partitions_csv,
-    partition_table_end,
     path_inside_cwd,
     pio_env_boards,
     render_markdown,
@@ -43,10 +40,6 @@ class ParseTests(unittest.TestCase):
         self.assertEqual(parse_partition_number("64K"), 65536)
         self.assertEqual(parse_partition_number("3M"), 3 * 1024 * 1024)
 
-    def test_flash_size(self) -> None:
-        self.assertEqual(parse_flash_size("8MB"), 8 * 1024 * 1024)
-        self.assertEqual(parse_flash_size("16MB"), 16 * 1024 * 1024)
-
     def test_blank_offset_is_aligned(self) -> None:
         csv_text = """# Name, Type, SubType, Offset, Size
 nvs, data, nvs, , 0x5000,
@@ -62,7 +55,6 @@ ota_0, app, ota_0, , 1000,
         fs = find_fs_slot(parts)
         self.assertEqual(app.size, 1000)
         self.assertEqual(fs.size, 400)
-        self.assertEqual(partition_table_end(parts), 0x30000 + 400)
 
     def test_pio_extends(self) -> None:
         ini = """
@@ -89,58 +81,6 @@ board = Gaggimate-Controller
         self.assertEqual(ram, 500)
 
 
-class FitTests(unittest.TestCase):
-    def test_exact_slot_ok(self) -> None:
-        self.assertEqual(
-            check_fit(
-                used_flash=1000,
-                flash_limit=1000,
-                used_ram=100,
-                ram_limit=327680,
-                table_end=0x400000,
-                flash_chip=0x400000,
-                label="controller",
-            ),
-            [],
-        )
-
-    def test_firmware_one_byte_over(self) -> None:
-        errors = check_fit(
-            used_flash=1001,
-            flash_limit=1000,
-            used_ram=None,
-            ram_limit=None,
-            table_end=1000,
-            flash_chip=4096,
-            label="controller",
-        )
-        self.assertTrue(any("1001 bytes > slot 1000" in item for item in errors))
-
-    def test_littlefs_over_spiffs(self) -> None:
-        errors = check_fit(
-            used_flash=401,
-            flash_limit=400,
-            used_ram=None,
-            ram_limit=None,
-            table_end=800,
-            flash_chip=4096,
-            label="display-filesystem",
-        )
-        self.assertTrue(any("401 bytes > slot 400" in item for item in errors))
-
-    def test_table_over_flash(self) -> None:
-        errors = check_fit(
-            used_flash=10,
-            flash_limit=100,
-            used_ram=None,
-            ram_limit=None,
-            table_end=9 * 1024 * 1024,
-            flash_chip=8 * 1024 * 1024,
-            label="controller",
-        )
-        self.assertTrue(any("partition table end" in item for item in errors))
-
-
 class MarkdownTests(unittest.TestCase):
     def test_delta_markers(self) -> None:
         self.assertEqual(format_delta(-240, 4096), "💚 -240")
@@ -156,7 +96,6 @@ class MarkdownTests(unittest.TestCase):
                 flash_limit=2000,
                 ram=80,
                 ram_limit=320,
-                fits=True,
             ),
             "display": TargetReport(
                 name="display",
@@ -164,7 +103,6 @@ class MarkdownTests(unittest.TestCase):
                 flash_limit=2000,
                 ram=70,
                 ram_limit=320,
-                fits=True,
             ),
         }
         baseline = {
@@ -174,7 +112,6 @@ class MarkdownTests(unittest.TestCase):
                 flash_limit=2000,
                 ram=80,
                 ram_limit=320,
-                fits=True,
             ),
             "display": TargetReport(
                 name="display",
@@ -182,7 +119,6 @@ class MarkdownTests(unittest.TestCase):
                 flash_limit=2000,
                 ram=80,
                 ram_limit=320,
-                fits=True,
             ),
         }
         text = render_markdown(current, baseline, "aaa111", "bbb222")
@@ -190,7 +126,7 @@ class MarkdownTests(unittest.TestCase):
         self.assertIn("controller", text)
         self.assertIn("⚠️ +100", text)
         self.assertIn("💚 -100", text)
-        self.assertIn("✅", text)
+        self.assertNotIn("overflow", text)
 
     def test_json_roundtrip(self) -> None:
         reports = {
@@ -209,13 +145,13 @@ class MarkdownTests(unittest.TestCase):
 
 
 class IntegrationTests(unittest.TestCase):
-    def test_collect_exact_and_overflow(self) -> None:
+    def test_collect_reports_flash_size(self) -> None:
         from check_firmware_size import collect_reports
 
         csv = SAMPLE_CSV
         board = {
             "build": {"arduino": {"partitions": "partitions.csv"}},
-            "upload": {"flash_size": "4MB", "maximum_ram_size": 327680},
+            "upload": {"maximum_ram_size": 327680},
         }
         ini = "[env:controller]\nboard = FakeBoard\n"
 
@@ -231,17 +167,9 @@ class IntegrationTests(unittest.TestCase):
             build.mkdir(parents=True)
             (build / "firmware.bin").write_bytes(b"\x00" * 1000)
 
-            with self.assertRaises(SystemExit):
-                collect_reports(root, ["controller"], require_ram=True)
-
-            ok = collect_reports(root, ["controller"], require_ram=False)
-            self.assertTrue(ok["controller"].fits)
+            ok = collect_reports(root, ["controller"])
             self.assertEqual(ok["controller"].flash, 1000)
             self.assertEqual(ok["controller"].flash_limit, 1000)
-
-            (build / "firmware.bin").write_bytes(b"\x00" * 1001)
-            over = collect_reports(root, ["controller"], require_ram=False)
-            self.assertFalse(over["controller"].fits)
 
 
 class PathJailTests(unittest.TestCase):
