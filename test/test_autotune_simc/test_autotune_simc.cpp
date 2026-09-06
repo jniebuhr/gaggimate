@@ -1,5 +1,5 @@
 // Unit tests: Autotune SIMC integrator+lag rule + exp-peeling τ₂ identifier.
-// Host-side, no ESP32/Arduino runtime — pio test -e native_autotune.
+// Host-side, no ESP32/Arduino runtime — pio test -e native -f test_autotune_simc.
 //
 // Groups:
 //   A — SIMC rule math

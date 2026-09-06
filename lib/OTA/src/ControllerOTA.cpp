@@ -1,6 +1,8 @@
 #include "ControllerOTA.h"
-#include <HTTPClient.h>
+#include "EspHttpTransport.h"
+#include "ResumableDownloader.h"
 #include <LittleFS.h>
+#include <esp_app_format.h>
 
 void ControllerOTA::init(const ctr_progress_callback_t &progress_callback) {
     ESP_LOGI("ControllerOTA", "Initializing ControllerOTA");
@@ -37,95 +39,78 @@ bool ControllerOTA::resolveCharacteristics() {
     return true;
 }
 
-void ControllerOTA::update(NimBLEClient *ble_client, WiFiClientSecure &wifi_client, const String &release_url) {
+bool ControllerOTA::update(NimBLEClient *ble_client, const String &release_url) {
     // Fail before the download
     this->client = ble_client;
     if (client == nullptr || !client->isConnected()) {
         ESP_LOGE("ControllerOTA", "Controller not connected, skipping update");
-        return;
+        return false;
     }
-    if (LittleFS.exists("/board-firmware.bin")) {
+    if (LittleFS.exists(CONTROLLER_FIRMWARE_PATH)) {
         ESP_LOGI("ControllerOTA", "Removing previous update file");
-        LittleFS.remove("/board-firmware.bin");
+        LittleFS.remove(CONTROLLER_FIRMWARE_PATH);
     }
-    if (!downloadFile(wifi_client, release_url)) {
+    if (!downloadFile(release_url)) {
         ESP_LOGE("ControllerOTA", "Download of firmware file failed");
-        return;
+        return false;
     }
     if (!resolveCharacteristics()) {
         ESP_LOGE("ControllerOTA", "Could not reach the controller OTA service, aborting");
-        return;
+        return false;
     }
-    File file = LittleFS.open("/board-firmware.bin", FILE_READ);
+    File file = LittleFS.open(CONTROLLER_FIRMWARE_PATH, FILE_READ);
     if (!file) {
         ESP_LOGE("ControllerOTA", "Could not open the downloaded firmware file");
         rxChar = nullptr;
         txChar = nullptr;
-        return;
+        return false;
     }
-    runUpdate(file, file.size());
+    bool ok = runUpdate(file, file.size());
     file.close();
     // Drop the pointers again; the next update re-resolves them against the live connection.
     rxChar = nullptr;
     txChar = nullptr;
+    return ok;
 }
 
-bool ControllerOTA::downloadFile(WiFiClientSecure &wifi_client, const String &release_url) {
-    HTTPClient http;
-    if (!http.begin(wifi_client, release_url)) {
-        ESP_LOGE("ControllerOTA", "Failed to start http client");
+bool ControllerOTA::downloadFile(const String &release_url) {
+    File file = LittleFS.open(CONTROLLER_FIRMWARE_PATH, FILE_WRITE, true);
+    if (!file) {
+        ESP_LOGE("ControllerOTA", "Could not create %s", CONTROLLER_FIRMWARE_PATH);
         return false;
     }
-
-    http.useHTTP10(true);
-    http.setTimeout(60000);
-    http.setConnectTimeout(10000);
-    http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
-    http.setUserAgent("ESP32-http-Update");
-    http.addHeader("Cache-Control", "no-cache");
-    int code = http.GET();
-    int len = http.getSize();
-
-    if (code != HTTP_CODE_OK) {
-        ESP_LOGE("ControllerOTA", "HTTP error: %d", code);
-        http.end();
-        return false;
-    }
-
-    if (len == 0) {
-        ESP_LOGE("ControllerOTA", "Could not fetch firmware");
-        http.end();
-        return false;
-    }
-
-    WiFiClient *tcp = http.getStreamPtr();
-    delay(100);
-
-    if (tcp->peek() != 0xE9) {
-        ESP_LOGE("ControllerOTA", "Magic header does not start with 0xE9");
-        http.end();
-        return false;
-    }
-
-    File file = LittleFS.open("/board-firmware.bin", FILE_WRITE, true);
-
-    int written = 0;
-    while (written < len) {
-        int bufferSize = min(1024, len - written);
-        uint8_t buffer[bufferSize];
-        fillBuffer(*tcp, buffer, bufferSize);
-        file.write(buffer, bufferSize);
-        written += bufferSize;
-        double progress = (static_cast<double>(written) / static_cast<double>(len)) * 50.0;
-        progressCallback(static_cast<int>(progress));
-    }
-    ESP_LOGI("ControllerOTA", "Downloaded firmware file with %d bytes to /board-firmware.bin", len);
+    DownloadSink sink;
+    sink.write = [&](const uint8_t *data, size_t len) {
+        if (file.position() == 0 && data[0] != ESP_IMAGE_HEADER_MAGIC) {
+            ESP_LOGE("ControllerOTA", "Magic header does not start with 0xE9");
+            return false;
+        }
+        return file.write(data, len) == len;
+    };
+    sink.restart = [&]() {
+        file.close();
+        file = LittleFS.open(CONTROLLER_FIRMWARE_PATH, FILE_WRITE, true);
+        return static_cast<bool>(file);
+    };
+    EspHttpTransport transport;
+    EspDownloadEnv env;
+    ResumableDownloader downloader(transport, env, release_url.c_str(), sink, [this](size_t received, size_t total) {
+        if (total > 0 || received == 0) {
+            progressCallback(total > 0 ? static_cast<int>((static_cast<uint64_t>(received) * 50) / total) : 0);
+        }
+    });
+    bool ok = downloader.run();
     file.close();
-    http.end();
+    if (!ok) {
+        LittleFS.remove(CONTROLLER_FIRMWARE_PATH);
+        return false;
+    }
+    ESP_LOGI("ControllerOTA", "Downloaded firmware file with %u bytes to %s", static_cast<unsigned>(downloader.received()),
+             CONTROLLER_FIRMWARE_PATH);
     return true;
 }
 
-void ControllerOTA::runUpdate(Stream &in, uint32_t size) {
+bool ControllerOTA::runUpdate(Stream &in, uint32_t size) {
     ESP_LOGI("ControllerOTA", "Sending update instructions over BLE. File Size: %d", size);
     fileParts = (size + PART_SIZE - 1) / PART_SIZE;
     currentPart = 0;
@@ -147,10 +132,11 @@ void ControllerOTA::runUpdate(Stream &in, uint32_t size) {
     uint8_t updateStart[] = {0xFD};
     if (!sendData(fileLengthBytes, 5) || !sendData(partsAndMTU, 5) || !sendData(updateStart, 1)) {
         ESP_LOGE("ControllerOTA", "Failed to send update instructions, aborting");
-        return;
+        return false;
     }
     ESP_LOGI("ControllerOTA", "Waiting for signal from controller");
 
+    uint32_t lastActivity = millis();
     while (client->isConnected()) {
         uint8_t signal = lastSignal;
         lastSignal = 0x00;
@@ -159,16 +145,22 @@ void ControllerOTA::runUpdate(Stream &in, uint32_t size) {
             ESP_LOGV("ControllerOTA", "Sending part %d / %d", currentPart + 1, fileParts);
             if (!sendPart(in, size)) {
                 ESP_LOGE("ControllerOTA", "Transfer aborted at part %d / %d", currentPart + 1, fileParts);
-                return;
+                return false;
             }
             currentPart++;
             notifyUpdate();
+            lastActivity = millis();
         } else if (signal == 0xF2 || signal == 0xFF) {
-            break;
+            ESP_LOGI("ControllerOTA", "Controller update finished");
+            return true;
+        } else if (millis() - lastActivity > SIGNAL_TIMEOUT_MS) {
+            ESP_LOGE("ControllerOTA", "No signal from the controller for %u ms, aborting", SIGNAL_TIMEOUT_MS);
+            return false;
         }
         delay(50);
     }
-    ESP_LOGI("ControllerOTA", "Controller update finished");
+    ESP_LOGE("ControllerOTA", "Controller disconnected before the transfer completed");
+    return false;
 }
 
 bool ControllerOTA::sendData(uint8_t *data, uint16_t len) const {
@@ -189,7 +181,7 @@ bool ControllerOTA::sendData(uint8_t *data, uint16_t len) const {
     return true;
 }
 
-void ControllerOTA::fillBuffer(Stream &in, uint8_t *buffer, uint16_t len) const {
+bool ControllerOTA::fillBuffer(Stream &in, uint8_t *buffer, uint16_t len) const {
     size_t bufferLen = 0;
     size_t bytesToRead = len;
     size_t toRead = 0;
@@ -201,7 +193,7 @@ void ControllerOTA::fillBuffer(Stream &in, uint8_t *buffer, uint16_t len) const 
                 timeout_failures++;
                 if (timeout_failures >= 300) {
                     ESP_LOGE("ControllerOTA", "Failed to read data from stream");
-                    return;
+                    return false;
                 }
                 ESP_LOGW("ControllerOTA", "Failed to read data from stream. Request %d bytes", bytesToRead);
                 delay(100);
@@ -212,6 +204,7 @@ void ControllerOTA::fillBuffer(Stream &in, uint8_t *buffer, uint16_t len) const 
         toRead = 0;
     }
     ESP_LOGV("ControllerOTA", "Read %d bytes", bufferLen);
+    return true;
 }
 
 void ControllerOTA::notifyUpdate() const {
@@ -230,7 +223,8 @@ bool ControllerOTA::sendPart(Stream &in, uint32_t totalSize) const {
     uint8_t parts = partLength / MTU;
     for (uint8_t part = 0; part < parts; part++) {
         partData[1] = part;
-        fillBuffer(in, buffer, MTU);
+        if (!fillBuffer(in, buffer, MTU))
+            return false;
         for (uint32_t i = 0; i < MTU; i++) {
             partData[i + 2] = buffer[i];
         }
@@ -243,7 +237,8 @@ bool ControllerOTA::sendPart(Stream &in, uint32_t totalSize) const {
         uint8_t remainingData[remaining + 2];
         remainingData[0] = 0xFB;
         remainingData[1] = parts;
-        fillBuffer(in, buffer, remaining);
+        if (!fillBuffer(in, buffer, remaining))
+            return false;
         for (uint32_t i = 0; i < remaining; i++) {
             remainingData[i + 2] = buffer[i];
         }

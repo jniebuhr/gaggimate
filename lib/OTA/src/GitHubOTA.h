@@ -2,7 +2,6 @@
 #define ESP_GITHUB_OTA_H
 
 #include "ControllerOTA.h"
-#include <HTTPUpdate.h>
 #include <WiFiClientSecure.h>
 
 #include "semver.h"
@@ -12,6 +11,7 @@ constexpr uint8_t PHASE_DISPLAY_FW = 1;
 constexpr uint8_t PHASE_DISPLAY_FS = 2;
 constexpr uint8_t PHASE_CONTROLLER_FW = 3;
 constexpr uint8_t PHASE_FINISHED = 4;
+constexpr uint8_t PHASE_FAILED = 5;
 
 using phase_callback_t = std::function<void(uint8_t phase)>;
 using progress_callback_t = std::function<void(uint8_t phase, int progress)>;
@@ -34,9 +34,8 @@ class GitHubOTA {
     void setControllerVersion(const String &controller_version);
 
   private:
-    HTTPUpdate Updater;
-
-    HTTPUpdateResult update_firmware(const String &url);
+    bool flashDisplayFirmware(const String &url);
+    void setPhase(uint8_t newPhase);
 
     uint8_t phase = PHASE_IDLE;
     semver_t _version;

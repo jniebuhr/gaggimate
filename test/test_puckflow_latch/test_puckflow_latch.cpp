@@ -1,6 +1,6 @@
 // Unit tests: PressureController puck-flow/puck-resistance estimator arming
 // across successive shots in one power session (GH #839).
-// Host-side, no ESP32/Arduino/BLE runtime — pio test -e native_puckflow.
+// Host-side, no ESP32/Arduino/BLE runtime — pio test -e native -f test_puckflow_latch.
 
 #include <unity.h>
 

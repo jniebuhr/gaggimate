@@ -1,5 +1,5 @@
 // Unit tests: ButtonHandler combo / long-press / click-on-release semantics (GM-200).
-// Host-side, no ESP32/Arduino runtime — pio test -e native_buttons.
+// Host-side, no ESP32/Arduino runtime — pio test -e native -f test_button_handler.
 
 #include <unity.h>
 

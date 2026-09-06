@@ -31,6 +31,8 @@ const getRssiStatusClass = rssi => {
 };
 
 function OtaProgressView({ phase, progress }) {
+  const finished = phase === 4;
+  const failed = phase === 5;
   const getOtaPhaseText = p => {
     switch (p) {
       case 1:
@@ -39,6 +41,8 @@ function OtaProgressView({ phase, progress }) {
         return 'Updating Display filesystem';
       case 3:
         return 'Updating controller firmware';
+      case 5:
+        return 'Update failed';
       default:
         return 'Finished';
     }
@@ -46,10 +50,17 @@ function OtaProgressView({ phase, progress }) {
 
   return (
     <div className='flex flex-col items-center gap-4 py-12'>
-      <Spinner size={8} />
+      {!failed && <Spinner size={8} />}
       <span className='text-base-content text-xl font-medium'>{getOtaPhaseText(phase)}</span>
-      <span className='text-base-content text-lg font-medium'>{phase === 4 ? 100 : progress}%</span>
-      {phase === 4 && (
+      {failed ? (
+        <span className='text-base-content/70 max-w-md text-center'>
+          The download could not be completed. Check the network connection and start the update
+          again.
+        </span>
+      ) : (
+        <span className='text-base-content text-lg font-medium'>{finished ? 100 : progress}%</span>
+      )}
+      {(finished || failed) && (
         <a href='/' className='btn btn-primary'>
           Back
         </a>

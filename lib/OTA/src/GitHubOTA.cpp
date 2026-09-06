@@ -1,18 +1,13 @@
 #include "GitHubOTA.h"
+#include "EspHttpTransport.h"
+#include "ResumableDownloader.h"
 #include "common.h"
 #include "semver_extensions.h"
-#include <ArduinoJson.h>
-#include <HTTPClient.h>
-#include <HTTPUpdate.h>
-#include <Update.h>
-#include <WiFiClientSecure.h>
+#include <esp_ota_ops.h>
 
 GitHubOTA::GitHubOTA(const String &display_version, const String &controller_version, const String &release_url,
                      const phase_callback_t &phase_callback, const progress_callback_t &progress_callback,
                      const String &firmware_name, const String &filesystem_name, const String &controller_firmware_name) {
-    ESP_LOGV("GitHubOTA", "GitHubOTA(version: %s, firmware_name: %s, fetch_url_via_redirect: %d)\n", version.c_str(),
-             firmware_name.c_str(), fetch_url_via_redirect);
-
     _version = from_string(display_version.substring(1).c_str());
     _controller_version = from_string(controller_version.substring(1).c_str());
 
@@ -23,18 +18,7 @@ GitHubOTA::GitHubOTA(const String &display_version, const String &controller_ver
     _phase_callback = phase_callback;
     _progress_callback = progress_callback;
 
-    Updater.rebootOnUpdate(false);
     _wifi_client.setCACertBundle(x509_crt_imported_bundle_bin_start);
-
-    Updater.onStart(update_started);
-    Updater.onEnd(update_finished);
-    Updater.onProgress([progress_callback, this](int bytesReceived, int totalBytes) {
-        int percentage = 100.0 * bytesReceived / totalBytes;
-        progress_callback(phase, percentage);
-        ESP_LOGV("update_progress", "Data received, Progress: %d %%\r", percentage);
-    });
-    Updater.onError(update_error);
-    Updater.setFollowRedirects(HTTPC_FORCE_FOLLOW_REDIRECTS);
 }
 
 void GitHubOTA::init() {
@@ -90,6 +74,11 @@ bool GitHubOTA::isUpdateAvailable(bool controller) const {
     return _screen_update_required;
 }
 
+void GitHubOTA::setPhase(uint8_t newPhase) {
+    phase = newPhase;
+    _phase_callback(newPhase);
+}
+
 void GitHubOTA::update(bool controller, bool display, NimBLEClient *client) {
     const char *TAG = "update";
 
@@ -97,34 +86,29 @@ void GitHubOTA::update(bool controller, bool display, NimBLEClient *client) {
 
     if (controller && update_required(_latest_version, _controller_version)) {
         ESP_LOGI(TAG, "Controller update is required, running firmware update.");
-        this->phase = PHASE_CONTROLLER_FW;
-        this->_phase_callback(PHASE_CONTROLLER_FW);
-        _controller_ota.update(client, _wifi_client, _latest_url + _controller_firmware_name);
-        ESP_LOGI(TAG, "Controller update successful. Restarting...\n");
+        setPhase(PHASE_CONTROLLER_FW);
+        if (!_controller_ota.update(client, _latest_url + _controller_firmware_name)) {
+            ESP_LOGE(TAG, "Controller update failed");
+            setPhase(PHASE_FAILED);
+            return;
+        }
+        ESP_LOGI(TAG, "Controller update successful.");
         updateExecuted = true;
     }
 
     if (display && update_required(_latest_version, _version)) {
         ESP_LOGI(TAG, "Update is required, running firmware update.");
-        this->phase = PHASE_DISPLAY_FW;
-        this->_phase_callback(PHASE_DISPLAY_FW);
-        auto result = update_firmware(_latest_url + _firmware_name);
-
-        if (result != HTTP_UPDATE_OK) {
-            ESP_LOGI(TAG, "Update failed: %s\n", Updater.getLastErrorString().c_str());
+        setPhase(PHASE_DISPLAY_FW);
+        if (!flashDisplayFirmware(_latest_url + _firmware_name)) {
+            ESP_LOGE(TAG, "Display update failed");
+            setPhase(PHASE_FAILED);
             return;
         }
-
-        // The web UI now ships inside the firmware app image (GM-106), so there is no separate filesystem image to
-        // flash. OTA stays a single, rollback-protected app image and the LittleFS partition (profiles + shot history)
-        // is left untouched across updates. The filesystem image is only used for fresh USB installs.
+        // The web UI ships inside the app image (GM-106); LittleFS (profiles + shots) is never touched by OTA.
         ESP_LOGI(TAG, "Update successful. Restarting...\n");
-        this->phase = PHASE_FINISHED;
-        this->_phase_callback(PHASE_FINISHED);
         updateExecuted = true;
     }
-    this->phase = PHASE_FINISHED;
-    this->_phase_callback(PHASE_FINISHED);
+    setPhase(PHASE_FINISHED);
 
     if (updateExecuted) {
         delay(1000);
@@ -136,14 +120,66 @@ void GitHubOTA::update(bool controller, bool display, NimBLEClient *client) {
 
 void GitHubOTA::setReleaseUrl(const String &release_url) { this->_release_url = release_url; }
 
-HTTPUpdateResult GitHubOTA::update_firmware(const String &url) {
-    const char *TAG = "update_firmware";
-    ESP_LOGI(TAG, "Download URL: %s\n", url.c_str());
+bool GitHubOTA::flashDisplayFirmware(const String &url) {
+    const char *TAG = "flashDisplayFirmware";
+    ESP_LOGI(TAG, "Download URL: %s", url.c_str());
 
-    auto result = Updater.update(_wifi_client, url);
+    const esp_partition_t *partition = esp_ota_get_next_update_partition(nullptr);
+    if (partition == nullptr) {
+        ESP_LOGE(TAG, "No OTA partition available");
+        return false;
+    }
+    esp_ota_handle_t handle = 0;
+    auto begin = [&]() {
+        // Sequential-write mode erases sectors as data arrives, so a resumed stream continues where it left off.
+        esp_err_t err = esp_ota_begin(partition, OTA_WITH_SEQUENTIAL_WRITES, &handle);
+        if (err != ESP_OK) {
+            ESP_LOGE(TAG, "esp_ota_begin failed: %s", esp_err_to_name(err));
+            handle = 0;
+        }
+        return err == ESP_OK;
+    };
+    if (!begin()) {
+        return false;
+    }
 
-    print_update_result(Updater, result, TAG);
-    return result;
+    DownloadSink sink;
+    sink.write = [&](const uint8_t *data, size_t len) {
+        esp_err_t err = esp_ota_write(handle, data, len);
+        if (err != ESP_OK) {
+            ESP_LOGE(TAG, "esp_ota_write failed: %s", esp_err_to_name(err));
+        }
+        return err == ESP_OK;
+    };
+    sink.restart = [&]() {
+        esp_ota_abort(handle);
+        return begin();
+    };
+    EspHttpTransport transport;
+    EspDownloadEnv env;
+    ResumableDownloader downloader(transport, env, url.c_str(), sink, [this](size_t received, size_t total) {
+        if (total > 0 || received == 0) {
+            _progress_callback(phase, total > 0 ? static_cast<int>((static_cast<uint64_t>(received) * 100) / total) : 0);
+        }
+    });
+    if (!downloader.run()) {
+        esp_ota_abort(handle);
+        return false;
+    }
+
+    // esp_ota_end verifies the complete image (header, checksum, appended SHA-256) before it can be booted.
+    esp_err_t err = esp_ota_end(handle);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Image verification failed: %s", esp_err_to_name(err));
+        return false;
+    }
+    err = esp_ota_set_boot_partition(partition);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "esp_ota_set_boot_partition failed: %s", esp_err_to_name(err));
+        return false;
+    }
+    ESP_LOGI(TAG, "Wrote %u bytes to %s", static_cast<unsigned>(downloader.received()), partition->label);
+    return true;
 }
 
 void GitHubOTA::setControllerVersion(const String &controller_version) {

@@ -166,8 +166,13 @@ components:
           enum: ['evt:ota-progress']
         phase:
           type: integer
+          description: >-
+            0 idle, 1 display firmware, 2 display filesystem (unused), 3 controller firmware,
+            4 finished, 5 failed (download or flashing gave up; the device keeps its current firmware)
+          enum: [0, 1, 2, 3, 4, 5]
         progress:
           type: integer
+          description: Percent of the current phase. Downloads retry and resume on connection loss, so it never goes backwards within a phase.
       required: [tp, phase, progress]
     AutotuneResultPayload:
       type: object
