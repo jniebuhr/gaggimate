@@ -39,7 +39,8 @@ jobs:
           python-version: "3.11"
 
       - name: Install PlatformIO Core
-        run: pip install --only-binary :all: platformio==6.1.18
+        run: |
+          pip install --only-binary :all: platformio==6.1.18
 
       - uses: actions/setup-node@v4
         with:
@@ -103,11 +104,11 @@ jobs:
           set -euo pipefail
           extra=()
           if [[ -n "${BASELINE_PATH}" ]]; then
-            extra+=(--baseline "${BASELINE_PATH}")
+            extra+=(--baseline)
           fi
           python3 scripts/check_firmware_size.py \
-            --json out/sizes.json \
-            --markdown out/sizes.md \
+            --json \
+            --markdown \
             --commit "${GITHUB_SHA}" \
             "${extra[@]}"
 

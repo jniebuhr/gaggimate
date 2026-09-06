@@ -105,7 +105,7 @@ jobs:
           firmware_dir: 'upload/headless'
           firmware_files: 'bootloader.bin,partitions.bin,firmware.bin,filesystem.bin'
       - name: Check firmware fits board slots
-        run: python3 scripts/check_firmware_size.py --json out/sizes.json
+        run: python3 scripts/check_firmware_size.py --json
       - name: Archive Firmware Files
         uses: actions/upload-artifact@v4
         with:

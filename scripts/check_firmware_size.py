@@ -18,6 +18,9 @@ from typing import TypeGuard
 COMMENT_MARKER = "<!-- gaggimate-firmware-size -->"
 FLASH_ALERT_BYTES = 4096
 RAM_ALERT_BYTES = 64
+JSON_REPORT = Path("out") / "sizes.json"
+MARKDOWN_REPORT = Path("out") / "sizes.md"
+BASELINE_REPORT = Path("baseline") / "sizes.json"
 
 APP_SUBTYPES = frozenset({"ota_0", "app0"})
 FS_SUBTYPES = frozenset({"spiffs", "fat", "littlefs"})
@@ -597,10 +600,13 @@ def current_commit(root: Path) -> str:
 def main(argv: list[str] | None = None) -> int:
     """CLI entry point."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--root", type=Path, default=Path("."), help="Repo root")
-    parser.add_argument("--json", type=Path, help="Write sizes.json")
-    parser.add_argument("--markdown", type=Path, help="Write the PR comment markdown")
-    parser.add_argument("--baseline", type=Path, help="Previous master sizes.json")
+    parser.add_argument("--json", action="store_true", help="Write out/sizes.json")
+    parser.add_argument("--markdown", action="store_true", help="Write out/sizes.md")
+    parser.add_argument(
+        "--baseline",
+        action="store_true",
+        help="Compare against baseline/sizes.json if present",
+    )
     parser.add_argument("--commit", default="", help="Override current commit SHA")
     parser.add_argument(
         "--targets",
@@ -609,32 +615,21 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
-    jail = Path.cwd().resolve()
-    try:
-        root = resolve_inside(jail, args.root)
-        json_path = resolve_inside(jail, args.json) if args.json is not None else None
-        markdown_path = (
-            resolve_inside(jail, args.markdown) if args.markdown is not None else None
-        )
-        baseline_path = (
-            resolve_inside(jail, args.baseline) if args.baseline is not None else None
-        )
-    except ValueError as exc:
-        print(exc, file=sys.stderr)
-        return 1
+    root = Path.cwd().resolve()
     names = [part.strip() for part in args.targets.split(",") if part.strip()]
     reports = collect_reports(root, names or None)
     commit = args.commit or current_commit(root)
-    baseline_commit, baseline = resolve_baseline(baseline_path, jail)
+    baseline_file = BASELINE_REPORT if args.baseline else None
+    baseline_commit, baseline = resolve_baseline(baseline_file)
 
     markdown = render_markdown(reports, baseline, commit, baseline_commit)
     print(markdown)
-    if markdown_path is not None:
-        markdown_path.parent.mkdir(parents=True, exist_ok=True)
-        markdown_path.write_text(markdown, encoding="utf-8")
-    if json_path is not None:
-        json_path.parent.mkdir(parents=True, exist_ok=True)
-        json_path.write_text(
+    if args.markdown:
+        MARKDOWN_REPORT.parent.mkdir(parents=True, exist_ok=True)
+        MARKDOWN_REPORT.write_text(markdown, encoding="utf-8")
+    if args.json:
+        JSON_REPORT.parent.mkdir(parents=True, exist_ok=True)
+        JSON_REPORT.write_text(
             json.dumps(reports_to_json(reports, commit), indent=2) + "\n",
             encoding="utf-8",
         )
