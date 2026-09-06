@@ -1,0 +1,149 @@
+name: Firmware size
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: firmware-size-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  actions: read
+  pull-requests: write
+
+jobs:
+  size:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with:
+          fetch-tags: true
+          fetch-depth: 0
+          submodules: recursive
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.platformio/.cache
+          key: ${{ runner.os }}-pio
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install PlatformIO Core
+        run: pip install --upgrade platformio
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Unit-test size checker
+        run: python3 scripts/test_check_firmware_size.py
+
+      - name: Build Web
+        run: ./scripts/build_webui.sh
+
+      - name: Build controller
+        run: pio run -e controller
+
+      - name: Build display FS
+        run: pio run -t buildfs -e display
+
+      - name: Build display
+        run: pio run -e display
+
+      - name: Build headless
+        run: pio run -e display-headless
+
+      - name: Fetch master baseline
+        id: baseline
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          mkdir -p baseline
+          run_id="$(
+            gh run list \
+              --repo "$GITHUB_REPOSITORY" \
+              --workflow firmware-size.yml \
+              --branch master \
+              --status success \
+              --limit 20 \
+              --json databaseId,event \
+              --jq '[.[] | select(.event == "push" or .event == "workflow_dispatch")][0].databaseId' \
+            || true
+          )"
+          if [[ -z "${run_id}" || "${run_id}" == "null" ]]; then
+            echo "No master baseline run found"
+            echo "path=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if gh run download "$run_id" --repo "$GITHUB_REPOSITORY" --name firmware-sizes --dir baseline; then
+            if [[ -f baseline/sizes.json ]]; then
+              echo "path=baseline/sizes.json" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          fi
+          echo "path=" >> "$GITHUB_OUTPUT"
+
+      - name: Measure and check sizes
+        env:
+          BASELINE_PATH: ${{ steps.baseline.outputs.path }}
+        run: |
+          set -euo pipefail
+          extra=()
+          if [[ -n "${BASELINE_PATH}" ]]; then
+            extra+=(--baseline "${BASELINE_PATH}")
+          fi
+          python3 scripts/check_firmware_size.py \
+            --json out/sizes.json \
+            --markdown out/sizes.md \
+            --commit "${GITHUB_SHA}" \
+            "${extra[@]}"
+
+      - name: Upload master size baseline
+        if: github.ref == 'refs/heads/master' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-sizes
+          path: out/sizes.json
+          retention-days: 90
+          if-no-files-found: error
+
+      - name: Upsert PR comment
+        if: >-
+          always()
+          && github.event_name == 'pull_request'
+          && github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          if [[ ! -f out/sizes.md ]]; then
+            echo "No size report to comment"
+            exit 0
+          fi
+          set +o pipefail
+          comment_id="$(
+            gh api --paginate "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments" \
+              --jq '.[] | select(.body | contains("<!-- gaggimate-firmware-size -->")) | .id' \
+            | awk 'NF { print; exit }'
+          )"
+          set -o pipefail
+          jq -n --rawfile body out/sizes.md '{body: $body}' > /tmp/size-comment.json
+          if [[ -n "${comment_id}" ]]; then
+            gh api --method PATCH "repos/${GITHUB_REPOSITORY}/issues/comments/${comment_id}" --input /tmp/size-comment.json
+          else
+            gh api --method POST "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments" --input /tmp/size-comment.json
+          fi
