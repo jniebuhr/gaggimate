@@ -136,6 +136,21 @@ def partition_table_end(partitions: list[Partition]) -> int:
     return max(part.offset + part.size for part in partitions)
 
 
+def resolve_inside(base: Path, raw: Path) -> Path:
+    """Resolve raw and reject paths that escape base."""
+    base_resolved = base.resolve()
+    candidate = raw.expanduser()
+    resolved = (
+        candidate.resolve()
+        if candidate.is_absolute()
+        else (base_resolved / candidate).resolve()
+    )
+    if not resolved.is_relative_to(base_resolved):
+        message = f"path escapes {base_resolved}: {raw}"
+        raise ValueError(message)
+    return resolved
+
+
 def pio_env_boards(ini_text: str) -> dict[str, str]:
     """Map PlatformIO env names to board names, following extends=."""
     boards: dict[str, str] = {}
@@ -549,11 +564,15 @@ def collect_reports(
 
 def resolve_baseline(
     path: Path | None,
+    jail: Path | None = None,
 ) -> tuple[str | None, dict[str, TargetReport] | None]:
     """Load a baseline JSON if the path exists."""
-    if path is None or not path.is_file():
+    if path is None:
         return None, None
-    payload = as_object(json.loads(path.read_text(encoding="utf-8")), "baseline")
+    safe = resolve_inside(jail, path) if jail is not None else path
+    if not safe.is_file():
+        return None, None
+    payload = as_object(json.loads(safe.read_text(encoding="utf-8")), "baseline")
     commit, reports = reports_from_json(payload)
     return commit or None, reports
 
@@ -590,20 +609,32 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
-    root = args.root.resolve()
+    jail = Path.cwd().resolve()
+    try:
+        root = resolve_inside(jail, args.root)
+        json_path = resolve_inside(jail, args.json) if args.json is not None else None
+        markdown_path = (
+            resolve_inside(jail, args.markdown) if args.markdown is not None else None
+        )
+        baseline_path = (
+            resolve_inside(jail, args.baseline) if args.baseline is not None else None
+        )
+    except ValueError as exc:
+        print(exc, file=sys.stderr)
+        return 1
     names = [part.strip() for part in args.targets.split(",") if part.strip()]
     reports = collect_reports(root, names or None)
     commit = args.commit or current_commit(root)
-    baseline_commit, baseline = resolve_baseline(args.baseline)
+    baseline_commit, baseline = resolve_baseline(baseline_path, jail)
 
     markdown = render_markdown(reports, baseline, commit, baseline_commit)
     print(markdown)
-    if args.markdown is not None:
-        args.markdown.parent.mkdir(parents=True, exist_ok=True)
-        args.markdown.write_text(markdown, encoding="utf-8")
-    if args.json is not None:
-        args.json.parent.mkdir(parents=True, exist_ok=True)
-        args.json.write_text(
+    if markdown_path is not None:
+        markdown_path.parent.mkdir(parents=True, exist_ok=True)
+        markdown_path.write_text(markdown, encoding="utf-8")
+    if json_path is not None:
+        json_path.parent.mkdir(parents=True, exist_ok=True)
+        json_path.write_text(
             json.dumps(reports_to_json(reports, commit), indent=2) + "\n",
             encoding="utf-8",
         )

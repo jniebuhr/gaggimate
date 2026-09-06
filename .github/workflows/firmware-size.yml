@@ -39,7 +39,7 @@ jobs:
           python-version: "3.11"
 
       - name: Install PlatformIO Core
-        run: pip install --upgrade platformio
+        run: pip install --only-binary :all: platformio==6.1.18
 
       - uses: actions/setup-node@v4
         with:

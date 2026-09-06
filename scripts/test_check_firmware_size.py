@@ -23,6 +23,7 @@ from check_firmware_size import (
     render_markdown,
     reports_from_json,
     reports_to_json,
+    resolve_inside,
 )
 
 SAMPLE_CSV = """# Name, Type, SubType, Offset, Size, Flags
@@ -228,6 +229,22 @@ class IntegrationTests(unittest.TestCase):
             (build / "firmware.bin").write_bytes(b"\x00" * 1001)
             over = collect_reports(root, ["controller"])
             self.assertFalse(over["controller"].fits)
+
+
+class PathJailTests(unittest.TestCase):
+    def test_relative_stays_inside(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp).resolve()
+            (base / "out").mkdir()
+            resolved = resolve_inside(base, Path("out/sizes.json"))
+            self.assertTrue(resolved.is_relative_to(base))
+            self.assertEqual(resolved.name, "sizes.json")
+
+    def test_escape_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp).resolve()
+            with self.assertRaises(ValueError):
+                resolve_inside(base, Path("../secret.json"))
 
 
 if __name__ == "__main__":
