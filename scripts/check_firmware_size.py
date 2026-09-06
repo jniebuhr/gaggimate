@@ -18,9 +18,9 @@ from typing import TypeGuard
 COMMENT_MARKER = "<!-- gaggimate-firmware-size -->"
 FLASH_ALERT_BYTES = 4096
 RAM_ALERT_BYTES = 64
-JSON_REPORT = Path("out") / "sizes.json"
-MARKDOWN_REPORT = Path("out") / "sizes.md"
-BASELINE_REPORT = Path("baseline") / "sizes.json"
+JSON_REPORT = "out/sizes.json"
+MARKDOWN_REPORT = "out/sizes.md"
+BASELINE_REPORT = "baseline/sizes.json"
 
 APP_SUBTYPES = frozenset({"ota_0", "app0"})
 FS_SUBTYPES = frozenset({"spiffs", "fat", "littlefs"})
@@ -92,22 +92,37 @@ def parse_flash_size(value: str) -> int:
     return parse_partition_number(value)
 
 
+def _align_up(value: int, alignment: int) -> int:
+    """Round value up to the next multiple of alignment."""
+    return (value + alignment - 1) & ~(alignment - 1)
+
+
 def parse_partitions_csv(text: str) -> list[Partition]:
     """Parse an ESP-IDF partitions CSV from text."""
     partitions: list[Partition] = []
+    next_offset = 0x9000
     for row in csv.reader(text.splitlines()):
         if not row or row[0].lstrip().startswith("#") or len(row) < 5:
             continue
-        name, part_type, subtype, offset, size = (field.strip() for field in row[:5])
+        name, part_type, subtype, offset_raw, size_raw = (
+            field.strip() for field in row[:5]
+        )
         if not name:
             continue
+        size = parse_partition_number(size_raw)
+        if offset_raw:
+            offset = parse_partition_number(offset_raw)
+        else:
+            alignment = 0x10000 if part_type == "app" else 0x1000
+            offset = _align_up(next_offset, alignment)
+        next_offset = offset + size
         partitions.append(
             Partition(
                 name=name,
                 type=part_type,
                 subtype=subtype,
-                offset=parse_partition_number(offset),
-                size=parse_partition_number(size),
+                offset=offset,
+                size=size,
             )
         )
     return partitions
@@ -152,6 +167,47 @@ def resolve_inside(base: Path, raw: Path) -> Path:
         message = f"path escapes {base_resolved}: {raw}"
         raise ValueError(message)
     return resolved
+
+
+def path_inside_cwd(relative: str) -> str:
+    """Resolve a relative path and reject anything outside the working directory."""
+    if os.path.isabs(relative) or ".." in Path(relative).parts:
+        message = f"refusing path outside the working directory: {relative}"
+        raise ValueError(message)
+    base = os.path.realpath(os.getcwd())
+    full = os.path.realpath(os.path.join(base, relative))
+    prefix = base if base.endswith(os.sep) else base + os.sep
+    if full != base and not full.startswith(prefix):
+        message = f"path escapes the working directory: {relative}"
+        raise ValueError(message)
+    return full
+
+
+def write_inside_cwd(relative: str, content: str) -> None:
+    """Write content only after the path is proven to stay under cwd."""
+    full = path_inside_cwd(relative)
+    base = os.path.realpath(os.getcwd())
+    prefix = base if base.endswith(os.sep) else base + os.sep
+    if not full.startswith(prefix):
+        message = f"path escapes the working directory: {relative}"
+        raise ValueError(message)
+    os.makedirs(os.path.dirname(full), exist_ok=True)
+    with open(full, "w", encoding="utf-8") as handle:
+        handle.write(content)
+
+
+def read_inside_cwd(relative: str) -> str | None:
+    """Read a cwd-confined file, or None if it does not exist."""
+    full = path_inside_cwd(relative)
+    base = os.path.realpath(os.getcwd())
+    prefix = base if base.endswith(os.sep) else base + os.sep
+    if not full.startswith(prefix):
+        message = f"path escapes the working directory: {relative}"
+        raise ValueError(message)
+    if not os.path.isfile(full):
+        return None
+    with open(full, encoding="utf-8") as handle:
+        return handle.read()
 
 
 def pio_env_boards(ini_text: str) -> dict[str, str]:
@@ -476,6 +532,7 @@ def measure_target(
     root: Path,
     boards: dict[str, str],
     size_tool: Path | None = None,
+    require_ram: bool = True,
 ) -> TargetReport:
     """Measure one firmware or filesystem target and apply the fit check."""
     if spec.env not in boards:
@@ -523,7 +580,12 @@ def measure_target(
     ram = None
     elf = build_dir / "firmware.elf"
     measured = measure_elf(elf, size_tool)
-    if measured is not None:
+    if measured is None:
+        if require_ram:
+            raise SystemExit(
+                f"cannot measure RAM for {spec.name}: missing firmware.elf or GNU size tool"
+            )
+    else:
         _flash_elf, ram = measured
     errors = check_fit(
         used_flash=used,
@@ -549,6 +611,7 @@ def collect_reports(
     root: Path,
     target_names: list[str] | None = None,
     size_tool: Path | None = None,
+    require_ram: bool = True,
 ) -> dict[str, TargetReport]:
     """Measure the selected targets under root."""
     ini = root / "platformio.ini"
@@ -561,23 +624,9 @@ def collect_reports(
         if missing:
             raise SystemExit(f"unknown targets: {', '.join(sorted(missing))}")
     return {
-        spec.name: measure_target(spec, root, boards, size_tool) for spec in selected
+        spec.name: measure_target(spec, root, boards, size_tool, require_ram)
+        for spec in selected
     }
-
-
-def resolve_baseline(
-    path: Path | None,
-    jail: Path | None = None,
-) -> tuple[str | None, dict[str, TargetReport] | None]:
-    """Load a baseline JSON if the path exists."""
-    if path is None:
-        return None, None
-    safe = resolve_inside(jail, path) if jail is not None else path
-    if not safe.is_file():
-        return None, None
-    payload = as_object(json.loads(safe.read_text(encoding="utf-8")), "baseline")
-    commit, reports = reports_from_json(payload)
-    return commit or None, reports
 
 
 def current_commit(root: Path) -> str:
@@ -619,20 +668,27 @@ def main(argv: list[str] | None = None) -> int:
     names = [part.strip() for part in args.targets.split(",") if part.strip()]
     reports = collect_reports(root, names or None)
     commit = args.commit or current_commit(root)
-    baseline_file = BASELINE_REPORT if args.baseline else None
-    baseline_commit, baseline = resolve_baseline(baseline_file)
-
-    markdown = render_markdown(reports, baseline, commit, baseline_commit)
-    print(markdown)
-    if args.markdown:
-        MARKDOWN_REPORT.parent.mkdir(parents=True, exist_ok=True)
-        MARKDOWN_REPORT.write_text(markdown, encoding="utf-8")
-    if args.json:
-        JSON_REPORT.parent.mkdir(parents=True, exist_ok=True)
-        JSON_REPORT.write_text(
-            json.dumps(reports_to_json(reports, commit), indent=2) + "\n",
-            encoding="utf-8",
-        )
+    try:
+        baseline_commit: str | None = None
+        baseline: dict[str, TargetReport] | None = None
+        if args.baseline:
+            raw_baseline = read_inside_cwd(BASELINE_REPORT)
+            if raw_baseline is not None:
+                payload = as_object(json.loads(raw_baseline), "baseline")
+                baseline_commit, baseline = reports_from_json(payload)
+                baseline_commit = baseline_commit or None
+        markdown = render_markdown(reports, baseline, commit, baseline_commit)
+        print(markdown)
+        if args.markdown:
+            write_inside_cwd(MARKDOWN_REPORT, markdown)
+        if args.json:
+            write_inside_cwd(
+                JSON_REPORT,
+                json.dumps(reports_to_json(reports, commit), indent=2) + "\n",
+            )
+    except ValueError as exc:
+        print(exc, file=sys.stderr)
+        return 1
 
     errors = [error for report in reports.values() for error in report.errors]
     if errors:

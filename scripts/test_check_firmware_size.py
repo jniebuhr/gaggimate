@@ -19,6 +19,7 @@ from check_firmware_size import (
     parse_partition_number,
     parse_partitions_csv,
     partition_table_end,
+    path_inside_cwd,
     pio_env_boards,
     render_markdown,
     reports_from_json,
@@ -45,6 +46,15 @@ class ParseTests(unittest.TestCase):
     def test_flash_size(self) -> None:
         self.assertEqual(parse_flash_size("8MB"), 8 * 1024 * 1024)
         self.assertEqual(parse_flash_size("16MB"), 16 * 1024 * 1024)
+
+    def test_blank_offset_is_aligned(self) -> None:
+        csv_text = """# Name, Type, SubType, Offset, Size
+nvs, data, nvs, , 0x5000,
+ota_0, app, ota_0, , 1000,
+"""
+        parts = parse_partitions_csv(csv_text)
+        self.assertEqual(parts[0].offset, 0x9000)
+        self.assertEqual(parts[1].offset, 0x10000)
 
     def test_csv_slots(self) -> None:
         parts = parse_partitions_csv(SAMPLE_CSV)
@@ -221,13 +231,16 @@ class IntegrationTests(unittest.TestCase):
             build.mkdir(parents=True)
             (build / "firmware.bin").write_bytes(b"\x00" * 1000)
 
-            ok = collect_reports(root, ["controller"])
+            with self.assertRaises(SystemExit):
+                collect_reports(root, ["controller"], require_ram=True)
+
+            ok = collect_reports(root, ["controller"], require_ram=False)
             self.assertTrue(ok["controller"].fits)
             self.assertEqual(ok["controller"].flash, 1000)
             self.assertEqual(ok["controller"].flash_limit, 1000)
 
             (build / "firmware.bin").write_bytes(b"\x00" * 1001)
-            over = collect_reports(root, ["controller"])
+            over = collect_reports(root, ["controller"], require_ram=False)
             self.assertFalse(over["controller"].fits)
 
 
@@ -245,6 +258,10 @@ class PathJailTests(unittest.TestCase):
             base = Path(tmp).resolve()
             with self.assertRaises(ValueError):
                 resolve_inside(base, Path("../secret.json"))
+
+    def test_cwd_helper_rejects_parent(self) -> None:
+        with self.assertRaises(ValueError):
+            path_inside_cwd("../secret.json")
 
 
 if __name__ == "__main__":
