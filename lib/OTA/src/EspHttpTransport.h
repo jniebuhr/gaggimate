@@ -38,6 +38,7 @@ class EspHttpTransport : public HttpTransport {
 class EspDownloadEnv : public DownloadEnv {
   public:
     void delayMs(uint32_t ms) override;
+    void yieldAfterChunk() override;
     bool waitForNetwork(uint32_t maxWaitMs) override;
     uint8_t *allocBuffer(size_t size) override;
     void freeBuffer(uint8_t *buffer) override;

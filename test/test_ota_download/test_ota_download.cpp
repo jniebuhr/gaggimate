@@ -170,12 +170,20 @@ struct FakeEnv : public DownloadEnv {
 
 struct MemorySink {
     std::vector<uint8_t> data;
+    std::vector<size_t> prepares;
     int restarts = 0;
+    bool prepared = false;
     bool failWrite = false;
+    bool failPrepare = false;
     DownloadSink sink() {
         DownloadSink s;
+        s.prepare = [this](size_t total) {
+            prepares.push_back(total);
+            prepared = !failPrepare;
+            return !failPrepare;
+        };
         s.write = [this](const uint8_t *d, size_t len) {
-            if (failWrite) {
+            if (failWrite || !prepared) {
                 return false;
             }
             data.insert(data.end(), d, d + len);
@@ -183,6 +191,7 @@ struct MemorySink {
         };
         s.restart = [this]() {
             restarts++;
+            prepared = false; // a fresh body must prepare again before writing
             data.clear();
             return true;
         };
@@ -450,6 +459,27 @@ void test_many_drops_still_complete() {
     rig.expectProgressMonotonic();
 }
 
+void test_prepare_runs_once_per_fresh_body() {
+    Rig rig;
+    rig.transport.faults[1] = {Fault::DROP_AFTER, 100000};
+    rig.transport.faults[2] = {Fault::SWAP_ASSET};
+    TEST_ASSERT_TRUE(rig.run());
+    // Once for the first body, once more for the replaced asset; the resume in between does not re-prepare.
+    TEST_ASSERT_EQUAL(2, rig.sink.prepares.size());
+    TEST_ASSERT_EQUAL(300000, rig.sink.prepares[0]);
+    TEST_ASSERT_EQUAL(300000, rig.sink.prepares[1]);
+    TEST_ASSERT_EQUAL(1, rig.sink.restarts);
+    rig.expectAsset();
+}
+
+void test_prepare_failure_is_fatal() {
+    Rig rig;
+    rig.sink.failPrepare = true;
+    TEST_ASSERT_FALSE(rig.run());
+    TEST_ASSERT_EQUAL(1, rig.attempts);
+    TEST_ASSERT_EQUAL(0, rig.sink.data.size());
+}
+
 void test_parse_content_range() {
     size_t start = 0;
     size_t total = 0;
@@ -487,6 +517,8 @@ int main() {
     RUN_TEST(test_resume_without_etag_restarts_instead);
     RUN_TEST(test_alloc_failure_returns_false_without_attempts);
     RUN_TEST(test_many_drops_still_complete);
+    RUN_TEST(test_prepare_runs_once_per_fresh_body);
+    RUN_TEST(test_prepare_failure_is_fatal);
     RUN_TEST(test_parse_content_range);
     return UNITY_END();
 }

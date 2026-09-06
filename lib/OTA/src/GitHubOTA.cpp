@@ -4,6 +4,16 @@
 #include "common.h"
 #include "semver_extensions.h"
 #include <esp_ota_ops.h>
+#include <esp_task_wdt.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
+
+// Flash erases freeze core 0 and Wi-Fi / BLE / web traffic eat the rest, so IDLE0 cannot feed the task
+// watchdog during an update (seen in the field as a TWDT panic mid-download). Pause it for the duration.
+struct IdleWatchdogPause {
+    IdleWatchdogPause() { esp_task_wdt_delete(xTaskGetIdleTaskHandleForCPU(0)); }
+    ~IdleWatchdogPause() { esp_task_wdt_add(xTaskGetIdleTaskHandleForCPU(0)); }
+};
 
 GitHubOTA::GitHubOTA(const String &display_version, const String &controller_version, const String &release_url,
                      const phase_callback_t &phase_callback, const progress_callback_t &progress_callback,
@@ -81,6 +91,7 @@ void GitHubOTA::setPhase(uint8_t newPhase) {
 
 void GitHubOTA::update(bool controller, bool display, NimBLEClient *client) {
     const char *TAG = "update";
+    IdleWatchdogPause watchdogPause;
 
     bool updateExecuted = false;
 
@@ -137,21 +148,29 @@ bool GitHubOTA::flashDisplayFirmware(const String &url) {
         return false;
     }
     esp_ota_handle_t handle = 0;
-    auto begin = [&]() {
-        // Sequential-write mode erases sectors as data arrives, so a resumed stream continues where it left off.
-        esp_err_t err = esp_ota_begin(partition, OTA_WITH_SEQUENTIAL_WRITES, &handle);
+    auto abort = [&]() {
+        if (handle != 0) {
+            esp_ota_abort(handle);
+            handle = 0;
+        }
+    };
+
+    DownloadSink sink;
+    // Erasing the whole image range once up front (cooperatively, in yielding slices) beats one sector erase per
+    // 4 KB write: far fewer core-0 stalls during the download. Unknown size falls back to erase-as-you-go.
+    sink.prepare = [&](size_t total) {
+        abort();
+        esp_err_t err = esp_ota_begin(partition, total > 0 ? total : OTA_WITH_SEQUENTIAL_WRITES, &handle);
         if (err != ESP_OK) {
-            ESP_LOGE(TAG, "esp_ota_begin failed: %s", esp_err_to_name(err));
+            ESP_LOGE(TAG, "esp_ota_begin(%u) failed: %s", static_cast<unsigned>(total), esp_err_to_name(err));
             handle = 0;
         }
         return err == ESP_OK;
     };
-    if (!begin()) {
-        return false;
-    }
-
-    DownloadSink sink;
     sink.write = [&](const uint8_t *data, size_t len) {
+        if (handle == 0) {
+            return false;
+        }
         esp_err_t err = esp_ota_write(handle, data, len);
         if (err != ESP_OK) {
             ESP_LOGE(TAG, "esp_ota_write failed: %s", esp_err_to_name(err));
@@ -159,8 +178,8 @@ bool GitHubOTA::flashDisplayFirmware(const String &url) {
         return err == ESP_OK;
     };
     sink.restart = [&]() {
-        esp_ota_abort(handle);
-        return begin();
+        abort(); // the next full response prepares a fresh handle
+        return true;
     };
     EspHttpTransport transport;
     EspDownloadEnv env;
@@ -169,8 +188,8 @@ bool GitHubOTA::flashDisplayFirmware(const String &url) {
             _progress_callback(phase, total > 0 ? static_cast<int>((static_cast<uint64_t>(received) * 100) / total) : 0);
         }
     });
-    if (!downloader.run() || downloader.received() == 0) {
-        esp_ota_abort(handle);
+    if (!downloader.run() || downloader.received() == 0 || handle == 0) {
+        abort();
         return false;
     }
 
