@@ -37,6 +37,7 @@ class GaggiMateController {
     void stopPidAutotune(void);
     void sendSensorData(void);
     void handleSerialCommand(char c);
+    bool isSteamSwitchOn() const;
 
     ControllerConfig _config = ControllerConfig{};
     GaggiMateServer _comms;

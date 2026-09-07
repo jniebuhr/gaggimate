@@ -8,8 +8,10 @@
 #include <functional>
 #include <string>
 
-// Receives the body in order; write() returns false to abort, restart() discards everything received so far.
+// Receives the body in order; prepare() (optional) gets the total size before the first byte of a fresh body,
+// write() returns false to abort, restart() discards everything received so far.
 struct DownloadSink {
+    std::function<bool(size_t total)> prepare;
     std::function<bool(const uint8_t *data, size_t len)> write;
     std::function<bool()> restart;
 };

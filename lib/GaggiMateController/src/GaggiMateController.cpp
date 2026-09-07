@@ -21,6 +21,16 @@ GaggiMateController::GaggiMateController(String version) : _version(std::move(ve
 char albaSwTxBuffer[128];
 char albaSwRxBuffer[128];
 
+bool GaggiMateController::isSteamSwitchOn() const {
+    pinMode(_config.steamButtonPin, INPUT_PULLUP);
+    for (int i = 0; i < 5; i++) { // active low; require a steady reading so a bouncing contact never opens the window
+        if (digitalRead(_config.steamButtonPin) != LOW)
+            return false;
+        delay(10);
+    }
+    return true;
+}
+
 void GaggiMateController::setup() {
     delay(5000);
     detectBoard();
@@ -97,7 +107,8 @@ void GaggiMateController::setup() {
         capabilities.addons[0] = gaggimate_Addon_init_zero;
         capabilities.addons[0].type = 7;
     }
-    _comms.init("GPBLS", _config.name.c_str(), _version, capabilities);
+    // Steam switch held at power-on opens the BLE pairing window; read it here since steamBtn->setup() runs later.
+    _comms.init("GPBLS", _config.name.c_str(), _version, capabilities, isSteamSwitchOn());
 
     if (_config.capabilites.ledControls) {
         ledController->setup();

@@ -186,6 +186,10 @@ void WebUIPlugin::setupServer() {
     if (controller->isSDCard()) {
         fs = &SD_MMC;
     }
+    server
+        .on(AsyncURIMatcher::prefix("/api/history/"), HTTP_ANY,
+            [](AsyncWebServerRequest *request) { request->send(503, "text/plain", "Update in progress"); })
+        .setFilter([this](AsyncWebServerRequest *) { return controller->isUpdating(); });
     server.serveStatic("/api/history/", *fs, "/h/").setCacheControl("no-store");
     server.on("/api/history/index.bin", HTTP_GET, [this, fs](AsyncWebServerRequest *request) {
         // Serve the binary index file directly

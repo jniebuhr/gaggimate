@@ -6,7 +6,7 @@
 GaggiMateServer::GaggiMateServer() : _endpoint(_transport) {}
 
 void GaggiMateServer::init(const String &deviceName, const String &hardware, const String &version,
-                           const gm::DeviceCapabilities &capabilities) {
+                           const gm::DeviceCapabilities &capabilities, bool pairingWindow) {
     setSystemInfo(hardware, version, capabilities);
     registerHandlers();
     _endpoint.onConnection([this](bool connected) {
@@ -15,7 +15,7 @@ void GaggiMateServer::init(const String &deviceName, const String &hardware, con
             pushSystemInfo();
     });
     _endpoint.begin();
-    _transport.init(deviceName);
+    _transport.init(deviceName, pairingWindow);
 
     if (xTaskCreatePinnedToCore(pumpTask, "GaggiMateServer", 4096, this, 1, &_taskHandle, 0) != pdPASS) {
         _taskHandle = nullptr;

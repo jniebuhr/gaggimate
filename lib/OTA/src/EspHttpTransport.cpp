@@ -115,6 +115,9 @@ esp_err_t EspHttpTransport::onEvent(esp_http_client_event_t *evt) {
 
 void EspDownloadEnv::delayMs(uint32_t ms) { vTaskDelay(pdMS_TO_TICKS(ms)); }
 
+// Every flash program / erase parks core 0; one tick lets its tasks (and IDLE0, the watchdog feeder) catch up.
+void EspDownloadEnv::yieldAfterChunk() { vTaskDelay(1); }
+
 bool EspDownloadEnv::waitForNetwork(uint32_t maxWaitMs) {
     wifi_mode_t mode = WIFI_MODE_NULL;
     if (esp_wifi_get_mode(&mode) != ESP_OK || (mode != WIFI_MODE_STA && mode != WIFI_MODE_APSTA)) {
