@@ -22,10 +22,11 @@ import {
 } from './targetMatching';
 import {
   getLastNonExtendedIndex,
+  getFinalWeightSample,
+  getFinalWeightSamples,
   getPhaseEndSample,
   getPhaseWeightRate,
   getSampleInstantWeightRate,
-  getSamplesThroughLastNonExtended,
   isPositiveFiniteRate,
 } from './weightRate';
 import { calculatePumpedWater } from './waterIntegration';
@@ -590,8 +591,8 @@ export function analyzeExecutedPhase({
   const pEnd = (phaseEndSample.t - globalStartTime) / 1000;
   const duration = pEnd - pStart;
   const phaseWeightRate = getPhaseWeightRate(samples, isLastPhase);
-  const weightSamples = getSamplesThroughLastNonExtended(samples);
-  const weightEndSample = weightSamples.at(-1) || getPhaseEndSample(samples);
+  const weightSamples = getFinalWeightSamples(samples);
+  const weightEndSample = getFinalWeightSample(samples) || getPhaseEndSample(samples);
   const rawName = phaseNameMap[phaseNum];
   const displayName = rawName || `Phase ${phaseNum}`;
   const sysInfo = getPhaseEndSample(samples).systemInfo || {};
