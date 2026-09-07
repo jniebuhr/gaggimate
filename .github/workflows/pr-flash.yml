@@ -41,7 +41,7 @@ jobs:
       run: |
         mkdir -p out
         git tag -d nightly
-        git describe --tags --dirty > out/version.txt
+        git describe --tags --dirty --match "v*" > out/version.txt
     - name: Build Web
       run: ./scripts/build_webui.sh
     - name: Build controller

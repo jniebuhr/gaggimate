@@ -15,3 +15,6 @@ src/display/webassets/
 # Desktop simulator runtime data (settings/profiles/shots) and screenshots
 sim_data/
 *.bmp
+
+# Local release staging (scripts/release.sh)
+out/
