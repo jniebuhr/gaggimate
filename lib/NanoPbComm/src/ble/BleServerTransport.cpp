@@ -5,7 +5,8 @@
 static constexpr const char *NVS_NAMESPACE = "gmble";
 static constexpr const char *NVS_PEER_KEY = "peer";
 
-void BleServerTransport::init(const String &deviceName) {
+void BleServerTransport::init(const String &deviceName, bool pairingWindow) {
+    _pairingWindow = pairingWindow;
     NimBLEDevice::init(deviceName.c_str());
     NimBLEDevice::setPower(ESP_PWR_LVL_P9);
     NimBLEDevice::setMTU(256); // headroom for batched frames
@@ -38,11 +39,10 @@ void BleServerTransport::init(const String &deviceName) {
     _deviceName = deviceName;
     _advertising = NimBLEDevice::getAdvertising();
     _advertising->setScanResponse(true);
-    // First boot pairs openly; once a display has bonded, only it may connect.
+    // First boot pairs openly; once a display has bonded, only it may connect (unless the pairing window is open).
     loadPairedPeer();
     if (_havePairedPeer) {
         NimBLEDevice::whiteListAdd(_pairedPeer);
-        enableWhitelist();
         pruneForeignBonds(_pairedPeer);
         ESP_LOGI(LOG_TAG, "Paired to display %s", _pairedPeer.toString().c_str());
     } else if (NimBLEDevice::getNumBonds() > 0) {
@@ -52,18 +52,24 @@ void BleServerTransport::init(const String &deviceName) {
             NimBLEDevice::whiteListAdd(addr);
             ESP_LOGW(LOG_TAG, "Legacy bond %s allowed until one display is adopted", addr.toString().c_str());
         }
-        enableWhitelist();
     }
+    // The whitelist stays populated but unenforced while the window is open; closePairingWindow() re-arms it.
+    if (NimBLEDevice::getWhiteListCount() > 0 && !_pairingWindow)
+        enableWhitelist();
+    if (_pairingWindow)
+        ESP_LOGW(LOG_TAG, "Pairing window open, a new display may replace the paired one");
     applyAdvertisingData();
     startAdv();
     ESP_LOGI(LOG_TAG, "BLE server started, advertising %s",
-             _havePairedPeer ? "(directed to paired display)" : (_whitelistOnly ? "(whitelist only)" : "(open, pairing mode)"));
+             _pairingWindow    ? "(open, pairing window)"
+             : _havePairedPeer ? "(directed to paired display)"
+                               : (_whitelistOnly ? "(whitelist only)" : "(open, pairing mode)"));
 }
 
 void BleServerTransport::startAdv() {
     if (_advertising == nullptr || _advertising->isAdvertising())
         return;
-    if (_havePairedPeer) {
+    if (_havePairedPeer && !_pairingWindow) {
         // Low-duty directed adverts are LL-dropped by every radio except the paired display's -- invisible to other scanners.
         _advertising->setAdvertisementType(BLE_GAP_CONN_MODE_DIR);
         _advertising->start(0, nullptr, &_pairedPeer);
@@ -76,7 +82,8 @@ void BleServerTransport::startAdv() {
 void BleServerTransport::applyAdvertisingData() {
     // Primary adv packet (31B): flags + service UUID + lock-owner mfg data; owner must be primary, displays scan passively.
     std::vector<uint8_t> mfg = {0xFF, 0xFF, 0, 0, 0, 0, 0, 0};
-    if (_havePairedPeer)
+    // Owner stays zeroed while the pairing window is open so unpaired displays see us as available.
+    if (_havePairedPeer && !_pairingWindow)
         memcpy(&mfg[2], _pairedPeer.getNative(), 6);
     NimBLEAdvertisementData advData;
     advData.setFlags(BLE_HS_ADV_F_DISC_GEN | BLE_HS_ADV_F_BREDR_UNSUP);
@@ -94,15 +101,20 @@ void BleServerTransport::enableWhitelist() {
 }
 
 void BleServerTransport::adoptPeer(const NimBLEAddress &address) {
-    if (_havePairedPeer) {
-        if (_pairedPeer == address)
-            return; // our display, nothing to do
+    if (_havePairedPeer && _pairedPeer == address) {
+        closePairingWindow(); // our display; an accidental steam-switch boot ends here
+        return;
+    }
+    if (_havePairedPeer && !_pairingWindow) {
         // Whitelisting should make this impossible; refuse the interloper.
         ESP_LOGW(LOG_TAG, "Rejecting bond from foreign display %s", address.toString().c_str());
         NimBLEDevice::deleteBond(address);
         disconnect();
         return;
     }
+    if (_havePairedPeer)
+        ESP_LOGW(LOG_TAG, "Replacing paired display %s with %s", _pairedPeer.toString().c_str(), address.toString().c_str());
+    _pairingWindow = false;
     savePairedPeer(address);
     pruneForeignBonds(address);
     // Reduce the (possibly legacy multi-bond) whitelist to this display; safe while connected, advertising is stopped.
@@ -112,6 +124,16 @@ void BleServerTransport::adoptPeer(const NimBLEAddress &address) {
     enableWhitelist();
     applyAdvertisingData(); // broadcast the new lock owner from the next adv start
     ESP_LOGI(LOG_TAG, "Bonded to display %s, advertising is now whitelist-only", address.toString().c_str());
+}
+
+void BleServerTransport::closePairingWindow() {
+    if (!_pairingWindow)
+        return;
+    _pairingWindow = false;
+    if (NimBLEDevice::getWhiteListCount() > 0)
+        enableWhitelist();
+    applyAdvertisingData(); // owner field back on; the next adv start is directed again
+    ESP_LOGI(LOG_TAG, "Pairing window closed, back to the paired display only");
 }
 
 void BleServerTransport::pruneForeignBonds(const NimBLEAddress &keep) {
@@ -170,6 +192,7 @@ void BleServerTransport::clearBonds() {
     }
     _havePairedPeer = false;
     _whitelistOnly = false;
+    _pairingWindow = false;
     if (_advertising) {
         _advertising->setScanFilter(false, false);
         applyAdvertisingData(); // owner field back to zeros (open for pairing)

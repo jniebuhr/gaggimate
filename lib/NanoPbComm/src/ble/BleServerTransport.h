@@ -8,11 +8,13 @@
 
 // BLE peripheral (server) transport for the controller: RX write / TX notify chars (one datagram each) + OTA DFU service.
 // Pairing: bonds one display on first boot, then directed-advertises to it only until clearBonds(); comms require encryption.
+// A boot-time pairing window (steam switch held at power-on) re-opens advertising so a replacement display can take over.
 class BleServerTransport : public Transport, public NimBLEServerCallbacks, public NimBLECharacteristicCallbacks {
   public:
     BleServerTransport() = default;
 
-    void init(const String &deviceName);
+    // pairingWindow: advertise openly until a display bonds; a new one replaces the paired peer, the old one closes it.
+    void init(const String &deviceName, bool pairingWindow = false);
     void startAdvertising();
 
     // Publish system info on the legacy read-only INFO characteristic for pre-framing external readers.
@@ -31,6 +33,7 @@ class BleServerTransport : public Transport, public NimBLEServerCallbacks, publi
   private:
     bool _connected = false;
     bool _whitelistOnly = false;
+    bool _pairingWindow = false;
     // The single display this PCB is paired to (NVS-persisted); the bond store and whitelist are pruned to match.
     NimBLEAddress _pairedPeer{};
     bool _havePairedPeer = false;
@@ -48,6 +51,7 @@ class BleServerTransport : public Transport, public NimBLEServerCallbacks, publi
     void applyAdvertisingData();
     void startAdv(); // directed at the paired display, or open when unpaired
     void adoptPeer(const NimBLEAddress &address);
+    void closePairingWindow();
     void pruneForeignBonds(const NimBLEAddress &keep);
     void loadPairedPeer();
     void savePairedPeer(const NimBLEAddress &address);

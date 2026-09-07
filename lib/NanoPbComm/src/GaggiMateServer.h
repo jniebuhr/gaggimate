@@ -25,8 +25,9 @@ class GaggiMateServer {
 
     GaggiMateServer();
 
-    void init(const String &deviceName, const String &hardware, const String &version,
-              const gm::DeviceCapabilities &capabilities);
+    // pairingWindow: let a new display replace the paired one this boot (steam switch held at power-on).
+    void init(const String &deviceName, const String &hardware, const String &version, const gm::DeviceCapabilities &capabilities,
+              bool pairingWindow = false);
     bool isConnected() const { return _endpoint.isConnected(); }
     bool isUpdating() const { return _transport.isUpdating(); }
 
