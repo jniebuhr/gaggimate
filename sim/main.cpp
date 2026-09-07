@@ -57,6 +57,26 @@ int main(int argc, char **argv) {
             }
         }
 
+        // Simulated BLE scale weight stream: emits a double-tap waveform every
+        // 5 s through the same BLUETOOTH measurement path a real scale driver
+        // uses, so the DoubleTapTarePlugin's tap detection can be exercised
+        // without hardware. Two 26-28 g peaks ~250 ms apart, well inside the
+        // default 350 ms window.
+        {
+            static unsigned long simPhaseStart = 0;
+            static const float WAVE[][2] = {
+                {0, 0}, {100, 12}, {200, 26}, {250, 4},
+                {350, 14}, {450, 28}, {500, 6}, {700, 0},
+            };
+            static constexpr unsigned long WAVE_MS = 5000;
+            unsigned long t = (millis() - simPhaseStart) % WAVE_MS;
+            float w = 0.0f;
+            for (auto &p : WAVE) {
+                if (t >= (unsigned long)p[0]) w = p[1];
+            }
+            controller.onVolumetricMeasurement(w, VolumetricMeasurementSource::BLUETOOTH);
+        }
+
         if (ui) {
             ui->loop();
             ui->loopProfiles();
