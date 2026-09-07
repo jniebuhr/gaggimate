@@ -4,6 +4,8 @@
 #include "remote_scales.h"
 #include "remote_scales_plugin_registry.h"
 
+#include <memory>
+
 void on_ble_measurement(float value);
 
 constexpr unsigned long UPDATE_INTERVAL_MS = 1000;
