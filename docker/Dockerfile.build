@@ -1,0 +1,112 @@
+# syntax=docker/dockerfile:1
+# GaggiMate firmware + web build environment
+#
+# Multi-stage build — three independent stages:
+#   pio-builder   Install PlatformIO and pre-warm the espressif32 platform
+#                 (~200 MB download, cached separately from Node.js)
+#   node-builder  Node.js 22 from the official image, isolated from PlatformIO
+#   final         Combine both, minimal runtime deps only
+#
+# Stages 1 and 2 are built in parallel by BuildKit and do not share layers,
+# so bumping the Node.js version never re-downloads the ESP32 platform and
+# vice versa.
+#
+# Usage (firmware):
+#   docker build -f docker/Dockerfile.build -t gaggimate-build .
+#   docker run --rm -v "$(pwd)":/workspace gaggimate-build pio run -e display
+#   docker run --rm -v "$(pwd)":/workspace gaggimate-build pio run -e controller
+#
+# Usage (web UI + SPIFFS image):
+#   docker run --rm -v "$(pwd)":/workspace gaggimate-build ./scripts/build_spiffs.sh
+#
+# Usage (interactive shell):
+#   docker run --rm -it -v "$(pwd)":/workspace gaggimate-build bash
+#
+# Note: the container runs as uid 1000 by default. If your host user has a
+# different UID, build with: docker build --build-arg UID=$(id -u) ...
+# or run with:               docker run --user $(id -u):$(id -g) ...
+
+# ─── Stage 1: PlatformIO + espressif32 platform ──────────────────────────────
+# Re-runs only when the PlatformIO pip version or the platform version changes.
+FROM ubuntu:24.04 AS pio-builder
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    # Fixed, user-agnostic data dir so the path survives the COPY into the
+    # final stage regardless of which user runs the container.
+    PLATFORMIO_CORE_DIR=/opt/pio-core
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 \
+    python3-pip \
+    python3-venv \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# PlatformIO in an isolated virtualenv (avoids system-pip conflicts)
+RUN python3 -m venv /opt/pio \
+    && /opt/pio/bin/pip install --upgrade pip \
+    && /opt/pio/bin/pip install platformio
+
+ENV PATH="/opt/pio/bin:$PATH"
+
+# Pre-warm the espressif32 platform into PLATFORMIO_CORE_DIR.
+# This layer is ~200 MB and is cached independently of everything below it.
+# The build must fail here if the download fails — a missing platform causes
+# confusing errors at pio run time.
+RUN pio pkg install --global --platform "espressif32@6.12.0"
+
+
+# ─── Stage 2: Node.js 22 ─────────────────────────────────────────────────────
+# Copies the Node.js binary directly from the official image instead of
+# piping a third-party setup script through bash. Re-runs only when the
+# Node.js major version changes.
+FROM node:22-slim AS node-builder
+
+
+# ─── Stage 3: Final image ─────────────────────────────────────────────────────
+# Pulls only the outputs of the two builder stages — no pip, no curl scripts,
+# no apt cache from the setup stages.
+FROM ubuntu:24.04
+
+LABEL org.opencontainers.image.title="GaggiMate Build Environment" \
+      org.opencontainers.image.description="Reproducible firmware and web build environment for GaggiMate" \
+      org.opencontainers.image.source="https://github.com/jniebuhr/gaggimate"
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PLATFORMIO_CORE_DIR=/opt/pio-core \
+    PATH="/opt/pio/bin:$PATH"
+
+# Minimal runtime system deps — python3 for PlatformIO, git for pio pkg,
+# ca-certificates for TLS. No pip, no curl.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 \
+    git \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# PlatformIO virtualenv from stage 1
+COPY --from=pio-builder /opt/pio /opt/pio
+
+# Pre-warmed espressif32 platform + package registry from stage 1
+COPY --from=pio-builder /opt/pio-core /opt/pio-core
+
+# Node.js binary + npm/npx from stage 2 (official node:22-slim image)
+COPY --from=node-builder /usr/local/bin/node /usr/local/bin/node
+COPY --from=node-builder /usr/local/bin/npm  /usr/local/bin/npm
+COPY --from=node-builder /usr/local/bin/npx  /usr/local/bin/npx
+COPY --from=node-builder /usr/local/lib/node_modules /usr/local/lib/node_modules
+
+# Non-root user — UID defaults to 1000 (matches most CI runners).
+# Override at build time with: docker build --build-arg UID=$(id -u) ...
+# ubuntu:24.04 ships with a default 'ubuntu' user at UID 1000, so we
+# remove it first to avoid conflicts.
+ARG UID=1000
+RUN userdel -r ubuntu 2>/dev/null || true \
+    && useradd -m -u ${UID} -s /bin/bash builder \
+    && chown -R builder:builder /opt/pio-core
+
+USER builder
+
+WORKDIR /workspace
+
+CMD ["bash"]
