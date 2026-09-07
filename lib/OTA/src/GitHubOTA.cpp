@@ -5,14 +5,15 @@
 #include "semver_extensions.h"
 #include <esp_ota_ops.h>
 #include <esp_task_wdt.h>
-#include <freertos/FreeRTOS.h>
-#include <freertos/task.h>
+#include <sdkconfig.h>
 
-// Flash erases freeze core 0 and Wi-Fi / BLE / web traffic eat the rest, so IDLE0 cannot feed the task
-// watchdog during an update (seen in the field as a TWDT panic mid-download). Pause it for the duration.
-struct IdleWatchdogPause {
-    IdleWatchdogPause() { esp_task_wdt_delete(xTaskGetIdleTaskHandleForCPU(0)); }
-    ~IdleWatchdogPause() { esp_task_wdt_add(xTaskGetIdleTaskHandleForCPU(0)); }
+// Flash erases park core 0 and slow every other task, so IDLE0 and the AsyncTCP service task (both watched by
+// the 5 s task watchdog) can miss their deadline mid-update (seen twice in field coredumps). Widen the timeout for
+// the update instead of unsubscribing anyone: a real hang still reboots, just later.
+struct OtaWatchdogRelax {
+    static constexpr uint32_t UPDATE_TIMEOUT_S = 60;
+    OtaWatchdogRelax() { esp_task_wdt_init(UPDATE_TIMEOUT_S, true); }
+    ~OtaWatchdogRelax() { esp_task_wdt_init(CONFIG_ESP_TASK_WDT_TIMEOUT_S, true); }
 };
 
 GitHubOTA::GitHubOTA(const String &display_version, const String &controller_version, const String &release_url,
@@ -91,7 +92,7 @@ void GitHubOTA::setPhase(uint8_t newPhase) {
 
 void GitHubOTA::update(bool controller, bool display, NimBLEClient *client) {
     const char *TAG = "update";
-    IdleWatchdogPause watchdogPause;
+    OtaWatchdogRelax watchdogRelax;
 
     bool updateExecuted = false;
 
