@@ -23,7 +23,7 @@ class PressureController {
     void setFlowLimit(float lim) { /* Flow limit not currently implemented */ };
     void setPressureLimit(float lim) { /* Pressure limit not currently implemented */ };
 
-    void update(ControlMode mode);
+    void update(ControlMode mode, bool freshPressure = true, float sampleTime = 0.0f, float elapsed = 0.0f);
     void tare();
     void reset();
 
@@ -42,7 +42,8 @@ class PressureController {
   private:
     float getPumpDutyCycleForPressure();
     void virtualScale();
-    void filterSensor();
+    void filterSensor(float sampleTime);
+    bool _pressureInitialized = false;
     void filterSetpoint(float rawSetpoint);
     float pumpFlowModel(float alpha = 100.0f) const;
     float getAvailableFlow() const;

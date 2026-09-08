@@ -42,13 +42,15 @@ void GaggiMateController::setup() {
             [this]() { thermalRunawayShutdown(); });
     }
     if (_config.capabilites.pressure || _config.capabilites.dualBoiler) {
-        adc = new ADSAdc(_config.pressureSda, _config.pressureScl, 4);
-        pressureSensor = new PressureSensor(this->adc);
+        adc = new ADSAdc(_config.pressureSda, _config.pressureScl, _config.adcRates);
+        pressureSensor = new PressureSensor(this->adc, _config.pressureControlRate);
         if (_config.capabilites.dualBoiler) {
             this->brewTemperature =
-                new NtcThermistor(this->adc, 2, [this]() { thermalRunawayShutdown(); }, 50000.0f, 10000.0f, 4.096f, 3988.0f);
+                new NtcThermistor(this->adc, 2, [this]() { thermalRunawayShutdown(); }, 50000.0f, 10000.0f, 4.096f, 3988.0f,
+                                  _config.ntcTiming[2]);
             this->steamTemperature =
-                new NtcThermistor(this->adc, 3, [this]() { thermalRunawayShutdown(); }, 50000.0f, 10000.0f, 4.096f, 3988.0f);
+                new NtcThermistor(this->adc, 3, [this]() { thermalRunawayShutdown(); }, 50000.0f, 10000.0f, 4.096f, 3988.0f,
+                                  _config.ntcTiming[3]);
         }
     }
     heater = new Heater(
@@ -69,7 +71,7 @@ void GaggiMateController::setup() {
     }
     valve = new SimpleRelay(_config.valvePin, _config.valveOn);
     if (_config.capabilites.dimming) {
-        pump = new DimmedPump(_config.pumpPin, _config.pumpSensePin, pressureSensor);
+        pump = new DimmedPump(_config.pumpPin, _config.pumpSensePin, pressureSensor, _config.pressureControlRate);
     } else {
         pump = new SimplePump(_config.pumpPin, _config.pumpOn, _config.capabilites.ssrPump ? 1000.0f : 5000.0f);
     }
@@ -123,8 +125,8 @@ void GaggiMateController::setup() {
         dimmedPump->setBinaryMode(true);
     }
     if (_config.capabilites.pressure || _config.capabilites.dualBoiler) {
-        this->adc->setup();
         pressureSensor->setup();
+        this->adc->setup();
         _comms.onPressureScale([this](float scale) { this->pressureSensor->setScale(scale); });
     }
     brewTemperature->setup();

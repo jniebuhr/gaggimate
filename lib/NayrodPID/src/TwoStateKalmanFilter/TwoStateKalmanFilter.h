@@ -14,12 +14,15 @@ class TwoStateKalmanFilter {
     // Update with a new measurement, returns the filtered value
     float updateEstimate(float mea);
     void reset();
+    void setSampleTime(float dt);
+    void setRateLeak(float rateLeak) { _rate_leak = rateLeak; }
 
     float getCurrentEstimate() const { return _position; }
     float getRateEstimate() const { return _velocity; }
 
   private:
     float _dt;
+    float _accel_q;
     float _err_measure; // R - measurement noise covariance
     float _rate_leak;
     float _q00, _q01, _q11; // Q - process noise covariance entries
