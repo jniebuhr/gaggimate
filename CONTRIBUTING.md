@@ -62,7 +62,7 @@ The `web/` directory contains a Preact + Vite project. The README inside explain
 - `npm run build` - Builds for production, emitting to `dist/`
 - `npm run preview` - Starts a server at <http://localhost:4173/> to test production build locally
 
-When building the firmware, the `scripts/build_webui.sh` script installs the web dependencies and copies the compiled files to the data/ directory for inclusion in the device’s SPIFFS image.
+When building the firmware, the `scripts/build_webui.sh` script installs the web dependencies and prepares assets for the display firmware (LittleFS / embedded `webassets`).
 
 ### Next Steps for Learning
 
