@@ -168,7 +168,15 @@ void WebSocketHandler::handleWebSocketData(AsyncWebSocket *server, AsyncWebSocke
             DeserializationError err = deserializeJson(doc, buf.c_str());
             if (!err) {
                 String msgType = doc["tp"].as<String>();
-                if (msgType.startsWith("req:profiles:")) {
+                // Storage-backed requests run on the AsyncTCP task, which the task watchdog polices; while an update
+                // hammers flash, SD I/O crawls and has blown that deadline (field coredumps). Refuse them meanwhile.
+                if (controller->isUpdating() && (msgType.startsWith("req:profiles:") || msgType.startsWith("req:history"))) {
+                    JsonDocument resp(&psramAllocator);
+                    resp["tp"] = String("res:") + msgType.substring(4);
+                    resp["rid"] = doc["rid"].as<String>();
+                    resp["error"] = F("Update in progress");
+                    client->text(toWsBuffer(resp));
+                } else if (msgType.startsWith("req:profiles:")) {
                     handleProfileRequest(client->id(), doc);
                 } else if (msgType == "req:ota-settings") {
                     if (otaSettingsHandler)

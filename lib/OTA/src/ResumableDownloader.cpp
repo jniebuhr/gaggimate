@@ -110,6 +110,9 @@ ResumableDownloader::Outcome ResumableDownloader::consumeResponse(int status, in
         }
         _etag = _transport.header("ETag");
         _total = contentLength > 0 ? static_cast<size_t>(contentLength) : 0;
+        if (_sink.prepare && !_sink.prepare(_total)) {
+            return Outcome::FATAL;
+        }
     } else if (status == 206) {
         size_t start = 0;
         size_t total = 0;
@@ -157,6 +160,7 @@ ResumableDownloader::Outcome ResumableDownloader::readBody(uint8_t *buffer) {
         _received += static_cast<size_t>(n);
         _progressed = true;
         reportProgress(false);
+        _env.yieldAfterChunk();
     }
     if (_total > 0 && _received < _total) {
         OTA_LOGW(TAG, "Response ended at %u of %u bytes", static_cast<unsigned>(_received), static_cast<unsigned>(_total));
