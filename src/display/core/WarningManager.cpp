@@ -57,13 +57,16 @@ void WarningManager::sampleTemperature() {
 
 void WarningManager::evaluate() {
     const Settings &settings = controller->getSettings();
-    const bool scaleConnected = BLEScales.isConnected();
+    const bool hardwareSelected = controller->getEffectiveScaleSource() == VolumetricMeasurementSource::HARDWARE;
+    const bool scaleConnected = hardwareSelected ? controller->isHardwareScaleHealthy() : BLEScales.isConnected();
+    const bool scaleExpected = settings.getSavedScale() != "" ||
+                               (controller->getMode() != MODE_GRIND && settings.getPreferredScaleSource() == "hardware");
 
     active[WARNING_WATER] = controller->getSystemInfo().capabilities.tof && controller->isLowWaterLevel();
     active[WARNING_FLUSH] = controller->isFlushPending();
     active[WARNING_SWITCH] = controller->isSteamSwitchOn();
-    active[WARNING_SCALE_CONNECTED] = !scaleConnected && settings.getSavedScale() != "";
-    active[WARNING_SCALE_BATTERY] = scaleConnected && BLEScales.hasBatteryLevel() && BLEScales.getBatteryLevel() < 20;
+    active[WARNING_SCALE_CONNECTED] = !scaleConnected && scaleExpected;
+    active[WARNING_SCALE_BATTERY] = !hardwareSelected && scaleConnected && BLEScales.hasBatteryLevel() && BLEScales.getBatteryLevel() < 20;
     active[WARNING_TEMPERATURE] = !temperatureStable;
 
     level[WARNING_WATER] = settings.getWarnWaterLevel();

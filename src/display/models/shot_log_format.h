@@ -14,7 +14,8 @@
 //   vf(int16_t), v(uint16_t), ev(uint16_t), pr(uint16_t), si(uint16_t), wp(uint16_t)
 // Values are stored as scaled integers (see comments per field below).
 // Sample size: v1-v5 = 26 bytes; v6 = 28 bytes because t is uint32_t;
-// v7 = 30 bytes with cumulative water pumped.
+// v7 = 30 bytes with cumulative water pumped; v8 retains that layout and adds
+// source-neutral scale/process flags. Legacy hardware-scale v6 used 26 bytes.
 // Phase data moved to header transitions in v5.
 // Older files may have fewer fields - use fieldsMask to determine layout.
 
@@ -128,6 +129,18 @@ struct ShotLogSample {
 
 static_assert(sizeof(ShotLogHeader) == SHOT_LOG_HEADER_SIZE, "ShotLogHeader size mismatch");
 static_assert(sizeof(ShotLogSample) == SHOT_LOG_SAMPLE_SIZE, "ShotLogSample size mismatch");
+
+// Legacy scale v6 and upstream v6 used different timestamp widths. The record
+// size written in reserved0 disambiguates those files without rewriting them.
+inline bool shotLogHasElapsedTimestamp(const ShotLogHeader &header) {
+    return header.version >= 6 &&
+           !(header.version == 6 && header.reserved0 == 26 && header.fieldsMask == 0x1FFF);
+}
+
+inline uint8_t shotLogSampleSize(const ShotLogHeader &header) {
+    const uint8_t expected = header.version >= 7 ? 30 : (shotLogHasElapsedTimestamp(header) ? 28 : 26);
+    return header.reserved0 == 0 || header.reserved0 == expected ? expected : 0;
+}
 
 // System info bit definitions for ShotLogSample.si field
 static constexpr uint16_t SYSTEM_INFO_SHOT_STARTED_VOLUMETRIC = 0x0001;   // Shot started in volumetric mode

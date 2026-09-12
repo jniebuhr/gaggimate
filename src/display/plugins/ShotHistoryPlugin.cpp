@@ -1004,19 +1004,17 @@ void ShotHistoryPlugin::rebuildIndex() {
             ShotLogSample sample{};
             shotFile.seek(shotHeader.headerSize, SeekSet);
             for (uint32_t s = 0; s < shotHeader.sampleCount; s++) {
-                // v1-v5 used a 26-byte record with a 16-bit t field. The
-                // aggregate fields begin two bytes later in v6 because t is
-                // now uint32_t; decode both layouts while rebuilding indexes.
-                const size_t expectedSampleSize = shotHeader.version >= 6 ? 28 : 26;
-                const size_t sampleSize = shotHeader.reserved0 ? shotHeader.reserved0 : expectedSampleSize;
-                if (sampleSize != expectedSampleSize) {
+                // Decode old scale ticks as well as upstream elapsed-time and
+                // pumped-water records when rebuilding the existing history.
+                const size_t sampleSize = shotLogSampleSize(shotHeader);
+                if (sampleSize == 0) {
                     break;
                 }
                 uint8_t raw[sizeof(ShotLogSample)]{};
                 if (shotFile.read(raw, sampleSize) != sampleSize) {
                     break;
                 }
-                const size_t valueOffset = shotHeader.version >= 6 ? 4 : 2;
+                const size_t valueOffset = shotLogHasElapsedTimestamp(shotHeader) ? 4 : 2;
                 memcpy(reinterpret_cast<uint8_t *>(&sample.tt), raw + valueOffset, sampleSize - valueOffset);
                 tempSum += sample.ct;
                 tempCount++;

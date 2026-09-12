@@ -100,6 +100,8 @@ void WebSocketHandler::setup(Controller *_controller, PluginManager *_pluginMana
 
     // Subscribe to the selected scale (hardware, Bluetooth, or estimation).
     pluginManager->on("controller:volumetric-measurement:active:change",
+                      [this](Event const &event) { this->currentActiveWeight = event.getFloat("value"); });
+    pluginManager->on("controller:volumetric-measurement:bluetooth:change",
                       [this](Event const &event) { this->currentBluetoothWeight = event.getFloat("value"); });
 }
 
@@ -435,7 +437,7 @@ void WebSocketHandler::publishTelemetry() {
     statusDoc["rtx"] = controller->getClientController()->getRetransmits(); // comms frames resent since boot
     const bool bleConnected = BLEScales.isConnected();
     statusDoc["bw"] = bleConnected ? this->currentBluetoothWeight : 0; // current bluetooth weight
-    statusDoc["cw"] = this->currentBluetoothWeight; // Active scale weight; renamed below with the scale integration.
+    statusDoc["cw"] = this->currentActiveWeight;
     // Explicit null/zero so merging clients drop a finished process instead of keeping the last one.
     statusDoc["process"] = nullptr;
     statusDoc["pkr"] = 0;
