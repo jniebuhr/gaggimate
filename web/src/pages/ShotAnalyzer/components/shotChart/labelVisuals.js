@@ -4,6 +4,7 @@ import { faDroplet } from '@fortawesome/free-solid-svg-icons/faDroplet';
 import { faFaucet } from '@fortawesome/free-solid-svg-icons/faFaucet';
 import { faFilter } from '@fortawesome/free-solid-svg-icons/faFilter';
 import { faGauge } from '@fortawesome/free-solid-svg-icons/faGauge';
+import { faGaugeHigh } from '@fortawesome/free-solid-svg-icons/faGaugeHigh';
 import { faScaleBalanced } from '@fortawesome/free-solid-svg-icons/faScaleBalanced';
 import { faTemperatureHalf } from '@fortawesome/free-solid-svg-icons/faTemperatureHalf';
 import {
@@ -29,6 +30,8 @@ const ICON_BY_LABEL = {
   'Pump Flow': faFaucet,
   'Target F': faBullseye,
   'Puck Flow': faFilter,
+  'Puck Resistance': faGaugeHigh,
+  'Liquid Resistance': faGaugeHigh,
   Weight: faScaleBalanced,
   'Weight Flow': faScaleBalanced,
   [WATER_DRAWN_PHASE_LABEL]: faDroplet,

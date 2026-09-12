@@ -134,6 +134,42 @@ export const columnConfig = [
     type: COLUMN_TYPES.AVG,
     group: 'puckflow',
   }),
+  createColumn({
+    id: 'pr_se',
+    label: 'Puck Resistance (s·√bar/mL)',
+    type: COLUMN_TYPES.SE,
+    group: 'puckresistance',
+  }),
+  createColumn({
+    id: 'pr_mm',
+    label: 'Puck Resistance (s·√bar/mL)',
+    type: COLUMN_TYPES.MM,
+    group: 'puckresistance',
+  }),
+  createColumn({
+    id: 'pr_avg',
+    label: 'Puck Resistance (s·√bar/mL)',
+    type: COLUMN_TYPES.AVG,
+    group: 'puckresistance',
+  }),
+  createColumn({
+    id: 'lr_se',
+    label: 'Liquid Resistance (bar·s/mL)',
+    type: COLUMN_TYPES.SE,
+    group: 'liquidresistance',
+  }),
+  createColumn({
+    id: 'lr_mm',
+    label: 'Liquid Resistance (bar·s/mL)',
+    type: COLUMN_TYPES.MM,
+    group: 'liquidresistance',
+  }),
+  createColumn({
+    id: 'lr_avg',
+    label: 'Liquid Resistance (bar·s/mL)',
+    type: COLUMN_TYPES.AVG,
+    group: 'liquidresistance',
+  }),
   createColumn({ id: 't_se', label: 'Temperature (℃)', type: COLUMN_TYPES.SE, group: 'temp' }),
   createColumn({ id: 't_mm', label: 'Temperature (℃)', type: COLUMN_TYPES.MM, group: 'temp' }),
   createColumn({

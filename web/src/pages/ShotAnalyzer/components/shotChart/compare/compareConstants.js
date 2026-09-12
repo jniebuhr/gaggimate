@@ -27,7 +27,14 @@ export const COMPARE_STYLE_FADE = 'fade';
 
 const MOBILE_COMPARE_CONTEXT_LEGEND_LABELS = ['Phases', 'Stops'];
 
-export const MOBILE_COMPARE_FIXED_SERIES_LABELS = ['Pressure', 'Target P', 'Pump Flow', 'Target F'];
+export const MOBILE_COMPARE_FIXED_SERIES_LABELS = [
+  'Pressure',
+  'Target P',
+  'Pump Flow',
+  'Target F',
+  'Puck Resistance',
+  'Liquid Resistance',
+];
 
 export const MOBILE_COMPARE_CONTEXT_LABEL_SET = new Set(MOBILE_COMPARE_CONTEXT_LEGEND_LABELS);
 
@@ -41,6 +48,8 @@ export const COMPARE_LEGEND_KEY_BY_LABEL = {
   'Pump Flow': 'flow',
   'Target F': 'targetFlow',
   'Puck Flow': 'puckFlow',
+  'Puck Resistance': 'puckResistance',
+  'Liquid Resistance': 'liquidResistance',
   Weight: 'weight',
   'Weight Flow': 'weightFlow',
 };
@@ -80,6 +89,30 @@ export const DETAIL_CHARTS = [
     seriesKey: 'puckFlow',
     targetSeriesKey: null,
     axisColorKey: 'puckFlow',
+    beginAtZero: true,
+  },
+  {
+    id: 'puck-resistance',
+    title: 'Puck Resistance',
+    tooltipBaseLabel: 'Puck Resistance',
+    targetTooltipBaseLabel: null,
+    visibleKey: 'puckResistance',
+    targetVisibleKey: null,
+    seriesKey: 'puckResistance',
+    targetSeriesKey: null,
+    axisColorKey: 'puckResistance',
+    beginAtZero: true,
+  },
+  {
+    id: 'liquid-resistance',
+    title: 'Liquid Resistance',
+    tooltipBaseLabel: 'Liquid Resistance',
+    targetTooltipBaseLabel: null,
+    visibleKey: 'liquidResistance',
+    targetVisibleKey: null,
+    seriesKey: 'liquidResistance',
+    targetSeriesKey: null,
+    axisColorKey: 'liquidResistance',
     beginAtZero: true,
   },
   {

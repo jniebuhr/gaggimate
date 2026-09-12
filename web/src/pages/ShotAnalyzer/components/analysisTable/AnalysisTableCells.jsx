@@ -62,6 +62,8 @@ const CELL_METRIC_UNITS = {
   f: 'ml/s',
   tf: 'ml/s',
   pf: 'ml/s',
+  pr: 's·√bar/mL',
+  lr: 'bar·s/mL',
   t: '°C',
   tt: '°C',
   w: 'g',
