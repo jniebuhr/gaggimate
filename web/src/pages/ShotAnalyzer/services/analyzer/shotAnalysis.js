@@ -7,6 +7,7 @@ import {
   isAnalyzerDebugEnabled,
 } from './delayTracking';
 import { getMetricStats } from './metricStats';
+import { getLiquidResistanceStats, getNativePuckResistanceStats } from './puckResistance';
 import { analyzeExecutedPhase } from './phaseAnalysis';
 import { getBluetoothScaleConnectionState } from './scaleConnection';
 import { getSlowSampleIntervalSummary } from './sampleIntervals';
@@ -227,6 +228,8 @@ export function calculateShotMetrics(shotData, profileData, settings) {
     tt: getMetricStats(gSamples, 'tt'),
     w: getMetricStats(gWeightSamples, 'v'),
     wf: getMetricStats(gSamples, 'vf'),
+    pr: getNativePuckResistanceStats(gSamples),
+    lr: getLiquidResistanceStats(gSamples),
     sys_raw: finalSysInfo.raw,
     sys_shot_vol: finalSysInfo.shotStartedVolumetric,
     sys_curr_vol: finalSysInfo.currentlyVolumetric,

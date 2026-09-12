@@ -29,6 +29,8 @@ export function normalizeCompareVisibility(
     brewModeLabel: Boolean(showBrewModeAnnotation),
     temp: false,
     puckFlow: false,
+    puckResistance: false,
+    liquidResistance: false,
     weight: false,
     weightFlow: false,
   };
@@ -58,6 +60,8 @@ export function getMobileCompareVisibility(visibility) {
     flow: true,
     targetFlow: true,
     puckFlow: false,
+    puckResistance: Boolean(visibility.puckResistance),
+    liquidResistance: Boolean(visibility.liquidResistance),
     temp: false,
     targetTemp: false,
     weight: false,

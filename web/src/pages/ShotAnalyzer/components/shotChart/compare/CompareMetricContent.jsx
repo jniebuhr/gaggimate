@@ -109,7 +109,11 @@ export function CompareMobileLegend({
   visibility,
 }) {
   const handleMobileLegendToggle = label => {
-    if (MOBILE_COMPARE_CONTEXT_LABEL_SET.has(label)) {
+    if (
+      MOBILE_COMPARE_CONTEXT_LABEL_SET.has(label) ||
+      label === 'Puck Resistance' ||
+      label === 'Liquid Resistance'
+    ) {
       onLegendToggle(label);
     }
   };
@@ -360,6 +364,26 @@ function getStatisticsMetricDefinitions(metricLabel = null) {
         getValue: total => total?.pf?.avg,
       },
     ],
+    'Puck Resistance': [
+      {
+        key: 'puckResistance',
+        label: 'Avg. Puck Resistance',
+        unit: 's·√bar/mL',
+        color: 'var(--analyzer-puckresistance-text)',
+        icon: getShotChartLabelIcon('Puck Resistance'),
+        getValue: total => total?.pr?.avg,
+      },
+    ],
+    'Liquid Resistance': [
+      {
+        key: 'liquidResistance',
+        label: 'Avg. Liquid Resistance',
+        unit: 'bar·s/mL',
+        color: 'var(--analyzer-liquidresistance-text)',
+        icon: getShotChartLabelIcon('Liquid Resistance'),
+        getValue: total => total?.lr?.avg,
+      },
+    ],
     Weight: [
       {
         key: 'weight',
@@ -536,6 +560,22 @@ function getCompareMobileDetailMetricDefinitions(labelKey, pageKey = null) {
       color: 'var(--analyzer-puckflow-text)',
       icon: getShotChartLabelIcon('Puck Flow'),
       getValue: nextTotal => nextTotal?.pf?.avg,
+    },
+    'Puck Resistance': {
+      key: 'puckResistance',
+      label: 'Avg. Puck Resistance',
+      unit: 's·√bar/mL',
+      color: 'var(--analyzer-puckresistance-text)',
+      icon: getShotChartLabelIcon('Puck Resistance'),
+      getValue: nextTotal => nextTotal?.pr?.avg,
+    },
+    'Liquid Resistance': {
+      key: 'liquidResistance',
+      label: 'Avg. Liquid Resistance',
+      unit: 'bar·s/mL',
+      color: 'var(--analyzer-liquidresistance-text)',
+      icon: getShotChartLabelIcon('Liquid Resistance'),
+      getValue: nextTotal => nextTotal?.lr?.avg,
     },
     Weight: {
       key: 'weight',

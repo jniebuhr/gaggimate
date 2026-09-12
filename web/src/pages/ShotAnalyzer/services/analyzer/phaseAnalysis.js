@@ -10,6 +10,7 @@ import {
   createPhaseDelayTracker,
 } from './delayTracking';
 import { getMetricStats } from './metricStats';
+import { getLiquidResistanceStats, getNativePuckResistanceStats } from './puckResistance';
 import { getBluetoothScaleConnectionState } from './scaleConnection';
 import {
   PREDICTION_INTERVAL_MS,
@@ -548,6 +549,8 @@ function getPhaseStats(samples, weightSamples, sysInfo, sysAnomalies, analyzerSy
     tt: getMetricStats(samples, 'tt'),
     w: getMetricStats(weightSamples, 'v'),
     wf: getMetricStats(samples, 'vf'),
+    pr: getNativePuckResistanceStats(samples),
+    lr: getLiquidResistanceStats(samples),
     sys_raw: sysInfo.raw,
     sys_shot_vol: sysInfo.shotStartedVolumetric,
     sys_curr_vol: sysInfo.currentlyVolumetric,

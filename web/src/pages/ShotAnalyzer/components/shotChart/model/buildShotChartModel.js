@@ -36,8 +36,15 @@ export function buildShotChartModel({
     cumulativeWaterTotalBySample,
   );
   const series = buildSeries(samples);
-  const { hasWeight, mainAxisMax, weightAxisMax, tempAxisMin, tempAxisMax } =
-    buildAxisRanges(series);
+  const {
+    hasWeight,
+    mainAxisMax,
+    weightAxisMax,
+    puckResistanceAxisMax,
+    liquidResistanceAxisMax,
+    tempAxisMin,
+    tempAxisMax,
+  } = buildAxisRanges(series);
   const phaseLabelOverlays = [];
   const phaseBackgroundRanges = [];
   const extendedStartX = getExtendedRecordingStartX(samples, maxTime);
@@ -78,6 +85,8 @@ export function buildShotChartModel({
     hasWeight,
     mainAxisMax,
     weightAxisMax,
+    puckResistanceAxisMax,
+    liquidResistanceAxisMax,
     tempAxisMin,
     tempAxisMax,
     phaseAnnotations,
