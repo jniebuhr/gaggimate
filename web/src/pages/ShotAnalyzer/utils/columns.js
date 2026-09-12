@@ -13,6 +13,12 @@ export function createColumn({ id, label, type, group, default: isDefault = fals
   return col;
 }
 
+function createMetricColumns(prefix, label, group) {
+  return [COLUMN_TYPES.SE, COLUMN_TYPES.MM, COLUMN_TYPES.AVG].map(type =>
+    createColumn({ id: `${prefix}_${type}`, label, type, group }),
+  );
+}
+
 export const columnConfig = [
   createColumn({
     id: 'duration',
@@ -134,42 +140,8 @@ export const columnConfig = [
     type: COLUMN_TYPES.AVG,
     group: 'puckflow',
   }),
-  createColumn({
-    id: 'pr_se',
-    label: 'Puck Resistance (s·√bar/mL)',
-    type: COLUMN_TYPES.SE,
-    group: 'puckresistance',
-  }),
-  createColumn({
-    id: 'pr_mm',
-    label: 'Puck Resistance (s·√bar/mL)',
-    type: COLUMN_TYPES.MM,
-    group: 'puckresistance',
-  }),
-  createColumn({
-    id: 'pr_avg',
-    label: 'Puck Resistance (s·√bar/mL)',
-    type: COLUMN_TYPES.AVG,
-    group: 'puckresistance',
-  }),
-  createColumn({
-    id: 'lr_se',
-    label: 'Liquid Resistance (bar·s/mL)',
-    type: COLUMN_TYPES.SE,
-    group: 'liquidresistance',
-  }),
-  createColumn({
-    id: 'lr_mm',
-    label: 'Liquid Resistance (bar·s/mL)',
-    type: COLUMN_TYPES.MM,
-    group: 'liquidresistance',
-  }),
-  createColumn({
-    id: 'lr_avg',
-    label: 'Liquid Resistance (bar·s/mL)',
-    type: COLUMN_TYPES.AVG,
-    group: 'liquidresistance',
-  }),
+  ...createMetricColumns('pr', 'Puck Resistance (s·√bar/mL)', 'puckresistance'),
+  ...createMetricColumns('lr', 'Liquid Resistance (bar·s/mL)', 'liquidresistance'),
   createColumn({ id: 't_se', label: 'Temperature (℃)', type: COLUMN_TYPES.SE, group: 'temp' }),
   createColumn({ id: 't_mm', label: 'Temperature (℃)', type: COLUMN_TYPES.MM, group: 'temp' }),
   createColumn({
