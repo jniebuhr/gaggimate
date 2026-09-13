@@ -198,6 +198,10 @@ function buildSubmitFormData(formData, autowakeupSchedules, restart) {
     formData.altRelayFunction !== undefined ? String(formData.altRelayFunction) : '1',
   );
   formDataToSubmit.set(
+    'dumpValveDuration',
+    formData.dumpValveDuration !== undefined ? String(formData.dumpValveDuration) : '2',
+  );
+  formDataToSubmit.set(
     'buttonBehavior',
     `${formData.button0},${formData.button1},${formData.button2}`,
   );

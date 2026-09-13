@@ -265,6 +265,10 @@ void Settings::setFullTankDistance(int full_tank_distance) { fullTankDistance.se
 
 void Settings::setAltRelayFunction(int alt_relay_function) { altRelayFunction.set(alt_relay_function); }
 
+void Settings::setDumpValveDuration(float dump_valve_duration) {
+    dumpValveDuration.set(std::clamp(dump_valve_duration, 0.0f, MAX_DUMP_VALVE_DURATION_S));
+}
+
 void Settings::setAutoWakeupEnabled(bool enabled) { autowakeupEnabled.set(enabled); }
 
 void Settings::setAutoWakeupSchedules(const std::vector<AutoWakeupSchedule> &schedules) { autowakeupSchedules.set(schedules); }
