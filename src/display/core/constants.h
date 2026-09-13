@@ -14,6 +14,8 @@
 #define MAX_FLUSH_DURATION_S 60
 #define FLUSH_HOLD_MAX_DURATION_S 60 // safety cap for hold-to-flush (flush duration 0)
 #define FLUSH_DRAIN_DURATION_S 1     // valve stays open this long after the flush pump stops
+#define DEFAULT_DUMP_VALVE_DURATION_S 2.0f
+#define MAX_DUMP_VALVE_DURATION_S 10.0f
 #define BREW_MAX_VOLUMETRIC 250.0
 #define DEFAULT_STANDBY_TIMEOUT_MS 900000
 #define MIN_TEMP 0
@@ -46,6 +48,7 @@
 #define ALT_RELAY_NONE 0
 #define ALT_RELAY_GRIND 1
 #define ALT_RELAY_STEAM_BOILER 2
+#define ALT_RELAY_DUMP 3
 
 #define WIFI_CONNECT_TIMEOUT_MS 30000
 #define DEFAULT_WIFI_AP_TIMEOUT_MS 600000

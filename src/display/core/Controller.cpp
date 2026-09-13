@@ -44,6 +44,15 @@
 
 const String LOG_TAG = F("Controller");
 
+namespace {
+float brewDumpDurationS(const Settings &settings) {
+    if (settings.getAltRelayFunction() != ALT_RELAY_DUMP) {
+        return 0.0f;
+    }
+    return settings.getDumpValveDuration();
+}
+} // namespace
+
 void Controller::setup() {
     mode = MODE_STANDBY;
 
@@ -280,7 +289,7 @@ void Controller::setupBluetooth() {
         }
         if (error != ERROR_CODE_TIMEOUT && error != this->error) {
             this->error = error;
-            deactivate();
+            deactivate(true);
             setMode(MODE_STANDBY);
             pluginManager->trigger(F("controller:error"));
             ESP_LOGE(LOG_TAG, "Received error %d", error);
@@ -896,7 +905,10 @@ void Controller::updateControl() {
 
     bool altRelayActive = false;
     if (active && proc->isAltRelayActive()) {
-        if (proc->getType() == MODE_GRIND && settings.getAltRelayFunction() == ALT_RELAY_GRIND) {
+        const int fn = settings.getAltRelayFunction();
+        if (fn == ALT_RELAY_GRIND && proc->getType() == MODE_GRIND) {
+            altRelayActive = true;
+        } else if (fn == ALT_RELAY_DUMP && proc->getType() == MODE_BREW) {
             altRelayActive = true;
         }
     }
@@ -1004,7 +1016,7 @@ void Controller::activate(bool ignoreWarnings) {
                                      profileManager->getSelectedProfile().isVolumetric() && isVolumetricAvailable()
                                          ? ProcessTarget::VOLUMETRIC
                                          : ProcessTarget::TIME,
-                                     settings.getBrewDelay()));
+                                     settings.getBrewDelay(), brewDumpDurationS(settings)));
         break;
     case MODE_STEAM:
         startProcess(new SteamProcess(STEAM_SAFETY_DURATION_MS, settings.getSteamPumpPercentage()));
@@ -1027,10 +1039,18 @@ void Controller::activate(bool ignoreWarnings) {
 // A UI declined the brew confirmation; every UI showing it dismisses.
 void Controller::cancelBrewConfirm() { pluginManager->trigger("controller:brew:confirm:cancel"); }
 
-void Controller::deactivate() {
+void Controller::deactivate(bool force) {
     std::vector<const char *> events;
     {
         std::lock_guard<std::recursive_mutex> guard(processMutex);
+        if (!force && !isErrorState() && currentProcess != nullptr && currentProcess->isActive() &&
+            currentProcess->getType() == MODE_BREW) {
+            auto *brewProcess = static_cast<BrewProcess *>(currentProcess);
+            if (brewProcess->processPhase == ProcessPhase::RUNNING && brewProcess->hasDump()) {
+                brewProcess->startDump(PhaseExitReason::ABORTED);
+                return;
+            }
+        }
         deactivateLocked(events);
     }
     dispatchEvents(events);
@@ -1204,7 +1224,7 @@ void Controller::onFlush() {
     const int duration = settings.getFlushDuration();
     Profile profile = FLUSH_PROFILE;
     profile.phases[0].duration = duration > 0 ? duration : FLUSH_HOLD_MAX_DURATION_S; // 0 = hold, capped
-    auto *flush = new BrewProcess(profile, ProcessTarget::TIME, settings.getBrewDelay());
+    auto *flush = new BrewProcess(profile, ProcessTarget::TIME, settings.getBrewDelay(), brewDumpDurationS(settings));
     flush->holdPhase = duration == 0; // pump phase ends on onFlushRelease(), the drain phase still runs
     std::vector<const char *> events;
     {
@@ -1301,7 +1321,9 @@ void Controller::handleBrewButton(bool pressed) {
     if (!pressed) { // latching switch flipped off
         if (getMode() == MODE_BREW) {
             deactivate();
-            clear();
+            if (!isActive()) {
+                clear();
+            }
         } else if (getMode() == MODE_WATER) {
             deactivate();
         }
@@ -1316,7 +1338,9 @@ void Controller::handleBrewButton(bool pressed) {
             activate();
         } else if (settings.isMomentaryButtons()) { // second press stops the shot
             deactivate();
-            clear();
+            if (!isActive()) {
+                clear();
+            }
         }
         break;
     case MODE_WATER:
@@ -1379,7 +1403,9 @@ void Controller::handleFlushButton(bool pressed) {
 void Controller::handleProfileButton(bool pressed, const String &id) {
     if (!pressed) { // latching switch flipped off
         deactivate();
-        clear();
+        if (!isActive()) {
+            clear();
+        }
         return;
     }
     if (getMode() == MODE_STANDBY) {
@@ -1391,7 +1417,9 @@ void Controller::handleProfileButton(bool pressed, const String &id) {
     }
     if (isActive()) { // pressing again stops the running shot
         deactivate();
-        clear();
+        if (!isActive()) {
+            clear();
+        }
         return;
     }
     std::vector<String> profileIds = profileManager->listProfiles();

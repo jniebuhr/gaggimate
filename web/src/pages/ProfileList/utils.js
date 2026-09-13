@@ -57,6 +57,7 @@ function parseJsonProfile(input) {
       let phase = {
         name: p && typeof p.name === 'string' && p.name.trim() ? p.name : `Phase ${i + 1}`,
         valve: 1,
+        alt: 0,
         pump: 0,
         duration: Math.max(p.target.time, p.stopConditions.time) / 1000,
         targets: [],
@@ -217,6 +218,7 @@ function convertStage(stage, index, profileTemperature, resolve) {
     name: stage.name || `Phase ${index + 1}`,
     phase: isPreinfusion ? 'preinfusion' : 'brew',
     valve: 1,
+    alt: 0,
     duration,
     pump: buildPump(stage, points, resolve),
     transition: {

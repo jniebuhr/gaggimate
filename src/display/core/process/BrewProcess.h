@@ -2,6 +2,7 @@
 #define BREWPROCESS_H
 
 #include <algorithm>
+#include <cmath>
 #include <display/core/constants.h>
 #include <display/core/predictive.h>
 #include <display/core/process/Process.h>
@@ -12,6 +13,8 @@ class BrewProcess : public Process {
     Profile profile;
     ProcessTarget target;
     double brewDelay;
+    unsigned long dumpDurationMs = 0;
+    unsigned long dumpStarted = 0;
     unsigned int phaseIndex = 0;
     Phase currentPhase;
     ProcessPhase processPhase = ProcessPhase::RUNNING;
@@ -30,8 +33,9 @@ class BrewProcess : public Process {
     float phaseStartedPumped = 0.0f;
     VolumetricRateCalculator volumetricRateCalculator{PREDICTIVE_TIME};
 
-    explicit BrewProcess(Profile profile, ProcessTarget target, double brewDelay = 0.0)
-        : profile(profile), target(target), brewDelay(brewDelay) {
+    explicit BrewProcess(Profile profile, ProcessTarget target, double brewDelay = 0.0, float dumpDurationS = 0.0f)
+        : profile(profile), target(target), brewDelay(brewDelay),
+          dumpDurationMs(static_cast<unsigned long>(std::lround(std::max(0.0f, dumpDurationS) * 1000.0f))) {
         currentPhase = profile.phases.at(phaseIndex);
         processStarted = millis();
         currentPhaseStarted = millis();
@@ -106,23 +110,61 @@ class BrewProcess : public Process {
         return newDelay;
     }
 
+    bool hasDump() const { return dumpDurationMs > 0; }
+
+    // Opens dump with the 3-way still open. abortReason is set for a user stop; omit on natural finish.
+    void startDump(PhaseExitReason abortReason = PhaseExitReason::NONE) {
+        if (processPhase != ProcessPhase::RUNNING) {
+            return;
+        }
+        if (abortReason != PhaseExitReason::NONE) {
+            lastExitReason = abortReason;
+        }
+        if (dumpDurationMs == 0) {
+            processPhase = ProcessPhase::FINISHED;
+            finished = millis();
+            return;
+        }
+        processPhase = ProcessPhase::DUMPING;
+        dumpStarted = millis();
+        currentPhaseStarted = dumpStarted;
+        currentPhase.name = "Dump";
+        currentPhase.valve = 1;
+        currentPhase.alt = 1;
+        currentPhase.pumpIsSimple = true;
+        currentPhase.pumpSimple = 0;
+        currentPhase.duration = static_cast<float>(dumpDurationMs) / 1000.0f;
+        currentPhase.targets.clear();
+    }
+
     bool isRelayActive() override {
         if (processPhase == ProcessPhase::FINISHED) {
             return false;
         }
+        if (processPhase == ProcessPhase::DUMPING) {
+            return true;
+        }
         return currentPhase.valve;
     }
 
-    bool isAltRelayActive() override { return false; }
+    bool isAltRelayActive() override {
+        if (processPhase == ProcessPhase::FINISHED) {
+            return false;
+        }
+        if (processPhase == ProcessPhase::DUMPING) {
+            return true;
+        }
+        return currentPhase.alt;
+    }
 
     float getPumpValue() override {
-        if (processPhase == ProcessPhase::FINISHED) {
+        if (processPhase == ProcessPhase::FINISHED || processPhase == ProcessPhase::DUMPING) {
             return 0.0f;
         }
         return currentPhase.pumpIsSimple ? currentPhase.pumpSimple : 100.0f;
     }
 
-    bool isAdvancedPump() const { return processPhase != ProcessPhase::FINISHED && !currentPhase.pumpIsSimple; }
+    bool isAdvancedPump() const { return processPhase == ProcessPhase::RUNNING && !currentPhase.pumpIsSimple; }
 
     [[nodiscard]] PumpTarget getPumpTarget() const { return currentPhase.pumpAdvanced.target; }
 
@@ -153,6 +195,13 @@ class BrewProcess : public Process {
 
     void progress() override {
         // Progress should be called around every 100ms, as defined in PROGRESS_INTERVAL, while the Process is active
+        if (processPhase == ProcessPhase::DUMPING) {
+            if (millis() - dumpStarted >= dumpDurationMs) {
+                processPhase = ProcessPhase::FINISHED;
+                finished = millis();
+            }
+            return;
+        }
         PhaseExitReason reason;
         while ((reason = currentPhaseExitReason()) != PhaseExitReason::NONE && processPhase == ProcessPhase::RUNNING) {
             previousPhaseFinished = millis();
@@ -169,13 +218,12 @@ class BrewProcess : public Process {
                 currentPhaseStarted = millis();
                 computeEffectiveTargetsForCurrentPhase();
             } else {
-                processPhase = ProcessPhase::FINISHED;
-                finished = millis();
+                startDump();
             }
         }
     }
 
-    bool isActive() override { return processPhase == ProcessPhase::RUNNING; }
+    bool isActive() override { return processPhase == ProcessPhase::RUNNING || processPhase == ProcessPhase::DUMPING; }
 
     bool isComplete() override {
         if (target == ProcessTarget::TIME) {

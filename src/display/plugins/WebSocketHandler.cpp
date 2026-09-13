@@ -192,7 +192,8 @@ void WebSocketHandler::handleWebSocketData(AsyncWebSocket *server, AsyncWebSocke
                     controller->cancelBrewConfirm();
                 } else if (msgType == "req:process:deactivate") {
                     controller->deactivate();
-                    controller->clear();
+                    if (!controller->isActive())
+                        controller->clear();
                 } else if (msgType == "req:process:clear") {
                     controller->clear();
                 } else if (msgType == "req:grind:activate") {
@@ -220,7 +221,7 @@ void WebSocketHandler::handleWebSocketData(AsyncWebSocket *server, AsyncWebSocke
                     // Locked in standby while the controller is not ready, like the touch UI's wake gate.
                     if (doc["mode"].is<uint8_t>() && controller->getSystemState() == SYSTEM_READY) {
                         auto mode = doc["mode"].as<uint8_t>();
-                        controller->deactivate();
+                        controller->deactivate(true);
                         controller->clear();
                         controller->setMode(mode);
                     }

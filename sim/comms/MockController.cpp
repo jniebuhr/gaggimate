@@ -24,6 +24,7 @@ void MockController::setPump(const PumpCommand &c) {
 void MockController::setRelay(const RelayCommand &c) {
     if (c.index == 0)
         brewValveOpen = c.open;
+    // index 1 = alt/dump relay; the Classic-style mock dumps to tray, not the scale.
 }
 
 void MockController::update() {

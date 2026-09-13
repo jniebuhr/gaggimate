@@ -19,6 +19,7 @@ import { Spinner } from '../../components/Spinner.jsx';
 import { ExtendedProfileForm } from './ExtendedProfileForm.jsx';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
+import { useQuery } from 'preact-fetching';
 
 Chart.register(
   LineController,
@@ -41,6 +42,12 @@ export function ProfileEdit() {
   const [saving, setSaving] = useState(false);
   const { params } = useRoute();
   const [data, setData] = useState(null);
+  const { data: settings } = useQuery(
+    'settings-cache',
+    async () => (await fetch('/api/settings')).json(),
+    { staleTime: 30000, refetchOnWindowFocus: false },
+  );
+  const showDumpValve = Number(settings?.altRelayFunction) === 3;
   useEffect(() => {
     async function fetchData() {
       if (params.id === 'new') {
@@ -53,6 +60,7 @@ export function ProfileEdit() {
               name: 'Pump',
               phase: 'preinfusion',
               valve: 1,
+              alt: 0,
               pump: 100,
               duration: 3,
               transition: {
@@ -66,6 +74,7 @@ export function ProfileEdit() {
               name: 'Bloom',
               phase: 'preinfusion',
               valve: 1,
+              alt: 0,
               pump: 0,
               duration: 5,
               transition: {
@@ -79,6 +88,7 @@ export function ProfileEdit() {
               name: 'Pump',
               phase: 'brew',
               valve: 1,
+              alt: 0,
               pump: 100,
               duration: 20,
               targets: [
@@ -159,6 +169,7 @@ export function ProfileEdit() {
           onSave={onSave}
           saving={saving}
           pressureAvailable={pressureAvailable.value}
+          showDumpValve={showDumpValve}
         />
       )}
       {data?.type === 'pro' && (
@@ -168,6 +179,7 @@ export function ProfileEdit() {
           onSave={onSave}
           saving={saving}
           pressureAvailable={pressureAvailable.value}
+          showDumpValve={showDumpValve}
         />
       )}
     </>
