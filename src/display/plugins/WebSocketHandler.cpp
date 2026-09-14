@@ -276,27 +276,16 @@ void WebSocketHandler::handleProfileRequest(uint32_t clientId, JsonDocument &req
     response["rid"] = request["rid"].as<String>();
 
     if (type == "req:profiles:list") {
-        auto arr = response["profiles"].to<JsonArray>();
-        for (auto const &id : profileManager->listProfiles()) {
-            Profile profile{};
-            // Skip entries whose JSON couldn't be opened or failed validation
-            // (parseProfile returns false for missing label/type/phases). Without
-            // this, corrupt or partial profile files surface as blank cards in
-            // the UI — the user reported "blank Simple cards" originating here.
-            if (!profileManager->loadProfile(id, profile)) {
-                ESP_LOGW("WebSocketHandler", "Skipping unreadable profile %s in list response", id.c_str());
-                continue;
-            }
-            auto p = arr.add<JsonObject>();
-            if (request["minimal"].as<bool>()) {
-                p["id"] = profile.id;
-                p["label"] = profile.label;
-            } else {
-                writeProfile(p, profile);
-            }
+        // The array is pre-serialized and cached in PSRAM by ProfileManager, so
+        // after the first request following a change this is a memcpy instead
+        // of a flash read + parse + re-serialize of every profile.
+        const bool minimal = request["minimal"].as<bool>();
+        const auto *listJson = profileManager->getListJson(minimal);
+        if (listJson != nullptr && !listJson->empty()) {
+            response["profiles"] = serialized(listJson->c_str(), listJson->size());
+        } else {
+            response["profiles"].to<JsonArray>();
         }
-        // Clients cache this list keyed by rev and skip the request while the
-        // device's revision (prv in evt:status) is unchanged.
         response["rev"] = profileManager->getRevision();
     } else if (type == "req:profiles:load") {
         auto id = request["id"].as<String>();
