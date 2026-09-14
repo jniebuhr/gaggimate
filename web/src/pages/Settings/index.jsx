@@ -18,6 +18,7 @@ import {
 } from '../../utils/dashboardManager.js';
 import { downloadJson } from '../../utils/download.js';
 import {
+  isDeviceRevisionKnown,
   isProfileListCurrent,
   readCachedProfileList,
   writeCachedProfileList,
@@ -212,7 +213,7 @@ export function Settings() {
   // Serve the profile dropdown from the browser cache while the device's
   // profile revision is unchanged (see utils/profileListCache.js).
   useEffect(() => {
-    if (!machine.value.connected) return;
+    if (!isDeviceRevisionKnown(machine.value)) return;
     const cached = readCachedProfileList('minimal');
     const deviceRev = machine.value.status.profilesRevision;
     if (cached && isProfileListCurrent(cached.rev, deviceRev)) {
@@ -225,7 +226,12 @@ export function Settings() {
       writeCachedProfileList(response.rev, response.profiles, 'minimal');
     };
     loadProfiles();
-  }, [machine.value.connected, machine.value.status.profilesRevision, apiService]);
+  }, [
+    machine.value.connected,
+    machine.value.stateReceived,
+    machine.value.status.profilesRevision,
+    apiService,
+  ]);
 
   const formRef = useRef();
   const dropdownRef = useRef(null);

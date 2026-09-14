@@ -25,6 +25,7 @@ import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'p
 import { computed } from '@preact/signals';
 import { Spinner } from '../../components/Spinner.jsx';
 import {
+  isDeviceRevisionKnown,
   isProfileListCurrent,
   readCachedProfileList,
   writeCachedProfileList,
@@ -67,7 +68,7 @@ const PhaseLabels = {
   brew: 'Brew',
 };
 
-const connected = computed(() => machine.value.connected);
+const revisionKnown = computed(() => isDeviceRevisionKnown(machine.value));
 const profilesRevision = computed(() => machine.value.status.profilesRevision);
 
 function ProfileCard({
@@ -822,13 +823,13 @@ export function ProfileList() {
   // list whose revision still matches needs no request at all.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    if (!connected.value) return;
+    if (!revisionKnown.value) return;
     if (isProfileListCurrent(loadedRevisionRef.current, profilesRevision.value)) {
       setLoading(false);
       return;
     }
     loadProfiles();
-  }, [connected.value, profilesRevision.value]);
+  }, [revisionKnown.value, profilesRevision.value]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const onDelete = useCallback(

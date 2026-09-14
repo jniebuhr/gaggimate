@@ -48,6 +48,16 @@ export function writeCachedProfileList(rev, profiles, variant = '') {
 }
 
 /**
+ * True once the device has told us its current revision for this connection
+ * (the full status snapshot has arrived). Until then a page should neither
+ * fetch nor trust its cache, because the socket opens a moment before the
+ * snapshot lands and fetching then would defeat the cache on every load.
+ */
+export function isDeviceRevisionKnown(machineValue) {
+  return !!machineValue.connected && !!machineValue.stateReceived;
+}
+
+/**
  * True when the list held at `cachedRev` is still what the device would return.
  * Unknown device revision (older firmware, or no status frame yet) counts as
  * stale so behaviour matches the old always-fetch path.

@@ -8,12 +8,14 @@ import { faScaleBalanced } from '@fortawesome/free-solid-svg-icons/faScaleBalanc
 import PropTypes from 'prop-types';
 import { SkeletonBlock } from '../../../components/SkeletonBlock.jsx';
 import {
+  isDeviceRevisionKnown,
   isProfileListCurrent,
   readCachedProfileList,
   writeCachedProfileList,
 } from '../../../utils/profileListCache.js';
 
 const connected = computed(() => machine.value.connected);
+const revisionKnown = computed(() => isDeviceRevisionKnown(machine.value));
 const profilesRevision = computed(() => machine.value.status.profilesRevision);
 
 function ProfileMiniCard({ profile, isSelected, onSelect }) {
@@ -73,6 +75,7 @@ export function FavoriteProfilesCard({ selectedProfileId, inCard = false, compac
       setLoading(false);
       return;
     }
+    if (!revisionKnown.value) return; // full status snapshot not in yet; keep the skeleton
     // The dashboard is the first page of every visit: serve favorites from the
     // browser cache while the device's profile revision is unchanged, so no
     // list request is needed at all (see utils/profileListCache.js). Reading
