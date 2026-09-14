@@ -24,6 +24,11 @@ import { ApiServiceContext, machine } from '../../services/ApiService.js';
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { computed } from '@preact/signals';
 import { Spinner } from '../../components/Spinner.jsx';
+import {
+  isProfileListCurrent,
+  readCachedProfileList,
+  writeCachedProfileList,
+} from '../../utils/profileListCache.js';
 import Card from '../../components/Card.jsx';
 import { parseProfile } from './utils.js';
 import { downloadJson } from '../../utils/download.js';
@@ -63,6 +68,7 @@ const PhaseLabels = {
 };
 
 const connected = computed(() => machine.value.connected);
+const profilesRevision = computed(() => machine.value.status.profilesRevision);
 
 function ProfileCard({
   data,
@@ -583,8 +589,12 @@ function SimpleStep(props) {
 
 export function ProfileList() {
   const apiService = useContext(ApiServiceContext);
-  const [profiles, setProfiles] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // Render the last known list straight away; it is replaced only if the
+  // device reports a different profile revision (see profileListCache.js).
+  const [cached] = useState(() => readCachedProfileList());
+  const [profiles, setProfiles] = useState(() => cached?.profiles ?? []);
+  const [loading, setLoading] = useState(!cached);
+  const loadedRevisionRef = useRef(cached?.rev);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('extraction');
   const [isDragging, setIsDragging] = useState(false);
@@ -603,6 +613,8 @@ export function ProfileList() {
   const loadProfiles = async () => {
     const response = await apiService.request({ tp: 'req:profiles:list' });
     setProfiles(response.profiles);
+    loadedRevisionRef.current = response.rev;
+    writeCachedProfileList(response.rev, response.profiles);
     setLoading(false);
   };
 
@@ -805,15 +817,18 @@ export function ProfileList() {
     };
   }, [loading, searchTerm, onDragStart, onDragChange, onDragEnd]);
 
+  // Fetch on connect and whenever the device's revision moves away from the
+  // list we hold (an edit from another browser or the touch screen). A cached
+  // list whose revision still matches needs no request at all.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    const loadData = async () => {
-      if (connected.value) {
-        await loadProfiles();
-      }
-    };
-    loadData();
-  }, [connected.value]);
+    if (!connected.value) return;
+    if (isProfileListCurrent(loadedRevisionRef.current, profilesRevision.value)) {
+      setLoading(false);
+      return;
+    }
+    loadProfiles();
+  }, [connected.value, profilesRevision.value]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const onDelete = useCallback(

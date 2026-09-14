@@ -114,29 +114,42 @@ void ProfileManager::migrate(const std::vector<String> &existingProfiles) {
 
 std::vector<String> ProfileManager::listProfiles() {
     std::vector<String> uuids;
-    File root = _fs->open(_dir);
-    if (!root || !root.isDirectory()) {
-        if (root)
-            root.close();
-        return uuids;
-    }
-
-    File file = root.openNextFile();
-    while (file) {
-        String name = file.name();
-        if (name.endsWith(".json")) {
-            int start = name.lastIndexOf('/') + 1;
-            int end = name.lastIndexOf('.');
-            uuids.push_back(name.substring(start, end));
+    bool cacheHit = false;
+    {
+        std::lock_guard<std::recursive_mutex> guard(cacheMutex);
+        if (idCacheValid) {
+            uuids = idCache;
+            cacheHit = true;
         }
-        file.close();
-        file = root.openNextFile();
     }
-    // SPIFFS has a small open-file table; failing to close the directory
-    // handle here exhausts it within ~30 list calls and causes subsequent
-    // loadProfile open() calls to fail silently — the root cause of profiles
-    // disappearing from the UI once the user has many of them on SD/SPIFFS.
-    root.close();
+    if (!cacheHit) {
+        File root = _fs->open(_dir);
+        if (!root || !root.isDirectory()) {
+            if (root)
+                root.close();
+            return uuids;
+        }
+
+        File file = root.openNextFile();
+        while (file) {
+            String name = file.name();
+            if (name.endsWith(".json")) {
+                int start = name.lastIndexOf('/') + 1;
+                int end = name.lastIndexOf('.');
+                uuids.push_back(name.substring(start, end));
+            }
+            file.close();
+            file = root.openNextFile();
+        }
+        // SPIFFS has a small open-file table; failing to close the directory
+        // handle here exhausts it within ~30 list calls and causes subsequent
+        // loadProfile open() calls to fail silently — the root cause of profiles
+        // disappearing from the UI once the user has many of them on SD/SPIFFS.
+        root.close();
+        std::lock_guard<std::recursive_mutex> guard(cacheMutex);
+        idCache = uuids;
+        idCacheValid = true;
+    }
 
     std::vector<String> ordered;
     auto stored = _settings.getProfileOrder();
@@ -154,14 +167,86 @@ std::vector<String> ProfileManager::listProfiles() {
     return ordered;
 }
 
-bool ProfileManager::loadProfile(const String &uuid, Profile &outProfile) {
+bool ProfileManager::readProfileFile(const String &uuid, PsramString &out) {
+    {
+        std::lock_guard<std::recursive_mutex> guard(cacheMutex);
+        auto it = fileCache.find(uuid);
+        if (it != fileCache.end()) {
+            out = it->second;
+            return true;
+        }
+    }
     File file = _fs->open(profilePath(uuid), "r");
     if (!file)
         return false;
+    const size_t size = file.size();
+    PsramString content;
+    content.resize(size);
+    const size_t read = size > 0 ? file.readBytes(&content[0], size) : 0;
+    file.close();
+    if (read != size)
+        return false;
+    std::lock_guard<std::recursive_mutex> guard(cacheMutex);
+    fileCache[uuid] = content;
+    out = std::move(content);
+    return true;
+}
+
+void ProfileManager::invalidateFile(const String &uuid) {
+    std::lock_guard<std::recursive_mutex> guard(cacheMutex);
+    fileCache.erase(uuid);
+    idCacheValid = false;
+}
+
+void ProfileManager::bumpRevision() {
+    std::lock_guard<std::recursive_mutex> guard(cacheMutex);
+    revision++;
+}
+
+const ProfileManager::PsramString *ProfileManager::getListJson(bool minimal) {
+    std::lock_guard<std::recursive_mutex> guard(cacheMutex);
+    PsramString &cached = minimal ? listJsonMinimal : listJsonFull;
+    uint32_t &cachedRevision = listJsonRevision[minimal ? 1 : 0];
+    if (cachedRevision == revision) {
+        return &cached;
+    }
+    // Serialize under the current revision; a mutation racing with this build
+    // bumps `revision` and the next call rebuilds again.
+    const uint32_t building = revision;
+    JsonDocument doc(&psramAllocator);
+    auto arr = doc.to<JsonArray>();
+    for (auto const &id : listProfiles()) {
+        Profile profile{};
+        // Skip entries whose JSON couldn't be opened or failed validation
+        // (parseProfile returns false for missing label/type/phases). Without
+        // this, corrupt or partial profile files surface as blank cards in
+        // the UI — the user reported "blank Simple cards" originating here.
+        if (!loadProfile(id, profile)) {
+            ESP_LOGW("ProfileManager", "Skipping unreadable profile %s in list response", id.c_str());
+            continue;
+        }
+        auto p = arr.add<JsonObject>();
+        if (minimal) {
+            p["id"] = profile.id;
+            p["label"] = profile.label;
+        } else {
+            writeProfile(p, profile);
+        }
+    }
+    const size_t len = measureJson(doc);
+    cached.resize(len);
+    serializeJson(doc, &cached[0], len);
+    cachedRevision = building;
+    return &cached;
+}
+
+bool ProfileManager::loadProfile(const String &uuid, Profile &outProfile) {
+    PsramString content;
+    if (!readProfileFile(uuid, content))
+        return false;
 
     JsonDocument doc(&psramAllocator);
-    DeserializationError err = deserializeJson(doc, file);
-    file.close();
+    DeserializationError err = deserializeJson(doc, content.data(), content.size());
     if (err)
         return false;
 
@@ -196,6 +281,8 @@ bool ProfileManager::saveProfile(Profile &profile) {
 
     bool ok = serializeJson(doc, file) > 0;
     file.close();
+    invalidateFile(profile.id);
+    bumpRevision();
     if (profile.id == selectedProfile.id) {
         selectedProfile = Profile{};
         loadSelectedProfile(selectedProfile);
@@ -213,7 +300,10 @@ bool ProfileManager::deleteProfile(const String &uuid) {
     if (_settings.getStartupProfile() == uuid) {
         _settings.setStartupProfile("");
     }
-    return _fs->remove(profilePath(uuid));
+    const bool ok = _fs->remove(profilePath(uuid));
+    invalidateFile(uuid);
+    bumpRevision();
+    return ok;
 }
 
 bool ProfileManager::profileExists(const String &uuid) { return _fs->exists(profilePath(uuid)); }
@@ -223,6 +313,7 @@ void ProfileManager::selectProfile(const String &uuid) {
     _settings.setSelectedProfile(uuid);
     selectedProfile = Profile{};
     loadSelectedProfile(selectedProfile);
+    bumpRevision();
     _plugin_manager->trigger("profiles:profile:select", "id", uuid);
 }
 
@@ -266,10 +357,17 @@ std::vector<String> ProfileManager::getFavoritedProfiles(bool validate) {
 
 void ProfileManager::removeFavoritedProfile(String id) {
     _settings.removeFavoritedProfile(id);
+    bumpRevision();
     _plugin_manager->trigger("profiles:profile:unfavorite", "id", id);
 }
 
 void ProfileManager::addFavoritedProfile(String id) {
     _settings.addFavoritedProfile(id);
+    bumpRevision();
     _plugin_manager->trigger("profiles:profile:favorite", "id", id);
+}
+
+void ProfileManager::reorderProfiles(const std::vector<String> &order) {
+    _settings.setProfileOrder(order);
+    bumpRevision();
 }

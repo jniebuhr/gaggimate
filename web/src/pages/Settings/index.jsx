@@ -17,6 +17,11 @@ import {
   setClock24h,
 } from '../../utils/dashboardManager.js';
 import { downloadJson } from '../../utils/download.js';
+import {
+  isProfileListCurrent,
+  readCachedProfileList,
+  writeCachedProfileList,
+} from '../../utils/profileListCache.js';
 import { getStoredTheme, handleThemeChange } from '../../utils/themeManager.js';
 
 import PageLayout from '../../components/PageLayout.jsx';
@@ -204,15 +209,23 @@ export function Settings() {
     }
   }, [fetchedSettings]);
 
+  // Serve the profile dropdown from the browser cache while the device's
+  // profile revision is unchanged (see utils/profileListCache.js).
   useEffect(() => {
+    if (!machine.value.connected) return;
+    const cached = readCachedProfileList('minimal');
+    const deviceRev = machine.value.status.profilesRevision;
+    if (cached && isProfileListCurrent(cached.rev, deviceRev)) {
+      setProfiles(cached.profiles);
+      return;
+    }
     const loadProfiles = async () => {
-      if (machine.value.connected) {
-        const response = await apiService.request({ tp: 'req:profiles:list', minimal: true });
-        setProfiles(response.profiles);
-      }
+      const response = await apiService.request({ tp: 'req:profiles:list', minimal: true });
+      setProfiles(response.profiles);
+      writeCachedProfileList(response.rev, response.profiles, 'minimal');
     };
     loadProfiles();
-  }, [machine.value.connected, apiService]);
+  }, [machine.value.connected, machine.value.status.profilesRevision, apiService]);
 
   const formRef = useRef();
   const dropdownRef = useRef(null);
