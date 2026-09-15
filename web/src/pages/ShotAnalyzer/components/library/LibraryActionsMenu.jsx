@@ -94,6 +94,7 @@ export function LibraryActionsMenu({ actions, ariaLabel, buttonClassName, placem
       ref={menuRef}
       role='menu'
       tabIndex={-1}
+      data-library-actions-menu='true'
       className='app-card-surface fixed z-[10000] rounded-xl p-1.5 shadow-xl'
       style={{
         top: `${menuPosition.top}px`,
