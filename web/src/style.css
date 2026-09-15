@@ -181,6 +181,18 @@
   --analyzer-target-flow-anchor: #63993d;
   --analyzer-puckflow-text: #059669;
   --analyzer-puckflow-anchor: #059669;
+  --analyzer-puckresistance-text: var(--statistics-trend-shots-brown);
+  --analyzer-puckresistance-anchor: var(--statistics-trend-shots-brown);
+  --analyzer-liquidresistance-text: color-mix(
+    in srgb,
+    var(--statistics-trend-shots-brown) 72%,
+    #d97706
+  );
+  --analyzer-liquidresistance-anchor: color-mix(
+    in srgb,
+    var(--statistics-trend-shots-brown) 72%,
+    #d97706
+  );
   --analyzer-temp-text: #f0561d;
   --analyzer-temp-anchor: #f0561d;
   --analyzer-target-temp-text: #731f00;

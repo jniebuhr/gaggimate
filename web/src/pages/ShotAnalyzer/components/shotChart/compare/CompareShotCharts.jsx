@@ -188,6 +188,12 @@ export function CompareShotCharts({
     fallbackMax: 16,
   });
   const weightDatasets = mainDatasets.filter(dataset => dataset.yAxisID === 'yWeight');
+  const puckResistanceDatasets = mainDatasets.filter(
+    dataset => dataset.yAxisID === 'yPuckResistance',
+  );
+  const liquidResistanceDatasets = mainDatasets.filter(
+    dataset => dataset.yAxisID === 'yLiquidResistance',
+  );
   const weightAxisRange = getCompareWeightAxisRange({
     shotStylePreset,
     weightDatasets,
@@ -199,7 +205,25 @@ export function CompareShotCharts({
   const showWeightAxis = Boolean(
     hasWeightData && showWeightInMainChart && effectiveVisibility.weight,
   );
-  const mainAxisUnitLabels = getMainAxisUnitLabels({ showWeightAxis });
+  const showPuckResistanceAxis = puckResistanceDatasets.length > 0;
+  const showLiquidResistanceAxis = liquidResistanceDatasets.length > 0;
+  const puckResistanceAxisRange = getAxisRange({
+    datasets: puckResistanceDatasets,
+    beginAtZero: true,
+    fallbackMin: 0,
+    fallbackMax: 1,
+  });
+  const liquidResistanceAxisRange = getAxisRange({
+    datasets: liquidResistanceDatasets,
+    beginAtZero: true,
+    fallbackMin: 0,
+    fallbackMax: 1,
+  });
+  const mainAxisUnitLabels = getMainAxisUnitLabels({
+    showWeightAxis,
+    showPuckResistanceAxis,
+    showLiquidResistanceAxis,
+  });
   const mainAxisUnitPadding = getMainAxisUnitPadding({
     mainAxisUnitLabels,
     reserveMarkerSpace: shotStylePreset === 'analyzer',
@@ -214,8 +238,12 @@ export function CompareShotCharts({
     mainAxisUnitPadding,
     mainDatasets,
     neutralAxisTickColor,
+    puckResistanceAxisRange,
+    liquidResistanceAxisRange,
     showStopAnnotations,
     showWeightAxis,
+    showPuckResistanceAxis,
+    showLiquidResistanceAxis,
     weightAxisRange,
     xRange,
   });

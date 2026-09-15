@@ -27,7 +27,14 @@ export const COMPARE_STYLE_FADE = 'fade';
 
 const MOBILE_COMPARE_CONTEXT_LEGEND_LABELS = ['Phases', 'Stops'];
 
-export const MOBILE_COMPARE_FIXED_SERIES_LABELS = ['Pressure', 'Target P', 'Pump Flow', 'Target F'];
+export const MOBILE_COMPARE_FIXED_SERIES_LABELS = [
+  'Pressure',
+  'Target P',
+  'Pump Flow',
+  'Target F',
+  'Puck Resistance',
+  'Liquid Resistance',
+];
 
 export const MOBILE_COMPARE_CONTEXT_LABEL_SET = new Set(MOBILE_COMPARE_CONTEXT_LEGEND_LABELS);
 
@@ -41,9 +48,26 @@ export const COMPARE_LEGEND_KEY_BY_LABEL = {
   'Pump Flow': 'flow',
   'Target F': 'targetFlow',
   'Puck Flow': 'puckFlow',
+  'Puck Resistance': 'puckResistance',
+  'Liquid Resistance': 'liquidResistance',
   Weight: 'weight',
   'Weight Flow': 'weightFlow',
 };
+
+function createDetailChartWithoutTarget(id, title, seriesKey) {
+  return {
+    id,
+    title,
+    tooltipBaseLabel: title,
+    targetTooltipBaseLabel: null,
+    visibleKey: seriesKey,
+    targetVisibleKey: null,
+    seriesKey,
+    targetSeriesKey: null,
+    axisColorKey: seriesKey,
+    beginAtZero: true,
+  };
+}
 
 export const DETAIL_CHARTS = [
   {
@@ -70,42 +94,11 @@ export const DETAIL_CHARTS = [
     axisColorKey: 'flow',
     beginAtZero: true,
   },
-  {
-    id: 'puck-flow',
-    title: 'Puck Flow',
-    tooltipBaseLabel: 'Puck Flow',
-    targetTooltipBaseLabel: null,
-    visibleKey: 'puckFlow',
-    targetVisibleKey: null,
-    seriesKey: 'puckFlow',
-    targetSeriesKey: null,
-    axisColorKey: 'puckFlow',
-    beginAtZero: true,
-  },
-  {
-    id: 'weight',
-    title: 'Weight',
-    tooltipBaseLabel: 'Weight',
-    targetTooltipBaseLabel: null,
-    visibleKey: 'weight',
-    targetVisibleKey: null,
-    seriesKey: 'weight',
-    targetSeriesKey: null,
-    axisColorKey: 'weight',
-    beginAtZero: true,
-  },
-  {
-    id: 'weight-flow',
-    title: 'Weight Flow',
-    tooltipBaseLabel: 'Weight Flow',
-    targetTooltipBaseLabel: null,
-    visibleKey: 'weightFlow',
-    targetVisibleKey: null,
-    seriesKey: 'weightFlow',
-    targetSeriesKey: null,
-    axisColorKey: 'weightFlow',
-    beginAtZero: true,
-  },
+  createDetailChartWithoutTarget('puck-flow', 'Puck Flow', 'puckFlow'),
+  createDetailChartWithoutTarget('puck-resistance', 'Puck Resistance', 'puckResistance'),
+  createDetailChartWithoutTarget('liquid-resistance', 'Liquid Resistance', 'liquidResistance'),
+  createDetailChartWithoutTarget('weight', 'Weight', 'weight'),
+  createDetailChartWithoutTarget('weight-flow', 'Weight Flow', 'weightFlow'),
   {
     id: 'temperature',
     title: 'Temperature',
