@@ -41,6 +41,10 @@ class RemoteScales {
     ScaleWeightUnit getWeightUnit() { return ScaleWeightUnit::UNKNOWN; }
     bool hasScaleTimer() { return false; }
     uint32_t getScaleTimerMs() { return 0; }
+    bool hasTimerControl() { return false; }
+    void startTimer() {}
+    void stopTimer() {}
+    void resetTimer() {}
 };
 
 class RemoteScalesScanner {

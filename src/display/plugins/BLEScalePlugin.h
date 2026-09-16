@@ -45,6 +45,19 @@ class BLEScalePlugin : public Plugin {
     std::vector<DiscoveredDevice> getDiscoveredScales() const;
     void tare() const;
 
+    // Timer controls forwarded to the connected scale (Timemore Dot etc.).
+    // No-ops when the scale driver doesn't support timer control.
+    bool hasTimerControl() const { return scale != nullptr && scale->hasTimerControl(); }
+    void startTimer() const {
+        if (scale != nullptr && scale->hasTimerControl()) scale->startTimer();
+    }
+    void stopTimer() const {
+        if (scale != nullptr && scale->hasTimerControl()) scale->stopTimer();
+    }
+    void resetTimer() const {
+        if (scale != nullptr && scale->hasTimerControl()) scale->resetTimer();
+    }
+
     // Accessors for the native scale fields that drivers optionally expose
     // (see RemoteScales). Each returns a sentinel value if not supported.
     float getFlowRate() const { return scale != nullptr && scale->hasFlowRate() ? scale->getFlowRate() : 0.0f; }

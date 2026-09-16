@@ -10,12 +10,18 @@ const gearpumpAddon = computed(() => machine.value.capabilities.gearpumpAddon);
 export function PluginCard({
   formData,
   onChange,
+  setField,
+  onSubmit,
   autowakeupSchedules,
   addAutoWakeupSchedule,
   removeAutoWakeupSchedule,
   updateAutoWakeupTime,
   updateAutoWakeupDay,
 }) {
+  const resetDoubleTapDefaults = () => {
+    setField('doubleTapPeakG', 20);
+    setField('doubleTapWindowMs', 350);
+  };
   return (
     <div className='space-y-4'>
       <div className='bg-base-200 rounded-lg p-4'>
@@ -264,6 +270,119 @@ export function PluginCard({
                 </option>
               </select>
             </div>
+          </div>
+        )}
+      </div>
+
+      <div className='bg-base-200 rounded-lg p-4'>
+        <div className='flex items-center justify-between'>
+          <span className='text-xl font-medium'>Double Tap Tare</span>
+          <input
+            id='doubleTapTareEnabled'
+            name='doubleTapTareEnabled'
+            value='doubleTapTareEnabled'
+            type='checkbox'
+            className='toggle toggle-primary'
+            checked={!!formData.doubleTapTareEnabled}
+            onChange={onChange('doubleTapTareEnabled')}
+            aria-label='Enable Double Tap Tare'
+          />
+        </div>
+        {formData.doubleTapTareEnabled && (
+          <div className='border-base-300 mt-4 space-y-4 border-t pt-4'>
+            <p className='text-sm opacity-70'>
+              Tap gestures on the connected BLE scale are detected from the weight stream. A
+              double tap (two quick peaks above 20 g) tares the scale; a triple tap cycles its
+              timer (start → stop → reset).
+            </p>
+            <div className='form-control'>
+              <label className='mb-2 flex items-center justify-between'>
+                <span className='text-sm font-medium'>Double Tap to Tare</span>
+                <input
+                  id='doubleTapTareActionEnabled'
+                  name='doubleTapTareActionEnabled'
+                  value='doubleTapTareActionEnabled'
+                  type='checkbox'
+                  className='toggle toggle-primary'
+                  checked={!!formData.doubleTapTareActionEnabled}
+                  onChange={onChange('doubleTapTareActionEnabled')}
+                  aria-label='Enable double tap to tare'
+                />
+              </label>
+            </div>
+            <div className='form-control'>
+              <label className='mb-2 flex items-center justify-between'>
+                <span className='text-sm font-medium'>Triple Tap to Control Timer</span>
+                <input
+                  id='tripleTapTimerEnabled'
+                  name='tripleTapTimerEnabled'
+                  value='tripleTapTimerEnabled'
+                  type='checkbox'
+                  className='toggle toggle-primary'
+                  checked={!!formData.tripleTapTimerEnabled}
+                  onChange={onChange('tripleTapTimerEnabled')}
+                  aria-label='Enable triple tap to control the timer'
+                />
+              </label>
+            </div>
+            <div className='grid grid-cols-2 gap-4'>
+              <div className='form-control'>
+                <label htmlFor='doubleTapPeakG' className='mb-2 block text-sm font-medium'>
+                  Tap Peak (g)
+                </label>
+                <input
+                  id='doubleTapPeakG'
+                  name='doubleTapPeakG'
+                  type='number'
+                  className='input input-bordered w-full'
+                  min='1'
+                  max='500'
+                  placeholder='20'
+                  value={formData.doubleTapPeakG ?? 20}
+                  onChange={onChange('doubleTapPeakG')}
+                />
+              </div>
+              <div className='form-control'>
+                <label htmlFor='doubleTapWindowMs' className='mb-2 block text-sm font-medium'>
+                  Tap Window (ms)
+                </label>
+                <input
+                  id='doubleTapWindowMs'
+                  name='doubleTapWindowMs'
+                  type='number'
+                  className='input input-bordered w-full'
+                  min='100'
+                  max='2000'
+                  placeholder='350'
+                  value={formData.doubleTapWindowMs ?? 350}
+                  onChange={onChange('doubleTapWindowMs')}
+                />
+              </div>
+            </div>
+            <div className='flex items-center gap-2'>
+              <button
+                type='button'
+                onClick={resetDoubleTapDefaults}
+                className='btn btn-ghost btn-sm'
+                title='Reset tap detection parameters to defaults'
+              >
+                Reset Defaults
+              </button>
+              <button
+                type='button'
+                onClick={() => onSubmit(null, false)}
+                className='btn btn-primary btn-sm'
+                title='Save tap detection parameters'
+              >
+                Save
+              </button>
+            </div>
+            <p className='text-xs opacity-50'>
+              Tap Peak: a tap must rise at least this much above the settled baseline. Tap Window:
+              maximum gap between taps to count as one gesture (real double taps are 155-307 ms).
+              Requires a connected BLE scale with timer control for the timer gesture; the triple
+              tap timer cycles start → stop → reset.
+            </p>
           </div>
         )}
       </div>

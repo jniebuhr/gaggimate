@@ -4,6 +4,8 @@ import Section from '../../../components/Card.jsx';
 export function PluginsTab({
   formData,
   onChange,
+  setField,
+  onSubmit,
   autowakeupSchedules,
   addAutoWakeupSchedule,
   removeAutoWakeupSchedule,
@@ -15,6 +17,8 @@ export function PluginsTab({
       <PluginCard
         formData={formData}
         onChange={onChange}
+        setField={setField}
+        onSubmit={onSubmit}
         autowakeupSchedules={autowakeupSchedules}
         addAutoWakeupSchedule={addAutoWakeupSchedule}
         removeAutoWakeupSchedule={removeAutoWakeupSchedule}

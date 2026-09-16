@@ -126,6 +126,9 @@ function buildSubmitFormData(formData, autowakeupSchedules, restart) {
     'clock24hFormat',
     'autowakeupEnabled',
     'smartGrindToggle',
+    'doubleTapTareEnabled',
+    'doubleTapTareActionEnabled',
+    'tripleTapTimerEnabled',
   ];
 
   for (const [key, value] of Object.entries(formData)) {
@@ -262,6 +265,9 @@ export function Settings() {
           'delayAdjust',
           'clock24hFormat',
           'autowakeupEnabled',
+          'doubleTapTareEnabled',
+          'doubleTapTareActionEnabled',
+          'tripleTapTimerEnabled',
         ].includes(key)
       ) {
         value = !formData[key];
@@ -484,6 +490,8 @@ export function Settings() {
             <LazyPluginsTab
               formData={formData}
               onChange={onChange}
+              setField={setField}
+              onSubmit={onSubmit}
               autowakeupSchedules={autowakeupSchedules}
               addAutoWakeupSchedule={addAutoWakeupSchedule}
               removeAutoWakeupSchedule={removeAutoWakeupSchedule}
