@@ -126,6 +126,7 @@ function buildSubmitFormData(formData, autowakeupSchedules, restart) {
     'clock24hFormat',
     'autowakeupEnabled',
     'smartGrindToggle',
+    'gaugeSetpointsInside',
   ];
 
   for (const [key, value] of Object.entries(formData)) {
@@ -262,9 +263,13 @@ export function Settings() {
           'delayAdjust',
           'clock24hFormat',
           'autowakeupEnabled',
+          'gaugeSetpointsInside',
         ].includes(key)
       ) {
         value = !formData[key];
+      }
+      if (key === 'gaugeSetpointsInside') {
+        value = e.currentTarget.value === 'inside';
       }
       if (key === 'clock24hFormat') {
         setClock24h(value);
