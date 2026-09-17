@@ -67,6 +67,7 @@ const CHECKBOX_KEYS = [
   'clock24hFormat',
   'autowakeupEnabled',
   'smartGrindToggle',
+  'temperaturePredictorEnabled',
 ];
 
 // Form-only fields that never come back from GET /api/settings.
@@ -228,7 +229,7 @@ export function Settings() {
   const apiService = useContext(ApiServiceContext);
   const { params } = useRoute();
   const tab = params.tab || 'general';
-  const isFormTab = ['general', 'machine', 'plugins'].includes(tab);
+  const isFormTab = ['general', 'machine', 'calibration', 'plugins'].includes(tab);
 
   const [profiles, setProfiles] = useState([]);
   const [submitting, setSubmitting] = useState(false);
@@ -593,6 +594,9 @@ export function Settings() {
           ) : (
             <LazyMachineTab formData={formData} onChange={onChange} setField={setField} />
           ))}
+        {tab === 'calibration' && (
+          <LazyCalibrationTab formData={formData} onChange={onChange} setField={setField} />
+        )}
         {tab === 'plugins' &&
           (isLoading ? (
             <PluginsTabSkeleton />
