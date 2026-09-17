@@ -175,6 +175,10 @@ void WebUIPlugin::setupServer() {
         doc["mode"] = controller->getMode();
         doc["tt"] = controller->getTargetTemp();
         doc["ct"] = controller->getCurrentTemp();
+        doc["ect"] = controller->getControlTemperature();
+        doc["tpr"] = controller->getPredictorResidual();
+        doc["tpa"] = controller->isTemperaturePredictorActive();
+        doc["tpf"] = controller->getPredictorFallbackReason();
         serializeJson(doc, *response);
         request->send(response);
     });

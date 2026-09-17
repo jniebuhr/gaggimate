@@ -171,6 +171,10 @@ export default class ApiService {
       if (has(key)) status[name] = convert(message[key]);
     };
     map('ct', 'currentTemperature');
+    map('ect', 'controlTemperature');
+    map('tpr', 'predictorResidual');
+    map('tpa', 'temperaturePredictorActive', v => !!v);
+    map('tpf', 'predictorFallbackReason', v => v ?? 0);
     map('tt', 'targetTemperature');
     map('cst', 'currentSteamTemperature');
     map('tst', 'targetSteamTemperature');
@@ -234,6 +238,10 @@ export const machine = signal({
   connected: false,
   status: {
     currentTemperature: 0,
+    controlTemperature: 0,
+    predictorResidual: 0,
+    temperaturePredictorActive: false,
+    predictorFallbackReason: 0,
     targetTemperature: 0,
     currentSteamTemperature: 0,
     targetSteamTemperature: 0,

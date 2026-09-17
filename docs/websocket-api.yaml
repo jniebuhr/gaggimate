@@ -76,6 +76,19 @@ components:
         ct:
           type: number
           description: Current temperature
+        ect:
+          type: number
+          description: Predicted temperature used for feedback; equals ct while bypassed
+        tpr:
+          type: number
+          description: Predictor residual (measured minus delayed-model temperature)
+        tpa:
+          type: boolean
+          description: Whether predictive temperature feedback is active
+        tpf:
+          type: integer
+          description: Temperature predictor fallback reason code
+          enum: [0, 1, 2, 3, 4, 5]
         tt:
           type: number
           description: Target temperature
@@ -182,6 +195,18 @@ components:
           enum: ['evt:autotune-result']
         pid:
           type: string
+        model:
+          type: object
+          properties:
+            delay:
+              type: number
+              description: Identified dead time L in seconds
+            gain:
+              type: number
+              description: Identified full-power process gain in degrees Celsius per second
+            lag:
+              type: number
+              description: Identified thermocouple lag tau2 in seconds
       required: [tp, pid]
     ProfilePayload:
       $ref: '../schema/profile.json'

@@ -402,6 +402,10 @@ void WebSocketHandler::publishTelemetry() {
     statusDoc["cst"] = round_to(controller->getCurrentSteamTemp(), 3);
     statusDoc["tst"] = controller->getTargetSteamTemp();
     statusDoc["db"] = controller->getSystemInfo().capabilities.dualBoiler;
+    statusDoc["ect"] = round_to(controller->getControlTemperature(), 3);
+    statusDoc["tpr"] = round_to(controller->getPredictorResidual(), 3);
+    statusDoc["tpa"] = controller->isTemperaturePredictorActive();
+    statusDoc["tpf"] = controller->getPredictorFallbackReason();
     statusDoc["tt"] = controller->getTargetTemp();
     statusDoc["pr"] = round_to(controller->getCurrentPressure(), 3);
     statusDoc["fl"] = round_to(controller->getCurrentPumpFlow(), 3);
@@ -492,7 +496,12 @@ void WebSocketHandler::broadcastJson(JsonDocument &doc) {
 void WebSocketHandler::sendAutotuneResult() {
     JsonDocument doc(&psramAllocator);
     doc["tp"] = "evt:autotune-result";
-    doc["pid"] = controller->getSettings().getPid();
+    const Settings &settings = controller->getSettings();
+    doc["pid"] = settings.getPid();
+    JsonObject model = doc["model"].to<JsonObject>();
+    model["delay"] = settings.getThermalModelDelay();
+    model["gain"] = settings.getThermalModelGain();
+    model["lag"] = settings.getThermalModelLag();
     broadcastJson(doc);
 }
 
