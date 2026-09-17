@@ -27,6 +27,12 @@ jobs:
           python-version: "3.11"
       - name: Install PlatformIO Core
         run: pip install --upgrade platformio
+      - name: Thermal control native tests
+        run: |
+          pio test -e native -f test_autotune_simc
+          pio test -e native -f test_temperature_predictor
+          pio test -e native -f test_heater_predictor
+          pio test -e native -f test_shot_log_format
       - name: OTA download unit tests and chaos load test
         env:
           OTA_LOAD_ITERATIONS: 60
