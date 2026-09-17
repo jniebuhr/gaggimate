@@ -9,6 +9,8 @@ class SimplePID {
   public:
     SimplePID(float *controlerOutput = nullptr, float *sensorOutput = nullptr, float *setpointTargetPtr = nullptr);
     bool update();
+    bool isUpdateDue() const;
+    void skipUpdate();
     void setControllerPIDGains(float Kp, float Ki, float Kd, float FF);
     void resetFeedbackController();
     void setSamplingFrequency(float freq);

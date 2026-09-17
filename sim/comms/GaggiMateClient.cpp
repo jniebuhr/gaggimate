@@ -4,7 +4,7 @@ GaggiMateClient::GaggiMateClient() {
     // Forward the mock's telemetry to whatever the firmware registered.
     _mock.onSensor = [this](float t, float t2, float p, float pf, float mf, float pr, float pp, float hp, float wp) {
         if (_sensorCb)
-            _sensorCb(t, t2, p, pf, mf, pr, pp, hp, wp);
+            _sensorCb(t, t2, t, 0.0f, _predictorEnabled, _predictorEnabled ? 0 : 1, p, pf, mf, pr, pp, hp, wp);
     };
     _mock.onVolumetric = [this](float v) {
         if (_volumetricCb)
@@ -38,7 +38,8 @@ void GaggiMateClient::loop() {
     if (_autotunePending && (int32_t)(millis() - _autotuneDueMs) >= 0) {
         _autotunePending = false;
         if (_autotuneResultCb)
-            _autotuneResultCb(58.397f, 1.027f, 249.055f, 0.0f); // plausible Gaggia PID
+            _autotuneResultCb(58.397f, 1.027f, 249.055f, 0.0f, 17.0f, 0.188f,
+                              3.5f); // plausible Gaggia PID + thermal model
     }
     if (_connected)
         _mock.update();
@@ -61,6 +62,7 @@ gm::Payload GaggiMateClient::buildRelayControl(uint8_t index, bool open) {
     return p;
 }
 gm::Payload GaggiMateClient::buildPidSettings(float, float, float, float) { return {gm::Payload::Pid}; }
+gm::Payload GaggiMateClient::buildThermalModelSettings(bool, float, float, float) { return {gm::Payload::ThermalModel}; }
 gm::Payload GaggiMateClient::buildPumpSettings(float, float, float, float, float, float, float, float) {
     return {gm::Payload::PumpSettings};
 }
@@ -102,6 +104,11 @@ void GaggiMateClient::sendPumpControl(uint8_t index, PumpControlMode mode, float
 }
 void GaggiMateClient::sendRelayControl(uint8_t index, bool open) { send(buildRelayControl(index, open)); }
 void GaggiMateClient::sendPidSettings(float, float, float, float) {}
+void GaggiMateClient::sendThermalModelSettings(bool enabled, float delay, float processGain, float lag) {
+    const bool modelValid = delay >= 0.25f && delay <= 240.0f && processGain >= 0.0001f && processGain <= 5.0f &&
+                            lag >= 0.05f && lag <= 240.0f;
+    _predictorEnabled = enabled && modelValid;
+}
 void GaggiMateClient::sendPumpSettings(float, float, float, float, float, float, float, float, float, float, float, float) {}
 void GaggiMateClient::sendAutotune(uint32_t, uint32_t, uint32_t) {
     _autotunePending = true;

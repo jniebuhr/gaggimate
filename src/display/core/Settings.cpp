@@ -1,6 +1,7 @@
 #include "Settings.h"
 
 #include <algorithm>
+#include <cmath>
 #include <display/util/ColorConversion.h>
 #include <utility>
 
@@ -116,6 +117,29 @@ void Settings::setStartupMode(const int startup_mode) { startupMode.set(startup_
 void Settings::setStandbyTimeout(int standby_timeout) { standbyTimeout.set(standby_timeout); }
 
 void Settings::setPid(const String &pid) { this->pid.set(pid); }
+
+void Settings::setTemperaturePredictorEnabled(bool enabled) {
+    const float delay = thermalModelDelay.get();
+    const float gain = thermalModelGain.get();
+    const float lag = thermalModelLag.get();
+    const bool modelValid = std::isfinite(delay) && delay >= 0.25f && delay <= 240.0f && std::isfinite(gain) &&
+                            gain >= 0.0001f && gain <= 5.0f && std::isfinite(lag) && lag >= 0.05f && lag <= 240.0f;
+    temperaturePredictorEnabled.set(enabled && modelValid);
+}
+
+void Settings::setThermalModel(float delay, float gain, float lag) {
+    if (!std::isfinite(delay) || !std::isfinite(gain) || !std::isfinite(lag) || delay < 0.25f || gain < 0.0001f ||
+        lag < 0.05f || delay > 240.0f || gain > 5.0f || lag > 240.0f) {
+        thermalModelDelay.set(0.0f);
+        thermalModelGain.set(0.0f);
+        thermalModelLag.set(0.0f);
+        temperaturePredictorEnabled.set(false);
+        return;
+    }
+    thermalModelDelay.set(delay);
+    thermalModelGain.set(gain);
+    thermalModelLag.set(lag);
+}
 
 void Settings::setPumpModelCoeffs(const String &pumpModelCoeffs) { this->pumpModelCoeffs.set(pumpModelCoeffs); }
 

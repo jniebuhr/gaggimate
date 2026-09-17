@@ -260,9 +260,14 @@ void Controller::setupBluetooth() {
         }
     });
     pluginManager->on("ota:update:end", [this](Event const &) { applyConnectionPriority(true); });
-    comms.onSensorData([this](float temp, float temp2, float pressure, float puckFlow, float pumpFlow, float puckResistance,
+    comms.onSensorData([this](float temp, float temp2, float controlTemp, float modelResidual, bool predictorActive,
+                              uint8_t predictorFallback, float pressure, float puckFlow, float pumpFlow, float puckResistance,
                               float pumpPower, float heaterPower, float waterPumped) {
         onTempRead(temp);
+        this->controlTemperature = controlTemp - static_cast<float>(settings.getTemperatureOffset());
+        this->predictorResidual = modelResidual;
+        this->temperaturePredictorActive = predictorActive;
+        this->predictorFallbackReason = predictorFallback;
         onPressureRead(pressure);
         this->currentSteamTemp = temp2;
         this->currentPuckFlow = puckFlow;
@@ -304,12 +309,15 @@ void Controller::setupBluetooth() {
             ESP_LOGE(LOG_TAG, "Received error %d", error);
         }
     });
-    comms.onAutotuneResult([this](float Kp, float Ki, float Kd, float Kf) {
-        ESP_LOGI(LOG_TAG, "Received autotune values: Kp=%.3f, Ki=%.3f, Kd=%.3f, Kf=%.3f (combined)", Kp, Ki, Kd, Kf);
+    comms.onAutotuneResult([this](float Kp, float Ki, float Kd, float Kf, float delay, float processGain, float lag) {
+        ESP_LOGI(LOG_TAG,
+                 "Received autotune values: Kp=%.3f, Ki=%.3f, Kd=%.3f, Kf=%.3f, L=%.2f, k'=%.4f, tau2=%.2f", Kp, Ki, Kd,
+                 Kf, delay, processGain, lag);
         // Guard: older controller firmware could emit zero/NaN gains (#672
         // class). Reject — keep existing PID, surface as "Autotune Failed".
-        if (!std::isfinite(Kp) || !std::isfinite(Ki) || !std::isfinite(Kd) || !std::isfinite(Kf) || Kp <= 0.0f ||
-            (Kp + Ki + Kd) <= 0.0f) {
+        if (!std::isfinite(Kp) || !std::isfinite(Ki) || !std::isfinite(Kd) || !std::isfinite(Kf) ||
+            !std::isfinite(delay) || !std::isfinite(processGain) || !std::isfinite(lag) || Kp <= 0.0f ||
+            (Kp + Ki + Kd) <= 0.0f || delay <= 0.0f || processGain <= 0.0f || lag <= 0.0f) {
             ESP_LOGW(LOG_TAG, "Rejecting autotune result: invalid gains, preserving existing PID");
             autotuning = false;
             pluginManager->trigger("controller:autotune:failed");
@@ -319,6 +327,9 @@ void Controller::setupBluetooth() {
         // Store in simplified format with combined Kf
         snprintf(pid, sizeof(pid), "%.3f,%.3f,%.3f,%.3f", Kp, Ki, Kd, Kf);
         settings.setPid(String(pid));
+        settings.setThermalModel(delay, processGain, lag);
+        settings.save(true);
+        setThermalModelSettings();
         pluginManager->trigger("controller:autotune:result");
         autotuning = false;
     });
@@ -357,6 +368,7 @@ void Controller::onSystemInfo(const char *hardware, const char *version, uint32_
     } else {
         setPressureScale();
         setPidSettings();
+        setThermalModelSettings();
         setPumpModelCoeffs();
         configResendUntil = millis() + CONFIG_RESEND_WINDOW_MS;
         lastConfigResend = millis();
@@ -538,6 +550,7 @@ void Controller::loop() {
     if (comms.isConnected() && now < configResendUntil && (now - lastConfigResend) >= CONFIG_RESEND_INTERVAL_MS) {
         setPressureScale();
         setPidSettings();
+        setThermalModelSettings();
         setPumpModelCoeffs();
         lastConfigResend = now;
     }
@@ -840,6 +853,11 @@ void Controller::setPidSettings() {
     float pid[4];
     parseFloatCsv(settings.getPid(), pid, 4, 0.0f);
     comms.sendPidSettings(pid[0], pid[1], pid[2], pid[3]);
+}
+
+void Controller::setThermalModelSettings() {
+    comms.sendThermalModelSettings(settings.isTemperaturePredictorEnabled(), settings.getThermalModelDelay(),
+                                   settings.getThermalModelGain(), settings.getThermalModelLag());
 }
 
 int Controller::getTargetGrindDuration() const { return settings.getTargetGrindDuration(); }

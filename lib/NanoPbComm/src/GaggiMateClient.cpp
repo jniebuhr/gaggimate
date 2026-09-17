@@ -85,6 +85,16 @@ gm::Payload GaggiMateClient::buildPidSettings(float kp, float ki, float kd, floa
     return p;
 }
 
+gm::Payload GaggiMateClient::buildThermalModelSettings(bool enabled, float delay, float processGain, float lag) {
+    gm::Payload p = gaggimate_Payload_init_zero;
+    p.which_content = gaggimate_Payload_thermal_model_tag;
+    p.content.thermal_model.enabled = enabled;
+    p.content.thermal_model.delay = delay;
+    p.content.thermal_model.process_gain = processGain;
+    p.content.thermal_model.lag = lag;
+    return p;
+}
+
 gm::Payload GaggiMateClient::buildPumpSettings(float a, float b, float c, float d, float commutationGain, float convergenceGain,
                                                float integralGain, float maxPower, float slipA, float slipB, float slipC,
                                                float slipD) {
@@ -159,6 +169,10 @@ void GaggiMateClient::sendPidSettings(float kp, float ki, float kd, float kf) {
     _endpoint.send(buildPidSettings(kp, ki, kd, kf));
 }
 
+void GaggiMateClient::sendThermalModelSettings(bool enabled, float delay, float processGain, float lag) {
+    _endpoint.send(buildThermalModelSettings(enabled, delay, processGain, lag));
+}
+
 void GaggiMateClient::sendPumpSettings(float a, float b, float c, float d, float commutationGain, float convergenceGain,
                                        float integralGain, float maxPower, float slipA, float slipB, float slipC, float slipD) {
     _endpoint.send(
@@ -198,18 +212,27 @@ void GaggiMateClient::registerHandlers() {
         // The display tracks a single boiler today; read boiler 0 if present.
         float temperature = 0.0f;
         float temp2 = 0.0f;
+        float controlTemperature = 0.0f;
+        float predictorResidual = 0.0f;
+        bool predictorActive = false;
+        uint8_t predictorFallback = 0;
         float pressure = 0.0f;
         float heater_power = 0.0f;
         if (p.content.sensor.boilers_count > 0) {
             temperature = p.content.sensor.boilers[0].temperature;
+            controlTemperature = p.content.sensor.boilers[0].control_temperature;
+            predictorResidual = p.content.sensor.boilers[0].predictor_residual;
+            predictorActive = p.content.sensor.boilers[0].predictor_active;
+            predictorFallback = static_cast<uint8_t>(p.content.sensor.boilers[0].predictor_fallback);
             pressure = p.content.sensor.boilers[0].pressure;
             heater_power = p.content.sensor.boilers[0].power;
         }
         if (p.content.sensor.boilers_count > 1) {
             temp2 = p.content.sensor.boilers[1].temperature;
         }
-        _sensorCb(temperature, temp2, pressure, p.content.sensor.puck_flow, p.content.sensor.pump_flow,
-                  p.content.sensor.puck_resistance, p.content.sensor.pump_power, heater_power, p.content.sensor.water_pumped);
+        _sensorCb(temperature, temp2, controlTemperature, predictorResidual, predictorActive, predictorFallback, pressure,
+                  p.content.sensor.puck_flow, p.content.sensor.pump_flow, p.content.sensor.puck_resistance,
+                  p.content.sensor.pump_power, heater_power, p.content.sensor.water_pumped);
     });
     _endpoint.on(gaggimate_Payload_button_tag, [this](const gm::Payload &p) {
         if (_buttonCb)
@@ -218,7 +241,8 @@ void GaggiMateClient::registerHandlers() {
     _endpoint.on(gaggimate_Payload_autotune_result_tag, [this](const gm::Payload &p) {
         if (_autotuneResultCb)
             _autotuneResultCb(p.content.autotune_result.kp, p.content.autotune_result.ki, p.content.autotune_result.kd,
-                              p.content.autotune_result.kf);
+                              p.content.autotune_result.kf, p.content.autotune_result.delay,
+                              p.content.autotune_result.process_gain, p.content.autotune_result.lag);
     });
     _endpoint.on(gaggimate_Payload_volumetric_tag, [this](const gm::Payload &p) {
         if (_volumetricCb)

@@ -1,11 +1,12 @@
 #ifndef HEATER_H
 #define HEATER_H
 #include "Autotune/Autotune.h"
-#include "Max31855Thermocouple.h"
 #include "TemperatureSensor.h"
 #include <SimplePID/SimplePID.h>
+#include <TemperaturePredictor/TemperaturePredictor.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
+#include <functional>
 
 constexpr float MAX_AUTOTUNE_TEMP = 125.0f;
 constexpr float TUNER_OUTPUT_SPAN = 1000.0f;
@@ -15,7 +16,8 @@ using heater_autotune_fail_callback_t = std::function<void()>;
 // Kff = combinedKff = output units per watt (disturbance feedforward), derived
 // in Heater::loopAutotune as 1000 / heaterWattage when wattage > 0; 0 when the
 // caller didn't supply a wattage.
-using pid_result_callback_t = std::function<void(float Kp, float Ki, float Kd, float Kff)>;
+using pid_result_callback_t =
+    std::function<void(float Kp, float Ki, float Kd, float Kff, float delay, float processGain, float lag)>;
 
 class Heater {
   public:
@@ -33,12 +35,21 @@ class Heater {
     // Thermal feedforward control
     void setThermalFeedforward(float *pumpFlowPtr = nullptr, float incomingWaterTemp = 23.0f, int *valveStatusPtr = nullptr);
     void setFeedforwardScale(float combinedKff); // Set combined Kff value (output units per watt)
+    bool configureTemperaturePredictor(bool enabled, float delaySeconds, float processGain, float lagSeconds);
+    float getMeasuredTemperature() const { return measuredTemperature; }
+    float getControlTemperature() const { return temperature; }
+    float getPredictorResidual();
+    bool isPredictorActive();
+    uint8_t getPredictorFallbackReason();
 
   private:
     void setupPid();
     void setupAutotune(int testTimeSec, int windowSize, int heaterWattage);
     void loopPid();
     void loopAutotune();
+    void resetTemperaturePredictor(
+        float measuredTemperature, float currentDuty = 0.0f,
+        TemperaturePredictor::FallbackReason reason = TemperaturePredictor::FallbackReason::Disabled);
     float softPwm(uint32_t windowSize);
     void plot(float optimumOutput, float outputScale, uint8_t everyNth);
     float calculateDisturbanceFeedforwardGain();
@@ -53,6 +64,7 @@ class Heater {
     pid_result_callback_t pid_callback;
     heater_autotune_fail_callback_t autotune_fail_callback;
 
+    float measuredTemperature = 0.0f;
     float temperature = 0.0f;
     float output = 0.0f;
     float setpoint = 0.0f;
@@ -81,6 +93,13 @@ class Heater {
     float heaterEfficiency = 0.95f; // 95% efficiency (immersion heater)
     float heatLossWatts = 5.0f;     // 5W heat loss (well-insulated boiler)
     float combinedKff = 0.0f;       // Combined feedforward gain (output units per watt) - disabled by default
+    TemperaturePredictor temperaturePredictor;
+    TemperaturePredictor::Result predictorResult{};
+    unsigned long lastPredictorUpdate = 0;
+    float lastDisturbanceDuty = 0.0f;
+    float lastAutomaticDuty = 0.0f;
+    bool predictorControlActive = false;
+    portMUX_TYPE predictorMux = portMUX_INITIALIZER_UNLOCKED;
 
     // Thermal model constants
     static constexpr float WATER_DENSITY = 1.0f;        // g/ml

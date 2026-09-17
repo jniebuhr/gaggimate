@@ -16,6 +16,7 @@ using BoilerControl = gaggimate_BoilerControl;
 using PumpControl = gaggimate_PumpControl;
 using RelayControl = gaggimate_RelayControl;
 using PidSettings = gaggimate_PidSettings;
+using ThermalModelSettings = gaggimate_ThermalModelSettings;
 using PumpSettings = gaggimate_PumpSettings;
 using AutotuneRequest = gaggimate_AutotuneRequest;
 using PressureScale = gaggimate_PressureScale;

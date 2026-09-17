@@ -17,6 +17,7 @@ class GaggiMateServer {
     // Binary output: index 0 = brew valve, index 1 = alt relay.
     using RelayCallback = std::function<void(uint8_t index, bool open)>;
     using PidCallback = std::function<void(float kp, float ki, float kd, float kf)>;
+    using ThermalModelCallback = std::function<void(bool enabled, float delay, float processGain, float lag)>;
     using PumpSettingsCallback = std::function<void(gm::PumpSettings settings)>;
     using AutotuneCallback = std::function<void(uint32_t testTime, uint32_t samples, uint32_t heaterWattage)>;
     using PressureScaleCallback = std::function<void(float scale)>;
@@ -34,19 +35,21 @@ class GaggiMateServer {
     void setSystemInfo(const String &hardware, const String &version, const gm::DeviceCapabilities &capabilities);
 
     // Build a payload without sending; sendSensorData reports boiler 0 (the wire format supports several).
-    gm::Payload buildSensorData(float temperature, float pressure, float puckFlow, float pumpFlow, float puckResistance,
+    gm::Payload buildSensorData(float temperature, float controlTemperature, float predictorResidual, bool predictorActive,
+                                uint8_t predictorFallback, float pressure, float puckFlow, float pumpFlow, float puckResistance,
                                 float pumpPower = 0.0f, float heaterPower = 0.0f, float waterPumped = 0.0f);
     gm::Payload buildButtonState(uint8_t index, bool pressed);
-    gm::Payload buildAutotuneResult(float kp, float ki, float kd, float kf);
+    gm::Payload buildAutotuneResult(float kp, float ki, float kd, float kf, float delay, float processGain, float lag);
     gm::Payload buildVolumetricMeasurement(float volume);
     gm::Payload buildTofMeasurement(uint32_t distance);
     gm::Payload buildError(int code);
 
     // Responses (controller -> display)
-    void sendSensorData(float temperature, float pressure, float puckFlow, float pumpFlow, float puckResistance,
+    void sendSensorData(float temperature, float controlTemperature, float predictorResidual, bool predictorActive,
+                        uint8_t predictorFallback, float pressure, float puckFlow, float pumpFlow, float puckResistance,
                         float pumpPower = 0.0f, float heaterPower = 0.0f);
     void sendButtonState(uint8_t index, bool pressed);
-    void sendAutotuneResult(float kp, float ki, float kd, float kf);
+    void sendAutotuneResult(float kp, float ki, float kd, float kf, float delay, float processGain, float lag);
     void sendVolumetricMeasurement(float volume);
     void sendTofMeasurement(uint32_t distance);
     void sendError(int code);
@@ -71,6 +74,7 @@ class GaggiMateServer {
     void onPumpControl(PumpCallback cb) { _pumpCb = std::move(cb); }
     void onRelayControl(RelayCallback cb) { _relayCb = std::move(cb); }
     void onPidSettings(PidCallback cb) { _pidCb = std::move(cb); }
+    void onThermalModelSettings(ThermalModelCallback cb) { _thermalModelCb = std::move(cb); }
     void onPumpSettings(PumpSettingsCallback cb) { _pumpSettingsCb = std::move(cb); }
     void onAutotune(AutotuneCallback cb) { _autotuneCb = std::move(cb); }
     void onPressureScale(PressureScaleCallback cb) { _pressureScaleCb = std::move(cb); }
@@ -91,6 +95,7 @@ class GaggiMateServer {
     PumpCallback _pumpCb;
     RelayCallback _relayCb;
     PidCallback _pidCb;
+    ThermalModelCallback _thermalModelCb;
     PumpSettingsCallback _pumpSettingsCb;
     AutotuneCallback _autotuneCb;
     PressureScaleCallback _pressureScaleCb;

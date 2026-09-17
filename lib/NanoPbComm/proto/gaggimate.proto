@@ -44,6 +44,7 @@ message Payload {
         PressureScale pressure_scale = 9;
         Tare tare = 10;
         LedControl led = 11;
+        ThermalModelSettings thermal_model = 12;
 
         // Responses: controller -> display
         SystemInfo system_info = 20;
@@ -104,6 +105,16 @@ message PidSettings {
     float ki = 2;
     float kd = 3;
     float kf = 4; // combined thermal feedforward gain
+}
+
+// Parameters for the optional delayed-temperature predictor. These are
+// identified by Autotune and persisted by the display; enabled remains an
+// explicit user choice.
+message ThermalModelSettings {
+    bool enabled = 1;
+    float delay = 2;        // L, seconds
+    float process_gain = 3; // k', degC/s at full heater power
+    float lag = 4;          // tau2, seconds
 }
 
 message PumpSettings {
@@ -185,6 +196,10 @@ message BoilerReading {
     float temperature = 2;
     float pressure = 3;
     float power = 4; // heater power 0..100 %
+    float control_temperature = 5; // predicted feedback temperature; raw when inactive
+    float predictor_residual = 6;  // measured minus delayed-model temperature
+    bool predictor_active = 7;
+    uint32 predictor_fallback = 8; // TemperaturePredictor::FallbackReason
 }
 
 message SensorData {
@@ -208,6 +223,9 @@ message AutotuneResult {
     float ki = 2;
     float kd = 3;
     float kf = 4;
+    float delay = 5;
+    float process_gain = 6;
+    float lag = 7;
 }
 
 message VolumetricMeasurement {

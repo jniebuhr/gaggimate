@@ -55,12 +55,16 @@ void GaggiMateController::setup() {
     }
     heater = new Heater(
         this->brewTemperature, _config.heaterPin, [this]() { thermalRunawayShutdown(); },
-        [this](float Kp, float Ki, float Kd, float Kf) { _comms.sendAutotuneResult(Kp, Ki, Kd, Kf); },
+        [this](float Kp, float Ki, float Kd, float Kff, float delay, float processGain, float lag) {
+            _comms.sendAutotuneResult(Kp, Ki, Kd, Kff, delay, processGain, lag);
+        },
         [this]() { _comms.sendError(ERROR_CODE_AUTOTUNE_TIMEOUT); });
     if (_config.capabilites.dualBoiler) {
         heater2 = new Heater(
             this->steamTemperature, _config.altPin, [this]() { thermalRunawayShutdown(); },
-            [this](float Kp, float Ki, float Kd, float Kf) { _comms.sendAutotuneResult(Kp, Ki, Kd, Kf); },
+            [this](float Kp, float Ki, float Kd, float Kff, float delay, float processGain, float lag) {
+                _comms.sendAutotuneResult(Kp, Ki, Kd, Kff, delay, processGain, lag);
+            },
             [this]() { _comms.sendError(ERROR_CODE_AUTOTUNE_TIMEOUT); });
         refill = new SimpleRelay(_config.refillPin, _config.valveOn);
         aux = new SimpleRelay(_config.auxPin, _config.valveOn);
@@ -255,6 +259,9 @@ void GaggiMateController::setup() {
             this->heater2->setTunings(Kp, Ki, Kd);
         }
     });
+    _comms.onThermalModelSettings([this](bool enabled, float delay, float processGain, float lag) {
+        this->heater->configureTemperaturePredictor(enabled, delay, processGain, lag);
+    });
     _comms.onPumpSettings([this](gm::PumpSettings settings) {
         if (_config.capabilites.dimming) {
             auto dimmedPump = static_cast<DimmedPump *>(pump);
@@ -413,6 +420,11 @@ void GaggiMateController::thermalRunawayShutdown() {
 void GaggiMateController::sendSensorData() {
     const float pumpPower = *pump->getPumpPowerPtr();
     const float heaterPower = heater ? heater->getDutyCycle() : 0.0f;
+    const float measuredTemperature = this->brewTemperature->read();
+    const float controlTemperature = heater ? heater->getControlTemperature() : measuredTemperature;
+    const float predictorResidual = heater ? heater->getPredictorResidual() : 0.0f;
+    const bool predictorActive = heater && heater->isPredictorActive();
+    const uint8_t predictorFallback = heater ? heater->getPredictorFallbackReason() : 0;
     float puckFlow = 0.0f;
     float pumpFlow = 0.0f;
     float puckResistance = 0.0f;
@@ -437,7 +449,11 @@ void GaggiMateController::sendSensorData() {
     p.which_content = gaggimate_Payload_sensor_tag;
     p.content.sensor.boilers_count = _config.capabilites.dualBoiler ? 2 : 1; // boiler 0; schema allows more
     p.content.sensor.boilers[0].index = 0;
-    p.content.sensor.boilers[0].temperature = this->brewTemperature->read();
+    p.content.sensor.boilers[0].temperature = measuredTemperature;
+    p.content.sensor.boilers[0].control_temperature = controlTemperature;
+    p.content.sensor.boilers[0].predictor_residual = predictorResidual;
+    p.content.sensor.boilers[0].predictor_active = predictorActive;
+    p.content.sensor.boilers[0].predictor_fallback = predictorFallback;
     p.content.sensor.boilers[0].pressure = pressure;
     p.content.sensor.boilers[0].power = heaterPower;
     if (_config.capabilites.dualBoiler) {

@@ -19,14 +19,14 @@ using std::vector;
 // Protocol version the firmware checks against; report the same so there's no
 // "protocol mismatch" path in the simulator.
 namespace gm_proto {
-static constexpr uint32_t PROTOCOL_VERSION = 3;
+static constexpr uint32_t PROTOCOL_VERSION = 6;
 }
 
 // Stand-in for the nanopb gm::Payload: a tagged command the build*() helpers
 // produce and send()/sendBatch() apply to the MockController.
 namespace gm {
 struct Payload {
-    enum Type { None, Ping, Boiler, Pump, Relay, Pid, PumpSettings, Autotune, PressureScale, Tare, Led } type = None;
+    enum Type { None, Ping, Boiler, Pump, Relay, Pid, ThermalModel, PumpSettings, Autotune, PressureScale, Tare, Led } type = None;
     BoilerCommand boiler;
     PumpCommand pump;
     RelayCommand relay;
@@ -41,10 +41,12 @@ class GaggiMateClient {
         std::function<void(const char *hardware, const char *version, uint32_t protocolVersion, bool dimming, bool pressure,
                            bool ledControl, bool tof, bool dualBoiler, std::vector<uint32_t> addons)>;
     using SensorCallback =
-        std::function<void(float temperature, float temperature2, float pressure, float puckFlow, float pumpFlow,
+        std::function<void(float temperature, float temperature2, float controlTemperature, float predictorResidual,
+                           bool predictorActive, uint8_t predictorFallback, float pressure, float puckFlow, float pumpFlow,
                            float puckResistance, float pumpPower, float heaterPower, float waterPumped)>;
     using ButtonCallback = std::function<void(uint8_t index, bool pressed)>;
-    using AutotuneResultCallback = std::function<void(float kp, float ki, float kd, float kf)>;
+    using AutotuneResultCallback =
+        std::function<void(float kp, float ki, float kd, float kf, float delay, float processGain, float lag)>;
     using VolumetricCallback = std::function<void(float volume)>;
     using TofCallback = std::function<void(uint32_t distance)>;
     using ErrorCallback = std::function<void(int code)>;
@@ -73,6 +75,7 @@ class GaggiMateClient {
     gm::Payload buildPumpControl(uint8_t index, PumpControlMode mode, float power, float pressure, float flow);
     gm::Payload buildRelayControl(uint8_t index, bool open);
     gm::Payload buildPidSettings(float kp, float ki, float kd, float kf);
+    gm::Payload buildThermalModelSettings(bool enabled, float delay, float processGain, float lag);
     gm::Payload buildPumpSettings(float a, float b, float c, float d, float commutationGain, float convergenceGain,
                                   float integralGain, float maxPower);
     gm::Payload buildAutotune(uint32_t testTime, uint32_t samples, uint32_t heaterWattage);
@@ -85,6 +88,7 @@ class GaggiMateClient {
     void sendPumpControl(uint8_t index, PumpControlMode mode, float power, float pressure, float flow);
     void sendRelayControl(uint8_t index, bool open);
     void sendPidSettings(float kp, float ki, float kd, float kf);
+    void sendThermalModelSettings(bool enabled, float delay, float processGain, float lag);
     void sendPumpSettings(float a, float b, float c, float d, float commutationGain, float convergenceGain, float integralGain,
                           float maxPower, float slipA, float slipB, float slipC, float slipD);
     void sendAutotune(uint32_t testTime, uint32_t samples, uint32_t heaterWattage);
@@ -119,6 +123,7 @@ class GaggiMateClient {
     bool _connected = false;
     bool _pendingConnect = false;
     bool _autotunePending = false;
+    bool _predictorEnabled = false;
     uint32_t _autotuneDueMs = 0;
 
     ConnectionCallback _connCb;

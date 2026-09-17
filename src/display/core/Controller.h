@@ -50,6 +50,7 @@ class Controller {
     void setPressureScale();
     void setPumpModelCoeffs();
     void setPidSettings();
+    void setThermalModelSettings();
     void setTargetGrindDuration(int duration);
     void setTargetGrindVolume(double volume);
 
@@ -75,6 +76,10 @@ class Controller {
     virtual float getCurrentPumpFlow() const { return currentPumpFlow; }
     virtual float getCurrentPumpPower() const { return currentPumpPower; }
     virtual float getCurrentHeaterPower() const { return currentHeaterPower; }
+    virtual float getControlTemperature() const { return controlTemperature; }
+    virtual float getPredictorResidual() const { return predictorResidual; }
+    virtual bool isTemperaturePredictorActive() const { return temperaturePredictorActive; }
+    virtual uint8_t getPredictorFallbackReason() const { return predictorFallbackReason; }
     virtual float getCurrentPuckResistance() const { return currentPuckResistance; }
     virtual float getCurrentCoffeeVolume() const { return currentCoffeeVolume; }
     virtual float getCurrentWaterPumped() const { return currentWaterPumped; }
@@ -218,6 +223,10 @@ class Controller {
     float currentPumpFlow = 0.0f;
     float currentPumpPower = 0.0f;
     float currentHeaterPower = 0.0f;
+    float controlTemperature = 0.0f;
+    float predictorResidual = 0.0f;
+    bool temperaturePredictorActive = false;
+    uint8_t predictorFallbackReason = 0;
     float currentPuckResistance = 0.0f;
     float currentCoffeeVolume = 0.0f;
     float currentWaterPumped = 0.0f;

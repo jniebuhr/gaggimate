@@ -12,6 +12,12 @@ SimplePID::SimplePID(float *controlerOutputPtr, float *sensorOutputPtr, float *s
     this->setpointTarget = setpointTargetPtr;
 }
 
+bool SimplePID::isUpdateDue() const {
+    return mode == Control::automatic && (millis() - lastTime) >= ctrl_freq_sampling * 1000;
+}
+
+void SimplePID::skipUpdate() { lastTime = millis(); }
+
 bool SimplePID::update() {
     if (mode == Control::manual) {
         return false;
