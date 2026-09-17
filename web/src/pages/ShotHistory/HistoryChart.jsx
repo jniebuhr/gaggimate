@@ -27,6 +27,8 @@ function getChartData(shot) {
   const tf = [];
   const v = [];
   const vf = [];
+  const et = [];
+  const hp = [];
 
   // Process all samples to build data arrays
   for (let i = 0; i < data.length; i++) {
@@ -42,6 +44,8 @@ function getChartData(shot) {
     tf.push({ x, y: s.tf });
     v.push({ x, y: s.v });
     vf.push({ x, y: s.vf });
+    et.push({ x, y: s.et });
+    hp.push({ x, y: s.hp });
   }
 
   // For v5+ files, use phase transitions from header
@@ -57,7 +61,12 @@ function getChartData(shot) {
     }));
   }
   // No phase tracking for versions before v5
-  const tempValues = ct.map(i => i.y).concat(tt.map(i => i.y));
+  const hasPrediction = et.some(point => Number.isFinite(point.y));
+  const hasHeaterPower = hp.some(point => Number.isFinite(point.y));
+  const tempValues = ct
+    .map(i => i.y)
+    .concat(tt.map(i => i.y))
+    .concat(hasPrediction ? et.map(i => i.y) : []);
   const timeValues = ct.map(i => i.x);
   const minTemp = Math.floor(Math.min(...tempValues));
   const maxTemp = Math.ceil(Math.max(...tempValues));
@@ -152,6 +161,17 @@ function getChartData(shot) {
           pointStyle: false,
           data: tt,
         },
+        ...(hasPrediction
+          ? [
+              {
+                label: 'Predicted Temperature',
+                borderColor: '#F59E0B',
+                borderDash: [3, 3],
+                pointStyle: false,
+                data: et,
+              },
+            ]
+          : []),
         {
           label: 'Current Pressure',
           borderColor: '#0066CC',
@@ -210,6 +230,18 @@ function getChartData(shot) {
                 pointStyle: false,
                 yAxisID: 'y1',
                 data: vf,
+              },
+            ]
+          : []),
+        ...(hasHeaterPower
+          ? [
+              {
+                label: 'Heater Power',
+                borderColor: '#DC2626',
+                borderDash: [2, 2],
+                pointStyle: false,
+                yAxisID: 'y3',
+                data: hp,
               },
             ]
           : []),
@@ -297,6 +329,24 @@ function getChartData(shot) {
                 offset: true,
                 ticks: {
                   callback: value => `${value.toFixed()} g`,
+                  font: {
+                    size: window.innerWidth < 640 ? 10 : 12,
+                  },
+                },
+                grid: { drawOnChartArea: false },
+              },
+            }
+          : {}),
+        ...(hasHeaterPower
+          ? {
+              y3: {
+                type: 'linear',
+                min: 0,
+                max: 100,
+                position: 'right',
+                offset: true,
+                ticks: {
+                  callback: value => `${value.toFixed()} %`,
                   font: {
                     size: window.innerWidth < 640 ? 10 : 12,
                   },

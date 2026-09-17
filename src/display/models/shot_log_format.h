@@ -11,19 +11,24 @@
 //   Header fields set at start; sampleCount & durationMs patched at end.
 // Per-sample record fields are ALWAYS present in fixed order.
 //   elapsedMs(uint32_t), tt(uint16_t), ct(uint16_t), tp(uint16_t), cp(uint16_t), fl(int16_t), tf(int16_t), pf(int16_t),
-//   vf(int16_t), v(uint16_t), ev(uint16_t), pr(uint16_t), si(uint16_t), wp(uint16_t)
+//   vf(int16_t), v(uint16_t), ev(uint16_t), pr(uint16_t), si(uint16_t), wp(uint16_t), et(uint16_t), hp(uint16_t)
 // Values are stored as scaled integers (see comments per field below).
 // Sample size: v1-v5 = 26 bytes; v6 = 28 bytes because t is uint32_t;
-// v7 = 30 bytes with cumulative water pumped.
+// v7 = 30 bytes with cumulative water pumped; v8 = 34 bytes with predicted
+// temperature and heater power.
 // Phase data moved to header transitions in v5.
 // Older files may have fewer fields - use fieldsMask to determine layout.
 
 static constexpr uint32_t SHOT_LOG_MAGIC = 0x544F4853; // 'S''H''O''T' little-endian 0x54 0x4F 0x48 0x53
-static constexpr uint8_t SHOT_LOG_VERSION = 7;
+static constexpr uint8_t SHOT_LOG_VERSION = 8;
 static constexpr uint16_t SHOT_LOG_HEADER_SIZE = 512;
 static constexpr uint16_t SHOT_LOG_SAMPLE_INTERVAL_MS = 250; // nominal recording interval
-static constexpr uint32_t SHOT_LOG_FIELDS_MASK_ALL = 0x3FFF; // 14 fields present
-static constexpr uint32_t SHOT_LOG_SAMPLE_SIZE = 30;
+static constexpr uint32_t SHOT_LOG_FIELDS_MASK_ALL = 0xFFFF; // 16 fields present
+static constexpr uint32_t SHOT_LOG_SAMPLE_SIZE = 34;
+
+constexpr uint8_t shotLogSampleSizeForVersion(uint8_t version) {
+    return version <= 5 ? 26 : (version == 6 ? 28 : (version == 7 ? 30 : SHOT_LOG_SAMPLE_SIZE));
+}
 
 // Field bit positions (for future expansion)
 static constexpr uint32_t SHOT_LOG_FIELD_T = 0x0001;  // elapsed time (bit 0)
@@ -40,7 +45,9 @@ static constexpr uint32_t SHOT_LOG_FIELD_EV = 0x0400; // estimated weight (bit 1
 static constexpr uint32_t SHOT_LOG_FIELD_PR = 0x0800; // puck resistance (bit 11)
 static constexpr uint32_t SHOT_LOG_FIELD_SI = 0x1000; // system info (bit 12)
 static constexpr uint32_t SHOT_LOG_FIELD_WP = 0x2000; // cumulative water pumped (bit 13)
-// Bits 14-31 available for future fields
+static constexpr uint32_t SHOT_LOG_FIELD_ET = 0x4000; // estimated/control temperature (bit 14)
+static constexpr uint32_t SHOT_LOG_FIELD_HP = 0x8000; // heater power (bit 15)
+// Bits 16-31 available for future fields
 
 // Phase transition structure for version 5+ headers
 // transitionReason was a reserved/padding byte through v5; repurposing it keeps the struct byte-identical,
@@ -107,6 +114,8 @@ struct ShotLogHeader {
 //   pr: puck resistance * 100 (0.01 step, saturates at uint16_t max)
 //   si: system info bit-packed (see SYSTEM_INFO_* constants)
 //   wp: water pumped * 10 (0.1 ml resolution)
+//   et: predictor/control temperature in °C * 10 (equals ct when bypassed)
+//   hp: heater power percentage * 10 (0.1% resolution)
 #pragma pack(push, 1)
 struct ShotLogSample {
     uint32_t t;  // actual elapsed milliseconds from shotStart
@@ -123,6 +132,8 @@ struct ShotLogSample {
     uint16_t pr; // puck resistance * 100
     uint16_t si; // system info bit-packed
     uint16_t wp; // water pumped * 10
+    uint16_t et; // estimated/control temperature * 10
+    uint16_t hp; // heater power percentage * 10
 };
 #pragma pack(pop)
 

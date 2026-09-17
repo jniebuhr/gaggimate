@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Shot History Schema",
   "type": "object",
-  "additionalProperties": false,
+  "additionalProperties": true,
   "properties": {
     "version": { "type": "integer" },
     "profile": { "type": "string" },
@@ -13,7 +13,7 @@
       "type": "array",
       "items": {
         "type": "object",
-        "additionalProperties": false,
+        "additionalProperties": true,
         "properties": {
           "t": {
             "description": "Timestamp of this measurement",
@@ -57,6 +57,36 @@
           },
           "ev": {
             "description": "Estimated volume in g/ml",
+            "type": "number"
+          },
+          "pr": {
+            "description": "Estimated puck resistance",
+            "type": "number"
+          },
+          "wp": {
+            "description": "Cumulative water pumped in ml",
+            "type": "number"
+          },
+          "systemInfo": {
+            "description": "Decoded bit-packed system state",
+            "type": "object",
+            "additionalProperties": true
+          },
+          "phaseNumber": {
+            "type": "integer"
+          },
+          "phaseDisplayNumber": {
+            "type": "integer"
+          },
+          "phaseName": {
+            "type": "string"
+          },
+          "et": {
+            "description": "Predicted control temperature (equals current temperature when prediction is bypassed)",
+            "type": "number"
+          },
+          "hp": {
+            "description": "Heater power in percent",
             "type": "number"
           }
         },

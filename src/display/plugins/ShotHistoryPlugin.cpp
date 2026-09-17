@@ -16,11 +16,13 @@ constexpr float PRESSURE_SCALE = 10.0f;
 constexpr float FLOW_SCALE = 100.0f;
 constexpr float WEIGHT_SCALE = 10.0f;
 constexpr float RESISTANCE_SCALE = 100.0f;
+constexpr float POWER_SCALE = 10.0f;
 
 constexpr uint16_t TEMP_MAX_VALUE = 2000;    // 200.0 °C
 constexpr uint16_t PRESSURE_MAX_VALUE = 200; // 20.0 bar
 constexpr uint16_t WEIGHT_MAX_VALUE = 10000; // 1000.0 g
 constexpr uint16_t RESISTANCE_MAX_VALUE = 0xFFFF;
+constexpr uint16_t POWER_MAX_VALUE = 1000; // 100.0%
 constexpr int16_t FLOW_MIN_VALUE = -2000; // -20.00 ml/s
 constexpr int16_t FLOW_MAX_VALUE = 2000;  //  20.00 ml/s
 
@@ -165,6 +167,8 @@ void ShotHistoryPlugin::record() {
         sample.pr = encodeUnsigned(currentPuckResistance, RESISTANCE_SCALE, RESISTANCE_MAX_VALUE);
         sample.si = getSystemInfo(); // Pack system state information
         sample.wp = encodeUnsigned(controller->getCurrentWaterPumped(), WEIGHT_SCALE, WEIGHT_MAX_VALUE);
+        sample.et = encodeUnsigned(controller->getControlTemperature(), TEMP_SCALE, TEMP_MAX_VALUE);
+        sample.hp = encodeUnsigned(controller->getCurrentHeaterPower(), POWER_SCALE, POWER_MAX_VALUE);
 
         // Track phase transitions
         if (controller->getMode() == MODE_BREW) {
@@ -973,9 +977,9 @@ void ShotHistoryPlugin::rebuildIndex() {
                 // v1-v5 used a 26-byte record with a 16-bit t field. The
                 // aggregate fields begin two bytes later in v6 because t is
                 // now uint32_t; decode both layouts while rebuilding indexes.
-                const size_t expectedSampleSize = shotHeader.version >= 6 ? 28 : 26;
+                const size_t expectedSampleSize = shotLogSampleSizeForVersion(shotHeader.version);
                 const size_t sampleSize = shotHeader.reserved0 ? shotHeader.reserved0 : expectedSampleSize;
-                if (sampleSize != expectedSampleSize) {
+                if (sampleSize != expectedSampleSize || sampleSize > sizeof(ShotLogSample)) {
                     break;
                 }
                 uint8_t raw[sizeof(ShotLogSample)]{};

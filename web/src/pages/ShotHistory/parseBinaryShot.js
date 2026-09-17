@@ -12,6 +12,7 @@ const PRESSURE_SCALE = 10;
 const FLOW_SCALE = 100;
 const WEIGHT_SCALE = 10;
 const RESISTANCE_SCALE = 100;
+const POWER_SCALE = 10;
 
 // Field bit positions (must match shot_log_format.h)
 const FIELD_BITS = {
@@ -29,6 +30,8 @@ const FIELD_BITS = {
   PR: 11, // puck resistance
   SI: 12, // system info (v2+)
   WP: 13, // cumulative water pumped
+  ET: 14, // estimated/control temperature
+  HP: 15, // heater power
   // Phase number moved to header transitions in v5+
 };
 
@@ -65,6 +68,8 @@ const FIELD_DEFS = {
     }),
   },
   [FIELD_BITS.WP]: { name: 'wp', type: 'uint16', scale: WEIGHT_SCALE },
+  [FIELD_BITS.ET]: { name: 'et', type: 'uint16', scale: TEMP_SCALE },
+  [FIELD_BITS.HP]: { name: 'hp', type: 'uint16', scale: POWER_SCALE },
   // Phase number field removed in v5+, moved to header transitions
 };
 
