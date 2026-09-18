@@ -52,7 +52,10 @@ Partition table (`default_16MB.csv`): app0 `0x10000`, otadata `0xE000`, SPIFFS `
 
 1. **Back up profiles + history** — they are on SPIFFS and `uploadfs` wipes them:
    `python3 scripts/backup_device_fs.py 192.168.2.27` → `data/p/*.json`, `data/h/*`
-   (then `build_spiffs.sh` + `buildfs` bake them into the new image).
+   (then `build_spiffs.sh` + `buildfs` bake them into the new image). Slow: ~20 min for
+   ~320 shots — the ESP32 serves files sequentially and stalls now and then; the script
+   retries and **resumes**, so just re-run it if interrupted, and don't wrap it in a
+   short timeout. Verified 2026-09-18 against the real machine.
 2. Plug the display in (`303a:1001`, appears as `/dev/ttyACM0`; your user needs `dialout`,
    or hold BOOT/SW1 while pressing RST if it doesn't auto-reset):
    ```bash
