@@ -62,8 +62,9 @@ void GaggiMateController::setup() {
     albaComms->setTimeout_ms(200);
     albaComms->setDelay_us(20);
     albaComms->begin();
-    this->ledController = new LedController(albaComms);
-    this->distanceSensor = new DistanceSensor(albaComms, [this](int distance) { _comms.sendTofMeasurement(distance); });
+    albaBus = new SoftWireBus(albaComms);
+    this->ledController = new LedController(albaBus);
+    this->distanceSensor = new DistanceSensor(albaBus, [this](int distance) { _comms.sendTofMeasurement(distance); });
     if (this->ledController->isAvailable()) {
         _config.capabilites.ledControls = true;
         _config.capabilites.tof = true;
@@ -237,6 +238,10 @@ void GaggiMateController::loop() {
         handlePingTimeout();
     }
     sendSensorData();
+    if (_config.capabilites.ledControls && now - lastLedHealthCheck >= LED_HEALTH_CHECK_INTERVAL_MS) {
+        lastLedHealthCheck = now;
+        ledController->healthCheck();
+    }
     if (errorState != ERROR_CODE_NONE) {
         ESP_LOGW("GaggiMateController", "Error state: %d", errorState);
     }
