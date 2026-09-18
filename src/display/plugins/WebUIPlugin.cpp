@@ -110,6 +110,15 @@ void WebUIPlugin::loop() {
         doc["gtv"] = controller->getSettings().getTargetGrindVolume();
         doc["gt"] = controller->isVolumetricAvailable() && controller->getSettings().isVolumetricTarget() ? 1 : 0;
         doc["gact"] = controller->isGrindActive() ? 1 : 0;
+        {
+            Bean activeBean;
+            float activeGrind = 0.0f;
+            if (controller->getBeanManager()->getActive(activeBean, activeGrind)) {
+                doc["bean"] = activeBean.name;
+                doc["beanid"] = activeBean.id;
+                doc["grind"] = activeGrind;
+            }
+        }
         doc["wl"] = controller->getWaterLevel();
         doc["tof"] = controller->getTofDistance();
         doc["rssi"] = 0;
@@ -294,6 +303,8 @@ void WebUIPlugin::handleWebSocketData(AsyncWebSocket *server, AsyncWebSocketClie
                 String msgType = doc["tp"].as<String>();
                 if (msgType.startsWith("req:profiles:")) {
                     handleProfileRequest(client->id(), doc);
+                } else if (msgType.startsWith("req:beans:")) {
+                    handleBeanRequest(client->id(), doc);
                 } else if (msgType == "req:ota-settings") {
                     handleOTASettings(client->id(), doc);
                 } else if (msgType == "req:ota-start") {
@@ -453,6 +464,57 @@ void WebUIPlugin::handleProfileRequest(uint32_t clientId, JsonDocument &request)
             }
             controller->getSettings().setProfileOrder(order);
         }
+    }
+
+    size_t bufferSize = measureJson(response);
+    auto *buffer = ws.makeBuffer(bufferSize);
+    serializeJson(response, buffer->get(), bufferSize);
+    ws.text(clientId, buffer);
+}
+
+void WebUIPlugin::handleBeanRequest(uint32_t clientId, JsonDocument &request) {
+    JsonDocument response;
+    auto type = request["tp"].as<String>();
+    ESP_LOGI("WebUIPlugin", "Handling request: %s", type.c_str());
+    response["tp"] = String("res:") + type.substring(4);
+    response["rid"] = request["rid"].as<String>();
+    BeanManager *beanManager = controller->getBeanManager();
+
+    if (type == "req:beans:list") {
+        auto arr = response["beans"].to<JsonArray>();
+        for (const auto &bean : beanManager->list()) {
+            BeanManager::writeBean(arr.add<JsonObject>(), bean);
+        }
+    } else if (type == "req:beans:save") {
+        auto obj = request["bean"].as<JsonObject>();
+        Bean bean;
+        bean.id = obj["id"] | String("");
+        bean.name = obj["name"] | String("");
+        bean.profileId = obj["profileId"] | String("");
+        String error;
+        if (!bean.profileId.isEmpty() && !profileManager->profileExists(bean.profileId)) {
+            response["error"] = F("Profile not found");
+        } else if (!beanManager->save(bean, error)) {
+            response["error"] = error;
+        } else {
+            BeanManager::writeBean(response["bean"].to<JsonObject>(), bean);
+        }
+    } else if (type == "req:beans:delete") {
+        auto id = request["id"].as<String>();
+        if (!beanManager->remove(id)) {
+            response["error"] = F("Bean not found");
+        }
+    } else if (type == "req:beans:select") {
+        // Same flow as tapping the bean on the touchscreen: remember grind,
+        // select its profile, and start the shot.
+        auto id = request["id"].as<String>();
+        float grind = request["grind"] | 0.0f;
+        String error;
+        if (!controller->startBeanShot(id, grind, error)) {
+            response["error"] = error;
+        }
+    } else {
+        response["error"] = F("Unknown beans request");
     }
 
     size_t bufferSize = measureJson(response);

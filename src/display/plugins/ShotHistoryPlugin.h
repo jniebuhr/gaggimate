@@ -24,6 +24,11 @@ class ShotHistoryPlugin : public Plugin {
 
     void handleRequest(JsonDocument &request, JsonDocument &response);
 
+    // Bean picker: attach bean + grind to the notes of the shot that starts
+    // next. Written to /h/<id>.json when that shot is kept; discarded with it
+    // otherwise, or if no shot starts within PENDING_BEAN_NOTES_TIMEOUT_MS.
+    void setPendingBeanNotes(const String &beanId, const String &beanName, float grind);
+
     // Index management methods
     bool appendToIndex(const ShotIndexEntry &entry);
     void updateIndexMetadata(uint32_t shotId, uint8_t rating, uint16_t volume);
@@ -86,6 +91,16 @@ class ShotHistoryPlugin : public Plugin {
 
     // Async rebuild state
     bool rebuildInProgress = false;
+
+    // Pending bean-picker notes for the next shot
+    static constexpr unsigned long PENDING_BEAN_NOTES_TIMEOUT_MS = 15000;
+    bool pendingBeanNotes = false;
+    unsigned long pendingBeanNotesSetAt = 0;
+    String pendingBeanId;
+    String pendingBeanName;
+    float pendingBeanGrind = 0.0f;
+    void writePendingBeanNotes();
+    void clearPendingBeanNotes();
 
     xTaskHandle taskHandle;
     void flushBuffer();

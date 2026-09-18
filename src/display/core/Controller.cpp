@@ -19,6 +19,7 @@
 #include <display/plugins/LedControlPlugin.h>
 #include <display/plugins/MQTTPlugin.h>
 #include <display/plugins/ShotHistoryPlugin.h>
+#include <display/plugins/ShotHistoryPlugin.h>
 #include <display/plugins/SmartGrindPlugin.h>
 #include <display/plugins/WebUIPlugin.h>
 #include <display/plugins/mDNSPlugin.h>
@@ -56,6 +57,8 @@ void Controller::setup() {
     }
     profileManager = new ProfileManager(fs, "/p", settings, pluginManager);
     profileManager->setup();
+    beanManager = new BeanManager(pluginManager);
+    beanManager->setup();
     if (settings.isHomekit())
         pluginManager->registerPlugin(new HomekitPlugin(settings.getWifiSsid(), settings.getWifiPassword()));
     else
@@ -723,6 +726,45 @@ void Controller::onVolumetricMeasurement(double measurement, VolumetricMeasureme
 bool Controller::isBluetoothScaleHealthy() const {
     unsigned long timeSinceLastBluetooth = millis() - lastBluetoothMeasurement;
     return (timeSinceLastBluetooth < BLUETOOTH_GRACE_PERIOD_MS) || volumetricOverride;
+}
+
+bool Controller::startBeanShot(const String &beanId, float grind, String &error) {
+    Bean bean;
+    if (!beanManager->find(beanId, bean)) {
+        error = "Bean not found";
+        return false;
+    }
+    if (!profileManager->profileExists(bean.profileId)) {
+        error = "The bean's profile no longer exists";
+        return false;
+    }
+    if (!clientController.isConnected()) {
+        error = "Controller not connected";
+        return false;
+    }
+    if (!isReady()) {
+        error = "Machine not ready";
+        return false;
+    }
+    if (isActive()) {
+        error = "A process is already running";
+        return false;
+    }
+    grind = roundf(grind * 2.0f) / 2.0f; // the picker steps in 0.5
+    beanManager->setLastGrind(beanId, grind);
+    beanManager->setActive(beanId, grind);
+    ShotHistory.setPendingBeanNotes(beanId, bean.name, grind);
+    profileManager->selectProfile(bean.profileId);
+    // Same reset the web UI's req:change-mode path does before switching modes.
+    deactivate();
+    clear();
+    setMode(MODE_BREW);
+    activate();
+    if (!isActive()) {
+        error = "Shot did not start";
+        return false;
+    }
+    return true;
 }
 
 void Controller::onFlush() {

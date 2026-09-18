@@ -226,7 +226,9 @@ void ShotHistoryPlugin::record() {
             if (indexEntryCreated) {
                 markIndexDeleted(currentId.toInt());
             }
+            clearPendingBeanNotes();
         } else {
+            writePendingBeanNotes();
             controller->getSettings().setHistoryIndex(controller->getSettings().getHistoryIndex() + 1);
             cleanupHistory();
 
@@ -522,6 +524,44 @@ void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &respo
         // This path shouldn't be reached, but handle it just in case
         response["msg"] = "Use async rebuild";
     }
+}
+
+void ShotHistoryPlugin::setPendingBeanNotes(const String &beanId, const String &beanName, float grind) {
+    pendingBeanId = beanId;
+    pendingBeanName = beanName;
+    pendingBeanGrind = grind;
+    pendingBeanNotesSetAt = millis();
+    pendingBeanNotes = true;
+}
+
+void ShotHistoryPlugin::clearPendingBeanNotes() {
+    pendingBeanNotes = false;
+    pendingBeanId = "";
+    pendingBeanName = "";
+    pendingBeanGrind = 0.0f;
+}
+
+// Called once a kept shot has been finalized (currentId is its history id).
+// Only applies if the bean was picked shortly before this shot started, so a
+// stale pick can't get attached to some unrelated later shot.
+void ShotHistoryPlugin::writePendingBeanNotes() {
+    if (!pendingBeanNotes) {
+        return;
+    }
+    const bool fresh = shotStart >= pendingBeanNotesSetAt && (shotStart - pendingBeanNotesSetAt) <= PENDING_BEAN_NOTES_TIMEOUT_MS;
+    if (fresh) {
+        JsonDocument notes;
+        notes["id"] = currentId;
+        notes["beanId"] = pendingBeanId;
+        notes["beanType"] = pendingBeanName;
+        notes["grindSetting"] = String(pendingBeanGrind, 1);
+        notes["source"] = "bean-picker";
+        notes["timestamp"] = getTime();
+        saveNotes(currentId, notes);
+        ESP_LOGI("ShotHistoryPlugin", "Attached bean %s (grind %.1f) to shot %s", pendingBeanName.c_str(), pendingBeanGrind,
+                 currentId.c_str());
+    }
+    clearPendingBeanNotes();
 }
 
 void ShotHistoryPlugin::saveNotes(const String &id, const JsonDocument &notes) {

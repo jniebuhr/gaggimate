@@ -18,6 +18,14 @@
       "description": "Type or origin of coffee beans",
       "type": "string"
     },
+    "beanId": {
+      "description": "Id of the bean (from the on-device bean picker) this shot was pulled with",
+      "type": "string"
+    },
+    "source": {
+      "description": "What created these notes, e.g. \"bean-picker\" when written by the firmware",
+      "type": "string"
+    },
     "doseIn": {
       "description": "Dose in grams",
       "type": "number",

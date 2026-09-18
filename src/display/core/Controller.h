@@ -6,6 +6,7 @@
 #include "PluginManager.h"
 #include "Settings.h"
 #include <WiFi.h>
+#include <display/core/BeanManager.h>
 #include <display/core/ProfileManager.h>
 #include <display/core/process/Process.h>
 #ifndef GAGGIMATE_HEADLESS
@@ -60,6 +61,7 @@ class Controller {
     Process *getLastProcess() const { return lastProcess; }
     Settings &getSettings() { return settings; }
     ProfileManager *getProfileManager() { return profileManager; }
+    BeanManager *getBeanManager() { return beanManager; }
 #ifndef GAGGIMATE_HEADLESS
     DefaultUI *getUI() const { return ui; }
 #endif
@@ -91,6 +93,10 @@ class Controller {
     void setVolumetricOverride(bool override) { volumetricOverride = override; }
     bool isBluetoothScaleHealthy() const;
     void onFlush();
+    // Bean picker: remember the grind, select the bean's profile, switch to
+    // brew mode and start the shot. Returns false (with `error`) if the machine
+    // isn't in a state to brew or the bean/profile doesn't exist.
+    bool startBeanShot(const String &beanId, float grind, String &error);
     int getWaterLevel() const {
         float reversedLevel = static_cast<float>(settings.getEmptyTankDistance()) -
                               static_cast<float>(std::min(settings.getEmptyTankDistance(), tofDistance));
@@ -138,6 +144,7 @@ class Controller {
     Settings settings;
     PluginManager *pluginManager{};
     ProfileManager *profileManager{};
+    BeanManager *beanManager{};
 
     int mode = MODE_BREW;
     float currentTemp = 0;
