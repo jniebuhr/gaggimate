@@ -6,6 +6,7 @@
 #include "Settings.h"
 #include "SystemInfo.h"
 #include <WiFi.h>
+#include <atomic>
 #include <display/core/ButtonHandler.h>
 #include <display/core/ProfileManager.h>
 #include <display/core/WarningManager.h>
@@ -216,12 +217,16 @@ class Controller {
 
     // Last control values sent to the controller. updateControl() only
     // transmits components that differ from these (the controller is stateful
-    // and delivery is acknowledged). Reset on (re)connect to force a full resend.
+    // and delivery is acknowledged). Cleared on (re)connect, a dropped frame and link settle.
     BoilerCommand lastBoiler{};
     PumpCommand lastPump{};
     RelayCommand lastRelay{};
     bool lastAlt = false;
-    bool controlStateSent = false;
+    std::atomic<bool> controlStateSent{false};
+    std::atomic<bool> stateResendPending{false}; // set from comms threads, serviced in loop()
+    unsigned long settleResendAt = 0;            // one full re-send once a fresh link has settled (0 = none)
+    static const unsigned long STATE_SETTLE_RESEND_MS = 5000;
+    void requestStateResend() { stateResendPending = true; }
 
     // Last requested BLE connection-interval priority; see updateConnectionPriority().
     bool connLowLatency = false;

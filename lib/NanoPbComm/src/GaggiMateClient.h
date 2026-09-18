@@ -87,6 +87,8 @@ class GaggiMateClient {
 
     // Response registrations (controller -> display)
     void onConnectionChanged(ConnectionCallback cb) { _connCb = std::move(cb); }
+    // A reliable frame was dropped after its retries; may fire on the BLE thread, so keep the callback trivial.
+    void onSendFailed(std::function<void()> cb) { _endpoint.onSendFailed(std::move(cb)); }
     void onSystemInfo(SystemInfoCallback cb) { _systemInfoCb = std::move(cb); }
     void onSensorData(SensorCallback cb) { _sensorCb = std::move(cb); }
     void onButtonState(ButtonCallback cb) { _buttonCb = std::move(cb); }

@@ -134,31 +134,35 @@ void Endpoint::pump() {
         return;
 
     lock();
+    const bool dropped = pumpLocked();
+    unlock();
+    if (dropped && _sendFailedHandler)
+        _sendFailedHandler(); // mutex released, so the handler may call send()
+}
+
+// Returns true when the in-flight frame ran out of retries and was dropped.
+bool Endpoint::pumpLocked() {
     const unsigned long now = millis();
+    bool dropped = false;
 
     if (_inFlight) {
-        if (now - _sentAt < ACK_TIMEOUT_MS) {
-            unlock();
-            return; // still waiting for ACK
-        }
+        if (now - _sentAt < ACK_TIMEOUT_MS)
+            return false; // still waiting for ACK
         if (_retries >= MAX_RETRIES) {
-            // Give up; coalesced fresh values (or the next periodic update) will
-            // resend. The in-flight slot frees up for new traffic.
+            // Give up and free the slot; the send-failed handler lets the application re-send its state.
             _inFlight = false;
+            dropped = true;
         } else {
             _transport.send(_txBuf, _txLen);
             _sentAt = now;
             _retries++;
-            unlock();
-            return;
+            return false;
         }
     }
 
     // Idle: drain the highest-priority entries into one frame.
-    if (_queue.empty()) {
-        unlock();
-        return;
-    }
+    if (_queue.empty())
+        return dropped;
 
     memset(&_txFrame, 0, sizeof(_txFrame));
     pb_size_t count = 0;
@@ -182,8 +186,7 @@ void Endpoint::pump() {
         for (pb_size_t i = 0; i < count; i++)
             _queue.upsert(gm_proto::coalescingKey(_txFrame.payloads[i]),
                           gm_proto::defaultPriority(_txFrame.payloads[i].which_content), _txFrame.payloads[i]);
-        unlock();
-        return;
+        return dropped;
     }
 
     _transport.send(_txBuf, _txLen);
@@ -191,7 +194,7 @@ void Endpoint::pump() {
     _inFlightId = _txFrame.id;
     _sentAt = now;
     _retries = 0;
-    unlock();
+    return dropped;
 }
 
 void Endpoint::handleData(const uint8_t *data, size_t length) {
