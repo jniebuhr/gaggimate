@@ -5,6 +5,7 @@
 
 #include "../../../main.h"
 #include "../../../plugins/BLEScalePlugin.h"
+#include "../BeanScreens.h"
 #include "ui.h"
 #include <Arduino.h>
 
@@ -89,6 +90,14 @@ void onMenuClick(lv_event_t *e) {
 void onGrindScreen(lv_event_t *e) {
     controller.getUI()->changeScreen(&ui_GrindScreen, &ui_GrindScreen_screen_init);
     controller.setMode(MODE_GRIND);
+}
+
+// The menu's former Grind slot now opens the bean picker (machine-controlled
+// grinding isn't used on this machine; it stays reachable from the web UI).
+void onBeanScreen(lv_event_t *e) {
+    controller.deactivate();
+    controller.setMode(MODE_BREW);
+    controller.getUI()->changeScreen(&ui_BeanScreen, &ui_BeanScreen_screen_init);
 }
 
 void onVolumetricClick(lv_event_t *e) {}

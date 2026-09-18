@@ -22,6 +22,7 @@ void onBrewScreen(lv_event_t *e);
 void onSteamScreen(lv_event_t *e);
 void onWaterScreen(lv_event_t *e);
 void onGrindScreen(lv_event_t *e);
+void onBeanScreen(lv_event_t *e);
 void onBrewScreenLoad(lv_event_t *e);
 void onBrewStart(lv_event_t *e);
 void onFlush(lv_event_t *e);

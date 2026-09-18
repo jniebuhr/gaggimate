@@ -1,4 +1,5 @@
 #include "DefaultUI.h"
+#include "BeanScreens.h"
 
 #include <WiFi.h>
 #include <display/core/Controller.h>
@@ -384,6 +385,26 @@ void DefaultUI::setupReactive() {
                           [=]() { adjustDials(ui_SimpleProcessScreen_dials); }, &pressureAvailable);
     effect_mgr.use_effect([=] { return currentScreen == ui_ProfileScreen; }, [=]() { adjustDials(ui_ProfileScreen_dials); },
                           &pressureAvailable);
+    effect_mgr.use_effect([=] { return currentScreen == ui_BeanScreen; }, [=]() { adjustDials(ui_BeanScreen_dials); },
+                          &pressureAvailable);
+    effect_mgr.use_effect([=] { return currentScreen == ui_BeanGrindScreen; }, [=]() { adjustDials(ui_BeanGrindScreen_dials); },
+                          &pressureAvailable);
+    effect_mgr.use_effect([=] { return currentScreen == ui_BeanScreen; }, [=]() { adjustHeatingIndicator(ui_BeanScreen_dials); },
+                          &isTemperatureStable, &heatingFlash);
+    effect_mgr.use_effect([=] { return currentScreen == ui_BeanGrindScreen; },
+                          [=]() { adjustHeatingIndicator(ui_BeanGrindScreen_dials); }, &isTemperatureStable, &heatingFlash);
+    effect_mgr.use_effect([=] { return currentScreen == ui_BeanScreen; },
+                          [=]() {
+                              lv_arc_set_value(uic_BeanScreen_dials_tempGauge, currentTemp);
+                              lv_label_set_text_fmt(uic_BeanScreen_dials_tempText, "%d°C", currentTemp);
+                          },
+                          &currentTemp);
+    effect_mgr.use_effect([=] { return currentScreen == ui_BeanGrindScreen; },
+                          [=]() {
+                              lv_arc_set_value(uic_BeanGrindScreen_dials_tempGauge, currentTemp);
+                              lv_label_set_text_fmt(uic_BeanGrindScreen_dials_tempText, "%d°C", currentTemp);
+                          },
+                          &currentTemp);
     effect_mgr.use_effect([=] { return currentScreen == ui_BrewScreen; }, [=]() { adjustHeatingIndicator(ui_BrewScreen_dials); },
                           &isTemperatureStable, &heatingFlash);
     effect_mgr.use_effect([=] { return currentScreen == ui_SimpleProcessScreen; },
@@ -629,13 +650,10 @@ void DefaultUI::setupReactive() {
         },
         &currentProfileIdx, &profileLoaded);
 
-    // Show/hide grind button based on SmartGrind setting or Alt Relay function
+    // The former Grind menu slot is the bean picker now, so it's always shown
+    // regardless of whether a grinder relay/SmartGrind is configured.
     effect_mgr.use_effect([=] { return currentScreen == ui_MenuScreen; },
-                          [=]() {
-                              grindAvailable ? lv_obj_clear_flag(ui_MenuScreen_grindBtn, LV_OBJ_FLAG_HIDDEN)
-                                             : lv_obj_add_flag(ui_MenuScreen_grindBtn, LV_OBJ_FLAG_HIDDEN);
-                          },
-                          &grindAvailable);
+                          [=]() { lv_obj_clear_flag(ui_MenuScreen_grindBtn, LV_OBJ_FLAG_HIDDEN); }, &grindAvailable);
     effect_mgr.use_effect([=] { return currentScreen == ui_BrewScreen; },
                           [=]() {
                               if (volumetricAvailable && bluetoothScales) {
