@@ -101,6 +101,7 @@ class AsyncWebServerRequest {
 };
 
 using ArRequestHandlerFunction = std::function<void(AsyncWebServerRequest *)>;
+using ArRequestFilterFunction = std::function<bool(AsyncWebServerRequest *)>;
 
 // Matches the real library's queued-message payload type.
 using AsyncWebSocketSharedBuffer = std::shared_ptr<std::vector<uint8_t>>;
@@ -146,6 +147,27 @@ class AsyncStaticWebHandler {
     AsyncStaticWebHandler &setCacheControl(const char *) { return *this; }
 };
 
+// Only prefix() is used; plain const char* URIs keep their exact-match overloads.
+struct AsyncURIMatcher {
+    static AsyncURIMatcher prefix(const char *uri) { return AsyncURIMatcher{uri}; }
+    std::string uri;
+};
+
+// Returned by on(AsyncURIMatcher, ...); the reference is only valid until the next on() call.
+class AsyncCallbackWebHandler {
+  public:
+    AsyncCallbackWebHandler &setFilter(ArRequestFilterFunction filter) {
+        _filter = std::move(filter);
+        return *this;
+    }
+
+    int _method = HTTP_ANY;
+    std::string _uri;
+    ArRequestHandlerFunction _handler;
+    bool _prefix = false;
+    ArRequestFilterFunction _filter;
+};
+
 class AsyncWebServer {
   public:
     explicit AsyncWebServer(uint16_t port) : _port(port) {}
@@ -154,6 +176,10 @@ class AsyncWebServer {
     void on(const char *uri, ArRequestHandlerFunction handler) { _routes.push_back({HTTP_ANY, uri, std::move(handler)}); }
     void on(const char *uri, WebRequestMethod method, ArRequestHandlerFunction handler) {
         _routes.push_back({(int)method, uri, std::move(handler)});
+    }
+    AsyncCallbackWebHandler &on(const AsyncURIMatcher &matcher, WebRequestMethod method, ArRequestHandlerFunction handler) {
+        _routes.push_back({(int)method, matcher.uri, std::move(handler), true});
+        return _routes.back();
     }
     void onNotFound(ArRequestHandlerFunction handler) { _notFound = std::move(handler); }
     void addHandler(AsyncWebSocket *ws) { _ws = ws; }
@@ -165,11 +191,7 @@ class AsyncWebServer {
     void pump(); // process pending sockets (called from gm_web_pump)
 
   private:
-    struct Route {
-        int method;
-        std::string uri;
-        ArRequestHandlerFunction handler;
-    };
+    using Route = AsyncCallbackWebHandler;
     struct StaticRoute {
         std::string uri;
         FS *fs;

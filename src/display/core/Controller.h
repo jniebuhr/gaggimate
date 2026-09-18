@@ -157,9 +157,8 @@ class Controller {
 
     // Functional methods
     void updateControl();
-    // Switch the BLE connection interval based on whether a process is running.
-    // force re-applies even if the desired state is unchanged (use on connect).
-    void applyConnectionPriority(bool force = false);
+    // Main-loop only: tight BLE interval + BT coex while a process or controller OTA runs, relaxed after a hold-off.
+    void updateConnectionPriority();
 
     // Process lifecycle (GM-147): the *Locked helpers assume processMutex is held and
     // collect the event ids to fire; the public wrappers dispatch them after unlocking
@@ -224,9 +223,14 @@ class Controller {
     bool lastAlt = false;
     bool controlStateSent = false;
 
-    // BLE connection-interval priority: tight while a process runs, relaxed when
-    // idle (frees radio airtime for Wi-Fi). Tracks the last requested state.
+    // Last requested BLE connection-interval priority; see updateConnectionPriority().
     bool connLowLatency = false;
+    bool otaLowLatency = false;
+    bool coexRelaxPending = false;
+    unsigned long lastLowLatencyDemand = 0;
+    unsigned long connRelaxedAt = 0;
+    static const unsigned long CONN_RELAX_HOLD_MS = 60000;
+    static const unsigned long CONN_COEX_SETTLE_MS = 2000;
 
     // Guards currentProcess/lastProcess lifecycle across tasks (UI, AsyncTCP, BLE
     // callbacks, logic task). Recursive: locked composites call locked primitives.

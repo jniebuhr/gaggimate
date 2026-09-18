@@ -49,6 +49,10 @@ bool BleClientTransport::connectToServer() {
         return false;
 
     ESP_LOGI(LOG_TAG, "Connecting to advertised device");
+    // Bring the link up at the wanted interval; a param update right after connect races the encryption procedure.
+    const bool lowLatency = _lowLatency;
+    _client->setConnectionParams(lowLatency ? ACTIVE_MIN_INTERVAL : IDLE_MIN_INTERVAL,
+                                 lowLatency ? ACTIVE_MAX_INTERVAL : IDLE_MAX_INTERVAL, CONN_LATENCY, CONN_TIMEOUT);
     unsigned int tries = 0;
     do {
         if (tries >= MAX_CONNECT_RETRIES) {
@@ -62,7 +66,7 @@ bool BleClientTransport::connectToServer() {
         }
         tries++;
     } while (!_client->isConnected());
-    applyConnParams(); // baseline for the new connection (idle unless set active)
+    _appliedLowLatency = lowLatency;
 
     // Secure before GATT use; trust the link state over the rc (losing the initiation race reports EALREADY as failure).
     if (!isEncrypted() && !_client->secureConnection() && !isEncrypted()) {
@@ -125,6 +129,7 @@ bool BleClientTransport::connectToServer() {
     if (NimBLEDevice::isBonded(_serverAddress))
         savePairedPeer(_serverAddress);
     ESP_LOGI(LOG_TAG, "Connected, MTU: %d", _client->getMTU());
+    applyConnParams(); // no-op unless the wanted interval changed while connecting
     emitConnection(true);
     return true;
 }
@@ -192,7 +197,12 @@ void BleClientTransport::setLowLatency(bool active) {
 void BleClientTransport::applyConnParams() {
     if (_client == nullptr || !_client->isConnected())
         return;
-    if (_lowLatency)
+    const bool lowLatency = _lowLatency;
+    if (lowLatency == _appliedLowLatency)
+        return; // link already runs these params; every update is an LL procedure that can drop the link
+    _appliedLowLatency = lowLatency;
+    ESP_LOGI(LOG_TAG, "Switching to %s connection interval", lowLatency ? "active" : "idle");
+    if (lowLatency)
         _client->updateConnParams(ACTIVE_MIN_INTERVAL, ACTIVE_MAX_INTERVAL, CONN_LATENCY, CONN_TIMEOUT);
     else
         _client->updateConnParams(IDLE_MIN_INTERVAL, IDLE_MAX_INTERVAL, CONN_LATENCY, CONN_TIMEOUT);
