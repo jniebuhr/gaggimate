@@ -21,6 +21,7 @@ import { Autotune } from './pages/Autotune/index.jsx';
 import { ShotHistory } from './pages/ShotHistory/index.jsx';
 import { ShotAnalyzer } from './pages/ShotAnalyzer/index.jsx';
 import { StatisticsPage } from './pages/Statistics/index.jsx';
+import { Beans } from './pages/Beans/index.jsx';
 
 const apiService = new ApiService();
 
@@ -42,6 +43,7 @@ export function App() {
                         <Route path='/' component={Home} />
                         <Route path='/profiles' component={ProfileList} />
                         <Route path='/profiles/:id' component={ProfileEdit} />
+                        <Route path='/beans' component={Beans} />
                         <Route path='/settings' component={Settings} />
                         <Route path='/ota' component={OTA} />
                         <Route path='/scales' component={Scales} />

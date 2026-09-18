@@ -9,6 +9,7 @@ import { faCog } from '@fortawesome/free-solid-svg-icons/faCog';
 import { faRotate } from '@fortawesome/free-solid-svg-icons/faRotate';
 import { faMagnifyingGlassChart } from '@fortawesome/free-solid-svg-icons/faMagnifyingGlassChart';
 import { faChartSimple } from '@fortawesome/free-solid-svg-icons/faChartSimple';
+import { faSeedling } from '@fortawesome/free-solid-svg-icons/faSeedling';
 
 function MenuItem(props) {
   let className =
@@ -38,6 +39,7 @@ export function Navigation(props) {
       <hr className='h-5 border-0' />
       <div className='space-y-1.5'>
         <MenuItem label='Profiles' link='/profiles' icon={faList} />
+        <MenuItem label='Beans' link='/beans' icon={faSeedling} isNew />
         <MenuItem label='Shot History' link='/history' icon={faTimeline} />
         <MenuItem label='Shot Analyzer' link='/analyzer' icon={faMagnifyingGlassChart} isNew />
         <MenuItem label='Statistics' link='/statistics' icon={faChartSimple} isNew />
