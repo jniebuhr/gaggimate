@@ -9,6 +9,7 @@
 
 function clearTooltipState(chart) {
   if (!chart) return;
+  chart.$fixedTooltipPointerX = null;
   chart.$fixedTooltipPointerY = null;
   chart.$externalTooltipSource = null;
   chart.$externalTooltipClientY = null;
@@ -78,6 +79,7 @@ function applyHoverForChart(chart, xValue, pointerClientY, showTooltip = true, o
   }
 
   chart.$fixedTooltipPointerY = tooltipY;
+  chart.$fixedTooltipPointerX = tooltipX;
   chart.$externalTooltipSource = options.tooltipSource || null;
   chart.$externalTooltipClientY = Number.isFinite(options.tooltipClientY)
     ? options.tooltipClientY
@@ -199,7 +201,8 @@ export function attachTempChartLayoutSync({ mainChart, tempChart }) {
       return;
     }
 
-    tempChart.options.layout = tempChart.options.layout || {};
+    // Chart.js exposes resolved options through a Proxy. Never assign that Proxy
+    // back into its own configuration: subsequent writes recurse indefinitely.
     tempChart.options.layout.padding = {
       left: targetLeft,
       right: targetRight,
@@ -217,28 +220,41 @@ export function attachTempChartLayoutSync({ mainChart, tempChart }) {
     }
   };
 
-  const handleResizeSync = () => {
-    const browserWindow = globalThis.window;
-    if (browserWindow) {
-      browserWindow.requestAnimationFrame(syncTempPlotAreaSettled);
-    } else {
+  const browserWindow = globalThis.window;
+  let frameId = 0;
+  const scheduleTempPlotAreaSync = () => {
+    if (!browserWindow?.requestAnimationFrame) {
       syncTempPlotAreaSettled();
+      return;
     }
+    if (frameId) return;
+
+    frameId = browserWindow.requestAnimationFrame(() => {
+      frameId = 0;
+      syncTempPlotAreaSettled();
+    });
   };
 
-  const browserWindow = globalThis.window;
+  const resizeObserver =
+    typeof globalThis.ResizeObserver === 'function'
+      ? new globalThis.ResizeObserver(scheduleTempPlotAreaSync)
+      : null;
+
+  // Chart.js calculates the axes synchronously, but responsive canvas sizing may
+  // settle one frame later. Run both passes so additional right-side axes keep the
+  // temperature chart's x-range identical to the main chart's x-range.
+  syncTempPlotAreaSettled();
   if (browserWindow) {
-    browserWindow.requestAnimationFrame(syncTempPlotAreaSettled);
-    browserWindow.addEventListener('resize', handleResizeSync);
-  } else {
-    syncTempPlotAreaSettled();
+    scheduleTempPlotAreaSync();
+    browserWindow.addEventListener('resize', scheduleTempPlotAreaSync);
   }
+  if (resizeObserver && mainChart.canvas) resizeObserver.observe(mainChart.canvas);
+  if (resizeObserver && tempChart.canvas) resizeObserver.observe(tempChart.canvas);
 
   return () => {
-    const cleanupWindow = globalThis.window;
-    if (cleanupWindow) {
-      cleanupWindow.removeEventListener('resize', handleResizeSync);
-    }
+    if (frameId && browserWindow?.cancelAnimationFrame) browserWindow.cancelAnimationFrame(frameId);
+    if (browserWindow) browserWindow.removeEventListener('resize', scheduleTempPlotAreaSync);
+    resizeObserver?.disconnect();
   };
 }
 

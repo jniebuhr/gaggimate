@@ -8,6 +8,7 @@ import { faScaleBalanced } from '@fortawesome/free-solid-svg-icons/faScaleBalanc
 import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons/faTriangleExclamation';
 import { getPhaseName } from '../helpers';
 import { getDisplayStopReasonParts } from '../../../utils/analyzerUtils';
+import { getLastNonExtendedIndex } from '../../../services/analyzer/weightRate';
 
 function isWeightStopType(type) {
   return type === 'weight' || type === 'volumetric';
@@ -147,17 +148,6 @@ function buildPhaseNumberResolver(results) {
   };
 }
 
-function findLastWeightSample(samples) {
-  for (let i = samples.length - 1; i >= 0; i -= 1) {
-    const sample = samples[i];
-    const weightValue = Number(sample?.v);
-    if (!sample?.systemInfo?.extendedRecording && Number.isFinite(weightValue) && weightValue > 0) {
-      return sample;
-    }
-  }
-  return null;
-}
-
 function getStopBadgePadding(phaseNumber) {
   const digitCount = String(Math.max(0, Number(phaseNumber) || 0)).length;
   return {
@@ -259,17 +249,6 @@ const MAIN_STOP_SAMPLE_KEY_BY_EXIT_TYPE = {
   pumped: 'fl',
 };
 
-function getStopReferenceSample({
-  finalWeightSample,
-  isWeightStop,
-  samples,
-  stopSample,
-  useFinalSample,
-}) {
-  if (!useFinalSample || !isWeightStop) return stopSample;
-  return finalWeightSample || samples.at(-1) || null;
-}
-
 function getMainStopYValue(exitType, refSample, samples) {
   const sampleKey = MAIN_STOP_SAMPLE_KEY_BY_EXIT_TYPE[exitType];
   if (sampleKey) return refSample?.[sampleKey] ?? 0;
@@ -279,31 +258,18 @@ function getMainStopYValue(exitType, refSample, samples) {
   return 0;
 }
 
-function getStopPosition({
-  exitType,
-  stopSample,
-  samples,
-  finalWeightSample = null,
-  useFinalSample = false,
-}) {
+function getStopPosition({ exitType, stopSample, samples }) {
   const isWeightStop = isWeightStopType(exitType);
-  const refSample = getStopReferenceSample({
-    finalWeightSample,
-    isWeightStop,
-    samples,
-    stopSample,
-    useFinalSample,
-  });
 
   if (isWeightStop) {
     return {
-      yValue: refSample?.v ?? 0,
+      yValue: stopSample?.v ?? 0,
       yScaleID: 'yWeight',
     };
   }
 
   return {
-    yValue: getMainStopYValue(exitType, refSample, samples),
+    yValue: getMainStopYValue(exitType, stopSample, samples),
     yScaleID: 'yMain',
   };
 }
@@ -617,13 +583,12 @@ function addFinalWeightStopLines({ phaseAnnotations, stopTimeSec, yScaleID, yVal
   };
 }
 
-function resolveFinalStopAnnotationContext({
-  finalWeightSample,
-  maxTime,
-  resolvePhaseNumber,
-  results,
-  samples,
-}) {
+function getLastPhaseStopSample(samples) {
+  const lastNonExtendedIndex = getLastNonExtendedIndex(samples);
+  return lastNonExtendedIndex >= 0 ? samples[lastNonExtendedIndex] : samples.at(-1) || null;
+}
+
+function resolveFinalStopAnnotationContext({ maxTime, resolvePhaseNumber, results, samples }) {
   const resultPhases = Array.isArray(results?.phases) ? results.phases : [];
   if (resultPhases.length === 0) return null;
 
@@ -632,15 +597,14 @@ function resolveFinalStopAnnotationContext({
 
   const exitType = lastPhase.exit.type || '';
   const isWeightStop = isWeightStopType(exitType);
-  const stopTimeSec =
-    isWeightStop && finalWeightSample ? (finalWeightSample.t ?? 0) / 1000 : maxTime;
-  const refSample = samples.at(-1) || null;
+  const lastPhaseStopSample = getLastPhaseStopSample(samples);
+  const stopTimeMs = Number(lastPhaseStopSample?.t);
+  const stopTimeSec = isWeightStop && Number.isFinite(stopTimeMs) ? stopTimeMs / 1000 : maxTime;
+  const refSample = isWeightStop ? lastPhaseStopSample : samples.at(-1) || null;
   const position = getStopPosition({
     exitType,
     stopSample: refSample,
     samples,
-    finalWeightSample,
-    useFinalSample: true,
   });
   const lastPhaseNum = resolvePhaseNumber(
     lastPhase.number,
@@ -664,12 +628,10 @@ function addFinalStopAnnotations({
   samples,
   maxTime,
   visibility,
-  finalWeightSample,
   resolvePhaseNumber,
   colors,
 }) {
   const context = resolveFinalStopAnnotationContext({
-    finalWeightSample,
     maxTime,
     resolvePhaseNumber,
     results,
@@ -790,7 +752,6 @@ export function buildPhaseAnnotations({
   stopIconOverlays = [],
 }) {
   const phaseAnnotations = {};
-  const finalWeightSample = findLastWeightSample(samples);
   const resolvePhaseNumber = buildPhaseNumberResolver(results);
   const hasPhaseTransitions =
     Array.isArray(shotData?.phaseTransitions) && shotData.phaseTransitions.length > 0;
@@ -835,7 +796,6 @@ export function buildPhaseAnnotations({
     samples,
     maxTime,
     visibility,
-    finalWeightSample,
     resolvePhaseNumber,
     colors,
   });

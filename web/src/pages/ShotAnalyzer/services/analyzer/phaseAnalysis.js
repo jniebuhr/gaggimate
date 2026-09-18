@@ -10,6 +10,7 @@ import {
   createPhaseDelayTracker,
 } from './delayTracking';
 import { getMetricStats } from './metricStats';
+import { getLiquidResistanceStats, getNativePuckResistanceStats } from './puckResistance';
 import { getBluetoothScaleConnectionState } from './scaleConnection';
 import {
   PREDICTION_INTERVAL_MS,
@@ -22,10 +23,11 @@ import {
 } from './targetMatching';
 import {
   getLastNonExtendedIndex,
+  getFinalWeightSample,
+  getFinalWeightSamples,
   getPhaseEndSample,
   getPhaseWeightRate,
   getSampleInstantWeightRate,
-  getSamplesThroughLastNonExtended,
   isPositiveFiniteRate,
 } from './weightRate';
 import { calculatePumpedWater } from './waterIntegration';
@@ -547,6 +549,8 @@ function getPhaseStats(samples, weightSamples, sysInfo, sysAnomalies, analyzerSy
     tt: getMetricStats(samples, 'tt'),
     w: getMetricStats(weightSamples, 'v'),
     wf: getMetricStats(samples, 'vf'),
+    pr: getNativePuckResistanceStats(samples),
+    lr: getLiquidResistanceStats(samples),
     sys_raw: sysInfo.raw,
     sys_shot_vol: sysInfo.shotStartedVolumetric,
     sys_curr_vol: sysInfo.currentlyVolumetric,
@@ -590,8 +594,8 @@ export function analyzeExecutedPhase({
   const pEnd = (phaseEndSample.t - globalStartTime) / 1000;
   const duration = pEnd - pStart;
   const phaseWeightRate = getPhaseWeightRate(samples, isLastPhase);
-  const weightSamples = getSamplesThroughLastNonExtended(samples);
-  const weightEndSample = weightSamples.at(-1) || getPhaseEndSample(samples);
+  const weightSamples = getFinalWeightSamples(samples);
+  const weightEndSample = getFinalWeightSample(samples) || getPhaseEndSample(samples);
   const rawName = phaseNameMap[phaseNum];
   const displayName = rawName || `Phase ${phaseNum}`;
   const sysInfo = getPhaseEndSample(samples).systemInfo || {};

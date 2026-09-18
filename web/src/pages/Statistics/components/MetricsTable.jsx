@@ -103,6 +103,26 @@ const METRIC_ROWS = [
     icon: faFilter,
     averageDescription: 'Time-weighted average puck flow',
   },
+  {
+    key: 'pr',
+    label: 'Puck Resistance',
+    unit: 's·√bar/mL',
+    colorClass: 'text-[var(--analyzer-puckresistance-text)]',
+    accentColor: 'var(--analyzer-puckresistance-text)',
+    icon: faGaugeHigh,
+    averageDescription: 'Time-weighted average puck resistance',
+    requiresData: true,
+  },
+  {
+    key: 'lr',
+    label: 'Liquid Resistance',
+    unit: 'bar·s/mL',
+    colorClass: 'text-[var(--analyzer-liquidresistance-text)]',
+    accentColor: 'var(--analyzer-liquidresistance-text)',
+    icon: faGaugeHigh,
+    averageDescription: 'Time-weighted average liquid resistance',
+    requiresData: true,
+  },
 ];
 
 function clamp(value, min, max) {
@@ -243,6 +263,8 @@ export function MetricsTable({ metrics }) {
         {METRIC_ROWS.map(row => {
           const metric = metrics[row.key];
           if (!metric) return null;
+          const count = Number(metric.count);
+          if (row.requiresData && (Number.isNaN(count) || count <= 0)) return null;
           return <MetricRangeViz key={row.key} row={row} metric={metric} />;
         })}
       </div>
