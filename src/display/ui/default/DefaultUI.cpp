@@ -29,7 +29,7 @@ static constexpr uint32_t STARTUP_FADE_MS = 1000; // standby fade-in duration on
 static constexpr int32_t GAUGE_TICK_LONG = 25;      // meter tick length on most screens
 static constexpr int32_t GAUGE_TICK_SHORT = 10;     // shortened tick length on profile / new-menu screens
 static constexpr uint32_t GAUGE_TICK_ANIM_MS = 300; // tick length transition duration
-static constexpr int16_t GAUGE_SETPOINT_INSIDE_PIVOT_X = -198;
+static constexpr int16_t GAUGE_SETPOINT_INSIDE_PIVOT_X = -196;
 static constexpr int16_t GAUGE_SETPOINT_OUTSIDE_PIVOT_X = -233;
 
 static std::array<uint8_t, 8 * 14 * LV_IMG_PX_SIZE_ALPHA_BYTE> insideIndicatorPixels;
