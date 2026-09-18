@@ -57,6 +57,28 @@ import { faPuzzlePiece } from '@fortawesome/free-solid-svg-icons/faPuzzlePiece';
 import { faBluetoothB } from '@fortawesome/free-brands-svg-icons/faBluetoothB';
 import { faRotate } from '@fortawesome/free-solid-svg-icons/faRotate';
 
+const CHECKBOX_KEYS = [
+  'homekit',
+  'boilerFillActive',
+  'smartGrindActive',
+  'homeAssistant',
+  'momentaryButtons',
+  'delayAdjust',
+  'clock24hFormat',
+  'autowakeupEnabled',
+  'smartGrindToggle',
+];
+
+// Form-only fields that never come back from GET /api/settings.
+const FORM_ONLY_KEYS = [
+  'kf',
+  'button0',
+  'button1',
+  'button2',
+  'standbyDisplayEnabled',
+  'dashboardLayout',
+];
+
 function splitPidString(pidString) {
   if (!pidString) return { pid: pidString, kf: '0.000' };
   const parts = pidString.split(',');
@@ -114,27 +136,57 @@ function transformFetchedSettings(fetchedSettings) {
   return settingsWithToggle;
 }
 
+function serializeAutoWakeupSchedules(autowakeupSchedules) {
+  return autowakeupSchedules
+    .map(schedule => `${schedule.time}|${schedule.days.map(d => (d ? '1' : '0')).join('')}`)
+    .join(';');
+}
+
+function isTruthySetting(value) {
+  return value === true || value === 1 || value === '1' || value === 'true' || value === 'on';
+}
+
+// Maps a full or partial settings file onto form fields; keys the file lacks stay untouched.
+function normalizeImportedSettings(data, knownKeys) {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    throw new Error('The file does not contain a settings object.');
+  }
+  const fields = {};
+  const ignored = [];
+  for (const [key, value] of Object.entries(data)) {
+    if (!knownKeys.has(key) || value === null || typeof value === 'object') {
+      ignored.push(key);
+    } else {
+      fields[key] = CHECKBOX_KEYS.includes(key) ? isTruthySetting(value) : value;
+    }
+  }
+  const count = Object.keys(fields).length;
+  // API-shaped files carry "p,i,d,kf" and "b0,b1,b2"; the form edits those as separate fields.
+  if (typeof fields.pid === 'string' && fields.pid.split(',').length >= 4) {
+    Object.assign(fields, splitPidString(fields.pid));
+  }
+  if (fields.buttonBehavior && fields.button0 === undefined) {
+    Object.assign(fields, splitButtons(String(fields.buttonBehavior)));
+  }
+  if (fields.standbyBrightness !== undefined && fields.standbyDisplayEnabled === undefined) {
+    fields.standbyDisplayEnabled = Number(fields.standbyBrightness) > 0;
+  }
+  const schedules =
+    fields.autowakeupSchedules !== undefined
+      ? parseAutoWakeupSchedules(fields.autowakeupSchedules)
+      : null;
+  return { fields, schedules, ignored, count };
+}
+
 function buildSubmitFormData(formData, autowakeupSchedules, restart) {
   const formDataToSubmit = new FormData();
-  const checkboxKeys = [
-    'homekit',
-    'boilerFillActive',
-    'smartGrindActive',
-    'homeAssistant',
-    'momentaryButtons',
-    'delayAdjust',
-    'clock24hFormat',
-    'autowakeupEnabled',
-    'smartGrindToggle',
-  ];
 
   for (const [key, value] of Object.entries(formData)) {
     if (value === undefined || value === null) continue;
 
-    if (checkboxKeys.includes(key)) {
-      if (value) {
-        formDataToSubmit.set(key, '1');
-      }
+    if (CHECKBOX_KEYS.includes(key)) {
+      // Always explicit: the firmware leaves absent booleans untouched (GM-214).
+      formDataToSubmit.set(key, value ? '1' : '0');
     } else {
       formDataToSubmit.set(key, String(value));
     }
@@ -155,10 +207,7 @@ function buildSubmitFormData(formData, autowakeupSchedules, restart) {
     formDataToSubmit.set('pid', combinedPid);
   }
 
-  const schedulesStr = autowakeupSchedules
-    .map(schedule => `${schedule.time}|${schedule.days.map(d => (d ? '1' : '0')).join('')}`)
-    .join(';');
-  formDataToSubmit.set('autowakeupSchedules', schedulesStr);
+  formDataToSubmit.set('autowakeupSchedules', serializeAutoWakeupSchedules(autowakeupSchedules));
 
   if (!formData.standbyDisplayEnabled) {
     formDataToSubmit.set('standbyBrightness', '0');
@@ -186,6 +235,8 @@ export function Settings() {
   const [autowakeupSchedules, setAutoWakeupSchedules] = useState([
     { time: '07:00', days: [true, true, true, true, true, true, true] },
   ]);
+
+  const [importNotice, setImportNotice] = useState(null);
 
   const [fetchedSettings, setFetchedSettings] = useState(() => getCachedSettings());
   const [isLoading, setIsLoading] = useState(!fetchedSettings);
@@ -251,19 +302,7 @@ export function Settings() {
   const onChange = key => {
     return e => {
       let value = e.currentTarget.value;
-      if (
-        [
-          'homekit',
-          'boilerFillActive',
-          'smartGrindActive',
-          'smartGrindToggle',
-          'homeAssistant',
-          'momentaryButtons',
-          'delayAdjust',
-          'clock24hFormat',
-          'autowakeupEnabled',
-        ].includes(key)
-      ) {
+      if (CHECKBOX_KEYS.includes(key)) {
         value = !formData[key];
       }
       if (key === 'clock24hFormat') {
@@ -351,6 +390,7 @@ export function Settings() {
 
         updateSettingsCache(data);
         setFormData(updatedData);
+        setImportNotice(null);
       } catch (error) {
         console.error('Failed to save settings:', error);
       } finally {
@@ -361,20 +401,46 @@ export function Settings() {
   );
 
   const onExport = useCallback(() => {
-    downloadJson(formData, 'settings.json');
-  }, [formData]);
+    const autowakeupSchedulesStr = serializeAutoWakeupSchedules(autowakeupSchedules);
+    downloadJson({ ...formData, autowakeupSchedules: autowakeupSchedulesStr }, 'settings.json');
+  }, [formData, autowakeupSchedules]);
 
-  const onUpload = function (evt) {
-    if (evt.target.files.length) {
-      const file = evt.target.files[0];
-      const reader = new FileReader();
-      reader.onload = async e => {
-        const data = JSON.parse(e.target.result);
-        setFormData(data);
-      };
-      reader.readAsText(file);
+  const onUpload = async evt => {
+    const input = evt.target;
+    const file = input.files?.[0];
+    if (!file) return;
+    try {
+      // Merging onto a form that never loaded would save defaults over the real settings.
+      if (isLoading || !Object.keys(formData).length) {
+        throw new Error('Settings have not loaded yet.');
+      }
+      const knownKeys = new Set([...Object.keys(formData), ...FORM_ONLY_KEYS]);
+      const { fields, schedules, ignored, count } = normalizeImportedSettings(
+        JSON.parse(await file.text()),
+        knownKeys,
+      );
+      if (!count) throw new Error('The file contains no known settings.');
+
+      setFormData(prev => ({ ...prev, ...fields }));
+      if (schedules) setAutoWakeupSchedules(schedules);
+      if (fields.clock24hFormat !== undefined) setClock24h(fields.clock24hFormat);
+      if (fields.dashboardLayout !== undefined) setDashboardLayout(fields.dashboardLayout);
+      setImportNotice({ error: false, name: file.name, count, ignored });
+    } catch (error) {
+      setImportNotice({ error: true, name: file.name, message: error.message });
+    } finally {
+      // Lets the same file be picked again.
+      input.value = '';
     }
   };
+
+  const onDiscardImport = useCallback(() => {
+    const current = getCachedSettings() ?? fetchedSettings;
+    setFormData(transformFetchedSettings(current));
+    setAutoWakeupSchedules(parseAutoWakeupSchedules(current?.autowakeupSchedules));
+    setClock24h(!!current?.clock24hFormat);
+    setImportNotice(null);
+  }, [fetchedSettings]);
 
   const settingsTabs = [
     { id: 'general', label: 'General', icon: faSliders },
@@ -445,6 +511,52 @@ export function Settings() {
         }
       />
 
+      {importNotice && (
+        <div
+          role='alert'
+          className={`alert alert-vertical sm:alert-horizontal mb-4 ${importNotice.error ? 'alert-error' : 'alert-info'}`}
+        >
+          <div className='text-sm'>
+            {importNotice.error ? (
+              <span>
+                Could not import {importNotice.name}: {importNotice.message}
+              </span>
+            ) : (
+              <>
+                <span>
+                  Loaded {importNotice.count} {importNotice.count === 1 ? 'setting' : 'settings'}{' '}
+                  from {importNotice.name}. All other settings are kept. Save to apply.
+                </span>
+                {importNotice.ignored.length > 0 && (
+                  <span className='block text-xs opacity-80'>
+                    Ignored unknown entries: {importNotice.ignored.join(', ')}
+                  </span>
+                )}
+              </>
+            )}
+          </div>
+          <div className='flex shrink-0 gap-2'>
+            {!importNotice.error && (
+              <button
+                type='button'
+                className='btn btn-sm btn-primary'
+                disabled={submitting}
+                onClick={() => onSubmit()}
+              >
+                Save Settings
+              </button>
+            )}
+            <button
+              type='button'
+              className='btn btn-sm btn-ghost'
+              onClick={importNotice.error ? () => setImportNotice(null) : onDiscardImport}
+            >
+              {importNotice.error ? 'Dismiss' : 'Discard'}
+            </button>
+          </div>
+        </div>
+      )}
+
       <form
         id='settings-page-form'
         key='settings'
@@ -497,7 +609,9 @@ export function Settings() {
         )}
       </form>
 
-      {tab === 'calibration' && <LazyCalibrationTab formData={formData} onChange={onChange} />}
+      {tab === 'calibration' && (
+        <LazyCalibrationTab formData={formData} onChange={onChange} setField={setField} />
+      )}
       {tab === 'bluetooth' && (isLoading ? <BluetoothTabSkeleton /> : <LazyBluetoothTab />)}
       {tab === 'system' && (isLoading ? <SystemTabSkeleton /> : <LazySystemTab />)}
     </PageLayout>
