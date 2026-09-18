@@ -719,7 +719,12 @@ void DefaultUI::handleScreenChange() {
         }
 
         _ui_screen_change(targetScreen, LV_SCR_LOAD_ANIM_NONE, 0, 0, targetScreenInit);
-        lv_obj_del(current);
+        // Every screen registers scr_unloaded_delete_cb, which already deletes it during
+        // _ui_screen_change (LV_EVENT_SCREEN_UNLOADED fires synchronously), so `current`
+        // is normally freed by now. Only delete if it somehow survived - deleting twice
+        // is a double free (caught by the native simulator with LV_USE_ASSERT_OBJ).
+        if (lv_obj_is_valid(current))
+            lv_obj_del(current);
         rerender = true;
     }
 }

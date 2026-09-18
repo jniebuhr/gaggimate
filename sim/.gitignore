@@ -1,0 +1,6 @@
+build/obj/
+build/lv_conf.h
+build/ui/
+build/ui_events_stubs.c
+build/sim
+out/

@@ -141,8 +141,11 @@ void ui_BeanScreen_screen_init(void) {
         lv_obj_t *label = lv_label_create(btn);
         styleThemedLabel(label, &lv_font_montserrat_24);
         lv_obj_set_align(label, LV_ALIGN_CENTER);
-        lv_label_set_long_mode(label, LV_LABEL_LONG_DOT);
+        // Fixed width AND height: LV_LABEL_LONG_DOT only ellipsizes a fixed-size
+        // label; with an auto height a long name would wrap to a second line.
         lv_obj_set_width(label, 230);
+        lv_obj_set_height(label, 30);
+        lv_label_set_long_mode(label, LV_LABEL_LONG_DOT);
         lv_label_set_text(label, beanList[i].name.c_str());
         lv_obj_add_event_cb(btn, ui_event_BeanScreen_beanBtn, LV_EVENT_ALL, reinterpret_cast<void *>(static_cast<intptr_t>(i)));
         ui_BeanScreen_beanBtns[i] = btn;
@@ -246,8 +249,9 @@ void ui_BeanGrindScreen_screen_init(void) {
     styleThemedLabel(title, &lv_font_montserrat_24);
     lv_obj_set_align(title, LV_ALIGN_CENTER);
     lv_obj_set_y(title, -140);
-    lv_label_set_long_mode(title, LV_LABEL_LONG_DOT);
     lv_obj_set_width(title, 260);
+    lv_obj_set_height(title, 30);
+    lv_label_set_long_mode(title, LV_LABEL_LONG_DOT);
     lv_label_set_text(title, haveBean ? beanList[selectedBeanIdx].name.c_str() : "Bean");
 
     lv_obj_t *subtitle = lv_label_create(ui_BeanGrindScreen_panel);
