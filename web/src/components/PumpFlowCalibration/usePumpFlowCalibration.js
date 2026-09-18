@@ -1,13 +1,15 @@
 import { useCallback, useContext, useEffect, useRef, useState } from 'preact/hooks';
-import { ApiServiceContext, machine } from '../../services/ApiService.js';
+import { ApiServiceContext, machine, updateSettingsCache } from '../../services/ApiService.js';
 import { analyze, parseCoeffs } from '../../utils/pumpFlowCalibration.js';
+import { activeWarnings, parseWarningStates } from '../../utils/warnings.js';
 import { fetchAndParseShot, fetchShotIndex, postCoefficients } from './api.js';
 import {
   MODE_BREW,
   PHASE,
   POST_MODE_SETTLE_MS,
-  POST_SHOT_SETTLE_MS,
   SHOT_END_TIMEOUT_MS,
+  SHOT_SAVED_POLL_DELAY_MS,
+  SHOT_SAVED_POLL_RETRIES,
 } from './constants.js';
 import { CALIBRATION_PROFILE, CALIBRATION_PROFILE_ID } from './profile.js';
 
@@ -42,7 +44,13 @@ export function usePumpFlowCalibration({ currentCoeffs, onApplied }) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  const statusListenerRef = useRef(null);
+  // WS listeners of the current run as [type, id] pairs.
+  const listenersRef = useRef([]);
+  // Shot id reported by evt:history-shot-saved plus a wake-up for the poll loop.
+  const savedShotIdRef = useRef(null);
+  const savedWakeRef = useRef(null);
+  // Survives Retry, where the selected profile is already the calibration profile.
+  const restoreProfileRef = useRef(null);
   // Prevents start() from running concurrently with itself: the Retry button
   // on the ERROR screen (or any other re-entry path) must not be allowed to
   // kick off a second run while the previous one's `finally` cleanup is still
@@ -57,10 +65,9 @@ export function usePumpFlowCalibration({ currentCoeffs, onApplied }) {
   const waitRejectRef = useRef(null);
 
   const detachStatusListener = useCallback(() => {
-    if (statusListenerRef.current !== null) {
-      apiService.off('evt:status', statusListenerRef.current);
-      statusListenerRef.current = null;
-    }
+    for (const [type, id] of listenersRef.current) apiService.off(type, id);
+    listenersRef.current = [];
+    savedWakeRef.current?.();
     if (safetyIdRef.current !== null) {
       clearTimeout(safetyIdRef.current);
       safetyIdRef.current = null;
@@ -88,6 +95,11 @@ export function usePumpFlowCalibration({ currentCoeffs, onApplied }) {
     setSaved(false);
   }, [detachStatusListener]);
 
+  const listen = useCallback(
+    (type, handler) => listenersRef.current.push([type, apiService.on(type, handler)]),
+    [apiService],
+  );
+
   const waitForShotEnd = useCallback(
     () =>
       new Promise((resolve, reject) => {
@@ -103,24 +115,55 @@ export function usePumpFlowCalibration({ currentCoeffs, onApplied }) {
           detachStatusListener();
           reject(new Error('Timeout waiting for shot to finish (5min).'));
         }, SHOT_END_TIMEOUT_MS);
-        statusListenerRef.current = apiService.on('evt:status', m => {
+        // Error-level warnings (e.g. still heating) park the start behind a confirmation only Home shows.
+        listen('evt:brew:confirm', m => {
+          const labels = activeWarnings(parseWarningStates(m.warn)).map(w => w.label);
+          pushLog(`Starting despite warnings: ${labels.join(', ') || 'unknown'}`, 'warn');
+          apiService.send({ tp: 'req:process:activate', ignoreWarnings: true });
+        });
+        listen('evt:brew:confirm:cancel', () => {
+          waitRejectRef.current = null;
+          detachStatusListener();
+          reject(new Error('Shot start was cancelled on the machine.'));
+        });
+        listen('evt:status', m => {
+          // State-only frames carry no process key; only telemetry frames say whether it's active.
+          if (!Object.prototype.hasOwnProperty.call(m, 'process')) return;
           const active = m.process?.a === 1;
           if (active) sawActive = true;
           if (sawActive && !active) {
-            // Mark as settled before detaching so detach doesn't reject our
-            // already-resolved promise.
+            // Listeners stay attached: the shot-saved event only arrives after this point.
             if (safetyIdRef.current !== null) {
               clearTimeout(safetyIdRef.current);
               safetyIdRef.current = null;
             }
             waitRejectRef.current = null;
-            detachStatusListener();
             resolve();
           }
         });
       }),
-    [apiService, detachStatusListener],
+    [apiService, detachStatusListener, listen, pushLog],
   );
+
+  // The index entry lands after extended recording: take the saved event, poll index.bin as fallback.
+  const waitForSavedShot = useCallback(async preIds => {
+    for (let attempt = 1; attempt <= SHOT_SAVED_POLL_RETRIES; attempt++) {
+      if (savedShotIdRef.current !== null) return savedShotIdRef.current;
+      const index = await fetchShotIndex();
+      const fresh = index.filter(e => !preIds.has(e.id)).sort((a, b) => b.timestamp - a.timestamp);
+      if (fresh.length) return fresh[0].id;
+      if (attempt === SHOT_SAVED_POLL_RETRIES) break;
+      await new Promise(resolve => {
+        const timer = setTimeout(resolve, SHOT_SAVED_POLL_DELAY_MS);
+        savedWakeRef.current = () => {
+          clearTimeout(timer);
+          resolve();
+        };
+      });
+      savedWakeRef.current = null;
+    }
+    throw new Error('New shot did not appear in history — was it cancelled?');
+  }, []);
 
   const start = useCallback(async () => {
     if (inFlightRef.current) return;
@@ -139,8 +182,9 @@ export function usePumpFlowCalibration({ currentCoeffs, onApplied }) {
     // so we can restore it in the `finally` block. Skip if the user was already
     // sitting on the calibration profile (interrupted previous run).
     const previousProfileId = machine.value.status.selectedProfileId;
-    const profileToRestore =
-      previousProfileId && previousProfileId !== CALIBRATION_PROFILE_ID ? previousProfileId : null;
+    if (previousProfileId && previousProfileId !== CALIBRATION_PROFILE_ID) {
+      restoreProfileRef.current = previousProfileId;
+    }
 
     try {
       // Validate the existing coefficients first so a malformed value can't
@@ -165,18 +209,18 @@ export function usePumpFlowCalibration({ currentCoeffs, onApplied }) {
       // Subscribe to evt:status BEFORE activating so a fast a:0→1→0 transition
       // (or a status arriving in the same tick) can't slip past the listener.
       const shotEnd = waitForShotEnd();
+      savedShotIdRef.current = null;
+      listen('evt:history-shot-saved', m => {
+        if (typeof m.id !== 'number' || preIds.has(m.id)) return;
+        savedShotIdRef.current = m.id;
+        savedWakeRef.current?.();
+      });
       apiService.send({ tp: 'req:process:activate' });
       await shotEnd;
 
-      pushLog('Shot finished. Fetching history...', 'ok');
-      await new Promise(r => setTimeout(r, POST_SHOT_SETTLE_MS));
-      const after = await fetchShotIndex();
-      const fresh = after.filter(e => !preIds.has(e.id)).sort((a, b) => b.timestamp - a.timestamp);
-      if (!fresh.length) {
-        throw new Error('New shot did not appear in history — was it cancelled?');
-      }
-
-      const shotId = fresh[0].id;
+      pushLog('Shot finished. Waiting for it to be saved to history...', 'ok');
+      const shotId = await waitForSavedShot(preIds);
+      detachStatusListener();
       pushLog(`Downloading shot #${shotId}`);
       setPhase(PHASE.ANALYZING);
 
@@ -198,13 +242,21 @@ export function usePumpFlowCalibration({ currentCoeffs, onApplied }) {
       // Best-effort cleanup: put the user back on their previous profile and
       // remove the calibration profile from the machine. Failures here are
       // surfaced as warnings — they don't undo a successful calibration.
-      if (profileToRestore) {
-        try {
-          pushLog('Restoring previous profile...');
-          await apiService.request({ tp: 'req:profiles:select', id: profileToRestore });
-        } catch (e) {
-          pushLog(`Could not restore previous profile: ${e.message}`, 'warn');
+      try {
+        pushLog('Restoring previous profile...');
+        let profileToRestore = restoreProfileRef.current;
+        if (!profileToRestore) {
+          // Never leave the machine on the profile we are about to delete.
+          const list = await apiService.request({ tp: 'req:profiles:list', minimal: true });
+          profileToRestore = list.profiles?.find(p => p.id !== CALIBRATION_PROFILE_ID)?.id;
         }
+        if (profileToRestore) {
+          await apiService.request({ tp: 'req:profiles:select', id: profileToRestore });
+        } else {
+          pushLog('No other profile found to switch back to.', 'warn');
+        }
+      } catch (e) {
+        pushLog(`Could not restore previous profile: ${e.message}`, 'warn');
       }
       try {
         pushLog('Removing calibration profile...');
@@ -214,13 +266,21 @@ export function usePumpFlowCalibration({ currentCoeffs, onApplied }) {
       }
       inFlightRef.current = false;
     }
-  }, [apiService, currentCoeffs, detachStatusListener, pushLog, waitForShotEnd]);
+  }, [
+    apiService,
+    currentCoeffs,
+    detachStatusListener,
+    listen,
+    pushLog,
+    waitForShotEnd,
+    waitForSavedShot,
+  ]);
 
   const apply = useCallback(async () => {
     if (!results) return;
     setSaving(true);
     try {
-      await postCoefficients(results.newCoeffs);
+      updateSettingsCache(await postCoefficients(results.newCoeffs));
       pushLog(`Coefficients saved to machine: ${results.newCoeffs}`, 'ok');
       setSaved(true);
       onApplied?.(results.newCoeffs);
