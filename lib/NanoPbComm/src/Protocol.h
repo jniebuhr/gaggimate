@@ -15,6 +15,8 @@ static constexpr const char *TX_CHAR_UUID = "87654321-4321-8765-4321-cba98765432
 static constexpr const char *RX_CHAR_UUID = "12345678-1234-5678-1234-123456789abc";
 // Legacy read-only system-info characteristic (JSON), kept for external readers.
 static constexpr const char *INFO_CHAR_UUID = "f8d7203b-e00c-48e2-83ba-37ff49cdba74";
+// Legacy error characteristic; displays <= v1.8.1 dereference it unchecked, so the server keeps an inert stub (GM-221).
+static constexpr const char *LEGACY_ERROR_CHAR_UUID = "d6676ec7-820c-41de-820d-95620749003b";
 
 // Bump on any breaking gaggimate.proto change; carried in SystemInfo.protocol_version for mismatch detection.
 static constexpr uint32_t PROTOCOL_VERSION = 5;

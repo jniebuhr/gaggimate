@@ -30,6 +30,9 @@ void BleServerTransport::init(const String &deviceName, bool pairingWindow) {
     // INFO stays readable without encryption so legacy/pre-pairing readers work.
     _infoChar = service->createCharacteristic(gm_proto::INFO_CHAR_UUID, NIMBLE_PROPERTY::READ);
     _infoChar->setValue(std::string(_info.c_str()));
+    // Inert stub: displays <= v1.8.1 null-deref a missing error characteristic and crash-loop (GM-221).
+    service->createCharacteristic(gm_proto::LEGACY_ERROR_CHAR_UUID, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY)
+        ->setValue(std::string("0"));
     service->start();
 
     // OTA DFU shares the same server (separate service/UUIDs).
