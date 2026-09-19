@@ -158,7 +158,7 @@ class Controller {
 
     // Functional methods
     void updateControl();
-    // Main-loop only: tight BLE interval + BT coex while a process or controller OTA runs, relaxed after a hold-off.
+    // Tight BLE interval + BT coex while a process or controller OTA runs, relaxed after a hold-off; serialized, any task.
     void updateConnectionPriority();
 
     // Process lifecycle (GM-147): the *Locked helpers assume processMutex is held and
@@ -234,6 +234,7 @@ class Controller {
     bool coexRelaxPending = false;
     unsigned long lastLowLatencyDemand = 0;
     unsigned long connRelaxedAt = 0;
+    std::mutex connPriorityMutex;
     static const unsigned long CONN_RELAX_HOLD_MS = 15000;
     static const unsigned long CONN_COEX_SETTLE_MS = 2000;
 

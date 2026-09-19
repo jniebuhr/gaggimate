@@ -151,7 +151,9 @@ void BLEScalePlugin::tick() {
             scanner->stopAsyncScan();
         }
     } else if (doConnect && !hasScale) {
-        establishConnection();
+        // Never start a connect during a shot, and honour the pause after a lost link or failed attempt.
+        if (!controller->isActive() && (!reconnectPaused || millis() - reconnectPausedAt >= SCALE_RECONNECT_PAUSE_MS))
+            establishConnection();
     } else if (wantScan && !connected) {
         scanner->initializeAsyncScan();
     }
@@ -182,6 +184,8 @@ void BLEScalePlugin::update() {
         if (!hasConnectedScale) {
             // Never update() a lost scale: drivers reconnect in there with a blocking connect(); the scan finds it again.
             ESP_LOGW("BLEScalePlugin", "Scale connection lost, resuming scan");
+            reconnectPaused = true;
+            reconnectPausedAt = millis();
             releaseScale();
             scanner->initializeAsyncScan();
             return;
@@ -241,6 +245,9 @@ void BLEScalePlugin::releaseScale() {
         old = std::move(scale);
         connected = false;
         doConnect = false;
+        cachedHasBattery = false;
+        cachedHasFlowRate = false;
+        cachedBattery = REMOTE_SCALES_BATTERY_UNKNOWN;
         // Reset metadata caches so a newly connected (possibly different) scale re-emits its change events.
         lastBatteryLevel = REMOTE_SCALES_BATTERY_UNKNOWN;
         lastWeightUnit = ScaleWeightUnit::UNKNOWN;
@@ -274,6 +281,7 @@ void BLEScalePlugin::pollScaleMetadata() {
         if (scale == nullptr || !scale->isConnected() || !scale->hasBatteryLevel())
             return;
         pct = scale->getBatteryLevel();
+        cachedBattery = pct;
         if (pct == lastBatteryLevel || pct == REMOTE_SCALES_BATTERY_UNKNOWN)
             return;
         lastBatteryLevel = pct;
@@ -327,9 +335,13 @@ void BLEScalePlugin::establishConnection() {
     });
 
     // Connect without the lock held: this blocks for up to NimBLE's 30s connect timeout.
+    const unsigned long started = millis();
     connecting = true;
     const bool connectResult = candidate->connect();
     connecting = false;
+    ESP_LOGI("BLEScalePlugin", "Scale connect %s after %lums", connectResult ? "succeeded" : "failed", millis() - started);
+    reconnectPaused = !connectResult;
+    reconnectPausedAt = millis();
 
     if (!connectResult || !active) {
         ESP_LOGW("BLEScalePlugin", "Failed to connect to scale, retrying scan");
@@ -341,6 +353,8 @@ void BLEScalePlugin::establishConnection() {
     }
     std::lock_guard<ScaleMutex> guard(scaleMutex);
     scale = std::move(candidate);
+    cachedHasBattery = scale->hasBatteryLevel();
+    cachedHasFlowRate = scale->hasFlowRate();
     connected = true;
 }
 
@@ -372,12 +386,12 @@ void BLEScalePlugin::onMeasurement(float value) const {
     controller->onVolumetricMeasurement(value, VolumetricMeasurementSource::BLUETOOTH);
 
     // Native flow rate (e.g. Bookoo) rides along at the scale's cadence; this is the NimBLE host task, so never wait.
-    if (pluginManager == nullptr)
+    if (pluginManager == nullptr || !cachedHasFlowRate)
         return;
     float flowRate = 0.0f;
     {
-        auto lock = lockScale(0);
-        if (!lock || scale == nullptr || !scale->hasFlowRate())
+        std::unique_lock<ScaleMutex> lock(scaleMutex, std::try_to_lock);
+        if (!lock || scale == nullptr)
             return;
         flowRate = scale->getFlowRate();
     }

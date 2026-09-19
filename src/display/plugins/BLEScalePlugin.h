@@ -14,6 +14,7 @@ void on_ble_measurement(float value);
 constexpr unsigned long UPDATE_INTERVAL_MS = 1000;
 constexpr unsigned long SCALE_TASK_INTERVAL_MS = 50;
 constexpr unsigned long SCALE_LOCK_TIMEOUT_MS = 50;
+constexpr unsigned long SCALE_RECONNECT_PAUSE_MS = 15000;
 
 class BLEScalePlugin : public Plugin {
   public:
@@ -42,20 +43,14 @@ class BLEScalePlugin : public Plugin {
     std::vector<DiscoveredDevice> getDiscoveredScales() const;
     void tare() const;
 
-    // Optional native scale fields (see RemoteScales); each returns a sentinel if unsupported or the scale is busy.
+    // Cached by the scale task: the main loop and web handlers poll these every pass and must never touch the scale lock.
+    bool hasBatteryLevel() const { return cachedHasBattery; }
+    uint8_t getBatteryLevel() const { return cachedBattery; }
+    bool hasFlowRate() const { return cachedHasFlowRate; }
+
+    // Rarely used native scale fields (see RemoteScales); each returns a sentinel if unsupported or the scale is busy.
     float getFlowRate() const {
         return withScale(0.0f, [](RemoteScales &s) { return s.hasFlowRate() ? s.getFlowRate() : 0.0f; });
-    }
-    bool hasFlowRate() const {
-        return withScale(false, [](RemoteScales &s) { return s.hasFlowRate(); });
-    }
-    uint8_t getBatteryLevel() const {
-        return withScale(REMOTE_SCALES_BATTERY_UNKNOWN, [](RemoteScales &s) {
-            return s.hasBatteryLevel() ? s.getBatteryLevel() : REMOTE_SCALES_BATTERY_UNKNOWN;
-        });
-    }
-    bool hasBatteryLevel() const {
-        return withScale(false, [](RemoteScales &s) { return s.hasBatteryLevel(); });
     }
     ScaleWeightUnit getWeightUnit() const {
         return withScale(ScaleWeightUnit::UNKNOWN,
@@ -96,6 +91,9 @@ class BLEScalePlugin : public Plugin {
     std::atomic<bool> doConnect{false};
     std::atomic<bool> connected{false};
     std::atomic<bool> connecting{false};
+    std::atomic<bool> cachedHasBattery{false};
+    std::atomic<bool> cachedHasFlowRate{false};
+    std::atomic<uint8_t> cachedBattery{REMOTE_SCALES_BATTERY_UNKNOWN};
     std::atomic<bool> disconnectRequested{false};
     mutable std::atomic<bool> scanRequested{false};
     std::mutex uuidMutex;
@@ -103,6 +101,9 @@ class BLEScalePlugin : public Plugin {
     TaskHandle_t taskHandle = nullptr;
 
     unsigned long lastUpdate = 0;
+    // Same 15s grace the old retry counter gave a lost scale; a connect attempt hogs the radio the controller link shares.
+    bool reconnectPaused = false;
+    unsigned long reconnectPausedAt = 0;
 
     // Cached scale-metadata values used to avoid firing an event for each
     // unchanged poll tick. Reset when the scale disconnects.
