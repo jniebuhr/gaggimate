@@ -12,7 +12,8 @@ import { ProfileMainInformation } from './ProfileMainInformation.jsx';
 import { getProfilePhases, removePhaseAt, updatePhaseAt } from './profilePhases.js';
 
 export function ExtendedProfileForm(props) {
-  const { data, onChange, onSave, saving = true, pressureAvailable = false } = props;
+  const { data, onChange, onSave, saving = true, pressureAvailable = false, showDumpValve = false } =
+    props;
   const phases = getProfilePhases(data);
   const [currentPhaseIndex, setCurrentPhaseIndex] = useState(0);
 
@@ -40,6 +41,7 @@ export function ExtendedProfileForm(props) {
           name: 'New Phase',
           pump: 100,
           valve: 1,
+          alt: 0,
           duration: 0,
           transition: {
             type: 'instant',
@@ -141,6 +143,7 @@ export function ExtendedProfileForm(props) {
                 onChange={phase => onPhaseChange(currentPhaseIndex, phase)}
                 onRemove={() => onPhaseRemove(currentPhaseIndex)}
                 pressureAvailable={pressureAvailable}
+                showDumpValve={showDumpValve}
               />
             ) : (
               <p className='text-base-content/60 text-sm'>
