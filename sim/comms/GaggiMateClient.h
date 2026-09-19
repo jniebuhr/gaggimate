@@ -61,7 +61,9 @@ class GaggiMateClient {
     uint32_t getLatencyMs() const { return 18; }
     uint32_t getLastLatencyMs() const { return 18; }
     bool hasLatency() const { return _connected; }
-    void setLowLatency(bool) {}
+    void setLowLatency(bool lat) {
+        ESP_LOGI("GaggiMateClient-Mock", "setLowLatency(%s) ignored in the simulator", lat ? "true" : "false");
+    }
     NimBLEClient *getClient() const { return const_cast<NimBLEClient *>(&_nativeClient); }
 
     // build*: compose a command without sending.
