@@ -1021,9 +1021,9 @@ void Controller::activate(bool ignoreWarnings) {
 #endif
         if (mode == MODE_BREW) {
             pluginManager->trigger("controller:brew:prestart");
+            delay(200);
         }
     }
-    delay(200);
     switch (mode) {
     case MODE_BREW:
         startProcess(new BrewProcess(profileManager->getSelectedProfile(),

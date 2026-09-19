@@ -208,11 +208,13 @@ void action_on_volumetric_click(lv_event_t *e) {
 
 void action_on_grind_toggle(lv_event_t *e) {
     controller.isGrindActive() ? controller.deactivateGrind() : controller.activateGrind();
+    controller.getUI()->markDirty();
 };
 
 void action_on_simple_process_toggle(lv_event_t *e) {
     if (controller.getMode() != MODE_STEAM) {
         controller.isActive() ? controller.deactivate() : controller.activate();
+        controller.getUI()->markDirty();
     }
 };
 
