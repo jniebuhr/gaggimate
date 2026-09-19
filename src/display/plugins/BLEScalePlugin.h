@@ -9,6 +9,8 @@
 #include <freertos/task.h>
 #include <mutex>
 
+#include <memory>
+
 void on_ble_measurement(float value);
 
 constexpr unsigned long UPDATE_INTERVAL_MS = 1000;
