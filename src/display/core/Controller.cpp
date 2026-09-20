@@ -1049,6 +1049,8 @@ void Controller::deactivate() {
         deactivateLocked(events);
     }
     updateControl(); // stop the pump / close the valve now instead of on the next logic cycle
+    comms.tare();
+    applyConnectionPriority(); // shot ended -> relaxed BLE interval
     dispatchEvents(events);
 }
 
@@ -1059,8 +1061,6 @@ void Controller::deactivateLocked(std::vector<const char *> &events) {
     delete lastProcess;
     lastProcess = currentProcess;
     currentProcess = nullptr;
-    comms.tare();
-    applyConnectionPriority(); // shot ended -> relaxed BLE interval
     if (lastProcess->getType() == MODE_BREW) {
         if (!static_cast<BrewProcess *>(lastProcess)->isUtility())
             flushPending = true; // a shot leaves grounds behind, a flush does not
