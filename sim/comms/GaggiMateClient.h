@@ -61,6 +61,7 @@ class GaggiMateClient {
     uint32_t getLatencyMs() const { return 18; }
     uint32_t getLastLatencyMs() const { return 18; }
     bool hasLatency() const { return _connected; }
+    uint32_t getRetransmits() const { return 0; }
     void setLowLatency(bool) {}
     NimBLEClient *getClient() const { return const_cast<NimBLEClient *>(&_nativeClient); }
 

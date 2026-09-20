@@ -414,6 +414,7 @@ void WebSocketHandler::publishTelemetry() {
     if (controller->getClientController()->hasLatency()) {
         statusDoc["lat"] = controller->getClientController()->getLatencyMs();
     }
+    statusDoc["rtx"] = controller->getClientController()->getRetransmits(); // comms frames resent since boot
     const bool bleConnected = BLEScales.isConnected();
     statusDoc["bw"] = bleConnected ? this->currentBluetoothWeight : 0; // current bluetooth weight
     statusDoc["cw"] = bleConnected ? this->currentBluetoothWeight : 0; // Use 'currentWeight' for forward compatbility

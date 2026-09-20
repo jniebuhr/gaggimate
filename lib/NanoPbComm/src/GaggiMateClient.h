@@ -43,6 +43,8 @@ class GaggiMateClient {
     uint32_t getLatencyMs() const { return _endpoint.latencyMs(); }
     uint32_t getLastLatencyMs() const { return _endpoint.lastLatencyMs(); }
     bool hasLatency() const { return _endpoint.hasLatency(); }
+    // Frames the display had to send again because no ACK arrived in time, since boot.
+    uint32_t getRetransmits() const { return _endpoint.retransmits(); }
 
     // Tight connection interval while active; relaxed when idle to give the shared radio back to Wi-Fi.
     void setLowLatency(bool active) { _transport.setLowLatency(active); }

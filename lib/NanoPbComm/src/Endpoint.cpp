@@ -150,6 +150,15 @@ void Endpoint::noteQueuedLocked(uint16_t key) {
     }
 }
 
+// A fixed timeout shorter than the real round trip resends every frame that did arrive and overloads a slow link.
+unsigned long Endpoint::ackTimeoutLocked() const {
+    unsigned long timeout = ACK_TIMEOUT_MIN_MS;
+    if (_rttValid && _smoothedRttMs * ACK_TIMEOUT_RTT_FACTOR > timeout)
+        timeout = _smoothedRttMs * ACK_TIMEOUT_RTT_FACTOR;
+    timeout <<= _timeoutShift;
+    return timeout > ACK_TIMEOUT_MAX_MS ? ACK_TIMEOUT_MAX_MS : timeout;
+}
+
 void Endpoint::clearInFlightLocked() {
     _inFlight = false;
     _superseded = false;
@@ -191,7 +200,7 @@ bool Endpoint::pumpLocked() {
         }
         clearInFlightLocked();
     } else if (_inFlight) {
-        if (now - _sentAt < ACK_TIMEOUT_MS)
+        if (now - _sentAt < ackTimeoutLocked())
             return false; // still waiting for ACK
         if (_retries >= MAX_RETRIES) {
             // Give up and free the slot; the send-failed handler lets the application re-send its state.
@@ -201,6 +210,9 @@ bool Endpoint::pumpLocked() {
             _transport.send(_txBuf, _txLen);
             _sentAt = now;
             _retries++;
+            _retransmits++;
+            if (_timeoutShift < ACK_TIMEOUT_MAX_SHIFT)
+                _timeoutShift++; // stays raised for the next frames until one is ACKed cleanly
             return false;
         }
     }
@@ -266,8 +278,13 @@ void Endpoint::handleData(const uint8_t *data, size_t length) {
         if (_retries == 0) {
             const uint32_t rtt = static_cast<uint32_t>(millis() - _sentAt);
             _lastRttMs = rtt;
-            _smoothedRttMs = _rttValid ? (_smoothedRttMs * 7 + rtt) / 8 : rtt;
+            // Rise fast, fall slow: the round trip jumps ~5x when the link relaxes to its idle interval after a process.
+            if (!_rttValid || rtt > _smoothedRttMs)
+                _smoothedRttMs = _rttValid ? (_smoothedRttMs + rtt) / 2 : rtt;
+            else
+                _smoothedRttMs = (_smoothedRttMs * 7 + rtt) / 8;
             _rttValid = true;
+            _timeoutShift = 0; // a clean sample: the estimate is trustworthy again
         }
         clearInFlightLocked();
     }
@@ -316,6 +333,7 @@ void Endpoint::handleConnection(bool connected) {
     lock();
     clearInFlightLocked();
     _retries = 0;
+    _timeoutShift = 0;
     _txLen = 0;
     _inFlightId = 0;
     _lastRxId = 0;

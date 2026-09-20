@@ -95,13 +95,19 @@ class Endpoint {
     uint32_t latencyMs() const { return _smoothedRttMs; }
     uint32_t lastLatencyMs() const { return _lastRttMs; }
     bool hasLatency() const { return _rttValid; }
+    // Frames sent again because no ACK arrived in time, since boot.
+    uint32_t retransmits() const { return _retransmits; }
 
   private:
     static constexpr size_t QUEUE_CAPACITY = 16;
     static constexpr size_t MAX_KEYS = 256; // >= which_content_max * MAX_DEVICES
     static constexpr size_t BUFFER_SIZE = 256;
     static constexpr size_t MAX_PAYLOADS_PER_FRAME = 6; // matches Frame.payloads max_count
-    static constexpr unsigned long ACK_TIMEOUT_MS = 150;
+    // Retransmit timeout = max(floor, factor x smoothed round trip), doubled per retransmit up to the cap.
+    static constexpr unsigned long ACK_TIMEOUT_MIN_MS = 150; // fits the 7.5-10 ms interval of a running process
+    static constexpr unsigned long ACK_TIMEOUT_MAX_MS = 2400;
+    static constexpr uint8_t ACK_TIMEOUT_MAX_SHIFT = 4;
+    static constexpr uint32_t ACK_TIMEOUT_RTT_FACTOR = 3; // an idle link needs 2-3 connection intervals per round trip
     static constexpr uint8_t MAX_RETRIES = 5;
     static constexpr size_t HANDLER_SLOTS = 32;  // > highest Payload_*_tag
     static constexpr size_t RX_QUEUE_DEPTH = 12; // inbound payloads awaiting dispatch
@@ -118,6 +124,8 @@ class Endpoint {
     size_t _txLen = 0;
     uint32_t _inFlightId = 0;
     unsigned long _sentAt = 0;
+    uint8_t _timeoutShift = 0; // backoff kept across frames until a frame is ACKed without a retransmit
+    uint32_t _retransmits = 0;
     uint8_t _retries = 0;
     bool _inFlight = false;
     // Payloads of the in-flight frame; a newer queued value for one of their keys replaces the frame right away.
@@ -163,6 +171,7 @@ class Endpoint {
     bool pumpLocked();
     void requestPump();
     void noteQueuedLocked(uint16_t key);
+    unsigned long ackTimeoutLocked() const;
     void clearInFlightLocked();
     void sendAck(uint32_t id);
     void dispatch(const gm::Payload &payload);
