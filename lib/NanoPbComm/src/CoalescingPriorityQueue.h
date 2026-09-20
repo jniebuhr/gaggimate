@@ -40,6 +40,7 @@ template <size_t N, typename KeyT = uint16_t, typename PayloadT = uint32_t, size
     bool empty() const { return size_ == 0; }
     size_t size() const { return size_; }
     size_t capacity() const { return N; }
+    bool contains(KeyT key) const { return key < MaxKeys && posOfKey_[key] != kNoPos; }
 
     // Insert or update the entry for this key. Returns false if the queue is
     // full and the key is not already present.

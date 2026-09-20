@@ -9,9 +9,13 @@ struct WarningInfo {
 };
 // Order must match WarningType; keys are shared with the web UI.
 const WarningInfo WARNING_INFO[WARNING_TYPE_COUNT] = {
-    {"water", "Water tank low"},           {"flush", "Flush recommended"},
-    {"switch", "Steam switch is on"},      {"scaleConnected", "Scale not connected"},
-    {"scaleBattery", "Scale battery low"}, {"temperature", "Temperature not stable"},
+    {"water", "Water tank low"},
+    {"flush", "Flush recommended"},
+    {"switch", "Steam switch is on"},
+    {"scaleConnected", "Scale not connected"},
+    {"scaleBattery", "Scale battery low"},
+    {"temperature", "Temperature not stable"},
+    {"scaleData", "Scale tare or weight data failed"},
 };
 } // namespace
 
@@ -65,6 +69,7 @@ void WarningManager::evaluate() {
     active[WARNING_SCALE_CONNECTED] = !scaleConnected && settings.getSavedScale() != "";
     active[WARNING_SCALE_BATTERY] = scaleConnected && BLEScales.hasBatteryLevel() && BLEScales.getBatteryLevel() < 20;
     active[WARNING_TEMPERATURE] = !temperatureStable;
+    active[WARNING_SCALE_DATA] = controller->hasScaleFault() || (scaleConnected && !controller->isBluetoothScaleHealthy());
 
     level[WARNING_WATER] = settings.getWarnWaterLevel();
     level[WARNING_FLUSH] = settings.getWarnFlush();
@@ -72,6 +77,7 @@ void WarningManager::evaluate() {
     level[WARNING_SCALE_CONNECTED] = settings.getWarnScaleConnected();
     level[WARNING_SCALE_BATTERY] = settings.getWarnScaleBattery();
     level[WARNING_TEMPERATURE] = settings.getWarnTemperature();
+    level[WARNING_SCALE_DATA] = WARNING_LEVEL_ERROR;
 }
 
 bool WarningManager::isWarn(WarningType type) const { return active[type] && level[type] == WARNING_LEVEL_WARN; }

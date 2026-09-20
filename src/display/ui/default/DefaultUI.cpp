@@ -113,6 +113,10 @@ void DefaultUI::init() {
         };
     });
     pluginManager->on("controller:brew:start", [this](Event const &event) { changeScreen(SCREEN_ID_STATUS_SCREEN); });
+    pluginManager->on("controller:brew:preparing", [this](Event const &) {
+        changeScreen(SCREEN_ID_STATUS_SCREEN);
+        setBrewConfirmVisible(false);
+    });
     pluginManager->on("controller:brew:clear", [this](Event const &event) {
         if (eez_flow_get_current_screen() == SCREEN_ID_STATUS_SCREEN) {
             changeScreen(SCREEN_ID_BREW_SCREEN);
@@ -230,8 +234,7 @@ void DefaultUI::loop() {
         rerender = true;
     }
 
-    if (rerender) {
-        rerender = false;
+    if (rerender.exchange(false)) {
         lastRender = now;
         applyTheme();
         if (controller->isErrorState()) {
@@ -441,17 +444,21 @@ void DefaultUI::setupState() {
 }
 
 void DefaultUI::handleScreenChange() {
-    if (currentScreen != targetScreen) {
+    // Recover a missed/delayed brew event when a remote start occurs on standby.
+    if (targetScreen.load() == SCREEN_ID_STANDBY_SCREEN && controller->isBrewActive() && !controller->isErrorState())
+        changeScreen(SCREEN_ID_STATUS_SCREEN);
+    const auto nextScreen = targetScreen.load();
+    if (currentScreen != nextScreen) {
         if (currentScreen == SCREEN_ID_BREW_SCREEN)
             brewConfirmVisible = false; // leaving the brew screen dismisses the confirm overlay
-        if (targetScreen == SCREEN_ID_STANDBY_SCREEN) {
+        if (nextScreen == SCREEN_ID_STANDBY_SCREEN) {
             standbyEnterTime = ::millis();
         } else if (currentScreen == SCREEN_ID_STANDBY_SCREEN) {
             const ::Settings &settings = controller->getSettings();
             setBrightness(settings.getMainBrightness());
         }
-        eez_flow_set_screen(targetScreen, LV_SCR_LOAD_ANIM_NONE, 0, 0);
-        animateGaugeTicks(currentScreen, targetScreen);
+        eez_flow_set_screen(nextScreen, LV_SCR_LOAD_ANIM_NONE, 0, 0);
+        animateGaugeTicks(currentScreen, nextScreen);
         rerender = true;
     }
 }
@@ -584,7 +591,7 @@ void DefaultUI::updateWarnings() {
     warnings.switchWarn(wm.isWarn(WARNING_SWITCH));
     warnings.switchError(wm.isError(WARNING_SWITCH));
     warnings.scaleConnectedWarn(wm.isWarn(WARNING_SCALE_CONNECTED));
-    warnings.scaleConnectedError(wm.isError(WARNING_SCALE_CONNECTED));
+    warnings.scaleConnectedError(wm.isError(WARNING_SCALE_CONNECTED) || wm.isError(WARNING_SCALE_DATA));
     warnings.scaleBatteryWarn(wm.isWarn(WARNING_SCALE_BATTERY));
     warnings.scaleBatteryError(wm.isError(WARNING_SCALE_BATTERY));
     warnings.temperatureWarn(wm.isWarn(WARNING_TEMPERATURE));
@@ -715,6 +722,8 @@ void DefaultUI::updateBrewProcess() {
     } else if (controller->getSettings().isDelayAdjust() && !process->isComplete()) {
         phaseName = "Calibrating...";
     }
+    if (controller->isPreparingScale())
+        phaseName = "Taring scale...";
     if (stringChanged(brewProcess.phase_name(), phaseName.c_str()))
         brewProcess.phase_name(phaseName.c_str());
 

@@ -5,6 +5,7 @@
 #include "GaggiMateComm.h"
 #include "ble/BleClientTransport.h"
 #include <Arduino.h>
+#include <atomic>
 #include <functional>
 
 // Display-side protocol facade: owns transport + Endpoint, exposes semantic sends and typed response callbacks.
@@ -26,13 +27,16 @@ class GaggiMateClient {
     using ErrorCallback = std::function<void(int code)>;
 
     GaggiMateClient();
+    ~GaggiMateClient();
 
     void init(const String &deviceName);
     void loop();
+    void sendStop();
+    void sendStop(const gm::Payload *payloads, size_t count) { _endpoint.sendStop(payloads, count); }
 
     // Connection lifecycle (driven from the display's main loop).
     bool isReadyForConnection() const { return _transport.isReadyForConnection(); }
-    bool connectToServer() { return _transport.connectToServer(); }
+    bool connectToServer() { return _senderTask && _transport.connectToServer(); }
     bool isConnected() const { return _endpoint.isConnected(); }
     void disconnect() { _transport.disconnect(); }
 
@@ -48,6 +52,8 @@ class GaggiMateClient {
     void setLowLatency(bool active) { _transport.setLowLatency(active); }
 
     // Native NimBLE client handle for ControllerOTA / status RSSI (OTA uses its own BLE service).
+    int getRSSI() const { return isConnected() ? _cachedRSSI.load() : 0; }
+    void refreshRSSI(); // called by the scale worker, never a telemetry/UI callback
     NimBLEClient *getClient() const { return _transport.getNativeClient(); }
 
     // Build a payload without sending (compose your own batch, then send()).
@@ -98,6 +104,9 @@ class GaggiMateClient {
     void onError(ErrorCallback cb) { _errorCb = std::move(cb); }
 
   private:
+    std::atomic<int> _cachedRSSI{0};
+    TaskHandle_t _senderTask = nullptr;
+    static void senderTask(void *arg);
     BleClientTransport _transport;
     Endpoint _endpoint;
 

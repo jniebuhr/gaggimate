@@ -87,14 +87,7 @@ void BLEScalePlugin::setup(Controller *controller, PluginManager *manager) {
         ESP_LOGW("BLEScalePlugin", "Controller disconnected, stopping BLE scan");
         setActive(false);
     });
-    manager->on("controller:brew:prestart", [this](Event const &) { onProcessStart(); });
-    manager->on("controller:brew:end", [this](Event const &) {
-        auto lock = lockScale();
-        if (lock && scale != nullptr && scale->isConnected() && scale->hasTimerControl()) {
-            scale->stopTimer();
-        }
-    });
-    manager->on("controller:grind:start", [this](Event const &) { onProcessStart(); });
+    manager->on("controller:brew:end", [this](Event const &) { stopTimerRequested = true; });
     manager->on("controller:mode:change", [this](Event const &event) {
         if (event.getInt("value") != MODE_STANDBY) {
             ESP_LOGI("BLEScalePlugin", "Resuming scanning");
@@ -157,7 +150,35 @@ void BLEScalePlugin::tick() {
     } else if (wantScan && !connected) {
         scanner->initializeAsyncScan();
     }
+    // Only this worker performs GATT operations. Event/UI/AsyncTCP callers merely enqueue.
+    if (stopTimerRequested.exchange(false)) {
+        std::lock_guard<ScaleMutex> guard(scaleMutex);
+        if (scale && scale->isConnected() && scale->hasTimerControl())
+            scale->stopTimer();
+    }
+    if (const uint32_t ticket = pendingTare.exchange(0)) {
+        bool success = false;
+        {
+            std::lock_guard<ScaleMutex> guard(scaleMutex);
+            if (scale && scale->isConnected())
+                success = scale->tare();
+        }
+        successfulTare = success;
+        tareSentAt = millis();
+        completedTare = ticket; // publish result last
+    }
+    {
+        std::lock_guard<ScaleMutex> guard(scaleMutex);
+        if (scale && connected && cachedHasFlowRate)
+            cachedFlowRate = scale->getFlowRate();
+    }
     const unsigned long now = millis();
+    if (!controller->isActive() && now - lastRSSIUpdate >= 5000) {
+        lastRSSIUpdate = now;
+        controller->getClientController()->refreshRSSI();
+        std::lock_guard<ScaleMutex> guard(scaleMutex);
+        cachedRSSI = scale && scale->isConnected() ? scale->getRSSI() : 0;
+    }
     if (now - lastUpdate > UPDATE_INTERVAL_MS) {
         lastUpdate = now;
         update();
@@ -173,9 +194,6 @@ void BLEScalePlugin::update() {
         hasConnectedScale = hasScale && scale->isConnected();
         connected = hasConnectedScale;
     }
-
-    if (controller->isVolumetricAvailable())
-        controller->setVolumetricOverride(hasConnectedScale);
 
     if (!active)
         return;
@@ -245,6 +263,12 @@ void BLEScalePlugin::releaseScale() {
         old = std::move(scale);
         connected = false;
         doConnect = false;
+        cachedRSSI = 0;
+        pendingTare = 0;
+        {
+            std::lock_guard<std::mutex> sampleGuard(measurementMutex);
+            measurementPending = false;
+        }
         cachedHasBattery = false;
         cachedHasFlowRate = false;
         cachedBattery = REMOTE_SCALES_BATTERY_UNKNOWN;
@@ -259,16 +283,12 @@ void BLEScalePlugin::releaseScale() {
     }
 }
 
-void BLEScalePlugin::onProcessStart() const {
-    // Double tare; the lock is dropped in between so the pause never holds up the scale task.
-    for (int i = 0; i < 2; i++) {
-        if (i > 0)
-            delay(50);
-        auto lock = lockScale();
-        if (!lock || scale == nullptr || !scale->isConnected())
-            return;
-        scale->tare();
-    }
+uint32_t BLEScalePlugin::requestTare() const {
+    uint32_t ticket = ++nextTare;
+    if (ticket == 0)
+        ticket = ++nextTare;
+    pendingTare = ticket;
+    return ticket;
 }
 
 void BLEScalePlugin::pollScaleMetadata() {
@@ -289,7 +309,7 @@ void BLEScalePlugin::pollScaleMetadata() {
     pluginManager->trigger("scale:battery:change", "value", static_cast<int>(pct));
 }
 
-void BLEScalePlugin::tare() const { onProcessStart(); }
+void BLEScalePlugin::tare() const { requestTare(); }
 
 void BLEScalePlugin::establishConnection() {
     std::string target;
@@ -382,20 +402,32 @@ void BLEScalePlugin::onMeasurement(float value) const {
         return;
     }
 
-    // Safe to call controller method
-    controller->onVolumetricMeasurement(value, VolumetricMeasurementSource::BLUETOOTH);
-
-    // Native flow rate (e.g. Bookoo) rides along at the scale's cadence; this is the NimBLE host task, so never wait.
-    if (pluginManager == nullptr || !cachedHasFlowRate)
+    if (!connected)
+        return; // Ignore synthetic connect-time zeros and notifications from a retired connection.
+    std::unique_lock<std::mutex> lock(measurementMutex, std::try_to_lock);
+    if (!lock)
         return;
-    float flowRate = 0.0f;
+    measurement = value;
+    measurementAt = now;
+    measurementPending = true;
+}
+
+void BLEScalePlugin::processMeasurements() {
+    float value;
+    unsigned long receivedAt;
     {
-        std::unique_lock<ScaleMutex> lock(scaleMutex, std::try_to_lock);
-        if (!lock || scale == nullptr)
+        std::lock_guard<std::mutex> lock(measurementMutex);
+        if (!measurementPending)
             return;
-        flowRate = scale->getFlowRate();
+        value = measurement;
+        receivedAt = measurementAt;
+        measurementPending = false;
     }
-    pluginManager->trigger("controller:volumetric-measurement:scale-flow:change", "value", flowRate);
+    if (connected && controller) {
+        controller->onVolumetricMeasurement(value, VolumetricMeasurementSource::BLUETOOTH, receivedAt);
+        if (cachedHasFlowRate && pluginManager)
+            pluginManager->trigger("controller:volumetric-measurement:scale-flow:change", "value", cachedFlowRate.load());
+    }
 }
 
 std::vector<DiscoveredDevice> BLEScalePlugin::getDiscoveredScales() const {

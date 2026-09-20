@@ -43,7 +43,10 @@ export const WARNINGS = [
   },
 ];
 
-export const warningByKey = key => WARNINGS.find(w => w.key === key);
+export const warningByKey = key =>
+  key === 'scaleData'
+    ? { key, label: 'Scale tare or weight data failed', icon: linkSlashAlt }
+    : WARNINGS.find(w => w.key === key);
 
 // Expand the compact firmware form ({k, l, a}) used in evt:status and evt:brew:confirm.
 export function parseWarningStates(raw) {

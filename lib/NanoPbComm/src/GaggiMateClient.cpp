@@ -1,6 +1,17 @@
 #include "GaggiMateClient.h"
+#include <esp_log.h>
 
 GaggiMateClient::GaggiMateClient() : _endpoint(_transport) {}
+
+GaggiMateClient::~GaggiMateClient() {
+    if (_senderTask)
+        vTaskDelete(_senderTask);
+}
+
+void GaggiMateClient::refreshRSSI() {
+    auto *client = getClient();
+    _cachedRSSI = client && client->isConnected() ? client->getRssi() : 0;
+}
 
 void GaggiMateClient::init(const String &deviceName) {
     registerHandlers();
@@ -14,11 +25,29 @@ void GaggiMateClient::init(const String &deviceName) {
     });
     _endpoint.begin();
     _transport.init(deviceName);
+    if (!_senderTask && xTaskCreatePinnedToCore(senderTask, "GmClientTx", 4096, this, 2, &_senderTask, 0) != pdPASS) {
+        ESP_LOGE("GaggiMateClient", "Cannot create sender task; disconnecting controller");
+        _transport.disconnect();
+    }
 }
 
 void GaggiMateClient::loop() {
-    _transport.maintain();
-    _endpoint.loop();
+    if (_senderTask)
+        _transport.maintain();
+}
+
+void GaggiMateClient::senderTask(void *arg) {
+    auto *self = static_cast<GaggiMateClient *>(arg);
+    for (;;) {
+        self->_endpoint.loop();
+        vTaskDelay(pdMS_TO_TICKS(10));
+    }
+}
+
+void GaggiMateClient::sendStop() {
+    gm::Payload stop[] = {buildPumpControl(0, PumpControlMode::Power, 0, 0, 0), buildRelayControl(0, false),
+                          buildRelayControl(1, false)};
+    _endpoint.sendStop(stop, 3);
 }
 
 gm::Payload GaggiMateClient::buildPing() {

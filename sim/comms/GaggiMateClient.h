@@ -52,6 +52,14 @@ class GaggiMateClient {
 
     void init(const String &deviceName);
     void loop();
+    int getRSSI() const { return 0; }
+    void refreshRSSI() {}
+    void sendStop(const gm::Payload *payloads, size_t count) { sendBatch(payloads, count); }
+    void sendStop() {
+        sendPumpControl(0, PumpControlMode::Power, 0, 0, 0);
+        sendRelayControl(0, false);
+        sendRelayControl(1, false);
+    }
 
     bool isReadyForConnection() const { return _initialized; }
     bool connectToServer();

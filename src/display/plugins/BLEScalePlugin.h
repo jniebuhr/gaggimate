@@ -36,12 +36,16 @@ class BLEScalePlugin : public Plugin {
     std::string getUUID() const {
         return withScale(std::string(), [](RemoteScales &s) { return s.isConnected() ? s.getDeviceAddress() : std::string(); });
     }
-    int getRSSI() const {
-        return withScale(0, [](RemoteScales &s) { return s.isConnected() ? s.getRSSI() : 0; });
-    }
+    int getRSSI() const { return cachedRSSI; }
 
     std::vector<DiscoveredDevice> getDiscoveredScales() const;
     void tare() const;
+    uint32_t requestTare() const;
+    void cancelTare() const { pendingTare = 0; }
+    bool tareCompleted(uint32_t ticket) const { return completedTare.load() == ticket; }
+    bool tareSucceeded() const { return successfulTare; }
+    unsigned long tareCompletedAt() const { return tareSentAt; }
+    void processMeasurements();
 
     // Cached by the scale task: the main loop and web handlers poll these every pass and must never touch the scale lock.
     bool hasBatteryLevel() const { return cachedHasBattery; }
@@ -81,12 +85,25 @@ class BLEScalePlugin : public Plugin {
     static void taskEntry(void *arg);
     void tick();
     void update();
-    void onProcessStart() const;
     void pollScaleMetadata();
     void establishConnection();
     void releaseScale();
     void setActive(bool value);
 
+    // BLE notifications only publish a latest-value mailbox; the logic task consumes it.
+    mutable std::mutex measurementMutex;
+    mutable bool measurementPending = false;
+    mutable float measurement = 0;
+    mutable unsigned long measurementAt = 0;
+    mutable std::atomic<uint32_t> nextTare{0};
+    mutable std::atomic<uint32_t> pendingTare{0};
+    std::atomic<uint32_t> completedTare{0};
+    std::atomic<bool> successfulTare{false};
+    std::atomic<unsigned long> tareSentAt{0};
+    std::atomic<bool> stopTimerRequested{false};
+    std::atomic<float> cachedFlowRate{0};
+    std::atomic<int> cachedRSSI{0};
+    unsigned long lastRSSIUpdate = 0;
     std::atomic<bool> active{false};
     std::atomic<bool> doConnect{false};
     std::atomic<bool> connected{false};

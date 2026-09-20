@@ -112,7 +112,7 @@ class DefaultUI {
     // Seasonal flags
     int christmasMode = false;
 
-    bool rerender = false;
+    std::atomic<bool> rerender{false};
     bool touchFlushHeld = false;
     unsigned long lastRender = 0;
 
@@ -123,7 +123,7 @@ class DefaultUI {
     float currentTemp = 0.0f;
     float targetTemp = 0.0f;
     double bluetoothWeight = 0.0;
-    BrewScreenState brewScreenState = BrewScreenState::Brew;
+    std::atomic<BrewScreenState> brewScreenState{BrewScreenState::Brew};
 
     // EEZ Structs
     SystemStatusValue systemStatus;
@@ -149,7 +149,7 @@ class DefaultUI {
     int currentThemeMode = -1; // Force applyTheme on first loop
 
     // Screen change
-    ScreensEnum targetScreen = ScreensEnum::SCREEN_ID_STANDBY_SCREEN;
+    std::atomic<ScreensEnum> targetScreen{ScreensEnum::SCREEN_ID_STANDBY_SCREEN};
     ScreensEnum currentScreen = ScreensEnum::SCREEN_ID_STANDBY_SCREEN;
 
     // Standby brightness control

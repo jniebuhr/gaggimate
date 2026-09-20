@@ -26,8 +26,9 @@
  *     non-idempotent ops) and ACKed; payloads are dispatched by oneof tag to
  *     typed handlers -- no run-time type erasure.
  *
- * Threading: decode + ACK/dedup + the send pump run on the transport's callback
- * thread, but registered handlers and connection callbacks are invoked on a
+ * Threading: callbacks only decode, queue ACKs and update session state.
+ * Exactly one sender task calls loop(); all transport writes happen there,
+ * without holding the session mutex. Registered handlers run on a
  * dedicated dispatch task (fed by an inbound event queue) so slow application
  * callbacks never block the BLE host task. Serializing both event types also
  * prevents payload handlers from crossing a connection-session boundary. If
@@ -61,10 +62,12 @@ class Endpoint {
     // next pump as long as nothing else preempts them.
     void sendBatch(const gm::Payload *payloads, size_t count);
 
-    // Fire-and-forget: send immediately as an unacknowledged frame (id == 0).
-    // Not queued, not coalesced, never retransmitted -- dropped if the link is
-    // momentarily busy. For high-rate, self-refreshing telemetry where a missed
-    // sample is simply replaced by the next one.
+    // Safety stop: supersedes queued/in-flight actuator commands. Uses a newer
+    // reliable id so a late copy of an older command cannot undo the stop.
+    void sendStop(const gm::Payload *payloads, size_t count);
+
+    // Latest-value telemetry, sent by the sender task as id == 0. Coalesced
+    // independently of reliable traffic, never retransmitted.
     void sendUnreliable(const gm::Payload &payload);
     void sendUnreliable(const gm::Payload *payloads, size_t count);
 
@@ -102,17 +105,20 @@ class Endpoint {
 
     Transport &_transport;
     CoalescingPrioQueue<QUEUE_CAPACITY, uint16_t, gm::Payload, MAX_KEYS> _queue;
+    CoalescingPrioQueue<QUEUE_CAPACITY, uint16_t, gm::Payload, MAX_KEYS> _telemetry;
     std::array<Handler, HANDLER_SLOTS> _handlers{};
     SemaphoreHandle_t _mutex = nullptr;
 
     // In-flight frame, retained until ACKed or retries are exhausted.
     uint8_t _txBuf[BUFFER_SIZE]{};
-    uint8_t _unrelBuf[BUFFER_SIZE]{}; // scratch for fire-and-forget sends (keeps _txBuf intact)
     size_t _txLen = 0;
     uint32_t _inFlightId = 0;
     unsigned long _sentAt = 0;
     uint8_t _retries = 0;
     bool _inFlight = false;
+    gm::Frame _stopFrame{};
+    bool _stopPending = false;
+    uint32_t _pendingAck = 0;
 
     // Round-trip latency from the reliability layer. Sampled only on frames
     // ACKed without a retransmit (Karn's algorithm) so an ambiguous retransmit
@@ -147,7 +153,8 @@ class Endpoint {
     void handleData(const uint8_t *data, size_t length);
     void handleConnection(bool connected);
     void pump();
-    bool pumpLocked();
+    bool pumpLocked(uint8_t *buffer, size_t &length);
+    bool prepareAuxiliary(uint8_t *buffer, size_t &length);
     void sendAck(uint32_t id);
     void dispatch(const gm::Payload &payload);
     static void dispatchTaskFn(void *arg);

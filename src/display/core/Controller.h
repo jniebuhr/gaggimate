@@ -1,5 +1,6 @@
 #ifndef CONTROLLER_H
 #define CONTROLLER_H
+#include "ScaleStartGate.h"
 
 #include "GaggiMateClient.h"
 #include "PluginManager.h"
@@ -118,8 +119,9 @@ class Controller {
     void onTargetChange(ProcessTarget target);
     void onProfileSave() const;
     void onProfileSaveAsNew();
-    void onVolumetricMeasurement(double measurement, VolumetricMeasurementSource source);
-    void setVolumetricOverride(bool override) { volumetricOverride = override; }
+    void onVolumetricMeasurement(double measurement, VolumetricMeasurementSource source, unsigned long receivedAt = 0);
+    bool isPreparingScale() const { return preparingScale; }
+    bool hasScaleFault() const { return scaleFault; }
     bool isBluetoothScaleHealthy() const;
     void onFlush();
     void onFlushRelease(); // ends a hold-to-flush; no-op otherwise
@@ -266,7 +268,6 @@ class Controller {
     unsigned long lastConfigResend = 0;
     static const unsigned long CONFIG_RESEND_WINDOW_MS = 8000;
     static const unsigned long CONFIG_RESEND_INTERVAL_MS = 1000;
-    bool volumetricOverride = false;
     bool processCompleted = false;
     bool steamReady = false;
     bool steamSwitchOn = false;
@@ -276,7 +277,12 @@ class Controller {
 
     // Bluetooth scale connection monitoring
     VolumetricMeasurementSource currentVolumetricSource = VolumetricMeasurementSource::INACTIVE;
-    unsigned long lastBluetoothMeasurement = 0;
+    std::atomic<unsigned long> lastBluetoothMeasurement{0};
+    std::atomic<bool> hasBluetoothMeasurement{false};
+    std::atomic<bool> preparingScale{false};
+    std::atomic<bool> scaleFault{false};
+    uint32_t scaleTareTicket = 0;
+    ScaleStartGate scaleStartGate;
     static const unsigned long BLUETOOTH_GRACE_PERIOD_MS = 1500; // 1.5 second grace period
     static const unsigned long CONTROLLER_WAITING_TIMEOUT_MS = 10000;
 

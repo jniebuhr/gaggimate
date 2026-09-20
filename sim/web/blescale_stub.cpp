@@ -18,6 +18,8 @@ void BLEScalePlugin::onMeasurement(float) const {}
 std::vector<DiscoveredDevice> BLEScalePlugin::getDiscoveredScales() const { return {}; }
 void BLEScalePlugin::tare() const {}
 void BLEScalePlugin::update() {}
-void BLEScalePlugin::onProcessStart() const {}
 void BLEScalePlugin::pollScaleMetadata() {}
 void BLEScalePlugin::establishConnection() {}
+
+uint32_t BLEScalePlugin::requestTare() const { return 0; }
+void BLEScalePlugin::processMeasurements() {}

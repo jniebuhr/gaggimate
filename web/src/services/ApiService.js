@@ -25,7 +25,9 @@ export default class ApiService {
   }
 
   async connect() {
-    if (this.isConnecting) return;
+    if (this.isConnecting || this.socket?.readyState === WebSocket.OPEN) return;
+    clearTimeout(this.reconnectTimeout);
+    this.reconnectTimeout = null;
     this.isConnecting = true;
 
     try {
@@ -37,19 +39,29 @@ export default class ApiService {
       const wsProtocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
       this.socket = new WebSocket(`${wsProtocol}${apiHost}/ws`);
 
-      this.socket.addEventListener('message', this._onMessage.bind(this));
-      this.socket.addEventListener('close', this._onClose.bind(this));
-      this.socket.addEventListener('error', this._onError.bind(this));
-      this.socket.addEventListener('open', this._onOpen.bind(this));
+      const socket = this.socket;
+      for (const [type, handler] of [
+        ['message', this._onMessage],
+        ['close', this._onClose],
+        ['error', this._onError],
+        ['open', this._onOpen],
+      ]) {
+        socket.addEventListener(type, event => {
+          // A late close/error from an older socket must not affect its replacement.
+          if (this.socket === socket) handler.call(this, event);
+        });
+      }
     } catch (error) {
       console.error('WebSocket connection error:', error);
-      this._scheduleReconnect();
-    } finally {
       this.isConnecting = false;
+      this._scheduleReconnect();
     }
   }
 
   _onOpen() {
+    this.isConnecting = false;
+    clearTimeout(this.reconnectTimeout);
+    this.reconnectTimeout = null;
     console.log('WebSocket connected successfully');
     this.reconnectAttempts = 0;
     machine.value = {
@@ -59,6 +71,7 @@ export default class ApiService {
   }
 
   _onClose() {
+    this.isConnecting = false;
     console.log('WebSocket connection closed');
     machine.value = {
       ...machine.value,
@@ -88,6 +101,7 @@ export default class ApiService {
     console.log(`Scheduling reconnect attempt ${this.reconnectAttempts + 1} in ${delay}ms`);
 
     this.reconnectTimeout = setTimeout(() => {
+      this.reconnectTimeout = null;
       this.reconnectAttempts++;
       this.connect();
     }, delay);

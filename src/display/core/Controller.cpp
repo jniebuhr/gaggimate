@@ -16,13 +16,13 @@
 #include <display/core/static_profiles.h>
 #include <display/core/zones.h>
 #include <display/plugins/AutoWakeupPlugin.h>
+#include <display/plugins/BLEScalePlugin.h> // real implementation on-device, stub in the simulator
 #include <display/plugins/BoilerFillPlugin.h>
 #include <display/plugins/LedControlPlugin.h>
 #include <display/plugins/ShotHistoryPlugin.h>
 #include <display/plugins/SmartGrindPlugin.h>
 #include <display/plugins/WebUIPlugin.h>
 #ifndef GAGGIMATE_SIM // network/BLE plugins are device-only
-#include <display/plugins/BLEScalePlugin.h>
 #include <display/plugins/HomekitPlugin.h>
 #include <display/plugins/ImprovPlugin.h>
 #include <display/plugins/MQTTPlugin.h>
@@ -551,6 +551,7 @@ void Controller::loop() {
 }
 
 void Controller::loopLogic() {
+    BLEScales.processMeasurements();
     if (isErrorState()) {
         loopControl();
         return;
@@ -569,8 +570,41 @@ void Controller::loopLogic() {
     {
         std::lock_guard<std::recursive_mutex> guard(processMutex);
 
+        if (currentProcess && preparingScale) {
+            const unsigned long now = millis();
+            if (currentProcess->getType() == MODE_BREW) {
+                auto *brew = static_cast<BrewProcess *>(currentProcess);
+                brew->processStarted = brew->currentPhaseStarted = now;
+            } else if (currentProcess->getType() == MODE_GRIND) {
+                static_cast<GrindProcess *>(currentProcess)->started = now;
+            }
+            const auto result = scaleStartGate.poll(now, BLEScales.isConnected(), BLEScales.tareCompleted(scaleTareTicket),
+                                                    BLEScales.tareSucceeded());
+            if (result == ScaleStartGate::Result::Ready) {
+                preparingScale = false;
+                events.push_back(currentProcess->getType() == MODE_BREW ? "controller:brew:start" : "controller:grind:start");
+            } else if (result == ScaleStartGate::Result::Failed) {
+                ESP_LOGW(LOG_TAG, "Scale tare failed or no fresh zero received; cancelling start");
+                scaleFault = true;
+                deactivateLocked(events);
+                processCompleted = true; // a cancelled start must not train the delay predictor
+            }
+        }
+        if (currentProcess && !preparingScale && currentVolumetricSource == VolumetricMeasurementSource::BLUETOOTH &&
+            !isBluetoothScaleHealthy()) {
+            const bool needsWeight = currentProcess->getType() == MODE_BREW
+                                         ? static_cast<BrewProcess *>(currentProcess)->target == ProcessTarget::VOLUMETRIC
+                                         : currentProcess->getType() == MODE_GRIND &&
+                                               static_cast<GrindProcess *>(currentProcess)->target == ProcessTarget::VOLUMETRIC;
+            if (needsWeight) {
+                ESP_LOGW(LOG_TAG, "Scale data stale; stopping weight-controlled process");
+                scaleFault = true;
+                deactivateLocked(events);
+                processCompleted = true;
+            }
+        }
         // Handle current process
-        if (currentProcess != nullptr) {
+        if (currentProcess != nullptr && !preparingScale) {
             updateLastAction();
             if (currentProcess->getType() == MODE_BREW) {
                 auto brewProcess = static_cast<BrewProcess *>(currentProcess);
@@ -603,6 +637,7 @@ void Controller::loopLogic() {
             }
         }
     }
+    loopControl(); // enqueue actuator changes before plugin callbacks or settings writes
     dispatchEvents(events);
     if (newBrewDelay >= 0) {
         settings.setBrewDelay(newBrewDelay);
@@ -617,8 +652,6 @@ void Controller::loopLogic() {
         deactivateGrind();
     if (mode != MODE_STANDBY && settings.getStandbyTimeout() > 0 && now > lastAction + settings.getStandbyTimeout())
         activateStandby();
-
-    loopControl();
 }
 
 void Controller::loopControl() {
@@ -709,7 +742,6 @@ void Controller::startProcess(Process *process) {
         std::lock_guard<std::recursive_mutex> guard(processMutex);
         startProcessLocked(process, events);
     }
-    updateConnectionPriority();
     dispatchEvents(events);
 }
 
@@ -913,10 +945,10 @@ void Controller::updateControl() {
 
     // Hold the process lock across the deref: deactivate()/clear() on other tasks
     // can delete the process mid-computation (GM-147). comms sends are queued
-    // (pumped from comms.loop()), so no cross-task blocking happens under the lock.
+    // (pumped by the dedicated sender task), so no cross-task blocking happens under the lock.
     std::lock_guard<std::recursive_mutex> guard(processMutex);
     Process *proc = currentProcess;
-    bool active = isActiveLocked();
+    bool active = isActiveLocked() && !preparingScale;
 
     float targetTemp = getTargetTemp();
     if (targetTemp > .0f) {
@@ -991,8 +1023,18 @@ void Controller::updateControl() {
     if (full || altRelayActive != lastAlt)
         batch[count++] = comms.buildRelayControl(1, altRelayActive); // index 1 = alt relay
 
-    if (count > 0)
+    const bool pumpStopping = pump.mode == PumpControlMode::Power && pump.power == 0 &&
+                              (lastPump.mode != PumpControlMode::Power || lastPump.power != 0);
+    if (pumpStopping) {
+        // A weight/flush phase may stop the pump while keeping the drain valve open.
+        // Supersede old actuator retries without changing the new phase's valve state.
+        gm::Payload stop[] = {comms.buildBoilerControl(boiler.index, boiler.mode, boiler.setpoint),
+                              comms.buildPumpControl(pump.index, pump.mode, pump.power, pump.pressure, pump.flow),
+                              comms.buildRelayControl(relay.index, relay.open), comms.buildRelayControl(1, altRelayActive)};
+        comms.sendStop(stop, 4);
+    } else if (count > 0) {
         comms.sendBatch(batch, count);
+    }
 
     lastBoiler = boiler;
     lastPump = pump;
@@ -1011,45 +1053,51 @@ void Controller::activate(bool ignoreWarnings) {
         pluginManager->trigger("controller:brew:confirm");
         return;
     }
-    clear();
-    comms.tare();
-    currentWaterPumped = 0.0f;
-    if (isVolumetricAvailable()) {
-#ifdef NIGHTLY_BUILD
-        currentVolumetricSource =
-            isBluetoothScaleHealthy() ? VolumetricMeasurementSource::BLUETOOTH : VolumetricMeasurementSource::FLOW_ESTIMATION;
-#else
-        currentVolumetricSource = VolumetricMeasurementSource::BLUETOOTH;
-#endif
-        if (mode == MODE_BREW) {
-            pluginManager->trigger("controller:brew:prestart");
-            delay(200);
-        }
-    }
-    switch (mode) {
-    case MODE_BREW:
-        startProcess(new BrewProcess(profileManager->getSelectedProfile(),
-                                     profileManager->getSelectedProfile().isVolumetric() && isVolumetricAvailable()
-                                         ? ProcessTarget::VOLUMETRIC
-                                         : ProcessTarget::TIME,
-                                     settings.getBrewDelay()));
-        break;
-    case MODE_STEAM:
-        startProcess(new SteamProcess(STEAM_SAFETY_DURATION_MS, settings.getSteamPumpPercentage()));
-        break;
-    case MODE_WATER:
-        startProcess(new PumpProcess());
-        break;
-    default:;
-    }
-    bool brewStarted;
+    std::vector<const char *> events;
     {
         std::lock_guard<std::recursive_mutex> guard(processMutex);
-        brewStarted = currentProcess != nullptr && currentProcess->getType() == MODE_BREW;
+        if (isActiveLocked() || !isReady())
+            return;
+        clearLocked(events);
+        comms.tare();
+        currentWaterPumped = 0.0f;
+        const bool bluetooth = isBluetoothScaleHealthy();
+        if (isVolumetricAvailable()) {
+#ifdef NIGHTLY_BUILD
+            currentVolumetricSource =
+                bluetooth ? VolumetricMeasurementSource::BLUETOOTH : VolumetricMeasurementSource::FLOW_ESTIMATION;
+#else
+            currentVolumetricSource = VolumetricMeasurementSource::BLUETOOTH;
+#endif
+        }
+        switch (mode) {
+        case MODE_BREW:
+            startProcessLocked(new BrewProcess(profileManager->getSelectedProfile(),
+                                               profileManager->getSelectedProfile().isVolumetric() && isVolumetricAvailable()
+                                                   ? ProcessTarget::VOLUMETRIC
+                                                   : ProcessTarget::TIME,
+                                               settings.getBrewDelay()),
+                               events);
+            if (currentProcess) {
+                scaleFault = false;
+                if (bluetooth) {
+                    preparingScale = true;
+                    scaleStartGate.begin(millis());
+                    scaleTareTicket = BLEScales.requestTare();
+                }
+                events.push_back(preparingScale ? "controller:brew:preparing" : "controller:brew:start");
+            }
+            break;
+        case MODE_STEAM:
+            startProcessLocked(new SteamProcess(STEAM_SAFETY_DURATION_MS, settings.getSteamPumpPercentage()), events);
+            break;
+        case MODE_WATER:
+            startProcessLocked(new PumpProcess(), events);
+            break;
+        default:;
+        }
     }
-    if (brewStarted) {
-        pluginManager->trigger("controller:brew:start");
-    }
+    dispatchEvents(events);
 }
 
 // A UI declined the brew confirmation; every UI showing it dismisses.
@@ -1065,9 +1113,29 @@ void Controller::deactivate() {
 }
 
 void Controller::deactivateLocked(std::vector<const char *> &events) {
-    if (currentProcess == nullptr) {
+    if (!systemInfo.protocolMismatch)
+        comms.sendStop(); // enqueue before any tare, plugin callback, storage or UI work
+    controlStateSent = false;
+    if (currentProcess == nullptr)
         return;
+    BLEScales.cancelTare();
+    const bool cancelledPreparation = preparingScale;
+    if (preparingScale || scaleFault)
+        processCompleted = true; // cancelled/failed shots cannot train the predictor
+    if (currentProcess->getType() == MODE_BREW) {
+        auto *brew = static_cast<BrewProcess *>(currentProcess);
+        if (brew->processPhase != ProcessPhase::FINISHED) {
+            brew->processPhase = ProcessPhase::FINISHED;
+            brew->finished = millis();
+        }
+    } else if (currentProcess->getType() == MODE_GRIND) {
+        auto *grind = static_cast<GrindProcess *>(currentProcess);
+        if (grind->active) {
+            grind->active = false;
+            grind->finished = millis();
+        }
     }
+    preparingScale = false;
     delete lastProcess;
     lastProcess = currentProcess;
     currentProcess = nullptr;
@@ -1076,7 +1144,7 @@ void Controller::deactivateLocked(std::vector<const char *> &events) {
         if (!static_cast<BrewProcess *>(lastProcess)->isUtility())
             flushPending = true; // a shot leaves grounds behind, a flush does not
         events.push_back("controller:brew:end");
-    } else if (lastProcess->getType() == MODE_GRIND) {
+    } else if (lastProcess->getType() == MODE_GRIND && !cancelledPreparation) {
         events.push_back("controller:grind:end");
     }
     events.push_back("controller:process:end");
@@ -1103,17 +1171,31 @@ void Controller::clearLocked(std::vector<const char *> &events) {
 }
 
 void Controller::activateGrind() {
-    pluginManager->trigger("controller:grind:start");
-    if (isGrindActive())
-        return;
-    clear();
-    if (settings.isVolumetricTarget() && isVolumetricAvailable()) {
-        currentVolumetricSource = VolumetricMeasurementSource::BLUETOOTH;
-        startProcess(new GrindProcess(ProcessTarget::VOLUMETRIC, 0, settings.getTargetGrindVolume(), settings.getGrindDelay()));
-    } else {
-        startProcess(
-            new GrindProcess(ProcessTarget::TIME, settings.getTargetGrindDuration(), settings.getTargetGrindVolume(), 0.0));
+    std::vector<const char *> events;
+    {
+        std::lock_guard<std::recursive_mutex> guard(processMutex);
+        if (isActiveLocked() || !isReady())
+            return;
+        clearLocked(events);
+        const bool weightTarget = settings.isVolumetricTarget() && isBluetoothScaleHealthy();
+        if (weightTarget)
+            currentVolumetricSource = VolumetricMeasurementSource::BLUETOOTH;
+        startProcessLocked(new GrindProcess(weightTarget ? ProcessTarget::VOLUMETRIC : ProcessTarget::TIME,
+                                            settings.getTargetGrindDuration(), settings.getTargetGrindVolume(),
+                                            weightTarget ? settings.getGrindDelay() : 0.0),
+                           events);
+        if (currentProcess) {
+            scaleFault = false;
+            if (weightTarget) {
+                preparingScale = true;
+                scaleStartGate.begin(millis());
+                scaleTareTicket = BLEScales.requestTare();
+            }
+            if (!preparingScale)
+                events.push_back("controller:grind:start");
+        }
     }
+    dispatchEvents(events);
 }
 
 void Controller::deactivateGrind() {
@@ -1194,7 +1276,7 @@ void Controller::onProfileSaveAsNew() {
     profileManager->addFavoritedProfile(profile.id);
 }
 
-void Controller::onVolumetricMeasurement(double measurement, VolumetricMeasurementSource source) {
+void Controller::onVolumetricMeasurement(double measurement, VolumetricMeasurementSource source, unsigned long receivedAt) {
     if (source == VolumetricMeasurementSource::FLOW_ESTIMATION) {
         currentCoffeeVolume = static_cast<float>(measurement);
     }
@@ -1203,16 +1285,21 @@ void Controller::onVolumetricMeasurement(double measurement, VolumetricMeasureme
                                : F("controller:volumetric-measurement:bluetooth:change"),
                            "value", static_cast<float>(measurement));
     if (source == VolumetricMeasurementSource::BLUETOOTH) {
-        lastBluetoothMeasurement = millis();
+        lastBluetoothMeasurement = receivedAt;
+        hasBluetoothMeasurement = true;
     }
 
+    std::lock_guard<std::recursive_mutex> guard(processMutex);
     if (currentVolumetricSource != source) {
         ESP_LOGD(LOG_TAG, "Ignoring volumetric measurement, source does not match");
         return;
     }
-    // This callback fires from the NimBLE task on core 0; deactivate()/clear() on
-    // other tasks can delete the processes, so hold the lock across the deref (GM-147).
-    std::lock_guard<std::recursive_mutex> guard(processMutex);
+    if (preparingScale) {
+        if (source == VolumetricMeasurementSource::BLUETOOTH)
+            scaleStartGate.observe(measurement, receivedAt, millis(), BLEScales.tareCompleted(scaleTareTicket),
+                                   BLEScales.tareSucceeded(), BLEScales.tareCompletedAt());
+        return; // Cup weight and tare transients must not enter the predictive stop calculation.
+    }
     if (currentProcess != nullptr) {
         currentProcess->updateVolume(measurement);
     }
@@ -1222,8 +1309,8 @@ void Controller::onVolumetricMeasurement(double measurement, VolumetricMeasureme
 }
 
 bool Controller::isBluetoothScaleHealthy() const {
-    unsigned long timeSinceLastBluetooth = millis() - lastBluetoothMeasurement;
-    return (timeSinceLastBluetooth < BLUETOOTH_GRACE_PERIOD_MS) || volumetricOverride;
+    return BLEScales.isConnected() && hasBluetoothMeasurement &&
+           millis() - lastBluetoothMeasurement.load() < BLUETOOTH_GRACE_PERIOD_MS;
 }
 
 void Controller::onFlush() {

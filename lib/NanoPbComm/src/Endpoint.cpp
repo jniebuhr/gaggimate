@@ -74,7 +74,6 @@ void Endpoint::send(const gm::Payload &payload, uint8_t priority) {
     lock();
     _queue.upsert(gm_proto::coalescingKey(payload), priority, payload);
     unlock();
-    pump();
 }
 
 void Endpoint::sendBatch(const gm::Payload *payloads, size_t count) {
@@ -84,29 +83,30 @@ void Endpoint::sendBatch(const gm::Payload *payloads, size_t count) {
     for (size_t i = 0; i < count; i++)
         _queue.upsert(gm_proto::coalescingKey(payloads[i]), gm_proto::defaultPriority(payloads[i].which_content), payloads[i]);
     unlock();
-    pump();
 }
 
 void Endpoint::sendUnreliable(const gm::Payload &payload) { sendUnreliable(&payload, 1); }
 
 void Endpoint::sendUnreliable(const gm::Payload *payloads, size_t count) {
-    if (payloads == nullptr || count == 0 || !_transport.isConnected())
+    if (payloads == nullptr || count == 0)
         return;
-    if (count > MAX_PAYLOADS_PER_FRAME)
-        count = MAX_PAYLOADS_PER_FRAME;
-
     lock();
-    // id == 0 => the peer will not ACK and we never retransmit. Build into the
-    // dedicated _unrelBuf so an in-flight reliable frame (_txBuf) is untouched.
-    memset(&_txFrame, 0, sizeof(_txFrame));
-    _txFrame.id = 0;
-    _txFrame.ack = 0;
-    _txFrame.payloads_count = static_cast<pb_size_t>(count);
     for (size_t i = 0; i < count; i++)
-        _txFrame.payloads[i] = payloads[i];
-    size_t len = 0;
-    if (encodeFrame(_txFrame, _unrelBuf, BUFFER_SIZE, &len))
-        _transport.send(_unrelBuf, len);
+        _telemetry.upsert(gm_proto::coalescingKey(payloads[i]), gm_proto::PRIO_LOW, payloads[i]);
+    unlock();
+}
+
+void Endpoint::sendStop(const gm::Payload *payloads, size_t count) {
+    if (payloads == nullptr || count == 0 || count > MAX_PAYLOADS_PER_FRAME)
+        return;
+    lock();
+    _stopFrame = gaggimate_Frame_init_zero;
+    _stopFrame.payloads_count = count;
+    for (size_t i = 0; i < count; i++) {
+        _stopFrame.payloads[i] = payloads[i];
+        _queue.invalidate(gm_proto::coalescingKey(payloads[i]));
+    }
+    _stopPending = true;
     unlock();
 }
 
@@ -119,82 +119,125 @@ bool Endpoint::encodeFrame(const gm::Frame &frame, uint8_t *buf, size_t bufSize,
 }
 
 void Endpoint::sendAck(uint32_t id) {
-    gm::Frame frame = gaggimate_Frame_init_zero;
-    frame.id = 0; // ACKs are never themselves acknowledged
-    frame.ack = id;
-    frame.payloads_count = 0;
-    uint8_t buf[16];
-    size_t len = 0;
-    if (encodeFrame(frame, buf, sizeof(buf), &len))
-        _transport.send(buf, len);
+    lock();
+    // The peer uses stop-and-wait; retain the newest accepted id if several
+    // duplicates arrive before the sender wakes up.
+    if (id > _pendingAck)
+        _pendingAck = id;
+    unlock();
 }
 
 void Endpoint::pump() {
     if (!_transport.isConnected())
         return;
-
+    uint8_t buffer[BUFFER_SIZE];
+    size_t length = 0;
     lock();
-    const bool dropped = pumpLocked();
+    const bool dropped = pumpLocked(buffer, length);
     unlock();
+    // A synchronous BLE write must never hold up enqueueing, ACK reception or
+    // the process mutex held by a producer. Only the sender task gets here.
+    if (length > 0)
+        _transport.send(buffer, length);
     if (dropped && _sendFailedHandler)
-        _sendFailedHandler(); // mutex released, so the handler may call send()
+        _sendFailedHandler();
 }
 
-// Returns true when the in-flight frame ran out of retries and was dropped.
-bool Endpoint::pumpLocked() {
+bool Endpoint::pumpLocked(uint8_t *buffer, size_t &length) {
     const unsigned long now = millis();
     bool dropped = false;
-
-    if (_inFlight) {
-        if (now - _sentAt < ACK_TIMEOUT_MS)
-            return false; // still waiting for ACK
-        if (_retries >= MAX_RETRIES) {
-            // Give up and free the slot; the send-failed handler lets the application re-send its state.
-            _inFlight = false;
+    if (_stopPending) {
+        if (_inFlight) {
+            // Preserve idempotent configuration, unless a newer value is queued.
+            // Tare/autotune and actuator commands must not be replayed after a
+            // stop: the former may already have executed, the latter are stale.
+            for (pb_size_t i = 0; i < _txFrame.payloads_count; i++) {
+                const auto &p = _txFrame.payloads[i];
+                const auto tag = p.which_content;
+                const bool config = tag == gaggimate_Payload_boiler_tag || tag == gaggimate_Payload_pid_tag ||
+                                    tag == gaggimate_Payload_pump_model_tag || tag == gaggimate_Payload_pressure_scale_tag ||
+                                    tag == gaggimate_Payload_led_tag;
+                const auto key = gm_proto::coalescingKey(p);
+                bool replacedByStop = false;
+                for (pb_size_t j = 0; j < _stopFrame.payloads_count; ++j)
+                    replacedByStop = replacedByStop || gm_proto::coalescingKey(_stopFrame.payloads[j]) == key;
+                if (config && !replacedByStop && !_queue.contains(key))
+                    _queue.upsert(key, gm_proto::defaultPriority(tag), p);
+            }
             dropped = true;
-        } else {
-            _transport.send(_txBuf, _txLen);
-            _sentAt = now;
-            _retries++;
-            return false;
+        }
+        _inFlight = false;
+        _txFrame = _stopFrame;
+        _stopPending = false;
+    } else if (_inFlight) {
+        if (now - _sentAt >= ACK_TIMEOUT_MS) {
+            if (_retries >= MAX_RETRIES) {
+                _inFlight = false;
+                dropped = true;
+            } else {
+                memcpy(buffer, _txBuf, _txLen);
+                length = _txLen;
+                _sentAt = now;
+                _retries++;
+                return false;
+            }
+        }
+        if (_inFlight)
+            return prepareAuxiliary(buffer, length);
+        _txFrame = gaggimate_Frame_init_zero;
+    } else {
+        _txFrame = gaggimate_Frame_init_zero;
+    }
+
+    if (_txFrame.payloads_count == 0) {
+        while (_txFrame.payloads_count < MAX_PAYLOADS_PER_FRAME) {
+            auto entry = _queue.pop();
+            if (!entry)
+                break;
+            _txFrame.payloads[_txFrame.payloads_count++] = entry->payload;
         }
     }
-
-    // Idle: drain the highest-priority entries into one frame.
-    if (_queue.empty())
+    if (_txFrame.payloads_count == 0) {
+        prepareAuxiliary(buffer, length);
         return dropped;
-
-    memset(&_txFrame, 0, sizeof(_txFrame));
-    pb_size_t count = 0;
-    while (count < MAX_PAYLOADS_PER_FRAME) {
-        auto entry = _queue.pop();
-        if (!entry)
-            break;
-        _txFrame.payloads[count++] = entry->payload;
     }
-    _txFrame.payloads_count = count;
-    _txFrame.ack = 0;
     _txFrame.id = _nextId++;
     if (_nextId == 0)
         _nextId = 1;
-
+    _txFrame.ack = _pendingAck;
     if (!encodeFrame(_txFrame, _txBuf, BUFFER_SIZE, &_txLen)) {
-        ESP_LOGE(ENDPOINT_TAG, "Failed to encode outbound frame (%u payloads); re-queuing", count);
-        // The payloads were already popped -- put them back (coalescing keeps the
-        // latest value if a newer one arrived) so nothing is silently lost. The
-        // reserved id is simply skipped; the receiver only needs monotonic ids.
-        for (pb_size_t i = 0; i < count; i++)
-            _queue.upsert(gm_proto::coalescingKey(_txFrame.payloads[i]),
-                          gm_proto::defaultPriority(_txFrame.payloads[i].which_content), _txFrame.payloads[i]);
+        for (pb_size_t i = 0; i < _txFrame.payloads_count; i++) {
+            const auto &p = _txFrame.payloads[i];
+            _queue.upsert(gm_proto::coalescingKey(p), gm_proto::defaultPriority(p.which_content), p);
+        }
         return dropped;
     }
-
-    _transport.send(_txBuf, _txLen);
+    _pendingAck = 0;
+    // Publish in-flight state BEFORE I/O: an ACK may arrive during send().
     _inFlight = true;
     _inFlightId = _txFrame.id;
     _sentAt = now;
     _retries = 0;
+    memcpy(buffer, _txBuf, _txLen);
+    length = _txLen;
     return dropped;
+}
+
+bool Endpoint::prepareAuxiliary(uint8_t *buffer, size_t &length) {
+    gm::Frame frame = gaggimate_Frame_init_zero;
+    frame.ack = _pendingAck;
+    // ACKs take precedence over telemetry, even while our own frame is unacknowledged.
+    if (frame.ack == 0) {
+        while (frame.payloads_count < MAX_PAYLOADS_PER_FRAME) {
+            auto entry = _telemetry.pop();
+            if (!entry)
+                break;
+            frame.payloads[frame.payloads_count++] = entry->payload;
+        }
+    }
+    if ((frame.ack || frame.payloads_count) && encodeFrame(frame, buffer, BUFFER_SIZE, &length))
+        _pendingAck = 0;
+    return false;
 }
 
 void Endpoint::handleData(const uint8_t *data, size_t length) {
@@ -227,7 +270,6 @@ void Endpoint::handleData(const uint8_t *data, size_t length) {
 
     if (id != 0 && duplicate) {
         sendAck(id); // peer's previous ACK was lost; re-ack without re-processing
-        pump();
         return;
     }
 
@@ -258,8 +300,7 @@ void Endpoint::handleData(const uint8_t *data, size_t length) {
         }
     }
 
-    // A received ACK may have freed the in-flight slot; send the next frame now.
-    pump();
+    // The sender task observes the freed slot on its next pass.
 }
 
 void Endpoint::handleConnection(bool connected) {
@@ -274,6 +315,9 @@ void Endpoint::handleConnection(bool connected) {
     _smoothedRttMs = 0;
     _lastRttMs = 0;
     _queue.clear();
+    _telemetry.clear();
+    _stopPending = false;
+    _pendingAck = 0;
     unlock();
 
     if (_rxQueue) {

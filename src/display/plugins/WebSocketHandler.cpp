@@ -408,9 +408,7 @@ void WebSocketHandler::publishTelemetry() {
     statusDoc["lat"] = -1; // BLE round-trip latency (ms); -1 = not yet measured
     statusDoc["pw"] = controller->getCurrentPumpPower();
     statusDoc["hp"] = round_to(controller->getCurrentHeaterPower(), 3);
-    if (controller->getClientController()->getClient()->isConnected()) {
-        statusDoc["rssi"] = controller->getClientController()->getClient()->getRssi();
-    }
+    statusDoc["rssi"] = controller->getClientController()->getRSSI();
     if (controller->getClientController()->hasLatency()) {
         statusDoc["lat"] = controller->getClientController()->getLatencyMs();
     }
@@ -440,7 +438,9 @@ void WebSocketHandler::publishTelemetry() {
             auto *brew = static_cast<BrewProcess *>(process);
             unsigned long ts = brew->isActive() && controller->isActive() ? millis() : brew->finished;
             pObj["s"] = brew->currentPhase.phase == PhaseType::PHASE_TYPE_BREW ? "brew" : "infusion";
-            pObj["l"] = brew->isActive() ? brew->currentPhase.name.c_str() : "Finished";
+            pObj["l"] = controller->isPreparingScale() ? "Taring scale..."
+                        : brew->isActive()             ? brew->currentPhase.name.c_str()
+                                                       : "Finished";
             pObj["e"] = ts - brew->processStarted;
             pObj["u"] = brew->isUtility() ? 1 : 0;
             const bool isVolumetric = brew->target == ProcessTarget::VOLUMETRIC && brew->currentPhase.hasVolumetricTarget() &&
@@ -458,7 +458,7 @@ void WebSocketHandler::publishTelemetry() {
             auto *grind = static_cast<GrindProcess *>(process);
             unsigned long ts = grind->isActive() && controller->isActive() ? millis() : grind->finished;
             pObj["s"] = "grind";
-            pObj["l"] = grind->isActive() ? "Grinding" : "Finished";
+            pObj["l"] = controller->isPreparingScale() ? "Taring scale..." : grind->isActive() ? "Grinding" : "Finished";
             pObj["e"] = ts - grind->started;
             const bool isVolumetric = grind->target == ProcessTarget::VOLUMETRIC && controller->isVolumetricAvailable();
             pObj["tt"] = isVolumetric ? "volumetric" : "time";

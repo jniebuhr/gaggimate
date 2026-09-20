@@ -37,6 +37,8 @@ class GrindProcess : public Process {
     float getPumpValue() override { return 0.f; }
 
     void progress() override {
+        if (!active)
+            return; // A cancelled preparation/manual stop must never become active again.
         // Progress should be called around every 100ms, as defined in PROGRESS_INTERVAL, while GrindProcess is active
         if (target == ProcessTarget::TIME) {
             active = millis() - started < time;
@@ -63,7 +65,7 @@ class GrindProcess : public Process {
 
     bool isActive() override {
         if (target == ProcessTarget::TIME) {
-            return millis() - started < time;
+            return active && millis() - started < time;
         }
         return active;
     }
