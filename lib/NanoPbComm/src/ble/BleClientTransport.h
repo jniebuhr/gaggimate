@@ -25,7 +25,6 @@ class BleClientTransport : public Transport, public NimBLEAdvertisedDeviceCallba
     bool isConnected() const override;
 
     // Tight ~7.5-10ms conn interval while a shot runs, relaxed ~30-50ms when idle to leave airtime for Wi-Fi.
-    // Call from the main loop only; new links come up at the wanted interval, live ones renegotiate only on a change.
     void setLowLatency(bool active);
 
     // Native client handle, needed by ControllerOTA (OTA uses its own service).
@@ -47,7 +46,6 @@ class BleClientTransport : public Transport, public NimBLEAdvertisedDeviceCallba
     NimBLERemoteCharacteristic *_notifyChar = nullptr; // from server (TX_CHAR_UUID)
     bool _readyForConnection = false;
     bool _lowLatency = false;
-    bool _appliedLowLatency = false; // what the live link runs; set at connect, then on each update
     bool _incompatible = false;
     std::function<void(const String &info)> _onIncompatible = nullptr;
 

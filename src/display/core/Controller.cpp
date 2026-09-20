@@ -230,9 +230,8 @@ void Controller::setupBluetooth() {
         controlStateSent = false;
         settleResendAt = 0;
         if (connected) {
-            requestStateResend(); // control state is re-sent via controlStateSent; this also refreshes plugin state (LEDs)
-            if (!connLowLatency)
-                esp_coex_preference_set(ESP_COEX_PREFER_WIFI); // idle default; BALANCE starves Wi-Fi (GM-90)
+            applyConnectionPriority(true);
+            requestStateResend();
         } else if (initialized) {
             pluginManager->trigger("controller:bluetooth:disconnect");
             waitingForController = true;
@@ -244,18 +243,14 @@ void Controller::setupBluetooth() {
         onSystemInfo(hardware, version, protocolVersion, dimming, pressure, ledControl, tof, addons);
     });
     comms.onIncompatibleController([this](const String &info) { onIncompatibleController(info); });
-    // OTA blocks the main loop, so apply its priority change right here rather than on the next loop() pass.
     pluginManager->on("ota:update:start", [this](Event const &event) {
-        otaLowLatency = event.getString("component") != "display";
-        if (!otaLowLatency)
-            lastLowLatencyDemand = millis() - CONN_RELAX_HOLD_MS; // a Wi-Fi download wants the radio now, skip the hold
-        updateConnectionPriority();
-        if (!connLowLatency) {
-            coexRelaxPending = false;
-            esp_coex_preference_set(ESP_COEX_PREFER_WIFI);
+        if (event.getString("component") != "display") {
+            connLowLatency = true;
+            comms.setLowLatency(true);
+            esp_coex_preference_set(ESP_COEX_PREFER_BT);
         }
     });
-    pluginManager->on("ota:update:end", [this](Event const &) { otaLowLatency = false; });
+    pluginManager->on("ota:update:end", [this](Event const &) { applyConnectionPriority(true); });
     comms.onSensorData([this](float temp, float pressure, float puckFlow, float pumpFlow, float puckResistance, float pumpPower,
                               float heaterPower, float waterPumped) {
         onTempRead(temp);
@@ -512,7 +507,6 @@ void Controller::loop() {
 
     if (initialized) {
         comms.loop(); // drive the comms send pump + retransmit
-        updateConnectionPriority();
     }
 
     unsigned long now = millis();
@@ -719,6 +713,7 @@ void Controller::startProcessLocked(Process *process, std::vector<const char *> 
     }
     processCompleted = false;
     this->currentProcess = process;
+    applyConnectionPriority(); // shot started -> tight BLE interval
     events.push_back("controller:process:start");
     updateLastAction();
 }
@@ -729,29 +724,22 @@ void Controller::dispatchEvents(const std::vector<const char *> &events) {
     }
 }
 
-void Controller::updateConnectionPriority() {
-    const unsigned long now = millis();
-    bool busy = otaLowLatency;
-    {
-        std::lock_guard<std::recursive_mutex> guard(processMutex);
-        busy = busy || currentProcess != nullptr;
-    }
-    if (busy)
-        lastLowLatencyDemand = now;
-    // Tighten at once, relax only after a quiet hold: flush -> shot must not renegotiate the link back to back (GM-215).
-    const bool lowLatency = busy || (connLowLatency && now - lastLowLatencyDemand < CONN_RELAX_HOLD_MS);
-    if (lowLatency != connLowLatency) {
+void Controller::applyConnectionPriority(bool force) {
+    // A running process needs responsive 10Hz control; idle does not. Track the
+    // last requested state so we only renegotiate on transitions.
+    const bool lowLatency = currentProcess != nullptr;
+    if (force || lowLatency != connLowLatency) {
         connLowLatency = lowLatency;
-        if (lowLatency)
-            esp_coex_preference_set(ESP_COEX_PREFER_BT); // BLE has to win the shared radio before the interval tightens
         comms.setLowLatency(lowLatency);
-        coexRelaxPending = !lowLatency;
-        connRelaxedAt = now;
-    }
-    // Hand the radio back to Wi-Fi only once the relaxed interval has taken effect, so the update itself isn't starved.
-    if (coexRelaxPending && now - connRelaxedAt >= CONN_COEX_SETTLE_MS) {
-        coexRelaxPending = false;
-        esp_coex_preference_set(ESP_COEX_PREFER_WIFI);
+        // Steer the shared-radio coexistence arbiter to match. WiFi and BLE
+        // share one 2.4GHz radio; the arbiter decides who wins on contention.
+        // During a shot the BLE control loop (7.5-10ms interval, pressure/flow
+        // feedback) must win, so prefer BT. When idle there is no tight BLE
+        // deadline, so prefer WiFi to keep the web UI / network responsive --
+        // the chronic coex failure mode is WiFi getting starved and the whole
+        // IP stack wedging. Default coex preference is BALANCE; nobody set this
+        // before. Best-effort: ignore the return (no-op if coex inactive). [GM-90]
+        esp_coex_preference_set(lowLatency ? ESP_COEX_PREFER_BT : ESP_COEX_PREFER_WIFI);
     }
 }
 
@@ -1070,6 +1058,7 @@ void Controller::deactivateLocked(std::vector<const char *> &events) {
     lastProcess = currentProcess;
     currentProcess = nullptr;
     comms.tare();
+    applyConnectionPriority(); // shot ended -> relaxed BLE interval
     if (lastProcess->getType() == MODE_BREW) {
         if (!static_cast<BrewProcess *>(lastProcess)->isUtility())
             flushPending = true; // a shot leaves grounds behind, a flush does not
