@@ -1,26 +1,29 @@
 // Tests the production endpoint with real nanopb encoding; tasks are driven explicitly.
 #include "Endpoint.h"
+#include <array>
 #include <cassert>
 #include <chrono>
 #include <future>
 #include <iostream>
+#include <mutex>
 #include <pb_decode.h>
 #include <pb_encode.h>
 #include <thread>
 #include <vector>
-unsigned long testMillis = 0;
+unsigned long &testClock() {
+    static unsigned long value = 0;
+    return value;
+}
 struct Link : Transport {
     std::vector<gm::Frame> frames;
     std::function<void(const gm::Frame &)> duringSend;
-    bool connected = true;
-    mutable uint32_t session = 1;
-    mutable bool reconnectAfterSnapshot = false;
-    mutable bool sessionRead = false;
     uint32_t connectionSession() const override {
+        std::lock_guard<std::mutex> guard(stateMutex);
         sessionRead = true;
         return session;
     }
     bool isConnected() const override {
+        std::lock_guard<std::mutex> guard(stateMutex);
         if (reconnectAfterSnapshot && sessionRead) {
             ++session;
             reconnectAfterSnapshot = false;
@@ -28,8 +31,11 @@ struct Link : Transport {
         return connected;
     }
     bool sendForSession(const uint8_t *bytes, size_t length, uint32_t expectedSession) override {
-        if (expectedSession != session)
-            return false;
+        {
+            std::lock_guard<std::mutex> guard(stateMutex);
+            if (expectedSession != session)
+                return false;
+        }
         return send(bytes, length);
     }
     bool send(const uint8_t *bytes, size_t length) override {
@@ -42,10 +48,10 @@ struct Link : Transport {
         return true;
     }
     void receive(const gm::Frame &f) {
-        uint8_t bytes[256];
-        auto stream = pb_ostream_from_buffer(bytes, sizeof(bytes));
+        std::array<uint8_t, 256> bytes{};
+        auto stream = pb_ostream_from_buffer(bytes.data(), bytes.size());
         assert(pb_encode(&stream, &gaggimate_Frame_msg, &f));
-        emitData(bytes, stream.bytes_written);
+        emitData(bytes.data(), stream.bytes_written);
     }
     void ack(uint32_t id) {
         gm::Frame f = gaggimate_Frame_init_zero;
@@ -56,6 +62,17 @@ struct Link : Transport {
         emitConnection(false);
         emitConnection(true);
     }
+    void reconnectAfterNextSnapshot() {
+        std::lock_guard<std::mutex> guard(stateMutex);
+        reconnectAfterSnapshot = true;
+    }
+
+  private:
+    mutable std::mutex stateMutex;
+    bool connected = true;
+    mutable uint32_t session = 1;
+    mutable bool reconnectAfterSnapshot = false;
+    mutable bool sessionRead = false;
 };
 gm::Payload pump(float power) {
     gm::Payload p = gaggimate_Payload_init_zero;
@@ -83,7 +100,7 @@ void stop_supersedes_unacknowledged_start() {
     Endpoint ep(link);
     ep.begin();
     int failures = 0;
-    ep.onSendFailed([&] { ++failures; });
+    ep.onSendFailed([&failures] { ++failures; });
     ep.send(pump(80));
     ep.loop();
     auto oldId = link.frames.back().id;
@@ -94,7 +111,7 @@ void stop_supersedes_unacknowledged_start() {
     auto stopId = link.frames.back().id;
     assert(stopId > oldId && link.frames.back().payloads[0].content.pump.power == 0);
     link.ack(oldId);
-    testMillis += 151;
+    testClock() += 151;
     ep.loop();
     assert(link.frames.back().id == stopId && link.frames.back().payloads[0].content.pump.power == 0);
     link.ack(stopId);
@@ -107,7 +124,7 @@ void ack_during_send_is_not_lost() {
     Link link;
     Endpoint ep(link);
     ep.begin();
-    link.duringSend = [&](const gm::Frame &f) { link.ack(f.id); };
+    link.duringSend = [&link](const gm::Frame &f) { link.ack(f.id); };
     ep.send(pump(50));
     ep.loop();
     ep.send(pump(60));
@@ -120,7 +137,7 @@ void frame_is_not_sent_after_connection_session_changes() {
     Endpoint ep(link);
     ep.begin();
     ep.send(pump(50));
-    link.reconnectAfterSnapshot = true;
+    link.reconnectAfterNextSnapshot();
     ep.loop();
     assert(link.frames.empty());
 }
@@ -128,18 +145,19 @@ void blocked_io_does_not_block_stop_enqueue() {
     Link link;
     Endpoint ep(link);
     ep.begin();
-    std::promise<void> entered, release;
+    std::promise<void> entered;
+    std::promise<void> release;
     auto resume = release.get_future();
-    link.duringSend = [&](const gm::Frame &) {
+    link.duringSend = [&entered, &resume](const gm::Frame &) {
         entered.set_value();
         resume.wait();
     };
     ep.send(pump(100));
-    std::thread sender([&] { ep.loop(); });
+    std::thread sender([&ep] { ep.loop(); });
     entered.get_future().wait();
     std::promise<void> enqueued;
     auto enqueuedFuture = enqueued.get_future();
-    std::thread enqueue([&] {
+    std::thread enqueue([&ep, &enqueued] {
         auto stop = pump(0);
         ep.sendStop(&stop, 1);
         enqueued.set_value();
@@ -182,16 +200,16 @@ void phase_stop_preserves_valve_and_newer_configuration() {
     gm::Payload boiler = gaggimate_Payload_init_zero;
     boiler.which_content = gaggimate_Payload_boiler_tag;
     boiler.content.boiler.setpoint = 90;
-    gm::Payload initial[] = {pump(80), boiler};
-    ep.sendBatch(initial, 2);
+    const std::array<gm::Payload, 2> initial = {pump(80), boiler};
+    ep.sendBatch(initial.data(), initial.size());
     ep.loop();
     boiler.content.boiler.setpoint = 95;
     ep.send(boiler);
     gm::Payload valve = gaggimate_Payload_init_zero;
     valve.which_content = gaggimate_Payload_relay_tag;
     valve.content.relay.open = true;
-    gm::Payload stop[] = {pump(0), valve};
-    ep.sendStop(stop, 2);
+    const std::array<gm::Payload, 2> stop = {pump(0), valve};
+    ep.sendStop(stop.data(), stop.size());
     ep.loop();
     const auto &frame = link.frames.back();
     assert(frame.payloads_count == 2 && frame.payloads[0].content.pump.power == 0);
@@ -211,8 +229,8 @@ void urgent_batch_does_not_replay_old_temperature() {
     ep.send(boiler);
     ep.loop();
     boiler.content.boiler.setpoint = 95;
-    gm::Payload stop[] = {pump(0), boiler};
-    ep.sendStop(stop, 2);
+    const std::array<gm::Payload, 2> stop = {pump(0), boiler};
+    ep.sendStop(stop.data(), stop.size());
     ep.loop();
     assert(link.frames.back().payloads[1].content.boiler.setpoint == 95);
     link.ack(link.frames.back().id);
@@ -225,17 +243,17 @@ void exhausted_retries_release_the_next_command() {
     Endpoint ep(link);
     ep.begin();
     int failures = 0;
-    ep.onSendFailed([&] { ++failures; });
+    ep.onSendFailed([&failures] { ++failures; });
     ep.send(pump(80));
     ep.loop();
     auto oldId = link.frames.back().id;
     ep.send(pump(40));
     for (int i = 0; i < 5; ++i) {
-        testMillis += 151;
+        testClock() += 151;
         ep.loop();
         assert(link.frames.back().id == oldId);
     }
-    testMillis += 151;
+    testClock() += 151;
     ep.loop();
     assert(failures == 1 && link.frames.back().id > oldId);
     assert(link.frames.back().payloads[0].content.pump.power == 40);

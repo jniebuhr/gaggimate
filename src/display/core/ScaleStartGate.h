@@ -7,20 +7,20 @@
 class ScaleStartGate {
   public:
     enum class Result { Waiting, Ready, Failed };
-    static constexpr uint32_t TimeoutMs = 2500;
+    static constexpr uint32_t TimeoutMs = 5000;
     static constexpr uint32_t FreshnessMs = 1500;
 
     void begin(uint32_t now) {
         started = now;
         zeroConfirmed = false;
     }
-    void observe(double weight, uint32_t receivedAt, uint32_t now, bool tareComplete, bool tareOK, uint32_t tareAt) {
-        if (tareComplete && tareOK && static_cast<int32_t>(receivedAt - tareAt) > 0 && now - receivedAt < FreshnessMs &&
+    void observe(double weight, uint32_t receivedAt, uint32_t now, bool tareComplete, bool, uint32_t tareAt) {
+        if (tareComplete && static_cast<int32_t>(receivedAt - tareAt) > 0 && now - receivedAt < FreshnessMs &&
             std::isfinite(weight) && std::abs(weight) <= 0.5)
             zeroConfirmed = true;
     }
-    Result poll(uint32_t now, bool connected, bool tareComplete, bool tareOK) const {
-        if (!connected || now - started >= TimeoutMs || (tareComplete && !tareOK))
+    Result poll(uint32_t now, bool connected, bool, bool) const {
+        if (!connected || now - started >= TimeoutMs)
             return Result::Failed;
         return zeroConfirmed ? Result::Ready : Result::Waiting;
     }

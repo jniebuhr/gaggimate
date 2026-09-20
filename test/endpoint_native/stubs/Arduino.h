@@ -1,4 +1,4 @@
 #pragma once
 #include <cstdint>
-extern unsigned long testMillis;
-inline unsigned long millis() { return testMillis; }
+unsigned long &testClock();
+inline unsigned long millis() { return testClock(); }

@@ -1,4 +1,5 @@
 #include "GaggiMateClient.h"
+#include <array>
 #include <esp_log.h>
 
 GaggiMateClient::GaggiMateClient() : _endpoint(_transport) {}
@@ -36,7 +37,7 @@ void GaggiMateClient::loop() {
         _transport.maintain();
 }
 
-void GaggiMateClient::senderTask(void *arg) {
+void GaggiMateClient::senderTask(void *arg) { // NOSONAR: FreeRTOS task callbacks require a void* context.
     auto *self = static_cast<GaggiMateClient *>(arg);
     for (;;) {
         self->_endpoint.loop();
@@ -45,9 +46,9 @@ void GaggiMateClient::senderTask(void *arg) {
 }
 
 void GaggiMateClient::sendStop() {
-    gm::Payload stop[] = {buildPumpControl(0, PumpControlMode::Power, 0, 0, 0), buildRelayControl(0, false),
-                          buildRelayControl(1, false)};
-    _endpoint.sendStop(stop, 3);
+    const std::array<gm::Payload, 3> stop = {buildPumpControl(0, PumpControlMode::Power, 0, 0, 0), buildRelayControl(0, false),
+                                             buildRelayControl(1, false)};
+    _endpoint.sendStop(stop.data(), stop.size());
 }
 
 gm::Payload GaggiMateClient::buildPing() {

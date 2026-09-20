@@ -154,6 +154,10 @@ class Endpoint {
     void handleConnection(bool connected);
     void pump();
     bool pumpLocked(uint8_t *buffer, size_t &length);
+    void activateStopFrameLocked();
+    void preserveInFlightConfigurationLocked();
+    bool finishInFlightLocked(unsigned long now, uint8_t *buffer, size_t &length, bool &dropped);
+    void fillTransmitFrameLocked();
     bool prepareAuxiliary(uint8_t *buffer, size_t &length);
     void sendAck(uint32_t id);
     void dispatch(const gm::Payload &payload);
@@ -162,11 +166,11 @@ class Endpoint {
 
     void lock() {
         if (_mutex)
-            xSemaphoreTakeRecursive(_mutex, portMAX_DELAY);
+            xSemaphoreTake(_mutex, portMAX_DELAY);
     }
     void unlock() {
         if (_mutex)
-            xSemaphoreGiveRecursive(_mutex);
+            xSemaphoreGive(_mutex);
     }
 };
 

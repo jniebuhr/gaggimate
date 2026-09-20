@@ -15,6 +15,8 @@ constexpr unsigned long UPDATE_INTERVAL_MS = 1000;
 constexpr unsigned long SCALE_TASK_INTERVAL_MS = 50;
 constexpr unsigned long SCALE_LOCK_TIMEOUT_MS = 50;
 constexpr unsigned long SCALE_RECONNECT_PAUSE_MS = 15000;
+constexpr unsigned long SCALE_TARE_RETRY_INTERVAL_MS = 50;
+constexpr uint8_t SCALE_TARE_ATTEMPTS = 2;
 
 class BLEScalePlugin : public Plugin {
   public:
@@ -41,7 +43,7 @@ class BLEScalePlugin : public Plugin {
     std::vector<DiscoveredDevice> getDiscoveredScales() const;
     void tare() const;
     uint32_t requestTare() const;
-    void cancelTare() const { pendingTare = 0; }
+    void cancelTare() const;
     bool tareCompleted(uint32_t ticket) const { return completedTare.load() == ticket; }
     bool tareSucceeded() const { return successfulTare; }
     unsigned long tareCompletedAt() const { return tareSentAt; }
@@ -71,7 +73,7 @@ class BLEScalePlugin : public Plugin {
     }
 
   private:
-    using ScaleMutex = std::recursive_timed_mutex;
+    using ScaleMutex = std::timed_mutex;
 
     // Bounded wait so UI/web/BLE-callback callers never stall behind a driver call running on the scale task.
     std::unique_lock<ScaleMutex> lockScale(unsigned long timeoutMs = SCALE_LOCK_TIMEOUT_MS) const {
@@ -84,6 +86,8 @@ class BLEScalePlugin : public Plugin {
 
     static void taskEntry(void *arg);
     void tick();
+    void processControlRequests();
+    void refreshScaleCaches();
     void update();
     void pollScaleMetadata();
     void establishConnection();
@@ -97,9 +101,14 @@ class BLEScalePlugin : public Plugin {
     mutable unsigned long measurementAt = 0;
     mutable std::atomic<uint32_t> nextTare{0};
     mutable std::atomic<uint32_t> pendingTare{0};
+    mutable std::atomic<bool> cancelTareRequested{false};
     std::atomic<uint32_t> completedTare{0};
     std::atomic<bool> successfulTare{false};
     std::atomic<unsigned long> tareSentAt{0};
+    uint32_t activeTareTicket = 0;       // owned by the scale task
+    uint8_t tareAttemptsRemaining = 0;   // owned by the scale task
+    bool anyTareSucceeded = false;       // owned by the scale task
+    unsigned long nextTareAttemptAt = 0; // owned by the scale task
     std::atomic<bool> stopTimerRequested{false};
     std::atomic<float> cachedFlowRate{0};
     std::atomic<int> cachedRSSI{0};

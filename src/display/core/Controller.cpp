@@ -5,6 +5,7 @@
 #include <LittleFS.h>
 #include <SD_MMC.h>
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <ctime>
 #include <display/config.h>
@@ -574,7 +575,8 @@ void Controller::loopLogic() {
             const unsigned long now = millis();
             if (currentProcess->getType() == MODE_BREW) {
                 auto *brew = static_cast<BrewProcess *>(currentProcess);
-                brew->processStarted = brew->currentPhaseStarted = now;
+                brew->processStarted = now;
+                brew->currentPhaseStarted = now;
             } else if (currentProcess->getType() == MODE_GRIND) {
                 static_cast<GrindProcess *>(currentProcess)->started = now;
             }
@@ -1011,7 +1013,7 @@ void Controller::updateControl() {
     // stateful and every message is acknowledged, so re-sending unchanged values
     // each cycle is unnecessary; a periodic ping (see loop()) keeps the watchdog
     // fed when nothing changes. controlStateSent is cleared to force a full resend.
-    gm::Payload batch[4];
+    std::array<gm::Payload, 4> batch{};
     size_t count = 0;
     const bool full = !controlStateSent.exchange(true); // claim the flag first so a concurrent reset is never lost
     if (full || boiler != lastBoiler)
@@ -1028,12 +1030,13 @@ void Controller::updateControl() {
     if (pumpStopping) {
         // A weight/flush phase may stop the pump while keeping the drain valve open.
         // Supersede old actuator retries without changing the new phase's valve state.
-        gm::Payload stop[] = {comms.buildBoilerControl(boiler.index, boiler.mode, boiler.setpoint),
-                              comms.buildPumpControl(pump.index, pump.mode, pump.power, pump.pressure, pump.flow),
-                              comms.buildRelayControl(relay.index, relay.open), comms.buildRelayControl(1, altRelayActive)};
-        comms.sendStop(stop, 4);
+        const std::array<gm::Payload, 4> stop = {
+            comms.buildBoilerControl(boiler.index, boiler.mode, boiler.setpoint),
+            comms.buildPumpControl(pump.index, pump.mode, pump.power, pump.pressure, pump.flow),
+            comms.buildRelayControl(relay.index, relay.open), comms.buildRelayControl(1, altRelayActive)};
+        comms.sendStop(stop.data(), stop.size());
     } else if (count > 0) {
-        comms.sendBatch(batch, count);
+        comms.sendBatch(batch.data(), count);
     }
 
     lastBoiler = boiler;

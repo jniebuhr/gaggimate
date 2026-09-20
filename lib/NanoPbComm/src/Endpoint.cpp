@@ -7,7 +7,7 @@
 static const char *ENDPOINT_TAG = "Endpoint";
 
 Endpoint::Endpoint(Transport &transport) : _transport(transport) {
-    _mutex = xSemaphoreCreateRecursiveMutex();
+    _mutex = xSemaphoreCreateMutex();
     _rxQueue = xQueueCreate(RX_QUEUE_DEPTH, sizeof(DispatchEvent));
     if (_mutex == nullptr || _rxQueue == nullptr)
         ESP_LOGE(ENDPOINT_TAG, "Failed to allocate endpoint resources (out of memory)");
@@ -131,15 +131,15 @@ void Endpoint::pump() {
     const uint32_t connectionSession = _transport.connectionSession();
     if (!_transport.isConnected())
         return;
-    uint8_t buffer[BUFFER_SIZE];
+    std::array<uint8_t, BUFFER_SIZE> buffer{};
     size_t length = 0;
     lock();
-    const bool dropped = pumpLocked(buffer, length);
+    const bool dropped = pumpLocked(buffer.data(), length);
     unlock();
     // A synchronous BLE write must never hold up enqueueing, ACK reception or
     // the process mutex held by a producer. Only the sender task gets here.
     if (length > 0)
-        _transport.sendForSession(buffer, length, connectionSession);
+        _transport.sendForSession(buffer.data(), length, connectionSession);
     if (dropped && _sendFailedHandler)
         _sendFailedHandler();
 }
@@ -148,55 +148,14 @@ bool Endpoint::pumpLocked(uint8_t *buffer, size_t &length) {
     const unsigned long now = millis();
     bool dropped = false;
     if (_stopPending) {
-        if (_inFlight) {
-            // Preserve idempotent configuration, unless a newer value is queued.
-            // Tare/autotune and actuator commands must not be replayed after a
-            // stop: the former may already have executed, the latter are stale.
-            for (pb_size_t i = 0; i < _txFrame.payloads_count; i++) {
-                const auto &p = _txFrame.payloads[i];
-                const auto tag = p.which_content;
-                const bool config = tag == gaggimate_Payload_boiler_tag || tag == gaggimate_Payload_pid_tag ||
-                                    tag == gaggimate_Payload_pump_model_tag || tag == gaggimate_Payload_pressure_scale_tag ||
-                                    tag == gaggimate_Payload_led_tag;
-                const auto key = gm_proto::coalescingKey(p);
-                bool replacedByStop = false;
-                for (pb_size_t j = 0; j < _stopFrame.payloads_count; ++j)
-                    replacedByStop = replacedByStop || gm_proto::coalescingKey(_stopFrame.payloads[j]) == key;
-                if (config && !replacedByStop && !_queue.contains(key))
-                    _queue.upsert(key, gm_proto::defaultPriority(tag), p);
-            }
-        }
-        _inFlight = false;
-        _txFrame = _stopFrame;
-        _stopPending = false;
-    } else if (_inFlight) {
-        if (now - _sentAt >= ACK_TIMEOUT_MS) {
-            if (_retries >= MAX_RETRIES) {
-                _inFlight = false;
-                dropped = true;
-            } else {
-                memcpy(buffer, _txBuf, _txLen);
-                length = _txLen;
-                _sentAt = now;
-                _retries++;
-                return false;
-            }
-        }
-        if (_inFlight)
-            return prepareAuxiliary(buffer, length);
-        _txFrame = gaggimate_Frame_init_zero;
+        activateStopFrameLocked();
+    } else if (_inFlight && finishInFlightLocked(now, buffer, length, dropped)) {
+        return dropped;
     } else {
         _txFrame = gaggimate_Frame_init_zero;
     }
 
-    if (_txFrame.payloads_count == 0) {
-        while (_txFrame.payloads_count < MAX_PAYLOADS_PER_FRAME) {
-            auto entry = _queue.pop();
-            if (!entry)
-                break;
-            _txFrame.payloads[_txFrame.payloads_count++] = entry->payload;
-        }
-    }
+    fillTransmitFrameLocked();
     if (_txFrame.payloads_count == 0) {
         prepareAuxiliary(buffer, length);
         return dropped;
@@ -221,6 +180,63 @@ bool Endpoint::pumpLocked(uint8_t *buffer, size_t &length) {
     memcpy(buffer, _txBuf, _txLen);
     length = _txLen;
     return dropped;
+}
+
+void Endpoint::activateStopFrameLocked() {
+    if (_inFlight)
+        preserveInFlightConfigurationLocked();
+    _inFlight = false;
+    _txFrame = _stopFrame;
+    _stopPending = false;
+}
+
+void Endpoint::preserveInFlightConfigurationLocked() {
+    // Preserve idempotent configuration, unless a newer value is queued.
+    // Tare/autotune and actuator commands must not be replayed after a stop:
+    // the former may already have executed, the latter are stale.
+    for (pb_size_t i = 0; i < _txFrame.payloads_count; ++i) {
+        const auto &payload = _txFrame.payloads[i];
+        const auto tag = payload.which_content;
+        const bool config = tag == gaggimate_Payload_boiler_tag || tag == gaggimate_Payload_pid_tag ||
+                            tag == gaggimate_Payload_pump_model_tag || tag == gaggimate_Payload_pressure_scale_tag ||
+                            tag == gaggimate_Payload_led_tag;
+        if (!config)
+            continue;
+        const auto key = gm_proto::coalescingKey(payload);
+        bool replacedByStop = false;
+        for (pb_size_t j = 0; j < _stopFrame.payloads_count; ++j)
+            replacedByStop = replacedByStop || gm_proto::coalescingKey(_stopFrame.payloads[j]) == key;
+        if (!replacedByStop && !_queue.contains(key))
+            _queue.upsert(key, gm_proto::defaultPriority(tag), payload);
+    }
+}
+
+bool Endpoint::finishInFlightLocked(unsigned long now, uint8_t *buffer, size_t &length, bool &dropped) {
+    if (now - _sentAt < ACK_TIMEOUT_MS) {
+        prepareAuxiliary(buffer, length);
+        return true;
+    }
+    if (_retries < MAX_RETRIES) {
+        memcpy(buffer, _txBuf, _txLen);
+        length = _txLen;
+        _sentAt = now;
+        ++_retries;
+        return true;
+    }
+    _inFlight = false;
+    dropped = true;
+    return false;
+}
+
+void Endpoint::fillTransmitFrameLocked() {
+    if (_txFrame.payloads_count != 0)
+        return;
+    while (_txFrame.payloads_count < MAX_PAYLOADS_PER_FRAME) {
+        auto entry = _queue.pop();
+        if (!entry)
+            break;
+        _txFrame.payloads[_txFrame.payloads_count++] = entry->payload;
+    }
 }
 
 bool Endpoint::prepareAuxiliary(uint8_t *buffer, size_t &length) {

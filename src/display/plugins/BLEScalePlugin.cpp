@@ -150,23 +150,55 @@ void BLEScalePlugin::tick() {
     } else if (wantScan && !connected) {
         scanner->initializeAsyncScan();
     }
+    processControlRequests();
+    refreshScaleCaches();
+    const unsigned long now = millis();
+    if (now - lastUpdate > UPDATE_INTERVAL_MS) {
+        lastUpdate = now;
+        update();
+    }
+}
+
+void BLEScalePlugin::processControlRequests() {
     // Only this worker performs GATT operations. Event/UI/AsyncTCP callers merely enqueue.
     if (stopTimerRequested.exchange(false)) {
         std::lock_guard<ScaleMutex> guard(scaleMutex);
         if (scale && scale->isConnected() && scale->hasTimerControl())
             scale->stopTimer();
     }
+    if (cancelTareRequested.exchange(false)) {
+        pendingTare = 0;
+        activeTareTicket = 0;
+        tareAttemptsRemaining = 0;
+    }
     if (const uint32_t ticket = pendingTare.exchange(0)) {
+        activeTareTicket = ticket;
+        tareAttemptsRemaining = SCALE_TARE_ATTEMPTS;
+        anyTareSucceeded = false;
+        nextTareAttemptAt = millis();
+    }
+    const unsigned long tareNow = millis();
+    if (tareAttemptsRemaining > 0 && static_cast<int32_t>(tareNow - nextTareAttemptAt) >= 0) {
         bool success = false;
         {
             std::lock_guard<ScaleMutex> guard(scaleMutex);
             if (scale && scale->isConnected())
                 success = scale->tare();
         }
-        successfulTare = success;
-        tareSentAt = millis();
-        completedTare = ticket; // publish result last
+        anyTareSucceeded |= success;
+        --tareAttemptsRemaining;
+        if (tareAttemptsRemaining > 0) {
+            nextTareAttemptAt = tareNow + SCALE_TARE_RETRY_INTERVAL_MS;
+        } else {
+            successfulTare = anyTareSucceeded;
+            tareSentAt = millis();
+            completedTare = activeTareTicket; // publish the aggregate result last
+            activeTareTicket = 0;
+        }
     }
+}
+
+void BLEScalePlugin::refreshScaleCaches() {
     {
         std::lock_guard<ScaleMutex> guard(scaleMutex);
         if (scale && connected && cachedHasFlowRate)
@@ -178,10 +210,6 @@ void BLEScalePlugin::tick() {
         controller->getClientController()->refreshRSSI();
         std::lock_guard<ScaleMutex> guard(scaleMutex);
         cachedRSSI = scale && scale->isConnected() ? scale->getRSSI() : 0;
-    }
-    if (now - lastUpdate > UPDATE_INTERVAL_MS) {
-        lastUpdate = now;
-        update();
     }
 }
 
@@ -265,6 +293,8 @@ void BLEScalePlugin::releaseScale() {
         doConnect = false;
         cachedRSSI = 0;
         pendingTare = 0;
+        activeTareTicket = 0;
+        tareAttemptsRemaining = 0;
         {
             std::lock_guard<std::mutex> sampleGuard(measurementMutex);
             measurementPending = false;
@@ -287,8 +317,14 @@ uint32_t BLEScalePlugin::requestTare() const {
     uint32_t ticket = ++nextTare;
     if (ticket == 0)
         ticket = ++nextTare;
+    cancelTareRequested = false;
     pendingTare = ticket;
     return ticket;
+}
+
+void BLEScalePlugin::cancelTare() const {
+    pendingTare = 0;
+    cancelTareRequested = true;
 }
 
 void BLEScalePlugin::pollScaleMetadata() {

@@ -438,9 +438,12 @@ void WebSocketHandler::publishTelemetry() {
             auto *brew = static_cast<BrewProcess *>(process);
             unsigned long ts = brew->isActive() && controller->isActive() ? millis() : brew->finished;
             pObj["s"] = brew->currentPhase.phase == PhaseType::PHASE_TYPE_BREW ? "brew" : "infusion";
-            pObj["l"] = controller->isPreparingScale() ? "Taring scale..."
-                        : brew->isActive()             ? brew->currentPhase.name.c_str()
-                                                       : "Finished";
+            const char *label = "Finished";
+            if (controller->isPreparingScale())
+                label = "Taring scale...";
+            else if (brew->isActive())
+                label = brew->currentPhase.name.c_str();
+            pObj["l"] = label;
             pObj["e"] = ts - brew->processStarted;
             pObj["u"] = brew->isUtility() ? 1 : 0;
             const bool isVolumetric = brew->target == ProcessTarget::VOLUMETRIC && brew->currentPhase.hasVolumetricTarget() &&
@@ -458,7 +461,12 @@ void WebSocketHandler::publishTelemetry() {
             auto *grind = static_cast<GrindProcess *>(process);
             unsigned long ts = grind->isActive() && controller->isActive() ? millis() : grind->finished;
             pObj["s"] = "grind";
-            pObj["l"] = controller->isPreparingScale() ? "Taring scale..." : grind->isActive() ? "Grinding" : "Finished";
+            const char *label = "Finished";
+            if (controller->isPreparingScale())
+                label = "Taring scale...";
+            else if (grind->isActive())
+                label = "Grinding";
+            pObj["l"] = label;
             pObj["e"] = ts - grind->started;
             const bool isVolumetric = grind->target == ProcessTarget::VOLUMETRIC && controller->isVolumetricAvailable();
             pObj["tt"] = isVolumetric ? "volumetric" : "time";
