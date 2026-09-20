@@ -394,7 +394,8 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setSteamPumpCutoff(request->arg("steamPumpCutoff").toFloat());
             if (request->hasArg("themeMode"))
                 settings->setThemeMode(request->arg("themeMode").toInt());
-            settings->setGaugeSetpointsInside(request->hasArg("gaugeSetpointsInside"));
+            if (request->hasArg("gaugeSetpointsInside"))
+                settings->setGaugeSetpointsInside(parseBoolArg(request->arg("gaugeSetpointsInside")));
             if (request->hasArg("sunriseIdle"))
                 settings->setSunriseIdle(request->arg("sunriseIdle"));
             if (request->hasArg("sunriseActive"))
