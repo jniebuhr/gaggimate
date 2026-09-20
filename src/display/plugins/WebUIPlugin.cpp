@@ -292,6 +292,11 @@ void WebUIPlugin::handleOTAStart(JsonDocument &request) {
     }
 }
 
+// Booleans are only touched when present, so a partial POST keeps the rest (GM-214).
+static bool parseBoolArg(const String &value) {
+    return !(value.isEmpty() || value == "0" || value.equalsIgnoreCase("false") || value.equalsIgnoreCase("off"));
+}
+
 void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     if (request->method() == HTTP_POST) {
         controller->getSettings().batchUpdate([request](Settings *settings) {
@@ -323,18 +328,22 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setWifiPassword(request->arg("wifiPassword"));
             if (request->hasArg("apPassword") && request->arg("apPassword").length() >= WIFI_AP_PASSWORD_MIN_LENGTH)
                 settings->setWifiApPassword(request->arg("apPassword"));
-            settings->setHomekit(request->hasArg("homekit"));
-            settings->setBoilerFillActive(request->hasArg("boilerFillActive"));
+            if (request->hasArg("homekit"))
+                settings->setHomekit(parseBoolArg(request->arg("homekit")));
+            if (request->hasArg("boilerFillActive"))
+                settings->setBoilerFillActive(parseBoolArg(request->arg("boilerFillActive")));
             if (request->hasArg("startupFillTime"))
                 settings->setStartupFillTime(request->arg("startupFillTime").toInt() * 1000);
             if (request->hasArg("steamFillTime"))
                 settings->setSteamFillTime(request->arg("steamFillTime").toInt() * 1000);
-            settings->setSmartGrindActive(request->hasArg("smartGrindActive"));
+            if (request->hasArg("smartGrindActive"))
+                settings->setSmartGrindActive(parseBoolArg(request->arg("smartGrindActive")));
             if (request->hasArg("smartGrindIp"))
                 settings->setSmartGrindIp(request->arg("smartGrindIp"));
             if (request->hasArg("smartGrindMode"))
                 settings->setSmartGrindMode(request->arg("smartGrindMode").toInt());
-            settings->setHomeAssistant(request->hasArg("homeAssistant"));
+            if (request->hasArg("homeAssistant"))
+                settings->setHomeAssistant(parseBoolArg(request->arg("homeAssistant")));
             if (request->hasArg("haUser"))
                 settings->setHomeAssistantUser(request->arg("haUser"));
             if (request->hasArg("haPassword"))
@@ -345,7 +354,8 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setHomeAssistantPort(request->arg("haPort").toInt());
             if (request->hasArg("haTopic"))
                 settings->setHomeAssistantTopic(request->arg("haTopic"));
-            settings->setMomentaryButtons(request->hasArg("momentaryButtons"));
+            if (request->hasArg("momentaryButtons"))
+                settings->setMomentaryButtons(parseBoolArg(request->arg("momentaryButtons")));
             if (request->hasArg("flushDuration"))
                 settings->setFlushDuration(request->arg("flushDuration").toInt());
             if (request->hasArg("warnWaterLevel"))
@@ -360,14 +370,16 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setWarnScaleBattery(request->arg("warnScaleBattery").toInt());
             if (request->hasArg("warnTemperature"))
                 settings->setWarnTemperature(request->arg("warnTemperature").toInt());
-            settings->setDelayAdjust(request->hasArg("delayAdjust"));
+            if (request->hasArg("delayAdjust"))
+                settings->setDelayAdjust(parseBoolArg(request->arg("delayAdjust")));
             if (request->hasArg("brewDelay"))
                 settings->setBrewDelay(request->arg("brewDelay").toDouble());
             if (request->hasArg("grindDelay"))
                 settings->setGrindDelay(request->arg("grindDelay").toDouble());
             if (request->hasArg("timezone"))
                 settings->setTimezone(request->arg("timezone"));
-            settings->setClockFormat(request->hasArg("clock24hFormat"));
+            if (request->hasArg("clock24hFormat"))
+                settings->setClockFormat(parseBoolArg(request->arg("clock24hFormat")));
             if (request->hasArg("standbyTimeout"))
                 settings->setStandbyTimeout(request->arg("standbyTimeout").toInt() * 1000);
             if (request->hasArg("mainBrightness"))
@@ -411,7 +423,8 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setMaxPumpPower(request->arg("maxPumpPower").toFloat());
             if (request->hasArg("savedScale"))
                 settings->setSavedScale(request->arg("savedScale"));
-            settings->setAutoWakeupEnabled(request->hasArg("autowakeupEnabled"));
+            if (request->hasArg("autowakeupEnabled"))
+                settings->setAutoWakeupEnabled(parseBoolArg(request->arg("autowakeupEnabled")));
             if (request->hasArg("autowakeupSchedules")) {
                 // Handle schedule format with days
                 String schedulesStr = request->arg("autowakeupSchedules");

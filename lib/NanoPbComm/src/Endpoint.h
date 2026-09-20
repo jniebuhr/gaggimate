@@ -76,6 +76,9 @@ class Endpoint {
     // after internal state has been reset. Used to push connect-time messages.
     void onConnection(ConnectionHandler handler) { _connHandler = std::move(handler); }
 
+    // Invoked (mutex released, on whichever thread ran the pump) when a reliable frame is dropped after its retries.
+    void onSendFailed(std::function<void()> handler) { _sendFailedHandler = std::move(handler); }
+
     bool isConnected() const { return _transport.isConnected(); }
 
     // Reliable-delivery round-trip latency (ms): time from transmitting a frame
@@ -123,6 +126,7 @@ class Endpoint {
     uint32_t _lastRxId = 0;
 
     ConnectionHandler _connHandler = nullptr;
+    std::function<void()> _sendFailedHandler = nullptr;
 
     struct DispatchEvent {
         gm::Payload payload{};
@@ -143,6 +147,7 @@ class Endpoint {
     void handleData(const uint8_t *data, size_t length);
     void handleConnection(bool connected);
     void pump();
+    bool pumpLocked();
     void sendAck(uint32_t id);
     void dispatch(const gm::Payload &payload);
     static void dispatchTaskFn(void *arg);

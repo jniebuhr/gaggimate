@@ -6,6 +6,7 @@
 void LedControlPlugin::setup(Controller *controller, PluginManager *pluginManager) {
     this->controller = controller;
     pluginManager->on("controller:ready", [this](Event const) { initialized = true; });
+    pluginManager->on("controller:state:resend", [this](Event const &) { forceSend = true; });
 }
 
 void LedControlPlugin::loop() {
@@ -53,8 +54,9 @@ void LedControlPlugin::sendControl(String hexColor, uint8_t ext) {
 }
 
 void LedControlPlugin::sendControl(uint8_t r, uint8_t g, uint8_t b, uint8_t w, uint8_t ext) {
-    if (r == last_r && g == last_g && b == last_b && w == last_w && ext == last_ext)
+    if (!forceSend && r == last_r && g == last_g && b == last_b && w == last_w && ext == last_ext)
         return;
+    forceSend = false;
 
     // Send every channel as one snapshot. A single message keeps the outbound
     // coalescing queue from collapsing per-channel updates down to one channel.

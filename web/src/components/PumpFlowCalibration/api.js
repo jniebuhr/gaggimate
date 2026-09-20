@@ -57,6 +57,7 @@ export async function fetchAndParseShot(id, onWait) {
   return parseBinaryShot(buf, String(id));
 }
 
+// Partial POST: the firmware only changes the fields a request carries (GM-214).
 export async function postCoefficients(coeffs) {
   const body = new URLSearchParams({ pumpModelCoeffs: coeffs }).toString();
   const r = await fetch('/api/settings', {
@@ -65,4 +66,5 @@ export async function postCoefficients(coeffs) {
     body,
   });
   if (!r.ok) throw new Error(`POST /api/settings ${r.status}`);
+  return r.json();
 }

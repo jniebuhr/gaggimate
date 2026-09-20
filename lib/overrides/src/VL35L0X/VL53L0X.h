@@ -104,6 +104,7 @@ class VL53L0X {
     void setAddress(uint8_t new_addr);
     inline uint8_t getAddress() { return address; }
 
+    void softReset();
     bool init(bool io_2v8 = true);
 
     void writeReg(uint8_t reg, uint8_t value);
