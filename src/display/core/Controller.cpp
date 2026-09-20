@@ -703,6 +703,7 @@ void Controller::startProcess(Process *process) {
         std::lock_guard<std::recursive_mutex> guard(processMutex);
         startProcessLocked(process, events);
     }
+    updateControl(); // queue the pump/valve command now instead of on the next logic cycle
     dispatchEvents(events);
 }
 
@@ -1047,6 +1048,7 @@ void Controller::deactivate() {
         std::lock_guard<std::recursive_mutex> guard(processMutex);
         deactivateLocked(events);
     }
+    updateControl(); // stop the pump / close the valve now instead of on the next logic cycle
     dispatchEvents(events);
 }
 
@@ -1232,6 +1234,7 @@ void Controller::onFlush() {
         flushPending = false;
         events.push_back("controller:brew:start");
     }
+    updateControl(); // same immediate send as startProcess()
     dispatchEvents(events);
 }
 

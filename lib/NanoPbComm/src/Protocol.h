@@ -57,6 +57,19 @@ inline uint16_t coalescingKey(const gm::Payload &p) {
     return static_cast<uint16_t>(p.which_content) * MAX_DEVICES + index;
 }
 
+// False for one-shot actions/events: a frame carrying one is never superseded, because that can deliver it twice.
+inline bool isRepeatable(pb_size_t which) {
+    switch (which) {
+    case gaggimate_Payload_autotune_tag:
+    case gaggimate_Payload_tare_tag:
+    case gaggimate_Payload_autotune_result_tag:
+    case gaggimate_Payload_error_tag:
+        return false;
+    default:
+        return true;
+    }
+}
+
 inline uint8_t defaultPriority(pb_size_t which) {
     switch (which) {
     case gaggimate_Payload_ping_tag:

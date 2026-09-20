@@ -101,6 +101,13 @@ class GaggiMateClient {
     BleClientTransport _transport;
     Endpoint _endpoint;
 
+    // Sole runner of the endpoint's send pump; woken by sends/ACKs, otherwise ticks at the idle interval.
+    TaskHandle_t _pumpTaskHandle = nullptr;
+    static void pumpTask(void *arg);
+    static constexpr uint32_t PUMP_TASK_STACK = 4096;
+    static constexpr UBaseType_t PUMP_TASK_PRIORITY = 5;
+    static constexpr uint32_t PUMP_IDLE_INTERVAL_MS = 10;
+
     ConnectionCallback _connCb;
     IncompatibleCallback _incompatibleCb;
     SystemInfoCallback _systemInfoCb;
