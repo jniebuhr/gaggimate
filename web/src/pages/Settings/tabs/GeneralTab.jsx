@@ -323,7 +323,7 @@ export function GeneralTab({
           <SettingsFormField
             label='Gauge Setpoint Indicator Position'
             htmlFor='gaugeSetpointsInside'
-            helpText='Choose whether the setpoint indicators appear inside edge or the outside edge of the gauges.'
+            helpText='Choose whether the setpoint indicators appear on the inside edge or the outside edge of the gauges.'
             noMargin
           >
             <select
