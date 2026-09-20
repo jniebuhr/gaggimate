@@ -26,6 +26,15 @@ class Transport {
     // Send one complete datagram. Returns false if it could not be handed off.
     virtual bool send(const uint8_t *data, size_t length) = 0;
 
+    // Identify the currently usable connection. Stateful transports override
+    // these two methods so a datagram prepared for a retired connection cannot
+    // be delivered after an intervening reconnect.
+    virtual uint32_t connectionSession() const { return 0; }
+    virtual bool sendForSession(const uint8_t *data, size_t length, uint32_t session) {
+        (void)session;
+        return send(data, length);
+    }
+
     // Whether the link is currently usable.
     virtual bool isConnected() const = 0;
 

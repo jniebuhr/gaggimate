@@ -128,6 +128,7 @@ void Endpoint::sendAck(uint32_t id) {
 }
 
 void Endpoint::pump() {
+    const uint32_t connectionSession = _transport.connectionSession();
     if (!_transport.isConnected())
         return;
     uint8_t buffer[BUFFER_SIZE];
@@ -138,7 +139,7 @@ void Endpoint::pump() {
     // A synchronous BLE write must never hold up enqueueing, ACK reception or
     // the process mutex held by a producer. Only the sender task gets here.
     if (length > 0)
-        _transport.send(buffer, length);
+        _transport.sendForSession(buffer, length, connectionSession);
     if (dropped && _sendFailedHandler)
         _sendFailedHandler();
 }
@@ -164,7 +165,6 @@ bool Endpoint::pumpLocked(uint8_t *buffer, size_t &length) {
                 if (config && !replacedByStop && !_queue.contains(key))
                     _queue.upsert(key, gm_proto::defaultPriority(tag), p);
             }
-            dropped = true;
         }
         _inFlight = false;
         _txFrame = _stopFrame;

@@ -94,13 +94,17 @@ bool BleClientTransport::connectToServer() {
         return false;
     }
 
-    _writeChar = service->getCharacteristic(NimBLEUUID(gm_proto::RX_CHAR_UUID));
-    _notifyChar = service->getCharacteristic(NimBLEUUID(gm_proto::TX_CHAR_UUID));
-    if (_writeChar == nullptr || _notifyChar == nullptr) {
+    auto *writeChar = service->getCharacteristic(NimBLEUUID(gm_proto::RX_CHAR_UUID));
+    auto *notifyChar = service->getCharacteristic(NimBLEUUID(gm_proto::TX_CHAR_UUID));
+    if (writeChar == nullptr || notifyChar == nullptr) {
         // Missing comms chars -> old/incompatible firmware; keep the link up so the separate OTA service stays reachable.
         ESP_LOGW(LOG_TAG, "Comms characteristics missing -- incompatible controller firmware (OTA only)");
-        _writeChar = nullptr;
-        _notifyChar = nullptr;
+        {
+            std::lock_guard<std::recursive_mutex> guard(_connectionMutex);
+            ++_connectionSession;
+            _writeChar = nullptr;
+            _notifyChar = nullptr;
+        }
         _readyForConnection = false;
         _incompatible = true;
         // Read the legacy INFO characteristic so the display can show the real hardware/version.
@@ -114,9 +118,9 @@ bool BleClientTransport::connectToServer() {
     }
 
     // Without the notify subscription we would never receive data; treat a failed subscribe as a failed connection.
-    if (!_notifyChar->canNotify() ||
-        !_notifyChar->subscribe(true, std::bind(&BleClientTransport::notifyCallback, this, std::placeholders::_1,
-                                                std::placeholders::_2, std::placeholders::_3, std::placeholders::_4))) {
+    if (!notifyChar->canNotify() ||
+        !notifyChar->subscribe(true, std::bind(&BleClientTransport::notifyCallback, this, std::placeholders::_1,
+                                               std::placeholders::_2, std::placeholders::_3, std::placeholders::_4))) {
         ESP_LOGE(LOG_TAG, "Failed to subscribe to TX characteristic");
         _client->disconnect();
         scan();
@@ -128,9 +132,19 @@ bool BleClientTransport::connectToServer() {
     // Persist the pairing only once a bond exists; until then the display keeps connecting openly.
     if (NimBLEDevice::isBonded(_serverAddress))
         savePairedPeer(_serverAddress);
+    {
+        std::lock_guard<std::recursive_mutex> guard(_connectionMutex);
+        // A disconnect callback may have run while services were discovered or
+        // notifications were subscribed. Do not publish that retired session.
+        if (_client == nullptr || !_client->isConnected())
+            return false;
+        ++_connectionSession;
+        _writeChar = writeChar;
+        _notifyChar = notifyChar;
+        emitConnection(true);
+    }
     ESP_LOGI(LOG_TAG, "Connected, MTU: %d", _client->getMTU());
     applyConnParams(); // no-op unless the wanted interval changed while connecting
-    emitConnection(true);
     return true;
 }
 
@@ -209,12 +223,29 @@ void BleClientTransport::applyConnParams() {
 }
 
 bool BleClientTransport::send(const uint8_t *data, size_t length) {
-    if (!isConnected() || _writeChar == nullptr || data == nullptr || length == 0)
+    std::lock_guard<std::recursive_mutex> guard(_connectionMutex);
+    if (_client == nullptr || !_client->isConnected() || _writeChar == nullptr || data == nullptr || length == 0)
         return false;
     return _writeChar->writeValue(data, length, false); // write without response
 }
 
-bool BleClientTransport::isConnected() const { return _client != nullptr && _client->isConnected(); }
+uint32_t BleClientTransport::connectionSession() const {
+    std::lock_guard<std::recursive_mutex> guard(_connectionMutex);
+    return _connectionSession;
+}
+
+bool BleClientTransport::sendForSession(const uint8_t *data, size_t length, uint32_t session) {
+    std::lock_guard<std::recursive_mutex> guard(_connectionMutex);
+    if (session != _connectionSession || _client == nullptr || !_client->isConnected() || _writeChar == nullptr ||
+        data == nullptr || length == 0)
+        return false;
+    return _writeChar->writeValue(data, length, false); // write without response
+}
+
+bool BleClientTransport::isConnected() const {
+    std::lock_guard<std::recursive_mutex> guard(_connectionMutex);
+    return _client != nullptr && _client->isConnected() && _writeChar != nullptr;
+}
 
 bool BleClientTransport::isEncrypted() const {
     if (_client == nullptr || !_client->isConnected())
@@ -270,10 +301,14 @@ bool BleClientTransport::isLockedToOther(NimBLEAdvertisedDevice *advertisedDevic
 void BleClientTransport::onDisconnect(NimBLEClient *client) {
     (void)client;
     ESP_LOGI(LOG_TAG, "Disconnected, will rescan");
-    _writeChar = nullptr;
-    _notifyChar = nullptr;
-    _incompatible = false;
-    emitConnection(false);
+    {
+        std::lock_guard<std::recursive_mutex> guard(_connectionMutex);
+        ++_connectionSession;
+        _writeChar = nullptr;
+        _notifyChar = nullptr;
+        _incompatible = false;
+        emitConnection(false);
+    }
     scan();
 }
 

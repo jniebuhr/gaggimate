@@ -41,7 +41,10 @@ class GrindProcess : public Process {
             return; // A cancelled preparation/manual stop must never become active again.
         // Progress should be called around every 100ms, as defined in PROGRESS_INTERVAL, while GrindProcess is active
         if (target == ProcessTarget::TIME) {
-            active = millis() - started < time;
+            const unsigned long now = millis();
+            active = now - started < time;
+            if (!active)
+                finished = now;
         } else {
             double currentRate = volumetricRateCalculator.getRate();
             ESP_LOGI("GrindProcess", "Current rate: %f, Current volume: %f, Expected Offset: %f", currentRate, currentVolume,

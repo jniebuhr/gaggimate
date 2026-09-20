@@ -6,13 +6,32 @@
 #include <iostream>
 #include <pb_decode.h>
 #include <pb_encode.h>
+#include <thread>
 #include <vector>
 unsigned long testMillis = 0;
 struct Link : Transport {
     std::vector<gm::Frame> frames;
     std::function<void(const gm::Frame &)> duringSend;
     bool connected = true;
-    bool isConnected() const override { return connected; }
+    mutable uint32_t session = 1;
+    mutable bool reconnectAfterSnapshot = false;
+    mutable bool sessionRead = false;
+    uint32_t connectionSession() const override {
+        sessionRead = true;
+        return session;
+    }
+    bool isConnected() const override {
+        if (reconnectAfterSnapshot && sessionRead) {
+            ++session;
+            reconnectAfterSnapshot = false;
+        }
+        return connected;
+    }
+    bool sendForSession(const uint8_t *bytes, size_t length, uint32_t expectedSession) override {
+        if (expectedSession != session)
+            return false;
+        return send(bytes, length);
+    }
     bool send(const uint8_t *bytes, size_t length) override {
         gm::Frame f = gaggimate_Frame_init_zero;
         auto stream = pb_istream_from_buffer(bytes, length);
@@ -63,6 +82,8 @@ void stop_supersedes_unacknowledged_start() {
     Link link;
     Endpoint ep(link);
     ep.begin();
+    int failures = 0;
+    ep.onSendFailed([&] { ++failures; });
     ep.send(pump(80));
     ep.loop();
     auto oldId = link.frames.back().id;
@@ -80,6 +101,7 @@ void stop_supersedes_unacknowledged_start() {
     auto count = link.frames.size();
     ep.loop();
     assert(link.frames.size() == count);
+    assert(failures == 0);
 }
 void ack_during_send_is_not_lost() {
     Link link;
@@ -93,6 +115,15 @@ void ack_during_send_is_not_lost() {
     assert(link.frames.size() == 2 && link.frames.back().id > link.frames.front().id);
     assert(link.frames.back().payloads[0].content.pump.power == 60);
 }
+void frame_is_not_sent_after_connection_session_changes() {
+    Link link;
+    Endpoint ep(link);
+    ep.begin();
+    ep.send(pump(50));
+    link.reconnectAfterSnapshot = true;
+    ep.loop();
+    assert(link.frames.empty());
+}
 void blocked_io_does_not_block_stop_enqueue() {
     Link link;
     Endpoint ep(link);
@@ -104,16 +135,19 @@ void blocked_io_does_not_block_stop_enqueue() {
         resume.wait();
     };
     ep.send(pump(100));
-    auto sender = std::async(std::launch::async, [&] { ep.loop(); });
+    std::thread sender([&] { ep.loop(); });
     entered.get_future().wait();
-    auto enqueue = std::async(std::launch::async, [&] {
+    std::promise<void> enqueued;
+    auto enqueuedFuture = enqueued.get_future();
+    std::thread enqueue([&] {
         auto stop = pump(0);
         ep.sendStop(&stop, 1);
+        enqueued.set_value();
     });
-    bool prompt = enqueue.wait_for(std::chrono::milliseconds(250)) == std::future_status::ready;
+    bool prompt = enqueuedFuture.wait_for(std::chrono::milliseconds(250)) == std::future_status::ready;
     release.set_value();
-    sender.get();
-    enqueue.get();
+    sender.join();
+    enqueue.join();
     assert(prompt);
     link.duringSend = nullptr;
     ep.loop();
@@ -210,10 +244,11 @@ int main() {
     enqueue_and_callback_never_send();
     stop_supersedes_unacknowledged_start();
     ack_during_send_is_not_lost();
+    frame_is_not_sent_after_connection_session_changes();
     blocked_io_does_not_block_stop_enqueue();
     telemetry_coalesces_while_waiting_for_ack();
     phase_stop_preserves_valve_and_newer_configuration();
     exhausted_retries_release_the_next_command();
     urgent_batch_does_not_replay_old_temperature();
-    std::cout << "8 endpoint regression tests passed\n";
+    std::cout << "9 endpoint regression tests passed\n";
 }

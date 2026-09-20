@@ -4,6 +4,7 @@
 #include "../Protocol.h"
 #include "../Transport.h"
 #include <NimBLEDevice.h>
+#include <mutex>
 
 // BLE central (client) transport for the display: scans, connects, subscribes TX / writes RX (one datagram per op).
 // Pairing: bonds to the first controller found, then connects only to it until clearBonds(); links encrypted before GATT use.
@@ -22,6 +23,8 @@ class BleClientTransport : public Transport, public NimBLEAdvertisedDeviceCallba
     void clearBonds();
 
     bool send(const uint8_t *data, size_t length) override;
+    uint32_t connectionSession() const override;
+    bool sendForSession(const uint8_t *data, size_t length, uint32_t session) override;
     bool isConnected() const override;
 
     // Tight ~7.5-10ms conn interval while a shot runs, relaxed ~30-50ms when idle to leave airtime for Wi-Fi.
@@ -45,6 +48,12 @@ class BleClientTransport : public Transport, public NimBLEAdvertisedDeviceCallba
     bool _havePairedPeer = false;
     NimBLERemoteCharacteristic *_writeChar = nullptr;  // to server (RX_CHAR_UUID)
     NimBLERemoteCharacteristic *_notifyChar = nullptr; // from server (TX_CHAR_UUID)
+    // Serializes final writes with publishing and retiring a connection.
+    // Endpoint releases its own mutex before entering the transport.
+    // Recursive because some NimBLE operations may synchronously enter a
+    // client callback on the same task.
+    mutable std::recursive_mutex _connectionMutex;
+    uint32_t _connectionSession = 0;
     bool _readyForConnection = false;
     bool _lowLatency = false;
     bool _appliedLowLatency = false; // what the live link runs; set at connect, then on each update

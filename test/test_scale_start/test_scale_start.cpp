@@ -51,11 +51,20 @@ void stopped_grind_does_not_restart_during_post_processing() {
     TEST_ASSERT_FALSE(timed.isAltRelayActive());
     TEST_ASSERT_FALSE(weighted.isAltRelayActive());
 }
+void timed_grind_records_when_it_finishes() {
+    nowMillis = 100;
+    GrindProcess timed(ProcessTarget::TIME, 500);
+    nowMillis = 601;
+    timed.progress();
+    TEST_ASSERT_FALSE(timed.isActive());
+    TEST_ASSERT_EQUAL_UINT32(601, timed.finished);
+}
 int main() {
     UNITY_BEGIN();
     RUN_TEST(waits_for_a_fresh_zero_after_tare);
     RUN_TEST(refuses_stale_zero_failed_write_and_disconnect);
     RUN_TEST(reset_and_clock_wrap_do_not_release_an_old_start);
     RUN_TEST(stopped_grind_does_not_restart_during_post_processing);
+    RUN_TEST(timed_grind_records_when_it_finishes);
     return UNITY_END();
 }
