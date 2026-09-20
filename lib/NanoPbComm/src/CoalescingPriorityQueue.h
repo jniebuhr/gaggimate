@@ -79,6 +79,17 @@ template <size_t N, typename KeyT = uint16_t, typename PayloadT = uint32_t, size
         return true;
     }
 
+    // Remove and return the entry for this key, wherever it sits in the heap.
+    std::optional<Msg> take(KeyT key) {
+        if (key >= MaxKeys || posOfKey_[key] == kNoPos)
+            return std::nullopt;
+        auto pos = posOfKey_[key];
+        Msg out = entries_[heap_[pos]];
+        free_(heap_[pos]);
+        removeAt_(pos);
+        return out;
+    }
+
     std::optional<Msg> top() const {
         if (empty())
             return std::nullopt;

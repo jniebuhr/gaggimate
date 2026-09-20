@@ -72,19 +72,28 @@ void Endpoint::send(const gm::Payload &payload) { send(payload, gm_proto::defaul
 
 void Endpoint::send(const gm::Payload &payload, uint8_t priority) {
     lock();
-    _queue.upsert(gm_proto::coalescingKey(payload), priority, payload);
+    const bool queued = _queue.upsert(gm_proto::coalescingKey(payload), priority, payload);
+    noteQueuedLocked(gm_proto::coalescingKey(payload));
     unlock();
-    pump();
+    if (!queued)
+        ESP_LOGW(ENDPOINT_TAG, "Outbound queue full, dropped payload %u", static_cast<unsigned>(payload.which_content));
+    requestPump();
 }
 
 void Endpoint::sendBatch(const gm::Payload *payloads, size_t count) {
     if (payloads == nullptr || count == 0)
         return;
     lock();
-    for (size_t i = 0; i < count; i++)
-        _queue.upsert(gm_proto::coalescingKey(payloads[i]), gm_proto::defaultPriority(payloads[i].which_content), payloads[i]);
+    bool queued = true;
+    for (size_t i = 0; i < count; i++) {
+        queued &= _queue.upsert(gm_proto::coalescingKey(payloads[i]), gm_proto::defaultPriority(payloads[i].which_content),
+                                payloads[i]);
+        noteQueuedLocked(gm_proto::coalescingKey(payloads[i]));
+    }
     unlock();
-    pump();
+    if (!queued)
+        ESP_LOGW(ENDPOINT_TAG, "Outbound queue full, dropped part of a batch");
+    requestPump();
 }
 
 void Endpoint::sendUnreliable(const gm::Payload &payload) { sendUnreliable(&payload, 1); }
@@ -129,6 +138,32 @@ void Endpoint::sendAck(uint32_t id) {
         _transport.send(buf, len);
 }
 
+// A newer value for a key the in-flight frame carries makes that frame obsolete; the pump then replaces it.
+void Endpoint::noteQueuedLocked(uint16_t key) {
+    if (!_inFlight || _superseded || !_inFlightRepeatable)
+        return;
+    for (pb_size_t i = 0; i < _inFlightCount; i++) {
+        if (gm_proto::coalescingKey(_inFlightPayloads[i]) == key) {
+            _superseded = true;
+            return;
+        }
+    }
+}
+
+void Endpoint::clearInFlightLocked() {
+    _inFlight = false;
+    _superseded = false;
+    _inFlightCount = 0;
+}
+
+// With a pump task registered the caller only wakes it; otherwise pump on the calling thread as before.
+void Endpoint::requestPump() {
+    if (_pumpTask != nullptr)
+        xTaskNotifyGive(_pumpTask);
+    else
+        pump();
+}
+
 void Endpoint::pump() {
     if (!_transport.isConnected())
         return;
@@ -145,12 +180,22 @@ bool Endpoint::pumpLocked() {
     const unsigned long now = millis();
     bool dropped = false;
 
-    if (_inFlight) {
+    memset(&_txFrame, 0, sizeof(_txFrame));
+    pb_size_t count = 0;
+
+    if (_inFlight && _superseded) {
+        // Replace the in-flight frame: same payloads, each swapped for its newer queued value where one exists.
+        for (pb_size_t i = 0; i < _inFlightCount; i++) {
+            auto newer = _queue.take(gm_proto::coalescingKey(_inFlightPayloads[i]));
+            _txFrame.payloads[count++] = newer ? newer->payload : _inFlightPayloads[i];
+        }
+        clearInFlightLocked();
+    } else if (_inFlight) {
         if (now - _sentAt < ACK_TIMEOUT_MS)
             return false; // still waiting for ACK
         if (_retries >= MAX_RETRIES) {
             // Give up and free the slot; the send-failed handler lets the application re-send its state.
-            _inFlight = false;
+            clearInFlightLocked();
             dropped = true;
         } else {
             _transport.send(_txBuf, _txLen);
@@ -160,12 +205,10 @@ bool Endpoint::pumpLocked() {
         }
     }
 
-    // Idle: drain the highest-priority entries into one frame.
-    if (_queue.empty())
+    // Idle (or replacing): drain the highest-priority entries into the frame.
+    if (count == 0 && _queue.empty())
         return dropped;
 
-    memset(&_txFrame, 0, sizeof(_txFrame));
-    pb_size_t count = 0;
     while (count < MAX_PAYLOADS_PER_FRAME) {
         auto entry = _queue.pop();
         if (!entry)
@@ -194,6 +237,13 @@ bool Endpoint::pumpLocked() {
     _inFlightId = _txFrame.id;
     _sentAt = now;
     _retries = 0;
+    _superseded = false;
+    _inFlightCount = count;
+    _inFlightRepeatable = true;
+    for (pb_size_t i = 0; i < count; i++) {
+        _inFlightPayloads[i] = _txFrame.payloads[i];
+        _inFlightRepeatable = _inFlightRepeatable && gm_proto::isRepeatable(_txFrame.payloads[i].which_content);
+    }
     return dropped;
 }
 
@@ -219,7 +269,7 @@ void Endpoint::handleData(const uint8_t *data, size_t length) {
             _smoothedRttMs = _rttValid ? (_smoothedRttMs * 7 + rtt) / 8 : rtt;
             _rttValid = true;
         }
-        _inFlight = false;
+        clearInFlightLocked();
     }
     if (id != 0 && id <= _lastRxId)
         duplicate = true; // retransmit of an already-processed frame
@@ -227,7 +277,7 @@ void Endpoint::handleData(const uint8_t *data, size_t length) {
 
     if (id != 0 && duplicate) {
         sendAck(id); // peer's previous ACK was lost; re-ack without re-processing
-        pump();
+        requestPump();
         return;
     }
 
@@ -259,12 +309,12 @@ void Endpoint::handleData(const uint8_t *data, size_t length) {
     }
 
     // A received ACK may have freed the in-flight slot; send the next frame now.
-    pump();
+    requestPump();
 }
 
 void Endpoint::handleConnection(bool connected) {
     lock();
-    _inFlight = false;
+    clearInFlightLocked();
     _retries = 0;
     _txLen = 0;
     _inFlightId = 0;
