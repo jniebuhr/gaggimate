@@ -731,7 +731,6 @@ void Controller::dispatchEvents(const std::vector<const char *> &events) {
 }
 
 void Controller::updateConnectionPriority() {
-    std::lock_guard<std::mutex> priorityGuard(connPriorityMutex);
     const unsigned long now = millis();
     bool busy = otaLowLatency;
     {
