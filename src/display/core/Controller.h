@@ -234,7 +234,7 @@ class Controller {
     bool coexRelaxPending = false;
     unsigned long lastLowLatencyDemand = 0;
     unsigned long connRelaxedAt = 0;
-    static const unsigned long CONN_RELAX_HOLD_MS = 15000;
+    static const unsigned long CONN_RELAX_HOLD_MS = 60000;
     static const unsigned long CONN_COEX_SETTLE_MS = 2000;
 
     // Guards currentProcess/lastProcess lifecycle across tasks (UI, AsyncTCP, BLE
