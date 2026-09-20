@@ -541,12 +541,6 @@ void AsyncWebServer::dispatch(Conn &c, AsyncWebServerRequest &req) {
             return;
         }
     }
-    for (auto &r : _matcherRoutes) {
-        if ((r.method == HTTP_ANY || (r.method & req._method)) && r.matches(&req)) {
-            r.handler(&req);
-            return;
-        }
-    }
     for (auto &s : _static) {
         if (path.rfind(s.uri, 0) == 0) { // prefix match
             std::string rel = path.substr(s.uri.size());

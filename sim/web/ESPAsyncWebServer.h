@@ -102,48 +102,6 @@ class AsyncWebServerRequest {
 
 using ArRequestHandlerFunction = std::function<void(AsyncWebServerRequest *)>;
 using ArRequestFilterFunction = std::function<bool(AsyncWebServerRequest *)>;
-<<<<<<< HEAD
-
-class AsyncURIMatcher {
-  public:
-    static AsyncURIMatcher prefix(const String &uri) { return AsyncURIMatcher(uri, Type::Prefix); }
-
-    bool matches(AsyncWebServerRequest *request) const {
-        return _type == Type::Prefix && std::string(request->url().c_str()).rfind(_uri.c_str(), 0) == 0;
-    }
-
-  private:
-    enum class Type { Prefix };
-
-    AsyncURIMatcher(const String &uri, Type type) : _uri(uri), _type(type) {}
-
-    String _uri;
-    Type _type;
-};
-
-class AsyncCallbackWebHandler {
-  public:
-    AsyncCallbackWebHandler &setFilter(ArRequestFilterFunction filter) {
-        _filter = std::move(filter);
-        return *this;
-    }
-
-    bool matches(AsyncWebServerRequest *request) const {
-        return _matcher.matches(request) && (!_filter || _filter(request));
-    }
-
-    int method;
-    AsyncURIMatcher _matcher;
-    ArRequestHandlerFunction handler;
-
-    AsyncCallbackWebHandler(int method, AsyncURIMatcher matcher, ArRequestHandlerFunction handler)
-        : method(method), _matcher(std::move(matcher)), handler(std::move(handler)) {}
-
-  private:
-    ArRequestFilterFunction _filter;
-};
-=======
->>>>>>> 09b4575570ad78726f1bacddb099f70a999ce803
 
 // Matches the real library's queued-message payload type.
 using AsyncWebSocketSharedBuffer = std::shared_ptr<std::vector<uint8_t>>;
@@ -243,7 +201,6 @@ class AsyncWebServer {
     uint16_t _port;
     int _listenFd = -1;
     std::vector<Route> _routes;
-    std::vector<AsyncCallbackWebHandler> _matcherRoutes;
     std::vector<StaticRoute> _static;
     std::vector<AsyncStaticWebHandler> _staticHandlers;
     ArRequestHandlerFunction _notFound;
