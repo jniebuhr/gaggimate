@@ -22,9 +22,6 @@
  *   - A frame stays "in flight" (and is retransmitted on timeout) until the
  *     peer ACKs its id; only then is the next frame sent. This is what keeps a
  *     message effectively in the queue until acknowledged.
- *   - Exception: a newer payload for a key the in-flight frame carries replaces
- *     that frame at once (new id, newer value, rest carried over) instead of
- *     waiting for the ACK, so e.g. a pump stop is never stuck behind a pump start.
  *   - Incoming frames are de-duplicated by id (so retransmits are safe even for
  *     non-idempotent ops) and ACKed; payloads are dispatched by oneof tag to
  *     typed handlers -- no run-time type erasure.
@@ -128,11 +125,6 @@ class Endpoint {
     uint32_t _retransmits = 0;
     uint8_t _retries = 0;
     bool _inFlight = false;
-    // Payloads of the in-flight frame; a newer queued value for one of their keys replaces the frame right away.
-    gm::Payload _inFlightPayloads[MAX_PAYLOADS_PER_FRAME]{};
-    pb_size_t _inFlightCount = 0;
-    bool _inFlightRepeatable = false;
-    bool _superseded = false;
 
     // Round-trip latency from the reliability layer. Sampled only on frames
     // ACKed without a retransmit (Karn's algorithm) so an ambiguous retransmit
@@ -170,9 +162,7 @@ class Endpoint {
     void pump();
     bool pumpLocked();
     void requestPump();
-    void noteQueuedLocked(uint16_t key);
     unsigned long ackTimeoutLocked() const;
-    void clearInFlightLocked();
     void sendAck(uint32_t id);
     void dispatch(const gm::Payload &payload);
     static void dispatchTaskFn(void *arg);
