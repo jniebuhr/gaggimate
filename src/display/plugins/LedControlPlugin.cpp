@@ -6,7 +6,7 @@
 void LedControlPlugin::setup(Controller *controller, PluginManager *pluginManager) {
     this->controller = controller;
     pluginManager->on("controller:ready", [this](Event const) { initialized = true; });
-    pluginManager->on("controller:state:resend", [this](Event const &) { forceSend = true; });
+    // pluginManager->on("controller:state:resend", [this](Event const &) { forceSend = true; });
 }
 
 void LedControlPlugin::loop() {

@@ -72,19 +72,25 @@ void Endpoint::send(const gm::Payload &payload) { send(payload, gm_proto::defaul
 
 void Endpoint::send(const gm::Payload &payload, uint8_t priority) {
     lock();
-    _queue.upsert(gm_proto::coalescingKey(payload), priority, payload);
+    const bool queued = _queue.upsert(gm_proto::coalescingKey(payload), priority, payload);
     unlock();
-    pump();
+    if (!queued)
+        ESP_LOGW(ENDPOINT_TAG, "Outbound queue full, dropped payload %u", static_cast<unsigned>(payload.which_content));
+    requestPump();
 }
 
 void Endpoint::sendBatch(const gm::Payload *payloads, size_t count) {
     if (payloads == nullptr || count == 0)
         return;
     lock();
+    bool queued = true;
     for (size_t i = 0; i < count; i++)
-        _queue.upsert(gm_proto::coalescingKey(payloads[i]), gm_proto::defaultPriority(payloads[i].which_content), payloads[i]);
+        queued &= _queue.upsert(gm_proto::coalescingKey(payloads[i]), gm_proto::defaultPriority(payloads[i].which_content),
+                                payloads[i]);
     unlock();
-    pump();
+    if (!queued)
+        ESP_LOGW(ENDPOINT_TAG, "Outbound queue full, dropped part of a batch");
+    requestPump();
 }
 
 void Endpoint::sendUnreliable(const gm::Payload &payload) { sendUnreliable(&payload, 1); }
@@ -129,6 +135,23 @@ void Endpoint::sendAck(uint32_t id) {
         _transport.send(buf, len);
 }
 
+// A fixed timeout shorter than the real round trip resends every frame that did arrive and overloads a slow link.
+unsigned long Endpoint::ackTimeoutLocked() const {
+    unsigned long timeout = ACK_TIMEOUT_MIN_MS;
+    if (_rttValid && _smoothedRttMs * ACK_TIMEOUT_RTT_FACTOR > timeout)
+        timeout = _smoothedRttMs * ACK_TIMEOUT_RTT_FACTOR;
+    timeout <<= _timeoutShift;
+    return timeout > ACK_TIMEOUT_MAX_MS ? ACK_TIMEOUT_MAX_MS : timeout;
+}
+
+// With a pump task registered the caller only wakes it; otherwise pump on the calling thread as before.
+void Endpoint::requestPump() {
+    if (_pumpTask != nullptr)
+        xTaskNotifyGive(_pumpTask);
+    else
+        pump();
+}
+
 void Endpoint::pump() {
     if (!_transport.isConnected())
         return;
@@ -146,7 +169,7 @@ bool Endpoint::pumpLocked() {
     bool dropped = false;
 
     if (_inFlight) {
-        if (now - _sentAt < ACK_TIMEOUT_MS)
+        if (now - _sentAt < ackTimeoutLocked())
             return false; // still waiting for ACK
         if (_retries >= MAX_RETRIES) {
             // Give up and free the slot; the send-failed handler lets the application re-send its state.
@@ -156,6 +179,9 @@ bool Endpoint::pumpLocked() {
             _transport.send(_txBuf, _txLen);
             _sentAt = now;
             _retries++;
+            _retransmits++;
+            if (_timeoutShift < ACK_TIMEOUT_MAX_SHIFT)
+                _timeoutShift++; // stays raised for the next frames until one is ACKed cleanly
             return false;
         }
     }
@@ -216,8 +242,13 @@ void Endpoint::handleData(const uint8_t *data, size_t length) {
         if (_retries == 0) {
             const uint32_t rtt = static_cast<uint32_t>(millis() - _sentAt);
             _lastRttMs = rtt;
-            _smoothedRttMs = _rttValid ? (_smoothedRttMs * 7 + rtt) / 8 : rtt;
+            // Rise fast, fall slow: the round trip jumps ~5x when the link relaxes to its idle interval after a process.
+            if (!_rttValid || rtt > _smoothedRttMs)
+                _smoothedRttMs = _rttValid ? (_smoothedRttMs + rtt) / 2 : rtt;
+            else
+                _smoothedRttMs = (_smoothedRttMs * 7 + rtt) / 8;
             _rttValid = true;
+            _timeoutShift = 0; // a clean sample: the estimate is trustworthy again
         }
         _inFlight = false;
     }
@@ -227,7 +258,7 @@ void Endpoint::handleData(const uint8_t *data, size_t length) {
 
     if (id != 0 && duplicate) {
         sendAck(id); // peer's previous ACK was lost; re-ack without re-processing
-        pump();
+        requestPump();
         return;
     }
 
@@ -259,13 +290,14 @@ void Endpoint::handleData(const uint8_t *data, size_t length) {
     }
 
     // A received ACK may have freed the in-flight slot; send the next frame now.
-    pump();
+    requestPump();
 }
 
 void Endpoint::handleConnection(bool connected) {
     lock();
     _inFlight = false;
     _retries = 0;
+    _timeoutShift = 0;
     _txLen = 0;
     _inFlightId = 0;
     _lastRxId = 0;

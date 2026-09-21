@@ -43,6 +43,8 @@ class GaggiMateClient {
     uint32_t getLatencyMs() const { return _endpoint.latencyMs(); }
     uint32_t getLastLatencyMs() const { return _endpoint.lastLatencyMs(); }
     bool hasLatency() const { return _endpoint.hasLatency(); }
+    // Frames the display had to send again because no ACK arrived in time, since boot.
+    uint32_t getRetransmits() const { return _endpoint.retransmits(); }
 
     // Tight connection interval while active; relaxed when idle to give the shared radio back to Wi-Fi.
     void setLowLatency(bool active) { _transport.setLowLatency(active); }
@@ -100,6 +102,13 @@ class GaggiMateClient {
   private:
     BleClientTransport _transport;
     Endpoint _endpoint;
+
+    // Sole runner of the endpoint's send pump; woken by sends/ACKs, otherwise ticks at the idle interval.
+    TaskHandle_t _pumpTaskHandle = nullptr;
+    static void pumpTask(void *arg);
+    static constexpr uint32_t PUMP_TASK_STACK = 4096;
+    static constexpr UBaseType_t PUMP_TASK_PRIORITY = 5;
+    static constexpr uint32_t PUMP_IDLE_INTERVAL_MS = 10;
 
     ConnectionCallback _connCb;
     IncompatibleCallback _incompatibleCb;
