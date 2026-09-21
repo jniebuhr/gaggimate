@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <display/core/pid_feedforward.h>
 #include <display/util/ColorConversion.h>
 #include <utility>
 
@@ -116,7 +117,11 @@ void Settings::setStartupMode(const int startup_mode) { startupMode.set(startup_
 
 void Settings::setStandbyTimeout(int standby_timeout) { standbyTimeout.set(standby_timeout); }
 
-void Settings::setPid(const String &pid) { this->pid.set(pid); }
+void Settings::setPid(const String &pid) {
+    const std::string merged =
+        mergePidKeepingFeedforward(std::string(this->pid.get().c_str()), std::string(pid.c_str()));
+    this->pid.set(String(merged.c_str()));
+}
 
 void Settings::setTemperaturePredictorEnabled(bool enabled) {
     const float delay = thermalModelDelay.get();

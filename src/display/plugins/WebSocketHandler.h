@@ -43,7 +43,7 @@ class WebSocketHandler {
     void handleFlushStop(uint32_t clientId, JsonDocument &request);
     void publishState(unsigned long now);
     void publishTelemetry();
-    void sendAutotuneResult();
+    void sendAutotuneResult(bool feedforwardSkipped);
     void sendAutotuneFailed();
 
     AsyncWebSocket ws;

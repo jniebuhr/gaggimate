@@ -81,12 +81,11 @@ const FORM_ONLY_KEYS = [
 ];
 
 function splitPidString(pidString) {
-  if (!pidString) return { pid: pidString, kf: '0.000' };
-  const parts = pidString.split(',');
-  if (parts.length >= 4) {
-    return { pid: parts.slice(0, 3).join(','), kf: parts[3] };
-  }
-  return { pid: pidString, kf: '0.000' };
+  if (!pidString) return { pid: pidString ?? '', kf: '' };
+  const parts = pidString.split(',').map(part => part.trim());
+  const pid = parts.slice(0, 3).join(',');
+  const kf = parts.length >= 4 && parts[3] !== '' ? parts[3] : '';
+  return { pid, kf };
 }
 
 function splitButtons(buttonBehavior) {
@@ -207,9 +206,13 @@ function buildSubmitFormData(formData, autowakeupSchedules, restart) {
     `${formData.button0},${formData.button1},${formData.button2}`,
   );
 
-  if (formData.pid && formData.kf !== undefined) {
-    const combinedPid = `${formData.pid},${formData.kf}`;
-    formDataToSubmit.set('pid', combinedPid);
+  if (formData.pid) {
+    const kf = formData.kf === undefined || formData.kf === null ? '' : String(formData.kf).trim();
+    // Blank Kff is "leave the stored value". An explicit 0 still disables it.
+    // The device keeps the 4th CSV field when this request omits it.
+    if (kf !== '') {
+      formDataToSubmit.set('pid', `${formData.pid},${kf}`);
+    }
   }
 
   formDataToSubmit.set('autowakeupSchedules', serializeAutoWakeupSchedules(autowakeupSchedules));

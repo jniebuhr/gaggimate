@@ -21,6 +21,7 @@ export function CalibrationTab({ formData, onChange, setField }) {
   // Autotune state
   const [autotuneActive, setAutotuneActive] = useState(false);
   const [autotuneResult, setAutotuneResult] = useState(null);
+  const [autotuneFeedforwardSkipped, setAutotuneFeedforwardSkipped] = useState(false);
   const [autotuneFailed, setAutotuneFailed] = useState(false);
   const [autotuneTime, setAutotuneTime] = useState(120);
   const [autotuneSamples, setAutotuneSamples] = useState(6);
@@ -35,6 +36,7 @@ export function CalibrationTab({ formData, onChange, setField }) {
     });
     setAutotuneFailed(false);
     setAutotuneResult(null);
+    setAutotuneFeedforwardSkipped(false);
     setAutotuneActive(true);
   }, [autotuneTime, autotuneSamples, autotuneWattage, apiService]);
 
@@ -43,10 +45,11 @@ export function CalibrationTab({ formData, onChange, setField }) {
       setAutotuneActive(false);
       setAutotuneFailed(false);
       setAutotuneResult(msg.pid);
+      setAutotuneFeedforwardSkipped(!!msg.kfSkipped);
       if (msg.pid) {
         const pidParts = msg.pid.split(',');
         setField?.('pid', pidParts.slice(0, 3).join(','));
-        setField?.('kf', pidParts[3] ?? '0.000');
+        setField?.('kf', pidParts.length >= 4 ? pidParts[3] : '');
       }
       if (msg.model) {
         setField?.('thermalModelDelay', msg.model.delay);
@@ -120,6 +123,11 @@ export function CalibrationTab({ formData, onChange, setField }) {
                 <code>{autotuneResult}</code>
               </pre>
             </div>
+            <p className='text-sm'>
+              {autotuneFeedforwardSkipped
+                ? 'Thermal feedforward unchanged (no heater wattage supplied).'
+                : `Thermal feedforward Kff ${autotuneResult.split(',')[3] ?? ''}`}
+            </p>
             <button
               type='button'
               className='btn btn-outline btn-sm mt-2'

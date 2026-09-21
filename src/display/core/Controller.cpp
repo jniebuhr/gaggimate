@@ -9,6 +9,7 @@
 #include <ctime>
 #include <display/config.h>
 #include <display/core/constants.h>
+#include <display/core/pid_feedforward.h>
 #include <display/core/process/BrewProcess.h>
 #include <display/core/process/GrindProcess.h>
 #include <display/core/process/PumpProcess.h>
@@ -323,14 +324,15 @@ void Controller::setupBluetooth() {
             pluginManager->trigger("controller:autotune:failed");
             return;
         }
-        char pid[64];
-        // Store in simplified format with combined Kf
-        snprintf(pid, sizeof(pid), "%.3f,%.3f,%.3f,%.3f", Kp, Ki, Kd, Kf);
-        settings.setPid(String(pid));
+        // Kf == 0 means wattage was not supplied. formatAutotunePid omits the 4th
+        // field so setPid keeps the stored feedforward instead of writing 0.
+        bool feedforwardSkipped = false;
+        settings.setPid(String(formatAutotunePid(Kp, Ki, Kd, Kf, feedforwardSkipped).c_str()));
         settings.setThermalModel(delay, processGain, lag);
         settings.save(true);
         setThermalModelSettings();
-        pluginManager->trigger("controller:autotune:result");
+        setPidSettings();
+        pluginManager->trigger("controller:autotune:result", "kfSkipped", feedforwardSkipped ? 1 : 0);
         autotuning = false;
     });
     comms.onVolumetricMeasurement(

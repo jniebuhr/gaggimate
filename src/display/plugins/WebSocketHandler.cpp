@@ -51,7 +51,9 @@ void WebSocketHandler::setup(Controller *_controller, PluginManager *_pluginMana
     this->pluginManager = _pluginManager;
     this->profileManager = _controller->getProfileManager();
 
-    pluginManager->on("controller:autotune:result", [this](Event const &event) { sendAutotuneResult(); });
+    pluginManager->on("controller:autotune:result", [this](Event const &event) {
+        sendAutotuneResult(event.getInt("kfSkipped") != 0);
+    });
     pluginManager->on("controller:autotune:failed", [this](Event const &) { sendAutotuneFailed(); });
 
     // A brew start blocked by an error-level warning asks every dashboard for confirmation.
@@ -493,11 +495,12 @@ void WebSocketHandler::broadcastJson(JsonDocument &doc) {
     ws.textAll(toWsBuffer(doc));
 }
 
-void WebSocketHandler::sendAutotuneResult() {
+void WebSocketHandler::sendAutotuneResult(bool feedforwardSkipped) {
     JsonDocument doc(&psramAllocator);
     doc["tp"] = "evt:autotune-result";
     const Settings &settings = controller->getSettings();
     doc["pid"] = settings.getPid();
+    doc["kfSkipped"] = feedforwardSkipped;
     JsonObject model = doc["model"].to<JsonObject>();
     model["delay"] = settings.getThermalModelDelay();
     model["gain"] = settings.getThermalModelGain();
