@@ -205,7 +205,7 @@ export function CalibrationTab({ formData, onChange, setField }) {
                   id='heaterWattage'
                   type='number'
                   min='300'
-                  max='1500'
+                  max='2500'
                   className='input input-bordered w-full'
                   value={autotuneWattage}
                   onChange={e => setAutotuneWattage(Number.parseInt(e.target.value, 10) || 0)}
@@ -225,7 +225,7 @@ export function CalibrationTab({ formData, onChange, setField }) {
                   autotuneSamples < 4 ||
                   autotuneSamples > 20 ||
                   autotuneWattage < 300 ||
-                  autotuneWattage > 1500
+                  autotuneWattage > 2500
                 }
               >
                 Start Autotune

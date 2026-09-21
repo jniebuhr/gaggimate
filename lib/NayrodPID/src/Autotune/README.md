@@ -218,7 +218,7 @@ the controller until the user re-tuned by hand.
 | Slope window `N` | 4 (Heater overrides to 6) | 4–20 | Number of samples in the moving slope fit. |
 | `epsilon` | 0.1 °C/s | — | Slope threshold above the noise floor for "boiler reacted." |
 | `requiredConfirmations` | 5 | — | How many consecutive samples must clear `epsilon`. |
-| Heater wattage | (user-supplied) | 300–1500 W | Drives the `Kff = 1000/W` derivation. 0 = skip Kff. |
+| Heater wattage | (user-supplied) | 300–2500 W | Drives the `Kff = 1000/W` derivation. 0 = skip Kff. |
 
 ## Running an autotune
 
