@@ -168,6 +168,7 @@ class Controller {
     bool isActiveLocked() const { return currentProcess != nullptr && currentProcess->isActive(); }
     void startProcessLocked(Process *process, std::vector<const char *> &events);
     void deactivateLocked(std::vector<const char *> &events);
+    void afterDeactivate();
     void clearLocked(std::vector<const char *> &events);
     void dispatchEvents(const std::vector<const char *> &events);
 

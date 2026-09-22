@@ -560,6 +560,7 @@ void Controller::loopLogic() {
     std::vector<const char *> events;
     double newBrewDelay = -1.0;
     double newGrindDelay = -1.0;
+    bool processEnded = false;
     {
         std::lock_guard<std::recursive_mutex> guard(processMutex);
 
@@ -575,6 +576,7 @@ void Controller::loopLogic() {
             currentProcess->progress();
             if (!isActiveLocked()) {
                 deactivateLocked(events);
+                processEnded = true;
             }
         }
 
@@ -597,6 +599,8 @@ void Controller::loopLogic() {
             }
         }
     }
+    if (processEnded)
+        afterDeactivate();
     dispatchEvents(events);
     if (newBrewDelay >= 0) {
         settings.setBrewDelay(newBrewDelay);
@@ -1048,10 +1052,17 @@ void Controller::deactivate() {
         std::lock_guard<std::recursive_mutex> guard(processMutex);
         deactivateLocked(events);
     }
-    updateControl(); // stop the pump / close the valve now instead of on the next logic cycle
-    comms.tare();
-    applyConnectionPriority(); // shot ended -> relaxed BLE interval
+    if (!events.empty())
+        afterDeactivate();
     dispatchEvents(events);
+}
+
+// Runs for every ended process, stopped by hand or finished on its own: stop command first, then tare, then relax the link.
+void Controller::afterDeactivate() {
+    updateControl();
+    comms.tare();
+    std::lock_guard<std::recursive_mutex> guard(processMutex);
+    applyConnectionPriority();
 }
 
 void Controller::deactivateLocked(std::vector<const char *> &events) {
