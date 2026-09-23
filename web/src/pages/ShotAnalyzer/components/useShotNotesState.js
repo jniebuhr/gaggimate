@@ -226,7 +226,12 @@ export function useShotNotesState({ currentShot, isSelectionPending = false } = 
     [handleInputChange, scheduleSave],
   );
 
-  useEffect(() => clearSaveTimer, [clearSaveTimer, currentShot]);
+  useEffect(
+    () => () => {
+      if (saveTimerRef.current) flushSave();
+    },
+    [currentShot, flushSave],
+  );
 
   const updateAndSave = useCallback(
     async (field, value) => {
