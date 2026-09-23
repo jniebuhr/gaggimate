@@ -507,6 +507,12 @@ void Controller::loop() {
 
     if (initialized) {
         comms.loop(); // drive the comms send pump + retransmit
+        // Stop + tare go out on the fast interval; the switch back starts only once the link is quiet (or after a cap).
+        if (relaxPending && (comms.isIdle() || millis() - relaxRequestedAt > RELAX_TIMEOUT_MS)) {
+            relaxPending = false;
+            std::lock_guard<std::recursive_mutex> guard(processMutex);
+            applyConnectionPriority();
+        }
     }
 
     unsigned long now = millis();
@@ -730,20 +736,10 @@ void Controller::dispatchEvents(const std::vector<const char *> &events) {
 }
 
 void Controller::applyConnectionPriority(bool force) {
-    // A running process needs responsive 10Hz control; idle does not. Track the
-    // last requested state so we only renegotiate on transitions.
     const bool lowLatency = currentProcess != nullptr;
     if (force || lowLatency != connLowLatency) {
         connLowLatency = lowLatency;
         comms.setLowLatency(lowLatency);
-        // Steer the shared-radio coexistence arbiter to match. WiFi and BLE
-        // share one 2.4GHz radio; the arbiter decides who wins on contention.
-        // During a shot the BLE control loop (7.5-10ms interval, pressure/flow
-        // feedback) must win, so prefer BT. When idle there is no tight BLE
-        // deadline, so prefer WiFi to keep the web UI / network responsive --
-        // the chronic coex failure mode is WiFi getting starved and the whole
-        // IP stack wedging. Default coex preference is BALANCE; nobody set this
-        // before. Best-effort: ignore the return (no-op if coex inactive). [GM-90]
         esp_coex_preference_set(lowLatency ? ESP_COEX_PREFER_BT : ESP_COEX_PREFER_WIFI);
     }
 }
@@ -1057,12 +1053,12 @@ void Controller::deactivate() {
     dispatchEvents(events);
 }
 
-// Runs for every ended process, stopped by hand or finished on its own: stop command first, then tare, then relax the link.
+// Runs for every ended process, stopped by hand or finished on its own: stop command, tare, then relax once they are ACKed.
 void Controller::afterDeactivate() {
     updateControl();
     comms.tare();
-    std::lock_guard<std::recursive_mutex> guard(processMutex);
-    applyConnectionPriority();
+    relaxPending = true;
+    relaxRequestedAt = millis();
 }
 
 void Controller::deactivateLocked(std::vector<const char *> &events) {
@@ -1072,8 +1068,10 @@ void Controller::deactivateLocked(std::vector<const char *> &events) {
     delete lastProcess;
     lastProcess = currentProcess;
     currentProcess = nullptr;
+    bool utility = false;
     if (lastProcess->getType() == MODE_BREW) {
-        if (!static_cast<BrewProcess *>(lastProcess)->isUtility())
+        utility = static_cast<BrewProcess *>(lastProcess)->isUtility();
+        if (!utility)
             flushPending = true; // a shot leaves grounds behind, a flush does not
         events.push_back("controller:brew:end");
     } else if (lastProcess->getType() == MODE_GRIND) {
@@ -1081,6 +1079,8 @@ void Controller::deactivateLocked(std::vector<const char *> &events) {
     }
     events.push_back("controller:process:end");
     updateLastAction();
+    if (utility)
+        clearLocked(events); // a flush has nothing to show, skip the finished screen
 }
 
 void Controller::clear() {
