@@ -169,6 +169,10 @@ class Controller {
     void startProcessLocked(Process *process, std::vector<const char *> &events);
     void deactivateLocked(std::vector<const char *> &events);
     void afterDeactivate();
+    // Relax the BLE interval only once the stop command has been acknowledged (see afterDeactivate()).
+    bool relaxPending = false;
+    unsigned long relaxRequestedAt = 0;
+    static const unsigned long RELAX_TIMEOUT_MS = 1000;
     void clearLocked(std::vector<const char *> &events);
     void dispatchEvents(const std::vector<const char *> &events);
 

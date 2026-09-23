@@ -17,7 +17,8 @@ void GaggiMateClient::init(const String &deviceName) {
     _transport.init(deviceName);
 
     // One task owns the send pump, so BLE writes and retransmits never depend on the caller's thread or the main loop.
-    if (xTaskCreatePinnedToCore(pumpTask, "GaggiMateClient", PUMP_TASK_STACK, this, PUMP_TASK_PRIORITY, &_pumpTaskHandle, 0) == pdPASS) {
+    if (xTaskCreatePinnedToCore(pumpTask, "GaggiMateClient", PUMP_TASK_STACK, this, PUMP_TASK_PRIORITY, &_pumpTaskHandle, 0) ==
+        pdPASS) {
         _endpoint.setPumpTask(_pumpTaskHandle);
     } else {
         _pumpTaskHandle = nullptr;

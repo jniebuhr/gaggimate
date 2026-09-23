@@ -92,6 +92,8 @@ class Endpoint {
     uint32_t latencyMs() const { return _smoothedRttMs; }
     uint32_t lastLatencyMs() const { return _lastRttMs; }
     bool hasLatency() const { return _rttValid; }
+    // Nothing queued and nothing awaiting an ACK.
+    bool isIdle();
     // Frames sent again because no ACK arrived in time, since boot.
     uint32_t retransmits() const { return _retransmits; }
 

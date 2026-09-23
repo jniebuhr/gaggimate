@@ -63,6 +63,13 @@ void Endpoint::dispatch(const gm::Payload &payload) {
 
 void Endpoint::loop() { pump(); }
 
+bool Endpoint::isIdle() {
+    lock();
+    const bool idle = _queue.empty() && !_inFlight;
+    unlock();
+    return idle;
+}
+
 void Endpoint::on(pb_size_t which, Handler handler) {
     if (which < HANDLER_SLOTS)
         _handlers[which] = std::move(handler);
