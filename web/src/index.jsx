@@ -108,7 +108,7 @@ export function App() {
     <LocationProvider>
       <ApiServiceContext.Provider value={apiService}>
         {isApp && showMachineSetup.value && <MachineSetup />}
-        <div className='bg-base-300 flex h-screen overflow-hidden pt-[env(safe-area-inset-top)] pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)]'>
+        <div className='bg-base-300 flex h-dvh overflow-hidden pt-[env(safe-area-inset-top)] pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)]'>
           <Navigation
             collapsed={navCollapsed}
             onToggleCollapsed={() => setNavCollapsed(collapsed => !collapsed)}
@@ -146,7 +146,7 @@ export function App() {
             </div>
           </div>
           {navCollapsed && (
-            <div className='fab end-auto bottom-[max(1rem,env(safe-area-inset-bottom))] left-[max(1rem,env(safe-area-inset-left))] md:hidden landscape:hidden'>
+            <div className='fab mobile-nav-fab end-auto left-[max(1rem,env(safe-area-inset-left))] md:hidden landscape:hidden'>
               <button
                 className='btn btn-lg btn-circle btn-primary'
                 onClick={() => setNavCollapsed(false)}
