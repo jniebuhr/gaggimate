@@ -17,11 +17,13 @@ function isNonOutlinedControl(children) {
   });
 }
 
-/** Label always sits on the top border of the field. */
-function OutlinedField({ label, children }) {
+/** Label always sits on the top border of the field and names the control. */
+function OutlinedField({ label, htmlFor, children }) {
   return (
     <div className='outlined-field'>
-      <span className='outlined-field-label'>{label}</span>
+      <label htmlFor={htmlFor} className='outlined-field-label'>
+        {label}
+      </label>
       {children}
     </div>
   );
@@ -54,27 +56,30 @@ export function SettingsFormField({
   const useFloating = floating === true;
   const useOutlined = !useFloating && floating !== false && !isNonOutlinedControl(children);
 
+  let control;
+  if (useFloating) {
+    control = <FloatingField label={label}>{children}</FloatingField>;
+  } else if (useOutlined) {
+    control = (
+      <OutlinedField label={label} htmlFor={htmlFor}>
+        {children}
+      </OutlinedField>
+    );
+  } else {
+    control = (
+      <>
+        <label htmlFor={htmlFor} className='mb-1 block text-sm font-medium'>
+          {label}
+        </label>
+        {children}
+      </>
+    );
+  }
+
   return (
     <div className={`form-control ${noMargin ? '' : 'mb-3'} ${className}`}>
-      {useFloating ? (
-        <>
-          <FloatingField label={label}>{children}</FloatingField>
-          {helpText && <div className='mt-1 text-xs opacity-70'>{helpText}</div>}
-        </>
-      ) : useOutlined ? (
-        <>
-          <OutlinedField label={label}>{children}</OutlinedField>
-          {helpText && <div className='mt-1 text-xs opacity-70'>{helpText}</div>}
-        </>
-      ) : (
-        <>
-          <label htmlFor={htmlFor} className='mb-1 block text-sm font-medium'>
-            {label}
-          </label>
-          {children}
-          {helpText && <div className='mt-1 text-xs opacity-70'>{helpText}</div>}
-        </>
-      )}
+      {control}
+      {helpText && <div className='mt-1 text-xs opacity-70'>{helpText}</div>}
     </div>
   );
 }
@@ -91,11 +96,11 @@ export function InputGroupField({
 }) {
   return (
     <div className={`form-control ${noMargin ? '' : 'mb-3'} ${className}`}>
-      <OutlinedField label={label}>
-        <label htmlFor={htmlFor} className='input w-full'>
+      <OutlinedField label={label} htmlFor={htmlFor}>
+        <div className='input w-full'>
           {children}
           <span aria-label={unitAriaLabel}>{unit}</span>
-        </label>
+        </div>
       </OutlinedField>
       {helpText && <div className='mt-1 text-xs opacity-70'>{helpText}</div>}
     </div>

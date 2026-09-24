@@ -339,20 +339,18 @@ export function GeneralTab({
               helpText='When the toggle is off, brightness will be set to 0'
               noMargin
             >
-              <label className='input w-full'>
-                <input
-                  id='standbyBrightness'
-                  name='standbyBrightness'
-                  type='number'
-                  className='grow'
-                  placeholder='8'
-                  min='0'
-                  max='16'
-                  disabled={!formData.standbyDisplayEnabled}
-                  value={formData.standbyDisplayEnabled ? formData.standbyBrightness : 0}
-                  onChange={onChange('standbyBrightness')}
-                />
-              </label>
+              <input
+                id='standbyBrightness'
+                name='standbyBrightness'
+                type='number'
+                className='input input-bordered w-full'
+                placeholder='8'
+                min='0'
+                max='16'
+                disabled={!formData.standbyDisplayEnabled}
+                value={formData.standbyDisplayEnabled ? formData.standbyBrightness : 0}
+                onChange={onChange('standbyBrightness')}
+              />
             </SettingsFormField>
             <InputGroupField
               label='Standby Brightness Timeout'
