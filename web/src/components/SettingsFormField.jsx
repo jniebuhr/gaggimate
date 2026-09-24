@@ -30,12 +30,12 @@ function OutlinedField({ label, htmlFor, children }) {
 }
 
 /** DaisyUI floating label — inside when empty, rises on focus/value. */
-function FloatingField({ label, children }) {
+function FloatingField({ label, htmlFor, children }) {
   return (
-    <div className='floating-label'>
+    <label className='floating-label' htmlFor={htmlFor}>
       <span>{label}</span>
       {children}
-    </div>
+    </label>
   );
 }
 
@@ -58,7 +58,11 @@ export function SettingsFormField({
 
   let control;
   if (useFloating) {
-    control = <FloatingField label={label}>{children}</FloatingField>;
+    control = (
+      <FloatingField label={label} htmlFor={htmlFor}>
+        {children}
+      </FloatingField>
+    );
   } else if (useOutlined) {
     control = (
       <OutlinedField label={label} htmlFor={htmlFor}>

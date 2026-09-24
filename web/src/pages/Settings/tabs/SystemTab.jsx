@@ -326,12 +326,12 @@ export function SystemTab() {
       {/* Firmware updates channel */}
       <Section title='System Version & Updates' className='h-full'>
         <form ref={formRef} onSubmit={onSubmit} className='space-y-4'>
-          <div className='flex w-full max-w-md items-end gap-2'>
+          <div className='flex w-full max-w-md flex-col gap-2 sm:flex-row sm:items-end'>
             <SettingsFormField
               label='Update Channel'
               htmlFor='channel'
               noMargin
-              className='min-w-0 grow'
+              className='min-w-0 sm:grow'
             >
               <select id='channel' name='channel' className='select select-bordered w-full'>
                 <option value='latest' selected={formData.channel === 'latest'}>
@@ -342,7 +342,11 @@ export function SystemTab() {
                 </option>
               </select>
             </SettingsFormField>
-            <button type='submit' className='btn btn-secondary shrink-0' disabled={submitting}>
+            <button
+              type='submit'
+              className='btn btn-secondary w-full shrink-0 sm:w-auto'
+              disabled={submitting}
+            >
               Save Channel & Refresh
             </button>
           </div>

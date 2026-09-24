@@ -41,24 +41,25 @@ export const TargetTypes = [
   },
 ];
 
-export function ExtendedPhaseTarget({ onChange, target, index, onRemove }) {
+export function ExtendedPhaseTarget({ onChange, target, index, phaseIndex = 0, onRemove }) {
   const targetType =
     TargetTypes.find(tt => tt.type === target.type && tt.operator === (target.operator || 'gte')) ||
     TargetTypes[0];
+  const fieldId = `phase-${phaseIndex}-target-${index}-value`;
   return (
     <>
       <div className='grid grid-cols-1 gap-4'>
         <div className='flex items-start gap-2'>
           <InputGroupField
             label={targetType.label}
-            htmlFor={`phase-${index}-target-value`}
+            htmlFor={fieldId}
             unit={targetType.unit}
             unitAriaLabel={targetType.unit}
             noMargin
             className='min-w-0 flex-1'
           >
             <input
-              id={`phase-${index}-target-value`}
+              id={fieldId}
               className='grow'
               type='number'
               value={target.value || 0}

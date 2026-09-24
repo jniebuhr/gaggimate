@@ -73,7 +73,7 @@ function WarningLevelSelect({ id, label, icon, value, onChange }) {
 
 function PasswordField({ id, label, placeholder, value, onChange, shown, setShown, ...rest }) {
   return (
-    <label className='input w-full'>
+    <div className='input w-full'>
       <input
         id={id}
         name={id}
@@ -91,7 +91,7 @@ function PasswordField({ id, label, placeholder, value, onChange, shown, setShow
       >
         <FontAwesomeIcon icon={shown ? faEyeSlash : faEye} />
       </button>
-    </label>
+    </div>
   );
 }
 

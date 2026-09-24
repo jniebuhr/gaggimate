@@ -212,11 +212,11 @@ export function ShotDetailsCard({ entry, isCompare }) {
           }
           htmlFor='analyzer-notes'
           noMargin
-          className='flex min-h-0 flex-1 flex-col'
+          className='outlined-field-fill flex min-h-0 flex-1 flex-col'
         >
           <textarea
             id='analyzer-notes'
-            className={`${textareaClass} flex-1`}
+            className={`${textareaClass} min-h-0 flex-1`}
             value={notes.notes || ''}
             maxLength={200}
             onInput={event => handleFieldChange('notes', event.target.value)}

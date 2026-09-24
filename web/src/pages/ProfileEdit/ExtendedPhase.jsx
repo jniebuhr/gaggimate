@@ -547,6 +547,7 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
             key={`target-${idx}`}
             target={target}
             index={idx}
+            phaseIndex={index}
           />
         </>
       ))}

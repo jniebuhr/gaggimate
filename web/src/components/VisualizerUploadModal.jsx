@@ -111,7 +111,9 @@ export default function VisualizerUploadModal({
 
           <form onSubmit={handleSubmit} className='space-y-4' name='visualizer-login' method='post'>
             <div className='outlined-field'>
-              <span className='outlined-field-label'>Visualizer.coffee Username</span>
+              <label htmlFor='username' className='outlined-field-label'>
+                Visualizer.coffee Username
+              </label>
               <input
                 id='username'
                 name='username'
@@ -127,8 +129,10 @@ export default function VisualizerUploadModal({
             </div>
 
             <div className='outlined-field'>
-              <span className='outlined-field-label'>Password</span>
-              <label className='input w-full'>
+              <label htmlFor='password' className='outlined-field-label'>
+                Password
+              </label>
+              <div className='input w-full'>
                 <input
                   id='password'
                   name='password'
@@ -150,7 +154,7 @@ export default function VisualizerUploadModal({
                 >
                   <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
                 </button>
-              </label>
+              </div>
             </div>
 
             <div className='flex items-center'>

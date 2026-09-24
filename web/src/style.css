@@ -660,6 +660,26 @@ html[data-theme='coffee'] {
   opacity: 1;
 }
 
+/* Analyzer Notes etc.: outlined wrapper must grow so textarea can fill the card */
+.form-control.outlined-field-fill {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+}
+
+.form-control.outlined-field-fill > .outlined-field {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+}
+
+.form-control.outlined-field-fill > .outlined-field > :is(textarea, .textarea) {
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
 @custom-variant hmd {
   @media (min-height: 429px) {
     @slot;
