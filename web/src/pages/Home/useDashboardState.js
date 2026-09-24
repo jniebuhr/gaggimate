@@ -43,7 +43,7 @@ export function useDashboardState() {
 
   const isSmartGrindEnabled = settings?.smartGrindActive || false;
   const altRelayFunction = settings?.altRelayFunction ?? 1;
-  const isGrindAvailable = isSmartGrindEnabled || altRelayFunction === 1;
+  const isGrindAvailable = isSmartGrindEnabled;
   const showGrindTab = isGrindAvailable || isGrinding;
 
   // ── water level (Alba) ────────────────────────────────────
