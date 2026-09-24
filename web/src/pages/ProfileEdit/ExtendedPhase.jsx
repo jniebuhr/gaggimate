@@ -4,6 +4,7 @@ import { useCallback } from 'preact/hooks';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import { Tooltip } from '../../components/Tooltip.jsx';
+import { InputGroupField, SettingsFormField } from '../../components/SettingsFormField.jsx';
 
 export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvailable }) {
   const onFieldChange = (field, value) => {
@@ -64,10 +65,7 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
       aria-label={`Phase ${index + 1} configuration`}
     >
       <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-        <div className='form-control'>
-          <label htmlFor={`phase-${index}-type`} className='mb-2 block text-sm font-medium'>
-            Phase Type
-          </label>
+        <SettingsFormField label='Phase Type' htmlFor={`phase-${index}-type`} noMargin>
           <select
             id={`phase-${index}-type`}
             className='select select-bordered w-full'
@@ -78,64 +76,54 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
             <option value='preinfusion'>Pre-Infusion</option>
             <option value='brew'>Brew</option>
           </select>
-        </div>
-        <div className='form-control'>
-          <label htmlFor={`phase-${index}-name`} className='mb-2 block text-sm font-medium'>
-            Phase Name
-          </label>
-          <div className='flex gap-2'>
-            <input
-              id={`phase-${index}-name`}
-              className='input input-bordered flex-1'
-              placeholder='Name...'
-              value={phase.name}
-              onChange={e => onFieldChange('name', e.target.value)}
-              aria-label='Enter a name for this phase'
-            />
-          </div>
-        </div>
+        </SettingsFormField>
+        <SettingsFormField label='Phase Name' htmlFor={`phase-${index}-name`} noMargin>
+          <input
+            id={`phase-${index}-name`}
+            className='input input-bordered w-full'
+            value={phase.name}
+            onChange={e => onFieldChange('name', e.target.value)}
+            aria-label='Enter a name for this phase'
+          />
+        </SettingsFormField>
       </div>
 
       <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-        <div className='form-control'>
-          <label htmlFor={`phase-${index}-duration`} className='mb-2 block text-sm font-medium'>
-            Duration
-          </label>
-          <div className='input-group'>
-            <label htmlFor={`phase-${index}-duration`} className='input w-full'>
-              <input
-                id={`phase-${index}-duration`}
-                className='grow'
-                type='number'
-                min='1'
-                value={phase.duration}
-                onChange={e => onFieldChange('duration', e.target.value)}
-                aria-label='Duration in seconds'
-              />
-              <span aria-label='seconds'>s</span>
-            </label>
-          </div>
-        </div>
-        <div className='form-control'>
-          <label htmlFor={`phase-${index}-temperature`} className='mb-2 block text-sm font-medium'>
-            Temperature (0 = Default)
-          </label>
-          <div className='input-group'>
-            <label htmlFor={`phase-${index}-temperature`} className='input w-full'>
-              <input
-                id={`phase-${index}-target`}
-                className='grow'
-                type='number'
-                value={`${phase.temperature || 0}`}
-                onChange={e => onFieldChange('temperature', parseFloat(e.target.value))}
-                aria-label='Target temperature'
-                min='0'
-                step='0.1'
-              />
-              <span aria-label='celsius'>°C</span>
-            </label>
-          </div>
-        </div>
+        <InputGroupField
+          label='Duration'
+          htmlFor={`phase-${index}-duration`}
+          unit='s'
+          unitAriaLabel='seconds'
+          noMargin
+        >
+          <input
+            id={`phase-${index}-duration`}
+            className='grow'
+            type='number'
+            min='1'
+            value={phase.duration}
+            onChange={e => onFieldChange('duration', e.target.value)}
+            aria-label='Duration in seconds'
+          />
+        </InputGroupField>
+        <InputGroupField
+          label='Temperature (0 = Default)'
+          htmlFor={`phase-${index}-temperature`}
+          unit='°C'
+          unitAriaLabel='celsius'
+          noMargin
+        >
+          <input
+            id={`phase-${index}-temperature`}
+            className='grow'
+            type='number'
+            value={`${phase.temperature || 0}`}
+            onChange={e => onFieldChange('temperature', parseFloat(e.target.value))}
+            aria-label='Target temperature'
+            min='0'
+            step='0.1'
+          />
+        </InputGroupField>
       </div>
 
       <div className='form-control'>
@@ -263,27 +251,24 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
       </div>
 
       {mode === 'power' && (
-        <div className='form-control'>
-          <label htmlFor={`phase-${index}-power`} className='mb-2 block text-sm font-medium'>
-            Pump Power
-          </label>
-          <div className='input-group'>
-            <label htmlFor={`phase-${index}-power`} className='input w-full'>
-              <input
-                id={`phase-${index}-power`}
-                className='grow'
-                type='number'
-                step='1'
-                min={0}
-                max={100}
-                value={pumpPower.toString()}
-                onChange={e => onFieldChange('pump', parseFloat(e.target.value))}
-                aria-label='Pump power as percentage'
-              />
-              <span aria-label='percent'>%</span>
-            </label>
-          </div>
-        </div>
+        <InputGroupField
+          label='Pump Power'
+          htmlFor={`phase-${index}-power`}
+          unit='%'
+          unitAriaLabel='percent'
+        >
+          <input
+            id={`phase-${index}-power`}
+            className='grow'
+            type='number'
+            step='1'
+            min={0}
+            max={100}
+            value={pumpPower.toString()}
+            onChange={e => onFieldChange('pump', parseFloat(e.target.value))}
+            aria-label='Pump power as percentage'
+          />
+        </InputGroupField>
       )}
 
       {(mode === 'pressure' ||
@@ -292,54 +277,48 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
         mode === 'hold-flow') && (
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
           {mode !== 'hold-pressure' && (
-            <div className='form-control'>
-              <label htmlFor={`phase-${index}-pressure`} className='mb-2 block text-sm font-medium'>
-                {mode === 'pressure' ? 'Target' : 'Maximum'} Pressure{' '}
-                {mode === 'flow' && '(0 = Ignore)'}
-              </label>
-              <div className='input-group'>
-                <label htmlFor={`phase-${index}-pressure`} className='input w-full'>
-                  <input
-                    id={`phase-${index}-pressure`}
-                    className='grow'
-                    type='number'
-                    step='0.01'
-                    min={mode === 'pressure' ? '0.1' : '0'}
-                    value={pressure.toString()}
-                    onChange={e =>
-                      onFieldChange('pump', { ...phase.pump, pressure: parseFloat(e.target.value) })
-                    }
-                    aria-label='Pressure in bar'
-                  />
-                  <span aria-label='bar'>bar</span>
-                </label>
-              </div>
-            </div>
+            <InputGroupField
+              label={`${mode === 'pressure' ? 'Target' : 'Maximum'} Pressure${mode === 'flow' ? ' (0 = Ignore)' : ''}`}
+              htmlFor={`phase-${index}-pressure`}
+              unit='bar'
+              unitAriaLabel='bar'
+              noMargin
+            >
+              <input
+                id={`phase-${index}-pressure`}
+                className='grow'
+                type='number'
+                step='0.01'
+                min={mode === 'pressure' ? '0.1' : '0'}
+                value={pressure.toString()}
+                onChange={e =>
+                  onFieldChange('pump', { ...phase.pump, pressure: parseFloat(e.target.value) })
+                }
+                aria-label='Pressure in bar'
+              />
+            </InputGroupField>
           )}
           {mode !== 'hold-flow' && (
-            <div className='form-control'>
-              <label htmlFor={`phase-${index}-flow`} className='mb-2 block text-sm font-medium'>
-                {mode === 'flow' ? 'Target' : 'Maximum'} Flow{' '}
-                {mode === 'pressure' && '(0 = Ignore)'}
-              </label>
-              <div className='input-group'>
-                <label htmlFor={`phase-${index}-flow`} className='input w-full'>
-                  <input
-                    id={`phase-${index}-flow`}
-                    className='grow'
-                    type='number'
-                    step='0.01'
-                    value={flow.toString()}
-                    onChange={e =>
-                      onFieldChange('pump', { ...phase.pump, flow: parseFloat(e.target.value) })
-                    }
-                    aria-label='Flow rate in grams per second'
-                    min={mode === 'flow' ? '0.1' : '0'}
-                  />
-                  <span aria-label='grams per second'>g/s</span>
-                </label>
-              </div>
-            </div>
+            <InputGroupField
+              label={`${mode === 'flow' ? 'Target' : 'Maximum'} Flow${mode === 'pressure' ? ' (0 = Ignore)' : ''}`}
+              htmlFor={`phase-${index}-flow`}
+              unit='g/s'
+              unitAriaLabel='grams per second'
+              noMargin
+            >
+              <input
+                id={`phase-${index}-flow`}
+                className='grow'
+                type='number'
+                step='0.01'
+                value={flow.toString()}
+                onChange={e =>
+                  onFieldChange('pump', { ...phase.pump, flow: parseFloat(e.target.value) })
+                }
+                aria-label='Flow rate in grams per second'
+                min={mode === 'flow' ? '0.1' : '0'}
+              />
+            </InputGroupField>
           )}
         </div>
       )}
@@ -459,34 +438,28 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
             </div>
           </div>
           <div className='grid grid-cols-1 gap-4'>
-            <div className='form-control'>
-              <label
-                htmlFor={`phase-${index}-transition-duration`}
-                className='mb-2 block text-sm font-medium'
-              >
-                Ramp Length
-              </label>
-              <div className='input-group'>
-                <label htmlFor={`phase-${index}-transition-duration`} className='input w-full'>
-                  <input
-                    id={`phase-${index}-transition-duration`}
-                    className='grow'
-                    type='number'
-                    value={phase.transition?.duration || 0}
-                    onChange={e =>
-                      onFieldChange('transition', {
-                        ...phase.transition,
-                        duration: parseFloat(e.target.value),
-                      })
-                    }
-                    aria-label={`Transition duration in ${rampUnit}`}
-                    min='0'
-                    step='0.1'
-                  />
-                  <span aria-label={rampUnit}>{rampUnit}</span>
-                </label>
-              </div>
-            </div>
+            <InputGroupField
+              label='Ramp Length'
+              htmlFor={`phase-${index}-transition-duration`}
+              unit={rampUnit}
+              unitAriaLabel={rampUnit}
+            >
+              <input
+                id={`phase-${index}-transition-duration`}
+                className='grow'
+                type='number'
+                value={phase.transition?.duration || 0}
+                onChange={e =>
+                  onFieldChange('transition', {
+                    ...phase.transition,
+                    duration: parseFloat(e.target.value),
+                  })
+                }
+                aria-label={`Transition duration in ${rampUnit}`}
+                min='0'
+                step='0.1'
+              />
+            </InputGroupField>
             <div className='form-control'>
               <fieldset>
                 <legend className='mb-2 block text-sm font-medium'>Start Ramp from</legend>

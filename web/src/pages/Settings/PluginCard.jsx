@@ -4,6 +4,7 @@ import homekitImage from '../../assets/homekit.png';
 import { faCalendarDays } from '@fortawesome/free-solid-svg-icons/faCalendarDays';
 import { computed } from '@preact/signals';
 import { machine } from '../../services/ApiService.js';
+import { SettingsFormField } from '../../components/SettingsFormField.jsx';
 
 const gearpumpAddon = computed(() => machine.value.capabilities.gearpumpAddon);
 
@@ -177,10 +178,7 @@ export function PluginCard({
         </div>
         {formData.boilerFillActive && (
           <div className='border-base-300 mt-4 grid grid-cols-2 gap-4 border-t pt-4'>
-            <div className='form-control'>
-              <label htmlFor='startupFillTime' className='mb-2 block text-sm font-medium'>
-                On startup (s)
-              </label>
+            <SettingsFormField label='On startup (s)' htmlFor='startupFillTime' noMargin>
               <input
                 id='startupFillTime'
                 name='startupFillTime'
@@ -190,11 +188,8 @@ export function PluginCard({
                 value={formData.startupFillTime}
                 onChange={onChange('startupFillTime')}
               />
-            </div>
-            <div className='form-control'>
-              <label htmlFor='steamFillTime' className='mb-2 block text-sm font-medium'>
-                On steam deactivate (s)
-              </label>
+            </SettingsFormField>
+            <SettingsFormField label='On steam deactivate (s)' htmlFor='steamFillTime' noMargin>
               <input
                 id='steamFillTime'
                 name='steamFillTime'
@@ -204,7 +199,7 @@ export function PluginCard({
                 value={formData.steamFillTime}
                 onChange={onChange('steamFillTime')}
               />
-            </div>
+            </SettingsFormField>
           </div>
         )}
       </div>
@@ -229,10 +224,7 @@ export function PluginCard({
               This feature controls a Tasmota Plug to turn off your grinder after the target has
               been reached.
             </p>
-            <div className='form-control'>
-              <label htmlFor='smartGrindIp' className='mb-2 block text-sm font-medium'>
-                Tasmota IP
-              </label>
+            <SettingsFormField label='Tasmota IP' htmlFor='smartGrindIp'>
               <input
                 id='smartGrindIp'
                 name='smartGrindIp'
@@ -242,11 +234,8 @@ export function PluginCard({
                 value={formData.smartGrindIp}
                 onChange={onChange('smartGrindIp')}
               />
-            </div>
-            <div className='form-control'>
-              <label htmlFor='smartGrindMode' className='mb-2 block text-sm font-medium'>
-                Mode
-              </label>
+            </SettingsFormField>
+            <SettingsFormField label='Mode' htmlFor='smartGrindMode' noMargin>
               <select
                 id='smartGrindMode'
                 name='smartGrindMode'
@@ -263,7 +252,7 @@ export function PluginCard({
                   Turn on at start, off at target
                 </option>
               </select>
-            </div>
+            </SettingsFormField>
           </div>
         )}
       </div>
@@ -297,10 +286,7 @@ export function PluginCard({
               </a>{' '}
               for a more up-to-date solution.
             </p>
-            <div className='form-control'>
-              <label htmlFor='haIP' className='mb-2 block text-sm font-medium'>
-                MQTT IP
-              </label>
+            <SettingsFormField label='MQTT IP' htmlFor='haIP'>
               <input
                 id='haIP'
                 name='haIP'
@@ -310,12 +296,9 @@ export function PluginCard({
                 value={formData.haIP}
                 onChange={onChange('haIP')}
               />
-            </div>
+            </SettingsFormField>
 
-            <div className='form-control'>
-              <label htmlFor='haPort' className='mb-2 block text-sm font-medium'>
-                MQTT Port
-              </label>
+            <SettingsFormField label='MQTT Port' htmlFor='haPort'>
               <input
                 id='haPort'
                 name='haPort'
@@ -325,12 +308,9 @@ export function PluginCard({
                 value={formData.haPort}
                 onChange={onChange('haPort')}
               />
-            </div>
+            </SettingsFormField>
 
-            <div className='form-control'>
-              <label htmlFor='haUser' className='mb-2 block text-sm font-medium'>
-                MQTT User
-              </label>
+            <SettingsFormField label='MQTT User' htmlFor='haUser'>
               <input
                 id='haUser'
                 name='haUser'
@@ -340,12 +320,9 @@ export function PluginCard({
                 value={formData.haUser}
                 onChange={onChange('haUser')}
               />
-            </div>
+            </SettingsFormField>
 
-            <div className='form-control'>
-              <label htmlFor='haPassword' className='mb-2 block text-sm font-medium'>
-                MQTT Password
-              </label>
+            <SettingsFormField label='MQTT Password' htmlFor='haPassword'>
               <input
                 id='haPassword'
                 name='haPassword'
@@ -355,11 +332,8 @@ export function PluginCard({
                 value={formData.haPassword}
                 onChange={onChange('haPassword')}
               />
-            </div>
-            <div className='form-control'>
-              <label htmlFor='haTopic' className='mb-2 block text-sm font-medium'>
-                Home Assistant Discovery Topic
-              </label>
+            </SettingsFormField>
+            <SettingsFormField label='Home Assistant Discovery Topic' htmlFor='haTopic' noMargin>
               <input
                 id='haTopic'
                 name='haTopic'
@@ -368,7 +342,7 @@ export function PluginCard({
                 value={formData.haTopic}
                 onChange={onChange('haTopic')}
               />
-            </div>
+            </SettingsFormField>
           </div>
         )}
       </div>
@@ -384,10 +358,7 @@ export function PluginCard({
               characteristics using the values below.
             </p>
 
-            <div className='form-control'>
-              <label htmlFor='commutationGain' className='mb-2 block text-sm font-medium'>
-                Commutation Gain
-              </label>
+            <SettingsFormField label='Commutation Gain' htmlFor='commutationGain'>
               <input
                 id='commutationGain'
                 name='commutationGain'
@@ -400,12 +371,9 @@ export function PluginCard({
                 value={formData.commutationGain?.toString()}
                 onChange={onChange('commutationGain')}
               />
-            </div>
+            </SettingsFormField>
 
-            <div className='form-control'>
-              <label htmlFor='convergenceGain' className='mb-2 block text-sm font-medium'>
-                Convergence Gain
-              </label>
+            <SettingsFormField label='Convergence Gain' htmlFor='convergenceGain'>
               <input
                 id='convergenceGain'
                 name='convergenceGain'
@@ -418,12 +386,9 @@ export function PluginCard({
                 value={formData.convergenceGain?.toString()}
                 onChange={onChange('convergenceGain')}
               />
-            </div>
+            </SettingsFormField>
 
-            <div className='form-control'>
-              <label htmlFor='integralGain' className='mb-2 block text-sm font-medium'>
-                Integral Gain
-              </label>
+            <SettingsFormField label='Integral Gain' htmlFor='integralGain'>
               <input
                 id='integralGain'
                 name='integralGain'
@@ -436,11 +401,8 @@ export function PluginCard({
                 value={formData.integralGain?.toString()}
                 onChange={onChange('integralGain')}
               />
-            </div>
-            <div className='form-control'>
-              <label htmlFor='maxPumpPower' className='mb-2 block text-sm font-medium'>
-                Maximum Pump Power (0 - 1)
-              </label>
+            </SettingsFormField>
+            <SettingsFormField label='Maximum Pump Power (0 - 1)' htmlFor='maxPumpPower'>
               <input
                 id='maxPumpPower'
                 name='maxPumpPower'
@@ -453,11 +415,13 @@ export function PluginCard({
                 value={formData.maxPumpPower?.toString()}
                 onChange={onChange('maxPumpPower')}
               />
-            </div>
-            <div className='form-control'>
-              <label htmlFor='pumpSlipCoeffs' className='mb-2 block text-sm font-medium'>
-                Pump Slip Coefficients
-              </label>
+            </SettingsFormField>
+            <SettingsFormField
+              label='Pump Slip Coefficients'
+              htmlFor='pumpSlipCoeffs'
+              helpText='Pressure polynomial (a,b,c,d) for vane-/gear-pump internal leakage. Leave at 0,0,0,0 if uncalibrated.'
+              noMargin
+            >
               <input
                 id='pumpSlipCoeffs'
                 name='pumpSlipCoeffs'
@@ -467,11 +431,7 @@ export function PluginCard({
                 value={formData.pumpSlipCoeffs}
                 onChange={onChange('pumpSlipCoeffs')}
               />
-              <span className='mt-1 text-xs opacity-70'>
-                Pressure polynomial (a,b,c,d) for vane-/gear-pump internal leakage. Leave at 0,0,0,0
-                if uncalibrated.
-              </span>
-            </div>
+            </SettingsFormField>
           </div>
         </div>
       )}

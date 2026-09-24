@@ -339,18 +339,20 @@ export function GeneralTab({
               helpText='When the toggle is off, brightness will be set to 0'
               noMargin
             >
-              <input
-                id='standbyBrightness'
-                name='standbyBrightness'
-                type='number'
-                className='input input-bordered w-full'
-                placeholder='8'
-                min='0'
-                max='16'
-                disabled={!formData.standbyDisplayEnabled}
-                value={formData.standbyDisplayEnabled ? formData.standbyBrightness : 0}
-                onChange={onChange('standbyBrightness')}
-              />
+              <label className='input w-full'>
+                <input
+                  id='standbyBrightness'
+                  name='standbyBrightness'
+                  type='number'
+                  className='grow'
+                  placeholder='8'
+                  min='0'
+                  max='16'
+                  disabled={!formData.standbyDisplayEnabled}
+                  value={formData.standbyDisplayEnabled ? formData.standbyBrightness : 0}
+                  onChange={onChange('standbyBrightness')}
+                />
+              </label>
             </SettingsFormField>
             <InputGroupField
               label='Standby Brightness Timeout'
@@ -414,7 +416,7 @@ export function GeneralTab({
       {/* Network / System Preferences */}
       <Section title='System & Network' className='h-full'>
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-          <SettingsFormField label='Wi-Fi SSID' htmlFor='wifiSsid' noMargin>
+          <SettingsFormField label='Wi-Fi SSID' htmlFor='wifiSsid' floating noMargin>
             <input
               id='wifiSsid'
               name='wifiSsid'
@@ -425,7 +427,7 @@ export function GeneralTab({
               onChange={onChange('wifiSsid')}
             />
           </SettingsFormField>
-          <SettingsFormField label='Wi-Fi Password' htmlFor='wifiPassword' noMargin>
+          <SettingsFormField label='Wi-Fi Password' htmlFor='wifiPassword' floating noMargin>
             <PasswordField
               id='wifiPassword'
               label='Wi-Fi Password'
@@ -439,6 +441,7 @@ export function GeneralTab({
             label='Access Point Password'
             htmlFor='apPassword'
             helpText='Used for the GaggiMate hotspot when no Wi-Fi is configured (min. 8 characters).'
+            floating
             noMargin
           >
             <PasswordField
@@ -452,7 +455,7 @@ export function GeneralTab({
               setShown={setShowApPassword}
             />
           </SettingsFormField>
-          <SettingsFormField label='Hostname' htmlFor='mdnsName' noMargin>
+          <SettingsFormField label='Hostname' htmlFor='mdnsName' floating noMargin>
             <input
               id='mdnsName'
               name='mdnsName'
