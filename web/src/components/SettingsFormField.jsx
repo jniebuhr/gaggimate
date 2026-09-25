@@ -1,9 +1,43 @@
+import { isValidElement, toChildArray } from 'preact';
 import { useRef, useState } from 'preact/hooks';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown';
 import { faChevronUp } from '@fortawesome/free-solid-svg-icons/faChevronUp';
 import { faLock } from '@fortawesome/free-solid-svg-icons/faLock';
 import { faXmark } from '@fortawesome/free-solid-svg-icons/faXmark';
+
+/** Button groups / ranges keep a normal label above. */
+function isNonOutlinedControl(children) {
+  return toChildArray(children).some(child => {
+    if (!isValidElement(child)) return false;
+    const className = child.props.className;
+    if (typeof className === 'string' && /\bjoin\b/.test(className)) return true;
+    if (child.type === 'input' && child.props.type === 'range') return true;
+    return false;
+  });
+}
+
+/** Label always sits on the top border of the field and names the control. */
+function OutlinedField({ label, htmlFor, children }) {
+  return (
+    <div className='outlined-field'>
+      <label htmlFor={htmlFor} className='outlined-field-label'>
+        {label}
+      </label>
+      {children}
+    </div>
+  );
+}
+
+/** DaisyUI floating label — inside when empty, rises on focus/value. */
+function FloatingField({ label, htmlFor, children }) {
+  return (
+    <label className='floating-label' htmlFor={htmlFor}>
+      <span>{label}</span>
+      {children}
+    </label>
+  );
+}
 
 export function SettingsFormField({
   label,
@@ -12,13 +46,43 @@ export function SettingsFormField({
   children,
   className = '',
   noMargin = false,
+  /**
+   * true  → DaisyUI floating label (empty: placeholder in field; filled/focus: on border)
+   * false → normal label above (button groups, ranges, …)
+   * omit  → label always on the tile border
+   */
+  floating,
 }) {
+  const useFloating = floating === true;
+  const useOutlined = !useFloating && floating !== false && !isNonOutlinedControl(children);
+
+  let control;
+  if (useFloating) {
+    control = (
+      <FloatingField label={label} htmlFor={htmlFor}>
+        {children}
+      </FloatingField>
+    );
+  } else if (useOutlined) {
+    control = (
+      <OutlinedField label={label} htmlFor={htmlFor}>
+        {children}
+      </OutlinedField>
+    );
+  } else {
+    control = (
+      <>
+        <label htmlFor={htmlFor} className='mb-1 block text-sm font-medium'>
+          {label}
+        </label>
+        {children}
+      </>
+    );
+  }
+
   return (
     <div className={`form-control ${noMargin ? '' : 'mb-3'} ${className}`}>
-      <label htmlFor={htmlFor} className='mb-1 block text-sm font-medium'>
-        {label}
-      </label>
-      {children}
+      {control}
       {helpText && <div className='mt-1 text-xs opacity-70'>{helpText}</div>}
     </div>
   );
@@ -31,19 +95,17 @@ export function InputGroupField({
   unitAriaLabel,
   helpText,
   children,
+  className = '',
   noMargin = false,
 }) {
   return (
-    <div className={`form-control ${noMargin ? '' : 'mb-3'}`}>
-      <label htmlFor={htmlFor} className='mb-1 block text-sm font-medium'>
-        {label}
-      </label>
-      <div className='input-group'>
-        <label htmlFor={htmlFor} className='input w-full'>
+    <div className={`form-control ${noMargin ? '' : 'mb-3'} ${className}`}>
+      <OutlinedField label={label} htmlFor={htmlFor}>
+        <div className='input w-full'>
           {children}
           <span aria-label={unitAriaLabel}>{unit}</span>
-        </label>
-      </div>
+        </div>
+      </OutlinedField>
       {helpText && <div className='mt-1 text-xs opacity-70'>{helpText}</div>}
     </div>
   );

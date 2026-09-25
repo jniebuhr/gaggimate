@@ -1,5 +1,6 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
+import { InputGroupField } from '../../components/SettingsFormField.jsx';
 
 export const TargetTypes = [
   {
@@ -40,47 +41,47 @@ export const TargetTypes = [
   },
 ];
 
-export function ExtendedPhaseTarget({ onChange, target, index, onRemove }) {
+export function ExtendedPhaseTarget({ onChange, target, index, phaseIndex = 0, onRemove }) {
   const targetType =
     TargetTypes.find(tt => tt.type === target.type && tt.operator === (target.operator || 'gte')) ||
     TargetTypes[0];
+  const fieldId = `phase-${phaseIndex}-target-${index}-value`;
   return (
     <>
       <div className='grid grid-cols-1 gap-4'>
-        <div className='form-control'>
-          <label htmlFor={`phase-${index}-target-value`} className='mb-2 block text-sm font-medium'>
-            {targetType.label}
-          </label>
-          <div className='flex flex-row gap-2'>
-            <div className='input-group flex-grow'>
-              <label htmlFor={`phase-${index}-target-value`} className='input w-full'>
-                <input
-                  id={`phase-${index}-target-value`}
-                  className='grow'
-                  type='number'
-                  value={target.value || 0}
-                  onChange={e =>
-                    onChange({
-                      ...target,
-                      value: parseFloat(e.target.value),
-                    })
-                  }
-                  aria-label={`Target value in ${targetType.unit}`}
-                  min='0'
-                  step='0.1'
-                />
-                <span aria-label={targetType.unit}>{targetType.unit}</span>
-              </label>
-            </div>
-            <button
-              type='button'
-              className={`join-item btn btn-outline text-error`}
-              aria-label='Remove target'
-              onClick={() => onRemove()}
-            >
-              <FontAwesomeIcon icon={faTrashCan} />
-            </button>
-          </div>
+        <div className='flex items-start gap-2'>
+          <InputGroupField
+            label={targetType.label}
+            htmlFor={fieldId}
+            unit={targetType.unit}
+            unitAriaLabel={targetType.unit}
+            noMargin
+            className='min-w-0 flex-1'
+          >
+            <input
+              id={fieldId}
+              className='grow'
+              type='number'
+              value={target.value || 0}
+              onChange={e =>
+                onChange({
+                  ...target,
+                  value: parseFloat(e.target.value),
+                })
+              }
+              aria-label={`Target value in ${targetType.unit}`}
+              min='0'
+              step='0.1'
+            />
+          </InputGroupField>
+          <button
+            type='button'
+            className={`join-item btn btn-outline text-error`}
+            aria-label='Remove target'
+            onClick={() => onRemove()}
+          >
+            <FontAwesomeIcon icon={faTrashCan} />
+          </button>
         </div>
       </div>
     </>

@@ -608,6 +608,78 @@ html[data-theme='coffee'] {
   }
 }
 
+/*
+ * Outlined field label — always on the top border of the input tile.
+ */
+.outlined-field {
+  position: relative;
+  padding-top: 0.4rem;
+}
+
+.outlined-field-label {
+  position: absolute;
+  z-index: 2;
+  inset-inline-start: 0.75rem;
+  top: 0.4rem;
+  max-width: calc(100% - 1.5rem);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  /* Allow selecting/copying the label (was none → blocked copy) */
+  pointer-events: auto;
+  user-select: text;
+  border-radius: 2px;
+  padding-inline: 0.25rem;
+  font-size: 0.75rem;
+  line-height: 1;
+  /* Light default: black */
+  color: #000000;
+  background-color: var(--color-base-100);
+  translate: 0 -50%;
+}
+
+.floating-label > span {
+  color: #000000;
+}
+
+/* Dark themes: white label text */
+:is([data-theme='dark'], [data-theme='coffee']) .outlined-field-label,
+:is([data-theme='dark'], [data-theme='coffee']) .floating-label > span {
+  color: #ffffff;
+}
+
+.outlined-field > :is(input.input, .input):disabled,
+.outlined-field > :is(input.input, .input):has(> input:disabled) {
+  border-color: color-mix(in oklab, var(--color-base-content) 20%, transparent);
+  box-shadow: 0 1px color-mix(in oklab, var(--color-base-content) 8%, transparent) inset;
+  color: color-mix(in oklab, var(--color-base-content) 70%, transparent);
+}
+
+.outlined-field > :is(input.input, .input):has(> input:disabled) > input:disabled {
+  color: inherit;
+  opacity: 1;
+}
+
+/* Analyzer Notes etc.: outlined wrapper must grow so textarea can fill the card */
+.form-control.outlined-field-fill {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+}
+
+.form-control.outlined-field-fill > .outlined-field {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+}
+
+.form-control.outlined-field-fill > .outlined-field > :is(textarea, .textarea) {
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
 @custom-variant hmd {
   @media (min-height: 429px) {
     @slot;

@@ -126,7 +126,7 @@ export function CalibrationTab({ formData, onChange, setField }) {
 
             <div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>
               <SettingsFormField
-                label='Test Duration (seconds)'
+                label='Test Duration (s)'
                 htmlFor='testTime'
                 helpText='Upper bound on the identification test. Most espresso boilers resolve within 60–120 s. Extend if Autotune fails before peak slope is detected.'
                 noMargin

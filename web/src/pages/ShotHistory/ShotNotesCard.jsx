@@ -4,6 +4,7 @@ import { ApiServiceContext } from '../../services/ApiService.js';
 import { Spinner } from '../../components/Spinner.jsx';
 import { faEdit } from '@fortawesome/free-solid-svg-icons/faEdit';
 import { faSave } from '@fortawesome/free-solid-svg-icons/faSave';
+import { InputGroupField, SettingsFormField } from '../../components/SettingsFormField.jsx';
 
 export default function ShotNotesCard({ shot, onNotesUpdate, onNotesLoaded }) {
   const apiService = useContext(ApiServiceContext);
@@ -240,92 +241,110 @@ export default function ShotNotesCard({ shot, onNotesUpdate, onNotesLoaded }) {
         </div>
 
         {/* Bean Type */}
-        <div className='form-control'>
-          <label className='mb-2 block text-sm font-medium'>Bean Type</label>
+        <SettingsFormField label='Bean Type' htmlFor='shot-notes-bean-type' noMargin>
           {isEditing ? (
             <input
+              id='shot-notes-bean-type'
               type='text'
               className='input input-bordered w-full'
               value={notes.beanType}
               onChange={e => handleInputChange('beanType', e.target.value)}
-              placeholder='e.g., Single Origin, Blend'
             />
           ) : (
             <div className='input input-bordered bg-base-200 w-full cursor-default'>
               {notes.beanType || '—'}
             </div>
           )}
-        </div>
+        </SettingsFormField>
 
         {/* Dose In */}
-        <div className='form-control'>
-          <label className='mb-2 block text-sm font-medium'>Dose In (g)</label>
-          {isEditing ? (
+        {isEditing ? (
+          <InputGroupField
+            label='Dose In'
+            htmlFor='shot-notes-dose-in'
+            unit='g'
+            unitAriaLabel='grams'
+            noMargin
+          >
             <input
+              id='shot-notes-dose-in'
               type='number'
               step='0.1'
-              className='input input-bordered w-full'
+              className='grow'
               value={notes.doseIn}
               onChange={e => handleInputChange('doseIn', e.target.value)}
-              placeholder='18.0'
             />
-          ) : (
+          </InputGroupField>
+        ) : (
+          <SettingsFormField label='Dose In' htmlFor='shot-notes-dose-in' noMargin>
             <div className='input input-bordered bg-base-200 w-full cursor-default'>
               {notes.doseIn || '—'}
             </div>
-          )}
-        </div>
+          </SettingsFormField>
+        )}
 
         {/* Dose Out */}
-        <div className='form-control'>
-          <label className='mb-2 block text-sm font-medium'>Dose Out (g)</label>
-          {isEditing ? (
+        {isEditing ? (
+          <InputGroupField
+            label='Dose Out'
+            htmlFor='shot-notes-dose-out'
+            unit='g'
+            unitAriaLabel='grams'
+            noMargin
+          >
             <input
+              id='shot-notes-dose-out'
               type='number'
               step='0.1'
-              className='input input-bordered w-full'
+              className='grow'
               value={notes.doseOut}
               onChange={e => handleInputChange('doseOut', e.target.value)}
-              placeholder='36.0'
             />
-          ) : (
+          </InputGroupField>
+        ) : (
+          <SettingsFormField label='Dose Out' htmlFor='shot-notes-dose-out' noMargin>
             <div className='input input-bordered bg-base-200 w-full cursor-default'>
               {notes.doseOut || '—'}
             </div>
-          )}
-        </div>
+          </SettingsFormField>
+        )}
 
         {/* Ratio */}
-        <div className='form-control'>
-          <label className='mb-2 block text-sm font-medium'>Ratio (1:{notes.ratio || '—'})</label>
-          <div className='input input-bordered bg-base-200 w-full cursor-default'>
+        <SettingsFormField
+          label={`Ratio (1:${notes.ratio || '—'})`}
+          htmlFor='shot-notes-ratio'
+          noMargin
+        >
+          <div
+            id='shot-notes-ratio'
+            className='input input-bordered bg-base-200 w-full cursor-default'
+          >
             {notes.ratio ? `1:${notes.ratio}` : '—'}
           </div>
-        </div>
+        </SettingsFormField>
 
         {/* Grind Setting */}
-        <div className='form-control'>
-          <label className='mb-2 block text-sm font-medium'>Grind Setting</label>
+        <SettingsFormField label='Grind Setting' htmlFor='shot-notes-grind-setting' noMargin>
           {isEditing ? (
             <input
+              id='shot-notes-grind-setting'
               type='text'
               className='input input-bordered w-full'
               value={notes.grindSetting}
               onChange={e => handleInputChange('grindSetting', e.target.value)}
-              placeholder='e.g., 2.5, Medium-Fine'
             />
           ) : (
             <div className='input input-bordered bg-base-200 w-full cursor-default'>
               {notes.grindSetting || '—'}
             </div>
           )}
-        </div>
+        </SettingsFormField>
 
         {/* Balance/Taste */}
-        <div className='form-control'>
-          <label className='mb-2 block text-sm font-medium'>Balance/Taste</label>
+        <SettingsFormField label='Balance/Taste' htmlFor='shot-notes-balance-taste' noMargin>
           {isEditing ? (
             <select
+              id='shot-notes-balance-taste'
               className='select select-bordered w-full'
               value={notes.balanceTaste}
               onChange={e => handleInputChange('balanceTaste', e.target.value)}
@@ -341,30 +360,30 @@ export default function ShotNotesCard({ shot, onNotesUpdate, onNotesLoaded }) {
               {notes.balanceTaste}
             </div>
           )}
-        </div>
+        </SettingsFormField>
       </div>
 
       {/* Notes Text Area - Full Width */}
-      <div className='form-control mt-6'>
-        <label className='mb-2 block text-sm font-medium'>
-          Notes{' '}
-          {isEditing && <span className='text-xs text-gray-500'>({notes.notes.length}/200)</span>}
-        </label>
+      <SettingsFormField
+        label={isEditing ? `Notes (${notes.notes.length}/200)` : 'Notes'}
+        htmlFor='shot-notes-text'
+        className='mt-6'
+      >
         {isEditing ? (
           <textarea
+            id='shot-notes-text'
             className='textarea textarea-bordered w-full'
             rows='4'
             value={notes.notes}
             maxLength={200}
             onChange={e => handleInputChange('notes', e.target.value)}
-            placeholder='Tasting notes, brewing observations, etc...'
           />
         ) : (
           <div className='textarea textarea-bordered bg-base-200 min-h-[6rem] w-full cursor-default'>
             {notes.notes || 'No notes added'}
           </div>
         )}
-      </div>
+      </SettingsFormField>
     </div>
   );
 }
