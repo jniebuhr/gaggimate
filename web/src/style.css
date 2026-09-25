@@ -608,6 +608,11 @@ html[data-theme='coffee'] {
   }
 }
 
+/* Sit above the settings save bar while that bar is stuck to the screen bottom. */
+.mobile-nav-fab {
+  bottom: var(--mobile-nav-fab-bottom, max(1rem, env(safe-area-inset-bottom)));
+}
+
 @custom-variant hmd {
   @media (min-height: 429px) {
     @slot;
