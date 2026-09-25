@@ -24,9 +24,18 @@ class ProfileManager {
 
     void addFavoritedProfile(String id);
     void removeFavoritedProfile(String id);
+    void reorderProfiles(const std::vector<String> &order);
+
+    // Monotonic counter bumped by every change that alters what a profile list
+    // request would return (file contents, selection, favorites, order). Sent to
+    // web clients so they can keep a cached list and skip the request entirely
+    // while the revision they hold is still current.
+    uint32_t getRevision() const { return revision; }
 
   private:
     Profile selectedProfile{};
+    uint32_t revision = 1;
+    void bumpRevision() { revision++; }
     PluginManager *_plugin_manager;
     Settings &_settings;
     fs::FS *_fs;

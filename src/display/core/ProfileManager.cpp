@@ -196,6 +196,7 @@ bool ProfileManager::saveProfile(Profile &profile) {
 
     bool ok = serializeJson(doc, file) > 0;
     file.close();
+    bumpRevision();
     if (profile.id == selectedProfile.id) {
         selectedProfile = Profile{};
         loadSelectedProfile(selectedProfile);
@@ -213,7 +214,9 @@ bool ProfileManager::deleteProfile(const String &uuid) {
     if (_settings.getStartupProfile() == uuid) {
         _settings.setStartupProfile("");
     }
-    return _fs->remove(profilePath(uuid));
+    const bool ok = _fs->remove(profilePath(uuid));
+    bumpRevision();
+    return ok;
 }
 
 bool ProfileManager::profileExists(const String &uuid) { return _fs->exists(profilePath(uuid)); }
@@ -223,6 +226,7 @@ void ProfileManager::selectProfile(const String &uuid) {
     _settings.setSelectedProfile(uuid);
     selectedProfile = Profile{};
     loadSelectedProfile(selectedProfile);
+    bumpRevision();
     _plugin_manager->trigger("profiles:profile:select", "id", uuid);
 }
 
@@ -266,10 +270,17 @@ std::vector<String> ProfileManager::getFavoritedProfiles(bool validate) {
 
 void ProfileManager::removeFavoritedProfile(String id) {
     _settings.removeFavoritedProfile(id);
+    bumpRevision();
     _plugin_manager->trigger("profiles:profile:unfavorite", "id", id);
 }
 
 void ProfileManager::addFavoritedProfile(String id) {
     _settings.addFavoritedProfile(id);
+    bumpRevision();
     _plugin_manager->trigger("profiles:profile:favorite", "id", id);
+}
+
+void ProfileManager::reorderProfiles(const std::vector<String> &order) {
+    _settings.setProfileOrder(order);
+    bumpRevision();
 }

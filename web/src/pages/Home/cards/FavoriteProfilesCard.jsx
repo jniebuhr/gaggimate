@@ -7,8 +7,16 @@ import { faClock } from '@fortawesome/free-solid-svg-icons/faClock';
 import { faScaleBalanced } from '@fortawesome/free-solid-svg-icons/faScaleBalanced';
 import PropTypes from 'prop-types';
 import { SkeletonBlock } from '../../../components/SkeletonBlock.jsx';
+import {
+  isDeviceRevisionKnown,
+  isProfileListCurrent,
+  readCachedProfileList,
+  writeCachedProfileList,
+} from '../../../utils/profileListCache.js';
 
 const connected = computed(() => machine.value.connected);
+const revisionKnown = computed(() => isDeviceRevisionKnown(machine.value));
+const profilesRevision = computed(() => machine.value.status.profilesRevision);
 
 function ProfileMiniCard({ profile, isSelected, onSelect }) {
   const phases = Array.isArray(profile?.phases) ? profile.phases : [];
@@ -67,12 +75,24 @@ export function FavoriteProfilesCard({ selectedProfileId, inCard = false, compac
       setLoading(false);
       return;
     }
+    if (!revisionKnown.value) return; // full status snapshot not in yet; keep the skeleton
+    // The dashboard is the first page of every visit: serve favorites from the
+    // browser cache while the device's profile revision is unchanged, so no
+    // list request is needed at all (see utils/profileListCache.js). Reading
+    // the revision signal here also refreshes when a profile changes elsewhere.
+    const cached = readCachedProfileList();
+    if (cached && isProfileListCurrent(cached.rev, profilesRevision.value)) {
+      setFavorites(cached.profiles.filter(p => p.favorite).slice(0, 3));
+      setLoading(false);
+      return;
+    }
     let cancelled = false;
     setLoading(true);
     apiService
       .request({ tp: 'req:profiles:list' })
       .then(res => {
         if (cancelled) return;
+        writeCachedProfileList(res.rev, res.profiles);
         setFavorites((res.profiles ?? []).filter(p => p.favorite).slice(0, 3));
         setLoading(false);
       })

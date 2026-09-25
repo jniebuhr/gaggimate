@@ -9,6 +9,7 @@
 #include <display/core/utils.h>
 #include <display/models/shot_log_format.h>
 #include <display/util/PsramAllocator.h>
+#include <esp_system.h>
 
 namespace {
 constexpr float TEMP_SCALE = 10.0f;
@@ -78,6 +79,7 @@ String padId(String id, int length = 6) {
 ShotHistoryPlugin ShotHistory;
 
 void ShotHistoryPlugin::setup(Controller *c, PluginManager *pm) {
+    indexBootToken = esp_random();
     controller = c;
     pluginManager = pm;
     if (controller->isSDCard()) {
@@ -640,6 +642,7 @@ bool ShotHistoryPlugin::ensureIndexExists() {
     }
 
     // Create new empty index
+    bumpIndexRevision();
     File indexFile = fs->open("/h/index.bin", FILE_WRITE);
     if (!indexFile) {
         ESP_LOGE("ShotHistoryPlugin", "Failed to create index file");
@@ -666,6 +669,7 @@ bool ShotHistoryPlugin::appendToIndex(const ShotIndexEntry &entry) {
     }
 
     File indexFile = fs->open("/h/index.bin", "r+");
+    bumpIndexRevision();
     if (!indexFile) {
         ESP_LOGE("ShotHistoryPlugin", "Failed to open index file for append");
         return false;
@@ -712,6 +716,7 @@ bool ShotHistoryPlugin::appendToIndex(const ShotIndexEntry &entry) {
 
 void ShotHistoryPlugin::updateIndexMetadata(uint32_t shotId, uint8_t rating, uint16_t volume) {
     File indexFile = fs->open("/h/index.bin", "r+");
+    bumpIndexRevision();
     if (!indexFile) {
         ESP_LOGE("ShotHistoryPlugin", "Failed to open index file for metadata update");
         return;
@@ -748,6 +753,7 @@ void ShotHistoryPlugin::updateIndexMetadata(uint32_t shotId, uint8_t rating, uin
 
 void ShotHistoryPlugin::markIndexDeleted(uint32_t shotId) {
     File indexFile = fs->open("/h/index.bin", "r+");
+    bumpIndexRevision();
     if (!indexFile) {
         ESP_LOGE("ShotHistoryPlugin", "Failed to open index file for deletion marking");
         return;
@@ -857,6 +863,7 @@ void ShotHistoryPlugin::rebuildIndex() {
     }
 
     // Delete existing index
+    bumpIndexRevision();
     fs->remove("/h/index.bin");
 
     // Create new empty index
@@ -1060,7 +1067,14 @@ void ShotHistoryPlugin::rebuildIndex() {
         pluginManager->trigger(completionEvent);
     }
 
+    bumpIndexRevision();
     ESP_LOGI("ShotHistoryPlugin", "Index rebuild completed");
+}
+
+String ShotHistoryPlugin::getIndexETag() const {
+    char buf[32];
+    snprintf(buf, sizeof(buf), "\"%08x-%u\"", static_cast<unsigned>(indexBootToken), static_cast<unsigned>(indexRevision));
+    return String(buf);
 }
 
 // Index helper functions

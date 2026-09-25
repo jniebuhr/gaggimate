@@ -81,8 +81,18 @@ class AsyncWebServerRequest {
         return it == _args.end() ? String() : String(it->second.c_str());
     }
     String arg(const String &name) const { return arg(name.c_str()); }
+    // Request headers, keys lowercased by the parser (lookup is case-insensitive like the real library).
+    bool hasHeader(const char *name) const { return _headers.count(lowerKey(name)) > 0; }
+    bool hasHeader(const String &name) const { return hasHeader(name.c_str()); }
+    String header(const char *name) const {
+        auto it = _headers.find(lowerKey(name));
+        return it == _headers.end() ? String() : String(it->second.c_str());
+    }
+    String header(const String &name) const { return header(name.c_str()); }
 
+    AsyncWebServerResponse *beginResponse(int code, const String &contentType = "text/plain", const String &content = String());
     AsyncWebServerResponse *beginResponse(int code, const String &contentType, const uint8_t *content, size_t len);
+    AsyncWebServerResponse *beginResponse(FS &fs, const String &path, const String &contentType);
     AsyncWebServerResponse *beginResponse(const String &contentType, size_t len, AwsResponseFiller callback);
     AsyncResponseStream *beginResponseStream(const String &contentType);
 
@@ -95,9 +105,18 @@ class AsyncWebServerRequest {
     String _url;
     int _method = HTTP_GET;
     std::map<std::string, std::string> _args;
+    std::map<std::string, std::string> _headers;
     std::string _body;
     int _fd;
     AsyncWebServer *_server;
+
+  private:
+    static std::string lowerKey(const char *name) {
+        std::string k(name);
+        for (auto &ch : k)
+            ch = tolower(ch);
+        return k;
+    }
 };
 
 using ArRequestHandlerFunction = std::function<void(AsyncWebServerRequest *)>;
