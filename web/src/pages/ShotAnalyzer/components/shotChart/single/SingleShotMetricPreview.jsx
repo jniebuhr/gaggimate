@@ -20,6 +20,14 @@ function getSingleMetricPageLabels() {
       key: SINGLE_METRIC_PAGE_KEYS.TEMPERATURE,
       label: 'Temperature',
     },
+    {
+      key: SINGLE_METRIC_PAGE_KEYS.PUCK_RESISTANCE,
+      label: 'Puck Resistance',
+    },
+    {
+      key: SINGLE_METRIC_PAGE_KEYS.ALL,
+      label: 'All',
+    },
   ];
 }
 
@@ -40,7 +48,7 @@ export function ShotChartStaticMetricPreview({ activePageKey, onPageChange, resu
         renderPage={page => (
           <div className='shot-chart-single-mobile-page-caption'>
             <span className='shot-chart-single-mobile-page-caption__label'>{page.label}</span>
-            <span className='shot-chart-single-mobile-page-caption__hint'>Hover info</span>
+            <span className='shot-chart-single-mobile-page-caption__hint'>Chart &amp; Metrics</span>
           </div>
         )}
       />
