@@ -81,6 +81,7 @@ export function useShotNotesState({ currentShot, isSelectionPending = false } = 
   const notesRef = useRef(notes);
   const localUpdateVersionRef = useRef(0);
   const originIdRef = useRef(null);
+  const saveTimerRef = useRef(null);
 
   if (!originIdRef.current) {
     notesStateOriginCounter += 1;
@@ -197,6 +198,41 @@ export function useShotNotesState({ currentShot, isSelectionPending = false } = 
     [currentShot],
   );
 
+  const clearSaveTimer = useCallback(() => {
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = null;
+    }
+  }, []);
+
+  const flushSave = useCallback(() => {
+    clearSaveTimer();
+    saveNotes();
+  }, [clearSaveTimer, saveNotes]);
+
+  const scheduleSave = useCallback(() => {
+    clearSaveTimer();
+    saveTimerRef.current = setTimeout(() => {
+      saveTimerRef.current = null;
+      saveNotes();
+    }, 650);
+  }, [clearSaveTimer, saveNotes]);
+
+  const handleFieldChange = useCallback(
+    (field, value) => {
+      handleInputChange(field, value);
+      scheduleSave();
+    },
+    [handleInputChange, scheduleSave],
+  );
+
+  useEffect(
+    () => () => {
+      if (saveTimerRef.current) flushSave();
+    },
+    [currentShot, flushSave],
+  );
+
   const updateAndSave = useCallback(
     async (field, value) => {
       const updated = updateNotesValue(notesRef.current, field, value);
@@ -219,7 +255,9 @@ export function useShotNotesState({ currentShot, isSelectionPending = false } = 
     saving,
     loading,
     handleInputChange,
+    handleFieldChange,
     saveNotes,
+    flushSave,
     updateAndSave,
   };
 }

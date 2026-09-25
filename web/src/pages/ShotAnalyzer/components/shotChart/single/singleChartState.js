@@ -1,9 +1,45 @@
 import { createHiddenExternalTooltipState } from '../ShotChartExternalTooltip';
-import { INITIAL_VISIBILITY } from '../constants';
+import { INITIAL_VISIBILITY, SINGLE_METRIC_PAGE_KEYS } from '../constants';
 import { isStaticMobileTooltipViewport } from '../scrubberUtils';
 import { getShotIdentityKey } from '../../../utils/analyzerUtils';
 
 export const HIDDEN_STATIC_TOOLTIP_STATE = createHiddenExternalTooltipState();
+
+const SINGLE_METRIC_PAGE_SERIES = {
+  [SINGLE_METRIC_PAGE_KEYS.BASICS]: ['pressure', 'flow', 'weight'],
+  [SINGLE_METRIC_PAGE_KEYS.PRESSURE_FLOW]: ['pressure', 'targetPressure', 'flow', 'targetFlow'],
+  [SINGLE_METRIC_PAGE_KEYS.FLOW_VOLUME]: ['weight', 'weightFlow', 'puckFlow'],
+  [SINGLE_METRIC_PAGE_KEYS.TEMPERATURE]: [],
+  [SINGLE_METRIC_PAGE_KEYS.PUCK_RESISTANCE]: ['puckResistance', 'liquidResistance'],
+  [SINGLE_METRIC_PAGE_KEYS.ALL]: [
+    'pressure',
+    'targetPressure',
+    'flow',
+    'targetFlow',
+    'puckFlow',
+    'puckResistance',
+    'liquidResistance',
+    'weight',
+    'weightFlow',
+  ],
+};
+
+const SINGLE_CHART_SERIES_VISIBILITY_KEYS = [
+  'pressure',
+  'targetPressure',
+  'flow',
+  'targetFlow',
+  'puckFlow',
+  'puckResistance',
+  'liquidResistance',
+  'weight',
+  'weightFlow',
+];
+
+const TEMPERATURE_SERIES_VISIBILITY = {
+  temp: true,
+  targetTemp: true,
+};
 
 function getDefaultSingleChartVisibility() {
   const showContextOverlaysByDefault = !isStaticMobileTooltipViewport();
@@ -27,6 +63,28 @@ export function normalizeSingleChartVisibility(storedVisibility) {
         typeof storedVisibility[key] === 'boolean' ? storedVisibility[key] : defaultVisibility[key],
     }),
     {},
+  );
+}
+
+export function getSingleMetricPageVisibility({
+  hasWeightData,
+  hasWeightFlowData,
+  pageKey,
+  visibility,
+}) {
+  const visibleSeries = new Set(
+    SINGLE_METRIC_PAGE_SERIES[pageKey] || SINGLE_METRIC_PAGE_SERIES[SINGLE_METRIC_PAGE_KEYS.BASICS],
+  );
+
+  return SINGLE_CHART_SERIES_VISIBILITY_KEYS.reduce(
+    (nextVisibility, key) => ({
+      ...nextVisibility,
+      [key]:
+        visibleSeries.has(key) &&
+        (key !== 'weight' || hasWeightData) &&
+        (key !== 'weightFlow' || hasWeightFlowData),
+    }),
+    { ...visibility, ...TEMPERATURE_SERIES_VISIBILITY },
   );
 }
 
