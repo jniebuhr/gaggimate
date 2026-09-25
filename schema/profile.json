@@ -104,6 +104,16 @@
           ],
           "enum": [0, 1]
         },
+        "alt": {
+          "type": "integer",
+          "default": 0,
+          "description": "Alt relay / dump valve state during this phase. Applied only when Alt Relay / SSR2 Function is Dump valve (`BrewProcess::isAltRelayActive()`). Omit or `0` on machines without a dump solenoid.",
+          "oneOf": [
+            { "const": 0, "title": "Closed", "description": "Dump valve closed. Default. Water stays in the group while the 3-way is open." },
+            { "const": 1, "title": "Open",   "description": "Dump valve open: group (and, with the 3-way open, pump/thermoblock) relieve to the drip tray. Used for Barista Express backflush depressurize phases." }
+          ],
+          "enum": [0, 1]
+        },
         "duration": {
           "type": "number",
           "minimum": 0.5,

@@ -11,7 +11,7 @@ void action_on_wakeup(lv_event_t *e) {
         return;
     }
     controller.getUI()->changeScreen(SCREEN_ID_BREW_SCREEN);
-    controller.deactivate();
+    controller.deactivate(true);
     controller.setMode(MODE_BREW);
 };
 
@@ -20,33 +20,33 @@ void action_on_load_started(lv_event_t *e) {
 };
 
 void action_on_menu_click(lv_event_t *e) {
-    controller.deactivate();
+    controller.deactivate(true);
     controller.setMode(MODE_BREW);
     controller.getUI()->changeScreen(SCREEN_ID_MENU_SCREEN_NEW);
 };
 
 void action_on_brew_screen(lv_event_t *e) {
     controller.getUI()->changeScreen(SCREEN_ID_BREW_SCREEN);
-    controller.deactivate();
+    controller.deactivate(true);
     controller.setMode(MODE_BREW);
 };
 
 void action_on_steam_screen(lv_event_t *e) {
     controller.getUI()->changeScreen(SCREEN_ID_STEAM_SCREEN);
     controller.setMode(MODE_STEAM);
-    controller.deactivate();
+    controller.deactivate(true);
 };
 
 void action_on_water_screen(lv_event_t *e) {
     controller.getUI()->changeScreen(SCREEN_ID_WATER_SCREEN);
     controller.setMode(MODE_WATER);
-    controller.deactivate();
+    controller.deactivate(true);
 };
 
 void action_on_grind_screen(lv_event_t *e) {
     controller.getUI()->changeScreen(SCREEN_ID_GRIND_SCREEN);
     controller.setMode(MODE_GRIND);
-    controller.deactivate();
+    controller.deactivate(true);
 };
 
 void action_on_brew_start(lv_event_t *e) { controller.activate(); }; // SHORT_CLICKED in EEZ: never fires after a long press
@@ -226,7 +226,9 @@ void action_on_next_profile(lv_event_t *e) { controller.getUI()->onNextProfile()
 
 void action_on_brew_cancel(lv_event_t *e) {
     controller.deactivate();
-    controller.clear();
+    if (!controller.isActive()) {
+        controller.clear();
+    }
 }
 
 void action_on_standby(lv_event_t *e) { controller.activateStandby(); }

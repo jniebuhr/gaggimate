@@ -106,7 +106,7 @@ class Controller {
     void lowerGrindTarget();
     void activate(bool ignoreWarnings = false);
     void cancelBrewConfirm();
-    void deactivate();
+    void deactivate(bool force = false);
     void clear();
     void activateGrind();
     void deactivateGrind();
