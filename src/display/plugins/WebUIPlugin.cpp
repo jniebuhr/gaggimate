@@ -152,6 +152,19 @@ void WebUIPlugin::serveWebAsset(AsyncWebServerRequest *request) {
     request->send(response);
 }
 
+// Answer a conditional GET with 304 when the client's If-None-Match equals
+// the current ETag. Returns true when the response has been sent.
+static bool sendNotModifiedIfMatch(AsyncWebServerRequest *request, const String &etag) {
+    if (!request->hasHeader("If-None-Match") || request->header("If-None-Match") != etag) {
+        return false;
+    }
+    AsyncWebServerResponse *response = request->beginResponse(304);
+    response->addHeader("Cache-Control", "no-cache");
+    response->addHeader("ETag", etag);
+    request->send(response);
+    return true;
+}
+
 void WebUIPlugin::setupServer() {
     server.on("/connecttest.txt", [](AsyncWebServerRequest *request) {
         request->redirect("http://logout.net");
@@ -190,14 +203,24 @@ void WebUIPlugin::setupServer() {
         .on(AsyncURIMatcher::prefix("/api/history/"), HTTP_ANY,
             [](AsyncWebServerRequest *request) { request->send(503, "text/plain", "Update in progress"); })
         .setFilter([this](AsyncWebServerRequest *) { return controller->isUpdating(); });
-    server.serveStatic("/api/history/", *fs, "/h/").setCacheControl("no-store");
+    // index.bin and recent.bin carry a strong ETag (see ShotHistoryPlugin::getIndexETag).
+    // With Cache-Control: no-cache the browser keeps the body but revalidates
+    // on every visit; nothing changed since the last shot means a bodyless 304
+    // instead of re-sending 128 bytes per shot. Both endpoints answer that
+    // revalidation here before touching the filesystem.
     server.on("/api/history/index.bin", HTTP_GET, [this, fs](AsyncWebServerRequest *request) {
-        // Serve the binary index file directly
-        if (fs->exists("/h/index.bin")) {
-            request->send(*fs, "/h/index.bin", "application/octet-stream");
-        } else {
-            request->send(404, "text/plain", "Index not found");
+        const String etag = ShotHistory.getIndexETag();
+        if (sendNotModifiedIfMatch(request, etag)) {
+            return;
         }
+        if (!fs->exists("/h/index.bin")) {
+            request->send(404, "text/plain", "Index not found");
+            return;
+        }
+        AsyncWebServerResponse *response = request->beginResponse(*fs, "/h/index.bin", "application/octet-stream");
+        response->addHeader("Cache-Control", "no-cache");
+        response->addHeader("ETag", etag);
+        request->send(response);
     });
     server.on("/api/history/recent.bin", HTTP_GET, [this](AsyncWebServerRequest *request) {
         // The most recent non-deleted shots, newest first, as a regular shot
@@ -207,6 +230,14 @@ void WebUIPlugin::setupServer() {
         long limit = 8;
         if (request->hasArg("limit")) {
             limit = constrain(request->arg("limit").toInt(), 1L, MAX_RECENT_LIMIT);
+        }
+
+        // The limit is part of the identity: a cached 8-entry body must not
+        // satisfy a request for 20.
+        const String etag = ShotHistory.getIndexETag();
+        const String recentEtag = etag.substring(0, etag.length() - 1) + "-" + String(limit) + "\"";
+        if (sendNotModifiedIfMatch(request, recentEtag)) {
+            return;
         }
 
         auto *entries = static_cast<ShotIndexEntry *>(ps_malloc(limit * sizeof(ShotIndexEntry)));
@@ -224,12 +255,17 @@ void WebUIPlugin::setupServer() {
         header.nextId = 0; // meaningless for a partial view
 
         AsyncResponseStream *response = request->beginResponseStream("application/octet-stream");
-        response->addHeader("Cache-Control", "no-store");
+        response->addHeader("Cache-Control", "no-cache");
+        response->addHeader("ETag", recentEtag);
         response->write(reinterpret_cast<const uint8_t *>(&header), sizeof(header));
         response->write(reinterpret_cast<const uint8_t *>(entries), count * sizeof(ShotIndexEntry));
         free(entries);
         request->send(response);
     });
+    // Registered after the two explicit handlers above: the server takes the
+    // first handler whose canHandle() matches, and this one matches any path
+    // under /h/ that exists on disk — including index.bin.
+    server.serveStatic("/api/history/", *fs, "/h/").setCacheControl("no-store");
     server.on("/api/core-dump", HTTP_GET, [this](AsyncWebServerRequest *request) { handleCoreDumpDownload(request); });
     // The web UI is embedded in firmware flash and served from the memory-mapped blob (see serveWebAsset). It is no
     // longer in LittleFS, so OTA never touches the partition holding profiles/shots. The catch-all onNotFound handles

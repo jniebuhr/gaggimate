@@ -1,15 +1,5 @@
-import {
-  Chart,
-  LineController,
-  TimeScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Legend,
-  Filler,
-} from 'chart.js';
-import 'chartjs-adapter-dayjs-4/dist/chartjs-adapter-dayjs-4.esm';
-import { OverviewChart } from '../../components/OverviewChart.jsx';
+import { lazyComponent } from '../../utils/lazyComponent.jsx';
+import { SkeletonBlock } from '../../components/SkeletonBlock.jsx';
 import Card from '../../components/Card.jsx';
 import { DashboardSidebar } from './DashboardSidebar.jsx';
 import { RecentShotsCard } from './cards/RecentShotsCard.jsx';
@@ -22,7 +12,14 @@ import {
   showRecentShotsSignal,
 } from '../../utils/dashboardManager.js';
 
-Chart.register(LineController, TimeScale, LinearScale, PointElement, LineElement, Filler, Legend);
+// Chart.js is loaded lazily so the dashboard shell paints before it arrives.
+const OverviewChart = lazyComponent(
+  () => import('../../components/OverviewChart.jsx'),
+  'OverviewChart',
+  () => (
+    <SkeletonBlock className='h-full min-h-[200px] w-full flex-1 rounded-lg lg:min-h-[350px] landscape:max-lg:min-h-0' />
+  ),
+);
 
 export function Home() {
   const isOrderFirst = dashboardLayoutSignal.value === DASHBOARD_LAYOUTS.ORDER_FIRST;

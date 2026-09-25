@@ -63,6 +63,7 @@ export default class ApiService {
     machine.value = {
       ...machine.value,
       connected: false,
+      stateReceived: false,
     };
     this._scheduleReconnect();
   }
@@ -180,6 +181,7 @@ export default class ApiService {
     map('m', 'mode');
     map('p', 'selectedProfile');
     map('puid', 'selectedProfileId');
+    map('prv', 'profilesRevision'); // bumps on any profile change; see utils/profileListCache.js
     map('bt', 'brewTarget', v => !!v);
     map('btd', 'brewTargetDuration', v => v || 0);
     map('bta', 'volumetricAvailable', v => v || false);
@@ -221,7 +223,19 @@ export default class ApiService {
       history = [...history, historyEntry].slice(-600);
     }
 
-    machine.value = { ...machine.value, connected: true, status, capabilities, history };
+    // The firmware replays its full slow-state frame (always carrying `m`) to
+    // every new client before anything else. Pages that compare cached data
+    // against a device revision wait for it, so they never fetch just because
+    // the socket opened a few milliseconds before the revision arrived.
+    const stateReceived = machine.value.stateReceived || has('m');
+    machine.value = {
+      ...machine.value,
+      connected: true,
+      stateReceived,
+      status,
+      capabilities,
+      history,
+    };
   }
 }
 
@@ -229,6 +243,7 @@ export const ApiServiceContext = createContext(null);
 
 export const machine = signal({
   connected: false,
+  stateReceived: false, // full evt:status snapshot seen on this connection
   status: {
     currentTemperature: 0,
     targetTemperature: 0,
