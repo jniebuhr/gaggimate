@@ -276,10 +276,11 @@ export function SystemTab() {
   }, [apiService]);
 
   useEffect(() => {
-    setTimeout(() => {
-      apiService.send({ tp: 'req:ota-settings' });
-    }, 500);
-  }, [apiService]);
+    if (!machine.value.connected) {
+      return;
+    }
+    apiService.send({ tp: 'req:ota-settings' });
+  }, [apiService, machine.value.connected]);
 
   const formRef = useRef();
 
