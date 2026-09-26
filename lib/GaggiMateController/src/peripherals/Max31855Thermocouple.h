@@ -6,10 +6,11 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 
-constexpr int MAX31855_UPDATE_INTERVAL = 250;
+constexpr int MAX31855_UPDATE_INTERVAL = 100;
 constexpr int MAX31855_ERROR_WINDOW = 20;
 constexpr float MAX31855_MAX_ERROR_RATE = 0.5f;
 constexpr int MAX31855_MAX_ERRORS = static_cast<int>(static_cast<float>(MAX31855_ERROR_WINDOW) * MAX31855_MAX_ERROR_RATE);
+constexpr size_t MAX31855_WINDOW_SIZE = 5;
 
 using temperature_callback_t = std::function<void(float)>;
 using temperature_error_callback_t = std::function<void()>;
@@ -30,6 +31,8 @@ class Max31855Thermocouple : public TemperatureSensor {
 
     int errorCount = 0;
     std::array<int, MAX31855_ERROR_WINDOW> resultBuffer{};
+    std::array<float, MAX31855_WINDOW_SIZE> slidingWindow{};
+    size_t windowCounter = 0;
     size_t resultCount = 0;
     size_t bufferIndex = 0;
 
