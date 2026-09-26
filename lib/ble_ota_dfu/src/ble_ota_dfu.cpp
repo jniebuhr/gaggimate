@@ -27,7 +27,7 @@ void task_install_update(void *parameters) {
 
     // If the file cannot be loaded, return.
     if (!update_binary) {
-        ESP_LOGE(TAG, "Could not load update.bin from spiffs root");
+        ESP_LOGE(TAG, "Could not load update.bin from littlefs root");
         vTaskDelete(NULL);
     }
 
@@ -84,7 +84,7 @@ void task_install_update(void *parameters) {
 
     update_binary.close();
 
-    // When finished remove the binary from spiffs
+    // When finished remove the binary from littlefs
     // to indicate the end of the process
     ESP_LOGI(TAG, "Removing update file");
     FLASH.remove(path);
@@ -306,22 +306,12 @@ void BLEOverTheAirDeviceFirmwareUpdate::onWrite(BLECharacteristic *pCharacterist
 }
 
 bool BLE_OTA_DFU::configure_OTA(NimBLEServer *pServer) {
-    // Init FLASH
-#ifdef USE_SPIFFS
-    if (!SPIFFS.begin(FORMAT_FLASH_IF_MOUNT_FAILED)) {
-        ESP_LOGE(TAG, "SPIFFS Mount Failed");
+    // Init FLASH (LittleFS on the board's filesystem partition)
+    if (!LittleFS.begin(FORMAT_FLASH_IF_MOUNT_FAILED, "/littlefs", 10, "spiffs")) {
+        ESP_LOGE(TAG, "LittleFS Mount Failed");
         return false;
     }
-    ESP_LOGI(TAG, "SPIFFS Mounted");
-#else
-    if (!FFat.begin()) {
-        ESP_LOGE(TAG, "FFat Mount Failed");
-        if (FORMAT_FLASH_IF_MOUNT_FAILED)
-            FFat.format();
-        return false;
-    }
-    ESP_LOGI(TAG, "FFat Mounted");
-#endif
+    ESP_LOGI(TAG, "LittleFS Mounted");
 
     // Get the pointer to the pServer
     this->pServer = pServer;
@@ -386,7 +376,9 @@ bool BLE_OTA_DFU::begin(String local_name) {
         return false;
     }
 
-    this->configure_OTA(pServer);
+    if (!this->configure_OTA(pServer)) {
+        return false;
+    }
 
     // Start advertising
     pServer->getAdvertising()->addServiceUUID(pServiceOTA->getUUID());
