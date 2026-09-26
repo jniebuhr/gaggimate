@@ -239,6 +239,8 @@ void Settings::setSteamPumpCutoff(float steam_pump_cutoff) { steamPumpCutoff.set
 
 void Settings::setThemeMode(int theme_mode) { themeMode.set(theme_mode); }
 
+void Settings::setGaugeSetpointsInside(bool inside) { gaugeSetpointsInside.set(inside); }
+
 void Settings::setHistoryIndex(int history_index) { historyIndex.set(history_index); }
 
 void Settings::setSunriseR(int sunrise_r) { sunriseR = sunrise_r; }

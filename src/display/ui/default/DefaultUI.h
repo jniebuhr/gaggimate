@@ -75,9 +75,11 @@ class DefaultUI {
     void animateGaugeTicks(ScreensEnum from, ScreensEnum to);
     void collectMeters(lv_obj_t *obj);
     void setGaugeTickLength(int32_t len);
+    void applyGaugeSetpointStyle(bool inside);
     static void gaugeTickAnimCb(void *var, int32_t v);
     lv_obj_t *gaugeMeters[4] = {nullptr};
     uint8_t gaugeCount = 0;
+    bool gaugeSetpointsInside = false;
     void positionMenuIcon(lv_obj_t *obj, int angle, int radius);
 
     void updateState();
