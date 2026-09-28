@@ -93,7 +93,6 @@ void BLEScalePlugin::setup(Controller *controller, PluginManager *manager) {
         ESP_LOGW("BLEScalePlugin", "Controller disconnected, stopping BLE scan");
         active = false;
     });
-    manager->on("controller:brew:prestart", [this](Event const &) { onProcessStart(); });
     manager->on("controller:brew:end", [this](Event const &) {
         if (scale != nullptr && scale->isConnected() && scale->hasTimerControl()) {
             scale->stopTimer();

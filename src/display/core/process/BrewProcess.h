@@ -23,7 +23,9 @@ class BrewProcess : public Process {
     bool holdPhase = false;                                 // phase 0 runs until release() (hold-to-flush, GM-201)
     bool releaseRequested = false;
     double phaseStartVolume = 0;
-    double currentVolume = 0; // most recent volume pushed
+    double currentVolume = 0;  // most recent volume pushed
+    double volumeBaseline = 0; // reading at shot start; volumetric values are measured from it, not from zero
+    bool volumeBaselineSet = false;
     float currentFlow = 0.0f;
     float currentPressure = 0.0f;
     float waterPumped = 0.0f;
@@ -41,11 +43,18 @@ class BrewProcess : public Process {
     }
 
     void updateVolume(double volume) override { // called even after the Process is no longer active
+        if (!volumeBaselineSet) { // first reading of the shot defines zero
+            volumeBaseline = volume;
+            volumeBaselineSet = true;
+        }
         currentVolume = volume;
         if (processPhase != ProcessPhase::FINISHED) { // only store measurements while active
-            volumetricRateCalculator.addMeasurement(volume);
+            volumetricRateCalculator.addMeasurement(relativeVolume());
         }
     }
+
+    // Volume this shot has added. Profiles state targets in these terms, so everything measured must match.
+    double relativeVolume() const { return max(0.0, currentVolume - volumeBaseline); }
 
     void updatePressure(float pressure) { currentPressure = pressure; }
 
@@ -71,12 +80,12 @@ class BrewProcess : public Process {
         if (releaseRequested) {
             return PhaseExitReason::HOLD_RELEASED;
         }
-        double volume = currentVolume;
+        double volume = relativeVolume();
         if (volume > 0.0) {
             double currentRate = volumetricRateCalculator.getRate();
             double predictedAddedVolume = currentRate * brewDelay;
             predictedAddedVolume = std::clamp(predictedAddedVolume, 0.0, 8.0);
-            volume = currentVolume + predictedAddedVolume;
+            volume += predictedAddedVolume;
         }
         float timeInPhase = static_cast<float>(millis() - currentPhaseStarted) / 1000.0f;
         return currentPhase.isFinished(target == ProcessTarget::VOLUMETRIC, volume, timeInPhase, currentFlow, currentPressure,
@@ -99,7 +108,7 @@ class BrewProcess : public Process {
     }
 
     double getNewDelayTime() {
-        double newDelay = brewDelay + volumetricRateCalculator.getOvershootAdjustMillis(getBrewVolume(), currentVolume);
+        double newDelay = brewDelay + volumetricRateCalculator.getOvershootAdjustMillis(getBrewVolume(), relativeVolume());
         if (newDelay <= 0.0 || newDelay >= PREDICTIVE_TIME) {
             return -1;
         }
@@ -162,7 +171,7 @@ class BrewProcess : public Process {
                 phaseStartedPumped = waterPumped;
                 phaseIndex++;
                 Phase nextPhase = profile.phases.at(phaseIndex);
-                phaseStartVolume = currentVolume;
+                phaseStartVolume = relativeVolume();
                 phaseStartPressure = nextPhase.transition.adaptive ? currentPressure : getPumpPressure();
                 phaseStartFlow = nextPhase.transition.adaptive ? currentFlow : getPumpFlow();
                 currentPhase = nextPhase;
@@ -264,7 +273,7 @@ class BrewProcess : public Process {
             if (endValue <= 0.0f && currentPhase.hasVolumetricTarget()) {
                 endValue = currentPhase.getVolumetricTarget().value - phaseStartVolume;
             }
-            startValue = max(0.0, currentVolume - phaseStartVolume);
+            startValue = max(0.0, relativeVolume() - phaseStartVolume);
         }
         if (currentPhase.transition.target == TransitionTarget::PUMPED) {
             endValue = currentPhase.transition.duration;

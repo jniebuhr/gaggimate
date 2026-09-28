@@ -999,7 +999,6 @@ void Controller::activate(bool ignoreWarnings) {
         return;
     }
     clear();
-    comms.tare();
     currentWaterPumped = 0.0f;
     if (isVolumetricAvailable()) {
 #ifdef NIGHTLY_BUILD
