@@ -185,6 +185,7 @@ function getSinglePagedMetricRows({ metricContext = null, rows = [] }) {
       'Puck Flow',
     ],
     [SINGLE_METRIC_PAGE_KEYS.TEMPERATURE]: ['Temp', 'Target T'],
+    [SINGLE_METRIC_PAGE_KEYS.PUCK_RESISTANCE]: ['Puck Resistance', 'Liquid Resistance'],
   };
   const orderedLabels = labelsByPage[pageKey] || labelsByPage[SINGLE_METRIC_PAGE_KEYS.BASICS];
   const orderIndexByLabel = new Map(orderedLabels.map((label, index) => [label, index]));
@@ -472,6 +473,23 @@ function SinglePagedContext({ state }) {
 }
 
 function SinglePagedMetricList({ metricContext = null, rows }) {
+  if (metricContext?.page === SINGLE_METRIC_PAGE_KEYS.ALL) {
+    return (
+      <div className='shot-chart-tooltip__single-paged-all-metric-list'>
+        {rows
+          .filter(row => row && !row.isPlaceholder)
+          .map((row, index) => (
+            <StaticCompactMetricRow
+              key={`${row.label}-${row.valueText}-${index}`}
+              hideShotLabel
+              row={row}
+              index={index}
+            />
+          ))}
+      </div>
+    );
+  }
+
   const metricRows = getSinglePagedMetricRows({ metricContext, rows }).filter(
     row => row && !row.isPlaceholder,
   );

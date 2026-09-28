@@ -13,6 +13,8 @@ export const SINGLE_METRIC_PAGE_KEYS = {
   PRESSURE_FLOW: 'pressureFlow',
   FLOW_VOLUME: 'flowVolume',
   TEMPERATURE: 'temperature',
+  PUCK_RESISTANCE: 'puckResistance',
+  ALL: 'all',
 };
 
 export const COMPARE_DETAIL_METRIC_PAGE_KEYS = {

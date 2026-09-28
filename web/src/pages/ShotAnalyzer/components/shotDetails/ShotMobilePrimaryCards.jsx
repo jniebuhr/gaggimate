@@ -1,21 +1,9 @@
 import { ShotMainInfoCard } from './ShotMainInfoCard';
-import { ShotRatioCard, useRatioCardState } from './ShotRatioCard';
+import { useShotNotesState } from '../useShotNotesState';
 
-export function ShotMobilePrimaryCards({ entry, index = 0 }) {
-  const {
-    loading,
-    notes,
-    isEditingRatio,
-    sliderRatio,
-    sliderTouched,
-    updateAndSave,
-    handleRatioCommit,
-    setIsEditingRatio,
-    setSliderRatio,
-    setSliderTouched,
-  } = useRatioCardState({
+export function ShotMobilePrimaryCards({ entry }) {
+  const { loading, notes, updateAndSave } = useShotNotesState({
     currentShot: entry?.shot,
-    entryKey: entry?.key || entry?.shot?.id || entry?.shotName || index,
   });
 
   return (
@@ -25,25 +13,6 @@ export function ShotMobilePrimaryCards({ entry, index = 0 }) {
         notes={notes}
         loading={loading}
         onRatingChange={value => updateAndSave('rating', value)}
-      />
-      <ShotRatioCard
-        notes={notes}
-        isEditingRatio={isEditingRatio}
-        sliderRatio={sliderRatio}
-        sliderTouched={sliderTouched}
-        onSliderInput={value => {
-          setSliderRatio(value);
-          if (!sliderTouched) setSliderTouched(true);
-        }}
-        onSliderActivate={() => {
-          if (!sliderTouched) setSliderTouched(true);
-        }}
-        onRatioCommit={handleRatioCommit}
-        onEditRatio={() => {
-          setSliderTouched(true);
-          setIsEditingRatio(true);
-        }}
-        className='sm:hidden'
       />
     </div>
   );

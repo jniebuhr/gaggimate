@@ -437,6 +437,7 @@ void WebSocketHandler::publishTelemetry() {
         statusDoc["pkr"] = round_to(controller->getCurrentPuckResistance(), 3);
         statusDoc["pf"] = round_to(controller->getCurrentPuckFlow(), 3);
         statusDoc["tf"] = controller->getTargetFlow();
+        statusDoc["wp"] = round_to(controller->getCurrentWaterPumped(), 3);
         if (process->getType() == MODE_BREW) {
             auto *brew = static_cast<BrewProcess *>(process);
             unsigned long ts = brew->isActive() && controller->isActive() ? millis() : brew->finished;
