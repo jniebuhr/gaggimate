@@ -731,7 +731,7 @@ void DefaultUI::updateBrewProcess() {
     brewProcess.phase_value_is_weight(weightTarget);
     if (weightTarget) {
         const float target = phase.getVolumetricTarget().value;
-        const float current = static_cast<float>(bp->relativeVolume());
+        const auto current = static_cast<float>(bp->relativeVolume());
         brewProcess.phase_value_current(current);
         brewProcess.phase_value_target(target);
         brewProcess.elapsed_percentage(target > 0.0f ? clampPercentage(current / target * 100.0f) : 0.0f);

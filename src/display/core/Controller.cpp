@@ -1019,9 +1019,7 @@ void Controller::activate(bool ignoreWarnings) {
                                          ? ProcessTarget::VOLUMETRIC
                                          : ProcessTarget::TIME,
                                      settings.getBrewDelay(),
-                                     isBluetoothScaleHealthy()
-                                         ? std::optional<double>(lastBluetoothVolume.load(std::memory_order_relaxed))
-                                         : std::nullopt));
+                                     retainedBluetoothWeight()));
         break;
     case MODE_STEAM:
         startProcess(new SteamProcess(STEAM_SAFETY_DURATION_MS, settings.getSteamPumpPercentage()));
@@ -1205,8 +1203,10 @@ void Controller::onVolumetricMeasurement(double measurement, VolumetricMeasureme
                                : F("controller:volumetric-measurement:bluetooth:change"),
                            "value", static_cast<float>(measurement));
     if (source == VolumetricMeasurementSource::BLUETOOTH) {
+        // Volume first: the timestamp is what readers test for freshness, so publishing it
+        // ahead of the value it vouches for would let them take the previous reading.
+        lastBluetoothVolume.store(static_cast<float>(measurement));
         lastBluetoothMeasurement = millis();
-        lastBluetoothVolume.store(static_cast<float>(measurement), std::memory_order_relaxed);
     }
 
     if (currentVolumetricSource != source) {
@@ -1222,6 +1222,16 @@ void Controller::onVolumetricMeasurement(double measurement, VolumetricMeasureme
     if (lastProcess != nullptr && !lastProcess->isComplete()) {
         lastProcess->updateVolume(measurement);
     }
+}
+
+// Weight to start a shot from, or empty when none is recent enough to trust. Deliberately not
+// isBluetoothScaleHealthy(): that accepts volumetricOverride, which a connected scale can set
+// before it has reported anything, and a stale weight must never become a shot's zero point.
+std::optional<double> Controller::retainedBluetoothWeight() const {
+    if (millis() - lastBluetoothMeasurement >= BLUETOOTH_GRACE_PERIOD_MS) {
+        return std::nullopt;
+    }
+    return lastBluetoothVolume.load();
 }
 
 bool Controller::isBluetoothScaleHealthy() const {

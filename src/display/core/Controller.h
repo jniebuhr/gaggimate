@@ -7,6 +7,7 @@
 #include "SystemInfo.h"
 #include <WiFi.h>
 #include <atomic>
+#include <optional>
 #include <display/core/ButtonHandler.h>
 #include <display/core/ProfileManager.h>
 #include <display/core/WarningManager.h>
@@ -121,6 +122,7 @@ class Controller {
     void onVolumetricMeasurement(double measurement, VolumetricMeasurementSource source);
     void setVolumetricOverride(bool override) { volumetricOverride = override; }
     bool isBluetoothScaleHealthy() const;
+    std::optional<double> retainedBluetoothWeight() const;
     void onFlush();
     void onFlushRelease(); // ends a hold-to-flush; no-op otherwise
     int getWaterLevel() const {
