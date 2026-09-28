@@ -2,8 +2,6 @@
 #define BREWPROCESS_H
 
 #include <algorithm>
-#include <optional>
-
 #include <display/core/constants.h>
 #include <display/core/predictive.h>
 #include <display/core/process/Process.h>
@@ -26,7 +24,7 @@ class BrewProcess : public Process {
     bool releaseRequested = false;
     double phaseStartVolume = 0;
     double currentVolume = 0;  // most recent volume pushed
-    double volumeBaseline = 0; // reading at shot start; volumetric values are measured from it, not from zero
+    double volumeBaseline = 0; // shot's zero point; volumetric values are measured from it, not from the raw reading
     bool volumeBaselineSet = false;
     float currentFlow = 0.0f;
     float currentPressure = 0.0f;
@@ -34,17 +32,8 @@ class BrewProcess : public Process {
     float phaseStartedPumped = 0.0f;
     VolumetricRateCalculator volumetricRateCalculator{PREDICTIVE_TIME};
 
-    // initialVolume seeds the reference from a reading already in hand, so the zero point does not
-    // depend on a callback arriving between construction and the first target evaluation. Leave it
-    // unset when no fresh reading exists; the first callback then defines the reference instead.
-    explicit BrewProcess(Profile profile, ProcessTarget target, double brewDelay = 0.0,
-                         std::optional<double> initialVolume = std::nullopt)
+    explicit BrewProcess(Profile profile, ProcessTarget target, double brewDelay = 0.0)
         : profile(profile), target(target), brewDelay(brewDelay) {
-        if (initialVolume.has_value()) {
-            volumeBaseline = *initialVolume;
-            currentVolume = *initialVolume;
-            volumeBaselineSet = true;
-        }
         currentPhase = profile.phases.at(phaseIndex);
         processStarted = millis();
         currentPhaseStarted = millis();
@@ -54,7 +43,12 @@ class BrewProcess : public Process {
     }
 
     void updateVolume(double volume) override { // called even after the Process is no longer active
-        if (!volumeBaselineSet) { // first reading of the shot defines zero
+        // Lowest reading of the shot is the zero point. The tare is requested at the start but
+        // travels over BLE, so the opening readings can still carry whatever stood on the scale;
+        // tracking downwards lets a late tare pull the reference to zero when it lands, and leaves
+        // a standing weight as the zero point when no tare ever arrives. Extraction only ever adds,
+        // so nothing that belongs to the shot can lower it.
+        if (!volumeBaselineSet || volume < volumeBaseline) {
             volumeBaseline = volume;
             volumeBaselineSet = true;
         }

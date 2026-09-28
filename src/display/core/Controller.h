@@ -7,7 +7,6 @@
 #include "SystemInfo.h"
 #include <WiFi.h>
 #include <atomic>
-#include <optional>
 #include <display/core/ButtonHandler.h>
 #include <display/core/ProfileManager.h>
 #include <display/core/WarningManager.h>
@@ -122,7 +121,6 @@ class Controller {
     void onVolumetricMeasurement(double measurement, VolumetricMeasurementSource source);
     void setVolumetricOverride(bool override) { volumetricOverride = override; }
     bool isBluetoothScaleHealthy() const;
-    std::optional<double> retainedBluetoothWeight() const;
     void onFlush();
     void onFlushRelease(); // ends a hold-to-flush; no-op otherwise
     int getWaterLevel() const {
@@ -279,10 +277,6 @@ class Controller {
     // Bluetooth scale connection monitoring
     VolumetricMeasurementSource currentVolumetricSource = VolumetricMeasurementSource::INACTIVE;
     unsigned long lastBluetoothMeasurement = 0;
-    // Last reported weight, to seed a new process before its first callback. Written from the BLE
-    // task at ~10 Hz and read when a shot starts, so it is atomic; float keeps that lock-free and
-    // still carries the scale's 0.1 g resolution.
-    std::atomic<float> lastBluetoothVolume{0.0f};
     static const unsigned long BLUETOOTH_GRACE_PERIOD_MS = 1500; // 1.5 second grace period
     static const unsigned long CONTROLLER_WAITING_TIMEOUT_MS = 10000;
 
