@@ -705,7 +705,7 @@ void DefaultUI::updateBrewProcess() {
     brewProcess.profile_is_volumetric(bp->target == ProcessTarget::VOLUMETRIC);
     brewProcess.profile_target_weight(bp->getBrewVolume());
     brewProcess.boiler_target_temperature(bp->getTemperature());
-    brewProcess.current_volume(bp->currentVolume);
+    brewProcess.current_volume(bp->relativeVolume());
 
     const char *phaseType = phase.phase == PhaseType::PHASE_TYPE_BREW ? "BREW" : "INFUSION";
     if (stringChanged(brewProcess.phase_type(), phaseType))
@@ -733,7 +733,7 @@ void DefaultUI::updateBrewProcess() {
     brewProcess.phase_value_is_weight(weightTarget);
     if (weightTarget) {
         const float target = phase.getVolumetricTarget().value;
-        const float current = static_cast<float>(bp->currentVolume);
+        const auto current = static_cast<float>(bp->relativeVolume());
         brewProcess.phase_value_current(current);
         brewProcess.phase_value_target(target);
         brewProcess.elapsed_percentage(target > 0.0f ? clampPercentage(current / target * 100.0f) : 0.0f);
