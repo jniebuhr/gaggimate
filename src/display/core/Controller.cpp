@@ -1019,7 +1019,9 @@ void Controller::activate(bool ignoreWarnings) {
                                          ? ProcessTarget::VOLUMETRIC
                                          : ProcessTarget::TIME,
                                      settings.getBrewDelay(),
-                                     isBluetoothScaleHealthy() ? std::optional(lastBluetoothVolume) : std::nullopt));
+                                     isBluetoothScaleHealthy()
+                                         ? std::optional<double>(lastBluetoothVolume.load(std::memory_order_relaxed))
+                                         : std::nullopt));
         break;
     case MODE_STEAM:
         startProcess(new SteamProcess(STEAM_SAFETY_DURATION_MS, settings.getSteamPumpPercentage()));
@@ -1204,7 +1206,7 @@ void Controller::onVolumetricMeasurement(double measurement, VolumetricMeasureme
                            "value", static_cast<float>(measurement));
     if (source == VolumetricMeasurementSource::BLUETOOTH) {
         lastBluetoothMeasurement = millis();
-        lastBluetoothVolume = measurement;
+        lastBluetoothVolume.store(static_cast<float>(measurement), std::memory_order_relaxed);
     }
 
     if (currentVolumetricSource != source) {

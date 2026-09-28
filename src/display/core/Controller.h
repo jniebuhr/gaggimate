@@ -277,7 +277,10 @@ class Controller {
     // Bluetooth scale connection monitoring
     VolumetricMeasurementSource currentVolumetricSource = VolumetricMeasurementSource::INACTIVE;
     unsigned long lastBluetoothMeasurement = 0;
-    double lastBluetoothVolume = 0; // last reported weight, to seed a new process before its first callback
+    // Last reported weight, to seed a new process before its first callback. Written from the BLE
+    // task at ~10 Hz and read when a shot starts, so it is atomic; float keeps that lock-free and
+    // still carries the scale's 0.1 g resolution.
+    std::atomic<float> lastBluetoothVolume{0.0f};
     static const unsigned long BLUETOOTH_GRACE_PERIOD_MS = 1500; // 1.5 second grace period
     static const unsigned long CONTROLLER_WAITING_TIMEOUT_MS = 10000;
 
