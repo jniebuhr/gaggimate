@@ -43,17 +43,18 @@ class BrewProcess : public Process {
     }
 
     void updateVolume(double volume) override { // called even after the Process is no longer active
-        // Lowest reading of the shot is the zero point. The tare is requested at the start but
-        // travels over BLE, so the opening readings can still carry whatever stood on the scale;
-        // tracking downwards lets a late tare pull the reference to zero when it lands, and leaves
-        // a standing weight as the zero point when no tare ever arrives. Extraction only ever adds,
-        // so nothing that belongs to the shot can lower it.
-        if (!volumeBaselineSet || volume < volumeBaseline) {
-            volumeBaseline = volume;
-            volumeBaselineSet = true;
-        }
         currentVolume = volume;
         if (processPhase != ProcessPhase::FINISHED) { // only store measurements while active
+            // Lowest reading of the shot is its zero point. The tare is requested at the start but
+            // travels over BLE, so the opening readings can still carry whatever stood on the scale;
+            // tracking downwards lets a late tare pull the zero point down when it lands, and leaves
+            // a standing weight as the zero point when no tare ever arrives. Extraction only adds, so
+            // nothing belonging to the shot can lower it. Frozen once finished: readings still arrive
+            // afterwards, and lifting the cup must not redefine the zero of a shot that is over.
+            if (!volumeBaselineSet || volume < volumeBaseline) {
+                volumeBaseline = volume;
+                volumeBaselineSet = true;
+            }
             volumetricRateCalculator.addMeasurement(relativeVolume());
         }
     }
