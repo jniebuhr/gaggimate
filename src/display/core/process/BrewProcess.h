@@ -2,6 +2,8 @@
 #define BREWPROCESS_H
 
 #include <algorithm>
+#include <optional>
+
 #include <display/core/constants.h>
 #include <display/core/predictive.h>
 #include <display/core/process/Process.h>
@@ -32,8 +34,17 @@ class BrewProcess : public Process {
     float phaseStartedPumped = 0.0f;
     VolumetricRateCalculator volumetricRateCalculator{PREDICTIVE_TIME};
 
-    explicit BrewProcess(Profile profile, ProcessTarget target, double brewDelay = 0.0)
+    // initialVolume seeds the reference from a reading already in hand, so the zero point does not
+    // depend on a callback arriving between construction and the first target evaluation. Leave it
+    // unset when no fresh reading exists; the first callback then defines the reference instead.
+    explicit BrewProcess(Profile profile, ProcessTarget target, double brewDelay = 0.0,
+                         std::optional<double> initialVolume = std::nullopt)
         : profile(profile), target(target), brewDelay(brewDelay) {
+        if (initialVolume.has_value()) {
+            volumeBaseline = *initialVolume;
+            currentVolume = *initialVolume;
+            volumeBaselineSet = true;
+        }
         currentPhase = profile.phases.at(phaseIndex);
         processStarted = millis();
         currentPhaseStarted = millis();
