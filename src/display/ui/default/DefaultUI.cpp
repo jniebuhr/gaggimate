@@ -117,6 +117,8 @@ void DefaultUI::init() {
     pluginManager->on("controller:targetDuration:change", [=](Event const &event) { rerender = true; });
     pluginManager->on("controller:grindDuration:change", [=](Event const &event) { rerender = true; });
     pluginManager->on("controller:grindVolume:change", [=](Event const &event) { rerender = true; });
+    pluginManager->on("controller:grind:end", triggerRender);
+    pluginManager->on("controller:grind:start", triggerRender);
     pluginManager->on("controller:process:end", triggerRender);
     pluginManager->on("controller:process:start", triggerRender);
     pluginManager->on("controller:mode:change", [this](Event const &event) {

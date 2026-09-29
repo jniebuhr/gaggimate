@@ -20,11 +20,19 @@ class LedController {
 
     bool initialize();
     bool recover();
+    // Bus-level helpers below expect the caller to hold the bus lock.
+    bool applyEnabledState();
+    bool applyDisabledState();
+    bool writeChannel(uint8_t channel);
+    bool isChannelOff(uint8_t channel) const;
+    bool allChannelsOff() const;
+    static bool isHeldLowChannel(uint8_t channel) { return channel == 4 || channel == 5; }
 
     SoftWireBus *bus;
     PCA9634 *pca9634 = nullptr;
     bool initialized = false;
     bool healthy = true;
+    bool outputsEnabled = false;
     uint8_t channels[CHANNEL_COUNT] = {0, 0, 0, 0, 0xFF, 0xFF, 0, 0};
 };
 
