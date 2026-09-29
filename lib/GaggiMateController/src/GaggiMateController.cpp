@@ -165,8 +165,13 @@ void GaggiMateController::setup() {
     // arrives independently (or batched together in one frame for an atomic
     // update). Control messages feed the connection watchdog via handlePing().
     _comms.onBoilerControl([this](uint8_t index, BoilerControlMode mode, float setpoint) {
+        if (!_config.capabilites.dualBoiler && index > 0) {
+            return;
+        }
+        if (_config.capabilites.dualBoiler && index == 0) {
+            lights->set(index == 0 && setpoint > 0.0f);
+        }
         Heater *target = index == 0 ? this->heater : this->heater2;
-        lights->set(index == 0 && setpoint > 0.0f);
         handlePing();
         if (errorState != ERROR_CODE_NONE) {
             return;

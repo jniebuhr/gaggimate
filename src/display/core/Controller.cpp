@@ -939,7 +939,6 @@ void Controller::updateControl() {
     if (targetTemp > .0f) {
         targetTemp = targetTemp + static_cast<float>(settings.getTemperatureOffset());
     }
-    float targetSteamTemp = getTargetSteamTemp();
 
     bool altRelayActive = false;
     if (active && proc->isAltRelayActive()) {
@@ -954,17 +953,10 @@ void Controller::updateControl() {
     BoilerCommand boiler;
     boiler.index = 0;
     boiler.setpoint = targetTemp;
-    BoilerCommand boiler2;
-    boiler2.index = 1;
-    boiler2.setpoint = targetSteamTemp;
     PumpCommand pump;
     pump.index = 0;
     RelayCommand relay; // index 0 = brew valve
     relay.index = 0;
-    RelayCommand refill; // index 2 = refill valve
-    refill.index = 2;
-    RelayCommand water; // index 3 = steam-pressure hot-water valve
-    water.index = 3;
 
     bool handled = false;
     if (active && systemInfo.capabilities.pressure) {
@@ -992,14 +984,49 @@ void Controller::updateControl() {
         }
     }
 
-    if (!active && mode != MODE_STANDBY && systemInfo.capabilities.dualBoiler && steamBoilerLow) {
-        targetPressure = 0.0f;
-        targetFlow = 0.0f;
-        relay.open = false;
-        pump.mode = PumpControlMode::Power;
-        pump.power = 100;
-        refill.open = true;
-        handled = true;
+    // Only send components that changed since the last update. The controller is
+    // stateful and every message is acknowledged, so re-sending unchanged values
+    // each cycle is unnecessary; a periodic ping (see loop()) keeps the watchdog
+    // fed when nothing changes. controlStateSent is cleared to force a full resend.
+    gm::Payload batch[8];
+    size_t count = 0;
+    const bool full = !controlStateSent.exchange(true); // claim the flag first so a concurrent reset is never lost
+    if (full || boiler != lastBoiler)
+        batch[count++] = comms.buildBoilerControl(boiler.index, boiler.mode, boiler.setpoint);
+
+    if (systemInfo.capabilities.dualBoiler) {
+        float targetSteamTemp = getTargetSteamTemp();
+        BoilerCommand boiler2;
+        boiler2.index = 1;
+        boiler2.setpoint = targetSteamTemp;
+        RelayCommand refill; // index 2 = refill valve
+        refill.index = 2;
+        RelayCommand water; // index 3 = steam-pressure hot-water valve
+        water.index = 3;
+
+        // On dual-boiler machines, steam pressure supplies the hot water. Opening
+        // the dedicated valve must not start the brew pump or create a PumpProcess.
+        water.open = waterValveActive;
+
+        if (!active && mode != MODE_STANDBY && steamBoilerLow) {
+            targetPressure = 0.0f;
+            targetFlow = 0.0f;
+            relay.open = false;
+            pump.mode = PumpControlMode::Power;
+            pump.power = 100;
+            refill.open = true;
+            handled = true;
+        }
+
+        if (full || boiler2 != lastBoiler2)
+            batch[count++] = comms.buildBoilerControl(boiler2.index, boiler2.mode, boiler2.setpoint);
+        if (full || refill != lastRefill)
+            batch[count++] = comms.buildRelayControl(refill.index, refill.open); // index 2 = refill relay
+        if (full || water != lastWater)
+            batch[count++] = comms.buildRelayControl(water.index, water.open); // index 3 = hot-water valve
+        lastBoiler2 = boiler2;
+        lastRefill = refill;
+        lastWater = water;
     }
 
     if (!handled) {
@@ -1010,42 +1037,20 @@ void Controller::updateControl() {
         pump.power = active ? proc->getPumpValue() : 0;
     }
 
-    // On dual-boiler machines, steam pressure supplies the hot water. Opening
-    // the dedicated valve must not start the brew pump or create a PumpProcess.
-    water.open = systemInfo.capabilities.dualBoiler && waterValveActive;
-
-    // Only send components that changed since the last update. The controller is
-    // stateful and every message is acknowledged, so re-sending unchanged values
-    // each cycle is unnecessary; a periodic ping (see loop()) keeps the watchdog
-    // fed when nothing changes. controlStateSent is cleared to force a full resend.
-    gm::Payload batch[4];
-    size_t count = 0;
-    const bool full = !controlStateSent.exchange(true); // claim the flag first so a concurrent reset is never lost
-    if (full || boiler != lastBoiler)
-        batch[count++] = comms.buildBoilerControl(boiler.index, boiler.mode, boiler.setpoint);
-    if (full || boiler2 != lastBoiler2)
-        batch[count++] = comms.buildBoilerControl(boiler2.index, boiler2.mode, boiler2.setpoint);
     if (full || pump != lastPump)
         batch[count++] = comms.buildPumpControl(pump.index, pump.mode, pump.power, pump.pressure, pump.flow);
     if (full || relay != lastRelay)
         batch[count++] = comms.buildRelayControl(relay.index, relay.open); // index 0 = brew valve
     if (full || altRelayActive != lastAlt)
         batch[count++] = comms.buildRelayControl(1, altRelayActive); // index 1 = alt relay
-    if (!controlStateSent || refill != lastRefill)
-        batch[count++] = comms.buildRelayControl(refill.index, refill.open); // index 2 = refill relay
-    if (!controlStateSent || water != lastWater)
-        batch[count++] = comms.buildRelayControl(water.index, water.open); // index 3 = hot-water valve
 
     if (count > 0)
         comms.sendBatch(batch, count);
 
     lastBoiler = boiler;
-    lastBoiler2 = boiler2;
     lastPump = pump;
     lastRelay = relay;
     lastAlt = altRelayActive;
-    lastRefill = refill;
-    lastWater = water;
 }
 
 void Controller::activate(bool ignoreWarnings) {
