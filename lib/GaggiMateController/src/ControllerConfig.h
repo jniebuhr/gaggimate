@@ -256,7 +256,7 @@ const ControllerConfig GM_STANDARD_REV_3X = {.name = "GaggiMate Standard Rev 3.x
                                              },
                                              .adcRates = {0, 0, 0, 0}};
 
-const ControllerConfig GM_MAX_REV10 = {.name = "GaggiMate Max Rev 1.x",
+const ControllerConfig GM_MAX_REV10 = {.name = "GaggiMate Duo Rev 1.x",
                                        .autodetectValue = 5,
                                        .heaterPin = 12,
                                        .altPin = 10,
