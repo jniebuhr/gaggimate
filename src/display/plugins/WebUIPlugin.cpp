@@ -276,7 +276,7 @@ void WebUIPlugin::handleOTASettings(JsonDocument &request) {
     if (request["update"].as<bool>()) {
         if (!request["channel"].isNull()) {
             controller->getSettings().setOTAChannel(request["channel"].as<String>() == "latest" ? "latest" : "nightly");
-            ota->setReleaseUrl(RELEASE_URL + (controller->getSettings().getOTAChannel() == "latest" ? "latest" : "tag/db"));
+            ota->setReleaseUrl(RELEASE_URL + (controller->getSettings().getOTAChannel() == "latest" ? "latest" : "tag/nightly"));
             lastUpdateCheck = 0;
         }
     }
