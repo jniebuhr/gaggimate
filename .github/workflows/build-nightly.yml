@@ -12,6 +12,8 @@ jobs:
   build:
     needs: ota-testbench
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
@@ -36,6 +38,7 @@ jobs:
           cache: 'npm'
           cache-dependency-path: web/package-lock.json
       - name: Add version
+        id: version
         run: |
           mkdir -p out
           mkdir -p upload/display
@@ -44,6 +47,7 @@ jobs:
           git tag -d nightly
           git tag -d db
           git describe --tags --dirty > out/version.txt
+          echo "version=$(cat out/version.txt)" >> "$GITHUB_OUTPUT"
       - name: Build Web
         run: ./scripts/build_webui.sh
       - name: Build controller
@@ -115,6 +119,7 @@ jobs:
           name: gaggimate-firmware
           path: "out/*"
   release-nightly:
+    name: "release-nightly: ${{ needs.build.outputs.version }}"
     needs: build
     runs-on: ubuntu-latest
     permissions:
