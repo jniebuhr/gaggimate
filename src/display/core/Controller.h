@@ -6,6 +6,7 @@
 #include "Settings.h"
 #include "SystemInfo.h"
 #include <WiFi.h>
+#include <atomic>
 #include <display/core/ButtonHandler.h>
 #include <display/core/ProfileManager.h>
 #include <display/core/WarningManager.h>
@@ -157,8 +158,9 @@ class Controller {
 
     // Functional methods
     void updateControl();
-    // Main-loop only: tight BLE interval + BT coex while a process or controller OTA runs, relaxed after a hold-off.
-    void updateConnectionPriority();
+    // Switch the BLE connection interval based on whether a process is running.
+    // force re-applies even if the desired state is unchanged (use on connect).
+    void applyConnectionPriority(bool force = false);
 
     // Process lifecycle (GM-147): the *Locked helpers assume processMutex is held and
     // collect the event ids to fire; the public wrappers dispatch them after unlocking
@@ -166,6 +168,11 @@ class Controller {
     bool isActiveLocked() const { return currentProcess != nullptr && currentProcess->isActive(); }
     void startProcessLocked(Process *process, std::vector<const char *> &events);
     void deactivateLocked(std::vector<const char *> &events);
+    void afterDeactivate();
+    // Relax the BLE interval only once the stop command has been acknowledged (see afterDeactivate()).
+    bool relaxPending = false;
+    unsigned long relaxRequestedAt = 0;
+    static const unsigned long RELAX_TIMEOUT_MS = 1000;
     void clearLocked(std::vector<const char *> &events);
     void dispatchEvents(const std::vector<const char *> &events);
 
@@ -216,21 +223,20 @@ class Controller {
 
     // Last control values sent to the controller. updateControl() only
     // transmits components that differ from these (the controller is stateful
-    // and delivery is acknowledged). Reset on (re)connect to force a full resend.
+    // and delivery is acknowledged). Cleared on (re)connect, a dropped frame and link settle.
     BoilerCommand lastBoiler{};
     PumpCommand lastPump{};
     RelayCommand lastRelay{};
     bool lastAlt = false;
-    bool controlStateSent = false;
+    std::atomic<bool> controlStateSent{false};
+    std::atomic<bool> stateResendPending{false}; // set from comms threads, serviced in loop()
+    unsigned long settleResendAt = 0;            // one full re-send once a fresh link has settled (0 = none)
+    static const unsigned long STATE_SETTLE_RESEND_MS = 5000;
+    void requestStateResend() { stateResendPending = true; }
 
-    // Last requested BLE connection-interval priority; see updateConnectionPriority().
+    // BLE connection-interval priority: tight while a process runs, relaxed when
+    // idle (frees radio airtime for Wi-Fi). Tracks the last requested state.
     bool connLowLatency = false;
-    bool otaLowLatency = false;
-    bool coexRelaxPending = false;
-    unsigned long lastLowLatencyDemand = 0;
-    unsigned long connRelaxedAt = 0;
-    static const unsigned long CONN_RELAX_HOLD_MS = 60000;
-    static const unsigned long CONN_COEX_SETTLE_MS = 2000;
 
     // Guards currentProcess/lastProcess lifecycle across tasks (UI, AsyncTCP, BLE
     // callbacks, logic task). Recursive: locked composites call locked primitives.

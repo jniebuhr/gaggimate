@@ -25,6 +25,7 @@ import {
   useMeasuredExternalTooltipLayout,
 } from '../ShotChartExternalTooltip';
 import {
+  INITIAL_VISIBILITY,
   REPLAY_FRAME_INTERVAL_MS,
   SINGLE_METRIC_PAGE_KEYS,
   TEMP_CHART_HEIGHT_MIN,
@@ -72,6 +73,7 @@ import {
 import {
   EMPTY_SHOT_SAMPLES,
   getClampedScrubXValue,
+  getSingleMetricPageVisibility,
   getShotChartIdentityKey,
   getShotSampleCapabilities,
   hasFiniteScrubValue,
@@ -138,6 +140,8 @@ export function SingleShotChart({ shotData, profileData, results, desktopCardHei
   const shotSamples = Array.isArray(shotData?.samples) ? shotData.samples : EMPTY_SHOT_SAMPLES;
 
   const { hasWeightData, hasWeightFlowData } = getShotSampleCapabilities(shotSamples);
+  const chartSeriesCapabilitiesRef = useRef({ hasWeightData, hasWeightFlowData });
+  chartSeriesCapabilitiesRef.current = { hasWeightData, hasWeightFlowData };
   const scrubberMax = Math.max(0, Number(chartMaxTime) || 0);
   const hasActiveScrubValue = hasFiniteScrubValue(scrubXValue);
   const clampedScrubXValue = getClampedScrubXValue(scrubXValue, scrubberMax);
@@ -283,14 +287,35 @@ export function SingleShotChart({ shotData, profileData, results, desktopCardHei
     if (typeof browserWindow?.matchMedia !== 'function') return undefined;
 
     const mediaQuery = browserWindow.matchMedia('(max-width: 640px)');
-    const handleChange = event => {
-      setUseStaticTooltip(event.matches);
-      if (event.matches) {
+    const applyViewportVisibility = isMobile => {
+      setUseStaticTooltip(isMobile);
+
+      if (isMobile) {
+        const { hasWeightData: hasWeight, hasWeightFlowData: hasWeightFlow } =
+          chartSeriesCapabilitiesRef.current;
+        setSingleMetricPageKey(SINGLE_METRIC_PAGE_KEYS.BASICS);
+        setVisibility(prev =>
+          getSingleMetricPageVisibility({
+            hasWeightData: hasWeight,
+            hasWeightFlowData: hasWeightFlow,
+            pageKey: SINGLE_METRIC_PAGE_KEYS.BASICS,
+            visibility: prev,
+          }),
+        );
         setScrubXValue(null);
         hideExternalTooltip();
+        return;
       }
+
+      setVisibility(prev => ({ ...prev, ...INITIAL_VISIBILITY }));
     };
-    setUseStaticTooltip(mediaQuery.matches);
+    const handleChange = event => applyViewportVisibility(event.matches);
+
+    if (mediaQuery.matches) {
+      applyViewportVisibility(true);
+    } else {
+      setUseStaticTooltip(false);
+    }
     mediaQuery.addEventListener('change', handleChange);
     return () => mediaQuery.removeEventListener('change', handleChange);
   }, [hideExternalTooltip]);
@@ -445,6 +470,23 @@ export function SingleShotChart({ shotData, profileData, results, desktopCardHei
     if (label === 'Weight Flow' && !hasWeightFlowData) return;
     setVisibility(prev => ({ ...prev, [key]: !prev[key] }));
   };
+
+  const handleSingleMetricPageChange = useCallback(
+    nextPageKey => {
+      if (nextPageKey === singleMetricPageKey) return;
+
+      setSingleMetricPageKey(nextPageKey);
+      setVisibility(prev =>
+        getSingleMetricPageVisibility({
+          hasWeightData,
+          hasWeightFlowData,
+          pageKey: nextPageKey,
+          visibility: prev,
+        }),
+      );
+    },
+    [hasWeightData, hasWeightFlowData, singleMetricPageKey],
+  );
 
   useEffect(() => {
     saveToStorage(ANALYZER_DB_KEYS.SINGLE_CHART_VISIBILITY, visibility);
@@ -749,7 +791,7 @@ export function SingleShotChart({ shotData, profileData, results, desktopCardHei
             emptyContent={
               <ShotChartStaticMetricPreview
                 activePageKey={singleMetricPageKey}
-                onPageChange={setSingleMetricPageKey}
+                onPageChange={handleSingleMetricPageChange}
                 results={results}
               />
             }

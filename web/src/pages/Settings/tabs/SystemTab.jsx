@@ -213,6 +213,7 @@ export function SystemTab() {
   const [progress, setProgress] = useState(0);
   const rssi = machine.value.status.rssi;
   const lat = machine.value.status.lat;
+  const rtx = machine.value.status.rtx;
 
   const downloadSupportData = useCallback(async () => {
     try {
@@ -355,7 +356,7 @@ export function SystemTab() {
               Controller Signal Strength
             </span>
             <span className='text-base-content flex items-center gap-2 font-semibold'>
-              {rssi}dB (Roundtrip: {lat} ms)
+              {rssi}dB (Roundtrip: {lat} ms, Resends: {rtx})
               <span className={`indicator-item status ${getRssiStatusClass(rssi)}`} />
             </span>
           </div>

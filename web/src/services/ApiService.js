@@ -193,6 +193,7 @@ export default class ApiService {
     map('process', 'process', v => v || null);
     map('rssi', 'rssi', v => v || 0);
     map('lat', 'lat', v => v || 0);
+    map('rtx', 'rtx', v => v || 0);
     map('tof', 'tofDistance', v => v || 0);
     map('pw', 'currentPumpPower', v => v ?? 0);
     map('hp', 'currentBoilerPower', v => v ?? 0);

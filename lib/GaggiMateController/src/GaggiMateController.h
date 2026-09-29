@@ -15,6 +15,7 @@
 #include <vector>
 
 constexpr double PING_TIMEOUT_SECONDS = 20.0;
+constexpr unsigned long LED_HEALTH_CHECK_INTERVAL_MS = 5000;
 
 constexpr int DETECT_EN_PIN = 40;
 constexpr int DETECT_VALUE_PIN = 11;
@@ -58,11 +59,13 @@ class GaggiMateController {
     GearpumpAddon *gearpumpAddon = nullptr;
 
     SoftWire *albaComms = nullptr;
+    SoftWireBus *albaBus = nullptr;
 
     std::vector<ControllerConfig> configs;
 
     String _version;
     unsigned long lastPingTime = 0;
+    unsigned long lastLedHealthCheck = 0;
     size_t errorState = ERROR_CODE_NONE;
 
     const char *LOG_TAG = "GaggiMateController";

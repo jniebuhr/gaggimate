@@ -25,7 +25,6 @@ class BleClientTransport : public Transport, public NimBLEAdvertisedDeviceCallba
     bool isConnected() const override;
 
     // Tight ~7.5-10ms conn interval while a shot runs, relaxed ~30-50ms when idle to leave airtime for Wi-Fi.
-    // Call from the main loop only; new links come up at the wanted interval, live ones renegotiate only on a change.
     void setLowLatency(bool active);
 
     // Native client handle, needed by ControllerOTA (OTA uses its own service).
@@ -47,11 +46,12 @@ class BleClientTransport : public Transport, public NimBLEAdvertisedDeviceCallba
     NimBLERemoteCharacteristic *_notifyChar = nullptr; // from server (TX_CHAR_UUID)
     bool _readyForConnection = false;
     bool _lowLatency = false;
-    bool _appliedLowLatency = false; // what the live link runs; set at connect, then on each update
     bool _incompatible = false;
     std::function<void(const String &info)> _onIncompatible = nullptr;
 
     void applyConnParams();
+    int requestConnParams(uint16_t minInterval, uint16_t maxInterval);
+    void logOtherLinks() const;
     // True link-layer encryption state; secureConnection()'s rc lies when it loses an initiation race.
     bool isEncrypted() const;
     void loadPairedPeer();
@@ -59,10 +59,11 @@ class BleClientTransport : public Transport, public NimBLEAdvertisedDeviceCallba
     bool isLockedToOther(NimBLEAdvertisedDevice *advertisedDevice) const;
 
     // Connection-interval units are 1.25ms; supervision timeout units are 10ms.
-    static constexpr uint16_t ACTIVE_MIN_INTERVAL = 6; // 7.5 ms
-    static constexpr uint16_t ACTIVE_MAX_INTERVAL = 8; // 10 ms
-    static constexpr uint16_t IDLE_MIN_INTERVAL = 24;  // 30 ms
-    static constexpr uint16_t IDLE_MAX_INTERVAL = 40;  // 50 ms
+    // Active rungs, tightest first; with a scale link on the same radio the controller refuses the tight ones (HCI 0x12).
+    // The controller settles on the max of an accepted range, so a fixed 15 ms rung sits before the 15-20 ms one.
+    static constexpr uint16_t ACTIVE_RUNGS[][2] = {{6, 8}, {9, 12}, {12, 12}, {12, 16}, {16, 24}}; // 7.5-10 .. 20-30 ms
+    static constexpr uint16_t IDLE_MIN_INTERVAL = 24;                                              // 30 ms
+    static constexpr uint16_t IDLE_MAX_INTERVAL = 40;                                              // 50 ms
     static constexpr uint16_t CONN_LATENCY = 0;
     static constexpr uint16_t CONN_TIMEOUT = 400; // 4 s
 

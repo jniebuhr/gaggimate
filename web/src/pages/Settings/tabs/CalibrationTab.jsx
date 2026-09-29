@@ -6,7 +6,7 @@ import Section from '../../../components/Card.jsx';
 import PumpFlowCalibration from '../../../components/PumpFlowCalibration/index.jsx';
 import { SettingsFormField } from '../../../components/SettingsFormField.jsx';
 
-export function CalibrationTab({ formData, onChange }) {
+export function CalibrationTab({ formData, onChange, setField }) {
   const apiService = useContext(ApiServiceContext);
 
   // Autotune state
@@ -201,7 +201,10 @@ export function CalibrationTab({ formData, onChange }) {
 
       {/* Pump Flow Tuning Section */}
       <Section title='Pump Flow Calibration' className='h-full'>
-        <PumpFlowCalibration currentCoeffs={formData.pumpModelCoeffs} />
+        <PumpFlowCalibration
+          currentCoeffs={formData.pumpModelCoeffs}
+          onApplied={coeffs => setField('pumpModelCoeffs', coeffs)}
+        />
       </Section>
     </div>
   );

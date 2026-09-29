@@ -414,6 +414,7 @@ void WebSocketHandler::publishTelemetry() {
     if (controller->getClientController()->hasLatency()) {
         statusDoc["lat"] = controller->getClientController()->getLatencyMs();
     }
+    statusDoc["rtx"] = controller->getClientController()->getRetransmits(); // comms frames resent since boot
     const bool bleConnected = BLEScales.isConnected();
     statusDoc["bw"] = bleConnected ? this->currentBluetoothWeight : 0; // current bluetooth weight
     statusDoc["cw"] = bleConnected ? this->currentBluetoothWeight : 0; // Use 'currentWeight' for forward compatbility
@@ -436,6 +437,7 @@ void WebSocketHandler::publishTelemetry() {
         statusDoc["pkr"] = round_to(controller->getCurrentPuckResistance(), 3);
         statusDoc["pf"] = round_to(controller->getCurrentPuckFlow(), 3);
         statusDoc["tf"] = controller->getTargetFlow();
+        statusDoc["wp"] = round_to(controller->getCurrentWaterPumped(), 3);
         if (process->getType() == MODE_BREW) {
             auto *brew = static_cast<BrewProcess *>(process);
             unsigned long ts = brew->isActive() && controller->isActive() ? millis() : brew->finished;

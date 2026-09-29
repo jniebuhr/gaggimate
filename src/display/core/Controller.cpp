@@ -225,11 +225,13 @@ static void parseFloatCsv(const String &csv, float *out, size_t count, float def
 
 void Controller::setupBluetooth() {
     comms.init("GPBLC");
+    comms.onSendFailed([this]() { requestStateResend(); });
     comms.onConnectionChanged([this](bool connected) {
         controlStateSent = false;
+        settleResendAt = 0;
         if (connected) {
-            if (!connLowLatency)
-                esp_coex_preference_set(ESP_COEX_PREFER_WIFI); // idle default; BALANCE starves Wi-Fi (GM-90)
+            applyConnectionPriority(true);
+            requestStateResend();
         } else if (initialized) {
             pluginManager->trigger("controller:bluetooth:disconnect");
             waitingForController = true;
@@ -241,18 +243,14 @@ void Controller::setupBluetooth() {
         onSystemInfo(hardware, version, protocolVersion, dimming, pressure, ledControl, tof, addons);
     });
     comms.onIncompatibleController([this](const String &info) { onIncompatibleController(info); });
-    // OTA blocks the main loop, so apply its priority change right here rather than on the next loop() pass.
     pluginManager->on("ota:update:start", [this](Event const &event) {
-        otaLowLatency = event.getString("component") != "display";
-        if (!otaLowLatency)
-            lastLowLatencyDemand = millis() - CONN_RELAX_HOLD_MS; // a Wi-Fi download wants the radio now, skip the hold
-        updateConnectionPriority();
-        if (!connLowLatency) {
-            coexRelaxPending = false;
-            esp_coex_preference_set(ESP_COEX_PREFER_WIFI);
+        if (event.getString("component") != "display") {
+            connLowLatency = true;
+            comms.setLowLatency(true);
+            esp_coex_preference_set(ESP_COEX_PREFER_BT);
         }
     });
-    pluginManager->on("ota:update:end", [this](Event const &) { otaLowLatency = false; });
+    pluginManager->on("ota:update:end", [this](Event const &) { applyConnectionPriority(true); });
     comms.onSensorData([this](float temp, float pressure, float puckFlow, float pumpFlow, float puckResistance, float pumpPower,
                               float heaterPower, float waterPumped) {
         onTempRead(temp);
@@ -346,6 +344,7 @@ void Controller::onSystemInfo(const char *hardware, const char *version, uint32_
         setPumpModelCoeffs();
         configResendUntil = millis() + CONFIG_RESEND_WINDOW_MS;
         lastConfigResend = millis();
+        settleResendAt = millis() + STATE_SETTLE_RESEND_MS;
     }
 
     if (!loaded) {
@@ -508,7 +507,12 @@ void Controller::loop() {
 
     if (initialized) {
         comms.loop(); // drive the comms send pump + retransmit
-        updateConnectionPriority();
+        // Stop + tare go out on the fast interval; the switch back starts only once the link is quiet (or after a cap).
+        if (relaxPending && (comms.isIdle() || millis() - relaxRequestedAt > RELAX_TIMEOUT_MS)) {
+            relaxPending = false;
+            std::lock_guard<std::recursive_mutex> guard(processMutex);
+            applyConnectionPriority();
+        }
     }
 
     unsigned long now = millis();
@@ -520,6 +524,17 @@ void Controller::loop() {
         setPidSettings();
         setPumpModelCoeffs();
         lastConfigResend = now;
+    }
+
+    // Frames sent right after a connect can get lost, so re-send the full state once the link has settled.
+    if (settleResendAt != 0 && now >= settleResendAt) {
+        settleResendAt = 0;
+        requestStateResend();
+    }
+    // A dropped frame, a reconnect or the settle timer asked for a full state re-send (control + plugin state such as LEDs).
+    if (comms.isConnected() && stateResendPending.exchange(false)) {
+        controlStateSent = false;
+        pluginManager->trigger("controller:state:resend");
     }
 
     // If BLE scanning has been running for a while without finding the controller,
@@ -551,6 +566,7 @@ void Controller::loopLogic() {
     std::vector<const char *> events;
     double newBrewDelay = -1.0;
     double newGrindDelay = -1.0;
+    bool processEnded = false;
     {
         std::lock_guard<std::recursive_mutex> guard(processMutex);
 
@@ -566,6 +582,7 @@ void Controller::loopLogic() {
             currentProcess->progress();
             if (!isActiveLocked()) {
                 deactivateLocked(events);
+                processEnded = true;
             }
         }
 
@@ -588,6 +605,8 @@ void Controller::loopLogic() {
             }
         }
     }
+    if (processEnded)
+        afterDeactivate();
     dispatchEvents(events);
     if (newBrewDelay >= 0) {
         settings.setBrewDelay(newBrewDelay);
@@ -694,6 +713,7 @@ void Controller::startProcess(Process *process) {
         std::lock_guard<std::recursive_mutex> guard(processMutex);
         startProcessLocked(process, events);
     }
+    updateControl(); // queue the pump/valve command now instead of on the next logic cycle
     dispatchEvents(events);
 }
 
@@ -704,6 +724,7 @@ void Controller::startProcessLocked(Process *process, std::vector<const char *> 
     }
     processCompleted = false;
     this->currentProcess = process;
+    applyConnectionPriority(); // shot started -> tight BLE interval
     events.push_back("controller:process:start");
     updateLastAction();
 }
@@ -714,29 +735,12 @@ void Controller::dispatchEvents(const std::vector<const char *> &events) {
     }
 }
 
-void Controller::updateConnectionPriority() {
-    const unsigned long now = millis();
-    bool busy = otaLowLatency;
-    {
-        std::lock_guard<std::recursive_mutex> guard(processMutex);
-        busy = busy || currentProcess != nullptr;
-    }
-    if (busy)
-        lastLowLatencyDemand = now;
-    // Tighten at once, relax only after a quiet hold: flush -> shot must not renegotiate the link back to back (GM-215).
-    const bool lowLatency = busy || (connLowLatency && now - lastLowLatencyDemand < CONN_RELAX_HOLD_MS);
-    if (lowLatency != connLowLatency) {
+void Controller::applyConnectionPriority(bool force) {
+    const bool lowLatency = currentProcess != nullptr;
+    if (force || lowLatency != connLowLatency) {
         connLowLatency = lowLatency;
-        if (lowLatency)
-            esp_coex_preference_set(ESP_COEX_PREFER_BT); // BLE has to win the shared radio before the interval tightens
         comms.setLowLatency(lowLatency);
-        coexRelaxPending = !lowLatency;
-        connRelaxedAt = now;
-    }
-    // Hand the radio back to Wi-Fi only once the relaxed interval has taken effect, so the update itself isn't starved.
-    if (coexRelaxPending && now - connRelaxedAt >= CONN_COEX_SETTLE_MS) {
-        coexRelaxPending = false;
-        esp_coex_preference_set(ESP_COEX_PREFER_WIFI);
+        esp_coex_preference_set(lowLatency ? ESP_COEX_PREFER_BT : ESP_COEX_PREFER_WIFI);
     }
 }
 
@@ -961,17 +965,17 @@ void Controller::updateControl() {
     // Only send components that changed since the last update. The controller is
     // stateful and every message is acknowledged, so re-sending unchanged values
     // each cycle is unnecessary; a periodic ping (see loop()) keeps the watchdog
-    // fed when nothing changes. controlStateSent is reset on (re)connect to force
-    // a full resend.
+    // fed when nothing changes. controlStateSent is cleared to force a full resend.
     gm::Payload batch[4];
     size_t count = 0;
-    if (!controlStateSent || boiler != lastBoiler)
+    const bool full = !controlStateSent.exchange(true); // claim the flag first so a concurrent reset is never lost
+    if (full || boiler != lastBoiler)
         batch[count++] = comms.buildBoilerControl(boiler.index, boiler.mode, boiler.setpoint);
-    if (!controlStateSent || pump != lastPump)
+    if (full || pump != lastPump)
         batch[count++] = comms.buildPumpControl(pump.index, pump.mode, pump.power, pump.pressure, pump.flow);
-    if (!controlStateSent || relay != lastRelay)
+    if (full || relay != lastRelay)
         batch[count++] = comms.buildRelayControl(relay.index, relay.open); // index 0 = brew valve
-    if (!controlStateSent || altRelayActive != lastAlt)
+    if (full || altRelayActive != lastAlt)
         batch[count++] = comms.buildRelayControl(1, altRelayActive); // index 1 = alt relay
 
     if (count > 0)
@@ -981,7 +985,6 @@ void Controller::updateControl() {
     lastPump = pump;
     lastRelay = relay;
     lastAlt = altRelayActive;
-    controlStateSent = true;
 }
 
 void Controller::activate(bool ignoreWarnings) {
@@ -1007,9 +1010,9 @@ void Controller::activate(bool ignoreWarnings) {
 #endif
         if (mode == MODE_BREW) {
             pluginManager->trigger("controller:brew:prestart");
+            delay(200);
         }
     }
-    delay(200);
     switch (mode) {
     case MODE_BREW:
         startProcess(new BrewProcess(profileManager->getSelectedProfile(),
@@ -1045,7 +1048,17 @@ void Controller::deactivate() {
         std::lock_guard<std::recursive_mutex> guard(processMutex);
         deactivateLocked(events);
     }
+    if (!events.empty())
+        afterDeactivate();
     dispatchEvents(events);
+}
+
+// Runs for every ended process, stopped by hand or finished on its own: stop command, tare, then relax once they are ACKed.
+void Controller::afterDeactivate() {
+    updateControl();
+    comms.tare();
+    relaxPending = true;
+    relaxRequestedAt = millis();
 }
 
 void Controller::deactivateLocked(std::vector<const char *> &events) {
@@ -1055,9 +1068,10 @@ void Controller::deactivateLocked(std::vector<const char *> &events) {
     delete lastProcess;
     lastProcess = currentProcess;
     currentProcess = nullptr;
-    comms.tare();
+    bool utility = false;
     if (lastProcess->getType() == MODE_BREW) {
-        if (!static_cast<BrewProcess *>(lastProcess)->isUtility())
+        utility = static_cast<BrewProcess *>(lastProcess)->isUtility();
+        if (!utility)
             flushPending = true; // a shot leaves grounds behind, a flush does not
         events.push_back("controller:brew:end");
     } else if (lastProcess->getType() == MODE_GRIND) {
@@ -1065,6 +1079,8 @@ void Controller::deactivateLocked(std::vector<const char *> &events) {
     }
     events.push_back("controller:process:end");
     updateLastAction();
+    if (utility)
+        clearLocked(events); // a flush has nothing to show, skip the finished screen
 }
 
 void Controller::clear() {
@@ -1229,6 +1245,7 @@ void Controller::onFlush() {
         flushPending = false;
         events.push_back("controller:brew:start");
     }
+    updateControl(); // same immediate send as startProcess()
     dispatchEvents(events);
 }
 

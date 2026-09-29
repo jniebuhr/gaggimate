@@ -4,11 +4,12 @@ import { faTag } from '@fortawesome/free-solid-svg-icons/faTag';
 import { faPenToSquare } from '@fortawesome/free-solid-svg-icons/faPenToSquare';
 import { faYinYang } from '@fortawesome/free-solid-svg-icons/faYinYang';
 import { faWeightScale } from '@fortawesome/free-solid-svg-icons/faWeightScale';
+import { faDivide } from '@fortawesome/free-solid-svg-icons/faDivide';
 import { CardTitle } from '../../../../components/CardTitle';
 import { getNotesTasteStyle } from '../../utils/analyzerUtils';
+import { useShotNotesState } from '../useShotNotesState';
 import { ShotMainInfoCard } from './ShotMainInfoCard';
 import { MetricValueGrid } from './ShotMetricCards';
-import { ShotRatioCard, useRatioCardState } from './ShotRatioCard';
 
 const tasteOptions = [
   { value: 'bitter', label: 'Bitter' },
@@ -22,6 +23,29 @@ const inputClass =
   'border-base-content/10 bg-base-100/80 text-base-content input input-xs min-h-8 w-full rounded-md text-xs lg:min-h-7 xl:min-h-8';
 const textareaClass =
   'border-base-content/10 bg-base-100/80 text-base-content textarea textarea-bordered textarea-xs min-h-[5rem] w-full rounded-md !text-xs leading-relaxed lg:min-h-[4rem] xl:min-h-[5rem]';
+const EMPTY_DOSE_DEFAULTS = {
+  doseIn: 18,
+  doseOut: 36,
+};
+
+function initializeEmptyDoseStepper(event, fallbackValue) {
+  const input = event.currentTarget;
+  if (input.value !== '') return;
+
+  const bounds = input.getBoundingClientRect();
+  const stepperWidth = Math.min(24, bounds.width);
+  if (event.clientX < bounds.right - stepperWidth) return;
+
+  const isIncrement = event.clientY < bounds.top + bounds.height / 2;
+  input.value = (fallbackValue + (isIncrement ? -0.1 : 0.1)).toFixed(1);
+}
+
+function initializeEmptyDoseKeyboardStepper(event, fallbackValue) {
+  const input = event.currentTarget;
+  if (input.value !== '' || !['ArrowUp', 'ArrowDown'].includes(event.key)) return;
+
+  input.value = (fallbackValue + (event.key === 'ArrowUp' ? -0.1 : 0.1)).toFixed(1);
+}
 
 function getSelectedTasteButtonStyle(taste) {
   const tasteStyle = getNotesTasteStyle(taste);
@@ -47,25 +71,10 @@ function DetailField({ icon, label, children, className = '', action = null }) {
 }
 
 export function ShotDetailsCard({ entry, isCompare }) {
-  const {
-    flushSave,
-    handleFieldChange,
-    handleRatioCommit,
-    loading,
-    notes,
-    isEditingRatio,
-    sliderRatio,
-    sliderTouched,
-    updateAndSave,
-    setIsEditingRatio,
-    setSliderRatio,
-    setSliderTouched,
-  } = useRatioCardState({
+  const { flushSave, handleFieldChange, loading, notes, updateAndSave } = useShotNotesState({
     currentShot: entry.shot,
-    entryKey: entry.key,
   });
   const duplicateMobileSummaryClass = isCompare ? '' : 'hidden lg:flex';
-  const duplicateMobileRatioClass = isCompare ? '' : 'hidden sm:flex';
   const duplicateMobileMetricsClass = isCompare ? 'hidden lg:block' : 'hidden sm:block';
 
   return (
@@ -77,26 +86,6 @@ export function ShotDetailsCard({ entry, isCompare }) {
         loading={loading}
         onRatingChange={value => updateAndSave('rating', value)}
         className={duplicateMobileSummaryClass || 'flex'}
-      />
-
-      <ShotRatioCard
-        notes={notes}
-        isEditingRatio={isEditingRatio}
-        sliderRatio={sliderRatio}
-        sliderTouched={sliderTouched}
-        onSliderInput={value => {
-          setSliderRatio(value);
-          if (!sliderTouched) setSliderTouched(true);
-        }}
-        onSliderActivate={() => {
-          if (!sliderTouched) setSliderTouched(true);
-        }}
-        onRatioCommit={handleRatioCommit}
-        onEditRatio={() => {
-          setSliderTouched(true);
-          setIsEditingRatio(true);
-        }}
-        className={duplicateMobileRatioClass}
       />
 
       <div className={duplicateMobileMetricsClass}>
@@ -119,6 +108,10 @@ export function ShotDetailsCard({ entry, isCompare }) {
               step='0.1'
               className={inputClass}
               value={notes.doseIn || ''}
+              onPointerDown={event => initializeEmptyDoseStepper(event, EMPTY_DOSE_DEFAULTS.doseIn)}
+              onKeyDown={event =>
+                initializeEmptyDoseKeyboardStepper(event, EMPTY_DOSE_DEFAULTS.doseIn)
+              }
               onInput={event => handleFieldChange('doseIn', event.target.value)}
               onBlur={flushSave}
               placeholder='18.0'
@@ -130,9 +123,24 @@ export function ShotDetailsCard({ entry, isCompare }) {
               step='0.1'
               className={inputClass}
               value={notes.doseOut || ''}
+              onPointerDown={event =>
+                initializeEmptyDoseStepper(event, EMPTY_DOSE_DEFAULTS.doseOut)
+              }
+              onKeyDown={event =>
+                initializeEmptyDoseKeyboardStepper(event, EMPTY_DOSE_DEFAULTS.doseOut)
+              }
               onInput={event => handleFieldChange('doseOut', event.target.value)}
               onBlur={flushSave}
               placeholder='36.0'
+            />
+          </DetailField>
+          <DetailField icon={faDivide} label='Ratio' className='col-span-2'>
+            <input
+              type='text'
+              readOnly
+              aria-label='Ratio'
+              className={`${inputClass} bg-base-200/50 text-base-content/70 cursor-default`}
+              value={notes.ratio ? `1:${notes.ratio}` : '—'}
             />
           </DetailField>
           <DetailField icon={faGears} label='Grind' className='col-span-2'>
