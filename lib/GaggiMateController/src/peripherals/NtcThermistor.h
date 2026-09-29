@@ -3,13 +3,9 @@
 
 #include "ADSAdc.h"
 #include "TemperatureSensor.h"
+#include "NtcTiming.h"
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
-
-constexpr int NTC_UPDATE_INTERVAL = 250;
-constexpr int NTC_ERROR_WINDOW = 20;
-constexpr float NTC_MAX_ERROR_RATE = 0.5f;
-constexpr int NTC_MAX_ERRORS = static_cast<int>(static_cast<float>(NTC_ERROR_WINDOW) * NTC_MAX_ERROR_RATE);
 
 constexpr float DEFAULT_RS = 10000.0f;  // voltage divider resistor value
 constexpr float DEFAULT_VS = 5.0f;      // Vcc
@@ -22,7 +18,7 @@ using temperature_error_callback_t = std::function<void()>;
 class NtcThermistor : public TemperatureSensor {
   public:
     NtcThermistor(ADSAdc *adc, uint8_t channel, const temperature_error_callback_t &error_callback, float ro = DEFAULT_RO,
-                  float Rs = DEFAULT_RS, float Vs = DEFAULT_VS, float Beta = DEFAULT_BETA);
+                  float Rs = DEFAULT_RS, float Vs = DEFAULT_VS, float Beta = DEFAULT_BETA, NtcTiming timing = {});
     float read() override;
     bool isErrorState() override;
 
@@ -34,12 +30,15 @@ class NtcThermistor : public TemperatureSensor {
     uint8_t _channel;
     xTaskHandle taskHandle;
 
-    int errorCount = 0;
-    std::array<int, NTC_ERROR_WINDOW> resultBuffer{};
-    size_t resultCount = 0;
-    size_t bufferIndex = 0;
+    NtcTiming _timing;
+    NtcFaultWindow _faultWindow;
+    bool _fault = false;
+    bool _filterInitialized = false;
 
     float temperature = .0f;
+    uint32_t _lastFreshMs = 0;
+    uint32_t _lastFilterMs = 0;
+    uint32_t _staleTimeoutMs = 1000;
     float _rs;
     float _vs;
     float _beta;

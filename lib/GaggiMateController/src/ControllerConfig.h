@@ -1,6 +1,9 @@
 #ifndef CONTROLLERCONFIG_H
 #define CONTROLLERCONFIG_H
 #include <string>
+#include <array>
+#include "peripherals/PressureTiming.h"
+#include "peripherals/NtcTiming.h"
 
 struct Capabilities {
     bool dimming = false;
@@ -61,6 +64,11 @@ struct ControllerConfig {
     uint8_t ext5Pin;
 
     Capabilities capabilites;
+    // ADC channels 0..3 in SPS; zero disables the channel. Total <= 570.
+    std::array<uint16_t, 4> adcRates = {0, 0, 0, 0};
+    PressureControlRate pressureControlRate = PressureControlRate::Hz60;
+    // Per ADS channel; only used where an NTC is instantiated.
+    std::array<NtcTiming, 4> ntcTiming{};
 };
 
 const ControllerConfig GM_STANDARD_REV_1X = {.name = "GaggiMate Standard Rev 1.x",
@@ -85,7 +93,8 @@ const ControllerConfig GM_STANDARD_REV_1X = {.name = "GaggiMate Standard Rev 1.x
                                              .ext3Pin = 8,
                                              .ext4Pin = 12,
                                              .ext5Pin = 13,
-                                             .capabilites = {}};
+                                             .capabilites = {},
+                                             .adcRates = {0, 0, 0, 0}};
 
 const ControllerConfig GM_STANDARD_REV_2X = {.name = "GaggiMate Standard Rev 2.x",
                                              .autodetectValue = 1,
@@ -113,7 +122,8 @@ const ControllerConfig GM_STANDARD_REV_2X = {.name = "GaggiMate Standard Rev 2.x
                                              .ext5Pin = 13,
                                              .capabilites = {
                                                  .ssrPump = true,
-                                             }};
+                                             },
+                                             .adcRates = {0, 0, 0, 0}};
 
 const ControllerConfig GM_PRO_REV_1x = {.name = "GaggiMate Pro Rev 1.0",
                                         .autodetectValue = 2,
@@ -145,7 +155,9 @@ const ControllerConfig GM_PRO_REV_1x = {.name = "GaggiMate Pro Rev 1.0",
                                         .capabilites = {
                                             .dimming = true,
                                             .pressure = true,
-                                        }};
+                                        },
+                                        .adcRates = {500, 0, 0, 0},
+                                        .pressureControlRate = PressureControlRate::Hz60};
 
 const ControllerConfig GM_PRO_LEGO = {.name = "GaggiMate Pro Lego Build",
                                       .autodetectValue = 3,
@@ -177,7 +189,9 @@ const ControllerConfig GM_PRO_LEGO = {.name = "GaggiMate Pro Lego Build",
                                       .capabilites = {
                                           .dimming = true,
                                           .pressure = true,
-                                      }};
+                                      },
+                                      .adcRates = {500, 0, 0, 0},
+                                      .pressureControlRate = PressureControlRate::Hz60};
 
 const ControllerConfig GM_PRO_REV_11 = {.name = "GaggiMate Pro Rev 1.1",
                                         .autodetectValue = 4,
@@ -209,7 +223,9 @@ const ControllerConfig GM_PRO_REV_11 = {.name = "GaggiMate Pro Rev 1.1",
                                         .capabilites = {
                                             .dimming = true,
                                             .pressure = true,
-                                        }};
+                                        },
+                                        .adcRates = {500, 0, 0, 0},
+                                        .pressureControlRate = PressureControlRate::Hz60};
 
 const ControllerConfig GM_STANDARD_REV_3X = {.name = "GaggiMate Standard Rev 3.x",
                                              .autodetectValue = 6,
@@ -237,7 +253,8 @@ const ControllerConfig GM_STANDARD_REV_3X = {.name = "GaggiMate Standard Rev 3.x
                                              .ext5Pin = 13,
                                              .capabilites = {
                                                  .ssrPump = true,
-                                             }};
+                                             },
+                                             .adcRates = {0, 0, 0, 0}};
 
 const ControllerConfig GM_MAX_REV10 = {.name = "GaggiMate Max Rev 1.x",
                                        .autodetectValue = 5,
@@ -273,6 +290,9 @@ const ControllerConfig GM_MAX_REV10 = {.name = "GaggiMate Max Rev 1.x",
                                            .dimming = true,
                                            .pressure = true,
                                            .dualBoiler = true,
-                                       }};
+                                       },
+                                       .adcRates = {500, 0, 35, 35},
+                                       .pressureControlRate = PressureControlRate::Hz60,
+                                       .ntcTiming = {{{}, {}, {100, 1120.355f}, {100, 1120.355f}}}};
 
 #endif // CONTROLLERCONFIG_H
