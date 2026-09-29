@@ -181,6 +181,28 @@
   overflow: hidden;
 }
 
+.shot-chart-tooltip__single-paged-all-metric-list {
+  display: grid;
+  min-height: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
+  gap: 0.16rem 0.4rem;
+  overflow: hidden;
+}
+
+.shot-chart-tooltip__single-paged-all-metric-list .shot-chart-tooltip__compact-metric-row {
+  grid-template-columns: 0.75rem minmax(0, 1fr) auto;
+  gap: 0.22rem;
+  font-size: 0.66rem;
+  line-height: 1.1;
+}
+
+.shot-chart-tooltip__single-paged-all-metric-list .shot-chart-tooltip__compact-metric-icon {
+  width: 0.75rem;
+  height: 0.75rem;
+  font-size: 0.65rem;
+}
+
 .shot-chart-tooltip__compact-content--compare-detail-active {
   grid-template-rows: auto auto minmax(0, 1fr);
 }

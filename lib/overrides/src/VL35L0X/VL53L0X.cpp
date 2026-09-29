@@ -12,6 +12,9 @@
 // and sets the last bit correctly based on reads and writes
 #define ADDRESS_DEFAULT 0b0101001
 
+// last_status value for a short read (matches Wire's "other error")
+#define READ_ERROR 4
+
 // Record the current time to check an upcoming timeout against
 #define startTimeout() (timeout_start_ms = millis())
 
@@ -44,6 +47,21 @@ VL53L0X::VL53L0X(SoftWire *bus_ptr)
 void VL53L0X::setAddress(uint8_t new_addr) {
     writeReg(I2C_SLAVE_DEVICE_ADDRESS, new_addr & 0x7F);
     address = new_addr;
+}
+
+// Soft-reset the sensor; tries the current and default address, leaves it on the default address
+void VL53L0X::softReset() {
+    const uint8_t addrs[] = {address, ADDRESS_DEFAULT};
+    for (uint8_t a : addrs) {
+        address = a;
+        writeReg(SOFT_RESET_GO2_SOFT_RESET_N, 0x00);
+    }
+    delay(5);
+    for (uint8_t a : addrs) {
+        address = a;
+        writeReg(SOFT_RESET_GO2_SOFT_RESET_N, 0x01);
+    }
+    delay(5);
 }
 
 // Initialize sensor using sequence based on VL53L0X_DataInit(),
@@ -316,7 +334,8 @@ uint8_t VL53L0X::readReg(uint8_t reg) {
     bus->write(reg);
     last_status = bus->endTransmission();
 
-    bus->requestFrom(address, (uint8_t)1);
+    if (bus->requestFrom(address, (uint8_t)1) != 1)
+        last_status = READ_ERROR;
     value = bus->read();
 
     return value;
@@ -330,7 +349,8 @@ uint16_t VL53L0X::readReg16Bit(uint8_t reg) {
     bus->write(reg);
     last_status = bus->endTransmission();
 
-    bus->requestFrom(address, (uint8_t)2);
+    if (bus->requestFrom(address, (uint8_t)2) != 2)
+        last_status = READ_ERROR;
     value = (uint16_t)bus->read() << 8; // value high byte
     value |= bus->read();               // value low byte
 
@@ -345,7 +365,8 @@ uint32_t VL53L0X::readReg32Bit(uint8_t reg) {
     bus->write(reg);
     last_status = bus->endTransmission();
 
-    bus->requestFrom(address, (uint8_t)4);
+    if (bus->requestFrom(address, (uint8_t)4) != 4)
+        last_status = READ_ERROR;
     value = (uint32_t)bus->read() << 24; // value highest byte
     value |= (uint32_t)bus->read() << 16;
     value |= (uint16_t)bus->read() << 8;
@@ -374,7 +395,8 @@ void VL53L0X::readMulti(uint8_t reg, uint8_t *dst, uint8_t count) {
     bus->write(reg);
     last_status = bus->endTransmission();
 
-    bus->requestFrom(address, count);
+    if (bus->requestFrom(address, count) != count)
+        last_status = READ_ERROR;
 
     while (count-- > 0) {
         *(dst++) = bus->read();

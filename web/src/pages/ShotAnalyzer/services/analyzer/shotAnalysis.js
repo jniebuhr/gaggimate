@@ -7,12 +7,13 @@ import {
   isAnalyzerDebugEnabled,
 } from './delayTracking';
 import { getMetricStats } from './metricStats';
+import { getLiquidResistanceStats, getNativePuckResistanceStats } from './puckResistance';
 import { analyzeExecutedPhase } from './phaseAnalysis';
 import { getBluetoothScaleConnectionState } from './scaleConnection';
 import { getSlowSampleIntervalSummary } from './sampleIntervals';
 import { mergeSkippedProfilePhases } from './skippedPhases';
 import { calculatePumpedWater, createPumpedWaterSource } from './waterIntegration';
-import { getSamplesThroughLastNonExtended } from './weightRate';
+import { getFinalWeightSample, getFinalWeightSamples } from './weightRate';
 import {
   buildRecordedExitReasonByPhase,
   getBrewCompletionLabel,
@@ -151,8 +152,8 @@ export function calculateShotMetrics(shotData, profileData, settings) {
   // --- 3. GLOBAL TOTALS ---
   const gDuration = (gSamples.at(-1).t - gSamples[0].t) / 1000;
   const gWater = calculatePumpedWater(gSamples, gSamples.length - 1, null, pumpedWaterSource);
-  const gWeightSamples = getSamplesThroughLastNonExtended(gSamples);
-  const gWeight = (gWeightSamples.at(-1) || gSamples.at(-1)).v;
+  const gWeightSamples = getFinalWeightSamples(gSamples);
+  const gWeight = (getFinalWeightSample(gSamples) || gSamples.at(-1)).v;
 
   // --- 4. PHASE-BY-PHASE ANALYSIS ---
   const analyzedPhases = [];
@@ -227,6 +228,8 @@ export function calculateShotMetrics(shotData, profileData, settings) {
     tt: getMetricStats(gSamples, 'tt'),
     w: getMetricStats(gWeightSamples, 'v'),
     wf: getMetricStats(gSamples, 'vf'),
+    pr: getNativePuckResistanceStats(gSamples),
+    lr: getLiquidResistanceStats(gSamples),
     sys_raw: finalSysInfo.raw,
     sys_shot_vol: finalSysInfo.shotStartedVolumetric,
     sys_curr_vol: finalSysInfo.currentlyVolumetric,

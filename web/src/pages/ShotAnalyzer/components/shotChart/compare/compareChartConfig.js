@@ -25,21 +25,44 @@ import { buildDetailChartDatasets } from './compareDatasets';
 import { getDetailChartUnitLabel } from './CompareMetricContent';
 import { getCompareFullDisplayViewportHeight, prefixCompareAnnotations } from './compareModel';
 
-export function getMainAxisUnitLabels({ showWeightAxis }) {
+const RIGHT_AXIS_UNIT_ROW_GAP = 14;
+
+export function getMainAxisUnitLabels({
+  showWeightAxis,
+  showPuckResistanceAxis,
+  showLiquidResistanceAxis,
+}) {
   const labels = [
     {
       scaleId: 'yMain',
       label: `${UNIT_BY_LABEL.Pressure} / ${UNIT_BY_LABEL['Pump Flow']}`,
     },
   ];
+  const rightAxisUnitLabels = [];
   if (showWeightAxis) {
-    labels.push({
+    rightAxisUnitLabels.push({
       scaleId: 'yWeight',
       label: 'g',
       side: 'right',
-      yOffset: 0,
     });
   }
+  if (showPuckResistanceAxis) {
+    rightAxisUnitLabels.push({
+      scaleId: 'yPuckResistance',
+      label: UNIT_BY_LABEL['Puck Resistance'],
+      side: 'right',
+    });
+  }
+  if (showLiquidResistanceAxis) {
+    rightAxisUnitLabels.push({
+      scaleId: 'yLiquidResistance',
+      label: UNIT_BY_LABEL['Liquid Resistance'],
+      side: 'right',
+    });
+  }
+  rightAxisUnitLabels.forEach((axisLabel, index) => {
+    labels.push({ ...axisLabel, yOffset: index * RIGHT_AXIS_UNIT_ROW_GAP });
+  });
   return labels;
 }
 
@@ -49,14 +72,15 @@ export function getMainAxisUnitPadding({ mainAxisUnitLabels, reserveMarkerSpace 
     xLabel: 's',
   });
 
-  if (reserveMarkerSpace) {
-    return {
-      ...padding,
-      top: Math.max(padding.top, COMPARE_MARKER_TOP_PADDING),
-    };
-  }
+  const rightAxisUnitCount = mainAxisUnitLabels.filter(label => label.side === 'right').length;
+  const rightAxisUnitTopPadding =
+    rightAxisUnitCount > 0 ? 24 + Math.max(0, rightAxisUnitCount - 1) * RIGHT_AXIS_UNIT_ROW_GAP : 0;
+  const markerTopPadding = reserveMarkerSpace ? COMPARE_MARKER_TOP_PADDING : 0;
 
-  return padding;
+  return {
+    ...padding,
+    top: Math.max(padding.top, markerTopPadding, rightAxisUnitTopPadding),
+  };
 }
 
 export function getCompareAnnotations({
@@ -105,8 +129,12 @@ export function getCompareMainChartConfig({
   mainAxisUnitPadding,
   mainDatasets,
   neutralAxisTickColor,
+  puckResistanceAxisRange,
+  liquidResistanceAxisRange,
   showStopAnnotations,
   showWeightAxis,
+  showPuckResistanceAxis,
+  showLiquidResistanceAxis,
   weightAxisRange,
   xRange,
 }) {
@@ -212,6 +240,38 @@ export function getCompareMainChartConfig({
           max: weightAxisRange.max,
           ticks: {
             display: showWeightAxis,
+            font: { size: 10 },
+            color: neutralAxisTickColor,
+            callback: formatUniqueAxisTick,
+          },
+          grid: { display: false },
+          border: { display: false },
+        },
+        yPuckResistance: {
+          type: 'linear',
+          display: showPuckResistanceAxis,
+          position: 'right',
+          offset: true,
+          min: puckResistanceAxisRange.min,
+          max: puckResistanceAxisRange.max,
+          ticks: {
+            display: showPuckResistanceAxis,
+            font: { size: 10 },
+            color: neutralAxisTickColor,
+            callback: formatUniqueAxisTick,
+          },
+          grid: { display: false },
+          border: { display: false },
+        },
+        yLiquidResistance: {
+          type: 'linear',
+          display: showLiquidResistanceAxis,
+          position: 'right',
+          offset: true,
+          min: liquidResistanceAxisRange.min,
+          max: liquidResistanceAxisRange.max,
+          ticks: {
+            display: showLiquidResistanceAxis,
             font: { size: 10 },
             color: neutralAxisTickColor,
             callback: formatUniqueAxisTick,

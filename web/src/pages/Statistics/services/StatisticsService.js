@@ -41,6 +41,7 @@ function aggregateMetricStats(totals, key) {
 
   const avg = averageOf(avgs);
   return {
+    count: avgs.length,
     avg,
     min: mins.length ? Math.min(...mins) : 0,
     max: maxs.length ? Math.max(...maxs) : 0,
@@ -52,6 +53,7 @@ function aggregateValueStats(values) {
   const finiteValues = values.filter(Number.isFinite);
   const avg = averageOf(finiteValues);
   return {
+    count: finiteValues.length,
     avg,
     min: finiteValues.length ? Math.min(...finiteValues) : 0,
     max: finiteValues.length ? Math.max(...finiteValues) : 0,
@@ -131,7 +133,7 @@ function computeSummary(entries) {
 
 function computeMetricAverages(entries) {
   const totals = entries.map(e => e.analysis.total).filter(Boolean);
-  const keys = ['p', 'f', 'pf', 'tt', 't', 'w'];
+  const keys = ['p', 'f', 'pf', 'tt', 't', 'w', 'pr', 'lr'];
   const metrics = {};
   for (const key of keys) {
     metrics[key] =

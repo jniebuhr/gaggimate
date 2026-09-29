@@ -47,7 +47,7 @@ function normalizeMetricValue(value) {
   return value == null ? 0 : value;
 }
 
-function createEmptyMetricStats() {
+export function createEmptyMetricStats() {
   return { start: null, end: null, min: null, max: null, avg: null };
 }
 
@@ -62,5 +62,7 @@ export function createEmptyPhaseStats() {
     tt: createEmptyMetricStats(),
     w: createEmptyMetricStats(),
     wf: createEmptyMetricStats(),
+    pr: createEmptyMetricStats(),
+    lr: createEmptyMetricStats(),
   };
 }

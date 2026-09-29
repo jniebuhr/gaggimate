@@ -12,6 +12,8 @@ export const PHASE = Object.freeze({
 export const MODE_BREW = 1;
 export const SHOT_END_TIMEOUT_MS = 5 * 60 * 1000;
 export const POST_MODE_SETTLE_MS = 1500;
-export const POST_SHOT_SETTLE_MS = 1500;
+// Extended recording (scale settling) delays the index entry by up to ~3 s after the pump stops.
+export const SHOT_SAVED_POLL_RETRIES = 15;
+export const SHOT_SAVED_POLL_DELAY_MS = 1000;
 export const SLOG_FETCH_RETRIES = 20;
 export const SLOG_FETCH_DELAY_MS = 1000;

@@ -192,10 +192,48 @@ void BleClientTransport::setLowLatency(bool active) {
 void BleClientTransport::applyConnParams() {
     if (_client == nullptr || !_client->isConnected())
         return;
-    if (_lowLatency)
-        _client->updateConnParams(ACTIVE_MIN_INTERVAL, ACTIVE_MAX_INTERVAL, CONN_LATENCY, CONN_TIMEOUT);
+    if (!_lowLatency) {
+        requestConnParams(IDLE_MIN_INTERVAL, IDLE_MAX_INTERVAL);
+        return;
+    }
+    // Walk down the rungs while the controller answers "invalid parameters"; any other error ends the attempt.
+    for (const auto &rung : ACTIVE_RUNGS) {
+        const int rc = requestConnParams(rung[0], rung[1]);
+        if (rc == 0)
+            return;
+        if (rc != BLE_HS_HCI_ERR(BLE_ERR_INV_HCI_CMD_PARMS))
+            return;
+    }
+    ESP_LOGE(LOG_TAG, "No active interval accepted, link stays at its current interval");
+    logOtherLinks();
+}
+
+// Returns NimBLE's rc; 0 only means the request was accepted, the result arrives as a CONN_UPDATE event.
+int BleClientTransport::requestConnParams(uint16_t minInterval, uint16_t maxInterval) {
+    ble_gap_upd_params params;
+    params.itvl_min = minInterval;
+    params.itvl_max = maxInterval;
+    params.latency = CONN_LATENCY;
+    params.supervision_timeout = CONN_TIMEOUT;
+    params.min_ce_len = BLE_GAP_INITIAL_CONN_MIN_CE_LEN;
+    params.max_ce_len = BLE_GAP_INITIAL_CONN_MAX_CE_LEN;
+    const int rc = ble_gap_update_params(_client->getConnId(), &params);
+    if (rc == 0)
+        ESP_LOGI(LOG_TAG, "Requested %.2f-%.2f ms connection interval", minInterval * 1.25f, maxInterval * 1.25f);
     else
-        _client->updateConnParams(IDLE_MIN_INTERVAL, IDLE_MAX_INTERVAL, CONN_LATENCY, CONN_TIMEOUT);
+        ESP_LOGW(LOG_TAG, "Interval %.2f-%.2f ms refused, rc=%d", minInterval * 1.25f, maxInterval * 1.25f, rc);
+    return rc;
+}
+
+// The other links (scales) decide what the radio still has room for; log their parameters next to a refusal.
+void BleClientTransport::logOtherLinks() const {
+    for (uint16_t handle = 0; handle < CONFIG_BT_NIMBLE_MAX_CONNECTIONS; handle++) {
+        ble_gap_conn_desc desc;
+        if (handle == _client->getConnId() || ble_gap_conn_find(handle, &desc) != 0)
+            continue;
+        ESP_LOGW(LOG_TAG, "Other link %u: interval %u ms, latency %u, timeout %u ms", handle, desc.conn_itvl * 5 / 4,
+                 desc.conn_latency, desc.supervision_timeout * 10);
+    }
 }
 
 bool BleClientTransport::send(const uint8_t *data, size_t length) {

@@ -62,6 +62,8 @@ class GaggiMateClient {
     uint32_t getLatencyMs() const { return 18; }
     uint32_t getLastLatencyMs() const { return 18; }
     bool hasLatency() const { return _connected; }
+    uint32_t getRetransmits() const { return 0; }
+    bool isIdle() const { return true; }
     void setLowLatency(bool) {}
     NimBLEClient *getClient() const { return const_cast<NimBLEClient *>(&_nativeClient); }
 
@@ -95,6 +97,7 @@ class GaggiMateClient {
 
     void onIncompatibleController(IncompatibleCallback cb) { _incompatibleCb = std::move(cb); }
     void onConnectionChanged(ConnectionCallback cb) { _connCb = std::move(cb); }
+    void onSendFailed(std::function<void()>) {} // the mocked link never drops a frame
     void onSystemInfo(SystemInfoCallback cb) { _systemInfoCb = std::move(cb); }
     void onSensorData(SensorCallback cb) { _sensorCb = std::move(cb); }
     void onButtonState(ButtonCallback cb) { _buttonCb = std::move(cb); }

@@ -7,7 +7,6 @@
 void on_ble_measurement(float value);
 
 constexpr unsigned long UPDATE_INTERVAL_MS = 1000;
-constexpr unsigned int RECONNECTION_TRIES = 15;
 
 class BLEScalePlugin : public Plugin {
   public:
@@ -72,7 +71,6 @@ class BLEScalePlugin : public Plugin {
     std::string uuid;
 
     unsigned long lastUpdate = 0;
-    unsigned int reconnectionTries = 0;
 
     // Cached scale-metadata values used to avoid firing an event for each
     // unchanged poll tick. Reset when the scale disconnects.

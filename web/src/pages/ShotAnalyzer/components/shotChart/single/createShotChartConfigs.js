@@ -21,7 +21,6 @@ import {
   formatUniqueAxisTick,
   getAxisUnitReservedPadding,
   getNeutralAxisTickColor,
-  hoverGuidePlugin,
   phaseBackgroundOverlayPlugin,
   phaseLabelOverlayPlugin,
   replayRevealPlugin,
@@ -29,6 +28,7 @@ import {
 } from '../helpers';
 
 const MAIN_CHART_MARKER_TOP_PADDING = 48;
+const RIGHT_AXIS_UNIT_ROW_GAP = 14;
 
 export function createShotChartConfigs({
   model,
@@ -43,24 +43,51 @@ export function createShotChartConfigs({
   showStopBadges = true,
 }) {
   const showWeightSeries = Boolean(hasWeightData && model.hasWeight);
+  const showPuckResistanceAxis = Boolean(
+    visibility.puckResistance && model.series.puckResistance.length > 0,
+  );
+  const showLiquidResistanceAxis = Boolean(
+    visibility.liquidResistance && model.series.liquidResistance.length > 0,
+  );
   const neutralAxisTickColor = getNeutralAxisTickColor();
   const mainAxisUnitLabels = [
     { scaleId: 'yMain', label: 'bar / ml/s' },
     { scaleId: 'yMain', label: 'Phase', side: 'center', yOffset: 0 },
   ];
   const showWeightAxis = Boolean(showWeightSeries && visibility.weight);
+  const rightAxisUnitLabels = [];
   if (showWeightAxis) {
-    mainAxisUnitLabels.push({
+    rightAxisUnitLabels.push({
       scaleId: 'yWeight',
       label: 'g',
       side: 'right',
-      yOffset: 0,
     });
   }
+  if (showPuckResistanceAxis) {
+    rightAxisUnitLabels.push({
+      scaleId: 'yPuckResistance',
+      label: 's·√bar/mL',
+      side: 'right',
+    });
+  }
+  if (showLiquidResistanceAxis) {
+    rightAxisUnitLabels.push({
+      scaleId: 'yLiquidResistance',
+      label: 'bar·s/mL',
+      side: 'right',
+    });
+  }
+  rightAxisUnitLabels.forEach((axisLabel, index) => {
+    mainAxisUnitLabels.push({ ...axisLabel, yOffset: index * RIGHT_AXIS_UNIT_ROW_GAP });
+  });
   const mainChartInsideLabels = [];
   const tempAxisUnitLabels = [{ scaleId: 'yTemp', label: '°C', side: 'left' }];
   const mainAxisUnitPadding = getAxisUnitReservedPadding({ yLabels: mainAxisUnitLabels });
-  mainAxisUnitPadding.top = Math.max(mainAxisUnitPadding.top, MAIN_CHART_MARKER_TOP_PADDING);
+  mainAxisUnitPadding.top = Math.max(
+    mainAxisUnitPadding.top,
+    MAIN_CHART_MARKER_TOP_PADDING +
+      Math.max(0, rightAxisUnitLabels.length - 1) * RIGHT_AXIS_UNIT_ROW_GAP,
+  );
   const tempAxisUnitPadding = getAxisUnitReservedPadding({
     yLabels: tempAxisUnitLabels,
     xLabel: 's',
@@ -178,6 +205,30 @@ export function createShotChartConfigs({
       hidden: !visibility.puckFlow,
     },
     {
+      label: 'Puck Resistance',
+      data: model.series.puckResistance,
+      borderColor: colors.puckResistance,
+      backgroundColor: colors.puckResistance,
+      fill: false,
+      yAxisID: 'yPuckResistance',
+      pointRadius: 0,
+      borderWidth: THIN_LINE_WIDTH,
+      tension: 0.2,
+      hidden: !visibility.puckResistance,
+    },
+    {
+      label: 'Liquid Resistance',
+      data: model.series.liquidResistance,
+      borderColor: colors.liquidResistance,
+      backgroundColor: colors.liquidResistance,
+      fill: false,
+      yAxisID: 'yLiquidResistance',
+      pointRadius: 0,
+      borderWidth: THIN_LINE_WIDTH,
+      tension: 0.2,
+      hidden: !visibility.liquidResistance,
+    },
+    {
       label: 'Weight',
       data: model.series.weight,
       borderColor: colors.weight,
@@ -264,7 +315,7 @@ export function createShotChartConfigs({
       data: { datasets: mainDatasets },
       plugins: [
         phaseBackgroundOverlayPlugin,
-        hoverGuidePlugin,
+        // The shared HTML hover connector draws one guide across both charts.
         replayRevealPlugin,
         finalWeightCalloutLinePlugin,
         axisUnitLabelPlugin,
@@ -276,6 +327,8 @@ export function createShotChartConfigs({
         responsive: true,
         maintainAspectRatio: false,
         animation: false,
+        // The shared hover surface selects points by timestamp, including sparse PR data.
+        events: [],
         layout: {
           autoPadding: false,
           padding: mainAxisUnitPadding,
@@ -395,6 +448,40 @@ export function createShotChartConfigs({
             grid: { display: false },
             border: { display: false },
           },
+          yPuckResistance: {
+            type: 'linear',
+            display: showPuckResistanceAxis,
+            position: 'right',
+            offset: true,
+            beginAtZero: true,
+            min: 0,
+            max: model.puckResistanceAxisMax,
+            ticks: {
+              display: showPuckResistanceAxis,
+              font: { size: 10 },
+              color: neutralAxisTickColor,
+              callback: formatUniqueAxisTick,
+            },
+            grid: { display: false },
+            border: { display: false },
+          },
+          yLiquidResistance: {
+            type: 'linear',
+            display: showLiquidResistanceAxis,
+            position: 'right',
+            offset: true,
+            beginAtZero: true,
+            min: 0,
+            max: model.liquidResistanceAxisMax,
+            ticks: {
+              display: showLiquidResistanceAxis,
+              font: { size: 10 },
+              color: neutralAxisTickColor,
+              callback: formatUniqueAxisTick,
+            },
+            grid: { display: false },
+            border: { display: false },
+          },
         },
       },
     },
@@ -406,6 +493,7 @@ export function createShotChartConfigs({
         responsive: true,
         maintainAspectRatio: false,
         animation: false,
+        events: [],
         layout: {
           autoPadding: false,
           padding: tempAxisUnitPadding,

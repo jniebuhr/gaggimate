@@ -39,6 +39,8 @@ export function getLegendColorByLabel(colors) {
     'Pump Flow': colors.flow,
     'Target F': colors.flow,
     'Puck Flow': colors.puckFlow,
+    'Puck Resistance': colors.puckResistance,
+    'Liquid Resistance': colors.liquidResistance,
     Weight: colors.weight,
     'Weight Flow': colors.weightFlow,
   };

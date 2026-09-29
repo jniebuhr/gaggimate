@@ -34,6 +34,8 @@ export const groups = {
   flow: 'Pump Flow (ml/s)',
   target_flow: 'Target Pump Flow (ml/s)',
   puckflow: 'Puck Flow (ml/s)',
+  puckresistance: 'Puck Resistance (s·√bar/mL)',
+  liquidresistance: 'Liquid Resistance (bar·s/mL)',
   temp: 'Temperature (℃)',
   target_temp: 'Target Temp (℃)',
   weight: 'Weight (g)',
@@ -119,6 +121,16 @@ export const groupColors = {
     bg: 'bg-emerald-500/5',
     text: 'text-[var(--analyzer-puckflow-text)]',
     anchor: 'var(--analyzer-puckflow-anchor)',
+  },
+  puckresistance: {
+    bg: 'bg-amber-500/5',
+    text: 'text-[var(--analyzer-puckresistance-text)]',
+    anchor: 'var(--analyzer-puckresistance-anchor)',
+  },
+  liquidresistance: {
+    bg: 'bg-amber-500/5',
+    text: 'text-[var(--analyzer-liquidresistance-text)]',
+    anchor: 'var(--analyzer-liquidresistance-anchor)',
   },
   temp: {
     bg: 'bg-orange-500/5',

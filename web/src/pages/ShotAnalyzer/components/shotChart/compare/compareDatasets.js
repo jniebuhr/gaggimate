@@ -289,6 +289,48 @@ function buildMainWeightDatasetSpecs({
   ];
 }
 
+function buildMainPuckResistanceDatasetSpecs({
+  entry,
+  model,
+  visibility,
+  colors,
+  shotStyle,
+  compareDatasetMeta,
+}) {
+  return [
+    visibility.puckResistance && model.series.puckResistance.length > 0
+      ? {
+          label: `${entry.label} Puck Resistance`,
+          compareTooltipBaseLabel: 'Puck Resistance',
+          data: model.series.puckResistance,
+          borderColor: applyColorAlpha(colors.puckResistance, shotStyle.opacity),
+          backgroundColor: applyColorAlpha(colors.puckResistance, shotStyle.opacity),
+          yAxisID: 'yPuckResistance',
+          borderWidth: Math.max(1.2, shotStyle.lineWidth - 0.8),
+          borderDash: shotStyle.dash,
+          tension: 0.2,
+          ...getComparePointStyle(false),
+          ...compareDatasetMeta,
+        }
+      : null,
+    visibility.liquidResistance && model.series.liquidResistance.length > 0
+      ? {
+          label: `${entry.label} Liquid Resistance`,
+          compareTooltipBaseLabel: 'Liquid Resistance',
+          data: model.series.liquidResistance,
+          borderColor: applyColorAlpha(colors.liquidResistance, shotStyle.opacity),
+          backgroundColor: applyColorAlpha(colors.liquidResistance, shotStyle.opacity),
+          yAxisID: 'yLiquidResistance',
+          borderWidth: Math.max(1.2, shotStyle.lineWidth - 0.8),
+          borderDash: shotStyle.dash,
+          tension: 0.2,
+          ...getComparePointStyle(false),
+          ...compareDatasetMeta,
+        }
+      : null,
+  ];
+}
+
 function buildMainChartDatasetSpecs({
   entry,
   model,
@@ -317,6 +359,14 @@ function buildMainChartDatasetSpecs({
       colors,
       shotStyle,
       showTargets,
+      compareDatasetMeta,
+    }),
+    ...buildMainPuckResistanceDatasetSpecs({
+      entry,
+      model,
+      visibility,
+      colors,
+      shotStyle,
       compareDatasetMeta,
     }),
     ...buildMainWeightDatasetSpecs({

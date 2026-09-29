@@ -91,6 +91,65 @@ export function getSamplesThroughLastNonExtended(samples) {
   return endIndex >= 0 ? samples.slice(0, endIndex + 1) : [];
 }
 
+function getFiniteWeightValue(sample) {
+  const weight = Number(sample?.v);
+  return Number.isFinite(weight) ? weight : null;
+}
+
+/**
+ * Returns the recorded samples that are safe to use for final-weight stats.
+ *
+ * Extended recording captures post-stop dripping, so higher values there are
+ * valid final-weight updates. A lower value cannot be caused by the brewed
+ * drink itself; it is usually scale handling or the cup being removed and is
+ * therefore excluded without changing the raw chart data.
+ */
+export function getFinalWeightSamples(samples) {
+  if (!Array.isArray(samples) || samples.length === 0) return [];
+
+  let extendedTailStartIndex = 0;
+  for (let i = samples.length - 1; i >= 0; i -= 1) {
+    if (!samples[i]?.systemInfo?.extendedRecording) {
+      extendedTailStartIndex = i + 1;
+      break;
+    }
+  }
+
+  const acceptedSamples = samples.slice(0, extendedTailStartIndex);
+  let finalWeightSample = null;
+
+  for (let i = acceptedSamples.length - 1; i >= 0; i -= 1) {
+    if (getFiniteWeightValue(acceptedSamples[i]) !== null) {
+      finalWeightSample = acceptedSamples[i];
+      break;
+    }
+  }
+
+  for (let i = extendedTailStartIndex; i < samples.length; i += 1) {
+    const sample = samples[i];
+    const weight = getFiniteWeightValue(sample);
+    if (weight === null) continue;
+
+    const finalWeight = getFiniteWeightValue(finalWeightSample);
+    if (finalWeight === null || weight >= finalWeight) {
+      acceptedSamples.push(sample);
+      finalWeightSample = sample;
+    }
+  }
+
+  return acceptedSamples;
+}
+
+export function getFinalWeightSample(samples) {
+  const weightSamples = getFinalWeightSamples(samples);
+
+  for (let i = weightSamples.length - 1; i >= 0; i -= 1) {
+    if (getFiniteWeightValue(weightSamples[i]) !== null) return weightSamples[i];
+  }
+
+  return samples?.at(-1) || null;
+}
+
 export function isPositiveFiniteRate(value) {
   return value != null && Number.isFinite(value) && value > 0.1;
 }

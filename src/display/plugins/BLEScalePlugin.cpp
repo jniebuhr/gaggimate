@@ -152,22 +152,20 @@ void BLEScalePlugin::update() {
         return;
 
     if (scale != nullptr) {
-        // Call scale update with error checking
-        scale->update();
         if (!hasConnectedScale) {
-            reconnectionTries++;
-            if (reconnectionTries > RECONNECTION_TRIES) {
-                ESP_LOGW("BLEScalePlugin", "Max reconnection attempts reached, disconnecting");
-                disconnect();
-                if (scanner != nullptr) {
-                    scanner->initializeAsyncScan();
-                }
+            // Drivers reconnect inside update() with a blocking connect(); drop the scale and let the scan find it again
+            // (GM-215).
+            ESP_LOGW("BLEScalePlugin", "Scale connection lost, resuming scan");
+            disconnect();
+            if (scanner != nullptr) {
+                scanner->initializeAsyncScan();
             }
-        } else {
-            // Poll slow-changing metadata (battery, unit). Flow rate is
-            // emitted inline with each weight measurement, not polled here.
-            pollScaleMetadata();
+            return;
         }
+        scale->update();
+        // Poll slow-changing metadata (battery, unit). Flow rate is
+        // emitted inline with each weight measurement, not polled here.
+        pollScaleMetadata();
     } else if (controller->getSettings().getSavedScale() != "" && scanner != nullptr) {
         // Protected scanner access with null checks
         auto discoveredScales = scanner->getDiscoveredScales();
@@ -220,7 +218,6 @@ void BLEScalePlugin::disconnect() {
         scale = nullptr;
         uuid = "";
         doConnect = false;
-        reconnectionTries = 0;
         // Reset metadata caches so we re-emit change events when a new scale
         // connects (possibly a different model with different capabilities).
         lastBatteryLevel = REMOTE_SCALES_BATTERY_UNKNOWN;
@@ -281,7 +278,6 @@ void BLEScalePlugin::establishConnection() {
     for (const auto &d : discoveredScales) {
         if (d.getAddress().toString() == uuid) {
             deviceFound = true;
-            reconnectionTries = 0;
 
             auto factory = RemoteScalesFactory::getInstance();
             if (factory == nullptr) {

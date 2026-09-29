@@ -1,6 +1,10 @@
 import { TARGET_FLOW_MAX, TARGET_PRESSURE_MAX } from '../constants';
 import { getSpikeResistantSeriesMax, safeMax, safeMin, toNumberOrNull } from '../helpers';
 import { createPumpedWaterSource } from '../../../services/analyzer/waterIntegration';
+import {
+  getLiquidResistanceValue,
+  getPuckResistanceValue,
+} from '../../../services/analyzer/puckResistance';
 
 function getSampleValue(sample, keys) {
   for (const key of keys) {
@@ -65,6 +69,8 @@ export function buildSeries(samples) {
     pressure: [],
     flow: [],
     puckFlow: [],
+    puckResistance: [],
+    liquidResistance: [],
     temp: [],
     weight: [],
     weightFlow: [],
@@ -81,6 +87,8 @@ export function buildSeries(samples) {
     const pressure = toNumberOrNull(getSampleValue(sample, ['cp', 'p', 'pressure']));
     const flow = toNumberOrNull(getFlowFromSample(sample));
     const puckFlow = toNumberOrNull(getSampleValue(sample, ['pf', 'puck_flow']));
+    const puckResistance = getPuckResistanceValue(sample);
+    const liquidResistance = getLiquidResistanceValue(sample);
     const temp = toNumberOrNull(getSampleValue(sample, ['ct', 'temperature']));
     const weight = toNumberOrNull(getSampleValue(sample, ['v', 'w', 'weight', 'm']));
     const weightFlow = toNumberOrNull(getSampleValue(sample, ['vf', 'weight_flow']));
@@ -91,6 +99,8 @@ export function buildSeries(samples) {
     if (pressure !== null) series.pressure.push({ x: t, y: pressure });
     if (flow !== null) series.flow.push({ x: t, y: flow });
     if (puckFlow !== null) series.puckFlow.push({ x: t, y: puckFlow });
+    if (puckResistance !== null) series.puckResistance.push({ x: t, y: puckResistance });
+    if (liquidResistance !== null) series.liquidResistance.push({ x: t, y: liquidResistance });
     if (temp !== null) series.temp.push({ x: t, y: temp });
     if (weight !== null && weight >= 0) series.weight.push({ x: t, y: weight });
     if (weightFlow !== null) series.weightFlow.push({ x: t, y: Math.max(0, weightFlow) });
@@ -133,6 +143,20 @@ export function buildAxisRanges(series) {
     seriesKind: 'weight',
   });
   const weightAxisMax = Math.max(1, weightAxisMaxRaw * 1.02);
+  const puckResistanceAxisMax = Math.max(
+    1,
+    safeMax(
+      series.puckResistance.map(point => point.y),
+      1,
+    ) * 1.05,
+  );
+  const liquidResistanceAxisMax = Math.max(
+    1,
+    safeMax(
+      series.liquidResistance.map(point => point.y),
+      1,
+    ) * 1.05,
+  );
 
   const tempAxisSamples = [...series.temp, ...series.targetTemp];
   const tempMinRaw = safeMin(
@@ -151,6 +175,8 @@ export function buildAxisRanges(series) {
     hasWeight,
     mainAxisMax,
     weightAxisMax,
+    puckResistanceAxisMax,
+    liquidResistanceAxisMax,
     tempAxisMin: tempMinRaw - tempBottomPadding,
     tempAxisMax: tempMaxRaw + tempTopPadding,
   };

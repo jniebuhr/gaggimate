@@ -17,6 +17,7 @@ class LedControlPlugin : public Plugin {
 
     unsigned long lastUpdate = 0;
     bool initialized = false;
+    bool forceSend = false; // re-send the LED snapshot even if unchanged
 
     uint8_t last_r = -1;
     uint8_t last_g = -1;
