@@ -64,7 +64,7 @@ export const setDashboardCardMode = mode => {
 
 const DASHBOARD_METRICS_KEY = 'dashboardMetrics';
 
-const DEFAULT_METRIC_ORDER = ['pressure', 'flow', 'temp', 'weight'];
+const DEFAULT_METRIC_ORDER = ['pressure', 'temp', 'steamtemp', 'flow', 'weight'];
 const DEFAULT_METRIC_ORDER_MOBILE = ['pressure', 'temp', 'weight'];
 
 // Matches narrow portrait phones (max-width) as well as phones rotated into
@@ -473,8 +473,8 @@ const DASHBOARD_PRESETS = {
     cardMode: DASHBOARD_CARD_MODES.SINGLE,
     metricOrder: () =>
       isMobileViewport()
-        ? ['pressure', 'flow', 'temp', 'weight']
-        : ['pressure', 'flow', 'temp', 'weight', 'pumppower', 'heaterpower'],
+        ? ['pressure', 'flow', 'temp', 'steamtemp', 'weight']
+        : ['pressure', 'flow', 'temp', 'steamtemp', 'weight', 'pumppower', 'heaterpower'],
     panelOrder: ['mode', 'profile', 'favorites', 'metrics', 'watertank', 'action'],
     stickyTop: false,
     stickyBottom: true,

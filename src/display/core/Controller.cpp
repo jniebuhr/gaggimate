@@ -239,8 +239,8 @@ void Controller::setupBluetooth() {
         }
     });
     comms.onSystemInfo([this](const char *hardware, const char *version, uint32_t protocolVersion, bool dimming, bool pressure,
-                              bool ledControl, bool tof, vector<uint32_t> addons) {
-        onSystemInfo(hardware, version, protocolVersion, dimming, pressure, ledControl, tof, addons);
+                              bool ledControl, bool tof, bool dualBoiler, vector<uint32_t> addons) {
+        onSystemInfo(hardware, version, protocolVersion, dimming, pressure, ledControl, tof, dualBoiler, addons);
     });
     comms.onIncompatibleController([this](const String &info) { onIncompatibleController(info); });
     pluginManager->on("ota:update:start", [this](Event const &event) {
@@ -251,10 +251,11 @@ void Controller::setupBluetooth() {
         }
     });
     pluginManager->on("ota:update:end", [this](Event const &) { applyConnectionPriority(true); });
-    comms.onSensorData([this](float temp, float pressure, float puckFlow, float pumpFlow, float puckResistance, float pumpPower,
-                              float heaterPower, float waterPumped) {
+    comms.onSensorData([this](float temp, float temp2, float pressure, float puckFlow, float pumpFlow, float puckResistance,
+                              float pumpPower, float heaterPower, float waterPumped) {
         onTempRead(temp);
         onPressureRead(pressure);
+        this->currentSteamTemp = temp2;
         this->currentPuckFlow = puckFlow;
         this->currentPumpFlow = pumpFlow;
         this->currentPumpPower = pumpPower;
@@ -267,6 +268,11 @@ void Controller::setupBluetooth() {
         pluginManager->trigger("pump:volume:change", "value", waterPumped);
     });
     comms.onButtonState([this](uint8_t index, bool pressed) {
+        if (index == 3) {
+            ESP_LOGI("Controller", "Boiler water level changed: %d", pressed);
+            steamBoilerLow = pressed;
+            return;
+        }
         ESP_LOGV(LOG_TAG, "Button %d changed to %d", index, pressed);
         buttons.setConfig(buttonConfig()); // settings may have changed since the last edge
         buttons.onRawState(index, pressed, millis());
@@ -318,7 +324,7 @@ void Controller::setupBluetooth() {
 }
 
 void Controller::onSystemInfo(const char *hardware, const char *version, uint32_t protocolVersion, bool dimming, bool pressure,
-                              bool ledControl, bool tof, vector<uint32_t> addons) {
+                              bool ledControl, bool tof, bool dualBoiler, vector<uint32_t> addons) {
     const bool mismatch = protocolVersion != gm_proto::PROTOCOL_VERSION;
     systemInfo = SystemInfo{.hardware = String(hardware),
                             .version = String(version),
@@ -328,12 +334,13 @@ void Controller::onSystemInfo(const char *hardware, const char *version, uint32_
                                     .pressure = pressure,
                                     .ledControl = ledControl,
                                     .tof = tof,
+                                    .dualBoiler = dualBoiler,
                                     .addons = addons,
                                 },
                             .protocolVersion = protocolVersion,
                             .protocolMismatch = mismatch};
-    ESP_LOGI(LOG_TAG, "System info: %s %s (proto=%u local=%u dm=%d ps=%d led=%d tof=%d)", hardware, version, protocolVersion,
-             gm_proto::PROTOCOL_VERSION, dimming, pressure, ledControl, tof);
+    ESP_LOGI(LOG_TAG, "System info: %s %s (proto=%u local=%u dm=%d ps=%d led=%d tof=%d, db=%d)", hardware, version,
+             protocolVersion, gm_proto::PROTOCOL_VERSION, dimming, pressure, ledControl, tof, dualBoiler);
     if (mismatch) {
         ESP_LOGW(LOG_TAG, "Protocol version mismatch: controller=%u display=%u -- control inhibited, OTA only", protocolVersion,
                  gm_proto::PROTOCOL_VERSION);
@@ -364,7 +371,7 @@ void Controller::onIncompatibleController(const String &infoJson) {
     DeserializationError err = deserializeJson(doc, infoJson);
     if (err) {
         ESP_LOGW(LOG_TAG, "Incompatible controller, no readable info (%s)", err.c_str());
-        onSystemInfo("Legacy controller", "0.0.0", 0, false, false, false, false, {});
+        onSystemInfo("Legacy controller", "0.0.0", 0, false, false, false, false, false, {});
         return;
     }
     String hardware = doc["hw"].as<String>();
@@ -374,7 +381,7 @@ void Controller::onIncompatibleController(const String &infoJson) {
     if (version.isEmpty())
         version = "0.0.0";
     onSystemInfo(hardware.c_str(), version.c_str(), 0, doc["cp"]["dm"].as<bool>(), doc["cp"]["ps"].as<bool>(),
-                 doc["cp"]["led"].as<bool>(), doc["cp"]["tof"].as<bool>(), {});
+                 doc["cp"]["led"].as<bool>(), doc["cp"]["tof"].as<bool>(), false, {});
 }
 
 void Controller::setupWifi() {
@@ -746,6 +753,12 @@ void Controller::applyConnectionPriority(bool force) {
 
 float Controller::getTargetTemp() const {
     switch (mode) {
+    case MODE_STEAM:
+        // Dual boilers keep the brew boiler at brew temp while steaming.
+        if (!systemInfo.capabilities.dualBoiler) {
+            return settings.getTargetSteamTemp();
+        }
+        [[fallthrough]];
     case MODE_BREW:
     case MODE_GRIND: {
         std::lock_guard<std::recursive_mutex> guard(processMutex);
@@ -756,13 +769,18 @@ float Controller::getTargetTemp() const {
         }
         return profileManager->getSelectedProfile().temperature;
     }
-    case MODE_STEAM:
-        return settings.getTargetSteamTemp();
     case MODE_WATER:
         return settings.getTargetWaterTemp();
     default:
         return 0;
     }
+}
+
+float Controller::getTargetSteamTemp() const {
+    if (mode != MODE_STANDBY) {
+        return settings.getTargetSteamTemp();
+    }
+    return 0.0f;
 }
 
 void Controller::setTargetTemp(float temperature) {
@@ -839,6 +857,18 @@ void Controller::lowerTemp() {
     float temp = getTargetTemp();
     temp = constrain(temp - 1.0f, MIN_TEMP, MAX_TEMP);
     setTargetTemp(temp);
+}
+
+void Controller::raiseSteamTemp() {
+    float temp = getTargetSteamTemp();
+    temp = constrain(temp + 1.0f, MIN_TEMP, MAX_TEMP);
+    settings.setTargetSteamTemp(static_cast<int>(temp));
+}
+
+void Controller::lowerSteamTemp() {
+    float temp = getTargetSteamTemp();
+    temp = constrain(temp - 1.0f, MIN_TEMP, MAX_TEMP);
+    settings.setTargetSteamTemp(static_cast<int>(temp));
 }
 
 void Controller::raiseBrewTarget() {
@@ -954,6 +984,51 @@ void Controller::updateControl() {
         }
     }
 
+    // Only send components that changed since the last update. The controller is
+    // stateful and every message is acknowledged, so re-sending unchanged values
+    // each cycle is unnecessary; a periodic ping (see loop()) keeps the watchdog
+    // fed when nothing changes. controlStateSent is cleared to force a full resend.
+    gm::Payload batch[8];
+    size_t count = 0;
+    const bool full = !controlStateSent.exchange(true); // claim the flag first so a concurrent reset is never lost
+    if (full || boiler != lastBoiler)
+        batch[count++] = comms.buildBoilerControl(boiler.index, boiler.mode, boiler.setpoint);
+
+    if (systemInfo.capabilities.dualBoiler) {
+        float targetSteamTemp = getTargetSteamTemp();
+        BoilerCommand boiler2;
+        boiler2.index = 1;
+        boiler2.setpoint = targetSteamTemp;
+        RelayCommand refill; // index 2 = refill valve
+        refill.index = 2;
+        RelayCommand water; // index 3 = steam-pressure hot-water valve
+        water.index = 3;
+
+        // On dual-boiler machines, steam pressure supplies the hot water. Opening
+        // the dedicated valve must not start the brew pump or create a PumpProcess.
+        water.open = waterValveActive;
+
+        if (!active && mode != MODE_STANDBY && steamBoilerLow) {
+            targetPressure = 0.0f;
+            targetFlow = 0.0f;
+            relay.open = false;
+            pump.mode = PumpControlMode::Power;
+            pump.power = 100;
+            refill.open = true;
+            handled = true;
+        }
+
+        if (full || boiler2 != lastBoiler2)
+            batch[count++] = comms.buildBoilerControl(boiler2.index, boiler2.mode, boiler2.setpoint);
+        if (full || refill != lastRefill)
+            batch[count++] = comms.buildRelayControl(refill.index, refill.open); // index 2 = refill relay
+        if (full || water != lastWater)
+            batch[count++] = comms.buildRelayControl(water.index, water.open); // index 3 = hot-water valve
+        lastBoiler2 = boiler2;
+        lastRefill = refill;
+        lastWater = water;
+    }
+
     if (!handled) {
         targetPressure = 0.0f;
         targetFlow = 0.0f;
@@ -962,15 +1037,6 @@ void Controller::updateControl() {
         pump.power = active ? proc->getPumpValue() : 0;
     }
 
-    // Only send components that changed since the last update. The controller is
-    // stateful and every message is acknowledged, so re-sending unchanged values
-    // each cycle is unnecessary; a periodic ping (see loop()) keeps the watchdog
-    // fed when nothing changes. controlStateSent is cleared to force a full resend.
-    gm::Payload batch[4];
-    size_t count = 0;
-    const bool full = !controlStateSent.exchange(true); // claim the flag first so a concurrent reset is never lost
-    if (full || boiler != lastBoiler)
-        batch[count++] = comms.buildBoilerControl(boiler.index, boiler.mode, boiler.setpoint);
     if (full || pump != lastPump)
         batch[count++] = comms.buildPumpControl(pump.index, pump.mode, pump.power, pump.pressure, pump.flow);
     if (full || relay != lastRelay)
@@ -1149,6 +1215,10 @@ bool Controller::isBrewActive() const {
 int Controller::getMode() const { return mode; }
 
 void Controller::setMode(int newMode) {
+    if (newMode == MODE_STANDBY) {
+        waterValveActive = false;
+        waterButtonPressed = false;
+    }
     Event modeEvent = pluginManager->trigger("controller:mode:change", "value", newMode);
     const int previousMode = mode;
     mode = modeEvent.getInt("value");
@@ -1377,6 +1447,30 @@ void Controller::handleSteamButton(bool pressed) {
 }
 
 void Controller::handleWaterButton(bool pressed) {
+    if (systemInfo.capabilities.dualBoiler) {
+        if (getMode() == MODE_STANDBY) {
+            waterButtonPressed = false;
+            return;
+        }
+
+        if (pressed) {
+            waterButtonPressed = true;
+            return;
+        }
+
+        if (!waterButtonPressed) {
+            return;
+        }
+        waterButtonPressed = false;
+        waterValveActive = !waterValveActive;
+        if (waterValveActive) {
+            pluginManager->trigger("controller:waterValve:activate");
+        } else {
+            pluginManager->trigger("controller:waterValve:deactivate");
+        }
+        return;
+    }
+
     if (pressed) {
         if (getMode() != MODE_WATER) {
             setMode(MODE_WATER);

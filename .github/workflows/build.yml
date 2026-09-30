@@ -1,7 +1,7 @@
 on:
   push:
     tags:
-      - "*"
+      - "v*" # one-off tags from scripts/release.sh must not reach the stable channel
 
 name: Build
 jobs:
@@ -41,7 +41,7 @@ jobs:
           mkdir -p upload/controller
           git tag -d nightly
           git tag -d db
-          git describe --tags --dirty > out/version.txt
+          git describe --tags --dirty --match "v*" > out/version.txt
       - name: Build Web
         run: ./scripts/build_webui.sh
       - name: Build controller

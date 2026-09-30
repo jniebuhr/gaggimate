@@ -164,6 +164,7 @@ message Capabilities {
     bool led_control = 3;
     bool tof = 4;
     repeated Addon addons = 5;
+    bool dual_boiler = 6;
 }
 
 message Addon {

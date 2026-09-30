@@ -82,3 +82,37 @@ xtensa-esp32s3-elf-gdb .pio/build/display/firmware.elf
 (gdb) info locals
 (gdb) print variable_name
 ```
+
+## One-off Firmware Releases
+
+### `release.sh`
+
+Builds the three firmware targets the same way CI does and publishes them as a GitHub release for an arbitrary tag.
+Use it for one-off test builds handed to individual users; `v*` tags stay with the CI pipeline (`build.yml`).
+
+**What it does:**
+- Firmware reports the usual nightly-style version (`v1.8.1-234-gabc`, only `v*` tags count); the release tag never lands in the binary
+- Builds the web UI, `controller`, `display` (+ LittleFS seed image) and `display-headless`
+- Stages the artifacts in `out/` with the CI file names (`board-*.bin`, `display-*.bin`, `display-headless-*.bin`, `version.txt`)
+- Force-pushes the tag (by SHA, no local tag is created) to `origin`, deletes any existing release with that tag and recreates it
+
+**Defaults mirror the nightly channel:** `-DNIGHTLY_BUILD`, marked as pre-release, never marked "Latest".
+It refuses to run on a dirty working tree and refuses `v<digits>` tags. It does not upload to the update
+server or the gh-pages flasher directory; those remain CI-only.
+
+**Usage:**
+```bash
+# Build everything and publish/overwrite the release "pairing-test"
+./scripts/release.sh pairing-test
+
+# Custom title and notes, stable build flags instead of -DNIGHTLY_BUILD
+./scripts/release.sh -t "Pairing test build" -b "Try the steam-switch pairing window" --release-flags pairing-test
+
+# Build only, print the publish steps without touching GitHub
+./scripts/release.sh --dry-run pairing-test
+
+# Re-publish what is already in out/ (e.g. after a failed upload)
+./scripts/release.sh --skip-build pairing-test
+```
+
+Run `./scripts/release.sh --help` for all options (`--skip-web`, `--allow-dirty`, `--no-prerelease`, `--repo`, `--notes-file`).

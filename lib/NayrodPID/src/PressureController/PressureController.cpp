@@ -46,21 +46,25 @@ void PressureController::initSetpointFilter(float val) {
     _setpointFilterInitialized = true;
 }
 
-void PressureController::filterSensor() {
+void PressureController::filterSensor(float sampleTime) {
+    if (sampleTime <= 0.0f) sampleTime = _dt;
+    _pressureKalmanFilter->setProcessNoise(powf(2 * sampleTime, 2));
     // Use Kalman filter for pressure (as originally intended)
     float newFiltered = this->_pressureKalmanFilter->updateEstimate(*_rawPressure);
 
     // Calculate pressure derivative using the filtered pressure
-    float pressureDerivative = (newFiltered - _lastFilteredPressure) / _dt;
-    applyLowPassFilter(&_filteredPressureDerivative, pressureDerivative, _filterEstimatorFrequency, _dt);
+    float pressureDerivative = _pressureInitialized ? (newFiltered - _lastFilteredPressure) / sampleTime : 0.0f;
+    _pressureInitialized = true;
+    applyLowPassFilter(&_filteredPressureDerivative, pressureDerivative, _filterEstimatorFrequency, sampleTime);
 
     _lastFilteredPressure = newFiltered;
     _filteredPressureSensor = newFiltered;
 }
 
-void PressureController::update(ControlMode mode) {
+void PressureController::update(ControlMode mode, bool freshPressure, float sampleTime, float elapsed) {
+    if (elapsed > 0.0f) _dt = elapsed;
     filterSetpoint(*_rawPressureSetpoint);
-    filterSensor();
+    if (freshPressure) filterSensor(sampleTime);
 
     if ((mode == ControlMode::FLOW || mode == ControlMode::PRESSURE) && *_rawPressureSetpoint > 0.0f &&
         *_rawFlowSetpoint > 0.0f) {

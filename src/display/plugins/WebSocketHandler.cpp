@@ -398,6 +398,9 @@ void WebSocketHandler::publishTelemetry() {
     statusDoc.clear();
     statusDoc["tp"] = "evt:status";
     statusDoc["ct"] = round_to(controller->getCurrentTemp(), 3);
+    statusDoc["cst"] = round_to(controller->getCurrentSteamTemp(), 3);
+    statusDoc["tst"] = controller->getTargetSteamTemp();
+    statusDoc["db"] = controller->getSystemInfo().capabilities.dualBoiler;
     statusDoc["tt"] = controller->getTargetTemp();
     statusDoc["pr"] = round_to(controller->getCurrentPressure(), 3);
     statusDoc["fl"] = round_to(controller->getCurrentPumpFlow(), 3);

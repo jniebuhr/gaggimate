@@ -13,6 +13,7 @@ inline String make_system_info(ControllerConfig config, String version) {
     capabilities["dm"] = config.capabilites.dimming;
     capabilities["led"] = config.capabilites.ledControls;
     capabilities["tof"] = config.capabilites.tof;
+    capabilities["db"] = config.capabilites.dualBoiler;
     doc["cp"] = capabilities;
     return doc.as<String>();
 }

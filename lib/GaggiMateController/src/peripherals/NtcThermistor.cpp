@@ -1,54 +1,86 @@
 #include "NtcThermistor.h"
 #include <Arduino.h>
 #include <SPI.h>
+#include <cmath>
+#include <algorithm>
 #include <freertos/FreeRTOS.h>
 
-NtcThermistor::NtcThermistor(ADSAdc *adc, uint8_t channel, const temperature_error_callback_t &error_callback)
-    : taskHandle(nullptr), _adc(adc), _channel(channel) {
-    this->error_callback = error_callback;
-}
+NtcThermistor::NtcThermistor(ADSAdc *adc, uint8_t channel, const temperature_error_callback_t &error_callback, float ro, float Rs,
+                             float Vs, float Beta, NtcTiming timing)
+    : _adc(adc), _channel(channel), taskHandle(nullptr), _timing(timing),
+      _rs(Rs), _vs(Vs), _beta(Beta), _ro(ro), error_callback(error_callback) {}
 
 float NtcThermistor::read() { return isErrorState() ? 0.0f : temperature; }
 
-bool NtcThermistor::isErrorState() { return temperature <= 0 || errorCount >= NTC_MAX_ERRORS; }
+bool NtcThermistor::isErrorState() {
+    return temperature <= 0 || _fault || millis() - _lastFreshMs >= _staleTimeoutMs;
+}
 
 void NtcThermistor::setup() {
+    if (_timing.updateIntervalMs < 20 || _timing.updateIntervalMs > 1000 ||
+        !std::isfinite(_timing.smoothingTimeConstantMs) || _timing.smoothingTimeConstantMs < 0) {
+        ESP_LOGE(LOG_TAG, "Invalid NTC timing configuration");
+        _fault = true;
+        error_callback();
+        return;
+    }
+    _lastFreshMs = millis();
+    const auto rate = _adc->sampleRate(_channel);
+    _staleTimeoutMs = std::max(3u * _timing.updateIntervalMs, rate ? std::max(1000u, 3000u / rate) : 1000u);
     xTaskCreate(monitorTask, "NtcThermocouple::monitor", configMINIMAL_STACK_SIZE * 4, this, 1, &taskHandle);
 }
 
 void NtcThermistor::loop() {
-    if (errorCount >= NTC_MAX_ERRORS || temperature > MAX_SAFE_TEMP) {
-        ESP_LOGE(LOG_TAG, "NTCThermistor failure! Error Count: %d, Temperature: %.2f\n", errorCount, temperature);
+    const uint32_t now = millis();
+    float reading = 0.0f;
+    uint16_t count = 0;
+    int minimum = 0, maximum = 0;
+    if (!_adc->consumeAverage(_channel, reading, count, minimum, maximum)) {
+        if (now - _lastFreshMs >= _staleTimeoutMs) {
+            _fault = true;
+            error_callback();
+        }
+        return;
+    }
+    const uint32_t elapsedMs = now - _lastFreshMs;
+    _lastFreshMs = now;
+    if (_fault || temperature > MAX_SAFE_TEMP) {
+        _fault = true;
+        ESP_LOGE(LOG_TAG, "NTCThermistor failure! Temperature: %.2f", temperature);
         error_callback();
         return;
     }
-    // If buffer has been filled up, remove the previous result from the error count
-    if (resultCount == NTC_ERROR_WINDOW) {
-        errorCount -= resultBuffer[bufferIndex];
-    } else {
-        ++resultCount;
-    }
-
-    int reading = _adc->getValue(_channel);
     float Va = reading * ADC_STEP;
-    float Rt = Rs * Va / (Vs - Va);
-    float T = 1 / (1 / To + log(Rt / Ro) / Beta);
+    float Rt = _rs * Va / (_vs - Va);
+    float T = 1 / (1 / To + log(Rt / _ro) / _beta);
     float temp = T - 273.15;
 
-    ESP_LOGI(LOG_TAG, "NTCThermistor: reading: %d, Va: %.2f, Rt: %.2f, T: %.2f", reading, Va, Rt, T);
+    ESP_LOGV(LOG_TAG, "NTCThermistor: mean ADC: %.2f, samples: %u, temp: %.2f", reading, count, temp);
+    const bool invalid = minimum <= 0 || maximum * ADC_STEP >= _vs || !std::isfinite(temp) || temp <= 0.0f;
 
     if (temp <= 0.0f) {
         ESP_LOGE(LOG_TAG, "Temperature reported below 0°C: %.2f\n", temp);
     }
 
-    resultBuffer[bufferIndex] = temp <= 0.0f ? 1 : 0;
-    errorCount += resultBuffer[bufferIndex];
-    bufferIndex = (bufferIndex + 1) % NTC_ERROR_WINDOW;
-
-    if (temp <= 0.0f)
+    _fault = _faultWindow.update(invalid, elapsedMs);
+    if (_fault) {
+        error_callback();
         return;
-    temperature = 0.2f * temp + 0.8f * temperature;
-    ESP_LOGI(LOG_TAG, "Updated temperature: %2f\n", temperature);
+    }
+
+    if (invalid)
+        return;
+    // Initialize from a real reading, not an artificial ramp from zero.
+    const float alpha = _timing.alpha(now - _lastFilterMs);
+    temperature = _filterInitialized ? alpha * temp + (1.0f - alpha) * temperature : temp;
+    _filterInitialized = true;
+    _lastFilterMs = now;
+    if (temperature > MAX_SAFE_TEMP) {
+        _fault = true;
+        error_callback();
+        return;
+    }
+    ESP_LOGD(LOG_TAG, "Updated temperature: %2f", temperature);
 }
 
 [[noreturn]] void NtcThermistor::monitorTask(void *arg) {
@@ -56,6 +88,6 @@ void NtcThermistor::loop() {
     auto *thermocouple = static_cast<NtcThermistor *>(arg);
     while (true) {
         thermocouple->loop();
-        xTaskDelayUntil(&lastWake, pdMS_TO_TICKS(NTC_UPDATE_INTERVAL));
+        xTaskDelayUntil(&lastWake, pdMS_TO_TICKS(thermocouple->_timing.updateIntervalMs));
     }
 }

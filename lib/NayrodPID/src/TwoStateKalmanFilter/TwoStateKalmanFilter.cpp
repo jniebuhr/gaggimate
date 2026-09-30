@@ -5,11 +5,16 @@
 constexpr float INITIAL_RATE_VARIANCE = 25.0f;
 
 TwoStateKalmanFilter::TwoStateKalmanFilter(float dt, float mea_e, float accel_q, float rate_leak)
-    : _dt(dt), _err_measure(mea_e), _rate_leak(rate_leak) {
+    : _dt(dt), _accel_q(accel_q), _err_measure(mea_e), _rate_leak(rate_leak) {
+    setSampleTime(dt);
+}
+
+void TwoStateKalmanFilter::setSampleTime(float dt) {
+    _dt = dt;
     // Piecewise-constant acceleration model: Q = accel_q * [dt^4/4, dt^3/2; dt^3/2, dt^2]
-    _q00 = accel_q * dt * dt * dt * dt / 4.0f;
-    _q01 = accel_q * dt * dt * dt / 2.0f;
-    _q11 = accel_q * dt * dt;
+    _q00 = _accel_q * dt * dt * dt * dt / 4.0f;
+    _q01 = _accel_q * dt * dt * dt / 2.0f;
+    _q11 = _accel_q * dt * dt;
 }
 
 void TwoStateKalmanFilter::reset() {

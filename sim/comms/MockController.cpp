@@ -10,7 +10,7 @@ void MockController::begin() {
 }
 
 void MockController::setBoiler(const BoilerCommand &c) {
-    if (c.mode == BoilerControlMode::Temperature)
+    if (c.mode == BoilerControlMode::Temperature && c.index == 0)
         targetTemp = c.setpoint;
 }
 
@@ -69,7 +69,8 @@ void MockController::update() {
         lastSensorMs = now;
         const float puckResistance = flow > 0.05f ? pressure / flow : 0.0f;
         if (onSensor)
-            onSensor(temperature, pressure, flow, flow, puckResistance, pumpPower, constrain(gain * 100.0, 0.0f, 100.0f), 0.0f);
+            onSensor(temperature, temperature + 40.0f, pressure, flow, flow, puckResistance, pumpPower,
+                     constrain(gain * 100.0, 0.0f, 100.0f), 0.0f);
         if (onVolumetric)
             onVolumetric(weight);
     }

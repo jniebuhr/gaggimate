@@ -123,6 +123,8 @@ export const PANEL_DEFINITIONS = [
       systemMessage: ds.systemMessage,
       currentTemperature: ds.currentTemperature,
       targetTemperature: ds.targetTemperature,
+      currentSteamTemperature: ds.currentSteamTemperature,
+      targetSteamTemperature: ds.targetSteamTemperature,
       changeTarget: ds.changeTarget,
       grindTarget: ds.grindTarget,
       grindTargetDuration: ds.grindTargetDuration,

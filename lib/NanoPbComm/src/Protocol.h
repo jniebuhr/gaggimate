@@ -19,7 +19,7 @@ static constexpr const char *INFO_CHAR_UUID = "f8d7203b-e00c-48e2-83ba-37ff49cdb
 static constexpr const char *LEGACY_ERROR_CHAR_UUID = "d6676ec7-820c-41de-820d-95620749003b";
 
 // Bump on any breaking gaggimate.proto change; carried in SystemInfo.protocol_version for mismatch detection.
-static constexpr uint32_t PROTOCOL_VERSION = 5;
+static constexpr uint32_t PROTOCOL_VERSION = 6;
 
 // Outbound priorities (higher wins in the queue).
 enum Priority : uint8_t {

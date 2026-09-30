@@ -108,6 +108,7 @@ class DefaultUI {
     int apActive = false;
     int wifiConnected = false;
     int waitingForController = false;
+    int dualBoiler = false;
     int initialized = false;
     int grindAvailable = false;
 
@@ -123,7 +124,9 @@ class DefaultUI {
     int heatingFlash = 0;
     float pressure = 0.0f;
     float currentTemp = 0.0f;
+    float currentSteamTemp = 0.0f;
     float targetTemp = 0.0f;
+    float targetSteamTemp = 0.0f;
     double bluetoothWeight = 0.0;
     BrewScreenState brewScreenState = BrewScreenState::Brew;
 

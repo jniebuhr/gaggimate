@@ -188,7 +188,8 @@ void GaggiMateClient::registerHandlers() {
             }
             _systemInfoCb(p.content.system_info.hardware, p.content.system_info.version, p.content.system_info.protocol_version,
                           p.content.system_info.capabilities.dimming, p.content.system_info.capabilities.pressure,
-                          p.content.system_info.capabilities.led_control, p.content.system_info.capabilities.tof, addonList);
+                          p.content.system_info.capabilities.led_control, p.content.system_info.capabilities.tof,
+                          p.content.system_info.capabilities.dual_boiler, addonList);
         }
     });
     _endpoint.on(gaggimate_Payload_sensor_tag, [this](const gm::Payload &p) {
@@ -196,6 +197,7 @@ void GaggiMateClient::registerHandlers() {
             return;
         // The display tracks a single boiler today; read boiler 0 if present.
         float temperature = 0.0f;
+        float temp2 = 0.0f;
         float pressure = 0.0f;
         float heater_power = 0.0f;
         if (p.content.sensor.boilers_count > 0) {
@@ -203,8 +205,11 @@ void GaggiMateClient::registerHandlers() {
             pressure = p.content.sensor.boilers[0].pressure;
             heater_power = p.content.sensor.boilers[0].power;
         }
-        _sensorCb(temperature, pressure, p.content.sensor.puck_flow, p.content.sensor.pump_flow, p.content.sensor.puck_resistance,
-                  p.content.sensor.pump_power, heater_power, p.content.sensor.water_pumped);
+        if (p.content.sensor.boilers_count > 1) {
+            temp2 = p.content.sensor.boilers[1].temperature;
+        }
+        _sensorCb(temperature, temp2, pressure, p.content.sensor.puck_flow, p.content.sensor.pump_flow,
+                  p.content.sensor.puck_resistance, p.content.sensor.pump_power, heater_power, p.content.sensor.water_pumped);
     });
     _endpoint.on(gaggimate_Payload_button_tag, [this](const gm::Payload &p) {
         if (_buttonCb)

@@ -587,6 +587,7 @@ void DefaultUI::updateState() {
     pressureAvailable = controller->getSystemInfo().capabilities.pressure ? 1 : 0;
     wifiConnected = WiFi.status() == WL_CONNECTED;
     grindAvailable = settings.isSmartGrindActive() || settings.getAltRelayFunction() == ALT_RELAY_GRIND;
+    dualBoiler = controller->getSystemInfo().capabilities.dualBoiler ? 1 : 0;
 
     uiFlags.brew_adjustments(brewScreenState == BrewScreenState::Settings);
     uiFlags.active(controller->isActive());
@@ -699,8 +700,9 @@ void DefaultUI::updateProfileInfo() {
 
 void DefaultUI::updateBoiler() {
     const ::Settings &settings = controller->getSettings();
-    boiler.current_temperature(controller->getCurrentTemp());
-    boiler.target_temperature(controller->getTargetTemp());
+    bool showSteamTemp = dualBoiler && currentScreen == SCREEN_ID_STEAM_SCREEN;
+    boiler.current_temperature(showSteamTemp ? controller->getCurrentSteamTemp() : controller->getCurrentTemp());
+    boiler.target_temperature(showSteamTemp ? controller->getTargetSteamTemp() : controller->getTargetTemp());
     boiler.current_pressure(pressure);
     boiler.target_pressure(controller->getTargetPressure());
     boiler.max_temperature(160.0f);

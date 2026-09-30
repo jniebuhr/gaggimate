@@ -119,6 +119,8 @@ export function useDashboardState() {
     systemMessage,
     currentTemperature: s.currentTemperature,
     targetTemperature: s.targetTemperature,
+    currentSteamTemperature: s.currentSteamTemperature,
+    targetSteamTemperature: s.targetSteamTemperature,
     currentPressure: s.currentPressure,
     targetPressure: s.targetPressure,
     currentFlow: s.currentFlow,
@@ -140,6 +142,7 @@ export function useDashboardState() {
     processInfo: p,
     tofDistance: s.tofDistance,
     warnings: s.warnings ?? [],
+    dualBoiler: caps.dualBoiler,
     // derived
     isActive,
     isFinished,

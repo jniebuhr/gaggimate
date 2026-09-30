@@ -53,6 +53,17 @@ export const METRIC_DEFINITIONS = [
     onIncrease: ds => ds.raiseTemp,
   },
   {
+    id: 'steamtemp',
+    label: 'Steam Temp',
+    required: true,
+    available: ds => ds.dualBoiler,
+    getValue: ds => `${(ds.currentSteamTemperature ?? 0).toFixed(1)}°`,
+    getTarget: ds => (ds.targetSteamTemperature ?? 0).toFixed(0),
+    unit: '°C',
+    adjustable: () => false,
+    disabled: ds => (ds.isBrewing && ds.isActive) || ds.mode === 0,
+  },
+  {
     id: 'pumppower',
     label: 'Pump Power',
     required: false,

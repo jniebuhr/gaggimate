@@ -172,6 +172,8 @@ export default class ApiService {
     };
     map('ct', 'currentTemperature');
     map('tt', 'targetTemperature');
+    map('cst', 'currentSteamTemperature');
+    map('tst', 'targetSteamTemperature');
     map('pr', 'currentPressure');
     map('pt', 'targetPressure');
     map('tw', 'targetWeight', v => v || 0);
@@ -211,6 +213,7 @@ export default class ApiService {
     if (has('cp')) capabilities.pressure = message.cp;
     if (has('led')) capabilities.ledControl = message.led;
     if (has('gp')) capabilities.gearpumpAddon = !!message.gp;
+    if (has('db')) capabilities.dualBoiler = message.db;
 
     // Only telemetry frames extend the chart history; state-only frames would duplicate points.
     let history = machine.value.history;
@@ -232,6 +235,8 @@ export const machine = signal({
   status: {
     currentTemperature: 0,
     targetTemperature: 0,
+    currentSteamTemperature: 0,
+    targetSteamTemperature: 0,
     currentFlow: 0,
     targetFlow: 0,
     mode: 0,
@@ -251,6 +256,7 @@ export const machine = signal({
   capabilities: {
     pressure: false,
     dimming: false,
+    dualBoiler: false,
   },
   history: [],
 });

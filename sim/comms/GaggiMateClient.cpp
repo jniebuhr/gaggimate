@@ -2,9 +2,9 @@
 
 GaggiMateClient::GaggiMateClient() {
     // Forward the mock's telemetry to whatever the firmware registered.
-    _mock.onSensor = [this](float t, float p, float pf, float mf, float pr, float pp, float hp, float wp) {
+    _mock.onSensor = [this](float t, float t2, float p, float pf, float mf, float pr, float pp, float hp, float wp) {
         if (_sensorCb)
-            _sensorCb(t, p, pf, mf, pr, pp, hp, wp);
+            _sensorCb(t, t2, p, pf, mf, pr, pp, hp, wp);
     };
     _mock.onVolumetric = [this](float v) {
         if (_volumetricCb)
@@ -32,7 +32,7 @@ void GaggiMateClient::loop() {
         if (_connCb)
             _connCb(true);
         if (_systemInfoCb)
-            _systemInfoCb("GaggiMate Sim", "sim-3.0", gm_proto::PROTOCOL_VERSION, true, true, true, true, {});
+            _systemInfoCb("GaggiMate Sim", "sim-3.0", gm_proto::PROTOCOL_VERSION, true, true, true, true, true, {});
         _mock.begin();
     }
     if (_autotunePending && (int32_t)(millis() - _autotuneDueMs) >= 0) {
