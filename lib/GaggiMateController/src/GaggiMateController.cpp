@@ -84,7 +84,7 @@ void GaggiMateController::setup() {
         waterBtn = new DigitalInput(_config.waterButtonPin, [this](const bool state) { _comms.sendButtonState(2, state); });
     }
     this->hardwareScale = new HardwareScale(
-        _config.scaleSdaPin, _config.scaleSda1Pin, _config.scaleSclPin,
+        _config.scaleDat0Pin, _config.scaleDat1Pin, _config.scaleClkPin,
         [this](float weight, float cell1Weight, float cell2Weight, bool cell1Valid, bool cell2Valid) {
             if (_comms.isConnected()) {
                 _comms.sendScaleMeasurement(weight, cell1Weight, cell2Weight, cell1Valid, cell2Valid);

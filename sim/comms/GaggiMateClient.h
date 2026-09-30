@@ -19,7 +19,7 @@ using std::vector;
 // Protocol version the firmware checks against; report the same so there's no
 // "protocol mismatch" path in the simulator.
 namespace gm_proto {
-static constexpr uint32_t PROTOCOL_VERSION = 4;
+static constexpr uint32_t PROTOCOL_VERSION = 7;
 }
 
 // Stand-in for the nanopb gm::Payload: a tagged command the build*() helpers
