@@ -238,7 +238,7 @@ export function MachineTab({ formData, onChange, setField }) {
           <SettingsFormField
             label='Alt Relay / SSR2 Function'
             htmlFor='altRelayFunction'
-            helpText='Dump valve: SSR2 drives a group dump solenoid (e.g. Sage/Breville Barista Express). Wire the 3-way to RELAY. After a shot the dump valve opens while the 3-way stays open, then the 3-way closes.'
+            helpText='Dump valve: SSR2 drives a group dump solenoid (e.g. Sage/Breville Barista Express). Wire the 3-way to RELAY. After a shot the 3-way closes and the dump valve opens together, so group pressure goes to the drip tray without pulling fines back into the steam or hot water path.'
             noMargin
           >
             <select
@@ -262,7 +262,7 @@ export function MachineTab({ formData, onChange, setField }) {
               htmlFor='dumpValveDuration'
               unit='s'
               unitAriaLabel='seconds'
-              helpText='How long the dump valve stays open after a shot or abort, with the 3-way still open. 0 disables the automatic dump; per-phase dump control still works.'
+              helpText='How long the dump valve stays open after a shot or abort. The 3-way closes at the same time. 0 disables the automatic dump; per-phase dump control still works.'
               noMargin
             >
               <input

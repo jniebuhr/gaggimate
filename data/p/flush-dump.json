@@ -2,7 +2,7 @@
   "id": "flush-dump",
   "label": "[Utility] Backflush (Dump valve)",
   "type": "standard",
-  "description": "Backflush for machines with a separate dump solenoid on SSR2 (e.g. Sage/Breville Barista Express). Depressurize keeps the 3-way open and opens the dump valve.",
+  "description": "Backflush for machines with a separate dump solenoid on SSR2 (e.g. Sage/Breville Barista Express). Depressurize closes the 3-way and opens the dump valve.",
   "temperature": 93,
   "utility": true,
   "phases": [
@@ -17,7 +17,7 @@
     {
       "name": "Depressurize",
       "phase": "brew",
-      "valve": 1,
+      "valve": 0,
       "alt": 1,
       "duration": 10,
       "pump": 0
@@ -33,7 +33,7 @@
     {
       "name": "Depressurize",
       "phase": "brew",
-      "valve": 1,
+      "valve": 0,
       "alt": 1,
       "duration": 10,
       "pump": 0
@@ -49,7 +49,7 @@
     {
       "name": "Depressurize",
       "phase": "brew",
-      "valve": 1,
+      "valve": 0,
       "alt": 1,
       "duration": 10,
       "pump": 0
@@ -65,7 +65,7 @@
     {
       "name": "Depressurize",
       "phase": "brew",
-      "valve": 1,
+      "valve": 0,
       "alt": 1,
       "duration": 10,
       "pump": 0
