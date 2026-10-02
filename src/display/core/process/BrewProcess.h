@@ -112,7 +112,9 @@ class BrewProcess : public Process {
 
     bool hasDump() const { return dumpDurationMs > 0; }
 
-    // Opens dump with the 3-way still open. abortReason is set for a user stop; omit on natural finish.
+    // Closes the 3-way and opens the dump together. Leaving the 3-way open while
+    // dumping pulls puck fines back into the thermoblock and the steam/hot-water path.
+    // abortReason is set for a user stop; omit on natural finish.
     void startDump(PhaseExitReason abortReason = PhaseExitReason::NONE) {
         if (processPhase != ProcessPhase::RUNNING) {
             return;
@@ -129,7 +131,7 @@ class BrewProcess : public Process {
         dumpStarted = millis();
         currentPhaseStarted = dumpStarted;
         currentPhase.name = "Dump";
-        currentPhase.valve = 1;
+        currentPhase.valve = 0;
         currentPhase.alt = 1;
         currentPhase.pumpIsSimple = true;
         currentPhase.pumpSimple = 0;
@@ -142,7 +144,7 @@ class BrewProcess : public Process {
             return false;
         }
         if (processPhase == ProcessPhase::DUMPING) {
-            return true;
+            return false;
         }
         return currentPhase.valve;
     }
