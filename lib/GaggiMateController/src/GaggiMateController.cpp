@@ -8,6 +8,9 @@
 #include <peripherals/NtcThermistor.h>
 #include <utility>
 
+constexpr uint32_t ADDON_GEARPUMP = 7;
+constexpr uint32_t ADDON_HW_SCALE = 8;
+
 GaggiMateController::GaggiMateController(String version) : _version(std::move(version)) {
     configs.push_back(GM_STANDARD_REV_1X);
     configs.push_back(GM_STANDARD_REV_2X);
@@ -80,6 +83,14 @@ void GaggiMateController::setup() {
     if (_config.waterButtonPin != 0) {
         waterBtn = new DigitalInput(_config.waterButtonPin, [this](const bool state) { _comms.sendButtonState(2, state); });
     }
+    this->hardwareScale = new HardwareScale(
+        _config.scaleDat0Pin, _config.scaleDat1Pin, _config.scaleClkPin,
+        [this](float weight, float cell1Weight, float cell2Weight, bool cell1Valid, bool cell2Valid) {
+            if (_comms.isConnected()) {
+                _comms.sendScaleMeasurement(weight, cell1Weight, cell2Weight, cell1Valid, cell2Valid);
+            }
+        },
+        [](float, float) {});
 
     // 4-Pin peripheral port
     if (!_config.capabilites.dualBoiler) {
@@ -98,18 +109,31 @@ void GaggiMateController::setup() {
             _comms.onLedControl([this](uint8_t channel, uint8_t brightness) { ledController->setChannel(channel, brightness); });
         }
     }
-
     gm::DeviceCapabilities capabilities = gaggimate_Capabilities_init_zero;
     capabilities.dimming = _config.capabilites.dimming;
     capabilities.pressure = _config.capabilites.pressure;
     capabilities.tof = _config.capabilites.tof;
     capabilities.led_control = _config.capabilites.ledControls;
     capabilities.dual_boiler = _config.capabilites.dualBoiler;
+
+    this->hardwareScale->setup();
+
+    auto addAddon = [&capabilities](uint32_t type) {
+        const auto maxAddons = sizeof(capabilities.addons) / sizeof(capabilities.addons[0]);
+        if (capabilities.addons_count >= maxAddons) {
+            return;
+        }
+        capabilities.addons[capabilities.addons_count] = gaggimate_Addon_init_zero;
+        capabilities.addons[capabilities.addons_count].type = type;
+        capabilities.addons_count++;
+    };
     if (this->gearpumpAddon != nullptr) {
-        capabilities.addons_count = 1;
-        capabilities.addons[0] = gaggimate_Addon_init_zero;
-        capabilities.addons[0].type = 7;
+        addAddon(ADDON_GEARPUMP);
     }
+    if (this->hardwareScale->isAvailable()) {
+        addAddon(ADDON_HW_SCALE);
+    }
+
     // Steam switch held at power-on opens the BLE pairing window; read it here since steamBtn->setup() runs later.
     _comms.init("GPBLS", _config.name.c_str(), _version, capabilities, isSteamSwitchOn());
 
@@ -290,17 +314,39 @@ void GaggiMateController::setup() {
         this->heater->autotune(static_cast<int>(testTimeSec), static_cast<int>(windowSize), static_cast<int>(heaterWattage));
     });
     _comms.onTare([this]() {
+        if (hardwareScale != nullptr && hardwareScale->isAvailable()) {
+            hardwareScale->tare();
+        }
         if (!_config.capabilites.dimming) {
             return;
         }
         auto dimmedPump = static_cast<DimmedPump *>(pump);
         dimmedPump->tare();
     });
+    _comms.onScaleFactors([this](float scaleFactor1, float scaleFactor2, uint16_t sampleRateSps,
+                                float idleFilterAlpha, float activeFilterAlpha) {
+        if (hardwareScale == nullptr || !hardwareScale->isAvailable()) {
+            return;
+        }
+        hardwareScale->setConfiguration(scaleFactor1, scaleFactor2, sampleRateSps, idleFilterAlpha,
+                                        activeFilterAlpha);
+    });
     ESP_LOGI(LOG_TAG, "Initialization done");
 }
 
 void GaggiMateController::loop() {
     unsigned long now = millis();
+
+    // Keep zero tracking and idle display quantization out of the measurement
+    // path whenever the brew valve or pump can be adding liquid to the cup.
+    if (hardwareScale != nullptr) {
+        const float pumpPower =
+            pump != nullptr && pump->getPumpPowerPtr() != nullptr ? *pump->getPumpPowerPtr() : 0.0f;
+        const bool scaleActivity =
+            (valve != nullptr && valve->getState()) || pumpPower > 0.01f;
+        hardwareScale->setBrewingActive(scaleActivity);
+    }
+
     if (lastPingTime < now && (now - lastPingTime) / 1000 > PING_TIMEOUT_SECONDS) {
         handlePingTimeout();
     }

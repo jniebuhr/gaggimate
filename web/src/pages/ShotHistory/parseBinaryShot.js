@@ -62,6 +62,10 @@ const FIELD_DEFS = {
       bluetoothScaleConnected: !!(val & 0x0004),
       volumetricAvailable: !!(val & 0x0008),
       extendedRecording: !!(val & 0x0010),
+      processIsBrew: !!(val & 0x0020),
+      targetIsVolumetric: !!(val & 0x0040),
+      phaseHasVolumetric: !!(val & 0x0080),
+      activeScaleConnected: !!(val & 0x0100),
     }),
   },
   [FIELD_BITS.WP]: { name: 'wp', type: 'uint16', scale: WEIGHT_SCALE },
@@ -192,10 +196,13 @@ export function parseBinaryShot(arrayBuffer, id) {
     brewDelay = view.getUint16(110 + 12 * 29 + 2, true);
   }
 
-  // v6 stores the timestamp as uint32 elapsed milliseconds. Older versions
-  // store a uint16 sample index which is multiplied by sampleInterval.
+  // The original hardware-scale v6 used 26-byte records with 16-bit ticks.
+  // Upstream v6 uses 28-byte records with elapsed milliseconds. The recorded
+  // size distinguishes them; v8 adds active-scale flags to upstream's v7 layout.
+  const legacyScaleV6 = version === 6 && deviceSampleSize === 26 && fieldsMask === 0x1fff;
+  const elapsedTimestamp = version >= 6 && !legacyScaleV6;
   const fieldCount = countSetBits(fieldsMask);
-  const expectedSampleSize = fieldCount * 2 + (version >= 6 ? 2 : 0);
+  const expectedSampleSize = fieldCount * 2 + (elapsedTimestamp ? 2 : 0);
 
   if (deviceSampleSize !== expectedSampleSize) {
     throw new Error(
@@ -248,7 +255,7 @@ export function parseBinaryShot(arrayBuffer, id) {
       const field = fieldLayout[fieldIdx];
 
       let rawValue;
-      if (version >= 6 && field.bitPos === FIELD_BITS.T) {
+      if (elapsedTimestamp && field.bitPos === FIELD_BITS.T) {
         rawValue = view.getUint32(offset, true);
       } else if (field.type === 'int16') {
         rawValue = view.getInt16(offset, true);
@@ -257,7 +264,7 @@ export function parseBinaryShot(arrayBuffer, id) {
       }
 
       let finalValue;
-      if (version >= 6 && field.bitPos === FIELD_BITS.T) {
+      if (elapsedTimestamp && field.bitPos === FIELD_BITS.T) {
         finalValue = rawValue;
       } else if (field.transform) {
         finalValue = field.transform(rawValue, sampleInterval);
@@ -268,7 +275,7 @@ export function parseBinaryShot(arrayBuffer, id) {
       }
 
       sample[field.name] = finalValue;
-      offset += version >= 6 && field.bitPos === FIELD_BITS.T ? 4 : 2;
+      offset += elapsedTimestamp && field.bitPos === FIELD_BITS.T ? 4 : 2;
     }
 
     // For v5+ files, reconstruct phase information from transitions
@@ -289,6 +296,12 @@ export function parseBinaryShot(arrayBuffer, id) {
       sample.phaseNumber = currentPhase;
       sample.phaseDisplayNumber = currentPhase + 1; // 1-based for display
       sample.phaseName = phaseName;
+    }
+
+    // Upstream histories have no source-neutral scale bit. Only the old scale
+    // v6 and the new scale v8 record it; do not interpret an absent bit as loss.
+    if (sample.systemInfo && !legacyScaleV6 && version < 8) {
+      sample.systemInfo.activeScaleConnected = sample.systemInfo.bluetoothScaleConnected;
     }
 
     samples.push(sample);

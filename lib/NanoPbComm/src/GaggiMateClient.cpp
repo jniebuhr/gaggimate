@@ -172,7 +172,6 @@ void GaggiMateClient::sendAutotune(uint32_t testTime, uint32_t samples, uint32_t
 void GaggiMateClient::sendPressureScale(float scale) { _endpoint.send(buildPressureScale(scale)); }
 
 void GaggiMateClient::tare() { _endpoint.send(buildTare()); }
-
 void GaggiMateClient::sendLedControl(const LedChannelCommand *channels, size_t count) {
     _endpoint.send(buildLedControl(channels, count));
 }
@@ -223,6 +222,11 @@ void GaggiMateClient::registerHandlers() {
     _endpoint.on(gaggimate_Payload_volumetric_tag, [this](const gm::Payload &p) {
         if (_volumetricCb)
             _volumetricCb(p.content.volumetric.volume);
+    });
+    _endpoint.on(gaggimate_Payload_scale_tag, [this](const gm::Payload &p) {
+        if (_scaleCb)
+            _scaleCb(p.content.scale.weight, p.content.scale.cell1_weight, p.content.scale.cell2_weight,
+                     p.content.scale.cell1_valid, p.content.scale.cell2_valid);
     });
     _endpoint.on(gaggimate_Payload_tof_tag, [this](const gm::Payload &p) {
         if (_tofCb)
