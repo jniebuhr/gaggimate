@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { getPrimaryIcon, getPrimaryLabel } from '../utils.js';
+import { fmtElapsed, getPrimaryIcon, getPrimaryLabel } from '../utils.js';
 import { WarningIcon } from '../../../components/WarningIcon.jsx';
 import { activeWarnings, WARNING_LEVEL } from '../../../utils/warnings.js';
 import { useEffect, useState } from 'preact/hooks';
@@ -33,6 +33,7 @@ export function ActionCard({
   lowerTarget,
   warnings = [],
   systemMessage = '',
+  standbyRemaining = null,
 }) {
   const [preheated, setPreheated] = useState(false);
   const showPrimary = mode === 1 || mode === 3 || mode === 4;
@@ -123,6 +124,11 @@ export function ActionCard({
           )}
         </div>
       )}
+      {!showStandby && standbyRemaining !== null && (
+        <span className='text-base-content/50 col-span-full mt-2 text-center text-xs tabular-nums'>
+          Standby in {fmtElapsed(standbyRemaining * 1000)}
+        </span>
+      )}
     </div>
   );
 }
@@ -143,4 +149,5 @@ ActionCard.propTypes = {
   inCard: PropTypes.bool,
   warnings: PropTypes.array,
   systemMessage: PropTypes.string,
+  standbyRemaining: PropTypes.number,
 };

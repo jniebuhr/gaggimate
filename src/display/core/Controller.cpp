@@ -1268,6 +1268,14 @@ bool Controller::isBrewActive() const {
 
 int Controller::getMode() const { return mode; }
 
+long Controller::getStandbyRemaining() const {
+    const unsigned long timeout = settings.getStandbyTimeout() > 0 ? settings.getStandbyTimeout() : 0;
+    if (mode == MODE_STANDBY || timeout == 0 || isActive())
+        return -1;
+    const unsigned long elapsed = millis() - lastAction;
+    return elapsed < timeout ? static_cast<long>(timeout - elapsed) : 0;
+}
+
 void Controller::setMode(int newMode) {
     if (newMode == MODE_STANDBY) {
         waterValveActive = false;
