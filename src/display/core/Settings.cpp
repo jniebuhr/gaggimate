@@ -214,7 +214,7 @@ void Settings::setSelectedProfile(String selected_profile) { selectedProfile.set
 
 void Settings::setStartupProfile(String startup_profile) { startupProfile.set(startup_profile); }
 
-void Settings::setFavoritedProfiles(std::vector<String> favorited_profiles) { favoritedProfiles.set(favorited_profiles); }
+void Settings::setFavoritedProfiles(const std::vector<String> &favorited_profiles) { favoritedProfiles.set(favorited_profiles); }
 
 void Settings::addFavoritedProfile(String profile) {
     std::vector<String> profiles = favoritedProfiles.get();
@@ -311,14 +311,7 @@ void Settings::setIntegralGain(float integral_gain) { integralGain.set(integral_
 void Settings::setMaxPumpPower(float max_pump_power) { maxPumpPower.set(max_pump_power); }
 
 void Settings::doSave() {
-    bool dirty = false;
-    for (auto *property : registry) {
-        if (property->isDirty()) {
-            dirty = true;
-            break;
-        }
-    }
-    if (!dirty) {
+    if (std::none_of(registry.begin(), registry.end(), [](const PropertyBase *property) { return property->isDirty(); })) {
         return;
     }
     ESP_LOGI("Settings", "Saving changed settings");

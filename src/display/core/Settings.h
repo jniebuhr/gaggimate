@@ -229,7 +229,7 @@ class Settings {
     void setClockFormat(bool format_24h);
     void setSelectedProfile(String selected_profile);
     void setStartupProfile(String startup_profile);
-    void setFavoritedProfiles(std::vector<String> favorited_profiles);
+    void setFavoritedProfiles(const std::vector<String> &favorited_profiles);
     void addFavoritedProfile(String profile);
     void removeFavoritedProfile(String profile);
     void setProfileOrder(std::vector<String> profile_order);

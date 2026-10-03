@@ -21,7 +21,8 @@ static lv_color_t *buf1 = NULL;
 
 /* Display flushing */
 static void disp_flush(lv_disp_drv_t *disp_drv, const lv_area_t *area, lv_color_t *color_p) {
-    static_cast<Display *>(disp_drv->user_data)->pushColors(area->x1, area->y1, area->x2 + 1, area->y2 + 1, (uint16_t *)color_p);
+    static_cast<Display *>(disp_drv->user_data)
+        ->pushColors(area->x1, area->y1, area->x2 + 1, area->y2 + 1, reinterpret_cast<uint16_t *>(color_p));
     lv_disp_flush_ready(disp_drv);
 }
 
@@ -68,11 +69,11 @@ void beginLvglHelper(Display &board, bool debug) {
 #endif
 
     size_t lv_buffer_size = board.width() * board.height() * sizeof(lv_color_t);
-    buf = (lv_color_t *)ps_malloc(lv_buffer_size);
+    buf = static_cast<lv_color_t *>(ps_malloc(lv_buffer_size));
     assert(buf);
 
     if (!board.supportsDirectMode()) {
-        buf1 = (lv_color_t *)ps_malloc(lv_buffer_size);
+        buf1 = static_cast<lv_color_t *>(ps_malloc(lv_buffer_size));
         assert(buf1);
     }
 
