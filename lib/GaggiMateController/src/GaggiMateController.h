@@ -23,7 +23,7 @@ constexpr int DETECT_VALUE_PIN = 11;
 
 class GaggiMateController {
   public:
-    GaggiMateController(String version);
+    explicit GaggiMateController(String version);
     void setup(void);
     void loop(void);
 

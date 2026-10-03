@@ -31,10 +31,8 @@ template <size_t N, typename KeyT = uint16_t, typename PayloadT = uint32_t, size
     void clear() {
         size_ = 0;
         seqCounter_ = 1;
-        for (auto &p : posOfKey_)
-            p = kNoPos;
-        for (auto &u : used_)
-            u = false;
+        posOfKey_.fill(kNoPos);
+        used_.fill(false);
     }
 
     bool empty() const { return size_ == 0; }
