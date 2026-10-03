@@ -13,6 +13,8 @@ void GaggiMateServer::init(const String &deviceName, const String &hardware, con
         _sentSystemInfoAfterHandshake = false;
         if (connected)
             pushSystemInfo();
+        if (_connCb)
+            _connCb(connected);
     });
     _endpoint.begin();
     _transport.init(deviceName, pairingWindow);
