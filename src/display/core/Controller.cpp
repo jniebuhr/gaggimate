@@ -203,6 +203,10 @@ void Controller::setupPanel() {
             ESP.restart();
         }
     }
+    if (driver != nullptr && (model == PANEL_AMOLED || model == PANEL_WAVESHARE)) {
+        ESP_LOGI(LOG_TAG, "AMOLED/OLED driver loaded, setting indicators to inside position");
+        settings.setGaugeSetpointsInside(true);
+    }
     driver->init();
     panelPrefs.putUChar("driver", model);
     panelPrefs.end();

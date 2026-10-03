@@ -320,6 +320,23 @@ export function GeneralTab({
               <option value={1}>Light Theme</option>
             </select>
           </SettingsFormField>
+          <SettingsFormField
+            label='Gauge Setpoint Indicator Position'
+            htmlFor='gaugeSetpointsInside'
+            helpText='Choose whether the setpoint indicators appear on the inside edge or the outside edge of the gauges.'
+            noMargin
+          >
+            <select
+              id='gaugeSetpointsInside'
+              name='gaugeSetpointsInside'
+              className='select select-bordered w-full'
+              value={formData.gaugeSetpointsInside ? 'inside' : 'outside'}
+              onChange={onChange('gaugeSetpointsInside')}
+            >
+              <option value='outside'>Outside</option>
+              <option value='inside'>Inside</option>
+            </select>
+          </SettingsFormField>
         </div>
 
         {/* Standby Display */}
