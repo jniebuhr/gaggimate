@@ -18,8 +18,9 @@ static constexpr const char *INFO_CHAR_UUID = "f8d7203b-e00c-48e2-83ba-37ff49cdb
 // Legacy error characteristic; displays <= v1.8.1 dereference it unchecked, so the server keeps an inert stub (GM-221).
 static constexpr const char *LEGACY_ERROR_CHAR_UUID = "d6676ec7-820c-41de-820d-95620749003b";
 
-// Bump on any breaking gaggimate.proto change; carried in SystemInfo.protocol_version for mismatch detection.
-static constexpr uint32_t PROTOCOL_VERSION = 6;
+// Protocol 7 combines upstream protocol 6 with hardware scale support.
+// Update controller and display together.
+static constexpr uint32_t PROTOCOL_VERSION = 7;
 
 // Outbound priorities (higher wins in the queue).
 enum Priority : uint8_t {
@@ -68,6 +69,7 @@ inline uint8_t defaultPriority(pb_size_t which) {
         return PRIO_CONTROL;
     case gaggimate_Payload_sensor_tag:
     case gaggimate_Payload_volumetric_tag:
+    case gaggimate_Payload_scale_tag:
     case gaggimate_Payload_tof_tag:
         return PRIO_LOW;
     default:

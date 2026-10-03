@@ -23,6 +23,8 @@ class GaggiMateClient {
     using ButtonCallback = std::function<void(uint8_t index, bool pressed)>;
     using AutotuneResultCallback = std::function<void(float kp, float ki, float kd, float kf)>;
     using VolumetricCallback = std::function<void(float volume)>;
+    using ScaleCallback = std::function<void(float weight, float cell1Weight, float cell2Weight,
+                                             bool cell1Valid, bool cell2Valid)>;
     using TofCallback = std::function<void(uint32_t distance)>;
     using ErrorCallback = std::function<void(int code)>;
 
@@ -66,7 +68,19 @@ class GaggiMateClient {
     gm::Payload buildAutotune(uint32_t testTime, uint32_t samples, uint32_t heaterWattage);
     gm::Payload buildPressureScale(float scale);
     gm::Payload buildTare();
-    // Pack channel/brightness pairs into one LedControl payload; entries beyond the schema's max_count are dropped.
+    gm::Payload buildScaleFactors(float scaleFactor1, float scaleFactor2, uint16_t sampleRateSps = 10,
+                                  float idleFilterAlpha = 0.80f, float activeFilterAlpha = 0.80f) {
+      gm::Payload p = gaggimate_Payload_init_zero;
+      p.which_content = gaggimate_Payload_scale_factors_tag;
+      p.content.scale_factors.scale_factor1 = scaleFactor1;
+      p.content.scale_factors.scale_factor2 = scaleFactor2;
+      p.content.scale_factors.sample_rate_sps = sampleRateSps;
+      p.content.scale_factors.idle_filter_alpha = idleFilterAlpha;
+      p.content.scale_factors.active_filter_alpha = activeFilterAlpha;
+      return p;
+    }
+    // Pack channel/brightness pairs into one LedControl payload; entries beyond
+    // the schema's per-message cap (LedControl.channels max_count) are dropped.
     gm::Payload buildLedControl(const LedChannelCommand *channels, size_t count);
 
     // Commands (display -> controller)
@@ -79,6 +93,10 @@ class GaggiMateClient {
                           float maxPower, float slipA, float slipB, float slipC, float slipD);
     void sendAutotune(uint32_t testTime, uint32_t samples, uint32_t heaterWattage);
     void sendPressureScale(float scale);
+    void sendScaleFactors(float scaleFactor1, float scaleFactor2, uint16_t sampleRateSps = 10,
+                          float idleFilterAlpha = 0.80f, float activeFilterAlpha = 0.80f) {
+        _endpoint.send(buildScaleFactors(scaleFactor1, scaleFactor2, sampleRateSps, idleFilterAlpha, activeFilterAlpha));
+    }
     void tare();
     // Drive several LED channels in one message; per-channel sends would coalesce down to a single channel.
     void sendLedControl(const LedChannelCommand *channels, size_t count);
@@ -99,6 +117,7 @@ class GaggiMateClient {
     void onButtonState(ButtonCallback cb) { _buttonCb = std::move(cb); }
     void onAutotuneResult(AutotuneResultCallback cb) { _autotuneResultCb = std::move(cb); }
     void onVolumetricMeasurement(VolumetricCallback cb) { _volumetricCb = std::move(cb); }
+    void onScaleMeasurement(ScaleCallback cb) { _scaleCb = std::move(cb); }
     void onTofMeasurement(TofCallback cb) { _tofCb = std::move(cb); }
     void onError(ErrorCallback cb) { _errorCb = std::move(cb); }
 
@@ -120,6 +139,7 @@ class GaggiMateClient {
     ButtonCallback _buttonCb;
     AutotuneResultCallback _autotuneResultCb;
     VolumetricCallback _volumetricCb;
+    ScaleCallback _scaleCb;
     TofCallback _tofCb;
     ErrorCallback _errorCb;
 

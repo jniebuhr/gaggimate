@@ -1,15 +1,18 @@
-import { useState } from 'preact/hooks';
+import { useCallback, useContext, useState } from 'preact/hooks';
 import { computed } from '@preact/signals';
-import { machine } from '../../../services/ApiService.js';
+import { ApiServiceContext, machine } from '../../../services/ApiService.js';
 import Section from '../../../components/Card.jsx';
 import { Tooltip } from '../../../components/Tooltip.jsx';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCrosshairs } from '@fortawesome/free-solid-svg-icons/faCrosshairs';
+import { faWeightScale } from '@fortawesome/free-solid-svg-icons/faWeightScale';
 import { InputGroupField, SettingsFormField } from '../../../components/SettingsFormField.jsx';
 
 const ledControl = computed(() => machine.value.capabilities.ledControl);
 const pressureAvailable = computed(() => machine.value.capabilities.pressure);
 const tofDistance = computed(() => machine.value.status.tofDistance);
+const hardwareScaleAvailable = computed(() => !!machine.value.capabilities.hardwareScale);
+const status = computed(() => machine.value.status);
 
 function SunriseColorField({ id, label, value, fallback, onChange }) {
   return (
@@ -59,7 +62,59 @@ function TankDistanceField({ id, label, value, onChange, onUseCurrent }) {
 }
 
 export function MachineTab({ formData, onChange, setField }) {
+  const apiService = useContext(ApiServiceContext);
   const [steamPumpDraft, setSteamPumpDraft] = useState(null);
+  const [calibrationWeight, setCalibrationWeight] = useState('');
+
+  const tareScale = useCallback(() => {
+    apiService.send({ tp: 'req:scale:tare' });
+  }, [apiService]);
+
+  const changeHardwareScaleSampleRate = useCallback(
+    event => {
+      const sampleRate = Number.parseInt(event.currentTarget.value, 10) === 80 ? 80 : 10;
+      const defaultAlpha = sampleRate === 80 ? '0.40' : '0.80';
+      setField('hardwareScaleSampleRateSps', sampleRate);
+      setField('hardwareScaleIdleAlpha', defaultAlpha);
+      setField('hardwareScaleActiveAlpha', defaultAlpha);
+    },
+    [setField],
+  );
+
+  const calibrateLoadCell = useCallback(
+    cellNumber => {
+      const measuredWeight =
+        cellNumber === 1
+          ? status.value?.hardwareScaleCell1Weight
+          : status.value?.hardwareScaleCell2Weight;
+      const measurementValid =
+        cellNumber === 1
+          ? status.value?.hardwareScaleCell1Valid
+          : status.value?.hardwareScaleCell2Valid;
+      const actualWeight = Number.parseFloat(calibrationWeight);
+      if (
+        !measurementValid ||
+        !Number.isFinite(measuredWeight) ||
+        Math.abs(measuredWeight) < 0.01 ||
+        !Number.isFinite(actualWeight) ||
+        actualWeight <= 0
+      ) {
+        window.alert(
+          'Please ensure the scale is showing a weight and enter a valid calibration weight.',
+        );
+        return;
+      }
+
+      const currentFactor =
+        cellNumber === 1
+          ? Number.parseFloat(formData.scaleFactor1) || 1
+          : Number.parseFloat(formData.scaleFactor2) || 1;
+      const newFactor = (measuredWeight * currentFactor) / actualWeight;
+      setField(`scaleFactor${cellNumber}`, newFactor.toFixed(2));
+      setCalibrationWeight('');
+    },
+    [calibrationWeight, formData.scaleFactor1, formData.scaleFactor2, setField],
+  );
 
   return (
     <div className='space-y-4 sm:space-y-6 lg:grid lg:grid-cols-2 lg:gap-4'>
@@ -289,6 +344,207 @@ export function MachineTab({ formData, onChange, setField }) {
           </InputGroupField>
         </div>
       </Section>
+
+      <Section title='Scales'>
+        <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+          <SettingsFormField
+            label='Preferred Scale Source'
+            htmlFor='preferredScaleSource'
+            helpText='Choose which source to prefer when both hardware and Bluetooth scales are available.'
+            noMargin
+          >
+            <select
+              id='preferredScaleSource'
+              name='preferredScaleSource'
+              className='select select-bordered w-full'
+              value={formData.preferredScaleSource || 'hardware'}
+              onChange={onChange('preferredScaleSource')}
+            >
+              <option value='hardware'>Prefer Hardware Scale (Built-in)</option>
+              <option value='bluetooth'>Prefer Bluetooth Scale</option>
+              <option value='auto'>Auto (best available)</option>
+            </select>
+          </SettingsFormField>
+        </div>
+
+        {hardwareScaleAvailable.value && (
+          <div className='border-base-content/5 mt-6 space-y-4 border-t pt-6'>
+            <div>
+              <h3 className='font-medium'>Hardware Scale</h3>
+              <p className='text-base-content/60 mt-1 text-sm'>
+                Configure acquisition and filtering, then tare and calibrate each load cell.
+              </p>
+            </div>
+
+            <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
+              <SettingsFormField
+                label='HX711 Sample Rate'
+                htmlFor='hardwareScaleSampleRateSps'
+                helpText='Must match the physical RATE-jumper configuration on the HX711 board. This setting does not switch the RATE pin.'
+                noMargin
+              >
+                <select
+                  id='hardwareScaleSampleRateSps'
+                  name='hardwareScaleSampleRateSps'
+                  className='select select-bordered w-full'
+                  value={formData.hardwareScaleSampleRateSps || 10}
+                  onChange={changeHardwareScaleSampleRate}
+                >
+                  <option value='10'>10 SPS</option>
+                  <option value='80'>80 SPS</option>
+                </select>
+              </SettingsFormField>
+              <SettingsFormField
+                label='Idle Filter Alpha'
+                htmlFor='hardwareScaleIdleAlpha'
+                helpText='Larger alpha responds faster with less smoothing; smaller alpha is smoother but slower.'
+                noMargin
+              >
+                <input
+                  id='hardwareScaleIdleAlpha'
+                  name='hardwareScaleIdleAlpha'
+                  type='number'
+                  className='input input-bordered w-full'
+                  min='0.05'
+                  max='1'
+                  step='0.01'
+                  value={formData.hardwareScaleIdleAlpha}
+                  onChange={onChange('hardwareScaleIdleAlpha')}
+                />
+              </SettingsFormField>
+              <SettingsFormField
+                label='Brewing Filter Alpha'
+                htmlFor='hardwareScaleActiveAlpha'
+                helpText='Larger alpha responds faster with less smoothing; smaller alpha is smoother but slower.'
+                noMargin
+              >
+                <input
+                  id='hardwareScaleActiveAlpha'
+                  name='hardwareScaleActiveAlpha'
+                  type='number'
+                  className='input input-bordered w-full'
+                  min='0.05'
+                  max='1'
+                  step='0.01'
+                  value={formData.hardwareScaleActiveAlpha}
+                  onChange={onChange('hardwareScaleActiveAlpha')}
+                />
+              </SettingsFormField>
+            </div>
+
+            <p className='text-base-content/60 text-xs'>
+              A given alpha behaves faster in time at 80 SPS because it is applied more often. Tune
+              the two alpha values independently for your installed sample rate. Changing sample
+              rate resets both values to 0.80 at 10 SPS or 0.40 at 80 SPS as sensible starting
+              points.
+            </p>
+
+            <div>
+              <h4 className='font-medium'>Calibration</h4>
+              <p className='text-base-content/60 mt-1 text-sm'>
+                Tare the scale, then place a known weight and calibrate each load cell.
+              </p>
+            </div>
+
+            <div className='bg-base-200 flex items-center justify-between rounded-lg p-3'>
+              <div className='flex items-center gap-2'>
+                <FontAwesomeIcon icon={faWeightScale} className='text-primary' />
+                <span className='text-2xl font-bold'>
+                  {status.value?.currentWeight?.toFixed(1) || '0.0'}g
+                </span>
+              </div>
+              <button type='button' className='btn btn-outline btn-sm' onClick={tareScale}>
+                Tare
+              </button>
+            </div>
+
+            <SettingsFormField
+              label='Actual Weight of Calibration Object'
+              htmlFor='calibrationWeight'
+              noMargin
+            >
+              <label className='input input-bordered w-full'>
+                <input
+                  id='calibrationWeight'
+                  type='number'
+                  className='grow'
+                  placeholder='100.0'
+                  min='0.1'
+                  step='0.1'
+                  value={calibrationWeight}
+                  onChange={event => setCalibrationWeight(event.currentTarget.value)}
+                />
+                <span>g</span>
+              </label>
+            </SettingsFormField>
+
+            <div className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
+              <button
+                type='button'
+                className='btn btn-primary btn-sm'
+                onClick={() => calibrateLoadCell(1)}
+                disabled={!status.value?.hardwareScaleCell1Valid || !calibrationWeight}
+              >
+                Calibrate Load Cell 1
+              </button>
+              <button
+                type='button'
+                className='btn btn-primary btn-sm'
+                onClick={() => calibrateLoadCell(2)}
+                disabled={!status.value?.hardwareScaleCell2Valid || !calibrationWeight}
+              >
+                Calibrate Load Cell 2
+              </button>
+            </div>
+
+            <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+              <div>
+                <p className='text-base-content/60 mb-1 text-xs'>
+                  Current:{' '}
+                  {status.value?.hardwareScaleCell1Valid
+                    ? `${status.value.hardwareScaleCell1Weight.toFixed(1)} g`
+                    : 'Unavailable / uncalibrated'}
+                </p>
+                <SettingsFormField label='Load Cell 1 Scale Factor' htmlFor='scaleFactor1' noMargin>
+                  <input
+                    id='scaleFactor1'
+                    name='scaleFactor1'
+                    type='number'
+                    className='input input-bordered w-full'
+                    min='-50000'
+                    max='50000'
+                    step='0.01'
+                    value={formData.scaleFactor1}
+                    onChange={onChange('scaleFactor1')}
+                  />
+                </SettingsFormField>
+              </div>
+              <div>
+                <p className='text-base-content/60 mb-1 text-xs'>
+                  Current:{' '}
+                  {status.value?.hardwareScaleCell2Valid
+                    ? `${status.value.hardwareScaleCell2Weight.toFixed(1)} g`
+                    : 'Unavailable / uncalibrated'}
+                </p>
+                <SettingsFormField label='Load Cell 2 Scale Factor' htmlFor='scaleFactor2' noMargin>
+                  <input
+                    id='scaleFactor2'
+                    name='scaleFactor2'
+                    type='number'
+                    className='input input-bordered w-full'
+                    min='-50000'
+                    max='50000'
+                    step='0.01'
+                    value={formData.scaleFactor2}
+                    onChange={onChange('scaleFactor2')}
+                  />
+                </SettingsFormField>
+              </div>
+            </div>
+          </div>
+        )}
+      </Section>
+
       {/* Alba Settings */}
       {ledControl.value && (
         <Section title='Alba Settings' className='h-full'>

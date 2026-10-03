@@ -89,8 +89,8 @@ void ShotHistoryPlugin::setup(Controller *c, PluginManager *pm) {
     pm->on("controller:brew:clear", [this](Event const &) { endExtendedRecording(); });
     pm->on("controller:volumetric-measurement:estimation:change",
            [this](Event const &event) { currentEstimatedWeight = event.getFloat("value"); });
-    pm->on("controller:volumetric-measurement:bluetooth:change",
-           [this](Event const &event) { currentBluetoothWeight = event.getFloat("value"); });
+    pm->on("controller:volumetric-measurement:active:change",
+           [this](Event const &event) { currentActiveWeight = event.getFloat("value"); });
     pm->on("boiler:currentTemperature:change", [this](Event const &event) { currentTemperature = event.getFloat("value"); });
     pm->on("pump:puck-resistance:change", [this](Event const &event) { currentPuckResistance = event.getFloat("value"); });
     // Initialize rebuild state
@@ -135,17 +135,18 @@ void ShotHistoryPlugin::record() {
                 currentFile.write(reinterpret_cast<const uint8_t *>(&header), sizeof(header));
             }
         }
-        // Bluetooth weight flow (vf): derive from the same non-negative weight we
+        // Active-scale weight flow (vf): derive from the same non-negative weight we
         // store in sample.v so the two can never disagree, and skip the EMA update
-        // on an implausible single-sample jump so one bad scale/BLE reading cannot
+        // on an implausible single-sample jump so one bad scale reading cannot
         // saturate vf for seconds. See GM-110.
-        const float btWeight = currentBluetoothWeight > 0.0f ? currentBluetoothWeight : 0.0f;
-        const float btDiff = btWeight - lastBluetoothWeight;
-        if (fabsf(btDiff) <= MAX_PLAUSIBLE_WEIGHT_DELTA) {
-            const float btFlow = btDiff / (SHOT_LOG_SAMPLE_INTERVAL_MS / 1000.0f);
-            currentBluetoothFlow = currentBluetoothFlow * 0.75f + btFlow * 0.25f;
+        const float activeWeight = currentActiveWeight > 0.0f ? currentActiveWeight : 0.0f;
+        const float activeDiff = activeWeight - lastActiveWeight;
+        const bool plausibleActiveDelta = fabsf(activeDiff) <= MAX_PLAUSIBLE_WEIGHT_DELTA;
+        if (plausibleActiveDelta) {
+            const float activeFlow = activeDiff / (SHOT_LOG_SAMPLE_INTERVAL_MS / 1000.0f);
+            currentActiveFlow = currentActiveFlow * 0.75f + activeFlow * 0.25f;
         }
-        lastBluetoothWeight = btWeight;
+        lastActiveWeight = activeWeight;
 
         ShotLogSample sample{};
         // Capture when this sampling pass actually runs. Older formats inferred
@@ -159,12 +160,18 @@ void ShotHistoryPlugin::record() {
         sample.fl = encodeSigned(controller->getCurrentPumpFlow(), FLOW_SCALE, FLOW_MIN_VALUE, FLOW_MAX_VALUE);
         sample.tf = encodeSigned(controller->getTargetFlow(), FLOW_SCALE, FLOW_MIN_VALUE, FLOW_MAX_VALUE);
         sample.pf = encodeSigned(controller->getCurrentPuckFlow(), FLOW_SCALE, FLOW_MIN_VALUE, FLOW_MAX_VALUE);
-        sample.vf = encodeSigned(currentBluetoothFlow, FLOW_SCALE, FLOW_MIN_VALUE, FLOW_MAX_VALUE);
-        sample.v = encodeUnsigned(btWeight, WEIGHT_SCALE, WEIGHT_MAX_VALUE);
+        sample.vf = encodeSigned(currentActiveFlow, FLOW_SCALE, FLOW_MIN_VALUE, FLOW_MAX_VALUE);
+        sample.v = encodeUnsigned(activeWeight, WEIGHT_SCALE, WEIGHT_MAX_VALUE);
         sample.ev = encodeUnsigned(currentEstimatedWeight, WEIGHT_SCALE, WEIGHT_MAX_VALUE);
         sample.pr = encodeUnsigned(currentPuckResistance, RESISTANCE_SCALE, RESISTANCE_MAX_VALUE);
         sample.si = getSystemInfo(); // Pack system state information
         sample.wp = encodeUnsigned(controller->getCurrentWaterPumped(), WEIGHT_SCALE, WEIGHT_MAX_VALUE);
+        // Apply the same spike rejection to the final-weight maximum. A real
+        // sustained step is accepted on the following stable sample, whereas a
+        // one-sample excursion cannot permanently inflate the shot total.
+        if (plausibleActiveDelta && activeWeight > maxRecordedWeight) {
+            maxRecordedWeight = activeWeight;
+        }
 
         // Track phase transitions
         if (controller->getMode() == MODE_BREW) {
@@ -218,7 +225,7 @@ void ShotHistoryPlugin::record() {
                 return;
             }
 
-            const float weightDiff = abs(currentBluetoothWeight - lastStableWeight);
+            const float weightDiff = abs(currentActiveWeight - lastStableWeight);
 
             if (weightDiff < WEIGHT_STABILIZATION_THRESHOLD) {
                 if (lastWeightChangeTime == 0) {
@@ -231,7 +238,7 @@ void ShotHistoryPlugin::record() {
             } else {
                 // Weight changed, reset stabilization timer
                 lastWeightChangeTime = 0;
-                lastStableWeight = currentBluetoothWeight;
+                lastStableWeight = currentActiveWeight;
             }
 
             // Also stop extended recording after maximum duration
@@ -246,7 +253,7 @@ void ShotHistoryPlugin::record() {
         header.sampleCount = sampleCount;
         header.durationMs = millis() - shotStart;
         header.finalExitReason = finalExitReason; // why the shot ended (last phase exit or manual abort)
-        float finalWeight = currentBluetoothWeight;
+        float finalWeight = maxRecordedWeight;
         header.finalWeight = finalWeight > 0.0f ? encodeUnsigned(finalWeight, WEIGHT_SCALE, WEIGHT_MAX_VALUE) : 0;
         currentFile.seek(0, SeekSet);
         currentFile.write(reinterpret_cast<const uint8_t *>(&header), sizeof(header));
@@ -316,11 +323,12 @@ void ShotHistoryPlugin::startRecording() {
     shotStart = millis();
     lastWeightChangeTime = 0;
     extendedRecordingStart = 0;
-    currentBluetoothWeight = 0.0f;
+    currentActiveWeight = 0.0f;
     lastStableWeight = 0.0f;
     currentEstimatedWeight = 0.0f;
-    currentBluetoothFlow = 0.0f;
-    lastBluetoothWeight = 0.0f;
+    currentActiveFlow = 0.0f;
+    lastActiveWeight = 0.0f;
+    maxRecordedWeight = 0.0f;
     currentProfileName = controller->getProfileManager()->getSelectedProfile().label;
     recording = true;
     extendedRecording = false;
@@ -359,11 +367,11 @@ void ShotHistoryPlugin::endRecording() {
         }
     }
 
-    if (recording && controller && controller->isVolumetricAvailable() && currentBluetoothWeight > 0) {
+    if (recording && controller && controller->isVolumetricAvailable() && currentActiveWeight > 0) {
         // Start extended recording for any shot with active weight data
         extendedRecording = true;
         extendedRecordingStart = millis();
-        lastStableWeight = currentBluetoothWeight;
+        lastStableWeight = currentActiveWeight;
         lastWeightChangeTime = 0;
     }
 
@@ -455,6 +463,32 @@ uint16_t ShotHistoryPlugin::getSystemInfo() {
     // Bit 4: Extended recording active
     if (extendedRecording) {
         systemInfo |= SYSTEM_INFO_EXTENDED_RECORDING;
+    }
+
+    // Bits 5-7: Brew process/target state used by v6 analysis.
+    if (controller != nullptr) {
+        std::lock_guard<std::recursive_mutex> guard(controller->getProcessLock());
+        Process *process = controller->getProcess();
+        if (process != nullptr && process->getType() == MODE_BREW) {
+            systemInfo |= SYSTEM_INFO_PROCESS_IS_BREW;
+            auto *brewProcess = static_cast<BrewProcess *>(process);
+            if (brewProcess->target == ProcessTarget::VOLUMETRIC) {
+                systemInfo |= SYSTEM_INFO_TARGET_IS_VOLUMETRIC;
+            }
+            if (brewProcess->currentPhase.hasVolumetricTarget()) {
+                systemInfo |= SYSTEM_INFO_PHASE_HAS_VOLUMETRIC;
+            }
+        }
+    }
+
+    // Bit 8: Effective scale source connected/healthy (hardware or Bluetooth).
+    if (controller != nullptr) {
+        const VolumetricMeasurementSource activeSource = controller->getEffectiveScaleSource();
+        if ((activeSource == VolumetricMeasurementSource::HARDWARE ||
+             activeSource == VolumetricMeasurementSource::BLUETOOTH) &&
+            controller->isScaleSourceHealthy(activeSource)) {
+            systemInfo |= SYSTEM_INFO_ACTIVE_SCALE_CONNECTED;
+        }
     }
 
     return systemInfo;
@@ -970,19 +1004,17 @@ void ShotHistoryPlugin::rebuildIndex() {
             ShotLogSample sample{};
             shotFile.seek(shotHeader.headerSize, SeekSet);
             for (uint32_t s = 0; s < shotHeader.sampleCount; s++) {
-                // v1-v5 used a 26-byte record with a 16-bit t field. The
-                // aggregate fields begin two bytes later in v6 because t is
-                // now uint32_t; decode both layouts while rebuilding indexes.
-                const size_t expectedSampleSize = shotHeader.version >= 6 ? 28 : 26;
-                const size_t sampleSize = shotHeader.reserved0 ? shotHeader.reserved0 : expectedSampleSize;
-                if (sampleSize != expectedSampleSize) {
+                // Decode old scale ticks as well as upstream elapsed-time and
+                // pumped-water records when rebuilding the existing history.
+                const size_t sampleSize = shotLogSampleSize(shotHeader);
+                if (sampleSize == 0) {
                     break;
                 }
                 uint8_t raw[sizeof(ShotLogSample)]{};
                 if (shotFile.read(raw, sampleSize) != sampleSize) {
                     break;
                 }
-                const size_t valueOffset = shotHeader.version >= 6 ? 4 : 2;
+                const size_t valueOffset = shotLogHasElapsedTimestamp(shotHeader) ? 4 : 2;
                 memcpy(reinterpret_cast<uint8_t *>(&sample.tt), raw + valueOffset, sampleSize - valueOffset);
                 tempSum += sample.ct;
                 tempCount++;
