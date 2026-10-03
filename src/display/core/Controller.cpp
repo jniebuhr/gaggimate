@@ -21,8 +21,8 @@
 #include <display/plugins/ShotHistoryPlugin.h>
 #include <display/plugins/SmartGrindPlugin.h>
 #include <display/plugins/WebUIPlugin.h>
-#include <display/plugins/BLEScalePlugin.h>
 #ifndef GAGGIMATE_SIM // network/BLE plugins are device-only
+#include <display/plugins/BLEScalePlugin.h>
 #include <display/plugins/HomekitPlugin.h>
 #include <display/plugins/ImprovPlugin.h>
 #include <display/plugins/MQTTPlugin.h>
