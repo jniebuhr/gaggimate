@@ -88,13 +88,13 @@ export function App() {
   return (
     <LocationProvider>
       <ApiServiceContext.Provider value={apiService}>
-        <div className='bg-base-300 flex h-screen overflow-hidden'>
+        <div className='bg-base-300 flex h-dvh overflow-hidden'>
           <Navigation
             collapsed={navCollapsed}
             onToggleCollapsed={() => setNavCollapsed(collapsed => !collapsed)}
           />
           <div className='flex flex-1 flex-col overflow-x-hidden overflow-y-auto'>
-            <div className='flex min-h-0 w-full flex-1 flex-col p-4'>
+            <div className='flex min-h-0 w-full flex-1 flex-col pt-[max(1rem,env(safe-area-inset-top))] pr-[max(1rem,env(safe-area-inset-right))] pb-4 pl-[max(1rem,env(safe-area-inset-left))]'>
               <div className='grid min-h-0 flex-1 grid-cols-1'>
                 <div className='min-h-0'>
                   <ErrorBoundary>
@@ -125,7 +125,7 @@ export function App() {
             </div>
           </div>
           {navCollapsed && (
-            <div className='fab end-auto left-4 md:hidden landscape:hidden'>
+            <div className='fab mobile-nav-fab end-auto left-[max(1rem,env(safe-area-inset-left))] md:hidden landscape:hidden'>
               <button
                 className='btn btn-lg btn-circle btn-primary'
                 onClick={() => setNavCollapsed(false)}

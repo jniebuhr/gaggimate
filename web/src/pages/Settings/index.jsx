@@ -452,168 +452,178 @@ export function Settings() {
   ];
 
   return (
-    <PageLayout>
-      <PageHeader
-        title='Settings'
-        noStack={true}
-        tabs={<TabBar tabs={settingsTabs} activeTab={tab} basePath='/settings' />}
-        actions={
-          <div
-            className={`action-dropdown relative ${dropdownOpen ? 'action-dropdown-open' : ''}`}
-            ref={dropdownRef}
-          >
-            <button
-              onClick={() => setDropdownOpen(open => !open)}
-              className='btn btn-ghost btn-circle text-base-content/85 hover:bg-base-content/10'
-              aria-label='More options'
-              aria-expanded={dropdownOpen}
+    <PageLayout fill={isFormTab}>
+      <div className='min-w-0'>
+        <PageHeader
+          title='Settings'
+          noStack={true}
+          tabs={<TabBar tabs={settingsTabs} activeTab={tab} basePath='/settings' />}
+          actions={
+            <div
+              className={`action-dropdown relative ${dropdownOpen ? 'action-dropdown-open' : ''}`}
+              ref={dropdownRef}
             >
-              <FontAwesomeIcon icon={faEllipsisVertical} size='lg' />
-            </button>
-            <ul className='menu action-dropdown-menu bg-base-100 rounded-box border-base-content/10 right-0 z-50 mt-1 w-52 border p-2 shadow-lg'>
-              <li>
-                <button
-                  type='button'
-                  onClick={() => {
-                    onExport();
-                    setDropdownOpen(false);
-                  }}
-                  className='justify-start gap-2 font-medium'
-                  aria-label='Export settings'
-                >
-                  <FontAwesomeIcon icon={faFileExport} />
-                  <span>Export Settings</span>
-                </button>
-              </li>
-              <li>
-                <button
-                  type='button'
-                  onClick={() => {
-                    document.getElementById('settingsImport')?.click();
-                    setDropdownOpen(false);
-                  }}
-                  className='justify-start gap-2 font-medium'
-                  aria-label='Import settings'
-                >
-                  <FontAwesomeIcon icon={faFileImport} />
-                  <span>Import Settings</span>
-                </button>
-              </li>
-            </ul>
-            <input
-              onChange={onUpload}
-              className='hidden'
-              id='settingsImport'
-              type='file'
-              accept='.json,application/json'
-            />
-          </div>
-        }
-      />
+              <button
+                onClick={() => setDropdownOpen(open => !open)}
+                className='btn btn-ghost btn-circle text-base-content/85 hover:bg-base-content/10'
+                aria-label='More options'
+                aria-expanded={dropdownOpen}
+              >
+                <FontAwesomeIcon icon={faEllipsisVertical} size='lg' />
+              </button>
+              <ul className='menu action-dropdown-menu bg-base-100 rounded-box border-base-content/10 right-0 z-50 mt-1 w-52 border p-2 shadow-lg'>
+                <li>
+                  <button
+                    type='button'
+                    onClick={() => {
+                      onExport();
+                      setDropdownOpen(false);
+                    }}
+                    className='justify-start gap-2 font-medium'
+                    aria-label='Export settings'
+                  >
+                    <FontAwesomeIcon icon={faFileExport} />
+                    <span>Export Settings</span>
+                  </button>
+                </li>
+                <li>
+                  <button
+                    type='button'
+                    onClick={() => {
+                      document.getElementById('settingsImport')?.click();
+                      setDropdownOpen(false);
+                    }}
+                    className='justify-start gap-2 font-medium'
+                    aria-label='Import settings'
+                  >
+                    <FontAwesomeIcon icon={faFileImport} />
+                    <span>Import Settings</span>
+                  </button>
+                </li>
+              </ul>
+              <input
+                onChange={onUpload}
+                className='hidden'
+                id='settingsImport'
+                type='file'
+                accept='.json,application/json'
+              />
+            </div>
+          }
+        />
 
-      {importNotice && (
-        <div
-          role='alert'
-          className={`alert alert-vertical sm:alert-horizontal mb-4 ${importNotice.error ? 'alert-error' : 'alert-info'}`}
-        >
-          <div className='text-sm'>
-            {importNotice.error ? (
-              <span>
-                Could not import {importNotice.name}: {importNotice.message}
-              </span>
-            ) : (
-              <>
+        {importNotice && (
+          <div
+            role='alert'
+            className={`alert alert-vertical sm:alert-horizontal mb-4 ${importNotice.error ? 'alert-error' : 'alert-info'}`}
+          >
+            <div className='text-sm'>
+              {importNotice.error ? (
                 <span>
-                  Loaded {importNotice.count} {importNotice.count === 1 ? 'setting' : 'settings'}{' '}
-                  from {importNotice.name}. All other settings are kept. Save to apply.
+                  Could not import {importNotice.name}: {importNotice.message}
                 </span>
-                {importNotice.ignored.length > 0 && (
-                  <span className='block text-xs opacity-80'>
-                    Ignored unknown entries: {importNotice.ignored.join(', ')}
+              ) : (
+                <>
+                  <span>
+                    Loaded {importNotice.count} {importNotice.count === 1 ? 'setting' : 'settings'}{' '}
+                    from {importNotice.name}. All other settings are kept. Save to apply.
                   </span>
-                )}
-              </>
-            )}
-          </div>
-          <div className='flex shrink-0 gap-2'>
-            {!importNotice.error && (
+                  {importNotice.ignored.length > 0 && (
+                    <span className='block text-xs opacity-80'>
+                      Ignored unknown entries: {importNotice.ignored.join(', ')}
+                    </span>
+                  )}
+                </>
+              )}
+            </div>
+            <div className='flex shrink-0 gap-2'>
+              {!importNotice.error && (
+                <button
+                  type='button'
+                  className='btn btn-sm btn-primary'
+                  disabled={submitting}
+                  onClick={() => onSubmit()}
+                >
+                  Save Settings
+                </button>
+              )}
               <button
                 type='button'
-                className='btn btn-sm btn-primary'
-                disabled={submitting}
-                onClick={() => onSubmit()}
+                className='btn btn-sm btn-ghost'
+                onClick={importNotice.error ? () => setImportNotice(null) : onDiscardImport}
               >
-                Save Settings
+                {importNotice.error ? 'Dismiss' : 'Discard'}
               </button>
-            )}
-            <button
-              type='button'
-              className='btn btn-sm btn-ghost'
-              onClick={importNotice.error ? () => setImportNotice(null) : onDiscardImport}
-            >
-              {importNotice.error ? 'Dismiss' : 'Discard'}
-            </button>
+            </div>
           </div>
-        </div>
-      )}
-
-      <form
-        id='settings-page-form'
-        key='settings'
-        ref={formRef}
-        method='post'
-        action='/api/settings'
-        onSubmit={onSubmit}
-        className={isFormTab ? '' : 'hidden'}
-      >
-        {tab === 'general' &&
-          (isLoading ? (
-            <GeneralTabSkeleton />
-          ) : (
-            <GeneralTab
-              formData={formData}
-              onChange={onChange}
-              profiles={profiles}
-              currentTheme={currentTheme}
-              setCurrentTheme={setCurrentTheme}
-              handleThemeChange={handleThemeChange}
-              showWifiPassword={showWifiPassword}
-              setShowWifiPassword={setShowWifiPassword}
-              showApPassword={showApPassword}
-              setShowApPassword={setShowApPassword}
-            />
-          ))}
-        {tab === 'machine' &&
-          (isLoading ? (
-            <MachineTabSkeleton />
-          ) : (
-            <LazyMachineTab formData={formData} onChange={onChange} setField={setField} />
-          ))}
-        {tab === 'plugins' &&
-          (isLoading ? (
-            <PluginsTabSkeleton />
-          ) : (
-            <LazyPluginsTab
-              formData={formData}
-              onChange={onChange}
-              autowakeupSchedules={autowakeupSchedules}
-              addAutoWakeupSchedule={addAutoWakeupSchedule}
-              removeAutoWakeupSchedule={removeAutoWakeupSchedule}
-              updateAutoWakeupTime={updateAutoWakeupTime}
-              updateAutoWakeupDay={updateAutoWakeupDay}
-            />
-          ))}
-
-        {isFormTab && (
-          <StickyFormFooter submitting={submitting} onRestart={e => onSubmit(e, true)} />
         )}
-      </form>
+      </div>
 
-      {tab === 'calibration' && (
-        <LazyCalibrationTab formData={formData} onChange={onChange} setField={setField} />
-      )}
-      {tab === 'bluetooth' && (isLoading ? <BluetoothTabSkeleton /> : <LazyBluetoothTab />)}
-      {tab === 'system' && (isLoading ? <SystemTabSkeleton /> : <LazySystemTab />)}
+      <div className='min-h-0 min-w-0'>
+        <form
+          id='settings-page-form'
+          key='settings'
+          ref={formRef}
+          method='post'
+          action='/api/settings'
+          onSubmit={onSubmit}
+          className={
+            isFormTab
+              ? 'grid h-full min-w-0 grid-cols-[minmax(0,1fr)] grid-rows-[1fr_auto]'
+              : 'hidden'
+          }
+        >
+          <div className='min-w-0'>
+            {tab === 'general' &&
+              (isLoading ? (
+                <GeneralTabSkeleton />
+              ) : (
+                <GeneralTab
+                  formData={formData}
+                  onChange={onChange}
+                  profiles={profiles}
+                  currentTheme={currentTheme}
+                  setCurrentTheme={setCurrentTheme}
+                  handleThemeChange={handleThemeChange}
+                  showWifiPassword={showWifiPassword}
+                  setShowWifiPassword={setShowWifiPassword}
+                  showApPassword={showApPassword}
+                  setShowApPassword={setShowApPassword}
+                />
+              ))}
+            {tab === 'machine' &&
+              (isLoading ? (
+                <MachineTabSkeleton />
+              ) : (
+                <LazyMachineTab formData={formData} onChange={onChange} setField={setField} />
+              ))}
+            {tab === 'plugins' &&
+              (isLoading ? (
+                <PluginsTabSkeleton />
+              ) : (
+                <LazyPluginsTab
+                  formData={formData}
+                  onChange={onChange}
+                  autowakeupSchedules={autowakeupSchedules}
+                  addAutoWakeupSchedule={addAutoWakeupSchedule}
+                  removeAutoWakeupSchedule={removeAutoWakeupSchedule}
+                  updateAutoWakeupTime={updateAutoWakeupTime}
+                  updateAutoWakeupDay={updateAutoWakeupDay}
+                />
+              ))}
+          </div>
+
+          {isFormTab && (
+            <StickyFormFooter submitting={submitting} onRestart={e => onSubmit(e, true)} />
+          )}
+        </form>
+
+        {tab === 'calibration' && (
+          <LazyCalibrationTab formData={formData} onChange={onChange} setField={setField} />
+        )}
+        {tab === 'bluetooth' && (isLoading ? <BluetoothTabSkeleton /> : <LazyBluetoothTab />)}
+        {tab === 'system' && (isLoading ? <SystemTabSkeleton /> : <LazySystemTab />)}
+      </div>
     </PageLayout>
   );
 }
