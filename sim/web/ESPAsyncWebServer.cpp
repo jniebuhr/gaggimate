@@ -264,20 +264,34 @@ void AsyncWebServerRequest::send(int code, const String &contentType, const Stri
     r._body.assign(body.c_str(), body.length());
     writeResponse(_fd, &r);
 }
-void AsyncWebServerRequest::send(FS &fs, const String &path, const String &contentType) {
+AsyncWebServerResponse *AsyncWebServerRequest::beginResponse(int code, const String &contentType, const String &content) {
+    auto *r = new AsyncWebServerResponse();
+    r->_code = code;
+    r->_contentType = contentType;
+    r->_body.assign(content.c_str(), content.length());
+    return r;
+}
+AsyncWebServerResponse *AsyncWebServerRequest::beginResponse(FS &fs, const String &path, const String &contentType) {
+    auto *r = new AsyncWebServerResponse();
+    r->_contentType = contentType;
     File f = fs.open(path.c_str(), "r");
     if (!f) {
-        send(404, "text/plain", "Not found");
-        return;
+        r->_code = 404;
+        r->_contentType = "text/plain";
+        r->_body = "Not found";
+        return r;
     }
-    AsyncWebServerResponse r;
-    r._contentType = contentType;
     uint8_t chunk[4096];
     size_t n;
     while ((n = f.read(chunk, sizeof(chunk))) > 0)
-        r._body.append((const char *)chunk, n);
+        r->_body.append((const char *)chunk, n);
     f.close();
-    writeResponse(_fd, &r);
+    return r;
+}
+void AsyncWebServerRequest::send(FS &fs, const String &path, const String &contentType) {
+    AsyncWebServerResponse *r = beginResponse(fs, path, contentType);
+    writeResponse(_fd, r);
+    delete r;
 }
 void AsyncWebServerRequest::redirect(const String &url) {
     AsyncWebServerResponse r;
@@ -504,6 +518,7 @@ bool AsyncWebServer::handleHttp(Conn &c) {
     AsyncWebServerRequest req(c.fd, this);
     req._url = String(path.c_str());
     req._body = body;
+    req._headers = headers;
     req._method = method == "POST" ? HTTP_POST : method == "PUT" ? HTTP_PUT : method == "DELETE" ? HTTP_DELETE : HTTP_GET;
     auto parseArgs = [&](const std::string &s) {
         size_t i = 0;

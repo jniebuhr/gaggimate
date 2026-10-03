@@ -207,6 +207,13 @@ components:
             enum: ['res:profiles:list']
           rid:
             type: string
+          rev:
+            type: integer
+            description: >-
+              Profile list revision. Increments whenever any profile is saved,
+              deleted, selected, (un)favorited or reordered. The same value is
+              sent as `prv` in full `evt:status` frames, so a client holding a
+              list with a matching `rev` can skip the request.
           profiles:
             type: array
             items:

@@ -36,6 +36,12 @@ class ShotHistoryPlugin : public Plugin {
     // Returns the number of entries written to outEntries.
     size_t readRecentEntries(ShotIndexEntry *outEntries, size_t maxCount);
 
+    // Strong ETag for /api/history/index.bin and recent.bin. Changes whenever
+    // the index is written (new shot, rating/volume update, delete, rebuild)
+    // and after every boot, so a browser's cached copy is revalidated with a
+    // 304 instead of re-downloading 128 bytes per shot on every visit.
+    String getIndexETag() const;
+
   private:
     // Index helper functions
     bool readIndexHeader(File &indexFile, ShotIndexHeader &header);
@@ -99,6 +105,13 @@ class ShotHistoryPlugin : public Plugin {
 
     // Async rebuild state
     bool rebuildInProgress = false;
+
+    // See getIndexETag. bootToken is random per boot so a revision counter
+    // that restarts at 0 can never collide with a value a browser cached
+    // before the reboot. Bumped conservatively before every index write.
+    uint32_t indexBootToken = 0;
+    uint32_t indexRevision = 0;
+    void bumpIndexRevision() { indexRevision++; }
 
     xTaskHandle taskHandle;
     void flushBuffer();
