@@ -1242,6 +1242,7 @@ void Controller::deactivateGrind() {
 }
 
 void Controller::activateStandby() {
+    BLEScales.shutdown();
     setMode(MODE_STANDBY);
     deactivate();
 }

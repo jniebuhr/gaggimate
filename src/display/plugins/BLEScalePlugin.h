@@ -20,6 +20,7 @@ class BLEScalePlugin : public Plugin {
     void connect(const std::string &uuid);
     void scan() const;
     void disconnect();
+    void shutdown();
     void onMeasurement(float value);
     bool isConnected() { return scale != nullptr && scale->isConnected(); };
     std::string getName() {

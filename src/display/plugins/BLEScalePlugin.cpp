@@ -221,6 +221,13 @@ void BLEScalePlugin::disconnect() {
     }
 }
 
+void BLEScalePlugin::shutdown() {
+    if (scale != nullptr && scale->isConnected()) {
+        ESP_LOGI("BLEScalePlugin", "Attempting remote shutdown of BLE scale");
+        scale->shutdown();
+    }
+}
+
 void BLEScalePlugin::onProcessStart() const {
     if (scale != nullptr && scale->isConnected()) {
         // Double tare with validation
