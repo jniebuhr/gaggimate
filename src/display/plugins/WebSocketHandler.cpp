@@ -133,8 +133,7 @@ void WebSocketHandler::attach(AsyncWebServer &server) {
 }
 
 void WebSocketHandler::loop(unsigned long now) {
-    if (now - lastHardwareScaleDiagnostic >= 200 && hasClients() &&
-        controller->getSystemInfo().capabilities.hwScale) {
+    if (now - lastHardwareScaleDiagnostic >= 200 && hasClients() && controller->getSystemInfo().capabilities.hwScale) {
         lastHardwareScaleDiagnostic = now;
         hardwareScaleDiagnosticDoc.clear();
         hardwareScaleDiagnosticDoc["tp"] = "evt:hardware-scale";

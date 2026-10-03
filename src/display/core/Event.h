@@ -2,6 +2,7 @@
 #define EVENT_H
 
 #include <Arduino.h>
+#include <algorithm>
 #include <vector>
 
 enum class EventDataType { EVENT_TYPE_INT, EVENT_TYPE_FLOAT, EVENT_TYPE_STRING, EVENT_TYPE_NONE };
@@ -36,30 +37,24 @@ struct Event {
     void setString(const String &key, const String &value) { data.emplace_back(key, value); }
 
     int getInt(const String &key) const {
-        for (const auto &entry : data) {
-            if (entry.key == key && entry.type == EventDataType::EVENT_TYPE_INT) {
-                return entry.intValue;
-            }
-        }
-        return 0;
+        const EventDataEntry *entry = find(key, EventDataType::EVENT_TYPE_INT);
+        return entry != nullptr ? entry->intValue : 0;
     }
 
     float getFloat(const String &key) const {
-        for (const auto &entry : data) {
-            if (entry.key == key && entry.type == EventDataType::EVENT_TYPE_FLOAT) {
-                return entry.floatValue;
-            }
-        }
-        return 0.0f;
+        const EventDataEntry *entry = find(key, EventDataType::EVENT_TYPE_FLOAT);
+        return entry != nullptr ? entry->floatValue : 0.0f;
     }
 
     String getString(const String &key) const {
-        for (const auto &entry : data) {
-            if (entry.key == key && entry.type == EventDataType::EVENT_TYPE_STRING) {
-                return entry.stringValue;
-            }
-        }
-        return "";
+        const EventDataEntry *entry = find(key, EventDataType::EVENT_TYPE_STRING);
+        return entry != nullptr ? entry->stringValue : String("");
+    }
+
+  private:
+    const EventDataEntry *find(const String &key, EventDataType type) const {
+        auto it = std::find_if(data.begin(), data.end(), [&](const EventDataEntry &e) { return e.key == key && e.type == type; });
+        return it != data.end() ? &*it : nullptr;
     }
 };
 

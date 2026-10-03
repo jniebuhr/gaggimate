@@ -133,8 +133,7 @@ static_assert(sizeof(ShotLogSample) == SHOT_LOG_SAMPLE_SIZE, "ShotLogSample size
 // Legacy scale v6 and upstream v6 used different timestamp widths. The record
 // size written in reserved0 disambiguates those files without rewriting them.
 inline bool shotLogHasElapsedTimestamp(const ShotLogHeader &header) {
-    return header.version >= 6 &&
-           !(header.version == 6 && header.reserved0 == 26 && header.fieldsMask == 0x1FFF);
+    return header.version >= 6 && !(header.version == 6 && header.reserved0 == 26 && header.fieldsMask == 0x1FFF);
 }
 
 inline uint8_t shotLogSampleSize(const ShotLogHeader &header) {

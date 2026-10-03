@@ -218,7 +218,6 @@ void BLEScalePlugin::disconnect() {
         // connects (possibly a different model with different capabilities).
         lastBatteryLevel = REMOTE_SCALES_BATTERY_UNKNOWN;
         lastWeightUnit = ScaleWeightUnit::UNKNOWN;
-        warnedOunceMidBrew = false;
     }
 }
 
@@ -332,7 +331,7 @@ void BLEScalePlugin::establishConnection() {
     }
 }
 
-void BLEScalePlugin::onMeasurement(float value) const {
+void BLEScalePlugin::onMeasurement(float value) {
     // Rate limiting to prevent callback flooding
     unsigned long now = millis();
     if (now - lastMeasurementTime < MIN_MEASUREMENT_INTERVAL_MS) {

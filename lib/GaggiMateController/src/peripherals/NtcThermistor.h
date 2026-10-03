@@ -2,8 +2,8 @@
 #define NTCTHERMOCOUPLE_H
 
 #include "ADSAdc.h"
-#include "TemperatureSensor.h"
 #include "NtcTiming.h"
+#include "TemperatureSensor.h"
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 

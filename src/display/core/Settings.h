@@ -85,9 +85,7 @@ class Settings {
     float getPressureScaling() const { return pressureScaling.get(); }
     float getScaleFactor1() const { return scaleFactor1.get(); }
     float getScaleFactor2() const { return scaleFactor2.get(); }
-    uint16_t getHardwareScaleSampleRateSps() const {
-        return static_cast<uint16_t>(hardwareScaleSampleRateSps.get());
-    }
+    uint16_t getHardwareScaleSampleRateSps() const { return static_cast<uint16_t>(hardwareScaleSampleRateSps.get()); }
     float getHardwareScaleIdleAlpha() const { return hardwareScaleIdleAlpha.get(); }
     float getHardwareScaleActiveAlpha() const { return hardwareScaleActiveAlpha.get(); }
     String getPreferredScaleSource() const { return preferredScaleSource.get(); }
@@ -231,7 +229,7 @@ class Settings {
     void setClockFormat(bool format_24h);
     void setSelectedProfile(String selected_profile);
     void setStartupProfile(String startup_profile);
-    void setFavoritedProfiles(std::vector<String> favorited_profiles);
+    void setFavoritedProfiles(const std::vector<String> &favorited_profiles);
     void addFavoritedProfile(String profile);
     void removeFavoritedProfile(String profile);
     void setProfileOrder(std::vector<String> profile_order);

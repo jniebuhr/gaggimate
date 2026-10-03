@@ -15,7 +15,7 @@
 
 template <typename T>
 void _initialize_queue(QueueHandle_t *queue, const char *queue_name,
-                       size_t size, T *initial_value = nullptr) {
+                       size_t size, const T *initial_value = nullptr) {
   *queue = xQueueCreate(size, sizeof(T));
 
   ESP_LOGI(TAG, "Creating the queue \"%s\"", queue_name);

@@ -34,15 +34,11 @@ bool validAlpha(float alpha) { return std::isfinite(alpha) && alpha > 0.0f && al
 } // namespace
 
 HardwareScale::HardwareScale(uint8_t data_pin1, uint8_t data_pin2, uint8_t clock_pin,
-    const scale_reading_callback_t &reading_callback,
-    const scale_configuration_callback_t &config_callback)
-    : is_initialized(false), _scale_factors_ready(false),
-    _data_pin1(data_pin1), _data_pin2(data_pin2), _clock_pin(clock_pin),
-    _scale_factor1(-2500.0f), _scale_factor2(2500.0f),
-    _offset1(0.0f), _offset2(0.0f),
-    _reading_callback(reading_callback),
-    _configuration_callback(config_callback),
-    taskHandle(nullptr), _operation_mutex(nullptr) {
+                             const scale_reading_callback_t &reading_callback,
+                             const scale_configuration_callback_t &config_callback)
+    : is_initialized(false), _scale_factors_ready(false), _data_pin1(data_pin1), _data_pin2(data_pin2), _clock_pin(clock_pin),
+      _scale_factor1(-2500.0f), _scale_factor2(2500.0f), _offset1(0.0f), _offset2(0.0f), _reading_callback(reading_callback),
+      _configuration_callback(config_callback), taskHandle(nullptr), _operation_mutex(nullptr) {
     _raw_weight = {0, 0};
 }
 
@@ -62,10 +58,11 @@ void HardwareScale::setup() {
 
     long start = millis();
     while (!isReady() && (millis() - start) < MAX_STARTUP_WAIT_MS) {
-            delay(10);
+        delay(10);
     }
     if (!isReady()) {
-        ESP_LOGE(LOG_TAG, "HX711 modules (%d, %d) not ready after max wait time, aborting setup", digitalRead(_data_pin1), digitalRead(_data_pin2));
+        ESP_LOGE(LOG_TAG, "HX711 modules (%d, %d) not ready after max wait time, aborting setup", digitalRead(_data_pin1),
+                 digitalRead(_data_pin2));
         is_initialized = false;
         return;
     } else {
@@ -79,7 +76,8 @@ void HardwareScale::setup() {
             delay(10);
         }
         if (!isReady()) {
-            ESP_LOGE(LOG_TAG, "HX711 modules (%d, %d) not ready after max wait time, aborting setup", digitalRead(_data_pin1), digitalRead(_data_pin2));
+            ESP_LOGE(LOG_TAG, "HX711 modules (%d, %d) not ready after max wait time, aborting setup", digitalRead(_data_pin1),
+                     digitalRead(_data_pin2));
             is_initialized = false;
             return;
         }
@@ -167,8 +165,7 @@ HardwareScale::RawReading HardwareScale::readRaw() {
     return {static_cast<long>(value1), static_cast<long>(value2)};
 }
 
-bool HardwareScale::convertRawToWeight(const RawReading &raw, float &weight, float &cell1Weight,
-                                       float &cell2Weight) const {
+bool HardwareScale::convertRawToWeight(const RawReading &raw, float &weight, float &cell1Weight, float &cell2Weight) const {
     if (saturatedReading(raw.value1) || saturatedReading(raw.value2) || !validScaleFactor(_scale_factor1) ||
         !validScaleFactor(_scale_factor2)) {
         return false;
@@ -189,9 +186,7 @@ bool HardwareScale::convertRawToWeight(const RawReading &raw, float &weight, flo
     return true;
 }
 
-bool HardwareScale::isResponsive() const {
-    return static_cast<int32_t>(_responsive_until.load() - millis()) > 0;
-}
+bool HardwareScale::isResponsive() const { return static_cast<int32_t>(_responsive_until.load() - millis()) > 0; }
 
 void HardwareScale::setBrewingActive(bool active) {
     if (active) {
@@ -227,9 +222,7 @@ unsigned long HardwareScale::readyTimeoutMs() const {
 
 uint8_t HardwareScale::tareSampleCount() const { return _config.sampleRateSps == 80 ? MAX_TARE_SAMPLES : 5; }
 
-uint8_t HardwareScale::calibrationSampleCount() const {
-    return _config.sampleRateSps == 80 ? MAX_CALIBRATION_SAMPLES : 10;
-}
+uint8_t HardwareScale::calibrationSampleCount() const { return _config.sampleRateSps == 80 ? MAX_CALIBRATION_SAMPLES : 10; }
 
 void HardwareScale::recordConversionInterval() {
     const unsigned long nowUs = micros();
@@ -304,9 +297,7 @@ bool HardwareScale::acceptReading(float reading, float &accepted) {
     return true;
 }
 
-float HardwareScale::getWeight() const {
-    return _weight.load();
-}
+float HardwareScale::getWeight() const { return _weight.load(); }
 
 void HardwareScale::loop() {
     // Send sentinel value if scale is not initialized
@@ -324,7 +315,10 @@ void HardwareScale::loop() {
 
     while (!_scale_factors_ready) {
         if (millis() - startWait > SCALE_FACTOR_TIMEOUT_MS) {
-            ESP_LOGW(LOG_TAG, "⚠️ Timeout waiting for scale factors after %lu ms, proceeding with defaults (readings will be inaccurate until calibrated)", SCALE_FACTOR_TIMEOUT_MS);
+            ESP_LOGW(LOG_TAG,
+                     "⚠️ Timeout waiting for scale factors after %lu ms, proceeding with defaults (readings will be inaccurate "
+                     "until calibrated)",
+                     SCALE_FACTOR_TIMEOUT_MS);
             _scale_factors_ready = true; // Allow operation with default factors
             break;
         }
@@ -397,30 +391,23 @@ void HardwareScale::loop() {
 
         if (_zero_median_count == SCALE_ZERO_TRACK_MEDIAN_SAMPLES) {
             float sortedMedianSamples[SCALE_ZERO_TRACK_MEDIAN_SAMPLES];
-            std::copy(_zero_median_samples,
-                      _zero_median_samples + SCALE_ZERO_TRACK_MEDIAN_SAMPLES,
-                      sortedMedianSamples);
+            std::copy(_zero_median_samples, _zero_median_samples + SCALE_ZERO_TRACK_MEDIAN_SAMPLES, sortedMedianSamples);
             std::sort(sortedMedianSamples, sortedMedianSamples + SCALE_ZERO_TRACK_MEDIAN_SAMPLES);
             const float medianAccepted = sortedMedianSamples[SCALE_ZERO_TRACK_MEDIAN_SAMPLES / 2];
 
             if (std::fabs(medianAccepted - _zero_bias) <= SCALE_ZERO_TRACK_WINDOW_GRAMS) {
                 _zero_stability_samples[_zero_stability_index] = medianAccepted;
-                _zero_stability_index =
-                    (_zero_stability_index + 1) % SCALE_ZERO_TRACK_STABILITY_SAMPLES;
+                _zero_stability_index = (_zero_stability_index + 1) % SCALE_ZERO_TRACK_STABILITY_SAMPLES;
                 if (_zero_stability_count < SCALE_ZERO_TRACK_STABILITY_SAMPLES) {
                     _zero_stability_count++;
                 }
 
                 if (_zero_stability_count == SCALE_ZERO_TRACK_STABILITY_SAMPLES) {
                     const auto [minimum, maximum] = std::minmax_element(
-                        _zero_stability_samples,
-                        _zero_stability_samples + SCALE_ZERO_TRACK_STABILITY_SAMPLES);
+                        _zero_stability_samples, _zero_stability_samples + SCALE_ZERO_TRACK_STABILITY_SAMPLES);
                     const bool allNearZero = std::all_of(
-                        _zero_stability_samples,
-                        _zero_stability_samples + SCALE_ZERO_TRACK_STABILITY_SAMPLES,
-                        [this](float sample) {
-                            return std::fabs(sample - _zero_bias) <= SCALE_ZERO_TRACK_WINDOW_GRAMS;
-                        });
+                        _zero_stability_samples, _zero_stability_samples + SCALE_ZERO_TRACK_STABILITY_SAMPLES,
+                        [this](float sample) { return std::fabs(sample - _zero_bias) <= SCALE_ZERO_TRACK_WINDOW_GRAMS; });
 
                     if (allNearZero && *maximum - *minimum <= SCALE_ZERO_TRACK_MAX_RANGE_GRAMS) {
                         float mean = 0.0f;
@@ -428,10 +415,8 @@ void HardwareScale::loop() {
                             mean += sample;
                         }
                         mean /= SCALE_ZERO_TRACK_STABILITY_SAMPLES;
-                        _zero_bias = std::clamp(
-                            _zero_bias + SCALE_ZERO_TRACK_ALPHA * (mean - _zero_bias),
-                            -SCALE_ZERO_TRACK_MAX_BIAS_GRAMS,
-                            SCALE_ZERO_TRACK_MAX_BIAS_GRAMS);
+                        _zero_bias = std::clamp(_zero_bias + SCALE_ZERO_TRACK_ALPHA * (mean - _zero_bias),
+                                                -SCALE_ZERO_TRACK_MAX_BIAS_GRAMS, SCALE_ZERO_TRACK_MAX_BIAS_GRAMS);
                         corrected = accepted - _zero_bias;
                     }
                 }
@@ -452,8 +437,7 @@ void HardwareScale::loop() {
     float output_weight = filtered_weight;
     if (!responsive) {
         if (std::fabs(filtered_weight - _published_weight) >= SCALE_DISPLAY_SWITCH_GRAMS) {
-            _published_weight =
-                std::round(filtered_weight / SCALE_DISPLAY_STEP_GRAMS) * SCALE_DISPLAY_STEP_GRAMS;
+            _published_weight = std::round(filtered_weight / SCALE_DISPLAY_STEP_GRAMS) * SCALE_DISPLAY_STEP_GRAMS;
             if (std::fabs(_published_weight) < SCALE_DISPLAY_STEP_GRAMS * 0.5f) {
                 _published_weight = 0.0f;
             }
@@ -462,8 +446,8 @@ void HardwareScale::loop() {
     }
     xSemaphoreGive(_operation_mutex);
 
-    ESP_LOGV(LOG_TAG, "Scale Reading: %0.2f, Corrected: %0.2f, Filtered: %0.2f, Published: %0.2f, alpha: %.2f",
-             reading, corrected, filtered_weight, output_weight, alpha);
+    ESP_LOGV(LOG_TAG, "Scale Reading: %0.2f, Corrected: %0.2f, Filtered: %0.2f, Published: %0.2f, alpha: %.2f", reading,
+             corrected, filtered_weight, output_weight, alpha);
     const unsigned long now = millis();
     if (_last_publish_ms == 0 || now - _last_publish_ms >= SCALE_PUBLICATION_INTERVAL_MS) {
         _last_publish_ms = now;
@@ -475,8 +459,8 @@ void HardwareScale::setScaleFactors(float scale_factor1, float scale_factor2) {
     setConfiguration(scale_factor1, scale_factor2, _config.sampleRateSps, _config.idleAlpha, _config.activeAlpha);
 }
 
-void HardwareScale::setConfiguration(float scale_factor1, float scale_factor2, uint16_t sample_rate_sps,
-                                     float idle_alpha, float active_alpha) {
+void HardwareScale::setConfiguration(float scale_factor1, float scale_factor2, uint16_t sample_rate_sps, float idle_alpha,
+                                     float active_alpha) {
     if (!validScaleFactor(scale_factor1)) {
         ESP_LOGW(LOG_TAG, "Invalid scale factor 1 %.3f; using -2500 counts/g", scale_factor1);
         scale_factor1 = -2500.0f;
@@ -515,7 +499,8 @@ void HardwareScale::setConfiguration(float scale_factor1, float scale_factor2, u
     resetZeroTrackingHistory();
     xSemaphoreGive(_operation_mutex);
     _scale_factors_ready = true;
-    ESP_LOGI(LOG_TAG, "Hardware scale configuration: sample rate=%u SPS, idle alpha=%.2f, active alpha=%.2f, scale factors=(%.3f, %.3f)",
+    ESP_LOGI(LOG_TAG,
+             "Hardware scale configuration: sample rate=%u SPS, idle alpha=%.2f, active alpha=%.2f, scale factors=(%.3f, %.3f)",
              _config.sampleRateSps, _config.idleAlpha, _config.activeAlpha, _scale_factor1, _scale_factor2);
 }
 
@@ -565,9 +550,10 @@ bool HardwareScale::tareInternal(bool allowUnstableFallback) {
     }
 
     if (!stable) {
-        ESP_LOGW(LOG_TAG,
-                 "Initial tare exceeded the %.2fg stability limit (%.3fg spread); using robust offsets so scale acquisition can start",
-                 TARE_MAX_SPREAD_GRAMS, lastSpread);
+        ESP_LOGW(
+            LOG_TAG,
+            "Initial tare exceeded the %.2fg stability limit (%.3fg spread); using robust offsets so scale acquisition can start",
+            TARE_MAX_SPREAD_GRAMS, lastSpread);
     }
 
     long values1[MAX_TARE_SAMPLES];
@@ -591,8 +577,8 @@ bool HardwareScale::tareInternal(bool allowUnstableFallback) {
     resetFilterState();
     _last_conversion_us = 0;
     xSemaphoreGive(_operation_mutex);
-    ESP_LOGI(LOG_TAG, "Tared scale offsets from %u %s samples: %.3f, %.3f", sampleCount,
-             stable ? "stable" : "startup fallback", _offset1, _offset2);
+    ESP_LOGI(LOG_TAG, "Tared scale offsets from %u %s samples: %.3f, %.3f", sampleCount, stable ? "stable" : "startup fallback",
+             _offset1, _offset2);
     return true;
 }
 
