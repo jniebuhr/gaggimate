@@ -920,7 +920,8 @@ void ShotHistoryPlugin::rebuildIndex() {
     }
 
     int currentIndex = 0;
-    uint32_t maxId = controller->getSettings().getHistoryIndex();
+    // historyIndex is the id the next shot will be written as, so it must end up past every file on disk
+    uint32_t nextId = controller->getSettings().getHistoryIndex();
     for (const String &fileName : slogFiles) {
         currentIndex++;
         File shotFile = fs->open("/h/" + fileName, "r");
@@ -940,8 +941,8 @@ void ShotHistoryPlugin::rebuildIndex() {
         int start = fileName.lastIndexOf('/') + 1;
         int end = fileName.lastIndexOf('.');
         uint32_t shotId = fileName.substring(start, end).toInt();
-        if (shotId > maxId) {
-            maxId = shotId;
+        if (shotId >= nextId) {
+            nextId = shotId + 1;
         }
 
         // Create index entry
@@ -1046,8 +1047,8 @@ void ShotHistoryPlugin::rebuildIndex() {
         }
     }
 
-    if (maxId > controller->getSettings().getHistoryIndex()) {
-        controller->getSettings().setHistoryIndex(maxId);
+    if (nextId > controller->getSettings().getHistoryIndex()) {
+        controller->getSettings().setHistoryIndex(nextId);
     }
 
     // Emit completion event
