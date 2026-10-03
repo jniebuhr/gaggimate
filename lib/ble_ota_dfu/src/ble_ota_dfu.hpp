@@ -11,21 +11,11 @@
 #include <Update.h>
 #include <string>
 
-// comment to use FFat
-#define USE_SPIFFS
-
-#ifdef USE_SPIFFS
-// SPIFFS write is slower
-#include <SPIFFS.h>
-#define FLASH SPIFFS
+// Stage OTA payload on LittleFS (same FS as display). Keep FASTMODE false so
+// the existing ControllerOTA ACK protocol (0xF1) is unchanged.
+#include <LittleFS.h>
+#define FLASH LittleFS
 const bool FASTMODE = false;
-#else
-// FFat is faster
-#include <FFat.h>
-#define FLASH FFat
-const bool FASTMODE = true;
-#endif
-// #endif
 
 constexpr char SERVICE_OTA_BLE_UUID[] = "fe590001-54ae-4a28-9f74-dfccb248601d";
 constexpr char CHARACTERISTIC_OTA_BL_UUID_RX[] =
