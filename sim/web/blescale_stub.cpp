@@ -14,6 +14,7 @@ void BLEScalePlugin::loop() {}
 void BLEScalePlugin::connect(const std::string &) {}
 void BLEScalePlugin::scan() const {}
 void BLEScalePlugin::disconnect() {}
+void BLEScalePlugin::shutdown() {}
 void BLEScalePlugin::onMeasurement(float) const {}
 std::vector<DiscoveredDevice> BLEScalePlugin::getDiscoveredScales() const { return {}; }
 void BLEScalePlugin::tare() const {}
