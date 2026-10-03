@@ -108,12 +108,10 @@ void Settings::setScaleFactors(float scale_factor_1, float scale_factor_2) {
 }
 
 void Settings::setHardwareScaleConfiguration(uint16_t sample_rate_sps, float idle_alpha, float active_alpha) {
-    hardwareScaleSampleRateSps.set((sample_rate_sps == 10 || sample_rate_sps == 80)
-                                       ? sample_rate_sps
-                                       : DEFAULT_HARDWARE_SCALE_SAMPLE_RATE_SPS);
-    hardwareScaleIdleAlpha.set(std::isfinite(idle_alpha) && idle_alpha > 0.0f && idle_alpha <= 1.0f
-                                   ? idle_alpha
-                                   : DEFAULT_HARDWARE_SCALE_IDLE_ALPHA);
+    hardwareScaleSampleRateSps.set((sample_rate_sps == 10 || sample_rate_sps == 80) ? sample_rate_sps
+                                                                                    : DEFAULT_HARDWARE_SCALE_SAMPLE_RATE_SPS);
+    hardwareScaleIdleAlpha.set(
+        std::isfinite(idle_alpha) && idle_alpha > 0.0f && idle_alpha <= 1.0f ? idle_alpha : DEFAULT_HARDWARE_SCALE_IDLE_ALPHA);
     hardwareScaleActiveAlpha.set(std::isfinite(active_alpha) && active_alpha > 0.0f && active_alpha <= 1.0f
                                      ? active_alpha
                                      : DEFAULT_HARDWARE_SCALE_ACTIVE_ALPHA);

@@ -6,7 +6,8 @@ ADSAdc::ADSAdc(uint8_t sda_pin, uint8_t scl_pin, AdcRates rates)
 
 void ADSAdc::setup() {
     uint32_t total = 0;
-    for (auto rate : _rates) total += rate;
+    for (auto rate : _rates)
+        total += rate;
     // 570 SPS is the conservative requested budget, including I2C servicing.
     if (total == 0 || total > 570) {
         ESP_LOGE(LOG_TAG, "Invalid ADS rate allocation: %lu SPS (1..570 required)", static_cast<unsigned long>(total));
@@ -23,15 +24,15 @@ void ADSAdc::setup() {
     ads->setGain(0);
     ads->setDataRate(7); // ADS1115 maximum: 860 SPS (~1.16 ms/conversion)
     ads->setMode(1);
-    const esp_timer_create_args_t args = {
-        .callback = onTick, .arg = this, .dispatch_method = ESP_TIMER_TASK, .name = "ADSAdc"};
+    const esp_timer_create_args_t args = {.callback = onTick, .arg = this, .dispatch_method = ESP_TIMER_TASK, .name = "ADSAdc"};
     if (esp_timer_create(&args, &_timer) != ESP_OK) {
         ESP_LOGE(LOG_TAG, "Could not create ADC timer");
         return;
     }
     _reportAt = esp_timer_get_time();
     for (uint8_t ch = 0; ch < 4; ++ch) {
-        if (_rates[ch]) _schedule.configure(ch, 1000000 / _rates[ch], _reportAt + ch * 500);
+        if (_rates[ch])
+            _schedule.configure(ch, 1000000 / _rates[ch], _reportAt + ch * 500);
     }
     if (xTaskCreate(loopTask, "ADSAdc::loop", configMINIMAL_STACK_SIZE * 4, this, 1, &taskHandle) != pdPASS) {
         ESP_LOGE(LOG_TAG, "Could not create ADC task");
@@ -57,7 +58,8 @@ void ADSAdc::loop() {
         } else if (ready) {
             reading = ads->getValue();
             delivered = ads->getError() == ADS1X15_OK;
-            if (!delivered) ++_errors;
+            if (!delivered)
+                ++_errors;
         } else {
             ++_errors;
         }
@@ -71,11 +73,13 @@ void ADSAdc::loop() {
     if (_schedule.deadline(_currentChannel) > now) {
         esp_timer_start_once(_timer, _schedule.deadline(_currentChannel) - now);
     } else {
-        if (_schedule.advance(_currentChannel, now)) ++_late;
+        if (_schedule.advance(_currentChannel, now))
+            ++_late;
         ads->getError();
         ads->requestADC(_currentChannel);
         _pending = ads->getError() == ADS1X15_OK;
-        if (!_pending) ++_errors;
+        if (!_pending)
+            ++_errors;
         _conversionStarted = esp_timer_get_time();
         esp_timer_start_once(_timer, ADC_CONVERSION_WAIT_US);
     }
@@ -92,27 +96,31 @@ void ADSAdc::loop() {
             window.maximum = std::max(window.maximum, reading);
         }
         portEXIT_CRITICAL(&_mux);
-        if (_callback) _callback(completedChannel, reading);
+        if (_callback)
+            _callback(completedChannel, reading);
     }
     if (now - _reportAt >= 10000000) {
         const float seconds = (now - _reportAt) / 1000000.0f;
-        ESP_LOGI(LOG_TAG, "SPS ch0=%.1f ch1=%.1f ch2=%.1f ch3=%.1f errors=%lu missed=%lu",
-                 _counts[0]/seconds, _counts[1]/seconds, _counts[2]/seconds, _counts[3]/seconds,
-                 static_cast<unsigned long>(_errors), static_cast<unsigned long>(_late));
-        for (auto &count : _counts) count = 0;
+        ESP_LOGI(LOG_TAG, "SPS ch0=%.1f ch1=%.1f ch2=%.1f ch3=%.1f errors=%lu missed=%lu", _counts[0] / seconds,
+                 _counts[1] / seconds, _counts[2] / seconds, _counts[3] / seconds, static_cast<unsigned long>(_errors),
+                 static_cast<unsigned long>(_late));
+        for (auto &count : _counts)
+            count = 0;
         _errors = _late = 0;
         _reportAt = now;
     }
 }
 
 bool ADSAdc::consumeAverage(uint8_t channel, float &average, uint16_t &count, int &minimum, int &maximum) {
-    if (channel > 3) return false;
+    if (channel > 3)
+        return false;
     portENTER_CRITICAL(&_mux);
     const Window window = _windows[channel];
     _windows[channel] = Window{};
     portEXIT_CRITICAL(&_mux);
     count = window.count;
-    if (!count) return false;
+    if (!count)
+        return false;
     average = static_cast<float>(window.sum) / count;
     minimum = window.minimum;
     maximum = window.maximum;

@@ -85,9 +85,7 @@ class Settings {
     float getPressureScaling() const { return pressureScaling.get(); }
     float getScaleFactor1() const { return scaleFactor1.get(); }
     float getScaleFactor2() const { return scaleFactor2.get(); }
-    uint16_t getHardwareScaleSampleRateSps() const {
-        return static_cast<uint16_t>(hardwareScaleSampleRateSps.get());
-    }
+    uint16_t getHardwareScaleSampleRateSps() const { return static_cast<uint16_t>(hardwareScaleSampleRateSps.get()); }
     float getHardwareScaleIdleAlpha() const { return hardwareScaleIdleAlpha.get(); }
     float getHardwareScaleActiveAlpha() const { return hardwareScaleActiveAlpha.get(); }
     String getPreferredScaleSource() const { return preferredScaleSource.get(); }

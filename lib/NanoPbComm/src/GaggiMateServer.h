@@ -42,8 +42,8 @@ class GaggiMateServer {
     gm::Payload buildButtonState(uint8_t index, bool pressed);
     gm::Payload buildAutotuneResult(float kp, float ki, float kd, float kf);
     gm::Payload buildVolumetricMeasurement(float volume);
-    gm::Payload buildScaleMeasurement(float weight, float cell1Weight = 0.0f, float cell2Weight = 0.0f,
-                                      bool cell1Valid = false, bool cell2Valid = false);
+    gm::Payload buildScaleMeasurement(float weight, float cell1Weight = 0.0f, float cell2Weight = 0.0f, bool cell1Valid = false,
+                                      bool cell2Valid = false);
     gm::Payload buildTofMeasurement(uint32_t distance);
     gm::Payload buildError(int code);
 
@@ -53,8 +53,8 @@ class GaggiMateServer {
     void sendButtonState(uint8_t index, bool pressed);
     void sendAutotuneResult(float kp, float ki, float kd, float kf);
     void sendVolumetricMeasurement(float volume);
-    void sendScaleMeasurement(float weight, float cell1Weight = 0.0f, float cell2Weight = 0.0f,
-                              bool cell1Valid = false, bool cell2Valid = false);
+    void sendScaleMeasurement(float weight, float cell1Weight = 0.0f, float cell2Weight = 0.0f, bool cell1Valid = false,
+                              bool cell2Valid = false);
     void sendTofMeasurement(uint32_t distance);
     void sendError(int code);
 

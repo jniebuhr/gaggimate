@@ -1,11 +1,11 @@
 #ifndef ADS_ADC_H
 #define ADS_ADC_H
 
+#include "AdcSchedule.h"
 #include <ADS1X15.h>
 #include <Arduino.h>
 #include <array>
 #include <esp_timer.h>
-#include "AdcSchedule.h"
 
 // Single-shot conversions at 860 SPS, serviced by a microsecond timer.
 // Rates are configured per channel; zero disables a channel.

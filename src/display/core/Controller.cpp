@@ -47,9 +47,7 @@ constexpr uint32_t ADDON_HW_SCALE = 8;
 constexpr double DISPLAY_NEGATIVE_WEIGHT_THRESHOLD = -0.1;
 
 float normalizeWeightForDisplay(double measurement) {
-    return measurement <= 0.0 && measurement > DISPLAY_NEGATIVE_WEIGHT_THRESHOLD
-               ? 0.0f
-               : static_cast<float>(measurement);
+    return measurement <= 0.0 && measurement > DISPLAY_NEGATIVE_WEIGHT_THRESHOLD ? 0.0f : static_cast<float>(measurement);
 }
 
 void Controller::setup() {
@@ -1338,9 +1336,8 @@ void Controller::onVolumetricMeasurement(double measurement, VolumetricMeasureme
     bool switchedToFlowEstimation = false;
     {
         std::lock_guard<std::recursive_mutex> guard(processMutex);
-        const bool physicalSourceSelected =
-            currentVolumetricSource == VolumetricMeasurementSource::HARDWARE ||
-            currentVolumetricSource == VolumetricMeasurementSource::BLUETOOTH;
+        const bool physicalSourceSelected = currentVolumetricSource == VolumetricMeasurementSource::HARDWARE ||
+                                            currentVolumetricSource == VolumetricMeasurementSource::BLUETOOTH;
         const bool activeBrew = currentProcess != nullptr && currentProcess->getType() == MODE_BREW && currentProcess->isActive();
 
         if (source == VolumetricMeasurementSource::FLOW_ESTIMATION) {
@@ -1379,7 +1376,8 @@ void Controller::onVolumetricMeasurement(double measurement, VolumetricMeasureme
 #endif
 
     if (source == VolumetricMeasurementSource::FLOW_ESTIMATION) {
-        pluginManager->trigger(F("controller:volumetric-measurement:estimation:change"), "value", static_cast<float>(measurement));
+        pluginManager->trigger(F("controller:volumetric-measurement:estimation:change"), "value",
+                               static_cast<float>(measurement));
     } else if (source == VolumetricMeasurementSource::HARDWARE) {
         pluginManager->trigger(F("controller:volumetric-measurement:hardware:change"), "value", static_cast<float>(measurement));
     } else {
@@ -1459,8 +1457,7 @@ VolumetricMeasurementSource Controller::getEffectiveScaleSource() const {
 }
 
 VolumetricMeasurementSource Controller::getGrindScaleSource() const {
-    return isBluetoothScaleHealthy() ? VolumetricMeasurementSource::BLUETOOTH
-                                     : VolumetricMeasurementSource::INACTIVE;
+    return isBluetoothScaleHealthy() ? VolumetricMeasurementSource::BLUETOOTH : VolumetricMeasurementSource::INACTIVE;
 }
 
 bool Controller::isScaleSourceHealthy(VolumetricMeasurementSource source) const {

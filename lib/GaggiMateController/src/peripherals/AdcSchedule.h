@@ -24,10 +24,12 @@ class AdcSchedule {
     int64_t deadline(uint8_t channel) const { return due[channel]; }
     bool advance(uint8_t channel, int64_t now) {
         const bool stalled = now - due[channel] >= 10000;
-        if (stalled) due[channel] = now;
+        if (stalled)
+            due[channel] = now;
         due[channel] += periods[channel];
         return stalled;
     }
+
   private:
     uint32_t periods[4] = {};
     int64_t due[4] = {};

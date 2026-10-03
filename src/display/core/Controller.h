@@ -11,7 +11,6 @@
 #include <display/core/ProfileManager.h>
 #include <display/core/WarningManager.h>
 #include <display/core/process/Process.h>
-#include <atomic>
 #include <mutex>
 #include <vector>
 #ifndef GAGGIMATE_HEADLESS

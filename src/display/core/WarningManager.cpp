@@ -66,7 +66,8 @@ void WarningManager::evaluate() {
     active[WARNING_FLUSH] = controller->isFlushPending();
     active[WARNING_SWITCH] = controller->isSteamSwitchOn();
     active[WARNING_SCALE_CONNECTED] = !scaleConnected && scaleExpected;
-    active[WARNING_SCALE_BATTERY] = !hardwareSelected && scaleConnected && BLEScales.hasBatteryLevel() && BLEScales.getBatteryLevel() < 20;
+    active[WARNING_SCALE_BATTERY] =
+        !hardwareSelected && scaleConnected && BLEScales.hasBatteryLevel() && BLEScales.getBatteryLevel() < 20;
     active[WARNING_TEMPERATURE] = !temperatureStable;
 
     level[WARNING_WATER] = settings.getWarnWaterLevel();

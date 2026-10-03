@@ -26,7 +26,20 @@ static constexpr uint32_t PROTOCOL_VERSION = 7;
 // produce and send()/sendBatch() apply to the MockController.
 namespace gm {
 struct Payload {
-    enum Type { None, Ping, Boiler, Pump, Relay, Pid, PumpSettings, Autotune, PressureScale, ScaleFactors, Tare, Led } type = None;
+    enum Type {
+        None,
+        Ping,
+        Boiler,
+        Pump,
+        Relay,
+        Pid,
+        PumpSettings,
+        Autotune,
+        PressureScale,
+        ScaleFactors,
+        Tare,
+        Led
+    } type = None;
     BoilerCommand boiler;
     PumpCommand pump;
     RelayCommand relay;
@@ -46,8 +59,8 @@ class GaggiMateClient {
     using ButtonCallback = std::function<void(uint8_t index, bool pressed)>;
     using AutotuneResultCallback = std::function<void(float kp, float ki, float kd, float kf)>;
     using VolumetricCallback = std::function<void(float volume)>;
-    using ScaleCallback = std::function<void(float weight, float cell1Weight, float cell2Weight,
-                                             bool cell1Valid, bool cell2Valid)>;
+    using ScaleCallback =
+        std::function<void(float weight, float cell1Weight, float cell2Weight, bool cell1Valid, bool cell2Valid)>;
     using TofCallback = std::function<void(uint32_t distance)>;
     using ErrorCallback = std::function<void(int code)>;
 
