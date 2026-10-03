@@ -246,6 +246,18 @@ void WebUIPlugin::start() {
         // STA reconnect needs nothing done here.
         return;
     }
+    if (!pluginHooksRegistered) {
+        // Fired here, not in setup(), so plugins set up after this one still get to register before the server listens
+        Event serverEvent;
+        serverEvent.id = "webui:server:register";
+        serverEvent.setPointer("server", &server);
+        pluginManager->trigger(serverEvent);
+        Event wsEvent;
+        wsEvent.id = "webui:ws:register";
+        wsEvent.setPointer("ws", &wsHandler);
+        pluginManager->trigger(wsEvent);
+        pluginHooksRegistered = true;
+    }
     server.begin();
     ESP_LOGI("WebUIPlugin", "Started webserver");
     if (apMode) {
@@ -342,6 +354,10 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setSmartGrindIp(request->arg("smartGrindIp"));
             if (request->hasArg("smartGrindMode"))
                 settings->setSmartGrindMode(request->arg("smartGrindMode").toInt());
+            if (request->hasArg("mahlkonigActive"))
+                settings->setMahlkonigActive(parseBoolArg(request->arg("mahlkonigActive")));
+            if (request->hasArg("mahlkonigRecipeDoses"))
+                settings->setMahlkonigRecipeDoses(request->arg("mahlkonigRecipeDoses"));
             if (request->hasArg("homeAssistant"))
                 settings->setHomeAssistant(parseBoolArg(request->arg("homeAssistant")));
             if (request->hasArg("haUser"))
@@ -503,6 +519,9 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["smartGrindActive"] = settings.isSmartGrindActive();
     doc["smartGrindIp"] = settings.getSmartGrindIp();
     doc["smartGrindMode"] = settings.getSmartGrindMode();
+    doc["mahlkonigActive"] = settings.isMahlkonigActive();
+    doc["mahlkonigRecipeDoses"] = settings.getMahlkonigRecipeDoses();
+    doc["deviceIp"] = apMode ? WIFI_AP_IP.toString() : WiFi.localIP().toString(); // read-only, for plugin setup hints
     doc["momentaryButtons"] = settings.isMomentaryButtons();
     doc["flushDuration"] = settings.getFlushDuration();
     doc["warnWaterLevel"] = settings.getWarnWaterLevel();

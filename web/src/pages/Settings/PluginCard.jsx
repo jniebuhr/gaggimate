@@ -3,9 +3,68 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import homekitImage from '../../assets/homekit.png';
 import { faCalendarDays } from '@fortawesome/free-solid-svg-icons/faCalendarDays';
 import { computed } from '@preact/signals';
-import { machine } from '../../services/ApiService.js';
+import { machine, ApiServiceContext } from '../../services/ApiService.js';
+import { useContext, useEffect, useState } from 'preact/hooks';
 
 const gearpumpAddon = computed(() => machine.value.capabilities.gearpumpAddon);
+
+const MAHLKONIG_MIN_RECIPES = 4;
+
+// Dose per grinder recipe slot, stored as "r1,r2,..."; the grinder reports only the recipe, never a dose.
+function MahlkonigRecipeDoses({ formData, onChange }) {
+  const apiService = useContext(ApiServiceContext);
+  const [lastRecipe, setLastRecipe] = useState(null);
+  const doses = String(formData.mahlkonigRecipeDoses || '').split(',');
+  const count = Math.max(MAHLKONIG_MIN_RECIPES, doses.length, lastRecipe || 0);
+  const recipes = Array.from({ length: count }, (_, i) => i + 1);
+
+  useEffect(() => {
+    apiService
+      .request({ tp: 'req:mahlkonig:status' })
+      .then(res => setLastRecipe(res.grind?.recipe || null))
+      .catch(() => setLastRecipe(null));
+  }, [apiService]);
+
+  const setDose = (recipe, value) => {
+    const next = recipes.map(r => (r === recipe ? value : (doses[r - 1] ?? '')));
+    while (next.length > MAHLKONIG_MIN_RECIPES && !next[next.length - 1]) next.pop();
+    onChange('mahlkonigRecipeDoses')({ currentTarget: { value: next.join(',') } });
+  };
+
+  return (
+    <div className='form-control'>
+      <span className='mb-2 block text-sm font-medium'>Dose per grinder recipe</span>
+      <div className='grid grid-cols-2 gap-4 sm:grid-cols-4'>
+        {recipes.map(recipe => (
+          <div key={recipe}>
+            <label htmlFor={`mahlkonigRecipe${recipe}`} className='mb-1 block text-sm opacity-70'>
+              Recipe {recipe}
+            </label>
+            <label className='input w-full'>
+              <input
+                id={`mahlkonigRecipe${recipe}`}
+                type='number'
+                step='0.1'
+                min='0'
+                className='grow'
+                placeholder='—'
+                value={doses[recipe - 1] ?? ''}
+                onChange={e => setDose(recipe, e.currentTarget.value)}
+              />
+              <span aria-label='gram'>g</span>
+            </label>
+          </div>
+        ))}
+      </div>
+      <p className='mt-2 text-sm opacity-70'>
+        {lastRecipe
+          ? `Your grinder last ground recipe ${lastRecipe}.`
+          : 'Grind once with GbS to see which recipe number your grinder reports.'}{' '}
+        Leave a recipe empty to save no dose for it.
+      </p>
+    </div>
+  );
+}
 
 export function PluginCard({
   formData,
@@ -264,6 +323,59 @@ export function PluginCard({
                 </option>
               </select>
             </div>
+          </div>
+        )}
+      </div>
+
+      <div className='bg-base-200 rounded-lg p-4'>
+        <div className='flex items-center justify-between'>
+          <span className='text-xl font-medium'>Mahlkönig E64 WS Grind-by-Sync</span>
+          <input
+            id='mahlkonigActive'
+            name='mahlkonigActive'
+            value='mahlkonigActive'
+            type='checkbox'
+            className='toggle toggle-primary'
+            checked={!!formData.mahlkonigActive}
+            onChange={onChange('mahlkonigActive')}
+            aria-label='Enable Mahlkönig E64 WS Grind-by-Sync'
+          />
+        </div>
+        {formData.mahlkonigActive && (
+          <div className='border-base-300 mt-4 space-y-4 border-t pt-4'>
+            <p className='text-sm opacity-70'>
+              Lets an E64 WS start shots with its knob and dial in its grind from the shot time and
+              weight. The grinder's target weight overrides the selected profile's weight target,
+              and the dose set for the grinder's recipe is saved to the shot history. Save and
+              restart to apply.
+            </p>
+            <div className='form-control'>
+              <span className='mb-2 block text-sm font-medium'>
+                Machine address for the grinder
+              </span>
+              <code className='bg-base-300 rounded px-2 py-1 text-lg'>
+                {formData.deviceIp || 'Not connected to Wi-Fi'}
+              </code>
+            </div>
+            <ol className='list-decimal space-y-1 pl-5 text-sm opacity-70'>
+              <li>Connect the grinder to the same 2.4 GHz Wi-Fi network as GaggiMate.</li>
+              <li>
+                On the grinder, open Settings → Connectivity → Machine To Machine and turn on Enable
+                Xenia.
+              </li>
+              <li>
+                Open Configuration and enter the address above by hand (the scan will not find
+                GaggiMate).
+              </li>
+              <li>
+                Turn on GbS for a recipe. After grinding, press the rotary knob to start the shot.
+              </li>
+            </ol>
+            <p className='text-sm opacity-70'>
+              Give GaggiMate a fixed IP or a DHCP reservation in your router so the address does not
+              change.
+            </p>
+            <MahlkonigRecipeDoses formData={formData} onChange={onChange} />
           </div>
         )}
       </div>

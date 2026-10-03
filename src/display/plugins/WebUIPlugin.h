@@ -71,6 +71,7 @@ class WebUIPlugin : public Plugin {
     bool updating = false;
     bool apMode = false;
     bool serverRunning = false;
+    bool pluginHooksRegistered = false;
     String updateComponent = "";
 };
 
