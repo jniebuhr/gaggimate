@@ -11,6 +11,7 @@
 // pushes SystemInfo to the display on connect.
 class GaggiMateServer {
   public:
+    using ConnectionCallback = std::function<void(bool connected)>;
     using PingCallback = std::function<void()>;
     using BoilerCallback = std::function<void(uint8_t index, BoilerControlMode mode, float setpoint)>;
     using PumpCallback = std::function<void(uint8_t index, PumpControlMode mode, float power, float pressure, float flow)>;
@@ -65,6 +66,9 @@ class GaggiMateServer {
     void sendUnreliable(const gm::Payload &payload) { _endpoint.sendUnreliable(payload); }
     void sendUnreliableBatch(const gm::Payload *payloads, size_t count) { _endpoint.sendUnreliable(payloads, count); }
 
+    // Link up/down, after the server's own session handling.
+    void onConnectionChange(ConnectionCallback cb) { _connCb = std::move(cb); }
+
     // Command registrations (display -> controller)
     void onPing(PingCallback cb) { _pingCb = std::move(cb); }
     void onBoilerControl(BoilerCallback cb) { _boilerCb = std::move(cb); }
@@ -86,6 +90,7 @@ class GaggiMateServer {
     // application-level proof that the new session is ready in both directions.
     bool _sentSystemInfoAfterHandshake = false;
 
+    ConnectionCallback _connCb;
     PingCallback _pingCb;
     BoilerCallback _boilerCb;
     PumpCallback _pumpCb;

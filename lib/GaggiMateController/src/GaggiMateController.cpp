@@ -276,6 +276,12 @@ void GaggiMateController::setup() {
         }
     });
     _comms.onPing([this]() { handlePing(); });
+    // A new link gets a full ping window; a stale lastPingTime would trip the watchdog while the display is still
+    // discovering services. errorState is left alone so a timed-out session only recovers on a real ping.
+    _comms.onConnectionChange([this](bool connected) {
+        if (connected)
+            lastPingTime = millis();
+    });
     _comms.onAutotune([this](uint32_t testTimeSec, uint32_t windowSize, uint32_t heaterWattage) {
         handlePing();
         if (errorState != ERROR_CODE_NONE) { // don't re-engage the heater while faulted

@@ -119,6 +119,15 @@ bool BleClientTransport::connectToServer() {
         return false;
     }
 
+    // NimBLE 1.4 reports a subscribe as successful when the CCCD lookup failed because the link dropped mid-discovery;
+    // onDisconnect already emitted the drop and restarted the scan, so don't follow it with a stale connect.
+    if (!_client->isConnected()) {
+        ESP_LOGW(LOG_TAG, "Link dropped during setup, waiting for rescan");
+        _writeChar = nullptr;
+        _notifyChar = nullptr;
+        return false;
+    }
+
     _readyForConnection = false;
     _incompatible = false;
     // Persist the pairing only once a bond exists; until then the display keeps connecting openly.
