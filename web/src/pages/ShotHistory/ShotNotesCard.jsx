@@ -4,6 +4,7 @@ import { ApiServiceContext } from '../../services/ApiService.js';
 import { Spinner } from '../../components/Spinner.jsx';
 import { faEdit } from '@fortawesome/free-solid-svg-icons/faEdit';
 import { faSave } from '@fortawesome/free-solid-svg-icons/faSave';
+import { loadShotNotes } from './loadShotNotes.js';
 
 export default function ShotNotesCard({ shot, onNotesUpdate, onNotesLoaded }) {
   const apiService = useContext(ApiServiceContext);
@@ -37,77 +38,16 @@ export default function ShotNotesCard({ shot, onNotesUpdate, onNotesLoaded }) {
     if (initialLoaded) return; // Prevent reloading
 
     const loadNotes = async () => {
-      try {
-        const response = await apiService.request({
-          tp: 'req:history:notes:get',
-          id: shot.id,
-        });
-
-        let loadedNotes = {
-          id: shot.id,
-          rating: 0,
-          beanType: '',
-          doseIn: '',
-          doseOut: '',
-          ratio: '',
-          grindSetting: '',
-          balanceTaste: 'balanced',
-          notes: '',
-        };
-
-        if (response.notes && Object.keys(response.notes).length > 0) {
-          // Parse response.notes if it's a string
-          let parsedNotes = response.notes;
-          if (typeof response.notes === 'string') {
-            try {
-              parsedNotes = JSON.parse(response.notes);
-            } catch (e) {
-              console.warn('Failed to parse notes JSON:', e);
-              parsedNotes = {};
-            }
-          }
-
-          // Merge loaded notes with defaults
-          loadedNotes = { ...loadedNotes, ...parsedNotes };
-        }
-
-        // Pre-populate doseOut with shot.volume if it's empty and shot.volume exists
-        if (!loadedNotes.doseOut && shot.volume) {
-          loadedNotes.doseOut = shot.volume.toFixed(1);
-        }
-
-        // Calculate ratio from loaded data
-        if (loadedNotes.doseIn && loadedNotes.doseOut) {
-          loadedNotes.ratio = calculateRatio(loadedNotes.doseIn, loadedNotes.doseOut);
-        }
-
-        setNotes(loadedNotes);
-        setInitialLoaded(true);
-        // Pass loaded notes to parent
-        if (onNotesLoaded) {
-          onNotesLoaded(loadedNotes);
-        }
-      } catch (error) {
-        console.error('Failed to load notes:', error);
-
-        // Even if loading fails, set up defaults
-        const defaultNotes = {
-          id: shot.id,
-          rating: 0,
-          beanType: '',
-          doseIn: '',
-          doseOut: shot.volume ? shot.volume.toFixed(1) : '',
-          ratio: '',
-          grindSetting: '',
-          balanceTaste: 'balanced',
-          notes: '',
-        };
-
-        setNotes(defaultNotes);
-        setInitialLoaded(true);
-        if (onNotesLoaded) {
-          onNotesLoaded(defaultNotes);
-        }
+      const loadedNotes = await loadShotNotes(apiService, shot);
+      // Ensure ratio consistency with the local calculator (in case of future changes)
+      if (loadedNotes.doseIn && loadedNotes.doseOut) {
+        loadedNotes.ratio = calculateRatio(loadedNotes.doseIn, loadedNotes.doseOut);
+      }
+      setNotes(loadedNotes);
+      setInitialLoaded(true);
+      // Pass loaded notes to parent
+      if (onNotesLoaded) {
+        onNotesLoaded(loadedNotes);
       }
     };
 
