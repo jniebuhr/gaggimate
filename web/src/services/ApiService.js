@@ -196,6 +196,7 @@ export default class ApiService {
     map('rssi', 'rssi', v => v || 0);
     map('lat', 'lat', v => v || 0);
     map('rtx', 'rtx', v => v || 0);
+    map('sbr', 'standbyRemaining', v => v ?? null);
     map('tof', 'tofDistance', v => v || 0);
     map('pw', 'currentPumpPower', v => v ?? 0);
     map('hp', 'currentBoilerPower', v => v ?? 0);
@@ -249,6 +250,7 @@ export const machine = signal({
     grindTarget: 0,
     grindActive: false,
     process: null,
+    standbyRemaining: null,
     update: false,
     warnings: [],
     system: null,

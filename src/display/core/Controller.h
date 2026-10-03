@@ -54,6 +54,9 @@ class Controller {
     void setTargetGrindVolume(double volume);
 
     int getMode() const;
+    // Milliseconds until the standby timeout fires, -1 while nothing is counting down
+    // (standby, timeout disabled or a process running).
+    long getStandbyRemaining() const;
 
     float getTargetTemp() const;
     float getTargetSteamTemp() const;

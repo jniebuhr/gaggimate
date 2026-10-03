@@ -109,6 +109,12 @@ components:
         m:
           type: integer
           description: Machine mode
+        sbr:
+          type: [integer, 'null']
+          description: >-
+            Seconds until the standby timeout puts the machine into standby (telemetry frame).
+            Null while nothing is counting down: in standby, with the timeout disabled or
+            while a process is running.
         p:
           type: string
           description: Selected profile label
