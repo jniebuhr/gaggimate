@@ -8,9 +8,11 @@ import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
 import { Tooltip } from '../../components/Tooltip.jsx';
 import { ProfileMainInformation } from './ProfileMainInformation.jsx';
 import { getProfilePhases, removePhaseAt, updatePhaseAt } from './profilePhases.js';
+import { DumpValveToggle } from './DumpValveToggle.jsx';
 
 export function StandardProfileForm(props) {
-  const { data, onChange, onSave, saving = true, pressureAvailable = false } = props;
+  const { data, onChange, onSave, saving = true, pressureAvailable = false, showDumpValve = false } =
+    props;
   const phases = getProfilePhases(data);
 
   const onFieldChange = (field, value) => {
@@ -37,6 +39,7 @@ export function StandardProfileForm(props) {
           name: 'New Phase',
           pump: 100,
           valve: 1,
+          alt: 0,
           duration: 0,
           targets: [],
         },
@@ -85,6 +88,7 @@ export function StandardProfileForm(props) {
                   onChange={phase => onPhaseChange(index, phase)}
                   onRemove={() => onPhaseRemove(index)}
                   pressureAvailable={pressureAvailable}
+                  showDumpValve={showDumpValve}
                 />
               </div>
             ))}
@@ -123,7 +127,7 @@ export function StandardProfileForm(props) {
   );
 }
 
-function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
+function Phase({ phase, index, onChange, onRemove, pressureAvailable, showDumpValve = false }) {
   const onFieldChange = (field, value) => {
     onChange({
       ...phase,
@@ -275,6 +279,10 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
           </div>
         </fieldset>
       </div>
+
+      {showDumpValve && (
+        <DumpValveToggle value={phase.alt} onChange={value => onFieldChange('alt', value)} />
+      )}
 
       <div className='form-control'>
         <fieldset>
