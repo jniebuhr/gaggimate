@@ -73,7 +73,7 @@ function WarningLevelSelect({ id, label, icon, value, onChange }) {
 
 function PasswordField({ id, label, placeholder, value, onChange, shown, setShown, ...rest }) {
   return (
-    <label className='input w-full'>
+    <div className='input w-full'>
       <input
         id={id}
         name={id}
@@ -91,7 +91,7 @@ function PasswordField({ id, label, placeholder, value, onChange, shown, setShow
       >
         <FontAwesomeIcon icon={shown ? faEyeSlash : faEye} />
       </button>
-    </label>
+    </div>
   );
 }
 
@@ -414,7 +414,7 @@ export function GeneralTab({
       {/* Network / System Preferences */}
       <Section title='System & Network' className='h-full'>
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-          <SettingsFormField label='Wi-Fi SSID' htmlFor='wifiSsid' noMargin>
+          <SettingsFormField label='Wi-Fi SSID' htmlFor='wifiSsid' floating noMargin>
             <input
               id='wifiSsid'
               name='wifiSsid'
@@ -425,7 +425,7 @@ export function GeneralTab({
               onChange={onChange('wifiSsid')}
             />
           </SettingsFormField>
-          <SettingsFormField label='Wi-Fi Password' htmlFor='wifiPassword' noMargin>
+          <SettingsFormField label='Wi-Fi Password' htmlFor='wifiPassword' floating noMargin>
             <PasswordField
               id='wifiPassword'
               label='Wi-Fi Password'
@@ -439,6 +439,7 @@ export function GeneralTab({
             label='Access Point Password'
             htmlFor='apPassword'
             helpText='Used for the GaggiMate hotspot when no Wi-Fi is configured (min. 8 characters).'
+            floating
             noMargin
           >
             <PasswordField
@@ -452,7 +453,7 @@ export function GeneralTab({
               setShown={setShowApPassword}
             />
           </SettingsFormField>
-          <SettingsFormField label='Hostname' htmlFor='mdnsName' noMargin>
+          <SettingsFormField label='Hostname' htmlFor='mdnsName' floating noMargin>
             <input
               id='mdnsName'
               name='mdnsName'

@@ -110,8 +110,8 @@ export default function VisualizerUploadModal({
           )}
 
           <form onSubmit={handleSubmit} className='space-y-4' name='visualizer-login' method='post'>
-            <div>
-              <label htmlFor='username' className='mb-1 block text-sm font-medium'>
+            <div className='outlined-field'>
+              <label htmlFor='username' className='outlined-field-label'>
                 Visualizer.coffee Username
               </label>
               <input
@@ -121,18 +121,18 @@ export default function VisualizerUploadModal({
                 value={username}
                 onChange={e => setUsername(e.target.value)}
                 disabled={isUploading}
-                className='w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-white'
-                placeholder='Enter your username'
+                className='input input-bordered w-full'
+                placeholder='Username'
                 autoComplete='username'
                 required
               />
             </div>
 
-            <div>
-              <label htmlFor='password' className='mb-1 block text-sm font-medium'>
+            <div className='outlined-field'>
+              <label htmlFor='password' className='outlined-field-label'>
                 Password
               </label>
-              <div className='relative'>
+              <div className='input w-full'>
                 <input
                   id='password'
                   name='password'
@@ -140,8 +140,8 @@ export default function VisualizerUploadModal({
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   disabled={isUploading}
-                  className='w-full rounded-md border border-gray-300 px-3 py-2 pr-10 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-white'
-                  placeholder='Enter your password'
+                  className='grow'
+                  placeholder='Password'
                   autoComplete='current-password'
                   required
                 />
@@ -149,7 +149,8 @@ export default function VisualizerUploadModal({
                   type='button'
                   onClick={() => setShowPassword(!showPassword)}
                   disabled={isUploading}
-                  className='absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 disabled:opacity-50'
+                  className='text-base-content/50 hover:text-base-content cursor-pointer disabled:opacity-50'
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
                 </button>
@@ -163,9 +164,9 @@ export default function VisualizerUploadModal({
                 checked={rememberCredentials}
                 onChange={e => setRememberCredentials(e.target.checked)}
                 disabled={isUploading}
-                className='h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50'
+                className='checkbox checkbox-sm'
               />
-              <label htmlFor='remember' className='ml-2 text-sm text-gray-600 dark:text-gray-300'>
+              <label htmlFor='remember' className='ml-2 text-sm opacity-70'>
                 Remember credentials
               </label>
             </div>
@@ -175,14 +176,14 @@ export default function VisualizerUploadModal({
                 type='button'
                 onClick={handleClose}
                 disabled={isUploading}
-                className='rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300 disabled:opacity-50 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500'
+                className='btn btn-ghost'
               >
                 Cancel
               </button>
               <button
                 type='submit'
                 disabled={isUploading || !username.trim() || !password.trim()}
-                className='flex items-center space-x-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50'
+                className='btn btn-primary'
               >
                 {isUploading && <FontAwesomeIcon icon={faSpinner} spin />}
                 <span>{isUploading ? 'Uploading...' : 'Upload Shot'}</span>

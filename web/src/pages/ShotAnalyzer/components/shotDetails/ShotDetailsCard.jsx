@@ -6,6 +6,7 @@ import { faYinYang } from '@fortawesome/free-solid-svg-icons/faYinYang';
 import { faWeightScale } from '@fortawesome/free-solid-svg-icons/faWeightScale';
 import { faDivide } from '@fortawesome/free-solid-svg-icons/faDivide';
 import { CardTitle } from '../../../../components/CardTitle';
+import { SettingsFormField } from '../../../../components/SettingsFormField.jsx';
 import { getNotesTasteStyle } from '../../utils/analyzerUtils';
 import { useShotNotesState } from '../useShotNotesState';
 import { ShotMainInfoCard } from './ShotMainInfoCard';
@@ -17,8 +18,6 @@ const tasteOptions = [
   { value: 'sour', label: 'Sour' },
 ];
 
-const fieldLabelClass =
-  'text-base-content/55 mb-0.5 flex items-center gap-1.5 text-xs leading-tight font-medium';
 const inputClass =
   'border-base-content/10 bg-base-100/80 text-base-content input input-xs min-h-8 w-full rounded-md text-xs lg:min-h-7 xl:min-h-8';
 const textareaClass =
@@ -55,14 +54,21 @@ function getSelectedTasteButtonStyle(taste) {
   };
 }
 
-function DetailField({ icon, label, children, className = '', action = null }) {
+function FieldLabel({ icon, children }) {
+  return (
+    <span className='inline-flex items-center gap-1.5'>
+      {icon ? <FontAwesomeIcon icon={icon} className='text-[0.7rem]' /> : null}
+      {children}
+    </span>
+  );
+}
+
+/** Label above — for button groups that are not an input tile. */
+function StackedDetailField({ icon, label, children, className = '', action = null }) {
   return (
     <div className={className}>
-      <div className={`${fieldLabelClass} justify-between`}>
-        <span className='flex min-w-0 items-center gap-1.5'>
-          {icon ? <FontAwesomeIcon icon={icon} className='text-[0.7rem]' /> : null}
-          {label}
-        </span>
+      <div className='text-base-content/55 mb-0.5 flex items-center justify-between gap-1.5 text-xs leading-tight font-medium'>
+        <FieldLabel icon={icon}>{label}</FieldLabel>
         {action}
       </div>
       {children}
@@ -76,6 +82,7 @@ export function ShotDetailsCard({ entry, isCompare }) {
   });
   const duplicateMobileSummaryClass = isCompare ? '' : 'hidden lg:flex';
   const duplicateMobileMetricsClass = isCompare ? 'hidden lg:block' : 'hidden sm:block';
+  const notesLength = (notes.notes || '').length;
 
   return (
     <section className='relative flex h-full flex-col gap-3'>
@@ -102,8 +109,13 @@ export function ShotDetailsCard({ entry, isCompare }) {
       <div className='app-card-surface flex flex-1 flex-col gap-3 rounded-xl p-3 lg:p-2.5 xl:p-3'>
         <CardTitle>Shot Notes</CardTitle>
         <div className='grid grid-cols-2 gap-3'>
-          <DetailField icon={faWeightScale} label='Dose In'>
+          <SettingsFormField
+            label={<FieldLabel icon={faWeightScale}>Dose In</FieldLabel>}
+            htmlFor='analyzer-dose-in'
+            noMargin
+          >
             <input
+              id='analyzer-dose-in'
               type='number'
               step='0.1'
               className={inputClass}
@@ -116,9 +128,14 @@ export function ShotDetailsCard({ entry, isCompare }) {
               onBlur={flushSave}
               placeholder='18.0'
             />
-          </DetailField>
-          <DetailField icon={faWeightScale} label='Dose Out'>
+          </SettingsFormField>
+          <SettingsFormField
+            label={<FieldLabel icon={faWeightScale}>Dose Out</FieldLabel>}
+            htmlFor='analyzer-dose-out'
+            noMargin
+          >
             <input
+              id='analyzer-dose-out'
               type='number'
               step='0.1'
               className={inputClass}
@@ -133,18 +150,29 @@ export function ShotDetailsCard({ entry, isCompare }) {
               onBlur={flushSave}
               placeholder='36.0'
             />
-          </DetailField>
-          <DetailField icon={faDivide} label='Ratio' className='col-span-2'>
+          </SettingsFormField>
+          <SettingsFormField
+            label={<FieldLabel icon={faDivide}>Ratio</FieldLabel>}
+            htmlFor='analyzer-ratio'
+            noMargin
+            className='col-span-2'
+          >
             <input
+              id='analyzer-ratio'
               type='text'
               readOnly
-              aria-label='Ratio'
               className={`${inputClass} bg-base-200/50 text-base-content/70 cursor-default`}
               value={notes.ratio ? `1:${notes.ratio}` : '—'}
             />
-          </DetailField>
-          <DetailField icon={faGears} label='Grind' className='col-span-2'>
+          </SettingsFormField>
+          <SettingsFormField
+            label={<FieldLabel icon={faGears}>Grind</FieldLabel>}
+            htmlFor='analyzer-grind'
+            noMargin
+            className='col-span-2'
+          >
             <input
+              id='analyzer-grind'
               type='text'
               className={inputClass}
               value={notes.grindSetting || ''}
@@ -152,9 +180,15 @@ export function ShotDetailsCard({ entry, isCompare }) {
               onBlur={flushSave}
               placeholder='2.5'
             />
-          </DetailField>
-          <DetailField icon={faTag} label='Beans' className='col-span-2'>
+          </SettingsFormField>
+          <SettingsFormField
+            label={<FieldLabel icon={faTag}>Beans</FieldLabel>}
+            htmlFor='analyzer-beans'
+            noMargin
+            className='col-span-2'
+          >
             <input
+              id='analyzer-beans'
               type='text'
               className={inputClass}
               value={notes.beanType || ''}
@@ -162,8 +196,8 @@ export function ShotDetailsCard({ entry, isCompare }) {
               onBlur={flushSave}
               placeholder='Single Origin, Blend...'
             />
-          </DetailField>
-          <DetailField icon={faYinYang} label='Balance / Taste' className='col-span-2'>
+          </SettingsFormField>
+          <StackedDetailField icon={faYinYang} label='Balance / Taste' className='col-span-2'>
             <div className='bg-base-200/70 flex w-full min-w-0 rounded-full p-0.5'>
               {tasteOptions.map(option => (
                 <button
@@ -181,25 +215,28 @@ export function ShotDetailsCard({ entry, isCompare }) {
                 </button>
               ))}
             </div>
-          </DetailField>
+          </StackedDetailField>
         </div>
-        <DetailField
-          icon={faPenToSquare}
-          label='Notes'
-          className='flex min-h-0 flex-1 flex-col'
-          action={
-            <span className='text-base-content/45 text-xs'>{(notes.notes || '').length}/200</span>
+        <SettingsFormField
+          label={
+            <FieldLabel icon={faPenToSquare}>
+              Notes <span className='text-base-content/45 font-normal'>({notesLength}/200)</span>
+            </FieldLabel>
           }
+          htmlFor='analyzer-notes'
+          noMargin
+          className='outlined-field-fill flex min-h-0 flex-1 flex-col'
         >
           <textarea
-            className={`${textareaClass} flex-1`}
+            id='analyzer-notes'
+            className={`${textareaClass} min-h-0 flex-1`}
             value={notes.notes || ''}
             maxLength={200}
             onInput={event => handleFieldChange('notes', event.target.value)}
             onBlur={flushSave}
             placeholder='Tasting notes, brewing observations...'
           />
-        </DetailField>
+        </SettingsFormField>
       </div>
     </section>
   );

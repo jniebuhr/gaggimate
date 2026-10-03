@@ -295,14 +295,14 @@ export function MachineTab({ formData, onChange, setField }) {
           <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
             <TankDistanceField
               id='emptyTankDistance'
-              label='Distance from sensor to bottom of the tank'
+              label='Sensor to tank bottom'
               value={formData.emptyTankDistance}
               onChange={onChange('emptyTankDistance')}
               onUseCurrent={() => setField('emptyTankDistance', tofDistance.value)}
             />
             <TankDistanceField
               id='fullTankDistance'
-              label='Distance from sensor to the fill line'
+              label='Sensor to max fill line'
               value={formData.fullTankDistance}
               onChange={onChange('fullTankDistance')}
               onUseCurrent={() => setField('fullTankDistance', tofDistance.value)}
