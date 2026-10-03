@@ -295,6 +295,9 @@ void WebSocketHandler::handleProfileRequest(uint32_t clientId, JsonDocument &req
                 writeProfile(p, profile);
             }
         }
+        // Clients cache this list keyed by rev and skip the request while the
+        // device's revision (prv in evt:status) is unchanged.
+        response["rev"] = profileManager->getRevision();
     } else if (type == "req:profiles:load") {
         auto id = request["id"].as<String>();
         Profile profile;
@@ -339,7 +342,7 @@ void WebSocketHandler::handleProfileRequest(uint32_t clientId, JsonDocument &req
                     }
                 }
             }
-            controller->getSettings().setProfileOrder(order);
+            profileManager->reorderProfiles(order);
         }
     }
 
@@ -354,6 +357,7 @@ void WebSocketHandler::publishState(unsigned long now) {
     const Profile &profile = controller->getProfileManager()->getSelectedProfile();
     doc["p"] = profile.label;
     doc["puid"] = profile.id;
+    doc["prv"] = controller->getProfileManager()->getRevision(); // profile list revision, see ProfileManager
     const auto &caps = controller->getSystemInfo().capabilities;
     doc["cp"] = caps.pressure;
     doc["cd"] = caps.dimming;

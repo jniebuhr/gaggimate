@@ -1,7 +1,21 @@
 import { machine } from '../services/ApiService.js';
 import { useEffect, useRef, useState } from 'preact/hooks';
-import { Chart } from 'chart.js';
+import {
+  Chart,
+  LineController,
+  TimeScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Legend,
+  Filler,
+} from 'chart.js';
+import 'chartjs-adapter-dayjs-4/dist/chartjs-adapter-dayjs-4.esm';
 import { ChartComponent } from './Chart.jsx';
+
+// Registered here (not in the Home page) so Chart.js and the dayjs adapter
+// only load together with this component, which the dashboard imports lazily.
+Chart.register(LineController, TimeScale, LinearScale, PointElement, LineElement, Filler, Legend);
 
 // Global state to track phase transitions during brewing
 let phaseTransitions = [];

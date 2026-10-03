@@ -20,7 +20,12 @@ import { faBars } from '@fortawesome/free-solid-svg-icons/faBars';
 // Each page lazy-loads as its own Vite chunk so the initial bundle stays small.
 // Chart.js, FontAwesome icon sets, and the analyzer/statistics views are too
 // large to ship up-front on the ESP32's slow WiFi pipe.
-const Home = lazy(() => import('./pages/Home/index.jsx').then(m => m.Home));
+//
+// The dashboard is the exception: it is the first page of every visit, so a
+// lazy chunk only adds a serial round-trip (download entry → discover chunk →
+// download chunk) on a slow link. It is imported statically and ships in the
+// entry bundle; its Chart.js views are lazy-loaded inside the page instead.
+import { Home } from './pages/Home/index.jsx';
 const NotFound = lazy(() => import('./pages/_404.jsx').then(m => m.NotFound));
 const Settings = lazy(() => import('./pages/Settings/index.jsx').then(m => m.Settings));
 const ProfileList = lazy(() => import('./pages/ProfileList/index.jsx').then(m => m.ProfileList));
