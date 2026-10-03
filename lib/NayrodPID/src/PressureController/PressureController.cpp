@@ -4,9 +4,6 @@
 #include <algorithm>
 #include <math.h>
 
-// Helper function to return the sign of a float
-inline float sign(float x) { return (x > 0.0f) - (x < 0.0f); }
-
 // Static utility function for first-order low-pass filtering
 void PressureController::applyLowPassFilter(float *filteredValue, float rawValue, float cutoffFreq, float dt) {
     if (filteredValue == nullptr)
@@ -24,7 +21,7 @@ PressureController::PressureController(float dt, float *rawPressureSetpoint, flo
     this->_ctrlOutput = controllerOutput;
     this->_valveStatus = valveStatus;
     this->_dt = dt;
-    this->_pressureKalmanFilter = new SimpleKalmanFilter(0.1f, 10.0f, powf(4 * _dt, 2));
+    this->_pressureKalmanFilter = new SimpleKalmanFilter(0.1f, 10.0f, powf(2 * _dt, 2));
     this->_previousPressure = *sensorOutput;
 }
 
@@ -291,7 +288,10 @@ float PressureController::getPumpDutyCycleForPressure() {
     }
     float denominator = fmaxf(1.0f - pressureRatio, 0.0001f); // Clamp to minimum 0.0001
     float Ki = _integralGain / denominator;
-    _errorIntegral += error * _dt;
+    // Integrate only inside the boundary layer so headspace fill can't wind up an overshoot the pump can't undo
+    const bool integrating = fabsf(error) < epsilon;
+    if (integrating)
+        _errorIntegral += error * _dt;
     float iterm = Ki * _errorIntegral;
 
     // Plant-gain inversion: Qa is the duty->flow slope (d Q_in / d duty), which is the
@@ -302,8 +302,8 @@ float PressureController::getPumpDutyCycleForPressure() {
     float K = _commutationGain / denominator * Qa / Ceq;
     _pumpDutyCycle = Ceq / Qa * (-_convergenceGain * error - K * sat_s) - iterm;
 
-    // Anti-windup
-    if ((sign(error) == -sign(_pumpDutyCycle)) && (fabs(_pumpDutyCycle) > 1.0f)) {
+    // Anti-windup against the actuator limits [0, 1]
+    if (integrating && ((_pumpDutyCycle > 1.0f && error < 0.0f) || (_pumpDutyCycle < 0.0f && error > 0.0f))) {
         _errorIntegral -= error * _dt;
         iterm = Ki * _errorIntegral;
     }
