@@ -26,7 +26,7 @@ static constexpr uint32_t PROTOCOL_VERSION = 7;
 // produce and send()/sendBatch() apply to the MockController.
 namespace gm {
 struct Payload {
-    enum Type { None, Ping, Boiler, Pump, Relay, Pid, PumpSettings, Autotune, PressureScale, Tare, Led } type = None;
+    enum Type { None, Ping, Boiler, Pump, Relay, Pid, PumpSettings, Autotune, PressureScale, ScaleFactors, Tare, Led } type = None;
     BoilerCommand boiler;
     PumpCommand pump;
     RelayCommand relay;
@@ -80,6 +80,9 @@ class GaggiMateClient {
     gm::Payload buildAutotune(uint32_t testTime, uint32_t samples, uint32_t heaterWattage);
     gm::Payload buildPressureScale(float scale);
     gm::Payload buildTare();
+    gm::Payload buildScaleFactors(float, float, uint16_t = 10, float = 0.80f, float = 0.80f) {
+        return {gm::Payload::ScaleFactors};
+    }
     gm::Payload buildLedControl(const LedChannelCommand *channels, size_t count);
 
     void sendPing();
@@ -91,6 +94,7 @@ class GaggiMateClient {
                           float maxPower, float slipA, float slipB, float slipC, float slipD);
     void sendAutotune(uint32_t testTime, uint32_t samples, uint32_t heaterWattage);
     void sendPressureScale(float scale);
+    void sendScaleFactors(float, float, uint16_t = 10, float = 0.80f, float = 0.80f) {} // no hardware scale in the mock
     void tare();
     void sendLedControl(const LedChannelCommand *channels, size_t count);
 
