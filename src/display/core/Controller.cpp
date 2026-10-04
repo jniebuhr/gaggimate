@@ -22,6 +22,7 @@
 #include <display/plugins/ShotHistoryPlugin.h>
 #include <display/plugins/SmartGrindPlugin.h>
 #include <display/plugins/WebUIPlugin.h>
+#include <display/plugins/mahlkonig/MahlkonigPlugin.h>
 #ifndef GAGGIMATE_SIM // network/BLE plugins are device-only
 #include <display/plugins/BLEScalePlugin.h>
 #include <display/plugins/HomekitPlugin.h>
@@ -102,6 +103,9 @@ void Controller::setup() {
     }
 #endif
     pluginManager->registerPlugin(new WebUIPlugin());
+    if (settings.isMahlkonigActive()) {
+        pluginManager->registerPlugin(new MahlkonigPlugin());
+    }
 #ifndef GAGGIMATE_SIM // WiFi watchdogs and BLE scales are device-only
     pluginManager->registerPlugin(new NetworkWatchdogPlugin());
     pluginManager->registerPlugin(new WifiStaWatchdogPlugin());
