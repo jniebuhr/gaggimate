@@ -112,7 +112,7 @@ class Settings {
     int getSteamFillTime() const { return steamFillTime.get(); }
     bool isSmartGrindActive() const { return smartGrindActive.get(); }
     bool isMahlkonigActive() const { return mahlkonigActive.get(); }
-    String getMahlkonigRecipeDoses() const { return mahlkonigRecipeDoses.get(); }
+    String getMahlkonigRecipeProfiles() const { return mahlkonigRecipeProfiles.get(); }
     int getSmartGrindMode() const { return smartGrindMode.get(); }
     String getSmartGrindIp() const { return smartGrindIp.get(); }
     bool isHomeAssistant() const { return homeAssistant.get(); }
@@ -222,7 +222,7 @@ class Settings {
     void setSteamFillTime(int steam_fill_time);
     void setSmartGrindActive(bool smart_grind_active);
     void setMahlkonigActive(bool mahlkonig_active);
-    void setMahlkonigRecipeDoses(String doses);
+    void setMahlkonigRecipeProfiles(String profiles);
     void setSmartGrindIp(String smart_grind_ip);
     void setSmartGrindMode(int smart_grind_mode);
     void setHomeAssistant(bool homeAssistant);
@@ -333,7 +333,7 @@ class Settings {
     Property<int> smartGrindMode{registry, "sg_m", 0};
     Property<String> smartGrindIp{registry, "sg_i", ""};
     Property<bool> mahlkonigActive{registry, "mk_a", false};
-    Property<String> mahlkonigRecipeDoses{registry, "mk_rd", ""}; // grams per grinder recipe slot, "r1,r2,..."
+    Property<String> mahlkonigRecipeProfiles{registry, "mk_rp", ""}; // profile id per grinder recipe slot, "r1,r2,..."
     Property<bool> homeAssistant{registry, "ha_a", false};
     Property<String> homeAssistantUser{registry, "ha_u", ""};
     Property<String> homeAssistantPassword{registry, "ha_pw", ""};

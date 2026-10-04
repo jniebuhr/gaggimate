@@ -169,7 +169,7 @@ void Settings::setSmartGrindActive(bool smart_grind_active) { smartGrindActive.s
 
 void Settings::setMahlkonigActive(bool mahlkonig_active) { mahlkonigActive.set(mahlkonig_active); }
 
-void Settings::setMahlkonigRecipeDoses(String doses) { mahlkonigRecipeDoses.set(doses); }
+void Settings::setMahlkonigRecipeProfiles(String profiles) { mahlkonigRecipeProfiles.set(profiles); }
 
 void Settings::setSmartGrindIp(String smart_grind_ip) { smartGrindIp.set(smart_grind_ip); }
 

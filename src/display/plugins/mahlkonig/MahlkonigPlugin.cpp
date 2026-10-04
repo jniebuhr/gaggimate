@@ -16,8 +16,6 @@ constexpr const char *TAG = "MahlkonigPlugin";
 constexpr size_t MAX_BODY_SIZE = 1024;
 // Scale settle + history write normally take ~4 s; past this the live scale weight is reported instead
 constexpr unsigned long SETTLE_TIMEOUT_MS = 8000;
-// A grind's dose and target only apply to a shot started within this window
-constexpr unsigned long GRIND_VALID_MS = 15UL * 60UL * 1000UL;
 // The grinder counts as connected while it polls at least this often
 constexpr unsigned long GRINDER_SEEN_MS = 10000;
 // A brew starting this soon after a grinder request (e.g. after a confirm dialog) counts as grinder-started
@@ -50,7 +48,7 @@ void MahlkonigPlugin::setup(Controller *_controller, PluginManager *_pluginManag
     });
     pluginManager->on("evt:history-shot-saved", [this](Event const &event) {
         std::lock_guard<std::mutex> lock(mutex);
-        if (phase != Phase::IDLE || doseWritePending)
+        if (phase != Phase::IDLE)
             savedShotId = static_cast<uint32_t>(event.getInt("id"));
     });
 }
@@ -97,12 +95,11 @@ void MahlkonigPlugin::registerWsHandlers(WebSocketHandler *ws) {
             resp["phase"] = phaseName();
             JsonObject grind = resp["grind"].to<JsonObject>();
             grind["targetWeight"] = recipeWeight;
-            grind["dose"] = grindDose;
             grind["recipe"] = grindRecipe;
+            grind["profileId"] = grindProfileId;
             JsonObject shot = resp["shot"].to<JsonObject>();
             shot["timeMs"] = extractionMs;
             shot["weight"] = shotWeight;
-            shot["dose"] = shotDose;
         }
         ws->sendJson(clientId, resp);
     });
@@ -193,15 +190,15 @@ void MahlkonigPlugin::handleBrewRatioBody(const uint8_t *data, size_t len) {
         return;
     }
     const int recipe = static_cast<int>(numberLike(doc[gbs::FIELD_RECIPE]));
-    const float dose = recipeDose(recipe);
-    if (!isUsable(dose))
-        ESP_LOGW(TAG, "No dose configured for recipe %d; shots from this grind get no dose in the history", recipe);
+    const String profileId = recipeProfile(recipe);
+    if (profileId.isEmpty())
+        ESP_LOGI(TAG, "No profile mapped to recipe %d, keeping the selected profile", recipe);
     const float weight = numberLike(doc[gbs::FIELD_TARGET_WEIGHT]);
     std::lock_guard<std::mutex> lock(mutex);
-    grindAt = millis();
     recipeWeight = isUsable(weight) ? weight : 0.0f;
-    grindDose = isUsable(dose) ? dose : 0.0f;
     grindRecipe = recipe;
+    grindProfileId = profileId;
+    pendingProfileId = profileId;
     pendingTargetWeight = recipeWeight;
 }
 
@@ -240,12 +237,8 @@ void MahlkonigPlugin::onBrewStart() {
     extractionMs = 0;
     shotWeight = 0.0f;
     savedShotId = 0;
-    doseWritePending = false;
     shotIsGrinderStarted = startRequestedAt != 0 && now - startRequestedAt < GRINDER_START_WINDOW_MS;
     startRequestedAt = 0;
-    const bool grindValid = grindAt != 0 && now - grindAt < GRIND_VALID_MS;
-    shotDose = grindValid ? grindDose : 0.0f;
-    grindDose = 0.0f;
 }
 
 void MahlkonigPlugin::onBrewEnd() {
@@ -261,9 +254,7 @@ void MahlkonigPlugin::onBrewEnd() {
 void MahlkonigPlugin::loop() {
     bool start;
     float targetWeight;
-    uint32_t doseShotId = 0;
-    float dose = 0.0f;
-    float weight = 0.0f;
+    String profileId;
     {
         std::lock_guard<std::mutex> lock(mutex);
         const unsigned long now = millis();
@@ -273,23 +264,20 @@ void MahlkonigPlugin::loop() {
             startRequestedAt = now;
         targetWeight = pendingTargetWeight;
         pendingTargetWeight = 0.0f;
+        profileId = pendingProfileId;
+        pendingProfileId = "";
         if (phase == Phase::SETTLING && (savedShotId != 0 || now - phaseSince > SETTLE_TIMEOUT_MS))
             finishShot(now);
         else if (phase == Phase::FINISHING && now - phaseSince > gbs::SHOT_DONE_VISIBLE_MS)
             phase = Phase::IDLE;
-        if (doseWritePending && savedShotId != 0) {
-            doseShotId = savedShotId;
-            dose = shotDose;
-            weight = shotWeight;
-            doseWritePending = false;
-        }
     }
+    // Profile first, so the grinder's target weight lands on the recipe's profile
+    if (!profileId.isEmpty())
+        selectRecipeProfile(profileId);
     if (isUsable(targetWeight))
         applyTargetWeight(targetWeight);
     if (start)
         startRequestedBrew();
-    if (doseShotId != 0)
-        writeDoseToHistory(doseShotId, dose, weight);
 }
 
 void MahlkonigPlugin::finishShot(unsigned long now) {
@@ -306,12 +294,9 @@ void MahlkonigPlugin::finishShot(unsigned long now) {
     if (!isUsable(weight))
         weight = recipeWeight;
     shotWeight = isUsable(weight) ? weight : 0.0f;
-    doseWritePending = isUsable(shotDose);
-    if (!doseWritePending)
-        ESP_LOGW(TAG, "No grinder dose for this shot, history notes left unchanged");
     phase = Phase::FINISHING;
     phaseSince = now;
-    ESP_LOGI(TAG, "Shot finished: %u ms, %.1f g, dose %.1f g%s", extractionMs, shotWeight, shotDose,
+    ESP_LOGI(TAG, "Shot finished: %u ms, %.1f g%s", extractionMs, shotWeight,
              shotIsGrinderStarted ? "" : " (not started by grinder)");
 }
 
@@ -342,48 +327,34 @@ void MahlkonigPlugin::applyTargetWeight(float weight) {
     pluginManager->trigger("controller:targetVolume:change", "value", profile.getTotalVolume());
 }
 
-void MahlkonigPlugin::writeDoseToHistory(uint32_t shotId, float dose, float weight) {
-    const String id(shotId);
-    JsonDocument request(&psramAllocator);
-    JsonDocument response(&psramAllocator);
-    request["tp"] = "req:history:notes:get";
-    request["id"] = id;
-    ShotHistory.handleRequest(request, response);
-
-    JsonDocument notes(&psramAllocator);
-    if (response["notes"].is<JsonObjectConst>())
-        notes.set(response["notes"]);
-    notes["doseIn"] = String(dose, 1);
-    const String doseOut = notes["doseOut"] | "";
-    if (doseOut.isEmpty() && isUsable(weight))
-        notes["doseOut"] = String(weight, 1);
-    const float out = String(notes["doseOut"] | "").toFloat();
-    if (isUsable(out))
-        notes["ratio"] = String(out / dose, 2);
-
-    request.clear();
-    response.clear();
-    request["tp"] = "req:history:notes:save";
-    request["id"] = id;
-    request["notes"] = notes;
-    ShotHistory.handleRequest(request, response);
-    ESP_LOGI(TAG, "Dose %.1f g written to shot %u", dose, shotId);
+void MahlkonigPlugin::selectRecipeProfile(const String &profileId) {
+    if (controller->isActive())
+        return;
+    ProfileManager *profileManager = controller->getProfileManager();
+    if (profileManager->getSelectedProfile().id == profileId)
+        return;
+    if (!profileManager->profileExists(profileId)) {
+        ESP_LOGW(TAG, "Profile %s mapped to a grinder recipe no longer exists", profileId.c_str());
+        return;
+    }
+    ESP_LOGI(TAG, "Selecting profile %s for grinder recipe", profileId.c_str());
+    profileManager->selectProfile(profileId);
 }
 
-float MahlkonigPlugin::recipeDose(int recipe) const {
+String MahlkonigPlugin::recipeProfile(int recipe) const {
     if (recipe < 1)
-        return 0.0f;
-    const String doses = controller->getSettings().getMahlkonigRecipeDoses();
+        return "";
+    const String profiles = controller->getSettings().getMahlkonigRecipeProfiles();
     int from = 0;
-    for (int index = 1; from <= static_cast<int>(doses.length()); index++) {
-        int comma = doses.indexOf(',', from);
+    for (int index = 1; from <= static_cast<int>(profiles.length()); index++) {
+        int comma = profiles.indexOf(',', from);
         if (comma < 0)
-            comma = doses.length();
+            comma = profiles.length();
         if (index == recipe)
-            return doses.substring(from, comma).toFloat();
+            return profiles.substring(from, comma);
         from = comma + 1;
     }
-    return 0.0f;
+    return "";
 }
 
 const char *MahlkonigPlugin::phaseName() const {

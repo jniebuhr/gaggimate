@@ -33,10 +33,10 @@ class MahlkonigPlugin : public Plugin {
     void onBrewEnd();
 
     void startRequestedBrew();
+    void selectRecipeProfile(const String &profileId);
     void applyTargetWeight(float weight);
     void finishShot(unsigned long now);
-    void writeDoseToHistory(uint32_t shotId, float dose, float weight);
-    float recipeDose(int recipe) const;
+    String recipeProfile(int recipe) const;
     const char *phaseName() const;
 
     Controller *controller = nullptr;
@@ -50,18 +50,16 @@ class MahlkonigPlugin : public Plugin {
     unsigned long phaseSince = 0;
     uint32_t extractionMs = 0;
     float shotWeight = 0.0f;
-    float shotDose = 0.0f;
     float lastScaleWeight = 0.0f;
     uint32_t savedShotId = 0;
-    bool doseWritePending = false;
 
     bool startRequested = false;
     unsigned long startRequestedAt = 0;
     float pendingTargetWeight = 0.0f;
+    String pendingProfileId;
     float recipeWeight = 0.0f;
-    float grindDose = 0.0f;
     int grindRecipe = 0;
-    unsigned long grindAt = 0;
+    String grindProfileId;
     unsigned long lastPollAt = 0;
 
     // Accumulates chunked POST bodies; requests from AsyncTCP are handled one at a time

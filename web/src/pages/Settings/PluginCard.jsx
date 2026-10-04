@@ -10,12 +10,13 @@ const gearpumpAddon = computed(() => machine.value.capabilities.gearpumpAddon);
 
 const MAHLKONIG_MIN_RECIPES = 4;
 
-// Dose per grinder recipe slot, stored as "r1,r2,..."; the grinder reports only the recipe, never a dose.
-function MahlkonigRecipeDoses({ formData, onChange }) {
+// Profile per grinder recipe slot, stored as "r1,r2,..."; the grinder reports only the recipe number.
+function MahlkonigRecipeProfiles({ formData, onChange }) {
   const apiService = useContext(ApiServiceContext);
   const [lastRecipe, setLastRecipe] = useState(null);
-  const doses = String(formData.mahlkonigRecipeDoses || '').split(',');
-  const count = Math.max(MAHLKONIG_MIN_RECIPES, doses.length, lastRecipe || 0);
+  const [profiles, setProfiles] = useState([]);
+  const mapped = String(formData.mahlkonigRecipeProfiles || '').split(',');
+  const count = Math.max(MAHLKONIG_MIN_RECIPES, mapped.length, lastRecipe || 0);
   const recipes = Array.from({ length: count }, (_, i) => i + 1);
 
   useEffect(() => {
@@ -23,44 +24,53 @@ function MahlkonigRecipeDoses({ formData, onChange }) {
       .request({ tp: 'req:mahlkonig:status' })
       .then(res => setLastRecipe(res.grind?.recipe || null))
       .catch(() => setLastRecipe(null));
+    apiService
+      .request({ tp: 'req:profiles:list' })
+      .then(res => setProfiles((res.profiles || []).filter(p => !p.utility)))
+      .catch(() => setProfiles([]));
   }, [apiService]);
 
-  const setDose = (recipe, value) => {
-    const next = recipes.map(r => (r === recipe ? value : (doses[r - 1] ?? '')));
+  const setProfile = (recipe, value) => {
+    const next = recipes.map(r => (r === recipe ? value : (mapped[r - 1] ?? '')));
     while (next.length > MAHLKONIG_MIN_RECIPES && !next[next.length - 1]) next.pop();
-    onChange('mahlkonigRecipeDoses')({ currentTarget: { value: next.join(',') } });
+    onChange('mahlkonigRecipeProfiles')({ currentTarget: { value: next.join(',') } });
   };
 
   return (
     <div className='form-control'>
-      <span className='mb-2 block text-sm font-medium'>Dose per grinder recipe</span>
-      <div className='grid grid-cols-2 gap-4 sm:grid-cols-4'>
-        {recipes.map(recipe => (
-          <div key={recipe}>
-            <label htmlFor={`mahlkonigRecipe${recipe}`} className='mb-1 block text-sm opacity-70'>
-              Recipe {recipe}
-            </label>
-            <label className='input w-full'>
-              <input
+      <span className='mb-2 block text-sm font-medium'>Profile per grinder recipe</span>
+      <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+        {recipes.map(recipe => {
+          const value = mapped[recipe - 1] ?? '';
+          const missing = value && profiles.length > 0 && !profiles.some(p => p.id === value);
+          return (
+            <div key={recipe}>
+              <label htmlFor={`mahlkonigRecipe${recipe}`} className='mb-1 block text-sm opacity-70'>
+                Recipe {recipe}
+              </label>
+              <select
                 id={`mahlkonigRecipe${recipe}`}
-                type='number'
-                step='0.1'
-                min='0'
-                className='grow'
-                placeholder='—'
-                value={doses[recipe - 1] ?? ''}
-                onChange={e => setDose(recipe, e.currentTarget.value)}
-              />
-              <span aria-label='gram'>g</span>
-            </label>
-          </div>
-        ))}
+                className='select select-bordered w-full'
+                value={value}
+                onChange={e => setProfile(recipe, e.currentTarget.value)}
+              >
+                <option value=''>Keep selected profile</option>
+                {missing && <option value={value}>Deleted profile</option>}
+                {profiles.map(p => (
+                  <option key={p.id} value={p.id}>
+                    {p.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          );
+        })}
       </div>
       <p className='mt-2 text-sm opacity-70'>
         {lastRecipe
           ? `Your grinder last ground recipe ${lastRecipe}.`
           : 'Grind once with GbS to see which recipe number your grinder reports.'}{' '}
-        Leave a recipe empty to save no dose for it.
+        The profile's dose is saved to the shot history.
       </p>
     </div>
   );
@@ -345,9 +355,8 @@ export function PluginCard({
           <div className='border-base-300 mt-4 space-y-4 border-t pt-4'>
             <p className='text-sm opacity-70'>
               Lets an E64 WS start shots with its knob and dial in its grind from the shot time and
-              weight. The grinder's target weight overrides the selected profile's weight target,
-              and the dose set for the grinder's recipe is saved to the shot history. Save and
-              restart to apply.
+              weight. A grind selects the profile mapped to its recipe, and the grinder's target
+              weight overrides that profile's weight target. Save and restart to apply.
             </p>
             <div className='form-control'>
               <span className='mb-2 block text-sm font-medium'>
@@ -375,7 +384,7 @@ export function PluginCard({
               Give GaggiMate a fixed IP or a DHCP reservation in your router so the address does not
               change.
             </p>
-            <MahlkonigRecipeDoses formData={formData} onChange={onChange} />
+            <MahlkonigRecipeProfiles formData={formData} onChange={onChange} />
           </div>
         )}
       </div>
