@@ -37,6 +37,11 @@ class Preferences {
         auto it = _kv.find(key);
         return it == _kv.end() ? def : (uint32_t)strtoul(it->second.c_str(), nullptr, 10);
     }
+    size_t putULong(const char *key, unsigned long value) { return setRaw(key, std::to_string(value)); }
+    unsigned long getULong(const char *key, unsigned long def = 0) {
+        auto it = _kv.find(key);
+        return it == _kv.end() ? def : strtoul(it->second.c_str(), nullptr, 10);
+    }
 
     size_t putBool(const char *key, bool value) { return setRaw(key, value ? "1" : "0"); }
     bool getBool(const char *key, bool def = false) {

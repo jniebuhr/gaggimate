@@ -206,6 +206,26 @@ void Settings::setWarnScaleBattery(int level) { warnScaleBattery.set(clampWarnin
 
 void Settings::setWarnTemperature(int level) { warnTemperature.set(clampWarningLevel(level)); }
 
+void Settings::setWarnBackflush(int level) { warnBackflush.set(clampWarningLevel(level)); }
+
+void Settings::setWarnDescaling(int level) { warnDescaling.set(clampWarningLevel(level)); }
+
+void Settings::setBackflushIntervalDays(int days) { backflushIntervalDays.set(std::max(0, days)); }
+
+void Settings::setBackflushIntervalShots(int shots) { backflushIntervalShots.set(std::max(0, shots)); }
+
+void Settings::setDescalingIntervalWeeks(int weeks) { descalingIntervalWeeks.set(std::max(0, weeks)); }
+
+void Settings::setDescalingIntervalShots(int shots) { descalingIntervalShots.set(std::max(0, shots)); }
+
+void Settings::setLastBackflushTime(unsigned long time) { lastBackflushTime.set(time); }
+
+void Settings::setLastDescalingTime(unsigned long time) { lastDescalingTime.set(time); }
+
+void Settings::setShotsSinceBackflush(int shots) { shotsSinceBackflush.set(std::max(0, shots)); }
+
+void Settings::setShotsSinceDescaling(int shots) { shotsSinceDescaling.set(std::max(0, shots)); }
+
 void Settings::setTimezone(String timezone) { this->timezone.set(timezone); }
 
 void Settings::setClockFormat(bool clock_24h_format) { clock24hFormat.set(clock_24h_format); }

@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <vector>
 
-enum class EventDataType { EVENT_TYPE_INT, EVENT_TYPE_FLOAT, EVENT_TYPE_STRING, EVENT_TYPE_NONE };
+enum class EventDataType { EVENT_TYPE_INT, EVENT_TYPE_FLOAT, EVENT_TYPE_STRING, EVENT_TYPE_POINTER, EVENT_TYPE_NONE };
 
 struct EventDataEntry {
     String key;
@@ -13,6 +13,7 @@ struct EventDataEntry {
     int intValue = 0;
     float floatValue = 0.0f;
     String stringValue = "";
+    void *pointerValue = nullptr;
 
     EventDataEntry() = default;
 
@@ -21,6 +22,8 @@ struct EventDataEntry {
     EventDataEntry(const String &k, float value) : key(k), type(EventDataType::EVENT_TYPE_FLOAT), floatValue(value) {}
 
     EventDataEntry(const String &k, const String &value) : key(k), type(EventDataType::EVENT_TYPE_STRING), stringValue(value) {}
+
+    EventDataEntry(const String &k, void *value) : key(k), type(EventDataType::EVENT_TYPE_POINTER), pointerValue(value) {}
 };
 
 using EventData = std::vector<EventDataEntry>;
@@ -36,6 +39,9 @@ struct Event {
 
     void setString(const String &key, const String &value) { data.emplace_back(key, value); }
 
+    // Non-owning; only valid for the duration of the trigger() call unless the emitter documents otherwise
+    void setPointer(const String &key, void *value) { data.emplace_back(key, value); }
+
     int getInt(const String &key) const {
         const EventDataEntry *entry = find(key, EventDataType::EVENT_TYPE_INT);
         return entry != nullptr ? entry->intValue : 0;
@@ -49,6 +55,11 @@ struct Event {
     String getString(const String &key) const {
         const EventDataEntry *entry = find(key, EventDataType::EVENT_TYPE_STRING);
         return entry != nullptr ? entry->stringValue : String("");
+    }
+
+    template <typename T> T *getPointer(const String &key) const {
+        const EventDataEntry *entry = find(key, EventDataType::EVENT_TYPE_POINTER);
+        return entry != nullptr ? static_cast<T *>(entry->pointerValue) : nullptr;
     }
 
   private:

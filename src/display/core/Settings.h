@@ -136,6 +136,16 @@ class Settings {
     int getWarnScaleConnected() const { return warnScaleConnected.get(); }
     int getWarnScaleBattery() const { return warnScaleBattery.get(); }
     int getWarnTemperature() const { return warnTemperature.get(); }
+    int getWarnBackflush() const { return warnBackflush.get(); }
+    int getWarnDescaling() const { return warnDescaling.get(); }
+    int getBackflushIntervalDays() const { return backflushIntervalDays.get(); }   // 0 = off
+    int getBackflushIntervalShots() const { return backflushIntervalShots.get(); } // 0 = off
+    int getDescalingIntervalWeeks() const { return descalingIntervalWeeks.get(); } // 0 = off
+    int getDescalingIntervalShots() const { return descalingIntervalShots.get(); } // 0 = off
+    unsigned long getLastBackflushTime() const { return lastBackflushTime.get(); } // epoch seconds, 0 = never
+    unsigned long getLastDescalingTime() const { return lastDescalingTime.get(); } // epoch seconds, 0 = never
+    int getShotsSinceBackflush() const { return shotsSinceBackflush.get(); }
+    int getShotsSinceDescaling() const { return shotsSinceDescaling.get(); }
     int getWifiApTimeout() const { return wifiApTimeout.get(); }
     float getSteamPumpPercentage() const { return steamPumpPercentage.get(); }
     float getSteamPumpCutoff() const { return steamPumpCutoff.get(); }
@@ -225,6 +235,16 @@ class Settings {
     void setWarnScaleConnected(int level);
     void setWarnScaleBattery(int level);
     void setWarnTemperature(int level);
+    void setWarnBackflush(int level);
+    void setWarnDescaling(int level);
+    void setBackflushIntervalDays(int days);
+    void setBackflushIntervalShots(int shots);
+    void setDescalingIntervalWeeks(int weeks);
+    void setDescalingIntervalShots(int shots);
+    void setLastBackflushTime(unsigned long time);
+    void setLastDescalingTime(unsigned long time);
+    void setShotsSinceBackflush(int shots);
+    void setShotsSinceDescaling(int shots);
     void setTimezone(String timezone);
     void setClockFormat(bool format_24h);
     void setSelectedProfile(String selected_profile);
@@ -339,6 +359,18 @@ class Settings {
     Property<int> warnScaleConnected{registry, "wl_scale", WARNING_LEVEL_WARN};
     Property<int> warnScaleBattery{registry, "wl_scale_bat", WARNING_LEVEL_ERROR};
     Property<int> warnTemperature{registry, "wl_temp", WARNING_LEVEL_WARN};
+    Property<int> warnBackflush{registry, "wl_backflush", WARNING_LEVEL_WARN};
+    Property<int> warnDescaling{registry, "wl_descale", WARNING_LEVEL_WARN};
+
+    // Cleaning schedule
+    Property<int> backflushIntervalDays{registry, "cl_bid", 14};
+    Property<int> backflushIntervalShots{registry, "cl_bis", 0};
+    Property<int> descalingIntervalWeeks{registry, "cl_diw", 6};
+    Property<int> descalingIntervalShots{registry, "cl_dis", 0};
+    Property<unsigned long> lastBackflushTime{registry, "cl_lbt", 0};
+    Property<unsigned long> lastDescalingTime{registry, "cl_ldt", 0};
+    Property<int> shotsSinceBackflush{registry, "cl_sbf", 0};
+    Property<int> shotsSinceDescaling{registry, "cl_sds", 0};
 
     // Sunrise settings (r/g/b/w are legacy load-only values that seed the idle color default)
     int sunriseR = 0;

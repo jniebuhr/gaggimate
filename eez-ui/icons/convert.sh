@@ -66,3 +66,4 @@ convert "high-temperature-alert.svg" 20
 convert "raindrops-filled.svg" 20
 convert "link-slash-alt.svg" 20
 convert "light-switch-off.svg" 20
+convert "broom.svg" 20

@@ -1,6 +1,7 @@
 #include "WarningManager.h"
 #include <display/core/Controller.h>
 #include <display/plugins/BLEScalePlugin.h>
+#include <display/plugins/CleaningSchedulePlugin.h>
 
 namespace {
 struct WarningInfo {
@@ -12,6 +13,7 @@ const WarningInfo WARNING_INFO[WARNING_TYPE_COUNT] = {
     {"water", "Water tank low"},           {"flush", "Flush recommended"},
     {"switch", "Steam switch is on"},      {"scaleConnected", "Scale not connected"},
     {"scaleBattery", "Scale battery low"}, {"temperature", "Temperature not stable"},
+    {"backflush", "Backflush due"},        {"descaling", "Descaling due"},
 };
 } // namespace
 
@@ -69,6 +71,9 @@ void WarningManager::evaluate() {
     active[WARNING_SCALE_BATTERY] =
         !hardwareSelected && scaleConnected && BLEScales.hasBatteryLevel() && BLEScales.getBatteryLevel() < 20;
     active[WARNING_TEMPERATURE] = !temperatureStable;
+    const String selectedProfile = settings.getSelectedProfile();
+    active[WARNING_BACKFLUSH] = selectedProfile != BACKFLUSH_PROFILE_ID && CleaningSchedulePlugin::isBackflushDue(settings);
+    active[WARNING_DESCALING] = selectedProfile != DESCALING_PROFILE_ID && CleaningSchedulePlugin::isDescalingDue(settings);
 
     level[WARNING_WATER] = settings.getWarnWaterLevel();
     level[WARNING_FLUSH] = settings.getWarnFlush();
@@ -76,6 +81,8 @@ void WarningManager::evaluate() {
     level[WARNING_SCALE_CONNECTED] = settings.getWarnScaleConnected();
     level[WARNING_SCALE_BATTERY] = settings.getWarnScaleBattery();
     level[WARNING_TEMPERATURE] = settings.getWarnTemperature();
+    level[WARNING_BACKFLUSH] = settings.getWarnBackflush();
+    level[WARNING_DESCALING] = settings.getWarnDescaling();
 }
 
 bool WarningManager::isWarn(WarningType type) const { return active[type] && level[type] == WARNING_LEVEL_WARN; }
