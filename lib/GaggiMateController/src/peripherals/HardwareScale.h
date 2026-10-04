@@ -58,11 +58,12 @@ class HardwareScale {
     void setBrewingActive(bool active);
     bool isReady();
     bool isAvailable() const { return is_initialized; }
-    bool tare();
+    void tare();
 
   private:
     std::atomic<bool> is_initialized;
     std::atomic<bool> _scale_factors_ready;
+    std::atomic<bool> _tare_requested{false};
     uint8_t _data_pin1;
     uint8_t _data_pin2;
     uint8_t _clock_pin;

@@ -1433,11 +1433,12 @@ VolumetricMeasurementSource Controller::getActiveScaleSource() const {
     if (preferred == VolumetricMeasurementSource::BLUETOOTH && isBluetoothScaleHealthy()) {
         return VolumetricMeasurementSource::BLUETOOTH;
     }
-    if (isHardwareScaleHealthy()) {
-        return VolumetricMeasurementSource::HARDWARE;
-    }
+    // Auto prefers a paired BLE scale: the user connected it on purpose (GM-249).
     if (isBluetoothScaleHealthy()) {
         return VolumetricMeasurementSource::BLUETOOTH;
+    }
+    if (isHardwareScaleHealthy()) {
+        return VolumetricMeasurementSource::HARDWARE;
     }
 
 #ifdef NIGHTLY_BUILD
@@ -1467,7 +1468,7 @@ bool Controller::isScaleSourceHealthy(VolumetricMeasurementSource source) const 
     if (source == VolumetricMeasurementSource::BLUETOOTH) {
         return isBluetoothScaleHealthy();
     }
-    return true;
+    return false;
 }
 
 String Controller::getActiveScaleSourceName() const {

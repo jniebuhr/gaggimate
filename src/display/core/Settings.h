@@ -283,7 +283,7 @@ class Settings {
     Property<int> hardwareScaleSampleRateSps{registry, "hs_rate", DEFAULT_HARDWARE_SCALE_SAMPLE_RATE_SPS};
     Property<float> hardwareScaleIdleAlpha{registry, "hs_ia", DEFAULT_HARDWARE_SCALE_IDLE_ALPHA};
     Property<float> hardwareScaleActiveAlpha{registry, "hs_aa", DEFAULT_HARDWARE_SCALE_ACTIVE_ALPHA};
-    Property<String> preferredScaleSource{registry, "pss", "hardware"};
+    Property<String> preferredScaleSource{registry, "pss", "auto"};
     Property<double> targetGrindVolume{registry, "tgv", 18.0};
     Property<int> targetGrindDuration{registry, "tgd", 25000};
     Property<double> brewDelay{registry, "del_br", 800.0};

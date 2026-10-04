@@ -23,6 +23,7 @@ constexpr unsigned long ZERO_TRACKING_OBSERVATION_INTERVAL_MS = 100;
 constexpr unsigned long INTERVAL_DIAGNOSTIC_PERIOD_MS = 5000;
 constexpr unsigned long ACTIVE_FILTER_LINGER_MS = 5000;
 constexpr float ACTIVE_OUTLIER_THRESHOLD_GRAMS = 0.75f;
+constexpr int WARMUP_READINGS = 5;
 
 bool validScaleFactor(float factor) { return std::isfinite(factor) && std::fabs(factor) >= MIN_ABS_SCALE_FACTOR; }
 
@@ -70,7 +71,9 @@ void HardwareScale::setup() {
     }
 
     // do a warm-up of 5 readings
-    for (int i = 0; i < 5; i++) {
+    uint8_t releasedCount = 0;
+    bool sawNonZero = false;
+    for (int i = 0; i < WARMUP_READINGS; i++) {
         long start = millis();
         while (!isReady() && (millis() - start) < readyTimeoutMs()) {
             delay(10);
@@ -81,7 +84,18 @@ void HardwareScale::setup() {
             is_initialized = false;
             return;
         }
-        readRaw();
+        const RawReading raw = readRaw();
+        // A real HX711 drives DOUT high after the 25th clock; floating pins of an absent one stay low (GM-249).
+        if (digitalRead(_data_pin1) == HIGH && digitalRead(_data_pin2) == HIGH) {
+            releasedCount++;
+        }
+        sawNonZero = sawNonZero || raw.value1 != 0 || raw.value2 != 0;
+    }
+    if (releasedCount < WARMUP_READINGS - 1 || !sawNonZero) {
+        ESP_LOGW(LOG_TAG, "No HX711 detected (DOUT released %u/%d, non-zero data %d); hardware scale disabled", releasedCount,
+                 WARMUP_READINGS, sawNonZero);
+        is_initialized = false;
+        return;
     }
     // A noisy boot window must not make otherwise responsive HX711 hardware
     // unavailable. Unlike a user-requested tare, startup may use a trimmed-mean
@@ -306,6 +320,10 @@ void HardwareScale::loop() {
         return;
     }
 
+    if (_tare_requested.exchange(false)) {
+        tareInternal(false);
+    }
+
     // Wait for scale factors to be properly set before starting weight calculations
     // Use a reasonable timeout to prevent indefinite waiting
     unsigned long startWait = millis();
@@ -504,7 +522,8 @@ void HardwareScale::setConfiguration(float scale_factor1, float scale_factor2, u
              _config.sampleRateSps, _config.idleAlpha, _config.activeAlpha, _scale_factor1, _scale_factor2);
 }
 
-bool HardwareScale::tare() { return tareInternal(false); }
+// Runs on the scale task so the caller (the comms handler) never blocks on HX711 conversions (GM-249).
+void HardwareScale::tare() { _tare_requested.store(true); }
 
 bool HardwareScale::tareInternal(bool allowUnstableFallback) {
     xSemaphoreTake(_operation_mutex, portMAX_DELAY);
