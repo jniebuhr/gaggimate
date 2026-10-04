@@ -172,6 +172,9 @@ export default class ApiService {
     const map = (key, name, convert = v => v) => {
       if (has(key)) status[name] = convert(message[key]);
     };
+    map('du', 'displayUptime');
+    map('dip', 'displayIPAddress');
+    map('dap', 'displayAPAddress');
     map('ct', 'currentTemperature');
     map('tt', 'targetTemperature');
     map('cst', 'currentSteamTemperature');
