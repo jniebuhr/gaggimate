@@ -384,6 +384,11 @@ export function PluginCard({
               </div>
             </div>
             <MahlkonigRecipeProfiles formData={formData} onChange={onChange} />
+            <div className='text-xs opacity-50'>
+              GaggiMate is not affiliated with, endorsed by or supported by Mahlkönig or its parent
+              company, the Hemro Group. Mahlkönig, E64 WS, Grind-by-Sync and Xenia are trademarks of
+              their respective owners.
+            </div>
           </div>
         )}
       </div>
