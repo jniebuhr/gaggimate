@@ -1,6 +1,7 @@
 /** Resolves profile exit targets against measured and delay-adjusted shot values. */
 
 import { LAST_PHASE_OVERSHOOT_MAX_G } from './delayTracking';
+import { isWeightType } from './exitReasons.js';
 import { calculatePumpedWaterAtSample } from './waterIntegration';
 
 export const PREDICTION_INTERVAL_MS = 100;
@@ -13,7 +14,7 @@ function isDirectionallyValidLookAhead(operator, currentValue, nextValue) {
 }
 
 export function isWeightTarget(target) {
-  return target.type === 'volumetric' || target.type === 'weight' || target.type === 'ratio';
+  return isWeightType(target.type);
 }
 
 function shouldSkipTarget(target, context) {

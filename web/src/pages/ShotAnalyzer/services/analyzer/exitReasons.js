@@ -7,6 +7,7 @@ export const PHASE_EXIT_REASON = Object.freeze({
   DURATION: 5,
   SAFETY: 6,
   ABORTED: 7,
+  TARGET_RATIO: 9,
 });
 
 const EXIT_REASON_META = Object.freeze({
@@ -50,7 +51,17 @@ const EXIT_REASON_META = Object.freeze({
     stopReason: 'Manually Stopped',
     exitType: 'manual',
   },
+  [PHASE_EXIT_REASON.TARGET_RATIO]: {
+    label: 'Ratio target',
+    stopReason: 'Ratio Stop',
+    exitType: 'ratio',
+  },
 });
+
+/** Ratio targets are resolved to grams before analysis, so they behave like weight targets. */
+export function isWeightType(type) {
+  return type === 'volumetric' || type === 'weight' || type === 'ratio';
+}
 
 export function normalizePhaseExitReasonCode(value) {
   const code = Number(value);
