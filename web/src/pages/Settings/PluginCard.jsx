@@ -365,25 +365,24 @@ export function PluginCard({
               <code className='bg-base-300 rounded px-2 py-1 text-lg'>
                 {formData.deviceIp || 'Not connected to Wi-Fi'}
               </code>
+              <div className='mt-2 text-sm opacity-70'>
+                The grinder reaches GaggiMate at this address, so both need to share a network (the
+                E64 WS is 2.4 GHz only) and the address must not change: reserve it for GaggiMate in
+                your router.
+              </div>
             </div>
-            <ol className='list-decimal space-y-1 pl-5 text-sm opacity-70'>
-              <li>Connect the grinder to the same 2.4 GHz Wi-Fi network as GaggiMate.</li>
-              <li>
-                On the grinder, open Settings → Connectivity → Machine To Machine and turn on Enable
-                Xenia.
-              </li>
-              <li>
-                Open Configuration and enter the address above by hand (the scan will not find
-                GaggiMate).
-              </li>
-              <li>
-                Turn on GbS for a recipe. After grinding, press the rotary knob to start the shot.
-              </li>
-            </ol>
-            <p className='text-sm opacity-70'>
-              Give GaggiMate a fixed IP or a DHCP reservation in your router so the address does not
-              change.
-            </p>
+            <div className='space-y-1 text-sm opacity-70'>
+              <div>
+                <span className='font-medium'>Pairing:</span> GaggiMate shows up to the grinder as a
+                Xenia machine. Under Settings → Connectivity → Machine To Machine, turn on Enable
+                Xenia, then type the address above into Configuration. Automatic discovery does not
+                see GaggiMate.
+              </div>
+              <div>
+                <span className='font-medium'>Brewing:</span> recipes with GbS turned on report each
+                grind here; pressing the rotary knob afterwards starts the shot.
+              </div>
+            </div>
             <MahlkonigRecipeProfiles formData={formData} onChange={onChange} />
           </div>
         )}
