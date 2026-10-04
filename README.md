@@ -43,6 +43,9 @@ The display allows you to control the espresso machine and see live temperature 
 The docs were moved to [https://gaggimate.eu/](https://gaggimate.eu/). You can find all sourcing and assembly information there.
 Additional documentation for the WebSocket API can be found in [docs/websocket-api.yaml](docs/websocket-api.yaml).
 
+## Hardware Files
+
+The hardware files were moved to [gaggimate/parts](https://github.com/gaggimate/parts).
 
 ## License
 
