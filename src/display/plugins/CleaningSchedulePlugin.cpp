@@ -58,7 +58,7 @@ void CleaningSchedulePlugin::registerWsHandlers(WebSocketHandler *ws) {
     });
 }
 
-// Start the time-based schedules once the clock is synced, so fresh installs are not due immediately.
+// Start the schedules once the clock is synced and pull future timestamps (clock moved back) to now.
 void CleaningSchedulePlugin::loop() {
     const unsigned long nowMs = millis();
     if (lastCheck != 0 && nowMs - lastCheck < CHECK_INTERVAL_MS)
@@ -68,9 +68,9 @@ void CleaningSchedulePlugin::loop() {
     if (now == 0)
         return;
     Settings &settings = controller->getSettings();
-    if (settings.getLastBackflushTime() == 0)
+    if (settings.getLastBackflushTime() == 0 || settings.getLastBackflushTime() > now)
         settings.setLastBackflushTime(now);
-    if (settings.getLastDescalingTime() == 0)
+    if (settings.getLastDescalingTime() == 0 || settings.getLastDescalingTime() > now)
         settings.setLastDescalingTime(now);
 }
 
