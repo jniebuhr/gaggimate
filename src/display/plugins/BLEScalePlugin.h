@@ -67,6 +67,7 @@ class BLEScalePlugin : public Plugin {
     void establishConnection();
 
     bool active = false;
+    bool shutdownPending = false; // set on entering standby, consumed by loop() before disconnecting
     bool doConnect = false;
     std::string uuid;
 

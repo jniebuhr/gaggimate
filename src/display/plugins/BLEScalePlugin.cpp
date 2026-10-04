@@ -105,7 +105,9 @@ void BLEScalePlugin::setup(Controller *controller, PluginManager *manager) {
             ESP_LOGI("BLEScalePlugin", "Resuming scanning");
             scan();
             active = true;
+            shutdownPending = false;
         } else {
+            shutdownPending = true;
             active = false;
         }
     });
@@ -117,8 +119,14 @@ void BLEScalePlugin::loop() {
     }
     if (!active) {
         if (scale != nullptr) {
+            // Entering standby powers the scale off too; a no-op for drivers without shutdown support.
+            if (shutdownPending && scale->isConnected()) {
+                scale->shutdown();
+                delay(100);
+            }
             disconnect();
         }
+        shutdownPending = false;
         if (scanner->isScanRunning()) {
             scanner->stopAsyncScan();
         }

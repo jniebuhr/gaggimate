@@ -55,6 +55,7 @@ class ShotHistoryPlugin : public Plugin {
     void cleanupHistory();
     size_t getFreeSpace();
 
+    float selectWeightFlow() const;
     void recordPhaseTransition(uint8_t phaseNumber, uint16_t sampleIndex,
                                uint8_t reason); // Helper for phase transitions
 
@@ -82,6 +83,8 @@ class ShotHistoryPlugin : public Plugin {
     float lastActiveWeight = 0.0f;
     float currentActiveFlow = 0.0f;
     float currentEstimatedWeight = 0.0f;
+    float currentScaleFlow = 0.0f;       // native flow from the BLE scale (g/s)
+    unsigned long lastScaleFlowTime = 0; // millis() of the last native flow update
     float currentPuckResistance = 0.0f;
     float maxRecordedWeight = 0.0f;
     String currentProfileName;

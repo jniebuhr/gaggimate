@@ -31,6 +31,9 @@ constexpr int16_t FLOW_MAX_VALUE = 2000;  //  20.00 ml/s
 // the ±20 floor for seconds while the EMA bleeds off. See GM-110.
 constexpr float MAX_PLAUSIBLE_WEIGHT_DELTA = 5.0f; // grams per sample
 
+// Native scale flow older than this is ignored and vf falls back to the derived flow.
+constexpr unsigned long SCALE_FLOW_STALE_MS = 1000;
+
 uint16_t encodeUnsigned(float value, float scale, uint16_t maxValue) {
     if (!std::isfinite(value)) {
         return 0;
@@ -91,6 +94,10 @@ void ShotHistoryPlugin::setup(Controller *c, PluginManager *pm) {
            [this](Event const &event) { currentEstimatedWeight = event.getFloat("value"); });
     pm->on("controller:volumetric-measurement:active:change",
            [this](Event const &event) { currentActiveWeight = event.getFloat("value"); });
+    pm->on("controller:volumetric-measurement:scale-flow:change", [this](Event const &event) {
+        currentScaleFlow = event.getFloat("value");
+        lastScaleFlowTime = millis();
+    });
     pm->on("boiler:currentTemperature:change", [this](Event const &event) { currentTemperature = event.getFloat("value"); });
     pm->on("pump:puck-resistance:change", [this](Event const &event) { currentPuckResistance = event.getFloat("value"); });
     // Initialize rebuild state
@@ -100,6 +107,19 @@ void ShotHistoryPlugin::setup(Controller *c, PluginManager *pm) {
         fs->remove("/h/recent.bin");
     }
     xTaskCreatePinnedToCore(loopTask, "ShotHistoryPlugin::loop", configMINIMAL_STACK_SIZE * 6, this, 1, &taskHandle, 0);
+}
+
+// Prefer the scale's native flow, or puck flow when the weight is itself the flow estimate; else the derived EMA.
+float ShotHistoryPlugin::selectWeightFlow() const {
+    const VolumetricMeasurementSource source = controller->getEffectiveScaleSource();
+    if (source == VolumetricMeasurementSource::BLUETOOTH && lastScaleFlowTime != 0 &&
+        millis() - lastScaleFlowTime < SCALE_FLOW_STALE_MS) {
+        return currentScaleFlow;
+    }
+    if (source == VolumetricMeasurementSource::FLOW_ESTIMATION) {
+        return controller->getCurrentPuckFlow();
+    }
+    return currentActiveFlow;
 }
 
 void ShotHistoryPlugin::record() {
@@ -135,7 +155,7 @@ void ShotHistoryPlugin::record() {
                 currentFile.write(reinterpret_cast<const uint8_t *>(&header), sizeof(header));
             }
         }
-        // Active-scale weight flow (vf): derive from the same non-negative weight we
+        // Derived weight flow (vf fallback, see selectWeightFlow): derive from the same non-negative weight we
         // store in sample.v so the two can never disagree, and skip the EMA update
         // on an implausible single-sample jump so one bad scale reading cannot
         // saturate vf for seconds. See GM-110.
@@ -160,7 +180,7 @@ void ShotHistoryPlugin::record() {
         sample.fl = encodeSigned(controller->getCurrentPumpFlow(), FLOW_SCALE, FLOW_MIN_VALUE, FLOW_MAX_VALUE);
         sample.tf = encodeSigned(controller->getTargetFlow(), FLOW_SCALE, FLOW_MIN_VALUE, FLOW_MAX_VALUE);
         sample.pf = encodeSigned(controller->getCurrentPuckFlow(), FLOW_SCALE, FLOW_MIN_VALUE, FLOW_MAX_VALUE);
-        sample.vf = encodeSigned(currentActiveFlow, FLOW_SCALE, FLOW_MIN_VALUE, FLOW_MAX_VALUE);
+        sample.vf = encodeSigned(selectWeightFlow(), FLOW_SCALE, FLOW_MIN_VALUE, FLOW_MAX_VALUE);
         sample.v = encodeUnsigned(activeWeight, WEIGHT_SCALE, WEIGHT_MAX_VALUE);
         sample.ev = encodeUnsigned(currentEstimatedWeight, WEIGHT_SCALE, WEIGHT_MAX_VALUE);
         sample.pr = encodeUnsigned(currentPuckResistance, RESISTANCE_SCALE, RESISTANCE_MAX_VALUE);
