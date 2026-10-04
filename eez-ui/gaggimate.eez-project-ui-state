@@ -1,12 +1,13 @@
 {
   "navigation": {
-    "selectedUserPageObject": "[gaggimate.eez-project]:/userPages/1",
+    "selectedUserPageObject": "[gaggimate.eez-project]:/userPages/3",
     "selectedUserWidgetObject": "[gaggimate.eez-project]:/userWidgets/1",
     "selectedActionObject": "[gaggimate.eez-project]:/actions/38",
     "selectedGlobalVariableObject": "[gaggimate.eez-project]:/variables/globalVariables/9",
     "selectedStructureObject": "[gaggimate.eez-project]:/variables/structures/5",
     "selectedThemeObject": "[gaggimate.eez-project]:/themes/0",
     "selectedThemeColorObject": "[gaggimate.eez-project]:/colors/8",
+    "selectedBitmapObject": "[gaggimate.eez-project]:/bitmaps/27",
     "subnavigationSelectedItems": {
       "variables-tab/sub-navigation/selected-item": "Structs"
     }
@@ -29,7 +30,7 @@
           },
           {
             "type": "border",
-            "selected": 2,
+            "selected": 3,
             "size": 255.5,
             "location": "right",
             "children": [
@@ -131,6 +132,7 @@
                   "type": "tabset",
                   "id": "#62043989-83c1-428b-8417-b89c3070fb5a",
                   "weight": 0.5267379679144385,
+                  "selected": 1,
                   "enableClose": false,
                   "children": [
                     {
@@ -202,22 +204,22 @@
               "children": [
                 {
                   "type": "tab",
-                  "id": "#f318aa94-59de-454b-bb72-ed85300526f2",
+                  "id": "#7fd2ef7a-477b-47ef-90be-a0839638856d",
                   "name": "warnings",
                   "component": "editor",
                   "config": {
                     "objectPath": "[gaggimate.eez-project]:/userWidgets/1",
-                    "permanent": false
+                    "permanent": true
                   },
                   "icon": "svg:user_widget"
                 },
                 {
                   "type": "tab",
                   "id": "#2aa7402a-95e1-481f-87cc-ef596a51e84a",
-                  "name": "BrewScreen",
+                  "name": "MenuScreenNew",
                   "component": "editor",
                   "config": {
-                    "objectPath": "[gaggimate.eez-project]:/userPages/1",
+                    "objectPath": "[gaggimate.eez-project]:/userPages/3",
                     "permanent": false
                   },
                   "icon": "svg:page"
@@ -1231,7 +1233,9 @@
             "2": {
               "0": {}
             },
-            "4": {}
+            "4": {
+              "$selected": true
+            }
           },
           "2": {
             "1": {},
@@ -2266,8 +2270,8 @@
       },
       "transform": {
         "translate": {
-          "x": -240,
-          "y": -97.047119140625
+          "x": -219,
+          "y": -171.047119140625
         },
         "scale": 0.8
       },
@@ -2312,7 +2316,7 @@
   "logsPanelFilter": "all",
   "selectedStylePropertyName": "",
   "lvglPart": "MAIN",
-  "lvglState": "DEFAULT",
+  "lvglState": "CHECKED",
   "lvglExpandedPropertiesGroup": [
     "POSITION AND SIZE",
     "IMAGE",
@@ -2331,5 +2335,5 @@
   "globalFlowZoom": true,
   "flowZoom": 0.8,
   "implementationLanguage": "C++",
-  "openDialogDefaultPath": "/Users/jniebuhr/Downloads/Stylized_uwu_emoticon.svg.png"
+  "openDialogDefaultPath": "/Users/jniebuhr/work/3d/projects/paros-control/eez-ui/icons/out/broom-20x20.png"
 }

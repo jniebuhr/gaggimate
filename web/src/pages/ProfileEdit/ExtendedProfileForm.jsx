@@ -77,6 +77,7 @@ export function ExtendedProfileForm(props) {
           onChangeLabel={e => onFieldChange('label', e.target.value)}
           onChangeDescription={e => onFieldChange('description', e.target.value)}
           onChangeTemperature={e => onFieldChange('temperature', e.target.value)}
+          onChangeDose={e => onFieldChange('dose', e.target.value)}
           onChangeUtility={e => onFieldChange('utility', !!e.target.checked)}
         />
         <Card sm={10}>

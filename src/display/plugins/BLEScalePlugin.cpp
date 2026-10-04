@@ -105,7 +105,9 @@ void BLEScalePlugin::setup(Controller *controller, PluginManager *manager) {
             ESP_LOGI("BLEScalePlugin", "Resuming scanning");
             scan();
             active = true;
+            shutdownPending = false;
         } else {
+            shutdownPending = true;
             active = false;
         }
     });
@@ -117,8 +119,14 @@ void BLEScalePlugin::loop() {
     }
     if (!active) {
         if (scale != nullptr) {
+            // Entering standby powers the scale off too; a no-op for drivers without shutdown support.
+            if (shutdownPending && scale->isConnected()) {
+                scale->shutdown();
+                delay(100);
+            }
             disconnect();
         }
+        shutdownPending = false;
         if (scanner->isScanRunning()) {
             scanner->stopAsyncScan();
         }
@@ -138,15 +146,11 @@ void BLEScalePlugin::update() {
         return;
     }
 
-    // Don't update volumetric override if scale access might fail
     bool hasConnectedScale = false;
     if (scale != nullptr) {
         // Check if scale pointer is valid before accessing
         hasConnectedScale = scale->isConnected();
     }
-
-    if (controller->isVolumetricAvailable())
-        controller->setVolumetricOverride(hasConnectedScale);
 
     if (!active)
         return;
@@ -222,7 +226,6 @@ void BLEScalePlugin::disconnect() {
         // connects (possibly a different model with different capabilities).
         lastBatteryLevel = REMOTE_SCALES_BATTERY_UNKNOWN;
         lastWeightUnit = ScaleWeightUnit::UNKNOWN;
-        warnedOunceMidBrew = false;
     }
 }
 
@@ -329,7 +332,7 @@ void BLEScalePlugin::establishConnection() {
     }
 }
 
-void BLEScalePlugin::onMeasurement(float value) const {
+void BLEScalePlugin::onMeasurement(float value) {
     // Rate limiting to prevent callback flooding
     unsigned long now = millis();
     if (now - lastMeasurementTime < MIN_MEASUREMENT_INTERVAL_MS) {

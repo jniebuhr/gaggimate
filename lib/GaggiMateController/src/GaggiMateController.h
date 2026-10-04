@@ -5,6 +5,7 @@
 #include <peripherals/DigitalInput.h>
 #include <peripherals/DistanceSensor.h>
 #include <peripherals/FlowSensor.h>
+#include <peripherals/HardwareScale.h>
 #include <peripherals/Heater.h>
 #include <peripherals/LedController.h>
 #include <peripherals/Max31855Thermocouple.h>
@@ -22,7 +23,7 @@ constexpr int DETECT_VALUE_PIN = 11;
 
 class GaggiMateController {
   public:
-    GaggiMateController(String version);
+    explicit GaggiMateController(String version);
     void setup(void);
     void loop(void);
 
@@ -62,6 +63,7 @@ class GaggiMateController {
     DistanceSensor *distanceSensor = nullptr;
     ADSAdc *adc = nullptr;
     FlowSensor *flowSensor = nullptr;
+    HardwareScale *hardwareScale = nullptr;
 
     GearpumpAddon *gearpumpAddon = nullptr;
 

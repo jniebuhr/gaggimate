@@ -16,7 +16,7 @@ typedef void (*TaskFunction_t)(void *);
 typedef enum { eRunning = 0, eReady, eBlocked, eSuspended, eDeleted, eInvalid } eTaskState;
 
 // Sentinel handle handed back by the no-op creators so isTaskHealthy() passes.
-#define GM_SIM_TASK_HANDLE ((TaskHandle_t)0x1)
+#define GM_SIM_TASK_HANDLE (reinterpret_cast<TaskHandle_t>(0x1))
 
 static inline BaseType_t xTaskCreatePinnedToCore(TaskFunction_t fn, const char *name, uint32_t stack, void *param,
                                                  UBaseType_t prio, TaskHandle_t *handle, BaseType_t core) {
@@ -50,5 +50,5 @@ static inline eTaskState eTaskGetState(TaskHandle_t handle) {
     return eRunning;
 }
 static inline TaskHandle_t xTaskGetCurrentTaskHandle(void) { return GM_SIM_TASK_HANDLE; }
-static inline TickType_t xTaskGetTickCount(void) { return (TickType_t)millis(); }
+static inline TickType_t xTaskGetTickCount(void) { return static_cast<TickType_t>(millis()); }
 static inline void taskYIELD(void) {}

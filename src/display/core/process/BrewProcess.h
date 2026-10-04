@@ -80,23 +80,14 @@ class BrewProcess : public Process {
         }
         float timeInPhase = static_cast<float>(millis() - currentPhaseStarted) / 1000.0f;
         return currentPhase.isFinished(target == ProcessTarget::VOLUMETRIC, volume, timeInPhase, currentFlow, currentPressure,
-                                       waterPumped - phaseStartedPumped, profile.type);
+                                       waterPumped - phaseStartedPumped, profile.type, profile.dose);
     }
 
     bool isCurrentPhaseFinished() { return currentPhaseExitReason() != PhaseExitReason::NONE; }
 
     bool isUtility() const { return profile.utility; }
 
-    double getBrewVolume() const {
-        double brewVolume = 0;
-        for (const auto &phase : profile.phases) {
-            if (phase.hasVolumetricTarget()) {
-                Target target = phase.getVolumetricTarget();
-                brewVolume = target.value;
-            }
-        }
-        return brewVolume;
-    }
+    double getBrewVolume() const { return profile.getTotalVolume(); }
 
     double getNewDelayTime() {
         double newDelay = brewDelay + volumetricRateCalculator.getOvershootAdjustMillis(getBrewVolume(), currentVolume);

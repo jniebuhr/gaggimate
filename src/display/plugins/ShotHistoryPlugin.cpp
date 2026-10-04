@@ -31,6 +31,9 @@ constexpr int16_t FLOW_MAX_VALUE = 2000;  //  20.00 ml/s
 // the ±20 floor for seconds while the EMA bleeds off. See GM-110.
 constexpr float MAX_PLAUSIBLE_WEIGHT_DELTA = 5.0f; // grams per sample
 
+// Native scale flow older than this is ignored and vf falls back to the derived flow.
+constexpr unsigned long SCALE_FLOW_STALE_MS = 1000;
+
 uint16_t encodeUnsigned(float value, float scale, uint16_t maxValue) {
     if (!std::isfinite(value)) {
         return 0;
@@ -73,6 +76,12 @@ String padId(String id, int length = 6) {
     }
     return id;
 }
+
+// Notes sit next to their .slog under the same padded id
+String notesPath(uint32_t id) { return "/h/" + padId(String(id)) + ".json"; }
+
+// Firmware since the shot index (#449) keyed notes by the unpadded id the web UI sends
+String legacyNotesPath(uint32_t id) { return "/h/" + String(id) + ".json"; }
 } // namespace
 
 ShotHistoryPlugin ShotHistory;
@@ -89,8 +98,12 @@ void ShotHistoryPlugin::setup(Controller *c, PluginManager *pm) {
     pm->on("controller:brew:clear", [this](Event const &) { endExtendedRecording(); });
     pm->on("controller:volumetric-measurement:estimation:change",
            [this](Event const &event) { currentEstimatedWeight = event.getFloat("value"); });
-    pm->on("controller:volumetric-measurement:bluetooth:change",
-           [this](Event const &event) { currentBluetoothWeight = event.getFloat("value"); });
+    pm->on("controller:volumetric-measurement:active:change",
+           [this](Event const &event) { currentActiveWeight = event.getFloat("value"); });
+    pm->on("controller:volumetric-measurement:scale-flow:change", [this](Event const &event) {
+        currentScaleFlow = event.getFloat("value");
+        lastScaleFlowTime = millis();
+    });
     pm->on("boiler:currentTemperature:change", [this](Event const &event) { currentTemperature = event.getFloat("value"); });
     pm->on("pump:puck-resistance:change", [this](Event const &event) { currentPuckResistance = event.getFloat("value"); });
     // Initialize rebuild state
@@ -100,6 +113,19 @@ void ShotHistoryPlugin::setup(Controller *c, PluginManager *pm) {
         fs->remove("/h/recent.bin");
     }
     xTaskCreatePinnedToCore(loopTask, "ShotHistoryPlugin::loop", configMINIMAL_STACK_SIZE * 6, this, 1, &taskHandle, 0);
+}
+
+// Prefer the scale's native flow, or puck flow when the weight is itself the flow estimate; else the derived EMA.
+float ShotHistoryPlugin::selectWeightFlow() const {
+    const VolumetricMeasurementSource source = controller->getEffectiveScaleSource();
+    if (source == VolumetricMeasurementSource::BLUETOOTH && lastScaleFlowTime != 0 &&
+        millis() - lastScaleFlowTime < SCALE_FLOW_STALE_MS) {
+        return currentScaleFlow;
+    }
+    if (source == VolumetricMeasurementSource::FLOW_ESTIMATION) {
+        return controller->getCurrentPuckFlow();
+    }
+    return currentActiveFlow;
 }
 
 void ShotHistoryPlugin::record() {
@@ -135,17 +161,18 @@ void ShotHistoryPlugin::record() {
                 currentFile.write(reinterpret_cast<const uint8_t *>(&header), sizeof(header));
             }
         }
-        // Bluetooth weight flow (vf): derive from the same non-negative weight we
+        // Derived weight flow (vf fallback, see selectWeightFlow): derive from the same non-negative weight we
         // store in sample.v so the two can never disagree, and skip the EMA update
-        // on an implausible single-sample jump so one bad scale/BLE reading cannot
+        // on an implausible single-sample jump so one bad scale reading cannot
         // saturate vf for seconds. See GM-110.
-        const float btWeight = currentBluetoothWeight > 0.0f ? currentBluetoothWeight : 0.0f;
-        const float btDiff = btWeight - lastBluetoothWeight;
-        if (fabsf(btDiff) <= MAX_PLAUSIBLE_WEIGHT_DELTA) {
-            const float btFlow = btDiff / (SHOT_LOG_SAMPLE_INTERVAL_MS / 1000.0f);
-            currentBluetoothFlow = currentBluetoothFlow * 0.75f + btFlow * 0.25f;
+        const float activeWeight = currentActiveWeight > 0.0f ? currentActiveWeight : 0.0f;
+        const float activeDiff = activeWeight - lastActiveWeight;
+        const bool plausibleActiveDelta = fabsf(activeDiff) <= MAX_PLAUSIBLE_WEIGHT_DELTA;
+        if (plausibleActiveDelta) {
+            const float activeFlow = activeDiff / (SHOT_LOG_SAMPLE_INTERVAL_MS / 1000.0f);
+            currentActiveFlow = currentActiveFlow * 0.75f + activeFlow * 0.25f;
         }
-        lastBluetoothWeight = btWeight;
+        lastActiveWeight = activeWeight;
 
         ShotLogSample sample{};
         // Capture when this sampling pass actually runs. Older formats inferred
@@ -159,12 +186,18 @@ void ShotHistoryPlugin::record() {
         sample.fl = encodeSigned(controller->getCurrentPumpFlow(), FLOW_SCALE, FLOW_MIN_VALUE, FLOW_MAX_VALUE);
         sample.tf = encodeSigned(controller->getTargetFlow(), FLOW_SCALE, FLOW_MIN_VALUE, FLOW_MAX_VALUE);
         sample.pf = encodeSigned(controller->getCurrentPuckFlow(), FLOW_SCALE, FLOW_MIN_VALUE, FLOW_MAX_VALUE);
-        sample.vf = encodeSigned(currentBluetoothFlow, FLOW_SCALE, FLOW_MIN_VALUE, FLOW_MAX_VALUE);
-        sample.v = encodeUnsigned(btWeight, WEIGHT_SCALE, WEIGHT_MAX_VALUE);
+        sample.vf = encodeSigned(selectWeightFlow(), FLOW_SCALE, FLOW_MIN_VALUE, FLOW_MAX_VALUE);
+        sample.v = encodeUnsigned(activeWeight, WEIGHT_SCALE, WEIGHT_MAX_VALUE);
         sample.ev = encodeUnsigned(currentEstimatedWeight, WEIGHT_SCALE, WEIGHT_MAX_VALUE);
         sample.pr = encodeUnsigned(currentPuckResistance, RESISTANCE_SCALE, RESISTANCE_MAX_VALUE);
         sample.si = getSystemInfo(); // Pack system state information
         sample.wp = encodeUnsigned(controller->getCurrentWaterPumped(), WEIGHT_SCALE, WEIGHT_MAX_VALUE);
+        // Apply the same spike rejection to the final-weight maximum. A real
+        // sustained step is accepted on the following stable sample, whereas a
+        // one-sample excursion cannot permanently inflate the shot total.
+        if (plausibleActiveDelta && activeWeight > maxRecordedWeight) {
+            maxRecordedWeight = activeWeight;
+        }
 
         // Track phase transitions
         if (controller->getMode() == MODE_BREW) {
@@ -218,7 +251,7 @@ void ShotHistoryPlugin::record() {
                 return;
             }
 
-            const float weightDiff = abs(currentBluetoothWeight - lastStableWeight);
+            const float weightDiff = abs(currentActiveWeight - lastStableWeight);
 
             if (weightDiff < WEIGHT_STABILIZATION_THRESHOLD) {
                 if (lastWeightChangeTime == 0) {
@@ -231,7 +264,7 @@ void ShotHistoryPlugin::record() {
             } else {
                 // Weight changed, reset stabilization timer
                 lastWeightChangeTime = 0;
-                lastStableWeight = currentBluetoothWeight;
+                lastStableWeight = currentActiveWeight;
             }
 
             // Also stop extended recording after maximum duration
@@ -246,7 +279,7 @@ void ShotHistoryPlugin::record() {
         header.sampleCount = sampleCount;
         header.durationMs = millis() - shotStart;
         header.finalExitReason = finalExitReason; // why the shot ended (last phase exit or manual abort)
-        float finalWeight = currentBluetoothWeight;
+        float finalWeight = maxRecordedWeight;
         header.finalWeight = finalWeight > 0.0f ? encodeUnsigned(finalWeight, WEIGHT_SCALE, WEIGHT_MAX_VALUE) : 0;
         currentFile.seek(0, SeekSet);
         currentFile.write(reinterpret_cast<const uint8_t *>(&header), sizeof(header));
@@ -259,6 +292,16 @@ void ShotHistoryPlugin::record() {
             controller->getSettings().setHistoryIndex(controller->getSettings().getHistoryIndex() + 1);
             cleanupHistory();
 
+            // Merge so notes saved during extended recording keep a user-entered dose
+            if (shotDose > 0.0f) {
+                JsonDocument notes(&psramAllocator);
+                loadNotes(currentId, notes);
+                if (notes["doseIn"].isNull() || notes["doseIn"].as<String>().isEmpty()) {
+                    notes["doseIn"] = String(shotDose, 1);
+                    saveNotes(currentId, notes);
+                }
+            }
+
             // Always create a complete index entry via upsert.
             // If an early entry exists, it gets overwritten with final data.
             // If no early entry exists, a new one is appended.
@@ -268,7 +311,7 @@ void ShotHistoryPlugin::record() {
             indexEntry.duration = header.durationMs;
             indexEntry.volume = header.finalWeight;
             indexEntry.rating = 0;
-            indexEntry.flags = SHOT_FLAG_COMPLETED;
+            indexEntry.flags = SHOT_FLAG_COMPLETED | (fs->exists(resolveNotesPath(currentId.toInt())) ? SHOT_FLAG_HAS_NOTES : 0);
             strncpy(indexEntry.profileId, header.profileId, sizeof(indexEntry.profileId) - 1);
             indexEntry.profileId[sizeof(indexEntry.profileId) - 1] = '\0';
             strncpy(indexEntry.profileName, header.profileName, sizeof(indexEntry.profileName) - 1);
@@ -316,11 +359,12 @@ void ShotHistoryPlugin::startRecording() {
     shotStart = millis();
     lastWeightChangeTime = 0;
     extendedRecordingStart = 0;
-    currentBluetoothWeight = 0.0f;
+    currentActiveWeight = 0.0f;
     lastStableWeight = 0.0f;
     currentEstimatedWeight = 0.0f;
-    currentBluetoothFlow = 0.0f;
-    lastBluetoothWeight = 0.0f;
+    currentActiveFlow = 0.0f;
+    lastActiveWeight = 0.0f;
+    maxRecordedWeight = 0.0f;
     currentProfileName = controller->getProfileManager()->getSelectedProfile().label;
     recording = true;
     extendedRecording = false;
@@ -335,6 +379,7 @@ void ShotHistoryPlugin::startRecording() {
     // Reset phase tracking for new shot
     lastRecordedPhase = 0xFF;                                      // Invalid value to detect first phase
     finalExitReason = static_cast<uint8_t>(PhaseExitReason::NONE); // Reset shot-end reason
+    shotDose = 0.0f;
 }
 
 unsigned long ShotHistoryPlugin::getTime() {
@@ -356,14 +401,15 @@ void ShotHistoryPlugin::endRecording() {
             PhaseExitReason reason =
                 brewProcess->processPhase == ProcessPhase::FINISHED ? brewProcess->lastExitReason : PhaseExitReason::ABORTED;
             finalExitReason = static_cast<uint8_t>(reason);
+            shotDose = brewProcess->profile.dose; // process copy, unaffected by later temporary adjustments
         }
     }
 
-    if (recording && controller && controller->isVolumetricAvailable() && currentBluetoothWeight > 0) {
+    if (recording && controller && controller->isVolumetricAvailable() && currentActiveWeight > 0) {
         // Start extended recording for any shot with active weight data
         extendedRecording = true;
         extendedRecordingStart = millis();
-        lastStableWeight = currentBluetoothWeight;
+        lastStableWeight = currentActiveWeight;
         lastWeightChangeTime = 0;
     }
 
@@ -457,6 +503,31 @@ uint16_t ShotHistoryPlugin::getSystemInfo() {
         systemInfo |= SYSTEM_INFO_EXTENDED_RECORDING;
     }
 
+    // Bits 5-7: Brew process/target state used by v6 analysis.
+    if (controller != nullptr) {
+        std::lock_guard<std::recursive_mutex> guard(controller->getProcessLock());
+        Process *process = controller->getProcess();
+        if (process != nullptr && process->getType() == MODE_BREW) {
+            systemInfo |= SYSTEM_INFO_PROCESS_IS_BREW;
+            auto *brewProcess = static_cast<BrewProcess *>(process);
+            if (brewProcess->target == ProcessTarget::VOLUMETRIC) {
+                systemInfo |= SYSTEM_INFO_TARGET_IS_VOLUMETRIC;
+            }
+            if (brewProcess->currentPhase.hasVolumetricTarget()) {
+                systemInfo |= SYSTEM_INFO_PHASE_HAS_VOLUMETRIC;
+            }
+        }
+    }
+
+    // Bit 8: Effective scale source connected/healthy (hardware or Bluetooth).
+    if (controller != nullptr) {
+        const VolumetricMeasurementSource activeSource = controller->getEffectiveScaleSource();
+        if ((activeSource == VolumetricMeasurementSource::HARDWARE || activeSource == VolumetricMeasurementSource::BLUETOOTH) &&
+            controller->isScaleSourceHealthy(activeSource)) {
+            systemInfo |= SYSTEM_INFO_ACTIVE_SCALE_CONNECTED;
+        }
+    }
+
     return systemInfo;
 }
 
@@ -493,12 +564,11 @@ void ShotHistoryPlugin::cleanupHistory() {
         if (end > start) {
             uint32_t shotId = fname.substring(start, end).toInt();
             markIndexDeleted(shotId);
+            fs->remove(notesPath(shotId));
+            fs->remove(legacyNotesPath(shotId));
         }
 
-        // Remove .slog and associated .json notes file
         fs->remove(fname);
-        String notesPath = fname.substring(0, fname.lastIndexOf('.')) + ".json";
-        fs->remove(notesPath);
         removed++;
     }
 
@@ -532,7 +602,8 @@ void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &respo
             paddedId = "0" + paddedId;
         }
         fs->remove("/h/" + paddedId + ".slog");
-        fs->remove("/h/" + paddedId + ".json");
+        fs->remove(notesPath(id.toInt()));
+        fs->remove(legacyNotesPath(id.toInt()));
 
         // Mark as deleted in index
         markIndexDeleted(id.toInt());
@@ -573,7 +644,7 @@ void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &respo
 }
 
 void ShotHistoryPlugin::saveNotes(const String &id, const JsonDocument &notes) {
-    File file = fs->open("/h/" + id + ".json", FILE_WRITE);
+    File file = fs->open(resolveNotesPath(id.toInt()), FILE_WRITE);
     if (file) {
         String notesStr;
         serializeJson(notes, notesStr);
@@ -583,12 +654,25 @@ void ShotHistoryPlugin::saveNotes(const String &id, const JsonDocument &notes) {
 }
 
 void ShotHistoryPlugin::loadNotes(const String &id, JsonDocument &notes) {
-    File file = fs->open("/h/" + id + ".json", "r");
+    File file = fs->open(resolveNotesPath(id.toInt()), "r");
     if (file) {
         String notesStr = file.readString();
         file.close();
         deserializeJson(notes, notesStr);
     }
+}
+
+// Returns the canonical notes path, moving a legacy unpadded-id file onto it (the UI has shown that one since #449)
+String ShotHistoryPlugin::resolveNotesPath(uint32_t id) {
+    String path = notesPath(id);
+    String legacy = legacyNotesPath(id);
+    if (legacy != path && fs->exists(legacy)) {
+        fs->remove(path);
+        if (!fs->rename(legacy.c_str(), path.c_str())) {
+            return legacy;
+        }
+    }
+    return path;
 }
 
 void ShotHistoryPlugin::loopTask(void *arg) {
@@ -970,19 +1054,17 @@ void ShotHistoryPlugin::rebuildIndex() {
             ShotLogSample sample{};
             shotFile.seek(shotHeader.headerSize, SeekSet);
             for (uint32_t s = 0; s < shotHeader.sampleCount; s++) {
-                // v1-v5 used a 26-byte record with a 16-bit t field. The
-                // aggregate fields begin two bytes later in v6 because t is
-                // now uint32_t; decode both layouts while rebuilding indexes.
-                const size_t expectedSampleSize = shotHeader.version >= 6 ? 28 : 26;
-                const size_t sampleSize = shotHeader.reserved0 ? shotHeader.reserved0 : expectedSampleSize;
-                if (sampleSize != expectedSampleSize) {
+                // Decode old scale ticks as well as upstream elapsed-time and
+                // pumped-water records when rebuilding the existing history.
+                const size_t sampleSize = shotLogSampleSize(shotHeader);
+                if (sampleSize == 0) {
                     break;
                 }
                 uint8_t raw[sizeof(ShotLogSample)]{};
                 if (shotFile.read(raw, sampleSize) != sampleSize) {
                     break;
                 }
-                const size_t valueOffset = shotHeader.version >= 6 ? 4 : 2;
+                const size_t valueOffset = shotLogHasElapsedTimestamp(shotHeader) ? 4 : 2;
                 memcpy(reinterpret_cast<uint8_t *>(&sample.tt), raw + valueOffset, sampleSize - valueOffset);
                 tempSum += sample.ct;
                 tempCount++;
@@ -1000,11 +1082,11 @@ void ShotHistoryPlugin::rebuildIndex() {
         }
 
         // Check for notes and extract rating and volume override
-        String notesPath = "/h/" + String(shotId, 10) + ".json";
-        if (fs->exists(notesPath)) {
+        String shotNotesPath = resolveNotesPath(shotId);
+        if (fs->exists(shotNotesPath)) {
             entry.flags |= SHOT_FLAG_HAS_NOTES;
 
-            File notesFile = fs->open(notesPath, "r");
+            File notesFile = fs->open(shotNotesPath, "r");
             if (notesFile) {
                 String notesStr = notesFile.readString();
                 notesFile.close();

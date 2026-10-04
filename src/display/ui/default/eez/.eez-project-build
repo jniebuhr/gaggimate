@@ -12,6 +12,7 @@
     "images/ui_image_angle_up_40x40.c",
     "images/ui_image_battery_exclamation_20x20.c",
     "images/ui_image_bluetooth_alt_20x20.c",
+    "images/ui_image_broom.c",
     "images/ui_image_check_40x40.c",
     "images/ui_image_clock_40x40.c",
     "images/ui_image_clock_future_past_40x40.c",

@@ -14,12 +14,13 @@
 //   vf(int16_t), v(uint16_t), ev(uint16_t), pr(uint16_t), si(uint16_t), wp(uint16_t)
 // Values are stored as scaled integers (see comments per field below).
 // Sample size: v1-v5 = 26 bytes; v6 = 28 bytes because t is uint32_t;
-// v7 = 30 bytes with cumulative water pumped.
+// v7 = 30 bytes with cumulative water pumped; v8 retains that layout and adds
+// source-neutral scale/process flags. Legacy hardware-scale v6 used 26 bytes.
 // Phase data moved to header transitions in v5.
 // Older files may have fewer fields - use fieldsMask to determine layout.
 
 static constexpr uint32_t SHOT_LOG_MAGIC = 0x544F4853; // 'S''H''O''T' little-endian 0x54 0x4F 0x48 0x53
-static constexpr uint8_t SHOT_LOG_VERSION = 7;
+static constexpr uint8_t SHOT_LOG_VERSION = 8;
 static constexpr uint16_t SHOT_LOG_HEADER_SIZE = 512;
 static constexpr uint16_t SHOT_LOG_SAMPLE_INTERVAL_MS = 250; // nominal recording interval
 static constexpr uint32_t SHOT_LOG_FIELDS_MASK_ALL = 0x3FFF; // 14 fields present
@@ -64,6 +65,8 @@ static constexpr uint8_t PHASE_EXIT_REASON_TARGET_PUMPED = 4;     // pumped-wate
 static constexpr uint8_t PHASE_EXIT_REASON_DURATION = 5;          // phase duration elapsed
 static constexpr uint8_t PHASE_EXIT_REASON_SAFETY = 6;            // brew safety timeout
 static constexpr uint8_t PHASE_EXIT_REASON_ABORTED = 7;           // shot manually stopped before finishing
+static constexpr uint8_t PHASE_EXIT_REASON_HOLD_RELEASED = 8;     // held phase ended on button release (hold-to-flush)
+static constexpr uint8_t PHASE_EXIT_REASON_TARGET_RATIO = 9;      // ratio target reached
 
 #pragma pack(push, 1)
 struct ShotLogHeader {
@@ -117,8 +120,8 @@ struct ShotLogSample {
     int16_t fl;  // current pump flow * 100 (allows small negatives)
     int16_t tf;  // target flow * 100
     int16_t pf;  // puck flow * 100
-    int16_t vf;  // bluetooth flow * 100
-    uint16_t v;  // bluetooth weight * 10
+    int16_t vf;  // active scale weight flow * 100
+    uint16_t v;  // active scale weight * 10
     uint16_t ev; // estimated weight * 10
     uint16_t pr; // puck resistance * 100
     uint16_t si; // system info bit-packed
@@ -129,12 +132,27 @@ struct ShotLogSample {
 static_assert(sizeof(ShotLogHeader) == SHOT_LOG_HEADER_SIZE, "ShotLogHeader size mismatch");
 static_assert(sizeof(ShotLogSample) == SHOT_LOG_SAMPLE_SIZE, "ShotLogSample size mismatch");
 
+// Legacy scale v6 and upstream v6 used different timestamp widths. The record
+// size written in reserved0 disambiguates those files without rewriting them.
+inline bool shotLogHasElapsedTimestamp(const ShotLogHeader &header) {
+    return header.version >= 6 && !(header.version == 6 && header.reserved0 == 26 && header.fieldsMask == 0x1FFF);
+}
+
+inline uint8_t shotLogSampleSize(const ShotLogHeader &header) {
+    const uint8_t expected = header.version >= 7 ? 30 : (shotLogHasElapsedTimestamp(header) ? 28 : 26);
+    return header.reserved0 == 0 || header.reserved0 == expected ? expected : 0;
+}
+
 // System info bit definitions for ShotLogSample.si field
 static constexpr uint16_t SYSTEM_INFO_SHOT_STARTED_VOLUMETRIC = 0x0001;   // Shot started in volumetric mode
 static constexpr uint16_t SYSTEM_INFO_CURRENTLY_VOLUMETRIC = 0x0002;      // Currently in volumetric mode
 static constexpr uint16_t SYSTEM_INFO_BLUETOOTH_SCALE_CONNECTED = 0x0004; // Bluetooth scale connected
 static constexpr uint16_t SYSTEM_INFO_VOLUMETRIC_AVAILABLE = 0x0008;      // Volumetric available
 static constexpr uint16_t SYSTEM_INFO_EXTENDED_RECORDING = 0x0010;        // Extended recording active
+static constexpr uint16_t SYSTEM_INFO_PROCESS_IS_BREW = 0x0020;           // Process is MODE_BREW
+static constexpr uint16_t SYSTEM_INFO_TARGET_IS_VOLUMETRIC = 0x0040;      // Target is volumetric
+static constexpr uint16_t SYSTEM_INFO_PHASE_HAS_VOLUMETRIC = 0x0080;      // Phase has volumetric target
+static constexpr uint16_t SYSTEM_INFO_ACTIVE_SCALE_CONNECTED = 0x0100;    // Active hardware/Bluetooth scale is healthy
 
 // Binary shot index format
 // File: /h/index.bin

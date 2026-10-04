@@ -187,10 +187,10 @@ void DefaultUI::init() {
     pluginManager->on("profiles:profile:favorite", [this](Event const &event) { reloadProfiles(); });
     pluginManager->on("profiles:profile:unfavorite", [this](Event const &event) { reloadProfiles(); });
     pluginManager->on("profiles:profile:save", [this](Event const &event) { reloadProfiles(); });
-    pluginManager->on("controller:volumetric-measurement:bluetooth:change", [=](Event const &event) {
+    pluginManager->on("controller:volumetric-measurement:active:change", [=](Event const &event) {
         double newWeight = event.getFloat("value");
-        if (round(newWeight * 10.0) != round(bluetoothWeight * 10.0)) {
-            bluetoothWeight = newWeight;
+        if (round(newWeight * 10.0) != round(activeWeight * 10.0)) {
+            activeWeight = newWeight;
             rerender = true;
         }
     });
@@ -246,7 +246,7 @@ void DefaultUI::loop() {
         updateProfileInfo();
         updateBoiler();
         updateBrewProcess();
-        currentWeight = FloatValue(bluetoothWeight);
+        currentWeight = FloatValue(activeWeight);
         eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_SCALE_WEIGHT_CURRENT, currentWeight);
 
         char timeBuf[12];
@@ -548,12 +548,9 @@ void DefaultUI::updateSystemStatus() {
     if (stringChanged(systemStatus.error_label(), errorLabel.c_str()))
         systemStatus.error_label(errorLabel.c_str());
     systemStatus.volumetric_available(controller->isVolumetricAvailable());
-    systemStatus.bluetooth_scales(controller->isBluetoothScaleHealthy());
-    const String controllerVersion = controller->getSystemInfo().version;
-    if (stringChanged(systemStatus.controller_version(), controllerVersion.c_str()))
-        systemStatus.controller_version(controllerVersion.c_str());
-    if (stringChanged(systemStatus.display_version(), BUILD_GIT_VERSION))
-        systemStatus.display_version(BUILD_GIT_VERSION);
+    systemStatus.bluetooth_scales(controller->isScaleSourceHealthy(controller->getEffectiveScaleSource()));
+    systemStatus.controller_version(controller->getSystemInfo().version.c_str());
+    systemStatus.display_version(BUILD_GIT_VERSION);
     systemStatus.update_available(updateAvailable);
     systemStatus.in_menu(currentScreen == SCREEN_ID_MENU_SCREEN_NEW);
     systemStatus.pressure_available(pressureAvailable);
@@ -592,6 +589,8 @@ void DefaultUI::updateWarnings() {
     warnings.scaleBatteryError(wm.isError(WARNING_SCALE_BATTERY));
     warnings.temperatureWarn(wm.isWarn(WARNING_TEMPERATURE));
     warnings.temperatureError(wm.isError(WARNING_TEMPERATURE));
+    warnings.cleanWarn(wm.isWarn(WARNING_BACKFLUSH) || wm.isWarn(WARNING_DESCALING));
+    warnings.cleanError(wm.isError(WARNING_BACKFLUSH) || wm.isError(WARNING_DESCALING));
     const String labels = wm.getLabels();
     if (stringChanged(warnings.labels(), labels.c_str()))
         warnings.labels(labels.c_str());
@@ -734,7 +733,13 @@ void DefaultUI::updateBrewProcess() {
     const bool weightTarget = bp->target == ProcessTarget::VOLUMETRIC && phase.hasVolumetricTarget();
     brewProcess.phase_value_is_weight(weightTarget);
     if (weightTarget) {
-        const float target = phase.getVolumetricTarget().value;
+        float target = 0.0f;
+        Target volumetricTarget = phase.getVolumetricTarget();
+        if (volumetricTarget.type == TargetType::TARGET_TYPE_VOLUMETRIC) {
+            target = volumetricTarget.value;
+        } else if (volumetricTarget.type == TargetType::TARGET_TYPE_RATIO && bp->profile.dose > 0.0f) {
+            target = volumetricTarget.value * bp->profile.dose;
+        }
         const float current = static_cast<float>(bp->currentVolume);
         brewProcess.phase_value_current(current);
         brewProcess.phase_value_target(target);

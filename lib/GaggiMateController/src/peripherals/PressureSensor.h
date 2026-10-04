@@ -2,9 +2,9 @@
 #define PRESSURESENSOR_H
 
 #include "ADSAdc.h"
+#include "PressureTiming.h"
 #include "TwoStateKalmanFilter/TwoStateKalmanFilter.h"
 #include <Arduino.h>
-#include "PressureTiming.h"
 
 // The telemetry filter consumes one pressure average per control interval.
 constexpr float PRESSURE_KF_MEASUREMENT_NOISE = 0.01f; // R, (0.1 bar)^2 incl. pump ripple
@@ -14,8 +14,8 @@ constexpr int SENSOR_READ_INTERVAL_MS = 100;
 
 class PressureSensor {
   public:
-    PressureSensor(ADSAdc *adc, PressureControlRate controlRate, float pressure_scale = 16.0f,
-                   float voltage_floor = 0.5, float voltage_ceil = 4.5, uint8_t channel = 0);
+    PressureSensor(ADSAdc *adc, PressureControlRate controlRate, float pressure_scale = 16.0f, float voltage_floor = 0.5,
+                   float voltage_ceil = 4.5, uint8_t channel = 0);
     ~PressureSensor() = default;
 
     void setup();

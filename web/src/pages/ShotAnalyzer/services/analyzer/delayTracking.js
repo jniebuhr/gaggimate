@@ -1,3 +1,5 @@
+import { isWeightType } from './exitReasons.js';
+
 /* global globalThis */
 
 export const LAST_PHASE_UNDERSHOOT_MIN_G = 2;
@@ -44,7 +46,7 @@ export function createDelayTotals() {
 }
 
 export function addDelayHit(delayTotals, exitType, delayMs) {
-  if (exitType === 'weight' || exitType === 'volumetric') {
+  if (isWeightType(exitType)) {
     delayTotals.sumScaleDelay += delayMs;
     delayTotals.countScaleHits++;
     return;

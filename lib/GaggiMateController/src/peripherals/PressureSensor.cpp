@@ -1,8 +1,8 @@
 #include "PressureSensor.h"
 #include "Wire.h"
 
-PressureSensor::PressureSensor(ADSAdc *adc, PressureControlRate controlRate, float pressure_scale,
-                               float voltage_floor, float voltage_ceil, uint8_t channel)
+PressureSensor::PressureSensor(ADSAdc *adc, PressureControlRate controlRate, float pressure_scale, float voltage_floor,
+                               float voltage_ceil, uint8_t channel)
     : _sampleTime(pressureControlPeriodS(controlRate)), _pressure_scale(pressure_scale), _adc(adc), _channel(channel),
       _filter(_sampleTime, PRESSURE_KF_MEASUREMENT_NOISE, PRESSURE_KF_ACCEL_NOISE, PRESSURE_KF_RATE_LEAK) {
     _adc_floor = static_cast<int16_t>(voltage_floor / ADC_STEP);
@@ -35,9 +35,11 @@ bool PressureSensor::consumeAverage() {
     _sum = 0;
     _count = 0;
     portEXIT_CRITICAL(&_mux);
-    if (!count) return false;
+    if (!count)
+        return false;
     const int64_t now = esp_timer_get_time();
-    if (_lastWindowUs) _sampleTime = (now - _lastWindowUs) / 1000000.0f;
+    if (_lastWindowUs)
+        _sampleTime = (now - _lastWindowUs) / 1000000.0f;
     _lastWindowUs = now;
     _averagedPressure = sum / count;
     const float dt = std::clamp(_sampleTime, 0.0005f, 0.1f);

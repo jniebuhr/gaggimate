@@ -4,15 +4,13 @@ import { faClock } from '@fortawesome/free-solid-svg-icons/faClock';
 import { faDroplet } from '@fortawesome/free-solid-svg-icons/faDroplet';
 import { faFaucet } from '@fortawesome/free-solid-svg-icons/faFaucet';
 import { faGauge } from '@fortawesome/free-solid-svg-icons/faGauge';
+import { faPercent } from '@fortawesome/free-solid-svg-icons/faPercent';
 import { faScaleBalanced } from '@fortawesome/free-solid-svg-icons/faScaleBalanced';
 import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons/faTriangleExclamation';
 import { getPhaseName } from '../helpers';
 import { getDisplayStopReasonParts } from '../../../utils/analyzerUtils';
 import { getLastNonExtendedIndex } from '../../../services/analyzer/weightRate';
-
-function isWeightStopType(type) {
-  return type === 'weight' || type === 'volumetric';
-}
+import { isWeightType } from '../../../services/analyzer/exitReasons.js';
 
 function getRecordedStopActualValue(phase) {
   if (phase?.exit?.source !== 'recorded') return null;
@@ -28,9 +26,11 @@ function getStopActualValue(phase, exitType) {
   if (recordedValue != null) return recordedValue;
 
   let calcValue = phase.targetCalcValues?.[exitType]?.value;
-  if (!Number.isFinite(Number(calcValue)) && isWeightStopType(exitType)) {
-    const altType = exitType === 'weight' ? 'volumetric' : 'weight';
-    calcValue = phase.targetCalcValues?.[altType]?.value;
+  if (!Number.isFinite(Number(calcValue)) && isWeightType(exitType)) {
+    const altType = ['volumetric', 'weight', 'ratio'].find(
+      type => type !== exitType && phase.targetCalcValues?.[type],
+    );
+    calcValue = altType ? phase.targetCalcValues[altType].value : undefined;
   }
   if (Number.isFinite(Number(calcValue))) return Number(calcValue);
 
@@ -38,7 +38,7 @@ function getStopActualValue(phase, exitType) {
   if (phase.skipped) return null;
 
   if (exitType === 'duration') return Number(phase.duration);
-  if (isWeightStopType(exitType)) {
+  if (isWeightType(exitType)) {
     const predictedWeight = Number(phase.prediction?.finalWeight);
     if (Number.isFinite(predictedWeight)) return predictedWeight;
     return Number(phase.weight);
@@ -56,7 +56,7 @@ function getStopTargetValue(phase, exitType) {
 
   const targets = Array.isArray(phase.profilePhase.targets) ? phase.profilePhase.targets : [];
   const target = targets.find(candidate => {
-    if (isWeightStopType(exitType)) return isWeightStopType(candidate?.type);
+    if (isWeightType(exitType)) return isWeightType(candidate?.type);
     return candidate?.type === exitType;
   });
   return target?.value ?? null;
@@ -64,7 +64,7 @@ function getStopTargetValue(phase, exitType) {
 
 function getStopUnit(exitType) {
   if (exitType === 'duration') return 's';
-  if (isWeightStopType(exitType)) return 'g';
+  if (isWeightType(exitType)) return 'g';
   if (exitType === 'pumped') return 'ml';
   if (exitType === 'pressure') return 'bar';
   if (exitType === 'flow') return 'ml/s';
@@ -164,6 +164,7 @@ const STOP_ICON_BY_TYPE = {
   flow: faFaucet,
   weight: faScaleBalanced,
   volumetric: faScaleBalanced,
+  ratio: faPercent,
   duration: faClock,
   pumped: faDroplet,
   safety: faTriangleExclamation,
@@ -259,7 +260,7 @@ function getMainStopYValue(exitType, refSample, samples) {
 }
 
 function getStopPosition({ exitType, stopSample, samples }) {
-  const isWeightStop = isWeightStopType(exitType);
+  const isWeightStop = isWeightType(exitType);
 
   if (isWeightStop) {
     return {
@@ -596,7 +597,7 @@ function resolveFinalStopAnnotationContext({ maxTime, resolvePhaseNumber, result
   if (!lastPhase?.exit?.reason) return null;
 
   const exitType = lastPhase.exit.type || '';
-  const isWeightStop = isWeightStopType(exitType);
+  const isWeightStop = isWeightType(exitType);
   const lastPhaseStopSample = getLastPhaseStopSample(samples);
   const stopTimeMs = Number(lastPhaseStopSample?.t);
   const stopTimeSec = isWeightStop && Number.isFinite(stopTimeMs) ? stopTimeMs / 1000 : maxTime;

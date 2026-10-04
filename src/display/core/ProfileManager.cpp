@@ -1,5 +1,6 @@
 #include "ProfileManager.h"
 #include <ArduinoJson.h>
+#include <display/core/system_profiles.h>
 #include <display/util/PsramAllocator.h>
 
 #include <utility>
@@ -24,6 +25,7 @@ void ProfileManager::setup() {
         selectedProfile = Profile{};
         loadSelectedProfile(selectedProfile);
     }
+    ensureSystemProfiles();
     _settings.setFavoritedProfiles(getFavoritedProfiles(true));
 
     String startupProfile = _settings.getStartupProfile();
@@ -44,6 +46,20 @@ bool ProfileManager::ensureDirectory() const {
         return _fs->mkdir(_dir);
     }
     return true;
+}
+
+bool ProfileManager::isSystemProfile(const String &uuid) { return uuid == BACKFLUSH_PROFILE_ID || uuid == DESCALING_PROFILE_ID; }
+
+void ProfileManager::ensureSystemProfiles() {
+    Profile seeds[] = {makeBackflushProfile(BACKFLUSH_PROFILE_ID), makeDescalingProfile(DESCALING_PROFILE_ID)};
+    for (Profile &seed : seeds) {
+        if (profileExists(seed.id))
+            continue;
+        if (saveProfile(seed))
+            ESP_LOGI("ProfileManager", "Created system profile %s", seed.id.c_str());
+        else
+            ESP_LOGE("ProfileManager", "Failed to create system profile %s", seed.id.c_str());
+    }
 }
 
 String ProfileManager::profilePath(const String &uuid) const { return _dir + "/" + uuid + ".json"; }
@@ -184,6 +200,9 @@ bool ProfileManager::saveProfile(Profile &profile) {
         isNew = true;
     }
 
+    if (isSystemProfile(profile.id))
+        profile.utility = true;
+
     ESP_LOGI("ProfileManager", "Saving profile %s", profile.id.c_str());
 
     File file = _fs->open(profilePath(profile.id), "w");
@@ -209,6 +228,10 @@ bool ProfileManager::saveProfile(Profile &profile) {
 }
 
 bool ProfileManager::deleteProfile(const String &uuid) {
+    if (isSystemProfile(uuid)) {
+        ESP_LOGW("ProfileManager", "Refusing to delete system profile %s", uuid.c_str());
+        return false;
+    }
     removeFavoritedProfile(uuid);
     if (_settings.getStartupProfile() == uuid) {
         _settings.setStartupProfile("");

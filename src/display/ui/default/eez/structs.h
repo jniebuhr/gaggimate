@@ -125,7 +125,9 @@ enum WarningsFlowStructureFields {
     FLOW_STRUCTURE_WARNINGS_FIELD_SCALE_BATTERY_ERROR = 9,
     FLOW_STRUCTURE_WARNINGS_FIELD_TEMPERATURE_WARN = 10,
     FLOW_STRUCTURE_WARNINGS_FIELD_TEMPERATURE_ERROR = 11,
-    FLOW_STRUCTURE_WARNINGS_FIELD_LABELS = 12,
+    FLOW_STRUCTURE_WARNINGS_FIELD_CLEAN_ERROR = 12,
+    FLOW_STRUCTURE_WARNINGS_FIELD_CLEAN_WARN = 13,
+    FLOW_STRUCTURE_WARNINGS_FIELD_LABELS = 14,
     FLOW_STRUCTURE_WARNINGS_NUM_FIELDS
 };
 
@@ -569,6 +571,16 @@ struct WarningsValue {
     bool temperatureError() { return value.getArray()->values[FLOW_STRUCTURE_WARNINGS_FIELD_TEMPERATURE_ERROR].getBoolean(); }
     void temperatureError(bool temperatureError) {
         value.getArray()->values[FLOW_STRUCTURE_WARNINGS_FIELD_TEMPERATURE_ERROR] = BooleanValue(temperatureError);
+    }
+
+    bool cleanError() { return value.getArray()->values[FLOW_STRUCTURE_WARNINGS_FIELD_CLEAN_ERROR].getBoolean(); }
+    void cleanError(bool cleanError) {
+        value.getArray()->values[FLOW_STRUCTURE_WARNINGS_FIELD_CLEAN_ERROR] = BooleanValue(cleanError);
+    }
+
+    bool cleanWarn() { return value.getArray()->values[FLOW_STRUCTURE_WARNINGS_FIELD_CLEAN_WARN].getBoolean(); }
+    void cleanWarn(bool cleanWarn) {
+        value.getArray()->values[FLOW_STRUCTURE_WARNINGS_FIELD_CLEAN_WARN] = BooleanValue(cleanWarn);
     }
 
     const char *labels() { return value.getArray()->values[FLOW_STRUCTURE_WARNINGS_FIELD_LABELS].getString(); }

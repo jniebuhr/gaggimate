@@ -20,7 +20,7 @@ class BLEScalePlugin : public Plugin {
     void connect(const std::string &uuid);
     void scan() const;
     void disconnect();
-    void onMeasurement(float value) const;
+    void onMeasurement(float value);
     bool isConnected() { return scale != nullptr && scale->isConnected(); };
     std::string getName() {
         if (scale != nullptr && scale->isConnected()) {
@@ -67,6 +67,7 @@ class BLEScalePlugin : public Plugin {
     void establishConnection();
 
     bool active = false;
+    bool shutdownPending = false; // set on entering standby, consumed by loop() before disconnecting
     bool doConnect = false;
     std::string uuid;
 
@@ -77,13 +78,8 @@ class BLEScalePlugin : public Plugin {
     uint8_t lastBatteryLevel = REMOTE_SCALES_BATTERY_UNKNOWN;
     ScaleWeightUnit lastWeightUnit = ScaleWeightUnit::UNKNOWN;
 
-    // Latch so the mid-brew oz warning + volumetric abort fires once per
-    // transition into ounces, not once per sample at ~10 Hz. Reset on
-    // disconnect and when the unit returns to grams.
-    mutable bool warnedOunceMidBrew = false;
-
     // Rate limiting for callbacks
-    mutable unsigned long lastMeasurementTime = 0;
+    unsigned long lastMeasurementTime = 0;
     static constexpr unsigned long MIN_MEASUREMENT_INTERVAL_MS = 10; // Max 100 measurements per second
 
     Controller *controller = nullptr;

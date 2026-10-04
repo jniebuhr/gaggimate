@@ -1,4 +1,5 @@
 import Card from '../../components/Card.jsx';
+import { isSystemProfile } from '../../utils/systemProfiles.js';
 
 export function ProfileMainInformation(props) {
   console.log(props.data);
@@ -55,6 +56,28 @@ export function ProfileMainInformation(props) {
         </div>
       </div>
       <div className='form-control'>
+        <label htmlFor='dose' className='mb-2 block text-sm font-medium'>
+          Dose
+        </label>
+        <div className='input-group'>
+          <label htmlFor='dose' className='input w-full'>
+            <input
+              id='dose'
+              name='dose'
+              type='number'
+              className='grow'
+              value={props.data?.dose}
+              onChange={props.onChangeDose}
+              aria-label='Dose in g'
+              min='0'
+              max='100'
+              step='0.1'
+            />
+            <span aria-label='grams'>g</span>
+          </label>
+        </div>
+      </div>
+      <div className='form-control'>
         <label
           htmlFor='utility'
           className='mb-2 block text-sm font-medium'
@@ -67,7 +90,8 @@ export function ProfileMainInformation(props) {
           name='utility'
           type='checkbox'
           className='toggle toggle-primary'
-          checked={!!props.data?.utility}
+          checked={!!props.data?.utility || isSystemProfile(props.data?.id)}
+          disabled={isSystemProfile(props.data?.id)}
           onChange={props.onChangeUtility}
         />
       </div>
