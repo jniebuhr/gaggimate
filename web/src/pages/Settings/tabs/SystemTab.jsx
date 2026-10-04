@@ -6,6 +6,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
 import { Spinner } from '../../../components/Spinner.jsx';
 import Section from '../../../components/Card.jsx';
+import { SettingsFormField } from '../../../components/SettingsFormField.jsx';
 
 const imageUrlToBase64 = async blob => {
   return new Promise((onSuccess, onError) => {
@@ -325,12 +326,14 @@ export function SystemTab() {
       {/* Firmware updates channel */}
       <Section title='System Version & Updates' className='h-full'>
         <form ref={formRef} onSubmit={onSubmit} className='space-y-4'>
-          <div className='form-control max-w-md'>
-            <label htmlFor='channel' className='mb-2 block text-sm font-medium'>
-              Update Channel
-            </label>
-            <div className='flex w-full items-center gap-2'>
-              <select id='channel' name='channel' className='select select-bordered grow'>
+          <div className='flex w-full max-w-md flex-col gap-2 sm:flex-row sm:items-end'>
+            <SettingsFormField
+              label='Update Channel'
+              htmlFor='channel'
+              noMargin
+              className='min-w-0 sm:grow'
+            >
+              <select id='channel' name='channel' className='select select-bordered w-full'>
                 <option value='latest' selected={formData.channel === 'latest'}>
                   Stable
                 </option>
@@ -338,10 +341,14 @@ export function SystemTab() {
                   Nightly
                 </option>
               </select>
-              <button type='submit' className='btn btn-secondary' disabled={submitting}>
-                Save Channel & Refresh
-              </button>
-            </div>
+            </SettingsFormField>
+            <button
+              type='submit'
+              className='btn btn-secondary w-full shrink-0 sm:w-auto'
+              disabled={submitting}
+            >
+              Save Channel & Refresh
+            </button>
           </div>
         </form>
 
@@ -363,53 +370,43 @@ export function SystemTab() {
 
           <div className='flex flex-col space-y-2'>
             <span className='text-base-content/70 text-sm font-medium'>Controller Version</span>
-            <div className='flex flex-wrap items-center gap-4'>
-              <span className='text-base-content font-semibold break-all'>
-                {formData.controllerVersion}
+            <span className='text-base-content font-semibold break-all'>
+              {formData.controllerVersion}
+            </span>
+            {formData.controllerUpdateAvailable && (
+              <span className='text-primary text-sm font-bold'>
+                Update available: {formData.latestVersion}
               </span>
-              {formData.controllerUpdateAvailable && (
-                <span className='text-primary text-sm font-bold'>
-                  Update available: {formData.latestVersion}
-                </span>
-              )}
-              <button
-                type='button'
-                className='btn btn-secondary btn-sm'
-                disabled={!formData.controllerUpdateAvailable || submitting}
-                onClick={() => onUpdate('controller')}
-              >
-                Update Controller
-              </button>
-            </div>
+            )}
+            <button
+              type='button'
+              className='btn btn-secondary btn-sm w-fit'
+              disabled={!formData.controllerUpdateAvailable || submitting}
+              onClick={() => onUpdate('controller')}
+            >
+              Update Controller
+            </button>
           </div>
 
           <div className='flex flex-col space-y-2'>
             <span className='text-base-content/70 text-sm font-medium'>Display Version</span>
-            <div className='flex flex-wrap items-center gap-4'>
-              <span className='text-base-content font-semibold break-all'>
-                {formData.displayVersion}
+            <span className='text-base-content font-semibold break-all'>
+              {formData.displayVersion}
+            </span>
+            {formData.displayUpdateAvailable && (
+              <span className='text-primary text-sm font-bold'>
+                Update available: {formData.latestVersion}
               </span>
-              {formData.displayUpdateAvailable && (
-                <span className='text-primary text-sm font-bold'>
-                  Update available: {formData.latestVersion}
-                </span>
-              )}
-              <button
-                type='button'
-                className='btn btn-secondary btn-sm'
-                disabled={!formData.displayUpdateAvailable || submitting}
-                onClick={() => onUpdate('display')}
-              >
-                Update Display
-              </button>
-            </div>
+            )}
+            <button
+              type='button'
+              className='btn btn-secondary btn-sm w-fit'
+              disabled={!formData.displayUpdateAvailable || submitting}
+              onClick={() => onUpdate('display')}
+            >
+              Update Display
+            </button>
           </div>
-        </div>
-
-        <div className='alert alert-warning mt-6'>
-          <span>
-            Make sure to backup your profiles from the profiles screen before updating the display.
-          </span>
         </div>
       </Section>
 
