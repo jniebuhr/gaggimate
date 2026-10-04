@@ -85,6 +85,8 @@ class GaggiMateServer {
     void onAutotune(AutotuneCallback cb) { _autotuneCb = std::move(cb); }
     void onPressureScale(PressureScaleCallback cb) { _pressureScaleCb = std::move(cb); }
     void onTare(TareCallback cb) { _tareCb = std::move(cb); }
+    using HeaterCoordinationCallback = std::function<void(bool,uint32_t)>;
+    void onHeaterCoordination(HeaterCoordinationCallback cb) { _heaterCoordinationCb = std::move(cb); }
     void onScaleFactors(ScaleFactorsCallback cb) { _scaleFactorsCb = std::move(cb); }
     void onLedControl(LedCallback cb) { _ledCb = std::move(cb); }
 
@@ -107,6 +109,7 @@ class GaggiMateServer {
     AutotuneCallback _autotuneCb;
     PressureScaleCallback _pressureScaleCb;
     TareCallback _tareCb;
+    HeaterCoordinationCallback _heaterCoordinationCb;
     ScaleFactorsCallback _scaleFactorsCb;
     LedCallback _ledCb;
 

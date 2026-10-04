@@ -180,6 +180,9 @@ void GaggiMateServer::registerHandlers() {
         if (_pidCb)
             _pidCb(p.content.pid.kp, p.content.pid.ki, p.content.pid.kd, p.content.pid.kf);
     });
+    _endpoint.on(gaggimate_Payload_heater_coordination_tag, [this](const gm::Payload &p) {
+        if (_heaterCoordinationCb) _heaterCoordinationCb(p.content.heater_coordination.enabled, p.content.heater_coordination.handover_ms);
+    });
     _endpoint.on(gaggimate_Payload_pump_model_tag, [this](const gm::Payload &p) {
         if (_pumpSettingsCb)
             _pumpSettingsCb(p.content.pump_model);

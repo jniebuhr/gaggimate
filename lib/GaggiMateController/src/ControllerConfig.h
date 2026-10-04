@@ -64,6 +64,8 @@ struct ControllerConfig {
     uint8_t ext5Pin;
 
     Capabilities capabilites;
+    bool heaterPriorityControl = false;
+    uint32_t heaterMinOffTime = 50;
     // ADC channels 0..3 in SPS; zero disables the channel. Total <= 570.
     std::array<uint16_t, 4> adcRates = {0, 0, 0, 0};
     PressureControlRate pressureControlRate = PressureControlRate::Hz60;
@@ -297,6 +299,7 @@ const ControllerConfig GM_MAX_REV10 = {.name = "GaggiMate Max Rev 1.x",
                                                .pressure = true,
                                                .dualBoiler = true,
                                            },
+                                       .heaterPriorityControl = true,
                                        .adcRates = {500, 0, 35, 35},
                                        .pressureControlRate = PressureControlRate::Hz60,
                                        .ntcTiming = {{{}, {}, {100, 1120.355f}, {100, 1120.355f}}}};

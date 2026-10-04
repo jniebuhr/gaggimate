@@ -41,6 +41,14 @@ void GaggiMateClient::loop() {
         _endpoint.loop();
 }
 
+void GaggiMateClient::sendHeaterCoordination(bool enabled, uint32_t handoverMs) {
+    gm::Payload p = gaggimate_Payload_init_zero;
+    p.which_content = gaggimate_Payload_heater_coordination_tag;
+    p.content.heater_coordination.enabled = enabled;
+    p.content.heater_coordination.handover_ms = handoverMs;
+    _endpoint.send(p);
+}
+
 gm::Payload GaggiMateClient::buildPing() {
     gm::Payload p = gaggimate_Payload_init_zero;
     p.which_content = gaggimate_Payload_ping_tag;

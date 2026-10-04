@@ -32,6 +32,7 @@ class GaggiMateClient {
 
     void init(const String &deviceName);
     void loop();
+    void sendHeaterCoordination(bool enabled, uint32_t handoverMs);
 
     // Connection lifecycle (driven from the display's main loop).
     bool isReadyForConnection() const { return _transport.isReadyForConnection(); }

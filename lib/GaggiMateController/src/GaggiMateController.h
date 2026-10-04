@@ -7,6 +7,7 @@
 #include <peripherals/FlowSensor.h>
 #include <peripherals/HardwareScale.h>
 #include <peripherals/Heater.h>
+#include <peripherals/HeaterCoordinator.h>
 #include <peripherals/LedController.h>
 #include <peripherals/Max31855Thermocouple.h>
 #include <peripherals/PressureSensor.h>
@@ -48,6 +49,7 @@ class GaggiMateController {
     TemperatureSensor *steamTemperature = nullptr;
     Heater *heater = nullptr;
     Heater *heater2 = nullptr;
+    HeaterCoordinator *heaterCoordinator = nullptr;
     Pump *pump = nullptr;
     SimpleRelay *valve = nullptr;
     SimpleRelay *alt = nullptr;

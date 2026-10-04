@@ -4,8 +4,11 @@
 #include "Max31855Thermocouple.h"
 #include "TemperatureSensor.h"
 #include <SimplePID/SimplePID.h>
+#include <limits>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
+#include <freertos/semphr.h>
+#include <atomic>
 
 constexpr float MAX_AUTOTUNE_TEMP = 125.0f;
 constexpr float TUNER_OUTPUT_SPAN = 1000.0f;
@@ -29,6 +32,11 @@ class Heater {
     float getDutyCycle() const { return output / TUNER_OUTPUT_SPAN * 100.0f; }
     void setTunings(float Kp, float Ki, float Kd);
     void autotune(int testTimeSec, int windowSize, int heaterWattage);
+    void enableCoordination(bool allowAutotune);
+    bool setCoordinatedState(bool on);
+    bool isRequestingOn() const { return requestedState; }
+    bool isAutotuning() const { return autotuning; }
+    bool isCommandedOn() const { return relayStatus; }
 
     // Thermal feedforward control
     void setThermalFeedforward(float *pumpFlowPtr = nullptr, float incomingWaterTemp = 23.0f, int *valveStatusPtr = nullptr);
@@ -53,6 +61,7 @@ class Heater {
     pid_result_callback_t pid_callback;
     heater_autotune_fail_callback_t autotune_fail_callback;
 
+    float outputTemperatureLimit = std::numeric_limits<float>::infinity();
     float temperature = 0.0f;
     float output = 0.0f;
     float setpoint = 0.0f;
@@ -61,13 +70,20 @@ class Heater {
     float Kd = 10;
     int plotCount = 0;
 
-    bool relayStatus = false;
+    std::atomic<bool> relayStatus{false};
+    std::atomic<bool> requestedState{false};
+    std::atomic<bool> heatEnabled{false};
+    bool coordinated = false;
+    bool allowCoordinatedAutotune = true;
+    StaticSemaphore_t outputMutexStorage;
+    SemaphoreHandle_t outputMutex = xSemaphoreCreateMutexStatic(&outputMutexStorage);
+    void requestOutput(bool on);
+    void writeOutput(bool on);
     unsigned long windowStartTime = 0;
-    unsigned long nextSwitchTime = 0;
 
     // Autotune variables
     bool startup = true;
-    bool autotuning = false;
+    std::atomic<bool> autotuning{false};
     // Stashed at autotune-start (BLE field 3) so loopAutotune can derive
     // combinedKff = 1000 / wattage on completion. 0 ⇒ caller didn't supply
     // wattage (older display firmware) ⇒ skip combinedKff derivation.
