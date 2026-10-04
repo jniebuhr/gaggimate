@@ -1,4 +1,5 @@
 import Card from '../../components/Card.jsx';
+import { isSystemProfile } from '../../utils/systemProfiles.js';
 
 export function ProfileMainInformation(props) {
   console.log(props.data);
@@ -89,7 +90,8 @@ export function ProfileMainInformation(props) {
           name='utility'
           type='checkbox'
           className='toggle toggle-primary'
-          checked={!!props.data?.utility}
+          checked={!!props.data?.utility || isSystemProfile(props.data?.id)}
+          disabled={isSystemProfile(props.data?.id)}
           onChange={props.onChangeUtility}
         />
       </div>

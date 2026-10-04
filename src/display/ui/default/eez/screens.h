@@ -53,6 +53,7 @@ typedef struct _objects_t {
     lv_obj_t *obj0__flush_reminder;
     lv_obj_t *obj0__water_low;
     lv_obj_t *obj0__temp_unstable;
+    lv_obj_t *obj0__clean_pending;
     lv_obj_t *status_dials;
     lv_obj_t *status_dials__temp_gauge;
     lv_obj_t *status_dials__temp_gauge_full;
@@ -82,6 +83,7 @@ typedef struct _objects_t {
     lv_obj_t *obj1__flush_reminder;
     lv_obj_t *obj1__water_low;
     lv_obj_t *obj1__temp_unstable;
+    lv_obj_t *obj1__clean_pending;
     lv_obj_t *steam_dials;
     lv_obj_t *steam_dials__temp_gauge;
     lv_obj_t *steam_dials__temp_gauge_full;

@@ -582,6 +582,16 @@
             "type": "boolean"
           },
           {
+            "objID": "f0c1f616-9df0-4fb5-a086-906cf0593279",
+            "name": "cleanError",
+            "type": "boolean"
+          },
+          {
+            "objID": "5dfc19a6-4050-4c02-de21-25d6f7e6d2b6",
+            "name": "cleanWarn",
+            "type": "boolean"
+          },
+          {
             "objID": "65ed0ceb-2ebc-48c2-ccd1-842e75fd36f1",
             "name": "labels",
             "type": "string"
@@ -1189,7 +1199,8 @@
               "textType": "expression",
               "longMode": "WRAP",
               "recolor": false,
-              "previewValue": "9:41"
+              "previewValue": "9:41",
+              "useStaticText": true
             },
             {
               "objID": "299f656f-227d-4f49-d0fd-0a68d860c4c4",
@@ -1479,7 +1490,8 @@
               "textType": "expression",
               "longMode": "WRAP",
               "recolor": false,
-              "previewValue": "Example"
+              "previewValue": "Example",
+              "useStaticText": true
             }
           ],
           "widgetFlags": "CLICKABLE|PRESS_LOCK|CLICK_FOCUSABLE|GESTURE_BUBBLE|SNAPPABLE|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER",
@@ -1684,7 +1696,8 @@
                   "textType": "expression",
                   "longMode": "WRAP",
                   "recolor": false,
-                  "previewValue": "Brew"
+                  "previewValue": "Brew",
+                  "useStaticText": true
                 },
                 {
                   "objID": "c0bcd8e4-b818-447c-afc8-45185da4aed0",
@@ -1986,7 +1999,8 @@
                           "textType": "expression",
                           "longMode": "WRAP",
                           "recolor": false,
-                          "previewValue": "12.4g"
+                          "previewValue": "12.4g",
+                          "useStaticText": true
                         }
                       ],
                       "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
@@ -2099,7 +2113,8 @@
                           "text": "Selected profile",
                           "textType": "literal",
                           "longMode": "WRAP",
-                          "recolor": false
+                          "recolor": false,
+                          "useStaticText": true
                         },
                         {
                           "objID": "4c2cc17b-d322-4d78-b331-6337fd9a549d",
@@ -2237,7 +2252,8 @@
                               "textType": "expression",
                               "longMode": "SCROLL_CIRCULAR",
                               "recolor": false,
-                              "previewValue": "a long profile name "
+                              "previewValue": "a long profile name ",
+                              "useStaticText": true
                             },
                             {
                               "objID": "c2ccef02-3de2-4061-b183-8051f70e2abf",
@@ -2463,7 +2479,8 @@
                               "textType": "expression",
                               "longMode": "WRAP",
                               "recolor": false,
-                              "previewValue": "93 °C"
+                              "previewValue": "93 °C",
+                              "useStaticText": true
                             },
                             {
                               "objID": "8370dd84-27c9-4ffc-bdb8-8bd2f65bc299",
@@ -2735,7 +2752,8 @@
                               "textType": "expression",
                               "longMode": "WRAP",
                               "recolor": false,
-                              "previewValue": "0:25"
+                              "previewValue": "0:25",
+                              "useStaticText": true
                             },
                             {
                               "objID": "0f8521a3-1636-47f9-fdc3-246ee461535a",
@@ -3008,7 +3026,8 @@
                               "textType": "expression",
                               "longMode": "WRAP",
                               "recolor": false,
-                              "previewValue": "28g"
+                              "previewValue": "28g",
+                              "useStaticText": true
                             },
                             {
                               "objID": "43f59fc3-ed07-481d-c8d7-70b48aee154c",
@@ -3572,7 +3591,7 @@
                   "type": "LVGLUserWidgetWidget",
                   "left": 0,
                   "top": 86,
-                  "width": 180,
+                  "width": 220,
                   "height": 30,
                   "customInputs": [],
                   "customOutputs": [],
@@ -3720,7 +3739,8 @@
                   "text": "Confirm",
                   "textType": "literal",
                   "longMode": "WRAP",
-                  "recolor": false
+                  "recolor": false,
+                  "useStaticText": true
                 },
                 {
                   "objID": "8fff782a-cff9-4005-c6d5-75abc6965768",
@@ -3773,7 +3793,8 @@
                   "text": "\"The following warnings are currently active:\\n\\n\" + warnings.labels",
                   "textType": "expression",
                   "longMode": "WRAP",
-                  "recolor": false
+                  "recolor": false,
+                  "useStaticText": true
                 },
                 {
                   "objID": "ff903039-5d95-457e-db56-85a92d0ee83b",
@@ -4127,7 +4148,8 @@
                   "textType": "expression",
                   "longMode": "WRAP",
                   "recolor": false,
-                  "previewValue": "0:30"
+                  "previewValue": "0:30",
+                  "useStaticText": true
                 },
                 {
                   "objID": "17a992b1-1c13-459e-f88d-6543d6668a7d",
@@ -4182,7 +4204,8 @@
                   "textType": "expression",
                   "longMode": "WRAP",
                   "recolor": false,
-                  "previewValue": "34g"
+                  "previewValue": "34g",
+                  "useStaticText": true
                 },
                 {
                   "objID": "ce4002ba-20fb-4056-d19a-7ccf8b06f711",
@@ -4236,7 +4259,8 @@
                   "textType": "expression",
                   "longMode": "WRAP",
                   "recolor": false,
-                  "previewValue": "85°C"
+                  "previewValue": "85°C",
+                  "useStaticText": true
                 },
                 {
                   "objID": "f8a3901a-320a-4632-b10f-1d5a92aef5cc",
@@ -4583,7 +4607,8 @@
                   "textType": "expression",
                   "longMode": "WRAP",
                   "recolor": false,
-                  "previewValue": "23.1 g / 0:00"
+                  "previewValue": "23.1 g / 0:00",
+                  "useStaticText": true
                 },
                 {
                   "objID": "29d0d25a-94a2-4d10-83b8-beb94d93ba6a",
@@ -4640,7 +4665,8 @@
                   "textType": "expression",
                   "longMode": "WRAP",
                   "recolor": false,
-                  "previewValue": "Da type"
+                  "previewValue": "Da type",
+                  "useStaticText": true
                 },
                 {
                   "objID": "07b544e1-6126-49c2-af9a-47e219425341",
@@ -4697,7 +4723,8 @@
                   "textType": "expression",
                   "longMode": "WRAP",
                   "recolor": false,
-                  "previewValue": "Da phase"
+                  "previewValue": "Da phase",
+                  "useStaticText": true
                 },
                 {
                   "objID": "25272711-d7b4-4587-f298-d9f3a8eba254",
@@ -4878,7 +4905,8 @@
                   "textType": "expression",
                   "longMode": "WRAP",
                   "recolor": false,
-                  "previewValue": "15s / 26s"
+                  "previewValue": "15s / 26s",
+                  "useStaticText": true
                 },
                 {
                   "objID": "05e095fc-e3b2-4f7a-b5a2-297fa67e87f1",
@@ -4934,7 +4962,8 @@
                   "textType": "expression",
                   "longMode": "WRAP",
                   "recolor": false,
-                  "previewValue": "36.1 g"
+                  "previewValue": "36.1 g",
+                  "useStaticText": true
                 }
               ],
               "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
@@ -5821,7 +5850,7 @@
               "type": "LVGLUserWidgetWidget",
               "left": 0,
               "top": -50,
-              "width": 180,
+              "width": 220,
               "height": 30,
               "customInputs": [],
               "customOutputs": [],
@@ -6069,7 +6098,8 @@
                   "text": "Steam",
                   "textType": "literal",
                   "longMode": "WRAP",
-                  "recolor": false
+                  "recolor": false,
+                  "useStaticText": true
                 },
                 {
                   "objID": "cc9f1ff4-8a26-4d5c-a215-6ecceae4ba20",
@@ -6203,7 +6233,8 @@
                       "textType": "expression",
                       "longMode": "WRAP",
                       "recolor": false,
-                      "previewValue": "135°C"
+                      "previewValue": "135°C",
+                      "useStaticText": true
                     },
                     {
                       "objID": "03eb0744-8515-4cc9-88b6-34eff319cebb",
@@ -6649,7 +6680,8 @@
                   "text": "Water",
                   "textType": "literal",
                   "longMode": "WRAP",
-                  "recolor": false
+                  "recolor": false,
+                  "useStaticText": true
                 },
                 {
                   "objID": "5b49873a-fa2f-42e0-9689-a2394a86d0fa",
@@ -6786,7 +6818,8 @@
                       "textType": "expression",
                       "longMode": "WRAP",
                       "recolor": false,
-                      "previewValue": "50°C"
+                      "previewValue": "50°C",
+                      "useStaticText": true
                     },
                     {
                       "objID": "1a9a4de4-4086-432c-b3a2-cf82fbf17212",
@@ -7223,7 +7256,8 @@
                   "textType": "expression",
                   "longMode": "WRAP",
                   "recolor": false,
-                  "previewValue": "Current profile"
+                  "previewValue": "Current profile",
+                  "useStaticText": true
                 },
                 {
                   "objID": "ad82c6ce-2b6a-4f8b-9a2c-d2d5983fc526",
@@ -7300,7 +7334,8 @@
                       "textType": "expression",
                       "longMode": "SCROLL_CIRCULAR",
                       "recolor": false,
-                      "previewValue": "Preview text"
+                      "previewValue": "Preview text",
+                      "useStaticText": true
                     },
                     {
                       "objID": "5a744f09-de33-4d6a-f9b2-a2a47d6dda68",
@@ -7454,7 +7489,8 @@
                               "textType": "expression",
                               "longMode": "WRAP",
                               "recolor": false,
-                              "previewValue": "85°C"
+                              "previewValue": "85°C",
+                              "useStaticText": true
                             }
                           ],
                           "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLLABLE|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_WITH_ARROW|SNAPPABLE",
@@ -7674,7 +7710,8 @@
                               "textType": "expression",
                               "longMode": "WRAP",
                               "recolor": false,
-                              "previewValue": "0:10"
+                              "previewValue": "0:10",
+                              "useStaticText": true
                             }
                           ],
                           "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLLABLE|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_WITH_ARROW|SNAPPABLE",
@@ -7807,7 +7844,8 @@
                           "textType": "expression",
                           "longMode": "WRAP",
                           "recolor": false,
-                          "previewValue": "1 phase"
+                          "previewValue": "1 phase",
+                          "useStaticText": true
                         },
                         {
                           "objID": "906af4cf-49f4-448a-839c-2f02288c0219",
@@ -7860,7 +7898,8 @@
                           "textType": "expression",
                           "longMode": "WRAP",
                           "recolor": false,
-                          "previewValue": "1 step"
+                          "previewValue": "1 step",
+                          "useStaticText": true
                         }
                       ],
                       "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLLABLE|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_WITH_ARROW|SNAPPABLE",
@@ -8335,7 +8374,8 @@
                   "text": "Grind",
                   "textType": "literal",
                   "longMode": "WRAP",
-                  "recolor": false
+                  "recolor": false,
+                  "useStaticText": true
                 },
                 {
                   "objID": "c67effee-c9a3-41db-82d4-dca58a67c464",
@@ -8546,7 +8586,8 @@
                       "textType": "expression",
                       "longMode": "WRAP",
                       "recolor": false,
-                      "previewValue": "0.0g"
+                      "previewValue": "0.0g",
+                      "useStaticText": true
                     }
                   ],
                   "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SNAPPABLE",
@@ -8667,7 +8708,8 @@
                       "textType": "expression",
                       "longMode": "WRAP",
                       "recolor": false,
-                      "previewValue": "18g"
+                      "previewValue": "18g",
+                      "useStaticText": true
                     },
                     {
                       "objID": "ddf951a7-3b16-4ab6-8950-c934140e4999",
@@ -8948,7 +8990,8 @@
                       "textType": "expression",
                       "longMode": "WRAP",
                       "recolor": false,
-                      "previewValue": "0:20"
+                      "previewValue": "0:20",
+                      "useStaticText": true
                     },
                     {
                       "objID": "83736858-2b4d-4a78-8e97-36a78bf9d15d",
@@ -9614,7 +9657,8 @@
                   "textType": "expression",
                   "longMode": "SCROLL_CIRCULAR",
                   "recolor": false,
-                  "previewValue": "1.8.1 / 1.8.1"
+                  "previewValue": "1.8.1 / 1.8.1",
+                  "useStaticText": true
                 },
                 {
                   "objID": "3b568dd2-e6bf-455d-de1d-9e6bd071de71",
@@ -9665,7 +9709,8 @@
                   "text": "Network",
                   "textType": "literal",
                   "longMode": "WRAP",
-                  "recolor": false
+                  "recolor": false,
+                  "useStaticText": true
                 },
                 {
                   "objID": "6d86742c-765a-4a93-d1bb-94b0e0bdfd3d",
@@ -9720,7 +9765,8 @@
                   "textType": "expression",
                   "longMode": "SCROLL_CIRCULAR",
                   "recolor": false,
-                  "previewValue": "SSID: GaggiMate • IP: 4.4.4.1"
+                  "previewValue": "SSID: GaggiMate • IP: 4.4.4.1",
+                  "useStaticText": true
                 },
                 {
                   "objID": "07e7e543-b7ca-4a64-88a2-d290b6a01ee9",
@@ -9771,7 +9817,8 @@
                   "text": "Version",
                   "textType": "literal",
                   "longMode": "WRAP",
-                  "recolor": false
+                  "recolor": false,
+                  "useStaticText": true
                 },
                 {
                   "objID": "656a95e5-9da6-48a8-eed5-5755066be987",
@@ -9876,7 +9923,8 @@
                   "textType": "expression",
                   "longMode": "WRAP",
                   "recolor": false,
-                  "previewValue": "Join WiFi"
+                  "previewValue": "Join WiFi",
+                  "useStaticText": true
                 }
               ],
               "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_WITH_ARROW|SNAPPABLE",
@@ -10093,7 +10141,8 @@
               "text": "Select profile",
               "textType": "literal",
               "longMode": "WRAP",
-              "recolor": false
+              "recolor": false,
+              "useStaticText": true
             },
             {
               "objID": "982d1e50-2742-4547-9ded-251479232ee3",
@@ -10223,7 +10272,8 @@
                   "text": "Soup Pro Beta",
                   "textType": "literal",
                   "longMode": "SCROLL",
-                  "recolor": false
+                  "recolor": false,
+                  "useStaticText": true
                 },
                 {
                   "objID": "de09ff96-c8ce-4b34-e76d-2198cac848b8",
@@ -10379,7 +10429,8 @@
                           "text": "93°C",
                           "textType": "literal",
                           "longMode": "SCROLL",
-                          "recolor": false
+                          "recolor": false,
+                          "useStaticText": true
                         },
                         {
                           "objID": "df010e35-5abe-4711-9291-ec9cdf9791df",
@@ -10488,7 +10539,8 @@
                           "text": "1:15",
                           "textType": "literal",
                           "longMode": "SCROLL",
-                          "recolor": false
+                          "recolor": false,
+                          "useStaticText": true
                         },
                         {
                           "objID": "51cd5d53-e2a0-4d52-9e4b-c96458e2f3e4",
@@ -10541,7 +10593,8 @@
                           "text": "2 Phases - 3 Steps",
                           "textType": "literal",
                           "longMode": "SCROLL",
-                          "recolor": false
+                          "recolor": false,
+                          "useStaticText": true
                         },
                         {
                           "objID": "ea48b551-c92a-43e6-940e-2edbcaf75717",
@@ -10698,7 +10751,8 @@
                           "text": "x",
                           "textType": "literal",
                           "longMode": "WRAP",
-                          "recolor": false
+                          "recolor": false,
+                          "useStaticText": true
                         }
                       ],
                       "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_ON_FOCUS|SCROLL_WITH_ARROW|SNAPPABLE",
@@ -10900,7 +10954,8 @@
                           "text": "i",
                           "textType": "literal",
                           "longMode": "WRAP",
-                          "recolor": false
+                          "recolor": false,
+                          "useStaticText": true
                         }
                       ],
                       "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_ON_FOCUS|SCROLL_WITH_ARROW|SNAPPABLE",
@@ -11271,7 +11326,8 @@
                               "text": "Soup Pro Beta",
                               "textType": "literal",
                               "longMode": "WRAP",
-                              "recolor": false
+                              "recolor": false,
+                              "useStaticText": true
                             },
                             {
                               "objID": "ee5de4c1-b5dc-46e2-e00f-b5a801619d45",
@@ -11435,7 +11491,8 @@
                               "text": "93°C",
                               "textType": "literal",
                               "longMode": "WRAP",
-                              "recolor": false
+                              "recolor": false,
+                              "useStaticText": true
                             },
                             {
                               "objID": "50921eac-b0b9-46a7-bf44-dbace2c8acbd",
@@ -11487,7 +11544,8 @@
                               "text": "0:35",
                               "textType": "literal",
                               "longMode": "WRAP",
-                              "recolor": false
+                              "recolor": false,
+                              "useStaticText": true
                             }
                           ],
                           "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLLABLE|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_WITH_ARROW|SNAPPABLE",
@@ -11578,7 +11636,8 @@
                               "text": "i",
                               "textType": "literal",
                               "longMode": "WRAP",
-                              "recolor": false
+                              "recolor": false,
+                              "useStaticText": true
                             }
                           ],
                           "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_ON_FOCUS|SCROLL_WITH_ARROW|SNAPPABLE",
@@ -11786,7 +11845,8 @@
                               "text": "Soup Pro Beta",
                               "textType": "literal",
                               "longMode": "WRAP",
-                              "recolor": false
+                              "recolor": false,
+                              "useStaticText": true
                             },
                             {
                               "objID": "4cc0f445-9374-446b-c551-b94955fe6bd1",
@@ -11950,7 +12010,8 @@
                               "text": "93°C",
                               "textType": "literal",
                               "longMode": "WRAP",
-                              "recolor": false
+                              "recolor": false,
+                              "useStaticText": true
                             },
                             {
                               "objID": "409a9014-a038-4853-b394-b1e93e3739c5",
@@ -12002,7 +12063,8 @@
                               "text": "0:35",
                               "textType": "literal",
                               "longMode": "WRAP",
-                              "recolor": false
+                              "recolor": false,
+                              "useStaticText": true
                             }
                           ],
                           "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLLABLE|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_WITH_ARROW|SNAPPABLE",
@@ -12093,7 +12155,8 @@
                               "text": "i",
                               "textType": "literal",
                               "longMode": "WRAP",
-                              "recolor": false
+                              "recolor": false,
+                              "useStaticText": true
                             }
                           ],
                           "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_ON_FOCUS|SCROLL_WITH_ARROW|SNAPPABLE",
@@ -12301,7 +12364,8 @@
                               "text": "Soup Pro Beta",
                               "textType": "literal",
                               "longMode": "WRAP",
-                              "recolor": false
+                              "recolor": false,
+                              "useStaticText": true
                             },
                             {
                               "objID": "1d464c50-fa43-4945-a2f8-aad213c2d216",
@@ -12465,7 +12529,8 @@
                               "text": "93°C",
                               "textType": "literal",
                               "longMode": "WRAP",
-                              "recolor": false
+                              "recolor": false,
+                              "useStaticText": true
                             },
                             {
                               "objID": "5a3c78e3-81ae-4b5e-a8fb-1a97a64ae4d8",
@@ -12517,7 +12582,8 @@
                               "text": "0:35",
                               "textType": "literal",
                               "longMode": "WRAP",
-                              "recolor": false
+                              "recolor": false,
+                              "useStaticText": true
                             }
                           ],
                           "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLLABLE|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_WITH_ARROW|SNAPPABLE",
@@ -12608,7 +12674,8 @@
                               "text": "i",
                               "textType": "literal",
                               "longMode": "WRAP",
-                              "recolor": false
+                              "recolor": false,
+                              "useStaticText": true
                             }
                           ],
                           "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_ON_FOCUS|SCROLL_WITH_ARROW|SNAPPABLE",
@@ -12816,7 +12883,8 @@
                               "text": "Soup Pro Beta",
                               "textType": "literal",
                               "longMode": "WRAP",
-                              "recolor": false
+                              "recolor": false,
+                              "useStaticText": true
                             },
                             {
                               "objID": "b97a8db0-4512-47bc-cd35-b8262cd7d991",
@@ -12980,7 +13048,8 @@
                               "text": "93°C",
                               "textType": "literal",
                               "longMode": "WRAP",
-                              "recolor": false
+                              "recolor": false,
+                              "useStaticText": true
                             },
                             {
                               "objID": "a8d21cd8-2aea-43da-91d7-477fad0c7bd2",
@@ -13032,7 +13101,8 @@
                               "text": "0:35",
                               "textType": "literal",
                               "longMode": "WRAP",
-                              "recolor": false
+                              "recolor": false,
+                              "useStaticText": true
                             }
                           ],
                           "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLLABLE|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_WITH_ARROW|SNAPPABLE",
@@ -13123,7 +13193,8 @@
                               "text": "i",
                               "textType": "literal",
                               "longMode": "WRAP",
-                              "recolor": false
+                              "recolor": false,
+                              "useStaticText": true
                             }
                           ],
                           "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_ON_FOCUS|SCROLL_WITH_ARROW|SNAPPABLE",
@@ -13996,7 +14067,8 @@
           "textType": "expression",
           "longMode": "WRAP",
           "recolor": false,
-          "previewValue": "2 bar"
+          "previewValue": "2 bar",
+          "useStaticText": true
         },
         {
           "objID": "3f740d24-ab7c-4bf5-acc6-212b167357b3",
@@ -14051,7 +14123,8 @@
           "textType": "expression",
           "longMode": "WRAP",
           "recolor": false,
-          "previewValue": "80 °C"
+          "previewValue": "80 °C",
+          "useStaticText": true
         },
         {
           "objID": "6d05b162-7ae0-4b19-ab9a-68f11fb1b18c",
@@ -14106,7 +14179,8 @@
           "textType": "expression",
           "longMode": "WRAP",
           "recolor": false,
-          "previewValue": "100 °C"
+          "previewValue": "100 °C",
+          "useStaticText": true
         }
       ],
       "connectionLines": [],
@@ -14140,7 +14214,7 @@
           "type": "LVGLContainerWidget",
           "left": 0,
           "top": 0,
-          "width": 180,
+          "width": 220,
           "height": 30,
           "customInputs": [],
           "customOutputs": [],
@@ -14535,6 +14609,70 @@
               "value": 0,
               "valueType": "literal",
               "previewValue": 0
+            },
+            {
+              "objID": "b7dfcf42-8ed5-41cd-bb53-b7f738b69024",
+              "type": "LVGLImageWidget",
+              "left": 0,
+              "top": 0,
+              "width": 20,
+              "height": 20,
+              "customInputs": [],
+              "customOutputs": [],
+              "style": {
+                "objID": "4c40a860-05c4-4d59-f4db-d533b23838ab",
+                "useStyle": "default",
+                "conditionalStyles": [],
+                "childStyles": []
+              },
+              "timeline": [],
+              "eventHandlers": [],
+              "identifier": "cleanPending",
+              "leftUnit": "px",
+              "topUnit": "px",
+              "widthUnit": "content",
+              "heightUnit": "content",
+              "children": [],
+              "widgetFlags": "ADV_HITTEST|CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLLABLE|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_WITH_ARROW|SNAPPABLE",
+              "hiddenFlag": "!warnings.cleanWarn && !warnings.cleanError",
+              "hiddenFlagType": "expression",
+              "clickableFlagType": "literal",
+              "flagScrollbarMode": "",
+              "flagScrollDirection": "",
+              "scrollSnapX": "",
+              "scrollSnapY": "",
+              "checkedState": "warnings.cleanError",
+              "checkedStateType": "expression",
+              "disabledStateType": "literal",
+              "states": "",
+              "localStyles": {
+                "objID": "40ee8e91-c1b8-4bfc-9797-845d94432e65",
+                "definition": {
+                  "MAIN": {
+                    "DEFAULT": {
+                      "img_recolor": "Warning",
+                      "img_recolor_opa": 255
+                    },
+                    "CHECKED": {
+                      "img_recolor": "Temperature",
+                      "img_recolor_opa": 255
+                    }
+                  }
+                }
+              },
+              "group": "",
+              "groupIndex": 0,
+              "image": "broom",
+              "setPivot": false,
+              "pivotX": 0,
+              "pivotY": 0,
+              "zoom": 256,
+              "angle": 0,
+              "innerAlign": "CENTER",
+              "sizeMode": "VIRTUAL",
+              "value": 0,
+              "valueType": "literal",
+              "previewValue": 0
             }
           ],
           "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_WITH_ARROW|SNAPPABLE",
@@ -14572,7 +14710,7 @@
       "name": "warnings",
       "left": 0,
       "top": 0,
-      "width": 180,
+      "width": 220,
       "height": 30,
       "isUsedAsUserWidget": true,
       "createAtStart": true,
@@ -15006,6 +15144,15 @@
       "objID": "431f9984-d63c-48f8-9f52-4e9b9a5f0302",
       "name": "tap-48x48",
       "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAACXBIWXMAAB2HAAAdhwGP5fFlAAAAGXRFWHRTb2Z0d2FyZQB3d3cuaW5rc2NhcGUub3Jnm+48GgAAA5JJREFUaIHtmTloFFEYx3+rOZSYVILkkJgDY6FgtFAJiYogioigCRrFztIo4lVYeJTW1oJ2QUyQYGyUeCA5IB4IJhGxiAnemBOMmsTizWRnv3k783Z33qbxDx/szHf9v5l3zPs2RnqoBQ4ADUAxUOrcHwU+AU+Be8DLNONbQQxoBAaAeUMZAA45vouKCqAbc+JSngNrsk3aRR3wJYCcqXwHdmaZOw3AjIbMDNAKNAM1QIEjNc691gC/hmyRrwC+aUjcBSoN/KuANo3/Vye2VcTwj/lZ4HwasS44vnJOWJ3YTfif3LkM4l3UxDuYIcekiAGD+IeNRB5wEugBpoFxoA9ocXQS7SLm26iJu9iEf+LJMV+M2qSSrTi9wErhUw38FnYbbRRwVSRpFfo84FUAeVeeAUuF7x1hc9lGAV0iSbPQtxiQd+W48D0m9I9sFDAkkqwV+h6hf4DaZcsdQl7dQ+FbI/SDNgqYEEkKQ/SrPbp1QvdD+BYK/UTE3AH/Dlok9HKYeBETulmhLxL6X5mSXaK5NyauSzU2yaArKCjWzxRia6Er4J24rs00SUAsmStl6AroEdeNmSbxoElcd0cYewE7SByn00CuRx80B6R+znM/z4nl1ddHS10hhnq1bpIpICcJwVQKyCWxgCEsftDVAx9Q59sjAQRTKQDgKOpwNARsi4JoOk8gbKWZF7918ywyWA2eDfwvYLHxv4AQxIDrwGHUgSbyZdP2KiQxAbwB+j0ygH+5NYaNAkZI7QNwDHhBvKAnwOc0eBkjbCPbh2rymp7apMyhztRNWBriYQW4KAH2A1eADvRNsjB5TMjbtDGEglACbPbIVvzdC4kRYDvq08aHbBegy19FvKA6YAv+bsZ71FliKoNcCzAdQumiGujU5LkR5piHapm4nbZJ53cLkO+xs10AqDdzU+SZAcqSOZQS3KzqJ96dy0YBoB6a/Dfoks5wGcFtQm+LZHcWCwA4IXJ16YxOhRD3yl/NPZsoF7lGdUa9wqgTNdYq8fcydWITOSLXH53RlDCSE+Ws47gYBWCST3YKdDN9F8l3UtsIzdcnDNpJ7EK4KEetRl7byej5+hBawGmNURv6f1mWA7c8dtei5+tDaAH5wGuN4X3UEqvDemBD1EyTwGjIlqG+N6Tx7SwQDIPxnCvBv/ON22ZngJQWjVUkDqcOq9TM8JE4n2EThxXAGUcK7PEyxl5UEcPAHqn8B2tBCOXqjvq4AAAAAElFTkSuQmCC",
+      "bpp": 4,
+      "alwaysBuild": false,
+      "lvglBinaryOutputFormat": 3,
+      "lvglDither": false
+    },
+    {
+      "objID": "a26fd52d-24b5-4a83-b1d4-c2f9e45adb42",
+      "name": "broom",
+      "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAACXBIWXMAAAxNAAAMTQHSzq1OAAAAGXRFWHRTb2Z0d2FyZQB3d3cuaW5rc2NhcGUub3Jnm+48GgAAAUlJREFUOI29079LHEEYxvHPJeeRRItYXW4hplXSBEMasbNKH7v8EynyB9hpJTbC1XangRxiUiSxELVMlUNSWijEQsQmBH+cxc7Cuu7tLnjkgZdhhnm+PO/wDkPWwyEwnmARr7B3X9hjfEc/1PN6RWML84jwC11chHUu3PmKoyqwEfxMpejjGLup/beQtlBvsYw6muhloEntYLQI9Bo/UoaNkDLC7xzgm0GgWWziOsdUBP2cB+sOaCdd66H9LPQvHqRhLyrAkuq4+6b/sunGwmFiukI7JFktgCZJc4e5LZ6rDqbDWYT9kqQRZvKArdA6PMJHnFdsf6AaWMBJxnjm9vdK14ciICxlDIeYQg2nOcCXZcAa1sLlL3gmHomVHNhWGSxRA+8C/Kl4qLOwP5ioCkw0joMcWA+Tg0y1EmgT78VvdYltfBKP2P/RDU5wk9wt+kSvAAAAAElFTkSuQmCC",
       "bpp": 4,
       "alwaysBuild": false,
       "lvglBinaryOutputFormat": 3,

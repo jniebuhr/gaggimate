@@ -7,6 +7,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCrosshairs } from '@fortawesome/free-solid-svg-icons/faCrosshairs';
 import { faWeightScale } from '@fortawesome/free-solid-svg-icons/faWeightScale';
 import { InputGroupField, SettingsFormField } from '../../../components/SettingsFormField.jsx';
+import { CleaningSection } from './CleaningSection.jsx';
 
 const ledControl = computed(() => machine.value.capabilities.ledControl);
 const pressureAvailable = computed(() => machine.value.capabilities.pressure);
@@ -544,6 +545,8 @@ export function MachineTab({ formData, onChange, setField }) {
           </div>
         </Section>
       )}
+
+      <CleaningSection formData={formData} onChange={onChange} setField={setField} />
 
       {/* Alba Settings */}
       {ledControl.value && (

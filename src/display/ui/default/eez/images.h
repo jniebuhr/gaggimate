@@ -48,6 +48,7 @@ extern const lv_img_dsc_t img_high_temperature_alert_20x20;
 extern const lv_img_dsc_t img_tint_slash_20x20;
 extern const lv_img_dsc_t img_battery_exclamation_20x20;
 extern const lv_img_dsc_t img_tap_48x48;
+extern const lv_img_dsc_t img_broom;
 
 #ifndef EXT_IMG_DESC_T
 #define EXT_IMG_DESC_T
@@ -57,7 +58,7 @@ typedef struct _ext_img_desc_t {
 } ext_img_desc_t;
 #endif
 
-extern const ext_img_desc_t images[41];
+extern const ext_img_desc_t images[42];
 
 #ifdef __cplusplus
 }

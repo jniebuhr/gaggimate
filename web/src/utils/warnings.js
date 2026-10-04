@@ -4,6 +4,7 @@ import lightSwitchOff from '../assets/warnings/light-switch-off.svg?raw';
 import linkSlashAlt from '../assets/warnings/link-slash-alt.svg?raw';
 import batteryExclamation from '../assets/warnings/battery-exclamation-2.svg?raw';
 import highTemperatureAlert from '../assets/warnings/high-temperature-alert.svg?raw';
+import broom from '../assets/warnings/broom.svg?raw';
 
 export const WARNING_LEVEL = { IGNORE: 0, WARN: 1, ERROR: 2 };
 
@@ -41,6 +42,8 @@ export const WARNINGS = [
     settingKey: 'warnScaleBattery',
     icon: batteryExclamation,
   },
+  { key: 'backflush', label: 'Backflush due', settingKey: 'warnBackflush', icon: broom },
+  { key: 'descaling', label: 'Descaling due', settingKey: 'warnDescaling', icon: broom },
 ];
 
 export const warningByKey = key => WARNINGS.find(w => w.key === key);

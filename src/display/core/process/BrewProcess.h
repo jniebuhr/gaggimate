@@ -87,9 +87,7 @@ class BrewProcess : public Process {
 
     bool isUtility() const { return profile.utility; }
 
-    double getBrewVolume() const {
-        return profile.getTotalVolume();
-    }
+    double getBrewVolume() const { return profile.getTotalVolume(); }
 
     double getNewDelayTime() {
         double newDelay = brewDelay + volumetricRateCalculator.getOvershootAdjustMillis(getBrewVolume(), currentVolume);

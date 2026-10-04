@@ -42,6 +42,7 @@ static const char *object_names[] = {"standby_screen",
                                      "obj0__flush_reminder",
                                      "obj0__water_low",
                                      "obj0__temp_unstable",
+                                     "obj0__clean_pending",
                                      "status_dials",
                                      "status_dials__temp_gauge",
                                      "status_dials__temp_gauge_full",
@@ -71,6 +72,7 @@ static const char *object_names[] = {"standby_screen",
                                      "obj1__flush_reminder",
                                      "obj1__water_low",
                                      "obj1__temp_unstable",
+                                     "obj1__clean_pending",
                                      "steam_dials",
                                      "steam_dials__temp_gauge",
                                      "steam_dials__temp_gauge_full",
@@ -1106,6 +1108,20 @@ static void event_handler_cb_warnings_temp_unstable(lv_event_t *e) {
     }
 }
 
+static void event_handler_cb_warnings_clean_pending(lv_event_t *e) {
+    lv_event_code_t event = lv_event_get_code(e);
+    void *flowState = lv_event_get_user_data(e);
+    (void)flowState;
+
+    if (event == LV_EVENT_VALUE_CHANGED) {
+        lv_obj_t *ta = lv_event_get_target(e);
+        if (tick_value_change_obj != ta) {
+            bool value = lv_obj_has_state(ta, LV_STATE_CHECKED);
+            assignBooleanProperty(flowState, 7, 4, value, "Failed to assign Checked state");
+        }
+    }
+}
+
 //
 // Screens
 //
@@ -1976,7 +1992,7 @@ void create_screen_brew_screen() {
                     lv_obj_t *obj = lv_obj_create(parent_obj);
                     objects.obj0 = obj;
                     lv_obj_set_pos(obj, 0, 86);
-                    lv_obj_set_size(obj, 180, 30);
+                    lv_obj_set_size(obj, 220, 30);
                     lv_obj_set_style_pad_left(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
                     lv_obj_set_style_pad_top(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
                     lv_obj_set_style_pad_right(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -2378,7 +2394,7 @@ void create_screen_status_screen() {
             lv_obj_set_style_pad_bottom(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_bg_opa(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_border_width(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-            create_user_widget_dials(obj, getFlowState(flowState, 0), 29, &state->status_dials);
+            create_user_widget_dials(obj, getFlowState(flowState, 0), 30, &state->status_dials);
             lv_obj_clear_flag(obj, LV_OBJ_FLAG_SCROLLABLE);
             lv_obj_set_style_align(obj, LV_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
         }
@@ -2666,7 +2682,7 @@ void tick_screen_status_screen() {
     (void)state;
     void *flowState = getFlowState(0, 2);
     (void)flowState;
-    tick_user_widget_dials(getFlowState(flowState, 0), 29, &state->status_dials);
+    tick_user_widget_dials(getFlowState(flowState, 0), 30, &state->status_dials);
     {
         const char *new_val = evalTextProperty(flowState, 3, 4, "Failed to evaluate Text in Label widget");
         const char *cur_val = lv_label_get_text(objects.target_duration_1);
@@ -2895,7 +2911,7 @@ void create_screen_menu_screen_new() {
             lv_obj_set_style_pad_bottom(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_bg_opa(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_border_width(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-            create_user_widget_dials(obj, getFlowState(flowState, 0), 40, &state->new_menu_dials);
+            create_user_widget_dials(obj, getFlowState(flowState, 0), 41, &state->new_menu_dials);
             lv_obj_clear_flag(obj, LV_OBJ_FLAG_SCROLLABLE);
             lv_obj_set_style_align(obj, LV_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_CHECKED);
             lv_obj_set_style_align(obj, LV_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -3085,14 +3101,14 @@ void create_screen_menu_screen_new() {
             lv_obj_t *obj = lv_obj_create(parent_obj);
             objects.obj1 = obj;
             lv_obj_set_pos(obj, 0, -50);
-            lv_obj_set_size(obj, 180, 30);
+            lv_obj_set_size(obj, 220, 30);
             lv_obj_set_style_pad_left(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_top(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_right(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_bottom(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_bg_opa(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_border_width(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-            create_user_widget_warnings(obj, getFlowState(flowState, 14), 51);
+            create_user_widget_warnings(obj, getFlowState(flowState, 14), 52);
             lv_obj_set_style_align(obj, LV_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
         }
     }
@@ -3133,7 +3149,7 @@ void tick_screen_menu_screen_new() {
     (void)state;
     void *flowState = getFlowState(0, 3);
     (void)flowState;
-    tick_user_widget_dials(getFlowState(flowState, 0), 40, &state->new_menu_dials);
+    tick_user_widget_dials(getFlowState(flowState, 0), 41, &state->new_menu_dials);
     {
         bool new_val = evalBooleanProperty(flowState, 6, 3, "Failed to evaluate Hidden flag");
         bool cur_val = lv_obj_has_flag(objects.btn_grind_1, LV_OBJ_FLAG_HIDDEN);
@@ -3186,7 +3202,7 @@ void tick_screen_menu_screen_new() {
             tick_value_change_obj = NULL;
         }
     }
-    tick_user_widget_warnings(getFlowState(flowState, 14), 51);
+    tick_user_widget_warnings(getFlowState(flowState, 14), 52);
 }
 
 void create_screen_steam_screen() {
@@ -3223,7 +3239,7 @@ void create_screen_steam_screen() {
             lv_obj_set_style_pad_bottom(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_bg_opa(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_border_width(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-            create_user_widget_dials(obj, getFlowState(flowState, 0), 58, &state->steam_dials);
+            create_user_widget_dials(obj, getFlowState(flowState, 0), 60, &state->steam_dials);
             lv_obj_clear_flag(obj, LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_CHAIN_HOR | LV_OBJ_FLAG_SCROLL_CHAIN_VER |
                                        LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_align(obj, LV_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -3387,7 +3403,7 @@ void tick_screen_steam_screen() {
     (void)state;
     void *flowState = getFlowState(0, 4);
     (void)flowState;
-    tick_user_widget_dials(getFlowState(flowState, 0), 58, &state->steam_dials);
+    tick_user_widget_dials(getFlowState(flowState, 0), 60, &state->steam_dials);
     {
         const char *new_val = evalTextProperty(flowState, 6, 3, "Failed to evaluate Text in Label widget");
         const char *cur_val = lv_label_get_text(objects.target_temp2);
@@ -3444,7 +3460,7 @@ void create_screen_water_screen() {
             lv_obj_set_style_pad_bottom(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_bg_opa(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_border_width(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-            create_user_widget_dials(obj, getFlowState(flowState, 0), 69, &state->water_dials);
+            create_user_widget_dials(obj, getFlowState(flowState, 0), 71, &state->water_dials);
             lv_obj_clear_flag(obj, LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_CHAIN_HOR | LV_OBJ_FLAG_SCROLL_CHAIN_VER |
                                        LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_align(obj, LV_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -3610,7 +3626,7 @@ void tick_screen_water_screen() {
     (void)state;
     void *flowState = getFlowState(0, 5);
     (void)flowState;
-    tick_user_widget_dials(getFlowState(flowState, 0), 69, &state->water_dials);
+    tick_user_widget_dials(getFlowState(flowState, 0), 71, &state->water_dials);
     {
         const char *new_val = evalTextProperty(flowState, 6, 3, "Failed to evaluate Text in Label widget");
         const char *cur_val = lv_label_get_text(objects.target_temp3);
@@ -3663,7 +3679,7 @@ void create_screen_profile_screen() {
             lv_obj_set_style_pad_bottom(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_bg_opa(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_border_width(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-            create_user_widget_dials(obj, getFlowState(flowState, 0), 80, &state->profile_dials);
+            create_user_widget_dials(obj, getFlowState(flowState, 0), 82, &state->profile_dials);
             lv_obj_clear_flag(obj, LV_OBJ_FLAG_SCROLLABLE);
             lv_obj_set_style_align(obj, LV_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
         }
@@ -4009,7 +4025,7 @@ void tick_screen_profile_screen() {
     (void)state;
     void *flowState = getFlowState(0, 6);
     (void)flowState;
-    tick_user_widget_dials(getFlowState(flowState, 0), 80, &state->profile_dials);
+    tick_user_widget_dials(getFlowState(flowState, 0), 82, &state->profile_dials);
     {
         const char *new_val = evalTextProperty(flowState, 3, 3, "Failed to evaluate Text in Label widget");
         const char *cur_val = lv_label_get_text(objects.obj19);
@@ -4152,7 +4168,7 @@ void create_screen_grind_screen() {
             lv_obj_set_style_pad_bottom(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_bg_opa(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_border_width(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-            create_user_widget_dials(obj, getFlowState(flowState, 0), 91, &state->grind_dials);
+            create_user_widget_dials(obj, getFlowState(flowState, 0), 93, &state->grind_dials);
             lv_obj_clear_flag(obj, LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_CHAIN_HOR | LV_OBJ_FLAG_SCROLL_CHAIN_VER |
                                        LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_align(obj, LV_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -4491,7 +4507,7 @@ void tick_screen_grind_screen() {
     (void)state;
     void *flowState = getFlowState(0, 7);
     (void)flowState;
-    tick_user_widget_dials(getFlowState(flowState, 0), 91, &state->grind_dials);
+    tick_user_widget_dials(getFlowState(flowState, 0), 93, &state->grind_dials);
     {
         bool new_val = evalBooleanProperty(flowState, 4, 3, "Failed to evaluate Checked state");
         bool cur_val = lv_obj_has_state(objects.grind_start_button, LV_STATE_CHECKED);
@@ -4639,7 +4655,7 @@ void create_screen_info_screen() {
             lv_obj_set_style_pad_bottom(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_bg_opa(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_border_width(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-            create_user_widget_dials(obj, getFlowState(flowState, 0), 102, &state->dials1_state);
+            create_user_widget_dials(obj, getFlowState(flowState, 0), 104, &state->dials1_state);
             lv_obj_clear_flag(obj, LV_OBJ_FLAG_SCROLLABLE);
             lv_obj_set_style_align(obj, LV_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
         }
@@ -4859,7 +4875,7 @@ void tick_screen_info_screen() {
     (void)state;
     void *flowState = getFlowState(0, 8);
     (void)flowState;
-    tick_user_widget_dials(getFlowState(flowState, 0), 102, &state->dials1_state);
+    tick_user_widget_dials(getFlowState(flowState, 0), 104, &state->dials1_state);
     {
         bool new_val = evalBooleanProperty(flowState, 4, 3, "Failed to evaluate Hidden flag");
         bool cur_val = lv_obj_has_flag(objects.wifi_icon_1, LV_OBJ_FLAG_HIDDEN);
@@ -6337,7 +6353,7 @@ void create_user_widget_warnings(lv_obj_t *parent_obj, void *flowState, int star
         {
             lv_obj_t *obj = lv_obj_create(parent_obj);
             lv_obj_set_pos(obj, 0, 0);
-            lv_obj_set_size(obj, 180, 30);
+            lv_obj_set_size(obj, 220, 30);
             lv_obj_set_style_pad_left(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_top(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_right(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -6433,6 +6449,21 @@ void create_user_widget_warnings(lv_obj_t *parent_obj, void *flowState, int star
                     lv_obj_set_style_img_recolor_opa(obj, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
                     lv_obj_set_style_img_recolor(obj, lv_color_hex(theme_colors[eez_flow_get_selected_theme_index()][8]),
                                                  LV_PART_MAIN | LV_STATE_DEFAULT);
+                    lv_obj_set_style_img_recolor(obj, lv_color_hex(theme_colors[eez_flow_get_selected_theme_index()][6]),
+                                                 LV_PART_MAIN | LV_STATE_CHECKED);
+                    lv_obj_set_style_img_recolor_opa(obj, 255, LV_PART_MAIN | LV_STATE_CHECKED);
+                }
+                {
+                    // cleanPending
+                    lv_obj_t *obj = lv_img_create(parent_obj);
+                    ((lv_obj_t **)&objects)[startWidgetIndex + 6] = obj;
+                    lv_obj_set_pos(obj, 0, 0);
+                    lv_obj_set_size(obj, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+                    lv_img_set_src(obj, &img_broom);
+                    lv_obj_add_event_cb(obj, event_handler_cb_warnings_clean_pending, LV_EVENT_ALL, flowState);
+                    lv_obj_set_style_img_recolor(obj, lv_color_hex(theme_colors[eez_flow_get_selected_theme_index()][8]),
+                                                 LV_PART_MAIN | LV_STATE_DEFAULT);
+                    lv_obj_set_style_img_recolor_opa(obj, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
                     lv_obj_set_style_img_recolor(obj, lv_color_hex(theme_colors[eez_flow_get_selected_theme_index()][6]),
                                                  LV_PART_MAIN | LV_STATE_CHECKED);
                     lv_obj_set_style_img_recolor_opa(obj, 255, LV_PART_MAIN | LV_STATE_CHECKED);
@@ -6597,6 +6628,32 @@ void tick_user_widget_warnings(void *flowState, int startWidgetIndex) {
                 lv_obj_add_state(((lv_obj_t **)&objects)[startWidgetIndex + 5], LV_STATE_CHECKED);
             } else {
                 lv_obj_clear_state(((lv_obj_t **)&objects)[startWidgetIndex + 5], LV_STATE_CHECKED);
+            }
+            tick_value_change_obj = NULL;
+        }
+    }
+    {
+        bool new_val = evalBooleanProperty(flowState, 7, 3, "Failed to evaluate Hidden flag");
+        bool cur_val = lv_obj_has_flag(((lv_obj_t **)&objects)[startWidgetIndex + 6], LV_OBJ_FLAG_HIDDEN);
+        if (new_val != cur_val) {
+            tick_value_change_obj = ((lv_obj_t **)&objects)[startWidgetIndex + 6];
+            if (new_val) {
+                lv_obj_add_flag(((lv_obj_t **)&objects)[startWidgetIndex + 6], LV_OBJ_FLAG_HIDDEN);
+            } else {
+                lv_obj_clear_flag(((lv_obj_t **)&objects)[startWidgetIndex + 6], LV_OBJ_FLAG_HIDDEN);
+            }
+            tick_value_change_obj = NULL;
+        }
+    }
+    {
+        bool new_val = evalBooleanProperty(flowState, 7, 4, "Failed to evaluate Checked state");
+        bool cur_val = lv_obj_has_state(((lv_obj_t **)&objects)[startWidgetIndex + 6], LV_STATE_CHECKED);
+        if (new_val != cur_val) {
+            tick_value_change_obj = ((lv_obj_t **)&objects)[startWidgetIndex + 6];
+            if (new_val) {
+                lv_obj_add_state(((lv_obj_t **)&objects)[startWidgetIndex + 6], LV_STATE_CHECKED);
+            } else {
+                lv_obj_clear_state(((lv_obj_t **)&objects)[startWidgetIndex + 6], LV_STATE_CHECKED);
             }
             tick_value_change_obj = NULL;
         }
@@ -6952,6 +7009,12 @@ void change_color_theme(uint32_t theme_index) {
                 if (((lv_obj_t **)&objects)[startWidgetIndex + 5])
                     lv_obj_set_style_img_recolor(((lv_obj_t **)&objects)[startWidgetIndex + 5],
                                                  lv_color_hex(theme_colors[theme_index][6]), LV_PART_MAIN | LV_STATE_CHECKED);
+                if (((lv_obj_t **)&objects)[startWidgetIndex + 6])
+                    lv_obj_set_style_img_recolor(((lv_obj_t **)&objects)[startWidgetIndex + 6],
+                                                 lv_color_hex(theme_colors[theme_index][8]), LV_PART_MAIN | LV_STATE_DEFAULT);
+                if (((lv_obj_t **)&objects)[startWidgetIndex + 6])
+                    lv_obj_set_style_img_recolor(((lv_obj_t **)&objects)[startWidgetIndex + 6],
+                                                 lv_color_hex(theme_colors[theme_index][6]), LV_PART_MAIN | LV_STATE_CHECKED);
             }
         }
     }
@@ -6989,7 +7052,7 @@ void change_color_theme(uint32_t theme_index) {
             int startWidgetIndex;
             (void)startWidgetIndex;
             {
-                startWidgetIndex = 29;
+                startWidgetIndex = 30;
                 user_widget_dials_state_t *state = &parent_state->status_dials;
                 (void)state;
                 if (state->scale) {
@@ -7084,7 +7147,7 @@ void change_color_theme(uint32_t theme_index) {
             int startWidgetIndex;
             (void)startWidgetIndex;
             {
-                startWidgetIndex = 40;
+                startWidgetIndex = 41;
                 user_widget_dials_state_t *state = &parent_state->new_menu_dials;
                 (void)state;
                 if (state->scale) {
@@ -7137,7 +7200,7 @@ void change_color_theme(uint32_t theme_index) {
                                                 lv_color_hex(theme_colors[theme_index][0]), LV_PART_MAIN | LV_STATE_DEFAULT);
             }
             {
-                startWidgetIndex = 51;
+                startWidgetIndex = 52;
                 if (((lv_obj_t **)&objects)[startWidgetIndex + 0])
                     lv_obj_set_style_img_recolor(((lv_obj_t **)&objects)[startWidgetIndex + 0],
                                                  lv_color_hex(theme_colors[theme_index][8]), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -7173,6 +7236,12 @@ void change_color_theme(uint32_t theme_index) {
                                                  lv_color_hex(theme_colors[theme_index][8]), LV_PART_MAIN | LV_STATE_DEFAULT);
                 if (((lv_obj_t **)&objects)[startWidgetIndex + 5])
                     lv_obj_set_style_img_recolor(((lv_obj_t **)&objects)[startWidgetIndex + 5],
+                                                 lv_color_hex(theme_colors[theme_index][6]), LV_PART_MAIN | LV_STATE_CHECKED);
+                if (((lv_obj_t **)&objects)[startWidgetIndex + 6])
+                    lv_obj_set_style_img_recolor(((lv_obj_t **)&objects)[startWidgetIndex + 6],
+                                                 lv_color_hex(theme_colors[theme_index][8]), LV_PART_MAIN | LV_STATE_DEFAULT);
+                if (((lv_obj_t **)&objects)[startWidgetIndex + 6])
+                    lv_obj_set_style_img_recolor(((lv_obj_t **)&objects)[startWidgetIndex + 6],
                                                  lv_color_hex(theme_colors[theme_index][6]), LV_PART_MAIN | LV_STATE_CHECKED);
             }
         }
@@ -7197,7 +7266,7 @@ void change_color_theme(uint32_t theme_index) {
             int startWidgetIndex;
             (void)startWidgetIndex;
             {
-                startWidgetIndex = 58;
+                startWidgetIndex = 60;
                 user_widget_dials_state_t *state = &parent_state->steam_dials;
                 (void)state;
                 if (state->scale) {
@@ -7268,7 +7337,7 @@ void change_color_theme(uint32_t theme_index) {
             int startWidgetIndex;
             (void)startWidgetIndex;
             {
-                startWidgetIndex = 69;
+                startWidgetIndex = 71;
                 user_widget_dials_state_t *state = &parent_state->water_dials;
                 (void)state;
                 if (state->scale) {
@@ -7374,7 +7443,7 @@ void change_color_theme(uint32_t theme_index) {
             int startWidgetIndex;
             (void)startWidgetIndex;
             {
-                startWidgetIndex = 80;
+                startWidgetIndex = 82;
                 user_widget_dials_state_t *state = &parent_state->profile_dials;
                 (void)state;
                 if (state->scale) {
@@ -7475,7 +7544,7 @@ void change_color_theme(uint32_t theme_index) {
             int startWidgetIndex;
             (void)startWidgetIndex;
             {
-                startWidgetIndex = 91;
+                startWidgetIndex = 93;
                 user_widget_dials_state_t *state = &parent_state->grind_dials;
                 (void)state;
                 if (state->scale) {
@@ -7585,7 +7654,7 @@ void change_color_theme(uint32_t theme_index) {
             int startWidgetIndex;
             (void)startWidgetIndex;
             {
-                startWidgetIndex = 102;
+                startWidgetIndex = 104;
                 user_widget_dials_state_t *state = &parent_state->dials1_state;
                 (void)state;
                 if (state->scale) {

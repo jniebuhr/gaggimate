@@ -78,7 +78,8 @@ struct Phase {
 
     bool hasVolumetricTarget() const {
         for (const auto &target : targets) {
-            if ((target.type == TargetType::TARGET_TYPE_VOLUMETRIC || target.type == TargetType::TARGET_TYPE_RATIO) && target.value > 0.0f) {
+            if ((target.type == TargetType::TARGET_TYPE_VOLUMETRIC || target.type == TargetType::TARGET_TYPE_RATIO) &&
+                target.value > 0.0f) {
                 return true;
             }
         }
@@ -483,7 +484,7 @@ inline void writeProfile(JsonObject &obj, const Profile &profile) {
                     tObj["type"] = "volumetric";
                     break;
                 case TargetType::TARGET_TYPE_RATIO:
-                        tObj["type"] = "ratio";
+                    tObj["type"] = "ratio";
                     break;
                 case TargetType::TARGET_TYPE_PRESSURE:
                     tObj["type"] = "pressure";

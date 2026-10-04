@@ -246,6 +246,18 @@ void WebUIPlugin::start() {
         // STA reconnect needs nothing done here.
         return;
     }
+    if (!pluginHooksRegistered) {
+        // Fired here, not in setup(), so plugins set up after this one still get to register before the server listens
+        Event serverEvent;
+        serverEvent.id = "webui:server:register";
+        serverEvent.setPointer("server", &server);
+        pluginManager->trigger(serverEvent);
+        Event wsEvent;
+        wsEvent.id = "webui:ws:register";
+        wsEvent.setPointer("ws", &wsHandler);
+        pluginManager->trigger(wsEvent);
+        pluginHooksRegistered = true;
+    }
     server.begin();
     ESP_LOGI("WebUIPlugin", "Started webserver");
     if (apMode) {
@@ -396,6 +408,18 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setWarnScaleBattery(request->arg("warnScaleBattery").toInt());
             if (request->hasArg("warnTemperature"))
                 settings->setWarnTemperature(request->arg("warnTemperature").toInt());
+            if (request->hasArg("warnBackflush"))
+                settings->setWarnBackflush(request->arg("warnBackflush").toInt());
+            if (request->hasArg("warnDescaling"))
+                settings->setWarnDescaling(request->arg("warnDescaling").toInt());
+            if (request->hasArg("backflushIntervalDays"))
+                settings->setBackflushIntervalDays(request->arg("backflushIntervalDays").toInt());
+            if (request->hasArg("backflushIntervalShots"))
+                settings->setBackflushIntervalShots(request->arg("backflushIntervalShots").toInt());
+            if (request->hasArg("descalingIntervalWeeks"))
+                settings->setDescalingIntervalWeeks(request->arg("descalingIntervalWeeks").toInt());
+            if (request->hasArg("descalingIntervalShots"))
+                settings->setDescalingIntervalShots(request->arg("descalingIntervalShots").toInt());
             if (request->hasArg("delayAdjust"))
                 settings->setDelayAdjust(parseBoolArg(request->arg("delayAdjust")));
             if (request->hasArg("brewDelay"))
@@ -544,6 +568,16 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["warnScaleConnected"] = settings.getWarnScaleConnected();
     doc["warnScaleBattery"] = settings.getWarnScaleBattery();
     doc["warnTemperature"] = settings.getWarnTemperature();
+    doc["warnBackflush"] = settings.getWarnBackflush();
+    doc["warnDescaling"] = settings.getWarnDescaling();
+    doc["backflushIntervalDays"] = settings.getBackflushIntervalDays();
+    doc["backflushIntervalShots"] = settings.getBackflushIntervalShots();
+    doc["descalingIntervalWeeks"] = settings.getDescalingIntervalWeeks();
+    doc["descalingIntervalShots"] = settings.getDescalingIntervalShots();
+    doc["lastBackflushTime"] = settings.getLastBackflushTime();
+    doc["lastDescalingTime"] = settings.getLastDescalingTime();
+    doc["shotsSinceBackflush"] = settings.getShotsSinceBackflush();
+    doc["shotsSinceDescaling"] = settings.getShotsSinceDescaling();
     doc["brewDelay"] = settings.getBrewDelay();
     doc["grindDelay"] = settings.getGrindDelay();
     doc["delayAdjust"] = settings.isDelayAdjust();

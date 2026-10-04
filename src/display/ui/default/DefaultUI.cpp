@@ -589,6 +589,8 @@ void DefaultUI::updateWarnings() {
     warnings.scaleBatteryError(wm.isError(WARNING_SCALE_BATTERY));
     warnings.temperatureWarn(wm.isWarn(WARNING_TEMPERATURE));
     warnings.temperatureError(wm.isError(WARNING_TEMPERATURE));
+    warnings.cleanWarn(wm.isWarn(WARNING_BACKFLUSH) || wm.isWarn(WARNING_DESCALING));
+    warnings.cleanError(wm.isError(WARNING_BACKFLUSH) || wm.isError(WARNING_DESCALING));
     const String labels = wm.getLabels();
     if (stringChanged(warnings.labels(), labels.c_str()))
         warnings.labels(labels.c_str());

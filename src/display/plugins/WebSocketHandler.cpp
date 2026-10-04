@@ -261,6 +261,8 @@ void WebSocketHandler::handleWebSocketData(AsyncWebSocket *server, AsyncWebSocke
                     controller->getClientController()->tare();
                 } else if (msgType == "req:flush:stop") {
                     handleFlushStop(client->id(), doc);
+                } else if (auto it = pluginRequestHandlers.find(msgType); it != pluginRequestHandlers.end()) {
+                    it->second(cid, doc);
                 }
             }
         }
@@ -496,6 +498,8 @@ void WebSocketHandler::publishTelemetry() {
 
     broadcastJson(statusDoc);
 }
+
+void WebSocketHandler::sendJson(uint32_t clientId, JsonDocument &doc) { ws.text(clientId, toWsBuffer(doc)); }
 
 void WebSocketHandler::broadcastJson(JsonDocument &doc) {
     if (ws.getClients().empty()) {
