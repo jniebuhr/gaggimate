@@ -1502,6 +1502,7 @@ void Controller::onFlush() {
     // Allocate outside the lock; reachable from the UI, AsyncTCP and BLE tasks (GM-147).
     const int duration = settings.getFlushDuration();
     Profile profile = FLUSH_PROFILE;
+    profile.temperature = profileManager->getSelectedProfile().temperature;
     profile.phases[0].duration = duration > 0 ? duration : FLUSH_HOLD_MAX_DURATION_S; // 0 = hold, capped
     auto *flush = new BrewProcess(profile, ProcessTarget::TIME, settings.getBrewDelay());
     flush->holdPhase = duration == 0; // pump phase ends on onFlushRelease(), the drain phase still runs
