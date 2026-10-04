@@ -4,7 +4,7 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
 
-enum class TargetType { TARGET_TYPE_VOLUMETRIC, TARGET_TYPE_PRESSURE, TARGET_TYPE_FLOW, TARGET_TYPE_PUMPED };
+enum class TargetType { TARGET_TYPE_VOLUMETRIC, TARGET_TYPE_PRESSURE, TARGET_TYPE_FLOW, TARGET_TYPE_PUMPED, TARGET_TYPE_RATIO };
 enum class TargetOperator { LTE, GTE };
 enum class PumpTarget {
     PUMP_TARGET_FLOW,
@@ -26,6 +26,7 @@ enum class PhaseExitReason : uint8_t {
     SAFETY = 6,            // brew safety timeout (set by BrewProcess, not Phase::isFinished)
     ABORTED = 7,           // shot manually stopped before the process finished
     HOLD_RELEASED = 8,     // held phase ended because the button was released (hold-to-flush)
+    TARGET_RATIO = 9,      // ratio target reached
 };
 
 struct Target {
@@ -66,9 +67,18 @@ struct Phase {
     PumpAdvanced pumpAdvanced;
     std::vector<Target> targets;
 
+    bool hasRatioTarget() const {
+        for (const auto &target : targets) {
+            if (target.type == TargetType::TARGET_TYPE_RATIO && target.value > 0.0f) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     bool hasVolumetricTarget() const {
         for (const auto &target : targets) {
-            if (target.type == TargetType::TARGET_TYPE_VOLUMETRIC && target.value > 0.0f) {
+            if ((target.type == TargetType::TARGET_TYPE_VOLUMETRIC || target.type == TargetType::TARGET_TYPE_RATIO) && target.value > 0.0f) {
                 return true;
             }
         }
@@ -77,7 +87,7 @@ struct Phase {
 
     Target getVolumetricTarget() const {
         for (auto &target : targets) {
-            if (target.type == TargetType::TARGET_TYPE_VOLUMETRIC) {
+            if (target.type == TargetType::TARGET_TYPE_VOLUMETRIC || target.type == TargetType::TARGET_TYPE_RATIO) {
                 return target;
             }
         }
@@ -114,7 +124,7 @@ struct Phase {
 
     // Returns the reason the phase finished, or PhaseExitReason::NONE if it is still running.
     PhaseExitReason isFinished(bool enableVolumetric, float volume, float time_in_phase, float current_flow,
-                               float current_pressure, float water_pumped, String type) const {
+                               float current_pressure, float water_pumped, String type, float dose) const {
         bool volumetricTested = false;
         for (const auto &target : targets) {
             switch (target.type) {
@@ -125,6 +135,15 @@ struct Phase {
                 volumetricTested = enableVolumetric;
                 if (enableVolumetric && target.isReached(volume)) {
                     return PhaseExitReason::TARGET_VOLUMETRIC;
+                }
+                break;
+            case TargetType::TARGET_TYPE_RATIO:
+                if (target.value <= 0.0f || dose <= 0.0f) {
+                    break;
+                }
+                volumetricTested = enableVolumetric;
+                if (enableVolumetric && target.isReached(volume / dose)) {
+                    return PhaseExitReason::TARGET_RATIO;
                 }
                 break;
             case TargetType::TARGET_TYPE_PRESSURE:
@@ -153,7 +172,7 @@ struct Phase {
     void removeVolumetricTarget() {
         std::vector<Target> newTargets;
         for (const auto &target : targets) {
-            if (target.type != TargetType::TARGET_TYPE_VOLUMETRIC) {
+            if (target.type != TargetType::TARGET_TYPE_VOLUMETRIC && target.type != TargetType::TARGET_TYPE_RATIO) {
                 newTargets.push_back(target);
             }
         }
@@ -168,6 +187,7 @@ struct Profile {
     String description;
     bool utility = false;
     float temperature;
+    float dose = 0;
     bool favorite = false;
     bool selected = false;
     std::vector<Phase> phases;
@@ -175,6 +195,15 @@ struct Profile {
     bool isVolumetric() const {
         for (const auto &phase : phases) {
             if (phase.hasVolumetricTarget()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool hasRatio() const {
+        for (const auto &phase : phases) {
+            if (phase.hasRatioTarget()) {
                 return true;
             }
         }
@@ -206,7 +235,12 @@ struct Profile {
         float volume = 0.0;
         for (const auto &phase : phases) {
             if (phase.hasVolumetricTarget()) {
-                volume = phase.getVolumetricTarget().value;
+                Target volumetricTarget = phase.getVolumetricTarget();
+                if (volumetricTarget.type == TargetType::TARGET_TYPE_VOLUMETRIC) {
+                    volume = volumetricTarget.value;
+                } else if (volumetricTarget.type == TargetType::TARGET_TYPE_RATIO && dose > 0.0f) {
+                    volume = volumetricTarget.value * dose;
+                }
             }
         }
         return volume;
@@ -232,6 +266,9 @@ struct Profile {
         float max = getTotalVolume();
         float adjustedMax = max + amount;
         float adjustment = adjustedMax / max;
+        if (dose > 0.0f && hasRatio()) {
+            dose = dose * adjustment;
+        }
         for (auto &phase : phases) {
             if (phase.hasVolumetricTarget() && phase.phase == PhaseType::PHASE_TYPE_BREW) {
                 phase.adjustVolumetricTarget(adjustment);
@@ -276,6 +313,7 @@ inline bool parseProfile(const JsonObject &obj, Profile &profile) {
     profile.type = obj["type"].as<String>();
     profile.description = obj["description"].as<String>();
     profile.temperature = obj["temperature"].as<float>();
+    profile.dose = obj["dose"].as<float>();
     profile.favorite = obj["favorite"] | false;
     profile.selected = obj["selected"] | false;
     profile.utility = obj["utility"] | false;
@@ -346,6 +384,8 @@ inline bool parseProfile(const JsonObject &obj, Profile &profile) {
                 auto type = t["type"].as<String>();
                 if (type == "volumetric") {
                     target.type = TargetType::TARGET_TYPE_VOLUMETRIC;
+                } else if (type == "ratio") {
+                    target.type = TargetType::TARGET_TYPE_RATIO;
                 } else if (type == "pressure") {
                     target.type = TargetType::TARGET_TYPE_PRESSURE;
                 } else if (type == "flow") {
@@ -383,6 +423,7 @@ inline void writeProfile(JsonObject &obj, const Profile &profile) {
     obj["type"] = profile.type;
     obj["description"] = profile.description;
     obj["temperature"] = profile.temperature;
+    obj["dose"] = profile.dose;
     obj["favorite"] = profile.favorite;
     obj["selected"] = profile.selected;
     obj["utility"] = profile.utility;
@@ -440,6 +481,9 @@ inline void writeProfile(JsonObject &obj, const Profile &profile) {
                 switch (t.type) {
                 case TargetType::TARGET_TYPE_VOLUMETRIC:
                     tObj["type"] = "volumetric";
+                    break;
+                case TargetType::TARGET_TYPE_RATIO:
+                        tObj["type"] = "ratio";
                     break;
                 case TargetType::TARGET_TYPE_PRESSURE:
                     tObj["type"] = "pressure";

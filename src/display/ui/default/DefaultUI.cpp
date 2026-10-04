@@ -731,7 +731,13 @@ void DefaultUI::updateBrewProcess() {
     const bool weightTarget = bp->target == ProcessTarget::VOLUMETRIC && phase.hasVolumetricTarget();
     brewProcess.phase_value_is_weight(weightTarget);
     if (weightTarget) {
-        const float target = phase.getVolumetricTarget().value;
+        float target = 0.0f;
+        Target volumetricTarget = phase.getVolumetricTarget();
+        if (volumetricTarget.type == TargetType::TARGET_TYPE_VOLUMETRIC) {
+            target = volumetricTarget.value;
+        } else if (volumetricTarget.type == TargetType::TARGET_TYPE_RATIO && bp->profile.dose > 0.0f) {
+            target = volumetricTarget.value * bp->profile.dose;
+        }
         const float current = static_cast<float>(bp->currentVolume);
         brewProcess.phase_value_current(current);
         brewProcess.phase_value_target(target);

@@ -65,6 +65,7 @@ static constexpr uint8_t PHASE_EXIT_REASON_TARGET_PUMPED = 4;     // pumped-wate
 static constexpr uint8_t PHASE_EXIT_REASON_DURATION = 5;          // phase duration elapsed
 static constexpr uint8_t PHASE_EXIT_REASON_SAFETY = 6;            // brew safety timeout
 static constexpr uint8_t PHASE_EXIT_REASON_ABORTED = 7;           // shot manually stopped before finishing
+static constexpr uint8_t PHASE_EXIT_REASON_TARGET_RATIO = 9;      // ratio target reached
 
 #pragma pack(push, 1)
 struct ShotLogHeader {

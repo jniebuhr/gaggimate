@@ -13,7 +13,7 @@ function isDirectionallyValidLookAhead(operator, currentValue, nextValue) {
 }
 
 export function isWeightTarget(target) {
-  return target.type === 'volumetric' || target.type === 'weight';
+  return target.type === 'volumetric' || target.type === 'weight' || target.type === 'ratio';
 }
 
 function shouldSkipTarget(target, context) {
@@ -236,6 +236,7 @@ export function formatStopReason(type) {
 
   // Map internal types to GM UI friendly labels
   if (t === 'duration') return 'Time Stop';
+  if (t === 'ratio') return 'Ratio Stop';
   if (t === 'pumped') return 'Pumped Water Stop';
   if (t === 'volumetric' || t === 'weight') return 'Weight Stop';
   if (t === 'pressure') return 'Pressure Stop';

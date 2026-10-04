@@ -76,6 +76,12 @@ String padId(String id, int length = 6) {
     }
     return id;
 }
+
+// Notes sit next to their .slog under the same padded id
+String notesPath(uint32_t id) { return "/h/" + padId(String(id)) + ".json"; }
+
+// Firmware since the shot index (#449) keyed notes by the unpadded id the web UI sends
+String legacyNotesPath(uint32_t id) { return "/h/" + String(id) + ".json"; }
 } // namespace
 
 ShotHistoryPlugin ShotHistory;
@@ -286,6 +292,16 @@ void ShotHistoryPlugin::record() {
             controller->getSettings().setHistoryIndex(controller->getSettings().getHistoryIndex() + 1);
             cleanupHistory();
 
+            // Merge so notes saved during extended recording keep a user-entered dose
+            if (shotDose > 0.0f) {
+                JsonDocument notes(&psramAllocator);
+                loadNotes(currentId, notes);
+                if (notes["doseIn"].isNull() || notes["doseIn"].as<String>().isEmpty()) {
+                    notes["doseIn"] = String(shotDose, 1);
+                    saveNotes(currentId, notes);
+                }
+            }
+
             // Always create a complete index entry via upsert.
             // If an early entry exists, it gets overwritten with final data.
             // If no early entry exists, a new one is appended.
@@ -295,7 +311,7 @@ void ShotHistoryPlugin::record() {
             indexEntry.duration = header.durationMs;
             indexEntry.volume = header.finalWeight;
             indexEntry.rating = 0;
-            indexEntry.flags = SHOT_FLAG_COMPLETED;
+            indexEntry.flags = SHOT_FLAG_COMPLETED | (fs->exists(resolveNotesPath(currentId.toInt())) ? SHOT_FLAG_HAS_NOTES : 0);
             strncpy(indexEntry.profileId, header.profileId, sizeof(indexEntry.profileId) - 1);
             indexEntry.profileId[sizeof(indexEntry.profileId) - 1] = '\0';
             strncpy(indexEntry.profileName, header.profileName, sizeof(indexEntry.profileName) - 1);
@@ -363,6 +379,7 @@ void ShotHistoryPlugin::startRecording() {
     // Reset phase tracking for new shot
     lastRecordedPhase = 0xFF;                                      // Invalid value to detect first phase
     finalExitReason = static_cast<uint8_t>(PhaseExitReason::NONE); // Reset shot-end reason
+    shotDose = 0.0f;
 }
 
 unsigned long ShotHistoryPlugin::getTime() {
@@ -384,6 +401,7 @@ void ShotHistoryPlugin::endRecording() {
             PhaseExitReason reason =
                 brewProcess->processPhase == ProcessPhase::FINISHED ? brewProcess->lastExitReason : PhaseExitReason::ABORTED;
             finalExitReason = static_cast<uint8_t>(reason);
+            shotDose = brewProcess->profile.dose; // process copy, unaffected by later temporary adjustments
         }
     }
 
@@ -546,12 +564,11 @@ void ShotHistoryPlugin::cleanupHistory() {
         if (end > start) {
             uint32_t shotId = fname.substring(start, end).toInt();
             markIndexDeleted(shotId);
+            fs->remove(notesPath(shotId));
+            fs->remove(legacyNotesPath(shotId));
         }
 
-        // Remove .slog and associated .json notes file
         fs->remove(fname);
-        String notesPath = fname.substring(0, fname.lastIndexOf('.')) + ".json";
-        fs->remove(notesPath);
         removed++;
     }
 
@@ -585,7 +602,8 @@ void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &respo
             paddedId = "0" + paddedId;
         }
         fs->remove("/h/" + paddedId + ".slog");
-        fs->remove("/h/" + paddedId + ".json");
+        fs->remove(notesPath(id.toInt()));
+        fs->remove(legacyNotesPath(id.toInt()));
 
         // Mark as deleted in index
         markIndexDeleted(id.toInt());
@@ -626,7 +644,7 @@ void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &respo
 }
 
 void ShotHistoryPlugin::saveNotes(const String &id, const JsonDocument &notes) {
-    File file = fs->open("/h/" + id + ".json", FILE_WRITE);
+    File file = fs->open(resolveNotesPath(id.toInt()), FILE_WRITE);
     if (file) {
         String notesStr;
         serializeJson(notes, notesStr);
@@ -636,12 +654,25 @@ void ShotHistoryPlugin::saveNotes(const String &id, const JsonDocument &notes) {
 }
 
 void ShotHistoryPlugin::loadNotes(const String &id, JsonDocument &notes) {
-    File file = fs->open("/h/" + id + ".json", "r");
+    File file = fs->open(resolveNotesPath(id.toInt()), "r");
     if (file) {
         String notesStr = file.readString();
         file.close();
         deserializeJson(notes, notesStr);
     }
+}
+
+// Returns the canonical notes path, moving a legacy unpadded-id file onto it (the UI has shown that one since #449)
+String ShotHistoryPlugin::resolveNotesPath(uint32_t id) {
+    String path = notesPath(id);
+    String legacy = legacyNotesPath(id);
+    if (legacy != path && fs->exists(legacy)) {
+        fs->remove(path);
+        if (!fs->rename(legacy.c_str(), path.c_str())) {
+            return legacy;
+        }
+    }
+    return path;
 }
 
 void ShotHistoryPlugin::loopTask(void *arg) {
@@ -1051,11 +1082,11 @@ void ShotHistoryPlugin::rebuildIndex() {
         }
 
         // Check for notes and extract rating and volume override
-        String notesPath = "/h/" + String(shotId, 10) + ".json";
-        if (fs->exists(notesPath)) {
+        String shotNotesPath = resolveNotesPath(shotId);
+        if (fs->exists(shotNotesPath)) {
             entry.flags |= SHOT_FLAG_HAS_NOTES;
 
-            File notesFile = fs->open(notesPath, "r");
+            File notesFile = fs->open(shotNotesPath, "r");
             if (notesFile) {
                 String notesStr = notesFile.readString();
                 notesFile.close();
