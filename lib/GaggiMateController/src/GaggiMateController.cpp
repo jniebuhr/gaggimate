@@ -7,6 +7,7 @@
 
 #include <peripherals/NtcThermistor.h>
 #include <utility>
+#include <Preferences.h>
 
 constexpr uint32_t ADDON_GEARPUMP = 7;
 constexpr uint32_t ADDON_HW_SCALE = 8;
@@ -38,6 +39,14 @@ void GaggiMateController::setup() {
     delay(5000);
     detectBoard();
     detectAddon();
+    {
+        Preferences prefs;
+        if (prefs.begin("heater-config", true)) {
+            _config.heaterPriorityControl = prefs.getBool("enabled", _config.heaterPriorityControl);
+            _config.heaterMinOffTime = std::clamp(prefs.getUInt("handover", _config.heaterMinOffTime), 20u, 5000u);
+            prefs.end();
+        }
+    }
 
     if (!_config.capabilites.dualBoiler) {
         brewTemperature = new Max31855Thermocouple(
@@ -80,6 +89,10 @@ void GaggiMateController::setup() {
     steamBtn = new DigitalInput(_config.steamButtonPin, [this](const bool state) { _comms.sendButtonState(1, state); });
     if (_config.waterButtonPin != 0) {
         waterBtn = new DigitalInput(_config.waterButtonPin, [this](const bool state) { _comms.sendButtonState(2, state); });
+    }
+    if (_config.capabilites.dualBoiler) {
+        // Attach before either heater task starts; they cannot bypass arbitration.
+        heaterCoordinator = new HeaterCoordinator(heater, heater2, _config.heaterMinOffTime, _config.heaterPriorityControl);
     }
     this->hardwareScale = new HardwareScale(
         _config.scaleDat0Pin, _config.scaleDat1Pin, _config.scaleClkPin,
@@ -176,6 +189,9 @@ void GaggiMateController::setup() {
     }
     if (tankLevel != nullptr) {
         tankLevel->setup();
+    }
+    if (heaterCoordinator && !heaterCoordinator->setup()) {
+        thermalRunawayShutdown();
     }
     // Set up thermal feedforward for main heater if pressure/dimming capability exists
     if (heater && _config.capabilites.dimming && _config.capabilites.pressure) {
@@ -282,6 +298,15 @@ void GaggiMateController::setup() {
         if (heater2 != nullptr) {
             this->heater2->setTunings(Kp, Ki, Kd);
         }
+    });
+    _comms.onHeaterCoordination([this](bool enabled, uint32_t handoverMs) {
+        if (!_config.capabilites.dualBoiler || handoverMs < 20 || handoverMs > 5000) return;
+        Preferences prefs;
+        if (!prefs.begin("heater-config", false)) return;
+        if (prefs.getBool("enabled", !enabled) != enabled) prefs.putBool("enabled", enabled);
+        if (prefs.getUInt("handover", 0) != handoverMs) prefs.putUInt("handover", handoverMs);
+        prefs.end();
+        // Applied on restart, before heater tasks start.
     });
     _comms.onPumpSettings([this](gm::PumpSettings settings) {
         if (_config.capabilites.dimming) {

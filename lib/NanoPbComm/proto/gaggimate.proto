@@ -44,6 +44,7 @@ message Payload {
         PressureScale pressure_scale = 9;
         Tare tare = 10;
         LedControl led = 11;
+        HeaterCoordinationSettings heater_coordination = 18;
         ScaleFactors scale_factors = 12;
 
         // Responses: controller -> display
@@ -63,6 +64,11 @@ message Payload {
 // ---------------------------------------------------------------------------
 
 message Ping {}
+
+message HeaterCoordinationSettings {
+    bool enabled = 1;
+    uint32 handover_ms = 2;
+}
 
 enum BoilerMode {
     BOILER_MODE_TEMPERATURE = 0; // `setpoint` is a target temperature in degC

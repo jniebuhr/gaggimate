@@ -409,6 +409,7 @@ void Controller::onSystemInfo(const char *hardware, const char *version, uint32_
     } else {
         setPressureScale();
         setScaleFactors();
+        setHeaterCoordination();
         setPidSettings();
         setPumpModelCoeffs();
         configResendUntil = millis() + CONFIG_RESEND_WINDOW_MS;
@@ -886,6 +887,11 @@ void Controller::setScaleFactors() {
 
     comms.sendScaleFactors(scaleFactor1, scaleFactor2, settings.getHardwareScaleSampleRateSps(),
                            settings.getHardwareScaleIdleAlpha(), settings.getHardwareScaleActiveAlpha());
+}
+
+void Controller::setHeaterCoordination() {
+    if (systemInfo.capabilities.dualBoiler)
+        comms.sendHeaterCoordination(settings.isHeaterCoordinationEnabled(), settings.getHeaterHandoverMs());
 }
 
 void Controller::setPumpModelCoeffs(void) {

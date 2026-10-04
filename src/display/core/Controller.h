@@ -50,6 +50,7 @@ class Controller {
     void setPressureScale();
     void setScaleFactors();
     void setPumpModelCoeffs();
+    void setHeaterCoordination();
     void setPidSettings();
     void setTargetGrindDuration(int duration);
     void setTargetGrindVolume(double volume);
