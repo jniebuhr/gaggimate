@@ -249,6 +249,9 @@ void BleServerTransport::onAuthenticationComplete(ble_gap_conn_desc *desc) {
         _server->disconnect(desc->conn_handle);
         return;
     }
+    // Negotiate the controller's transmit length too; ATT MTU alone leaves
+    // telemetry fragmented into small packets and can exhaust the BLE packet pool.
+    _server->setDataLen(desc->conn_handle, BLE_DLE_OCTETS);
     if (desc->sec_state.bonded)
         adoptPeer(NimBLEAddress(desc->peer_id_addr));
 }
