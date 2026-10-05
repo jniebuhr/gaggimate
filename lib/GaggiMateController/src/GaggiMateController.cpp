@@ -84,7 +84,10 @@ void GaggiMateController::setup() {
     this->hardwareScale = new HardwareScale(
         _config.scaleDat0Pin, _config.scaleDat1Pin, _config.scaleClkPin,
         [this](float weight, float cell1Weight, float cell2Weight, bool cell1Valid, bool cell2Valid) {
-            if (_comms.isConnected()) {
+            portENTER_CRITICAL(&scaleSnapshotMux);
+            latestScale = {weight, cell1Weight, cell2Weight, cell1Valid, cell2Valid, true};
+            portEXIT_CRITICAL(&scaleSnapshotMux);
+            if (_comms.isConnected() && !_comms.shouldThrottleHardwareScale()) {
                 _comms.sendScaleMeasurement(weight, cell1Weight, cell2Weight, cell1Valid, cell2Valid);
             }
         },
@@ -465,7 +468,7 @@ void GaggiMateController::sendSensorData() {
     float puckResistance = 0.0f;
     float pressure = 0.0f;
     float waterPumped = 0.0f;
-    gm::Payload batch[2];
+    gm::Payload batch[3];
     size_t n = 0;
     if (_config.capabilites.pressure) {
         pressure = pressureSensor->getPressure();
@@ -482,6 +485,7 @@ void GaggiMateController::sendSensorData() {
     }
     gm::Payload p = gaggimate_Payload_init_zero;
     p.which_content = gaggimate_Payload_sensor_tag;
+    p.content.sensor = gaggimate_SensorData_init_zero;
     p.content.sensor.boilers_count = _config.capabilites.dualBoiler ? 2 : 1; // boiler 0; schema allows more
     p.content.sensor.boilers[0].index = 0;
     p.content.sensor.boilers[0].temperature = this->brewTemperature->read();
@@ -497,7 +501,25 @@ void GaggiMateController::sendSensorData() {
     p.content.sensor.puck_resistance = puckResistance;
     p.content.sensor.pump_power = pumpPower;
     p.content.sensor.water_pumped = waterPumped;
+    ScaleSnapshot snapshot;
+    portENTER_CRITICAL(&scaleSnapshotMux);
+    snapshot = latestScale;
+    portEXIT_CRITICAL(&scaleSnapshotMux);
+    if (snapshot.received) {
+        p.content.sensor.has_scale_cells = true;
+        p.content.sensor.scale_cells.cell1_weight = snapshot.cell1Weight;
+        p.content.sensor.scale_cells.cell2_weight = snapshot.cell2Weight;
+        p.content.sensor.scale_cells.cell1_valid = snapshot.cell1Valid;
+        p.content.sensor.scale_cells.cell2_valid = snapshot.cell2Valid;
+    }
     batch[n++] = p;
+    const unsigned long now = millis();
+    if (_comms.isConnected() && _comms.shouldThrottleHardwareScale() && snapshot.received &&
+        (lastIdleScaleSend == 0 || now - lastIdleScaleSend >= 250)) {
+        batch[n++] = _comms.buildScaleMeasurement(snapshot.weight, snapshot.cell1Weight, snapshot.cell2Weight,
+                                                 snapshot.cell1Valid, snapshot.cell2Valid);
+        lastIdleScaleSend = now;
+    }
     _comms.sendUnreliableBatch(batch, n);
 }
 

@@ -47,6 +47,14 @@ gm::Payload GaggiMateClient::buildPing() {
     return p;
 }
 
+gm::Payload GaggiMateClient::buildHardwareScaleRate(uint32_t publicationIntervalMs) {
+    gm::Payload p = gaggimate_Payload_init_zero;
+    p.which_content = gaggimate_Payload_hardware_scale_rate_tag;
+    p.content.hardware_scale_rate = gaggimate_HardwareScaleRate_init_zero;
+    p.content.hardware_scale_rate.publication_interval_ms = publicationIntervalMs;
+    return p;
+}
+
 gm::Payload GaggiMateClient::buildBoilerControl(uint8_t index, BoilerControlMode mode, float setpoint) {
     gm::Payload p = gaggimate_Payload_init_zero;
     p.which_content = gaggimate_Payload_boiler_tag;
@@ -192,6 +200,10 @@ void GaggiMateClient::registerHandlers() {
         }
     });
     _endpoint.on(gaggimate_Payload_sensor_tag, [this](const gm::Payload &p) {
+        if (p.content.sensor.has_scale_cells && _scaleCellsCb) {
+            const auto &cells = p.content.sensor.scale_cells;
+            _scaleCellsCb(cells.cell1_weight, cells.cell2_weight, cells.cell1_valid, cells.cell2_valid);
+        }
         if (!_sensorCb)
             return;
         // The display tracks a single boiler today; read boiler 0 if present.
@@ -226,7 +238,8 @@ void GaggiMateClient::registerHandlers() {
     _endpoint.on(gaggimate_Payload_scale_tag, [this](const gm::Payload &p) {
         if (_scaleCb)
             _scaleCb(p.content.scale.weight, p.content.scale.cell1_weight, p.content.scale.cell2_weight,
-                     p.content.scale.cell1_valid, p.content.scale.cell2_valid);
+                     p.content.scale.cell1_valid, p.content.scale.cell2_valid,
+                     p.content.scale.valid);
     });
     _endpoint.on(gaggimate_Payload_tof_tag, [this](const gm::Payload &p) {
         if (_tofCb)

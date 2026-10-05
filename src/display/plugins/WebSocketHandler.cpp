@@ -133,16 +133,6 @@ void WebSocketHandler::attach(AsyncWebServer &server) {
 }
 
 void WebSocketHandler::loop(unsigned long now) {
-    if (now - lastHardwareScaleDiagnostic >= 200 && hasClients() && controller->getSystemInfo().capabilities.hwScale) {
-        lastHardwareScaleDiagnostic = now;
-        hardwareScaleDiagnosticDoc.clear();
-        hardwareScaleDiagnosticDoc["tp"] = "evt:hardware-scale";
-        hardwareScaleDiagnosticDoc["c1"] = controller->getHardwareScaleCell1Weight();
-        hardwareScaleDiagnosticDoc["c2"] = controller->getHardwareScaleCell2Weight();
-        hardwareScaleDiagnosticDoc["c1v"] = controller->isHardwareScaleCell1Valid();
-        hardwareScaleDiagnosticDoc["c2v"] = controller->isHardwareScaleCell2Valid();
-        broadcastJson(hardwareScaleDiagnosticDoc);
-    }
     if (now > lastStatus + STATUS_PERIOD && hasClients()) {
         lastStatus = now;
         publishState(now);
@@ -439,6 +429,12 @@ void WebSocketHandler::publishTelemetry() {
     const bool bleConnected = BLEScales.isConnected();
     statusDoc["bw"] = bleConnected ? this->currentBluetoothWeight : 0; // current bluetooth weight
     statusDoc["cw"] = this->currentActiveWeight;
+    if (controller->getSystemInfo().capabilities.hwScale) {
+        statusDoc["c1"] = controller->getHardwareScaleCell1Weight();
+        statusDoc["c2"] = controller->getHardwareScaleCell2Weight();
+        statusDoc["c1v"] = controller->isHardwareScaleCell1Valid();
+        statusDoc["c2v"] = controller->isHardwareScaleCell2Valid();
+    }
     // Explicit null/zero so merging clients drop a finished process instead of keeping the last one.
     statusDoc["process"] = nullptr;
     statusDoc["pkr"] = 0;

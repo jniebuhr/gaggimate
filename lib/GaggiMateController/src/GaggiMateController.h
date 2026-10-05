@@ -64,6 +64,17 @@ class GaggiMateController {
     ADSAdc *adc = nullptr;
     FlowSensor *flowSensor = nullptr;
     HardwareScale *hardwareScale = nullptr;
+    struct ScaleSnapshot {
+        float weight = 0.0f;
+        float cell1Weight = 0.0f;
+        float cell2Weight = 0.0f;
+        bool cell1Valid = false;
+        bool cell2Valid = false;
+        bool received = false;
+    };
+    ScaleSnapshot latestScale;
+    portMUX_TYPE scaleSnapshotMux = portMUX_INITIALIZER_UNLOCKED;
+    unsigned long lastIdleScaleSend = 0;
 
     GearpumpAddon *gearpumpAddon = nullptr;
 

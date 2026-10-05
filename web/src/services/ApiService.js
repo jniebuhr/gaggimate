@@ -103,8 +103,6 @@ export default class ApiService {
     const listeners = Object.values(this.listeners[message.tp] || {});
     if (message.tp === 'evt:status') {
       this._onStatus(message);
-    } else if (message.tp === 'evt:hardware-scale') {
-      this._onHardwareScale(message);
     }
     for (const listener of listeners) {
       listener(message);
@@ -172,6 +170,10 @@ export default class ApiService {
     const map = (key, name, convert = v => v) => {
       if (has(key)) status[name] = convert(message[key]);
     };
+    map('c1', 'hardwareScaleCell1Weight');
+    map('c2', 'hardwareScaleCell2Weight');
+    map('c1v', 'hardwareScaleCell1Valid', Boolean);
+    map('c2v', 'hardwareScaleCell2Valid', Boolean);
     map('ct', 'currentTemperature');
     map('tt', 'targetTemperature');
     map('cst', 'currentSteamTemperature');
@@ -229,19 +231,6 @@ export default class ApiService {
     }
 
     machine.value = { ...machine.value, connected: true, status, capabilities, history };
-  }
-
-  _onHardwareScale(message) {
-    machine.value = {
-      ...machine.value,
-      status: {
-        ...machine.value.status,
-        hardwareScaleCell1Weight: message.c1 ?? 0,
-        hardwareScaleCell2Weight: message.c2 ?? 0,
-        hardwareScaleCell1Valid: !!message.c1v,
-        hardwareScaleCell2Valid: !!message.c2v,
-      },
-    };
   }
 }
 

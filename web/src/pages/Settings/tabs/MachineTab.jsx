@@ -443,7 +443,8 @@ export function MachineTab({ formData, onChange, setField }) {
             <div>
               <h4 className='font-medium'>Calibration</h4>
               <p className='text-base-content/60 mt-1 text-sm'>
-                Tare the scale, then place a known weight and calibrate each load cell.
+                Calibrate while no brew or grind process is running. Tare the scale, then place a
+                known weight and calibrate each load cell.
               </p>
             </div>
 
