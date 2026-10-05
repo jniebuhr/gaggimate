@@ -47,6 +47,7 @@ static float clampPercentage(float pct) { return pct < 0.0f ? 0.0f : (pct > 100.
 // Theme color slots (Pressure, Progress, Temperature, Warning) so the chart matches the rest of the UI.
 static constexpr int SHOT_THEME_COLORS[SHOT_SERIES_COUNT] = {7, 7, 2, 2, 6, 8};
 static constexpr int SHOT_GUIDE_COLOR = 3; // theme SemiDark, for the baseline and phase markers
+static constexpr lv_coord_t SHOT_DOT_RADIUS = 3;
 static constexpr bool SHOT_IS_TARGET[SHOT_SERIES_COUNT] = {false, true, false, true, false, false};
 static constexpr lv_coord_t SHOT_CHART_SCALE = 1000;    // every series is normalised to 0..1000 of its own range
 static constexpr float SHOT_FLOW_RANGE_DEFAULT = 12.0f; // bar / ml/s
@@ -811,7 +812,9 @@ void DefaultUI::setupShotChart() {
     lv_chart_set_point_count(shotChart, SHOT_CHART_POINTS);
     lv_chart_set_range(shotChart, LV_CHART_AXIS_PRIMARY_Y, 0, SHOT_CHART_SCALE);
     lv_chart_set_div_line_count(shotChart, 0, 0);
-    lv_obj_set_style_pad_all(shotChart, 0, LV_PART_MAIN);
+    // Inset the plot by the dot radius so endpoint dots at the edges aren't clipped by the chart bounds.
+    lv_obj_set_style_pad_all(shotChart, SHOT_DOT_RADIUS, LV_PART_MAIN);
+    lv_obj_set_style_pad_left(shotChart, 0, LV_PART_MAIN);
     lv_obj_set_style_line_width(shotChart, 2, LV_PART_ITEMS);
     lv_obj_set_style_size(shotChart, 0, LV_PART_INDICATOR);
     for (int i = 0; i < SHOT_SERIES_COUNT; i++) {
@@ -874,7 +877,9 @@ void DefaultUI::updateShotChart() {
     const unsigned long now = ::millis();
     if (lastShotSample != 0 && now - lastShotSample < SHOT_CHART_SAMPLE_INTERVAL)
         return;
-    lastShotSample = now;
+    // Advance by the interval, not to now, so the coarse UI tick doesn't stretch the 30 s window.
+    const bool behind = lastShotSample == 0 || now - lastShotSample >= 2 * SHOT_CHART_SAMPLE_INTERVAL;
+    lastShotSample = behind ? now : lastShotSample + SHOT_CHART_SAMPLE_INTERVAL;
     addShotChartSample(volumetric ? static_cast<float>(bp->currentVolume) : -1.0f);
 }
 
@@ -986,8 +991,9 @@ void DefaultUI::shotChartDrawCb(lv_event_t *e) {
     dot.radius = LV_RADIUS_CIRCLE;
     dot.bg_color = dsc->line_dsc->color;
     dot.bg_opa = LV_OPA_COVER;
-    const lv_area_t area = {static_cast<lv_coord_t>(dsc->p2->x - 3), static_cast<lv_coord_t>(dsc->p2->y - 3),
-                            static_cast<lv_coord_t>(dsc->p2->x + 3), static_cast<lv_coord_t>(dsc->p2->y + 3)};
+    const lv_area_t area = {
+        static_cast<lv_coord_t>(dsc->p2->x - SHOT_DOT_RADIUS), static_cast<lv_coord_t>(dsc->p2->y - SHOT_DOT_RADIUS),
+        static_cast<lv_coord_t>(dsc->p2->x + SHOT_DOT_RADIUS), static_cast<lv_coord_t>(dsc->p2->y + SHOT_DOT_RADIUS)};
     lv_draw_rect(dsc->draw_ctx, &dot, &area);
 }
 
