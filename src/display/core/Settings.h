@@ -17,6 +17,7 @@ constexpr float DEFAULT_HARDWARE_SCALE_ACTIVE_ALPHA = 0.80f;
 
 // Per-warning severity: hidden, shown as a warning, or shown as an error that needs confirmation before brewing.
 enum WarningLevel { WARNING_LEVEL_IGNORE = 0, WARNING_LEVEL_WARN = 1, WARNING_LEVEL_ERROR = 2 };
+enum StatusDisplayMode { STATUS_DISPLAY_PROGRESS = 0, STATUS_DISPLAY_CHART = 1 };
 
 struct AutoWakeupSchedule {
     String time;    // HH:MM format
@@ -152,6 +153,7 @@ class Settings {
     float getSteamPumpPercentage() const { return steamPumpPercentage.get(); }
     float getSteamPumpCutoff() const { return steamPumpCutoff.get(); }
     int getThemeMode() const { return themeMode.get(); }
+    int getStatusDisplayMode() const { return statusDisplayMode.get(); } // STATUS_DISPLAY_*
     int getHistoryIndex() const { return historyIndex.get(); }
 
     [[deprecated]]
@@ -264,6 +266,7 @@ class Settings {
     void setSteamPumpPercentage(float steam_pump_percentage);
     void setSteamPumpCutoff(float steam_pump_cutoff);
     void setThemeMode(int theme_mode);
+    void setStatusDisplayMode(int status_display_mode);
     void setHistoryIndex(int history_index);
     [[deprecated]]
     void setSunriseR(int sunrise_r);
@@ -357,6 +360,7 @@ class Settings {
     Property<int> standbyBrightnessTimeout{registry, "standby_bt", 60000}; // 60 seconds default
     Property<int> wifiApTimeout{registry, "wifi_apt", DEFAULT_WIFI_AP_TIMEOUT_MS};
     Property<int> themeMode{registry, "theme", 0};
+    Property<int> statusDisplayMode{registry, "sdm", STATUS_DISPLAY_PROGRESS};
 
     // Warning levels (WarningLevel)
     Property<int> warnWaterLevel{registry, "wl_water", WARNING_LEVEL_WARN};

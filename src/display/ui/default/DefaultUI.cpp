@@ -27,9 +27,10 @@ static constexpr int32_t GAUGE_TICK_LONG = 25;      // meter tick length on most
 static constexpr int32_t GAUGE_TICK_SHORT = 10;     // shortened tick length on profile / new-menu screens
 static constexpr uint32_t GAUGE_TICK_ANIM_MS = 300; // tick length transition duration
 
-// Profile and the new menu screen show shortened meter ticks.
-static bool isShortTickScreen(ScreensEnum s) {
-    return s == SCREEN_ID_PROFILE_SCREEN || s == SCREEN_ID_MENU_SCREEN_NEW || s == SCREEN_ID_INFO_SCREEN;
+// Profile, menu and info screens, plus the status screen in chart mode, show shortened meter ticks.
+static bool isShortTickScreen(ScreensEnum s, bool chartMode) {
+    return s == SCREEN_ID_PROFILE_SCREEN || s == SCREEN_ID_MENU_SCREEN_NEW || s == SCREEN_ID_INFO_SCREEN ||
+           (chartMode && s == SCREEN_ID_STATUS_SCREEN);
 }
 
 // Format a millisecond duration as "m:ss" for the brew/profile time labels.
@@ -41,6 +42,28 @@ static void formatDuration(unsigned long ms, char *buf, size_t len) {
 }
 
 static float clampPercentage(float pct) { return pct < 0.0f ? 0.0f : (pct > 100.0f ? 100.0f : pct); }
+
+// Shot chart styling, after the community concept UI: thin lines, endpoint dot, no grid or fill.
+// Theme color slots (Pressure, Progress, Temperature, Warning) so the chart matches the rest of the UI.
+static constexpr int SHOT_THEME_COLORS[SHOT_SERIES_COUNT] = {7, 7, 2, 2, 6, 8};
+static constexpr int SHOT_GUIDE_COLOR = 3; // theme SemiDark, for the baseline and phase markers
+static constexpr bool SHOT_IS_TARGET[SHOT_SERIES_COUNT] = {false, true, false, true, false, false};
+static constexpr lv_coord_t SHOT_CHART_SCALE = 1000;    // every series is normalised to 0..1000 of its own range
+static constexpr float SHOT_FLOW_RANGE_DEFAULT = 12.0f; // bar / ml/s
+static constexpr float SHOT_WEIGHT_RANGE_DEFAULT = 50.0f;
+static constexpr float SHOT_TEMP_RANGE = 10.0f; // profile temperature centred, ±10 °C
+
+static lv_coord_t scaleShotValue(float value, float min, float max) {
+    const int32_t scaled = lroundf((value - min) / (max - min) * SHOT_CHART_SCALE);
+    return static_cast<lv_coord_t>(LV_CLAMP(0, scaled, SHOT_CHART_SCALE));
+}
+
+// Grow a range in whole steps until it fits value.
+static float growShotRange(float range, float value, float step) {
+    while (value > range)
+        range += step;
+    return range;
+}
 
 // EEZ string setters allocate a fresh StringRef on the LVGL heap each call; skip unchanged text to cut churn.
 static bool stringChanged(const char *current, const char *next) {
@@ -246,6 +269,7 @@ void DefaultUI::loop() {
         updateProfileInfo();
         updateBoiler();
         updateBrewProcess();
+        updateShotChart();
         currentWeight = FloatValue(activeWeight);
         eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_SCALE_WEIGHT_CURRENT, currentWeight);
 
@@ -453,7 +477,7 @@ void DefaultUI::handleScreenChange() {
             setBrightness(settings.getMainBrightness());
         }
         eez_flow_set_screen(targetScreen, LV_SCR_LOAD_ANIM_NONE, 0, 0);
-        animateGaugeTicks(currentScreen, targetScreen);
+        animateGaugeTicks(isShortTickScreen(currentScreen, tickChartMode), isShortTickScreen(targetScreen, tickChartMode));
         rerender = true;
     }
 }
@@ -483,9 +507,9 @@ void DefaultUI::setGaugeTickLength(int32_t len) {
 
 void DefaultUI::gaugeTickAnimCb(void *var, int32_t v) { static_cast<DefaultUI *>(var)->setGaugeTickLength(v); }
 
-void DefaultUI::animateGaugeTicks(ScreensEnum from, ScreensEnum to) {
-    const int32_t fromLen = isShortTickScreen(from) ? GAUGE_TICK_SHORT : GAUGE_TICK_LONG;
-    const int32_t toLen = isShortTickScreen(to) ? GAUGE_TICK_SHORT : GAUGE_TICK_LONG;
+void DefaultUI::animateGaugeTicks(bool fromShort, bool toShort) {
+    const int32_t fromLen = fromShort ? GAUGE_TICK_SHORT : GAUGE_TICK_LONG;
+    const int32_t toLen = toShort ? GAUGE_TICK_SHORT : GAUGE_TICK_LONG;
 
     lv_anim_del(this, gaugeTickAnimCb); // cancel any in-flight tick animation
     gaugeCount = 0;
@@ -532,10 +556,31 @@ void DefaultUI::updateState() {
     uiFlags.temperature_stable(controller->getWarnings().isTemperatureStable());
     uiFlags.has_prev_profile(currentProfileIdx > 0);
     uiFlags.brew_confirm_visible(brewConfirmVisible);
+    const bool chartMode = settings.getStatusDisplayMode() == STATUS_DISPLAY_CHART && pressureAvailable && isProShot();
+    uiFlags.chart_mode(chartMode);
+    if (chartMode != tickChartMode) {
+        // Re-animate the ring when the mode flips while the status screen is open.
+        if (currentScreen == SCREEN_ID_STATUS_SCREEN && currentScreen == targetScreen)
+            animateGaugeTicks(!chartMode, chartMode);
+        tickChartMode = chartMode;
+    }
     {
         std::lock_guard<std::mutex> guard(profilesMutex);
         uiFlags.has_next_profile(currentProfileIdx + 1 < static_cast<int>(favoritedProfileIds.size()));
     }
+}
+
+// The chart needs pressure data, so it only applies to Pro profiles; prefer the running brew's profile.
+bool DefaultUI::isProShot() {
+    if (!initialized)
+        return false;
+    std::lock_guard<std::recursive_mutex> guard(controller->getProcessLock());
+    Process *process = controller->getProcess();
+    if (process == nullptr)
+        process = controller->getLastProcess();
+    if (process != nullptr && process->getType() == MODE_BREW)
+        return static_cast<BrewProcess *>(process)->profile.type == "pro";
+    return profileManager->getSelectedProfile().type == "pro";
 }
 
 void DefaultUI::updateSystemStatus() {
@@ -663,6 +708,7 @@ void DefaultUI::updateBrewProcess() {
     brewProcess.profile_is_current(true);
     brewProcess.profile_target_weight(selected.getTotalVolume());
     brewProcess.boiler_target_temperature(controller->getTargetTemp());
+    brewProcess.current_flow(controller->getCurrentPumpFlow());
 
     // Hold the process lock across every deref below — the logic/AsyncTCP/BLE tasks delete
     // the process at any time (GM-147).
@@ -759,6 +805,192 @@ void DefaultUI::updateBrewProcess() {
 
 void DefaultUI::updateMenuScreen() {}
 
+void DefaultUI::setupShotChart() {
+    shotChart = objects.shot_chart;
+    lv_chart_set_type(shotChart, LV_CHART_TYPE_LINE);
+    lv_chart_set_point_count(shotChart, SHOT_CHART_POINTS);
+    lv_chart_set_range(shotChart, LV_CHART_AXIS_PRIMARY_Y, 0, SHOT_CHART_SCALE);
+    lv_chart_set_div_line_count(shotChart, 0, 0);
+    lv_obj_set_style_pad_all(shotChart, 0, LV_PART_MAIN);
+    lv_obj_set_style_line_width(shotChart, 2, LV_PART_ITEMS);
+    lv_obj_set_style_size(shotChart, 0, LV_PART_INDICATOR);
+    for (int i = 0; i < SHOT_SERIES_COUNT; i++) {
+        shotSeries[i] = lv_chart_add_series(shotChart, lv_color_hex(0), LV_CHART_AXIS_PRIMARY_Y);
+        lv_chart_set_ext_y_array(shotChart, shotSeries[i], shotPoints[i]);
+    }
+    applyShotChartTheme();
+    lv_obj_add_event_cb(shotChart, shotChartDrawCb, LV_EVENT_DRAW_PART_BEGIN, this);
+    lv_obj_add_event_cb(shotChart, shotChartDrawCb, LV_EVENT_DRAW_PART_END, this);
+    lv_obj_add_event_cb(shotChart, shotChartBackgroundCb, LV_EVENT_DRAW_MAIN_BEGIN, this);
+    resetShotChart(controller->getTargetTemp(), 0.0f);
+}
+
+void DefaultUI::applyShotChartTheme() {
+    if (shotChart == nullptr)
+        return;
+    const int theme = currentThemeMode >= 0 ? currentThemeMode : 0;
+    for (int i = 0; i < SHOT_SERIES_COUNT; i++)
+        lv_chart_set_series_color(shotChart, shotSeries[i], lv_color_hex(theme_colors[theme][SHOT_THEME_COLORS[i]]));
+    lv_chart_refresh(shotChart);
+}
+
+void DefaultUI::resetShotChart(float targetTemperature, float targetWeight) {
+    for (auto &series : shotPoints)
+        for (auto &point : series)
+            point = LV_CHART_POINT_NONE;
+    for (auto &mark : shotPhaseMarks)
+        mark = false;
+    shotPhasePending = false;
+    shotPointCount = 0;
+    lastShotSample = 0;
+    shotFlowRange = SHOT_FLOW_RANGE_DEFAULT;
+    shotWeightRange = targetWeight > 0.0f ? growShotRange(10.0f, targetWeight * 1.1f, 10.0f) : SHOT_WEIGHT_RANGE_DEFAULT;
+    shotTempMin = targetTemperature - SHOT_TEMP_RANGE;
+    shotTempMax = targetTemperature + SHOT_TEMP_RANGE;
+    lv_chart_refresh(shotChart);
+}
+
+void DefaultUI::updateShotChart() {
+    if (objects.shot_chart == nullptr)
+        return;
+    if (objects.shot_chart != shotChart)
+        setupShotChart();
+
+    std::lock_guard<std::recursive_mutex> guard(controller->getProcessLock());
+    Process *process = controller->getProcess();
+    if (process == nullptr || process->getType() != MODE_BREW || !process->isActive())
+        return;
+    auto *bp = static_cast<BrewProcess *>(process);
+    const bool volumetric = controller->isVolumetricAvailable();
+    if (bp->processStarted != shotChartStarted) {
+        shotChartStarted = bp->processStarted;
+        resetShotChart(bp->getTemperature(), volumetric ? static_cast<float>(bp->getBrewVolume()) : 0.0f);
+        shotPhaseIndex = bp->phaseIndex;
+    }
+    if (bp->phaseIndex != shotPhaseIndex) {
+        shotPhaseIndex = bp->phaseIndex;
+        shotPhasePending = true;
+    }
+    const unsigned long now = ::millis();
+    if (lastShotSample != 0 && now - lastShotSample < SHOT_CHART_SAMPLE_INTERVAL)
+        return;
+    lastShotSample = now;
+    addShotChartSample(volumetric ? static_cast<float>(bp->currentVolume) : -1.0f);
+}
+
+void DefaultUI::rescaleShotSeries(lv_coord_t *points, float oldRange, float newRange) {
+    for (int i = 0; i < SHOT_CHART_POINTS; i++)
+        if (points[i] != LV_CHART_POINT_NONE)
+            points[i] = static_cast<lv_coord_t>(lroundf(points[i] * oldRange / newRange));
+}
+
+void DefaultUI::addShotChartSample(float weight) {
+    const float pressure = controller->getCurrentPressure();
+    const float flow = controller->getCurrentPumpFlow();
+    const float targetPressure = controller->getTargetPressure();
+    const float targetFlow = controller->getTargetFlow();
+
+    const float flowRange =
+        growShotRange(shotFlowRange, LV_MAX(LV_MAX(pressure, flow), LV_MAX(targetPressure, targetFlow)), 2.0f);
+    if (flowRange != shotFlowRange) {
+        for (int i : {SHOT_PRESSURE, SHOT_TARGET_PRESSURE, SHOT_FLOW, SHOT_TARGET_FLOW})
+            rescaleShotSeries(shotPoints[i], shotFlowRange, flowRange);
+        shotFlowRange = flowRange;
+    }
+    const float weightRange = growShotRange(shotWeightRange, weight, 10.0f);
+    if (weightRange != shotWeightRange) {
+        rescaleShotSeries(shotPoints[SHOT_WEIGHT], shotWeightRange, weightRange);
+        shotWeightRange = weightRange;
+    }
+
+    lv_coord_t sample[SHOT_SERIES_COUNT];
+    sample[SHOT_PRESSURE] = scaleShotValue(pressure, 0.0f, shotFlowRange);
+    sample[SHOT_TARGET_PRESSURE] =
+        targetPressure > 0.0f ? scaleShotValue(targetPressure, 0.0f, shotFlowRange) : LV_CHART_POINT_NONE;
+    sample[SHOT_FLOW] = scaleShotValue(flow, 0.0f, shotFlowRange);
+    sample[SHOT_TARGET_FLOW] = targetFlow > 0.0f ? scaleShotValue(targetFlow, 0.0f, shotFlowRange) : LV_CHART_POINT_NONE;
+    sample[SHOT_TEMPERATURE] = scaleShotValue(controller->getCurrentTemp(), shotTempMin, shotTempMax);
+    sample[SHOT_WEIGHT] = weight >= 0.0f ? scaleShotValue(weight, 0.0f, shotWeightRange) : LV_CHART_POINT_NONE;
+
+    if (shotPointCount == SHOT_CHART_POINTS) {
+        for (auto &series : shotPoints)
+            memmove(series, series + 1, (SHOT_CHART_POINTS - 1) * sizeof(lv_coord_t));
+        memmove(shotPhaseMarks, shotPhaseMarks + 1, (SHOT_CHART_POINTS - 1) * sizeof(bool));
+        shotPointCount--;
+    }
+    for (int i = 0; i < SHOT_SERIES_COUNT; i++)
+        shotPoints[i][shotPointCount] = sample[i];
+    shotPhaseMarks[shotPointCount] = shotPhasePending;
+    shotPhasePending = false;
+    shotPointCount++;
+    lv_chart_refresh(shotChart);
+}
+
+// Drawn before the series so the guides sit behind the lines.
+void DefaultUI::shotChartBackgroundCb(lv_event_t *e) {
+    auto *ui = static_cast<DefaultUI *>(lv_event_get_user_data(e));
+    lv_obj_t *chart = lv_event_get_target(e);
+    lv_draw_ctx_t *drawCtx = lv_event_get_draw_ctx(e);
+    lv_area_t content;
+    lv_obj_get_content_coords(chart, &content);
+    const lv_coord_t width = lv_obj_get_content_width(chart);
+    const lv_coord_t bottom = content.y1 + lv_obj_get_content_height(chart);
+    const int theme = ui->currentThemeMode >= 0 ? ui->currentThemeMode : 0;
+
+    lv_draw_line_dsc_t line;
+    lv_draw_line_dsc_init(&line);
+    line.color = lv_color_hex(theme_colors[theme][SHOT_GUIDE_COLOR]);
+    line.width = 1;
+    line.opa = LV_OPA_40;
+    const lv_point_t baseStart = {content.x1, bottom};
+    const lv_point_t baseEnd = {content.x2, bottom};
+    lv_draw_line(drawCtx, &line, &baseStart, &baseEnd);
+
+    line.opa = LV_OPA_30;
+    line.dash_width = 2;
+    line.dash_gap = 3;
+    for (int i = 0; i < ui->shotPointCount; i++) {
+        if (!ui->shotPhaseMarks[i])
+            continue;
+        const lv_coord_t x = static_cast<lv_coord_t>(content.x1 + width * i / (SHOT_CHART_POINTS - 1));
+        const lv_point_t top = {x, content.y1};
+        const lv_point_t base = {x, bottom};
+        lv_draw_line(drawCtx, &line, &top, &base);
+    }
+}
+
+void DefaultUI::shotChartDrawCb(lv_event_t *e) {
+    auto *dsc = lv_event_get_draw_part_dsc(e);
+    if (dsc == nullptr || dsc->part != LV_PART_ITEMS || dsc->line_dsc == nullptr || dsc->sub_part_ptr == nullptr)
+        return;
+    auto *ui = static_cast<DefaultUI *>(lv_event_get_user_data(e));
+    int index = 0;
+    while (index < SHOT_SERIES_COUNT && ui->shotSeries[index] != dsc->sub_part_ptr)
+        index++;
+    if (index == SHOT_SERIES_COUNT)
+        return;
+
+    if (lv_event_get_code(e) == LV_EVENT_DRAW_PART_BEGIN) {
+        // The chart shares one line descriptor across all series, so set every field each segment.
+        dsc->line_dsc->dash_width = SHOT_IS_TARGET[index] ? 3 : 0;
+        dsc->line_dsc->dash_gap = SHOT_IS_TARGET[index] ? 3 : 0;
+        dsc->line_dsc->opa = SHOT_IS_TARGET[index] ? LV_OPA_60 : LV_OPA_COVER;
+        dsc->line_dsc->width = SHOT_IS_TARGET[index] ? 1 : 2;
+        return;
+    }
+
+    if (SHOT_IS_TARGET[index] || dsc->p2 == nullptr || dsc->id != ui->shotPointCount - 2)
+        return;
+    lv_draw_rect_dsc_t dot;
+    lv_draw_rect_dsc_init(&dot);
+    dot.radius = LV_RADIUS_CIRCLE;
+    dot.bg_color = dsc->line_dsc->color;
+    dot.bg_opa = LV_OPA_COVER;
+    const lv_area_t area = {static_cast<lv_coord_t>(dsc->p2->x - 3), static_cast<lv_coord_t>(dsc->p2->y - 3),
+                            static_cast<lv_coord_t>(dsc->p2->x + 3), static_cast<lv_coord_t>(dsc->p2->y + 3)};
+    lv_draw_rect(dsc->draw_ctx, &dot, &area);
+}
+
 String DefaultUI::getErrorMessage() { return controller->getSystemStateMessage(); }
 
 void DefaultUI::applyTheme() {
@@ -773,6 +1005,7 @@ void DefaultUI::applyTheme() {
     if (newThemeMode != currentThemeMode) {
         currentThemeMode = newThemeMode;
         change_color_theme(currentThemeMode);
+        applyShotChartTheme();
     }
 }
 

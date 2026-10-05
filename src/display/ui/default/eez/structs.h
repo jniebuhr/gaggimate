@@ -88,6 +88,7 @@ enum UIFlagsFlowStructureFields {
     FLOW_STRUCTURE_UI_FLAGS_FIELD_HAS_PREV_PROFILE = 6,
     FLOW_STRUCTURE_UI_FLAGS_FIELD_HAS_NEXT_PROFILE = 7,
     FLOW_STRUCTURE_UI_FLAGS_FIELD_BREW_CONFIRM_VISIBLE = 8,
+    FLOW_STRUCTURE_UI_FLAGS_FIELD_CHART_MODE = 9,
     FLOW_STRUCTURE_UI_FLAGS_NUM_FIELDS
 };
 
@@ -109,6 +110,7 @@ enum BrewProcessFlowStructureFields {
     FLOW_STRUCTURE_BREW_PROCESS_FIELD_ELAPSED_PERCENTAGE = 14,
     FLOW_STRUCTURE_BREW_PROCESS_FIELD_IS_COMPLETE = 15,
     FLOW_STRUCTURE_BREW_PROCESS_FIELD_CURRENT_VOLUME = 16,
+    FLOW_STRUCTURE_BREW_PROCESS_FIELD_CURRENT_FLOW = 17,
     FLOW_STRUCTURE_BREW_PROCESS_NUM_FIELDS
 };
 
@@ -378,6 +380,11 @@ struct UIFlagsValue {
     void brew_confirm_visible(bool brew_confirm_visible) {
         value.getArray()->values[FLOW_STRUCTURE_UI_FLAGS_FIELD_BREW_CONFIRM_VISIBLE] = BooleanValue(brew_confirm_visible);
     }
+
+    bool chart_mode() { return value.getArray()->values[FLOW_STRUCTURE_UI_FLAGS_FIELD_CHART_MODE].getBoolean(); }
+    void chart_mode(bool chart_mode) {
+        value.getArray()->values[FLOW_STRUCTURE_UI_FLAGS_FIELD_CHART_MODE] = BooleanValue(chart_mode);
+    }
 };
 
 typedef ArrayOf<UIFlagsValue, FLOW_ARRAY_OF_STRUCTURE_UI_FLAGS> ArrayOfUIFlagsValue;
@@ -494,6 +501,11 @@ struct BrewProcessValue {
     float current_volume() { return value.getArray()->values[FLOW_STRUCTURE_BREW_PROCESS_FIELD_CURRENT_VOLUME].getFloat(); }
     void current_volume(float current_volume) {
         value.getArray()->values[FLOW_STRUCTURE_BREW_PROCESS_FIELD_CURRENT_VOLUME] = FloatValue(current_volume);
+    }
+
+    float current_flow() { return value.getArray()->values[FLOW_STRUCTURE_BREW_PROCESS_FIELD_CURRENT_FLOW].getFloat(); }
+    void current_flow(float current_flow) {
+        value.getArray()->values[FLOW_STRUCTURE_BREW_PROCESS_FIELD_CURRENT_FLOW] = FloatValue(current_flow);
     }
 };
 
