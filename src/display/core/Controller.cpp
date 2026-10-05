@@ -1023,7 +1023,10 @@ void Controller::updateControl() {
                 relay.open = brewProcess->isRelayActive();
                 pump.mode = pressureTarget ? PumpControlMode::Pressure : PumpControlMode::Flow;
                 // Mushroom-valve machines lose the cracking pressure before the puck; command the sensor-side value
-                pump.pressure = brewProcess->getPumpPressure() + settings.getPressureOffset();
+                pump.pressure = brewProcess->getPumpPressure();
+                if (pump.pressure > 0.0f) {
+                    pump.pressure += settings.getPressureOffset();
+                }
                 pump.flow = brewProcess->getPumpFlow();
                 targetPressure = brewProcess->getPumpPressure();
                 targetFlow = brewProcess->getPumpFlow();
