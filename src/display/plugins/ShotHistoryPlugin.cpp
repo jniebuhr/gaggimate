@@ -1024,8 +1024,8 @@ void ShotHistoryPlugin::rebuildIndex() {
         int start = fileName.lastIndexOf('/') + 1;
         int end = fileName.lastIndexOf('.');
         uint32_t shotId = fileName.substring(start, end).toInt();
-        if (shotId > maxId) {
-            maxId = shotId;
+        if (shotId >= maxId) {
+            maxId = shotId + 1;
         }
 
         // Create index entry
