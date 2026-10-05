@@ -115,7 +115,7 @@ void HardwareScale::setup() {
     delay(500);
 
     // Create task with lower priority (0 instead of 1) to not interfere with Bluetooth
-    if (xTaskCreate(loopTask, "HardwareScale::loop", configMINIMAL_STACK_SIZE * 3, this, 0, &taskHandle) != pdPASS) {
+    if (xTaskCreate(loopTask, "HardwareScale::loop", configMINIMAL_STACK_SIZE * 6, this, 0, &taskHandle) != pdPASS) {
         ESP_LOGE(LOG_TAG, "Unable to create hardware scale task");
         is_initialized = false;
         taskHandle = nullptr;
