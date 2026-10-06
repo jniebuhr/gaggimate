@@ -160,7 +160,7 @@ void DefaultUI::reloadProfiles() { profileLoaded = 0; }
 DefaultUI::DefaultUI(Controller *controller, Driver *driver, PluginManager *pluginManager)
     : controller(controller), panelDriver(driver), pluginManager(pluginManager) {
     setupPanel();
-    xTaskCreatePinnedToCore(loopTask, "DefaultUI::loop", configMINIMAL_STACK_SIZE * 6, this, 1, &taskHandle, 1);
+    xTaskCreatePinnedToCore(loopTask, "DefaultUI::loop", configMINIMAL_STACK_SIZE * 7, this, 1, &taskHandle, 1);
 }
 
 void DefaultUI::init() {
