@@ -671,8 +671,8 @@ void DefaultUI::applyGaugeSetpointStyle(bool inside) {
                           objects.new_menu_dials__pressure_gauge, objects.steam_dials__temp_gauge,
                           objects.steam_dials__temp_gauge_full, objects.steam_dials__pressure_gauge,
                           objects.water_dials__temp_gauge,      objects.water_dials__temp_gauge_full,
-                          objects.water_dials__pressure_gauge,  objects.profile_dials__temp_gauge,
-                          objects.profile_dials__temp_gauge_full, objects.profile_dials__pressure_gauge,
+                          objects.water_dials__pressure_gauge,  objects.profile_dials_1__temp_gauge,
+                          objects.profile_dials_1__temp_gauge_full, objects.profile_dials_1__pressure_gauge,
                           objects.grind_dials__temp_gauge,      objects.grind_dials__temp_gauge_full,
                           objects.grind_dials__pressure_gauge,  objects.obj2__temp_gauge,
                           objects.obj2__temp_gauge_full,        objects.obj2__pressure_gauge};
