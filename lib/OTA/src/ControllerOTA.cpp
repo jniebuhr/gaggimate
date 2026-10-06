@@ -207,13 +207,18 @@ bool ControllerOTA::sendData(uint8_t *data, uint16_t len, bool response) const {
         ESP_LOGE("ControllerOTA", "Controller disconnected during transfer");
         return false;
     }
-    // A write without response fails while the stack is out of TX buffers; back off and retry rather than drop the packet.
-    for (uint16_t attempt = 0; attempt < WRITE_NR_RETRIES; attempt++) {
+    // Hold no-response packets back while the shared TX pool runs low; leaves room for 0xFC, pings and scale writes.
+    const uint32_t start = millis();
+    while (!response && os_msys_num_free() < MIN_FREE_TX_BUFFERS && client->isConnected() &&
+           millis() - start < WRITE_RETRIES * WRITE_RETRY_BACKOFF_MS)
+        delay(TX_BUFFER_POLL_MS);
+
+    for (uint16_t attempt = 0; attempt < WRITE_RETRIES; attempt++) {
         if (rxChar->writeValue(data, len, response))
             return true;
-        if (response || !client->isConnected())
+        if (!client->isConnected())
             break;
-        delay(WRITE_NR_BACKOFF_MS);
+        delay(WRITE_RETRY_BACKOFF_MS);
     }
     ESP_LOGE("ControllerOTA", "BLE write failed");
     return false;

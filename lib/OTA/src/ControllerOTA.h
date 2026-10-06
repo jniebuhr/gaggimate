@@ -13,8 +13,10 @@ constexpr uint16_t DEFAULT_MTU = 120;
 constexpr uint16_t PART_SIZE = 19000;
 constexpr uint32_t SIGNAL_TIMEOUT_MS = 60000;
 constexpr uint32_t SIGNAL_POLL_MS = 5;
-constexpr uint16_t WRITE_NR_RETRIES = 400; // x WRITE_NR_BACKOFF_MS = 2 s for the stack to free a TX buffer
-constexpr uint32_t WRITE_NR_BACKOFF_MS = 5;
+constexpr uint16_t WRITE_RETRIES = 400; // x WRITE_RETRY_BACKOFF_MS = 2 s for the stack to free a TX buffer
+constexpr uint32_t WRITE_RETRY_BACKOFF_MS = 5;
+constexpr int MIN_FREE_TX_BUFFERS = 4; // NimBLE msys blocks kept free during the packet burst
+constexpr uint32_t TX_BUFFER_POLL_MS = 2;
 constexpr uint16_t STACK_MTU_OFFSET = 5; // 3 byte ATT header + 2 byte OTA packet header
 constexpr uint16_t MAX_MTU = 242;        // BLE_MTU 247 minus STACK_MTU_OFFSET; sizes the packet buffers
 
