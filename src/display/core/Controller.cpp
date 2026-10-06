@@ -263,6 +263,7 @@ void Controller::setupBluetooth() {
         }
     });
     pluginManager->on("ota:update:end", [this](Event const &) { applyConnectionPriority(true); });
+    pluginManager->on("history:shot:recorded", [this](Event const &) { comms.tare(); });
     comms.onSensorData([this](float temp, float temp2, float pressure, float puckFlow, float pumpFlow, float puckResistance,
                               float pumpPower, float heaterPower, float waterPumped) {
         onTempRead(temp);
@@ -1172,7 +1173,14 @@ void Controller::deactivate() {
 // Runs for every ended process, stopped by hand or finished on its own: stop command, tare, then relax once they are ACKed.
 void Controller::afterDeactivate() {
     updateControl();
-    comms.tare();
+    bool shot;
+    {
+        std::lock_guard<std::recursive_mutex> guard(processMutex);
+        shot = lastProcess != nullptr && lastProcess->getType() == MODE_BREW &&
+               !static_cast<BrewProcess *>(lastProcess)->isUtility();
+    }
+    if (!shot)
+        comms.tare(); // shots tare on history:shot:recorded, once their final weight is written
     relaxPending = true;
     relaxRequestedAt = millis();
 }

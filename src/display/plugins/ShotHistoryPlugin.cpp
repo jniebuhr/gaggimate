@@ -285,6 +285,7 @@ void ShotHistoryPlugin::record() {
         currentFile.write(reinterpret_cast<const uint8_t *>(&header), sizeof(header));
         currentFile.close();
         isFileOpen = false;
+        pluginManager->trigger("history:shot:recorded"); // final weight and pumped water are written
         unsigned long duration = header.durationMs;
         if (duration <= 7500) { // Exclude failed shots and flushes
             fs->remove("/h/" + currentId + ".slog");

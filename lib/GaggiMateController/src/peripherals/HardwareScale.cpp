@@ -52,8 +52,12 @@ void HardwareScale::setup() {
     }
 
     pinMode(_data_pin1, INPUT);
-    pinMode(_data_pin2, INPUT);
+    if (!isSingleCell())
+        pinMode(_data_pin2, INPUT);
     pinMode(_clock_pin, OUTPUT);
+    // Reset the HX711 (SCK high > 60 us = power down, low = power up): a reboot mid-read can leave it stuck.
+    digitalWrite(_clock_pin, HIGH);
+    delayMicroseconds(100);
     digitalWrite(_clock_pin, LOW);
     ESP_LOGV(LOG_TAG, "Initializing hardware scale on DATA1: %d, DATA2: %d, CLOCK: %d", _data_pin1, _data_pin2, _clock_pin);
 
@@ -63,7 +67,7 @@ void HardwareScale::setup() {
     }
     if (!isReady()) {
         ESP_LOGE(LOG_TAG, "HX711 modules (%d, %d) not ready after max wait time, aborting setup", digitalRead(_data_pin1),
-                 digitalRead(_data_pin2));
+                 dataPin2Level());
         is_initialized = false;
         return;
     } else {
@@ -80,13 +84,13 @@ void HardwareScale::setup() {
         }
         if (!isReady()) {
             ESP_LOGE(LOG_TAG, "HX711 modules (%d, %d) not ready after max wait time, aborting setup", digitalRead(_data_pin1),
-                     digitalRead(_data_pin2));
+                     dataPin2Level());
             is_initialized = false;
             return;
         }
         const RawReading raw = readRaw();
         // A real HX711 drives DOUT high after the 25th clock; floating pins of an absent one stay low (GM-249).
-        if (digitalRead(_data_pin1) == HIGH && digitalRead(_data_pin2) == HIGH) {
+        if (digitalRead(_data_pin1) == HIGH && (isSingleCell() || digitalRead(_data_pin2) == HIGH)) {
             releasedCount++;
         }
         sawNonZero = sawNonZero || raw.value1 != 0 || raw.value2 != 0;
@@ -122,11 +126,11 @@ void HardwareScale::setup() {
     }
 }
 
-bool HardwareScale::isReady() { return digitalRead(_data_pin1) == LOW && digitalRead(_data_pin2) == LOW; }
+bool HardwareScale::isReady() { return digitalRead(_data_pin1) == LOW && (isSingleCell() || digitalRead(_data_pin2) == LOW); }
 
 bool HardwareScale::waitUntilReady(unsigned long timeoutMs) const {
     const unsigned long started = millis();
-    while (digitalRead(_data_pin1) != LOW || digitalRead(_data_pin2) != LOW) {
+    while (digitalRead(_data_pin1) != LOW || (!isSingleCell() && digitalRead(_data_pin2) != LOW)) {
         if (millis() - started >= timeoutMs) {
             return false;
         }
@@ -152,7 +156,8 @@ HardwareScale::RawReading HardwareScale::readRaw() {
         digitalWrite(_clock_pin, HIGH);
         delayMicroseconds(1);
         value1 |= (digitalRead(_data_pin1) << i);
-        value2 |= (digitalRead(_data_pin2) << i);
+        if (!isSingleCell())
+            value2 |= (digitalRead(_data_pin2) << i);
         digitalWrite(_clock_pin, LOW);
         delayMicroseconds(1);
     }
@@ -351,7 +356,7 @@ void HardwareScale::loop() {
         }
         if (millis() - _read_failure_started_ms >= READ_FAULT_DELAY_MS && !_read_fault_reported) {
             ESP_LOGE(LOG_TAG, "HX711 runtime timeout (%d, %d); marking scale unavailable until readings recover",
-                     digitalRead(_data_pin1), digitalRead(_data_pin2));
+                     digitalRead(_data_pin1), dataPin2Level());
             _read_fault_reported = true;
             _reading_callback(HARDWARE_SCALE_UNAVAILABLE, 0.0f, 0.0f, false, false);
         }

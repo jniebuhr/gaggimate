@@ -7,6 +7,7 @@
 
 constexpr float HARDWARE_SCALE_UNAVAILABLE = -9999.0f; // Sentinel value to signal scale not available
 
+constexpr uint8_t HARDWARE_SCALE_NO_PIN = 0xFF; // pass as data_pin2 for a single HX711
 constexpr uint16_t HARDWARE_SCALE_DEFAULT_SAMPLE_RATE_SPS = 10;
 constexpr float HARDWARE_SCALE_DEFAULT_FILTER_ALPHA_IDLE = 0.80f;
 constexpr float HARDWARE_SCALE_DEFAULT_FILTER_ALPHA_ACTIVE = 0.80f;
@@ -61,6 +62,8 @@ class HardwareScale {
     void tare();
 
   private:
+    bool isSingleCell() const { return _data_pin2 == HARDWARE_SCALE_NO_PIN; }
+    int dataPin2Level() const { return isSingleCell() ? -1 : digitalRead(_data_pin2); }
     std::atomic<bool> is_initialized;
     std::atomic<bool> _scale_factors_ready;
     std::atomic<bool> _tare_requested{false};
