@@ -169,6 +169,7 @@ class Endpoint {
     void dispatch(const gm::Payload &payload);
     static void dispatchTaskFn(void *arg);
     static bool encodeFrame(const gm::Frame &frame, uint8_t *buf, size_t bufSize, size_t *outLen);
+    size_t frameLimit() const;
 
     void lock() {
         if (_mutex)

@@ -8,7 +8,9 @@ static constexpr const char *NVS_PEER_KEY = "peer";
 void BleClientTransport::init(const String &deviceName) {
     NimBLEDevice::init(deviceName.c_str());
     NimBLEDevice::setPower(ESP_PWR_LVL_P9);
-    NimBLEDevice::setMTU(256);
+    NimBLEDevice::setMTU(BLE_MTU);
+    if (int rc = ble_gap_write_sugg_def_data_len(BLE_DLE_OCTETS, BLE_DLE_TIME_US); rc != 0)
+        ESP_LOGW(LOG_TAG, "Setting suggested data length failed: %d", rc);
     // Just Works bonding with LE Secure Connections, mirroring the controller.
     NimBLEDevice::setSecurityAuth(true, false, true);
     NimBLEDevice::setSecurityIOCap(BLE_HS_IO_NO_INPUT_OUTPUT);

@@ -118,9 +118,14 @@ void Endpoint::sendUnreliable(const gm::Payload *payloads, size_t count) {
     for (size_t i = 0; i < count; i++)
         _txFrame.payloads[i] = payloads[i];
     size_t len = 0;
-    if (encodeFrame(_txFrame, _unrelBuf, BUFFER_SIZE, &len))
+    if (encodeFrame(_txFrame, _unrelBuf, frameLimit(), &len))
         _transport.send(_unrelBuf, len);
     unlock();
+}
+
+size_t Endpoint::frameLimit() const {
+    const size_t limit = _transport.maxDatagram();
+    return limit < BUFFER_SIZE ? limit : BUFFER_SIZE;
 }
 
 bool Endpoint::encodeFrame(const gm::Frame &frame, uint8_t *buf, size_t bufSize, size_t *outLen) {
@@ -211,7 +216,14 @@ bool Endpoint::pumpLocked() {
     if (_nextId == 0)
         _nextId = 1;
 
-    if (!encodeFrame(_txFrame, _txBuf, BUFFER_SIZE, &_txLen)) {
+    // Over the transport limit: push the lowest-priority payloads back for the next frame.
+    bool encoded;
+    while (!(encoded = encodeFrame(_txFrame, _txBuf, frameLimit(), &_txLen)) && count > 1) {
+        const gm::Payload &last = _txFrame.payloads[--count];
+        _queue.upsert(gm_proto::coalescingKey(last), gm_proto::defaultPriority(last.which_content), last);
+        _txFrame.payloads_count = count;
+    }
+    if (!encoded) {
         ESP_LOGE(ENDPOINT_TAG, "Failed to encode outbound frame (%u payloads); re-queuing", count);
         // The payloads were already popped -- put them back (coalescing keeps the
         // latest value if a newer one arrived) so nothing is silently lost. The

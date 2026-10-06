@@ -9,7 +9,9 @@ void BleServerTransport::init(const String &deviceName, bool pairingWindow) {
     _pairingWindow = pairingWindow;
     NimBLEDevice::init(deviceName.c_str());
     NimBLEDevice::setPower(ESP_PWR_LVL_P9);
-    NimBLEDevice::setMTU(256); // headroom for batched frames
+    NimBLEDevice::setMTU(BLE_MTU); // headroom for batched frames
+    if (int rc = ble_gap_write_sugg_def_data_len(BLE_DLE_OCTETS, BLE_DLE_TIME_US); rc != 0)
+        ESP_LOGW(LOG_TAG, "Setting suggested data length failed: %d", rc);
 
     // Just Works bonding + LE Secure Connections (no IO -> no MITM); keys persist in NVS across reboots.
     NimBLEDevice::setSecurityAuth(true, false, true);
@@ -37,7 +39,6 @@ void BleServerTransport::init(const String &deviceName, bool pairingWindow) {
 
     // OTA DFU shares the same server (separate service/UUIDs).
     _otaDfu.configure_OTA(_server);
-    _otaDfu.start_OTA();
 
     _deviceName = deviceName;
     _advertising = NimBLEDevice::getAdvertising();
@@ -256,6 +257,7 @@ void BleServerTransport::onDisconnect(NimBLEServer *server) {
     _connected = false;
     _connHandle = BLE_HS_CONN_HANDLE_NONE;
     ESP_LOGI(LOG_TAG, "Client disconnected");
+    _otaDfu.onDisconnect();
     emitConnection(false);
     startAdv();
 }

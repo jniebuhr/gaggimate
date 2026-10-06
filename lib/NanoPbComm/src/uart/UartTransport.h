@@ -22,6 +22,7 @@ class UartTransport : public Transport {
 
     bool send(const uint8_t *data, size_t length) override;
     bool isConnected() const override { return _connected; }
+    size_t maxDatagram() const override { return MAX_DATAGRAM; }
 
   private:
     static constexpr size_t MAX_DATAGRAM = 256; // == Endpoint::BUFFER_SIZE; bigger is dropped
