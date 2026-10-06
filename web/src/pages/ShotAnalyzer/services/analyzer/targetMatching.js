@@ -29,6 +29,7 @@ function shouldSkipTarget(target, context) {
 }
 
 export function isTargetHit(target, value, context) {
+  if (!Number.isFinite(value)) return false;
   if (target.operator === 'lte') return value <= target.value;
   if (target.operator !== 'gte' || value < target.value) return false;
 
@@ -42,6 +43,7 @@ export function isTargetHit(target, value, context) {
 function getTargetValue(target, values) {
   if (target.type === 'pressure') return values.pressure;
   if (target.type === 'flow') return values.flow;
+  if (target.type === 'weight_flow') return values.weightFlow;
   if (isWeightTarget(target)) return values.weight;
   if (target.type === 'pumped') return values.pumped;
   return undefined;
@@ -73,6 +75,13 @@ export function findTargetMatch(targets, values, delayMs, context) {
 function getLookAheadTargetValues(target, nextSample, delayMs, context) {
   const horizon = Math.max(0, delayMs) / 1000;
 
+  if (target.type === 'weight_flow') {
+    return {
+      anchorValue: context.anchor.vf,
+      nextValue: nextSample.vf,
+      predictedValue: context.anchor.vf,
+    };
+  }
   if (target.type === 'pressure') {
     return {
       anchorValue: context.anchor.cp,
@@ -142,6 +151,7 @@ export function predictTargetValuesAtDelay(delayMs, context) {
   return {
     pressure: Math.max(0, context.anchor.cp + context.pressureSlope * horizon),
     flow: Math.max(0, context.anchor.fl + context.flowSlope * horizon),
+    weightFlow: context.anchor.vf,
     weight: context.anchor.v + (context.weightRate > 0 ? context.weightRate * horizon : 0),
     pumped: context.anchorPumped + Math.max(0, context.anchor.fl) * horizon,
   };
@@ -151,6 +161,9 @@ function getManualTargetValue(target, context) {
   const scaleDelaySec = context.normalizedScaleDelayMs / 1000;
   const sensorDelaySec = context.normalizedSensorDelayMs / 1000;
 
+  if (target.type === 'weight_flow') {
+    return { delayMs: context.normalizedScaleDelayMs, value: context.anchor.vf };
+  }
   if (target.type === 'pressure') {
     return {
       delayMs: context.normalizedSensorDelayMs,
@@ -242,6 +255,7 @@ export function formatStopReason(type) {
   if (t === 'volumetric' || t === 'weight') return 'Weight Stop';
   if (t === 'pressure') return 'Pressure Stop';
   if (t === 'flow') return 'Pump Flow Stop';
+  if (t === 'weight_flow') return 'Weight Flow Stop';
 
   // Fallback
   return `${t.charAt(0).toUpperCase() + t.slice(1)} Stop`;

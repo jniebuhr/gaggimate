@@ -613,6 +613,10 @@ void Controller::loopLogic() {
             updateLastAction();
             if (currentProcess->getType() == MODE_BREW) {
                 auto brewProcess = static_cast<BrewProcess *>(currentProcess);
+                const auto scaleSource = getEffectiveScaleSource();
+                brewProcess->updateScaleAvailability(
+                    (scaleSource == VolumetricMeasurementSource::BLUETOOTH ||
+                     scaleSource == VolumetricMeasurementSource::HARDWARE) && isScaleSourceHealthy(scaleSource));
                 brewProcess->updatePressure(pressure);
                 brewProcess->updateFlow(currentPumpFlow);
                 brewProcess->updateWaterPumped(currentWaterPumped);

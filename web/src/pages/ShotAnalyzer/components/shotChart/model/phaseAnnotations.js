@@ -46,6 +46,7 @@ function getStopActualValue(phase, exitType) {
   if (exitType === 'pumped') return Number(phase.water);
   if (exitType === 'pressure') return Number(phase.stats?.p?.end);
   if (exitType === 'flow') return Number(phase.stats?.f?.end);
+  if (exitType === 'weight_flow') return Number(phase.stats?.wf?.end);
 
   return null;
 }
@@ -68,6 +69,7 @@ function getStopUnit(exitType) {
   if (exitType === 'pumped') return 'ml';
   if (exitType === 'pressure') return 'bar';
   if (exitType === 'flow') return 'ml/s';
+  if (exitType === 'weight_flow') return 'g/s';
   return '';
 }
 
@@ -162,6 +164,7 @@ const STOP_BADGE_Y_ADJUST = -30;
 const STOP_ICON_BY_TYPE = {
   pressure: faGauge,
   flow: faFaucet,
+  weight_flow: faScaleBalanced,
   weight: faScaleBalanced,
   volumetric: faScaleBalanced,
   ratio: faPercent,
@@ -246,6 +249,7 @@ function getMaxPressure(samples) {
 
 const MAIN_STOP_SAMPLE_KEY_BY_EXIT_TYPE = {
   flow: 'fl',
+  weight_flow: 'vf',
   pressure: 'cp',
   pumped: 'fl',
 };

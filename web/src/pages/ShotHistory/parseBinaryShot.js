@@ -108,6 +108,7 @@ export const PHASE_EXIT_REASON_LABELS = {
   7: 'Aborted',
   8: 'Hold released',
   9: 'Ratio target',
+  10: 'Weight-flow target',
 };
 
 // Parse phase transitions from v5+ headers

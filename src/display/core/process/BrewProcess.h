@@ -24,6 +24,7 @@ class BrewProcess : public Process {
     bool releaseRequested = false;
     double phaseStartVolume = 0;
     double currentVolume = 0; // most recent volume pushed
+    bool scaleFlowAvailable = false;
     float currentFlow = 0.0f;
     float currentPressure = 0.0f;
     float waterPumped = 0.0f;
@@ -40,6 +41,21 @@ class BrewProcess : public Process {
         computeEffectiveTargetsForCurrentPhase();
     }
 
+    float weightFlowOverride = NAN;
+    bool useWeightFlowOverride = false;
+
+    void setWeightFlowOverride(float flow, bool enabled) {
+        weightFlowOverride = flow;
+        useWeightFlowOverride = enabled;
+    }
+
+    float getWeightFlow() const {
+        if (useWeightFlowOverride)
+            return weightFlowOverride;
+        return volumetricRateCalculator.hasRecentMeasurements() ?
+            static_cast<float>(volumetricRateCalculator.getRate() * 1000.0) : NAN;
+    }
+
     void updateVolume(double volume) override { // called even after the Process is no longer active
         currentVolume = volume;
         if (processPhase != ProcessPhase::FINISHED) { // only store measurements while active
@@ -48,6 +64,8 @@ class BrewProcess : public Process {
     }
 
     void updatePressure(float pressure) { currentPressure = pressure; }
+
+    void updateScaleAvailability(bool available) { scaleFlowAvailable = available; }
 
     void updateFlow(float flow) { currentFlow = flow; }
 
@@ -80,7 +98,8 @@ class BrewProcess : public Process {
         }
         float timeInPhase = static_cast<float>(millis() - currentPhaseStarted) / 1000.0f;
         return currentPhase.isFinished(target == ProcessTarget::VOLUMETRIC, volume, timeInPhase, currentFlow, currentPressure,
-                                       waterPumped - phaseStartedPumped, profile.type, profile.dose);
+                                       waterPumped - phaseStartedPumped, profile.type, profile.dose,
+                                       getWeightFlow(), scaleFlowAvailable && std::isfinite(getWeightFlow()));
     }
 
     bool isCurrentPhaseFinished() { return currentPhaseExitReason() != PhaseExitReason::NONE; }
