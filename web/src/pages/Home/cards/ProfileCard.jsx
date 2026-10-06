@@ -4,11 +4,19 @@ import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faRectangleList } from '@fortawesome/free-solid-svg-icons/faRectangleList';
 import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
-import { ProcessProfileChart } from '../../../components/ProcessProfileChart.jsx';
+import { lazyComponent } from '../../../utils/lazyComponent.jsx';
 import { profileChartHeightSignal } from '../../../utils/dashboardManager.js';
 import { SkeletonBlock } from '../../../components/SkeletonBlock.jsx';
 import { fmtElapsed, fmtPhaseTarget, getPhaseLabel } from '../utils.js';
 import { parseBinaryIndex, indexToShotList } from '../../ShotHistory/parseBinaryIndex.js';
+
+// Chart.js is loaded lazily (see lazyComponent) so the dashboard shell paints
+// before it arrives; the chart area shows its skeleton until then.
+const ProcessProfileChart = lazyComponent(
+  () => import('../../../components/ProcessProfileChart.jsx'),
+  'ProcessProfileChart',
+  ({ className, style }) => <SkeletonBlock className={`${className} rounded-xl`} style={style} />,
+);
 
 function ProgressCard({ processInfo, isBrewing, isGrinding, selectedProfile }) {
   const p = processInfo;
