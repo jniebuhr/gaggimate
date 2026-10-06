@@ -9,7 +9,6 @@
 [![Sonar Tech Debt][sonar-tech-debt]][sonar-url]
 
 
-
 </p>
 
 This project upgrades a Gaggia espresso machine with smart controls to improve your coffee-making experience. By adding a display and custom electronics, you can monitor and control the machine more easily.
