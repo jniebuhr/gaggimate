@@ -141,8 +141,22 @@ class DefaultUI {
     bool profilePhaseMarks[PROFILE_CHART_POINTS] = {}; // true where a new phase starts
     String profileChartId;
     int profileChartGeneration = -1;
-    String profileImageSrc;
     bool profileDetailsVisible = false;
+
+    // Profile image: the UI task asks for an id, the profile task loads it from SD into PSRAM and hands it over.
+    void loadRequestedImage();
+    std::mutex imageMutex;
+    String imageWantedId;            // UI → loader
+    int imageRequest = 0;            // bumped whenever imageWantedId changes
+    uint8_t *imagePending = nullptr; // loader → UI
+    String imagePendingId;
+    std::atomic<int> imageGeneration{0}; // bumped when an image is uploaded or removed
+    int imageLoadedRequest = -1;         // loader-only
+    int imageLoadedGeneration = -1;
+    lv_img_dsc_t imageDsc[2] = {};
+    uint8_t imageDscIndex = 0;
+    uint8_t *imageShown = nullptr; // UI-only
+    String imageShownId;
     String getErrorMessage();
 
     void adjustDials(lv_obj_t *dials);

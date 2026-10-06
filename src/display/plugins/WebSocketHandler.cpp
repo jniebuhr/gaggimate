@@ -339,7 +339,9 @@ void WebSocketHandler::handleProfileRequest(uint32_t clientId, JsonDocument &req
         profileManager->selectProfile(id);
     } else if (type == "req:profiles:favorite") {
         auto id = request["id"].as<String>();
-        profileManager->addFavoritedProfile(id);
+        if (!profileManager->addFavoritedProfile(id)) {
+            response["error"] = F("Favorite limit reached");
+        }
     } else if (type == "req:profiles:unfavorite") {
         auto id = request["id"].as<String>();
         profileManager->removeFavoritedProfile(id);

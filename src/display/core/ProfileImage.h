@@ -27,9 +27,6 @@ inline bool isValidId(const String &id) {
 
 inline String path(const String &id) { return String(DIR) + "/" + id + ".bin"; }
 
-// Same file through LVGL's POSIX driver ('S' = /sdcard, see lv_conf.h).
-inline String lvglPath(const String &id) { return "S:" + path(id); }
-
 } // namespace profile_image
 
 #endif // PROFILEIMAGE_H

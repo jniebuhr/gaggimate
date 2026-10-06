@@ -13,7 +13,6 @@
 #include <display/drivers/common/LV_Helper.h>
 #endif
 #include <display/main.h>
-#include <display/ui/utils/SdImageDecoder.h>
 #include <display/ui/utils/effects.h>
 #include <utility>
 
@@ -160,7 +159,7 @@ void DefaultUI::reloadProfiles() { profileLoaded = 0; }
 DefaultUI::DefaultUI(Controller *controller, Driver *driver, PluginManager *pluginManager)
     : controller(controller), panelDriver(driver), pluginManager(pluginManager) {
     setupPanel();
-    xTaskCreatePinnedToCore(loopTask, "DefaultUI::loop", configMINIMAL_STACK_SIZE * 7, this, 1, &taskHandle, 1);
+    xTaskCreatePinnedToCore(loopTask, "DefaultUI::loop", configMINIMAL_STACK_SIZE * 6, this, 1, &taskHandle, 1);
 }
 
 void DefaultUI::init() {
@@ -291,7 +290,7 @@ void DefaultUI::init() {
     pluginManager->on("profiles:profile:unfavorite", [this](Event const &event) { reloadProfiles(); });
     pluginManager->on("profiles:profile:save", [this](Event const &event) { reloadProfiles(); });
     pluginManager->on("profiles:image:change", [this](Event const &) {
-        sdImageInvalidate();
+        imageGeneration++;
         reloadProfiles();
         rerender = true;
     });
@@ -302,8 +301,8 @@ void DefaultUI::init() {
             rerender = true;
         }
     });
-    xTaskCreatePinnedToCore(profileLoopTask, "DefaultUI::loopProfiles", configMINIMAL_STACK_SIZE * 4, this, 1, &profileTaskHandle,
-                            0);
+    // Task names cap at 15 chars; "DefaultUI::loopProfiles" read as "DefaultUI::loop" in panics. SD + JSON need the headroom.
+    xTaskCreatePinnedToCore(profileLoopTask, "UI::profiles", configMINIMAL_STACK_SIZE * 6, this, 1, &profileTaskHandle, 0);
 }
 
 // True while any pointer input device (the touch panel) is pressed.
@@ -383,8 +382,6 @@ void DefaultUI::loop() {
         }
     }
 
-    if (sdImageProcessInvalidation() && objects.profile_preview != nullptr)
-        lv_obj_invalidate(objects.profile_preview);
     ui_tick();
     lv_task_handler();
 }
@@ -404,12 +401,12 @@ void DefaultUI::loopProfiles() {
         std::vector<bool> hasImage;
         profiles.reserve(ids.size());
         hasImage.reserve(ids.size());
-        const bool sdCard = controller->isSDCard();
+        const std::vector<String> imageIds = controller->isSDCard() ? profileManager->listProfileImages() : std::vector<String>{};
         for (const auto &profileId : ids) {
             Profile profile{};
             profileManager->loadProfile(profileId, profile);
             profiles.emplace_back(std::move(profile));
-            hasImage.push_back(sdCard && profileManager->hasProfileImage(profileId));
+            hasImage.push_back(std::find(imageIds.begin(), imageIds.end(), profileId) != imageIds.end());
         }
         {
             std::lock_guard<std::mutex> guard(profilesMutex);
@@ -420,6 +417,33 @@ void DefaultUI::loopProfiles() {
         }
         profileLoaded = 1;
     }
+    loadRequestedImage();
+}
+
+// SD reads stay on this task: a slow or failing card must not block rendering or overflow the UI task's stack.
+void DefaultUI::loadRequestedImage() {
+    String wanted;
+    int request;
+    {
+        std::lock_guard<std::mutex> guard(imageMutex);
+        wanted = imageWantedId;
+        request = imageRequest;
+    }
+    const int generation = imageGeneration;
+    if (wanted.isEmpty() || (request == imageLoadedRequest && generation == imageLoadedGeneration))
+        return;
+    uint8_t *pixels = profileManager->loadProfileImage(wanted);
+    imageLoadedRequest = request;
+    imageLoadedGeneration = generation;
+    if (pixels == nullptr)
+        return;
+    {
+        std::lock_guard<std::mutex> guard(imageMutex);
+        free(imagePending);
+        imagePending = pixels;
+        imagePendingId = wanted;
+    }
+    rerender = true;
 }
 
 void DefaultUI::changeScreen(ScreensEnum screen) {
@@ -483,7 +507,6 @@ void DefaultUI::onVolumetricDelete() {
 }
 
 void DefaultUI::setupPanel() {
-    sdImageDecoderInit();
     ui_init();
     setupState();
     applyTheme();
@@ -1067,7 +1090,8 @@ void DefaultUI::shotChartDrawCb(lv_event_t *e) {
     lv_draw_rect(dsc->draw_ctx, &dot, &area);
 }
 
-// Point the preview image at the SD file and redraw the pro chart when the previewed profile changes.
+// Show the preview profile's image once the profile task has loaded it, and redraw the pro chart when the previewed profile
+// changes.
 void DefaultUI::updateProfilePreview() {
     if (currentScreen != SCREEN_ID_NEW_PROFILE_SCREEN || objects.profile_preview == nullptr)
         return;
@@ -1089,11 +1113,38 @@ void DefaultUI::updateProfilePreview() {
         }
     }
 
-    const String src = hasImage ? profile_image::lvglPath(id) : String();
-    if (src != profileImageSrc) {
-        profileImageSrc = src;
-        if (hasImage)
-            lv_img_set_src(objects.profile_preview, src.c_str());
+    uint8_t *pixels = nullptr;
+    {
+        std::lock_guard<std::mutex> guard(imageMutex);
+        const String wanted = hasImage ? id : String();
+        if (wanted != imageWantedId) {
+            imageWantedId = wanted;
+            imageRequest++;
+        }
+        if (imagePending != nullptr && imagePendingId == imageWantedId) {
+            pixels = imagePending;
+            imagePending = nullptr;
+        }
+    }
+    if (pixels != nullptr) {
+        // Alternate descriptors so LVGL sees a new source; the old pixels are freed once replaced.
+        imageDscIndex ^= 1;
+        lv_img_dsc_t &dsc = imageDsc[imageDscIndex];
+        dsc.header.always_zero = 0;
+        dsc.header.cf = LV_IMG_CF_TRUE_COLOR;
+        dsc.header.w = profile_image::SIZE;
+        dsc.header.h = profile_image::SIZE;
+        dsc.data_size = profile_image::FILE_BYTES - profile_image::HEADER_BYTES;
+        dsc.data = pixels;
+        lv_img_set_src(objects.profile_preview, &dsc);
+        free(imageShown);
+        imageShown = pixels;
+        imageShownId = id;
+    } else if (imageShown != nullptr && imageShownId != id) {
+        lv_img_set_src(objects.profile_preview, nullptr); // don't flash the previous profile's image while loading
+        free(imageShown);
+        imageShown = nullptr;
+        imageShownId = "";
     }
 
     lv_obj_t *chart = objects.profile_chart;
