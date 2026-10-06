@@ -84,6 +84,10 @@ bool BleClientTransport::connectToServer() {
         }
     }
 
+    // ATT MTU does not enlarge link-layer packets. Request DLE on the machine
+    // link so telemetry needs fewer radio fragments when a BLE scale is also connected.
+    _client->setDataLen(BLE_DLE_OCTETS);
+
     NimBLERemoteService *service = _client->getService(NimBLEUUID(gm_proto::SERVICE_UUID));
     if (service == nullptr) {
         ESP_LOGE(LOG_TAG, "Service not found");
