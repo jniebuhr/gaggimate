@@ -58,6 +58,10 @@ class WebUIPlugin : public Plugin {
     // Core dump download
     void handleCoreDumpDownload(AsyncWebServerRequest *request);
 
+    // Profile images on the SD card (pre-converted 300x300 RGB565 from the web UI)
+    void handleProfileImage(AsyncWebServerRequest *request);
+    void handleProfileImageBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total);
+
     GitHubOTA *ota = nullptr;
     AsyncWebServer server;
     WebSocketHandler wsHandler;
@@ -71,7 +75,13 @@ class WebUIPlugin : public Plugin {
     bool updating = false;
     bool apMode = false;
     bool serverRunning = false;
+    bool pluginHooksRegistered = false;
     String updateComponent = "";
+
+    // One upload at a time; a new upload takes over a stale one whose client went away.
+    AsyncWebServerRequest *imageUploadRequest = nullptr;
+    File imageUploadFile;
+    String imageUploadError;
 };
 
 #endif // WEBUIPLUGIN_H

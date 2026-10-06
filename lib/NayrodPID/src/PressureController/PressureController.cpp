@@ -44,7 +44,8 @@ void PressureController::initSetpointFilter(float val) {
 }
 
 void PressureController::filterSensor(float sampleTime) {
-    if (sampleTime <= 0.0f) sampleTime = _dt;
+    if (sampleTime <= 0.0f)
+        sampleTime = _dt;
     _pressureKalmanFilter->setProcessNoise(powf(2 * sampleTime, 2));
     // Use Kalman filter for pressure (as originally intended)
     float newFiltered = this->_pressureKalmanFilter->updateEstimate(*_rawPressure);
@@ -59,9 +60,11 @@ void PressureController::filterSensor(float sampleTime) {
 }
 
 void PressureController::update(ControlMode mode, bool freshPressure, float sampleTime, float elapsed) {
-    if (elapsed > 0.0f) _dt = elapsed;
+    if (elapsed > 0.0f)
+        _dt = elapsed;
     filterSetpoint(*_rawPressureSetpoint);
-    if (freshPressure) filterSensor(sampleTime);
+    if (freshPressure)
+        filterSensor(sampleTime);
 
     if ((mode == ControlMode::FLOW || mode == ControlMode::PRESSURE) && *_rawPressureSetpoint > 0.0f &&
         *_rawFlowSetpoint > 0.0f) {

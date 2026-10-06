@@ -8,7 +8,9 @@ static constexpr const char *NVS_PEER_KEY = "peer";
 void BleClientTransport::init(const String &deviceName) {
     NimBLEDevice::init(deviceName.c_str());
     NimBLEDevice::setPower(ESP_PWR_LVL_P9);
-    NimBLEDevice::setMTU(256);
+    NimBLEDevice::setMTU(BLE_MTU);
+    if (int rc = ble_gap_write_sugg_def_data_len(BLE_DLE_OCTETS, BLE_DLE_TIME_US); rc != 0)
+        ESP_LOGW(LOG_TAG, "Setting suggested data length failed: %d", rc);
     // Just Works bonding with LE Secure Connections, mirroring the controller.
     NimBLEDevice::setSecurityAuth(true, false, true);
     NimBLEDevice::setSecurityIOCap(BLE_HS_IO_NO_INPUT_OUTPUT);
@@ -81,6 +83,10 @@ bool BleClientTransport::connectToServer() {
             ESP_LOGW(LOG_TAG, "Securing link failed, continuing unencrypted");
         }
     }
+
+    // ATT MTU does not enlarge link-layer packets. Request DLE on the machine
+    // link so telemetry needs fewer radio fragments when a BLE scale is also connected.
+    _client->setDataLen(BLE_DLE_OCTETS);
 
     NimBLERemoteService *service = _client->getService(NimBLEUUID(gm_proto::SERVICE_UUID));
     if (service == nullptr) {

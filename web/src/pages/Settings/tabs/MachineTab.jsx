@@ -7,6 +7,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCrosshairs } from '@fortawesome/free-solid-svg-icons/faCrosshairs';
 import { faWeightScale } from '@fortawesome/free-solid-svg-icons/faWeightScale';
 import { InputGroupField, SettingsFormField } from '../../../components/SettingsFormField.jsx';
+import { CleaningSection } from './CleaningSection.jsx';
 
 const ledControl = computed(() => machine.value.capabilities.ledControl);
 const pressureAvailable = computed(() => machine.value.capabilities.pressure);
@@ -345,29 +346,29 @@ export function MachineTab({ formData, onChange, setField }) {
         </div>
       </Section>
 
-      <Section title='Scales'>
-        <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-          <SettingsFormField
-            label='Preferred Scale Source'
-            htmlFor='preferredScaleSource'
-            helpText='Choose which source to prefer when both hardware and Bluetooth scales are available.'
-            noMargin
-          >
-            <select
-              id='preferredScaleSource'
-              name='preferredScaleSource'
-              className='select select-bordered w-full'
-              value={formData.preferredScaleSource || 'hardware'}
-              onChange={onChange('preferredScaleSource')}
+      {hardwareScaleAvailable.value && (
+        <Section title='Scales'>
+          <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+            <SettingsFormField
+              label='Preferred Scale Source'
+              htmlFor='preferredScaleSource'
+              helpText='Choose which source to prefer when both hardware and Bluetooth scales are available.'
+              noMargin
             >
-              <option value='hardware'>Prefer Hardware Scale (Built-in)</option>
-              <option value='bluetooth'>Prefer Bluetooth Scale</option>
-              <option value='auto'>Auto (best available)</option>
-            </select>
-          </SettingsFormField>
-        </div>
+              <select
+                id='preferredScaleSource'
+                name='preferredScaleSource'
+                className='select select-bordered w-full'
+                value={formData.preferredScaleSource || 'auto'}
+                onChange={onChange('preferredScaleSource')}
+              >
+                <option value='auto'>Auto (Bluetooth when connected)</option>
+                <option value='hardware'>Prefer Hardware Scale (Built-in)</option>
+                <option value='bluetooth'>Prefer Bluetooth Scale</option>
+              </select>
+            </SettingsFormField>
+          </div>
 
-        {hardwareScaleAvailable.value && (
           <div className='border-base-content/5 mt-6 space-y-4 border-t pt-6'>
             <div>
               <h3 className='font-medium'>Hardware Scale</h3>
@@ -542,8 +543,10 @@ export function MachineTab({ formData, onChange, setField }) {
               </div>
             </div>
           </div>
-        )}
-      </Section>
+        </Section>
+      )}
+
+      <CleaningSection formData={formData} onChange={onChange} setField={setField} />
 
       {/* Alba Settings */}
       {ledControl.value && (

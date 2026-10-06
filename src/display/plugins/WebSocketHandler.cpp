@@ -133,8 +133,7 @@ void WebSocketHandler::attach(AsyncWebServer &server) {
 }
 
 void WebSocketHandler::loop(unsigned long now) {
-    if (now - lastHardwareScaleDiagnostic >= 200 && hasClients() &&
-        controller->getSystemInfo().capabilities.hwScale) {
+    if (now - lastHardwareScaleDiagnostic >= 200 && hasClients() && controller->getSystemInfo().capabilities.hwScale) {
         lastHardwareScaleDiagnostic = now;
         hardwareScaleDiagnosticDoc.clear();
         hardwareScaleDiagnosticDoc["tp"] = "evt:hardware-scale";
@@ -262,6 +261,8 @@ void WebSocketHandler::handleWebSocketData(AsyncWebSocket *server, AsyncWebSocke
                     controller->getClientController()->tare();
                 } else if (msgType == "req:flush:stop") {
                     handleFlushStop(client->id(), doc);
+                } else if (auto it = pluginRequestHandlers.find(msgType); it != pluginRequestHandlers.end()) {
+                    it->second(cid, doc);
                 }
             }
         }
@@ -338,7 +339,9 @@ void WebSocketHandler::handleProfileRequest(uint32_t clientId, JsonDocument &req
         profileManager->selectProfile(id);
     } else if (type == "req:profiles:favorite") {
         auto id = request["id"].as<String>();
-        profileManager->addFavoritedProfile(id);
+        if (!profileManager->addFavoritedProfile(id)) {
+            response["error"] = F("Favorite limit reached");
+        }
     } else if (type == "req:profiles:unfavorite") {
         auto id = request["id"].as<String>();
         profileManager->removeFavoritedProfile(id);
@@ -376,6 +379,7 @@ void WebSocketHandler::publishState(unsigned long now) {
     doc["hs"] = caps.hwScale;
     doc["scaleSource"] = controller->getActiveScaleSourceName();
     doc["led"] = caps.ledControl;
+    doc["sd"] = controller->isSDCard();
     doc["tw"] = profile.getTotalVolume(); // total target weight for the process
     doc["bta"] = controller->isVolumetricAvailable() ? 1 : 0;
     doc["bt"] = controller->isVolumetricAvailable() && profile.isVolumetric() ? 1 : 0;
@@ -497,6 +501,8 @@ void WebSocketHandler::publishTelemetry() {
 
     broadcastJson(statusDoc);
 }
+
+void WebSocketHandler::sendJson(uint32_t clientId, JsonDocument &doc) { ws.text(clientId, toWsBuffer(doc)); }
 
 void WebSocketHandler::broadcastJson(JsonDocument &doc) {
     if (ws.getClients().empty()) {

@@ -44,6 +44,7 @@ class ShotHistoryPlugin : public Plugin {
     bool writeEntryAtPosition(File &indexFile, size_t position, const ShotIndexEntry &entry);
     void saveNotes(const String &id, const JsonDocument &notes);
     void loadNotes(const String &id, JsonDocument &notes);
+    String resolveNotesPath(uint32_t id);
     void startRecording();
 
     uint16_t getSystemInfo(); // Helper to pack system state bits
@@ -55,6 +56,7 @@ class ShotHistoryPlugin : public Plugin {
     void cleanupHistory();
     size_t getFreeSpace();
 
+    float selectWeightFlow() const;
     void recordPhaseTransition(uint8_t phaseNumber, uint16_t sampleIndex,
                                uint8_t reason); // Helper for phase transitions
 
@@ -73,6 +75,7 @@ class ShotHistoryPlugin : public Plugin {
     bool extendedRecording = false;
     bool shotStartedVolumetric = false; // Track initial volumetric mode
     double currentBrewDelay = 0.0;      // Brew delay (ms) the active shot was started with
+    float shotDose = 0.0f;              // Dose (g) of the brew process's profile snapshot; captured at brew end
     unsigned long shotStart = 0;
     unsigned long extendedRecordingStart = 0;
     unsigned long lastWeightChangeTime = 0;
@@ -82,6 +85,8 @@ class ShotHistoryPlugin : public Plugin {
     float lastActiveWeight = 0.0f;
     float currentActiveFlow = 0.0f;
     float currentEstimatedWeight = 0.0f;
+    float currentScaleFlow = 0.0f;       // native flow from the BLE scale (g/s)
+    unsigned long lastScaleFlowTime = 0; // millis() of the last native flow update
     float currentPuckResistance = 0.0f;
     float maxRecordedWeight = 0.0f;
     String currentProfileName;

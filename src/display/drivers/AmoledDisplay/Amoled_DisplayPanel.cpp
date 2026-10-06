@@ -1,9 +1,10 @@
 #include "Amoled_DisplayPanel.h"
 #include "Arduino_GFX_Library.h"
 #include "pin_config.h"
+#include <algorithm>
 #include <esp_adc_cal.h>
 
-Amoled_DisplayPanel::Amoled_DisplayPanel(AmoledHwConfig hw_config)
+Amoled_DisplayPanel::Amoled_DisplayPanel(const AmoledHwConfig &hw_config)
     : hwConfig(hw_config), displayBus(nullptr), display(nullptr), _touchDrv(nullptr), _wakeupMethod(WAKEUP_FROM_NONE),
       _sleepTimeUs(0), currentBrightness(0) {
     _rotation = 0;
@@ -58,23 +59,13 @@ void Amoled_DisplayPanel::uninstallSD() {
 }
 
 void Amoled_DisplayPanel::setBrightness(uint8_t level) {
-    uint16_t brightness = level * 16;
-
-    brightness = brightness > 255 ? 255 : brightness;
-    brightness = brightness < 0 ? 0 : brightness;
-
-    if (brightness > this->currentBrightness) {
-        for (int i = this->currentBrightness; i <= brightness; i++) {
-            display->setBrightness(i);
-            delay(1);
-        }
-    } else {
-        for (int i = this->currentBrightness; i >= brightness; i--) {
-            display->setBrightness(i);
-            delay(1);
-        }
+    const int target = std::min(level * 16, 255);
+    const int step = target > currentBrightness ? 1 : -1;
+    for (int i = currentBrightness; i != target + step; i += step) {
+        display->setBrightness(i);
+        delay(1);
     }
-    this->currentBrightness = brightness;
+    currentBrightness = target;
 }
 
 uint8_t Amoled_DisplayPanel::getBrightness() { return (this->currentBrightness + 1) / 16; }

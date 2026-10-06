@@ -35,6 +35,7 @@ import {
   getBrewModeLabel,
   getPhaseExitReasonMeta,
   isKnownPhaseExitReason,
+  isWeightType,
   normalizePhaseExitReasonCode,
 } from './exitReasons.js';
 
@@ -88,7 +89,7 @@ function getRecordedStopValue(exitType, samples, phaseStartTime, closingSample, 
   const stopSample = stopIndex >= 0 ? samples[stopIndex] : getPhaseEndSample(samples);
   if (!stopSample) return null;
 
-  if (exitType === 'weight' || exitType === 'volumetric') return stopSample.v;
+  if (isWeightType(exitType)) return stopSample.v;
   if (exitType === 'pressure') return stopSample.cp;
   if (exitType === 'flow') return stopSample.fl;
   if (exitType === 'pumped') {
@@ -266,7 +267,7 @@ function applyTargetMatchResult({
 }
 
 function findWeightTarget(targets) {
-  return targets.find(t => t.type === 'weight' || t.type === 'volumetric') || null;
+  return targets.find(t => isWeightType(t.type)) || null;
 }
 
 function getLastPhaseWeightSamples(samples) {

@@ -45,6 +45,7 @@ import { faScaleBalanced } from '@fortawesome/free-solid-svg-icons/faScaleBalanc
 import { faSearch } from '@fortawesome/free-solid-svg-icons/faSearch';
 import { faAnglesDown, faAnglesUp, faGripVertical } from '@fortawesome/free-solid-svg-icons';
 import { buildStatisticsProfileHref } from '../Statistics/utils/statisticsRoute.js';
+import { isSystemProfile } from '../../utils/systemProfiles.js';
 
 Chart.register(
   LineController,
@@ -97,6 +98,7 @@ function ProfileCard({
 
   const bookmarkClass = data.favorite ? 'text-warning' : 'text-base-content/60';
   const typeText = data.type === 'pro' ? 'Pro' : 'Simple';
+  const isSystem = isSystemProfile(data.id);
   const typeClass = data.type === 'pro' ? 'badge badge-primary' : 'badge badge-neutral';
   const favoriteToggleDisabled = data.favorite ? unfavoriteDisabled : favoriteDisabled;
   const favoriteToggleClass = favoriteToggleDisabled ? 'opacity-50 cursor-not-allowed' : '';
@@ -234,6 +236,14 @@ function ProfileCard({
                 >
                   {typeText}
                 </span>
+                {isSystem && (
+                  <span
+                    className='badge badge-outline badge-sm lg:badge-md font-medium'
+                    title='Built-in profile, can be edited but not deleted'
+                  >
+                    System
+                  </span>
+                )}
                 <button
                   onClick={onToggleDetails}
                   className='btn btn-xs btn-ghost self-start'
@@ -349,27 +359,29 @@ function ProfileCard({
                             <span>Duplicate</span>
                           </button>
                         </li>
-                        <li role='none'>
-                          <button
-                            role='menuitem'
-                            onClick={() => {
-                              confirmOrDelete(() => {
-                                onDelete(data.id);
-                                closeMenu();
-                              });
-                            }}
-                            className={`justify-start ${confirmDelete ? 'bg-error text-error-content rounded font-semibold' : 'text-error'}`}
-                            aria-label={
-                              confirmDelete
-                                ? `Confirm deletion of ${data.label} profile`
-                                : `Delete ${data.label} profile`
-                            }
-                            title={confirmDelete ? 'Click to confirm delete' : 'Delete profile'}
-                          >
-                            <FontAwesomeIcon icon={faTrashCan} />
-                            <span>{confirmDelete ? 'Confirm' : 'Delete'}</span>
-                          </button>
-                        </li>
+                        {!isSystem && (
+                          <li role='none'>
+                            <button
+                              role='menuitem'
+                              onClick={() => {
+                                confirmOrDelete(() => {
+                                  onDelete(data.id);
+                                  closeMenu();
+                                });
+                              }}
+                              className={`justify-start ${confirmDelete ? 'bg-error text-error-content rounded font-semibold' : 'text-error'}`}
+                              aria-label={
+                                confirmDelete
+                                  ? `Confirm deletion of ${data.label} profile`
+                                  : `Delete ${data.label} profile`
+                              }
+                              title={confirmDelete ? 'Click to confirm delete' : 'Delete profile'}
+                            >
+                              <FontAwesomeIcon icon={faTrashCan} />
+                              <span>{confirmDelete ? 'Confirm' : 'Delete'}</span>
+                            </button>
+                          </li>
+                        )}
                       </ul>
                     </div>
                   )}
@@ -432,22 +444,24 @@ function ProfileCard({
                       <FontAwesomeIcon icon={faCopy} />
                     </button>
                   </Tooltip>
-                  <Tooltip content={confirmDelete ? 'Click to confirm' : 'Delete profile'}>
-                    <button
-                      onClick={() => {
-                        confirmOrDelete(() => onDelete(data.id));
-                      }}
-                      className={`btn btn-sm btn-ghost ${confirmDelete ? 'bg-error text-error-content' : 'text-error'}`}
-                      aria-label={
-                        confirmDelete
-                          ? `Confirm deletion of ${data.label} profile`
-                          : `Delete ${data.label} profile`
-                      }
-                    >
-                      <FontAwesomeIcon icon={faTrashCan} />
-                      {confirmDelete && <span className='ml-2 font-semibold'>Confirm</span>}
-                    </button>
-                  </Tooltip>
+                  {!isSystem && (
+                    <Tooltip content={confirmDelete ? 'Click to confirm' : 'Delete profile'}>
+                      <button
+                        onClick={() => {
+                          confirmOrDelete(() => onDelete(data.id));
+                        }}
+                        className={`btn btn-sm btn-ghost ${confirmDelete ? 'bg-error text-error-content' : 'text-error'}`}
+                        aria-label={
+                          confirmDelete
+                            ? `Confirm deletion of ${data.label} profile`
+                            : `Delete ${data.label} profile`
+                        }
+                      >
+                        <FontAwesomeIcon icon={faTrashCan} />
+                        {confirmDelete && <span className='ml-2 font-semibold'>Confirm</span>}
+                      </button>
+                    </Tooltip>
+                  )}
                 </div>
               </div>
             </div>
@@ -913,7 +927,7 @@ export function ProfileList() {
   const onClear = useCallback(async () => {
     setLoading(true);
     for (const p of profiles) {
-      if (!p.selected) {
+      if (!p.selected && !isSystemProfile(p.id)) {
         await apiService.request({ tp: 'req:profiles:delete', id: p.id });
       }
     }

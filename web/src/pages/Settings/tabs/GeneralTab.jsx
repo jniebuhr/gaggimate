@@ -1,9 +1,11 @@
+import { computed } from '@preact/signals';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye } from '@fortawesome/free-solid-svg-icons/faEye';
 import { faEyeSlash } from '@fortawesome/free-solid-svg-icons/faEyeSlash';
 import { timezones } from '../../../config/zones.js';
 import { DASHBOARD_LAYOUTS } from '../../../utils/dashboardManager.js';
 import Section from '../../../components/Card.jsx';
+import { machine } from '../../../services/ApiService.js';
 import { WarningIcon } from '../../../components/WarningIcon.jsx';
 import { WARNING_LEVELS, WARNINGS } from '../../../utils/warnings.js';
 import {
@@ -11,6 +13,8 @@ import {
   SettingsFormField,
   ToggleField,
 } from '../../../components/SettingsFormField.jsx';
+
+const pressureAvailable = computed(() => machine.value.capabilities.pressure);
 
 const FLUSH_DURATION_STEPS = [0, 5, 10, 15, 20];
 
@@ -337,6 +341,25 @@ export function GeneralTab({
               <option value='inside'>Inside</option>
             </select>
           </SettingsFormField>
+          {pressureAvailable.value && (
+            <SettingsFormField
+              label='Brew Status Display'
+              htmlFor='statusDisplayMode'
+              helpText='The chart is shown for Pro profiles only'
+              noMargin
+            >
+              <select
+                id='statusDisplayMode'
+                name='statusDisplayMode'
+                className='select select-bordered w-full'
+                value={formData.statusDisplayMode ?? 0}
+                onChange={onChange('statusDisplayMode')}
+              >
+                <option value={0}>Progress Bar</option>
+                <option value={1}>Shot Chart</option>
+              </select>
+            </SettingsFormField>
+          )}
         </div>
 
         {/* Standby Display */}

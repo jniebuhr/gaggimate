@@ -5,8 +5,8 @@
 
 DimmedPump::DimmedPump(uint8_t ssr_pin, uint8_t sense_pin, PressureSensor *pressure_sensor, PressureControlRate controlRate)
     : _ssr_pin(ssr_pin), _sense_pin(sense_pin), _psm(_sense_pin, _ssr_pin, 100, FALLING, 1, 4), _pressureSensor(pressure_sensor),
-      _controlRate(controlRate),
-      _pressureController(pressureControlPeriodS(controlRate), &_ctrlPressure, &_ctrlFlow, &_currentPressure, &_controllerPower, &_valveStatus) {
+      _controlRate(controlRate), _pressureController(pressureControlPeriodS(controlRate), &_ctrlPressure, &_ctrlFlow,
+                                                     &_currentPressure, &_controllerPower, &_valveStatus) {
     _psm.set(0);
 }
 
@@ -24,7 +24,8 @@ void DimmedPump::loop() {
     const float elapsed = _lastUpdateUs ? (now - _lastUpdateUs) / 1000000.0f : pressureControlPeriodS(_controlRate);
     _lastUpdateUs = now;
     const bool fresh = _pressureSensor->consumeAverage();
-    if (fresh) _currentPressure = _pressureSensor->getAveragedPressure();
+    if (fresh)
+        _currentPressure = _pressureSensor->getAveragedPressure();
     updatePower(fresh, _pressureSensor->getSampleTime(), elapsed);
     _currentFlow = _pressureController.getPumpFlowRate();
 }

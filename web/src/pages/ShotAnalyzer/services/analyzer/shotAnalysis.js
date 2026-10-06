@@ -107,6 +107,24 @@ function getDelayReviewSummary(analyzedPhases) {
   };
 }
 
+/** Converts ratio targets to grams using the shot's dose (notes, then profile); without a dose the firmware skips them too. */
+function resolveRatioTargets(profileData, shotData) {
+  if (!profileData?.phases?.some(phase => phase.targets?.some(t => t.type === 'ratio')))
+    return profileData;
+
+  const dose = Number.parseFloat(shotData.notes?.doseIn) || Number(profileData.dose) || 0;
+  return {
+    ...profileData,
+    phases: profileData.phases.map(phase => ({
+      ...phase,
+      targets: (phase.targets || []).flatMap(target => {
+        if (target.type !== 'ratio') return [target];
+        return dose > 0 ? [{ ...target, value: target.value * dose, ratio: target.value }] : [];
+      }),
+    })),
+  };
+}
+
 /**
  * Main Analysis Function
  * Calculates all metrics for a shot with optional profile comparison
@@ -118,11 +136,12 @@ function getDelayReviewSummary(analyzedPhases) {
  * @param {boolean} settings.isAutoAdjusted - Whether delay was auto-detected
  * @returns {Object} Analysis results with phases and totals
  */
-export function calculateShotMetrics(shotData, profileData, settings) {
+export function calculateShotMetrics(shotData, rawProfileData, settings) {
   // Defensive guard: ensure valid shot data with samples
   if (!shotData || !Array.isArray(shotData.samples) || shotData.samples.length === 0) {
     return { phases: [], warnings: ['No sample data available for analysis.'] };
   }
+  const profileData = resolveRatioTargets(rawProfileData, shotData);
 
   const { scaleDelayMs, sensorDelayMs, isAutoAdjusted } = settings;
   const debugEnabled = isAnalyzerDebugEnabled();

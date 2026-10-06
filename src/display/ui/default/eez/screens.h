@@ -17,11 +17,10 @@ enum ScreensEnum {
     SCREEN_ID_MENU_SCREEN_NEW = 4,
     SCREEN_ID_STEAM_SCREEN = 5,
     SCREEN_ID_WATER_SCREEN = 6,
-    SCREEN_ID_PROFILE_SCREEN = 7,
-    SCREEN_ID_GRIND_SCREEN = 8,
-    SCREEN_ID_INFO_SCREEN = 9,
-    SCREEN_ID_NEW_PROFILE_SCREEN = 10,
-    _SCREEN_ID_LAST = 10
+    SCREEN_ID_GRIND_SCREEN = 7,
+    SCREEN_ID_INFO_SCREEN = 8,
+    SCREEN_ID_NEW_PROFILE_SCREEN = 9,
+    _SCREEN_ID_LAST = 9
 };
 
 typedef struct _objects_t {
@@ -31,7 +30,6 @@ typedef struct _objects_t {
     lv_obj_t *menu_screen_new;
     lv_obj_t *steam_screen;
     lv_obj_t *water_screen;
-    lv_obj_t *profile_screen;
     lv_obj_t *grind_screen;
     lv_obj_t *info_screen;
     lv_obj_t *new_profile_screen;
@@ -53,6 +51,7 @@ typedef struct _objects_t {
     lv_obj_t *obj0__flush_reminder;
     lv_obj_t *obj0__water_low;
     lv_obj_t *obj0__temp_unstable;
+    lv_obj_t *obj0__clean_pending;
     lv_obj_t *status_dials;
     lv_obj_t *status_dials__temp_gauge;
     lv_obj_t *status_dials__temp_gauge_full;
@@ -82,6 +81,7 @@ typedef struct _objects_t {
     lv_obj_t *obj1__flush_reminder;
     lv_obj_t *obj1__water_low;
     lv_obj_t *obj1__temp_unstable;
+    lv_obj_t *obj1__clean_pending;
     lv_obj_t *steam_dials;
     lv_obj_t *steam_dials__temp_gauge;
     lv_obj_t *steam_dials__temp_gauge_full;
@@ -104,17 +104,6 @@ typedef struct _objects_t {
     lv_obj_t *water_dials__pressure_text;
     lv_obj_t *water_dials__temp_text;
     lv_obj_t *water_dials__temp_text_full;
-    lv_obj_t *profile_dials;
-    lv_obj_t *profile_dials__temp_gauge;
-    lv_obj_t *profile_dials__temp_gauge_full;
-    lv_obj_t *profile_dials__pressure_gauge;
-    lv_obj_t *profile_dials__standby_icon;
-    lv_obj_t *profile_dials__menu_icon;
-    lv_obj_t *profile_dials__temp_icon;
-    lv_obj_t *profile_dials__pressure_icon;
-    lv_obj_t *profile_dials__pressure_text;
-    lv_obj_t *profile_dials__temp_text;
-    lv_obj_t *profile_dials__temp_text_full;
     lv_obj_t *grind_dials;
     lv_obj_t *grind_dials__temp_gauge;
     lv_obj_t *grind_dials__temp_gauge_full;
@@ -137,6 +126,17 @@ typedef struct _objects_t {
     lv_obj_t *obj2__pressure_text;
     lv_obj_t *obj2__temp_text;
     lv_obj_t *obj2__temp_text_full;
+    lv_obj_t *profile_dials_1;
+    lv_obj_t *profile_dials_1__temp_gauge;
+    lv_obj_t *profile_dials_1__temp_gauge_full;
+    lv_obj_t *profile_dials_1__pressure_gauge;
+    lv_obj_t *profile_dials_1__standby_icon;
+    lv_obj_t *profile_dials_1__menu_icon;
+    lv_obj_t *profile_dials_1__temp_icon;
+    lv_obj_t *profile_dials_1__pressure_icon;
+    lv_obj_t *profile_dials_1__pressure_text;
+    lv_obj_t *profile_dials_1__temp_text;
+    lv_obj_t *profile_dials_1__temp_text_full;
     lv_obj_t *obj3;
     lv_obj_t *touch_icon;
     lv_obj_t *time;
@@ -184,31 +184,44 @@ typedef struct _objects_t {
     lv_obj_t *confirm_back_button;
     lv_obj_t *confirm_ignore_button;
     lv_obj_t *obj12;
-    lv_obj_t *obj13;
+    lv_obj_t *progress_view;
+    lv_obj_t *pause_button;
+    lv_obj_t *process_volume;
+    lv_obj_t *check_button;
+    lv_obj_t *current_duration;
     lv_obj_t *target_duration_1;
     lv_obj_t *target_weight_2;
     lv_obj_t *target_temp_1;
     lv_obj_t *image7;
     lv_obj_t *image8;
     lv_obj_t *image9;
-    lv_obj_t *pause_button;
-    lv_obj_t *check_button;
-    lv_obj_t *current_duration;
     lv_obj_t *step_label;
     lv_obj_t *phase_label;
+    lv_obj_t *phase_progress;
     lv_obj_t *bar_container;
     lv_obj_t *brew_bar;
-    lv_obj_t *phase_progress;
-    lv_obj_t *process_volume;
+    lv_obj_t *chart_view;
+    lv_obj_t *current_duration_1;
+    lv_obj_t *phase_label_1;
+    lv_obj_t *phase_progress_chart;
+    lv_obj_t *shot_chart;
+    lv_obj_t *process_volume_1;
+    lv_obj_t *chart_legend;
+    lv_obj_t *chart_legend_temp;
+    lv_obj_t *chart_legend_pressure;
+    lv_obj_t *chart_legend_flow;
+    lv_obj_t *chart_legend_weight;
+    lv_obj_t *pause_button_1;
+    lv_obj_t *check_button_1;
     lv_obj_t *btn_brew_1;
     lv_obj_t *btn_steam_1;
     lv_obj_t *btn_water_1;
     lv_obj_t *btn_grind_1;
     lv_obj_t *btn_settings_1;
     lv_obj_t *status_icons;
+    lv_obj_t *obj13;
     lv_obj_t *obj14;
     lv_obj_t *obj15;
-    lv_obj_t *obj16;
     lv_obj_t *info_btn;
     lv_obj_t *standby_btn;
     lv_obj_t *main_label5;
@@ -216,32 +229,18 @@ typedef struct _objects_t {
     lv_obj_t *target_temp2;
     lv_obj_t *steam_down_temp_button;
     lv_obj_t *steam_up_temp_button;
-    lv_obj_t *obj17;
+    lv_obj_t *obj16;
     lv_obj_t *main_label6;
     lv_obj_t *water_down_temp_button;
     lv_obj_t *target_temp3;
     lv_obj_t *image10;
     lv_obj_t *water_up_temp_button;
     lv_obj_t *water_start_button;
-    lv_obj_t *obj18;
-    lv_obj_t *obj19;
-    lv_obj_t *profile_name_1;
-    lv_obj_t *profile_temp_time;
-    lv_obj_t *obj20;
-    lv_obj_t *obj21;
-    lv_obj_t *obj22;
-    lv_obj_t *obj23;
-    lv_obj_t *obj24;
-    lv_obj_t *obj25;
-    lv_obj_t *obj26;
-    lv_obj_t *select_profile;
-    lv_obj_t *previous_profile;
-    lv_obj_t *next_profile;
     lv_obj_t *main_label4;
     lv_obj_t *grind_start_button;
     lv_obj_t *mode_switch1;
-    lv_obj_t *obj27;
-    lv_obj_t *obj28;
+    lv_obj_t *obj17;
+    lv_obj_t *obj18;
     lv_obj_t *target_weight;
     lv_obj_t *target_duration3_1;
     lv_obj_t *target_symbol_1;
@@ -252,36 +251,47 @@ typedef struct _objects_t {
     lv_obj_t *target_symbol;
     lv_obj_t *grind_down_duration_button;
     lv_obj_t *grind_up_duration_button;
-    lv_obj_t *obj29;
+    lv_obj_t *obj19;
     lv_obj_t *standby_icons_1;
     lv_obj_t *wifi_icon_1;
     lv_obj_t *bluetooth_icon_1;
     lv_obj_t *update_icon_1;
+    lv_obj_t *obj20;
+    lv_obj_t *obj21;
+    lv_obj_t *obj22;
+    lv_obj_t *obj23;
+    lv_obj_t *qrcode;
+    lv_obj_t *obj24;
+    lv_obj_t *info_menu_icon;
+    lv_obj_t *single_view;
+    lv_obj_t *obj25;
+    lv_obj_t *profile_details;
+    lv_obj_t *simple_preview;
+    lv_obj_t *obj26;
+    lv_obj_t *obj27;
+    lv_obj_t *obj28;
+    lv_obj_t *obj29;
     lv_obj_t *obj30;
     lv_obj_t *obj31;
     lv_obj_t *obj32;
+    lv_obj_t *chart_preview;
+    lv_obj_t *profile_temp_time_1;
     lv_obj_t *obj33;
-    lv_obj_t *qrcode;
     lv_obj_t *obj34;
-    lv_obj_t *info_menu_icon;
     lv_obj_t *obj35;
-    lv_obj_t *single_view;
-    lv_obj_t *prev_button;
     lv_obj_t *obj36;
-    lv_obj_t *phase_preview;
     lv_obj_t *obj37;
+    lv_obj_t *profile_chart;
     lv_obj_t *obj38;
+    lv_obj_t *image_preview;
+    lv_obj_t *profile_preview;
     lv_obj_t *obj39;
+    lv_obj_t *list_view;
     lv_obj_t *obj40;
     lv_obj_t *obj41;
     lv_obj_t *obj42;
     lv_obj_t *obj43;
-    lv_obj_t *image_preview;
-    lv_obj_t *profile_preview;
     lv_obj_t *obj44;
-    lv_obj_t *select_button;
-    lv_obj_t *next_button;
-    lv_obj_t *list_view;
     lv_obj_t *obj45;
     lv_obj_t *obj46;
     lv_obj_t *obj47;
@@ -304,11 +314,9 @@ typedef struct _objects_t {
     lv_obj_t *obj64;
     lv_obj_t *obj65;
     lv_obj_t *obj66;
-    lv_obj_t *obj67;
-    lv_obj_t *obj68;
-    lv_obj_t *obj69;
-    lv_obj_t *obj70;
-    lv_obj_t *obj71;
+    lv_obj_t *select_profile_1;
+    lv_obj_t *previous_profile_1;
+    lv_obj_t *next_profile_1;
 } objects_t;
 
 extern objects_t objects;
@@ -346,10 +354,6 @@ typedef struct {
 } screen_water_screen_state_t;
 
 typedef struct {
-    user_widget_dials_state_t profile_dials;
-} screen_profile_screen_state_t;
-
-typedef struct {
     user_widget_dials_state_t grind_dials;
 } screen_grind_screen_state_t;
 
@@ -357,14 +361,18 @@ typedef struct {
     user_widget_dials_state_t dials1_state;
 } screen_info_screen_state_t;
 
+typedef struct {
+    user_widget_dials_state_t profile_dials_1;
+} screen_new_profile_screen_state_t;
+
 extern screen_brew_screen_state_t screen_brew_screen_state;
 extern screen_status_screen_state_t screen_status_screen_state;
 extern screen_menu_screen_new_state_t screen_menu_screen_new_state;
 extern screen_steam_screen_state_t screen_steam_screen_state;
 extern screen_water_screen_state_t screen_water_screen_state;
-extern screen_profile_screen_state_t screen_profile_screen_state;
 extern screen_grind_screen_state_t screen_grind_screen_state;
 extern screen_info_screen_state_t screen_info_screen_state;
+extern screen_new_profile_screen_state_t screen_new_profile_screen_state;
 
 void create_screen_standby_screen();
 void delete_screen_standby_screen();
@@ -389,10 +397,6 @@ void tick_screen_steam_screen();
 void create_screen_water_screen();
 void delete_screen_water_screen();
 void tick_screen_water_screen();
-
-void create_screen_profile_screen();
-void delete_screen_profile_screen();
-void tick_screen_profile_screen();
 
 void create_screen_grind_screen();
 void delete_screen_grind_screen();

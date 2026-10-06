@@ -65,6 +65,8 @@ static constexpr uint8_t PHASE_EXIT_REASON_TARGET_PUMPED = 4;     // pumped-wate
 static constexpr uint8_t PHASE_EXIT_REASON_DURATION = 5;          // phase duration elapsed
 static constexpr uint8_t PHASE_EXIT_REASON_SAFETY = 6;            // brew safety timeout
 static constexpr uint8_t PHASE_EXIT_REASON_ABORTED = 7;           // shot manually stopped before finishing
+static constexpr uint8_t PHASE_EXIT_REASON_HOLD_RELEASED = 8;     // held phase ended on button release (hold-to-flush)
+static constexpr uint8_t PHASE_EXIT_REASON_TARGET_RATIO = 9;      // ratio target reached
 
 #pragma pack(push, 1)
 struct ShotLogHeader {
@@ -133,8 +135,7 @@ static_assert(sizeof(ShotLogSample) == SHOT_LOG_SAMPLE_SIZE, "ShotLogSample size
 // Legacy scale v6 and upstream v6 used different timestamp widths. The record
 // size written in reserved0 disambiguates those files without rewriting them.
 inline bool shotLogHasElapsedTimestamp(const ShotLogHeader &header) {
-    return header.version >= 6 &&
-           !(header.version == 6 && header.reserved0 == 26 && header.fieldsMask == 0x1FFF);
+    return header.version >= 6 && !(header.version == 6 && header.reserved0 == 26 && header.fieldsMask == 0x1FFF);
 }
 
 inline uint8_t shotLogSampleSize(const ShotLogHeader &header) {

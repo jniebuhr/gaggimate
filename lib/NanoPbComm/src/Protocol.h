@@ -35,27 +35,27 @@ static constexpr uint16_t MAX_DEVICES = 8;
 
 // Coalescing key (family, device index): repeated updates for one component collapse to the latest value.
 inline uint16_t coalescingKey(const gm::Payload &p) {
-    uint16_t index = 0;
+    uint16_t deviceIndex = 0;
     switch (p.which_content) {
     case gaggimate_Payload_boiler_tag:
-        index = p.content.boiler.index;
+        deviceIndex = p.content.boiler.index;
         break;
     case gaggimate_Payload_pump_tag:
-        index = p.content.pump.index;
+        deviceIndex = p.content.pump.index;
         break;
     case gaggimate_Payload_relay_tag:
-        index = p.content.relay.index;
+        deviceIndex = p.content.relay.index;
         break;
     case gaggimate_Payload_button_tag:
-        index = p.content.button.index;
+        deviceIndex = p.content.button.index;
         break;
     default:
-        index = 0;
+        deviceIndex = 0;
         break;
     }
-    if (index >= MAX_DEVICES)
-        index = MAX_DEVICES - 1;
-    return static_cast<uint16_t>(p.which_content) * MAX_DEVICES + index;
+    if (deviceIndex >= MAX_DEVICES)
+        deviceIndex = MAX_DEVICES - 1;
+    return static_cast<uint16_t>(p.which_content) * MAX_DEVICES + deviceIndex;
 }
 
 inline uint8_t defaultPriority(pb_size_t which) {

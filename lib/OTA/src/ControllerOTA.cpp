@@ -65,6 +65,12 @@ bool ControllerOTA::update(NimBLEClient *ble_client, const String &release_url) 
         txChar = nullptr;
         return false;
     }
+    // Below DEFAULT_MTU the one-byte packet index overflows a part (and 0 means the link is gone), so never go lower.
+    const uint16_t attMtu = client->getMTU();
+    _currentMtu = attMtu > DEFAULT_MTU + STACK_MTU_OFFSET ? attMtu - STACK_MTU_OFFSET : DEFAULT_MTU;
+    if (_currentMtu > MAX_MTU)
+        _currentMtu = MAX_MTU;
+    ESP_LOGI("ControllerOTA", "ATT MTU %u, sending %u byte packets", attMtu, _currentMtu);
     bool ok = runUpdate(file, file.size());
     file.close();
     // Drop the pointers again; the next update re-resolves them against the live connection.
@@ -126,44 +132,72 @@ bool ControllerOTA::runUpdate(Stream &in, uint32_t size) {
         0xFF,
         static_cast<uint8_t>(fileParts / 256),
         static_cast<uint8_t>(fileParts % 256),
-        static_cast<uint8_t>(MTU / 256),
-        static_cast<uint8_t>(MTU % 256),
+        static_cast<uint8_t>(_currentMtu / 256),
+        static_cast<uint8_t>(_currentMtu % 256),
     };
     uint8_t updateStart[] = {0xFD};
+    lastSignal = 0x00;
+    fastMode = false;
     if (!sendData(fileLengthBytes, 5) || !sendData(partsAndMTU, 5) || !sendData(updateStart, 1)) {
         ESP_LOGE("ControllerOTA", "Failed to send update instructions, aborting");
         return false;
     }
     ESP_LOGI("ControllerOTA", "Waiting for signal from controller");
+    if (waitForSignal() != 0xAA) {
+        ESP_LOGE("ControllerOTA", "Controller did not start the transfer, aborting");
+        return false;
+    }
+    ESP_LOGI("ControllerOTA", "Starting transfer in %s mode", fastMode ? "fast" : "slow");
 
-    uint32_t lastActivity = millis();
-    while (client->isConnected()) {
-        uint8_t signal = lastSignal;
+    const uint32_t startedAt = millis();
+    while (currentPart < fileParts) {
         lastSignal = 0x00;
-        if (signal == 0xAA || signal == 0xF1) {
-            // Start update or send next part
-            ESP_LOGV("ControllerOTA", "Sending part %d / %d", currentPart + 1, fileParts);
-            if (!sendPart(in, size)) {
-                ESP_LOGE("ControllerOTA", "Transfer aborted at part %d / %d", currentPart + 1, fileParts);
-                return false;
-            }
-            currentPart++;
-            notifyUpdate();
-            lastActivity = millis();
-        } else if (signal == 0xF2 || signal == 0xFF) {
-            ESP_LOGI("ControllerOTA", "Controller update finished");
-            return true;
-        } else if (millis() - lastActivity > SIGNAL_TIMEOUT_MS) {
-            ESP_LOGE("ControllerOTA", "No signal from the controller for %u ms, aborting", SIGNAL_TIMEOUT_MS);
+        ESP_LOGV("ControllerOTA", "Sending part %d / %d", currentPart + 1, fileParts);
+        if (!sendPart(in, size)) {
+            ESP_LOGE("ControllerOTA", "Transfer aborted at part %d / %d", currentPart + 1, fileParts);
             return false;
         }
-        delay(50);
+        currentPart++;
+        notifyUpdate();
+        if (lastSignal == 0x0F) {
+            ESP_LOGE("ControllerOTA", "Controller rejected part %d / %d, aborting", currentPart, fileParts);
+            return false;
+        }
+        // Fast mode streams on; the acknowledged 0xFC write already holds us back until the part is flashed.
+        if (currentPart < fileParts && !fastMode && waitForSignal() != 0xF1) {
+            ESP_LOGE("ControllerOTA", "Controller did not request part %d / %d, aborting", currentPart + 1, fileParts);
+            return false;
+        }
     }
-    ESP_LOGE("ControllerOTA", "Controller disconnected before the transfer completed");
+    ESP_LOGI("ControllerOTA", "Sent %u bytes in %u ms", size, millis() - startedAt);
+
+    const uint8_t signal = waitForSignal();
+    if (signal == 0xF2 || signal == 0xFF) {
+        ESP_LOGI("ControllerOTA", "Controller update finished");
+        return true;
+    }
+    ESP_LOGE("ControllerOTA", "Controller did not confirm the update (signal 0x%x)", signal);
     return false;
 }
 
-bool ControllerOTA::sendData(uint8_t *data, uint16_t len) const {
+uint8_t ControllerOTA::waitForSignal() {
+    const uint32_t start = millis();
+    while (client->isConnected() && millis() - start < SIGNAL_TIMEOUT_MS) {
+        const uint8_t signal = lastSignal;
+        if (signal != 0x00) {
+            lastSignal = 0x00;
+            return signal;
+        }
+        delay(SIGNAL_POLL_MS);
+    }
+    if (client->isConnected())
+        ESP_LOGE("ControllerOTA", "No signal from the controller for %u ms", SIGNAL_TIMEOUT_MS);
+    else
+        ESP_LOGE("ControllerOTA", "Controller disconnected");
+    return 0x00;
+}
+
+bool ControllerOTA::sendData(uint8_t *data, uint16_t len, bool response) const {
     if (rxChar == nullptr) {
         ESP_LOGE("ControllerOTA", "RX Char uninitialized");
         return false;
@@ -173,12 +207,21 @@ bool ControllerOTA::sendData(uint8_t *data, uint16_t len) const {
         ESP_LOGE("ControllerOTA", "Controller disconnected during transfer");
         return false;
     }
-    if (!rxChar->writeValue(data, len, true)) {
-        ESP_LOGE("ControllerOTA", "BLE write failed");
-        return false;
+    // Hold no-response packets back while the shared TX pool runs low; leaves room for 0xFC, pings and scale writes.
+    const uint32_t start = millis();
+    while (!response && os_msys_num_free() < MIN_FREE_TX_BUFFERS && client->isConnected() &&
+           millis() - start < WRITE_RETRIES * WRITE_RETRY_BACKOFF_MS)
+        delay(TX_BUFFER_POLL_MS);
+
+    for (uint16_t attempt = 0; attempt < WRITE_RETRIES; attempt++) {
+        if (rxChar->writeValue(data, len, response))
+            return true;
+        if (!client->isConnected())
+            break;
+        delay(WRITE_RETRY_BACKOFF_MS);
     }
-    delay(50);
-    return true;
+    ESP_LOGE("ControllerOTA", "BLE write failed");
+    return false;
 }
 
 bool ControllerOTA::fillBuffer(Stream &in, uint8_t *buffer, uint16_t len) const {
@@ -213,28 +256,28 @@ void ControllerOTA::notifyUpdate() const {
 }
 
 bool ControllerOTA::sendPart(Stream &in, uint32_t totalSize) const {
-    uint8_t partData[MTU + 2];
-    uint8_t buffer[MTU];
+    uint8_t partData[MAX_MTU + 2];
+    uint8_t buffer[MAX_MTU];
     partData[0] = 0xFB;
     uint32_t partLength = PART_SIZE;
     if ((currentPart + 1) * PART_SIZE > totalSize) {
         partLength = totalSize - (currentPart * PART_SIZE);
     }
-    uint8_t parts = partLength / MTU;
+    uint8_t parts = partLength / _currentMtu;
     for (uint8_t part = 0; part < parts; part++) {
         partData[1] = part;
-        if (!fillBuffer(in, buffer, MTU))
+        if (!fillBuffer(in, buffer, _currentMtu))
             return false;
-        for (uint32_t i = 0; i < MTU; i++) {
+        for (uint32_t i = 0; i < _currentMtu; i++) {
             partData[i + 2] = buffer[i];
         }
         ESP_LOGV("ControllerOTA", "Sending part %d / %d - package %d / %d", currentPart + 1, fileParts, part + 1, parts);
-        if (!sendData(partData, MTU + 2))
+        if (!sendData(partData, _currentMtu + 2, false))
             return false;
     }
-    if (partLength % MTU > 0) {
-        uint32_t remaining = partLength % MTU;
-        uint8_t remainingData[remaining + 2];
+    if (partLength % _currentMtu > 0) {
+        uint32_t remaining = partLength % _currentMtu;
+        uint8_t remainingData[MAX_MTU + 2];
         remainingData[0] = 0xFB;
         remainingData[1] = parts;
         if (!fillBuffer(in, buffer, remaining))
@@ -242,7 +285,7 @@ bool ControllerOTA::sendPart(Stream &in, uint32_t totalSize) const {
         for (uint32_t i = 0; i < remaining; i++) {
             remainingData[i + 2] = buffer[i];
         }
-        if (!sendData(remainingData, remaining + 2))
+        if (!sendData(remainingData, remaining + 2, false))
             return false;
     }
     uint8_t footer[5];
@@ -255,17 +298,25 @@ bool ControllerOTA::sendPart(Stream &in, uint32_t totalSize) const {
 }
 
 void ControllerOTA::onReceive(NimBLERemoteCharacteristic *pRemoteCharacteristic, uint8_t *pData, size_t length, bool isNotify) {
+    if (length == 0)
+        return;
+    // Publish the mode before the signal; the loop task reads fastMode once it sees 0xAA.
+    if (pData[0] == 0xAA)
+        fastMode = length > 1 && pData[1] != 0;
     lastSignal = pData[0];
-    ESP_LOGI("ControllerOTA", "Received signal 0x%x", lastSignal);
-    switch (lastSignal) {
+    ESP_LOGI("ControllerOTA", "Received signal 0x%x", pData[0]);
+    switch (pData[0]) {
     case 0xAA:
-        ESP_LOGI("ControllerOTA", "Starting transfer, only slow mode supported as of yet");
+        ESP_LOGI("ControllerOTA", "Starting transfer, controller requests %s mode", fastMode ? "fast" : "slow");
         break;
     case 0xF1:
         ESP_LOGI("ControllerOTA", "Next part requested");
         break;
     case 0xF2:
         ESP_LOGI("ControllerOTA", "Controller installing firmware");
+        break;
+    case 0x0F:
+        ESP_LOGE("ControllerOTA", "Controller reported an error: %.*s", static_cast<int>(length - 1), pData + 1);
         break;
     default:
         ESP_LOGI("ControllerOTA", "Unhandled message");

@@ -26,7 +26,20 @@ static constexpr uint32_t PROTOCOL_VERSION = 7;
 // produce and send()/sendBatch() apply to the MockController.
 namespace gm {
 struct Payload {
-    enum Type { None, Ping, Boiler, Pump, Relay, Pid, PumpSettings, Autotune, PressureScale, Tare, Led } type = None;
+    enum Type {
+        None,
+        Ping,
+        Boiler,
+        Pump,
+        Relay,
+        Pid,
+        PumpSettings,
+        Autotune,
+        PressureScale,
+        ScaleFactors,
+        Tare,
+        Led
+    } type = None;
     BoilerCommand boiler;
     PumpCommand pump;
     RelayCommand relay;
@@ -46,8 +59,8 @@ class GaggiMateClient {
     using ButtonCallback = std::function<void(uint8_t index, bool pressed)>;
     using AutotuneResultCallback = std::function<void(float kp, float ki, float kd, float kf)>;
     using VolumetricCallback = std::function<void(float volume)>;
-    using ScaleCallback = std::function<void(float weight, float cell1Weight, float cell2Weight,
-                                             bool cell1Valid, bool cell2Valid)>;
+    using ScaleCallback =
+        std::function<void(float weight, float cell1Weight, float cell2Weight, bool cell1Valid, bool cell2Valid)>;
     using TofCallback = std::function<void(uint32_t distance)>;
     using ErrorCallback = std::function<void(int code)>;
 
@@ -80,6 +93,9 @@ class GaggiMateClient {
     gm::Payload buildAutotune(uint32_t testTime, uint32_t samples, uint32_t heaterWattage);
     gm::Payload buildPressureScale(float scale);
     gm::Payload buildTare();
+    gm::Payload buildScaleFactors(float, float, uint16_t = 10, float = 0.80f, float = 0.80f) {
+        return {gm::Payload::ScaleFactors};
+    }
     gm::Payload buildLedControl(const LedChannelCommand *channels, size_t count);
 
     void sendPing();
@@ -91,6 +107,7 @@ class GaggiMateClient {
                           float maxPower, float slipA, float slipB, float slipC, float slipD);
     void sendAutotune(uint32_t testTime, uint32_t samples, uint32_t heaterWattage);
     void sendPressureScale(float scale);
+    void sendScaleFactors(float, float, uint16_t = 10, float = 0.80f, float = 0.80f) {} // no hardware scale in the mock
     void tare();
     void sendLedControl(const LedChannelCommand *channels, size_t count);
 

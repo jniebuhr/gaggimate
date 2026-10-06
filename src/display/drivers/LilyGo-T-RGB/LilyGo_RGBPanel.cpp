@@ -507,8 +507,8 @@ void LilyGo_RGBPanel::writeCommand(const uint8_t cmd) {
 }
 
 void LilyGo_RGBPanel::writeData(const uint8_t *data, int len) {
-    uint32_t i = 0;
     if (len > 0) {
+        uint32_t i = 0;
         do {
             // The ninth bit of data, 1, represents data, 0 represents command
             uint16_t pdat = (*(data + i)) | 1 << 8;

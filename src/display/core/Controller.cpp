@@ -17,10 +17,12 @@
 #include <display/core/zones.h>
 #include <display/plugins/AutoWakeupPlugin.h>
 #include <display/plugins/BoilerFillPlugin.h>
+#include <display/plugins/CleaningSchedulePlugin.h>
 #include <display/plugins/LedControlPlugin.h>
 #include <display/plugins/ShotHistoryPlugin.h>
 #include <display/plugins/SmartGrindPlugin.h>
 #include <display/plugins/WebUIPlugin.h>
+#include <display/plugins/mahlkonig/MahlkonigPlugin.h>
 #ifndef GAGGIMATE_SIM // network/BLE plugins are device-only
 #include <display/plugins/BLEScalePlugin.h>
 #include <display/plugins/HomekitPlugin.h>
@@ -47,9 +49,7 @@ constexpr uint32_t ADDON_HW_SCALE = 8;
 constexpr double DISPLAY_NEGATIVE_WEIGHT_THRESHOLD = -0.1;
 
 float normalizeWeightForDisplay(double measurement) {
-    return measurement <= 0.0 && measurement > DISPLAY_NEGATIVE_WEIGHT_THRESHOLD
-               ? 0.0f
-               : static_cast<float>(measurement);
+    return measurement <= 0.0 && measurement > DISPLAY_NEGATIVE_WEIGHT_THRESHOLD ? 0.0f : static_cast<float>(measurement);
 }
 
 void Controller::setup() {
@@ -103,6 +103,9 @@ void Controller::setup() {
     }
 #endif
     pluginManager->registerPlugin(new WebUIPlugin());
+    if (settings.isMahlkonigActive()) {
+        pluginManager->registerPlugin(new MahlkonigPlugin());
+    }
 #ifndef GAGGIMATE_SIM // WiFi watchdogs and BLE scales are device-only
     pluginManager->registerPlugin(new NetworkWatchdogPlugin());
     pluginManager->registerPlugin(new WifiStaWatchdogPlugin());
@@ -114,6 +117,7 @@ void Controller::setup() {
 #endif
     pluginManager->registerPlugin(new LedControlPlugin());
     pluginManager->registerPlugin(new AutoWakeupPlugin());
+    pluginManager->registerPlugin(new CleaningSchedulePlugin());
     pluginManager->setup(this);
 
     pluginManager->on("profiles:profile:save", [this](Event const &event) {
@@ -263,6 +267,7 @@ void Controller::setupBluetooth() {
         }
     });
     pluginManager->on("ota:update:end", [this](Event const &) { applyConnectionPriority(true); });
+    pluginManager->on("history:shot:recorded", [this](Event const &) { comms.tare(); });
     comms.onSensorData([this](float temp, float temp2, float pressure, float puckFlow, float pumpFlow, float puckResistance,
                               float pumpPower, float heaterPower, float waterPumped) {
         onTempRead(temp);
@@ -1023,7 +1028,10 @@ void Controller::updateControl() {
                 relay.open = brewProcess->isRelayActive();
                 pump.mode = pressureTarget ? PumpControlMode::Pressure : PumpControlMode::Flow;
                 // Mushroom-valve machines lose the cracking pressure before the puck; command the sensor-side value
-                pump.pressure = brewProcess->getPumpPressure() + settings.getPressureOffset();
+                pump.pressure = brewProcess->getPumpPressure();
+                if (pump.pressure > 0.0f) {
+                    pump.pressure += settings.getPressureOffset();
+                }
                 pump.flow = brewProcess->getPumpFlow();
                 targetPressure = brewProcess->getPumpPressure();
                 targetFlow = brewProcess->getPumpFlow();
@@ -1169,7 +1177,14 @@ void Controller::deactivate() {
 // Runs for every ended process, stopped by hand or finished on its own: stop command, tare, then relax once they are ACKed.
 void Controller::afterDeactivate() {
     updateControl();
-    comms.tare();
+    bool shot;
+    {
+        std::lock_guard<std::recursive_mutex> guard(processMutex);
+        shot = lastProcess != nullptr && lastProcess->getType() == MODE_BREW &&
+               !static_cast<BrewProcess *>(lastProcess)->isUtility();
+    }
+    if (!shot)
+        comms.tare(); // shots tare on history:shot:recorded, once their final weight is written
     relaxPending = true;
     relaxRequestedAt = millis();
 }
@@ -1342,9 +1357,8 @@ void Controller::onVolumetricMeasurement(double measurement, VolumetricMeasureme
     bool switchedToFlowEstimation = false;
     {
         std::lock_guard<std::recursive_mutex> guard(processMutex);
-        const bool physicalSourceSelected =
-            currentVolumetricSource == VolumetricMeasurementSource::HARDWARE ||
-            currentVolumetricSource == VolumetricMeasurementSource::BLUETOOTH;
+        const bool physicalSourceSelected = currentVolumetricSource == VolumetricMeasurementSource::HARDWARE ||
+                                            currentVolumetricSource == VolumetricMeasurementSource::BLUETOOTH;
         const bool activeBrew = currentProcess != nullptr && currentProcess->getType() == MODE_BREW && currentProcess->isActive();
 
         if (source == VolumetricMeasurementSource::FLOW_ESTIMATION) {
@@ -1383,7 +1397,8 @@ void Controller::onVolumetricMeasurement(double measurement, VolumetricMeasureme
 #endif
 
     if (source == VolumetricMeasurementSource::FLOW_ESTIMATION) {
-        pluginManager->trigger(F("controller:volumetric-measurement:estimation:change"), "value", static_cast<float>(measurement));
+        pluginManager->trigger(F("controller:volumetric-measurement:estimation:change"), "value",
+                               static_cast<float>(measurement));
     } else if (source == VolumetricMeasurementSource::HARDWARE) {
         pluginManager->trigger(F("controller:volumetric-measurement:hardware:change"), "value", static_cast<float>(measurement));
     } else {
@@ -1439,11 +1454,12 @@ VolumetricMeasurementSource Controller::getActiveScaleSource() const {
     if (preferred == VolumetricMeasurementSource::BLUETOOTH && isBluetoothScaleHealthy()) {
         return VolumetricMeasurementSource::BLUETOOTH;
     }
-    if (isHardwareScaleHealthy()) {
-        return VolumetricMeasurementSource::HARDWARE;
-    }
+    // Auto prefers a paired BLE scale: the user connected it on purpose (GM-249).
     if (isBluetoothScaleHealthy()) {
         return VolumetricMeasurementSource::BLUETOOTH;
+    }
+    if (isHardwareScaleHealthy()) {
+        return VolumetricMeasurementSource::HARDWARE;
     }
 
 #ifdef NIGHTLY_BUILD
@@ -1463,8 +1479,7 @@ VolumetricMeasurementSource Controller::getEffectiveScaleSource() const {
 }
 
 VolumetricMeasurementSource Controller::getGrindScaleSource() const {
-    return isBluetoothScaleHealthy() ? VolumetricMeasurementSource::BLUETOOTH
-                                     : VolumetricMeasurementSource::INACTIVE;
+    return isBluetoothScaleHealthy() ? VolumetricMeasurementSource::BLUETOOTH : VolumetricMeasurementSource::INACTIVE;
 }
 
 bool Controller::isScaleSourceHealthy(VolumetricMeasurementSource source) const {
@@ -1474,7 +1489,7 @@ bool Controller::isScaleSourceHealthy(VolumetricMeasurementSource source) const 
     if (source == VolumetricMeasurementSource::BLUETOOTH) {
         return isBluetoothScaleHealthy();
     }
-    return true;
+    return false;
 }
 
 String Controller::getActiveScaleSourceName() const {
@@ -1508,6 +1523,7 @@ void Controller::onFlush() {
     // Allocate outside the lock; reachable from the UI, AsyncTCP and BLE tasks (GM-147).
     const int duration = settings.getFlushDuration();
     Profile profile = FLUSH_PROFILE;
+    profile.temperature = profileManager->getSelectedProfile().temperature;
     profile.phases[0].duration = duration > 0 ? duration : FLUSH_HOLD_MAX_DURATION_S; // 0 = hold, capped
     auto *flush = new BrewProcess(profile, ProcessTarget::TIME, settings.getBrewDelay());
     flush->holdPhase = duration == 0; // pump phase ends on onFlushRelease(), the drain phase still runs

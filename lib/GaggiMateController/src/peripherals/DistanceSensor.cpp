@@ -63,9 +63,12 @@ bool DistanceSensor::readRange(uint16_t &range) {
     bool ok = tof->last_status == 0 && range != TOF_INVALID_RANGE;
     tof->writeReg(VL53L0X::SYSTEM_INTERRUPT_CLEAR, 0x01);
     ok = ok && tof->last_status == 0;
-    if (ok && ++pollsSinceIdentityCheck >= IDENTITY_CHECK_POLLS) {
-        pollsSinceIdentityCheck = 0;
-        ok = checkIdentity();
+    if (ok) {
+        pollsSinceIdentityCheck++;
+        if (pollsSinceIdentityCheck >= IDENTITY_CHECK_POLLS) {
+            pollsSinceIdentityCheck = 0;
+            ok = checkIdentity();
+        }
     }
     if (!ok) {
         failures++;

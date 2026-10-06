@@ -79,9 +79,9 @@ class LilyGo_RGBPanel : public Display {
 
     void wakeup();
 
-    uint16_t width();
+    uint16_t width() override;
 
-    uint16_t height();
+    uint16_t height() override;
 
     uint8_t getPoint(int16_t *x_array, int16_t *y_array, uint8_t get_point = 1);
 
@@ -89,9 +89,9 @@ class LilyGo_RGBPanel : public Display {
 
     uint16_t getBattVoltage(void);
 
-    void pushColors(uint16_t x, uint16_t y, uint16_t width, uint16_t hight, uint16_t *data);
+    void pushColors(uint16_t x, uint16_t y, uint16_t width, uint16_t hight, uint16_t *data) override;
 
-    bool supportsDirectMode() { return false; }
+    bool supportsDirectMode() override { return false; }
 
   private:
     void writeData(const uint8_t *data, int len);

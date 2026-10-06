@@ -101,8 +101,8 @@ gm::Payload GaggiMateServer::buildVolumetricMeasurement(float volume) {
     return p;
 }
 
-gm::Payload GaggiMateServer::buildScaleMeasurement(float weight, float cell1Weight, float cell2Weight,
-                                                   bool cell1Valid, bool cell2Valid) {
+gm::Payload GaggiMateServer::buildScaleMeasurement(float weight, float cell1Weight, float cell2Weight, bool cell1Valid,
+                                                   bool cell2Valid) {
     gm::Payload p = gaggimate_Payload_init_zero;
     p.which_content = gaggimate_Payload_scale_tag;
     p.content.scale.weight = weight;
@@ -141,8 +141,7 @@ void GaggiMateServer::sendAutotuneResult(float kp, float ki, float kd, float kf)
 
 void GaggiMateServer::sendVolumetricMeasurement(float volume) { _endpoint.sendUnreliable(buildVolumetricMeasurement(volume)); }
 
-void GaggiMateServer::sendScaleMeasurement(float weight, float cell1Weight, float cell2Weight, bool cell1Valid,
-                                           bool cell2Valid) {
+void GaggiMateServer::sendScaleMeasurement(float weight, float cell1Weight, float cell2Weight, bool cell1Valid, bool cell2Valid) {
     _endpoint.sendUnreliable(buildScaleMeasurement(weight, cell1Weight, cell2Weight, cell1Valid, cell2Valid));
 }
 
@@ -201,8 +200,7 @@ void GaggiMateServer::registerHandlers() {
         if (_scaleFactorsCb)
             _scaleFactorsCb(p.content.scale_factors.scale_factor1, p.content.scale_factors.scale_factor2,
                             static_cast<uint16_t>(p.content.scale_factors.sample_rate_sps),
-                            p.content.scale_factors.idle_filter_alpha,
-                            p.content.scale_factors.active_filter_alpha);
+                            p.content.scale_factors.idle_filter_alpha, p.content.scale_factors.active_filter_alpha);
     });
     _endpoint.on(gaggimate_Payload_led_tag, [this](const gm::Payload &p) {
         if (!_ledCb)

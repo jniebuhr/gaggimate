@@ -31,6 +31,9 @@ constexpr int16_t FLOW_MAX_VALUE = 2000;  //  20.00 ml/s
 // the ±20 floor for seconds while the EMA bleeds off. See GM-110.
 constexpr float MAX_PLAUSIBLE_WEIGHT_DELTA = 5.0f; // grams per sample
 
+// Native scale flow older than this is ignored and vf falls back to the derived flow.
+constexpr unsigned long SCALE_FLOW_STALE_MS = 1000;
+
 uint16_t encodeUnsigned(float value, float scale, uint16_t maxValue) {
     if (!std::isfinite(value)) {
         return 0;
@@ -73,6 +76,12 @@ String padId(String id, int length = 6) {
     }
     return id;
 }
+
+// Notes sit next to their .slog under the same padded id
+String notesPath(uint32_t id) { return "/h/" + padId(String(id)) + ".json"; }
+
+// Firmware since the shot index (#449) keyed notes by the unpadded id the web UI sends
+String legacyNotesPath(uint32_t id) { return "/h/" + String(id) + ".json"; }
 } // namespace
 
 ShotHistoryPlugin ShotHistory;
@@ -91,6 +100,10 @@ void ShotHistoryPlugin::setup(Controller *c, PluginManager *pm) {
            [this](Event const &event) { currentEstimatedWeight = event.getFloat("value"); });
     pm->on("controller:volumetric-measurement:active:change",
            [this](Event const &event) { currentActiveWeight = event.getFloat("value"); });
+    pm->on("controller:volumetric-measurement:scale-flow:change", [this](Event const &event) {
+        currentScaleFlow = event.getFloat("value");
+        lastScaleFlowTime = millis();
+    });
     pm->on("boiler:currentTemperature:change", [this](Event const &event) { currentTemperature = event.getFloat("value"); });
     pm->on("pump:puck-resistance:change", [this](Event const &event) { currentPuckResistance = event.getFloat("value"); });
     // Initialize rebuild state
@@ -100,6 +113,19 @@ void ShotHistoryPlugin::setup(Controller *c, PluginManager *pm) {
         fs->remove("/h/recent.bin");
     }
     xTaskCreatePinnedToCore(loopTask, "ShotHistoryPlugin::loop", configMINIMAL_STACK_SIZE * 6, this, 1, &taskHandle, 0);
+}
+
+// Prefer the scale's native flow, or puck flow when the weight is itself the flow estimate; else the derived EMA.
+float ShotHistoryPlugin::selectWeightFlow() const {
+    const VolumetricMeasurementSource source = controller->getEffectiveScaleSource();
+    if (source == VolumetricMeasurementSource::BLUETOOTH && lastScaleFlowTime != 0 &&
+        millis() - lastScaleFlowTime < SCALE_FLOW_STALE_MS) {
+        return currentScaleFlow;
+    }
+    if (source == VolumetricMeasurementSource::FLOW_ESTIMATION) {
+        return controller->getCurrentPuckFlow();
+    }
+    return currentActiveFlow;
 }
 
 void ShotHistoryPlugin::record() {
@@ -135,7 +161,7 @@ void ShotHistoryPlugin::record() {
                 currentFile.write(reinterpret_cast<const uint8_t *>(&header), sizeof(header));
             }
         }
-        // Active-scale weight flow (vf): derive from the same non-negative weight we
+        // Derived weight flow (vf fallback, see selectWeightFlow): derive from the same non-negative weight we
         // store in sample.v so the two can never disagree, and skip the EMA update
         // on an implausible single-sample jump so one bad scale reading cannot
         // saturate vf for seconds. See GM-110.
@@ -160,7 +186,7 @@ void ShotHistoryPlugin::record() {
         sample.fl = encodeSigned(controller->getCurrentPumpFlow(), FLOW_SCALE, FLOW_MIN_VALUE, FLOW_MAX_VALUE);
         sample.tf = encodeSigned(controller->getTargetFlow(), FLOW_SCALE, FLOW_MIN_VALUE, FLOW_MAX_VALUE);
         sample.pf = encodeSigned(controller->getCurrentPuckFlow(), FLOW_SCALE, FLOW_MIN_VALUE, FLOW_MAX_VALUE);
-        sample.vf = encodeSigned(currentActiveFlow, FLOW_SCALE, FLOW_MIN_VALUE, FLOW_MAX_VALUE);
+        sample.vf = encodeSigned(selectWeightFlow(), FLOW_SCALE, FLOW_MIN_VALUE, FLOW_MAX_VALUE);
         sample.v = encodeUnsigned(activeWeight, WEIGHT_SCALE, WEIGHT_MAX_VALUE);
         sample.ev = encodeUnsigned(currentEstimatedWeight, WEIGHT_SCALE, WEIGHT_MAX_VALUE);
         sample.pr = encodeUnsigned(currentPuckResistance, RESISTANCE_SCALE, RESISTANCE_MAX_VALUE);
@@ -259,12 +285,23 @@ void ShotHistoryPlugin::record() {
         currentFile.write(reinterpret_cast<const uint8_t *>(&header), sizeof(header));
         currentFile.close();
         isFileOpen = false;
+        pluginManager->trigger("history:shot:recorded"); // final weight and pumped water are written
         unsigned long duration = header.durationMs;
         if (duration <= 7500) { // Exclude failed shots and flushes
             fs->remove("/h/" + currentId + ".slog");
         } else {
             controller->getSettings().setHistoryIndex(controller->getSettings().getHistoryIndex() + 1);
             cleanupHistory();
+
+            // Merge so notes saved during extended recording keep a user-entered dose
+            if (shotDose > 0.0f) {
+                JsonDocument notes(&psramAllocator);
+                loadNotes(currentId, notes);
+                if (notes["doseIn"].isNull() || notes["doseIn"].as<String>().isEmpty()) {
+                    notes["doseIn"] = String(shotDose, 1);
+                    saveNotes(currentId, notes);
+                }
+            }
 
             // Always create a complete index entry via upsert.
             // If an early entry exists, it gets overwritten with final data.
@@ -275,7 +312,7 @@ void ShotHistoryPlugin::record() {
             indexEntry.duration = header.durationMs;
             indexEntry.volume = header.finalWeight;
             indexEntry.rating = 0;
-            indexEntry.flags = SHOT_FLAG_COMPLETED;
+            indexEntry.flags = SHOT_FLAG_COMPLETED | (fs->exists(resolveNotesPath(currentId.toInt())) ? SHOT_FLAG_HAS_NOTES : 0);
             strncpy(indexEntry.profileId, header.profileId, sizeof(indexEntry.profileId) - 1);
             indexEntry.profileId[sizeof(indexEntry.profileId) - 1] = '\0';
             strncpy(indexEntry.profileName, header.profileName, sizeof(indexEntry.profileName) - 1);
@@ -343,6 +380,7 @@ void ShotHistoryPlugin::startRecording() {
     // Reset phase tracking for new shot
     lastRecordedPhase = 0xFF;                                      // Invalid value to detect first phase
     finalExitReason = static_cast<uint8_t>(PhaseExitReason::NONE); // Reset shot-end reason
+    shotDose = 0.0f;
 }
 
 unsigned long ShotHistoryPlugin::getTime() {
@@ -364,6 +402,7 @@ void ShotHistoryPlugin::endRecording() {
             PhaseExitReason reason =
                 brewProcess->processPhase == ProcessPhase::FINISHED ? brewProcess->lastExitReason : PhaseExitReason::ABORTED;
             finalExitReason = static_cast<uint8_t>(reason);
+            shotDose = brewProcess->profile.dose; // process copy, unaffected by later temporary adjustments
         }
     }
 
@@ -484,8 +523,7 @@ uint16_t ShotHistoryPlugin::getSystemInfo() {
     // Bit 8: Effective scale source connected/healthy (hardware or Bluetooth).
     if (controller != nullptr) {
         const VolumetricMeasurementSource activeSource = controller->getEffectiveScaleSource();
-        if ((activeSource == VolumetricMeasurementSource::HARDWARE ||
-             activeSource == VolumetricMeasurementSource::BLUETOOTH) &&
+        if ((activeSource == VolumetricMeasurementSource::HARDWARE || activeSource == VolumetricMeasurementSource::BLUETOOTH) &&
             controller->isScaleSourceHealthy(activeSource)) {
             systemInfo |= SYSTEM_INFO_ACTIVE_SCALE_CONNECTED;
         }
@@ -527,12 +565,11 @@ void ShotHistoryPlugin::cleanupHistory() {
         if (end > start) {
             uint32_t shotId = fname.substring(start, end).toInt();
             markIndexDeleted(shotId);
+            fs->remove(notesPath(shotId));
+            fs->remove(legacyNotesPath(shotId));
         }
 
-        // Remove .slog and associated .json notes file
         fs->remove(fname);
-        String notesPath = fname.substring(0, fname.lastIndexOf('.')) + ".json";
-        fs->remove(notesPath);
         removed++;
     }
 
@@ -566,7 +603,8 @@ void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &respo
             paddedId = "0" + paddedId;
         }
         fs->remove("/h/" + paddedId + ".slog");
-        fs->remove("/h/" + paddedId + ".json");
+        fs->remove(notesPath(id.toInt()));
+        fs->remove(legacyNotesPath(id.toInt()));
 
         // Mark as deleted in index
         markIndexDeleted(id.toInt());
@@ -607,7 +645,7 @@ void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &respo
 }
 
 void ShotHistoryPlugin::saveNotes(const String &id, const JsonDocument &notes) {
-    File file = fs->open("/h/" + id + ".json", FILE_WRITE);
+    File file = fs->open(resolveNotesPath(id.toInt()), FILE_WRITE);
     if (file) {
         String notesStr;
         serializeJson(notes, notesStr);
@@ -617,12 +655,25 @@ void ShotHistoryPlugin::saveNotes(const String &id, const JsonDocument &notes) {
 }
 
 void ShotHistoryPlugin::loadNotes(const String &id, JsonDocument &notes) {
-    File file = fs->open("/h/" + id + ".json", "r");
+    File file = fs->open(resolveNotesPath(id.toInt()), "r");
     if (file) {
         String notesStr = file.readString();
         file.close();
         deserializeJson(notes, notesStr);
     }
+}
+
+// Returns the canonical notes path, moving a legacy unpadded-id file onto it (the UI has shown that one since #449)
+String ShotHistoryPlugin::resolveNotesPath(uint32_t id) {
+    String path = notesPath(id);
+    String legacy = legacyNotesPath(id);
+    if (legacy != path && fs->exists(legacy)) {
+        fs->remove(path);
+        if (!fs->rename(legacy.c_str(), path.c_str())) {
+            return legacy;
+        }
+    }
+    return path;
 }
 
 void ShotHistoryPlugin::loopTask(void *arg) {
@@ -974,8 +1025,8 @@ void ShotHistoryPlugin::rebuildIndex() {
         int start = fileName.lastIndexOf('/') + 1;
         int end = fileName.lastIndexOf('.');
         uint32_t shotId = fileName.substring(start, end).toInt();
-        if (shotId > maxId) {
-            maxId = shotId;
+        if (shotId >= maxId) {
+            maxId = shotId + 1;
         }
 
         // Create index entry
@@ -1032,11 +1083,11 @@ void ShotHistoryPlugin::rebuildIndex() {
         }
 
         // Check for notes and extract rating and volume override
-        String notesPath = "/h/" + String(shotId, 10) + ".json";
-        if (fs->exists(notesPath)) {
+        String shotNotesPath = resolveNotesPath(shotId);
+        if (fs->exists(shotNotesPath)) {
             entry.flags |= SHOT_FLAG_HAS_NOTES;
 
-            File notesFile = fs->open(notesPath, "r");
+            File notesFile = fs->open(shotNotesPath, "r");
             if (notesFile) {
                 String notesStr = notesFile.readString();
                 notesFile.close();

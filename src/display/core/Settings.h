@@ -17,6 +17,7 @@ constexpr float DEFAULT_HARDWARE_SCALE_ACTIVE_ALPHA = 0.80f;
 
 // Per-warning severity: hidden, shown as a warning, or shown as an error that needs confirmation before brewing.
 enum WarningLevel { WARNING_LEVEL_IGNORE = 0, WARNING_LEVEL_WARN = 1, WARNING_LEVEL_ERROR = 2 };
+enum StatusDisplayMode { STATUS_DISPLAY_PROGRESS = 0, STATUS_DISPLAY_CHART = 1 };
 
 struct AutoWakeupSchedule {
     String time;    // HH:MM format
@@ -85,9 +86,7 @@ class Settings {
     float getPressureScaling() const { return pressureScaling.get(); }
     float getScaleFactor1() const { return scaleFactor1.get(); }
     float getScaleFactor2() const { return scaleFactor2.get(); }
-    uint16_t getHardwareScaleSampleRateSps() const {
-        return static_cast<uint16_t>(hardwareScaleSampleRateSps.get());
-    }
+    uint16_t getHardwareScaleSampleRateSps() const { return static_cast<uint16_t>(hardwareScaleSampleRateSps.get()); }
     float getHardwareScaleIdleAlpha() const { return hardwareScaleIdleAlpha.get(); }
     float getHardwareScaleActiveAlpha() const { return hardwareScaleActiveAlpha.get(); }
     String getPreferredScaleSource() const { return preferredScaleSource.get(); }
@@ -113,6 +112,8 @@ class Settings {
     int getStartupFillTime() const { return startupFillTime.get(); }
     int getSteamFillTime() const { return steamFillTime.get(); }
     bool isSmartGrindActive() const { return smartGrindActive.get(); }
+    bool isMahlkonigActive() const { return mahlkonigActive.get(); }
+    String getMahlkonigRecipeProfiles() const { return mahlkonigRecipeProfiles.get(); }
     int getSmartGrindMode() const { return smartGrindMode.get(); }
     String getSmartGrindIp() const { return smartGrindIp.get(); }
     bool isHomeAssistant() const { return homeAssistant.get(); }
@@ -138,11 +139,22 @@ class Settings {
     int getWarnScaleConnected() const { return warnScaleConnected.get(); }
     int getWarnScaleBattery() const { return warnScaleBattery.get(); }
     int getWarnTemperature() const { return warnTemperature.get(); }
+    int getWarnBackflush() const { return warnBackflush.get(); }
+    int getWarnDescaling() const { return warnDescaling.get(); }
+    int getBackflushIntervalDays() const { return backflushIntervalDays.get(); }   // 0 = off
+    int getBackflushIntervalShots() const { return backflushIntervalShots.get(); } // 0 = off
+    int getDescalingIntervalWeeks() const { return descalingIntervalWeeks.get(); } // 0 = off
+    int getDescalingIntervalShots() const { return descalingIntervalShots.get(); } // 0 = off
+    unsigned long getLastBackflushTime() const { return lastBackflushTime.get(); } // epoch seconds, 0 = never
+    unsigned long getLastDescalingTime() const { return lastDescalingTime.get(); } // epoch seconds, 0 = never
+    int getShotsSinceBackflush() const { return shotsSinceBackflush.get(); }
+    int getShotsSinceDescaling() const { return shotsSinceDescaling.get(); }
     int getWifiApTimeout() const { return wifiApTimeout.get(); }
     float getSteamPumpPercentage() const { return steamPumpPercentage.get(); }
     float getSteamPumpCutoff() const { return steamPumpCutoff.get(); }
     int getThemeMode() const { return themeMode.get(); }
     bool isGaugeSetpointsInside() const { return gaugeSetpointsInside.get(); }
+    int getStatusDisplayMode() const { return statusDisplayMode.get(); } // STATUS_DISPLAY_*
     int getHistoryIndex() const { return historyIndex.get(); }
 
     [[deprecated]]
@@ -212,6 +224,8 @@ class Settings {
     void setStartupFillTime(int startup_fill_time);
     void setSteamFillTime(int steam_fill_time);
     void setSmartGrindActive(bool smart_grind_active);
+    void setMahlkonigActive(bool mahlkonig_active);
+    void setMahlkonigRecipeProfiles(String profiles);
     void setSmartGrindIp(String smart_grind_ip);
     void setSmartGrindMode(int smart_grind_mode);
     void setHomeAssistant(bool homeAssistant);
@@ -228,11 +242,21 @@ class Settings {
     void setWarnScaleConnected(int level);
     void setWarnScaleBattery(int level);
     void setWarnTemperature(int level);
+    void setWarnBackflush(int level);
+    void setWarnDescaling(int level);
+    void setBackflushIntervalDays(int days);
+    void setBackflushIntervalShots(int shots);
+    void setDescalingIntervalWeeks(int weeks);
+    void setDescalingIntervalShots(int shots);
+    void setLastBackflushTime(unsigned long time);
+    void setLastDescalingTime(unsigned long time);
+    void setShotsSinceBackflush(int shots);
+    void setShotsSinceDescaling(int shots);
     void setTimezone(String timezone);
     void setClockFormat(bool format_24h);
     void setSelectedProfile(String selected_profile);
     void setStartupProfile(String startup_profile);
-    void setFavoritedProfiles(std::vector<String> favorited_profiles);
+    void setFavoritedProfiles(const std::vector<String> &favorited_profiles);
     void addFavoritedProfile(String profile);
     void removeFavoritedProfile(String profile);
     void setProfileOrder(std::vector<String> profile_order);
@@ -244,6 +268,7 @@ class Settings {
     void setSteamPumpCutoff(float steam_pump_cutoff);
     void setThemeMode(int theme_mode);
     void setGaugeSetpointsInside(bool inside);
+    void setStatusDisplayMode(int status_display_mode);
     void setHistoryIndex(int history_index);
     [[deprecated]]
     void setSunriseR(int sunrise_r);
@@ -287,7 +312,7 @@ class Settings {
     Property<int> hardwareScaleSampleRateSps{registry, "hs_rate", DEFAULT_HARDWARE_SCALE_SAMPLE_RATE_SPS};
     Property<float> hardwareScaleIdleAlpha{registry, "hs_ia", DEFAULT_HARDWARE_SCALE_IDLE_ALPHA};
     Property<float> hardwareScaleActiveAlpha{registry, "hs_aa", DEFAULT_HARDWARE_SCALE_ACTIVE_ALPHA};
-    Property<String> preferredScaleSource{registry, "pss", "hardware"};
+    Property<String> preferredScaleSource{registry, "pss", "auto"};
     Property<double> targetGrindVolume{registry, "tgv", 18.0};
     Property<int> targetGrindDuration{registry, "tgd", 25000};
     Property<double> brewDelay{registry, "del_br", 800.0};
@@ -312,6 +337,8 @@ class Settings {
     Property<bool> smartGrindToggle{registry, "sg_t", false}; // legacy, seeds the smartGrindMode default
     Property<int> smartGrindMode{registry, "sg_m", 0};
     Property<String> smartGrindIp{registry, "sg_i", ""};
+    Property<bool> mahlkonigActive{registry, "mk_a", false};
+    Property<String> mahlkonigRecipeProfiles{registry, "mk_rp", ""}; // profile id per grinder recipe slot, "r1,r2,..."
     Property<bool> homeAssistant{registry, "ha_a", false};
     Property<String> homeAssistantUser{registry, "ha_u", ""};
     Property<String> homeAssistantPassword{registry, "ha_pw", ""};
@@ -336,6 +363,7 @@ class Settings {
     Property<int> wifiApTimeout{registry, "wifi_apt", DEFAULT_WIFI_AP_TIMEOUT_MS};
     Property<int> themeMode{registry, "theme", 0};
     Property<bool> gaugeSetpointsInside{registry, "gsi", false};
+    Property<int> statusDisplayMode{registry, "sdm", STATUS_DISPLAY_PROGRESS};
 
     // Warning levels (WarningLevel)
     Property<int> warnWaterLevel{registry, "wl_water", WARNING_LEVEL_WARN};
@@ -344,6 +372,18 @@ class Settings {
     Property<int> warnScaleConnected{registry, "wl_scale", WARNING_LEVEL_WARN};
     Property<int> warnScaleBattery{registry, "wl_scale_bat", WARNING_LEVEL_ERROR};
     Property<int> warnTemperature{registry, "wl_temp", WARNING_LEVEL_WARN};
+    Property<int> warnBackflush{registry, "wl_backflush", WARNING_LEVEL_WARN};
+    Property<int> warnDescaling{registry, "wl_descale", WARNING_LEVEL_WARN};
+
+    // Cleaning schedule
+    Property<int> backflushIntervalDays{registry, "cl_bid", 14};
+    Property<int> backflushIntervalShots{registry, "cl_bis", 0};
+    Property<int> descalingIntervalWeeks{registry, "cl_diw", 6};
+    Property<int> descalingIntervalShots{registry, "cl_dis", 0};
+    Property<unsigned long> lastBackflushTime{registry, "cl_lbt", 0};
+    Property<unsigned long> lastDescalingTime{registry, "cl_ldt", 0};
+    Property<int> shotsSinceBackflush{registry, "cl_sbf", 0};
+    Property<int> shotsSinceDescaling{registry, "cl_sds", 0};
 
     // Sunrise settings (r/g/b/w are legacy load-only values that seed the idle color default)
     int sunriseR = 0;

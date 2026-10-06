@@ -3,9 +3,78 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import homekitImage from '../../assets/homekit.png';
 import { faCalendarDays } from '@fortawesome/free-solid-svg-icons/faCalendarDays';
 import { computed } from '@preact/signals';
-import { machine } from '../../services/ApiService.js';
+import { machine, ApiServiceContext } from '../../services/ApiService.js';
+import { useContext, useEffect, useState } from 'preact/hooks';
 
 const gearpumpAddon = computed(() => machine.value.capabilities.gearpumpAddon);
+
+const MAHLKONIG_MIN_RECIPES = 4;
+
+// Profile per grinder recipe slot, stored as "r1,r2,..."; the grinder reports only the recipe number.
+function MahlkonigRecipeProfiles({ formData, onChange }) {
+  const apiService = useContext(ApiServiceContext);
+  const [lastRecipe, setLastRecipe] = useState(null);
+  const [profiles, setProfiles] = useState([]);
+  const mapped = String(formData.mahlkonigRecipeProfiles || '').split(',');
+  const count = Math.max(MAHLKONIG_MIN_RECIPES, mapped.length, lastRecipe || 0);
+  const recipes = Array.from({ length: count }, (_, i) => i + 1);
+
+  useEffect(() => {
+    apiService
+      .request({ tp: 'req:mahlkonig:status' })
+      .then(res => setLastRecipe(res.grind?.recipe || null))
+      .catch(() => setLastRecipe(null));
+    apiService
+      .request({ tp: 'req:profiles:list' })
+      .then(res => setProfiles((res.profiles || []).filter(p => !p.utility)))
+      .catch(() => setProfiles([]));
+  }, [apiService]);
+
+  const setProfile = (recipe, value) => {
+    const next = recipes.map(r => (r === recipe ? value : (mapped[r - 1] ?? '')));
+    while (next.length > MAHLKONIG_MIN_RECIPES && !next[next.length - 1]) next.pop();
+    onChange('mahlkonigRecipeProfiles')({ currentTarget: { value: next.join(',') } });
+  };
+
+  return (
+    <div className='form-control'>
+      <span className='mb-2 block text-sm font-medium'>Profile per grinder recipe</span>
+      <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+        {recipes.map(recipe => {
+          const value = mapped[recipe - 1] ?? '';
+          const missing = value && profiles.length > 0 && !profiles.some(p => p.id === value);
+          return (
+            <div key={recipe}>
+              <label htmlFor={`mahlkonigRecipe${recipe}`} className='mb-1 block text-sm opacity-70'>
+                Recipe {recipe}
+              </label>
+              <select
+                id={`mahlkonigRecipe${recipe}`}
+                className='select select-bordered w-full'
+                value={value}
+                onChange={e => setProfile(recipe, e.currentTarget.value)}
+              >
+                <option value=''>Keep selected profile</option>
+                {missing && <option value={value}>Deleted profile</option>}
+                {profiles.map(p => (
+                  <option key={p.id} value={p.id}>
+                    {p.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          );
+        })}
+      </div>
+      <p className='mt-2 text-sm opacity-70'>
+        {lastRecipe
+          ? `Your grinder last ground recipe ${lastRecipe}.`
+          : 'Grind once with GbS to see which recipe number your grinder reports.'}{' '}
+        The profile's dose is saved to the shot history.
+      </p>
+    </div>
+  );
+}
 
 export function PluginCard({
   formData,
@@ -263,6 +332,62 @@ export function PluginCard({
                   Turn on at start, off at target
                 </option>
               </select>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className='bg-base-200 rounded-lg p-4'>
+        <div className='flex items-center justify-between'>
+          <span className='text-xl font-medium'>Mahlkönig E64 WS Grind-by-Sync</span>
+          <input
+            id='mahlkonigActive'
+            name='mahlkonigActive'
+            value='mahlkonigActive'
+            type='checkbox'
+            className='toggle toggle-primary'
+            checked={!!formData.mahlkonigActive}
+            onChange={onChange('mahlkonigActive')}
+            aria-label='Enable Mahlkönig E64 WS Grind-by-Sync'
+          />
+        </div>
+        {formData.mahlkonigActive && (
+          <div className='border-base-300 mt-4 space-y-4 border-t pt-4'>
+            <p className='text-sm opacity-70'>
+              Lets an E64 WS start shots with its knob and dial in its grind from the shot time and
+              weight. A grind selects the profile mapped to its recipe, and the grinder's target
+              weight overrides that profile's weight target. Save and restart to apply.
+            </p>
+            <div className='form-control'>
+              <span className='mb-2 block text-sm font-medium'>
+                Machine address for the grinder
+              </span>
+              <code className='bg-base-300 rounded px-2 py-1 text-lg'>
+                {formData.deviceIp || 'Not connected to Wi-Fi'}
+              </code>
+              <div className='mt-2 text-sm opacity-70'>
+                The grinder reaches GaggiMate at this address, so both need to share a network (the
+                E64 WS is 2.4 GHz only) and the address must not change: reserve it for GaggiMate in
+                your router.
+              </div>
+            </div>
+            <div className='space-y-1 text-sm opacity-70'>
+              <div>
+                <span className='font-medium'>Pairing:</span> GaggiMate shows up to the grinder as a
+                Xenia machine. Under Settings → Connectivity → Machine To Machine, turn on Enable
+                Xenia, then type the address above into Configuration. Automatic discovery does not
+                see GaggiMate.
+              </div>
+              <div>
+                <span className='font-medium'>Brewing:</span> recipes with GbS turned on report each
+                grind here; pressing the rotary knob afterwards starts the shot.
+              </div>
+            </div>
+            <MahlkonigRecipeProfiles formData={formData} onChange={onChange} />
+            <div className='text-xs opacity-50'>
+              GaggiMate is not affiliated with, endorsed by or supported by Mahlkönig or its parent
+              company, the Hemro Group. Mahlkönig, E64 WS, Grind-by-Sync and Xenia are trademarks of
+              their respective owners.
             </div>
           </div>
         )}

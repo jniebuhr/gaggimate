@@ -48,12 +48,10 @@ void GaggiMateController::setup() {
         adc = new ADSAdc(_config.pressureSda, _config.pressureScl, _config.adcRates);
         pressureSensor = new PressureSensor(this->adc, _config.pressureControlRate);
         if (_config.capabilites.dualBoiler) {
-            this->brewTemperature =
-                new NtcThermistor(this->adc, 2, [this]() { thermalRunawayShutdown(); }, 50000.0f, 10000.0f, 4.096f, 3988.0f,
-                                  _config.ntcTiming[2]);
-            this->steamTemperature =
-                new NtcThermistor(this->adc, 3, [this]() { thermalRunawayShutdown(); }, 50000.0f, 10000.0f, 4.096f, 3988.0f,
-                                  _config.ntcTiming[3]);
+            this->brewTemperature = new NtcThermistor(
+                this->adc, 2, [this]() { thermalRunawayShutdown(); }, 50000.0f, 10000.0f, 4.096f, 3988.0f, _config.ntcTiming[2]);
+            this->steamTemperature = new NtcThermistor(
+                this->adc, 3, [this]() { thermalRunawayShutdown(); }, 50000.0f, 10000.0f, 4.096f, 3988.0f, _config.ntcTiming[3]);
         }
     }
     heater = new Heater(
@@ -323,14 +321,13 @@ void GaggiMateController::setup() {
         auto dimmedPump = static_cast<DimmedPump *>(pump);
         dimmedPump->tare();
     });
-    _comms.onScaleFactors([this](float scaleFactor1, float scaleFactor2, uint16_t sampleRateSps,
-                                float idleFilterAlpha, float activeFilterAlpha) {
-        if (hardwareScale == nullptr || !hardwareScale->isAvailable()) {
-            return;
-        }
-        hardwareScale->setConfiguration(scaleFactor1, scaleFactor2, sampleRateSps, idleFilterAlpha,
-                                        activeFilterAlpha);
-    });
+    _comms.onScaleFactors(
+        [this](float scaleFactor1, float scaleFactor2, uint16_t sampleRateSps, float idleFilterAlpha, float activeFilterAlpha) {
+            if (hardwareScale == nullptr || !hardwareScale->isAvailable()) {
+                return;
+            }
+            hardwareScale->setConfiguration(scaleFactor1, scaleFactor2, sampleRateSps, idleFilterAlpha, activeFilterAlpha);
+        });
     ESP_LOGI(LOG_TAG, "Initialization done");
 }
 
@@ -340,10 +337,8 @@ void GaggiMateController::loop() {
     // Keep zero tracking and idle display quantization out of the measurement
     // path whenever the brew valve or pump can be adding liquid to the cup.
     if (hardwareScale != nullptr) {
-        const float pumpPower =
-            pump != nullptr && pump->getPumpPowerPtr() != nullptr ? *pump->getPumpPowerPtr() : 0.0f;
-        const bool scaleActivity =
-            (valve != nullptr && valve->getState()) || pumpPower > 0.01f;
+        const float pumpPower = pump != nullptr && pump->getPumpPowerPtr() != nullptr ? *pump->getPumpPowerPtr() : 0.0f;
+        const bool scaleActivity = (valve != nullptr && valve->getState()) || pumpPower > 0.01f;
         hardwareScale->setBrewingActive(scaleActivity);
     }
 

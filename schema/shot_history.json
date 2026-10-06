@@ -1,68 +1,221 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "Shot History Schema",
+  "$id": "shot_history.json",
+  "title": "Shot History Export Schema",
+  "description": "JSON export of one shot (Shot History card download and Shot Analyzer export). It is the parsed binary shot log (/api/history/<6-digit id>.slog, see shot_log_format.h) merged with its shot index entry and notes. Exporters may add further client-side fields.",
   "type": "object",
-  "additionalProperties": false,
-  "properties": {
-    "version": { "type": "integer" },
-    "profile": { "type": "string" },
-    "timestamp": { "type": "integer" },
-    "duration": { "type":  "number" },
-    "volume": { "type": "number" },
-    "samples": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "t": {
-            "description": "Timestamp of this measurement",
-            "type": "integer"
-          },
-          "tt": {
-            "description": "Target temperature at this measurement",
-            "type": "number"
-          },
-          "ct": {
-            "description": "Current temperature at this measurement",
-            "type": "number"
-          },
-          "tp": {
-            "description": "Target / Limit pressure at this measurement",
-            "type": "number"
-          },
-          "cp": {
-            "description": "Current boiler pressure",
-            "type": "number"
-          },
-          "fl": {
-            "description": "Current pump flow",
-            "type": "number"
-          },
-          "tf": {
-            "description": "Target / Limit pump flow",
-            "type": "number"
-          },
-          "pf": {
-            "description": "Estimated puck flow",
-            "type": "number"
-          },
-          "vf": {
-            "description": "Volume flow",
-            "type": "number"
-          },
-          "v": {
-            "description": "Measured volume in g/ml",
-            "type": "number"
-          },
-          "ev": {
-            "description": "Estimated volume in g/ml",
-            "type": "number"
-          }
+  "additionalProperties": true,
+  "definitions": {
+    "exitReason": {
+      "description": "Why a phase or shot ended: 0 unknown/legacy, 1 volumetric target, 2 pressure target, 3 flow target, 4 pumped-water target, 5 phase duration, 6 safety timeout, 7 manually stopped, 8 hold released (hold-to-flush), 9 ratio target",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9
+    },
+    "phaseTransition": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "sampleIndex": {
+          "description": "Index of the first sample of this phase",
+          "type": "integer",
+          "minimum": 0
         },
-        "required": ["t","tt","ct","tp","cp","tf","fl"]
-      }
+        "phaseNumber": {
+          "description": "Zero-based index of the phase in the profile",
+          "type": "integer",
+          "minimum": 0
+        },
+        "phaseName": {
+          "description": "Phase name from the profile (max. 24 bytes UTF-8)",
+          "type": "string"
+        },
+        "transitionReason": {
+          "description": "Why the previous phase ended",
+          "$ref": "#/definitions/exitReason"
+        },
+        "transitionReasonLabel": {
+          "description": "Human-readable label for transitionReason",
+          "type": "string"
+        }
+      },
+      "required": ["sampleIndex", "phaseNumber", "phaseName"]
+    },
+    "systemInfo": {
+      "description": "Decoded per-sample system flags (shot log v2+)",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "raw": { "description": "Raw flag bits", "type": "integer" },
+        "shotStartedVolumetric": { "type": "boolean" },
+        "currentlyVolumetric": { "type": "boolean" },
+        "bluetoothScaleConnected": { "type": "boolean" },
+        "volumetricAvailable": { "type": "boolean" },
+        "extendedRecording": {
+          "description": "Sample was recorded after the pump stopped, while the scale weight settles",
+          "type": "boolean"
+        },
+        "processIsBrew": { "type": "boolean" },
+        "targetIsVolumetric": { "type": "boolean" },
+        "phaseHasVolumetric": { "type": "boolean" },
+        "activeScaleConnected": {
+          "description": "Any scale (Bluetooth or hardware) connected; mirrors bluetoothScaleConnected before shot log v8",
+          "type": "boolean"
+        }
+      },
+      "required": ["raw"]
+    },
+    "sample": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "t": {
+          "description": "Milliseconds since shot start",
+          "type": "integer",
+          "minimum": 0
+        },
+        "tt": { "description": "Target temperature (°C)", "type": "number" },
+        "ct": { "description": "Current temperature (°C)", "type": "number" },
+        "tp": {
+          "description": "Target / limit pressure (bar)",
+          "type": "number"
+        },
+        "cp": { "description": "Current pressure (bar)", "type": "number" },
+        "fl": { "description": "Pump flow (ml/s)", "type": "number" },
+        "tf": {
+          "description": "Target / limit pump flow (ml/s)",
+          "type": "number"
+        },
+        "pf": { "description": "Estimated puck flow (ml/s)", "type": "number" },
+        "vf": {
+          "description": "Weight flow from the scale (g/s)",
+          "type": "number"
+        },
+        "v": { "description": "Measured weight (g)", "type": "number" },
+        "ev": { "description": "Estimated weight (g)", "type": "number" },
+        "pr": { "description": "Puck resistance", "type": "number" },
+        "wp": {
+          "description": "Cumulative water pumped (ml)",
+          "type": "number"
+        },
+        "systemInfo": { "$ref": "#/definitions/systemInfo" },
+        "phaseNumber": {
+          "description": "Zero-based profile phase index (shot log v5+)",
+          "type": "integer",
+          "minimum": 0
+        },
+        "phaseDisplayNumber": {
+          "description": "One-based phase number for display (shot log v5+)",
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": ["t", "tt", "ct", "tp", "cp", "fl", "tf"]
     }
   },
-  "required": ["version","profile","timestamp","samples","duration","volume"]
+  "properties": {
+    "id": {
+      "description": "Shot id without zero padding (e.g. \"31\"); the log file is the zero-padded id (000031.slog)",
+      "type": "string"
+    },
+    "version": {
+      "description": "Binary shot log format version (SHOT_LOG_VERSION, currently 8)",
+      "type": "integer",
+      "minimum": 1
+    },
+    "profile": {
+      "description": "Profile label at shot start",
+      "type": "string"
+    },
+    "profileId": {
+      "description": "Profile id at shot start",
+      "type": "string"
+    },
+    "timestamp": {
+      "description": "Shot start (Unix epoch seconds)",
+      "type": "integer"
+    },
+    "duration": {
+      "description": "Shot duration (ms)",
+      "type": "number",
+      "minimum": 0
+    },
+    "volume": {
+      "description": "Final weight (g): notes doseOut override, then recorded final weight, then last sample; null if unknown",
+      "type": ["number", "null"]
+    },
+    "rating": {
+      "description": "Rating from the shot index; null (or 0 in imported files) when unrated",
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "maximum": 5
+    },
+    "incomplete": {
+      "description": "Shot log was not finalized (power loss, still recording, truncated file)",
+      "type": "boolean"
+    },
+    "avgTemp": {
+      "description": "Average temperature from the shot index (°C)",
+      "type": ["number", "null"]
+    },
+    "maxPressure": {
+      "description": "Peak pressure from the shot index (bar)",
+      "type": ["number", "null"]
+    },
+    "avgFlow": {
+      "description": "Average positive pump flow from the shot index (ml/s)",
+      "type": ["number", "null"]
+    },
+    "sampleInterval": {
+      "description": "Nominal sampling interval (ms)",
+      "type": "integer"
+    },
+    "fieldsMask": {
+      "description": "Bit mask of recorded sample fields (shot_log_format.h)",
+      "type": "integer"
+    },
+    "trailingBytes": {
+      "description": "Bytes after the last complete sample (non-zero means truncated)",
+      "type": "integer"
+    },
+    "samplesExpected": {
+      "description": "Sample count from the log header; 0 if not finalized",
+      "type": "integer"
+    },
+    "phaseTransitions": {
+      "description": "Phase starts with exit reasons (shot log v5+, max. 12)",
+      "type": "array",
+      "maxItems": 12,
+      "items": { "$ref": "#/definitions/phaseTransition" }
+    },
+    "finalExitReason": {
+      "description": "Why the shot ended (last phase exit or manual stop; shot log v5+)",
+      "$ref": "#/definitions/exitReason"
+    },
+    "finalExitReasonLabel": {
+      "description": "Human-readable label for finalExitReason",
+      "type": "string"
+    },
+    "brewDelay": {
+      "description": "Predictive brew stop delay the shot ran with (ms)",
+      "type": "number"
+    },
+    "samples": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/sample" }
+    },
+    "notes": {
+      "description": "Shot notes, or null when none were loaded",
+      "oneOf": [{ "$ref": "shot_notes.json" }, { "type": "null" }]
+    },
+    "loaded": {
+      "description": "Web UI state; always true in exports",
+      "type": "boolean"
+    },
+    "data": {
+      "description": "Web UI state; always null in exports",
+      "type": "null"
+    }
+  },
+  "required": ["id", "version", "profile", "timestamp", "duration", "samples"]
 }

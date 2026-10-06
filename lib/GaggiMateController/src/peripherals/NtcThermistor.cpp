@@ -1,24 +1,22 @@
 #include "NtcThermistor.h"
 #include <Arduino.h>
 #include <SPI.h>
-#include <cmath>
 #include <algorithm>
+#include <cmath>
 #include <freertos/FreeRTOS.h>
 
 NtcThermistor::NtcThermistor(ADSAdc *adc, uint8_t channel, const temperature_error_callback_t &error_callback, float ro, float Rs,
                              float Vs, float Beta, NtcTiming timing)
-    : _adc(adc), _channel(channel), taskHandle(nullptr), _timing(timing),
-      _rs(Rs), _vs(Vs), _beta(Beta), _ro(ro), error_callback(error_callback) {}
+    : _adc(adc), _channel(channel), taskHandle(nullptr), _timing(timing), _rs(Rs), _vs(Vs), _beta(Beta), _ro(ro),
+      error_callback(error_callback) {}
 
 float NtcThermistor::read() { return isErrorState() ? 0.0f : temperature; }
 
-bool NtcThermistor::isErrorState() {
-    return temperature <= 0 || _fault || millis() - _lastFreshMs >= _staleTimeoutMs;
-}
+bool NtcThermistor::isErrorState() { return temperature <= 0 || _fault || millis() - _lastFreshMs >= _staleTimeoutMs; }
 
 void NtcThermistor::setup() {
-    if (_timing.updateIntervalMs < 20 || _timing.updateIntervalMs > 1000 ||
-        !std::isfinite(_timing.smoothingTimeConstantMs) || _timing.smoothingTimeConstantMs < 0) {
+    if (_timing.updateIntervalMs < 20 || _timing.updateIntervalMs > 1000 || !std::isfinite(_timing.smoothingTimeConstantMs) ||
+        _timing.smoothingTimeConstantMs < 0) {
         ESP_LOGE(LOG_TAG, "Invalid NTC timing configuration");
         _fault = true;
         error_callback();

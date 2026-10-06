@@ -7,13 +7,13 @@ bool I2C_Read(uint8_t Driver_addr, uint8_t Reg_addr, uint8_t *Reg_data, uint32_t
     Wire.write(Reg_addr);
     if (Wire.endTransmission(true)) {
         printf("The I2C transmission fails. - I2C Read\r\n");
-        return -1;
+        return true;
     }
     Wire.requestFrom(Driver_addr, Length);
     for (int i = 0; i < Length; i++) {
         *Reg_data++ = Wire.read();
     }
-    return 0;
+    return false;
 }
 bool I2C_Write(uint8_t Driver_addr, uint8_t Reg_addr, const uint8_t *Reg_data, uint32_t Length) {
     Wire.beginTransmission(Driver_addr);
@@ -23,7 +23,7 @@ bool I2C_Write(uint8_t Driver_addr, uint8_t Reg_addr, const uint8_t *Reg_data, u
     }
     if (Wire.endTransmission(true)) {
         printf("The I2C transmission fails. - I2C Write\r\n");
-        return -1;
+        return true;
     }
-    return 0;
+    return false;
 }

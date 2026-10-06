@@ -48,6 +48,12 @@
       "maximum": 150,
       "description": "Boiler setpoint in °C for the whole profile. Individual phases override this by setting a non-zero `phase.temperature`. Web UI accepts 0–150 °C; firmware hard limits are `MIN_TEMP=0` and `MAX_TEMP=160` (`src/display/core/constants.h:15-16`) — the parser itself does not clamp at load time, so profiles outside this range should be treated as invalid by validators even though the firmware will parse them."
     },
+    "dose": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 100,
+      "description": "The dose in grams to use for this specific shot. This dose can be referenced in a ratio type target. Quick adjustments of the dose will then be reflect in volumetric brewing."
+    },
     "favorite": {
       "type": "boolean",
       "default": false,
@@ -258,13 +264,15 @@
           "description": "What measured variable this target watches. All four are strict string matches; unknown strings drop the target without error.",
           "oneOf": [
             { "const": "volumetric", "title": "Volumetric (scale weight)", "description": "Compares scale weight in grams. Volumetric targets require a connected Bluetooth scale AND the brew-by-weight mode toggle active (see `BrewProcess` enableVolumetric flag). A `value` of `0` is treated as 'no target' — the phase will run for its full `duration` (`src/display/models/profile.h:55`). The web UI renders this as 'Weight'." },
+            { "const": "ratio",      "title": "Volumetric (ratio)",        "description": "If this target is used, it will be multiplied with the current profile dose on brew start and follow the same logic as volumetric." },
             { "const": "pressure",   "title": "Pressure",                  "description": "Compares current pressure in bar." },
             { "const": "flow",       "title": "Flow",                      "description": "Compares current flow rate. UI labels this in ml/s; firmware uses same value as pump.flow (g/s)." },
             { "const": "pumped",     "title": "Pumped water",              "description": "Compares cumulative water pumped in this phase in ml. Reset to 0 at each phase boundary (`BrewProcess.h:141`)." }
           ],
-          "enum": ["volumetric", "pressure", "flow", "pumped"],
+          "enum": ["volumetric", "ratio", "pressure", "flow", "pumped"],
           "enumDescriptions": [
             "Scale weight in grams.",
+            "Brew ratio as a multiplier of dose.",
             "Current pressure in bar.",
             "Current flow rate in ml/s.",
             "Cumulative water pumped in this phase, in ml."
@@ -287,7 +295,7 @@
         "value": {
           "type": "number",
           "minimum": 0,
-          "description": "Threshold. Units depend on `type`: `volumetric` = grams, `pressure` = bar, `flow` = ml/s, `pumped` = ml. For `volumetric` specifically, `value: 0` is treated as 'no target — run full duration'."
+          "description": "Threshold. Units depend on `type`: `volumetric` = grams, `ratio` = multiplier, `pressure` = bar, `flow` = ml/s, `pumped` = ml. For `volumetric` specifically, `value: 0` is treated as 'no target — run full duration'."
         }
       }
     }

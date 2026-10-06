@@ -3,6 +3,7 @@
 
 #include "../Protocol.h"
 #include "../Transport.h"
+#include "BleConstants.h"
 #include <NimBLEDevice.h>
 #include <ble_ota_dfu.hpp>
 
@@ -22,6 +23,7 @@ class BleServerTransport : public Transport, public NimBLEServerCallbacks, publi
 
     bool send(const uint8_t *data, size_t length) override;
     bool isConnected() const override;
+    size_t maxDatagram() const override { return BLE_MAX_DATAGRAM; }
     bool isUpdating() const { return _otaDfu.isUpdating(); };
 
     // Link-layer disconnect for the ping watchdog: LL_TERMINATE_IND propagates even when GATT writes silently drop.

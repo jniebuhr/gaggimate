@@ -106,6 +106,8 @@ export const PHASE_EXIT_REASON_LABELS = {
   5: 'Duration',
   6: 'Safety timeout',
   7: 'Aborted',
+  8: 'Hold released',
+  9: 'Ratio target',
 };
 
 // Parse phase transitions from v5+ headers

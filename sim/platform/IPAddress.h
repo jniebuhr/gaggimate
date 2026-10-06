@@ -22,12 +22,13 @@ class IPAddress {
     }
     bool operator!=(const IPAddress &o) const { return !(*this == o); }
     operator uint32_t() const {
-        return (uint32_t)_addr[0] | ((uint32_t)_addr[1] << 8) | ((uint32_t)_addr[2] << 16) | ((uint32_t)_addr[3] << 24);
+        return static_cast<uint32_t>(_addr[0]) | (static_cast<uint32_t>(_addr[1]) << 8) |
+               (static_cast<uint32_t>(_addr[2]) << 16) | (static_cast<uint32_t>(_addr[3]) << 24);
     }
     String toString() const {
-        char buf[16];
-        snprintf(buf, sizeof(buf), "%u.%u.%u.%u", _addr[0], _addr[1], _addr[2], _addr[3]);
-        return String(buf);
+        char text[16];
+        snprintf(text, sizeof(text), "%u.%u.%u.%u", _addr[0], _addr[1], _addr[2], _addr[3]);
+        return String(text);
     }
 
   private:
