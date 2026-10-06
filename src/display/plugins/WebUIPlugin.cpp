@@ -4,6 +4,7 @@
 #include <SD_MMC.h>
 #include <algorithm>
 #include <display/core/Controller.h>
+#include <display/core/ProfileImage.h>
 #include <display/core/ProfileManager.h>
 #include <display/models/profile.h>
 #include <display/plugins/BLEScalePlugin.h>
@@ -231,6 +232,11 @@ void WebUIPlugin::setupServer() {
         request->send(response);
     });
     server.on("/api/core-dump", HTTP_GET, [this](AsyncWebServerRequest *request) { handleCoreDumpDownload(request); });
+    server.on(
+        "/api/profiles/image", HTTP_ANY, [this](AsyncWebServerRequest *request) { handleProfileImage(request); }, nullptr,
+        [this](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
+            handleProfileImageBody(request, data, len, index, total);
+        });
     // The web UI is embedded in firmware flash and served from the memory-mapped blob (see serveWebAsset). It is no
     // longer in LittleFS, so OTA never touches the partition holding profiles/shots. The catch-all onNotFound handles
     // every path not claimed by an explicit server.on()/api route above. [GM-106]
@@ -763,6 +769,103 @@ void WebUIPlugin::updateOTAProgress(uint8_t phase, int progress) {
     doc["phase"] = phase;
     doc["progress"] = progress;
     wsHandler.broadcastJson(doc);
+}
+
+static String profileImageTempPath(const String &id) { return String(profile_image::DIR) + "/" + id + ".tmp"; }
+
+void WebUIPlugin::handleProfileImageBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
+    if (request->method() != HTTP_POST)
+        return;
+    const String id = request->arg("id");
+    if (index == 0) {
+        if (imageUploadFile)
+            imageUploadFile.close();
+        imageUploadRequest = request;
+        imageUploadError = "";
+        if (!controller->isSDCard())
+            imageUploadError = "No SD card";
+        else if (controller->isUpdating())
+            imageUploadError = "Update in progress";
+        else if (!profile_image::isValidId(id) || !profileManager->profileExists(id))
+            imageUploadError = "Unknown profile";
+        else if (total != profile_image::FILE_BYTES || len < profile_image::HEADER_BYTES)
+            imageUploadError = "Image must be 300x300";
+        else {
+            uint32_t header = 0;
+            memcpy(&header, data, sizeof(header));
+            if (header != profile_image::HEADER)
+                imageUploadError = "Invalid image header";
+        }
+        if (imageUploadError.isEmpty()) {
+            SD_MMC.mkdir(profile_image::DIR);
+            imageUploadFile = SD_MMC.open(profileImageTempPath(id), FILE_WRITE);
+            if (!imageUploadFile)
+                imageUploadError = "Could not write to SD card";
+        }
+    }
+    if (request != imageUploadRequest || !imageUploadError.isEmpty() || !imageUploadFile)
+        return;
+    if (imageUploadFile.write(data, len) != len) {
+        imageUploadError = "Could not write to SD card";
+        imageUploadFile.close();
+        SD_MMC.remove(profileImageTempPath(id));
+        return;
+    }
+    if (index + len == total) {
+        imageUploadFile.close();
+        SD_MMC.remove(profile_image::path(id));
+        if (!SD_MMC.rename(profileImageTempPath(id).c_str(), profile_image::path(id).c_str()))
+            imageUploadError = "Could not write to SD card";
+    }
+}
+
+void WebUIPlugin::handleProfileImage(AsyncWebServerRequest *request) {
+    const String id = request->arg("id");
+    if (!controller->isSDCard()) {
+        request->send(404, "text/plain", "No SD card");
+        return;
+    }
+    if (controller->isUpdating()) {
+        request->send(503, "text/plain", "Update in progress");
+        return;
+    }
+    if (!profile_image::isValidId(id)) {
+        request->send(400, "text/plain", "Invalid profile id");
+        return;
+    }
+    switch (request->method()) {
+    case HTTP_GET:
+        if (SD_MMC.exists(profile_image::path(id)))
+            request->send(SD_MMC, profile_image::path(id), "application/octet-stream");
+        else
+            request->send(404, "text/plain", "No image");
+        return;
+    case HTTP_DELETE:
+        SD_MMC.remove(profile_image::path(id));
+        pluginManager->trigger("profiles:image:change", "id", id);
+        request->send(200, "application/json", "{}");
+        return;
+    case HTTP_POST: {
+        if (request != imageUploadRequest) {
+            request->send(400, "text/plain", "Image must be 300x300");
+            return;
+        }
+        imageUploadRequest = nullptr;
+        if (imageUploadFile) {
+            imageUploadFile.close(); // body ended short of Content-Length
+            imageUploadError = "Incomplete upload";
+        }
+        if (!imageUploadError.isEmpty()) {
+            request->send(400, "text/plain", imageUploadError);
+            return;
+        }
+        pluginManager->trigger("profiles:image:change", "id", id);
+        request->send(200, "application/json", "{}");
+        return;
+    }
+    default:
+        request->send(405);
+    }
 }
 
 void WebUIPlugin::handleCoreDumpDownload(AsyncWebServerRequest *request) {

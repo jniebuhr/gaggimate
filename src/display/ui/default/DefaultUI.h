@@ -20,6 +20,7 @@ constexpr int TEMP_HISTORY_INTERVAL = 250;
 
 constexpr int SHOT_CHART_POINTS = 120;                    // 30 s window; older samples slide out to the left
 constexpr unsigned long SHOT_CHART_SAMPLE_INTERVAL = 250; // ms per point
+constexpr int PROFILE_CHART_POINTS = 100;                 // pro profile preview chart resolution
 
 enum ShotChartSeries {
     SHOT_PRESSURE,
@@ -52,6 +53,7 @@ class DefaultUI {
     void onNextProfile();
     void onPreviousProfile();
     void onProfileSelect();
+    void onProfileDetailToggle();
     void setBrightness(int brightness) {
         if (panelDriver) {
             panelDriver->setBrightness(brightness);
@@ -125,6 +127,22 @@ class DefaultUI {
     float shotTempMax = 0.0f;
     unsigned long lastShotSample = 0;
     unsigned long shotChartStarted = 0;
+
+    // Profile preview: SD card image and pro profile chart on the new profile screen
+    void updateProfilePreview();
+    void setupProfileChart(lv_obj_t *chart);
+    void renderProfileChart(const Profile &profile);
+    static void profileChartDrawCb(lv_event_t *e);
+    static void profileChartBackgroundCb(lv_event_t *e);
+    lv_obj_t *profileChart = nullptr;
+    lv_chart_series_t *profileSeries[2] = {};
+    lv_coord_t profilePoints[2][PROFILE_CHART_POINTS] = {};
+    bool profilePointIsTarget[2][PROFILE_CHART_POINTS] = {};
+    bool profilePhaseMarks[PROFILE_CHART_POINTS] = {}; // true where a new phase starts
+    String profileChartId;
+    int profileChartGeneration = -1;
+    String profileImageSrc;
+    bool profileDetailsVisible = false;
     String getErrorMessage();
 
     void adjustDials(lv_obj_t *dials);
@@ -187,7 +205,9 @@ class DefaultUI {
     std::mutex profilesMutex;
     std::vector<String> favoritedProfileIds;
     std::vector<Profile> favoritedProfiles;
-    int currentThemeMode = -1; // Force applyTheme on first loop
+    std::vector<bool> favoritedHasImage;
+    int profilesGeneration = 0; // bumped on every reload so previews re-render
+    int currentThemeMode = -1;  // Force applyTheme on first loop
 
     // Screen change
     ScreensEnum targetScreen = ScreensEnum::SCREEN_ID_STANDBY_SCREEN;

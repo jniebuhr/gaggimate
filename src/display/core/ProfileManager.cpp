@@ -1,5 +1,6 @@
 #include "ProfileManager.h"
 #include <ArduinoJson.h>
+#include <display/core/ProfileImage.h>
 #include <display/core/system_profiles.h>
 #include <display/util/PsramAllocator.h>
 
@@ -236,10 +237,17 @@ bool ProfileManager::deleteProfile(const String &uuid) {
     if (_settings.getStartupProfile() == uuid) {
         _settings.setStartupProfile("");
     }
+    if (hasProfileImage(uuid)) {
+        _fs->remove(profile_image::path(uuid));
+    }
     return _fs->remove(profilePath(uuid));
 }
 
 bool ProfileManager::profileExists(const String &uuid) { return _fs->exists(profilePath(uuid)); }
+
+bool ProfileManager::hasProfileImage(const String &uuid) {
+    return profile_image::isValidId(uuid) && _fs->exists(profile_image::path(uuid));
+}
 
 void ProfileManager::selectProfile(const String &uuid) {
     ESP_LOGI("ProfileManager", "Selecting profile %s", uuid.c_str());

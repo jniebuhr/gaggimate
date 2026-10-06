@@ -377,6 +377,7 @@ void WebSocketHandler::publishState(unsigned long now) {
     doc["hs"] = caps.hwScale;
     doc["scaleSource"] = controller->getActiveScaleSourceName();
     doc["led"] = caps.ledControl;
+    doc["sd"] = controller->isSDCard();
     doc["tw"] = profile.getTotalVolume(); // total target weight for the process
     doc["bta"] = controller->isVolumetricAvailable() ? 1 : 0;
     doc["bt"] = controller->isVolumetricAvailable() && profile.isVolumetric() ? 1 : 0;

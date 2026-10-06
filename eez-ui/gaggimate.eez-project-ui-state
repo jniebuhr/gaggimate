@@ -1,13 +1,13 @@
 {
   "navigation": {
-    "selectedUserPageObject": "[gaggimate.eez-project]:/userPages/2",
+    "selectedUserPageObject": "[gaggimate.eez-project]:/userPages/8",
     "selectedUserWidgetObject": "[gaggimate.eez-project]:/userWidgets/1",
-    "selectedActionObject": "[gaggimate.eez-project]:/actions/38",
+    "selectedActionObject": "[gaggimate.eez-project]:/actions/39",
     "selectedGlobalVariableObject": "[gaggimate.eez-project]:/variables/globalVariables/9",
-    "selectedStructureObject": "[gaggimate.eez-project]:/variables/structures/3",
+    "selectedStructureObject": "[gaggimate.eez-project]:/variables/structures/1",
     "selectedThemeObject": "[gaggimate.eez-project]:/themes/0",
-    "selectedThemeColorObject": "[gaggimate.eez-project]:/colors/8",
-    "selectedBitmapObject": "[gaggimate.eez-project]:/bitmaps/27",
+    "selectedThemeColorObject": "[gaggimate.eez-project]:/colors/1",
+    "selectedBitmapObject": "[gaggimate.eez-project]:/bitmaps/9",
     "subnavigationSelectedItems": {
       "variables-tab/sub-navigation/selected-item": "Structs"
     }
@@ -30,7 +30,7 @@
           },
           {
             "type": "border",
-            "selected": 3,
+            "selected": 2,
             "size": 255.5,
             "location": "right",
             "children": [
@@ -197,10 +197,20 @@
               "type": "tabset",
               "id": "EDITORS",
               "weight": 46.47304077762655,
-              "selected": 1,
               "enableDeleteWhenEmpty": false,
               "enableClose": false,
               "children": [
+                {
+                  "type": "tab",
+                  "id": "#cc90c56e-b38e-4ab9-956f-1fb808b5b9e6",
+                  "name": "NewProfileScreen",
+                  "component": "editor",
+                  "config": {
+                    "objectPath": "[gaggimate.eez-project]:/userPages/8",
+                    "permanent": false
+                  },
+                  "icon": "svg:page"
+                },
                 {
                   "type": "tab",
                   "id": "#7fd2ef7a-477b-47ef-90be-a0839638856d",
@@ -214,19 +224,8 @@
                 },
                 {
                   "type": "tab",
-                  "id": "#2aa7402a-95e1-481f-87cc-ef596a51e84a",
-                  "name": "StatusScreen",
-                  "component": "editor",
-                  "config": {
-                    "objectPath": "[gaggimate.eez-project]:/userPages/2",
-                    "permanent": false
-                  },
-                  "icon": "svg:page"
-                },
-                {
-                  "type": "tab",
                   "id": "#e4422c6b-7edb-415d-87c6-346b00545887",
-                  "name": "MenuScreenNew",
+                  "name": "SteamScreen",
                   "component": "editor",
                   "config": {
                     "objectPath": "[gaggimate.eez-project]:/userPages/4",
@@ -237,24 +236,13 @@
                 {
                   "type": "tab",
                   "id": "#acbf425d-f9ac-457e-90c1-4ea068d04b16",
-                  "name": "onWarningIgnore",
+                  "name": "onProfileDetailToggle",
                   "component": "editor",
                   "config": {
-                    "objectPath": "[gaggimate.eez-project]:/actions/38",
+                    "objectPath": "[gaggimate.eez-project]:/actions/39",
                     "permanent": false
                   },
                   "icon": "material:code"
-                },
-                {
-                  "type": "tab",
-                  "id": "#07a87284-0adf-47ce-9994-8cc743141d5f",
-                  "name": "InfoScreen",
-                  "component": "editor",
-                  "config": {
-                    "objectPath": "[gaggimate.eez-project]:/userPages/9",
-                    "permanent": true
-                  },
-                  "icon": "svg:page"
                 },
                 {
                   "type": "tab",
@@ -1415,7 +1403,7 @@
           "x": -240,
           "y": -240
         },
-        "scale": 0.8
+        "scale": 0.9
       },
       "timeline": {
         "isEditorActive": false,
@@ -1451,7 +1439,7 @@
           "x": -240,
           "y": -247
         },
-        "scale": 1
+        "scale": 0.9
       },
       "timeline": {
         "isEditorActive": false,
@@ -1467,7 +1455,10 @@
           },
           "1": {
             "1": {
-              "1": {},
+              "0": {},
+              "1": {
+                "1": {}
+              },
               "2": {}
             },
             "2": {}
@@ -1947,11 +1938,7 @@
         "0": {
           "0": {},
           "1": {
-            "1": {
-              "0": {
-                "$selected": true
-              }
-            },
+            "1": {},
             "2": {},
             "3": {},
             "4": {}
@@ -1963,7 +1950,7 @@
           "x": -240,
           "y": -562.4315185546875
         },
-        "scale": 1
+        "scale": 0.9
       },
       "timeline": {
         "isEditorActive": false,
@@ -2027,23 +2014,23 @@
       "selectionBack": {
         "0": {
           "1": {
-            "0": {
-              "0": {},
-              "2": {}
+            "1": {
+              "1": {
+                "0": {
+                  "1": {}
+                }
+              }
             },
-            "3": {},
-            "4": {},
-            "5": {},
-            "6": {}
+            "2": {}
           }
         }
       },
       "transform": {
         "translate": {
           "x": -240,
-          "y": -240
+          "y": -90.6121826171875
         },
-        "scale": 0.8
+        "scale": 0.9
       },
       "timeline": {
         "isEditorActive": false,
@@ -2097,24 +2084,21 @@
       "selectionBack": {
         "0": {
           "1": {
-            "0": {},
-            "2": {
-              "0": {
-                "5": {
-                  "$selected": true
+            "1": {
+              "1": {
+                "0": {
+                  "1": {}
                 }
               }
             },
-            "3": {},
-            "4": {},
-            "5": {}
+            "2": {}
           }
         }
       },
       "transform": {
         "translate": {
           "x": -240,
-          "y": -240
+          "y": -90.6121826171875
         },
         "scale": 0.9
       },
@@ -2301,6 +2285,16 @@
         },
         "scale": 1
       }
+    },
+    "[gaggimate.eez-project]:/actions/39[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": 0,
+          "y": 0
+        },
+        "scale": 1
+      }
     }
   },
   "activeOutputSection": 0,
@@ -2326,7 +2320,6 @@
     "ARC",
     "LINE",
     "PADDING",
-    "BACKGROUND",
     "BORDER",
     "LAYOUT",
     "MISCELLANEOUS"
@@ -2335,5 +2328,5 @@
   "globalFlowZoom": true,
   "flowZoom": 0.9,
   "implementationLanguage": "C++",
-  "openDialogDefaultPath": "/Users/jniebuhr/work/3d/projects/paros-control/eez-ui/icons/out/broom-20x20.png"
+  "openDialogDefaultPath": "/Users/jniebuhr/Downloads/soup.jpg"
 }
