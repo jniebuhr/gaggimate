@@ -29,6 +29,9 @@ class Transport {
     // Whether the link is currently usable.
     virtual bool isConnected() const = 0;
 
+    // Largest datagram send() delivers intact; the Endpoint never encodes a frame above it.
+    virtual size_t maxDatagram() const = 0;
+
     void onData(DataCallback cb) { _dataCb = std::move(cb); }
     void onConnectionChange(ConnectionCallback cb) { _connCb = std::move(cb); }
 
