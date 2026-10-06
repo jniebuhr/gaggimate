@@ -61,6 +61,7 @@ const CHECKBOX_KEYS = [
   'homekit',
   'boilerFillActive',
   'smartGrindActive',
+  'mahlkonigActive',
   'homeAssistant',
   'momentaryButtons',
   'delayAdjust',
@@ -68,6 +69,9 @@ const CHECKBOX_KEYS = [
   'autowakeupEnabled',
   'smartGrindToggle',
 ];
+
+// Device facts GET /api/settings reports for display only; never saved, exported or imported.
+const READ_ONLY_KEYS = ['deviceIp'];
 
 // Form-only fields that never come back from GET /api/settings.
 const FORM_ONLY_KEYS = [
@@ -78,6 +82,11 @@ const FORM_ONLY_KEYS = [
   'standbyDisplayEnabled',
   'dashboardLayout',
 ];
+
+const DEFAULT_SCALE_FACTOR_1 = -2500.0;
+const DEFAULT_SCALE_FACTOR_2 = 2500.0;
+const DEFAULT_HARDWARE_SCALE_SAMPLE_RATE_SPS = 10;
+const DEFAULT_HARDWARE_SCALE_FILTER_ALPHA = 0.8;
 
 function splitPidString(pidString) {
   if (!pidString) return { pid: pidString, kf: '0.000' };
@@ -127,6 +136,26 @@ function transformFetchedSettings(fetchedSettings) {
         : fetchedSettings.standbyBrightness > 0,
     dashboardLayout: fetchedSettings.dashboardLayout || DASHBOARD_LAYOUTS.ORDER_FIRST,
   };
+
+  const sf1 = Number(fetchedSettings.scaleFactor1);
+  const sf2 = Number(fetchedSettings.scaleFactor2);
+  settingsWithToggle.scaleFactor1 =
+    Number.isFinite(sf1) && Math.abs(sf1) > 0.001 ? sf1 : DEFAULT_SCALE_FACTOR_1;
+  settingsWithToggle.scaleFactor2 =
+    Number.isFinite(sf2) && Math.abs(sf2) > 0.001 ? sf2 : DEFAULT_SCALE_FACTOR_2;
+  const sampleRate = Number(fetchedSettings.hardwareScaleSampleRateSps);
+  settingsWithToggle.hardwareScaleSampleRateSps =
+    sampleRate === 80 ? 80 : DEFAULT_HARDWARE_SCALE_SAMPLE_RATE_SPS;
+  const idleAlpha = Number(fetchedSettings.hardwareScaleIdleAlpha);
+  settingsWithToggle.hardwareScaleIdleAlpha =
+    Number.isFinite(idleAlpha) && idleAlpha > 0 && idleAlpha <= 1
+      ? idleAlpha
+      : DEFAULT_HARDWARE_SCALE_FILTER_ALPHA;
+  const activeAlpha = Number(fetchedSettings.hardwareScaleActiveAlpha);
+  settingsWithToggle.hardwareScaleActiveAlpha =
+    Number.isFinite(activeAlpha) && activeAlpha > 0 && activeAlpha <= 1
+      ? activeAlpha
+      : DEFAULT_HARDWARE_SCALE_FILTER_ALPHA;
 
   if (fetchedSettings.pid) {
     const split = splitPidString(fetchedSettings.pid);
@@ -182,7 +211,7 @@ function buildSubmitFormData(formData, autowakeupSchedules, restart) {
   const formDataToSubmit = new FormData();
 
   for (const [key, value] of Object.entries(formData)) {
-    if (value === undefined || value === null) continue;
+    if (value === undefined || value === null || READ_ONLY_KEYS.includes(key)) continue;
 
     if (CHECKBOX_KEYS.includes(key)) {
       // Always explicit: the firmware leaves absent booleans untouched (GM-214).
@@ -402,7 +431,9 @@ export function Settings() {
 
   const onExport = useCallback(() => {
     const autowakeupSchedulesStr = serializeAutoWakeupSchedules(autowakeupSchedules);
-    downloadJson({ ...formData, autowakeupSchedules: autowakeupSchedulesStr }, 'settings.json');
+    const exported = { ...formData, autowakeupSchedules: autowakeupSchedulesStr };
+    READ_ONLY_KEYS.forEach(key => delete exported[key]);
+    downloadJson(exported, 'settings.json');
   }, [formData, autowakeupSchedules]);
 
   const onUpload = async evt => {
@@ -415,6 +446,7 @@ export function Settings() {
         throw new Error('Settings have not loaded yet.');
       }
       const knownKeys = new Set([...Object.keys(formData), ...FORM_ONLY_KEYS]);
+      READ_ONLY_KEYS.forEach(key => knownKeys.delete(key));
       const { fields, schedules, ignored, count } = normalizeImportedSettings(
         JSON.parse(await file.text()),
         knownKeys,

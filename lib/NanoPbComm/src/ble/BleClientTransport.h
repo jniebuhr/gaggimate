@@ -3,6 +3,7 @@
 
 #include "../Protocol.h"
 #include "../Transport.h"
+#include "BleConstants.h"
 #include <NimBLEDevice.h>
 
 // BLE central (client) transport for the display: scans, connects, subscribes TX / writes RX (one datagram per op).
@@ -23,6 +24,7 @@ class BleClientTransport : public Transport, public NimBLEAdvertisedDeviceCallba
 
     bool send(const uint8_t *data, size_t length) override;
     bool isConnected() const override;
+    size_t maxDatagram() const override { return BLE_MAX_DATAGRAM; }
 
     // Tight ~7.5-10ms conn interval while a shot runs, relaxed ~30-50ms when idle to leave airtime for Wi-Fi.
     void setLowLatency(bool active);

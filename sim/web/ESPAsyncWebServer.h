@@ -102,6 +102,8 @@ class AsyncWebServerRequest {
 
 using ArRequestHandlerFunction = std::function<void(AsyncWebServerRequest *)>;
 using ArRequestFilterFunction = std::function<bool(AsyncWebServerRequest *)>;
+using ArUploadHandlerFunction = std::function<void(AsyncWebServerRequest *, const String &, size_t, uint8_t *, size_t, bool)>;
+using ArBodyHandlerFunction = std::function<void(AsyncWebServerRequest *, uint8_t *, size_t, size_t, size_t)>;
 
 // Matches the real library's queued-message payload type.
 using AsyncWebSocketSharedBuffer = std::shared_ptr<std::vector<uint8_t>>;
@@ -165,6 +167,7 @@ class AsyncCallbackWebHandler {
     std::string _uri;
     ArRequestHandlerFunction _handler;
     bool _prefix = false;
+    ArBodyHandlerFunction _onBody; // called once with the whole body (the real library streams chunks)
     ArRequestFilterFunction _filter;
 };
 
@@ -176,6 +179,12 @@ class AsyncWebServer {
     void on(const char *uri, ArRequestHandlerFunction handler) { _routes.push_back({HTTP_ANY, uri, std::move(handler)}); }
     void on(const char *uri, WebRequestMethod method, ArRequestHandlerFunction handler) {
         _routes.push_back({(int)method, uri, std::move(handler)});
+    }
+    void on(const char *uri, WebRequestMethod method, ArRequestHandlerFunction handler, ArUploadHandlerFunction,
+            ArBodyHandlerFunction onBody) {
+        Route route{(int)method, uri, std::move(handler)};
+        route._onBody = std::move(onBody);
+        _routes.push_back(std::move(route));
     }
     AsyncCallbackWebHandler &on(const AsyncURIMatcher &matcher, WebRequestMethod method, ArRequestHandlerFunction handler) {
         _routes.push_back({(int)method, matcher.uri, std::move(handler), true});

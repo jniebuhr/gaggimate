@@ -5,6 +5,7 @@
 #include <ESPAsyncWebServer.h>
 #include <display/util/PsramAllocator.h>
 #include <functional>
+#include <map>
 
 constexpr size_t STATUS_PERIOD = 500;
 constexpr size_t STATE_RESEND_PERIOD = 10000; // full slow-state resend even without changes
@@ -18,6 +19,7 @@ class ProfileManager;
 class WebSocketHandler {
   public:
     using RequestHandler = std::function<void(JsonDocument &request)>;
+    using ClientRequestHandler = std::function<void(uint32_t clientId, JsonDocument &request)>;
 
     WebSocketHandler();
     void setup(Controller *controller, PluginManager *pluginManager);
@@ -28,6 +30,12 @@ class WebSocketHandler {
     void closeAll() { ws.closeAll(); }
     bool hasClients() { return !ws.getClients().empty(); }
     void broadcastJson(JsonDocument &doc);
+    void sendJson(uint32_t clientId, JsonDocument &doc);
+
+    // Plugin hook: handles a request `tp` the built-in dispatch does not know; runs on the AsyncTCP task.
+    void registerRequestHandler(const String &type, ClientRequestHandler handler) {
+        pluginRequestHandlers[type] = std::move(handler);
+    }
 
     // OTA is driven by WebUIPlugin; the two OTA requests are routed back to it.
     void onOtaSettings(RequestHandler handler) { otaSettingsHandler = std::move(handler); }
@@ -52,19 +60,24 @@ class WebSocketHandler {
     ProfileManager *profileManager = nullptr;
     RequestHandler otaSettingsHandler;
     RequestHandler otaStartHandler;
+    std::map<String, ClientRequestHandler> pluginRequestHandlers;
     std::function<bool()> updateAvailableProvider; // OTA state for the `up` status field
 
     long lastStatus = 0;
     long lastStateSent = 0;
     long lastCleanup = 0;
+    unsigned long lastHardwareScaleDiagnostic = 0;
     AsyncWebSocketSharedBuffer lastStateBuffer; // last slow-state frame, replayed to new clients
     float currentBluetoothWeight = 0.0f;
+    float currentActiveWeight = 0.0f;
     // Reused for every 500ms status broadcast. Allocating a fresh JsonDocument
     // each tick was a major contributor to internal-heap fragmentation
     // (device reports 33%+ fragmentation, causing AsyncTCP buffer allocs to
     // stall mid-asset-serve). Keeping one doc lets its underlying pool grow
     // once and stay put.
     JsonDocument statusDoc{&psramAllocator};
+    // Independent 5 Hz calibration stream, without increasing general status traffic.
+    JsonDocument hardwareScaleDiagnosticDoc{&psramAllocator};
 };
 
 #endif // WEBSOCKETHANDLER_H

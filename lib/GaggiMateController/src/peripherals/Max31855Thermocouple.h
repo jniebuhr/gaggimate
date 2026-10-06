@@ -21,7 +21,7 @@ class Max31855Thermocouple : public TemperatureSensor {
     float read() override;
     bool isErrorState() override;
 
-    void setup();
+    void setup() override;
     void loop();
 
   private:

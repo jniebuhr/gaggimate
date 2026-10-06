@@ -2,6 +2,7 @@
 
 #include <WiFi.h>
 #include <display/core/Controller.h>
+#include <display/core/ProfileImage.h>
 #include <display/core/process/BrewProcess.h>
 #include <display/core/process/Process.h>
 #include <display/core/zones.h>
@@ -27,9 +28,10 @@ static constexpr int32_t GAUGE_TICK_LONG = 25;      // meter tick length on most
 static constexpr int32_t GAUGE_TICK_SHORT = 10;     // shortened tick length on profile / new-menu screens
 static constexpr uint32_t GAUGE_TICK_ANIM_MS = 300; // tick length transition duration
 
-// Profile and the new menu screen show shortened meter ticks.
-static bool isShortTickScreen(ScreensEnum s) {
-    return s == SCREEN_ID_PROFILE_SCREEN || s == SCREEN_ID_MENU_SCREEN_NEW || s == SCREEN_ID_INFO_SCREEN;
+// Profile, menu and info screens, plus the status screen in chart mode, show shortened meter ticks.
+static bool isShortTickScreen(ScreensEnum s, bool chartMode) {
+    return s == SCREEN_ID_MENU_SCREEN_NEW || s == SCREEN_ID_INFO_SCREEN || s == SCREEN_ID_NEW_PROFILE_SCREEN ||
+           (chartMode && s == SCREEN_ID_STATUS_SCREEN);
 }
 
 // Format a millisecond duration as "m:ss" for the brew/profile time labels.
@@ -41,6 +43,106 @@ static void formatDuration(unsigned long ms, char *buf, size_t len) {
 }
 
 static float clampPercentage(float pct) { return pct < 0.0f ? 0.0f : (pct > 100.0f ? 100.0f : pct); }
+
+// Shot chart styling, after the community concept UI: thin lines, endpoint dot, no grid or fill.
+// Theme color slots (Pressure, Progress, Temperature, Warning) so the chart matches the rest of the UI.
+static constexpr int SHOT_THEME_COLORS[SHOT_SERIES_COUNT] = {7, 7, 2, 2, 6, 8};
+static constexpr int SHOT_GUIDE_COLOR = 3; // theme SemiDark, for the baseline and phase markers
+static constexpr lv_coord_t SHOT_DOT_RADIUS = 3;
+static constexpr bool SHOT_IS_TARGET[SHOT_SERIES_COUNT] = {false, true, false, true, false, false};
+static constexpr lv_coord_t SHOT_CHART_SCALE = 1000;    // every series is normalised to 0..1000 of its own range
+static constexpr float SHOT_FLOW_RANGE_DEFAULT = 12.0f; // bar / ml/s
+static constexpr float SHOT_WEIGHT_RANGE_DEFAULT = 50.0f;
+static constexpr float SHOT_TEMP_RANGE = 10.0f; // profile temperature centred, ±10 °C
+
+static constexpr int PROFILE_THEME_COLORS[2] = {7, 2};  // pressure, flow; same slots as the shot chart
+static constexpr float PROFILE_CHART_STEP = 0.1f;       // s, matches the web UI profile chart
+static constexpr float PROFILE_CHART_MIN_RANGE = 10.0f; // bar / ml/s
+
+static float applyEasing(float t, TransitionType type) {
+    if (t <= 0.0f)
+        return 0.0f;
+    if (t >= 1.0f)
+        return 1.0f;
+    switch (type) {
+    case TransitionType::LINEAR:
+        return t;
+    case TransitionType::EASE_IN:
+        return t * t;
+    case TransitionType::EASE_OUT:
+        return 1.0f - (1.0f - t) * (1.0f - t);
+    case TransitionType::EASE_IN_OUT:
+        return t < 0.5f ? 2.0f * t * t : 1.0f - 2.0f * (1.0f - t) * (1.0f - t);
+    default:
+        return 1.0f;
+    }
+}
+
+static lv_coord_t scaleShotValue(float value, float min, float max) {
+    const int32_t scaled = lroundf((value - min) / (max - min) * SHOT_CHART_SCALE);
+    return static_cast<lv_coord_t>(LV_CLAMP(0, scaled, SHOT_CHART_SCALE));
+}
+
+// Grow a range in whole steps until it fits value.
+static float growShotRange(float range, float value, float step) {
+    while (value > range)
+        range += step;
+    return range;
+}
+
+// Shared look of the live shot chart and the profile preview chart: thin lines, no grid, baseline and phase markers.
+static void styleTrendChart(lv_obj_t *chart, uint16_t points) {
+    lv_chart_set_type(chart, LV_CHART_TYPE_LINE);
+    lv_chart_set_point_count(chart, points);
+    lv_chart_set_range(chart, LV_CHART_AXIS_PRIMARY_Y, 0, SHOT_CHART_SCALE);
+    lv_chart_set_div_line_count(chart, 0, 0);
+    lv_obj_set_style_border_opa(chart, LV_OPA_TRANSP, LV_PART_MAIN);
+    lv_obj_set_style_line_width(chart, 0, LV_PART_MAIN);
+    // Inset the plot by the dot radius so endpoint dots at the edges aren't clipped by the chart bounds.
+    lv_obj_set_style_pad_all(chart, SHOT_DOT_RADIUS, LV_PART_MAIN);
+    lv_obj_set_style_pad_left(chart, 0, LV_PART_MAIN);
+    lv_obj_set_style_line_width(chart, 2, LV_PART_ITEMS);
+    lv_obj_set_style_size(chart, 0, LV_PART_INDICATOR);
+}
+
+// The chart shares one line descriptor across all series, so set every field each segment.
+static void styleTrendLine(lv_draw_line_dsc_t *line, bool secondary) {
+    line->dash_width = secondary ? 3 : 0;
+    line->dash_gap = secondary ? 3 : 0;
+    line->opa = secondary ? LV_OPA_60 : LV_OPA_COVER;
+    line->width = secondary ? 1 : 2;
+}
+
+// Drawn before the series so the guides sit behind the lines.
+static void drawTrendGuides(lv_event_t *e, int theme, const bool *phaseMarks, int markCount, int pointCount) {
+    lv_obj_t *chart = lv_event_get_target(e);
+    lv_draw_ctx_t *drawCtx = lv_event_get_draw_ctx(e);
+    lv_area_t content;
+    lv_obj_get_content_coords(chart, &content);
+    const lv_coord_t width = lv_obj_get_content_width(chart);
+    const lv_coord_t bottom = content.y1 + lv_obj_get_content_height(chart);
+
+    lv_draw_line_dsc_t line;
+    lv_draw_line_dsc_init(&line);
+    line.color = lv_color_hex(theme_colors[theme][SHOT_GUIDE_COLOR]);
+    line.width = 1;
+    line.opa = LV_OPA_40;
+    const lv_point_t baseStart = {content.x1, bottom};
+    const lv_point_t baseEnd = {content.x2, bottom};
+    lv_draw_line(drawCtx, &line, &baseStart, &baseEnd);
+
+    line.opa = LV_OPA_30;
+    line.dash_width = 2;
+    line.dash_gap = 3;
+    for (int i = 0; i < markCount; i++) {
+        if (!phaseMarks[i])
+            continue;
+        const lv_coord_t x = static_cast<lv_coord_t>(content.x1 + width * i / (pointCount - 1));
+        const lv_point_t top = {x, content.y1};
+        const lv_point_t base = {x, bottom};
+        lv_draw_line(drawCtx, &line, &top, &base);
+    }
+}
 
 // EEZ string setters allocate a fresh StringRef on the LVGL heap each call; skip unchanged text to cut churn.
 static bool stringChanged(const char *current, const char *next) {
@@ -187,15 +289,20 @@ void DefaultUI::init() {
     pluginManager->on("profiles:profile:favorite", [this](Event const &event) { reloadProfiles(); });
     pluginManager->on("profiles:profile:unfavorite", [this](Event const &event) { reloadProfiles(); });
     pluginManager->on("profiles:profile:save", [this](Event const &event) { reloadProfiles(); });
-    pluginManager->on("controller:volumetric-measurement:bluetooth:change", [=](Event const &event) {
+    pluginManager->on("profiles:image:change", [this](Event const &) {
+        imageGeneration++;
+        reloadProfiles();
+        rerender = true;
+    });
+    pluginManager->on("controller:volumetric-measurement:active:change", [=](Event const &event) {
         double newWeight = event.getFloat("value");
-        if (round(newWeight * 10.0) != round(bluetoothWeight * 10.0)) {
-            bluetoothWeight = newWeight;
+        if (round(newWeight * 10.0) != round(activeWeight * 10.0)) {
+            activeWeight = newWeight;
             rerender = true;
         }
     });
-    xTaskCreatePinnedToCore(profileLoopTask, "DefaultUI::loopProfiles", configMINIMAL_STACK_SIZE * 4, this, 1, &profileTaskHandle,
-                            0);
+    // Task names cap at 15 chars; "DefaultUI::loopProfiles" read as "DefaultUI::loop" in panics. SD + JSON need the headroom.
+    xTaskCreatePinnedToCore(profileLoopTask, "UI::profiles", configMINIMAL_STACK_SIZE * 6, this, 1, &profileTaskHandle, 0);
 }
 
 // True while any pointer input device (the touch panel) is pressed.
@@ -246,7 +353,8 @@ void DefaultUI::loop() {
         updateProfileInfo();
         updateBoiler();
         updateBrewProcess();
-        currentWeight = FloatValue(bluetoothWeight);
+        updateShotChart();
+        currentWeight = FloatValue(activeWeight);
         eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_SCALE_WEIGHT_CURRENT, currentWeight);
 
         char timeBuf[12];
@@ -260,6 +368,7 @@ void DefaultUI::loop() {
 
         handleScreenChange();
         currentScreen = static_cast<ScreensEnum>(eez_flow_get_current_screen());
+        updateProfilePreview();
         effect_mgr.evaluate_all();
 
         if (currentScreen == SCREEN_ID_STANDBY_SCREEN) {
@@ -289,19 +398,52 @@ void DefaultUI::loopProfiles() {
                 ids.emplace_back(id);
         }
         std::vector<Profile> profiles;
+        std::vector<bool> hasImage;
         profiles.reserve(ids.size());
+        hasImage.reserve(ids.size());
+        const std::vector<String> imageIds = controller->isSDCard() ? profileManager->listProfileImages() : std::vector<String>{};
         for (const auto &profileId : ids) {
             Profile profile{};
             profileManager->loadProfile(profileId, profile);
             profiles.emplace_back(std::move(profile));
+            hasImage.push_back(std::find(imageIds.begin(), imageIds.end(), profileId) != imageIds.end());
         }
         {
             std::lock_guard<std::mutex> guard(profilesMutex);
             favoritedProfileIds = std::move(ids);
             favoritedProfiles = std::move(profiles);
+            favoritedHasImage = std::move(hasImage);
+            profilesGeneration++;
         }
         profileLoaded = 1;
     }
+    loadRequestedImage();
+}
+
+// SD reads stay on this task: a slow or failing card must not block rendering or overflow the UI task's stack.
+void DefaultUI::loadRequestedImage() {
+    String wanted;
+    int request;
+    {
+        std::lock_guard<std::mutex> guard(imageMutex);
+        wanted = imageWantedId;
+        request = imageRequest;
+    }
+    const int generation = imageGeneration;
+    if (wanted.isEmpty() || (request == imageLoadedRequest && generation == imageLoadedGeneration))
+        return;
+    uint8_t *pixels = profileManager->loadProfileImage(wanted);
+    imageLoadedRequest = request;
+    imageLoadedGeneration = generation;
+    if (pixels == nullptr)
+        return;
+    {
+        std::lock_guard<std::mutex> guard(imageMutex);
+        free(imagePending);
+        imagePending = pixels;
+        imagePendingId = wanted;
+    }
+    rerender = true;
 }
 
 void DefaultUI::changeScreen(ScreensEnum screen) {
@@ -318,13 +460,15 @@ void DefaultUI::changeBrewScreenMode(BrewScreenState state) {
 
 void DefaultUI::onProfileSwitch() {
     currentProfileIdx = 0;
-    changeScreen(SCREEN_ID_PROFILE_SCREEN);
+    profileDetailsVisible = false;
+    changeScreen(SCREEN_ID_NEW_PROFILE_SCREEN);
 }
 
 void DefaultUI::onNextProfile() {
     std::lock_guard<std::mutex> guard(profilesMutex);
     if (currentProfileIdx + 1 < static_cast<int>(favoritedProfileIds.size())) {
         currentProfileIdx++;
+        profileDetailsVisible = false;
     }
     rerender = true;
 }
@@ -332,7 +476,13 @@ void DefaultUI::onNextProfile() {
 void DefaultUI::onPreviousProfile() {
     if (currentProfileIdx > 0) {
         currentProfileIdx--;
+        profileDetailsVisible = false;
     }
+    rerender = true;
+}
+
+void DefaultUI::onProfileDetailToggle() {
+    profileDetailsVisible = !profileDetailsVisible;
     rerender = true;
 }
 
@@ -453,7 +603,7 @@ void DefaultUI::handleScreenChange() {
             setBrightness(settings.getMainBrightness());
         }
         eez_flow_set_screen(targetScreen, LV_SCR_LOAD_ANIM_NONE, 0, 0);
-        animateGaugeTicks(currentScreen, targetScreen);
+        animateGaugeTicks(isShortTickScreen(currentScreen, tickChartMode), isShortTickScreen(targetScreen, tickChartMode));
         rerender = true;
     }
 }
@@ -483,9 +633,9 @@ void DefaultUI::setGaugeTickLength(int32_t len) {
 
 void DefaultUI::gaugeTickAnimCb(void *var, int32_t v) { static_cast<DefaultUI *>(var)->setGaugeTickLength(v); }
 
-void DefaultUI::animateGaugeTicks(ScreensEnum from, ScreensEnum to) {
-    const int32_t fromLen = isShortTickScreen(from) ? GAUGE_TICK_SHORT : GAUGE_TICK_LONG;
-    const int32_t toLen = isShortTickScreen(to) ? GAUGE_TICK_SHORT : GAUGE_TICK_LONG;
+void DefaultUI::animateGaugeTicks(bool fromShort, bool toShort) {
+    const int32_t fromLen = fromShort ? GAUGE_TICK_SHORT : GAUGE_TICK_LONG;
+    const int32_t toLen = toShort ? GAUGE_TICK_SHORT : GAUGE_TICK_LONG;
 
     lv_anim_del(this, gaugeTickAnimCb); // cancel any in-flight tick animation
     gaugeCount = 0;
@@ -532,10 +682,32 @@ void DefaultUI::updateState() {
     uiFlags.temperature_stable(controller->getWarnings().isTemperatureStable());
     uiFlags.has_prev_profile(currentProfileIdx > 0);
     uiFlags.brew_confirm_visible(brewConfirmVisible);
+    uiFlags.profile_details_visible(profileDetailsVisible);
+    const bool chartMode = settings.getStatusDisplayMode() == STATUS_DISPLAY_CHART && pressureAvailable && isProShot();
+    uiFlags.chart_mode(chartMode);
+    if (chartMode != tickChartMode) {
+        // Re-animate the ring when the mode flips while the status screen is open.
+        if (currentScreen == SCREEN_ID_STATUS_SCREEN && currentScreen == targetScreen)
+            animateGaugeTicks(!chartMode, chartMode);
+        tickChartMode = chartMode;
+    }
     {
         std::lock_guard<std::mutex> guard(profilesMutex);
         uiFlags.has_next_profile(currentProfileIdx + 1 < static_cast<int>(favoritedProfileIds.size()));
     }
+}
+
+// The chart needs pressure data, so it only applies to Pro profiles; prefer the running brew's profile.
+bool DefaultUI::isProShot() {
+    if (!initialized)
+        return false;
+    std::lock_guard<std::recursive_mutex> guard(controller->getProcessLock());
+    Process *process = controller->getProcess();
+    if (process == nullptr)
+        process = controller->getLastProcess();
+    if (process != nullptr && process->getType() == MODE_BREW)
+        return static_cast<BrewProcess *>(process)->profile.type == "pro";
+    return profileManager->getSelectedProfile().type == "pro";
 }
 
 void DefaultUI::updateSystemStatus() {
@@ -548,12 +720,9 @@ void DefaultUI::updateSystemStatus() {
     if (stringChanged(systemStatus.error_label(), errorLabel.c_str()))
         systemStatus.error_label(errorLabel.c_str());
     systemStatus.volumetric_available(controller->isVolumetricAvailable());
-    systemStatus.bluetooth_scales(controller->isBluetoothScaleHealthy());
-    const String controllerVersion = controller->getSystemInfo().version;
-    if (stringChanged(systemStatus.controller_version(), controllerVersion.c_str()))
-        systemStatus.controller_version(controllerVersion.c_str());
-    if (stringChanged(systemStatus.display_version(), BUILD_GIT_VERSION))
-        systemStatus.display_version(BUILD_GIT_VERSION);
+    systemStatus.bluetooth_scales(controller->isScaleSourceHealthy(controller->getEffectiveScaleSource()));
+    systemStatus.controller_version(controller->getSystemInfo().version.c_str());
+    systemStatus.display_version(BUILD_GIT_VERSION);
     systemStatus.update_available(updateAvailable);
     systemStatus.in_menu(currentScreen == SCREEN_ID_MENU_SCREEN_NEW);
     systemStatus.pressure_available(pressureAvailable);
@@ -592,12 +761,14 @@ void DefaultUI::updateWarnings() {
     warnings.scaleBatteryError(wm.isError(WARNING_SCALE_BATTERY));
     warnings.temperatureWarn(wm.isWarn(WARNING_TEMPERATURE));
     warnings.temperatureError(wm.isError(WARNING_TEMPERATURE));
+    warnings.cleanWarn(wm.isWarn(WARNING_BACKFLUSH) || wm.isWarn(WARNING_DESCALING));
+    warnings.cleanError(wm.isError(WARNING_BACKFLUSH) || wm.isError(WARNING_DESCALING));
     const String labels = wm.getLabels();
     if (stringChanged(warnings.labels(), labels.c_str()))
         warnings.labels(labels.c_str());
 }
 
-static void populateProfileInfo(ProfileInfoValue &info, const Profile &profile, bool isCurrent) {
+static void populateProfileInfo(ProfileInfoValue &info, const Profile &profile, bool isCurrent, bool hasImage) {
     char timeBuf[12];
     formatDuration(static_cast<unsigned long>(profile.getTotalDuration() * 1000.0f), timeBuf, sizeof(timeBuf));
     if (stringChanged(info.name(), profile.label.c_str()))
@@ -610,26 +781,32 @@ static void populateProfileInfo(ProfileInfoValue &info, const Profile &profile, 
     info.is_volumetric(profile.isVolumetric());
     info.is_current(isCurrent);
     info.target_weight(profile.getTotalVolume());
+    info.is_pro(profile.type == "pro");
+    info.has_image(hasImage);
 }
 
 void DefaultUI::updateProfileInfo() {
     if (!initialized) {
         return;
     }
-    populateProfileInfo(selectedProfileInfo, profileManager->getSelectedProfile(), true);
-    selectedProfileInfo.dirty(profileDirty);
-
+    const Profile &selected = profileManager->getSelectedProfile();
     bool populated = false;
+    bool selectedHasImage = false;
     {
         std::lock_guard<std::mutex> guard(profilesMutex);
+        // The profile task always puts the selected profile first.
+        selectedHasImage = !favoritedProfileIds.empty() && favoritedProfileIds[0] == selected.id && favoritedHasImage[0];
         if (!favoritedProfiles.empty() && currentProfileIdx >= 0 &&
             currentProfileIdx < static_cast<int>(favoritedProfiles.size())) {
-            populateProfileInfo(previewProfileInfo, favoritedProfiles[currentProfileIdx], currentProfileIdx == 0);
+            populateProfileInfo(previewProfileInfo, favoritedProfiles[currentProfileIdx], currentProfileIdx == 0,
+                                favoritedHasImage[currentProfileIdx]);
             populated = true;
         }
     }
+    populateProfileInfo(selectedProfileInfo, selected, true, selectedHasImage);
+    selectedProfileInfo.dirty(profileDirty);
     if (!populated) {
-        populateProfileInfo(previewProfileInfo, profileManager->getSelectedProfile(), true);
+        populateProfileInfo(previewProfileInfo, selected, true, selectedHasImage);
     }
 }
 
@@ -664,6 +841,7 @@ void DefaultUI::updateBrewProcess() {
     brewProcess.profile_is_current(true);
     brewProcess.profile_target_weight(selected.getTotalVolume());
     brewProcess.boiler_target_temperature(controller->getTargetTemp());
+    brewProcess.current_flow(controller->getCurrentPumpFlow());
 
     // Hold the process lock across every deref below — the logic/AsyncTCP/BLE tasks delete
     // the process at any time (GM-147).
@@ -734,7 +912,13 @@ void DefaultUI::updateBrewProcess() {
     const bool weightTarget = bp->target == ProcessTarget::VOLUMETRIC && phase.hasVolumetricTarget();
     brewProcess.phase_value_is_weight(weightTarget);
     if (weightTarget) {
-        const float target = phase.getVolumetricTarget().value;
+        float target = 0.0f;
+        Target volumetricTarget = phase.getVolumetricTarget();
+        if (volumetricTarget.type == TargetType::TARGET_TYPE_VOLUMETRIC) {
+            target = volumetricTarget.value;
+        } else if (volumetricTarget.type == TargetType::TARGET_TYPE_RATIO && bp->profile.dose > 0.0f) {
+            target = volumetricTarget.value * bp->profile.dose;
+        }
         const float current = static_cast<float>(bp->currentVolume);
         brewProcess.phase_value_current(current);
         brewProcess.phase_value_target(target);
@@ -754,6 +938,327 @@ void DefaultUI::updateBrewProcess() {
 
 void DefaultUI::updateMenuScreen() {}
 
+void DefaultUI::setupShotChart() {
+    shotChart = objects.shot_chart;
+    styleTrendChart(shotChart, SHOT_CHART_POINTS);
+    for (int i = 0; i < SHOT_SERIES_COUNT; i++) {
+        shotSeries[i] = lv_chart_add_series(shotChart, lv_color_hex(0), LV_CHART_AXIS_PRIMARY_Y);
+        lv_chart_set_ext_y_array(shotChart, shotSeries[i], shotPoints[i]);
+    }
+    applyShotChartTheme();
+    lv_obj_add_event_cb(shotChart, shotChartDrawCb, LV_EVENT_DRAW_PART_BEGIN, this);
+    lv_obj_add_event_cb(shotChart, shotChartDrawCb, LV_EVENT_DRAW_PART_END, this);
+    lv_obj_add_event_cb(shotChart, shotChartBackgroundCb, LV_EVENT_DRAW_MAIN_BEGIN, this);
+    resetShotChart(controller->getTargetTemp(), 0.0f);
+}
+
+void DefaultUI::applyShotChartTheme() {
+    if (shotChart == nullptr)
+        return;
+    const int theme = currentThemeMode >= 0 ? currentThemeMode : 0;
+    for (int i = 0; i < SHOT_SERIES_COUNT; i++)
+        lv_chart_set_series_color(shotChart, shotSeries[i], lv_color_hex(theme_colors[theme][SHOT_THEME_COLORS[i]]));
+    lv_chart_refresh(shotChart);
+}
+
+void DefaultUI::resetShotChart(float targetTemperature, float targetWeight) {
+    for (auto &series : shotPoints)
+        for (auto &point : series)
+            point = LV_CHART_POINT_NONE;
+    for (auto &mark : shotPhaseMarks)
+        mark = false;
+    shotPhasePending = false;
+    shotPointCount = 0;
+    lastShotSample = 0;
+    shotFlowRange = SHOT_FLOW_RANGE_DEFAULT;
+    shotWeightRange = targetWeight > 0.0f ? growShotRange(10.0f, targetWeight * 1.1f, 10.0f) : SHOT_WEIGHT_RANGE_DEFAULT;
+    shotTempMin = targetTemperature - SHOT_TEMP_RANGE;
+    shotTempMax = targetTemperature + SHOT_TEMP_RANGE;
+    lv_chart_refresh(shotChart);
+}
+
+void DefaultUI::updateShotChart() {
+    if (objects.shot_chart == nullptr)
+        return;
+    if (objects.shot_chart != shotChart)
+        setupShotChart();
+
+    std::lock_guard<std::recursive_mutex> guard(controller->getProcessLock());
+    Process *process = controller->getProcess();
+    if (process == nullptr || process->getType() != MODE_BREW || !process->isActive())
+        return;
+    auto *bp = static_cast<BrewProcess *>(process);
+    const bool volumetric = controller->isVolumetricAvailable();
+    if (bp->processStarted != shotChartStarted) {
+        shotChartStarted = bp->processStarted;
+        resetShotChart(bp->getTemperature(), volumetric ? static_cast<float>(bp->getBrewVolume()) : 0.0f);
+        shotPhaseIndex = bp->phaseIndex;
+    }
+    if (bp->phaseIndex != shotPhaseIndex) {
+        shotPhaseIndex = bp->phaseIndex;
+        shotPhasePending = true;
+    }
+    const unsigned long now = ::millis();
+    if (lastShotSample != 0 && now - lastShotSample < SHOT_CHART_SAMPLE_INTERVAL)
+        return;
+    // Advance by the interval, not to now, so the coarse UI tick doesn't stretch the 30 s window.
+    const bool behind = lastShotSample == 0 || now - lastShotSample >= 2 * SHOT_CHART_SAMPLE_INTERVAL;
+    lastShotSample = behind ? now : lastShotSample + SHOT_CHART_SAMPLE_INTERVAL;
+    addShotChartSample(volumetric ? static_cast<float>(bp->currentVolume) : -1.0f);
+}
+
+void DefaultUI::rescaleShotSeries(lv_coord_t *points, float oldRange, float newRange) {
+    for (int i = 0; i < SHOT_CHART_POINTS; i++)
+        if (points[i] != LV_CHART_POINT_NONE)
+            points[i] = static_cast<lv_coord_t>(lroundf(points[i] * oldRange / newRange));
+}
+
+void DefaultUI::addShotChartSample(float weight) {
+    const float pressure = controller->getCurrentPressure();
+    const float flow = controller->getCurrentPumpFlow();
+    const float targetPressure = controller->getTargetPressure();
+    const float targetFlow = controller->getTargetFlow();
+
+    const float flowRange =
+        growShotRange(shotFlowRange, LV_MAX(LV_MAX(pressure, flow), LV_MAX(targetPressure, targetFlow)), 2.0f);
+    if (flowRange != shotFlowRange) {
+        for (int i : {SHOT_PRESSURE, SHOT_TARGET_PRESSURE, SHOT_FLOW, SHOT_TARGET_FLOW})
+            rescaleShotSeries(shotPoints[i], shotFlowRange, flowRange);
+        shotFlowRange = flowRange;
+    }
+    const float weightRange = growShotRange(shotWeightRange, weight, 10.0f);
+    if (weightRange != shotWeightRange) {
+        rescaleShotSeries(shotPoints[SHOT_WEIGHT], shotWeightRange, weightRange);
+        shotWeightRange = weightRange;
+    }
+
+    lv_coord_t sample[SHOT_SERIES_COUNT];
+    sample[SHOT_PRESSURE] = scaleShotValue(pressure, 0.0f, shotFlowRange);
+    sample[SHOT_TARGET_PRESSURE] =
+        targetPressure > 0.0f ? scaleShotValue(targetPressure, 0.0f, shotFlowRange) : LV_CHART_POINT_NONE;
+    sample[SHOT_FLOW] = scaleShotValue(flow, 0.0f, shotFlowRange);
+    sample[SHOT_TARGET_FLOW] = targetFlow > 0.0f ? scaleShotValue(targetFlow, 0.0f, shotFlowRange) : LV_CHART_POINT_NONE;
+    sample[SHOT_TEMPERATURE] = scaleShotValue(controller->getCurrentTemp(), shotTempMin, shotTempMax);
+    sample[SHOT_WEIGHT] = weight >= 0.0f ? scaleShotValue(weight, 0.0f, shotWeightRange) : LV_CHART_POINT_NONE;
+
+    if (shotPointCount == SHOT_CHART_POINTS) {
+        for (auto &series : shotPoints)
+            memmove(series, series + 1, (SHOT_CHART_POINTS - 1) * sizeof(lv_coord_t));
+        memmove(shotPhaseMarks, shotPhaseMarks + 1, (SHOT_CHART_POINTS - 1) * sizeof(bool));
+        shotPointCount--;
+    }
+    for (int i = 0; i < SHOT_SERIES_COUNT; i++)
+        shotPoints[i][shotPointCount] = sample[i];
+    shotPhaseMarks[shotPointCount] = shotPhasePending;
+    shotPhasePending = false;
+    shotPointCount++;
+    lv_chart_refresh(shotChart);
+}
+
+void DefaultUI::shotChartBackgroundCb(lv_event_t *e) {
+    auto *ui = static_cast<DefaultUI *>(lv_event_get_user_data(e));
+    const int theme = ui->currentThemeMode >= 0 ? ui->currentThemeMode : 0;
+    drawTrendGuides(e, theme, ui->shotPhaseMarks, ui->shotPointCount, SHOT_CHART_POINTS);
+}
+
+void DefaultUI::shotChartDrawCb(lv_event_t *e) {
+    auto *dsc = lv_event_get_draw_part_dsc(e);
+    if (dsc == nullptr || dsc->part != LV_PART_ITEMS || dsc->line_dsc == nullptr || dsc->sub_part_ptr == nullptr)
+        return;
+    auto *ui = static_cast<DefaultUI *>(lv_event_get_user_data(e));
+    int index = 0;
+    while (index < SHOT_SERIES_COUNT && ui->shotSeries[index] != dsc->sub_part_ptr)
+        index++;
+    if (index == SHOT_SERIES_COUNT)
+        return;
+
+    if (lv_event_get_code(e) == LV_EVENT_DRAW_PART_BEGIN) {
+        styleTrendLine(dsc->line_dsc, SHOT_IS_TARGET[index]);
+        return;
+    }
+
+    if (SHOT_IS_TARGET[index] || dsc->p2 == nullptr || dsc->id != ui->shotPointCount - 2)
+        return;
+    lv_draw_rect_dsc_t dot;
+    lv_draw_rect_dsc_init(&dot);
+    dot.radius = LV_RADIUS_CIRCLE;
+    dot.bg_color = dsc->line_dsc->color;
+    dot.bg_opa = LV_OPA_COVER;
+    const lv_area_t area = {
+        static_cast<lv_coord_t>(dsc->p2->x - SHOT_DOT_RADIUS), static_cast<lv_coord_t>(dsc->p2->y - SHOT_DOT_RADIUS),
+        static_cast<lv_coord_t>(dsc->p2->x + SHOT_DOT_RADIUS), static_cast<lv_coord_t>(dsc->p2->y + SHOT_DOT_RADIUS)};
+    lv_draw_rect(dsc->draw_ctx, &dot, &area);
+}
+
+// Show the preview profile's image once the profile task has loaded it, and redraw the pro chart when the previewed profile
+// changes.
+void DefaultUI::updateProfilePreview() {
+    if (currentScreen != SCREEN_ID_NEW_PROFILE_SCREEN || objects.profile_preview == nullptr)
+        return;
+    String id;
+    bool hasImage = false;
+    bool isPro = false;
+    Profile profile;
+    {
+        std::lock_guard<std::mutex> guard(profilesMutex);
+        if (currentProfileIdx < 0 || currentProfileIdx >= static_cast<int>(favoritedProfiles.size()))
+            return;
+        id = favoritedProfileIds[currentProfileIdx];
+        hasImage = favoritedHasImage[currentProfileIdx];
+        isPro = favoritedProfiles[currentProfileIdx].type == "pro";
+        if (isPro && (id != profileChartId || profilesGeneration != profileChartGeneration)) {
+            profile = favoritedProfiles[currentProfileIdx];
+            profileChartId = id;
+            profileChartGeneration = profilesGeneration;
+        }
+    }
+
+    uint8_t *pixels = nullptr;
+    {
+        std::lock_guard<std::mutex> guard(imageMutex);
+        const String wanted = hasImage ? id : String();
+        if (wanted != imageWantedId) {
+            imageWantedId = wanted;
+            imageRequest++;
+        }
+        if (imagePending != nullptr && imagePendingId == imageWantedId) {
+            pixels = imagePending;
+            imagePending = nullptr;
+        }
+    }
+    if (pixels != nullptr) {
+        // Alternate descriptors so LVGL sees a new source; the old pixels are freed once replaced.
+        imageDscIndex ^= 1;
+        lv_img_dsc_t &dsc = imageDsc[imageDscIndex];
+        dsc.header.always_zero = 0;
+        dsc.header.cf = LV_IMG_CF_TRUE_COLOR;
+        dsc.header.w = profile_image::SIZE;
+        dsc.header.h = profile_image::SIZE;
+        dsc.data_size = profile_image::FILE_BYTES - profile_image::HEADER_BYTES;
+        dsc.data = pixels;
+        lv_img_set_src(objects.profile_preview, &dsc);
+        free(imageShown);
+        imageShown = pixels;
+        imageShownId = id;
+    } else if (imageShown != nullptr && imageShownId != id) {
+        lv_img_set_src(objects.profile_preview, nullptr); // don't flash the previous profile's image while loading
+        free(imageShown);
+        imageShown = nullptr;
+        imageShownId = "";
+    }
+
+    lv_obj_t *chart = objects.profile_chart;
+    if (!isPro || chart == nullptr)
+        return;
+    if (chart != profileChart) {
+        setupProfileChart(chart);
+        profileChartGeneration = -1; // re-render into the new chart
+    }
+    if (!profile.id.isEmpty())
+        renderProfileChart(profile);
+}
+
+void DefaultUI::setupProfileChart(lv_obj_t *chart) {
+    profileChart = chart;
+    styleTrendChart(chart, PROFILE_CHART_POINTS);
+    const int theme = currentThemeMode >= 0 ? currentThemeMode : 0;
+    for (int i = 0; i < 2; i++) {
+        profileSeries[i] =
+            lv_chart_add_series(chart, lv_color_hex(theme_colors[theme][PROFILE_THEME_COLORS[i]]), LV_CHART_AXIS_PRIMARY_Y);
+        lv_chart_set_ext_y_array(chart, profileSeries[i], profilePoints[i]);
+    }
+    lv_obj_add_event_cb(chart, profileChartDrawCb, LV_EVENT_DRAW_PART_BEGIN, this);
+    lv_obj_add_event_cb(chart, profileChartBackgroundCb, LV_EVENT_DRAW_MAIN_BEGIN, this);
+}
+
+// Same simulation as the web UI's ExtendedProfileChart: the pump target ramps per transition, the other value is a limit.
+void DefaultUI::renderProfileChart(const Profile &profile) {
+    const float total = profile.getTotalDuration();
+    float pressure[PROFILE_CHART_POINTS] = {};
+    float flow[PROFILE_CHART_POINTS] = {};
+    bool pressureTarget[PROFILE_CHART_POINTS] = {};
+    bool phaseMarks[PROFILE_CHART_POINTS] = {};
+    bool phasePending = false;
+    int out = 0;
+    float maxValue = PROFILE_CHART_MIN_RANGE;
+
+    if (!profile.phases.empty() && total > 0.0f) {
+        size_t phaseIndex = 0;
+        float time = 0.0f;
+        float phaseTime = 0.0f;
+        float currentPressure = 0.0f;
+        float currentFlow = 0.0f;
+        float startPressure = 0.0f;
+        float startFlow = 0.0f;
+        float effectivePressure = profile.phases[0].pumpAdvanced.pressure;
+        float effectiveFlow = profile.phases[0].pumpAdvanced.flow;
+        while (phaseIndex < profile.phases.size() && out < PROFILE_CHART_POINTS) {
+            const Phase &phase = profile.phases[phaseIndex];
+            const bool simple = phase.pumpIsSimple;
+            const bool isPressure = !simple && phase.pumpAdvanced.target == PumpTarget::PUMP_TARGET_PRESSURE;
+            const float transition = phase.transition.duration > 0.0f ? phase.transition.duration : phase.duration;
+            const float alpha = transition > 0.0f ? applyEasing(phaseTime / transition, phase.transition.type) : 1.0f;
+            const float limitPressure = simple ? 0.0f : phase.pumpAdvanced.pressure;
+            const float limitFlow = simple ? 0.0f : phase.pumpAdvanced.flow;
+            currentFlow = !simple && !isPressure ? startFlow + (effectiveFlow - startFlow) * alpha : limitFlow;
+            currentPressure = isPressure ? startPressure + (effectivePressure - startPressure) * alpha : limitPressure;
+            while (out < PROFILE_CHART_POINTS && time >= total * out / (PROFILE_CHART_POINTS - 1)) {
+                pressure[out] = LV_MAX(currentPressure, 0.0f);
+                flow[out] = LV_MAX(currentFlow, 0.0f);
+                pressureTarget[out] = isPressure;
+                phaseMarks[out] = phasePending;
+                phasePending = false;
+                maxValue = LV_MAX(maxValue, LV_MAX(pressure[out], flow[out]));
+                out++;
+            }
+            time += PROFILE_CHART_STEP;
+            phaseTime += PROFILE_CHART_STEP;
+            if (phaseTime >= phase.duration) {
+                phaseTime = 0.0f;
+                if (++phaseIndex < profile.phases.size()) {
+                    phasePending = true;
+                    startFlow = currentFlow;
+                    startPressure = currentPressure;
+                    const PumpAdvanced &next = profile.phases[phaseIndex].pumpAdvanced;
+                    effectiveFlow = next.flow == -1 ? currentFlow : next.flow;
+                    effectivePressure = next.pressure == -1 ? currentPressure : next.pressure;
+                }
+            }
+        }
+    }
+
+    const float range = growShotRange(PROFILE_CHART_MIN_RANGE, maxValue * 1.1f, 2.0f);
+    for (int i = 0; i < PROFILE_CHART_POINTS; i++) {
+        const bool valid = i < out;
+        const bool lastValid = out > 0 && i >= out;
+        const int src = lastValid ? out - 1 : i;
+        profilePoints[0][i] = valid || lastValid ? scaleShotValue(pressure[src], 0.0f, range) : LV_CHART_POINT_NONE;
+        profilePoints[1][i] = valid || lastValid ? scaleShotValue(flow[src], 0.0f, range) : LV_CHART_POINT_NONE;
+        profilePointIsTarget[0][i] = pressureTarget[src];
+        profilePointIsTarget[1][i] = !pressureTarget[src];
+        profilePhaseMarks[i] = valid && phaseMarks[i];
+    }
+    lv_chart_refresh(profileChart);
+}
+
+// The controlled value draws solid, the limit dashed (as in the web UI).
+void DefaultUI::profileChartDrawCb(lv_event_t *e) {
+    auto *dsc = lv_event_get_draw_part_dsc(e);
+    if (dsc == nullptr || dsc->part != LV_PART_ITEMS || dsc->line_dsc == nullptr || dsc->sub_part_ptr == nullptr)
+        return;
+    auto *ui = static_cast<DefaultUI *>(lv_event_get_user_data(e));
+    const int series = ui->profileSeries[0] == dsc->sub_part_ptr ? 0 : ui->profileSeries[1] == dsc->sub_part_ptr ? 1 : -1;
+    if (series < 0 || dsc->id >= PROFILE_CHART_POINTS)
+        return;
+    styleTrendLine(dsc->line_dsc, !ui->profilePointIsTarget[series][dsc->id]);
+}
+
+void DefaultUI::profileChartBackgroundCb(lv_event_t *e) {
+    auto *ui = static_cast<DefaultUI *>(lv_event_get_user_data(e));
+    const int theme = ui->currentThemeMode >= 0 ? ui->currentThemeMode : 0;
+    drawTrendGuides(e, theme, ui->profilePhaseMarks, PROFILE_CHART_POINTS, PROFILE_CHART_POINTS);
+}
+
 String DefaultUI::getErrorMessage() { return controller->getSystemStateMessage(); }
 
 void DefaultUI::applyTheme() {
@@ -768,6 +1273,13 @@ void DefaultUI::applyTheme() {
     if (newThemeMode != currentThemeMode) {
         currentThemeMode = newThemeMode;
         change_color_theme(currentThemeMode);
+        applyShotChartTheme();
+        if (profileChart != nullptr) {
+            for (int i = 0; i < 2; i++)
+                lv_chart_set_series_color(profileChart, profileSeries[i],
+                                          lv_color_hex(theme_colors[currentThemeMode][PROFILE_THEME_COLORS[i]]));
+            lv_chart_refresh(profileChart);
+        }
     }
 }
 

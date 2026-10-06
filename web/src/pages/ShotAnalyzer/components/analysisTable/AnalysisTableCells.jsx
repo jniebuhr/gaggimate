@@ -1,7 +1,7 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faExclamationTriangle, faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { getDisplayStopReasonParts, utilityColors } from '../../utils/analyzerUtils';
-import { isSafetyExitReason } from '../../services/analyzer/exitReasons.js';
+import { isSafetyExitReason, isWeightType } from '../../services/analyzer/exitReasons.js';
 
 export function ComparePhaseLabel({ phase, results }) {
   if (!phase) {
@@ -221,7 +221,7 @@ function TargetDeltaDisplay({ targetVal, unit, subTextSize }) {
 function findPhaseTarget(phase, col) {
   const targets = Array.isArray(phase?.profilePhase?.targets) ? phase.profilePhase.targets : [];
   return targets.find(target => {
-    if (col.id === 'weight') return target.type === 'weight' || target.type === 'volumetric';
+    if (col.id === 'weight') return isWeightType(target.type);
     return target.type === col.targetType;
   });
 }
@@ -248,7 +248,9 @@ function getTargetDisplay({ phase, col, unit, subTextSize }) {
 function getTargetCalcEntry(phase, col) {
   if (!col.targetType || !phase?.targetCalcValues) return null;
   return col.id === 'weight'
-    ? phase.targetCalcValues.volumetric || phase.targetCalcValues.weight
+    ? phase.targetCalcValues.volumetric ||
+        phase.targetCalcValues.weight ||
+        phase.targetCalcValues.ratio
     : phase.targetCalcValues[col.targetType];
 }
 
@@ -318,7 +320,7 @@ function renderTotalCellContent({ isBoolean, booleanContent, mainValue, unit, wa
 
 function getCellHitState({ phase, col }) {
   if (col.id === 'weight') {
-    return phase.exit?.type === 'weight' || phase.exit?.type === 'volumetric';
+    return isWeightType(phase.exit?.type);
   }
   if (!col.targetType) return false;
   return phase.exit?.type === col.targetType;

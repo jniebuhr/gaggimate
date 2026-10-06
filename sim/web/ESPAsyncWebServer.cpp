@@ -537,6 +537,8 @@ void AsyncWebServer::dispatch(Conn &c, AsyncWebServerRequest &req) {
     for (auto &r : _routes) {
         const bool uriMatch = r._prefix ? path.rfind(r._uri, 0) == 0 : r._uri == path;
         if ((r._method == HTTP_ANY || (r._method & req._method)) && uriMatch && (!r._filter || r._filter(&req))) {
+            if (r._onBody && !req._body.empty())
+                r._onBody(&req, (uint8_t *)req._body.data(), req._body.size(), 0, req._body.size());
             r._handler(&req);
             return;
         }

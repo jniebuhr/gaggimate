@@ -96,7 +96,7 @@ class VL53L0X {
 
     uint8_t last_status; // status of last I2C transmission
 
-    VL53L0X(SoftWire *bus);
+    explicit VL53L0X(SoftWire *bus);
 
     void setBus(SoftWire *bus) { this->bus = bus; }
     SoftWire *getBus() { return bus; }

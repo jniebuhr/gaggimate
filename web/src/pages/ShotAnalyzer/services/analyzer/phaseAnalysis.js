@@ -35,6 +35,7 @@ import {
   getBrewModeLabel,
   getPhaseExitReasonMeta,
   isKnownPhaseExitReason,
+  isWeightType,
   normalizePhaseExitReasonCode,
 } from './exitReasons.js';
 
@@ -42,7 +43,7 @@ function getPhaseSysAnomalies(samples, sysInfo) {
   const sysFieldMap = [
     ['sys_shot_vol', 'shotStartedVolumetric'],
     ['sys_curr_vol', 'currentlyVolumetric'],
-    ['sys_scale', 'bluetoothScaleConnected'],
+    ['sys_scale', 'activeScaleConnected'],
     ['sys_vol_avail', 'volumetricAvailable'],
     ['sys_ext', 'extendedRecording'],
   ];
@@ -88,7 +89,7 @@ function getRecordedStopValue(exitType, samples, phaseStartTime, closingSample, 
   const stopSample = stopIndex >= 0 ? samples[stopIndex] : getPhaseEndSample(samples);
   if (!stopSample) return null;
 
-  if (exitType === 'weight' || exitType === 'volumetric') return stopSample.v;
+  if (isWeightType(exitType)) return stopSample.v;
   if (exitType === 'pressure') return stopSample.cp;
   if (exitType === 'flow') return stopSample.fl;
   if (exitType === 'pumped') {
@@ -266,7 +267,7 @@ function applyTargetMatchResult({
 }
 
 function findWeightTarget(targets) {
-  return targets.find(t => t.type === 'weight' || t.type === 'volumetric') || null;
+  return targets.find(t => isWeightType(t.type)) || null;
 }
 
 function getLastPhaseWeightSamples(samples) {
@@ -554,7 +555,7 @@ function getPhaseStats(samples, weightSamples, sysInfo, sysAnomalies, analyzerSy
     sys_raw: sysInfo.raw,
     sys_shot_vol: sysInfo.shotStartedVolumetric,
     sys_curr_vol: sysInfo.currentlyVolumetric,
-    sys_scale: sysInfo.bluetoothScaleConnected,
+    sys_scale: sysInfo.activeScaleConnected,
     sys_vol_avail: sysInfo.volumetricAvailable,
     sys_ext: sysInfo.extendedRecording,
     sys_brew_mode: analyzerSystemInfo.brewModeLabel,

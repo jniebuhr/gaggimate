@@ -6,86 +6,71 @@
 
 #include "./freertos_utils.hpp"
 #include <Arduino.h>
-#include <FS.h>
 #include <NimBLEDevice.h>
-#include <Update.h>
+#include <esp_ota_ops.h>
 #include <string>
 
-// comment to use FFat
-#define USE_SPIFFS
-
-#ifdef USE_SPIFFS
-// SPIFFS write is slower
-#include <SPIFFS.h>
-#define FLASH SPIFFS
-const bool FASTMODE = false;
-#else
-// FFat is faster
-#include <FFat.h>
-#define FLASH FFat
-const bool FASTMODE = true;
-#endif
-// #endif
-
 constexpr char SERVICE_OTA_BLE_UUID[] = "fe590001-54ae-4a28-9f74-dfccb248601d";
-constexpr char CHARACTERISTIC_OTA_BL_UUID_RX[] =
-    "fe590002-54ae-4a28-9f74-dfccb248601d";
-constexpr char CHARACTERISTIC_OTA_BL_UUID_TX[] =
-    "fe590003-54ae-4a28-9f74-dfccb248601d";
+constexpr char CHARACTERISTIC_OTA_BL_UUID_RX[] = "fe590002-54ae-4a28-9f74-dfccb248601d";
+constexpr char CHARACTERISTIC_OTA_BL_UUID_TX[] = "fe590003-54ae-4a28-9f74-dfccb248601d";
 
-constexpr bool FORMAT_FLASH_IF_MOUNT_FAILED = true;
 constexpr uint32_t UPDATER_SIZE = 20000;
+constexpr uint32_t OTA_FINISH_STACK = 6144;
+constexpr uint32_t OTA_RESTART_DELAY_MS = 3000;
 
-/* Dummy class */
 class BLE_OTA_DFU;
 
+// Streams each received part straight into the inactive app partition; no file system staging.
 class BLEOverTheAirDeviceFirmwareUpdate final : public BLECharacteristicCallbacks {
-private:
-  bool selected_updater = true;
-  bool file_open = false;
-  uint8_t updater[2][UPDATER_SIZE]{};
-  uint16_t write_len[2] = {0, 0};
-  uint16_t parts = 0, MTU = 0;
-  uint16_t current_progression = 0;
-  uint32_t received_file_size = 0;
-  uint32_t expected_file_size = 0;
+  private:
+    uint8_t updater[UPDATER_SIZE]{};
+    uint16_t parts = 0, MTU = 0;
+    uint16_t next_part = 0;
+    uint32_t received_file_size = 0;
+    uint32_t expected_file_size = 0;
+    esp_ota_handle_t ota_handle = 0;
+    const esp_partition_t *ota_partition = nullptr;
+    volatile bool finishing = false;
 
-public:
-  friend class BLE_OTA_DFU;
-  BLE_OTA_DFU *OTA_DFU_BLE;
+    bool begin_update();
+    bool write_part(uint16_t length, uint16_t part);
+    void abort_update(const char *reason);
+    void notify_progress(uint8_t signal, uint16_t part);
+    static void task_finish_update(void *parameters);
 
-  uint16_t write_binary(fs::FS *file_system, const char *path, uint8_t *data,
-                        uint16_t length, bool keep_open = true);
-  void onNotify(BLECharacteristic *pCharacteristic) override;
-  void onWrite(BLECharacteristic *pCharacteristic) override;
+  public:
+    friend class BLE_OTA_DFU;
+    BLE_OTA_DFU *OTA_DFU_BLE;
+
+    void onWrite(BLECharacteristic *pCharacteristic) override;
+    void onDisconnect();
 };
 
 class BLE_OTA_DFU {
-private:
-  BLEServer *pServer = nullptr;
-  BLEService *pServiceOTA = nullptr;
-  BLECharacteristic *pCharacteristic_BLE_OTA_DFU_TX = nullptr;
-  friend class BLEOverTheAirDeviceFirmwareUpdate;
-  bool updating = false;
+  private:
+    BLEServer *pServer = nullptr;
+    BLEService *pServiceOTA = nullptr;
+    BLECharacteristic *pCharacteristic_BLE_OTA_DFU_TX = nullptr;
+    BLEOverTheAirDeviceFirmwareUpdate *callbacks = nullptr;
+    friend class BLEOverTheAirDeviceFirmwareUpdate;
+    volatile bool updating = false; // written from the NimBLE task, read from the controller loop
 
-public:
-  BLE_OTA_DFU() = default;
-  ~BLE_OTA_DFU() = default;
+  public:
+    BLE_OTA_DFU() = default;
+    ~BLE_OTA_DFU() = default;
 
-  bool configure_OTA(NimBLEServer *pServer);
-  void start_OTA();
+    bool configure_OTA(NimBLEServer *pServer);
+    bool begin(String local_name);
 
-  bool begin(String local_name);
+    bool connected();
+    bool isUpdating() const;
+    void setUpdating(bool updating);
+    // Drop a half-received update when the link goes away.
+    void onDisconnect();
 
-  bool connected();
-  bool isUpdating() const;
-  void setUpdating(bool updating);
-
-  void send_OTA_DFU(uint8_t value);
-  void send_OTA_DFU(uint8_t *value, size_t size);
-  void send_OTA_DFU(String value);
-
-  friend void task_install_update(void *parameters);
+    void send_OTA_DFU(uint8_t value);
+    void send_OTA_DFU(uint8_t *value, size_t size);
+    void send_OTA_DFU(String value);
 };
 
 #endif /* SRC_BLE_OTA_DFU_HPP_ */

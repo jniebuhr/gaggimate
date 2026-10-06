@@ -1,12 +1,13 @@
 {
   "navigation": {
-    "selectedUserPageObject": "[gaggimate.eez-project]:/userPages/1",
+    "selectedUserPageObject": "[gaggimate.eez-project]:/userPages/8",
     "selectedUserWidgetObject": "[gaggimate.eez-project]:/userWidgets/1",
-    "selectedActionObject": "[gaggimate.eez-project]:/actions/38",
+    "selectedActionObject": "[gaggimate.eez-project]:/actions/39",
     "selectedGlobalVariableObject": "[gaggimate.eez-project]:/variables/globalVariables/9",
-    "selectedStructureObject": "[gaggimate.eez-project]:/variables/structures/5",
+    "selectedStructureObject": "[gaggimate.eez-project]:/variables/structures/1",
     "selectedThemeObject": "[gaggimate.eez-project]:/themes/0",
-    "selectedThemeColorObject": "[gaggimate.eez-project]:/colors/8",
+    "selectedThemeColorObject": "[gaggimate.eez-project]:/colors/1",
+    "selectedBitmapObject": "[gaggimate.eez-project]:/bitmaps/9",
     "subnavigationSelectedItems": {
       "variables-tab/sub-navigation/selected-item": "Structs"
     }
@@ -196,36 +197,35 @@
               "type": "tabset",
               "id": "EDITORS",
               "weight": 46.47304077762655,
-              "selected": 1,
               "enableDeleteWhenEmpty": false,
               "enableClose": false,
               "children": [
                 {
                   "type": "tab",
-                  "id": "#f318aa94-59de-454b-bb72-ed85300526f2",
-                  "name": "warnings",
+                  "id": "#cc90c56e-b38e-4ab9-956f-1fb808b5b9e6",
+                  "name": "NewProfileScreen",
                   "component": "editor",
                   "config": {
-                    "objectPath": "[gaggimate.eez-project]:/userWidgets/1",
-                    "permanent": false
-                  },
-                  "icon": "svg:user_widget"
-                },
-                {
-                  "type": "tab",
-                  "id": "#2aa7402a-95e1-481f-87cc-ef596a51e84a",
-                  "name": "BrewScreen",
-                  "component": "editor",
-                  "config": {
-                    "objectPath": "[gaggimate.eez-project]:/userPages/1",
+                    "objectPath": "[gaggimate.eez-project]:/userPages/8",
                     "permanent": false
                   },
                   "icon": "svg:page"
                 },
                 {
                   "type": "tab",
+                  "id": "#7fd2ef7a-477b-47ef-90be-a0839638856d",
+                  "name": "warnings",
+                  "component": "editor",
+                  "config": {
+                    "objectPath": "[gaggimate.eez-project]:/userWidgets/1",
+                    "permanent": true
+                  },
+                  "icon": "svg:user_widget"
+                },
+                {
+                  "type": "tab",
                   "id": "#e4422c6b-7edb-415d-87c6-346b00545887",
-                  "name": "MenuScreenNew",
+                  "name": "SteamScreen",
                   "component": "editor",
                   "config": {
                     "objectPath": "[gaggimate.eez-project]:/userPages/4",
@@ -236,24 +236,13 @@
                 {
                   "type": "tab",
                   "id": "#acbf425d-f9ac-457e-90c1-4ea068d04b16",
-                  "name": "onWarningIgnore",
+                  "name": "onProfileDetailToggle",
                   "component": "editor",
                   "config": {
-                    "objectPath": "[gaggimate.eez-project]:/actions/38",
+                    "objectPath": "[gaggimate.eez-project]:/actions/39",
                     "permanent": false
                   },
                   "icon": "material:code"
-                },
-                {
-                  "type": "tab",
-                  "id": "#07a87284-0adf-47ce-9994-8cc743141d5f",
-                  "name": "InfoScreen",
-                  "component": "editor",
-                  "config": {
-                    "objectPath": "[gaggimate.eez-project]:/userPages/9",
-                    "permanent": true
-                  },
-                  "icon": "svg:page"
                 },
                 {
                   "type": "tab",
@@ -289,8 +278,7 @@
                   },
                   "icon": "svg:page"
                 }
-              ],
-              "active": true
+              ]
             },
             {
               "type": "row",
@@ -310,7 +298,8 @@
                       "enableClose": false,
                       "icon": "svg:properties"
                     }
-                  ]
+                  ],
+                  "active": true
                 },
                 {
                   "type": "tabset",
@@ -1181,7 +1170,7 @@
           "x": -205,
           "y": -200.000244140625
         },
-        "scale": 0.8
+        "scale": 0.9
       },
       "timeline": {
         "isEditorActive": false,
@@ -1231,7 +1220,9 @@
             "2": {
               "0": {}
             },
-            "4": {}
+            "4": {
+              "$selected": true
+            }
           },
           "2": {
             "1": {},
@@ -1252,10 +1243,10 @@
       },
       "transform": {
         "translate": {
-          "x": -240,
-          "y": -516.5838623046875
+          "x": -192.82500000000002,
+          "y": -233.37559509277338
         },
-        "scale": 0.8
+        "scale": 0.9
       },
       "timeline": {
         "isEditorActive": false,
@@ -1269,8 +1260,9 @@
           "0": {},
           "1": {
             "0": {},
-            "2": {},
-            "8": {}
+            "1": {
+              "5": {}
+            }
           }
         }
       }
@@ -1288,7 +1280,7 @@
           "x": -239.5,
           "y": -216.89990234375
         },
-        "scale": 0.8
+        "scale": 0.9
       },
       "timeline": {
         "isEditorActive": false,
@@ -1379,7 +1371,7 @@
           "x": -213.60000000000002,
           "y": -235.17001953125
         },
-        "scale": 0.8
+        "scale": 0.9
       },
       "timeline": {
         "isEditorActive": false,
@@ -1411,7 +1403,7 @@
           "x": -240,
           "y": -240
         },
-        "scale": 0.8
+        "scale": 0.9
       },
       "timeline": {
         "isEditorActive": false,
@@ -1447,7 +1439,7 @@
           "x": -240,
           "y": -247
         },
-        "scale": 1
+        "scale": 0.9
       },
       "timeline": {
         "isEditorActive": false,
@@ -1463,7 +1455,10 @@
           },
           "1": {
             "1": {
-              "1": {},
+              "0": {},
+              "1": {
+                "1": {}
+              },
               "2": {}
             },
             "2": {}
@@ -1943,11 +1938,7 @@
         "0": {
           "0": {},
           "1": {
-            "1": {
-              "0": {
-                "$selected": true
-              }
-            },
+            "1": {},
             "2": {},
             "3": {},
             "4": {}
@@ -1959,7 +1950,7 @@
           "x": -240,
           "y": -562.4315185546875
         },
-        "scale": 1
+        "scale": 0.9
       },
       "timeline": {
         "isEditorActive": false,
@@ -2023,23 +2014,24 @@
       "selectionBack": {
         "0": {
           "1": {
-            "0": {
-              "0": {},
-              "2": {}
+            "1": {
+              "1": {
+                "0": {
+                  "1": {}
+                },
+                "$selected": true
+              }
             },
-            "3": {},
-            "4": {},
-            "5": {},
-            "6": {}
+            "2": {}
           }
         }
       },
       "transform": {
         "translate": {
           "x": -240,
-          "y": -240
+          "y": -90.6121826171875
         },
-        "scale": 0.8
+        "scale": 0.9
       },
       "timeline": {
         "isEditorActive": false,
@@ -2093,26 +2085,23 @@
       "selectionBack": {
         "0": {
           "1": {
-            "0": {},
-            "2": {
-              "0": {
-                "5": {
-                  "$selected": true
+            "1": {
+              "1": {
+                "0": {
+                  "1": {}
                 }
               }
             },
-            "3": {},
-            "4": {},
-            "5": {}
+            "2": {}
           }
         }
       },
       "transform": {
         "translate": {
           "x": -240,
-          "y": -240
+          "y": -90.6121826171875
         },
-        "scale": 0.8
+        "scale": 0.9
       },
       "timeline": {
         "isEditorActive": false,
@@ -2266,10 +2255,10 @@
       },
       "transform": {
         "translate": {
-          "x": -240,
-          "y": -97.047119140625
+          "x": -219,
+          "y": -171.047119140625
         },
-        "scale": 0.8
+        "scale": 0.9
       },
       "timeline": {
         "isEditorActive": false,
@@ -2289,6 +2278,16 @@
       }
     },
     "[gaggimate.eez-project]:/actions/38[flow-state]": {
+      "selection": {},
+      "transform": {
+        "translate": {
+          "x": 0,
+          "y": 0
+        },
+        "scale": 1
+      }
+    },
+    "[gaggimate.eez-project]:/actions/39[flow-state]": {
       "selection": {},
       "transform": {
         "translate": {
@@ -2322,14 +2321,14 @@
     "ARC",
     "LINE",
     "PADDING",
-    "BACKGROUND",
     "BORDER",
     "LAYOUT",
-    "MISCELLANEOUS"
+    "MISCELLANEOUS",
+    "BACKGROUND"
   ],
   "showInactiveFlowsInDebugger": true,
   "globalFlowZoom": true,
-  "flowZoom": 0.8,
+  "flowZoom": 0.9,
   "implementationLanguage": "C++",
-  "openDialogDefaultPath": "/Users/jniebuhr/Downloads/Stylized_uwu_emoticon.svg.png"
+  "openDialogDefaultPath": "/Users/jniebuhr/Downloads/soup.jpg"
 }

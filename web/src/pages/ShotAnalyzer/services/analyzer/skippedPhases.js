@@ -98,6 +98,7 @@ function buildSkippedTargetCalcValues(skipType, skipValue) {
     flow: 'flow',
     pressure: 'pressure',
     pumped: 'pumped',
+    ratio: 'weight',
     volumetric: 'weight',
     weight: 'weight',
   };

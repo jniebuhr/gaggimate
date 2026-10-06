@@ -200,11 +200,10 @@ static void test_lower_combined_saturation_preserves_legacy_limits_and_eventual_
     rig.pressure = 8.0f;
     rig.tick(Mode::PRESSURE, 100);
     assertFiniteDuty(rig);
-    // This experimental patch isolates the selector reset. Legacy saturation
-    // anti-windup remains unchanged, including its delayed lower release.
+    // The selector fix retains upstream's saturation and recovery behavior.
     rig.tick(Mode::PRESSURE, 900);
     assertFiniteDuty(rig);
-    TEST_ASSERT_TRUE_MESSAGE(rig.output > 20.0f, "Legacy saturated pressure control must eventually recover");
+    TEST_ASSERT_TRUE_MESSAGE(rig.output > 20.0f, "Saturated pressure control must eventually recover");
 }
 
 static void test_flow_command_saturates_at_both_output_endpoints() {
@@ -285,8 +284,9 @@ static void test_zero_geometric_flow_is_finite_and_outputs_zero() {
 
 static void test_pure_pressure_unsaturated_behavior_matches_unpatched_nightly() {
     const float offsets[] = {0.0f, 0.0f, 0.0f, 0.1f, 0.2f, 0.3f, 0.2f, 0.1f, 0.0f, -0.1f, -0.2f, -0.1f};
-    // Generated from upstream 510ad2e4 sources with the same public
-    // warmup, coefficients and pressure trajectory. Neither trace saturates.
+    // Generated from upstream 510ad2e4 and verified against ad2cb603 with the
+    // same public warmup, coefficients and pressure trajectory. Neither trace
+    // saturates, and both remain within the integration boundary layer.
     const float expected[2][12] = {{13.89216900f, 14.27788258f, 14.66359806f, 14.62140560f, 14.21728897f, 13.50354290f,
                                     13.53237152f, 13.90312290f, 14.60508442f, 15.77424431f, 17.23174667f, 18.08770180f},
                                    {18.61046028f, 18.85591507f, 19.10136795f, 18.96776581f, 18.50566864f, 17.74929047f,
@@ -402,6 +402,32 @@ static void test_pressure_integration_uses_actual_elapsed_between_control_ticks(
     TEST_ASSERT_FLOAT_WITHIN(0.002f, expectedIncrement, rig.output - first);
 }
 
+static void test_pressure_does_not_integrate_outside_upstream_boundary_layer() {
+    // A 5 bar error exceeds upstream's 0.3 * 9 bar integration boundary.
+    // This pressure command is unsaturated, so a steady output specifically
+    // verifies the integration gate rather than actuator anti-windup.
+    Rig rig(4.0f);
+    rig.tick(Mode::PRESSURE);
+    const float firstDuty = rig.output;
+    TEST_ASSERT_TRUE(firstDuty > 0.0f && firstDuty < 100.0f);
+    rig.tick(Mode::PRESSURE, 1000);
+    TEST_ASSERT_FLOAT_WITHIN(0.002f, firstDuty, rig.output);
+}
+
+static void test_lower_saturation_does_not_accumulate_hidden_pressure_integral() {
+    Rig rig(10.0f);
+    rig.tick(Mode::PRESSURE, 1000);
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, 0.0f, rig.output);
+    // Settle the changed measurement without changing integral state. After
+    // leaving lower saturation, the command must match a fresh controller.
+    rig.pressure = 8.0f;
+    rig.tick(Mode::POWER, 500);
+    rig.tick(Mode::PRESSURE);
+    Rig fresh(8.0f);
+    fresh.tick(Mode::PRESSURE);
+    TEST_ASSERT_FLOAT_WITHIN(0.002f, fresh.output, rig.output);
+}
+
 int main(int, char **) {
     UNITY_BEGIN();
     RUN_TEST(test_gear_flow_handoff_has_no_next_cycle_collapse);
@@ -426,5 +452,7 @@ int main(int, char **) {
     RUN_TEST(test_handoff_with_irregular_elapsed_and_intermittent_pressure_samples);
     RUN_TEST(test_stale_pressure_is_ignored_until_a_fresh_sample_can_limit_output);
     RUN_TEST(test_pressure_integration_uses_actual_elapsed_between_control_ticks);
+    RUN_TEST(test_pressure_does_not_integrate_outside_upstream_boundary_layer);
+    RUN_TEST(test_lower_saturation_does_not_accumulate_hidden_pressure_integral);
     return UNITY_END();
 }

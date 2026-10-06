@@ -57,22 +57,24 @@ class Stream : public Print {
     unsigned long getTimeout(void);
 
     bool find(const char *target); // reads data from the stream until the target string is found
-    bool find(uint8_t *target) { return find((char *)target); }
+    bool find(uint8_t *target) { return find(reinterpret_cast<char *>(target)); }
     // returns true if target string is found, false if timed out (see setTimeout)
 
     bool find(const char *target, size_t length); // reads data from the stream until the target string of given length is found
-    bool find(const uint8_t *target, size_t length) { return find((char *)target, length); }
+    bool find(const uint8_t *target, size_t length) { return find(reinterpret_cast<const char *>(target), length); }
     // returns true if target string is found, false if timed out
 
     bool find(char target) { return find(&target, 1); }
 
     bool findUntil(const char *target, const char *terminator); // as find but search ends if the terminator string is found
-    bool findUntil(const uint8_t *target, const char *terminator) { return findUntil((char *)target, terminator); }
+    bool findUntil(const uint8_t *target, const char *terminator) {
+        return findUntil(reinterpret_cast<const char *>(target), terminator);
+    }
 
     bool findUntil(const char *target, size_t targetLen, const char *terminate,
                    size_t termLen); // as above but search ends if the terminate string is found
     bool findUntil(const uint8_t *target, size_t targetLen, const char *terminate, size_t termLen) {
-        return findUntil((char *)target, targetLen, terminate, termLen);
+        return findUntil(reinterpret_cast<const char *>(target), targetLen, terminate, termLen);
     }
 
     long parseInt(); // returns the first valid (long) integer value from the current position.
@@ -82,13 +84,13 @@ class Stream : public Print {
     float parseFloat(); // float version of parseInt
 
     virtual size_t readBytes(char *buffer, size_t length); // read chars from stream into buffer
-    virtual size_t readBytes(uint8_t *buffer, size_t length) { return readBytes((char *)buffer, length); }
+    virtual size_t readBytes(uint8_t *buffer, size_t length) { return readBytes(reinterpret_cast<char *>(buffer), length); }
     // terminates if length characters have been read or timeout (see setTimeout)
     // returns the number of characters placed in the buffer (0 means no valid data found)
 
     size_t readBytesUntil(char terminator, char *buffer, size_t length); // as readBytes with terminator character
     size_t readBytesUntil(char terminator, uint8_t *buffer, size_t length) {
-        return readBytesUntil(terminator, (char *)buffer, length);
+        return readBytesUntil(terminator, reinterpret_cast<char *>(buffer), length);
     }
     // terminates if length characters have been read, timeout, or if the terminator character  detected
     // returns the number of characters placed in the buffer (0 means no valid data found)
