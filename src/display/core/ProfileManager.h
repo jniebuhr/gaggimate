@@ -23,6 +23,7 @@ class ProfileManager {
     bool saveProfile(Profile &profile);
     bool deleteProfile(const String &uuid);
     bool profileExists(const String &uuid);
+    bool hasProfileImage(const String &uuid);
     void selectProfile(const String &uuid);
     Profile &getSelectedProfile();
     bool loadSelectedProfile(Profile &outProfile);

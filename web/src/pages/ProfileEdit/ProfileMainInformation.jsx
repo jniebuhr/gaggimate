@@ -1,5 +1,6 @@
 import Card from '../../components/Card.jsx';
 import { isSystemProfile } from '../../utils/systemProfiles.js';
+import { ProfileImageUpload } from './ProfileImageUpload.jsx';
 
 export function ProfileMainInformation(props) {
   console.log(props.data);
@@ -95,6 +96,7 @@ export function ProfileMainInformation(props) {
           onChange={props.onChangeUtility}
         />
       </div>
+      <ProfileImageUpload profileId={props.data?.id} />
     </Card>
   );
 }

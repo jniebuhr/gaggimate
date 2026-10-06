@@ -218,6 +218,7 @@ export default class ApiService {
     if (has('gp')) capabilities.gearpumpAddon = !!message.gp;
     if (has('db')) capabilities.dualBoiler = message.db;
     if (has('hs')) capabilities.hardwareScale = !!message.hs;
+    if (has('sd')) capabilities.sdCard = !!message.sd;
 
     // Only telemetry frames extend the chart history; state-only frames would duplicate points.
     let history = machine.value.history;
@@ -275,6 +276,7 @@ export const machine = signal({
     dimming: false,
     dualBoiler: false,
     hardwareScale: false,
+    sdCard: false,
   },
   history: [],
 });

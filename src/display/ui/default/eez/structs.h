@@ -65,6 +65,8 @@ enum ProfileInfoFlowStructureFields {
     FLOW_STRUCTURE_PROFILE_INFO_FIELD_IS_CURRENT = 6,
     FLOW_STRUCTURE_PROFILE_INFO_FIELD_TARGET_WEIGHT = 7,
     FLOW_STRUCTURE_PROFILE_INFO_FIELD_DIRTY = 8,
+    FLOW_STRUCTURE_PROFILE_INFO_FIELD_IS_PRO = 9,
+    FLOW_STRUCTURE_PROFILE_INFO_FIELD_HAS_IMAGE = 10,
     FLOW_STRUCTURE_PROFILE_INFO_NUM_FIELDS
 };
 
@@ -89,6 +91,7 @@ enum UIFlagsFlowStructureFields {
     FLOW_STRUCTURE_UI_FLAGS_FIELD_HAS_NEXT_PROFILE = 7,
     FLOW_STRUCTURE_UI_FLAGS_FIELD_BREW_CONFIRM_VISIBLE = 8,
     FLOW_STRUCTURE_UI_FLAGS_FIELD_CHART_MODE = 9,
+    FLOW_STRUCTURE_UI_FLAGS_FIELD_PROFILE_DETAILS_VISIBLE = 10,
     FLOW_STRUCTURE_UI_FLAGS_NUM_FIELDS
 };
 
@@ -279,6 +282,14 @@ struct ProfileInfoValue {
 
     bool dirty() { return value.getArray()->values[FLOW_STRUCTURE_PROFILE_INFO_FIELD_DIRTY].getBoolean(); }
     void dirty(bool dirty) { value.getArray()->values[FLOW_STRUCTURE_PROFILE_INFO_FIELD_DIRTY] = BooleanValue(dirty); }
+
+    bool is_pro() { return value.getArray()->values[FLOW_STRUCTURE_PROFILE_INFO_FIELD_IS_PRO].getBoolean(); }
+    void is_pro(bool is_pro) { value.getArray()->values[FLOW_STRUCTURE_PROFILE_INFO_FIELD_IS_PRO] = BooleanValue(is_pro); }
+
+    bool has_image() { return value.getArray()->values[FLOW_STRUCTURE_PROFILE_INFO_FIELD_HAS_IMAGE].getBoolean(); }
+    void has_image(bool has_image) {
+        value.getArray()->values[FLOW_STRUCTURE_PROFILE_INFO_FIELD_HAS_IMAGE] = BooleanValue(has_image);
+    }
 };
 
 typedef ArrayOf<ProfileInfoValue, FLOW_ARRAY_OF_STRUCTURE_PROFILE_INFO> ArrayOfProfileInfoValue;
@@ -384,6 +395,13 @@ struct UIFlagsValue {
     bool chart_mode() { return value.getArray()->values[FLOW_STRUCTURE_UI_FLAGS_FIELD_CHART_MODE].getBoolean(); }
     void chart_mode(bool chart_mode) {
         value.getArray()->values[FLOW_STRUCTURE_UI_FLAGS_FIELD_CHART_MODE] = BooleanValue(chart_mode);
+    }
+
+    bool profile_details_visible() {
+        return value.getArray()->values[FLOW_STRUCTURE_UI_FLAGS_FIELD_PROFILE_DETAILS_VISIBLE].getBoolean();
+    }
+    void profile_details_visible(bool profile_details_visible) {
+        value.getArray()->values[FLOW_STRUCTURE_UI_FLAGS_FIELD_PROFILE_DETAILS_VISIBLE] = BooleanValue(profile_details_visible);
     }
 };
 
