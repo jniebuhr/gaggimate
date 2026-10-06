@@ -278,8 +278,7 @@
                   },
                   "icon": "svg:page"
                 }
-              ],
-              "active": true
+              ]
             },
             {
               "type": "row",
@@ -299,7 +298,8 @@
                       "enableClose": false,
                       "icon": "svg:properties"
                     }
-                  ]
+                  ],
+                  "active": true
                 },
                 {
                   "type": "tabset",
@@ -2018,7 +2018,8 @@
               "1": {
                 "0": {
                   "1": {}
-                }
+                },
+                "$selected": true
               }
             },
             "2": {}
@@ -2322,7 +2323,8 @@
     "PADDING",
     "BORDER",
     "LAYOUT",
-    "MISCELLANEOUS"
+    "MISCELLANEOUS",
+    "BACKGROUND"
   ],
   "showInactiveFlowsInDebugger": true,
   "globalFlowZoom": true,
