@@ -11,6 +11,7 @@ void GaggiMateServer::init(const String &deviceName, const String &hardware, con
     registerHandlers();
     _endpoint.onConnection([this](bool connected) {
         _sentSystemInfoAfterHandshake = false;
+        _scalePublicationIntervalMs.store(90);
         if (connected)
             pushSystemInfo();
         if (_connCb)
@@ -63,6 +64,7 @@ gm::Payload GaggiMateServer::buildSensorData(float temperature, float pressure, 
                                              float puckResistance, float pumpPower, float heaterPower, float waterPumped) {
     gm::Payload p = gaggimate_Payload_init_zero;
     p.which_content = gaggimate_Payload_sensor_tag;
+    p.content.sensor = gaggimate_SensorData_init_zero;
     p.content.sensor.boilers_count = 1; // boiler 0; schema allows more
     p.content.sensor.boilers[0].index = 0;
     p.content.sensor.boilers[0].temperature = temperature;
@@ -105,11 +107,10 @@ gm::Payload GaggiMateServer::buildScaleMeasurement(float weight, float cell1Weig
                                                    bool cell2Valid) {
     gm::Payload p = gaggimate_Payload_init_zero;
     p.which_content = gaggimate_Payload_scale_tag;
+    p.content.scale = gaggimate_ScaleMeasurement_init_zero;
     p.content.scale.weight = weight;
-    p.content.scale.cell1_weight = cell1Weight;
-    p.content.scale.cell2_weight = cell2Weight;
-    p.content.scale.cell1_valid = cell1Valid;
-    p.content.scale.cell2_valid = cell2Valid;
+    p.content.scale.has_valid = true;
+    p.content.scale.valid = cell1Valid && cell2Valid;
     return p;
 }
 
@@ -150,6 +151,12 @@ void GaggiMateServer::sendTofMeasurement(uint32_t distance) { _endpoint.sendUnre
 void GaggiMateServer::sendError(int code) { _endpoint.send(buildError(code)); }
 
 void GaggiMateServer::registerHandlers() {
+    _endpoint.on(gaggimate_Payload_hardware_scale_rate_tag, [this](const gm::Payload &p) {
+        const uint32_t interval = p.content.hardware_scale_rate.publication_interval_ms;
+        if (interval == 90 || interval == 250) {
+            _scalePublicationIntervalMs.store(interval);
+        }
+    });
     _endpoint.on(gaggimate_Payload_ping_tag, [this](const gm::Payload &) {
         // A SystemInfo notification sent synchronously from the BLE subscribe
         // callback can beat the client's notification handler. Once a ping has

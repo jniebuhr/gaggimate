@@ -86,9 +86,11 @@ void Endpoint::send(const gm::Payload &payload, uint8_t priority) {
     requestPump();
 }
 
-void Endpoint::sendBatch(const gm::Payload *payloads, size_t count) {
-    if (payloads == nullptr || count == 0)
-        return;
+bool Endpoint::sendBatch(const gm::Payload *payloads, size_t count) {
+    if (count == 0)
+        return true;
+    if (payloads == nullptr)
+        return false;
     lock();
     bool queued = true;
     for (size_t i = 0; i < count; i++)
@@ -98,6 +100,7 @@ void Endpoint::sendBatch(const gm::Payload *payloads, size_t count) {
     if (!queued)
         ESP_LOGW(ENDPOINT_TAG, "Outbound queue full, dropped part of a batch");
     requestPump();
+    return queued;
 }
 
 void Endpoint::sendUnreliable(const gm::Payload &payload) { sendUnreliable(&payload, 1); }

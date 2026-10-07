@@ -5,6 +5,7 @@
 #include "GaggiMateComm.h"
 #include "ble/BleClientTransport.h"
 #include <Arduino.h>
+#include <atomic>
 #include <functional>
 
 // Display-side protocol facade: owns transport + Endpoint, exposes semantic sends and typed response callbacks.
@@ -24,7 +25,8 @@ class GaggiMateClient {
     using AutotuneResultCallback = std::function<void(float kp, float ki, float kd, float kf)>;
     using VolumetricCallback = std::function<void(float volume)>;
     using ScaleCallback =
-        std::function<void(float weight, float cell1Weight, float cell2Weight, bool cell1Valid, bool cell2Valid)>;
+        std::function<void(float weight, float cell1Weight, float cell2Weight, bool cell1Valid, bool cell2Valid, bool weightValid)>;
+    using ScaleCellsCallback = std::function<void(float, float, bool, bool)>;
     using TofCallback = std::function<void(uint32_t distance)>;
     using ErrorCallback = std::function<void(int code)>;
 
@@ -59,6 +61,7 @@ class GaggiMateClient {
 
     // Build a payload without sending (compose your own batch, then send()).
     gm::Payload buildPing();
+    gm::Payload buildHardwareScaleRate(uint32_t publicationIntervalMs);
     gm::Payload buildBoilerControl(uint8_t index, BoilerControlMode mode, float setpoint);
     gm::Payload buildPumpControl(uint8_t index, PumpControlMode mode, float power, float pressure, float flow);
     gm::Payload buildRelayControl(uint8_t index, bool open);
@@ -103,7 +106,7 @@ class GaggiMateClient {
 
     // Send a pre-built payload / batch of payloads (one frame), composed from the build*() helpers.
     void send(const gm::Payload &payload) { _endpoint.send(payload); }
-    void sendBatch(const gm::Payload *payloads, size_t count) { _endpoint.sendBatch(payloads, count); }
+    bool sendBatch(const gm::Payload *payloads, size_t count) { return _endpoint.sendBatch(payloads, count); }
 
     // Fired when the controller lacks the framed-comms characteristics (old firmware); link is kept for OTA.
     void onIncompatibleController(IncompatibleCallback cb) { _incompatibleCb = std::move(cb); }
@@ -118,6 +121,7 @@ class GaggiMateClient {
     void onAutotuneResult(AutotuneResultCallback cb) { _autotuneResultCb = std::move(cb); }
     void onVolumetricMeasurement(VolumetricCallback cb) { _volumetricCb = std::move(cb); }
     void onScaleMeasurement(ScaleCallback cb) { _scaleCb = std::move(cb); }
+    void onScaleCells(ScaleCellsCallback cb) { _scaleCellsCb = std::move(cb); }
     void onTofMeasurement(TofCallback cb) { _tofCb = std::move(cb); }
     void onError(ErrorCallback cb) { _errorCb = std::move(cb); }
 
@@ -140,6 +144,7 @@ class GaggiMateClient {
     AutotuneResultCallback _autotuneResultCb;
     VolumetricCallback _volumetricCb;
     ScaleCallback _scaleCb;
+    ScaleCellsCallback _scaleCellsCb;
     TofCallback _tofCb;
     ErrorCallback _errorCb;
 

@@ -5,6 +5,7 @@
 #include "GaggiMateComm.h"
 #include "ble/BleServerTransport.h"
 #include <Arduino.h>
+#include <atomic>
 #include <functional>
 
 // Controller-side protocol facade: owns transport + Endpoint, exposes semantic sends and typed command callbacks;
@@ -66,7 +67,7 @@ class GaggiMateServer {
 
     // Send a pre-built payload / batch of payloads (one frame).
     void send(const gm::Payload &payload) { _endpoint.send(payload); }
-    void sendBatch(const gm::Payload *payloads, size_t count) { _endpoint.sendBatch(payloads, count); }
+    bool sendBatch(const gm::Payload *payloads, size_t count) { return _endpoint.sendBatch(payloads, count); }
 
     // Fire-and-forget variants (unacknowledged) for high-rate telemetry.
     void sendUnreliable(const gm::Payload &payload) { _endpoint.sendUnreliable(payload); }
@@ -77,6 +78,7 @@ class GaggiMateServer {
 
     // Command registrations (display -> controller)
     void onPing(PingCallback cb) { _pingCb = std::move(cb); }
+    bool shouldThrottleHardwareScale() const { return _scalePublicationIntervalMs.load() == 250; }
     void onBoilerControl(BoilerCallback cb) { _boilerCb = std::move(cb); }
     void onPumpControl(PumpCallback cb) { _pumpCb = std::move(cb); }
     void onRelayControl(RelayCallback cb) { _relayCb = std::move(cb); }
@@ -91,6 +93,7 @@ class GaggiMateServer {
   private:
     BleServerTransport _transport;
     Endpoint _endpoint;
+    std::atomic<uint32_t> _scalePublicationIntervalMs{90};
     gm::SystemInfo _systemInfo = gaggimate_SystemInfo_init_zero;
     // The BLE subscribe callback can run before the client has finished
     // installing its notification handler. The first received ping is the

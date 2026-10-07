@@ -63,7 +63,8 @@ class Endpoint {
     // Enqueue several payloads to be delivered together in a single frame
     // (atomic multi-component update). They are drained into one frame on the
     // next pump as long as nothing else preempts them.
-    void sendBatch(const gm::Payload *payloads, size_t count);
+    // True only when every payload was accepted into the outbound queue.
+    bool sendBatch(const gm::Payload *payloads, size_t count);
 
     // Fire-and-forget: send immediately as an unacknowledged frame (id == 0).
     // Not queued, not coalesced, never retransmitted -- dropped if the link is

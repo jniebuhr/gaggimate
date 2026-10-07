@@ -331,17 +331,16 @@ void Controller::setupBluetooth() {
         // flow estimate; the hardware scale reports via onScaleMeasurement below.
         onVolumetricMeasurement(value, VolumetricMeasurementSource::FLOW_ESTIMATION);
     });
-    comms.onScaleMeasurement([this](float value, float cell1Weight, float cell2Weight, bool cell1Valid, bool cell2Valid) {
+    comms.onScaleCells([this](float cell1Weight, float cell2Weight, bool cell1Valid, bool cell2Valid) {
         hardwareScaleCell1Weight.store(normalizeWeightForDisplay(cell1Weight));
         hardwareScaleCell2Weight.store(normalizeWeightForDisplay(cell2Weight));
         hardwareScaleCell1Valid.store(cell1Valid);
         hardwareScaleCell2Valid.store(cell2Valid);
-        // An unavailable/faulted controller-side scale sends invalid cell flags.
-        // Do not treat that sentinel message as fresh weight data; otherwise the
-        // display-side health timeout can never expire.
-        if (cell1Valid && cell2Valid) {
+    });
+    comms.onScaleMeasurement([this](float value, float, float, bool, bool, bool weightValid) {
+        // Compact weight messages do not overwrite slow per-cell diagnostics.
+        if (weightValid)
             onVolumetricMeasurement(value, VolumetricMeasurementSource::HARDWARE);
-        }
     });
     comms.onTofMeasurement([this](uint32_t value) {
         tofDistance = static_cast<int>(value);
@@ -1040,9 +1039,14 @@ void Controller::updateControl() {
     // stateful and every message is acknowledged, so re-sending unchanged values
     // each cycle is unnecessary; a periodic ping (see loop()) keeps the watchdog
     // fed when nothing changes. controlStateSent is cleared to force a full resend.
-    gm::Payload batch[8];
+    auto &batch = controlBatch;
     size_t count = 0;
     const bool full = !controlStateSent.exchange(true); // claim the flag first so a concurrent reset is never lost
+    // The display owns process and Bluetooth-scale state. Send only the rate
+    // policy to the controller, alongside reliable output-control deltas.
+    const uint32_t scaleInterval = proc == nullptr && BLEScales.isConnected() ? 250 : 90;
+    if (systemInfo.capabilities.hwScale && (full || scaleInterval != lastHardwareScaleRate))
+        batch[count++] = comms.buildHardwareScaleRate(scaleInterval);
     if (full || boiler != lastBoiler)
         batch[count++] = comms.buildBoilerControl(boiler.index, boiler.mode, boiler.setpoint);
 
@@ -1096,9 +1100,14 @@ void Controller::updateControl() {
     if (full || altRelayActive != lastAlt)
         batch[count++] = comms.buildRelayControl(1, altRelayActive); // index 1 = alt relay
 
-    if (count > 0)
-        comms.sendBatch(batch, count);
+    if (count > 0 && !comms.sendBatch(batch, count)) {
+        // A batch may be only partially queued. Retry the full current state,
+        // including the rate command, rather than remember rejected commands.
+        controlStateSent = false;
+        return;
+    }
 
+    lastHardwareScaleRate = scaleInterval;
     lastBoiler = boiler;
     lastPump = pump;
     lastRelay = relay;
