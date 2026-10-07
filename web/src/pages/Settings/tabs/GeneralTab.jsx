@@ -4,6 +4,7 @@ import { faEye } from '@fortawesome/free-solid-svg-icons/faEye';
 import { faEyeSlash } from '@fortawesome/free-solid-svg-icons/faEyeSlash';
 import { timezones } from '../../../config/zones.js';
 import { DASHBOARD_LAYOUTS } from '../../../utils/dashboardManager.js';
+import { isApp } from '../../../app/platform.js';
 import Section from '../../../components/Card.jsx';
 import { machine } from '../../../services/ApiService.js';
 import { WarningIcon } from '../../../components/WarningIcon.jsx';
@@ -396,43 +397,56 @@ export function GeneralTab({
         </div>
       </Section>
 
-      {/* Web Settings */}
-      <Section title='Web Settings' className='h-full'>
-        <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-          <SettingsFormField label='Theme' htmlFor='webui-theme' noMargin>
-            <select
-              id='webui-theme'
-              name='webui-theme'
-              className='select select-bordered w-full'
-              value={currentTheme}
-              onChange={e => {
-                setCurrentTheme(e.target.value);
-                handleThemeChange(e);
-              }}
-            >
-              <option value='system'>System</option>
-              <option value='light'>Light</option>
-              <option value='dark'>Dark</option>
-              <option value='coffee'>Coffee</option>
-              <option value='nord'>Nord</option>
-            </select>
-          </SettingsFormField>
-          <SettingsFormField label='Dashboard Layout' htmlFor='dashboardLayout' noMargin>
-            <select
-              id='dashboardLayout'
-              name='dashboardLayout'
-              className='select select-bordered w-full'
-              value={formData.dashboardLayout || DASHBOARD_LAYOUTS.ORDER_FIRST}
-              onChange={e => {
-                onChange('dashboardLayout')(e);
-              }}
-            >
-              <option value={DASHBOARD_LAYOUTS.ORDER_FIRST}>Process Controls First</option>
-              <option value={DASHBOARD_LAYOUTS.ORDER_LAST}>Chart First</option>
-            </select>
-          </SettingsFormField>
-        </div>
-      </Section>
+      {/* Web Settings — in the app these live in App Settings and the dashboard customizer */}
+      {isApp && (
+        <Section title='Theme & Notifications' className='h-full'>
+          <p className='text-sm'>
+            Settings for this phone, like the theme and notifications, are in{' '}
+            <a href='/app-settings' className='link link-primary font-medium'>
+              App Settings
+            </a>
+            . The dashboard layout is in the dashboard's customize view.
+          </p>
+        </Section>
+      )}
+      {!isApp && (
+        <Section title='Web Settings' className='h-full'>
+          <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+            <SettingsFormField label='Theme' htmlFor='webui-theme' noMargin>
+              <select
+                id='webui-theme'
+                name='webui-theme'
+                className='select select-bordered w-full'
+                value={currentTheme}
+                onChange={e => {
+                  setCurrentTheme(e.target.value);
+                  handleThemeChange(e);
+                }}
+              >
+                <option value='system'>System</option>
+                <option value='light'>Light</option>
+                <option value='dark'>Dark</option>
+                <option value='coffee'>Coffee</option>
+                <option value='nord'>Nord</option>
+              </select>
+            </SettingsFormField>
+            <SettingsFormField label='Dashboard Layout' htmlFor='dashboardLayout' noMargin>
+              <select
+                id='dashboardLayout'
+                name='dashboardLayout'
+                className='select select-bordered w-full'
+                value={formData.dashboardLayout || DASHBOARD_LAYOUTS.ORDER_FIRST}
+                onChange={e => {
+                  onChange('dashboardLayout')(e);
+                }}
+              >
+                <option value={DASHBOARD_LAYOUTS.ORDER_FIRST}>Process Controls First</option>
+                <option value={DASHBOARD_LAYOUTS.ORDER_LAST}>Chart First</option>
+              </select>
+            </SettingsFormField>
+          </div>
+        </Section>
+      )}
 
       {/* Network / System Preferences */}
       <Section title='System & Network' className='h-full'>

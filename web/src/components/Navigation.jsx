@@ -5,6 +5,7 @@ import { faList } from '@fortawesome/free-solid-svg-icons/faList';
 import { faTimeline } from '@fortawesome/free-solid-svg-icons/faTimeline';
 import { faBluetoothB } from '@fortawesome/free-brands-svg-icons/faBluetoothB';
 import { faCog } from '@fortawesome/free-solid-svg-icons/faCog';
+import { faMobileScreen } from '@fortawesome/free-solid-svg-icons/faMobileScreen';
 import { faRotate } from '@fortawesome/free-solid-svg-icons/faRotate';
 import { faMagnifyingGlassChart } from '@fortawesome/free-solid-svg-icons/faMagnifyingGlassChart';
 import { faChartSimple } from '@fortawesome/free-solid-svg-icons/faChartSimple';
@@ -23,6 +24,8 @@ import {
 } from '../utils/dashboardManager.js';
 import { machine } from '../services/ApiService.js';
 import { computed } from '@preact/signals';
+import { isApp } from '../app/platform.js';
+import { MachineSwitcher } from '../app/MachineSwitcher.jsx';
 
 // List of random icons to display - add your icons here (SVG strings, text, or emojis)
 const RANDOM_ICONS = [
@@ -77,7 +80,8 @@ const NAVIGATION_SECTIONS = [
   {
     id: 'settings',
     showDivider: true,
-    items: [{ label: 'Settings', link: '/settings', icon: faCog }],
+    // The app may get its own settings later, so the machine's are named explicitly there.
+    items: [{ label: isApp ? 'Device Settings' : 'Settings', link: '/settings', icon: faCog }],
   },
 ];
 
@@ -229,7 +233,7 @@ export function Navigation({ collapsed = false, onToggleCollapsed }) {
         />
       )}
       <aside
-        className={`sidebar border-base-300 bg-base-100 fixed top-0 left-0 z-9999 flex h-screen flex-col overflow-y-auto border-r p-5 md:static landscape:static ${
+        className={`sidebar border-base-300 bg-base-100 fixed top-0 left-0 z-9999 flex h-screen flex-col overflow-y-auto border-r px-5 pt-[max(1.25rem,env(safe-area-inset-top))] pb-[max(1.25rem,env(safe-area-inset-bottom))] md:static landscape:static ${
           collapsed ? 'hidden md:flex md:w-[90px] landscape:flex landscape:w-[90px]' : 'w-[290px]'
         }`}
       >
@@ -337,6 +341,19 @@ export function Navigation({ collapsed = false, onToggleCollapsed }) {
           ))}
 
           <div className='flex-grow'>&nbsp;</div>
+
+          {/* App-level entries sit apart from the machine's pages, next to the machine switcher. */}
+          {isApp && (
+            <div className='mb-4 space-y-1.5'>
+              <MenuItem
+                collapsed={collapsed}
+                label='App Settings'
+                link='/app-settings'
+                icon={faMobileScreen}
+              />
+              <MachineSwitcher collapsed={collapsed} />
+            </div>
+          )}
 
           {!collapsed && (
             <>
