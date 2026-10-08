@@ -89,10 +89,28 @@ index rating, and a non-empty `doseOut` overrides the recorded volume.
 
 Removes the shot log and its notes and marks the index entry deleted. Response `msg` is `"Ok"`.
 
+### Delete all shots
+
+```json
+{ "tp": "req:history:delete-all", "rid": "4" }
+```
+
+```json
+{ "tp": "res:history:delete-all", "rid": "4", "msg": "Ok", "deleted": 12 }
+```
+
+Removes every shot log (`.slog`) and notes file (`.json`) under `/h` on the history
+filesystem (SD card if present, LittleFS otherwise) and recreates an empty `index.bin`.
+`deleted` is the number of files removed. Like all `req:history:*` requests it is refused
+with `"Update in progress"` while a firmware update is running, and while a shot is being
+recorded it answers `"Recording in progress"` instead — retry once the brew (including the
+scale-settling window) has finished. The shot id counter is kept monotonic, so later shots
+never reuse ids of deleted ones.
+
 ### Rebuild the index
 
 ```json
-{ "tp": "req:history:rebuild", "rid": "4" }
+{ "tp": "req:history:rebuild", "rid": "5" }
 ```
 
 Answered immediately with `"msg": "Rebuild started"`; progress arrives as `evt:history-rebuild-progress`
