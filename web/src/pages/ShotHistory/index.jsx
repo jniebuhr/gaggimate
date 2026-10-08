@@ -133,6 +133,7 @@ export function ShotHistory() {
     } catch (error) {
       setShowDeleteAllModal(false);
       console.error('Failed to delete shot history:', error);
+      alert('Could not delete history. Please try again.');
     } finally {
       setDeletingAll(false);
     }
