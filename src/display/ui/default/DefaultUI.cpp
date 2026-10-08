@@ -19,6 +19,7 @@
 #include "esp_sntp.h"
 
 #include <display/ui/default/eez/ui.h>
+#include <display/ui/default/eez/images.h>
 
 static EffectManager effect_mgr;
 
@@ -35,7 +36,7 @@ static void applyGaugeSetpointVisibility(lv_obj_t *obj, bool inside) {
         for (auto *indicator = static_cast<lv_meter_indicator_t *>(_lv_ll_get_head(&meter->indicator_ll)); indicator != nullptr;
              indicator = static_cast<lv_meter_indicator_t *>(_lv_ll_get_next(&meter->indicator_ll, indicator))) {
             if (indicator->type == LV_METER_INDICATOR_TYPE_NEEDLE_IMG) {
-                const bool isInsideIndicator = indicator->type_data.needle_img.pivot.x == GAUGE_SETPOINT_INSIDE_PIVOT_X;
+                const bool isInsideIndicator = indicator->type_data.needle_img.src == &img_indicator_small_inside;
                 indicator->opa = inside == isInsideIndicator ? LV_OPA_COVER : LV_OPA_TRANSP;
                 lv_obj_invalidate(obj);
             }
@@ -645,11 +646,19 @@ void DefaultUI::collectMeters(lv_obj_t *obj) {
 }
 
 void DefaultUI::setGaugeTickLength(int32_t len) {
+    const int16_t insidePivotX = GAUGE_SETPOINT_INSIDE_PIVOT_X - (GAUGE_TICK_LONG - len);
     for (uint8_t i = 0; i < gaugeCount; i++) {
         auto *meter = reinterpret_cast<lv_meter_t *>(gaugeMeters[i]);
         auto *scale = static_cast<lv_meter_scale_t *>(_lv_ll_get_head(&meter->scale_ll));
         if (scale != nullptr) {
             scale->tick_length = static_cast<uint16_t>(len);
+        }
+        for (auto *indicator = static_cast<lv_meter_indicator_t *>(_lv_ll_get_head(&meter->indicator_ll)); indicator != nullptr;
+             indicator = static_cast<lv_meter_indicator_t *>(_lv_ll_get_next(&meter->indicator_ll, indicator))) {
+            if (indicator->type == LV_METER_INDICATOR_TYPE_NEEDLE_IMG &&
+                indicator->type_data.needle_img.src == &img_indicator_small_inside) {
+                indicator->type_data.needle_img.pivot.x = insidePivotX;
+            }
         }
         lv_obj_invalidate(gaugeMeters[i]);
     }
