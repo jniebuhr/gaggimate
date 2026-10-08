@@ -27,6 +27,7 @@ import { Spinner } from '../../components/Spinner.jsx';
 import Card from '../../components/Card.jsx';
 import { parseProfile } from './utils.js';
 import { downloadJson } from '../../utils/download.js';
+import { exportProfileImage, importProfileImage } from '../../utils/profileImage.js';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faStar } from '@fortawesome/free-solid-svg-icons/faStar';
 import { faPen } from '@fortawesome/free-solid-svg-icons/faPen';
@@ -108,10 +109,8 @@ function ProfileCard({
     else if (!data.favorite && !favoriteDisabled) onFavorite(data.id);
   }, [data.favorite, unfavoriteDisabled, favoriteDisabled, onUnfavorite, onFavorite, data.id]);
 
-  const onDownload = useCallback(() => {
-    const download = {
-      ...data,
-    };
+  const onDownload = useCallback(async () => {
+    const download = await withExportedImage(data);
     delete download.id;
     delete download.selected;
     delete download.favorite;
@@ -595,6 +594,17 @@ function SimpleStep(props) {
   );
 }
 
+// Profile images only exist with an SD card; without one the export carries no "image" field.
+async function withExportedImage(profile) {
+  const copy = { ...profile };
+  delete copy.image;
+  if (machine.value.capabilities.sdCard) {
+    const image = await exportProfileImage(profile.id).catch(() => null);
+    if (image) copy.image = image;
+  }
+  return copy;
+}
+
 export function ProfileList() {
   const apiService = useContext(ApiServiceContext);
   const [profiles, setProfiles] = useState([]);
@@ -887,16 +897,15 @@ export function ProfileList() {
     [apiService, profiles, setLoading],
   );
 
-  const onExport = useCallback(() => {
-    const exportedProfiles = profiles.map(p => {
-      const ep = {
-        ...p,
-      };
+  const onExport = useCallback(async () => {
+    const exportedProfiles = [];
+    for (const p of profiles) {
+      const ep = await withExportedImage(p);
       delete ep.id;
       delete ep.selected;
       delete ep.favorite;
-      return ep;
-    });
+      exportedProfiles.push(ep);
+    }
 
     downloadJson(exportedProfiles, 'profiles.json');
   }, [profiles]);
@@ -911,8 +920,12 @@ export function ProfileList() {
           setLoading(true);
           try {
             const profiles = parseProfile(result);
-            for (const p of profiles) {
-              await apiService.request({ tp: 'req:profiles:save', profile: p });
+            for (const { image, ...p } of profiles) {
+              const response = await apiService.request({ tp: 'req:profiles:save', profile: p });
+              const id = response?.profile?.id;
+              if (image && id && machine.value.capabilities.sdCard) {
+                await importProfileImage(id, image).catch(() => {});
+              }
             }
           } catch {
             // Individual save errors are surfaced by WS timeout; continue to reload list.

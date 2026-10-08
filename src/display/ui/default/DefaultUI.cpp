@@ -1337,7 +1337,9 @@ void DefaultUI::applyTheme() {
 
     if (newThemeMode != currentThemeMode) {
         currentThemeMode = newThemeMode;
-        change_color_theme(currentThemeMode);
+        // Via EEZ so its selected index updates too; on-demand screens (new profile) read it when created.
+        static const char *const THEME_NAMES[] = {"Dark", "Light", "AmoledDark"};
+        eez_flow_set_theme(THEME_NAMES[currentThemeMode]);
         applyShotChartTheme();
         if (profileChart != nullptr) {
             for (int i = 0; i < 2; i++)

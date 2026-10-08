@@ -250,6 +250,10 @@ function convertMeticulousProfile(input) {
     temperature: isPositive(input.temperature) ? input.temperature : 93,
     phases: [],
   };
+  // Carried as the GaggiMate "image" field; the importer uploads it when the device has an SD card.
+  if (typeof input.display?.image === 'string' && input.display.image.startsWith('data:image/')) {
+    profile.image = input.display.image;
+  }
 
   for (let i = 0; i < input.stages.length; i++) {
     profile.phases.push(convertStage(input.stages[i], i, profile.temperature, resolve));
