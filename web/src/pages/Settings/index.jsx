@@ -335,9 +335,6 @@ export function Settings() {
       if (CHECKBOX_KEYS.includes(key)) {
         value = !formData[key];
       }
-      if (key === 'gaugeSetpointsInside') {
-        value = e.currentTarget.value === 'inside';
-      }
       if (key === 'clock24hFormat') {
         setClock24h(value);
       }
