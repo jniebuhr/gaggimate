@@ -234,9 +234,10 @@ void Controller::setupPanel() {
     }
     if (driver != nullptr && (model == PANEL_AMOLED || model == PANEL_WAVESHARE)) {
         ESP_LOGI(LOG_TAG, "AMOLED/OLED driver loaded, setting indicators visibility to inside position");
-        settings.setGaugeSetpointsInside(true);
+        gaugeSetpointsInside = true;
     } else {
         ESP_LOGI(LOG_TAG, "Default LCD / LillyGo driver loaded, setting indicators visibility to outside position");
+        gaugeSetpointsInside = false;
     }
     driver->init();
     panelPrefs.putUChar("driver", model);

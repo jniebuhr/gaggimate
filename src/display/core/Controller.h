@@ -93,6 +93,7 @@ class Controller {
     ProfileManager *getProfileManager() { return profileManager; }
 #ifndef GAGGIMATE_HEADLESS
     DefaultUI *getUI() const { return ui; }
+    bool areGaugeSetpointsInside() const { return gaugeSetpointsInside; }
 #endif
     bool isErrorState() const { return error > 0; }
     int getError() const { return error; }
@@ -212,6 +213,7 @@ class Controller {
 #ifndef GAGGIMATE_HEADLESS
     DefaultUI *ui = nullptr;
     Driver *driver = nullptr;
+    bool gaugeSetpointsInside = false;
 #endif
     GaggiMateClient comms;
     ButtonHandler buttons;

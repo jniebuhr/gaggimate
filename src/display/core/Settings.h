@@ -154,7 +154,6 @@ class Settings {
     float getSteamPumpPercentage() const { return steamPumpPercentage.get(); }
     float getSteamPumpCutoff() const { return steamPumpCutoff.get(); }
     int getThemeMode() const { return themeMode.get(); }
-    bool isGaugeSetpointsInside() const { return gaugeSetpointsInside.get(); }
     int getStatusDisplayMode() const { return statusDisplayMode.get(); } // STATUS_DISPLAY_*
     int getHistoryIndex() const { return historyIndex.get(); }
 
@@ -269,7 +268,6 @@ class Settings {
     void setSteamPumpPercentage(float steam_pump_percentage);
     void setSteamPumpCutoff(float steam_pump_cutoff);
     void setThemeMode(int theme_mode);
-    void setGaugeSetpointsInside(bool inside);
     void setStatusDisplayMode(int status_display_mode);
     void setHistoryIndex(int history_index);
     [[deprecated]]
@@ -365,7 +363,6 @@ class Settings {
     Property<int> standbyBrightnessTimeout{registry, "standby_bt", 60000}; // 60 seconds default
     Property<int> wifiApTimeout{registry, "wifi_apt", DEFAULT_WIFI_AP_TIMEOUT_MS};
     Property<int> themeMode{registry, "theme", 0};
-    Property<bool> gaugeSetpointsInside{registry, "gsi", false};
     Property<int> statusDisplayMode{registry, "sdm", STATUS_DISPLAY_PROGRESS};
 
     // Warning levels (WarningLevel)

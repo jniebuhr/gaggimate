@@ -29,6 +29,24 @@ static constexpr int32_t GAUGE_TICK_SHORT = 10;     // shortened tick length on 
 static constexpr uint32_t GAUGE_TICK_ANIM_MS = 300; // tick length transition duration
 static constexpr int16_t GAUGE_SETPOINT_INSIDE_PIVOT_X = -195;
 
+static void applyGaugeSetpointVisibility(lv_obj_t *obj, bool inside) {
+    if (lv_obj_check_type(obj, &lv_meter_class)) {
+        auto *meter = reinterpret_cast<lv_meter_t *>(obj);
+        for (auto *indicator = static_cast<lv_meter_indicator_t *>(_lv_ll_get_head(&meter->indicator_ll)); indicator != nullptr;
+             indicator = static_cast<lv_meter_indicator_t *>(_lv_ll_get_next(&meter->indicator_ll, indicator))) {
+            if (indicator->type == LV_METER_INDICATOR_TYPE_NEEDLE_IMG) {
+                const bool isInsideIndicator = indicator->type_data.needle_img.pivot.x == GAUGE_SETPOINT_INSIDE_PIVOT_X;
+                indicator->opa = inside == isInsideIndicator ? LV_OPA_COVER : LV_OPA_TRANSP;
+                lv_obj_invalidate(obj);
+            }
+        }
+    }
+
+    const uint32_t childCount = lv_obj_get_child_cnt(obj);
+    for (uint32_t i = 0; i < childCount; i++)
+        applyGaugeSetpointVisibility(lv_obj_get_child(obj, i), inside);
+}
+
 // Profile, menu and info screens, plus the status screen in chart mode, show shortened meter ticks.
 static bool isShortTickScreen(ScreensEnum s, bool chartMode) {
     return s == SCREEN_ID_MENU_SCREEN_NEW || s == SCREEN_ID_INFO_SCREEN || s == SCREEN_ID_NEW_PROFILE_SCREEN ||
@@ -509,7 +527,7 @@ void DefaultUI::onVolumetricDelete() {
 
 void DefaultUI::setupPanel() {
     ui_init();
-    gaugeSetpointsInside = controller->getSettings().isGaugeSetpointsInside();
+    gaugeSetpointsInside = controller->areGaugeSetpointsInside();
     applyGaugeSetpointStyle(gaugeSetpointsInside);
     setupState();
     applyTheme();
@@ -638,31 +656,7 @@ void DefaultUI::setGaugeTickLength(int32_t len) {
 }
 
 void DefaultUI::applyGaugeSetpointStyle(bool inside) {
-    lv_obj_t *meters[] = {objects.brew_dials__temp_gauge,       objects.brew_dials__temp_gauge_full,
-                          objects.brew_dials__pressure_gauge,   objects.status_dials__temp_gauge,
-                          objects.status_dials__temp_gauge_full, objects.status_dials__pressure_gauge,
-                          objects.new_menu_dials__temp_gauge,   objects.new_menu_dials__temp_gauge_full,
-                          objects.new_menu_dials__pressure_gauge, objects.steam_dials__temp_gauge,
-                          objects.steam_dials__temp_gauge_full, objects.steam_dials__pressure_gauge,
-                          objects.water_dials__temp_gauge,      objects.water_dials__temp_gauge_full,
-                          objects.water_dials__pressure_gauge,  objects.profile_dials_1__temp_gauge,
-                          objects.profile_dials_1__temp_gauge_full, objects.profile_dials_1__pressure_gauge,
-                          objects.grind_dials__temp_gauge,      objects.grind_dials__temp_gauge_full,
-                          objects.grind_dials__pressure_gauge,  objects.obj2__temp_gauge,
-                          objects.obj2__temp_gauge_full,        objects.obj2__pressure_gauge};
-    for (lv_obj_t *meterObject : meters) {
-        if (meterObject == nullptr)
-            continue;
-        auto *meter = reinterpret_cast<lv_meter_t *>(meterObject);
-        for (auto *indicator = static_cast<lv_meter_indicator_t *>(_lv_ll_get_head(&meter->indicator_ll)); indicator != nullptr;
-            indicator = static_cast<lv_meter_indicator_t *>(_lv_ll_get_next(&meter->indicator_ll, indicator))) {
-            if (indicator->type == LV_METER_INDICATOR_TYPE_NEEDLE_IMG) {
-                const bool isInsideIndicator = indicator->type_data.needle_img.pivot.x == GAUGE_SETPOINT_INSIDE_PIVOT_X;
-                indicator->opa = inside == isInsideIndicator ? LV_OPA_COVER : LV_OPA_TRANSP;
-                lv_obj_invalidate(meterObject);
-            }
-        }
-    }
+    applyGaugeSetpointVisibility(lv_scr_act(), inside);
 }
 
 void DefaultUI::gaugeTickAnimCb(void *var, int32_t v) { static_cast<DefaultUI *>(var)->setGaugeTickLength(v); }
@@ -700,10 +694,6 @@ void DefaultUI::positionMenuIcon(lv_obj_t *obj, int angle, int radius) {
 
 void DefaultUI::updateState() {
     const auto &settings = controller->getSettings();
-    if (gaugeSetpointsInside != settings.isGaugeSetpointsInside()) {
-        gaugeSetpointsInside = settings.isGaugeSetpointsInside();
-        applyGaugeSetpointStyle(gaugeSetpointsInside);
-    }
     mode = controller->getMode();
     currentTemp = static_cast<int>(controller->getCurrentTemp());
     targetTemp = static_cast<int>(controller->getTargetTemp());
