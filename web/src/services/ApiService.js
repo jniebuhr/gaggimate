@@ -85,6 +85,8 @@ export default class ApiService {
     this.state.value = {
       ...this.state.value,
       connected: false,
+      // scan:complete can't arrive on a dead socket, so don't leave the spinner latched.
+      scale: { ...machine.value.scale, scanning: false },
     };
     this._scheduleReconnect();
   }
@@ -128,6 +130,8 @@ export default class ApiService {
       this._onStatus(message);
     } else if (message.tp === 'evt:hardware-scale') {
       this._onHardwareScale(message);
+    } else if (message.tp.startsWith('evt:scale:')) {
+      this._onScaleEvent(message);
     }
     for (const listener of listeners) {
       listener(message);
@@ -255,6 +259,28 @@ export default class ApiService {
     this.state.value = { ...this.state.value, connected: true, status, capabilities, history };
   }
 
+  _onScaleEvent(message) {
+    const now = Date.now();
+    switch (message.tp) {
+      case 'evt:scale:scan:complete':
+        updateScaleState({ scanning: false });
+        break;
+      case 'evt:scale:connect:error':
+        updateScaleState({
+          connectError: { address: message.address, reason: message.reason, at: now },
+        });
+        break;
+      case 'evt:scale:connect:success':
+        updateScaleState({ connectError: null, disconnected: null });
+        break;
+      case 'evt:scale:disconnect':
+        updateScaleState({
+          disconnected: { address: message.address, name: message.name, at: now },
+        });
+        break;
+    }
+  }
+
   _onHardwareScale(message) {
     this.state.value = {
       ...this.state.value,
@@ -303,10 +329,20 @@ export const createMachineState = () =>
       hardwareScale: false,
       sdCard: false,
     },
+    // BLE scale lifecycle from evt:scale:* (GM-257).
+    scale: {
+      scanning: false,
+      connectError: null,
+      disconnected: null,
+    },
     history: [],
   });
 
 export const machine = createMachineState();
+
+export const updateScaleState = patch => {
+  machine.value = { ...machine.value, scale: { ...machine.value.scale, ...patch } };
+};
 
 let settingsCache = null;
 let settingsData = null;

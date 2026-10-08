@@ -1,76 +1,18 @@
 import { computed } from '@preact/signals';
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import { machine } from '../../services/ApiService.js';
-
-// Device format: 4-byte LVGL header (true color, 300x300) + RGB565 little endian pixels.
-const IMAGE_SIZE = 300;
-const COLOR_FORMAT_TRUE_COLOR = 4;
-const HEADER = COLOR_FORMAT_TRUE_COLOR | (IMAGE_SIZE << 10) | (IMAGE_SIZE << 21);
-const ACCEPTED_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/bmp'];
+import {
+  ACCEPTED_IMAGE_TYPES,
+  canvasToDeviceImage,
+  deleteProfileImage,
+  deviceImageToCanvas,
+  drawToCanvas,
+  fetchProfileImage,
+  isGif,
+  uploadProfileImage,
+} from '../../utils/profileImage.js';
 
 const sdCard = computed(() => !!machine.value.capabilities.sdCard);
-
-const imageUrl = id => `/api/profiles/image?id=${encodeURIComponent(id)}`;
-
-async function isGif(file) {
-  if (file.type === 'image/gif' || /\.gif$/i.test(file.name)) return true;
-  const magic = new Uint8Array(await file.slice(0, 4).arrayBuffer());
-  return String.fromCharCode(...magic) === 'GIF8';
-}
-
-// Center-crop to a square and scale to 300x300.
-async function drawToCanvas(file) {
-  const bitmap = await createImageBitmap(file);
-  const side = Math.min(bitmap.width, bitmap.height);
-  const canvas = document.createElement('canvas');
-  canvas.width = IMAGE_SIZE;
-  canvas.height = IMAGE_SIZE;
-  const ctx = canvas.getContext('2d');
-  ctx.fillStyle = '#000';
-  ctx.fillRect(0, 0, IMAGE_SIZE, IMAGE_SIZE);
-  ctx.imageSmoothingQuality = 'high';
-  ctx.drawImage(
-    bitmap,
-    (bitmap.width - side) / 2,
-    (bitmap.height - side) / 2,
-    side,
-    side,
-    0,
-    0,
-    IMAGE_SIZE,
-    IMAGE_SIZE,
-  );
-  bitmap.close();
-  return canvas;
-}
-
-function canvasToDeviceImage(canvas) {
-  const px = canvas.getContext('2d').getImageData(0, 0, IMAGE_SIZE, IMAGE_SIZE).data;
-  const out = new DataView(new ArrayBuffer(4 + IMAGE_SIZE * IMAGE_SIZE * 2));
-  out.setUint32(0, HEADER, true);
-  for (let i = 0, o = 4; i < px.length; i += 4, o += 2) {
-    out.setUint16(o, ((px[i] & 0xf8) << 8) | ((px[i + 1] & 0xfc) << 3) | (px[i + 2] >> 3), true);
-  }
-  return out.buffer;
-}
-
-function deviceImageToDataUrl(buffer) {
-  const view = new DataView(buffer);
-  const canvas = document.createElement('canvas');
-  canvas.width = IMAGE_SIZE;
-  canvas.height = IMAGE_SIZE;
-  const ctx = canvas.getContext('2d');
-  const image = ctx.createImageData(IMAGE_SIZE, IMAGE_SIZE);
-  for (let i = 0, o = 4; o + 1 < buffer.byteLength; i += 4, o += 2) {
-    const v = view.getUint16(o, true);
-    image.data[i] = (((v >> 11) & 0x1f) * 255) / 31;
-    image.data[i + 1] = (((v >> 5) & 0x3f) * 255) / 63;
-    image.data[i + 2] = ((v & 0x1f) * 255) / 31;
-    image.data[i + 3] = 255;
-  }
-  ctx.putImageData(image, 0, 0);
-  return canvas.toDataURL();
-}
 
 export function ProfileImageUpload({ profileId }) {
   const [preview, setPreview] = useState(null);
@@ -82,10 +24,9 @@ export function ProfileImageUpload({ profileId }) {
   useEffect(() => {
     if (!hasSdCard || !profileId) return;
     let cancelled = false;
-    fetch(imageUrl(profileId), { cache: 'no-store' })
-      .then(r => (r.ok ? r.arrayBuffer() : null))
+    fetchProfileImage(profileId)
       .then(buffer => {
-        if (!cancelled) setPreview(buffer ? deviceImageToDataUrl(buffer) : null);
+        if (!cancelled) setPreview(buffer ? deviceImageToCanvas(buffer).toDataURL() : null);
       })
       .catch(() => {});
     return () => {
@@ -99,23 +40,18 @@ export function ProfileImageUpload({ profileId }) {
       e.target.value = '';
       if (!file) return;
       setError('');
-      if (await isGif(file)) {
+      if (await isGif(file, file.name)) {
         setError('GIF images are not supported. Please use PNG, JPEG, WebP or BMP.');
         return;
       }
-      if (!ACCEPTED_TYPES.includes(file.type)) {
+      if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
         setError('Unsupported file type. Please use PNG, JPEG, WebP or BMP.');
         return;
       }
       setBusy(true);
       try {
         const canvas = await drawToCanvas(file);
-        const response = await fetch(imageUrl(profileId), {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/octet-stream' },
-          body: canvasToDeviceImage(canvas),
-        });
-        if (!response.ok) throw new Error((await response.text()) || 'Upload failed');
+        await uploadProfileImage(profileId, canvasToDeviceImage(canvas));
         setPreview(canvas.toDataURL());
       } catch (err) {
         setError(err.message || 'Could not read this image.');
@@ -130,8 +66,7 @@ export function ProfileImageUpload({ profileId }) {
     setBusy(true);
     setError('');
     try {
-      const response = await fetch(imageUrl(profileId), { method: 'DELETE' });
-      if (!response.ok) throw new Error((await response.text()) || 'Could not remove image');
+      await deleteProfileImage(profileId);
       setPreview(null);
     } catch (err) {
       setError(err.message);
@@ -164,7 +99,7 @@ export function ProfileImageUpload({ profileId }) {
                 ref={inputRef}
                 id='profile-image'
                 type='file'
-                accept={ACCEPTED_TYPES.join(',')}
+                accept={ACCEPTED_IMAGE_TYPES.join(',')}
                 className='hidden'
                 onChange={onFile}
               />

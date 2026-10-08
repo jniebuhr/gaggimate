@@ -46,7 +46,7 @@ export const PANEL_DEFINITIONS = [
     component: ModeCard,
     props: ds => ({
       mode: ds.mode,
-      showGrindTab: ds.showGrindTab,
+      modes: ds.visibleModes,
       changeMode: ds.changeMode,
       locked: !ds.systemReady,
     }),

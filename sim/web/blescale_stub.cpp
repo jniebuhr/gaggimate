@@ -12,7 +12,8 @@ BLEScalePlugin::~BLEScalePlugin() {}
 void BLEScalePlugin::setup(Controller *, PluginManager *) {}
 void BLEScalePlugin::loop() {}
 void BLEScalePlugin::connect(const std::string &) {}
-void BLEScalePlugin::scan() const {}
+void BLEScalePlugin::scan() {}
+void BLEScalePlugin::forget() {}
 void BLEScalePlugin::disconnect() {}
 void BLEScalePlugin::onMeasurement(float) {}
 std::vector<DiscoveredDevice> BLEScalePlugin::getDiscoveredScales() const { return {}; }
@@ -21,3 +22,5 @@ void BLEScalePlugin::update() {}
 void BLEScalePlugin::onProcessStart() const {}
 void BLEScalePlugin::pollScaleMetadata() {}
 void BLEScalePlugin::establishConnection() {}
+void BLEScalePlugin::emitScanComplete() {}
+void BLEScalePlugin::emitConnectError(const std::string &, const char *) {}
