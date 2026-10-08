@@ -21,6 +21,7 @@ class BLEScalePlugin : public Plugin {
 
     void connect(const std::string &uuid);
     void scan();
+    void forget();
     void disconnect();
     void onMeasurement(float value);
     bool isConnected() { return scale != nullptr && scale->isConnected(); };
@@ -75,7 +76,8 @@ class BLEScalePlugin : public Plugin {
     bool doConnect = false;
     std::string uuid;
 
-    std::atomic<bool> scanRequested{false}; // set by scan() from any task, consumed in loop()
+    std::atomic<bool> scanRequested{false};   // set by scan() from any task, consumed in loop()
+    std::atomic<bool> forgetRequested{false}; // set by forget() from any task, consumed in loop()
     bool scanWindowOpen = false;
     unsigned long scanDeadline = 0;
 

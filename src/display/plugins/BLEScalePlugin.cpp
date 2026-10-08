@@ -114,6 +114,16 @@ void BLEScalePlugin::setup(Controller *controller, PluginManager *manager) {
 }
 
 void BLEScalePlugin::loop() {
+    if (forgetRequested.exchange(false) && controller != nullptr) {
+        ESP_LOGI("BLEScalePlugin", "Forgetting saved scale");
+        controller->getSettings().setSavedScale("");
+        controller->getSettings().setSavedScaleName("");
+        doConnect = false;
+        disconnect();
+        if (active) {
+            scan();
+        }
+    }
     if (doConnect && scale == nullptr) {
         establishConnection();
     }
@@ -211,6 +221,9 @@ void BLEScalePlugin::connect(const std::string &uuid) {
 
     doConnect = true;
     this->uuid = uuid;
+    if (controller->getSettings().getSavedScale() != uuid.c_str()) {
+        controller->getSettings().setSavedScaleName("");
+    }
     controller->getSettings().setSavedScale(uuid.data());
 }
 
@@ -225,6 +238,8 @@ void BLEScalePlugin::scan() {
     }
     scanner->initializeAsyncScan();
 }
+
+void BLEScalePlugin::forget() { forgetRequested = true; }
 
 void BLEScalePlugin::emitScanComplete() {
     scanWindowOpen = false;
@@ -364,12 +379,18 @@ void BLEScalePlugin::establishConnection() {
                 if (scanner != nullptr) {
                     scanner->initializeAsyncScan();
                 }
-            } else if (pluginManager != nullptr) {
-                Event event;
-                event.id = "scale:connect:success";
-                event.setString("address", String(uuid.c_str()));
-                event.setString("name", String(scale->getDeviceName().c_str()));
-                pluginManager->trigger(event);
+            } else {
+                const String name = scale->getDeviceName().c_str();
+                if (controller->getSettings().getSavedScaleName() != name) {
+                    controller->getSettings().setSavedScaleName(name);
+                }
+                if (pluginManager != nullptr) {
+                    Event event;
+                    event.id = "scale:connect:success";
+                    event.setString("address", String(uuid.c_str()));
+                    event.setString("name", name);
+                    pluginManager->trigger(event);
+                }
             }
             break;
         }

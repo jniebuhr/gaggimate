@@ -50,6 +50,7 @@ export function BluetoothTab() {
   const [key, setKey] = useState(0);
   const [scaleData, setScaleData] = useState([]);
   const [connectingUuid, setConnectingUuid] = useState(null);
+  const [forgettingUuid, setForgettingUuid] = useState(null);
   const mode = machine.value.status.mode;
   const { scanning: isScanning, connectError, disconnected } = machine.value.scale;
 
@@ -77,7 +78,23 @@ export function BluetoothTab() {
     if (!connectedScale) {
       return;
     }
-    setScaleData(connectedScale.connected ? [connectedScale] : fetchedScales);
+    if (connectedScale.connected) {
+      setScaleData([{ ...connectedScale, saved: true }]);
+      return;
+    }
+    const saved = connectedScale.saved;
+    const scales = fetchedScales.map(scale => ({ ...scale, saved: scale.uuid === saved }));
+    if (saved && !scales.some(scale => scale.saved)) {
+      // Saved but not advertising: keep it listed so it can still be forgotten.
+      scales.push({
+        uuid: saved,
+        name: connectedScale.savedName || '',
+        saved: true,
+        outOfRange: true,
+      });
+    }
+    scales.sort((a, b) => Number(b.saved) - Number(a.saved));
+    setScaleData(scales);
   }, [connectedScale, fetchedScales]);
 
   // Refresh the list as soon as the firmware closes the scan window.
@@ -159,6 +176,22 @@ export function BluetoothTab() {
     }
   }, []);
 
+  const onForget = useCallback(async uuid => {
+    setForgettingUuid(uuid);
+    updateScaleState({ connectError: null, disconnected: null });
+    try {
+      await fetchJson('/api/scales/forget', { method: 'post' });
+      // The plugin forgets on its next loop tick; refresh just after.
+      setTimeout(() => {
+        setForgettingUuid(null);
+        setKey(Date.now().valueOf());
+      }, 500);
+    } catch (error) {
+      console.error('Forget failed:', error);
+      setForgettingUuid(null);
+    }
+  }, []);
+
   const loading = isLoading || isInfoLoading;
 
   return (
@@ -224,7 +257,9 @@ export function BluetoothTab() {
                   isInfoError={isInfoError}
                   scaleData={scaleData}
                   connectingUuid={connectingUuid}
+                  forgettingUuid={forgettingUuid}
                   onConnect={onConnect}
+                  onForget={onForget}
                 />
               ))}
             <div className='mt-4'>
@@ -260,7 +295,16 @@ function ScaleNotice({ kind, title, message, onDismiss }) {
 }
 
 function ScaleList(props) {
-  const { isLoading, isError, isInfoError, scaleData, connectingUuid, onConnect } = props;
+  const {
+    isLoading,
+    isError,
+    isInfoError,
+    scaleData,
+    connectingUuid,
+    forgettingUuid,
+    onConnect,
+    onForget,
+  } = props;
   if (isError || isInfoError) {
     return (
       <div className='alert alert-error'>
@@ -294,7 +338,7 @@ function ScaleList(props) {
                   </div>
                   <div>
                     <h4 className='text-base-content font-bold'>
-                      {model || scale.name || 'Unknown Scale'}
+                      {model || scale.name || (scale.saved ? 'Saved scale' : 'Unknown Scale')}
                       <span
                         className={`ml-2 inline-block h-2 w-2 rounded-full ${
                           scale.connected ? 'bg-success' : 'bg-base-content/20'
@@ -302,8 +346,16 @@ function ScaleList(props) {
                       />
                     </h4>
                     {model && <p className='text-base-content/60 text-xs'>{scale.name}</p>}
+                    {scale.outOfRange && (
+                      <p className='text-base-content/60 text-xs'>
+                        Not in range. Switch it on to reconnect.
+                      </p>
+                    )}
                     <p className='text-base-content/70 flex items-center space-x-2 text-sm'>
                       <span className='font-mono text-xs'>{scale.uuid}</span>
+                      {scale.saved && !scale.connected && (
+                        <span className='badge badge-ghost badge-xs'>Saved</span>
+                      )}
                       {scale.connected && scale.hasBattery && typeof scale.battery === 'number' && (
                         <span
                           className={`flex items-center gap-1 ${batteryColorClass(scale.battery)}`}
@@ -314,18 +366,27 @@ function ScaleList(props) {
                     </p>
                   </div>
                 </div>
-                <div className='flex items-center space-x-3'>
-                  {scale.connected ? (
-                    <div className='badge badge-success gap-2'>Connected</div>
-                  ) : (
+                <div className='flex w-full items-center gap-2 md:w-auto'>
+                  {scale.connected && <div className='badge badge-success gap-2'>Connected</div>}
+                  {!scale.connected && !scale.outOfRange && (
                     <button
                       type='button'
-                      className='btn btn-primary btn-sm'
+                      className='btn btn-primary btn-sm flex-1 md:flex-none'
                       onClick={() => onConnect(scale.uuid)}
-                      disabled={!!connectingUuid}
+                      disabled={!!connectingUuid || !!forgettingUuid}
                     >
                       {connectingUuid === scale.uuid ? 'Connecting...' : 'Connect'}
                       {connectingUuid === scale.uuid && <Spinner size={4} className='ml-2' />}
+                    </button>
+                  )}
+                  {scale.saved && (
+                    <button
+                      type='button'
+                      className={`btn btn-ghost btn-sm text-error ${scale.connected || scale.outOfRange ? 'ml-auto md:ml-0' : ''}`}
+                      onClick={() => onForget(scale.uuid)}
+                      disabled={!!forgettingUuid}
+                    >
+                      {forgettingUuid === scale.uuid ? 'Forgetting...' : 'Forget'}
                     </button>
                   )}
                 </div>
