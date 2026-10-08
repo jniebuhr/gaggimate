@@ -8,6 +8,7 @@
 #include <display/core/process/BrewProcess.h>
 #include <display/core/utils.h>
 #include <display/models/shot_log_format.h>
+#include <display/util/FsUtil.h>
 #include <display/util/PsramAllocator.h>
 
 namespace {
@@ -543,7 +544,7 @@ void ShotHistoryPlugin::cleanupHistory() {
     std::vector<String> slogFiles;
     String filename = directory.getNextFileName();
     while (filename != "") {
-        if (filename.endsWith(".slog")) {
+        if (filename.endsWith(".slog") && !fs_util::isHiddenPath(filename)) {
             slogFiles.push_back(filename);
         }
         filename = directory.getNextFileName();
@@ -981,7 +982,7 @@ void ShotHistoryPlugin::rebuildIndex() {
     File file = directory.openNextFile();
     while (file) {
         String fname = String(file.name());
-        if (fname.endsWith(".slog")) {
+        if (fname.endsWith(".slog") && !fs_util::isHiddenPath(fname)) {
             slogFiles.push_back(fname);
         }
         file.close();

@@ -161,6 +161,7 @@ class Controller {
     // Initialization methods
 #ifndef GAGGIMATE_HEADLESS
     void setupPanel();
+    void seedSDCard();
 #endif
     void setupBluetooth();
     void onSystemInfo(const char *hardware, const char *version, uint32_t protocolVersion, bool dimming, bool pressure,
