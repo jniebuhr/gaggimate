@@ -105,7 +105,8 @@ filesystem (SD card if present, LittleFS otherwise) and recreates an empty `inde
 with `"Update in progress"` while a firmware update is running, and while a shot is being
 recorded it answers `"Recording in progress"` instead — retry once the brew (including the
 scale-settling window) has finished. The shot id counter is kept monotonic, so later shots
-never reuse ids of deleted ones.
+never reuse ids of deleted ones. If any removal or the index recreation fails, the
+response carries `"error": "Delete failed"` instead (with no `msg`/`deleted`).
 
 ### Rebuild the index
 

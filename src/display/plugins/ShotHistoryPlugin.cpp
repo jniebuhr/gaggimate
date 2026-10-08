@@ -614,8 +614,13 @@ void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &respo
         if (recording || extendedRecording || isFileOpen) {
             response["error"] = "Recording in progress";
         } else {
-            response["msg"] = "Ok";
-            response["deleted"] = deleteAllHistory();
+            size_t deleted = 0;
+            if (deleteAllHistory(deleted)) {
+                response["msg"] = "Ok";
+                response["deleted"] = deleted;
+            } else {
+                response["error"] = "Delete failed";
+            }
         }
     } else if (type == "req:history:notes:get") {
         auto id = request["id"].as<String>();
@@ -880,7 +885,7 @@ void ShotHistoryPlugin::markIndexDeleted(uint32_t shotId) {
     indexFile.close();
 }
 
-size_t ShotHistoryPlugin::deleteAllHistory() {
+bool ShotHistoryPlugin::deleteAllHistory(size_t &deleted) {
     // Collect first, delete after: mutating a LittleFS/SD directory while
     // iterating it can skip entries (see cleanupHistory for the same pattern).
     std::vector<String> shotFiles;
@@ -900,10 +905,13 @@ size_t ShotHistoryPlugin::deleteAllHistory() {
         }
         directory.close();
     }
-    size_t deleted = 0;
+    bool ok = true;
+    deleted = 0;
     for (const String &path : shotFiles) {
         if (fs->remove(path)) {
             deleted++;
+        } else {
+            ok = false;
         }
     }
     // Drop the index (and any stale recent-shots cache) so deleted entries
@@ -912,10 +920,16 @@ size_t ShotHistoryPlugin::deleteAllHistory() {
     // reused by later shots.
     fs->remove("/h/index.bin");
     fs->remove("/h/recent.bin");
-    ensureIndexExists();
+    if (!ensureIndexExists()) {
+        ok = false;
+    }
 
-    ESP_LOGI("ShotHistoryPlugin", "Deleted all shot history (%u files)", deleted);
-    return deleted;
+    if (ok) {
+        ESP_LOGI("ShotHistoryPlugin", "Deleted all shot history (%u files)", deleted);
+    } else {
+        ESP_LOGE("ShotHistoryPlugin", "Failed to delete all shot history (%u files removed)", deleted);
+    }
+    return ok;
 }
 
 size_t ShotHistoryPlugin::readRecentEntries(ShotIndexEntry *outEntries, size_t maxCount) {
