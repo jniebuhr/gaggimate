@@ -1,6 +1,7 @@
 // Advertised BLE name prefix → friendly model name; mirrors the esp-arduino-ble-scales matchers.
 const SCALE_MODELS = [
   [/^BOOKOO[_-]SC[_-]M/i, 'Bookoo Themis Mini'],
+  [/^BOOKOO[_-]SC[_-]U/i, 'Bookoo Themis Ultra'],
   [/^BOOKOO[_-]SC/i, 'Bookoo Themis'],
   [/^PEARLS/, 'Acaia Pearl S'],
   [/^PEARL/, 'Acaia Pearl'],
@@ -12,7 +13,7 @@ const SCALE_MODELS = [
   [/^(Microbalance|Mb)/, 'DiFluid Microbalance'],
   [/^ECLAIR-/, 'Eclair'],
   [/^CFS-9002/, 'Eureka Precisa'],
-  [/^LSJ-001/, 'Eureka'],
+  [/^LSJ-001/, 'Eureka Precisa'],
   [/^FELICITA/, 'Felicita'],
   [/^TIMEMORE_Dot|tes017/i, 'Timemore Dot'],
   [/basic ?3|timemore.*basic/i, 'Timemore Basic 3.0'],
