@@ -33,7 +33,18 @@ The sim `.incbin`s that `web_ui.bin`, so it must exist before building with WebU
 ```shell
 pio run -e display-sim                 # build
 pio run -e display-sim -t run          # build + launch (also: ./.pio/build/display-sim/program)
+pio run -e display-sim-amoled           # 466x466 LilyGo/Waveshare 1.75-inch AMOLED
+pio run -e display-sim-amoled -t run    # build + launch the AMOLED preview
 ```
+
+The default target reproduces the 480×480 round RGB panels. The
+`display-sim-amoled` target reproduces the 466×466 logical canvas and automatic
+true-black theme shared by the supported LilyGo and Waveshare 1.75-inch round
+AMOLED panels. Their hardware rotations differ, but both present the same
+orientation and dimensions to LVGL after the panel driver applies its rotation.
+The target loads a host-safe `AmoledDisplayDriver` singleton backed by SDL, so
+firmware checks against `AmoledDisplayDriver::getInstance()` behave exactly as
+they do on hardware.
 
 `-t run` is a custom PlatformIO target (see `scripts/sim_run.py`). In a PlatformIO
 IDE (CLion/VSCode) it shows up under the `display-sim` environment as the
@@ -69,7 +80,8 @@ unchanged except for a few small `#ifndef GAGGIMATE_SIM` guards.
 | `sim/web/` | Host shim of `ESPAsyncWebServer`/`AsyncWebSocket`/`DNSServer` over a tiny non-blocking HTTP/1.1 + WebSocket server (pumped from the main loop, so handlers never race the firmware). OTA / BLE-scale endpoints are stubbed. |
 | `sim/main.cpp` | Entry point: builds the `Controller`, then runs one cooperative loop (controller + UI + web server + SDL) on the main thread. |
 
-The PlatformIO env is `[env:display-sim]` (`platform = native`) in `platformio.ini`.
+The PlatformIO envs are `[env:display-sim]` and `[env:display-sim-amoled]`
+(`platform = native`) in `platformio.ini`.
 
 ## Caveats
 

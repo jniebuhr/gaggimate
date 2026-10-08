@@ -8,14 +8,29 @@
 
 SdlDriver *SdlDriver::instance = nullptr;
 
-// The LilyGo T-RGB panel the default UI targets is 480x480.
-static constexpr int DISP_W = 480;
-static constexpr int DISP_H = 480;
+// Keep the desktop panel geometry selectable at build time. The original
+// LilyGo T-RGB/Waveshare RGB panels are 480x480; both supported 1.75-inch
+// round AMOLED panels expose a 466x466 logical canvas.
+#ifndef GM_SIM_DISPLAY_WIDTH
+#define GM_SIM_DISPLAY_WIDTH 480
+#endif
+#ifndef GM_SIM_DISPLAY_HEIGHT
+#define GM_SIM_DISPLAY_HEIGHT 480
+#endif
+
+static constexpr int DISP_W = GM_SIM_DISPLAY_WIDTH;
+static constexpr int DISP_H = GM_SIM_DISPLAY_HEIGHT;
+
+#ifdef GAGGIMATE_SIM_AMOLED
+static constexpr const char *WINDOW_TITLE = "GaggiMate Simulator - 1.75-inch AMOLED (466x466)";
+#else
+static constexpr const char *WINDOW_TITLE = "GaggiMate Simulator - RGB (480x480)";
+#endif
 
 static SDL_Window *s_window = nullptr;
 static SDL_Renderer *s_renderer = nullptr;
 static SDL_Texture *s_texture = nullptr;
-static SDL_Texture *s_mask = nullptr; // opaque outside the 480px circle, transparent inside
+static SDL_Texture *s_mask = nullptr; // opaque outside the display circle, transparent inside
 
 // "Bezel" colour shown outside the round panel (corners of the square window).
 static constexpr Uint8 BEZEL_R = 0x28, BEZEL_G = 0x28, BEZEL_B = 0x28;
@@ -46,12 +61,12 @@ void SdlDriver::init() {
         fprintf(stderr, "SDL_Init failed: %s\n", SDL_GetError());
         exit(1);
     }
-    s_window =
-        SDL_CreateWindow("GaggiMate Simulator", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, DISP_W, DISP_H, SDL_WINDOW_SHOWN);
+    s_window = SDL_CreateWindow(WINDOW_TITLE, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, DISP_W, DISP_H,
+                                SDL_WINDOW_SHOWN);
     s_renderer = SDL_CreateRenderer(s_window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
     s_texture = SDL_CreateTexture(s_renderer, SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_STREAMING, DISP_W, DISP_H);
 
-    // Build the round-display mask: the device panel is a 480px circle, so paint
+    // Build the round-display mask: the device panel is circular, so paint
     // everything outside that circle with the bezel colour and leave the inside
     // transparent. Overlaid on every frame so the square framebuffer reads as round.
     s_mask = SDL_CreateTexture(s_renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STATIC, DISP_W, DISP_H);

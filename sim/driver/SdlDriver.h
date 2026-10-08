@@ -24,7 +24,9 @@ class SdlDriver : public Driver {
     bool shouldQuit() const;
     void screenshot(const char *path); // writes a BMP of the current frame
 
+  protected:
+    SdlDriver() = default;
+
   private:
     static SdlDriver *instance;
-    SdlDriver() = default;
 };
