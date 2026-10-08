@@ -455,8 +455,6 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setSteamPumpCutoff(request->arg("steamPumpCutoff").toFloat());
             if (request->hasArg("themeMode"))
                 settings->setThemeMode(request->arg("themeMode").toInt());
-            if (request->hasArg("gaugeSetpointsInside"))
-                settings->setGaugeSetpointsInside(parseBoolArg(request->arg("gaugeSetpointsInside")));
             if (request->hasArg("statusDisplayMode"))
                 settings->setStatusDisplayMode(request->arg("statusDisplayMode").toInt());
             if (request->hasArg("sunriseIdle"))
@@ -610,7 +608,6 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["steamPumpPercentage"] = settings.getSteamPumpPercentage();
     doc["steamPumpCutoff"] = settings.getSteamPumpCutoff();
     doc["themeMode"] = settings.getThemeMode();
-    doc["gaugeSetpointsInside"] = settings.isGaugeSetpointsInside();
     doc["statusDisplayMode"] = settings.getStatusDisplayMode();
     doc["sunriseIdle"] = settings.getSunriseIdle();
     doc["sunriseActive"] = settings.getSunriseActive();
