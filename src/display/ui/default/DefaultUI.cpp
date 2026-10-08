@@ -19,9 +19,6 @@
 #include "esp_sntp.h"
 
 #include <display/ui/default/eez/ui.h>
-#include <display/ui/default/eez/images.h>
-#include <array>
-#include <cstring>
 
 static EffectManager effect_mgr;
 
@@ -30,32 +27,7 @@ static constexpr uint32_t STARTUP_FADE_MS = 1000; // standby fade-in duration on
 static constexpr int32_t GAUGE_TICK_LONG = 25;      // meter tick length on most screens
 static constexpr int32_t GAUGE_TICK_SHORT = 10;     // shortened tick length on profile / new-menu screens
 static constexpr uint32_t GAUGE_TICK_ANIM_MS = 300; // tick length transition duration
-static constexpr int16_t GAUGE_SETPOINT_INSIDE_PIVOT_X = -196;
-static constexpr int16_t GAUGE_SETPOINT_OUTSIDE_PIVOT_X = -233;
-
-static std::array<uint8_t, 8 * 14 * LV_IMG_PX_SIZE_ALPHA_BYTE> insideIndicatorPixels;
-static lv_img_dsc_t insideIndicator;
-static bool insideIndicatorInitialized = false;
-
-static void initializeInsideIndicator() {
-    if (insideIndicatorInitialized)
-        return;
-    constexpr size_t width = 8;
-    constexpr size_t height = 14;
-    constexpr size_t bytesPerPixel = LV_IMG_PX_SIZE_ALPHA_BYTE;
-    const uint8_t *outsidePixels = img_indicator_small.data;
-    for (size_t row = 0; row < height; row++) {
-        for (size_t column = 0; column < width; column++) {
-            const size_t source = (row * width + (width - 1 - column)) * bytesPerPixel;
-            const size_t destination = (row * width + column) * bytesPerPixel;
-            memcpy(insideIndicatorPixels.data() + destination, outsidePixels + source, bytesPerPixel);
-        }
-    }
-    insideIndicator.data = insideIndicatorPixels.data();
-    insideIndicator.header = img_indicator_small.header;
-    insideIndicator.data_size = img_indicator_small.data_size;
-    insideIndicatorInitialized = true;
-}
+static constexpr int16_t GAUGE_SETPOINT_INSIDE_PIVOT_X = -195;
 
 // Profile, menu and info screens, plus the status screen in chart mode, show shortened meter ticks.
 static bool isShortTickScreen(ScreensEnum s, bool chartMode) {
@@ -634,6 +606,9 @@ void DefaultUI::handleScreenChange() {
             setBrightness(settings.getMainBrightness());
         }
         eez_flow_set_screen(targetScreen, LV_SCR_LOAD_ANIM_NONE, 0, 0);
+        // Dial widgets are created lazily by EEZ, so apply the current choice after
+        // the new screen's pair of indicators exists.
+        applyGaugeSetpointStyle(gaugeSetpointsInside);
         animateGaugeTicks(isShortTickScreen(currentScreen, tickChartMode), isShortTickScreen(targetScreen, tickChartMode));
         rerender = true;
     }
@@ -663,7 +638,6 @@ void DefaultUI::setGaugeTickLength(int32_t len) {
 }
 
 void DefaultUI::applyGaugeSetpointStyle(bool inside) {
-    initializeInsideIndicator();
     lv_obj_t *meters[] = {objects.brew_dials__temp_gauge,       objects.brew_dials__temp_gauge_full,
                           objects.brew_dials__pressure_gauge,   objects.status_dials__temp_gauge,
                           objects.status_dials__temp_gauge_full, objects.status_dials__pressure_gauge,
@@ -681,11 +655,10 @@ void DefaultUI::applyGaugeSetpointStyle(bool inside) {
             continue;
         auto *meter = reinterpret_cast<lv_meter_t *>(meterObject);
         for (auto *indicator = static_cast<lv_meter_indicator_t *>(_lv_ll_get_head(&meter->indicator_ll)); indicator != nullptr;
-             indicator = static_cast<lv_meter_indicator_t *>(_lv_ll_get_next(&meter->indicator_ll, indicator))) {
+            indicator = static_cast<lv_meter_indicator_t *>(_lv_ll_get_next(&meter->indicator_ll, indicator))) {
             if (indicator->type == LV_METER_INDICATOR_TYPE_NEEDLE_IMG) {
-                indicator->type_data.needle_img.src = inside ? &insideIndicator : &img_indicator_small;
-                indicator->type_data.needle_img.pivot.x =
-                    inside ? GAUGE_SETPOINT_INSIDE_PIVOT_X : GAUGE_SETPOINT_OUTSIDE_PIVOT_X;
+                const bool isInsideIndicator = indicator->type_data.needle_img.pivot.x == GAUGE_SETPOINT_INSIDE_PIVOT_X;
+                indicator->opa = inside == isInsideIndicator ? LV_OPA_COVER : LV_OPA_TRANSP;
                 lv_obj_invalidate(meterObject);
             }
         }
