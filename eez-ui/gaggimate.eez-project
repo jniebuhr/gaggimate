@@ -13970,7 +13970,7 @@
       "width": 480,
       "height": 480,
       "isUsedAsUserWidget": false,
-      "createAtStart": false,
+      "createAtStart": true,
       "deleteOnScreenUnload": false
     }
   ],

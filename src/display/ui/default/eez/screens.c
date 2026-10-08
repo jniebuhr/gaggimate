@@ -8412,4 +8412,5 @@ void create_screens() {
     create_screen_water_screen();
     create_screen_grind_screen();
     create_screen_info_screen();
+    create_screen_new_profile_screen();
 }
