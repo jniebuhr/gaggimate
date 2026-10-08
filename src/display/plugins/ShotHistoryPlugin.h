@@ -28,6 +28,11 @@ class ShotHistoryPlugin : public Plugin {
     bool appendToIndex(const ShotIndexEntry &entry);
     void updateIndexMetadata(uint32_t shotId, uint8_t rating, uint16_t volume);
     void markIndexDeleted(uint32_t shotId);
+    // Deletes every shot log (.slog) and notes file (.json) under /h on the
+    // history filesystem (SD card if present, LittleFS otherwise) and recreates
+    // an empty index. Returns the number of files removed. Must not run while a
+    // recording is open (see handleRequest guard).
+    size_t deleteAllHistory();
     void rebuildIndex();
     void startAsyncRebuild();
     bool ensureIndexExists();
