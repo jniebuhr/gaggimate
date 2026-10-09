@@ -108,9 +108,7 @@ void GaggiMateController::setup() {
         }
     }
     if (!_config.capabilites.tof && _config.tankLevelPin > 0) {
-        tankLevel = new DigitalInput(_config.tankLevelPin, [this](const bool state) {
-            _comms.sendTofMeasurement(state ? 1000 : 10);
-        }, 5);
+        tankLevel = new DigitalInput(_config.tankLevelPin, [this](const bool) { sendTankLevel(); }, 5);
     }
     gm::DeviceCapabilities capabilities = gaggimate_Capabilities_init_zero;
     capabilities.dimming = _config.capabilites.dimming;
@@ -358,6 +356,9 @@ void GaggiMateController::loop() {
         lastLedHealthCheck = now;
         ledController->healthCheck();
     }
+    if (tankLevel != nullptr && now - lastTankLevelSend >= TANK_LEVEL_SEND_INTERVAL_MS) {
+        sendTankLevel();
+    }
     if (errorState != ERROR_CODE_NONE) {
         ESP_LOGW("GaggiMateController", "Error state: %d", errorState);
     }
@@ -368,6 +369,12 @@ void GaggiMateController::loop() {
             handleSerialCommand(c);
         }
     }
+}
+
+// Reed switch closed (state true) means water present, so report a full-tank distance.
+void GaggiMateController::sendTankLevel() {
+    lastTankLevelSend = millis();
+    _comms.sendTofMeasurement(tankLevel->getState() ? 10 : 1000);
 }
 
 void GaggiMateController::registerBoardConfig(ControllerConfig config) { configs.push_back(config); }
