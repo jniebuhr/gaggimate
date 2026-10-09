@@ -21,7 +21,14 @@ project_dir = env["PROJECT_DIR"]  # noqa: F821
 out_dir = os.path.join(project_dir, "src", "display", "webassets")
 manifest = os.path.join(out_dir, "web_ui_manifest.h")
 packer = os.path.join(project_dir, "scripts", "embed_webui.py")
+blob_bin = os.path.join(out_dir, "web_ui.bin")
 
 if not os.path.isfile(manifest):
     print("embed_webui_pre: no web bundle found, writing stub (run build_webui.sh for the real UI)")
     subprocess.check_call([sys.executable, packer, "--out", out_dir, "--stub"])
+
+# web_ui_blob.S only .incbin's web_ui.bin; without this, a rebuilt bundle updates
+# the manifest (recompiled) but not the assembled blob (stale .S.o).
+if os.path.isfile(blob_bin):
+    blob_obj = os.path.join(env.subst("$BUILD_DIR"), "src", "display", "webassets", "web_ui_blob.S.o")
+    env.Depends(blob_obj, blob_bin)  # noqa: F821

@@ -2,6 +2,7 @@
 #include <ArduinoJson.h>
 #include <display/core/ProfileImage.h>
 #include <display/core/system_profiles.h>
+#include <display/util/FsUtil.h>
 #include <display/util/PsramAllocator.h>
 #include <esp32-hal-psram.h>
 
@@ -145,7 +146,7 @@ std::vector<String> ProfileManager::listProfiles() {
     File file = root.openNextFile();
     while (file) {
         String name = file.name();
-        if (name.endsWith(".json")) {
+        if (name.endsWith(".json") && !fs_util::isHiddenPath(name)) {
             int start = name.lastIndexOf('/') + 1;
             int end = name.lastIndexOf('.');
             uuids.push_back(name.substring(start, end));
@@ -264,7 +265,7 @@ std::vector<String> ProfileManager::listProfileImages() {
     // Names only: openNextFile() would fopen every entry against the 10-file SD_MMC limit.
     bool isDir = false;
     for (String name = root.getNextFileName(&isDir); !name.isEmpty(); name = root.getNextFileName(&isDir)) {
-        if (isDir || !name.endsWith(".bin"))
+        if (isDir || !name.endsWith(".bin") || fs_util::isHiddenPath(name))
             continue;
         ids.push_back(name.substring(name.lastIndexOf('/') + 1, name.lastIndexOf('.')));
     }

@@ -6409,6 +6409,9 @@ void create_user_widget_dials(lv_obj_t *parent_obj, void *flowState, int startWi
                     state->indicator = lv_meter_add_needle_img(obj, scale, &img_indicator_small, -233, 0);
                 }
                 {
+                    state->indicator6 = lv_meter_add_needle_img(obj, scale, &img_indicator_small_inside, -195, 0);
+                }
+                {
                     lv_meter_indicator_t *indicator =
                         lv_meter_add_scale_lines(obj, scale, lv_color_hex(theme_colors[eez_flow_get_selected_theme_index()][6]),
                                                  lv_color_hex(theme_colors[eez_flow_get_selected_theme_index()][6]), false, 0);
@@ -6441,6 +6444,9 @@ void create_user_widget_dials(lv_obj_t *parent_obj, void *flowState, int startWi
                     state->indicator2 = lv_meter_add_needle_img(obj, scale, &img_indicator_small, -233, 0);
                 }
                 {
+                    state->indicator7 = lv_meter_add_needle_img(obj, scale, &img_indicator_small_inside, -195, 0);
+                }
+                {
                     lv_meter_indicator_t *indicator =
                         lv_meter_add_scale_lines(obj, scale, lv_color_hex(theme_colors[eez_flow_get_selected_theme_index()][6]),
                                                  lv_color_hex(theme_colors[eez_flow_get_selected_theme_index()][6]), false, 0);
@@ -6469,6 +6475,9 @@ void create_user_widget_dials(lv_obj_t *parent_obj, void *flowState, int startWi
                 lv_meter_set_scale_range(obj, scale, 160, 0, 120, 300);
                 {
                     state->indicator4 = lv_meter_add_needle_img(obj, scale, &img_indicator_small, -233, 0);
+                }
+                {
+                    state->indicator8 = lv_meter_add_needle_img(obj, scale, &img_indicator_small_inside, -195, 0);
                 }
                 {
                     lv_meter_indicator_t *indicator =
@@ -6610,6 +6619,17 @@ void tick_user_widget_dials(void *flowState, int startWidgetIndex, user_widget_d
         }
     }
     {
+        if (state->indicator6) {
+            int32_t new_val = evalIntegerProperty(flowState, 1, 4, "Failed to evaluate Value in Meter widget");
+            int32_t cur_val = state->indicator6->start_value;
+            if (new_val != cur_val) {
+                tick_value_change_obj = ((lv_obj_t **)&objects)[startWidgetIndex + 0];
+                lv_meter_set_indicator_value(((lv_obj_t **)&objects)[startWidgetIndex + 0], state->indicator6, new_val);
+                tick_value_change_obj = NULL;
+            }
+        }
+    }
+    {
         bool new_val = evalBooleanProperty(flowState, 1, 3, "Failed to evaluate Hidden flag");
         bool cur_val = lv_obj_has_flag(((lv_obj_t **)&objects)[startWidgetIndex + 0], LV_OBJ_FLAG_HIDDEN);
         if (new_val != cur_val) {
@@ -6645,6 +6665,17 @@ void tick_user_widget_dials(void *flowState, int startWidgetIndex, user_widget_d
         }
     }
     {
+        if (state->indicator7) {
+            int32_t new_val = evalIntegerProperty(flowState, 0, 4, "Failed to evaluate Value in Meter widget");
+            int32_t cur_val = state->indicator7->start_value;
+            if (new_val != cur_val) {
+                tick_value_change_obj = ((lv_obj_t **)&objects)[startWidgetIndex + 1];
+                lv_meter_set_indicator_value(((lv_obj_t **)&objects)[startWidgetIndex + 1], state->indicator7, new_val);
+                tick_value_change_obj = NULL;
+            }
+        }
+    }
+    {
         bool new_val = evalBooleanProperty(flowState, 0, 3, "Failed to evaluate Hidden flag");
         bool cur_val = lv_obj_has_flag(((lv_obj_t **)&objects)[startWidgetIndex + 1], LV_OBJ_FLAG_HIDDEN);
         if (new_val != cur_val) {
@@ -6675,6 +6706,17 @@ void tick_user_widget_dials(void *flowState, int startWidgetIndex, user_widget_d
             if (new_val != cur_val) {
                 tick_value_change_obj = ((lv_obj_t **)&objects)[startWidgetIndex + 2];
                 lv_meter_set_indicator_end_value(((lv_obj_t **)&objects)[startWidgetIndex + 2], state->indicator5, new_val);
+                tick_value_change_obj = NULL;
+            }
+        }
+    }
+    {
+        if (state->indicator8) {
+            int32_t new_val = evalIntegerProperty(flowState, 2, 4, "Failed to evaluate Value in Meter widget");
+            int32_t cur_val = state->indicator8->start_value;
+            if (new_val != cur_val) {
+                tick_value_change_obj = ((lv_obj_t **)&objects)[startWidgetIndex + 2];
+                lv_meter_set_indicator_value(((lv_obj_t **)&objects)[startWidgetIndex + 2], state->indicator8, new_val);
                 tick_value_change_obj = NULL;
             }
         }
@@ -8412,4 +8454,5 @@ void create_screens() {
     create_screen_water_screen();
     create_screen_grind_screen();
     create_screen_info_screen();
+    create_screen_new_profile_screen();
 }

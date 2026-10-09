@@ -30,7 +30,7 @@
           },
           {
             "type": "border",
-            "selected": 2,
+            "selected": 3,
             "size": 255.5,
             "location": "right",
             "children": [
@@ -173,7 +173,8 @@
                       "enableClose": false,
                       "icon": "svg:hierarchy"
                     }
-                  ]
+                  ],
+                  "active": true
                 },
                 {
                   "type": "tabset",
@@ -298,8 +299,7 @@
                       "enableClose": false,
                       "icon": "svg:properties"
                     }
-                  ],
-                  "active": true
+                  ]
                 },
                 {
                   "type": "tabset",
@@ -1203,7 +1203,7 @@
           "x": -224,
           "y": -267.5367431640625
         },
-        "scale": 0.8
+        "scale": 0.9
       },
       "timeline": {
         "isEditorActive": false,
@@ -1220,9 +1220,8 @@
             "2": {
               "0": {}
             },
-            "4": {
-              "$selected": true
-            }
+            "4": {},
+            "$selected": true
           },
           "2": {
             "1": {},
@@ -2013,13 +2012,15 @@
       "selectionFront": {},
       "selectionBack": {
         "0": {
+          "0": {
+            "$selected": true
+          },
           "1": {
             "1": {
               "1": {
                 "0": {
                   "1": {}
-                },
-                "$selected": true
+                }
               }
             },
             "2": {}

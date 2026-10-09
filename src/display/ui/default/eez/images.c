@@ -1,6 +1,6 @@
 #include "images.h"
 
-const ext_img_desc_t images[42] = {
+const ext_img_desc_t images[43] = {
     {"angle-down-40x40", &img_angle_down_40x40},
     {"angle-left-40x40", &img_angle_left_40x40},
     {"angle-right-40x40", &img_angle_right_40x40},
@@ -15,6 +15,7 @@ const ext_img_desc_t images[42] = {
     {"floppy-disks-30x30", &img_floppy_disks_30x30},
     {"flowmeter", &img_flowmeter},
     {"indicator-small", &img_indicator_small},
+    {"indicator-small-inside", &img_indicator_small_inside},
     {"logo", &img_logo},
     {"minus-small-40x40", &img_minus_small_40x40},
     {"mug-hot-alt-80x80", &img_mug_hot_alt_80x80},
