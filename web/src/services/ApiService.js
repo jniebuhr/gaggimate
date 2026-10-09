@@ -219,6 +219,7 @@ export default class ApiService {
     if (has('cd')) capabilities.dimming = message.cd;
     if (has('cp')) capabilities.pressure = message.cp;
     if (has('led')) capabilities.ledControl = message.led;
+    if (has('tof')) capabilities.tof = message.tof;
     if (has('gp')) capabilities.gearpumpAddon = !!message.gp;
     if (has('db')) capabilities.dualBoiler = message.db;
     if (has('hs')) capabilities.hardwareScale = !!message.hs;
