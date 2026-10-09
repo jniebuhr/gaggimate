@@ -107,6 +107,12 @@ void GaggiMateController::setup() {
             _comms.onLedControl([this](uint8_t channel, uint8_t brightness) { ledController->setChannel(channel, brightness); });
         }
     }
+    if (!_config.capabilites.tof && _config.tankLevelPin > 0) {
+        _config.capabilites.tof = true;
+        tankLevel = new DigitalInput(_config.tankLevelPin, [this](const bool state) {
+            _comms.sendTofMeasurement(state ? 1000 : 10);
+        }, 5);
+    }
     gm::DeviceCapabilities capabilities = gaggimate_Capabilities_init_zero;
     capabilities.dimming = _config.capabilites.dimming;
     capabilities.pressure = _config.capabilites.pressure;
@@ -170,6 +176,9 @@ void GaggiMateController::setup() {
         lights->setup();
     } else {
         alt->setup();
+    }
+    if (tankLevel != nullptr) {
+        tankLevel->setup();
     }
     // Set up thermal feedforward for main heater if pressure/dimming capability exists
     if (heater && _config.capabilites.dimming && _config.capabilites.pressure) {
