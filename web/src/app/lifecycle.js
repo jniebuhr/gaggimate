@@ -1,6 +1,7 @@
 import { effect } from '@preact/signals';
 import { WARNINGS } from '../utils/warnings.js';
 import { appSettings } from './appSettings.js';
+import { resumeConnections, suspendConnections } from './machineConnections.js';
 import { machines } from './machines.js';
 import { nativePlatform } from './platform.js';
 
@@ -19,9 +20,11 @@ export async function watchAppLifecycle(apiService, notificationService) {
   await App.addListener('appStateChange', ({ isActive }) => {
     if (isActive) {
       apiService.reopen();
+      resumeConnections();
       notificationService.resume();
     } else {
       notificationService.suspend();
+      suspendConnections();
       apiService.close();
     }
   });

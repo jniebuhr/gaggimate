@@ -1,7 +1,7 @@
 import { effect } from '@preact/signals';
-import ApiService, { createMachineState } from '../services/ApiService.js';
 import { WARNING_LEVEL, warningByKey } from '../utils/warnings.js';
 import { appSettings } from './appSettings.js';
+import { acquireConnection } from './machineConnections.js';
 import { activeMachine, machines } from './machines.js';
 import { nativePlatform } from './platform.js';
 
@@ -119,12 +119,12 @@ export class MachineMonitor {
 const isShot = process =>
   !!process && (process.s === 'brew' || process.s === 'infusion') && !process.u;
 
-// Owns one monitor per saved machine; non-active machines get their own background connection.
+// Owns one monitor per saved machine; non-active machines use the shared background connections.
 export class NotificationService {
   constructor(mainApi) {
     this.mainApi = mainApi;
     this.monitors = [];
-    this.backgroundApis = [];
+    this.connections = [];
     this.suspended = false;
     this.nextId = Date.now() % 1_000_000;
     // Restart whenever notifications are switched on/off or the machine list changes.
@@ -143,12 +143,9 @@ export class NotificationService {
     if (active) this.monitors.push(new MachineMonitor(active, this.mainApi, e => this.notify(e)));
     for (const other of saved) {
       if (other.id === active?.id) continue;
-      const api = new ApiService({
-        socketUrl: `ws://${other.host}/ws`,
-        state: createMachineState(),
-      });
-      this.backgroundApis.push(api);
-      this.monitors.push(new MachineMonitor(other, api, e => this.notify(e)));
+      const connection = acquireConnection(other);
+      this.connections.push(connection);
+      this.monitors.push(new MachineMonitor(other, connection.api, e => this.notify(e)));
     }
   }
 
@@ -166,9 +163,9 @@ export class NotificationService {
 
   stop() {
     this.monitors.forEach(monitor => monitor.dispose());
-    this.backgroundApis.forEach(api => api.close());
+    this.connections.forEach(connection => connection.release());
     this.monitors = [];
-    this.backgroundApis = [];
+    this.connections = [];
   }
 
   async notify({ event, title, body, machine }) {

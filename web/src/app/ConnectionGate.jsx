@@ -46,6 +46,13 @@ export function ConnectionGate() {
           <>
             <span className='loading loading-spinner loading-md text-primary' />
             <p className='text-base-content/70'>Connecting to {current.name}…</p>
+            <button
+              type='button'
+              className='btn btn-ghost btn-sm'
+              onClick={() => (showMachineSetup.value = true)}
+            >
+              Cancel
+            </button>
           </>
         )}
       </div>

@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
 import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
@@ -6,6 +7,8 @@ import { faArrowRightFromBracket } from '@fortawesome/free-solid-svg-icons/faArr
 import { faChevronUp } from '@fortawesome/free-solid-svg-icons/faChevronUp';
 import { machine } from '../services/ApiService.js';
 import { FirmwareWarning } from './FirmwareWarning.jsx';
+import { useMachinePeeks } from './machineConnections.js';
+import { formatMachineStatus } from './machineStatus.js';
 import {
   activeMachine,
   disconnectMachine,
@@ -16,13 +19,35 @@ import {
 
 // App-only sidebar entry: shows the connected machine and switches, adds or disconnects machines.
 export function MachineSwitcher({ collapsed = false }) {
+  const [open, setOpen] = useState(false);
+  const root = useRef(null);
   const current = activeMachine.value;
+  const peekStates = useMachinePeeks(machines.value, open);
+
+  // Close on a tap outside or Escape.
+  useEffect(() => {
+    if (!open) return undefined;
+    const onPointer = event => !root.current?.contains(event.target) && setOpen(false);
+    const onKey = event => event.key === 'Escape' && setOpen(false);
+    document.addEventListener('pointerdown', onPointer);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('pointerdown', onPointer);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
   if (!current) return null;
   const connected = machine.value.connected;
+  const liveStatus = connected ? formatMachineStatus(machine.value.status) : null;
+  const statusOf = m => {
+    if (m.id === current.id) return liveStatus;
+    const state = peekStates[m.id]?.value;
+    return state?.connected ? formatMachineStatus(state.status) : null;
+  };
 
-  // daisyUI dropdowns are focus-driven — blur to close after a selection.
   const run = action => () => {
-    document.activeElement?.blur();
+    setOpen(false);
     action();
   };
 
@@ -34,12 +59,14 @@ export function MachineSwitcher({ collapsed = false }) {
   );
 
   return (
-    <div className={`dropdown dropdown-top ${collapsed ? '' : 'w-full'}`}>
-      {/* div+tabindex instead of <button>: Safari doesn't focus buttons on click,
-          which daisyUI's focus-driven dropdown relies on. */}
-      <div
-        tabIndex={0}
-        role='button'
+    <div
+      ref={root}
+      className={`dropdown dropdown-top ${open ? 'dropdown-open' : ''} ${collapsed ? '' : 'w-full'}`}
+    >
+      <button
+        type='button'
+        aria-expanded={open}
+        onClick={() => setOpen(!open)}
         title={`${current.name} (${current.host})`}
         className={
           collapsed
@@ -54,35 +81,49 @@ export function MachineSwitcher({ collapsed = false }) {
           </>
         ) : (
           <>
-            {statusDot}
+            <span className='flex h-5 items-center self-start'>{statusDot}</span>
             <span className='flex min-w-0 flex-1 flex-col text-left'>
               <span className='truncate text-sm font-medium'>{current.name}</span>
               <span className='text-base-content/60 truncate text-xs font-normal'>
-                {connected ? current.host : `Connecting to ${current.host}…`}
+                {liveStatus ?? `Connecting to ${current.host}…`}
               </span>
-              <FirmwareWarning version={current.version} className='mt-1 whitespace-normal' />
+              <FirmwareWarning version={current.version} compact className='mt-1' />
             </span>
-            <FontAwesomeIcon icon={faChevronUp} className='text-base-content/50 h-3 w-3' />
+            <FontAwesomeIcon
+              icon={faChevronUp}
+              className={`text-base-content/50 h-3 w-3 transition-transform ${open ? 'rotate-180' : ''}`}
+            />
           </>
         )}
-      </div>
+      </button>
       <ul
-        tabIndex={0}
-        className='dropdown-content menu bg-base-100 rounded-box border-base-300 z-10 mb-2 w-64 border p-2 shadow-lg'
+        className={`dropdown-content ${open ? '' : 'hidden'} menu bg-base-100 rounded-box border-base-300 z-10 mb-2 w-64 border p-2 shadow-lg`}
       >
         <li className='menu-title'>Machines</li>
-        {machines.value.map(m => (
-          <li key={m.id}>
-            <button type='button' onClick={run(() => selectMachine(m.id))}>
-              <span className='flex min-w-0 flex-1 flex-col'>
-                <span className='truncate'>{m.name}</span>
-                <span className='text-base-content/60 truncate text-xs'>{m.host}</span>
-                <FirmwareWarning version={m.version} className='mt-1' />
-              </span>
-              {m.id === current.id && <FontAwesomeIcon icon={faCheck} className='h-3 w-3' />}
-            </button>
-          </li>
-        ))}
+        {machines.value.map(m => {
+          const isCurrent = m.id === current.id;
+          const status = statusOf(m);
+          return (
+            <li key={m.id}>
+              <button
+                type='button'
+                className='flex items-start gap-3'
+                onClick={run(() => selectMachine(m.id))}
+              >
+                <span className='flex h-5 w-3 shrink-0 items-center justify-center'>
+                  {isCurrent && <FontAwesomeIcon icon={faCheck} className='text-primary h-3 w-3' />}
+                </span>
+                <span className='flex min-w-0 flex-1 flex-col'>
+                  <span className='truncate'>{m.name}</span>
+                  <span className='text-base-content/60 truncate text-xs'>
+                    {status ? `${status} · ${m.host}` : m.host}
+                  </span>
+                  <FirmwareWarning version={m.version} className='mt-1' />
+                </span>
+              </button>
+            </li>
+          );
+        })}
         <li>
           <button type='button' onClick={run(() => (showMachineSetup.value = true))}>
             <FontAwesomeIcon icon={faPlus} className='h-3 w-3' />
