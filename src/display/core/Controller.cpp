@@ -190,15 +190,24 @@ void Controller::seedSDCard() {
 }
 
 void Controller::setupPanel() {
+    // Keep the detected or emulated panel model available after platform-specific
+    // driver selection so display-dependent UI behavior uses one shared path.
+    uint8_t model = PANEL_UNKNOWN;
 #ifdef GAGGIMATE_SIM
     driver = SdlDriver::getInstance(); // desktop SDL panel
-    driver->init();
+    // The SDL backend renders every simulator target, but the AMOLED target must
+    // emulate the hardware model so layout decisions match a physical 466x466 panel.
+#ifdef GAGGIMATE_SIM_AMOLED
+    model = PANEL_AMOLED;
+#else
+    model = PANEL_LILYGO;
+#endif
 #else
     // The panel can't change after flashing, so cache the detection result in NVS
     // and skip the multi-second probing chain on subsequent boots (GM-140).
     Preferences panelPrefs;
     panelPrefs.begin("panel", false);
-    uint8_t model = panelPrefs.getUChar("driver", PANEL_UNKNOWN);
+    model = panelPrefs.getUChar("driver", PANEL_UNKNOWN);
     if (model != PANEL_UNKNOWN) {
         // Drop the cache before init so a crash here falls back to full detection
         panelPrefs.remove("driver");
@@ -232,6 +241,9 @@ void Controller::setupPanel() {
             ESP.restart();
         }
     }
+#endif
+    // Run this for both real and simulated panels. In particular, the AMOLED
+    // simulator should exercise the same indicator-placement branch as hardware.
     if (driver != nullptr && model == PANEL_AMOLED) {
         ESP_LOGI(LOG_TAG, "AMOLED/OLED driver loaded, setting indicators visibility to inside position");
         gaugeSetpointsInside = true;
@@ -240,6 +252,7 @@ void Controller::setupPanel() {
         gaugeSetpointsInside = false;
     }
     driver->init();
+#ifndef GAGGIMATE_SIM
     panelPrefs.putUChar("driver", model);
     panelPrefs.end();
 #endif
