@@ -108,7 +108,6 @@ void GaggiMateController::setup() {
         }
     }
     if (!_config.capabilites.tof && _config.tankLevelPin > 0) {
-        _config.capabilites.tof = true;
         tankLevel = new DigitalInput(_config.tankLevelPin, [this](const bool state) {
             _comms.sendTofMeasurement(state ? 1000 : 10);
         }, 5);
@@ -116,7 +115,7 @@ void GaggiMateController::setup() {
     gm::DeviceCapabilities capabilities = gaggimate_Capabilities_init_zero;
     capabilities.dimming = _config.capabilites.dimming;
     capabilities.pressure = _config.capabilites.pressure;
-    capabilities.tof = _config.capabilites.tof;
+    capabilities.tof = _config.capabilites.tof || _config.tankLevelPin > 0;
     capabilities.led_control = _config.capabilites.ledControls;
     capabilities.dual_boiler = _config.capabilites.dualBoiler;
 
