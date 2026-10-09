@@ -232,7 +232,7 @@ void Controller::setupPanel() {
             ESP.restart();
         }
     }
-    if (driver != nullptr && (model == PANEL_AMOLED || model == PANEL_WAVESHARE)) {
+    if (driver != nullptr && model == PANEL_AMOLED) {
         ESP_LOGI(LOG_TAG, "AMOLED/OLED driver loaded, setting indicators visibility to inside position");
         gaugeSetpointsInside = true;
     } else {
