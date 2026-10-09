@@ -21,6 +21,7 @@
 #include "esp_sntp.h"
 
 #include <display/ui/default/eez/ui.h>
+#include <display/ui/default/eez/images.h>
 
 static EffectManager effect_mgr;
 
@@ -29,6 +30,25 @@ static constexpr uint32_t STARTUP_FADE_MS = 1000; // standby fade-in duration on
 static constexpr int32_t GAUGE_TICK_LONG = 25;      // meter tick length on most screens
 static constexpr int32_t GAUGE_TICK_SHORT = 10;     // shortened tick length on profile / new-menu screens
 static constexpr uint32_t GAUGE_TICK_ANIM_MS = 300; // tick length transition duration
+static constexpr int16_t GAUGE_SETPOINT_INSIDE_PIVOT_X = -195;
+
+static void applyGaugeSetpointVisibility(lv_obj_t *obj, bool inside) {
+    if (lv_obj_check_type(obj, &lv_meter_class)) {
+        auto *meter = reinterpret_cast<lv_meter_t *>(obj);
+        for (auto *indicator = static_cast<lv_meter_indicator_t *>(_lv_ll_get_head(&meter->indicator_ll)); indicator != nullptr;
+             indicator = static_cast<lv_meter_indicator_t *>(_lv_ll_get_next(&meter->indicator_ll, indicator))) {
+            if (indicator->type == LV_METER_INDICATOR_TYPE_NEEDLE_IMG) {
+                const bool isInsideIndicator = indicator->type_data.needle_img.src == &img_indicator_small_inside;
+                indicator->opa = inside == isInsideIndicator ? LV_OPA_COVER : LV_OPA_TRANSP;
+                lv_obj_invalidate(obj);
+            }
+        }
+    }
+
+    const uint32_t childCount = lv_obj_get_child_cnt(obj);
+    for (uint32_t i = 0; i < childCount; i++)
+        applyGaugeSetpointVisibility(lv_obj_get_child(obj, i), inside);
+}
 
 // Profile, menu and info screens, plus the status screen in chart mode, show shortened meter ticks.
 static bool isShortTickScreen(ScreensEnum s, bool chartMode) {
@@ -514,6 +534,8 @@ void DefaultUI::onVolumetricDelete() {
 
 void DefaultUI::setupPanel() {
     ui_init();
+    gaugeSetpointsInside = controller->areGaugeSetpointsInside();
+    applyGaugeSetpointStyle(gaugeSetpointsInside);
     setupState();
     applyTheme();
     ui_tick();
@@ -609,6 +631,9 @@ void DefaultUI::handleScreenChange() {
             setBrightness(settings.getMainBrightness());
         }
         eez_flow_set_screen(targetScreen, LV_SCR_LOAD_ANIM_NONE, 0, 0);
+        // Dial widgets are created lazily by EEZ, so apply the current choice after
+        // the new screen's pair of indicators exists.
+        applyGaugeSetpointStyle(gaugeSetpointsInside);
         animateGaugeTicks(isShortTickScreen(currentScreen, tickChartMode), isShortTickScreen(targetScreen, tickChartMode));
         rerender = true;
     }
@@ -627,14 +652,26 @@ void DefaultUI::collectMeters(lv_obj_t *obj) {
 }
 
 void DefaultUI::setGaugeTickLength(int32_t len) {
+    const int16_t insidePivotX = GAUGE_SETPOINT_INSIDE_PIVOT_X - (GAUGE_TICK_LONG - len);
     for (uint8_t i = 0; i < gaugeCount; i++) {
         auto *meter = reinterpret_cast<lv_meter_t *>(gaugeMeters[i]);
         auto *scale = static_cast<lv_meter_scale_t *>(_lv_ll_get_head(&meter->scale_ll));
         if (scale != nullptr) {
             scale->tick_length = static_cast<uint16_t>(len);
         }
+        for (auto *indicator = static_cast<lv_meter_indicator_t *>(_lv_ll_get_head(&meter->indicator_ll)); indicator != nullptr;
+             indicator = static_cast<lv_meter_indicator_t *>(_lv_ll_get_next(&meter->indicator_ll, indicator))) {
+            if (indicator->type == LV_METER_INDICATOR_TYPE_NEEDLE_IMG &&
+                indicator->type_data.needle_img.src == &img_indicator_small_inside) {
+                indicator->type_data.needle_img.pivot.x = insidePivotX;
+            }
+        }
         lv_obj_invalidate(gaugeMeters[i]);
     }
+}
+
+void DefaultUI::applyGaugeSetpointStyle(bool inside) {
+    applyGaugeSetpointVisibility(lv_scr_act(), inside);
 }
 
 void DefaultUI::gaugeTickAnimCb(void *var, int32_t v) { static_cast<DefaultUI *>(var)->setGaugeTickLength(v); }
