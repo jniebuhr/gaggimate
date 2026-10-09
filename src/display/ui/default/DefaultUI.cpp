@@ -6,8 +6,8 @@
 #include <display/core/process/BrewProcess.h>
 #include <display/core/process/Process.h>
 #include <display/core/zones.h>
-#include <display/drivers/AmoledDisplayDriver.h>
 #ifndef GAGGIMATE_SIM // hardware panel drivers are device-only
+#include <display/drivers/AmoledDisplayDriver.h>
 #include <display/drivers/LilyGoDriver.h>
 #include <display/drivers/WaveshareDriver.h>
 #include <display/drivers/common/LV_Helper.h>
@@ -1353,9 +1353,16 @@ String DefaultUI::getErrorMessage() { return controller->getSystemStateMessage()
 void DefaultUI::applyTheme() {
     const ::Settings &settings = controller->getSettings();
     int newThemeMode = settings.getThemeMode();
+#ifdef GAGGIMATE_SIM_AMOLED
+    // Match the automatic true-black theme used by the physical AMOLED driver.
+    if (newThemeMode == 0) {
+        newThemeMode = THEME_ID_AMOLED_DARK;
+    }
+#elif !defined(GAGGIMATE_SIM)
     if (newThemeMode == 0 && panelDriver == AmoledDisplayDriver::getInstance()) {
         newThemeMode = THEME_ID_AMOLED_DARK;
     }
+#endif
 
     if (newThemeMode != currentThemeMode) {
         currentThemeMode = newThemeMode;

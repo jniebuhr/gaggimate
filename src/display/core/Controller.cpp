@@ -37,7 +37,6 @@
 #ifndef GAGGIMATE_HEADLESS
 #ifdef GAGGIMATE_SIM
 #include <SdlDriver.h> // desktop SDL panel stands in for the hardware drivers
-#include <display/drivers/AmoledDisplayDriver.h>
 #else
 #include <Preferences.h>
 #include <display/drivers/AmoledDisplayDriver.h>
@@ -192,11 +191,7 @@ void Controller::seedSDCard() {
 
 void Controller::setupPanel() {
 #ifdef GAGGIMATE_SIM
-#ifdef GAGGIMATE_SIM_AMOLED
-    driver = AmoledDisplayDriver::getInstance(); // concrete AMOLED identity backed by SDL
-#else
     driver = SdlDriver::getInstance(); // desktop SDL panel
-#endif
     driver->init();
 #else
     // The panel can't change after flashing, so cache the detection result in NVS

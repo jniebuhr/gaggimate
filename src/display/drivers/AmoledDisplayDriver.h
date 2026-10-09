@@ -1,26 +1,5 @@
 #ifndef AMOLEDDISPLAYDRIVER_H
 #define AMOLEDDISPLAYDRIVER_H
-
-#ifdef GAGGIMATE_SIM
-
-#include <SdlDriver.h>
-
-// Host-safe stand-in with the same concrete singleton identity as the hardware
-// driver. It inherits SDL rendering/input but lets firmware code detect the
-// loaded driver with `AmoledDisplayDriver::getInstance()` exactly as on-device.
-class AmoledDisplayDriver : public SdlDriver {
-  public:
-    static AmoledDisplayDriver *getInstance() {
-        static AmoledDisplayDriver instance;
-        return &instance;
-    }
-
-  private:
-    AmoledDisplayDriver() = default;
-};
-
-#else
-
 #include "Driver.h"
 #include <display/drivers/AmoledDisplay/Amoled_DisplayPanel.h>
 
@@ -53,7 +32,5 @@ class AmoledDisplayDriver : public Driver {
 
     AmoledDisplayDriver() {};
 };
-
-#endif // GAGGIMATE_SIM
 
 #endif // AMOLEDDISPLAYDRIVER_H

@@ -42,9 +42,6 @@ The default target reproduces the 480×480 round RGB panels. The
 true-black theme shared by the supported LilyGo and Waveshare 1.75-inch round
 AMOLED panels. Their hardware rotations differ, but both present the same
 orientation and dimensions to LVGL after the panel driver applies its rotation.
-The target loads a host-safe `AmoledDisplayDriver` singleton backed by SDL, so
-firmware checks against `AmoledDisplayDriver::getInstance()` behave exactly as
-they do on hardware.
 
 `-t run` is a custom PlatformIO target (see `scripts/sim_run.py`). In a PlatformIO
 IDE (CLion/VSCode) it shows up under the `display-sim` environment as the
