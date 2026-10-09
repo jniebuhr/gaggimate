@@ -68,6 +68,35 @@ void WebSocketHandler::setup(Controller *_controller, PluginManager *_pluginMana
         broadcastJson(doc);
     });
 
+    // BLE scale lifecycle for the Bluetooth settings tab (GM-257).
+    pluginManager->on("scale:scan:complete", [this](Event const &event) {
+        JsonDocument doc(&psramAllocator);
+        doc["tp"] = "evt:scale:scan:complete";
+        doc["count"] = event.getInt("count");
+        broadcastJson(doc);
+    });
+    pluginManager->on("scale:connect:error", [this](Event const &event) {
+        JsonDocument doc(&psramAllocator);
+        doc["tp"] = "evt:scale:connect:error";
+        doc["address"] = event.getString("address");
+        doc["reason"] = event.getString("reason");
+        broadcastJson(doc);
+    });
+    pluginManager->on("scale:connect:success", [this](Event const &event) {
+        JsonDocument doc(&psramAllocator);
+        doc["tp"] = "evt:scale:connect:success";
+        doc["address"] = event.getString("address");
+        doc["name"] = event.getString("name");
+        broadcastJson(doc);
+    });
+    pluginManager->on("scale:disconnect", [this](Event const &event) {
+        JsonDocument doc(&psramAllocator);
+        doc["tp"] = "evt:scale:disconnect";
+        doc["address"] = event.getString("address");
+        doc["name"] = event.getString("name");
+        broadcastJson(doc);
+    });
+
     // Forward shot history rebuild progress events to WebSocket clients
     pluginManager->on("evt:history-rebuild-progress", [this](Event const &event) {
         JsonDocument doc(&psramAllocator);
@@ -379,6 +408,7 @@ void WebSocketHandler::publishState(unsigned long now) {
     doc["hs"] = caps.hwScale;
     doc["scaleSource"] = controller->getActiveScaleSourceName();
     doc["led"] = caps.ledControl;
+    doc["tofc"] = caps.tof;
     doc["sd"] = controller->isSDCard();
     doc["tw"] = profile.getTotalVolume(); // total target weight for the process
     doc["bta"] = controller->isVolumetricAvailable() ? 1 : 0;

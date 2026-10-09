@@ -331,6 +331,9 @@ typedef struct {
     lv_meter_scale_t *scale2;
     lv_meter_indicator_t *indicator4;
     lv_meter_indicator_t *indicator5;
+    lv_meter_indicator_t *indicator6;
+    lv_meter_indicator_t *indicator7;
+    lv_meter_indicator_t *indicator8;
 } user_widget_dials_state_t;
 
 typedef struct {

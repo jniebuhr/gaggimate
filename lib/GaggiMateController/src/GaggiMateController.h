@@ -58,6 +58,7 @@ class GaggiMateController {
     DigitalInput *steamBtn = nullptr;
     DigitalInput *waterBtn = nullptr;
     DigitalInput *waterSense = nullptr;
+    DigitalInput *tankLevel = nullptr;
     PressureSensor *pressureSensor = nullptr;
     LedController *ledController = nullptr;
     DistanceSensor *distanceSensor = nullptr;

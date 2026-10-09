@@ -39,6 +39,10 @@ channels:
           - $ref: '#/components/messages/ProfilesReorderResponse'
           - $ref: '#/components/messages/BrewConfirmEvent'
           - $ref: '#/components/messages/BrewConfirmCancelEvent'
+          - $ref: '#/components/messages/ScaleScanCompleteEvent'
+          - $ref: '#/components/messages/ScaleConnectErrorEvent'
+          - $ref: '#/components/messages/ScaleConnectSuccessEvent'
+          - $ref: '#/components/messages/ScaleDisconnectEvent'
           - $ref: '#/components/messages/FlushStartResponse'
           - $ref: '#/components/messages/CleaningResponse'
           - $ref: '#/components/messages/FlushStopResponse'
@@ -475,6 +479,65 @@ components:
             type: string
             enum: ['evt:brew:confirm:cancel']
         required: [tp]
+
+    ScaleScanCompleteEvent:
+      summary: The listening window (5 s) after POST /api/scales/scan closed, or a connect attempt aborted it. Sent immediately when no scan could run (a scale is already connected). Discovery itself keeps running in the background.
+      payload:
+        type: object
+        properties:
+          tp:
+            type: string
+            enum: ['evt:scale:scan:complete']
+          count:
+            type: integer
+            description: Number of supported scales discovered so far.
+        required: [tp, count]
+
+    ScaleConnectErrorEvent:
+      summary: Connecting to a BLE scale failed, after a user connect or the saved-scale auto-connect.
+      payload:
+        type: object
+        properties:
+          tp:
+            type: string
+            enum: ['evt:scale:connect:error']
+          address:
+            type: string
+          reason:
+            type: string
+            enum: ['not_found', 'connect_failed', 'unsupported']
+            description: not_found = not in the discovered list, connect_failed = BLE connection failed, unsupported = no driver could be created.
+        required: [tp, address, reason]
+
+    ScaleConnectSuccessEvent:
+      summary: A BLE scale connected.
+      payload:
+        type: object
+        properties:
+          tp:
+            type: string
+            enum: ['evt:scale:connect:success']
+          address:
+            type: string
+          name:
+            type: string
+            description: Advertised BLE name.
+        required: [tp, address, name]
+
+    ScaleDisconnectEvent:
+      summary: A connected BLE scale was lost while the machine is awake; the display rescans and reconnects automatically. Not sent for the intentional disconnect on standby.
+      payload:
+        type: object
+        properties:
+          tp:
+            type: string
+            enum: ['evt:scale:disconnect']
+          address:
+            type: string
+          name:
+            type: string
+            description: Advertised BLE name.
+        required: [tp, address, name]
 
     CleaningStartRequest:
       summary: Select the backflush or descaling system profile and start it in brew mode; error-level warnings trigger evt:brew:confirm as usual. Answered with res:cleaning:<task>:start (success false while a process is running).
