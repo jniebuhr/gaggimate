@@ -73,6 +73,7 @@ void Heater::setTunings(float Kp, float Ki, float Kd) {
 void Heater::stop() {
     autotuning = false;
     setSetpoint(0.0f);
+    requestOutput(false); // cut the relay now instead of on the heater task's next tick
 }
 
 void Heater::setThermalFeedforward(float *pumpFlowPtr, float incomingWaterTemp, int *valveStatusPtr) {
