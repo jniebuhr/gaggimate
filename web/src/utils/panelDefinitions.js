@@ -121,6 +121,7 @@ export const PANEL_DEFINITIONS = [
       stopFlush: ds.stopFlush,
       warnings: ds.warnings,
       systemMessage: ds.systemMessage,
+      standbyRemaining: ds.standbyRemaining,
       currentTemperature: ds.currentTemperature,
       targetTemperature: ds.targetTemperature,
       currentSteamTemperature: ds.currentSteamTemperature,

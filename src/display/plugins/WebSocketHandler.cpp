@@ -469,6 +469,13 @@ void WebSocketHandler::publishTelemetry() {
         statusDoc["lat"] = controller->getClientController()->getLatencyMs();
     }
     statusDoc["rtx"] = controller->getClientController()->getRetransmits(); // comms frames resent since boot
+    // Seconds until auto-standby; explicit null while nothing is counting down so merging clients clear it.
+    const long standbyRemaining = controller->getStandbyRemaining();
+    if (standbyRemaining >= 0) {
+        statusDoc["sbr"] = standbyRemaining / 1000;
+    } else {
+        statusDoc["sbr"] = nullptr;
+    }
     const bool bleConnected = BLEScales.isConnected();
     statusDoc["bw"] = bleConnected ? this->currentBluetoothWeight : 0; // current bluetooth weight
     statusDoc["cw"] = this->currentActiveWeight;
