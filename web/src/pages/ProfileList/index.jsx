@@ -587,6 +587,7 @@ function SimpleStep(props) {
           <span key={i}>
             Exit on: {t.value}
             {t.type === 'volumetric' && 'g'}
+            {t.type === 'weight_flow' && 'g/s'}
           </span>
         ))}
       </div>

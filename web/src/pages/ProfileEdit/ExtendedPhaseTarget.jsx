@@ -45,6 +45,8 @@ export const TargetTypes = [
     operator: 'lte',
     unit: 'ml/s',
   },
+  { label: 'Weight flow above', type: 'weight_flow', operator: 'gte', unit: 'g/s' },
+  { label: 'Weight flow below', type: 'weight_flow', operator: 'lte', unit: 'g/s' },
 ];
 
 export function ExtendedPhaseTarget({ onChange, target, index, onRemove }) {

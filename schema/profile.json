@@ -257,25 +257,27 @@
       "type": "object",
       "additionalProperties": false,
       "required": ["type", "value"],
-      "description": "A single stop condition. Parser is strict — only the four `type` strings below are accepted; any other string (including `\"weight\"`) is silently dropped by `continue;` at `src/display/models/profile.h:287-289`. The web UI shot analyzer treats `\"weight\"` and `\"volumetric\"` as aliases for display only, which can mislead users into thinking `\"weight\"` works as a target type.",
+      "description": "A single stop condition. Parser is strict — only the listed `type` strings are accepted; any other string (including `\"weight\"`) is silently dropped by `continue;` at `src/display/models/profile.h:287-289`. The web UI shot analyzer treats `\"weight\"` and `\"volumetric\"` as aliases for display only, which can mislead users into thinking `\"weight\"` works as a target type.",
       "properties": {
         "type": {
           "type": "string",
-          "description": "What measured variable this target watches. All four are strict string matches; unknown strings drop the target without error.",
+          "description": "What measured variable this target watches. All types are strict string matches; unknown strings drop the target without error.",
           "oneOf": [
             { "const": "volumetric", "title": "Volumetric (scale weight)", "description": "Compares scale weight in grams. Volumetric targets require a connected Bluetooth scale AND the brew-by-weight mode toggle active (see `BrewProcess` enableVolumetric flag). A `value` of `0` is treated as 'no target' — the phase will run for its full `duration` (`src/display/models/profile.h:55`). The web UI renders this as 'Weight'." },
             { "const": "ratio",      "title": "Volumetric (ratio)",        "description": "If this target is used, it will be multiplied with the current profile dose on brew start and follow the same logic as volumetric." },
             { "const": "pressure",   "title": "Pressure",                  "description": "Compares current pressure in bar." },
             { "const": "flow",       "title": "Flow",                      "description": "Compares current flow rate. UI labels this in ml/s; firmware uses same value as pump.flow (g/s)." },
+            { "const": "weight_flow", "title": "Weight flow", "description": "Compares weight flow in g/s calculated from the selected Bluetooth or hardware brew scale. Unavailable scale flow does not trigger this target." },
             { "const": "pumped",     "title": "Pumped water",              "description": "Compares cumulative water pumped in this phase in ml. Reset to 0 at each phase boundary (`BrewProcess.h:141`)." }
           ],
-          "enum": ["volumetric", "ratio", "pressure", "flow", "pumped"],
+          "enum": ["volumetric", "ratio", "pressure", "flow", "pumped", "weight_flow"],
           "enumDescriptions": [
             "Scale weight in grams.",
             "Brew ratio as a multiplier of dose.",
             "Current pressure in bar.",
             "Current flow rate in ml/s.",
-            "Cumulative water pumped in this phase, in ml."
+            "Cumulative water pumped in this phase, in ml.",
+            "Selected brew scale weight flow in g/s."
           ]
         },
         "operator": {
@@ -295,7 +297,7 @@
         "value": {
           "type": "number",
           "minimum": 0,
-          "description": "Threshold. Units depend on `type`: `volumetric` = grams, `ratio` = multiplier, `pressure` = bar, `flow` = ml/s, `pumped` = ml. For `volumetric` specifically, `value: 0` is treated as 'no target — run full duration'."
+          "description": "Threshold. Units depend on `type`: `volumetric` = grams, `ratio` = multiplier, `pressure` = bar, `flow` = ml/s, `pumped` = ml, `weight_flow` = g/s. For `volumetric` specifically, `value: 0` is treated as 'no target — run full duration'."
         }
       }
     }

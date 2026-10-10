@@ -52,6 +52,7 @@ export const columnConfig = [
     label: 'Weight Flow (g/s)',
     type: COLUMN_TYPES.SE,
     group: 'weightflow',
+    targetType: 'weight_flow',
   }),
   createColumn({
     id: 'wf_mm',

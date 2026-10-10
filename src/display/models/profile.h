@@ -4,7 +4,7 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
 
-enum class TargetType { TARGET_TYPE_VOLUMETRIC, TARGET_TYPE_PRESSURE, TARGET_TYPE_FLOW, TARGET_TYPE_PUMPED, TARGET_TYPE_RATIO };
+enum class TargetType { TARGET_TYPE_VOLUMETRIC, TARGET_TYPE_PRESSURE, TARGET_TYPE_FLOW, TARGET_TYPE_PUMPED, TARGET_TYPE_RATIO, TARGET_TYPE_WEIGHT_FLOW };
 enum class TargetOperator { LTE, GTE };
 enum class PumpTarget {
     PUMP_TARGET_FLOW,
@@ -27,6 +27,7 @@ enum class PhaseExitReason : uint8_t {
     ABORTED = 7,           // shot manually stopped before the process finished
     HOLD_RELEASED = 8,     // held phase ended because the button was released (hold-to-flush)
     TARGET_RATIO = 9,      // ratio target reached
+    TARGET_WEIGHT_FLOW = 10, // scale weight-flow target reached
 };
 
 struct Target {
@@ -125,7 +126,7 @@ struct Phase {
 
     // Returns the reason the phase finished, or PhaseExitReason::NONE if it is still running.
     PhaseExitReason isFinished(bool enableVolumetric, float volume, float time_in_phase, float current_flow,
-                               float current_pressure, float water_pumped, String type, float dose) const {
+                               float current_pressure, float water_pumped, String type, float dose, float weight_flow = 0.0f, bool scales_available = false) const {
         bool volumetricTested = false;
         for (const auto &target : targets) {
             switch (target.type) {
@@ -155,6 +156,11 @@ struct Phase {
             case TargetType::TARGET_TYPE_FLOW:
                 if (target.isReached(current_flow)) {
                     return PhaseExitReason::TARGET_FLOW;
+                }
+                break;
+            case TargetType::TARGET_TYPE_WEIGHT_FLOW:
+                if (scales_available && target.isReached(weight_flow)) {
+                    return PhaseExitReason::TARGET_WEIGHT_FLOW;
                 }
                 break;
             case TargetType::TARGET_TYPE_PUMPED:
@@ -391,6 +397,8 @@ inline bool parseProfile(const JsonObject &obj, Profile &profile) {
                     target.type = TargetType::TARGET_TYPE_PRESSURE;
                 } else if (type == "flow") {
                     target.type = TargetType::TARGET_TYPE_FLOW;
+                } else if (type == "weight_flow") {
+                    target.type = TargetType::TARGET_TYPE_WEIGHT_FLOW;
                 } else if (type == "pumped") {
                     target.type = TargetType::TARGET_TYPE_PUMPED;
                 } else {
@@ -491,6 +499,9 @@ inline void writeProfile(JsonObject &obj, const Profile &profile) {
                     break;
                 case TargetType::TARGET_TYPE_FLOW:
                     tObj["type"] = "flow";
+                    break;
+                case TargetType::TARGET_TYPE_WEIGHT_FLOW:
+                    tObj["type"] = "weight_flow";
                     break;
                 case TargetType::TARGET_TYPE_PUMPED:
                     tObj["type"] = "pumped";

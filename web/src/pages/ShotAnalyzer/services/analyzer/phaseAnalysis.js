@@ -92,6 +92,7 @@ function getRecordedStopValue(exitType, samples, phaseStartTime, closingSample, 
   if (isWeightType(exitType)) return stopSample.v;
   if (exitType === 'pressure') return stopSample.cp;
   if (exitType === 'flow') return stopSample.fl;
+  if (exitType === 'weight_flow') return stopSample.vf;
   if (exitType === 'pumped') {
     const stopClosingSample = stopIndex === samples.length - 1 ? closingSample : null;
     return calculatePumpedWater(samples, stopIndex, stopClosingSample, pumpedWaterSource);
@@ -142,6 +143,7 @@ function findAutoAdjustedTargetMatch(targets, targetContext, nextPhaseSamples) {
     {
       pressure: anchor.cp,
       flow: anchor.fl,
+      weightFlow: anchor.vf,
       weight: anchor.v,
       pumped: targetContext.anchorPumped,
     },
@@ -207,10 +209,17 @@ function createExitState() {
   };
 }
 
-function applyRecordedExitReason(exitState, recordedExitReasonCode) {
+function applyRecordedExitReason(exitState, recordedExitReasonCode, profilePhase) {
   if (!isKnownPhaseExitReason(recordedExitReasonCode)) return false;
 
-  const metadata = getPhaseExitReasonMeta(recordedExitReasonCode);
+  let metadata = getPhaseExitReasonMeta(recordedExitReasonCode);
+  // Older weight-flow firmware shared code 3 with pump flow. Only disambiguate
+  // when the profile has a weight-flow condition and no pump-flow condition.
+  const targets = profilePhase?.targets || [];
+  if (Number(recordedExitReasonCode) === 3 && targets.some(t => t.type === 'weight_flow') &&
+      !targets.some(t => t.type === 'flow')) {
+    metadata = { ...metadata, stopReason: 'Weight Flow Stop', exitType: 'weight_flow' };
+  }
   exitState.exitCode = normalizePhaseExitReasonCode(recordedExitReasonCode);
   exitState.exitReason = metadata.stopReason;
   exitState.exitSource = 'recorded';
@@ -614,6 +623,7 @@ export function analyzeExecutedPhase({
   const hasRecordedExitReason = applyRecordedExitReason(
     exitState,
     normalizedRecordedExitReasonCode,
+    profilePhase,
   );
   const recordedStopValue = hasRecordedExitReason
     ? getRecordedStopValue(

@@ -12,6 +12,7 @@ function getPreviousPhaseTargetValue(target, prevPhase) {
   if (target.type === 'pumped') return prevPhase.water ?? 0;
   if (target.type === 'pressure') return prevPhase.stats?.p?.avg ?? 0;
   if (target.type === 'flow') return prevPhase.stats?.f?.avg ?? 0;
+  if (target.type === 'weight_flow') return prevPhase.stats?.wf?.avg;
   return undefined;
 }
 
@@ -19,6 +20,7 @@ function getFirstSampleTargetValue(target, firstSample) {
   if (isWeightTarget(target)) return firstSample.v ?? 0;
   if (target.type === 'pressure') return firstSample.cp ?? 0;
   if (target.type === 'flow') return firstSample.fl ?? 0;
+  if (target.type === 'weight_flow') return firstSample.vf;
   return undefined;
 }
 

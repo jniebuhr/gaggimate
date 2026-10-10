@@ -20,6 +20,19 @@ class VolumetricRateCalculator {
         }
     }
 
+    // A flow threshold needs two fresh samples at distinct times; zero alone
+    // cannot distinguish stationary weight from an unavailable measurement.
+    bool hasRecentMeasurements() const {
+        const unsigned long now = millis();
+        if (measurementTimes.size() < 2 || now - measurementTimes.back() >= windowDuration)
+            return false;
+        for (const auto time : measurementTimes) {
+            if (now - time < windowDuration && time != measurementTimes.back())
+                return true;
+        }
+        return false;
+    }
+
     double getRate(unsigned long time = 0) const {
         if (time == 0) {
             time = millis();

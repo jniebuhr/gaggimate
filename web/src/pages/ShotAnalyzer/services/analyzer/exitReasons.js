@@ -8,6 +8,7 @@ export const PHASE_EXIT_REASON = Object.freeze({
   SAFETY: 6,
   ABORTED: 7,
   TARGET_RATIO: 9,
+  TARGET_WEIGHT_FLOW: 10,
 });
 
 const EXIT_REASON_META = Object.freeze({
@@ -30,6 +31,11 @@ const EXIT_REASON_META = Object.freeze({
     label: 'Flow target',
     stopReason: 'Pump Flow Stop',
     exitType: 'flow',
+  },
+  [PHASE_EXIT_REASON.TARGET_WEIGHT_FLOW]: {
+    label: 'Weight-flow target',
+    stopReason: 'Weight Flow Stop',
+    exitType: 'weight_flow',
   },
   [PHASE_EXIT_REASON.TARGET_PUMPED]: {
     label: 'Pumped-water target',
