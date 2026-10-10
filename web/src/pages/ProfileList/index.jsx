@@ -67,21 +67,21 @@ const PhaseLabels = {
 const connected = computed(() => machine.value.connected);
 
 function ProfileCard({
-  data,
-  onDelete,
-  onSelect,
-  onFavorite,
-  onUnfavorite,
-  onDuplicate,
-  favoriteDisabled,
-  unfavoriteDisabled,
-  disabledDrag,
-  isDragging,
-  onMoveTop,
-  onMoveBottom,
-  isFirst,
-  isLast,
-}) {
+                       data,
+                       onDelete,
+                       onSelect,
+                       onFavorite,
+                       onUnfavorite,
+                       onDuplicate,
+                       favoriteDisabled,
+                       unfavoriteDisabled,
+                       disabledDrag,
+                       isDragging,
+                       onMoveTop,
+                       onMoveBottom,
+                       isFirst,
+                       isLast,
+                     }) {
   const { armed: confirmDelete, armOrRun: confirmOrDelete } = useConfirmAction(4000);
   const [tooltipsDisabled, setTooltipsDisabled] = useState(false);
 
@@ -682,6 +682,8 @@ export function ProfileList() {
     return profiles;
   }, [profiles, searchTerm]);
 
+  const isUtilityProfileActive = profilesToShow.filter(p => p.utility && p.selected).length > 0;
+
   const clearDropHighlights = useCallback(() => {
     if (!containerRef.current) return;
     const highlighted = containerRef.current.querySelectorAll('.drop-highlight');
@@ -1026,20 +1028,22 @@ export function ProfileList() {
         <div role='tablist' className='tabs tabs-border mb-4'>
           <button
             role='tab'
-            className={`tab ${activeTab === 'extraction' ? 'tab-active' : ''}`}
+            className={`tab ${activeTab === 'extraction' ? 'tab-active' : ''} ${!isUtilityProfileActive ? 'pr-[5px]' : ''}`}
             onClick={() => setActiveTab('extraction')}
             aria-label='Switch to extraction tab'
           >
             Extraction
           </button>
+          {!isUtilityProfileActive && <div class='bg-primary mr-[7px] h-2 w-2 rounded-full' />}
           <button
             role='tab'
-            className={`tab ${activeTab === 'utility' ? 'tab-active' : ''}`}
+            className={`tab ${activeTab === 'utility' ? 'tab-active' : ''} ${isUtilityProfileActive ? 'pr-[5px]' : ''}`}
             onClick={() => setActiveTab('utility')}
             aria-label='Switch to utility tab'
           >
             Utility
           </button>
+          {isUtilityProfileActive && <div class='bg-primary mr-[7px] h-2 w-2 rounded-full' />}
         </div>
       )}
       <div
