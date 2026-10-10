@@ -409,7 +409,7 @@ void Controller::onSystemInfo(const char *hardware, const char *version, uint32_
     } else {
         setPressureScale();
         setScaleFactors();
-        setPidSettings();
+        setHeaterSettings();
         setPumpModelCoeffs();
         configResendUntil = millis() + CONFIG_RESEND_WINDOW_MS;
         lastConfigResend = millis();
@@ -591,7 +591,7 @@ void Controller::loop() {
     // and a spurious ACK then stops the reliable layer retrying. Re-send until it lands.
     if (comms.isConnected() && now < configResendUntil && (now - lastConfigResend) >= CONFIG_RESEND_INTERVAL_MS) {
         setPressureScale();
-        setPidSettings();
+        setHeaterSettings();
         setPumpModelCoeffs();
         lastConfigResend = now;
     }
@@ -908,10 +908,11 @@ void Controller::setPumpModelCoeffs(void) {
     }
 }
 
-void Controller::setPidSettings() {
+void Controller::setHeaterSettings() {
     float pid[4];
     parseFloatCsv(settings.getPid(), pid, 4, 0.0f);
-    comms.sendPidSettings(pid[0], pid[1], pid[2], pid[3]);
+    comms.sendHeaterSettings(pid[0], pid[1], pid[2], pid[3], settings.isHeaterCoordinationEnabled(),
+                             static_cast<uint32_t>(settings.getHeaterHandoverMs()));
 }
 
 int Controller::getTargetGrindDuration() const { return settings.getTargetGrindDuration(); }
@@ -1331,7 +1332,7 @@ void Controller::setMode(int newMode) {
 
     updateLastAction();
     setTargetTemp(getTargetTemp());
-    setPidSettings();
+    setHeaterSettings();
 }
 
 void Controller::onTempRead(float temperature) {

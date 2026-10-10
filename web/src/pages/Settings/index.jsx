@@ -64,6 +64,7 @@ const CHECKBOX_KEYS = [
   'mahlkonigActive',
   'homeAssistant',
   'momentaryButtons',
+  'heaterCoordinationEnabled',
   'delayAdjust',
   'clock24hFormat',
   'autowakeupEnabled',

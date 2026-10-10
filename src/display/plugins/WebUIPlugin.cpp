@@ -359,6 +359,10 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
             }
             if (request->hasArg("preferredScaleSource"))
                 settings->setPreferredScaleSource(request->arg("preferredScaleSource"));
+            if (request->hasArg("heaterCoordinationEnabled"))
+                settings->setHeaterCoordinationEnabled(parseBoolArg(request->arg("heaterCoordinationEnabled")));
+            if (request->hasArg("heaterHandoverMs"))
+                settings->setHeaterHandoverMs(request->arg("heaterHandoverMs").toInt());
             if (request->hasArg("pid"))
                 settings->setPid(request->arg("pid"));
             if (request->hasArg("pumpModelCoeffs"))
@@ -536,6 +540,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
         pluginManager->trigger("settings:changed");
         controller->setTargetTemp(controller->getTargetTemp());
         controller->setScaleFactors();
+        controller->setHeaterSettings();
         controller->setPumpModelCoeffs();
     }
 
@@ -553,6 +558,8 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["haIP"] = settings.getHomeAssistantIP();
     doc["haPort"] = settings.getHomeAssistantPort();
     doc["haTopic"] = settings.getHomeAssistantTopic();
+    doc["heaterCoordinationEnabled"] = settings.isHeaterCoordinationEnabled();
+    doc["heaterHandoverMs"] = settings.getHeaterHandoverMs();
     doc["pid"] = settings.getPid();
     doc["pumpModelCoeffs"] = settings.getPumpModelCoeffs();
     doc["pumpSlipCoeffs"] = settings.getPumpSlipCoeffs();
