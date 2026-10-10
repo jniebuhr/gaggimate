@@ -18,8 +18,9 @@ constexpr int RERENDER_INTERVAL_ACTIVE = 100;
 
 constexpr int TEMP_HISTORY_INTERVAL = 250;
 
-constexpr int SHOT_CHART_POINTS = 120;                    // 30 s window; older samples slide out to the left
+constexpr int SHOT_CHART_POINTS = 120;                    // 30 s live window; older samples slide out to the left
 constexpr unsigned long SHOT_CHART_SAMPLE_INTERVAL = 250; // ms per point
+constexpr int SHOT_HISTORY_POINTS = 480;                  // 2 min of samples, shown whole once the shot ends
 constexpr int PROFILE_CHART_POINTS = 100;                 // pro profile preview chart resolution
 
 enum ShotChartSeries {
@@ -90,10 +91,12 @@ class DefaultUI {
     void animateGaugeTicks(bool fromShort, bool toShort);
     void collectMeters(lv_obj_t *obj);
     void setGaugeTickLength(int32_t len);
+    void applyGaugeSetpointStyle(bool inside);
     static void gaugeTickAnimCb(void *var, int32_t v);
     lv_obj_t *gaugeMeters[4] = {nullptr};
     bool tickChartMode = false; // chart mode the ring ticks currently reflect
     uint8_t gaugeCount = 0;
+    bool gaugeSetpointsInside = false;
     void positionMenuIcon(lv_obj_t *obj, int angle, int radius);
 
     void updateState();
@@ -111,13 +114,24 @@ class DefaultUI {
     void resetShotChart(float targetTemperature, float targetWeight);
     void updateShotChart();
     void addShotChartSample(float weight);
-    static void rescaleShotSeries(lv_coord_t *points, float oldRange, float newRange);
+    void renderShotChart();
+    void zoomOutShotChart();
+    static void shotChartZoomAnimCb(void *var, int32_t value);
     static void shotChartDrawCb(lv_event_t *e);
     static void shotChartBackgroundCb(lv_event_t *e);
     lv_obj_t *shotChart = nullptr;
     lv_chart_series_t *shotSeries[SHOT_SERIES_COUNT] = {};
     lv_coord_t shotPoints[SHOT_SERIES_COUNT][SHOT_CHART_POINTS] = {};
     uint16_t shotPointCount = 0;
+    struct ShotSample {
+        float values[SHOT_SERIES_COUNT]; // raw units, negative = no value
+        bool phaseStart;
+    };
+    ShotSample *shotHistory = nullptr; // PSRAM ring buffer of SHOT_HISTORY_POINTS samples
+    uint16_t shotHistoryStart = 0;
+    uint16_t shotHistoryCount = 0;
+    bool shotChartLive = false;                  // false once the shot ended and the whole shot is shown
+    float shotChartZoom = 0.0f;                  // 0 = live 30 s window, 1 = whole shot
     bool shotPhaseMarks[SHOT_CHART_POINTS] = {}; // true where a new phase starts
     size_t shotPhaseIndex = 0;
     bool shotPhasePending = false;
@@ -141,8 +155,22 @@ class DefaultUI {
     bool profilePhaseMarks[PROFILE_CHART_POINTS] = {}; // true where a new phase starts
     String profileChartId;
     int profileChartGeneration = -1;
-    String profileImageSrc;
     bool profileDetailsVisible = false;
+
+    // Profile image: the UI task asks for an id, the profile task loads it from SD into PSRAM and hands it over.
+    void loadRequestedImage();
+    std::mutex imageMutex;
+    String imageWantedId;            // UI → loader
+    int imageRequest = 0;            // bumped whenever imageWantedId changes
+    uint8_t *imagePending = nullptr; // loader → UI
+    String imagePendingId;
+    std::atomic<int> imageGeneration{0}; // bumped when an image is uploaded or removed
+    int imageLoadedRequest = -1;         // loader-only
+    int imageLoadedGeneration = -1;
+    lv_img_dsc_t imageDsc[2] = {};
+    uint8_t imageDscIndex = 0;
+    uint8_t *imageShown = nullptr; // UI-only
+    String imageShownId;
     String getErrorMessage();
 
     void adjustDials(lv_obj_t *dials);

@@ -2,6 +2,7 @@ import { computed } from '@preact/signals';
 import { useContext, useEffect, useState } from 'preact/hooks';
 import { useQuery } from 'preact-fetching';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
+import { MODES } from './utils.js';
 
 const status = computed(() => machine.value.status);
 const capabilities = computed(() => machine.value.capabilities);
@@ -45,14 +46,23 @@ export function useDashboardState() {
   const altRelayFunction = settings?.altRelayFunction ?? 1;
   const isGrindAvailable = isSmartGrindEnabled || altRelayFunction === 1;
   const showGrindTab = isGrindAvailable || isGrinding;
+  // Dual boilers steam and dispense water from brew mode; keep a hidden tab while it is the current mode.
+  const steamWaterAvailable = !caps?.dualBoiler;
+  const visibleModes = MODES.filter(m => {
+    if (m.id === mode) return true;
+    if (m.id === 4) return showGrindTab;
+    if (m.id === 2 || m.id === 3) return steamWaterAvailable;
+    return true;
+  });
 
   // ── water level (Alba) ────────────────────────────────────
   const ledControl = caps?.ledControl || false;
+  const tof = caps?.tof || false;
   const emptyTankDistance = settings?.emptyTankDistance || 0;
   const fullTankDistance = settings?.fullTankDistance || 0;
   const albaCalibrated = emptyTankDistance > 0 && fullTankDistance > 0;
   const waterLevelPercent =
-    ledControl && albaCalibrated
+    tof && albaCalibrated
       ? Math.max(
           0,
           Math.min(
@@ -150,8 +160,10 @@ export function useDashboardState() {
     isGrinding,
     isGrindAvailable,
     showGrindTab,
+    visibleModes,
     // water level
     ledControl,
+    tof,
     albaCalibrated,
     waterLevelPercent,
     // settings

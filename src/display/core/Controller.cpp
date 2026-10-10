@@ -23,6 +23,7 @@
 #include <display/plugins/SmartGrindPlugin.h>
 #include <display/plugins/WebUIPlugin.h>
 #include <display/plugins/mahlkonig/MahlkonigPlugin.h>
+#include <display/util/FsUtil.h>
 #ifndef GAGGIMATE_SIM // network/BLE plugins are device-only
 #include <display/plugins/BLEScalePlugin.h>
 #include <display/plugins/HomekitPlugin.h>
@@ -77,6 +78,7 @@ void Controller::setup() {
         sdcard = true;
         ESP_LOGI(LOG_TAG, "SD Card detected and mounted");
         ESP_LOGI(LOG_TAG, "Used: %lluMB, Capacity: %lluMB", SD_MMC.usedBytes() / 1024 / 1024, SD_MMC.cardSize() / 1024 / 1024);
+        seedSDCard();
     }
 #endif
     FS *fs = &LittleFS;
@@ -164,6 +166,29 @@ void Controller::connect() {
 // NVS values for the cached panel detection result (GM-140) — only append, never renumber
 enum PanelModel : uint8_t { PANEL_UNKNOWN = 0, PANEL_LILYGO = 1, PANEL_AMOLED = 2, PANEL_WAVESHARE = 3 };
 
+// Hidden, so an interrupted copy still counts as an empty card and is retried on next boot.
+static constexpr const char *SD_SEED_MARKER = "/.gm-seeding";
+
+void Controller::seedSDCard() {
+    if (!fs_util::isEmptyVolume(SD_MMC) && !SD_MMC.exists(SD_SEED_MARKER))
+        return;
+    ESP_LOGI(LOG_TAG, "Empty SD card, copying data from internal flash");
+    File marker = SD_MMC.open(SD_SEED_MARKER, "w");
+    if (marker)
+        marker.close();
+    bool ok = true;
+    for (const char *dir : {"/p", "/h"}) {
+        if (LittleFS.exists(dir))
+            ok = fs_util::copyTree(LittleFS, SD_MMC, dir) && ok;
+    }
+    if (ok) {
+        SD_MMC.remove(SD_SEED_MARKER);
+        ESP_LOGI(LOG_TAG, "SD card seeded from internal flash");
+    } else {
+        ESP_LOGE(LOG_TAG, "Failed to seed SD card from internal flash, retrying next boot");
+    }
+}
+
 void Controller::setupPanel() {
 #ifdef GAGGIMATE_SIM
     driver = SdlDriver::getInstance(); // desktop SDL panel
@@ -206,6 +231,13 @@ void Controller::setupPanel() {
             delay(10000);
             ESP.restart();
         }
+    }
+    if (driver != nullptr && model == PANEL_AMOLED) {
+        ESP_LOGI(LOG_TAG, "AMOLED/OLED driver loaded, setting indicators visibility to inside position");
+        gaugeSetpointsInside = true;
+    } else {
+        ESP_LOGI(LOG_TAG, "Default LCD / LillyGo driver loaded, setting indicators visibility to outside position");
+        gaugeSetpointsInside = false;
     }
     driver->init();
     panelPrefs.putUChar("driver", model);
@@ -377,7 +409,7 @@ void Controller::onSystemInfo(const char *hardware, const char *version, uint32_
     } else {
         setPressureScale();
         setScaleFactors();
-        setPidSettings();
+        setHeaterSettings();
         setPumpModelCoeffs();
         configResendUntil = millis() + CONFIG_RESEND_WINDOW_MS;
         lastConfigResend = millis();
@@ -559,7 +591,7 @@ void Controller::loop() {
     // and a spurious ACK then stops the reliable layer retrying. Re-send until it lands.
     if (comms.isConnected() && now < configResendUntil && (now - lastConfigResend) >= CONFIG_RESEND_INTERVAL_MS) {
         setPressureScale();
-        setPidSettings();
+        setHeaterSettings();
         setPumpModelCoeffs();
         lastConfigResend = now;
     }
@@ -880,10 +912,11 @@ void Controller::setPumpModelCoeffs(void) {
     }
 }
 
-void Controller::setPidSettings() {
+void Controller::setHeaterSettings() {
     float pid[4];
     parseFloatCsv(settings.getPid(), pid, 4, 0.0f);
-    comms.sendPidSettings(pid[0], pid[1], pid[2], pid[3]);
+    comms.sendHeaterSettings(pid[0], pid[1], pid[2], pid[3], settings.isHeaterCoordinationEnabled(),
+                             static_cast<uint32_t>(settings.getHeaterHandoverMs()));
 }
 
 int Controller::getTargetGrindDuration() const { return settings.getTargetGrindDuration(); }
@@ -1303,7 +1336,7 @@ void Controller::setMode(int newMode) {
 
     updateLastAction();
     setTargetTemp(getTargetTemp());
-    setPidSettings();
+    setHeaterSettings();
 }
 
 void Controller::onTempRead(float temperature) {

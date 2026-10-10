@@ -38,11 +38,13 @@ const apiService = new ApiService();
 const DESKTOP_NAV_COLLAPSED_STORAGE_KEY = 'gaggimate.desktopNavCollapsed';
 
 function readInitialDesktopNavCollapsed() {
+  // The drawer is an overlay below md, so it always starts closed there; the stored state is desktop-only.
+  if (globalThis.window?.innerWidth < 768) return true;
   const storage = globalThis.window?.localStorage;
   if (!storage) return true;
 
   try {
-    return storage.getItem(DESKTOP_NAV_COLLAPSED_STORAGE_KEY) === 'true';
+    return storage.getItem(DESKTOP_NAV_COLLAPSED_STORAGE_KEY) !== 'false';
   } catch {
     return true;
   }
@@ -70,7 +72,7 @@ export function App() {
 
   useEffect(() => {
     const storage = globalThis.window?.localStorage;
-    if (!storage) return;
+    if (!storage || globalThis.window.innerWidth < 768) return;
 
     try {
       storage.setItem(DESKTOP_NAV_COLLAPSED_STORAGE_KEY, String(navCollapsed));

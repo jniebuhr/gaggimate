@@ -53,7 +53,8 @@ export function ToggleField({ label, htmlFor, checked, onChange, helpText }) {
   return (
     <div className='form-control'>
       <label htmlFor={htmlFor} className='label cursor-pointer'>
-        <span className='label-text text-sm font-medium'>{label}</span>
+        {/* Explicit color: older WebViews resolve daisyUI's color-mix(currentColor) label color to transparent. */}
+        <span className='label-text text-base-content text-sm font-medium'>{label}</span>
         <input
           id={htmlFor}
           name={htmlFor}

@@ -12,13 +12,15 @@
 #include <display/drivers/WaveshareDriver.h>
 #include <display/drivers/common/LV_Helper.h>
 #endif
+#include <cmath>
 #include <display/main.h>
-#include <display/ui/utils/SdImageDecoder.h>
 #include <display/ui/utils/effects.h>
+#include <esp32-hal-psram.h>
 #include <utility>
 
 #include "esp_sntp.h"
 
+#include <display/ui/default/eez/images.h>
 #include <display/ui/default/eez/ui.h>
 
 static EffectManager effect_mgr;
@@ -28,6 +30,25 @@ static constexpr uint32_t STARTUP_FADE_MS = 1000; // standby fade-in duration on
 static constexpr int32_t GAUGE_TICK_LONG = 25;      // meter tick length on most screens
 static constexpr int32_t GAUGE_TICK_SHORT = 10;     // shortened tick length on profile / new-menu screens
 static constexpr uint32_t GAUGE_TICK_ANIM_MS = 300; // tick length transition duration
+static constexpr int16_t GAUGE_SETPOINT_INSIDE_PIVOT_X = -195;
+
+static void applyGaugeSetpointVisibility(lv_obj_t *obj, bool inside) {
+    if (lv_obj_check_type(obj, &lv_meter_class)) {
+        auto *meter = reinterpret_cast<lv_meter_t *>(obj);
+        for (auto *indicator = static_cast<lv_meter_indicator_t *>(_lv_ll_get_head(&meter->indicator_ll)); indicator != nullptr;
+             indicator = static_cast<lv_meter_indicator_t *>(_lv_ll_get_next(&meter->indicator_ll, indicator))) {
+            if (indicator->type == LV_METER_INDICATOR_TYPE_NEEDLE_IMG) {
+                const bool isInsideIndicator = indicator->type_data.needle_img.src == &img_indicator_small_inside;
+                indicator->opa = inside == isInsideIndicator ? LV_OPA_COVER : LV_OPA_TRANSP;
+                lv_obj_invalidate(obj);
+            }
+        }
+    }
+
+    const uint32_t childCount = lv_obj_get_child_cnt(obj);
+    for (uint32_t i = 0; i < childCount; i++)
+        applyGaugeSetpointVisibility(lv_obj_get_child(obj, i), inside);
+}
 
 // Profile, menu and info screens, plus the status screen in chart mode, show shortened meter ticks.
 static bool isShortTickScreen(ScreensEnum s, bool chartMode) {
@@ -55,8 +76,12 @@ static constexpr lv_coord_t SHOT_CHART_SCALE = 1000;    // every series is norma
 static constexpr float SHOT_FLOW_RANGE_DEFAULT = 12.0f; // bar / ml/s
 static constexpr float SHOT_WEIGHT_RANGE_DEFAULT = 50.0f;
 static constexpr float SHOT_TEMP_RANGE = 10.0f; // profile temperature centred, ±10 °C
+static constexpr uint32_t SHOT_ZOOM_ANIM_MS = 400;
+static constexpr int32_t SHOT_ZOOM_ANIM_STEPS = 1000;
 
-static constexpr int PROFILE_THEME_COLORS[2] = {7, 2};  // pressure, flow; same slots as the shot chart
+// Pressure teal and flow pink as in the web UI's profile chart, deepened where the profile card is light (dark themes).
+static constexpr uint32_t PROFILE_COLORS[3][2] = {{0x2a8f8f, 0xe05a5a}, {0x4bc0c0, 0xffc0c0}, {0x2a8f8f, 0xe05a5a}};
+static constexpr lv_coord_t PROFILE_LINE_WIDTH = 4;     // limit lines draw dashed and thinner
 static constexpr float PROFILE_CHART_STEP = 0.1f;       // s, matches the web UI profile chart
 static constexpr float PROFILE_CHART_MIN_RANGE = 10.0f; // bar / ml/s
 
@@ -107,11 +132,11 @@ static void styleTrendChart(lv_obj_t *chart, uint16_t points) {
 }
 
 // The chart shares one line descriptor across all series, so set every field each segment.
-static void styleTrendLine(lv_draw_line_dsc_t *line, bool secondary) {
-    line->dash_width = secondary ? 3 : 0;
-    line->dash_gap = secondary ? 3 : 0;
+static void styleTrendLine(lv_draw_line_dsc_t *line, bool secondary, lv_coord_t width = 2) {
+    line->dash_width = secondary ? width + 1 : 0;
+    line->dash_gap = secondary ? width + 1 : 0;
     line->opa = secondary ? LV_OPA_60 : LV_OPA_COVER;
-    line->width = secondary ? 1 : 2;
+    line->width = secondary ? width * 3 / 4 : width;
 }
 
 // Drawn before the series so the guides sit behind the lines.
@@ -160,7 +185,7 @@ void DefaultUI::reloadProfiles() { profileLoaded = 0; }
 DefaultUI::DefaultUI(Controller *controller, Driver *driver, PluginManager *pluginManager)
     : controller(controller), panelDriver(driver), pluginManager(pluginManager) {
     setupPanel();
-    xTaskCreatePinnedToCore(loopTask, "DefaultUI::loop", configMINIMAL_STACK_SIZE * 7, this, 1, &taskHandle, 1);
+    xTaskCreatePinnedToCore(loopTask, "DefaultUI::loop", configMINIMAL_STACK_SIZE * 6, this, 1, &taskHandle, 1);
 }
 
 void DefaultUI::init() {
@@ -291,7 +316,7 @@ void DefaultUI::init() {
     pluginManager->on("profiles:profile:unfavorite", [this](Event const &event) { reloadProfiles(); });
     pluginManager->on("profiles:profile:save", [this](Event const &event) { reloadProfiles(); });
     pluginManager->on("profiles:image:change", [this](Event const &) {
-        sdImageInvalidate();
+        imageGeneration++;
         reloadProfiles();
         rerender = true;
     });
@@ -302,8 +327,8 @@ void DefaultUI::init() {
             rerender = true;
         }
     });
-    xTaskCreatePinnedToCore(profileLoopTask, "DefaultUI::loopProfiles", configMINIMAL_STACK_SIZE * 4, this, 1, &profileTaskHandle,
-                            0);
+    // Task names cap at 15 chars; "DefaultUI::loopProfiles" read as "DefaultUI::loop" in panics. SD + JSON need the headroom.
+    xTaskCreatePinnedToCore(profileLoopTask, "UI::profiles", configMINIMAL_STACK_SIZE * 6, this, 1, &profileTaskHandle, 0);
 }
 
 // True while any pointer input device (the touch panel) is pressed.
@@ -383,8 +408,6 @@ void DefaultUI::loop() {
         }
     }
 
-    if (sdImageProcessInvalidation() && objects.profile_preview != nullptr)
-        lv_obj_invalidate(objects.profile_preview);
     ui_tick();
     lv_task_handler();
 }
@@ -404,12 +427,12 @@ void DefaultUI::loopProfiles() {
         std::vector<bool> hasImage;
         profiles.reserve(ids.size());
         hasImage.reserve(ids.size());
-        const bool sdCard = controller->isSDCard();
+        const std::vector<String> imageIds = controller->isSDCard() ? profileManager->listProfileImages() : std::vector<String>{};
         for (const auto &profileId : ids) {
             Profile profile{};
             profileManager->loadProfile(profileId, profile);
             profiles.emplace_back(std::move(profile));
-            hasImage.push_back(sdCard && profileManager->hasProfileImage(profileId));
+            hasImage.push_back(std::find(imageIds.begin(), imageIds.end(), profileId) != imageIds.end());
         }
         {
             std::lock_guard<std::mutex> guard(profilesMutex);
@@ -420,6 +443,33 @@ void DefaultUI::loopProfiles() {
         }
         profileLoaded = 1;
     }
+    loadRequestedImage();
+}
+
+// SD reads stay on this task: a slow or failing card must not block rendering or overflow the UI task's stack.
+void DefaultUI::loadRequestedImage() {
+    String wanted;
+    int request;
+    {
+        std::lock_guard<std::mutex> guard(imageMutex);
+        wanted = imageWantedId;
+        request = imageRequest;
+    }
+    const int generation = imageGeneration;
+    if (wanted.isEmpty() || (request == imageLoadedRequest && generation == imageLoadedGeneration))
+        return;
+    uint8_t *pixels = profileManager->loadProfileImage(wanted);
+    imageLoadedRequest = request;
+    imageLoadedGeneration = generation;
+    if (pixels == nullptr)
+        return;
+    {
+        std::lock_guard<std::mutex> guard(imageMutex);
+        free(imagePending);
+        imagePending = pixels;
+        imagePendingId = wanted;
+    }
+    rerender = true;
 }
 
 void DefaultUI::changeScreen(ScreensEnum screen) {
@@ -483,8 +533,9 @@ void DefaultUI::onVolumetricDelete() {
 }
 
 void DefaultUI::setupPanel() {
-    sdImageDecoderInit();
     ui_init();
+    gaugeSetpointsInside = controller->areGaugeSetpointsInside();
+    applyGaugeSetpointStyle(gaugeSetpointsInside);
     setupState();
     applyTheme();
     ui_tick();
@@ -580,6 +631,9 @@ void DefaultUI::handleScreenChange() {
             setBrightness(settings.getMainBrightness());
         }
         eez_flow_set_screen(targetScreen, LV_SCR_LOAD_ANIM_NONE, 0, 0);
+        // Dial widgets are created lazily by EEZ, so apply the current choice after
+        // the new screen's pair of indicators exists.
+        applyGaugeSetpointStyle(gaugeSetpointsInside);
         animateGaugeTicks(isShortTickScreen(currentScreen, tickChartMode), isShortTickScreen(targetScreen, tickChartMode));
         rerender = true;
     }
@@ -598,15 +652,25 @@ void DefaultUI::collectMeters(lv_obj_t *obj) {
 }
 
 void DefaultUI::setGaugeTickLength(int32_t len) {
+    const int16_t insidePivotX = GAUGE_SETPOINT_INSIDE_PIVOT_X - (GAUGE_TICK_LONG - len);
     for (uint8_t i = 0; i < gaugeCount; i++) {
         auto *meter = reinterpret_cast<lv_meter_t *>(gaugeMeters[i]);
         auto *scale = static_cast<lv_meter_scale_t *>(_lv_ll_get_head(&meter->scale_ll));
         if (scale != nullptr) {
             scale->tick_length = static_cast<uint16_t>(len);
         }
+        for (auto *indicator = static_cast<lv_meter_indicator_t *>(_lv_ll_get_head(&meter->indicator_ll)); indicator != nullptr;
+             indicator = static_cast<lv_meter_indicator_t *>(_lv_ll_get_next(&meter->indicator_ll, indicator))) {
+            if (indicator->type == LV_METER_INDICATOR_TYPE_NEEDLE_IMG &&
+                indicator->type_data.needle_img.src == &img_indicator_small_inside) {
+                indicator->type_data.needle_img.pivot.x = insidePivotX;
+            }
+        }
         lv_obj_invalidate(gaugeMeters[i]);
     }
 }
+
+void DefaultUI::applyGaugeSetpointStyle(bool inside) { applyGaugeSetpointVisibility(lv_scr_act(), inside); }
 
 void DefaultUI::gaugeTickAnimCb(void *var, int32_t v) { static_cast<DefaultUI *>(var)->setGaugeTickLength(v); }
 
@@ -926,7 +990,12 @@ void DefaultUI::setupShotChart() {
     lv_obj_add_event_cb(shotChart, shotChartDrawCb, LV_EVENT_DRAW_PART_BEGIN, this);
     lv_obj_add_event_cb(shotChart, shotChartDrawCb, LV_EVENT_DRAW_PART_END, this);
     lv_obj_add_event_cb(shotChart, shotChartBackgroundCb, LV_EVENT_DRAW_MAIN_BEGIN, this);
-    resetShotChart(controller->getTargetTemp(), 0.0f);
+    if (shotHistory == nullptr) {
+        shotHistory = static_cast<ShotSample *>(ps_malloc(SHOT_HISTORY_POINTS * sizeof(ShotSample)));
+        resetShotChart(controller->getTargetTemp(), 0.0f);
+    } else {
+        renderShotChart(); // screen was recreated; redraw from the kept history
+    }
 }
 
 void DefaultUI::applyShotChartTheme() {
@@ -939,19 +1008,15 @@ void DefaultUI::applyShotChartTheme() {
 }
 
 void DefaultUI::resetShotChart(float targetTemperature, float targetWeight) {
-    for (auto &series : shotPoints)
-        for (auto &point : series)
-            point = LV_CHART_POINT_NONE;
-    for (auto &mark : shotPhaseMarks)
-        mark = false;
+    shotHistoryStart = 0;
+    shotHistoryCount = 0;
     shotPhasePending = false;
-    shotPointCount = 0;
     lastShotSample = 0;
     shotFlowRange = SHOT_FLOW_RANGE_DEFAULT;
     shotWeightRange = targetWeight > 0.0f ? growShotRange(10.0f, targetWeight * 1.1f, 10.0f) : SHOT_WEIGHT_RANGE_DEFAULT;
     shotTempMin = targetTemperature - SHOT_TEMP_RANGE;
     shotTempMax = targetTemperature + SHOT_TEMP_RANGE;
-    lv_chart_refresh(shotChart);
+    renderShotChart();
 }
 
 void DefaultUI::updateShotChart() {
@@ -962,12 +1027,20 @@ void DefaultUI::updateShotChart() {
 
     std::lock_guard<std::recursive_mutex> guard(controller->getProcessLock());
     Process *process = controller->getProcess();
-    if (process == nullptr || process->getType() != MODE_BREW || !process->isActive())
+    if (process == nullptr || process->getType() != MODE_BREW || !process->isActive()) {
+        if (shotChartLive) {
+            shotChartLive = false;
+            zoomOutShotChart();
+        }
         return;
+    }
     auto *bp = static_cast<BrewProcess *>(process);
     const bool volumetric = controller->isVolumetricAvailable();
     if (bp->processStarted != shotChartStarted) {
         shotChartStarted = bp->processStarted;
+        shotChartLive = true;
+        lv_anim_del(this, shotChartZoomAnimCb);
+        shotChartZoom = 0.0f;
         resetShotChart(bp->getTemperature(), volumetric ? static_cast<float>(bp->getBrewVolume()) : 0.0f);
         shotPhaseIndex = bp->phaseIndex;
     }
@@ -984,51 +1057,89 @@ void DefaultUI::updateShotChart() {
     addShotChartSample(volumetric ? static_cast<float>(bp->currentVolume) : -1.0f);
 }
 
-void DefaultUI::rescaleShotSeries(lv_coord_t *points, float oldRange, float newRange) {
-    for (int i = 0; i < SHOT_CHART_POINTS; i++)
-        if (points[i] != LV_CHART_POINT_NONE)
-            points[i] = static_cast<lv_coord_t>(lroundf(points[i] * oldRange / newRange));
-}
-
 void DefaultUI::addShotChartSample(float weight) {
+    if (shotHistory == nullptr)
+        return;
     const float pressure = controller->getCurrentPressure();
     const float flow = controller->getCurrentPumpFlow();
     const float targetPressure = controller->getTargetPressure();
     const float targetFlow = controller->getTargetFlow();
+    shotFlowRange = growShotRange(shotFlowRange, LV_MAX(LV_MAX(pressure, flow), LV_MAX(targetPressure, targetFlow)), 2.0f);
+    shotWeightRange = growShotRange(shotWeightRange, weight, 10.0f);
 
-    const float flowRange =
-        growShotRange(shotFlowRange, LV_MAX(LV_MAX(pressure, flow), LV_MAX(targetPressure, targetFlow)), 2.0f);
-    if (flowRange != shotFlowRange) {
-        for (int i : {SHOT_PRESSURE, SHOT_TARGET_PRESSURE, SHOT_FLOW, SHOT_TARGET_FLOW})
-            rescaleShotSeries(shotPoints[i], shotFlowRange, flowRange);
-        shotFlowRange = flowRange;
+    // Oldest sample is overwritten once the 2 min history is full.
+    if (shotHistoryCount == SHOT_HISTORY_POINTS) {
+        shotHistoryStart = (shotHistoryStart + 1) % SHOT_HISTORY_POINTS;
+        shotHistoryCount--;
     }
-    const float weightRange = growShotRange(shotWeightRange, weight, 10.0f);
-    if (weightRange != shotWeightRange) {
-        rescaleShotSeries(shotPoints[SHOT_WEIGHT], shotWeightRange, weightRange);
-        shotWeightRange = weightRange;
-    }
-
-    lv_coord_t sample[SHOT_SERIES_COUNT];
-    sample[SHOT_PRESSURE] = scaleShotValue(pressure, 0.0f, shotFlowRange);
-    sample[SHOT_TARGET_PRESSURE] =
-        targetPressure > 0.0f ? scaleShotValue(targetPressure, 0.0f, shotFlowRange) : LV_CHART_POINT_NONE;
-    sample[SHOT_FLOW] = scaleShotValue(flow, 0.0f, shotFlowRange);
-    sample[SHOT_TARGET_FLOW] = targetFlow > 0.0f ? scaleShotValue(targetFlow, 0.0f, shotFlowRange) : LV_CHART_POINT_NONE;
-    sample[SHOT_TEMPERATURE] = scaleShotValue(controller->getCurrentTemp(), shotTempMin, shotTempMax);
-    sample[SHOT_WEIGHT] = weight >= 0.0f ? scaleShotValue(weight, 0.0f, shotWeightRange) : LV_CHART_POINT_NONE;
-
-    if (shotPointCount == SHOT_CHART_POINTS) {
-        for (auto &series : shotPoints)
-            memmove(series, series + 1, (SHOT_CHART_POINTS - 1) * sizeof(lv_coord_t));
-        memmove(shotPhaseMarks, shotPhaseMarks + 1, (SHOT_CHART_POINTS - 1) * sizeof(bool));
-        shotPointCount--;
-    }
-    for (int i = 0; i < SHOT_SERIES_COUNT; i++)
-        shotPoints[i][shotPointCount] = sample[i];
-    shotPhaseMarks[shotPointCount] = shotPhasePending;
+    ShotSample &sample = shotHistory[(shotHistoryStart + shotHistoryCount) % SHOT_HISTORY_POINTS];
+    sample.values[SHOT_PRESSURE] = pressure;
+    sample.values[SHOT_TARGET_PRESSURE] = targetPressure > 0.0f ? targetPressure : NAN;
+    sample.values[SHOT_FLOW] = flow;
+    sample.values[SHOT_TARGET_FLOW] = targetFlow > 0.0f ? targetFlow : NAN;
+    sample.values[SHOT_TEMPERATURE] = controller->getCurrentTemp();
+    sample.values[SHOT_WEIGHT] = weight >= 0.0f ? weight : NAN;
+    sample.phaseStart = shotPhasePending;
     shotPhasePending = false;
-    shotPointCount++;
+    shotHistoryCount++;
+    renderShotChart();
+}
+
+// Zoom from the live window out to the whole shot; the window's left edge eases back to the shot start.
+void DefaultUI::zoomOutShotChart() {
+    lv_anim_del(this, shotChartZoomAnimCb);
+    if (shotHistoryCount <= SHOT_CHART_POINTS) {
+        shotChartZoom = 1.0f; // the whole shot is already visible
+        return;
+    }
+    lv_anim_t a;
+    lv_anim_init(&a);
+    lv_anim_set_var(&a, this);
+    lv_anim_set_exec_cb(&a, shotChartZoomAnimCb);
+    lv_anim_set_values(&a, 0, SHOT_ZOOM_ANIM_STEPS);
+    lv_anim_set_time(&a, SHOT_ZOOM_ANIM_MS);
+    lv_anim_set_path_cb(&a, lv_anim_path_ease_in_out);
+    lv_anim_start(&a);
+}
+
+void DefaultUI::shotChartZoomAnimCb(void *var, int32_t value) {
+    auto *ui = static_cast<DefaultUI *>(var);
+    ui->shotChartZoom = static_cast<float>(value) / SHOT_ZOOM_ANIM_STEPS;
+    if (ui->shotChart != nullptr && ui->shotChart == objects.shot_chart)
+        ui->renderShotChart();
+}
+
+// Samples the history window ending at the latest sample; zoom 0 shows the last 30 s, zoom 1 the whole shot.
+void DefaultUI::renderShotChart() {
+    const int total = shotHistory != nullptr ? shotHistoryCount : 0;
+    const int count = LV_MIN(total, SHOT_CHART_POINTS);
+    const float windowStart = (total - count) * (1.0f - shotChartZoom);
+    const float step = count > 1 ? (total - 1 - windowStart) / (count - 1) : 0.0f;
+    int previous = -1;
+    for (int j = 0; j < SHOT_CHART_POINTS; j++) {
+        shotPhaseMarks[j] = false;
+        if (j >= count) {
+            for (auto &series : shotPoints)
+                series[j] = LV_CHART_POINT_NONE;
+            continue;
+        }
+        const int pick = j == count - 1 ? total - 1 : lroundf(windowStart + j * step);
+        // A point carries a phase mark if any sample it skips over started a phase.
+        for (int k = previous < 0 ? pick : previous + 1; k <= pick; k++)
+            shotPhaseMarks[j] |= shotHistory[(shotHistoryStart + k) % SHOT_HISTORY_POINTS].phaseStart;
+        previous = pick;
+        const ShotSample &sample = shotHistory[(shotHistoryStart + pick) % SHOT_HISTORY_POINTS];
+        for (int i = 0; i < SHOT_SERIES_COUNT; i++) {
+            const float value = sample.values[i];
+            if (std::isnan(value))
+                shotPoints[i][j] = LV_CHART_POINT_NONE;
+            else if (i == SHOT_TEMPERATURE)
+                shotPoints[i][j] = scaleShotValue(value, shotTempMin, shotTempMax);
+            else
+                shotPoints[i][j] = scaleShotValue(value, 0.0f, i == SHOT_WEIGHT ? shotWeightRange : shotFlowRange);
+        }
+    }
+    shotPointCount = count;
     lv_chart_refresh(shotChart);
 }
 
@@ -1067,7 +1178,8 @@ void DefaultUI::shotChartDrawCb(lv_event_t *e) {
     lv_draw_rect(dsc->draw_ctx, &dot, &area);
 }
 
-// Point the preview image at the SD file and redraw the pro chart when the previewed profile changes.
+// Show the preview profile's image once the profile task has loaded it, and redraw the pro chart when the previewed profile
+// changes.
 void DefaultUI::updateProfilePreview() {
     if (currentScreen != SCREEN_ID_NEW_PROFILE_SCREEN || objects.profile_preview == nullptr)
         return;
@@ -1089,11 +1201,38 @@ void DefaultUI::updateProfilePreview() {
         }
     }
 
-    const String src = hasImage ? profile_image::lvglPath(id) : String();
-    if (src != profileImageSrc) {
-        profileImageSrc = src;
-        if (hasImage)
-            lv_img_set_src(objects.profile_preview, src.c_str());
+    uint8_t *pixels = nullptr;
+    {
+        std::lock_guard<std::mutex> guard(imageMutex);
+        const String wanted = hasImage ? id : String();
+        if (wanted != imageWantedId) {
+            imageWantedId = wanted;
+            imageRequest++;
+        }
+        if (imagePending != nullptr && imagePendingId == imageWantedId) {
+            pixels = imagePending;
+            imagePending = nullptr;
+        }
+    }
+    if (pixels != nullptr) {
+        // Alternate descriptors so LVGL sees a new source; the old pixels are freed once replaced.
+        imageDscIndex ^= 1;
+        lv_img_dsc_t &dsc = imageDsc[imageDscIndex];
+        dsc.header.always_zero = 0;
+        dsc.header.cf = LV_IMG_CF_TRUE_COLOR;
+        dsc.header.w = profile_image::SIZE;
+        dsc.header.h = profile_image::SIZE;
+        dsc.data_size = profile_image::FILE_BYTES - profile_image::HEADER_BYTES;
+        dsc.data = pixels;
+        lv_img_set_src(objects.profile_preview, &dsc);
+        free(imageShown);
+        imageShown = pixels;
+        imageShownId = id;
+    } else if (imageShown != nullptr && imageShownId != id) {
+        lv_img_set_src(objects.profile_preview, nullptr); // don't flash the previous profile's image while loading
+        free(imageShown);
+        imageShown = nullptr;
+        imageShownId = "";
     }
 
     lv_obj_t *chart = objects.profile_chart;
@@ -1112,8 +1251,7 @@ void DefaultUI::setupProfileChart(lv_obj_t *chart) {
     styleTrendChart(chart, PROFILE_CHART_POINTS);
     const int theme = currentThemeMode >= 0 ? currentThemeMode : 0;
     for (int i = 0; i < 2; i++) {
-        profileSeries[i] =
-            lv_chart_add_series(chart, lv_color_hex(theme_colors[theme][PROFILE_THEME_COLORS[i]]), LV_CHART_AXIS_PRIMARY_Y);
+        profileSeries[i] = lv_chart_add_series(chart, lv_color_hex(PROFILE_COLORS[theme][i]), LV_CHART_AXIS_PRIMARY_Y);
         lv_chart_set_ext_y_array(chart, profileSeries[i], profilePoints[i]);
     }
     lv_obj_add_event_cb(chart, profileChartDrawCb, LV_EVENT_DRAW_PART_BEGIN, this);
@@ -1199,7 +1337,7 @@ void DefaultUI::profileChartDrawCb(lv_event_t *e) {
     const int series = ui->profileSeries[0] == dsc->sub_part_ptr ? 0 : ui->profileSeries[1] == dsc->sub_part_ptr ? 1 : -1;
     if (series < 0 || dsc->id >= PROFILE_CHART_POINTS)
         return;
-    styleTrendLine(dsc->line_dsc, !ui->profilePointIsTarget[series][dsc->id]);
+    styleTrendLine(dsc->line_dsc, !ui->profilePointIsTarget[series][dsc->id], PROFILE_LINE_WIDTH);
 }
 
 void DefaultUI::profileChartBackgroundCb(lv_event_t *e) {
@@ -1221,12 +1359,13 @@ void DefaultUI::applyTheme() {
 
     if (newThemeMode != currentThemeMode) {
         currentThemeMode = newThemeMode;
-        change_color_theme(currentThemeMode);
+        // Via EEZ so its selected index updates too; on-demand screens (new profile) read it when created.
+        static const char *const THEME_NAMES[] = {"Dark", "Light", "AmoledDark"};
+        eez_flow_set_theme(THEME_NAMES[currentThemeMode]);
         applyShotChartTheme();
         if (profileChart != nullptr) {
             for (int i = 0; i < 2; i++)
-                lv_chart_set_series_color(profileChart, profileSeries[i],
-                                          lv_color_hex(theme_colors[currentThemeMode][PROFILE_THEME_COLORS[i]]));
+                lv_chart_set_series_color(profileChart, profileSeries[i], lv_color_hex(PROFILE_COLORS[currentThemeMode][i]));
             lv_chart_refresh(profileChart);
         }
     }

@@ -183,6 +183,7 @@ void WebUIPlugin::setupServer() {
     server.on("/api/scales/connect", [this](AsyncWebServerRequest *request) { handleBLEScaleConnect(request); });
     server.on("/api/scales/scan", [this](AsyncWebServerRequest *request) { handleBLEScaleScan(request); });
     server.on("/api/scales/info", [this](AsyncWebServerRequest *request) { handleBLEScaleInfo(request); });
+    server.on("/api/scales/forget", [this](AsyncWebServerRequest *request) { handleBLEScaleForget(request); });
     FS *fs = &LittleFS;
     if (controller->isSDCard()) {
         fs = &SD_MMC;
@@ -358,6 +359,10 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
             }
             if (request->hasArg("preferredScaleSource"))
                 settings->setPreferredScaleSource(request->arg("preferredScaleSource"));
+            if (request->hasArg("heaterCoordinationEnabled"))
+                settings->setHeaterCoordinationEnabled(parseBoolArg(request->arg("heaterCoordinationEnabled")));
+            if (request->hasArg("heaterHandoverMs"))
+                settings->setHeaterHandoverMs(request->arg("heaterHandoverMs").toInt());
             if (request->hasArg("pid"))
                 settings->setPid(request->arg("pid"));
             if (request->hasArg("pumpModelCoeffs"))
@@ -484,6 +489,8 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setMaxPumpPower(request->arg("maxPumpPower").toFloat());
             if (request->hasArg("savedScale"))
                 settings->setSavedScale(request->arg("savedScale"));
+            if (request->hasArg("savedScaleName"))
+                settings->setSavedScaleName(request->arg("savedScaleName"));
             if (request->hasArg("autowakeupEnabled"))
                 settings->setAutoWakeupEnabled(parseBoolArg(request->arg("autowakeupEnabled")));
             if (request->hasArg("autowakeupSchedules")) {
@@ -533,6 +540,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
         pluginManager->trigger("settings:changed");
         controller->setTargetTemp(controller->getTargetTemp());
         controller->setScaleFactors();
+        controller->setHeaterSettings();
         controller->setPumpModelCoeffs();
     }
 
@@ -550,6 +558,8 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["haIP"] = settings.getHomeAssistantIP();
     doc["haPort"] = settings.getHomeAssistantPort();
     doc["haTopic"] = settings.getHomeAssistantTopic();
+    doc["heaterCoordinationEnabled"] = settings.isHeaterCoordinationEnabled();
+    doc["heaterHandoverMs"] = settings.getHeaterHandoverMs();
     doc["pid"] = settings.getPid();
     doc["pumpModelCoeffs"] = settings.getPumpModelCoeffs();
     doc["pumpSlipCoeffs"] = settings.getPumpSlipCoeffs();
@@ -622,6 +632,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["integralGain"] = settings.getIntegralGain();
     doc["maxPumpPower"] = settings.getMaxPumpPower();
     doc["savedScale"] = settings.getSavedScale();
+    doc["savedScaleName"] = settings.getSavedScaleName();
 
     // Add schedule format with days
     std::vector<AutoWakeupSchedule> autowakeupSchedules = settings.getAutoWakeupSchedules();
@@ -686,12 +697,27 @@ void WebUIPlugin::handleBLEScaleConnect(AsyncWebServerRequest *request) {
     request->send(response);
 }
 
+void WebUIPlugin::handleBLEScaleForget(AsyncWebServerRequest *request) {
+    if (request->method() != HTTP_POST) {
+        request->send(404);
+        return;
+    }
+    BLEScales.forget();
+    JsonDocument doc(&psramAllocator);
+    doc["success"] = true;
+    AsyncResponseStream *response = request->beginResponseStream("application/json");
+    serializeJson(doc, *response);
+    request->send(response);
+}
+
 void WebUIPlugin::handleBLEScaleInfo(AsyncWebServerRequest *request) {
     JsonDocument doc(&psramAllocator);
     doc["connected"] = BLEScales.isConnected();
     doc["name"] = BLEScales.getName();
     doc["uuid"] = BLEScales.getUUID();
     doc["rssi"] = BLEScales.getRSSI();
+    doc["saved"] = controller->getSettings().getSavedScale();
+    doc["savedName"] = controller->getSettings().getSavedScaleName();
     doc["hasBattery"] = BLEScales.hasBatteryLevel();
     // Only surface the numeric when the scale reports one — a 255 sentinel
     // (REMOTE_SCALES_BATTERY_UNKNOWN) would otherwise render as a fake "255%".

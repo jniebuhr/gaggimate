@@ -97,6 +97,8 @@ class Settings {
     double getBrewDelay() const { return brewDelay.get(); }
     double getGrindDelay() const { return grindDelay.get(); }
     bool isDelayAdjust() const { return delayAdjust.get(); }
+    bool isHeaterCoordinationEnabled() const { return heaterCoordinationEnabled.get(); }
+    int getHeaterHandoverMs() const { return heaterHandoverMs.get(); }
     String getPid() const { return pid.get(); }
     String getPumpModelCoeffs() const { return pumpModelCoeffs.get(); }
     String getPumpSlipCoeffs() const { return pumpSlipCoeffs.get(); }
@@ -108,6 +110,7 @@ class Settings {
     bool isVolumetricTarget() const { return volumetricTarget.get(); }
     String getOTAChannel() const { return otaChannel.get(); }
     String getSavedScale() const { return savedScale.get(); }
+    String getSavedScaleName() const { return savedScaleName.get(); }
     bool isBoilerFillActive() const { return boilerFillActive.get(); }
     int getStartupFillTime() const { return startupFillTime.get(); }
     int getSteamFillTime() const { return steamFillTime.get(); }
@@ -209,6 +212,8 @@ class Settings {
     void setGrindDelay(double grindDelay);
     void setDelayAdjust(bool delay_adjust);
     void setPid(const String &pid);
+    void setHeaterCoordinationEnabled(bool enabled);
+    void setHeaterHandoverMs(int handoverMs);
     void setPumpModelCoeffs(const String &pumpModelCoeffs);
     void setPumpSlipCoeffs(const String &pumpSlipCoeffs);
     void setWifiSsid(const String &wifiSsid);
@@ -219,6 +224,7 @@ class Settings {
     void setVolumetricTarget(bool volumetric_target);
     void setOTAChannel(const String &otaChannel);
     void setSavedScale(const String &savedScale);
+    void setSavedScaleName(const String &savedScaleName);
     void setBoilerFillActive(bool boiler_fill_active);
     void setStartupFillTime(int startup_fill_time);
     void setSteamFillTime(int steam_fill_time);
@@ -326,6 +332,7 @@ class Settings {
     Property<String> wifiApPassword{registry, "wap", ""}; // empty until generated on first start
     Property<String> mdnsName{registry, "mn", DEFAULT_MDNS_NAME};
     Property<String> savedScale{registry, "ssc", ""};
+    Property<String> savedScaleName{registry, "sscn", ""}; // advertised BLE name, shown while the scale is out of range
     Property<bool> homekit{registry, "hk", false};
     Property<bool> volumetricTarget{registry, "vt", false};
     Property<bool> boilerFillActive{registry, "bf_a", false};
@@ -353,6 +360,9 @@ class Settings {
     Property<float> steamPumpPercentage{registry, "spp", DEFAULT_STEAM_PUMP_PERCENTAGE};
     Property<float> steamPumpCutoff{registry, "spc", DEFAULT_STEAM_PUMP_CUTOFF};
     Property<int> historyIndex{registry, "hi", 0};
+
+    Property<bool> heaterCoordinationEnabled{registry, "hco", false};
+    Property<int> heaterHandoverMs{registry, "hcg", DEFAULT_HEATER_HANDOVER_MS};
 
     // Display settings
     Property<int> mainBrightness{registry, "main_b", 16};

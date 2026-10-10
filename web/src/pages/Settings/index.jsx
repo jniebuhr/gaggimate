@@ -12,7 +12,7 @@ import {
   getCachedSettings,
 } from '../../services/ApiService.js';
 import {
-  DASHBOARD_LAYOUTS,
+  getDashboardLayout,
   setDashboardLayout,
   setClock24h,
 } from '../../utils/dashboardManager.js';
@@ -64,6 +64,7 @@ const CHECKBOX_KEYS = [
   'mahlkonigActive',
   'homeAssistant',
   'momentaryButtons',
+  'heaterCoordinationEnabled',
   'delayAdjust',
   'clock24hFormat',
   'autowakeupEnabled',
@@ -134,7 +135,8 @@ function transformFetchedSettings(fetchedSettings) {
       fetchedSettings.standbyDisplayEnabled !== undefined
         ? fetchedSettings.standbyDisplayEnabled
         : fetchedSettings.standbyBrightness > 0,
-    dashboardLayout: fetchedSettings.dashboardLayout || DASHBOARD_LAYOUTS.ORDER_FIRST,
+    // Stored locally, never returned by the machine.
+    dashboardLayout: getDashboardLayout(),
   };
 
   const sf1 = Number(fetchedSettings.scaleFactor1);

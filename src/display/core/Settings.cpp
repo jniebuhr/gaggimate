@@ -139,6 +139,12 @@ void Settings::setStandbyTimeout(int standby_timeout) { standbyTimeout.set(stand
 
 void Settings::setPid(const String &pid) { this->pid.set(pid); }
 
+void Settings::setHeaterCoordinationEnabled(bool enabled) { heaterCoordinationEnabled.set(enabled); }
+
+void Settings::setHeaterHandoverMs(int handoverMs) {
+    heaterHandoverMs.set(std::clamp(handoverMs, MIN_HEATER_HANDOVER_MS, MAX_HEATER_HANDOVER_MS));
+}
+
 void Settings::setPumpModelCoeffs(const String &pumpModelCoeffs) { this->pumpModelCoeffs.set(pumpModelCoeffs); }
 
 void Settings::setPumpSlipCoeffs(const String &pumpSlipCoeffs) { this->pumpSlipCoeffs.set(pumpSlipCoeffs); }
@@ -158,6 +164,8 @@ void Settings::setVolumetricTarget(bool volumetric_target) { volumetricTarget.se
 void Settings::setOTAChannel(const String &otaChannel) { this->otaChannel.set(otaChannel); }
 
 void Settings::setSavedScale(const String &savedScale) { this->savedScale.set(savedScale); }
+
+void Settings::setSavedScaleName(const String &savedScaleName) { this->savedScaleName.set(savedScaleName); }
 
 void Settings::setBoilerFillActive(bool boiler_fill_active) { boilerFillActive.set(boiler_fill_active); }
 

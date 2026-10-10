@@ -4145,7 +4145,7 @@
                     "conditionalStyles": [],
                     "childStyles": []
                   },
-                  "hiddenInEditor": true,
+                  "hiddenInEditor": false,
                   "timeline": [],
                   "eventHandlers": [],
                   "identifier": "progressView",
@@ -4169,7 +4169,7 @@
                         "conditionalStyles": [],
                         "childStyles": []
                       },
-                      "hiddenInEditor": true,
+                      "hiddenInEditor": false,
                       "timeline": [],
                       "eventHandlers": [
                         {
@@ -4230,7 +4230,7 @@
                         "conditionalStyles": [],
                         "childStyles": []
                       },
-                      "hiddenInEditor": true,
+                      "hiddenInEditor": false,
                       "timeline": [],
                       "eventHandlers": [],
                       "identifier": "processVolume",
@@ -4287,7 +4287,7 @@
                         "conditionalStyles": [],
                         "childStyles": []
                       },
-                      "hiddenInEditor": true,
+                      "hiddenInEditor": false,
                       "timeline": [],
                       "eventHandlers": [
                         {
@@ -4348,7 +4348,7 @@
                         "conditionalStyles": [],
                         "childStyles": []
                       },
-                      "hiddenInEditor": true,
+                      "hiddenInEditor": false,
                       "timeline": [],
                       "eventHandlers": [],
                       "identifier": "currentDuration",
@@ -4404,7 +4404,7 @@
                         "conditionalStyles": [],
                         "childStyles": []
                       },
-                      "hiddenInEditor": true,
+                      "hiddenInEditor": false,
                       "timeline": [],
                       "eventHandlers": [],
                       "identifier": "targetDuration_1",
@@ -4460,7 +4460,7 @@
                         "conditionalStyles": [],
                         "childStyles": []
                       },
-                      "hiddenInEditor": true,
+                      "hiddenInEditor": false,
                       "timeline": [],
                       "eventHandlers": [],
                       "identifier": "targetWeight_2",
@@ -4516,7 +4516,7 @@
                         "conditionalStyles": [],
                         "childStyles": []
                       },
-                      "hiddenInEditor": true,
+                      "hiddenInEditor": false,
                       "timeline": [],
                       "eventHandlers": [],
                       "identifier": "targetTemp_1",
@@ -4571,7 +4571,7 @@
                         "conditionalStyles": [],
                         "childStyles": []
                       },
-                      "hiddenInEditor": true,
+                      "hiddenInEditor": false,
                       "timeline": [],
                       "eventHandlers": [],
                       "identifier": "Image7",
@@ -4627,7 +4627,7 @@
                         "conditionalStyles": [],
                         "childStyles": []
                       },
-                      "hiddenInEditor": true,
+                      "hiddenInEditor": false,
                       "timeline": [],
                       "eventHandlers": [],
                       "identifier": "Image8",
@@ -4684,7 +4684,7 @@
                         "conditionalStyles": [],
                         "childStyles": []
                       },
-                      "hiddenInEditor": true,
+                      "hiddenInEditor": false,
                       "timeline": [],
                       "eventHandlers": [],
                       "identifier": "Image9",
@@ -4741,7 +4741,7 @@
                         "conditionalStyles": [],
                         "childStyles": []
                       },
-                      "hiddenInEditor": true,
+                      "hiddenInEditor": false,
                       "timeline": [],
                       "eventHandlers": [],
                       "identifier": "stepLabel",
@@ -4789,7 +4789,7 @@
                       "type": "LVGLLabelWidget",
                       "left": 0,
                       "top": -40,
-                      "width": 200,
+                      "width": 300,
                       "height": 30,
                       "customInputs": [],
                       "customOutputs": [],
@@ -4799,7 +4799,7 @@
                         "conditionalStyles": [],
                         "childStyles": []
                       },
-                      "hiddenInEditor": true,
+                      "hiddenInEditor": false,
                       "timeline": [],
                       "eventHandlers": [],
                       "identifier": "phaseLabel",
@@ -4837,9 +4837,9 @@
                       "groupIndex": 0,
                       "text": "brew_process_info.phase_name",
                       "textType": "expression",
-                      "longMode": "WRAP",
+                      "longMode": "SCROLL_CIRCULAR",
                       "recolor": false,
-                      "previewValue": "Da phase",
+                      "previewValue": "Brew",
                       "useStaticText": true
                     },
                     {
@@ -4857,7 +4857,7 @@
                         "conditionalStyles": [],
                         "childStyles": []
                       },
-                      "hiddenInEditor": true,
+                      "hiddenInEditor": false,
                       "timeline": [],
                       "eventHandlers": [],
                       "identifier": "phaseProgress",
@@ -4917,7 +4917,7 @@
                         "conditionalStyles": [],
                         "childStyles": []
                       },
-                      "hiddenInEditor": true,
+                      "hiddenInEditor": false,
                       "timeline": [],
                       "eventHandlers": [],
                       "identifier": "barContainer",
@@ -4941,7 +4941,7 @@
                             "conditionalStyles": [],
                             "childStyles": []
                           },
-                          "hiddenInEditor": true,
+                          "hiddenInEditor": false,
                           "timeline": [],
                           "eventHandlers": [],
                           "identifier": "brewBar",
@@ -5065,6 +5065,7 @@
                     "conditionalStyles": [],
                     "childStyles": []
                   },
+                  "hiddenInEditor": true,
                   "timeline": [],
                   "eventHandlers": [],
                   "identifier": "chartView",
@@ -5088,7 +5089,7 @@
                         "conditionalStyles": [],
                         "childStyles": []
                       },
-                      "hiddenInEditor": false,
+                      "hiddenInEditor": true,
                       "timeline": [],
                       "eventHandlers": [],
                       "identifier": "currentDuration_1",
@@ -5144,7 +5145,7 @@
                         "conditionalStyles": [],
                         "childStyles": []
                       },
-                      "hiddenInEditor": false,
+                      "hiddenInEditor": true,
                       "timeline": [],
                       "eventHandlers": [],
                       "identifier": "phaseLabel_1",
@@ -5182,7 +5183,7 @@
                       "groupIndex": 0,
                       "text": "brew_process_info.phase_name",
                       "textType": "expression",
-                      "longMode": "WRAP",
+                      "longMode": "SCROLL_CIRCULAR",
                       "recolor": false,
                       "previewValue": "Da phase",
                       "useStaticText": true
@@ -5202,7 +5203,7 @@
                         "conditionalStyles": [],
                         "childStyles": []
                       },
-                      "hiddenInEditor": false,
+                      "hiddenInEditor": true,
                       "timeline": [],
                       "eventHandlers": [],
                       "identifier": "phaseProgressChart",
@@ -5262,6 +5263,7 @@
                         "conditionalStyles": [],
                         "childStyles": []
                       },
+                      "hiddenInEditor": true,
                       "timeline": [],
                       "eventHandlers": [],
                       "identifier": "shotChart",
@@ -5369,7 +5371,7 @@
                         "conditionalStyles": [],
                         "childStyles": []
                       },
-                      "hiddenInEditor": false,
+                      "hiddenInEditor": true,
                       "timeline": [],
                       "eventHandlers": [],
                       "identifier": "chartLegend",
@@ -5393,7 +5395,7 @@
                             "conditionalStyles": [],
                             "childStyles": []
                           },
-                          "hiddenInEditor": false,
+                          "hiddenInEditor": true,
                           "timeline": [],
                           "eventHandlers": [],
                           "identifier": "chartLegendTemp",
@@ -5448,7 +5450,7 @@
                             "conditionalStyles": [],
                             "childStyles": []
                           },
-                          "hiddenInEditor": false,
+                          "hiddenInEditor": true,
                           "timeline": [],
                           "eventHandlers": [],
                           "identifier": "chartLegendPressure",
@@ -5503,7 +5505,7 @@
                             "conditionalStyles": [],
                             "childStyles": []
                           },
-                          "hiddenInEditor": false,
+                          "hiddenInEditor": true,
                           "timeline": [],
                           "eventHandlers": [],
                           "identifier": "chartLegendFlow",
@@ -5558,7 +5560,7 @@
                             "conditionalStyles": [],
                             "childStyles": []
                           },
-                          "hiddenInEditor": false,
+                          "hiddenInEditor": true,
                           "timeline": [],
                           "eventHandlers": [],
                           "identifier": "chartLegendWeight",
@@ -5646,7 +5648,7 @@
                         "conditionalStyles": [],
                         "childStyles": []
                       },
-                      "hiddenInEditor": false,
+                      "hiddenInEditor": true,
                       "timeline": [],
                       "eventHandlers": [
                         {
@@ -13970,7 +13972,7 @@
       "width": 480,
       "height": 480,
       "isUsedAsUserWidget": false,
-      "createAtStart": false,
+      "createAtStart": true,
       "deleteOnScreenUnload": false
     }
   ],
@@ -14048,6 +14050,15 @@
                   "type": "NEEDLE_IMG",
                   "image": "indicator-small",
                   "pivotX": -233,
+                  "pivotY": 0,
+                  "value": "boiler.target_temperature",
+                  "valueType": "expression"
+                },
+                {
+                  "objID": "a1a13a31-0b85-418d-9a4e-127d3314969d",
+                  "type": "NEEDLE_IMG",
+                  "image": "indicator-small-inside",
+                  "pivotX": -195,
                   "pivotY": 0,
                   "value": "boiler.target_temperature",
                   "valueType": "expression"
@@ -14157,6 +14168,15 @@
                   "valueType": "expression"
                 },
                 {
+                  "objID": "e5277f9c-8842-4d8f-96d1-ff0bcb42e8b1",
+                  "type": "NEEDLE_IMG",
+                  "image": "indicator-small-inside",
+                  "pivotX": -195,
+                  "pivotY": 0,
+                  "value": "boiler.target_temperature",
+                  "valueType": "expression"
+                },
+                {
                   "objID": "a600d5fd-40e2-451d-ea6d-05e3ce342b49",
                   "type": "SCALE_LINES",
                   "colorStart": "Temperature",
@@ -14256,6 +14276,15 @@
                   "type": "NEEDLE_IMG",
                   "image": "indicator-small",
                   "pivotX": -233,
+                  "pivotY": 0,
+                  "value": "boiler.target_pressure * 10",
+                  "valueType": "expression"
+                },
+                {
+                  "objID": "ba21e7e1-93ee-4e54-b156-763dd04bf35c",
+                  "type": "NEEDLE_IMG",
+                  "image": "indicator-small-inside",
+                  "pivotX": -195,
                   "pivotY": 0,
                   "value": "boiler.target_pressure * 10",
                   "valueType": "expression"
@@ -15436,6 +15465,15 @@
       "objID": "cf49c42c-5478-4cd6-a22e-fd43f8411999",
       "name": "indicator-small",
       "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAOCAYAAAASVl2WAAAAAXNSR0IArs4c6QAAAORlWElmTU0AKgAAAAgABgESAAMAAAABAAEAAAEaAAUAAAABAAAAVgEbAAUAAAABAAAAXgEoAAMAAAABAAIAAAEyAAIAAAAUAAAAZodpAAQAAAABAAAAegAAAAAAAAEsAAAAAQAAASwAAAABMjAyNTowNTowOCAwMjo1MToxMgAABZADAAIAAAAUAAAAvJAEAAIAAAAUAAAA0KABAAMAAAABAAEAAKACAAQAAAABAAAACKADAAQAAAABAAAADgAAAAAyMDI1OjA1OjA4IDAyOjUwOjM4ADIwMjU6MDU6MDggMDI6NTA6MzgAI+1KhwAAAAlwSFlzAAAuIwAALiMBeKU/dgAABz9pVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IlhNUCBDb3JlIDYuMC4wIj4KICAgPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4KICAgICAgPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIKICAgICAgICAgICAgeG1sbnM6ZXhpZj0iaHR0cDovL25zLmFkb2JlLmNvbS9leGlmLzEuMC8iCiAgICAgICAgICAgIHhtbG5zOnRpZmY9Imh0dHA6Ly9ucy5hZG9iZS5jb20vdGlmZi8xLjAvIgogICAgICAgICAgICB4bWxuczpwaG90b3Nob3A9Imh0dHA6Ly9ucy5hZG9iZS5jb20vcGhvdG9zaG9wLzEuMC8iCiAgICAgICAgICAgIHhtbG5zOnhtcD0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyIKICAgICAgICAgICAgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iCiAgICAgICAgICAgIHhtbG5zOnN0RXZ0PSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VFdmVudCMiPgogICAgICAgICA8ZXhpZjpDb2xvclNwYWNlPjE8L2V4aWY6Q29sb3JTcGFjZT4KICAgICAgICAgPGV4aWY6UGl4ZWxYRGltZW5zaW9uPjE0PC9leGlmOlBpeGVsWERpbWVuc2lvbj4KICAgICAgICAgPGV4aWY6UGl4ZWxZRGltZW5zaW9uPjg8L2V4aWY6UGl4ZWxZRGltZW5zaW9uPgogICAgICAgICA8dGlmZjpJbWFnZUxlbmd0aD44PC90aWZmOkltYWdlTGVuZ3RoPgogICAgICAgICA8dGlmZjpSZXNvbHV0aW9uVW5pdD4yPC90aWZmOlJlc29sdXRpb25Vbml0PgogICAgICAgICA8dGlmZjpJbWFnZVdpZHRoPjE0PC90aWZmOkltYWdlV2lkdGg+CiAgICAgICAgIDx0aWZmOk9yaWVudGF0aW9uPjE8L3RpZmY6T3JpZW50YXRpb24+CiAgICAgICAgIDx0aWZmOlhSZXNvbHV0aW9uPjMwMDwvdGlmZjpYUmVzb2x1dGlvbj4KICAgICAgICAgPHRpZmY6WVJlc29sdXRpb24+MzAwPC90aWZmOllSZXNvbHV0aW9uPgogICAgICAgICA8cGhvdG9zaG9wOkRhdGVDcmVhdGVkPjIwMjUtMDUtMDhUMDI6NTA6MzgrMDIwMDwvcGhvdG9zaG9wOkRhdGVDcmVhdGVkPgogICAgICAgICA8cGhvdG9zaG9wOklDQ1Byb2ZpbGU+c1JHQiBJRUM2MTk2Ni0yLjE8L3Bob3Rvc2hvcDpJQ0NQcm9maWxlPgogICAgICAgICA8cGhvdG9zaG9wOkNvbG9yTW9kZT4zPC9waG90b3Nob3A6Q29sb3JNb2RlPgogICAgICAgICA8eG1wOk1vZGlmeURhdGU+MjAyNS0wNS0wOFQwMjo1MToxMiswMjowMDwveG1wOk1vZGlmeURhdGU+CiAgICAgICAgIDx4bXA6Q3JlYXRlRGF0ZT4yMDI1LTA1LTA4VDAyOjUwOjM4KzAyMDA8L3htcDpDcmVhdGVEYXRlPgogICAgICAgICA8eG1wOk1ldGFkYXRhRGF0ZT4yMDI1LTA1LTA4VDAyOjUxOjEyKzAyOjAwPC94bXA6TWV0YWRhdGFEYXRlPgogICAgICAgICA8eG1wTU06SGlzdG9yeT4KICAgICAgICAgICAgPHJkZjpTZXE+CiAgICAgICAgICAgICAgIDxyZGY6bGkgcmRmOnBhcnNlVHlwZT0iUmVzb3VyY2UiPgogICAgICAgICAgICAgICAgICA8c3RFdnQ6c29mdHdhcmVBZ2VudD5BZmZpbml0eSBEZXNpZ25lciAyIDIuNi4wPC9zdEV2dDpzb2Z0d2FyZUFnZW50PgogICAgICAgICAgICAgICAgICA8c3RFdnQ6YWN0aW9uPnByb2R1Y2VkPC9zdEV2dDphY3Rpb24+CiAgICAgICAgICAgICAgICAgIDxzdEV2dDp3aGVuPjIwMjUtMDUtMDhUMDI6NTE6MTIrMDI6MDA8L3N0RXZ0OndoZW4+CiAgICAgICAgICAgICAgIDwvcmRmOmxpPgogICAgICAgICAgICA8L3JkZjpTZXE+CiAgICAgICAgIDwveG1wTU06SGlzdG9yeT4KICAgICAgPC9yZGY6RGVzY3JpcHRpb24+CiAgIDwvcmRmOlJERj4KPC94OnhtcG1ldGE+ClYrMDoAAAC3SURBVBgZY2DAAf7//8/85s2bCYzY5J89e8bFwsKyhJGRMRBDwfPnz0WBkpuBGs1BmlEUvHr1ShWoaztQXBkkCQJMEIqB4eXLl1ZA9nEghkuC5MAKgJLBTExMe4G6hUGCyIDp9evXBUDJ1UBBDmQJGBtuBUwAnQY7EmrFEqAkhilwX4AcCXTDJnR3wBWAjMbrTZACMTGx23/+/LEEMk+C+CCA4UhJScnXv3//dgLGxXqIEhwkLLIAWEc8EyJnRyYAAAAASUVORK5CYII=",
+      "bpp": 32,
+      "alwaysBuild": false,
+      "lvglBinaryOutputFormat": 3,
+      "lvglDither": false
+    },
+    {
+      "objID": "f0fb9637-cf78-4a3c-aa55-2058432acaf4",
+      "name": "indicator-small-inside",
+      "image": "data:image/png;base64,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",
       "bpp": 32,
       "alwaysBuild": false,
       "lvglBinaryOutputFormat": 3,

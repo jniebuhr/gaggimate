@@ -50,7 +50,7 @@ class Controller {
     void setPressureScale();
     void setScaleFactors();
     void setPumpModelCoeffs();
-    void setPidSettings();
+    void setHeaterSettings();
     void setTargetGrindDuration(int duration);
     void setTargetGrindVolume(double volume);
 
@@ -93,6 +93,7 @@ class Controller {
     ProfileManager *getProfileManager() { return profileManager; }
 #ifndef GAGGIMATE_HEADLESS
     DefaultUI *getUI() const { return ui; }
+    bool areGaugeSetpointsInside() const { return gaugeSetpointsInside; }
 #endif
     bool isErrorState() const { return error > 0; }
     int getError() const { return error; }
@@ -161,6 +162,7 @@ class Controller {
     // Initialization methods
 #ifndef GAGGIMATE_HEADLESS
     void setupPanel();
+    void seedSDCard();
 #endif
     void setupBluetooth();
     void onSystemInfo(const char *hardware, const char *version, uint32_t protocolVersion, bool dimming, bool pressure,
@@ -211,6 +213,7 @@ class Controller {
 #ifndef GAGGIMATE_HEADLESS
     DefaultUI *ui = nullptr;
     Driver *driver = nullptr;
+    bool gaugeSetpointsInside = false;
 #endif
     GaggiMateClient comms;
     ButtonHandler buttons;
