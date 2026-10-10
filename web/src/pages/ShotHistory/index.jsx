@@ -32,9 +32,44 @@ import { faSearch } from '@fortawesome/free-solid-svg-icons/faSearch';
 import { faSort } from '@fortawesome/free-solid-svg-icons/faSort';
 import { faFilter } from '@fortawesome/free-solid-svg-icons/faFilter';
 import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
+import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
+import { faFilterCircleXmark } from '@fortawesome/free-solid-svg-icons/faFilterCircleXmark';
 import { Tooltip } from '../../components/Tooltip.jsx';
+import { downloadJson } from '../../utils/download.js';
 
 const connected = computed(() => machine.value.connected);
+
+function round2(v) {
+  if (v == null || Number.isNaN(v)) return v;
+  return Math.round((v + Number.EPSILON) * 100) / 100;
+}
+
+// Same shaping as HistoryCard's single-shot export so bulk files stay compatible.
+function toExportShot(shot, notes) {
+  const exportData = { ...shot, notes: notes ?? shot.notes ?? null };
+  if (Array.isArray(exportData.samples)) {
+    exportData.samples = exportData.samples.map(s => ({
+      t: s.t,
+      tt: round2(s.tt),
+      ct: round2(s.ct),
+      tp: round2(s.tp),
+      cp: round2(s.cp),
+      fl: round2(s.fl),
+      tf: round2(s.tf),
+      pf: round2(s.pf),
+      vf: round2(s.vf),
+      v: round2(s.v),
+      ev: round2(s.ev),
+      pr: round2(s.pr),
+      wp: round2(s.wp),
+      systemInfo: s.systemInfo,
+      phaseNumber: s.phaseNumber,
+      phaseDisplayNumber: s.phaseDisplayNumber,
+    }));
+  }
+  exportData.volume = round2(exportData.volume);
+  return exportData;
+}
 
 export function ShotHistory() {
   const { t } = useLingui();
@@ -48,8 +83,17 @@ export function ShotHistory() {
   const [currentPage, setCurrentPage] = useState(1);
   const [deletingAll, setDeletingAll] = useState(false);
   const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState({ current: 0, total: 0 });
+  const [deletingFiltered, setDeletingFiltered] = useState(false);
+  const [deleteFilteredProgress, setDeleteFilteredProgress] = useState({ current: 0, total: 0 });
+  const [showDeleteFilteredModal, setShowDeleteFilteredModal] = useState(false);
   const itemsPerPage = 10;
   const loadHistoryAbortRef = useRef(null);
+  // Cooperative cancel flag for the sequential bulk loops below (export / delete
+  // filtered). The ESP32 can't handle parallel requests, so both run one shot at
+  // a time and check this flag between iterations.
+  const bulkCancelRef = useRef(false);
   const loadHistory = async () => {
     // Abort any in-flight fetch to prevent request pileup on the ESP32.
     loadHistoryAbortRef.current?.abort();
@@ -107,45 +151,10 @@ export function ShotHistory() {
     return () => loadHistoryAbortRef.current?.abort();
   }, [connected.value]);
 
-  const onDelete = useCallback(
-    async id => {
-      setLoading(true);
-      await apiService.request({ tp: 'req:history:delete', id });
-      // Reload the index after deletion
-      await loadHistory();
-    },
-    [apiService],
-  );
-
-  const onDeleteAll = useCallback(async () => {
-    setDeletingAll(true);
-    try {
-      const resp = await apiService.request({ tp: 'req:history:delete-all' });
-      setShowDeleteAllModal(false);
-      if (resp?.error) {
-        alert(`Could not delete history: ${resp.error}`);
-      } else {
-        setSearchTerm('');
-        setCurrentPage(1);
-        // Reload the index after deletion
-        await loadHistory();
-      }
-    } catch (error) {
-      setShowDeleteAllModal(false);
-      console.error('Failed to delete shot history:', error);
-      alert('Could not delete history. Please try again.');
-    } finally {
-      setDeletingAll(false);
-    }
-  }, [apiService]);
-
-  const onNotesChanged = useCallback(async () => {
-    // Reload the index to get updated ratings
-    await loadHistory();
-  }, []);
-
-  // Filtered and sorted history with pagination
-  const { paginatedHistory, totalPages, totalFilteredItems } = useMemo(() => {
+  // Filtered and sorted history with pagination. `filteredHistory` is the full
+  // sorted match list (all pages) — used by the bulk export / delete-filtered
+  // actions so they respect the current search + filters.
+  const { paginatedHistory, filteredHistory, totalPages, totalFilteredItems } = useMemo(() => {
     let filtered = history;
 
     // Apply search filter
@@ -204,6 +213,7 @@ export function ShotHistory() {
       return sortOrder === 'desc' ? -comparison : comparison;
     });
 
+    const filteredHistory = filtered;
     const totalFilteredItems = filtered.length;
     const totalPages = Math.ceil(totalFilteredItems / itemsPerPage);
 
@@ -212,10 +222,165 @@ export function ShotHistory() {
     const endIndex = startIndex + itemsPerPage;
     const paginatedHistory = filtered.slice(startIndex, endIndex);
 
-    return { paginatedHistory, totalPages, totalFilteredItems };
+    return { paginatedHistory, filteredHistory, totalPages, totalFilteredItems };
   }, [history, searchTerm, filterBy, sortBy, sortOrder, currentPage]);
 
   const historyCount = history.length;
+
+  const busy = deletingAll || deletingFiltered || exporting;
+
+  const onDelete = useCallback(
+    async id => {
+      setLoading(true);
+      await apiService.request({ tp: 'req:history:delete', id });
+      // Reload the index after deletion
+      await loadHistory();
+    },
+    [apiService],
+  );
+
+  const onDeleteAll = useCallback(async () => {
+    setDeletingAll(true);
+    try {
+      const resp = await apiService.request({ tp: 'req:history:delete-all' });
+      setShowDeleteAllModal(false);
+      if (resp?.error) {
+        alert(`Could not delete history: ${resp.error}`);
+      } else {
+        setSearchTerm('');
+        setCurrentPage(1);
+        // Reload the index after deletion
+        await loadHistory();
+      }
+    } catch (error) {
+      setShowDeleteAllModal(false);
+      console.error('Failed to delete shot history:', error);
+      alert('Could not delete history. Please try again.');
+    } finally {
+      setDeletingAll(false);
+    }
+  }, [apiService]);
+
+  const onNotesChanged = useCallback(async () => {
+    // Reload the index to get updated ratings
+    await loadHistory();
+  }, []);
+
+  // Loads one full shot (samples + notes) for export. Reuses already-loaded
+  // state to avoid refetching expanded cards. Returns null on failure so a
+  // single bad file doesn't abort the whole export.
+  const loadFullShotForExport = useCallback(
+    async meta => {
+      try {
+        let full = meta.loaded && meta.samples ? { ...meta } : null;
+        if (!full) {
+          // Pad ID to 6 digits with zeros to match backend filename format
+          const paddedId = meta.id.padStart(6, '0');
+          const resp = await fetch(`/api/history/${paddedId}.slog`);
+          if (!resp.ok) return null;
+          const buf = await resp.arrayBuffer();
+          const parsed = parseBinaryShot(buf, meta.id);
+          parsed.incomplete = meta.incomplete ?? parsed.incomplete;
+          full = {
+            ...meta,
+            ...parsed,
+            // Preserve index metadata over shot file data
+            volume: meta.volume ?? parsed.volume,
+            rating: meta.rating ?? parsed.rating,
+            incomplete: meta.incomplete ?? parsed.incomplete,
+          };
+        }
+        let notes = full.notes ?? null;
+        try {
+          const notesResp = await apiService.request({ tp: 'req:history:notes:get', id: meta.id });
+          if (notesResp?.notes && Object.keys(notesResp.notes).length > 0) {
+            notes =
+              typeof notesResp.notes === 'string' ? JSON.parse(notesResp.notes) : notesResp.notes;
+          }
+        } catch {
+          // Notes are optional — export the shot without them.
+        }
+        return toExportShot(full, notes);
+      } catch {
+        return null;
+      }
+    },
+    [apiService],
+  );
+
+  const cancelBulk = useCallback(() => {
+    bulkCancelRef.current = true;
+  }, []);
+
+  const onExportFiltered = useCallback(async () => {
+    const targets = [...filteredHistory];
+    if (targets.length === 0 || exporting || deletingAll || deletingFiltered) return;
+    bulkCancelRef.current = false;
+    setExporting(true);
+    setExportProgress({ current: 0, total: targets.length });
+    const exported = [];
+    let failed = 0;
+    // Sequential on purpose: parallel fetches pile up requests on the ESP32
+    // (see loadHistory). Progress mirrors the StatisticsView pattern.
+    for (let i = 0; i < targets.length; i++) {
+      if (bulkCancelRef.current) break;
+      const shot = await loadFullShotForExport(targets[i]);
+      if (bulkCancelRef.current) break;
+      if (shot) exported.push(shot);
+      else failed++;
+      setExportProgress({ current: i + 1, total: targets.length });
+    }
+    const cancelled = bulkCancelRef.current;
+    setExporting(false);
+    setExportProgress({ current: 0, total: 0 });
+    if (cancelled) return;
+    if (exported.length === 0) {
+      alert('Could not export any shots. Please try again.');
+      return;
+    }
+    const day = new Date().toISOString().slice(0, 10);
+    downloadJson(
+      { exportedAt: new Date().toISOString(), count: exported.length, shots: exported },
+      `shot-history-export-${day}.json`,
+    );
+    if (failed > 0) {
+      alert(`Exported ${exported.length} of ${targets.length} shots (${failed} failed).`);
+    }
+  }, [filteredHistory, exporting, deletingAll, deletingFiltered, loadFullShotForExport]);
+
+  const onDeleteFiltered = useCallback(async () => {
+    const targets = [...filteredHistory];
+    if (targets.length === 0 || deletingFiltered || deletingAll || exporting) return;
+    bulkCancelRef.current = false;
+    setDeletingFiltered(true);
+    setDeleteFilteredProgress({ current: 0, total: targets.length });
+    const failedIds = [];
+    // Sequential req:history:delete loop — no firmware changes needed and the
+    // existing per-shot endpoint already updates the index.
+    for (let i = 0; i < targets.length; i++) {
+      if (bulkCancelRef.current) break;
+      try {
+        const resp = await apiService.request({ tp: 'req:history:delete', id: targets[i].id });
+        if (resp?.error) failedIds.push(targets[i].id);
+      } catch {
+        failedIds.push(targets[i].id);
+      }
+      if (bulkCancelRef.current) break;
+      setDeleteFilteredProgress({ current: i + 1, total: targets.length });
+    }
+    const cancelled = bulkCancelRef.current;
+    setShowDeleteFilteredModal(false);
+    setDeletingFiltered(false);
+    setDeleteFilteredProgress({ current: 0, total: 0 });
+    setSearchTerm('');
+    setCurrentPage(1);
+    await loadHistory();
+    if (cancelled) return;
+    if (failedIds.length > 0) {
+      const done = targets.length - failedIds.length;
+      alert(`Deleted ${done} of ${targets.length} shots. Failed: ${failedIds.join(', ')}`);
+    }
+  }, [filteredHistory, deletingFiltered, deletingAll, exporting, apiService]);
 
   if (loading) {
     return (
@@ -236,10 +401,30 @@ export function ShotHistory() {
             {t`${totalFilteredItems} of ${historyCount} shots`}{' '}
             {totalPages > 1 && t`(Page ${currentPage} of ${totalPages})`}
           </span>
+          <Tooltip content='Export filtered shots'>
+            <button
+              onClick={onExportFiltered}
+              disabled={totalFilteredItems === 0 || busy}
+              className='text-base-content/50 hover:text-info hover:bg-info/10 cursor-pointer rounded-md p-2 transition-colors disabled:cursor-not-allowed disabled:opacity-40'
+              aria-label='Export filtered shots'
+            >
+              <FontAwesomeIcon icon={faFileExport} className='h-4 w-4' />
+            </button>
+          </Tooltip>
+          <Tooltip content={`Delete filtered shots (${totalFilteredItems})`}>
+            <button
+              onClick={() => setShowDeleteFilteredModal(true)}
+              disabled={totalFilteredItems === 0 || busy}
+              className='text-base-content/50 hover:text-error hover:bg-error/10 cursor-pointer rounded-md p-2 transition-colors disabled:cursor-not-allowed disabled:opacity-40'
+              aria-label='Delete filtered shots'
+            >
+              <FontAwesomeIcon icon={faFilterCircleXmark} className='h-4 w-4' />
+            </button>
+          </Tooltip>
           <Tooltip content='Delete all'>
             <button
               onClick={() => setShowDeleteAllModal(true)}
-              disabled={history.length === 0 || deletingAll}
+              disabled={history.length === 0 || busy}
               className='text-base-content/50 hover:text-error hover:bg-error/10 cursor-pointer rounded-md p-2 transition-colors disabled:cursor-not-allowed disabled:opacity-40'
               aria-label='Delete all shots'
             >
@@ -314,6 +499,30 @@ export function ShotHistory() {
           </div>
         </div>
       </div>
+
+      {exporting && (
+        <div className='border-base-content/10 bg-base-100 mb-4 rounded-lg border p-4 text-center'>
+          <div className='mb-2 text-sm font-semibold opacity-70'>
+            {exportProgress.total > 0
+              ? `Exporting shot ${exportProgress.current} of ${exportProgress.total}...`
+              : 'Preparing export...'}
+          </div>
+          {exportProgress.total > 0 ? (
+            <progress
+              className='progress progress-primary w-full max-w-xs'
+              value={exportProgress.current}
+              max={exportProgress.total}
+            />
+          ) : (
+            <progress className='progress progress-primary w-full max-w-xs' />
+          )}
+          <div className='mt-3'>
+            <button className='btn btn-sm btn-outline' onClick={cancelBulk}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className='grid grid-cols-1 gap-3 lg:grid-cols-12'>
         {paginatedHistory.map(item => (
@@ -455,6 +664,77 @@ export function ShotHistory() {
                 >
                   {deletingAll ? 'Deleting…' : 'Delete all'}
                 </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showDeleteFilteredModal && (
+        <div className='bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black p-4'>
+          <div className='max-h-[90vh] w-full max-w-md overflow-y-auto rounded-lg bg-white shadow-xl dark:bg-gray-800'>
+            <div className='p-6'>
+              <div className='mb-4 flex items-center justify-between'>
+                <h3 className='text-lg font-semibold'>Delete filtered shots?</h3>
+                {!deletingFiltered && (
+                  <button
+                    onClick={() => setShowDeleteFilteredModal(false)}
+                    className='text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                    aria-label='Close'
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+              <p className='mb-4 text-sm text-gray-600 dark:text-gray-300'>
+                This will permanently delete the {totalFilteredItems} shots matching your current
+                search and filters (across all pages). This cannot be undone.
+              </p>
+              {deletingFiltered && (
+                <div className='mb-4 text-center'>
+                  <div className='mb-2 text-sm font-semibold opacity-70'>
+                    {deleteFilteredProgress.total > 0
+                      ? `Deleting shot ${deleteFilteredProgress.current} of ${deleteFilteredProgress.total}...`
+                      : 'Preparing deletion...'}
+                  </div>
+                  {deleteFilteredProgress.total > 0 ? (
+                    <progress
+                      className='progress progress-error w-full max-w-xs'
+                      value={deleteFilteredProgress.current}
+                      max={deleteFilteredProgress.total}
+                    />
+                  ) : (
+                    <progress className='progress progress-error w-full max-w-xs' />
+                  )}
+                </div>
+              )}
+              <div className='flex justify-end space-x-3'>
+                {deletingFiltered ? (
+                  <button
+                    type='button'
+                    onClick={cancelBulk}
+                    className='rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500'
+                  >
+                    Cancel deletion
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      type='button'
+                      onClick={() => setShowDeleteFilteredModal(false)}
+                      className='rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500'
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type='button'
+                      onClick={onDeleteFiltered}
+                      className='rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50'
+                    >
+                      Delete {totalFilteredItems} shots
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </div>
