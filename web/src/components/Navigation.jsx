@@ -229,7 +229,7 @@ export function Navigation({ collapsed = false, onToggleCollapsed }) {
         />
       )}
       <aside
-        className={`sidebar border-base-300 bg-base-100 fixed top-0 left-0 z-9999 flex h-screen flex-col overflow-y-auto border-r p-5 md:static landscape:static ${
+        className={`sidebar border-base-300 bg-base-100 fixed top-0 left-0 z-9999 flex h-dvh flex-col overflow-y-auto border-r pt-[max(1.25rem,env(safe-area-inset-top))] pr-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pl-[max(1.25rem,env(safe-area-inset-left))] md:static landscape:static ${
           collapsed ? 'hidden md:flex md:w-[90px] landscape:flex landscape:w-[90px]' : 'w-[290px]'
         }`}
       >
