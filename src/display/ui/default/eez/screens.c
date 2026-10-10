@@ -2179,12 +2179,15 @@ void delete_screen_brew_screen() {
     screen_brew_screen_state.brew_dials.scale = 0;
     screen_brew_screen_state.brew_dials.indicator = 0;
     screen_brew_screen_state.brew_dials.indicator1 = 0;
-    screen_brew_screen_state.brew_dials.scale1 = 0;
     screen_brew_screen_state.brew_dials.indicator2 = 0;
+    screen_brew_screen_state.brew_dials.scale1 = 0;
     screen_brew_screen_state.brew_dials.indicator3 = 0;
-    screen_brew_screen_state.brew_dials.scale2 = 0;
     screen_brew_screen_state.brew_dials.indicator4 = 0;
     screen_brew_screen_state.brew_dials.indicator5 = 0;
+    screen_brew_screen_state.brew_dials.scale2 = 0;
+    screen_brew_screen_state.brew_dials.indicator6 = 0;
+    screen_brew_screen_state.brew_dials.indicator7 = 0;
+    screen_brew_screen_state.brew_dials.indicator8 = 0;
     deletePageFlowState(1);
 }
 
@@ -2631,7 +2634,8 @@ void create_screen_status_screen() {
                             lv_obj_t *obj = lv_label_create(parent_obj);
                             objects.phase_label = obj;
                             lv_obj_set_pos(obj, 0, -40);
-                            lv_obj_set_size(obj, 200, 30);
+                            lv_obj_set_size(obj, 300, 30);
+                            lv_label_set_long_mode(obj, LV_LABEL_LONG_SCROLL_CIRCULAR);
                             lv_obj_clear_flag(obj, LV_OBJ_FLAG_SCROLL_WITH_ARROW);
                             add_style_text_theme_color(obj);
                             lv_obj_set_style_text_font(obj, &lv_font_montserrat_24, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -2745,6 +2749,7 @@ void create_screen_status_screen() {
                             objects.phase_label_1 = obj;
                             lv_obj_set_pos(obj, 0, -190);
                             lv_obj_set_size(obj, 200, 30);
+                            lv_label_set_long_mode(obj, LV_LABEL_LONG_SCROLL_CIRCULAR);
                             lv_obj_clear_flag(obj, LV_OBJ_FLAG_SCROLL_WITH_ARROW);
                             add_style_text_theme_color(obj);
                             lv_obj_set_style_text_font(obj, &lv_font_montserrat_24, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -2950,12 +2955,15 @@ void delete_screen_status_screen() {
     screen_status_screen_state.status_dials.scale = 0;
     screen_status_screen_state.status_dials.indicator = 0;
     screen_status_screen_state.status_dials.indicator1 = 0;
-    screen_status_screen_state.status_dials.scale1 = 0;
     screen_status_screen_state.status_dials.indicator2 = 0;
+    screen_status_screen_state.status_dials.scale1 = 0;
     screen_status_screen_state.status_dials.indicator3 = 0;
-    screen_status_screen_state.status_dials.scale2 = 0;
     screen_status_screen_state.status_dials.indicator4 = 0;
     screen_status_screen_state.status_dials.indicator5 = 0;
+    screen_status_screen_state.status_dials.scale2 = 0;
+    screen_status_screen_state.status_dials.indicator6 = 0;
+    screen_status_screen_state.status_dials.indicator7 = 0;
+    screen_status_screen_state.status_dials.indicator8 = 0;
     deletePageFlowState(2);
 }
 
@@ -3593,12 +3601,15 @@ void delete_screen_menu_screen_new() {
     screen_menu_screen_new_state.new_menu_dials.scale = 0;
     screen_menu_screen_new_state.new_menu_dials.indicator = 0;
     screen_menu_screen_new_state.new_menu_dials.indicator1 = 0;
-    screen_menu_screen_new_state.new_menu_dials.scale1 = 0;
     screen_menu_screen_new_state.new_menu_dials.indicator2 = 0;
+    screen_menu_screen_new_state.new_menu_dials.scale1 = 0;
     screen_menu_screen_new_state.new_menu_dials.indicator3 = 0;
-    screen_menu_screen_new_state.new_menu_dials.scale2 = 0;
     screen_menu_screen_new_state.new_menu_dials.indicator4 = 0;
     screen_menu_screen_new_state.new_menu_dials.indicator5 = 0;
+    screen_menu_screen_new_state.new_menu_dials.scale2 = 0;
+    screen_menu_screen_new_state.new_menu_dials.indicator6 = 0;
+    screen_menu_screen_new_state.new_menu_dials.indicator7 = 0;
+    screen_menu_screen_new_state.new_menu_dials.indicator8 = 0;
     deletePageFlowState(3);
 }
 
@@ -3847,12 +3858,15 @@ void delete_screen_steam_screen() {
     screen_steam_screen_state.steam_dials.scale = 0;
     screen_steam_screen_state.steam_dials.indicator = 0;
     screen_steam_screen_state.steam_dials.indicator1 = 0;
-    screen_steam_screen_state.steam_dials.scale1 = 0;
     screen_steam_screen_state.steam_dials.indicator2 = 0;
+    screen_steam_screen_state.steam_dials.scale1 = 0;
     screen_steam_screen_state.steam_dials.indicator3 = 0;
-    screen_steam_screen_state.steam_dials.scale2 = 0;
     screen_steam_screen_state.steam_dials.indicator4 = 0;
     screen_steam_screen_state.steam_dials.indicator5 = 0;
+    screen_steam_screen_state.steam_dials.scale2 = 0;
+    screen_steam_screen_state.steam_dials.indicator6 = 0;
+    screen_steam_screen_state.steam_dials.indicator7 = 0;
+    screen_steam_screen_state.steam_dials.indicator8 = 0;
     deletePageFlowState(4);
 }
 
@@ -4070,12 +4084,15 @@ void delete_screen_water_screen() {
     screen_water_screen_state.water_dials.scale = 0;
     screen_water_screen_state.water_dials.indicator = 0;
     screen_water_screen_state.water_dials.indicator1 = 0;
-    screen_water_screen_state.water_dials.scale1 = 0;
     screen_water_screen_state.water_dials.indicator2 = 0;
+    screen_water_screen_state.water_dials.scale1 = 0;
     screen_water_screen_state.water_dials.indicator3 = 0;
-    screen_water_screen_state.water_dials.scale2 = 0;
     screen_water_screen_state.water_dials.indicator4 = 0;
     screen_water_screen_state.water_dials.indicator5 = 0;
+    screen_water_screen_state.water_dials.scale2 = 0;
+    screen_water_screen_state.water_dials.indicator6 = 0;
+    screen_water_screen_state.water_dials.indicator7 = 0;
+    screen_water_screen_state.water_dials.indicator8 = 0;
     deletePageFlowState(5);
 }
 
@@ -4468,12 +4485,15 @@ void delete_screen_grind_screen() {
     screen_grind_screen_state.grind_dials.scale = 0;
     screen_grind_screen_state.grind_dials.indicator = 0;
     screen_grind_screen_state.grind_dials.indicator1 = 0;
-    screen_grind_screen_state.grind_dials.scale1 = 0;
     screen_grind_screen_state.grind_dials.indicator2 = 0;
+    screen_grind_screen_state.grind_dials.scale1 = 0;
     screen_grind_screen_state.grind_dials.indicator3 = 0;
-    screen_grind_screen_state.grind_dials.scale2 = 0;
     screen_grind_screen_state.grind_dials.indicator4 = 0;
     screen_grind_screen_state.grind_dials.indicator5 = 0;
+    screen_grind_screen_state.grind_dials.scale2 = 0;
+    screen_grind_screen_state.grind_dials.indicator6 = 0;
+    screen_grind_screen_state.grind_dials.indicator7 = 0;
+    screen_grind_screen_state.grind_dials.indicator8 = 0;
     deletePageFlowState(6);
 }
 
@@ -4836,12 +4856,15 @@ void delete_screen_info_screen() {
     screen_info_screen_state.dials1_state.scale = 0;
     screen_info_screen_state.dials1_state.indicator = 0;
     screen_info_screen_state.dials1_state.indicator1 = 0;
-    screen_info_screen_state.dials1_state.scale1 = 0;
     screen_info_screen_state.dials1_state.indicator2 = 0;
+    screen_info_screen_state.dials1_state.scale1 = 0;
     screen_info_screen_state.dials1_state.indicator3 = 0;
-    screen_info_screen_state.dials1_state.scale2 = 0;
     screen_info_screen_state.dials1_state.indicator4 = 0;
     screen_info_screen_state.dials1_state.indicator5 = 0;
+    screen_info_screen_state.dials1_state.scale2 = 0;
+    screen_info_screen_state.dials1_state.indicator6 = 0;
+    screen_info_screen_state.dials1_state.indicator7 = 0;
+    screen_info_screen_state.dials1_state.indicator8 = 0;
     deletePageFlowState(7);
 }
 
@@ -6149,12 +6172,15 @@ void delete_screen_new_profile_screen() {
     screen_new_profile_screen_state.profile_dials_1.scale = 0;
     screen_new_profile_screen_state.profile_dials_1.indicator = 0;
     screen_new_profile_screen_state.profile_dials_1.indicator1 = 0;
-    screen_new_profile_screen_state.profile_dials_1.scale1 = 0;
     screen_new_profile_screen_state.profile_dials_1.indicator2 = 0;
+    screen_new_profile_screen_state.profile_dials_1.scale1 = 0;
     screen_new_profile_screen_state.profile_dials_1.indicator3 = 0;
-    screen_new_profile_screen_state.profile_dials_1.scale2 = 0;
     screen_new_profile_screen_state.profile_dials_1.indicator4 = 0;
     screen_new_profile_screen_state.profile_dials_1.indicator5 = 0;
+    screen_new_profile_screen_state.profile_dials_1.scale2 = 0;
+    screen_new_profile_screen_state.profile_dials_1.indicator6 = 0;
+    screen_new_profile_screen_state.profile_dials_1.indicator7 = 0;
+    screen_new_profile_screen_state.profile_dials_1.indicator8 = 0;
     deletePageFlowState(8);
 }
 
@@ -6409,13 +6435,13 @@ void create_user_widget_dials(lv_obj_t *parent_obj, void *flowState, int startWi
                     state->indicator = lv_meter_add_needle_img(obj, scale, &img_indicator_small, -233, 0);
                 }
                 {
-                    state->indicator6 = lv_meter_add_needle_img(obj, scale, &img_indicator_small_inside, -195, 0);
+                    state->indicator1 = lv_meter_add_needle_img(obj, scale, &img_indicator_small_inside, -195, 0);
                 }
                 {
                     lv_meter_indicator_t *indicator =
                         lv_meter_add_scale_lines(obj, scale, lv_color_hex(theme_colors[eez_flow_get_selected_theme_index()][6]),
                                                  lv_color_hex(theme_colors[eez_flow_get_selected_theme_index()][6]), false, 0);
-                    state->indicator1 = indicator;
+                    state->indicator2 = indicator;
                     lv_meter_set_indicator_start_value(obj, indicator, 0);
                 }
             }
@@ -6441,16 +6467,16 @@ void create_user_widget_dials(lv_obj_t *parent_obj, void *flowState, int startWi
                 lv_meter_set_scale_major_ticks(obj, scale, 0, 0, 0, lv_color_hex(0x000000), 0);
                 lv_meter_set_scale_range(obj, scale, 0, 160, 300, 120);
                 {
-                    state->indicator2 = lv_meter_add_needle_img(obj, scale, &img_indicator_small, -233, 0);
+                    state->indicator3 = lv_meter_add_needle_img(obj, scale, &img_indicator_small, -233, 0);
                 }
                 {
-                    state->indicator7 = lv_meter_add_needle_img(obj, scale, &img_indicator_small_inside, -195, 0);
+                    state->indicator4 = lv_meter_add_needle_img(obj, scale, &img_indicator_small_inside, -195, 0);
                 }
                 {
                     lv_meter_indicator_t *indicator =
                         lv_meter_add_scale_lines(obj, scale, lv_color_hex(theme_colors[eez_flow_get_selected_theme_index()][6]),
                                                  lv_color_hex(theme_colors[eez_flow_get_selected_theme_index()][6]), false, 0);
-                    state->indicator3 = indicator;
+                    state->indicator5 = indicator;
                     lv_meter_set_indicator_start_value(obj, indicator, 0);
                 }
             }
@@ -6474,16 +6500,16 @@ void create_user_widget_dials(lv_obj_t *parent_obj, void *flowState, int startWi
                 lv_meter_set_scale_major_ticks(obj, scale, 0, 0, 0, lv_color_hex(0x000000), 0);
                 lv_meter_set_scale_range(obj, scale, 160, 0, 120, 300);
                 {
-                    state->indicator4 = lv_meter_add_needle_img(obj, scale, &img_indicator_small, -233, 0);
+                    state->indicator6 = lv_meter_add_needle_img(obj, scale, &img_indicator_small, -233, 0);
                 }
                 {
-                    state->indicator8 = lv_meter_add_needle_img(obj, scale, &img_indicator_small_inside, -195, 0);
+                    state->indicator7 = lv_meter_add_needle_img(obj, scale, &img_indicator_small_inside, -195, 0);
                 }
                 {
                     lv_meter_indicator_t *indicator =
                         lv_meter_add_scale_lines(obj, scale, lv_color_hex(theme_colors[eez_flow_get_selected_theme_index()][7]),
                                                  lv_color_hex(theme_colors[eez_flow_get_selected_theme_index()][7]), false, 0);
-                    state->indicator5 = indicator;
+                    state->indicator8 = indicator;
                     lv_meter_set_indicator_start_value(obj, indicator, 0);
                 }
             }
@@ -6609,22 +6635,22 @@ void tick_user_widget_dials(void *flowState, int startWidgetIndex, user_widget_d
     }
     {
         if (state->indicator1) {
-            int32_t new_val = evalIntegerProperty(flowState, 1, 5, "Failed to evaluate End value in Meter widget");
-            int32_t cur_val = state->indicator1->end_value;
+            int32_t new_val = evalIntegerProperty(flowState, 1, 5, "Failed to evaluate Value in Meter widget");
+            int32_t cur_val = state->indicator1->start_value;
             if (new_val != cur_val) {
                 tick_value_change_obj = ((lv_obj_t **)&objects)[startWidgetIndex + 0];
-                lv_meter_set_indicator_end_value(((lv_obj_t **)&objects)[startWidgetIndex + 0], state->indicator1, new_val);
+                lv_meter_set_indicator_value(((lv_obj_t **)&objects)[startWidgetIndex + 0], state->indicator1, new_val);
                 tick_value_change_obj = NULL;
             }
         }
     }
     {
-        if (state->indicator6) {
-            int32_t new_val = evalIntegerProperty(flowState, 1, 4, "Failed to evaluate Value in Meter widget");
-            int32_t cur_val = state->indicator6->start_value;
+        if (state->indicator2) {
+            int32_t new_val = evalIntegerProperty(flowState, 1, 6, "Failed to evaluate End value in Meter widget");
+            int32_t cur_val = state->indicator2->end_value;
             if (new_val != cur_val) {
                 tick_value_change_obj = ((lv_obj_t **)&objects)[startWidgetIndex + 0];
-                lv_meter_set_indicator_value(((lv_obj_t **)&objects)[startWidgetIndex + 0], state->indicator6, new_val);
+                lv_meter_set_indicator_end_value(((lv_obj_t **)&objects)[startWidgetIndex + 0], state->indicator2, new_val);
                 tick_value_change_obj = NULL;
             }
         }
@@ -6643,34 +6669,34 @@ void tick_user_widget_dials(void *flowState, int startWidgetIndex, user_widget_d
         }
     }
     {
-        if (state->indicator2) {
-            int32_t new_val = evalIntegerProperty(flowState, 0, 4, "Failed to evaluate Value in Meter widget");
-            int32_t cur_val = state->indicator2->start_value;
-            if (new_val != cur_val) {
-                tick_value_change_obj = ((lv_obj_t **)&objects)[startWidgetIndex + 1];
-                lv_meter_set_indicator_value(((lv_obj_t **)&objects)[startWidgetIndex + 1], state->indicator2, new_val);
-                tick_value_change_obj = NULL;
-            }
-        }
-    }
-    {
         if (state->indicator3) {
-            int32_t new_val = evalIntegerProperty(flowState, 0, 5, "Failed to evaluate End value in Meter widget");
-            int32_t cur_val = state->indicator3->end_value;
+            int32_t new_val = evalIntegerProperty(flowState, 0, 4, "Failed to evaluate Value in Meter widget");
+            int32_t cur_val = state->indicator3->start_value;
             if (new_val != cur_val) {
                 tick_value_change_obj = ((lv_obj_t **)&objects)[startWidgetIndex + 1];
-                lv_meter_set_indicator_end_value(((lv_obj_t **)&objects)[startWidgetIndex + 1], state->indicator3, new_val);
+                lv_meter_set_indicator_value(((lv_obj_t **)&objects)[startWidgetIndex + 1], state->indicator3, new_val);
                 tick_value_change_obj = NULL;
             }
         }
     }
     {
-        if (state->indicator7) {
-            int32_t new_val = evalIntegerProperty(flowState, 0, 4, "Failed to evaluate Value in Meter widget");
-            int32_t cur_val = state->indicator7->start_value;
+        if (state->indicator4) {
+            int32_t new_val = evalIntegerProperty(flowState, 0, 5, "Failed to evaluate Value in Meter widget");
+            int32_t cur_val = state->indicator4->start_value;
             if (new_val != cur_val) {
                 tick_value_change_obj = ((lv_obj_t **)&objects)[startWidgetIndex + 1];
-                lv_meter_set_indicator_value(((lv_obj_t **)&objects)[startWidgetIndex + 1], state->indicator7, new_val);
+                lv_meter_set_indicator_value(((lv_obj_t **)&objects)[startWidgetIndex + 1], state->indicator4, new_val);
+                tick_value_change_obj = NULL;
+            }
+        }
+    }
+    {
+        if (state->indicator5) {
+            int32_t new_val = evalIntegerProperty(flowState, 0, 6, "Failed to evaluate End value in Meter widget");
+            int32_t cur_val = state->indicator5->end_value;
+            if (new_val != cur_val) {
+                tick_value_change_obj = ((lv_obj_t **)&objects)[startWidgetIndex + 1];
+                lv_meter_set_indicator_end_value(((lv_obj_t **)&objects)[startWidgetIndex + 1], state->indicator5, new_val);
                 tick_value_change_obj = NULL;
             }
         }
@@ -6689,34 +6715,34 @@ void tick_user_widget_dials(void *flowState, int startWidgetIndex, user_widget_d
         }
     }
     {
-        if (state->indicator4) {
+        if (state->indicator6) {
             int32_t new_val = evalIntegerProperty(flowState, 2, 4, "Failed to evaluate Value in Meter widget");
-            int32_t cur_val = state->indicator4->start_value;
+            int32_t cur_val = state->indicator6->start_value;
             if (new_val != cur_val) {
                 tick_value_change_obj = ((lv_obj_t **)&objects)[startWidgetIndex + 2];
-                lv_meter_set_indicator_value(((lv_obj_t **)&objects)[startWidgetIndex + 2], state->indicator4, new_val);
+                lv_meter_set_indicator_value(((lv_obj_t **)&objects)[startWidgetIndex + 2], state->indicator6, new_val);
                 tick_value_change_obj = NULL;
             }
         }
     }
     {
-        if (state->indicator5) {
-            int32_t new_val = evalIntegerProperty(flowState, 2, 5, "Failed to evaluate End value in Meter widget");
-            int32_t cur_val = state->indicator5->end_value;
+        if (state->indicator7) {
+            int32_t new_val = evalIntegerProperty(flowState, 2, 5, "Failed to evaluate Value in Meter widget");
+            int32_t cur_val = state->indicator7->start_value;
             if (new_val != cur_val) {
                 tick_value_change_obj = ((lv_obj_t **)&objects)[startWidgetIndex + 2];
-                lv_meter_set_indicator_end_value(((lv_obj_t **)&objects)[startWidgetIndex + 2], state->indicator5, new_val);
+                lv_meter_set_indicator_value(((lv_obj_t **)&objects)[startWidgetIndex + 2], state->indicator7, new_val);
                 tick_value_change_obj = NULL;
             }
         }
     }
     {
         if (state->indicator8) {
-            int32_t new_val = evalIntegerProperty(flowState, 2, 4, "Failed to evaluate Value in Meter widget");
-            int32_t cur_val = state->indicator8->start_value;
+            int32_t new_val = evalIntegerProperty(flowState, 2, 6, "Failed to evaluate End value in Meter widget");
+            int32_t cur_val = state->indicator8->end_value;
             if (new_val != cur_val) {
                 tick_value_change_obj = ((lv_obj_t **)&objects)[startWidgetIndex + 2];
-                lv_meter_set_indicator_value(((lv_obj_t **)&objects)[startWidgetIndex + 2], state->indicator8, new_val);
+                lv_meter_set_indicator_end_value(((lv_obj_t **)&objects)[startWidgetIndex + 2], state->indicator8, new_val);
                 tick_value_change_obj = NULL;
             }
         }
@@ -7462,25 +7488,25 @@ void change_color_theme(uint32_t theme_index) {
                     state->scale->tick_color = lv_color_hex(theme_colors[theme_index][5]);
                     state->scale->tick_major_color = lv_color_hex(0x000000);
                 }
-                if (state->indicator1) {
-                    state->indicator1->type_data.scale_lines.color_start = lv_color_hex(theme_colors[theme_index][6]);
-                    state->indicator1->type_data.scale_lines.color_end = lv_color_hex(theme_colors[theme_index][6]);
+                if (state->indicator2) {
+                    state->indicator2->type_data.scale_lines.color_start = lv_color_hex(theme_colors[theme_index][6]);
+                    state->indicator2->type_data.scale_lines.color_end = lv_color_hex(theme_colors[theme_index][6]);
                 }
                 if (state->scale1) {
                     state->scale1->tick_color = lv_color_hex(theme_colors[theme_index][5]);
                     state->scale1->tick_major_color = lv_color_hex(0x000000);
                 }
-                if (state->indicator3) {
-                    state->indicator3->type_data.scale_lines.color_start = lv_color_hex(theme_colors[theme_index][6]);
-                    state->indicator3->type_data.scale_lines.color_end = lv_color_hex(theme_colors[theme_index][6]);
+                if (state->indicator5) {
+                    state->indicator5->type_data.scale_lines.color_start = lv_color_hex(theme_colors[theme_index][6]);
+                    state->indicator5->type_data.scale_lines.color_end = lv_color_hex(theme_colors[theme_index][6]);
                 }
                 if (state->scale2) {
                     state->scale2->tick_color = lv_color_hex(theme_colors[theme_index][5]);
                     state->scale2->tick_major_color = lv_color_hex(0x000000);
                 }
-                if (state->indicator5) {
-                    state->indicator5->type_data.scale_lines.color_start = lv_color_hex(theme_colors[theme_index][7]);
-                    state->indicator5->type_data.scale_lines.color_end = lv_color_hex(theme_colors[theme_index][7]);
+                if (state->indicator8) {
+                    state->indicator8->type_data.scale_lines.color_start = lv_color_hex(theme_colors[theme_index][7]);
+                    state->indicator8->type_data.scale_lines.color_end = lv_color_hex(theme_colors[theme_index][7]);
                 }
                 if (((lv_obj_t **)&objects)[startWidgetIndex + 3])
                     lv_obj_set_style_img_recolor(((lv_obj_t **)&objects)[startWidgetIndex + 3],
@@ -7620,25 +7646,25 @@ void change_color_theme(uint32_t theme_index) {
                     state->scale->tick_color = lv_color_hex(theme_colors[theme_index][5]);
                     state->scale->tick_major_color = lv_color_hex(0x000000);
                 }
-                if (state->indicator1) {
-                    state->indicator1->type_data.scale_lines.color_start = lv_color_hex(theme_colors[theme_index][6]);
-                    state->indicator1->type_data.scale_lines.color_end = lv_color_hex(theme_colors[theme_index][6]);
+                if (state->indicator2) {
+                    state->indicator2->type_data.scale_lines.color_start = lv_color_hex(theme_colors[theme_index][6]);
+                    state->indicator2->type_data.scale_lines.color_end = lv_color_hex(theme_colors[theme_index][6]);
                 }
                 if (state->scale1) {
                     state->scale1->tick_color = lv_color_hex(theme_colors[theme_index][5]);
                     state->scale1->tick_major_color = lv_color_hex(0x000000);
                 }
-                if (state->indicator3) {
-                    state->indicator3->type_data.scale_lines.color_start = lv_color_hex(theme_colors[theme_index][6]);
-                    state->indicator3->type_data.scale_lines.color_end = lv_color_hex(theme_colors[theme_index][6]);
+                if (state->indicator5) {
+                    state->indicator5->type_data.scale_lines.color_start = lv_color_hex(theme_colors[theme_index][6]);
+                    state->indicator5->type_data.scale_lines.color_end = lv_color_hex(theme_colors[theme_index][6]);
                 }
                 if (state->scale2) {
                     state->scale2->tick_color = lv_color_hex(theme_colors[theme_index][5]);
                     state->scale2->tick_major_color = lv_color_hex(0x000000);
                 }
-                if (state->indicator5) {
-                    state->indicator5->type_data.scale_lines.color_start = lv_color_hex(theme_colors[theme_index][7]);
-                    state->indicator5->type_data.scale_lines.color_end = lv_color_hex(theme_colors[theme_index][7]);
+                if (state->indicator8) {
+                    state->indicator8->type_data.scale_lines.color_start = lv_color_hex(theme_colors[theme_index][7]);
+                    state->indicator8->type_data.scale_lines.color_end = lv_color_hex(theme_colors[theme_index][7]);
                 }
                 if (((lv_obj_t **)&objects)[startWidgetIndex + 3])
                     lv_obj_set_style_img_recolor(((lv_obj_t **)&objects)[startWidgetIndex + 3],
@@ -7715,25 +7741,25 @@ void change_color_theme(uint32_t theme_index) {
                     state->scale->tick_color = lv_color_hex(theme_colors[theme_index][5]);
                     state->scale->tick_major_color = lv_color_hex(0x000000);
                 }
-                if (state->indicator1) {
-                    state->indicator1->type_data.scale_lines.color_start = lv_color_hex(theme_colors[theme_index][6]);
-                    state->indicator1->type_data.scale_lines.color_end = lv_color_hex(theme_colors[theme_index][6]);
+                if (state->indicator2) {
+                    state->indicator2->type_data.scale_lines.color_start = lv_color_hex(theme_colors[theme_index][6]);
+                    state->indicator2->type_data.scale_lines.color_end = lv_color_hex(theme_colors[theme_index][6]);
                 }
                 if (state->scale1) {
                     state->scale1->tick_color = lv_color_hex(theme_colors[theme_index][5]);
                     state->scale1->tick_major_color = lv_color_hex(0x000000);
                 }
-                if (state->indicator3) {
-                    state->indicator3->type_data.scale_lines.color_start = lv_color_hex(theme_colors[theme_index][6]);
-                    state->indicator3->type_data.scale_lines.color_end = lv_color_hex(theme_colors[theme_index][6]);
+                if (state->indicator5) {
+                    state->indicator5->type_data.scale_lines.color_start = lv_color_hex(theme_colors[theme_index][6]);
+                    state->indicator5->type_data.scale_lines.color_end = lv_color_hex(theme_colors[theme_index][6]);
                 }
                 if (state->scale2) {
                     state->scale2->tick_color = lv_color_hex(theme_colors[theme_index][5]);
                     state->scale2->tick_major_color = lv_color_hex(0x000000);
                 }
-                if (state->indicator5) {
-                    state->indicator5->type_data.scale_lines.color_start = lv_color_hex(theme_colors[theme_index][7]);
-                    state->indicator5->type_data.scale_lines.color_end = lv_color_hex(theme_colors[theme_index][7]);
+                if (state->indicator8) {
+                    state->indicator8->type_data.scale_lines.color_start = lv_color_hex(theme_colors[theme_index][7]);
+                    state->indicator8->type_data.scale_lines.color_end = lv_color_hex(theme_colors[theme_index][7]);
                 }
                 if (((lv_obj_t **)&objects)[startWidgetIndex + 3])
                     lv_obj_set_style_img_recolor(((lv_obj_t **)&objects)[startWidgetIndex + 3],
@@ -7834,25 +7860,25 @@ void change_color_theme(uint32_t theme_index) {
                     state->scale->tick_color = lv_color_hex(theme_colors[theme_index][5]);
                     state->scale->tick_major_color = lv_color_hex(0x000000);
                 }
-                if (state->indicator1) {
-                    state->indicator1->type_data.scale_lines.color_start = lv_color_hex(theme_colors[theme_index][6]);
-                    state->indicator1->type_data.scale_lines.color_end = lv_color_hex(theme_colors[theme_index][6]);
+                if (state->indicator2) {
+                    state->indicator2->type_data.scale_lines.color_start = lv_color_hex(theme_colors[theme_index][6]);
+                    state->indicator2->type_data.scale_lines.color_end = lv_color_hex(theme_colors[theme_index][6]);
                 }
                 if (state->scale1) {
                     state->scale1->tick_color = lv_color_hex(theme_colors[theme_index][5]);
                     state->scale1->tick_major_color = lv_color_hex(0x000000);
                 }
-                if (state->indicator3) {
-                    state->indicator3->type_data.scale_lines.color_start = lv_color_hex(theme_colors[theme_index][6]);
-                    state->indicator3->type_data.scale_lines.color_end = lv_color_hex(theme_colors[theme_index][6]);
+                if (state->indicator5) {
+                    state->indicator5->type_data.scale_lines.color_start = lv_color_hex(theme_colors[theme_index][6]);
+                    state->indicator5->type_data.scale_lines.color_end = lv_color_hex(theme_colors[theme_index][6]);
                 }
                 if (state->scale2) {
                     state->scale2->tick_color = lv_color_hex(theme_colors[theme_index][5]);
                     state->scale2->tick_major_color = lv_color_hex(0x000000);
                 }
-                if (state->indicator5) {
-                    state->indicator5->type_data.scale_lines.color_start = lv_color_hex(theme_colors[theme_index][7]);
-                    state->indicator5->type_data.scale_lines.color_end = lv_color_hex(theme_colors[theme_index][7]);
+                if (state->indicator8) {
+                    state->indicator8->type_data.scale_lines.color_start = lv_color_hex(theme_colors[theme_index][7]);
+                    state->indicator8->type_data.scale_lines.color_end = lv_color_hex(theme_colors[theme_index][7]);
                 }
                 if (((lv_obj_t **)&objects)[startWidgetIndex + 3])
                     lv_obj_set_style_img_recolor(((lv_obj_t **)&objects)[startWidgetIndex + 3],
@@ -7905,25 +7931,25 @@ void change_color_theme(uint32_t theme_index) {
                     state->scale->tick_color = lv_color_hex(theme_colors[theme_index][5]);
                     state->scale->tick_major_color = lv_color_hex(0x000000);
                 }
-                if (state->indicator1) {
-                    state->indicator1->type_data.scale_lines.color_start = lv_color_hex(theme_colors[theme_index][6]);
-                    state->indicator1->type_data.scale_lines.color_end = lv_color_hex(theme_colors[theme_index][6]);
+                if (state->indicator2) {
+                    state->indicator2->type_data.scale_lines.color_start = lv_color_hex(theme_colors[theme_index][6]);
+                    state->indicator2->type_data.scale_lines.color_end = lv_color_hex(theme_colors[theme_index][6]);
                 }
                 if (state->scale1) {
                     state->scale1->tick_color = lv_color_hex(theme_colors[theme_index][5]);
                     state->scale1->tick_major_color = lv_color_hex(0x000000);
                 }
-                if (state->indicator3) {
-                    state->indicator3->type_data.scale_lines.color_start = lv_color_hex(theme_colors[theme_index][6]);
-                    state->indicator3->type_data.scale_lines.color_end = lv_color_hex(theme_colors[theme_index][6]);
+                if (state->indicator5) {
+                    state->indicator5->type_data.scale_lines.color_start = lv_color_hex(theme_colors[theme_index][6]);
+                    state->indicator5->type_data.scale_lines.color_end = lv_color_hex(theme_colors[theme_index][6]);
                 }
                 if (state->scale2) {
                     state->scale2->tick_color = lv_color_hex(theme_colors[theme_index][5]);
                     state->scale2->tick_major_color = lv_color_hex(0x000000);
                 }
-                if (state->indicator5) {
-                    state->indicator5->type_data.scale_lines.color_start = lv_color_hex(theme_colors[theme_index][7]);
-                    state->indicator5->type_data.scale_lines.color_end = lv_color_hex(theme_colors[theme_index][7]);
+                if (state->indicator8) {
+                    state->indicator8->type_data.scale_lines.color_start = lv_color_hex(theme_colors[theme_index][7]);
+                    state->indicator8->type_data.scale_lines.color_end = lv_color_hex(theme_colors[theme_index][7]);
                 }
                 if (((lv_obj_t **)&objects)[startWidgetIndex + 3])
                     lv_obj_set_style_img_recolor(((lv_obj_t **)&objects)[startWidgetIndex + 3],
@@ -8006,25 +8032,25 @@ void change_color_theme(uint32_t theme_index) {
                     state->scale->tick_color = lv_color_hex(theme_colors[theme_index][5]);
                     state->scale->tick_major_color = lv_color_hex(0x000000);
                 }
-                if (state->indicator1) {
-                    state->indicator1->type_data.scale_lines.color_start = lv_color_hex(theme_colors[theme_index][6]);
-                    state->indicator1->type_data.scale_lines.color_end = lv_color_hex(theme_colors[theme_index][6]);
+                if (state->indicator2) {
+                    state->indicator2->type_data.scale_lines.color_start = lv_color_hex(theme_colors[theme_index][6]);
+                    state->indicator2->type_data.scale_lines.color_end = lv_color_hex(theme_colors[theme_index][6]);
                 }
                 if (state->scale1) {
                     state->scale1->tick_color = lv_color_hex(theme_colors[theme_index][5]);
                     state->scale1->tick_major_color = lv_color_hex(0x000000);
                 }
-                if (state->indicator3) {
-                    state->indicator3->type_data.scale_lines.color_start = lv_color_hex(theme_colors[theme_index][6]);
-                    state->indicator3->type_data.scale_lines.color_end = lv_color_hex(theme_colors[theme_index][6]);
+                if (state->indicator5) {
+                    state->indicator5->type_data.scale_lines.color_start = lv_color_hex(theme_colors[theme_index][6]);
+                    state->indicator5->type_data.scale_lines.color_end = lv_color_hex(theme_colors[theme_index][6]);
                 }
                 if (state->scale2) {
                     state->scale2->tick_color = lv_color_hex(theme_colors[theme_index][5]);
                     state->scale2->tick_major_color = lv_color_hex(0x000000);
                 }
-                if (state->indicator5) {
-                    state->indicator5->type_data.scale_lines.color_start = lv_color_hex(theme_colors[theme_index][7]);
-                    state->indicator5->type_data.scale_lines.color_end = lv_color_hex(theme_colors[theme_index][7]);
+                if (state->indicator8) {
+                    state->indicator8->type_data.scale_lines.color_start = lv_color_hex(theme_colors[theme_index][7]);
+                    state->indicator8->type_data.scale_lines.color_end = lv_color_hex(theme_colors[theme_index][7]);
                 }
                 if (((lv_obj_t **)&objects)[startWidgetIndex + 3])
                     lv_obj_set_style_img_recolor(((lv_obj_t **)&objects)[startWidgetIndex + 3],
@@ -8116,25 +8142,25 @@ void change_color_theme(uint32_t theme_index) {
                     state->scale->tick_color = lv_color_hex(theme_colors[theme_index][5]);
                     state->scale->tick_major_color = lv_color_hex(0x000000);
                 }
-                if (state->indicator1) {
-                    state->indicator1->type_data.scale_lines.color_start = lv_color_hex(theme_colors[theme_index][6]);
-                    state->indicator1->type_data.scale_lines.color_end = lv_color_hex(theme_colors[theme_index][6]);
+                if (state->indicator2) {
+                    state->indicator2->type_data.scale_lines.color_start = lv_color_hex(theme_colors[theme_index][6]);
+                    state->indicator2->type_data.scale_lines.color_end = lv_color_hex(theme_colors[theme_index][6]);
                 }
                 if (state->scale1) {
                     state->scale1->tick_color = lv_color_hex(theme_colors[theme_index][5]);
                     state->scale1->tick_major_color = lv_color_hex(0x000000);
                 }
-                if (state->indicator3) {
-                    state->indicator3->type_data.scale_lines.color_start = lv_color_hex(theme_colors[theme_index][6]);
-                    state->indicator3->type_data.scale_lines.color_end = lv_color_hex(theme_colors[theme_index][6]);
+                if (state->indicator5) {
+                    state->indicator5->type_data.scale_lines.color_start = lv_color_hex(theme_colors[theme_index][6]);
+                    state->indicator5->type_data.scale_lines.color_end = lv_color_hex(theme_colors[theme_index][6]);
                 }
                 if (state->scale2) {
                     state->scale2->tick_color = lv_color_hex(theme_colors[theme_index][5]);
                     state->scale2->tick_major_color = lv_color_hex(0x000000);
                 }
-                if (state->indicator5) {
-                    state->indicator5->type_data.scale_lines.color_start = lv_color_hex(theme_colors[theme_index][7]);
-                    state->indicator5->type_data.scale_lines.color_end = lv_color_hex(theme_colors[theme_index][7]);
+                if (state->indicator8) {
+                    state->indicator8->type_data.scale_lines.color_start = lv_color_hex(theme_colors[theme_index][7]);
+                    state->indicator8->type_data.scale_lines.color_end = lv_color_hex(theme_colors[theme_index][7]);
                 }
                 if (((lv_obj_t **)&objects)[startWidgetIndex + 3])
                     lv_obj_set_style_img_recolor(((lv_obj_t **)&objects)[startWidgetIndex + 3],
@@ -8342,25 +8368,25 @@ void change_color_theme(uint32_t theme_index) {
                     state->scale->tick_color = lv_color_hex(theme_colors[theme_index][5]);
                     state->scale->tick_major_color = lv_color_hex(0x000000);
                 }
-                if (state->indicator1) {
-                    state->indicator1->type_data.scale_lines.color_start = lv_color_hex(theme_colors[theme_index][6]);
-                    state->indicator1->type_data.scale_lines.color_end = lv_color_hex(theme_colors[theme_index][6]);
+                if (state->indicator2) {
+                    state->indicator2->type_data.scale_lines.color_start = lv_color_hex(theme_colors[theme_index][6]);
+                    state->indicator2->type_data.scale_lines.color_end = lv_color_hex(theme_colors[theme_index][6]);
                 }
                 if (state->scale1) {
                     state->scale1->tick_color = lv_color_hex(theme_colors[theme_index][5]);
                     state->scale1->tick_major_color = lv_color_hex(0x000000);
                 }
-                if (state->indicator3) {
-                    state->indicator3->type_data.scale_lines.color_start = lv_color_hex(theme_colors[theme_index][6]);
-                    state->indicator3->type_data.scale_lines.color_end = lv_color_hex(theme_colors[theme_index][6]);
+                if (state->indicator5) {
+                    state->indicator5->type_data.scale_lines.color_start = lv_color_hex(theme_colors[theme_index][6]);
+                    state->indicator5->type_data.scale_lines.color_end = lv_color_hex(theme_colors[theme_index][6]);
                 }
                 if (state->scale2) {
                     state->scale2->tick_color = lv_color_hex(theme_colors[theme_index][5]);
                     state->scale2->tick_major_color = lv_color_hex(0x000000);
                 }
-                if (state->indicator5) {
-                    state->indicator5->type_data.scale_lines.color_start = lv_color_hex(theme_colors[theme_index][7]);
-                    state->indicator5->type_data.scale_lines.color_end = lv_color_hex(theme_colors[theme_index][7]);
+                if (state->indicator8) {
+                    state->indicator8->type_data.scale_lines.color_start = lv_color_hex(theme_colors[theme_index][7]);
+                    state->indicator8->type_data.scale_lines.color_end = lv_color_hex(theme_colors[theme_index][7]);
                 }
                 if (((lv_obj_t **)&objects)[startWidgetIndex + 3])
                     lv_obj_set_style_img_recolor(((lv_obj_t **)&objects)[startWidgetIndex + 3],

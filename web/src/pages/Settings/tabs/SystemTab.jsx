@@ -4,6 +4,7 @@ import { downloadJson } from '../../../utils/download.js';
 import { SystemTabSkeleton } from '../../../components/skeletons/SettingsSkeletons.jsx';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
+import { faCaretRight } from '@fortawesome/free-solid-svg-icons/faCaretRight';
 import { Spinner } from '../../../components/Spinner.jsx';
 import Section from '../../../components/Card.jsx';
 
@@ -329,7 +330,7 @@ export function SystemTab() {
             <label htmlFor='channel' className='mb-2 block text-sm font-medium'>
               Update Channel
             </label>
-            <div className='flex w-full items-center gap-2'>
+            <div className='mb-2 flex w-full items-center gap-2'>
               <select id='channel' name='channel' className='select select-bordered grow'>
                 <option value='latest' selected={formData.channel === 'latest'}>
                   Stable
@@ -363,46 +364,61 @@ export function SystemTab() {
 
           <div className='flex flex-col space-y-2'>
             <span className='text-base-content/70 text-sm font-medium'>Controller Version</span>
-            <div className='flex flex-wrap items-center gap-4'>
+            <div className='flex flex-wrap items-center'>
               <span className='text-base-content font-semibold break-all'>
                 {formData.controllerVersion}
               </span>
               {formData.controllerUpdateAvailable && (
-                <span className='text-primary text-sm font-bold'>
-                  Update available: {formData.latestVersion}
-                </span>
+                <>
+                  <FontAwesomeIcon icon={faCaretRight} className='text-primary' />
+                  <span className='text-primary text-sm font-bold'>► {formData.latestVersion}</span>
+                </>
               )}
-              <button
-                type='button'
-                className='btn btn-secondary btn-sm'
-                disabled={!formData.controllerUpdateAvailable || submitting}
-                onClick={() => onUpdate('controller')}
-              >
-                Update Controller
-              </button>
             </div>
+            <button
+              type='button'
+              className='btn btn-secondary btn-sm'
+              disabled={!formData.controllerUpdateAvailable || submitting}
+              onClick={() => onUpdate('controller')}
+            >
+              Update Controller
+            </button>
           </div>
 
           <div className='flex flex-col space-y-2'>
             <span className='text-base-content/70 text-sm font-medium'>Display Version</span>
-            <div className='flex flex-wrap items-center gap-4'>
+            <div className='flex flex-wrap items-center'>
               <span className='text-base-content font-semibold break-all'>
                 {formData.displayVersion}
               </span>
               {formData.displayUpdateAvailable && (
-                <span className='text-primary text-sm font-bold'>
-                  Update available: {formData.latestVersion}
-                </span>
+                <>
+                  <FontAwesomeIcon icon={faCaretRight} className='text-primary' />
+                  <span className='text-primary text-sm font-bold'>{formData.latestVersion}</span>
+                </>
               )}
-              <button
-                type='button'
-                className='btn btn-secondary btn-sm'
-                disabled={!formData.displayUpdateAvailable || submitting}
-                onClick={() => onUpdate('display')}
-              >
-                Update Display
-              </button>
             </div>
+            <button
+              type='button'
+              className='btn btn-secondary btn-sm'
+              disabled={!formData.displayUpdateAvailable || submitting}
+              onClick={() => onUpdate('display')}
+            >
+              Update Display
+            </button>
+          </div>
+          <div className='col-span-2 flex flex-col space-y-2'>
+            <button
+              type='button'
+              className='btn btn-secondary btn-sm flex-auto'
+              disabled={
+                (!formData.controllerUpdateAvailable && !formData.displayUpdateAvailable) ||
+                submitting
+              }
+              onClick={() => onUpdate('both')}
+            >
+              Update both
+            </button>
           </div>
         </div>
 
