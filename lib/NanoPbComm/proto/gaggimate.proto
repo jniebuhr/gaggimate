@@ -32,20 +32,20 @@ message Frame {
 // receiving Endpoint -- there is no run-time type erasure.
 message Payload {
     reserved 5; // retired AltControl (merged into RelayControl: relay index 1)
+    reserved 6; // retired PidSettings (merged into HeaterSettings)
     oneof content {
         // Commands: display -> controller
         Ping ping = 1;
         BoilerControl boiler = 2;
         PumpControl pump = 3;
         RelayControl relay = 4;
-        PidSettings pid = 6;
         PumpSettings pump_model = 7;
         AutotuneRequest autotune = 8;
         PressureScale pressure_scale = 9;
         Tare tare = 10;
         LedControl led = 11;
-        HeaterCoordinationSettings heater_coordination = 18;
         ScaleFactors scale_factors = 12;
+        HeaterSettings heater = 13;
 
         // Responses: controller -> display
         SystemInfo system_info = 20;
@@ -64,11 +64,6 @@ message Payload {
 // ---------------------------------------------------------------------------
 
 message Ping {}
-
-message HeaterCoordinationSettings {
-    bool enabled = 1;
-    uint32 handover_ms = 2;
-}
 
 enum BoilerMode {
     BOILER_MODE_TEMPERATURE = 0; // `setpoint` is a target temperature in degC
@@ -107,11 +102,14 @@ message RelayControl {
     bool open = 2;
 }
 
-message PidSettings {
+// Complete heater configuration; the controller keeps its heaters off until it has received one.
+message HeaterSettings {
     float kp = 1;
     float ki = 2;
     float kd = 3;
-    float kf = 4; // combined thermal feedforward gain
+    float kf = 4;                         // combined thermal feedforward gain
+    bool heater_coordination_enabled = 5; // dual boiler: power heaters one at a time instead of in parallel, brew first
+    uint32 handover_ms = 6;               // dual boiler: dead time between heaters when coordinated (clamped 20..5000)
 }
 
 message PumpSettings {

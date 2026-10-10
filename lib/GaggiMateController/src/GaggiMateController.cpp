@@ -7,7 +7,6 @@
 
 #include <peripherals/NtcThermistor.h>
 #include <utility>
-#include <Preferences.h>
 
 constexpr uint32_t ADDON_GEARPUMP = 7;
 constexpr uint32_t ADDON_HW_SCALE = 8;
@@ -39,14 +38,6 @@ void GaggiMateController::setup() {
     delay(5000);
     detectBoard();
     detectAddon();
-    {
-        Preferences prefs;
-        if (prefs.begin("heater-config", true)) {
-            _config.heaterPriorityControl = prefs.getBool("enabled", _config.heaterPriorityControl);
-            _config.heaterMinOffTime = std::clamp(prefs.getUInt("handover", _config.heaterMinOffTime), 20u, 5000u);
-            prefs.end();
-        }
-    }
 
     if (!_config.capabilites.dualBoiler) {
         brewTemperature = new Max31855Thermocouple(
@@ -72,6 +63,7 @@ void GaggiMateController::setup() {
             this->steamTemperature, _config.altPin, [this]() { thermalRunawayShutdown(); },
             [this](float Kp, float Ki, float Kd, float Kf) { _comms.sendAutotuneResult(Kp, Ki, Kd, Kf); },
             [this]() { _comms.sendError(ERROR_CODE_AUTOTUNE_TIMEOUT); });
+        heaterCoordinator = new HeaterCoordinator(heater, heater2);
         refill = new SimpleRelay(_config.refillPin, _config.valveOn);
         aux = new SimpleRelay(_config.auxPin, _config.valveOn);
         waterSense = new DigitalInput(_config.waterSensePin, [this](const bool state) { _comms.sendButtonState(3, state); }, 25);
@@ -89,10 +81,6 @@ void GaggiMateController::setup() {
     steamBtn = new DigitalInput(_config.steamButtonPin, [this](const bool state) { _comms.sendButtonState(1, state); });
     if (_config.waterButtonPin != 0) {
         waterBtn = new DigitalInput(_config.waterButtonPin, [this](const bool state) { _comms.sendButtonState(2, state); });
-    }
-    if (_config.capabilites.dualBoiler) {
-        // Attach before either heater task starts; they cannot bypass arbitration.
-        heaterCoordinator = new HeaterCoordinator(heater, heater2, _config.heaterMinOffTime, _config.heaterPriorityControl);
     }
     this->hardwareScale = new HardwareScale(
         _config.scaleDat0Pin, _config.scaleDat1Pin, _config.scaleClkPin,
@@ -190,9 +178,6 @@ void GaggiMateController::setup() {
     if (tankLevel != nullptr) {
         tankLevel->setup();
     }
-    if (heaterCoordinator && !heaterCoordinator->setup()) {
-        thermalRunawayShutdown();
-    }
     // Set up thermal feedforward for main heater if pressure/dimming capability exists
     if (heater && _config.capabilites.dimming && _config.capabilites.pressure) {
         auto dimmedPump = static_cast<DimmedPump *>(pump);
@@ -289,24 +274,16 @@ void GaggiMateController::setup() {
             static_cast<DimmedPump *>(pump)->setValveState(open);
         }
     });
-    _comms.onPidSettings([this](float Kp, float Ki, float Kd, float Kf) {
-        this->heater->setTunings(Kp, Ki, Kd);
-
-        // Apply thermal feedforward parameters if available
-        heater->setFeedforwardScale(Kf);
-
-        if (heater2 != nullptr) {
-            this->heater2->setTunings(Kp, Ki, Kd);
+    // Heaters stay off until the display delivers these; coordination is applied before the gains enable heating.
+    _comms.onHeaterSettings([this](const gm::HeaterSettings &settings) {
+        if (heaterCoordinator != nullptr) {
+            heaterCoordinator->configure(settings.heater_coordination_enabled, settings.handover_ms);
         }
-    });
-    _comms.onHeaterCoordination([this](bool enabled, uint32_t handoverMs) {
-        if (!_config.capabilites.dualBoiler || handoverMs < 20 || handoverMs > 5000) return;
-        Preferences prefs;
-        if (!prefs.begin("heater-config", false)) return;
-        if (prefs.getBool("enabled", !enabled) != enabled) prefs.putBool("enabled", enabled);
-        if (prefs.getUInt("handover", 0) != handoverMs) prefs.putUInt("handover", handoverMs);
-        prefs.end();
-        // Applied on restart, before heater tasks start.
+        heater->setFeedforwardScale(settings.kf);
+        heater->setTunings(settings.kp, settings.ki, settings.kd);
+        if (heater2 != nullptr) {
+            heater2->setTunings(settings.kp, settings.ki, settings.kd);
+        }
     });
     _comms.onPumpSettings([this](gm::PumpSettings settings) {
         if (_config.capabilites.dimming) {
@@ -455,11 +432,11 @@ void GaggiMateController::handlePing() {
 
 void GaggiMateController::handlePingTimeout() {
     // Turn off the heater and pump as a safety measure
-    this->heater->setSetpoint(0);
+    this->heater->stop();
     this->pump->setPower(0);
     this->valve->set(false);
     if (_config.capabilites.dualBoiler) {
-        this->heater2->setSetpoint(0);
+        this->heater2->stop();
         this->refill->set(false);
         this->aux->set(false);
     } else {
@@ -483,11 +460,11 @@ void GaggiMateController::handlePingTimeout() {
 void GaggiMateController::thermalRunawayShutdown() {
     ESP_LOGE(LOG_TAG, "Thermal runaway detected! Turning off heater and pump!\n");
     // Turn off the heater and pump immediately
-    this->heater->setSetpoint(0);
+    this->heater->stop();
     this->pump->setPower(0);
     this->valve->set(false);
     if (_config.capabilites.dualBoiler) {
-        this->heater2->setSetpoint(0);
+        this->heater2->stop();
         this->refill->set(false);
         this->aux->set(false);
     } else {

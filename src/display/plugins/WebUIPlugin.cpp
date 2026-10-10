@@ -317,15 +317,6 @@ static bool parseBoolArg(const String &value) {
 }
 
 void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
-    if (request->method() == HTTP_POST && request->hasArg("heaterHandoverMs")) {
-        const String raw = request->arg("heaterHandoverMs");
-        char *end = nullptr;
-        const long gap = strtol(raw.c_str(), &end, 10);
-        if (end == raw.c_str() || *end != '\0' || gap < 20 || gap > 5000) {
-            request->send(400, "application/json", "{\"error\":\"Invalid heater handover delay\"}");
-            return;
-        }
-    }
     if (request->method() == HTTP_POST) {
         controller->getSettings().batchUpdate([request](Settings *settings) {
             if (request->hasArg("startupMode"))
@@ -368,8 +359,10 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
             }
             if (request->hasArg("preferredScaleSource"))
                 settings->setPreferredScaleSource(request->arg("preferredScaleSource"));
-            if (request->hasArg("heaterCoordinationEnabled")) settings->setHeaterCoordinationEnabled(parseBoolArg(request->arg("heaterCoordinationEnabled")));
-            if (request->hasArg("heaterHandoverMs")) settings->setHeaterHandoverMs(request->arg("heaterHandoverMs").toInt());
+            if (request->hasArg("heaterCoordinationEnabled"))
+                settings->setHeaterCoordinationEnabled(parseBoolArg(request->arg("heaterCoordinationEnabled")));
+            if (request->hasArg("heaterHandoverMs"))
+                settings->setHeaterHandoverMs(request->arg("heaterHandoverMs").toInt());
             if (request->hasArg("pid"))
                 settings->setPid(request->arg("pid"));
             if (request->hasArg("pumpModelCoeffs"))
@@ -547,7 +540,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
         pluginManager->trigger("settings:changed");
         controller->setTargetTemp(controller->getTargetTemp());
         controller->setScaleFactors();
-        controller->setHeaterCoordination();
+        controller->setHeaterSettings();
         controller->setPumpModelCoeffs();
     }
 
@@ -565,7 +558,6 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["haIP"] = settings.getHomeAssistantIP();
     doc["haPort"] = settings.getHomeAssistantPort();
     doc["haTopic"] = settings.getHomeAssistantTopic();
-    doc["heaterCoordinationSupported"] = true;
     doc["heaterCoordinationEnabled"] = settings.isHeaterCoordinationEnabled();
     doc["heaterHandoverMs"] = settings.getHeaterHandoverMs();
     doc["pid"] = settings.getPid();

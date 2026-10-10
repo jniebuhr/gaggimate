@@ -1,20 +1,29 @@
-#pragma once
+#ifndef HEATERCOORDINATOR_H
+#define HEATERCOORDINATOR_H
 #include "Heater.h"
-#include "HeaterInterlock.h"
+#include <cstdint>
+#include <mutex>
 
-// Single owner of coordinated ON commands. OFF remains available to local
-// fault/disable paths. No dependency on ADC rates or pressure-control timing.
+// Arbitrates brew and steam heater outputs; with coordination only one is on at a time, brew first unless steam is autotuning.
 class HeaterCoordinator {
   public:
-    HeaterCoordinator(Heater *brew, Heater *steam, uint32_t handoverMs, bool enabled);
-    bool setup();
+    static constexpr uint32_t MIN_HANDOVER_MS = 20;
+    static constexpr uint32_t MAX_HANDOVER_MS = 5000;
+
+    HeaterCoordinator(Heater *brew, Heater *steam);
+    void configure(bool heaterCoordinationEnabled, uint32_t handoverMs);
+    void request(Heater *heater, bool on);
 
   private:
-    bool priorityEnabled;
-    Heater *brew;
-    Heater *steam;
-    HeaterInterlock interlock;
-    TaskHandle_t task = nullptr;
-    static void loopTask(void *arg);
-    void loop();
+    void set(int channel, bool on, uint32_t now);
+
+    Heater *heaters[2];
+    bool active[2] = {false, false};
+    uint32_t offAt[2] = {0, 0};
+    bool wanted[2] = {false, false};
+    bool heaterCoordinationEnabled = false;
+    uint32_t handoverMs = 50;
+    std::mutex mutex;
 };
+
+#endif // HEATERCOORDINATOR_H

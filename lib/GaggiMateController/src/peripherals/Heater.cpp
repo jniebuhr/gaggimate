@@ -1,4 +1,5 @@
 #include "Heater.h"
+#include "HeaterCoordinator.h"
 #include <Arduino.h>
 #include <algorithm>
 #include <cmath>
@@ -14,7 +15,6 @@ Heater::Heater(TemperatureSensor *sensor, uint8_t heaterPin, const heater_error_
 
 void Heater::setup() {
     pinMode(heaterPin, OUTPUT);
-    digitalWrite(heaterPin, LOW);
     setupPid();
     xTaskCreate(loopTask, "Heater::loop", configMINIMAL_STACK_SIZE * 4, this, 1, &taskHandle);
 }
@@ -56,11 +56,6 @@ void Heater::loop() {
 }
 
 void Heater::setSetpoint(float setpoint) {
-    heatEnabled = setpoint > 0.0f;
-    if (!heatEnabled) {
-        autotuning = false;
-        requestOutput(false);
-    }
     if (this->setpoint != setpoint) {
         this->setpoint = setpoint;
         ESP_LOGV(LOG_TAG, "Set setpoint %f°C", setpoint);
@@ -73,6 +68,11 @@ void Heater::setTunings(float Kp, float Ki, float Kd) {
         simplePid->reset();
         ESP_LOGV(LOG_TAG, "Set tunings to Kp: %f, Ki: %f, Kd: %f", Kp, Ki, Kd);
     }
+}
+
+void Heater::stop() {
+    autotuning = false;
+    setSetpoint(0.0f);
 }
 
 void Heater::setThermalFeedforward(float *pumpFlowPtr, float incomingWaterTemp, int *valveStatusPtr) {
@@ -92,11 +92,6 @@ void Heater::setFeedforwardScale(float combinedKff) {
 }
 
 void Heater::autotune(int testTimeSec, int windowSize, int heaterWattage) {
-    if (!allowCoordinatedAutotune) {
-        ESP_LOGW(LOG_TAG, "Steam autotune unavailable during brew-priority coordination");
-        if (autotune_fail_callback) autotune_fail_callback();
-        return;
-    }
     setupAutotune(testTimeSec, windowSize, heaterWattage);
     autotuning = true;
 }
@@ -182,14 +177,12 @@ void Heater::loopAutotune() {
             return;
         }
     }
-    if (!autotuning) {
-        output = 0.0f;
-        requestOutput(false);
+    output = 0.0f;
+    softPwm(TUNER_OUTPUT_SPAN);
+    if (!autotuning.exchange(false)) {
+        ESP_LOGW(LOG_TAG, "Autotune aborted by safety stop");
         return;
     }
-    output = 0.0f;
-    autotuning = false;
-    softPwm(TUNER_OUTPUT_SPAN);
 
     if (autotuner->isTimedOut()) {
         // Reaction/inflection never detected in window. Keep NVS PID — never
@@ -240,37 +233,14 @@ float Heater::softPwm(uint32_t windowSize) {
     return optimumOutput;
 }
 
-void Heater::writeOutput(bool on) {
-    digitalWrite(heaterPin, on ? HIGH : LOW);
-    relayStatus = on;
-}
-
-void Heater::enableCoordination(bool allowAutotune) {
-    // Called during construction/setup, before this heater's task starts.
-    xSemaphoreTake(outputMutex, portMAX_DELAY);
-    requestedState = false;
-    coordinated = true;
-    allowCoordinatedAutotune = allowAutotune;
-    xSemaphoreGive(outputMutex);
-}
-
 void Heater::requestOutput(bool on) {
-    xSemaphoreTake(outputMutex, portMAX_DELAY);
-    on = on && (heatEnabled || autotuning) && !sensor->isErrorState() && sensor->read() <= outputTemperatureLimit;
-    requestedState = on;
-    // Local tasks retain immediate OFF authority; only the coordinator enables heat.
-    if (!coordinated || !on) writeOutput(on);
-    xSemaphoreGive(outputMutex);
+    if (coordinator != nullptr)
+        coordinator->request(this, on);
+    else
+        writeOutput(on);
 }
 
-bool Heater::setCoordinatedState(bool on) {
-    xSemaphoreTake(outputMutex, portMAX_DELAY);
-    on = on && requestedState && (heatEnabled || autotuning) && !sensor->isErrorState() && sensor->read() <= outputTemperatureLimit;
-    if (coordinated) writeOutput(on);
-    const bool actual = relayStatus;
-    xSemaphoreGive(outputMutex);
-    return actual;
-}
+void Heater::writeOutput(bool on) { digitalWrite(heaterPin, on ? HIGH : LOW); }
 
 void Heater::plot(float optimumOutput, float outputScale, uint8_t everyNth) {
     if (plotCount >= everyNth) {

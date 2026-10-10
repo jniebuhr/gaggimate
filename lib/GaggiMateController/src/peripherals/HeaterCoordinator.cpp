@@ -1,35 +1,45 @@
 #include "HeaterCoordinator.h"
+#include <Arduino.h>
 #include <algorithm>
 
-HeaterCoordinator::HeaterCoordinator(Heater *brew, Heater *steam, uint32_t handoverMs, bool enabled)
-    : priorityEnabled(enabled), brew(brew), steam(steam) {
-    interlock.setDelay(std::max(20u, handoverMs));
-    brew->enableCoordination(true);
-    steam->enableCoordination(!enabled);
+HeaterCoordinator::HeaterCoordinator(Heater *brew, Heater *steam) : heaters{brew, steam} {
+    offAt[0] = offAt[1] = millis() - MAX_HANDOVER_MS;
+    brew->setCoordinator(this);
+    steam->setCoordinator(this);
 }
 
-bool HeaterCoordinator::setup() {
-    if (xTaskCreate(loopTask, "HeaterCoordinator", configMINIMAL_STACK_SIZE * 3,
-                    this, 2, &task) != pdPASS) {
-        ESP_LOGE("HeaterCoordinator", "Could not start coordinator; both heaters inhibited");
-        return false;
+void HeaterCoordinator::configure(bool heaterCoordinationEnabled, uint32_t handoverMs) {
+    std::lock_guard<std::mutex> lock(mutex);
+    this->heaterCoordinationEnabled = heaterCoordinationEnabled;
+    this->handoverMs = std::clamp(handoverMs, MIN_HANDOVER_MS, MAX_HANDOVER_MS);
+}
+
+void HeaterCoordinator::request(Heater *heater, bool on) {
+    std::lock_guard<std::mutex> lock(mutex);
+    const int channel = heater == heaters[0] ? 0 : 1;
+    const int other = 1 - channel;
+    const uint32_t now = millis();
+    wanted[channel] = on;
+    if (!on || !heaterCoordinationEnabled) {
+        set(channel, on, now);
+        return;
     }
-    return true;
-}
-
-void HeaterCoordinator::loop() {
-    // Reserve the brew autotuner's unheated phases as well as its heating phases.
-    interlock.update(brew->isRequestingOn(), steam->isRequestingOn() && (!priorityEnabled || !brew->isAutotuning()), priorityEnabled,
-        [this](unsigned channel, bool on) {
-            return (channel == 0 ? brew : steam)->setCoordinatedState(on);
-        }, []() { return static_cast<uint32_t>(millis()); });
-}
-
-void HeaterCoordinator::loopTask(void *arg) {
-    auto *coordinator = static_cast<HeaterCoordinator *>(arg);
-    TickType_t lastWake = xTaskGetTickCount();
-    while (true) {
-        coordinator->loop();
-        xTaskDelayUntil(&lastWake, pdMS_TO_TICKS(10));
+    // Brew leads unless steam is autotuning; an autotuning heater keeps the lead for the whole run so handovers don't skew it.
+    const int lead = heaters[1]->isAutotuning() ? 1 : 0;
+    if (channel == lead || wanted[lead] || heaters[lead]->isAutotuning()) {
+        set(1 - lead, false, now);
+        if (channel != lead)
+            return;
     }
+    // The other SSR must have been off for the handover gap before this one may switch on.
+    if (!active[channel] && (active[other] || now - offAt[other] < handoverMs))
+        return;
+    set(channel, true, now);
+}
+
+void HeaterCoordinator::set(int channel, bool on, uint32_t now) {
+    if (active[channel] && !on)
+        offAt[channel] = now;
+    active[channel] = on;
+    heaters[channel]->writeOutput(on);
 }

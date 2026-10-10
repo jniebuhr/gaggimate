@@ -99,9 +99,6 @@ class Settings {
     bool isDelayAdjust() const { return delayAdjust.get(); }
     bool isHeaterCoordinationEnabled() const { return heaterCoordinationEnabled.get(); }
     int getHeaterHandoverMs() const { return heaterHandoverMs.get(); }
-    void setHeaterCoordinationEnabled(bool value) { heaterCoordinationEnabled.set(value); }
-    void setHeaterHandoverMs(int value) { if (value >= 20 && value <= 5000) heaterHandoverMs.set(value); }
-
     String getPid() const { return pid.get(); }
     String getPumpModelCoeffs() const { return pumpModelCoeffs.get(); }
     String getPumpSlipCoeffs() const { return pumpSlipCoeffs.get(); }
@@ -215,6 +212,8 @@ class Settings {
     void setGrindDelay(double grindDelay);
     void setDelayAdjust(bool delay_adjust);
     void setPid(const String &pid);
+    void setHeaterCoordinationEnabled(bool enabled);
+    void setHeaterHandoverMs(int handoverMs);
     void setPumpModelCoeffs(const String &pumpModelCoeffs);
     void setPumpSlipCoeffs(const String &pumpSlipCoeffs);
     void setWifiSsid(const String &wifiSsid);
@@ -362,8 +361,8 @@ class Settings {
     Property<float> steamPumpCutoff{registry, "spc", DEFAULT_STEAM_PUMP_CUTOFF};
     Property<int> historyIndex{registry, "hi", 0};
 
-    Property<bool> heaterCoordinationEnabled{registry, "hco", true};
-    Property<int> heaterHandoverMs{registry, "hcg", 50};
+    Property<bool> heaterCoordinationEnabled{registry, "hco", false};
+    Property<int> heaterHandoverMs{registry, "hcg", DEFAULT_HEATER_HANDOVER_MS};
 
     // Display settings
     Property<int> mainBrightness{registry, "main_b", 16};
