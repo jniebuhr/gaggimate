@@ -1,4 +1,6 @@
 #include "WebUIPlugin.h"
+#include <esp_system.h>
+#include <esp_timer.h>
 #include <DNSServer.h>
 #include <LittleFS.h>
 #include <SD_MMC.h>
@@ -737,6 +739,10 @@ void WebUIPlugin::updateOTAStatus(const String &version) {
     doc["displayVersion"] = BUILD_GIT_VERSION;
     doc["controllerVersion"] = controller->getSystemInfo().version;
     doc["hardware"] = controller->getSystemInfo().hardware;
+    doc["displayUptime"] = static_cast<uint32_t>(esp_timer_get_time() / 1000000LL);
+    doc["displayResetReason"] = static_cast<int>(esp_reset_reason());
+    doc["displayIPAddress"] = WiFi.status() == WL_CONNECTED ? WiFi.localIP().toString() : "";
+    doc["displayAPAddress"] = apMode ? WiFi.softAPIP().toString() : "";
     doc["latestVersion"] = ota->getCurrentVersion();
     doc["channel"] = settings.getOTAChannel();
     doc["updating"] = updating;

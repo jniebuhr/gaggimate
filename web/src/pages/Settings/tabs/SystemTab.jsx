@@ -25,6 +25,34 @@ const imageUrlToBase64 = async blob => {
   });
 };
 
+const formatUptime = seconds => {
+  if (seconds === undefined || seconds === null) return '—';
+  const total = Math.max(0, Math.floor(seconds));
+  const days = Math.floor(total / 86400);
+  const hours = Math.floor((total % 86400) / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+  const parts = [];
+  if (days) parts.push(`${days}d`);
+  if (hours || days) parts.push(`${hours}h`);
+  if (minutes || hours || days) parts.push(`${minutes}m`);
+  parts.push(`${total % 60}s`);
+  return parts.join(' ');
+};
+
+const RESET_REASONS = {
+  0: 'Unknown',
+  1: 'Power-on',
+  2: 'External pin',
+  3: 'Software restart',
+  4: 'Panic / exception',
+  5: 'Interrupt watchdog',
+  6: 'Task watchdog',
+  7: 'Other watchdog',
+  8: 'Deep-sleep wake',
+  9: 'Brownout (power dip)',
+  10: 'SDIO',
+};
+
 const getRssiStatusClass = rssi => {
   if (rssi < -90) return 'status-error';
   if (rssi < -80) return 'status-warning';
@@ -212,7 +240,11 @@ export function SystemTab() {
   const [formData, setFormData] = useState({});
   const [phase, setPhase] = useState(0);
   const [progress, setProgress] = useState(0);
-  const rssi = machine.value.status.rssi;
+  const status = machine.value.status;
+  const uptime = status.displayUptime ?? formData.displayUptime;
+  const ipAddress = status.displayIPAddress ?? formData.displayIPAddress;
+  const apAddress = status.displayAPAddress ?? formData.displayAPAddress;
+  const rssi = status.rssi;
   const lat = machine.value.status.lat;
   const rtx = machine.value.status.rtx;
 
@@ -350,6 +382,27 @@ export function SystemTab() {
           <div className='flex flex-col space-y-1'>
             <span className='text-base-content/70 text-sm font-medium'>Hardware</span>
             <span className='text-base-content font-semibold'>{formData.hardware}</span>
+          </div>
+
+          <div className='flex flex-col space-y-1'>
+            <span className='text-base-content/70 text-sm font-medium'>Display Uptime</span>
+            <span className='text-base-content font-semibold'>{formatUptime(uptime)}</span>
+            {formData.displayResetReason !== undefined && (
+              <span className='text-base-content/60 text-xs'>
+                Last reset:{' '}
+                {RESET_REASONS[formData.displayResetReason] ??
+                  `Code ${formData.displayResetReason}`}
+              </span>
+            )}
+          </div>
+          <div className='flex flex-col space-y-1'>
+            <span className='text-base-content/70 text-sm font-medium'>Display IP Address</span>
+            <span className='text-base-content font-semibold'>
+              {ipAddress || 'Wi-Fi disconnected'}
+            </span>
+            {apAddress && (
+              <span className='text-base-content/60 text-xs'>Access point: {apAddress}</span>
+            )}
           </div>
 
           <div className='flex flex-col space-y-1'>
