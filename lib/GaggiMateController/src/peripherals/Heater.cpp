@@ -58,7 +58,7 @@ void Heater::loop() {
 void Heater::setSetpoint(float setpoint) {
     if (this->setpoint != setpoint) {
         this->setpoint = setpoint;
-        ESP_LOGV(LOG_TAG, "Set setpoint %f°C", setpoint);
+        ESP_LOGI(LOG_TAG, "Set setpoint %f°C", setpoint);
     }
 }
 
@@ -66,7 +66,7 @@ void Heater::setTunings(float Kp, float Ki, float Kd) {
     if (simplePid->getKp() != Kp || simplePid->getKi() != Ki || simplePid->getKd() != Kd) {
         simplePid->setControllerPIDGains(Kp, Ki, Kd, 0.0f);
         simplePid->reset();
-        ESP_LOGV(LOG_TAG, "Set tunings to Kp: %f, Ki: %f, Kd: %f", Kp, Ki, Kd);
+        ESP_LOGI(LOG_TAG, "Set tunings to Kp: %f, Ki: %f, Kd: %f", Kp, Ki, Kd);
     }
 }
 
