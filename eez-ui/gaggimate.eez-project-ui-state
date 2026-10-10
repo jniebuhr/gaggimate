@@ -1,6 +1,6 @@
 {
   "navigation": {
-    "selectedUserPageObject": "[gaggimate.eez-project]:/userPages/8",
+    "selectedUserPageObject": "[gaggimate.eez-project]:/userPages/2",
     "selectedUserWidgetObject": "[gaggimate.eez-project]:/userWidgets/1",
     "selectedActionObject": "[gaggimate.eez-project]:/actions/39",
     "selectedGlobalVariableObject": "[gaggimate.eez-project]:/variables/globalVariables/9",
@@ -173,8 +173,7 @@
                       "enableClose": false,
                       "icon": "svg:hierarchy"
                     }
-                  ],
-                  "active": true
+                  ]
                 },
                 {
                   "type": "tabset",
@@ -204,10 +203,10 @@
                 {
                   "type": "tab",
                   "id": "#cc90c56e-b38e-4ab9-956f-1fb808b5b9e6",
-                  "name": "NewProfileScreen",
+                  "name": "StatusScreen",
                   "component": "editor",
                   "config": {
-                    "objectPath": "[gaggimate.eez-project]:/userPages/8",
+                    "objectPath": "[gaggimate.eez-project]:/userPages/2",
                     "permanent": false
                   },
                   "icon": "svg:page"
@@ -279,7 +278,8 @@
                   },
                   "icon": "svg:page"
                 }
-              ]
+              ],
+              "active": true
             },
             {
               "type": "row",
@@ -2029,8 +2029,8 @@
       },
       "transform": {
         "translate": {
-          "x": -240,
-          "y": -90.6121826171875
+          "x": -236,
+          "y": -216.6121826171875
         },
         "scale": 0.9
       },
