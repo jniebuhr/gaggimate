@@ -291,7 +291,12 @@ export function MachineTab({ formData, onChange, setField }) {
               />
             </InputGroupField>
           )}
-          <SettingsFormField label='Alt Relay / SSR2 Function' htmlFor='altRelayFunction' noMargin>
+          <SettingsFormField
+            label='Alt Relay / SSR2 Function'
+            htmlFor='altRelayFunction'
+            helpText='Dump valve: SSR2 drives a group dump solenoid (e.g. Sage/Breville Barista Express). Wire the 3-way to RELAY. After a shot the 3-way closes and the dump valve opens together, so group pressure goes to the drip tray without pulling fines back into the steam or hot water path.'
+            noMargin
+          >
             <select
               id='altRelayFunction'
               name='altRelayFunction'
@@ -304,8 +309,31 @@ export function MachineTab({ formData, onChange, setField }) {
               <option value={2} disabled className='text-gray-400'>
                 Steam Boiler (Coming Soon)
               </option>
+              <option value={3}>Dump valve</option>
             </select>
           </SettingsFormField>
+          {Number(formData.altRelayFunction) === 3 && (
+            <InputGroupField
+              label='Dump Valve Duration'
+              htmlFor='dumpValveDuration'
+              unit='s'
+              unitAriaLabel='seconds'
+              helpText='How long the dump valve stays open after a shot or abort. The 3-way closes at the same time. 0 disables the automatic dump; per-phase dump control still works.'
+              noMargin
+            >
+              <input
+                id='dumpValveDuration'
+                name='dumpValveDuration'
+                type='number'
+                min='0'
+                max='10'
+                step='0.1'
+                className='grow'
+                value={formData.dumpValveDuration ?? 2}
+                onChange={onChange('dumpValveDuration')}
+              />
+            </InputGroupField>
+          )}
         </div>
       </Section>
       {/* Temperature Settings */}
