@@ -30,6 +30,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch } from '@fortawesome/free-solid-svg-icons/faSearch';
 import { faSort } from '@fortawesome/free-solid-svg-icons/faSort';
 import { faFilter } from '@fortawesome/free-solid-svg-icons/faFilter';
+import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
+import { Tooltip } from '../../components/Tooltip.jsx';
 
 const connected = computed(() => machine.value.connected);
 
@@ -42,6 +44,8 @@ export function ShotHistory() {
   const [sortOrder, setSortOrder] = useState('desc'); // asc, desc
   const [filterBy, setFilterBy] = useState('all'); // all, rated, unrated
   const [currentPage, setCurrentPage] = useState(1);
+  const [deletingAll, setDeletingAll] = useState(false);
+  const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
   const itemsPerPage = 10;
   const loadHistoryAbortRef = useRef(null);
   const loadHistory = async () => {
@@ -110,6 +114,28 @@ export function ShotHistory() {
     },
     [apiService],
   );
+
+  const onDeleteAll = useCallback(async () => {
+    setDeletingAll(true);
+    try {
+      const resp = await apiService.request({ tp: 'req:history:delete-all' });
+      setShowDeleteAllModal(false);
+      if (resp?.error) {
+        alert(`Could not delete history: ${resp.error}`);
+      } else {
+        setSearchTerm('');
+        setCurrentPage(1);
+        // Reload the index after deletion
+        await loadHistory();
+      }
+    } catch (error) {
+      setShowDeleteAllModal(false);
+      console.error('Failed to delete shot history:', error);
+      alert('Could not delete history. Please try again.');
+    } finally {
+      setDeletingAll(false);
+    }
+  }, [apiService]);
 
   const onNotesChanged = useCallback(async () => {
     // Reload the index to get updated ratings
@@ -204,6 +230,16 @@ export function ShotHistory() {
             {totalFilteredItems} of {history.length} shots{' '}
             {totalPages > 1 && `(Page ${currentPage} of ${totalPages})`}
           </span>
+          <Tooltip content='Delete all'>
+            <button
+              onClick={() => setShowDeleteAllModal(true)}
+              disabled={history.length === 0 || deletingAll}
+              className='text-base-content/50 hover:text-error hover:bg-error/10 cursor-pointer rounded-md p-2 transition-colors disabled:cursor-not-allowed disabled:opacity-40'
+              aria-label='Delete all shots'
+            >
+              <FontAwesomeIcon icon={faTrashCan} className='h-4 w-4' />
+            </button>
+          </Tooltip>
         </div>
 
         {/* Controls Row */}
@@ -369,6 +405,49 @@ export function ShotHistory() {
           >
             Next
           </button>
+        </div>
+      )}
+
+      {showDeleteAllModal && (
+        <div className='bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black p-4'>
+          <div className='max-h-[90vh] w-full max-w-md overflow-y-auto rounded-lg bg-white shadow-xl dark:bg-gray-800'>
+            <div className='p-6'>
+              <div className='mb-4 flex items-center justify-between'>
+                <h3 className='text-lg font-semibold'>Delete all shots?</h3>
+                {!deletingAll && (
+                  <button
+                    onClick={() => setShowDeleteAllModal(false)}
+                    className='text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                    aria-label='Close'
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+              <p className='mb-6 text-sm text-gray-600 dark:text-gray-300'>
+                This will permanently delete all {history.length} shots from the device. This cannot
+                be undone.
+              </p>
+              <div className='flex justify-end space-x-3'>
+                <button
+                  type='button'
+                  onClick={() => setShowDeleteAllModal(false)}
+                  disabled={deletingAll}
+                  className='rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300 disabled:opacity-50 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500'
+                >
+                  Cancel
+                </button>
+                <button
+                  type='button'
+                  onClick={onDeleteAll}
+                  disabled={deletingAll}
+                  className='rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50'
+                >
+                  {deletingAll ? 'Deleting…' : 'Delete all'}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </>

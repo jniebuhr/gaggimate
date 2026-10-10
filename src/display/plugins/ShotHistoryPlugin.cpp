@@ -611,6 +611,18 @@ void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &respo
         markIndexDeleted(id.toInt());
 
         response["msg"] = "Ok";
+    } else if (type == "req:history:delete-all") {
+        if (recording || extendedRecording || isFileOpen) {
+            response["error"] = "Recording in progress";
+        } else {
+            size_t deleted = 0;
+            if (deleteAllHistory(deleted)) {
+                response["msg"] = "Ok";
+                response["deleted"] = deleted;
+            } else {
+                response["error"] = "Delete failed";
+            }
+        }
     } else if (type == "req:history:notes:get") {
         auto id = request["id"].as<String>();
         JsonDocument notes(&psramAllocator);
@@ -872,6 +884,53 @@ void ShotHistoryPlugin::markIndexDeleted(uint32_t shotId) {
     }
 
     indexFile.close();
+}
+
+bool ShotHistoryPlugin::deleteAllHistory(size_t &deleted) {
+    // Collect first, delete after: mutating a LittleFS/SD directory while
+    // iterating it can skip entries (see cleanupHistory for the same pattern).
+    std::vector<String> shotFiles;
+    File directory = fs->open("/h");
+    if (directory && directory.isDirectory()) {
+        File file = directory.openNextFile();
+        while (file) {
+            String name = String(file.name());
+            file.close();
+            // file.name() yields a bare name on some filesystems and a full
+            // path on others — normalize before matching.
+            String path = name.startsWith("/") ? name : "/h/" + name;
+            if (path.endsWith(".slog") || path.endsWith(".json")) {
+                shotFiles.push_back(path);
+            }
+            file = directory.openNextFile();
+        }
+        directory.close();
+    }
+    bool ok = true;
+    deleted = 0;
+    for (const String &path : shotFiles) {
+        if (fs->remove(path)) {
+            deleted++;
+        } else {
+            ok = false;
+        }
+    }
+    // Drop the index (and any stale recent-shots cache) so deleted entries
+    // can't resurface, then recreate an empty one keyed at the current
+    // history counter. The counter itself is kept monotonic so ids are never
+    // reused by later shots.
+    fs->remove("/h/index.bin");
+    fs->remove("/h/recent.bin");
+    if (!ensureIndexExists()) {
+        ok = false;
+    }
+
+    if (ok) {
+        ESP_LOGI("ShotHistoryPlugin", "Deleted all shot history (%u files)", deleted);
+    } else {
+        ESP_LOGE("ShotHistoryPlugin", "Failed to delete all shot history (%u files removed)", deleted);
+    }
+    return ok;
 }
 
 size_t ShotHistoryPlugin::readRecentEntries(ShotIndexEntry *outEntries, size_t maxCount) {
