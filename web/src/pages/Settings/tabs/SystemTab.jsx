@@ -364,14 +364,14 @@ export function SystemTab() {
 
           <div className='flex flex-col space-y-2'>
             <span className='text-base-content/70 text-sm font-medium'>Controller Version</span>
-            <div className='flex flex-wrap items-center'>
+            <div className='flex flex-wrap items-center gap-2'>
               <span className='text-base-content font-semibold break-all'>
                 {formData.controllerVersion}
               </span>
               {formData.controllerUpdateAvailable && (
                 <>
                   <FontAwesomeIcon icon={faCaretRight} className='text-primary' />
-                  <span className='text-primary text-sm font-bold'>► {formData.latestVersion}</span>
+                  <span className='text-primary text-sm font-bold'>{formData.latestVersion}</span>
                 </>
               )}
             </div>
@@ -387,7 +387,7 @@ export function SystemTab() {
 
           <div className='flex flex-col space-y-2'>
             <span className='text-base-content/70 text-sm font-medium'>Display Version</span>
-            <div className='flex flex-wrap items-center'>
+            <div className='flex flex-wrap items-center gap-2'>
               <span className='text-base-content font-semibold break-all'>
                 {formData.displayVersion}
               </span>
@@ -407,7 +407,7 @@ export function SystemTab() {
               Update Display
             </button>
           </div>
-          <div className='col-span-2 flex flex-col space-y-2'>
+          <div className='flex flex-col space-y-2 md:col-span-2'>
             <button
               type='button'
               className='btn btn-secondary btn-sm flex-auto'
