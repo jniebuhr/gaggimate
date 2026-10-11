@@ -151,6 +151,7 @@ export function useDashboardState() {
     selectedProfileId: s.selectedProfileId,
     processInfo: p,
     tofDistance: s.tofDistance,
+    standbyRemaining: s.standbyRemaining ?? null,
     warnings: s.warnings ?? [],
     dualBoiler: caps.dualBoiler,
     // derived
