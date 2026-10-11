@@ -27,6 +27,6 @@ class Process {
 };
 
 enum class ProcessTarget { VOLUMETRIC, TIME };
-enum class ProcessPhase { RUNNING, FINISHED };
+enum class ProcessPhase { RUNNING, DUMPING, FINISHED };
 
 #endif // PROCESS_H

@@ -103,6 +103,7 @@ export class TclConverter {
         name: 'Pre-infusion',
         phase: 'preinfusion',
         valve: 1,
+        alt: 0,
         duration: this._clampDuration(preinfusionTime),
         pump: { target: 'flow', pressure: 0, flow: preinfusionFlow },
       };
@@ -116,6 +117,7 @@ export class TclConverter {
         name: 'Hold',
         phase: 'brew',
         valve: 1,
+        alt: 0,
         duration: this._clampDuration(holdTime),
         pump: { target: 'pressure', pressure: holdPressure, flow: 0 },
       });
@@ -126,6 +128,7 @@ export class TclConverter {
         name: 'Decline',
         phase: 'brew',
         valve: 1,
+        alt: 0,
         duration: declineDuration,
         transition: { type: 'linear', duration: declineDuration, adaptive: true },
         pump: { target: 'pressure', pressure: declineEndPressure, flow: 0 },
@@ -149,6 +152,7 @@ export class TclConverter {
         name: 'Pre-infusion',
         phase: 'preinfusion',
         valve: 1,
+        alt: 0,
         duration: this._clampDuration(preinfusionTime),
         pump: { target: 'flow', pressure: 0, flow: preinfusionFlow },
       };
@@ -162,6 +166,7 @@ export class TclConverter {
         name: 'Hold',
         phase: 'brew',
         valve: 1,
+        alt: 0,
         duration: this._clampDuration(holdTime),
         pump: { target: 'flow', pressure: 0, flow: holdFlow },
       });
@@ -172,6 +177,7 @@ export class TclConverter {
         name: 'Decline',
         phase: 'brew',
         valve: 1,
+        alt: 0,
         duration: declineDuration,
         transition: { type: 'linear', duration: declineDuration, adaptive: true },
         pump: { target: 'flow', pressure: 0, flow: declineEndFlow },
@@ -225,6 +231,7 @@ export class TclConverter {
         name: phaseData.name,
         phase: isPreinfusion ? 'preinfusion' : 'brew',
         valve: 1,
+        alt: 0,
         duration: this._clampDuration(this._toSafeFloat(phaseData.seconds, 0.5)),
         pump: {
           target: pumpMode,

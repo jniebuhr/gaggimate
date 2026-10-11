@@ -4,8 +4,16 @@ import { useCallback } from 'preact/hooks';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import { Tooltip } from '../../components/Tooltip.jsx';
+import { DumpValveToggle } from './DumpValveToggle.jsx';
 
-export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvailable }) {
+export function ExtendedPhase({
+  phase,
+  index,
+  onChange,
+  onRemove,
+  pressureAvailable,
+  showDumpValve = false,
+}) {
   const onFieldChange = (field, value) => {
     onChange({
       ...phase,
@@ -163,6 +171,10 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
           </div>
         </fieldset>
       </div>
+
+      {showDumpValve && (
+        <DumpValveToggle value={phase.alt} onChange={value => onFieldChange('alt', value)} />
+      )}
 
       <div className='form-control'>
         <fieldset>
