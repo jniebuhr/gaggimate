@@ -20,8 +20,8 @@
 
 #include "esp_sntp.h"
 
-#include <display/ui/default/eez/ui.h>
 #include <display/ui/default/eez/images.h>
+#include <display/ui/default/eez/ui.h>
 
 static EffectManager effect_mgr;
 
@@ -670,9 +670,7 @@ void DefaultUI::setGaugeTickLength(int32_t len) {
     }
 }
 
-void DefaultUI::applyGaugeSetpointStyle(bool inside) {
-    applyGaugeSetpointVisibility(lv_scr_act(), inside);
-}
+void DefaultUI::applyGaugeSetpointStyle(bool inside) { applyGaugeSetpointVisibility(lv_scr_act(), inside); }
 
 void DefaultUI::gaugeTickAnimCb(void *var, int32_t v) { static_cast<DefaultUI *>(var)->setGaugeTickLength(v); }
 

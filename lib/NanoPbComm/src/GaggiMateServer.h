@@ -17,7 +17,7 @@ class GaggiMateServer {
     using PumpCallback = std::function<void(uint8_t index, PumpControlMode mode, float power, float pressure, float flow)>;
     // Binary output: index 0 = brew valve, index 1 = alt relay.
     using RelayCallback = std::function<void(uint8_t index, bool open)>;
-    using PidCallback = std::function<void(float kp, float ki, float kd, float kf)>;
+    using HeaterSettingsCallback = std::function<void(const gm::HeaterSettings &settings)>;
     using PumpSettingsCallback = std::function<void(gm::PumpSettings settings)>;
     using AutotuneCallback = std::function<void(uint32_t testTime, uint32_t samples, uint32_t heaterWattage)>;
     using PressureScaleCallback = std::function<void(float scale)>;
@@ -80,7 +80,7 @@ class GaggiMateServer {
     void onBoilerControl(BoilerCallback cb) { _boilerCb = std::move(cb); }
     void onPumpControl(PumpCallback cb) { _pumpCb = std::move(cb); }
     void onRelayControl(RelayCallback cb) { _relayCb = std::move(cb); }
-    void onPidSettings(PidCallback cb) { _pidCb = std::move(cb); }
+    void onHeaterSettings(HeaterSettingsCallback cb) { _heaterSettingsCb = std::move(cb); }
     void onPumpSettings(PumpSettingsCallback cb) { _pumpSettingsCb = std::move(cb); }
     void onAutotune(AutotuneCallback cb) { _autotuneCb = std::move(cb); }
     void onPressureScale(PressureScaleCallback cb) { _pressureScaleCb = std::move(cb); }
@@ -102,7 +102,7 @@ class GaggiMateServer {
     BoilerCallback _boilerCb;
     PumpCallback _pumpCb;
     RelayCallback _relayCb;
-    PidCallback _pidCb;
+    HeaterSettingsCallback _heaterSettingsCb;
     PumpSettingsCallback _pumpSettingsCb;
     AutotuneCallback _autotuneCb;
     PressureScaleCallback _pressureScaleCb;

@@ -139,6 +139,12 @@ void Settings::setStandbyTimeout(int standby_timeout) { standbyTimeout.set(stand
 
 void Settings::setPid(const String &pid) { this->pid.set(pid); }
 
+void Settings::setHeaterCoordinationEnabled(bool enabled) { heaterCoordinationEnabled.set(enabled); }
+
+void Settings::setHeaterHandoverMs(int handoverMs) {
+    heaterHandoverMs.set(std::clamp(handoverMs, MIN_HEATER_HANDOVER_MS, MAX_HEATER_HANDOVER_MS));
+}
+
 void Settings::setPumpModelCoeffs(const String &pumpModelCoeffs) { this->pumpModelCoeffs.set(pumpModelCoeffs); }
 
 void Settings::setPumpSlipCoeffs(const String &pumpSlipCoeffs) { this->pumpSlipCoeffs.set(pumpSlipCoeffs); }

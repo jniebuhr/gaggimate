@@ -2,6 +2,7 @@ import { useCallback, useContext, useState } from 'preact/hooks';
 import { computed } from '@preact/signals';
 import { ApiServiceContext, machine } from '../../../services/ApiService.js';
 import Section from '../../../components/Card.jsx';
+import { HeaterCoordinationSection } from './HeaterCoordinationSection.jsx';
 import { Tooltip } from '../../../components/Tooltip.jsx';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCrosshairs } from '@fortawesome/free-solid-svg-icons/faCrosshairs';
@@ -346,6 +347,7 @@ export function MachineTab({ formData, onChange, setField }) {
         </div>
       </Section>
 
+      <HeaterCoordinationSection formData={formData} onChange={onChange} />
       {hardwareScaleAvailable.value && (
         <Section title='Scales'>
           <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
