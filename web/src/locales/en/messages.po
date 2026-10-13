@@ -165,7 +165,6 @@ msgid "Active"
 msgstr "Active"
 
 #: src/pages/Home/cards/ActionCard.jsx
-#: src/pages/Home/CompactProcessControls.jsx
 msgid "Active warnings"
 msgstr "Active warnings"
 
@@ -1194,7 +1193,6 @@ msgid "Deep Dive Shot Analyzer"
 msgstr "Deep Dive Shot Analyzer"
 
 #: src/pages/Home/cards/ProfileCard.jsx
-#: src/pages/Home/CompactProcessControls.jsx
 msgctxt "profile"
 msgid "Default"
 msgstr "Default"
@@ -1780,7 +1778,6 @@ msgid "Finish"
 msgstr "Finish"
 
 #: src/pages/Home/cards/ProfileCard.jsx
-#: src/pages/Home/CompactProcessControls.jsx
 #: src/pages/Settings/tabs/SystemTab.jsx
 msgid "Finished"
 msgstr "Finished"
@@ -1961,7 +1958,6 @@ msgid "Grind"
 msgstr "Grind"
 
 #: src/app/machineStatus.js
-#: src/pages/Home/CompactProcessControls.jsx
 #: src/pages/Home/utils.js
 msgctxt "machine mode"
 msgid "Grind"
@@ -1977,10 +1973,6 @@ msgctxt "relay function"
 msgid "Grind"
 msgstr "Grind"
 
-#: src/pages/Home/CompactProcessControls.jsx
-msgid "Grind function not available"
-msgstr "Grind function not available"
-
 #: src/pages/Settings/PluginCard.jsx
 msgid "Grind once with GbS to see which recipe number your grinder reports."
 msgstr "Grind once with GbS to see which recipe number your grinder reports."
@@ -1992,10 +1984,6 @@ msgstr "Grind Setting"
 #: src/pages/Home/cards/ActionCard.jsx
 msgid "Grind target"
 msgstr "Grind target"
-
-#: src/pages/Home/CompactProcessControls.jsx
-msgid "GRIND TARGET"
-msgstr "GRIND TARGET"
 
 #: src/pages/Home/cards/ProfileCard.jsx
 #: src/pages/Home/utils.js
@@ -2436,10 +2424,6 @@ msgstr "Machine error"
 #: src/app/notifications.js
 msgid "Machine events"
 msgstr "Machine events"
-
-#: src/pages/Home/CompactProcessControls.jsx
-msgid "Machine is ready"
-msgstr "Machine is ready"
 
 #: src/pages/Home/cards/ActionCard.jsx
 msgid "Machine is ready, wake up to use"
@@ -3240,10 +3224,6 @@ msgstr "Prefer Hardware Scale (Built-in)"
 msgid "Preferred Scale Source"
 msgstr "Preferred Scale Source"
 
-#: src/pages/Home/CompactProcessControls.jsx
-msgid "Preheating"
-msgstr "Preheating"
-
 #: src/pages/Home/cards/ActionCard.jsx
 msgid "Preheating..."
 msgstr "Preheating..."
@@ -3384,7 +3364,6 @@ msgid "profile"
 msgstr "profile"
 
 #: src/pages/Home/cards/ProfileCard.jsx
-#: src/pages/Home/CompactProcessControls.jsx
 #: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 #: src/pages/Statistics/components/ProfileGroupTable.jsx
 msgid "Profile"
@@ -4498,7 +4477,6 @@ msgid "Standard"
 msgstr "Standard"
 
 #: src/app/machineStatus.js
-#: src/pages/Home/CompactProcessControls.jsx
 #: src/pages/Home/utils.js
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgctxt "machine mode"
@@ -4535,10 +4513,6 @@ msgstr "Start"
 msgctxt "process action"
 msgid "Start"
 msgstr "Start"
-
-#: src/pages/Home/CompactProcessControls.jsx
-msgid "Start and open valve to pull water"
-msgstr "Start and open valve to pull water"
 
 #: src/pages/Home/BrewConfirmModal.jsx
 msgid "Start anyway"
@@ -4637,10 +4611,6 @@ msgstr "Steam Button Behavior"
 #: src/app/notifications.js
 msgid "Steam has been on for 5 minutes."
 msgstr "Steam has been on for 5 minutes."
-
-#: src/pages/Home/CompactProcessControls.jsx
-msgid "Steam is ready"
-msgstr "Steam is ready"
 
 #: src/app/appSettings.js
 msgid "Steam mode left on"
@@ -4829,10 +4799,6 @@ msgstr "Target"
 msgid "Target (Delta)"
 msgstr "Target (Delta)"
 
-#: src/pages/Home/CompactProcessControls.jsx
-msgid "target {phaseTarget}"
-msgstr "target {phaseTarget}"
-
 #: src/pages/ShotAnalyzer/components/shotChart/tooltip/StaticTooltipContent.jsx
 msgid "Target {targetText}"
 msgstr "Target {targetText}"
@@ -4959,10 +4925,6 @@ msgstr "Temp"
 #: src/pages/Statistics/components/MetricsTable.jsx
 msgid "Temperature"
 msgstr "Temperature"
-
-#: src/pages/Home/CompactProcessControls.jsx
-msgid "TEMPERATURE"
-msgstr "TEMPERATURE"
 
 #: src/pages/ShotAnalyzer/utils/columns.js
 #: src/pages/ShotAnalyzer/utils/constants.js
