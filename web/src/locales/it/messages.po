@@ -4043,6 +4043,14 @@ msgstr "Scansione dei file della cronologia shot..."
 msgid "Scanning..."
 msgstr "Scansione..."
 
+#: src/components/TabBar.jsx
+msgid "Scroll tabs left"
+msgstr "Scorri le schede a sinistra"
+
+#: src/components/TabBar.jsx
+msgid "Scroll tabs right"
+msgstr "Scorri le schede a destra"
+
 #: src/pages/ShotAnalyzer/components/shotChart/compare/CompareChartCanvas.jsx
 msgid "Scrub compare time"
 msgstr "Scorri il tempo del confronto"

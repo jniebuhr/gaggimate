@@ -4043,6 +4043,14 @@ msgstr "Shot-Verlaufsdateien werden durchsucht..."
 msgid "Scanning..."
 msgstr "Suche..."
 
+#: src/components/TabBar.jsx
+msgid "Scroll tabs left"
+msgstr "Tabs nach links scrollen"
+
+#: src/components/TabBar.jsx
+msgid "Scroll tabs right"
+msgstr "Tabs nach rechts scrollen"
+
 #: src/pages/ShotAnalyzer/components/shotChart/compare/CompareChartCanvas.jsx
 msgid "Scrub compare time"
 msgstr "Vergleichszeit verschieben"

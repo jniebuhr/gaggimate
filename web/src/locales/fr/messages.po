@@ -4043,6 +4043,14 @@ msgstr "Analyse des fichiers de l'historique des shots..."
 msgid "Scanning..."
 msgstr "Recherche..."
 
+#: src/components/TabBar.jsx
+msgid "Scroll tabs left"
+msgstr "Faire défiler les onglets vers la gauche"
+
+#: src/components/TabBar.jsx
+msgid "Scroll tabs right"
+msgstr "Faire défiler les onglets vers la droite"
+
 #: src/pages/ShotAnalyzer/components/shotChart/compare/CompareChartCanvas.jsx
 msgid "Scrub compare time"
 msgstr "Parcourir le temps de comparaison"

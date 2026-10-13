@@ -4043,6 +4043,14 @@ msgstr "Escaneando archivos del historial de extracciones..."
 msgid "Scanning..."
 msgstr "Buscando..."
 
+#: src/components/TabBar.jsx
+msgid "Scroll tabs left"
+msgstr "Desplazar pestañas a la izquierda"
+
+#: src/components/TabBar.jsx
+msgid "Scroll tabs right"
+msgstr "Desplazar pestañas a la derecha"
+
 #: src/pages/ShotAnalyzer/components/shotChart/compare/CompareChartCanvas.jsx
 msgid "Scrub compare time"
 msgstr "Desplazar tiempo de comparación"

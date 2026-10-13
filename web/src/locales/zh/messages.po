@@ -4043,6 +4043,14 @@ msgstr "正在扫描萃取历史文件..."
 msgid "Scanning..."
 msgstr "扫描中..."
 
+#: src/components/TabBar.jsx
+msgid "Scroll tabs left"
+msgstr "向左滚动标签页"
+
+#: src/components/TabBar.jsx
+msgid "Scroll tabs right"
+msgstr "向右滚动标签页"
+
 #: src/pages/ShotAnalyzer/components/shotChart/compare/CompareChartCanvas.jsx
 msgid "Scrub compare time"
 msgstr "拖动对比时间"

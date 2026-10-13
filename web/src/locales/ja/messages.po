@@ -4043,6 +4043,14 @@ msgstr "ショット履歴ファイルをスキャン中..."
 msgid "Scanning..."
 msgstr "スキャン中..."
 
+#: src/components/TabBar.jsx
+msgid "Scroll tabs left"
+msgstr "タブを左にスクロール"
+
+#: src/components/TabBar.jsx
+msgid "Scroll tabs right"
+msgstr "タブを右にスクロール"
+
 #: src/pages/ShotAnalyzer/components/shotChart/compare/CompareChartCanvas.jsx
 msgid "Scrub compare time"
 msgstr "比較の時間をスクラブ"
