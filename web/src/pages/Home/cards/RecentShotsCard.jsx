@@ -11,6 +11,9 @@ import {
   recentShotCountSignal,
 } from '../../../utils/dashboardManager.js';
 import PropTypes from 'prop-types';
+import { Trans, useLingui } from '@lingui/react/macro';
+import { msg, t } from '@lingui/core/macro';
+import { i18n } from '../../../i18n.js';
 import { SkeletonBlock } from '../../../components/SkeletonBlock.jsx';
 
 // Compares calendar dates, not raw milliseconds, so 11:59 PM yesterday
@@ -22,8 +25,8 @@ function getRelativeDayLabel(timestamp) {
   const shotDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
   const todayDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
   const diffDays = Math.round((todayDay - shotDay) / 86400000);
-  if (diffDays === 0) return 'Today';
-  if (diffDays === 1) return 'Yesterday';
+  if (diffDays === 0) return t`Today`;
+  if (diffDays === 1) return t`Yesterday`;
   return d.toLocaleDateString([], { weekday: 'long' });
 }
 
@@ -49,35 +52,36 @@ async function loadRecentShots(recentShotCount) {
 
 const METRIC_DEFS = {
   duration: {
-    label: 'Duration',
+    labelMsg: msg`Duration`,
     unit: 's',
     getValue: shot => (shot.duration != null ? (shot.duration / 1000).toFixed(1) : null),
   },
   weight: {
-    label: 'Weight',
+    labelMsg: msg`Weight`,
     unit: 'g',
     getValue: shot => (shot.volume != null ? shot.volume.toFixed(1) : null),
   },
   avgTemp: {
-    label: 'Temperature',
+    labelMsg: msg`Temperature`,
     unit: '°C',
     getValue: shot => (shot.avgTemp != null ? shot.avgTemp.toFixed(1) : null),
   },
   maxPressure: {
-    label: 'Pressure',
+    labelMsg: msg`Pressure`,
     unit: 'bar',
     getValue: shot => (shot.maxPressure != null ? shot.maxPressure.toFixed(1) : null),
   },
   avgFlow: {
-    label: 'Flow',
+    labelMsg: msg`Flow`,
     unit: 'ml/s',
     getValue: shot => (shot.avgFlow != null ? shot.avgFlow.toFixed(2) : null),
   },
 };
 
 function ShotMiniCard({ shot, slots }) {
+  const { t } = useLingui();
   const analyzerUrl = `/analyzer/internal/${shot.id}`;
-  const profileLabel = cleanName(shot.profile || 'Unknown');
+  const profileLabel = cleanName(shot.profile || t({ message: 'Unknown', context: 'profile' }));
   const dateLabel = formatShotDateTime(shot.timestamp, !clock24hSignal.value);
 
   return (
@@ -100,8 +104,8 @@ function ShotMiniCard({ shot, slots }) {
         <a
           href={analyzerUrl}
           className='text-base-content/30 hover:text-primary shrink-0 text-xs transition-colors'
-          aria-label='Open in Analyzer'
-          title='Open in Analyzer'
+          aria-label={t`Open in Analyzer`}
+          title={t`Open in Analyzer`}
         >
           <FontAwesomeIcon icon={faMagnifyingGlassChart} />
         </a>
@@ -123,7 +127,7 @@ function ShotMiniCard({ shot, slots }) {
                 )}
               </div>
               <div className='text-base-content/50 text-[0.6rem] font-semibold tracking-wider uppercase'>
-                {def?.label ?? slotId}
+                {def ? i18n._(def.labelMsg) : slotId}
               </div>
             </div>
           );
@@ -236,7 +240,7 @@ export function RecentShotsCard() {
   return (
     <div className='card bg-base-100 flex flex-col gap-2 rounded-xl p-3'>
       <div className='text-base-content/50 text-[0.6rem] tracking-wider uppercase'>
-        Recent Shots
+        <Trans>Recent Shots</Trans>
       </div>
       <div className='grid grid-cols-1 gap-3 sm:[grid-template-columns:repeat(auto-fit,minmax(180px,1fr))]'>
         {shots.map(shot => (

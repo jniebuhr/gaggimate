@@ -36,6 +36,7 @@ import {
   getBuiltProfileCount,
   getBuiltDateRange,
 } from './analysis';
+import { t } from '@lingui/core/macro';
 
 export function useStatisticsMetadataState({
   apiService,
@@ -82,7 +83,7 @@ export function useStatisticsMetadataState({
         if (cancelled || loadId !== metaLoadIdRef.current) return;
         setRawShotCandidates([]);
         setRawProfiles([]);
-        setMetadataError('Failed to load shots/profiles for filtering.');
+        setMetadataError(t`Failed to load shots/profiles for filtering.`);
       } finally {
         if (!cancelled && loadId === metaLoadIdRef.current) {
           setMetadataLoading(false);
@@ -672,7 +673,7 @@ export function useStatisticsRunExecution({
         setResult(computeStatistics(entries));
       } catch {
         if (cancelled || loadId !== analyzeLoadIdRef.current) return;
-        setError('Failed to load statistics. Please try again.');
+        setError(t`Failed to load statistics. Please try again.`);
       } finally {
         if (!cancelled && loadId === analyzeLoadIdRef.current) {
           setLoading(false);

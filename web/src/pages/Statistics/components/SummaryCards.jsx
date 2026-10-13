@@ -2,6 +2,7 @@ import { faDroplet } from '@fortawesome/free-solid-svg-icons/faDroplet';
 import { faMugHot } from '@fortawesome/free-solid-svg-icons/faMugHot';
 import { faScaleBalanced } from '@fortawesome/free-solid-svg-icons/faScaleBalanced';
 import { faStopwatch } from '@fortawesome/free-solid-svg-icons/faStopwatch';
+import { useLingui } from '@lingui/react/macro';
 import { StatisticsMetricHeader } from './StatisticsMetricHeader';
 
 // Presentational only: renders a high-signal summary layer from StatisticsService.summary.
@@ -55,34 +56,35 @@ function SummaryStatCard({ icon, label, value, accentColorVar }) {
 }
 
 export function SummaryCards({ summary }) {
+  const { t } = useLingui();
   if (!summary) return null;
 
   // Totals are shown first with a stronger visual treatment for quick scanning.
   const totalCards = [
     {
       key: 'totalShots',
-      label: 'Total Shots',
+      label: t`Total Shots`,
       value: Number.isFinite(summary.totalShots) ? String(summary.totalShots) : '-',
       icon: faMugHot,
       accentColorVar: '--statistics-summary-shots-brown',
     },
     {
       key: 'totalWeight',
-      label: 'Total Weight',
+      label: t`Total Weight`,
       value: formatWeight(summary.totalWeight),
       icon: faScaleBalanced,
       accentColorVar: '--analyzer-weight-text',
     },
     {
       key: 'totalWater',
-      label: 'Total Pumped Water',
+      label: t`Total Pumped Water`,
       value: formatWater(summary.totalWater),
       icon: faDroplet,
       accentColorVar: '--statistics-summary-water',
     },
     {
       key: 'totalDuration',
-      label: 'Total Duration',
+      label: t`Total Duration`,
       value: formatDuration(summary.totalDuration),
       icon: faStopwatch,
       accentColorVar: '--statistics-summary-duration',

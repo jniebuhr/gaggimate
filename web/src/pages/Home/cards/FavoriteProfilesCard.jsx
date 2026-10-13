@@ -6,6 +6,7 @@ import { faTemperatureFull } from '@fortawesome/free-solid-svg-icons/faTemperatu
 import { faClock } from '@fortawesome/free-solid-svg-icons/faClock';
 import { faScaleBalanced } from '@fortawesome/free-solid-svg-icons/faScaleBalanced';
 import PropTypes from 'prop-types';
+import { Trans } from '@lingui/react/macro';
 import { SkeletonBlock } from '../../../components/SkeletonBlock.jsx';
 
 const connected = computed(() => machine.value.connected);
@@ -117,11 +118,13 @@ export function FavoriteProfilesCard({ selectedProfileId, inCard = false, compac
     return (
       <div className={wrapperClass}>
         <div className='text-base-content/50 text-[0.6rem] tracking-wider uppercase'>
-          Quick Select
+          <Trans>Quick Select</Trans>
         </div>
         <div className='text-base-content/50 flex flex-col items-center gap-1 py-3 text-center text-sm'>
           <span className='text-lg'>★</span>
-          <span>No favorites — mark profiles as ★ in the profile list</span>
+          <span>
+            <Trans>No favorites — mark profiles as ★ in the profile list</Trans>
+          </span>
         </div>
       </div>
     );
@@ -160,7 +163,7 @@ export function FavoriteProfilesCard({ selectedProfileId, inCard = false, compac
   return (
     <div className={wrapperClass}>
       <div className='text-base-content/50 text-[0.6rem] tracking-wider uppercase'>
-        Quick Select
+        <Trans>Quick Select</Trans>
       </div>
       {content}
     </div>

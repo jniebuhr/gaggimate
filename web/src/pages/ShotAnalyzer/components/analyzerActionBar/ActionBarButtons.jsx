@@ -1,4 +1,5 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { faChevronLeft } from '@fortawesome/free-solid-svg-icons/faChevronLeft';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight';
 import { faChartArea } from '@fortawesome/free-solid-svg-icons/faChartArea';
@@ -17,6 +18,7 @@ export function ActionBarNavigationButtons({
   currentIndex,
   onNavigateToIndex,
 }) {
+  const { t } = useLingui();
   return (
     <div className='flex shrink-0 items-center gap-1'>
       <button
@@ -24,7 +26,7 @@ export function ActionBarNavigationButtons({
         className={navButtonClasses}
         disabled={!canGoPrev}
         onClick={() => canGoPrev && onNavigateToIndex(currentIndex - 1, -1)}
-        title='Previous shot'
+        title={t`Previous shot`}
       >
         <FontAwesomeIcon icon={faChevronLeft} />
       </button>
@@ -34,7 +36,7 @@ export function ActionBarNavigationButtons({
         className={navButtonClasses}
         disabled={!canGoNext}
         onClick={() => canGoNext && onNavigateToIndex(currentIndex + 1, 1)}
-        title='Next shot'
+        title={t`Next shot`}
       >
         <FontAwesomeIcon icon={faChevronRight} />
       </button>
@@ -48,6 +50,7 @@ export function ActionBarCompareButton({
   compareMode,
   onCompareModeToggle,
 }) {
+  const { t } = useLingui();
   return (
     <button
       type='button'
@@ -58,10 +61,12 @@ export function ActionBarCompareButton({
         event.stopPropagation();
         onCompareModeToggle?.();
       }}
-      title={compareMode ? 'Disable compare mode' : 'Enable compare mode'}
+      title={compareMode ? t`Disable compare mode` : t`Enable compare mode`}
     >
       <FontAwesomeIcon icon={faEquals} className='text-sm' />
-      <span>Compare</span>
+      <span>
+        <Trans context='compare mode'>Compare</Trans>
+      </span>
     </button>
   );
 }
@@ -73,11 +78,12 @@ export function ActionBarStatisticsAction({
   statsHref,
   onShowStats,
 }) {
+  const { t } = useLingui();
   const statisticsIcon = compareMode ? faChartArea : faChartSimple;
   const content = (
     <>
       <FontAwesomeIcon icon={statisticsIcon} className='text-sm' />
-      <span>{compareMode ? 'Multi-Compare' : 'Profile Stats'}</span>
+      <span>{compareMode ? <Trans>Multi-Compare</Trans> : <Trans>Profile Stats</Trans>}</span>
     </>
   );
 
@@ -90,7 +96,7 @@ export function ActionBarStatisticsAction({
           event.stopPropagation();
           onShowStats?.();
         }}
-        title='Open statistics'
+        title={t`Open statistics`}
       >
         {content}
       </a>
@@ -102,7 +108,7 @@ export function ActionBarStatisticsAction({
       type='button'
       className={actionButtonClasses}
       disabled
-      title='Load a profile to open statistics'
+      title={t`Load a profile to open statistics`}
     >
       {content}
     </button>
@@ -115,6 +121,7 @@ function ActionBarImportModeToggle({
   modeButtonRef,
   handleModeToggle,
 }) {
+  const { t } = useLingui();
   const isBrowserImportMode = importMode === 'browser';
 
   return (
@@ -126,17 +133,23 @@ function ActionBarImportModeToggle({
       onClick={handleModeToggle}
       title={
         isBrowserImportMode
-          ? 'Save to Browser. Click to switch imports to View temporarily.'
-          : 'View temporarily. Click to switch imports to Save to Browser.'
+          ? t`Save to Browser. Click to switch imports to View temporarily.`
+          : t`View temporarily. Click to switch imports to Save to Browser.`
       }
       aria-label={
         isBrowserImportMode
-          ? 'Switch import mode to View temporarily'
-          : 'Switch import mode to Save to Browser'
+          ? t`Switch import mode to View temporarily`
+          : t`Switch import mode to Save to Browser`
       }
     >
       <FontAwesomeIcon icon={isBrowserImportMode ? faLaptopFile : faEye} className='text-sm' />
-      <span>{isBrowserImportMode ? 'Save' : 'View'}</span>
+      <span>
+        {isBrowserImportMode ? (
+          <Trans context='import mode'>Save</Trans>
+        ) : (
+          <Trans context='import mode'>View</Trans>
+        )}
+      </span>
     </button>
   );
 }
@@ -150,6 +163,7 @@ export function ActionBarImportActions({
   modeButtonRef,
   showImportModeToggle,
 }) {
+  const { t } = useLingui();
   return (
     <div className='hidden shrink-0 items-center gap-1 sm:ml-auto sm:flex'>
       <button
@@ -157,15 +171,17 @@ export function ActionBarImportActions({
         className={actionButtonClasses}
         onClick={handleImportClick}
         disabled={isImporting}
-        title='Import shot or profile'
-        aria-label={isImporting ? 'Importing shot or profile' : 'Import shot or profile'}
+        title={t`Import shot or profile`}
+        aria-label={isImporting ? t`Importing shot or profile` : t`Import shot or profile`}
       >
         <FontAwesomeIcon
           icon={isImporting ? faCircleNotch : faFileImport}
           spin={isImporting}
           className='text-sm'
         />
-        <span>Import</span>
+        <span>
+          <Trans>Import</Trans>
+        </span>
       </button>
 
       {showImportModeToggle ? (

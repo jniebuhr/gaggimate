@@ -1,3 +1,5 @@
+import { t } from '@lingui/core/macro';
+import { Trans } from '@lingui/react/macro';
 import { libraryService } from '../../services/LibraryService';
 import {
   cleanName,
@@ -44,14 +46,14 @@ function LibraryMobileSectionTabs({ activeSection, onSectionChange }) {
           className={getTabClassName('shots')}
           onClick={() => onSectionChange('shots')}
         >
-          Shots
+          <Trans>Shots</Trans>
         </button>
         <button
           type='button'
           className={getTabClassName('profiles')}
           onClick={() => onSectionChange('profiles')}
         >
-          Profiles
+          <Trans>Profiles</Trans>
         </button>
       </div>
     </div>
@@ -72,7 +74,7 @@ export function LibraryDropdown({
         className='fixed inset-0 cursor-pointer border-0 bg-black/20 p-0'
         style={{ zIndex: 40 }}
         onClick={onClose}
-        aria-label='Close library'
+        aria-label={t`Close library`}
       />
       <div style={dropdownStyle}>
         <div className='library-panel-dropdown-surface app-card-surface animate-fade-in-down origin-top overflow-hidden rounded-b-xl'>
@@ -125,9 +127,10 @@ export function LibraryShotsPanelSection({
 }) {
   const handleExportAllShots = () => {
     if (shots.length === 0) return;
+    const count = shots.length;
     if (
       confirm(
-        `Do you really want to export all ${shots.length} filtered shots? (Shots are downloaded individually, one after the other.)`,
+        t`Do you really want to export all ${count} filtered shots? (Shots are downloaded individually, one after the other.)`,
       )
     ) {
       for (let i = 0; i < shots.length; i++)
@@ -136,10 +139,9 @@ export function LibraryShotsPanelSection({
   };
 
   const handleDeleteAllShots = async () => {
+    const count = shots.length;
     if (
-      confirm(
-        `WARNING: Do you really want to IRREVOCABLY delete all ${shots.length} filtered shots?`,
-      )
+      confirm(t`WARNING: Do you really want to IRREVOCABLY delete all ${count} filtered shots?`)
     ) {
       for (const shot of shots) {
         await libraryService.deleteShot(getShotStorageKey(shot), shot.source);
@@ -151,7 +153,7 @@ export function LibraryShotsPanelSection({
   return (
     <div className={getLibrarySectionVisibilityClass(mobileActiveSection, 'shots')}>
       <LibrarySection
-        title='Shots'
+        title={t`Shots`}
         items={shots}
         isShot={true}
         compareMode={compareMode}
@@ -237,9 +239,10 @@ export function LibraryProfilesPanelSection({
 }) {
   const handleExportAllProfiles = () => {
     if (profiles.length === 0) return;
+    const count = profiles.length;
     if (
       confirm(
-        `Do you really want to export all ${profiles.length} filtered profiles? (Profiles are downloaded individually, one after the other.)`,
+        t`Do you really want to export all ${count} filtered profiles? (Profiles are downloaded individually, one after the other.)`,
       )
     ) {
       for (let i = 0; i < profiles.length; i++)
@@ -248,10 +251,9 @@ export function LibraryProfilesPanelSection({
   };
 
   const handleDeleteAllProfiles = async () => {
+    const count = profiles.length;
     if (
-      confirm(
-        `WARNING: Do you really want to IRREVOCABLY delete all ${profiles.length} filtered profiles?`,
-      )
+      confirm(t`WARNING: Do you really want to IRREVOCABLY delete all ${count} filtered profiles?`)
     ) {
       for (const profile of profiles) {
         await libraryService.deleteProfile(getLibraryProfileDeleteKey(profile), profile.source);
@@ -263,7 +265,7 @@ export function LibraryProfilesPanelSection({
   return (
     <div className={getLibrarySectionVisibilityClass(mobileActiveSection, 'profiles')}>
       <LibrarySection
-        title='Profiles'
+        title={t`Profiles`}
         items={profiles}
         isShot={false}
         compareMode={compareMode}

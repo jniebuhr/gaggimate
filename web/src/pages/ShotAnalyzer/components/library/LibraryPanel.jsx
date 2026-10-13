@@ -3,6 +3,7 @@
  * Coordinates library state, selection, and the extracted presentation modules.
  */
 
+import { t } from '@lingui/core/macro';
 import { ApiServiceContext } from '../../../../services/ApiService';
 import { exportLibraryItems } from '../../services/LibraryExportService';
 import {
@@ -300,18 +301,21 @@ export function LibraryPanel({
     try {
       await exportLibraryItems([{ item, isShot }]);
     } catch (e) {
-      alert(`Export failed: ${e.message}`);
+      const message = e.message;
+      alert(t`Export failed: ${message}`);
       console.error(e);
     }
   };
 
   const handleDelete = async item => {
-    if (!confirm(`Are you sure you want to delete "${item.name || item.id}"?`)) return;
+    const itemName = item.name || item.id;
+    if (!confirm(t`Are you sure you want to delete "${itemName}"?`)) return;
     try {
       await deleteLibraryItem(item);
       refreshLibraries();
     } catch (e) {
-      alert(`Delete failed: ${e.message}`);
+      const message = e.message;
+      alert(t`Delete failed: ${message}`);
     }
   };
 

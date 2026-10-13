@@ -1,5 +1,6 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useCallback, useState } from 'preact/hooks';
+import { Trans } from '@lingui/react/macro';
 import { Tooltip } from './Tooltip.jsx';
 
 export function ConfirmButton({ onAction, icon, tooltip, confirmTooltip, btnSize = 'sm' }) {
@@ -23,7 +24,11 @@ export function ConfirmButton({ onAction, icon, tooltip, confirmTooltip, btnSize
         aria-label={confirm ? confirmTooltip : tooltip}
       >
         <FontAwesomeIcon icon={icon} />
-        {confirm && <span className='ml-2 hidden sm:inline'>Confirm</span>}
+        {confirm && (
+          <span className='ml-2 hidden sm:inline'>
+            <Trans>Confirm</Trans>
+          </span>
+        )}
       </button>
     </Tooltip>
   );

@@ -6,6 +6,7 @@
  * - Browser Uploads (via IndexedDB)
  */
 
+import { t } from '@lingui/core/macro';
 import { parseBinaryIndex, indexToShotList } from '../../ShotHistory/parseBinaryIndex';
 import { parseBinaryShot } from '../../ShotHistory/parseBinaryShot';
 import { indexedDBService } from './IndexedDBService';
@@ -318,7 +319,8 @@ class LibraryService {
       const response = await fetch(`/api/history/${paddedId}.slog`, { signal });
 
       if (!response.ok) {
-        throw new Error(`Failed to load shot ${idStr}: HTTP ${response.status}`);
+        const status = response.status;
+        throw new Error(t`Failed to load shot ${idStr}: HTTP ${status}`);
       }
 
       const arrayBuffer = await response.arrayBuffer();
@@ -328,7 +330,7 @@ class LibraryService {
     }
     const shot = await indexedDBService.getShot(idStr);
     if (!shot) {
-      throw new Error(`Shot ${idStr} not found in browser storage`);
+      throw new Error(t`Shot ${idStr} not found in browser storage`);
     }
     shot.storageKey = shot.storageKey || shot.name || idStr;
     shot.source = shot.source || 'browser';
@@ -344,7 +346,7 @@ class LibraryService {
   async loadProfile(nameOrId, source) {
     if (source === 'gaggimate') {
       if (this.apiService?.socket?.readyState !== WebSocket.OPEN) {
-        throw new Error('WebSocket not connected');
+        throw new Error(t`WebSocket not connected`);
       }
 
       const response = await this.apiService.request({
@@ -353,7 +355,7 @@ class LibraryService {
       });
 
       if (!response.profile) {
-        throw new Error(`Profile ${nameOrId} not found`);
+        throw new Error(t`Profile ${nameOrId} not found`);
       }
 
       return {
@@ -363,7 +365,7 @@ class LibraryService {
     }
     const profile = await indexedDBService.getProfile(nameOrId);
     if (!profile) {
-      throw new Error(`Profile ${nameOrId} not found in browser storage`);
+      throw new Error(t`Profile ${nameOrId} not found in browser storage`);
     }
     return profile;
   }
@@ -387,7 +389,7 @@ class LibraryService {
         // We MUST load the full shot because the list item only has summary data.
         // Use the 'id' (timestamp) to load, ignoring the 'name' (profile name).
         const loadId = item.id;
-        if (!loadId) throw new Error('Shot ID missing for export');
+        if (!loadId) throw new Error(t`Shot ID missing for export`);
 
         const fullShot = await this.loadShot(loadId, 'gaggimate');
         delete fullShot.source;
@@ -398,7 +400,7 @@ class LibraryService {
         // PROFILE EXPORT (GM):
         // Load fresh from controller using the hidden profileId
         const loadId = item.profileId || item.id;
-        if (!loadId) throw new Error('Profile ID missing for export');
+        if (!loadId) throw new Error(t`Profile ID missing for export`);
 
         const raw = await this.loadProfile(loadId, 'gaggimate');
         filename = getProfileExportFilename(

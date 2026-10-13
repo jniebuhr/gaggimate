@@ -1,4 +1,5 @@
 import { effect } from '@preact/signals';
+import { t } from '@lingui/core/macro';
 import { WARNING_LEVEL, warningByKey } from '../utils/warnings.js';
 import { appSettings } from './appSettings.js';
 import { acquireConnection } from './machineConnections.js';
@@ -57,26 +58,26 @@ export class MachineMonitor {
     if (!previous) return;
 
     if (current.shotActive && !previous.shotActive) {
-      this.emit('shotStarted', 'Shot started', current.process?.l || 'Brewing…');
+      this.emit('shotStarted', t`Shot started`, current.process?.l || t`Brewing…`);
     }
     if (!current.shotActive && previous.shotActive) {
       // The finished frame carries the final duration; fall back to the last running frame.
       const seconds = Math.round(((current.process ?? previous.process)?.e ?? 0) / 1000);
       const weight = current.weight > 0 ? `, ${current.weight.toFixed(1)} g` : '';
-      this.emit('shotFinished', 'Shot finished', `${seconds} s${weight}`);
+      this.emit('shotFinished', t`Shot finished`, `${seconds} s${weight}`);
     }
     if (current.systemError && !previous.systemError) {
       this.emit(
         'errors',
-        'Machine error',
-        current.systemMessage || 'The controller reported an error.',
+        t`Machine error`,
+        current.systemMessage || t`The controller reported an error.`,
       );
     }
     for (const key of current.warnings) {
       if (previous.warnings.has(key)) continue;
       const label = warningByKey(key)?.label ?? key;
       const isError = current.warningLevels[key] >= WARNING_LEVEL.ERROR;
-      this.emit(isError ? 'errors' : 'warnings', isError ? 'Error' : 'Warning', label);
+      this.emit(isError ? 'errors' : 'warnings', isError ? t`Error` : t`Warning`, label);
     }
   }
 
@@ -91,7 +92,8 @@ export class MachineMonitor {
     } else if (this.heating && current.temperature >= current.target - READY_BAND) {
       this.heating = false;
       if (notify) {
-        this.emit('preheated', 'Ready to brew', `Boiler at ${Math.round(current.temperature)} °C`);
+        const temperature = Math.round(current.temperature);
+        this.emit('preheated', t`Ready to brew`, t`Boiler at ${temperature} °C`);
       }
     }
   }
@@ -106,7 +108,7 @@ export class MachineMonitor {
     this.steamSince ??= Date.now();
     if (!this.steamNotified && Date.now() - this.steamSince >= STEAM_LEFT_ON_MS) {
       this.steamNotified = true;
-      this.emit('steamLeftOn', 'Still in steam mode', 'Steam has been on for 5 minutes.');
+      this.emit('steamLeftOn', t`Still in steam mode`, t`Steam has been on for 5 minutes.`);
     }
   }
 
@@ -177,7 +179,7 @@ export class NotificationService {
       // Same high-importance channel as MachineMonitorService, so events pop up as banners.
       await LocalNotifications.createChannel({
         id: EVENTS_CHANNEL,
-        name: 'Machine events',
+        name: t`Machine events`,
         importance: 5,
       });
       this.channelCreated = true;

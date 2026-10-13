@@ -1,3 +1,5 @@
+import { Trans, useLingui } from '@lingui/react/macro';
+
 export default function ResultsPanel({ results, currentCoeffs }) {
   const { oneBar, nineBar, newCoeffs } = results;
   return (
@@ -7,7 +9,9 @@ export default function ResultsPanel({ results, currentCoeffs }) {
         <ResultCard title='9 bar' a={nineBar} />
       </div>
       <div className='border-primary bg-primary/10 rounded-md border p-3'>
-        <div className='text-base-content/60 text-xs uppercase'>Coefficients</div>
+        <div className='text-base-content/60 text-xs uppercase'>
+          <Trans>Coefficients</Trans>
+        </div>
         <div className='mt-1 flex items-baseline gap-3'>
           <span className='text-base-content/60 font-mono text-sm'>{currentCoeffs || '—'}</span>
           <span className='text-base-content/60'>→</span>
@@ -19,13 +23,14 @@ export default function ResultsPanel({ results, currentCoeffs }) {
 }
 
 function ResultCard({ title, a }) {
+  const { t } = useLingui();
   return (
     <div className='bg-base-200 rounded-md p-3'>
       <div className='text-base-content/60 text-xs uppercase'>{title}</div>
       <div className='mt-1 space-y-1 font-mono text-xs'>
-        <Row label='actual flow' value={`${a.actualFlow.toFixed(3)} ml/s`} />
-        <Row label='estimated flow' value={`${a.estimatedFlow.toFixed(3)} ml/s`} />
-        <Row label='factor' value={a.factor.toFixed(4)} />
+        <Row label={t`actual flow`} value={`${a.actualFlow.toFixed(3)} ml/s`} />
+        <Row label={t`estimated flow`} value={`${a.estimatedFlow.toFixed(3)} ml/s`} />
+        <Row label={t`factor`} value={a.factor.toFixed(4)} />
       </div>
     </div>
   );

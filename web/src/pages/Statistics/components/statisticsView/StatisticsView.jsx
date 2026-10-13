@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useContext, useCallback } from 'preact/hooks';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlay } from '@fortawesome/free-solid-svg-icons/faPlay';
+import { Trans, useLingui } from '@lingui/react/macro';
 // Main StatisticsView orchestrator: wires hooks, toolbar, summary cards, and the detail section panel
 import { ApiServiceContext } from '../../../../services/ApiService';
 import { libraryService } from '../../../ShotAnalyzer/services/LibraryService';
@@ -35,6 +36,7 @@ import {
 import { StatisticsDetailSectionPanel } from './StatisticsDetailSection';
 
 export function StatisticsView({ initialContext }) {
+  const { t } = useLingui();
   const apiService = useContext(ApiServiceContext);
   const initialProfileName = getInitialProfileName(initialContext);
 
@@ -327,6 +329,9 @@ export function StatisticsView({ initialContext }) {
     />
   );
 
+  const progressCurrent = progress.current;
+  const progressTotal = progress.total;
+
   return (
     <div className={shouldShowEmptyStatisticsState ? 'space-y-6' : 'space-y-5'}>
       <div
@@ -389,8 +394,8 @@ export function StatisticsView({ initialContext }) {
         <div className={`${STATISTICS_PANEL_CLASS} p-6 text-center`}>
           <div className='mb-2 text-sm font-semibold opacity-70'>
             {progress.total > 0
-              ? `Analyzing shot ${progress.current} of ${progress.total}...`
-              : 'Preparing statistics...'}
+              ? t`Analyzing shot ${progressCurrent} of ${progressTotal}...`
+              : t`Preparing statistics...`}
           </div>
           {progress.total > 0 ? (
             <progress
@@ -424,7 +429,9 @@ export function StatisticsView({ initialContext }) {
 
           {result.summary.totalShots === 0 && (
             <div className={`${STATISTICS_PANEL_CLASS} p-8 text-center`}>
-              <p className='text-sm opacity-50'>No shots found for the selected filters.</p>
+              <p className='text-sm opacity-50'>
+                <Trans>No shots found for the selected filters.</Trans>
+              </p>
             </div>
           )}
         </div>
@@ -434,29 +441,33 @@ export function StatisticsView({ initialContext }) {
         <div className='w-full'>
           <div className='app-card-surface w-full space-y-6 rounded-xl p-8 text-left'>
             <div className='space-y-2 text-center'>
-              <h3 className='text-base-content text-2xl font-bold'>No Statistics Built Yet</h3>
+              <h3 className='text-base-content text-2xl font-bold'>
+                <Trans>No Statistics Built Yet</Trans>
+              </h3>
               <p className='text-base-content text-sm opacity-70'>
-                Press{' '}
-                <span
-                  className={`inline-flex h-5 w-5 items-center justify-center rounded-md ${STATISTICS_RUN_BUTTON_TONE_CLASS}`}
-                >
-                  <FontAwesomeIcon icon={faPlay} className='text-[10px]' />
-                </span>{' '}
-                to build a statistic.
+                <Trans>
+                  Press{' '}
+                  <span
+                    className={`inline-flex h-5 w-5 items-center justify-center rounded-md ${STATISTICS_RUN_BUTTON_TONE_CLASS}`}
+                  >
+                    <FontAwesomeIcon icon={faPlay} className='text-[10px]' />
+                  </span>{' '}
+                  to build a statistic.
+                </Trans>
               </p>
               <div className='border-base-content/10 mt-5 border-t pt-4 text-center'>
                 <div className='text-base-content/60 flex flex-wrap items-center justify-center gap-3 text-xs'>
                   <span>
                     <span className='bg-base-content/8 border-base-content/10 mr-1.5 inline-flex min-w-10 items-center justify-center rounded-md border px-1.5 py-0.5 font-bold'>
-                      Enter
+                      <Trans context='keyboard key'>Enter</Trans>
                     </span>{' '}
-                    Build
+                    <Trans context='keyboard shortcut action'>Build</Trans>
                   </span>
                   <span>
                     <span className='bg-base-content/8 border-base-content/10 mr-1.5 inline-flex min-w-6 items-center justify-center rounded-md border px-1.5 py-0.5 font-bold'>
                       C
                     </span>{' '}
-                    Build and show Shot Charts
+                    <Trans>Build and show Shot Charts</Trans>
                   </span>
                 </div>
               </div>

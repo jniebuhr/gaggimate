@@ -5,12 +5,14 @@ import { faFaucet } from '@fortawesome/free-solid-svg-icons/faFaucet';
 import { faGaugeHigh } from '@fortawesome/free-solid-svg-icons/faGaugeHigh';
 import { faTemperatureHalf } from '@fortawesome/free-solid-svg-icons/faTemperatureHalf';
 import { faWeightScale } from '@fortawesome/free-solid-svg-icons/faWeightScale';
+import { msg } from '@lingui/core/macro';
+import { useLingui } from '@lingui/react/macro';
 import { formatMetricValue } from '../../utils/analyzerUtils';
 
 const metricRows = [
   {
     key: 'duration',
-    label: 'Duration',
+    label: msg`Duration`,
     unit: 's',
     color: 'var(--statistics-summary-duration)',
     icon: faClock,
@@ -18,7 +20,7 @@ const metricRows = [
   },
   {
     key: 'w',
-    label: 'Weight',
+    label: msg`Weight`,
     unit: 'g',
     color: 'var(--analyzer-weight-text)',
     icon: faWeightScale,
@@ -26,7 +28,7 @@ const metricRows = [
   },
   {
     key: 'tt',
-    label: 'Target Temperature',
+    label: msg`Target Temperature`,
     unit: '\u2103',
     color: 'var(--analyzer-target-temp-text)',
     icon: faBullseye,
@@ -34,7 +36,7 @@ const metricRows = [
   },
   {
     key: 't',
-    label: 'Avg. Temperature',
+    label: msg`Avg. Temperature`,
     unit: '\u2103',
     color: 'var(--analyzer-temp-text)',
     icon: faTemperatureHalf,
@@ -42,7 +44,7 @@ const metricRows = [
   },
   {
     key: 'pPeak',
-    label: 'Peak Pressure',
+    label: msg`Peak Pressure`,
     unit: 'bar',
     color: 'var(--analyzer-pressure-text)',
     icon: faGaugeHigh,
@@ -50,7 +52,7 @@ const metricRows = [
   },
   {
     key: 'f',
-    label: 'Avg. Pump Flow',
+    label: msg`Avg. Pump Flow`,
     unit: 'ml/s',
     color: 'var(--analyzer-flow-text)',
     icon: faFaucet,
@@ -58,7 +60,7 @@ const metricRows = [
   },
   {
     key: 'water',
-    label: 'Pumped Water',
+    label: msg`Pumped Water`,
     unit: 'ml',
     color: 'var(--statistics-summary-water)',
     icon: faDroplet,
@@ -83,16 +85,18 @@ function SummaryMetric({ label, unit, value }) {
 }
 
 export function ShotSummaryMetricsRow({ total, className = '' }) {
+  const { t } = useLingui();
   return (
     <div className={className || 'mt-4 flex gap-2 lg:mt-3.5 lg:gap-1.5 xl:mt-4 xl:gap-2'}>
-      <SummaryMetric label='Duration' unit='s' value={total?.duration} />
-      <SummaryMetric label='Weight' unit='g' value={total?.weight} />
-      <SummaryMetric label='Temperature' unit='°C' value={total?.tt?.avg} />
+      <SummaryMetric label={t`Duration`} unit='s' value={total?.duration} />
+      <SummaryMetric label={t`Weight`} unit='g' value={total?.weight} />
+      <SummaryMetric label={t`Temperature`} unit='°C' value={total?.tt?.avg} />
     </div>
   );
 }
 
 export function MetricValueGrid({ total, excludeKeys = [], flat }) {
+  const { i18n } = useLingui();
   const items = metricRows
     .filter(row => !excludeKeys.includes(row.key))
     .map(row => ({
@@ -122,7 +126,7 @@ export function MetricValueGrid({ total, excludeKeys = [], flat }) {
                 </span>
               </div>
               <div className='text-base-content/55 mt-0.5 max-w-full truncate text-center text-xs leading-tight font-medium'>
-                {row.label}
+                {i18n._(row.label)}
               </div>
             </div>
           </div>

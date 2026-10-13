@@ -1,5 +1,6 @@
 import { useCallback, useContext, useState } from 'preact/hooks';
 import { computed } from '@preact/signals';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { ApiServiceContext, machine } from '../../../services/ApiService.js';
 import Section from '../../../components/Card.jsx';
 import { HeaterCoordinationSection } from './HeaterCoordinationSection.jsx';
@@ -36,6 +37,8 @@ function SunriseColorField({ id, label, value, fallback, onChange }) {
 }
 
 function TankDistanceField({ id, label, value, onChange, onUseCurrent }) {
+  const { t } = useLingui();
+  const distance = tofDistance.value;
   return (
     <SettingsFormField label={label} htmlFor={id} noMargin>
       <div className='flex flex-row gap-2'>
@@ -50,10 +53,10 @@ function TankDistanceField({ id, label, value, onChange, onUseCurrent }) {
               value={value}
               onChange={onChange}
             />
-            <span aria-label='millimeter'>mm</span>
+            <span aria-label={t`millimeter`}>mm</span>
           </label>
         </div>
-        <Tooltip content={`Set to current measurement: ${tofDistance}mm`}>
+        <Tooltip content={t`Set to current measurement: ${distance}mm`}>
           <button type='button' className='btn btn-ghost' onClick={onUseCurrent}>
             <FontAwesomeIcon icon={faCrosshairs} />
           </button>
@@ -64,6 +67,7 @@ function TankDistanceField({ id, label, value, onChange, onUseCurrent }) {
 }
 
 export function MachineTab({ formData, onChange, setField }) {
+  const { t } = useLingui();
   const apiService = useContext(ApiServiceContext);
   const [steamPumpDraft, setSteamPumpDraft] = useState(null);
   const [calibrationWeight, setCalibrationWeight] = useState('');
@@ -102,7 +106,7 @@ export function MachineTab({ formData, onChange, setField }) {
         actualWeight <= 0
       ) {
         window.alert(
-          'Please ensure the scale is showing a weight and enter a valid calibration weight.',
+          t`Please ensure the scale is showing a weight and enter a valid calibration weight.`,
         );
         return;
       }
@@ -115,16 +119,18 @@ export function MachineTab({ formData, onChange, setField }) {
       setField(`scaleFactor${cellNumber}`, newFactor.toFixed(2));
       setCalibrationWeight('');
     },
-    [calibrationWeight, formData.scaleFactor1, formData.scaleFactor2, setField],
+    [calibrationWeight, formData.scaleFactor1, formData.scaleFactor2, setField, t],
   );
+
+  const extLedPct = ((formData.sunriseExtBrightness / 255) * 100).toFixed(0);
 
   return (
     <div className='space-y-4 sm:space-y-6 lg:grid lg:grid-cols-2 lg:gap-4'>
       {/* Machine Hardware Settings */}
-      <Section title='Machine Settings' className='h-full'>
+      <Section title={t`Machine Settings`} className='h-full'>
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
           <InputGroupField
-            label='PID Values'
+            label={t`PID Values`}
             htmlFor='pid'
             unit={
               <>
@@ -144,14 +150,14 @@ export function MachineTab({ formData, onChange, setField }) {
             />
           </InputGroupField>
           <InputGroupField
-            label='Thermal Feedforward Gain'
+            label={t`Thermal Feedforward Gain`}
             htmlFor='kf'
             unit={
               <>
                 K<sub>ff</sub>
               </>
             }
-            helpText='Set to 0 to disable feedforward control.'
+            helpText={t`Set to 0 to disable feedforward control.`}
             noMargin
           >
             <input
@@ -166,9 +172,9 @@ export function MachineTab({ formData, onChange, setField }) {
             />
           </InputGroupField>
           <SettingsFormField
-            label='Pump Flow Coefficients'
+            label={t`Pump Flow Coefficients`}
             htmlFor='pumpModelCoeffs'
-            helpText='Enter 2 values (flow at 1 bar, flow at 9 bar)'
+            helpText={t`Enter 2 values (flow at 1 bar, flow at 9 bar)`}
             noMargin
           >
             <input
@@ -182,10 +188,10 @@ export function MachineTab({ formData, onChange, setField }) {
             />
           </SettingsFormField>
           <InputGroupField
-            label='Temperature Offset (°C)'
+            label={t`Temperature Offset (°C)`}
             htmlFor='temperatureOffset'
             unit='°C'
-            unitAriaLabel='celsius'
+            unitAriaLabel={t`celsius`}
             noMargin
           >
             <input
@@ -201,10 +207,10 @@ export function MachineTab({ formData, onChange, setField }) {
           </InputGroupField>
           {pressureAvailable.value && (
             <InputGroupField
-              label='Pressure Offset'
+              label={t`Pressure Offset`}
               htmlFor='pressureOffset'
               unit='bar'
-              helpText='Cracking pressure of a grouphead mushroom valve (e.g. 4.0 on Delonghi machines). Subtracted from readings and added to targets only while a brew is running. Leave at 0.0 for a 3-way solenoid.'
+              helpText={t`Cracking pressure of a grouphead mushroom valve (e.g. 4.0 on Delonghi machines). Subtracted from readings and added to targets only while a brew is running. Leave at 0.0 for a 3-way solenoid.`}
               noMargin
             >
               <input
@@ -221,10 +227,10 @@ export function MachineTab({ formData, onChange, setField }) {
           )}
           {pressureAvailable.value && (
             <InputGroupField
-              label='Pressure Sensor Rating'
+              label={t`Pressure Sensor Rating`}
               htmlFor='pressureScaling'
               unit='bar'
-              helpText='Enter the bar rating of the pressure sensor being used'
+              helpText={t`Enter the bar rating of the pressure sensor being used`}
               noMargin
             >
               <input
@@ -240,14 +246,14 @@ export function MachineTab({ formData, onChange, setField }) {
             </InputGroupField>
           )}
           <InputGroupField
-            label='Steam Pump Assist'
+            label={t`Steam Pump Assist`}
             htmlFor='steamPumpPercentage'
             unit={pressureAvailable.value ? 'ml/s' : '%'}
-            unitAriaLabel={pressureAvailable.value ? 'milliliter per second' : 'percent'}
+            unitAriaLabel={pressureAvailable.value ? t`milliliter per second` : t`percent`}
             helpText={
               pressureAvailable.value
-                ? 'How many ml/s to pump into the boiler during steaming'
-                : 'What percentage to run the pump at during steaming'
+                ? t`How many ml/s to pump into the boiler during steaming`
+                : t`What percentage to run the pump at during steaming`
             }
             noMargin
           >
@@ -274,10 +280,10 @@ export function MachineTab({ formData, onChange, setField }) {
           </InputGroupField>
           {pressureAvailable.value && (
             <InputGroupField
-              label='Pump Assist Cutoff'
+              label={t`Pump Assist Cutoff`}
               htmlFor='steamPumpCutoff'
               unit='bar'
-              helpText='At how many bars should the pump assist stop. This makes it so the pump will only run when steam is flowing.'
+              helpText={t`At how many bars should the pump assist stop. This makes it so the pump will only run when steam is flowing.`}
               noMargin
             >
               <input
@@ -292,7 +298,11 @@ export function MachineTab({ formData, onChange, setField }) {
               />
             </InputGroupField>
           )}
-          <SettingsFormField label='Alt Relay / SSR2 Function' htmlFor='altRelayFunction' noMargin>
+          <SettingsFormField
+            label={t`Alt Relay / SSR2 Function`}
+            htmlFor='altRelayFunction'
+            noMargin
+          >
             <select
               id='altRelayFunction'
               name='altRelayFunction'
@@ -300,23 +310,23 @@ export function MachineTab({ formData, onChange, setField }) {
               value={formData.altRelayFunction ?? 1}
               onChange={onChange('altRelayFunction')}
             >
-              <option value={0}>None</option>
-              <option value={1}>Grind</option>
+              <option value={0}>{t({ message: 'None', context: 'relay function' })}</option>
+              <option value={1}>{t({ message: 'Grind', context: 'relay function' })}</option>
               <option value={2} disabled className='text-gray-400'>
-                Steam Boiler (Coming Soon)
+                {t`Steam Boiler (Coming Soon)`}
               </option>
             </select>
           </SettingsFormField>
         </div>
       </Section>
       {/* Temperature Settings */}
-      <Section title='Temperature Settings' className='h-full md:order-3'>
+      <Section title={t`Temperature Settings`} className='h-full md:order-3'>
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
           <InputGroupField
-            label='Default Steam Temperature'
+            label={t`Default Steam Temperature`}
             htmlFor='targetSteamTemp'
             unit='°C'
-            unitAriaLabel='celsius'
+            unitAriaLabel={t`celsius`}
             noMargin
           >
             <input
@@ -329,10 +339,10 @@ export function MachineTab({ formData, onChange, setField }) {
             />
           </InputGroupField>
           <InputGroupField
-            label='Default Water Temperature'
+            label={t`Default Water Temperature`}
             htmlFor='targetWaterTemp'
             unit='°C'
-            unitAriaLabel='celsius'
+            unitAriaLabel={t`celsius`}
             noMargin
           >
             <input
@@ -349,12 +359,12 @@ export function MachineTab({ formData, onChange, setField }) {
 
       <HeaterCoordinationSection formData={formData} onChange={onChange} />
       {hardwareScaleAvailable.value && (
-        <Section title='Scales'>
+        <Section title={t`Scales`}>
           <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
             <SettingsFormField
-              label='Preferred Scale Source'
+              label={t`Preferred Scale Source`}
               htmlFor='preferredScaleSource'
-              helpText='Choose which source to prefer when both hardware and Bluetooth scales are available.'
+              helpText={t`Choose which source to prefer when both hardware and Bluetooth scales are available.`}
               noMargin
             >
               <select
@@ -364,26 +374,30 @@ export function MachineTab({ formData, onChange, setField }) {
                 value={formData.preferredScaleSource || 'auto'}
                 onChange={onChange('preferredScaleSource')}
               >
-                <option value='auto'>Auto (Bluetooth when connected)</option>
-                <option value='hardware'>Prefer Hardware Scale (Built-in)</option>
-                <option value='bluetooth'>Prefer Bluetooth Scale</option>
+                <option value='auto'>{t`Auto (Bluetooth when connected)`}</option>
+                <option value='hardware'>{t`Prefer Hardware Scale (Built-in)`}</option>
+                <option value='bluetooth'>{t`Prefer Bluetooth Scale`}</option>
               </select>
             </SettingsFormField>
           </div>
 
           <div className='border-base-content/5 mt-6 space-y-4 border-t pt-6'>
             <div>
-              <h3 className='font-medium'>Hardware Scale</h3>
+              <h3 className='font-medium'>
+                <Trans>Hardware Scale</Trans>
+              </h3>
               <p className='text-base-content/60 mt-1 text-sm'>
-                Configure acquisition and filtering, then tare and calibrate each load cell.
+                <Trans>
+                  Configure acquisition and filtering, then tare and calibrate each load cell.
+                </Trans>
               </p>
             </div>
 
             <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
               <SettingsFormField
-                label='HX711 Sample Rate'
+                label={t`HX711 Sample Rate`}
                 htmlFor='hardwareScaleSampleRateSps'
-                helpText='Must match the physical RATE-jumper configuration on the HX711 board. This setting does not switch the RATE pin.'
+                helpText={t`Must match the physical RATE-jumper configuration on the HX711 board. This setting does not switch the RATE pin.`}
                 noMargin
               >
                 <select
@@ -398,9 +412,9 @@ export function MachineTab({ formData, onChange, setField }) {
                 </select>
               </SettingsFormField>
               <SettingsFormField
-                label='Idle Filter Alpha'
+                label={t`Idle Filter Alpha`}
                 htmlFor='hardwareScaleIdleAlpha'
-                helpText='Larger alpha responds faster with less smoothing; smaller alpha is smoother but slower.'
+                helpText={t`Larger alpha responds faster with less smoothing; smaller alpha is smoother but slower.`}
                 noMargin
               >
                 <input
@@ -416,9 +430,9 @@ export function MachineTab({ formData, onChange, setField }) {
                 />
               </SettingsFormField>
               <SettingsFormField
-                label='Brewing Filter Alpha'
+                label={t`Brewing Filter Alpha`}
                 htmlFor='hardwareScaleActiveAlpha'
-                helpText='Larger alpha responds faster with less smoothing; smaller alpha is smoother but slower.'
+                helpText={t`Larger alpha responds faster with less smoothing; smaller alpha is smoother but slower.`}
                 noMargin
               >
                 <input
@@ -436,16 +450,22 @@ export function MachineTab({ formData, onChange, setField }) {
             </div>
 
             <p className='text-base-content/60 text-xs'>
-              A given alpha behaves faster in time at 80 SPS because it is applied more often. Tune
-              the two alpha values independently for your installed sample rate. Changing sample
-              rate resets both values to 0.80 at 10 SPS or 0.40 at 80 SPS as sensible starting
-              points.
+              <Trans>
+                A given alpha behaves faster in time at 80 SPS because it is applied more often.
+                Tune the two alpha values independently for your installed sample rate. Changing
+                sample rate resets both values to 0.80 at 10 SPS or 0.40 at 80 SPS as sensible
+                starting points.
+              </Trans>
             </p>
 
             <div>
-              <h4 className='font-medium'>Calibration</h4>
+              <h4 className='font-medium'>
+                <Trans>Calibration</Trans>
+              </h4>
               <p className='text-base-content/60 mt-1 text-sm'>
-                Tare the scale, then place a known weight and calibrate each load cell.
+                <Trans>
+                  Tare the scale, then place a known weight and calibrate each load cell.
+                </Trans>
               </p>
             </div>
 
@@ -457,12 +477,12 @@ export function MachineTab({ formData, onChange, setField }) {
                 </span>
               </div>
               <button type='button' className='btn btn-outline btn-sm' onClick={tareScale}>
-                Tare
+                <Trans>Tare</Trans>
               </button>
             </div>
 
             <SettingsFormField
-              label='Actual Weight of Calibration Object'
+              label={t`Actual Weight of Calibration Object`}
               htmlFor='calibrationWeight'
               noMargin
             >
@@ -488,7 +508,7 @@ export function MachineTab({ formData, onChange, setField }) {
                 onClick={() => calibrateLoadCell(1)}
                 disabled={!status.value?.hardwareScaleCell1Valid || !calibrationWeight}
               >
-                Calibrate Load Cell 1
+                <Trans>Calibrate Load Cell 1</Trans>
               </button>
               <button
                 type='button'
@@ -496,19 +516,23 @@ export function MachineTab({ formData, onChange, setField }) {
                 onClick={() => calibrateLoadCell(2)}
                 disabled={!status.value?.hardwareScaleCell2Valid || !calibrationWeight}
               >
-                Calibrate Load Cell 2
+                <Trans>Calibrate Load Cell 2</Trans>
               </button>
             </div>
 
             <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
               <div>
                 <p className='text-base-content/60 mb-1 text-xs'>
-                  Current:{' '}
+                  {t`Current:`}{' '}
                   {status.value?.hardwareScaleCell1Valid
                     ? `${status.value.hardwareScaleCell1Weight.toFixed(1)} g`
-                    : 'Unavailable / uncalibrated'}
+                    : t`Unavailable / uncalibrated`}
                 </p>
-                <SettingsFormField label='Load Cell 1 Scale Factor' htmlFor='scaleFactor1' noMargin>
+                <SettingsFormField
+                  label={t`Load Cell 1 Scale Factor`}
+                  htmlFor='scaleFactor1'
+                  noMargin
+                >
                   <input
                     id='scaleFactor1'
                     name='scaleFactor1'
@@ -524,12 +548,16 @@ export function MachineTab({ formData, onChange, setField }) {
               </div>
               <div>
                 <p className='text-base-content/60 mb-1 text-xs'>
-                  Current:{' '}
+                  {t`Current:`}{' '}
                   {status.value?.hardwareScaleCell2Valid
                     ? `${status.value.hardwareScaleCell2Weight.toFixed(1)} g`
-                    : 'Unavailable / uncalibrated'}
+                    : t`Unavailable / uncalibrated`}
                 </p>
-                <SettingsFormField label='Load Cell 2 Scale Factor' htmlFor='scaleFactor2' noMargin>
+                <SettingsFormField
+                  label={t`Load Cell 2 Scale Factor`}
+                  htmlFor='scaleFactor2'
+                  noMargin
+                >
                   <input
                     id='scaleFactor2'
                     name='scaleFactor2'
@@ -552,18 +580,18 @@ export function MachineTab({ formData, onChange, setField }) {
 
       {/* Alba Settings */}
       {ledControl.value && (
-        <Section title='Alba Settings' className='h-full'>
+        <Section title={t`Alba Settings`} className='h-full'>
           <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
             <TankDistanceField
               id='emptyTankDistance'
-              label='Distance from sensor to bottom of the tank'
+              label={t`Distance from sensor to bottom of the tank`}
               value={formData.emptyTankDistance}
               onChange={onChange('emptyTankDistance')}
               onUseCurrent={() => setField('emptyTankDistance', tofDistance.value)}
             />
             <TankDistanceField
               id='fullTankDistance'
-              label='Distance from sensor to the fill line'
+              label={t`Distance from sensor to the fill line`}
               value={formData.fullTankDistance}
               onChange={onChange('fullTankDistance')}
               onUseCurrent={() => setField('fullTankDistance', tofDistance.value)}
@@ -572,35 +600,35 @@ export function MachineTab({ formData, onChange, setField }) {
           <div className='border-base-content/5 mt-6 grid grid-cols-1 gap-4 border-t pt-6 md:grid-cols-4'>
             <SunriseColorField
               id='sunriseIdle'
-              label='Idle Color'
+              label={t`Idle Color`}
               value={formData.sunriseIdle}
               fallback='#00ffff'
               onChange={onChange('sunriseIdle')}
             />
             <SunriseColorField
               id='sunriseActive'
-              label='Brew Color'
+              label={t`Brew Color`}
               value={formData.sunriseActive}
               fallback='#0000ff'
               onChange={onChange('sunriseActive')}
             />
             <SunriseColorField
               id='sunriseFinished'
-              label='Finished Color'
+              label={t`Finished Color`}
               value={formData.sunriseFinished}
               fallback='#00ff00'
               onChange={onChange('sunriseFinished')}
             />
             <SunriseColorField
               id='sunriseError'
-              label='Error Color'
+              label={t`Error Color`}
               value={formData.sunriseError}
               fallback='#ff0000'
               onChange={onChange('sunriseError')}
             />
           </div>
           <SettingsFormField
-            label={`External LED (${((formData.sunriseExtBrightness / 255) * 100).toFixed(0)}%)`}
+            label={t`External LED (${extLedPct}%)`}
             htmlFor='sunriseExtBrightness'
             className='mt-4'
             noMargin

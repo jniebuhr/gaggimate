@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 import { libraryService } from '../../services/LibraryService';
 import {
   cleanName,
@@ -16,6 +17,13 @@ import {
   getLibraryRequestSource,
   hasLoadedProfileMismatch,
 } from './libraryData';
+
+// 'No Shot Loaded' / 'No Profile Loaded' are sentinel values; translate them only for display.
+export function getLoadedNameLabel(name) {
+  if (name === 'No Shot Loaded') return t`No Shot Loaded`;
+  if (name === 'No Profile Loaded') return t`No Profile Loaded`;
+  return name;
+}
 
 export function getLibraryPanelDisplayState({
   currentShot,
@@ -198,7 +206,7 @@ export function getPinnedShotBucketKeyForItem(item, pinnedShotsByProfile) {
 export function getProfilePinDisabledReasonForItem(item, pinnedProfiles) {
   if (isProfilePinned(item, pinnedProfiles)) return '';
   return pinnedProfiles.length >= MAX_PINNED_PROFILES
-    ? `Maximum ${MAX_PINNED_PROFILES} pinned profiles`
+    ? t`Maximum ${MAX_PINNED_PROFILES} pinned profiles`
     : '';
 }
 
@@ -214,8 +222,8 @@ export function getShotPinDisabledReasonForItem({
   if (pinnedCount < MAX_PINNED_SHOTS_PER_PROFILE) return '';
 
   return bucketKey === PINNED_NO_PROFILE_BUCKET
-    ? `Maximum ${MAX_PINNED_SHOTS_PER_PROFILE} pinned shots without a profile`
-    : `Maximum ${MAX_PINNED_SHOTS_PER_PROFILE} pinned shots per profile`;
+    ? t`Maximum ${MAX_PINNED_SHOTS_PER_PROFILE} pinned shots without a profile`
+    : t`Maximum ${MAX_PINNED_SHOTS_PER_PROFILE} pinned shots per profile`;
 }
 
 export function getLibraryTargetMobileSection(target) {

@@ -2,11 +2,13 @@
 import { useState, useMemo, useRef, useEffect } from 'preact/hooks';
 import { getDayStartLocalMs, getIsoWeekStartLocalMs, formatDateLocal } from '../utils/trendBuckets';
 import { CardTitle } from '../../../components/CardTitle';
+import { msg } from '@lingui/core/macro';
+import { Plural, Trans, useLingui } from '@lingui/react/macro';
 
 const DAY_LABELS = [
-  { dow: 0, label: 'M' },
-  { dow: 2, label: 'W' },
-  { dow: 4, label: 'F' },
+  { dow: 0, label: msg({ message: 'M', context: 'weekday initial: Monday' }) },
+  { dow: 2, label: msg({ message: 'W', context: 'weekday initial: Wednesday' }) },
+  { dow: 4, label: msg({ message: 'F', context: 'weekday initial: Friday' }) },
 ];
 const MS_PER_DAY = 86400000;
 
@@ -135,6 +137,7 @@ function buildHeatmapData(trends) {
 }
 
 export function ActivityHeatmap({ trends }) {
+  const { i18n } = useLingui();
   const [tooltip, setTooltip] = useState(null);
   const containerRef = useRef(null);
   const [containerWidth, setContainerWidth] = useState(0);
@@ -172,6 +175,8 @@ export function ActivityHeatmap({ trends }) {
   if (!data || data.stats.totalShots === 0) return null;
 
   const { weeks } = data;
+  const dailyAvg = data.stats.dailyAvg.toFixed(1);
+  const daysWithShots = data.stats.daysWithShots;
   const labelWidth = 20;
   const availableWidth = containerWidth > 0 ? containerWidth - labelWidth : 0;
   const cellGap = 2;
@@ -184,7 +189,9 @@ export function ActivityHeatmap({ trends }) {
 
   return (
     <div ref={containerRef}>
-      <CardTitle className='mb-2 px-0.5 py-1'>Activity Heatmap</CardTitle>
+      <CardTitle className='mb-2 px-0.5 py-1'>
+        <Trans>Activity Heatmap</Trans>
+      </CardTitle>
       <div className='overflow-x-auto'>
         <svg
           width={svgWidth}
@@ -210,7 +217,7 @@ export function ActivityHeatmap({ trends }) {
               y={topPadding + dow * step + cellSize - 1}
               style={{ fontSize: '10px', fill: 'var(--statistics-trend-shots-brown, #8B5E3C)' }}
             >
-              {label}
+              {i18n._(label)}
             </text>
           ))}
 
@@ -268,25 +275,25 @@ export function ActivityHeatmap({ trends }) {
 
       <div className='mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-xs'>
         <span className='opacity-60'>
-          Daily average:{' '}
+          <Trans>
+            Daily average: <span className='text-base-content font-bold'>{dailyAvg} shots</span>
+          </Trans>
+        </span>
+        <span className='opacity-60'>
+          <Trans>
+            Days active: <span className='text-base-content font-bold'>{daysWithShots}</span>
+          </Trans>
+        </span>
+        <span className='opacity-60'>
+          <Trans>Longest streak:</Trans>{' '}
           <span className='text-base-content font-bold'>
-            {data.stats.dailyAvg.toFixed(1)} shots
+            <Plural value={data.stats.longestStreak} one='# day' other='# days' />
           </span>
         </span>
         <span className='opacity-60'>
-          Days active:{' '}
-          <span className='text-base-content font-bold'>{data.stats.daysWithShots}</span>
-        </span>
-        <span className='opacity-60'>
-          Longest streak:{' '}
+          <Trans>Current streak:</Trans>{' '}
           <span className='text-base-content font-bold'>
-            {data.stats.longestStreak} {data.stats.longestStreak === 1 ? 'day' : 'days'}
-          </span>
-        </span>
-        <span className='opacity-60'>
-          Current streak:{' '}
-          <span className='text-base-content font-bold'>
-            {data.stats.currentStreak} {data.stats.currentStreak === 1 ? 'day' : 'days'}
+            <Plural value={data.stats.currentStreak} one='# day' other='# days' />
           </span>
         </span>
       </div>
@@ -302,7 +309,7 @@ export function ActivityHeatmap({ trends }) {
           }}
         >
           <div className='font-semibold'>
-            {tooltip.cell.count} {tooltip.cell.count === 1 ? 'shot' : 'shots'}
+            <Plural value={tooltip.cell.count} one='# shot' other='# shots' />
           </div>
           <div className='opacity-60'>
             {formatDateLocal(tooltip.cell.dayMs, TOOLTIP_DATE_OPTIONS)}

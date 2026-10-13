@@ -1,3 +1,5 @@
+import { t } from '@lingui/core/macro';
+
 export function getPhaseName(shot, phaseNumber) {
   if (shot.phaseTransitions?.length > 0) {
     const transition = shot.phaseTransitions.find(t => t.phaseNumber === phaseNumber);
@@ -10,7 +12,9 @@ export function getPhaseName(shot, phaseNumber) {
     return shot.profile.phases[phaseNumber].name;
   }
 
-  return phaseNumber === 0 ? 'Start' : `P${phaseNumber + 1}`;
+  return phaseNumber === 0
+    ? t({ message: 'Start', context: 'first phase' })
+    : `P${phaseNumber + 1}`;
 }
 
 export function toNumberOrNull(value) {

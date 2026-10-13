@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 import { MAX_AUTO_DETECTED_DOSE_GRAMS } from './constants';
 import { cleanName } from './formatting';
 
@@ -16,7 +17,7 @@ export function resolveProfileFieldValue(profile) {
   );
 }
 
-export const getProfileDisplayLabel = (profile, fallback = 'Unknown') => {
+export const getProfileDisplayLabel = (profile, fallback = t`Unknown`) => {
   if (typeof profile === 'string') {
     return cleanName(profile).trim() || fallback;
   }

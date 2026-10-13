@@ -13,6 +13,7 @@ import {
 } from '../../../ShotAnalyzer/utils/analyzerUtils';
 import { resolveShotEffectiveTimestampMs } from '../../utils/statisticsSearchDsl';
 import { STATISTICS_SOURCE_FALLBACK } from '../../utils/statisticsRoute';
+import { t } from '@lingui/core/macro';
 
 export function getStatisticsFallbackSource(source) {
   return STATISTICS_SOURCE_FALLBACK[source] || null;
@@ -58,11 +59,11 @@ export function parseDateInputMs(value, boundary = 'start') {
       date.getMonth() + 1 !== monthNum ||
       date.getDate() !== dayNum
     ) {
-      return { valueMs: null, error: `Invalid date: ${value}` };
+      return { valueMs: null, error: t`Invalid date: ${value}` };
     }
     const valueMs = date.getTime();
     if (!Number.isFinite(valueMs)) {
-      return { valueMs: null, error: `Invalid date: ${value}` };
+      return { valueMs: null, error: t`Invalid date: ${value}` };
     }
     return { valueMs, error: null };
   }
@@ -70,7 +71,7 @@ export function parseDateInputMs(value, boundary = 'start') {
   const date = new Date(normalizedValue);
   const valueMs = date.getTime();
   if (!Number.isFinite(valueMs)) {
-    return { valueMs: null, error: `Invalid date/time: ${value}` };
+    return { valueMs: null, error: t`Invalid date/time: ${value}` };
   }
   return { valueMs, error: null };
 }
@@ -99,7 +100,7 @@ export function getSourceShortLabel(source) {
 }
 
 export function formatShotDateTime(ms) {
-  if (!Number.isFinite(ms) || ms <= 0) return 'No date';
+  if (!Number.isFinite(ms) || ms <= 0) return t`No date`;
   try {
     return new Date(ms).toLocaleString(undefined, {
       year: '2-digit',
@@ -109,13 +110,13 @@ export function formatShotDateTime(ms) {
       minute: '2-digit',
     });
   } catch {
-    return 'No date';
+    return t`No date`;
   }
 }
 
 export function getShotDisplayPrimary(shotMeta) {
   return String(
-    shotMeta?.name || shotMeta?.label || shotMeta?.title || shotMeta?.id || 'Unknown Shot',
+    shotMeta?.name || shotMeta?.label || shotMeta?.title || shotMeta?.id || t`Unknown Shot`,
   );
 }
 
@@ -128,7 +129,7 @@ function stripFileExtension(value) {
 export function getShotFileStem(shotMeta) {
   const fileName = shotMeta?.name || shotMeta?.storageKey;
   if (fileName) return String(stripFileExtension(fileName));
-  return String(shotMeta?.label || shotMeta?.title || shotMeta?.id || 'Unknown Shot');
+  return String(shotMeta?.label || shotMeta?.title || shotMeta?.id || t`Unknown Shot`);
 }
 
 export function getShotDisplaySecondary(shotMeta, dateBasisMode) {
@@ -253,7 +254,8 @@ function isShotPinnedAnywhere(shotKey, pinnedShotsByProfile) {
 export function getProfilePinDisabledReasonText(profileName, pinnedProfiles) {
   if (isProfilePinned(profileName, pinnedProfiles)) return '';
   if (pinnedProfiles.length >= MAX_PINNED_PROFILES) {
-    return `Maximum ${MAX_PINNED_PROFILES} pinned profiles`;
+    const maxPinned = MAX_PINNED_PROFILES;
+    return t`Maximum ${maxPinned} pinned profiles`;
   }
   return '';
 }
@@ -270,9 +272,10 @@ export function getShotPinDisabledReasonText(
 
   const pinnedCount = (pinnedShotsByProfile[bucketKey] || []).length;
   if (pinnedCount >= MAX_PINNED_SHOTS_PER_PROFILE) {
+    const maxPinned = MAX_PINNED_SHOTS_PER_PROFILE;
     return bucketKey === PINNED_NO_PROFILE_BUCKET
-      ? `Maximum ${MAX_PINNED_SHOTS_PER_PROFILE} pinned shots without a profile`
-      : `Maximum ${MAX_PINNED_SHOTS_PER_PROFILE} pinned shots per profile`;
+      ? t`Maximum ${maxPinned} pinned shots without a profile`
+      : t`Maximum ${maxPinned} pinned shots per profile`;
   }
 
   return '';
@@ -298,14 +301,11 @@ export function buildDateBasisWarningState(rawShotCandidates) {
 
   if (showDateBasisWarning) {
     if (uploadFallbackCount > 0 && noUsableDateCount > 0) {
-      dateBasisWarningMessage =
-        'Some shots have no shot timestamp. Choose how date handling should treat them (Shot = exclude missing, Auto = fallback to upload time, Upload = upload time only). Some shots have no usable date at all and may still be excluded from date filtering.';
+      dateBasisWarningMessage = t`Some shots have no shot timestamp. Choose how date handling should treat them (Shot = exclude missing, Auto = fallback to upload time, Upload = upload time only). Some shots have no usable date at all and may still be excluded from date filtering.`;
     } else if (uploadFallbackCount > 0) {
-      dateBasisWarningMessage =
-        'Some shots have no shot timestamp. Choose how date handling should treat them (Shot = exclude missing, Auto = fallback to upload time, Upload = upload time only).';
+      dateBasisWarningMessage = t`Some shots have no shot timestamp. Choose how date handling should treat them (Shot = exclude missing, Auto = fallback to upload time, Upload = upload time only).`;
     } else {
-      dateBasisWarningMessage =
-        'Some shots have no usable shot timestamp. Date filtering may exclude them unless upload time is available.';
+      dateBasisWarningMessage = t`Some shots have no usable shot timestamp. Date filtering may exclude them unless upload time is available.`;
     }
   }
 
@@ -348,7 +348,7 @@ export function buildBaseFilterState({
   ) {
     parseErrors.push({
       code: 'visual_date_range_invalid',
-      message: 'Date range invalid: From is after To.',
+      message: t`Date range invalid: From is after To.`,
     });
   }
 
@@ -425,10 +425,10 @@ export function buildCandidateFilterState({
 
 export function getStatisticsSelectionHint({ mode, selectedProfileNames, selectedShotKeys }) {
   if (mode === 'profile' && selectedProfileNames.length === 0) {
-    return 'Select one or more profiles.';
+    return t`Select one or more profiles.`;
   }
   if (mode === 'shots' && selectedShotKeys.length === 0) {
-    return 'Select one or more shots.';
+    return t`Select one or more shots.`;
   }
   return null;
 }
