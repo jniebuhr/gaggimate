@@ -21,6 +21,7 @@
     "assets": "node scripts/generate-assets.mjs",
     "ios:device": "npm run cap:sync && CAP_SKIP_WEB_BUILD=1 scripts/run-ios-device.sh",
     "ios:ipa": "npm run cap:sync && CAP_SKIP_WEB_BUILD=1 scripts/build-ios-ipa.sh",
+    "ios:testflight": "npm run cap:sync && CAP_SKIP_WEB_BUILD=1 scripts/upload-ios-testflight.sh",
     "android:bundle": "cd android && ./gradlew bundleRelease",
     "android:apk": "cd android && ./gradlew assembleRelease"
   },
