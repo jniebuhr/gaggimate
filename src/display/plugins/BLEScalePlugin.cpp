@@ -197,14 +197,22 @@ void BLEScalePlugin::update() {
         // emitted inline with each weight measurement, not polled here.
         pollScaleMetadata();
     } else if (!doConnect && controller->getSettings().getSavedScale() != "" && scanner != nullptr) {
-        // Protected scanner access with null checks
         auto discoveredScales = scanner->getDiscoveredScales();
+        const String savedAddr = controller->getSettings().getSavedScale();
+        bool found = false;
         for (const auto &d : discoveredScales) {
-            if (d.getAddress().toString() == controller->getSettings().getSavedScale().c_str()) {
+            if (d.getAddress().toString() == savedAddr.c_str()) {
                 ESP_LOGI("BLEScalePlugin", "Connecting to last known scale");
                 connect(d.getAddress().toString());
+                found = true;
                 break;
             }
+        }
+        const unsigned long now = millis();
+        if (!found && now - lastScanRestart >= SCAN_RESTART_INTERVAL_MS) {
+            lastScanRestart = now;
+            ESP_LOGI("BLEScalePlugin", "Restarting BLE scale scan");
+            scanner->restartAsyncScan();
         }
     }
 }

@@ -10,6 +10,10 @@ void on_ble_measurement(float value);
 constexpr unsigned long UPDATE_INTERVAL_MS = 1000;
 // Listening window after a scan request before scale:scan:complete; the lib's scan itself is continuous.
 constexpr unsigned long SCAN_WINDOW_MS = 5000;
+// NimBLE continuous scan can go deaf after a few minutes. Restarting
+// clears the scanner and lets a scale that was powered off at wake still
+// be found later without rebooting GaggiMate.
+constexpr unsigned long SCAN_RESTART_INTERVAL_MS = 30000;
 
 class BLEScalePlugin : public Plugin {
   public:
@@ -82,6 +86,7 @@ class BLEScalePlugin : public Plugin {
     unsigned long scanDeadline = 0;
 
     unsigned long lastUpdate = 0;
+    unsigned long lastScanRestart = 0;
 
     // Cached scale-metadata values used to avoid firing an event for each
     // unchanged poll tick. Reset when the scale disconnects.
