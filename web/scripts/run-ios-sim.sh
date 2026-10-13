@@ -4,7 +4,6 @@ set -euo pipefail
 
 WEB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DERIVED="$WEB_DIR/ios/App/build"
-BUNDLE_ID="$(node -p "require('$WEB_DIR/capacitor.config.json').appId")"
 
 # Device: first arg (name or UDID), else the first booted iPhone, else the newest available iPhone.
 DEVICE="${1:-}"
@@ -25,6 +24,8 @@ xcodebuild -project "$WEB_DIR/ios/App/App.xcodeproj" -scheme App -configuration 
 [[ ${PIPESTATUS[0]} -eq 0 ]] || exit 1
 
 APP="$DERIVED/Build/Products/Debug-iphonesimulator/App.app"
+# iOS uses its own bundle ID (eu.gaggimate.ios), so read it from the build, not capacitor.config.json.
+BUNDLE_ID="$(/usr/libexec/PlistBuddy -c "Print CFBundleIdentifier" "$APP/Info.plist")"
 xcrun simctl install "$DEVICE" "$APP"
 xcrun simctl terminate "$DEVICE" "$BUNDLE_ID" 2>/dev/null || true
 xcrun simctl launch "$DEVICE" "$BUNDLE_ID" >/dev/null

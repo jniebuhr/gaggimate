@@ -4,7 +4,6 @@ set -euo pipefail
 
 WEB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DERIVED="$WEB_DIR/ios/App/build"
-BUNDLE_ID="$(node -p "require('$WEB_DIR/capacitor.config.json').appId")"
 JSON="$(mktemp)"
 trap 'rm -f "$JSON"' EXIT
 
@@ -23,6 +22,9 @@ xcodebuild -project "$WEB_DIR/ios/App/App.xcodeproj" -scheme App -configuration 
   | { grep -v 'IDERunDestination: Supported platforms' || true; }
 [[ ${PIPESTATUS[0]} -eq 0 ]] || exit 1
 
-xcrun devicectl device install app --device "$DEVICE" "$DERIVED/Build/Products/Debug-iphoneos/App.app" >/dev/null
+APP="$DERIVED/Build/Products/Debug-iphoneos/App.app"
+# iOS uses its own bundle ID (eu.gaggimate.ios), so read it from the build, not capacitor.config.json.
+BUNDLE_ID="$(/usr/libexec/PlistBuddy -c "Print CFBundleIdentifier" "$APP/Info.plist")"
+xcrun devicectl device install app --device "$DEVICE" "$APP" >/dev/null
 xcrun devicectl device process launch --device "$DEVICE" "$BUNDLE_ID" >/dev/null
 echo "Launched $BUNDLE_ID on $DEVICE"
