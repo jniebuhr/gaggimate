@@ -10,6 +10,7 @@ import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown';
 import { machine as liveMachine } from '../services/ApiService.js';
 import { useMachinePeeks } from './machineConnections.js';
 import { FirmwareWarning } from './FirmwareWarning.jsx';
+import { Notice } from './Notice.jsx';
 import { formatMachineStatus } from './machineStatus.js';
 import { GmLogoIcon } from '../pages/ShotAnalyzer/components/SourceMarker.jsx';
 import {
@@ -99,11 +100,7 @@ export function MachineSetup({ mandatory = false }) {
           </p>
         </div>
 
-        {error && (
-          <div role='alert' className='alert alert-error alert-soft text-sm'>
-            {error}
-          </div>
-        )}
+        {error && <Notice variant='error'>{error}</Notice>}
 
         {saved.length > 0 && (
           <section className='flex flex-col gap-2'>

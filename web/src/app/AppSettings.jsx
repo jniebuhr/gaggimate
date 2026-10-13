@@ -1,6 +1,4 @@
 import { useState } from 'preact/hooks';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCircleInfo } from '@fortawesome/free-solid-svg-icons/faCircleInfo';
 import PageLayout from '../components/PageLayout.jsx';
 import PageHeader from '../components/PageHeader.jsx';
 import Section from '../components/Card.jsx';
@@ -14,6 +12,7 @@ import {
 } from './appSettings.js';
 import { activeMachine, machines, showMachineSetup } from './machines.js';
 import { requestNotificationPermission } from './notifications.js';
+import { Notice } from './Notice.jsx';
 import { nativePlatform } from './platform.js';
 import { bundleVersion, checkForUpdate, pendingUpdate } from './updates.js';
 
@@ -66,18 +65,15 @@ export function AppSettings() {
             onChange={toggleNotifications}
             helpText={`Watches all ${machines.value.length} saved machines.`}
           />
-          <div className='bg-base-200 text-base-content rounded-box flex items-start gap-3 p-3 text-sm'>
-            <FontAwesomeIcon icon={faCircleInfo} className='text-info mt-0.5 shrink-0' />
-            <span>
-              {nativePlatform() === 'ios'
-                ? 'iOS only lets GaggiMate stay connected to your machines while the app is open. Notifications stop a few seconds after you switch to another app or lock your phone.'
-                : 'While GaggiMate is in the background it keeps watching your machines and shows a permanent “Watching machines” notification. This uses some extra battery.'}
-            </span>
-          </div>
+          <Notice>
+            {nativePlatform() === 'ios'
+              ? 'iOS only lets GaggiMate stay connected to your machines while the app is open. Notifications stop a few seconds after you switch to another app or lock your phone.'
+              : 'While GaggiMate is in the background it keeps watching your machines and shows a permanent “Watching machines” notification. This uses some extra battery.'}
+          </Notice>
           {permissionDenied && (
-            <div role='alert' className='alert alert-warning alert-soft text-sm'>
+            <Notice variant='warning'>
               Notifications are blocked. Allow them for GaggiMate in your phone's settings.
-            </div>
+            </Notice>
           )}
           <div className={`flex flex-col gap-2 ${notifications.enabled ? '' : 'opacity-50'}`}>
             {NOTIFICATION_EVENTS.map(event => (
