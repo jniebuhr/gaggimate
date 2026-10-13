@@ -1,6 +1,17 @@
 import { defineConfig } from 'vite';
 import preact from '@preact/preset-vite';
 import tailwindcss from '@tailwindcss/vite';
+import { execSync } from 'node:child_process';
+
+// Same version string as the firmware, so an app web bundle maps to a firmware build.
+function bundleVersion() {
+  if (process.env.BUNDLE_VERSION) return process.env.BUNDLE_VERSION;
+  try {
+    return execSync('git describe --tags --dirty --match "v*"', { encoding: 'utf8' }).trim();
+  } catch {
+    return 'dev';
+  }
+}
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -17,6 +28,10 @@ export default defineConfig(({ mode }) => ({
         ),
     },
   ],
+
+  define: {
+    'import.meta.env.BUNDLE_VERSION': JSON.stringify(mode === 'app' ? bundleVersion() : ''),
+  },
 
   build: {
     // App builds go to their own dir so the firmware build's in-place gzip never leaks into the native bundle.

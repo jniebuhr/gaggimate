@@ -1,6 +1,7 @@
 {
   "private": true,
   "type": "module",
+  "appMinNativeVersion": "1.0.0",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -33,6 +34,7 @@
     "@capacitor/local-notifications": "^8.3.1",
     "@capacitor/preferences": "^8.0.1",
     "@capacitor/splash-screen": "^8.0.2",
+    "@capgo/capacitor-updater": "^8.52.1",
     "@floating-ui/dom": "^1.7.4",
     "@fortawesome/fontawesome-svg-core": "^7.0.0",
     "@fortawesome/free-brands-svg-icons": "^7.0.0",

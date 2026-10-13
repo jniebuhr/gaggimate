@@ -9,6 +9,7 @@ import {
 import { loadAppSettings } from './appSettings.js';
 import { NotificationService } from './notifications.js';
 import { watchAppLifecycle } from './lifecycle.js';
+import { checkForUpdate, markBundleHealthy } from './updates.js';
 
 // Becomes true once the active machine's live connection has opened in this session.
 export const hasConnected = /* @__PURE__ */ signal(false);
@@ -24,6 +25,10 @@ export async function initApp() {
 
 // Starts app-only services once the UI and its machine connection exist.
 export function onAppRendered(apiService) {
+  // The UI rendered, so this web bundle works; only then look for a newer one.
+  markBundleHealthy()
+    .then(checkForUpdate)
+    .catch(err => console.warn('Updater unavailable', err?.message || err));
   trackFirmwareVersion(apiService);
   const notificationService = new NotificationService(apiService);
   watchAppLifecycle(apiService, notificationService);

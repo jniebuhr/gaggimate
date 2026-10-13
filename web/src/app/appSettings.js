@@ -18,6 +18,8 @@ export const NOTIFICATION_EVENTS = [
 ];
 
 const DEFAULTS = {
+  // Release channel for web UI updates (see updates.js).
+  updateChannel: 'stable',
   notifications: {
     enabled: false,
     preheated: true,
@@ -48,11 +50,18 @@ export async function loadAppSettings() {
   }
 }
 
-export async function updateNotificationSettings(changes) {
-  const next = {
+export function updateNotificationSettings(changes) {
+  return saveAppSettings({
     ...appSettings.value,
     notifications: { ...appSettings.value.notifications, ...changes },
-  };
+  });
+}
+
+export function setUpdateChannel(updateChannel) {
+  return saveAppSettings({ ...appSettings.value, updateChannel });
+}
+
+async function saveAppSettings(next) {
   const { Preferences } = await import('@capacitor/preferences');
   await Preferences.set({ key: STORAGE_KEY, value: JSON.stringify(next) });
   appSettings.value = next;

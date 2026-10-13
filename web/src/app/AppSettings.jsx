@@ -4,10 +4,16 @@ import PageHeader from '../components/PageHeader.jsx';
 import Section from '../components/Card.jsx';
 import { SettingsFormField, ToggleField } from '../components/SettingsFormField.jsx';
 import { getStoredTheme, handleThemeChange } from '../utils/themeManager.js';
-import { NOTIFICATION_EVENTS, appSettings, updateNotificationSettings } from './appSettings.js';
+import {
+  NOTIFICATION_EVENTS,
+  appSettings,
+  setUpdateChannel,
+  updateNotificationSettings,
+} from './appSettings.js';
 import { activeMachine, machines, showMachineSetup } from './machines.js';
 import { requestNotificationPermission } from './notifications.js';
 import { nativePlatform } from './platform.js';
+import { bundleVersion, checkForUpdate, pendingUpdate } from './updates.js';
 
 // App-only settings stored on the phone; machine settings stay under Device Settings.
 export function AppSettings() {
@@ -83,6 +89,33 @@ export function AppSettings() {
             ))}
           </div>
         </div>
+      </Section>
+
+      <Section title='Updates'>
+        <SettingsFormField
+          label='Update channel'
+          htmlFor='app-update-channel'
+          helpText='Nightly gets new features first, built from the same code as the nightly firmware.'
+          noMargin
+        >
+          <select
+            id='app-update-channel'
+            className='select select-bordered w-full'
+            value={appSettings.value.updateChannel}
+            onChange={async e => {
+              await setUpdateChannel(e.target.value);
+              checkForUpdate();
+            }}
+          >
+            <option value='stable'>Stable</option>
+            <option value='nightly'>Nightly</option>
+          </select>
+        </SettingsFormField>
+        <p className='text-base-content/60 mt-3 text-xs'>
+          Version {bundleVersion}
+          {pendingUpdate.value &&
+            ` · ${pendingUpdate.value} installs the next time you leave the app`}
+        </p>
       </Section>
 
       <Section title='Machines'>

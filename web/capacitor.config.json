@@ -18,6 +18,12 @@
     },
     "LocalNotifications": {
       "smallIcon": "ic_stat_gaggimate"
+    },
+    "CapacitorUpdater": {
+      "autoUpdate": false,
+      "statsUrl": "",
+      "updateUrl": "",
+      "channelUrl": ""
     }
   }
 }

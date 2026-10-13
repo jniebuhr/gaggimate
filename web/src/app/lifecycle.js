@@ -2,6 +2,7 @@ import { effect } from '@preact/signals';
 import { WARNINGS } from '../utils/warnings.js';
 import { appSettings } from './appSettings.js';
 import { resumeConnections, suspendConnections } from './machineConnections.js';
+import { checkForUpdate } from './updates.js';
 import { machines } from './machines.js';
 import { nativePlatform } from './platform.js';
 
@@ -22,6 +23,7 @@ export async function watchAppLifecycle(apiService, notificationService) {
       apiService.reopen();
       resumeConnections();
       notificationService.resume();
+      checkForUpdate();
     } else {
       notificationService.suspend();
       suspendConnections();
