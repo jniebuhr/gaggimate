@@ -1,7 +1,7 @@
 /* global globalThis */
 
 import { useEffect, useRef, useState } from 'preact/hooks';
-import Chart from 'chart.js/auto';
+import Chart from '../../../utils/lineChart.js';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown';
 import {

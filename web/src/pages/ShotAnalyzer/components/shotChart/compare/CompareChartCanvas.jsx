@@ -1,7 +1,7 @@
 /* global globalThis */
 
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
-import Chart from 'chart.js/auto';
+import Chart from '../../../../../utils/lineChart.js';
 import {
   areTooltipStatesEqual,
   createHiddenExternalTooltipLayout,
