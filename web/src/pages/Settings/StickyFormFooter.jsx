@@ -1,3 +1,4 @@
+import { Trans } from '@lingui/react/macro';
 import { Spinner } from '../../components/Spinner.jsx';
 
 export function StickyFormFooter({ submitting, onRestart }) {
@@ -11,7 +12,7 @@ export function StickyFormFooter({ submitting, onRestart }) {
             disabled={submitting}
           >
             {submitting && <Spinner size={4} className='mr-2' />}
-            Save Settings
+            <Trans>Save Settings</Trans>
           </button>
           <button
             type='submit'
@@ -20,14 +21,14 @@ export function StickyFormFooter({ submitting, onRestart }) {
             disabled={submitting}
             onClick={onRestart}
           >
-            Save & Restart
+            <Trans>Save & Restart</Trans>
           </button>
         </div>
         <div className='text-base-content/60 hidden text-[11px] leading-tight sm:block sm:max-w-xs'>
-          * Restart required for Wi-Fi, Timezone, or Plugin changes.
+          <Trans>* Restart required for Wi-Fi, Timezone, or Plugin changes.</Trans>
         </div>
         <div className='text-base-content/60 text-center text-[11px] leading-tight sm:hidden'>
-          * Restart required for Wi-Fi, Timezone, or Plugin changes.
+          <Trans>* Restart required for Wi-Fi, Timezone, or Plugin changes.</Trans>
         </div>
       </div>
     </div>

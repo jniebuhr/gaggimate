@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 /**
  * createShotChartConfigs.js
  *
@@ -52,7 +53,7 @@ export function createShotChartConfigs({
   const neutralAxisTickColor = getNeutralAxisTickColor();
   const mainAxisUnitLabels = [
     { scaleId: 'yMain', label: 'bar / ml/s' },
-    { scaleId: 'yMain', label: 'Phase', side: 'center', yOffset: 0 },
+    { scaleId: 'yMain', label: t`Phase`, side: 'center', yOffset: 0 },
   ];
   const showWeightAxis = Boolean(showWeightSeries && visibility.weight);
   const rightAxisUnitLabels = [];

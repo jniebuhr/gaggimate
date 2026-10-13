@@ -2,12 +2,14 @@
 
 import { createPortal } from 'preact/compat';
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
+import { t } from '@lingui/core/macro';
+import { Trans } from '@lingui/react/macro';
 import { analyzerUiColors } from '../../utils/analyzerUtils';
 
 function getModeHintCopy(nextMode) {
   return nextMode === 'browser'
-    ? 'Save to Browser. Imported shots and profiles will now be saved to the browser library.'
-    : 'View temporarily. Imported shots and profiles will now open temporarily in the analyzer.';
+    ? t`Save to Browser. Imported shots and profiles will now be saved to the browser library.`
+    : t`View temporarily. Imported shots and profiles will now open temporarily in the analyzer.`;
 }
 
 export function ModeHintPortal({
@@ -32,7 +34,11 @@ export function ModeHintPortal({
           className='inline-flex h-5 shrink-0 items-center rounded-full border px-2 text-xs font-medium'
           style={modeHintBadgeStyle}
         >
-          {modeHintVariant === 'browser' ? 'SAVE' : 'VIEW'}
+          {modeHintVariant === 'browser' ? (
+            <Trans context='import mode badge'>SAVE</Trans>
+          ) : (
+            <Trans context='import mode badge'>VIEW</Trans>
+          )}
         </span>
         <span className='min-w-0'>{modeHint}</span>
       </div>

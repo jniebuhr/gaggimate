@@ -3,6 +3,7 @@ import { useContext, useEffect, useState } from 'preact/hooks';
 import { useQuery } from 'preact-fetching';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
 import { MODES } from './utils.js';
+import { t } from '@lingui/core/macro';
 
 const status = computed(() => machine.value.status);
 const capabilities = computed(() => machine.value.capabilities);
@@ -20,7 +21,7 @@ export function useDashboardState() {
   const systemReady = connected.value && (!s.system || s.system.state === 'ready');
   // Only a not-ready state carries a message; ready leaves the default standby text in place.
   const systemMessage = !connected.value
-    ? 'Connecting to the machine...'
+    ? t`Connecting to the machine...`
     : systemReady
       ? ''
       : s.system.message || s.system.state;

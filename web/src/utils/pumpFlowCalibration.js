@@ -1,3 +1,5 @@
+import { t } from '@lingui/core/macro';
+
 // Pure pump-flow calibration math. No I/O, no state — safe to call from
 // anywhere (including tests). Same algorithm as the community `analyze.js`
 // that originally shipped outside the web UI.
@@ -11,7 +13,7 @@ export function analyze(samples, targetPressure) {
   const measure = samples.filter(s => s.tt === 25 && s.tp === targetPressure);
   if (measure.length < 2) {
     throw new Error(
-      `Not enough samples for tp=${targetPressure} bar (Measure phase). Was the valve closed enough to reach ${targetPressure} bar?`,
+      t`Not enough samples for tp=${targetPressure} bar (Measure phase). Was the valve closed enough to reach ${targetPressure} bar?`,
     );
   }
   const first = measure[0];
@@ -36,7 +38,7 @@ export function analyze(samples, targetPressure) {
     estimatedFlow <= 0
   ) {
     throw new Error(
-      `Invalid flow data for tp=${targetPressure} bar (estimatedFlow=${estimatedFlow}, actualFlow=${actualFlow}). Did the scale see any weight increase during the shot?`,
+      t`Invalid flow data for tp=${targetPressure} bar (estimatedFlow=${estimatedFlow}, actualFlow=${actualFlow}). Did the scale see any weight increase during the shot?`,
     );
   }
   const factor = actualFlow / estimatedFlow;
@@ -44,8 +46,9 @@ export function analyze(samples, targetPressure) {
   // [0.5, 2.0] usually means the user couldn't hold the target pressure during
   // the Measure phase (valve too open / not open enough).
   if (factor < 0.5 || factor > 2.0) {
+    const shownFactor = factor.toFixed(3);
     throw new Error(
-      `Calibration factor for tp=${targetPressure} bar is out of plausible range (${factor.toFixed(3)}). Did pressure actually reach ${targetPressure} bar during the Measure phase?`,
+      t`Calibration factor for tp=${targetPressure} bar is out of plausible range (${shownFactor}). Did pressure actually reach ${targetPressure} bar during the Measure phase?`,
     );
   }
   return { volume, time, actualFlow, estimatedFlow, factor };
@@ -54,7 +57,7 @@ export function analyze(samples, targetPressure) {
 export function parseCoeffs(raw) {
   const [c1, c9] = (raw || '').split(',').map(Number.parseFloat);
   if (!Number.isFinite(c1) || !Number.isFinite(c9)) {
-    throw new TypeError(`Current coefficients are not numeric: "${raw}"`);
+    throw new TypeError(t`Current coefficients are not numeric: "${raw}"`);
   }
   return [c1, c9];
 }

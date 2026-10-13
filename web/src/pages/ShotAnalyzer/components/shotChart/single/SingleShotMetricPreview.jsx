@@ -1,3 +1,5 @@
+import { t } from '@lingui/core/macro';
+import { Trans } from '@lingui/react/macro';
 import { MetricValueGrid } from '../../ShotDetailsPanel';
 import { MobileMetricPager } from '../MobileMetricPager';
 import { SINGLE_METRIC_PAGE_KEYS } from '../constants';
@@ -6,27 +8,27 @@ function getSingleMetricPageLabels() {
   return [
     {
       key: SINGLE_METRIC_PAGE_KEYS.BASICS,
-      label: 'Basics',
+      label: t`Basics`,
     },
     {
       key: SINGLE_METRIC_PAGE_KEYS.PRESSURE_FLOW,
-      label: 'Pressure & Pump Flow',
+      label: t`Pressure & Pump Flow`,
     },
     {
       key: SINGLE_METRIC_PAGE_KEYS.FLOW_VOLUME,
-      label: 'Flow & Volume',
+      label: t`Flow & Volume`,
     },
     {
       key: SINGLE_METRIC_PAGE_KEYS.TEMPERATURE,
-      label: 'Temperature',
+      label: t`Temperature`,
     },
     {
       key: SINGLE_METRIC_PAGE_KEYS.PUCK_RESISTANCE,
-      label: 'Puck Resistance',
+      label: t`Puck Resistance`,
     },
     {
       key: SINGLE_METRIC_PAGE_KEYS.ALL,
-      label: 'All',
+      label: t({ message: 'All', context: 'all metrics page' }),
     },
   ];
 }
@@ -48,7 +50,9 @@ export function ShotChartStaticMetricPreview({ activePageKey, onPageChange, resu
         renderPage={page => (
           <div className='shot-chart-single-mobile-page-caption'>
             <span className='shot-chart-single-mobile-page-caption__label'>{page.label}</span>
-            <span className='shot-chart-single-mobile-page-caption__hint'>Chart &amp; Metrics</span>
+            <span className='shot-chart-single-mobile-page-caption__hint'>
+              <Trans>Chart &amp; Metrics</Trans>
+            </span>
           </div>
         )}
       />

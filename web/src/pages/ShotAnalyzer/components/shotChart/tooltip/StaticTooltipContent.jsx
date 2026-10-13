@@ -1,4 +1,5 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Trans } from '@lingui/react/macro';
 import {
   COMPARE_DETAIL_METRIC_PAGE_KEYS,
   SINGLE_METRIC_PAGE_KEYS,
@@ -148,9 +149,7 @@ function StaticCompactMetricRow({ hideShotLabel = false, row, index }) {
 
 function getCompactMetricRows({ isSingleLineVariant, rows }) {
   if (!isSingleLineVariant) return rows;
-  return rows
-    .filter(row => row.displayLabel !== 'Difference' && !TOOLTIP_WATER_LABELS.has(row.label))
-    .slice(0, 2);
+  return rows.filter(row => !row.isDifference && !TOOLTIP_WATER_LABELS.has(row.label)).slice(0, 2);
 }
 
 function getCompareLargeMetricRows({ metricContext = null, rows = [], variant }) {
@@ -235,14 +234,20 @@ function CompactDifferenceContent({ differenceRow }) {
   if (differenceRow) {
     return (
       <>
-        <span className='shot-chart-tooltip__compact-difference-label'>Difference</span>
+        <span className='shot-chart-tooltip__compact-difference-label'>
+          <Trans>Difference</Trans>
+        </span>
         <span className='shot-chart-tooltip__compact-difference-value'>
           {differenceRow.valueText}
         </span>
       </>
     );
   }
-  return <span>Difference -</span>;
+  return (
+    <span>
+      <Trans>Difference</Trans> -
+    </span>
+  );
 }
 
 function buildStopLineText(summary) {
@@ -254,6 +259,7 @@ function buildStopLineText(summary) {
 
 function CompactStopLine({ summary, index }) {
   const stopText = buildStopLineText(summary);
+  const targetValue = summary.stopTargetValue;
 
   return (
     <div
@@ -273,7 +279,7 @@ function CompactStopLine({ summary, index }) {
         {summary.stopTargetValue ? (
           <span className='shot-chart-tooltip__phase-target'>
             {' '}
-            · Target {summary.stopTargetValue}
+            · <Trans>Target {targetValue}</Trans>
           </span>
         ) : null}
       </span>
@@ -300,7 +306,11 @@ function CompactStopContent({ differenceRow, isSingleLineVariant, stopSummary, s
     );
   }
 
-  return <span>Stop -</span>;
+  return (
+    <span>
+      <Trans context='shot stop'>Stop</Trans> -
+    </span>
+  );
 }
 
 function getCompareShotSlots(items = []) {
@@ -343,7 +353,7 @@ function CompareCompactStopColumn({ summary }) {
         {stopText ? <span className={getStopReasonClassName(summary)}>{stopText}</span> : '-'}
       </div>
       <div className='shot-chart-tooltip__compare-compact-stop-target'>
-        {targetText ? `Target ${targetText}` : ''}
+        {targetText ? <Trans>Target {targetText}</Trans> : ''}
       </div>
     </div>
   );
@@ -388,7 +398,7 @@ function splitCompareMetricValue(row) {
 
 function getCompareLargeMetricSlots({ metricContext = null, rows = [], variant }) {
   const metricRows = getCompareLargeMetricRows({ metricContext, rows, variant }).filter(
-    row => row && !row.isPlaceholder && row.displayLabel !== 'Difference',
+    row => row && !row.isPlaceholder && !row.isDifference,
   );
   const rowsByShotOrder = new Map();
 
@@ -466,7 +476,7 @@ function SinglePagedContext({ state }) {
         {stopText ? <span className={getStopReasonClassName(phaseSummary)}>{stopText}</span> : '-'}
       </div>
       <div className='shot-chart-tooltip__single-paged-target'>
-        {targetText ? `Target ${targetText}` : ''}
+        {targetText ? <Trans>Target {targetText}</Trans> : ''}
       </div>
     </div>
   );
@@ -623,9 +633,7 @@ export function StaticCompactTooltipContent({ metricContext = null, state, varia
   const isTitleOnlyVariant = variant === 'titleOnly';
   const hideShotLabelInMetricRows = variant === 'comparePreview' || variant === 'singleLine';
   const shouldShowPhaseLabel = !isTitleOnlyVariant && Boolean(phaseSummary?.phaseLabel);
-  const differenceRow = isSingleLineVariant
-    ? state.rows.find(row => row.displayLabel === 'Difference')
-    : null;
+  const differenceRow = isSingleLineVariant ? state.rows.find(row => row.isDifference) : null;
   const metricRows = isSingleLineVariant
     ? getCompactMetricRows({ isSingleLineVariant, rows: state.rows })
     : getMobileCompactMetricRows(state.rows);

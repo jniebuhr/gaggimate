@@ -2,9 +2,11 @@ import PropTypes from 'prop-types';
 import { useEffect } from 'preact/hooks';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTint } from '@fortawesome/free-solid-svg-icons/faTint';
+import { Trans, useLingui } from '@lingui/react/macro';
 
 // Press-and-hold aware: a hold-to-flush (flush duration 0) runs until the pointer or key is released.
 export function FlushButton({ className, isFlushing, startFlush, stopFlush }) {
+  const { t } = useLingui();
   // The release is caught on the window so it still arrives when the pointer left the button.
   useEffect(() => {
     if (!isFlushing) return undefined;
@@ -33,9 +35,9 @@ export function FlushButton({ className, isFlushing, startFlush, stopFlush }) {
       onKeyDown={onKeyDown}
       onKeyUp={onKeyUp}
       aria-pressed={isFlushing}
-      aria-label='Flush water'
+      aria-label={t`Flush water`}
     >
-      <FontAwesomeIcon icon={faTint} /> Flush
+      <FontAwesomeIcon icon={faTint} /> <Trans context='action'>Flush</Trans>
     </button>
   );
 }

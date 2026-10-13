@@ -1,20 +1,22 @@
 // Constants for StatisticsToolbar: source/mode/date options and run button tone class
+import { msg } from '@lingui/core/macro';
+
 export const SOURCE_OPTIONS = [
   { value: 'gaggimate', label: 'GM' },
-  { value: 'browser', label: 'WEB' },
-  { value: 'both', label: 'ALL' },
+  { value: 'browser', label: msg({ message: 'WEB', context: 'shot source: browser storage' }) },
+  { value: 'both', label: msg({ message: 'ALL', context: 'shot source: all sources' }) },
 ];
 
 export const MODE_OPTIONS = [
-  { value: 'all', label: 'All' },
-  { value: 'profile', label: 'By Profile' },
-  { value: 'shots', label: 'By Shots' },
+  { value: 'all', label: msg({ message: 'All', context: 'statistics mode' }) },
+  { value: 'profile', label: msg`By Profile` },
+  { value: 'shots', label: msg`By Shots` },
 ];
 
 export const DATE_BASIS_OPTIONS = [
-  { value: 'shot', label: 'Shot' },
-  { value: 'auto', label: 'Auto' },
-  { value: 'upload', label: 'Upload' },
+  { value: 'shot', label: msg({ message: 'Shot', context: 'date basis' }) },
+  { value: 'auto', label: msg({ message: 'Auto', context: 'date basis' }) },
+  { value: 'upload', label: msg({ message: 'Upload', context: 'date basis' }) },
 ];
 
 export const STATISTICS_RUN_BUTTON_TONE_CLASS =

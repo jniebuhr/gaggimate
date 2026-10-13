@@ -1,5 +1,6 @@
 /** Orchestrates full-shot aggregation while delegating phase-level decisions. */
 
+import { t } from '@lingui/core/macro';
 import {
   analyzerDebug,
   createDelayTotals,
@@ -18,7 +19,7 @@ import {
   buildRecordedExitReasonByPhase,
   getBrewCompletionLabel,
   getBrewModeLabel,
-  getPhaseExitReasonMeta,
+  getPhaseExitReasonLabel,
   isSafetyExitReason,
   normalizePhaseExitReasonCode,
 } from './exitReasons.js';
@@ -62,7 +63,7 @@ function applySkippedPhaseSystemStats(analyzedPhases, brewModeLabel, configuredS
   analyzedPhases.forEach(phase => {
     if (!phase.skipped) return;
     phase.stats.sys_brew_mode = brewModeLabel;
-    phase.stats.sys_recorded_stop_reason = 'Not recorded';
+    phase.stats.sys_recorded_stop_reason = t`Not recorded`;
     phase.stats.sys_scale_delay = configuredScaleDelayMs;
   });
 }
@@ -139,7 +140,7 @@ function resolveRatioTargets(profileData, shotData) {
 export function calculateShotMetrics(shotData, rawProfileData, settings) {
   // Defensive guard: ensure valid shot data with samples
   if (!shotData || !Array.isArray(shotData.samples) || shotData.samples.length === 0) {
-    return { phases: [], warnings: ['No sample data available for analysis.'] };
+    return { phases: [], warnings: [t`No sample data available for analysis.`] };
   }
   const profileData = resolveRatioTargets(rawProfileData, shotData);
 
@@ -163,7 +164,7 @@ export function calculateShotMetrics(shotData, rawProfileData, settings) {
   const brewModeLabel = getBrewModeLabel(isBrewByWeight);
   const configuredScaleDelayMs = Math.max(0, Number(shotData.brewDelay) || 0);
   const finalExitReasonCode = normalizePhaseExitReasonCode(shotData.finalExitReason);
-  const finalExitReasonLabel = getPhaseExitReasonMeta(finalExitReasonCode).label;
+  const finalExitReasonLabel = getPhaseExitReasonLabel(finalExitReasonCode);
 
   const globalScaleLost = isBrewByWeight && getBluetoothScaleConnectionState(gSamples).scaleLost;
   const { hasSlowSampleInterval, maxSampleIntervalMs } = getSlowSampleIntervalSummary(gSamples);

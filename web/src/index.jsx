@@ -1,5 +1,7 @@
 import './style.css';
 import { initializeTheme } from './utils/themeManager.js';
+import { I18nProvider } from '@lingui/react';
+import { activateLocale, i18n } from './i18n.js';
 import { isApp } from './app/platform.js';
 import { hasConnected, initApp, onAppRendered } from './app/index.js';
 import { ConnectionGate } from './app/ConnectionGate.jsx';
@@ -164,7 +166,13 @@ async function boot() {
   apiService = new ApiService();
   // Must be called before render
   initializeTheme();
-  render(<App />, document.getElementById('app'));
+  await activateLocale();
+  render(
+    <I18nProvider i18n={i18n}>
+      <App />
+    </I18nProvider>,
+    document.getElementById('app'),
+  );
   if (isApp) onAppRendered(apiService);
 }
 

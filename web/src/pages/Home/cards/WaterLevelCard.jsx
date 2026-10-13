@@ -1,4 +1,5 @@
 import PropTypes from 'prop-types';
+import { Trans } from '@lingui/react/macro';
 
 export function WaterLevelCard({ waterLevelPercent, inCard = false }) {
   const pct = Math.round(waterLevelPercent);
@@ -11,7 +12,7 @@ export function WaterLevelCard({ waterLevelPercent, inCard = false }) {
     >
       <div className='flex items-center justify-between'>
         <div className='text-base-content/50 text-[0.6rem] font-semibold tracking-wider uppercase'>
-          Water Tank
+          <Trans>Water Tank</Trans>
         </div>
         <div className='text-info text-xs font-bold tabular-nums'>{pct}%</div>
       </div>

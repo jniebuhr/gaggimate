@@ -1,5 +1,6 @@
 import { Chart } from 'chart.js';
 import { ChartComponent } from '../../components/Chart.jsx';
+import { t } from '@lingui/core/macro';
 
 // Helper function to get phase name from shot data (v5+) or fallback to profile/generic
 function getPhaseName(shot, phaseNumber) {
@@ -107,6 +108,7 @@ function getChartData(shot) {
     // Skip the first transition since we handle it with shot_start marker
     if (index === 0) return;
 
+    const phaseNumber = transition.phaseDisplayNumber || transition.phaseNumber + 1;
     phaseAnnotations[`phase_line_${index}`] = {
       type: 'line',
       xMin: transition.time,
@@ -115,9 +117,7 @@ function getChartData(shot) {
       borderWidth: 1,
       label: {
         display: true,
-        content:
-          transition.phaseName ||
-          `Phase ${transition.phaseDisplayNumber || transition.phaseNumber + 1}`,
+        content: transition.phaseName || t`Phase ${phaseNumber}`,
         rotation: -90,
         position: 'end',
         xAdjust: -10,
@@ -139,13 +139,13 @@ function getChartData(shot) {
     data: {
       datasets: [
         {
-          label: 'Current Temperature',
+          label: t`Current Temperature`,
           borderColor: '#F0561D',
           pointStyle: false,
           data: ct,
         },
         {
-          label: 'Target Temperature',
+          label: t`Target Temperature`,
           fill: true,
           borderColor: '#731F00',
           borderDash: [6, 6],
@@ -153,14 +153,14 @@ function getChartData(shot) {
           data: tt,
         },
         {
-          label: 'Current Pressure',
+          label: t`Current Pressure`,
           borderColor: '#0066CC',
           pointStyle: false,
           yAxisID: 'y1',
           data: cp,
         },
         {
-          label: 'Target Pressure',
+          label: t`Target Pressure`,
           fill: true,
           borderColor: '#0066CC',
           borderDash: [6, 6],
@@ -169,21 +169,21 @@ function getChartData(shot) {
           data: tp,
         },
         {
-          label: 'Current Pump Flow',
+          label: t`Current Pump Flow`,
           borderColor: '#63993D',
           pointStyle: false,
           yAxisID: 'y1',
           data: fl,
         },
         {
-          label: 'Current Puck Flow',
+          label: t`Current Puck Flow`,
           borderColor: '#204D00',
           pointStyle: false,
           yAxisID: 'y1',
           data: pf,
         },
         {
-          label: 'Target Pump Flow',
+          label: t`Target Pump Flow`,
           borderColor: '#63993D',
           borderDash: [6, 6],
           pointStyle: false,
@@ -194,7 +194,7 @@ function getChartData(shot) {
         ...(hasWeight
           ? [
               {
-                label: 'Weight',
+                label: t`Weight`,
                 borderColor: '#8B5CF6',
                 pointStyle: false,
                 yAxisID: 'y2',
@@ -205,7 +205,7 @@ function getChartData(shot) {
         ...(hasWeightFlow
           ? [
               {
-                label: 'Weight Flow',
+                label: t`Weight Flow`,
                 borderColor: '#4b2e8dff',
                 pointStyle: false,
                 yAxisID: 'y1',
@@ -261,7 +261,7 @@ function getChartData(shot) {
           min: minX,
           max: maxX,
           type: 'linear',
-          title: { display: true, text: 'Time (s)' },
+          title: { display: true, text: t`Time (s)` },
           ticks: { font: { size: window.innerWidth < 640 ? 10 : 12 } },
         },
         y: {

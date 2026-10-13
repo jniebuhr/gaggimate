@@ -7,6 +7,8 @@ import { faGauge } from '@fortawesome/free-solid-svg-icons/faGauge';
 import { faGaugeHigh } from '@fortawesome/free-solid-svg-icons/faGaugeHigh';
 import { faScaleBalanced } from '@fortawesome/free-solid-svg-icons/faScaleBalanced';
 import { faTemperatureHalf } from '@fortawesome/free-solid-svg-icons/faTemperatureHalf';
+import { msg } from '@lingui/core/macro';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { fmt } from '../utils/format';
 import { StatisticsMetricHeader } from './StatisticsMetricHeader';
 import { STATISTICS_DENSE_VALUE_CLASS, STATISTICS_SMALL_LABEL_CLASS } from './statisticsUi';
@@ -14,7 +16,7 @@ import { STATISTICS_DENSE_VALUE_CLASS, STATISTICS_SMALL_LABEL_CLASS } from './st
 const METRIC_ROWS = [
   {
     key: 'w',
-    label: 'Weight',
+    label: msg`Weight`,
     unit: 'g',
     colorClass: 'text-[var(--analyzer-weight-text)]',
     accentColor: 'var(--analyzer-weight-text)',
@@ -23,7 +25,7 @@ const METRIC_ROWS = [
   },
   {
     key: 'duration',
-    label: 'Duration',
+    label: msg`Duration`,
     unit: 's',
     colorClass: 'text-[var(--statistics-summary-duration)]',
     accentColor: 'var(--statistics-summary-duration)',
@@ -32,7 +34,7 @@ const METRIC_ROWS = [
   },
   {
     key: 'tt',
-    label: 'Avg. Target Temperature',
+    label: msg`Avg. Target Temperature`,
     unit: '\u2103',
     colorClass: 'text-[var(--analyzer-target-temp-text)]',
     accentColor: 'var(--analyzer-target-temp-text)',
@@ -41,7 +43,7 @@ const METRIC_ROWS = [
   },
   {
     key: 't',
-    label: 'Temperature',
+    label: msg`Temperature`,
     unit: '\u2103',
     colorClass: 'text-[var(--analyzer-temp-text)]',
     accentColor: 'var(--analyzer-temp-text)',
@@ -50,7 +52,7 @@ const METRIC_ROWS = [
   },
   {
     key: 'ttDelta',
-    label: 'Target Temp \u0394',
+    label: msg`Target Temp Δ`,
     unit: '\u2103',
     colorClass: 'text-[var(--analyzer-target-temp-text)]',
     accentColor: 'var(--analyzer-target-temp-text)',
@@ -60,7 +62,7 @@ const METRIC_ROWS = [
   },
   {
     key: 'p',
-    label: 'Pressure',
+    label: msg`Pressure`,
     unit: 'bar',
     colorClass: 'text-[var(--analyzer-pressure-text)]',
     accentColor: 'var(--analyzer-pressure-text)',
@@ -69,7 +71,7 @@ const METRIC_ROWS = [
   },
   {
     key: 'pPeak',
-    label: 'Avg. Peak Pressure',
+    label: msg`Avg. Peak Pressure`,
     unit: 'bar',
     colorClass: 'text-[var(--analyzer-pressure-text)]',
     accentColor: 'var(--analyzer-pressure-text)',
@@ -78,7 +80,7 @@ const METRIC_ROWS = [
   },
   {
     key: 'f',
-    label: 'Pump Flow',
+    label: msg`Pump Flow`,
     unit: 'ml/s',
     colorClass: 'text-[var(--analyzer-flow-text)]',
     accentColor: 'var(--analyzer-flow-text)',
@@ -87,7 +89,7 @@ const METRIC_ROWS = [
   },
   {
     key: 'water',
-    label: 'Pumped Water',
+    label: msg`Pumped Water`,
     unit: 'ml',
     colorClass: 'text-[var(--statistics-summary-water)]',
     accentColor: 'var(--statistics-summary-water)',
@@ -96,7 +98,7 @@ const METRIC_ROWS = [
   },
   {
     key: 'pf',
-    label: 'Puck Flow',
+    label: msg`Puck Flow`,
     unit: 'ml/s',
     colorClass: 'text-[var(--analyzer-puckflow-text)]',
     accentColor: 'var(--analyzer-puckflow-text)',
@@ -105,7 +107,7 @@ const METRIC_ROWS = [
   },
   {
     key: 'pr',
-    label: 'Puck Resistance',
+    label: msg`Puck Resistance`,
     unit: 's·√bar/mL',
     colorClass: 'text-[var(--analyzer-puckresistance-text)]',
     accentColor: 'var(--analyzer-puckresistance-text)',
@@ -115,7 +117,7 @@ const METRIC_ROWS = [
   },
   {
     key: 'lr',
-    label: 'Liquid Resistance',
+    label: msg`Liquid Resistance`,
     unit: 'bar·s/mL',
     colorClass: 'text-[var(--analyzer-liquidresistance-text)]',
     accentColor: 'var(--analyzer-liquidresistance-text)',
@@ -184,6 +186,7 @@ function getMetricPositions(metric) {
 }
 
 function MetricRangeViz({ row, metric }) {
+  const { i18n } = useLingui();
   const spreadRatio = getSpreadRatio(metric);
   const positions = getMetricPositions(metric);
   const stdBandPct = Math.round(14 + spreadRatio * 26);
@@ -193,7 +196,7 @@ function MetricRangeViz({ row, metric }) {
       <StatisticsMetricHeader
         accentColor={row.accentColor}
         icon={row.icon}
-        label={row.label}
+        label={i18n._(row.label)}
         unit={row.unit}
         value={formatMetricValue(metric.avg, row)}
       />
@@ -205,9 +208,13 @@ function MetricRangeViz({ row, metric }) {
         }}
       >
         <div className='flex items-center justify-between gap-2'>
-          <div className={STATISTICS_SMALL_LABEL_CLASS}>Range</div>
+          <div className={STATISTICS_SMALL_LABEL_CLASS}>
+            <Trans>Range</Trans>
+          </div>
           <div className='text-right'>
-            <div className='text-base-content/60 text-[10px]'>Std Dev</div>
+            <div className='text-base-content/60 text-[10px]'>
+              <Trans>Std Dev</Trans>
+            </div>
             <div className={`text-xs ${STATISTICS_DENSE_VALUE_CLASS}`}>
               {fmt(metric.stdDev, row.digits)}
             </div>

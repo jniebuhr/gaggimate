@@ -1,3 +1,4 @@
+import { useLingui } from '@lingui/react/macro';
 import { PluginCard } from '../PluginCard.jsx';
 import Section from '../../../components/Card.jsx';
 
@@ -10,8 +11,9 @@ export function PluginsTab({
   updateAutoWakeupTime,
   updateAutoWakeupDay,
 }) {
+  const { t } = useLingui();
   return (
-    <Section title='Plugins'>
+    <Section title={t`Plugins`}>
       <PluginCard
         formData={formData}
         onChange={onChange}

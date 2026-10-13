@@ -2,6 +2,8 @@
 
 import { createPortal } from 'preact/compat';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { t } from '@lingui/core/macro';
+import { Trans } from '@lingui/react/macro';
 import { faMinus } from '@fortawesome/free-solid-svg-icons/faMinus';
 import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import {
@@ -248,7 +250,13 @@ function CompareDetailChartsToggle({
       onClick={() => setIsMobileDetailExpanded(expanded => !expanded)}
       aria-expanded={isMobileDetailExpanded}
     >
-      <span>{isMobileDetailExpanded ? 'Hide detail charts' : 'Show detail charts'}</span>
+      <span>
+        {isMobileDetailExpanded ? (
+          <Trans>Hide detail charts</Trans>
+        ) : (
+          <Trans>Show detail charts</Trans>
+        )}
+      </span>
       <FontAwesomeIcon
         icon={isMobileDetailExpanded ? faMinus : faPlus}
         className='text-base-content/45 text-xs'
@@ -492,7 +500,7 @@ export function CompareChartsShell({ charts, controls, isFullDisplay, onCloseFul
           type='button'
           className='shot-chart-full-display__backdrop'
           onClick={onCloseFullDisplay}
-          aria-label='Close full display'
+          aria-label={t`Close full display`}
         />
         <div className='shot-chart-full-display__panel'>
           {controls}

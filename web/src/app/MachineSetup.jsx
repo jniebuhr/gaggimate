@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { createPortal } from 'preact/compat';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
 import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
@@ -38,6 +39,7 @@ const CORNER_BUTTON =
 
 // App-only screen for adding a machine or picking a saved one; mandatory while none is active.
 export function MachineSetup({ mandatory = false }) {
+  const { t } = useLingui();
   const [error, setError] = useState(null);
   // Host currently being connected to, from discovery or the address form.
   const [connectingHost, setConnectingHost] = useState(null);
@@ -71,8 +73,9 @@ export function MachineSetup({ mandatory = false }) {
       await addMachine({ host, name: preferredName || settings.mdnsName || host, version });
     } catch (err) {
       console.error('Machine probe failed', host, err?.message);
+      const reason = err?.message || err;
       setError(
-        `Couldn't connect to ${host}: ${err?.message || err}. Make sure the machine is on and your phone is on the same Wi-Fi network.`,
+        t`Couldn't connect to ${host}: ${reason}. Make sure the machine is on and your phone is on the same Wi-Fi network.`,
       );
       setConnectingHost(null);
     }
@@ -89,14 +92,16 @@ export function MachineSetup({ mandatory = false }) {
             disabled={connecting}
           >
             <FontAwesomeIcon icon={faArrowLeft} />
-            Back
+            <Trans>Back</Trans>
           </button>
         )}
         <div className='flex flex-col items-center gap-3 text-center'>
           <GmLogoIcon width={72} height={72} />
-          <h1 className='text-2xl font-semibold'>Connect to your GaggiMate</h1>
+          <h1 className='text-2xl font-semibold'>
+            <Trans>Connect to your GaggiMate</Trans>
+          </h1>
           <p className='text-base-content/70 text-sm'>
-            Your phone needs to be on the same Wi-Fi network as the machine.
+            <Trans>Your phone needs to be on the same Wi-Fi network as the machine.</Trans>
           </p>
         </div>
 
@@ -104,7 +109,9 @@ export function MachineSetup({ mandatory = false }) {
 
         {saved.length > 0 && (
           <section className='flex flex-col gap-2'>
-            <h2 className={SECTION_TITLE}>Your machines</h2>
+            <h2 className={SECTION_TITLE}>
+              <Trans>Your machines</Trans>
+            </h2>
             <div className='grid grid-cols-2 gap-3'>
               {saved.map(machine => (
                 <SavedMachineCard
@@ -123,14 +130,16 @@ export function MachineSetup({ mandatory = false }) {
         {discoveryAvailable.value && (
           <section className='flex flex-col gap-2'>
             <h2 className={SECTION_TITLE}>
-              <span className='flex-1'>Found on your network</span>
-              <span className='loading loading-dots loading-xs' aria-label='Searching' />
+              <span className='flex-1'>
+                <Trans>Found on your network</Trans>
+              </span>
+              <span className='loading loading-dots loading-xs' aria-label={t`Searching`} />
             </h2>
             {newlyFound.length === 0 ? (
               <p className='text-base-content/60 px-1 text-sm'>
                 {found.length === 0
-                  ? "Looking for machines… If yours doesn't show up, add it by its address."
-                  : 'No other machines found.'}
+                  ? t`Looking for machines… If yours doesn't show up, add it by its address.`
+                  : t`No other machines found.`}
               </p>
             ) : (
               <div className='grid grid-cols-2 gap-3'>
@@ -172,20 +181,22 @@ export function MachineSetup({ mandatory = false }) {
 
 // Tappable status card for a saved machine; the X asks before removing it.
 function SavedMachineCard({ machine, state, onNetwork, disabled, onRemove }) {
+  const { t } = useLingui();
+  const name = machine.name;
   const [editing, setEditing] = useState(false);
   const isActive = machine.id === activeMachineId.value;
   const live = state.value.connected;
 
   let dot = 'bg-base-content/30';
-  let status = 'Not found';
+  let status = t`Not found`;
   if (live) {
     dot = 'bg-success';
     status = formatMachineStatus(state.value.status);
   } else if (onNetwork) {
     dot = 'bg-success';
-    status = 'On this network';
+    status = t`On this network`;
   } else if (onNetwork === null) {
-    status = 'Saved';
+    status = t({ message: 'Saved', context: 'machine status' });
   }
 
   if (editing) {
@@ -197,8 +208,8 @@ function SavedMachineCard({ machine, state, onNetwork, disabled, onRemove }) {
       <button
         type='button'
         className={CORNER_BUTTON}
-        aria-label={`Remove ${machine.name}`}
-        title='Remove'
+        aria-label={t`Remove ${name}`}
+        title={t`Remove`}
         onClick={onRemove}
         disabled={disabled}
       >
@@ -223,8 +234,8 @@ function SavedMachineCard({ machine, state, onNetwork, disabled, onRemove }) {
       <button
         type='button'
         className='btn btn-ghost btn-circle btn-xs text-base-content/50 absolute right-1.5 bottom-1.5'
-        aria-label={`Rename ${machine.name}`}
-        title='Rename'
+        aria-label={t`Rename ${name}`}
+        title={t`Rename`}
         onClick={() => setEditing(true)}
         disabled={disabled}
       >
@@ -235,6 +246,8 @@ function SavedMachineCard({ machine, state, onNetwork, disabled, onRemove }) {
 }
 
 function RenameCard({ machine, onDone }) {
+  const { t } = useLingui();
+  const host = machine.host;
   const [draft, setDraft] = useState(machine.name);
   const input = useRef(null);
 
@@ -256,7 +269,7 @@ function RenameCard({ machine, onDone }) {
       <input
         type='text'
         className='input input-sm w-full'
-        aria-label={`Name for ${machine.host}`}
+        aria-label={t`Name for ${host}`}
         value={draft}
         onInput={e => setDraft(e.currentTarget.value)}
         onKeyDown={e => e.key === 'Escape' && onDone()}
@@ -266,8 +279,8 @@ function RenameCard({ machine, onDone }) {
         <button
           type='button'
           className='btn btn-ghost btn-square btn-sm text-base-content/50'
-          aria-label='Cancel renaming'
-          title='Cancel'
+          aria-label={t`Cancel renaming`}
+          title={t`Cancel`}
           onClick={onDone}
         >
           <FontAwesomeIcon icon={faXmark} />
@@ -275,8 +288,8 @@ function RenameCard({ machine, onDone }) {
         <button
           type='submit'
           className='btn btn-ghost btn-square btn-sm text-primary'
-          aria-label='Save name'
-          title='Save'
+          aria-label={t`Save name`}
+          title={t`Save`}
           disabled={!draft.trim()}
         >
           <FontAwesomeIcon icon={faCheck} />
@@ -288,13 +301,15 @@ function RenameCard({ machine, onDone }) {
 
 // Unsaved machine seen via mDNS; tapping anywhere (or the +) connects and saves it.
 function DiscoveredMachineCard({ machine, connecting, disabled, onAdd }) {
+  const { t } = useLingui();
+  const name = machine.name;
   return (
     <button
       type='button'
       className='card bg-base-100 relative flex min-h-24 flex-col items-start gap-1 p-3 pr-8 text-left shadow-sm disabled:opacity-50'
       onClick={onAdd}
       disabled={disabled}
-      aria-label={`Add ${machine.name}`}
+      aria-label={t`Add ${name}`}
     >
       <span className='text-primary absolute top-2.5 right-2.5'>
         {connecting ? (
@@ -315,6 +330,7 @@ function DiscoveredMachineCard({ machine, connecting, disabled, onAdd }) {
 
 // Manual entry; always open without saved machines, otherwise a section that slides open.
 function AddByAddress({ collapsible, connectingHost, onConnect, onInvalid }) {
+  const { t } = useLingui();
   const [open, setOpen] = useState(!collapsible);
   const [address, setAddress] = useState('');
   const [name, setName] = useState('');
@@ -326,7 +342,7 @@ function AddByAddress({ collapsible, connectingHost, onConnect, onInvalid }) {
     event.preventDefault();
     const host = normalizeHost(address);
     if (!host) {
-      onInvalid('Enter the hostname or IP address of your machine.');
+      onInvalid(t`Enter the hostname or IP address of your machine.`);
       return;
     }
     onConnect(host, name.trim());
@@ -342,7 +358,9 @@ function AddByAddress({ collapsible, connectingHost, onConnect, onInvalid }) {
           aria-expanded={expanded}
         >
           <FontAwesomeIcon icon={faPlus} className='text-primary' />
-          <span className='flex-1'>Add machine by address</span>
+          <span className='flex-1'>
+            <Trans>Add machine by address</Trans>
+          </span>
           <FontAwesomeIcon
             icon={faChevronDown}
             className={`text-base-content/50 h-3 w-3 transition-transform ${expanded ? 'rotate-180' : ''}`}
@@ -359,11 +377,13 @@ function AddByAddress({ collapsible, connectingHost, onConnect, onInvalid }) {
             inert={!expanded}
           >
             <label className='flex flex-col gap-1.5'>
-              <span className='text-sm font-medium'>Address</span>
+              <span className='text-sm font-medium'>
+                <Trans>Address</Trans>
+              </span>
               <input
                 type='text'
                 className='input w-full'
-                placeholder='gaggimate.local or 192.168.1.20'
+                placeholder={t`gaggimate.local or 192.168.1.20`}
                 autoCapitalize='none'
                 autoCorrect='off'
                 spellcheck={false}
@@ -376,12 +396,14 @@ function AddByAddress({ collapsible, connectingHost, onConnect, onInvalid }) {
             </label>
             <label className='flex flex-col gap-1.5'>
               <span className='text-sm font-medium'>
-                Name <span className='text-base-content/50 font-normal'>(optional)</span>
+                <Trans>
+                  Name <span className='text-base-content/50 font-normal'>(optional)</span>
+                </Trans>
               </span>
               <input
                 type='text'
                 className='input w-full'
-                placeholder='Kitchen'
+                placeholder={t`Kitchen`}
                 value={name}
                 onInput={e => setName(e.currentTarget.value)}
                 disabled={connecting}
@@ -389,7 +411,7 @@ function AddByAddress({ collapsible, connectingHost, onConnect, onInvalid }) {
             </label>
             <button type='submit' className='btn btn-primary' disabled={connecting}>
               {connectingHere && <span className='loading loading-spinner loading-sm' />}
-              {connectingHere ? 'Connecting…' : 'Connect'}
+              {connectingHere ? t`Connecting…` : t`Connect`}
             </button>
           </form>
         </div>
@@ -400,6 +422,9 @@ function AddByAddress({ collapsible, connectingHost, onConnect, onInvalid }) {
 
 // Portaled to <body> so it sits above the full-screen setup overlay.
 function RemoveMachineModal({ machine, onCancel, onConfirm }) {
+  const { t } = useLingui();
+  const name = machine.name;
+  const host = machine.host;
   return createPortal(
     <div
       className='modal modal-open z-[10001]'
@@ -409,22 +434,24 @@ function RemoveMachineModal({ machine, onCancel, onConfirm }) {
     >
       <div className='modal-box'>
         <h3 id='remove-machine-title' className='text-lg font-bold'>
-          Remove {machine.name}?
+          <Trans>Remove {name}?</Trans>
         </h3>
         <p className='text-base-content/70 py-2 text-sm'>
-          The app forgets {machine.host}. Nothing changes on the machine, and you can add it again
-          any time.
+          <Trans>
+            The app forgets {host}. Nothing changes on the machine, and you can add it again any
+            time.
+          </Trans>
         </p>
         <div className='modal-action'>
           <button type='button' className='btn' onClick={onCancel}>
-            Cancel
+            <Trans>Cancel</Trans>
           </button>
           <button type='button' className='btn btn-error' onClick={onConfirm}>
-            Remove
+            <Trans>Remove</Trans>
           </button>
         </div>
       </div>
-      <button type='button' className='modal-backdrop' aria-label='Close' onClick={onCancel} />
+      <button type='button' className='modal-backdrop' aria-label={t`Close`} onClick={onCancel} />
     </div>,
     document.body,
   );

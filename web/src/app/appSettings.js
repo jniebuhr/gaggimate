@@ -1,21 +1,44 @@
 import { signal } from '@preact/signals';
+import { msg } from '@lingui/core/macro';
+import { i18n } from '../i18n.js';
 import { isApp } from './platform.js';
 
 // Settings that belong to the phone, not to a machine; persisted with Capacitor Preferences.
 const STORAGE_KEY = 'gaggimate.appSettings';
 
+// `label` and `help` are getters so they read in the active locale.
 export const NOTIFICATION_EVENTS = [
-  { key: 'preheated', label: 'Machine preheated', help: 'The boiler reached brew temperature.' },
-  { key: 'shotStarted', label: 'Shot started', help: 'A brew started on the machine.' },
-  { key: 'shotFinished', label: 'Shot finished', help: 'With shot time and weight.' },
+  {
+    key: 'preheated',
+    labelMsg: msg`Machine preheated`,
+    helpMsg: msg`The boiler reached brew temperature.`,
+  },
+  { key: 'shotStarted', labelMsg: msg`Shot started`, helpMsg: msg`A brew started on the machine.` },
+  { key: 'shotFinished', labelMsg: msg`Shot finished`, helpMsg: msg`With shot time and weight.` },
   {
     key: 'steamLeftOn',
-    label: 'Steam mode left on',
-    help: 'The machine has been in steam mode for 5 minutes.',
+    labelMsg: msg`Steam mode left on`,
+    helpMsg: msg`The machine has been in steam mode for 5 minutes.`,
   },
-  { key: 'warnings', label: 'Warnings', help: 'E.g. water tank low, scale battery low.' },
-  { key: 'errors', label: 'Errors', help: 'Controller errors and error-level warnings.' },
-];
+  {
+    key: 'warnings',
+    labelMsg: msg`Warnings`,
+    helpMsg: msg`E.g. water tank low, scale battery low.`,
+  },
+  {
+    key: 'errors',
+    labelMsg: msg`Errors`,
+    helpMsg: msg`Controller errors and error-level warnings.`,
+  },
+].map(e => ({
+  ...e,
+  get label() {
+    return i18n._(e.labelMsg);
+  },
+  get help() {
+    return i18n._(e.helpMsg);
+  },
+}));
 
 const DEFAULTS = {
   // Release channel for web UI updates (see updates.js).

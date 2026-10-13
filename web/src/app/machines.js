@@ -1,4 +1,5 @@
 import { computed, signal } from '@preact/signals';
+import { t } from '@lingui/core/macro';
 import { isApp } from './platform.js';
 
 // Saved machines for the native app; the web UI served by a machine always talks to its own origin.
@@ -72,12 +73,12 @@ async function probeHttp(host) {
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const settings = await response.json();
     if (typeof settings !== 'object' || settings === null || !('mdnsName' in settings)) {
-      throw new Error('this address is not a GaggiMate');
+      throw new Error(t`this address is not a GaggiMate`);
     }
     return settings;
   } catch (err) {
     throw new Error(
-      err?.name === 'AbortError' ? 'no answer (timed out)' : err?.message || String(err),
+      err?.name === 'AbortError' ? t`no answer (timed out)` : err?.message || String(err),
     );
   } finally {
     clearTimeout(timeout);
@@ -91,9 +92,12 @@ function probeSocket(host) {
       clearTimeout(timeout);
       socket.onopen = socket.onclose = socket.onerror = null;
       socket.close();
-      reject(new Error(`live connection failed (${reason})`));
+      reject(new Error(t`live connection failed (${reason})`));
     };
-    const timeout = setTimeout(() => fail('timed out'), PROBE_TIMEOUT_MS);
+    const timeout = setTimeout(
+      () => fail(t({ message: 'timed out', context: 'connection failure' })),
+      PROBE_TIMEOUT_MS,
+    );
     const done = version => {
       clearTimeout(versionTimeout);
       socket.onmessage = socket.onclose = socket.onerror = null;
@@ -116,8 +120,11 @@ function probeSocket(host) {
       };
       socket.send(JSON.stringify({ tp: 'req:ota-settings' }));
     };
-    socket.onerror = () => fail('error');
-    socket.onclose = event => fail(`closed, code ${event.code}`);
+    socket.onerror = () => fail(t({ message: 'error', context: 'connection failure' }));
+    socket.onclose = event => {
+      const code = event.code;
+      fail(t`closed, code ${code}`);
+    };
   });
 }
 

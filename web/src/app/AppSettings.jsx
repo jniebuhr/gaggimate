@@ -1,8 +1,11 @@
 import { useState } from 'preact/hooks';
+import { Trans, useLingui } from '@lingui/react/macro';
+import { plural } from '@lingui/core/macro';
 import PageLayout from '../components/PageLayout.jsx';
 import PageHeader from '../components/PageHeader.jsx';
 import Section from '../components/Card.jsx';
 import { SettingsFormField, ToggleField } from '../components/SettingsFormField.jsx';
+import { LanguageSelect } from '../components/LanguageSelect.jsx';
 import { getStoredTheme, handleThemeChange } from '../utils/themeManager.js';
 import {
   NOTIFICATION_EVENTS,
@@ -18,7 +21,11 @@ import { bundleVersion, checkForUpdate, pendingUpdate } from './updates.js';
 
 // App-only settings stored on the phone; machine settings stay under Device Settings.
 export function AppSettings() {
+  const { t } = useLingui();
   const [theme, setTheme] = useState(getStoredTheme);
+  const machineCount = machines.value.length;
+  const pending = pendingUpdate.value;
+  const name = activeMachine.value?.name;
   const [permissionDenied, setPermissionDenied] = useState(false);
   const notifications = appSettings.value.notifications;
 
@@ -34,10 +41,10 @@ export function AppSettings() {
 
   return (
     <PageLayout variant='narrow'>
-      <PageHeader title='App Settings' />
+      <PageHeader title={t`App Settings`} />
 
-      <Section title='Appearance'>
-        <SettingsFormField label='Theme' htmlFor='app-theme' noMargin>
+      <Section title={t`Appearance`}>
+        <SettingsFormField label={t`Theme`} htmlFor='app-theme' noMargin>
           <select
             id='app-theme'
             className='select select-bordered w-full'
@@ -47,32 +54,40 @@ export function AppSettings() {
               handleThemeChange(e);
             }}
           >
-            <option value='system'>System</option>
-            <option value='light'>Light</option>
-            <option value='dark'>Dark</option>
+            <option value='system'>{t({ message: 'System', context: 'theme' })}</option>
+            <option value='light'>{t({ message: 'Light', context: 'theme' })}</option>
+            <option value='dark'>{t({ message: 'Dark', context: 'theme' })}</option>
             <option value='coffee'>Coffee</option>
             <option value='nord'>Nord</option>
           </select>
         </SettingsFormField>
+        <div className='mt-4'>
+          <LanguageSelect />
+        </div>
       </Section>
 
-      <Section title='Notifications'>
+      <Section title={t`Notifications`}>
         <div className='flex flex-col gap-2'>
           <ToggleField
-            label='Enable notifications'
+            label={t`Enable notifications`}
             htmlFor='notifications-enabled'
             checked={notifications.enabled}
             onChange={toggleNotifications}
-            helpText={`Watches all ${machines.value.length} saved machines.`}
+            helpText={plural(machineCount, {
+              one: 'Watches # saved machine.',
+              other: 'Watches all # saved machines.',
+            })}
           />
           <Notice>
             {nativePlatform() === 'ios'
-              ? 'iOS only lets GaggiMate stay connected to your machines while the app is open. Notifications stop a few seconds after you switch to another app or lock your phone.'
-              : 'While GaggiMate is in the background it keeps watching your machines and shows a permanent “Watching machines” notification. This uses some extra battery.'}
+              ? t`iOS only lets GaggiMate stay connected to your machines while the app is open. Notifications stop a few seconds after you switch to another app or lock your phone.`
+              : t`While GaggiMate is in the background it keeps watching your machines and shows a permanent “Watching machines” notification. This uses some extra battery.`}
           </Notice>
           {permissionDenied && (
             <Notice variant='warning'>
-              Notifications are blocked. Allow them for GaggiMate in your phone's settings.
+              <Trans>
+                Notifications are blocked. Allow them for GaggiMate in your phone's settings.
+              </Trans>
             </Notice>
           )}
           <div className={`flex flex-col gap-2 ${notifications.enabled ? '' : 'opacity-50'}`}>
@@ -92,11 +107,11 @@ export function AppSettings() {
         </div>
       </Section>
 
-      <Section title='Updates'>
+      <Section title={t`Updates`}>
         <SettingsFormField
-          label='Update channel'
+          label={t`Update channel`}
           htmlFor='app-update-channel'
-          helpText='Nightly gets new features first, built from the same code as the nightly firmware.'
+          helpText={t`Nightly gets new features first, built from the same code as the nightly firmware.`}
           noMargin
         >
           <select
@@ -108,29 +123,40 @@ export function AppSettings() {
               checkForUpdate();
             }}
           >
-            <option value='stable'>Stable</option>
-            <option value='nightly'>Nightly</option>
+            <option value='stable'>{t({ message: 'Stable', context: 'update channel' })}</option>
+            <option value='nightly'>{t({ message: 'Nightly', context: 'update channel' })}</option>
           </select>
         </SettingsFormField>
         <p className='text-base-content/60 mt-3 text-xs'>
-          Version {bundleVersion}
-          {pendingUpdate.value &&
-            ` · ${pendingUpdate.value} installs the next time you leave the app`}
+          <Trans>Version {bundleVersion}</Trans>
+          {pending && (
+            <>
+              {' · '}
+              <Trans>{pending} installs the next time you leave the app</Trans>
+            </>
+          )}
         </p>
       </Section>
 
-      <Section title='Machines'>
+      <Section title={t`Machines`}>
         <div className='flex flex-wrap items-center justify-between gap-3'>
           <span className='text-sm'>
-            Connected to <span className='font-medium'>{activeMachine.value?.name}</span>
-            {machines.value.length > 1 && ` · ${machines.value.length} saved`}
+            <Trans>
+              Connected to <span className='font-medium'>{name}</span>
+            </Trans>
+            {machineCount > 1 && (
+              <>
+                {' · '}
+                <Trans>{machineCount} saved</Trans>
+              </>
+            )}
           </span>
           <button
             type='button'
             className='btn btn-sm'
             onClick={() => (showMachineSetup.value = true)}
           >
-            Manage machines
+            <Trans>Manage machines</Trans>
           </button>
         </div>
       </Section>

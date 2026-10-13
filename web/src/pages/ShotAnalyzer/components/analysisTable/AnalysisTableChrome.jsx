@@ -5,6 +5,7 @@
 import { createPortal } from 'preact/compat';
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Trans } from '@lingui/react/macro';
 import {
   faAngleRight,
   faAngleDoubleRight,
@@ -68,16 +69,18 @@ export function AnalysisTableHeader({
           <th
             className={`min-w-[140px] px-2 py-2 text-left whitespace-nowrap ${subtleDividerClass} ${tableHeaderTextClass}`}
           >
-            Shot
+            <Trans context='table column'>Shot</Trans>
           </th>
         )}
         <th
           className={`min-w-[120px] px-2 py-2 text-left whitespace-nowrap ${strongDividerClass} ${tableHeaderTextClass}`}
         >
-          <div className='leading-none'>Phase</div>
+          <div className='leading-none'>
+            <Trans context='table column'>Phase</Trans>
+          </div>
           {hasProfilePhaseStops && (
             <div className={`mt-0.5 ${tableHeaderSubtextClass}`} style={{ fontSize: '0.85em' }}>
-              Stop reason
+              <Trans>Stop reason</Trans>
             </div>
           )}
         </th>

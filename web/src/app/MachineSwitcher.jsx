@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
 import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
@@ -19,6 +20,7 @@ import {
 
 // App-only sidebar entry: shows the connected machine and switches, adds or disconnects machines.
 export function MachineSwitcher({ collapsed = false }) {
+  const { t } = useLingui();
   const [open, setOpen] = useState(false);
   const root = useRef(null);
   const current = activeMachine.value;
@@ -38,6 +40,7 @@ export function MachineSwitcher({ collapsed = false }) {
   }, [open]);
 
   if (!current) return null;
+  const host = current.host;
   const connected = machine.value.connected;
   const liveStatus = connected ? formatMachineStatus(machine.value.status) : null;
   const statusOf = m => {
@@ -54,7 +57,7 @@ export function MachineSwitcher({ collapsed = false }) {
   const statusDot = (
     <span
       className={`inline-block h-2.5 w-2.5 shrink-0 rounded-full ${connected ? 'bg-success' : 'bg-warning animate-pulse'}`}
-      aria-label={connected ? 'Connected' : 'Connecting'}
+      aria-label={connected ? t`Connected` : t`Connecting`}
     />
   );
 
@@ -85,7 +88,7 @@ export function MachineSwitcher({ collapsed = false }) {
             <span className='flex min-w-0 flex-1 flex-col text-left'>
               <span className='truncate text-sm font-medium'>{current.name}</span>
               <span className='text-base-content/60 truncate text-xs font-normal'>
-                {liveStatus ?? `Connecting to ${current.host}…`}
+                {liveStatus ?? t`Connecting to ${host}…`}
               </span>
               <FirmwareWarning version={current.version} compact className='mt-1' />
             </span>
@@ -99,7 +102,9 @@ export function MachineSwitcher({ collapsed = false }) {
       <ul
         className={`dropdown-content ${open ? '' : 'hidden'} menu bg-base-100 rounded-box border-base-300 z-10 mb-2 w-64 border p-2 shadow-lg`}
       >
-        <li className='menu-title'>Machines</li>
+        <li className='menu-title'>
+          <Trans>Machines</Trans>
+        </li>
         {machines.value.map(m => {
           const isCurrent = m.id === current.id;
           const status = statusOf(m);
@@ -127,13 +132,13 @@ export function MachineSwitcher({ collapsed = false }) {
         <li>
           <button type='button' onClick={run(() => (showMachineSetup.value = true))}>
             <FontAwesomeIcon icon={faPlus} className='h-3 w-3' />
-            Add or manage machines
+            <Trans>Add or manage machines</Trans>
           </button>
         </li>
         <li>
           <button type='button' className='text-error' onClick={run(disconnectMachine)}>
             <FontAwesomeIcon icon={faArrowRightFromBracket} className='h-3 w-3' />
-            Disconnect
+            <Trans>Disconnect</Trans>
           </button>
         </li>
       </ul>

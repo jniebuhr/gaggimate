@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 import preact from '@preact/preset-vite';
 import tailwindcss from '@tailwindcss/vite';
+import { lingui } from '@lingui/vite-plugin';
 import { execSync } from 'node:child_process';
 
 // Same version string as the firmware, so an app web bundle maps to a firmware build.
@@ -16,7 +17,9 @@ function bundleVersion() {
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   plugins: [
-    preact(),
+    // The Lingui macro (t, Trans, msg, plural) compiles messages at build time; the plugin compiles .po catalogs on import.
+    preact({ babel: { plugins: ['@lingui/babel-plugin-lingui-macro'] } }),
+    lingui(),
     tailwindcss(),
     // The native app draws edge-to-edge (layout pads with env(safe-area-inset-*)) and, like a native app, never zooms.
     mode === 'app' && {

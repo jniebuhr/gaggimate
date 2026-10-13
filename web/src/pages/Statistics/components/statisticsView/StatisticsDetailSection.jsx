@@ -1,4 +1,5 @@
 // Sub-components for the Statistics view detail section: header bar and panel body with metrics, profile groups, phase stats, trend chart, and compare
+import { useLingui } from '@lingui/react/macro';
 import { STATISTICS_PANEL_CLASS } from './constants';
 import { StatisticsShotCompareSection } from '../StatisticsShotCompareSection';
 import { MetricsTable } from '../MetricsTable';
@@ -18,12 +19,13 @@ function StatisticsDetailHeader({
   resolvedStatisticsDetailSection,
   setStatisticsDetailSection,
 }) {
+  const { t } = useLingui();
   const availableTabs = [
-    hasMetricStatistics ? { id: 'metrics', label: 'Global metric averages' } : null,
-    hasTrendStatistics ? { id: 'trends', label: 'Trends' } : null,
-    hasCompareStatistics ? { id: 'compare', label: 'Shot Charts' } : null,
-    hasProfileGroupStatistics ? { id: 'profile', label: 'Per-profile statistics' } : null,
-    hasPhaseStatistics ? { id: 'phase', label: 'Per-phase statistics' } : null,
+    hasMetricStatistics ? { id: 'metrics', label: t`Global metric averages` } : null,
+    hasTrendStatistics ? { id: 'trends', label: t`Trends` } : null,
+    hasCompareStatistics ? { id: 'compare', label: t`Shot Charts` } : null,
+    hasProfileGroupStatistics ? { id: 'profile', label: t`Per-profile statistics` } : null,
+    hasPhaseStatistics ? { id: 'phase', label: t`Per-phase statistics` } : null,
   ].filter(Boolean);
 
   if (availableTabs.length > 1) {
@@ -45,7 +47,7 @@ function StatisticsDetailHeader({
     );
   }
 
-  const title = availableTabs[0]?.label || 'Statistics';
+  const title = availableTabs[0]?.label || t`Statistics`;
   return <h3 className={STATISTICS_SECTION_TITLE_CLASS}>{title}</h3>;
 }
 

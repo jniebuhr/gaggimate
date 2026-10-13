@@ -6,6 +6,7 @@ import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import { faRectangleList } from '@fortawesome/free-solid-svg-icons/faRectangleList';
 import { faThermometerHalf } from '@fortawesome/free-solid-svg-icons/faThermometerHalf';
 import { faWeightScale } from '@fortawesome/free-solid-svg-icons/faWeightScale';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { WarningIcon } from '../../components/WarningIcon.jsx';
 import { activeWarnings, WARNING_LEVEL } from '../../utils/warnings.js';
 import { FlushButton } from './FlushButton.jsx';
@@ -33,7 +34,9 @@ const Metric = ({ icon, current, target, unit }) => (
 
 const FinishedView = ({ elapsed }) => (
   <div className='space-y-1 text-center'>
-    <div className='text-base-content text-lg font-bold'>Finished</div>
+    <div className='text-base-content text-lg font-bold'>
+      <Trans>Finished</Trans>
+    </div>
     <div className='text-base-content text-2xl font-bold tabular-nums'>{elapsed}</div>
   </div>
 );
@@ -64,7 +67,7 @@ const ActiveView = ({ p, grind }) => {
       </div>
       {phaseTarget && (
         <div className='text-base-content/60 self-end text-[0.65rem] tabular-nums'>
-          target {phaseTarget}
+          <Trans>target {phaseTarget}</Trans>
         </div>
       )}
     </div>
@@ -78,12 +81,8 @@ const InfoView = ({ title, hint }) => (
   </div>
 );
 
-const getSteamHint = (currentTemp, targetTemp, mode) => {
-  if (mode !== 2) return 'Start and open valve to pull water';
-  return Math.abs(targetTemp - currentTemp) < 5 ? 'Steam is ready' : 'Preheating';
-};
-
 export default function CompactProcessControls() {
+  const { t } = useLingui();
   const ds = useDashboardState();
   const {
     mode,
@@ -134,6 +133,11 @@ export default function CompactProcessControls() {
     else activate();
   };
 
+  const getSteamHint = (currentTemp, targetTemp) => {
+    if (mode !== 2) return t`Start and open valve to pull water`;
+    return Math.abs(targetTemp - currentTemp) < 5 ? t`Steam is ready` : t`Preheating`;
+  };
+
   const grindValue =
     grindTarget === 1 && volumetricAvailable
       ? `${grindTargetVolume}g`
@@ -142,7 +146,13 @@ export default function CompactProcessControls() {
   const renderContent = () => {
     if (processRunning && isFinished) return <FinishedView elapsed={fmtElapsed(p?.e)} />;
     if (processRunning) return <ActiveView p={p} grind={isGrinding} />;
-    if (mode === 0) return <InfoView title='Standby' hint={systemMessage || 'Machine is ready'} />;
+    if (mode === 0)
+      return (
+        <InfoView
+          title={t({ message: 'Standby', context: 'machine mode' })}
+          hint={systemMessage || t`Machine is ready`}
+        />
+      );
     if (mode === 1)
       return (
         <div className='flex w-full max-w-sm min-w-0 flex-col items-stretch gap-3'>
@@ -155,10 +165,10 @@ export default function CompactProcessControls() {
             </span>
             <span className='flex min-w-0 flex-1 flex-col leading-tight'>
               <span className='text-base-content/50 text-[0.6rem] font-semibold tracking-[0.18em] uppercase'>
-                Profile
+                <Trans>Profile</Trans>
               </span>
               <span className='text-base-content min-w-0 truncate text-sm font-bold'>
-                {ds.selectedProfile || 'Default'}
+                {ds.selectedProfile || t({ message: 'Default', context: 'profile' })}
               </span>
             </span>
           </a>
@@ -171,23 +181,28 @@ export default function CompactProcessControls() {
       return (
         <div className='flex flex-col items-center gap-3'>
           <Adjuster
-            label='TEMPERATURE'
+            label={t`TEMPERATURE`}
             value={`${targetTemperature}°C`}
             onDecrease={lowerTemp}
             onIncrease={raiseTemp}
           />
           <div className='text-base-content/60 text-xs'>
-            {getSteamHint(currentTemperature, targetTemperature, mode)}
+            {getSteamHint(currentTemperature, targetTemperature)}
           </div>
         </div>
       );
     if (isGrinding && !isGrindAvailable)
-      return <InfoView title='Grind' hint='Grind function not available' />;
+      return (
+        <InfoView
+          title={t({ message: 'Grind', context: 'machine mode' })}
+          hint={t`Grind function not available`}
+        />
+      );
     if (isGrinding)
       return (
         <div className='flex flex-col items-center gap-3'>
           <Adjuster
-            label='GRIND TARGET'
+            label={t`GRIND TARGET`}
             value={grindValue}
             onDecrease={lowerTarget}
             onIncrease={raiseTarget}
@@ -242,7 +257,7 @@ export default function CompactProcessControls() {
 
       {(showPrimary || showFlush || shownWarnings.length > 0) && (
         <div className='flex shrink-0 items-center gap-3'>
-          <div className='flex min-w-0 flex-1 items-center gap-2' aria-label='Active warnings'>
+          <div className='flex min-w-0 flex-1 items-center gap-2' aria-label={t`Active warnings`}>
             {shownWarnings.map(w => (
               <WarningIcon
                 key={w.key}
