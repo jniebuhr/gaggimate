@@ -56,6 +56,7 @@ import { faCrosshairs } from '@fortawesome/free-solid-svg-icons/faCrosshairs';
 import { faPuzzlePiece } from '@fortawesome/free-solid-svg-icons/faPuzzlePiece';
 import { faBluetoothB } from '@fortawesome/free-brands-svg-icons/faBluetoothB';
 import { faRotate } from '@fortawesome/free-solid-svg-icons/faRotate';
+import { isApp } from '../../app/platform.js';
 
 const CHECKBOX_KEYS = [
   'homekit',
@@ -488,7 +489,7 @@ export function Settings() {
   return (
     <PageLayout>
       <PageHeader
-        title='Settings'
+        title={isApp ? 'Device Settings' : 'Settings'}
         noStack={true}
         tabs={<TabBar tabs={settingsTabs} activeTab={tab} basePath='/settings' />}
         actions={
