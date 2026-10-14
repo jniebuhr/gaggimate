@@ -19,9 +19,18 @@ for (const file of readdirSync(srcDir).filter(f => f.endsWith('.svg'))) {
 execFileSync(
   'npx',
   [
-    'capacitor-assets', 'generate', '--ios', '--android',
-    '--iconBackgroundColor', '#ffffff', '--iconBackgroundColorDark', '#1d232a',
-    '--splashBackgroundColor', '#ffffff', '--splashBackgroundColorDark', '#1d232a',
+    'capacitor-assets',
+    'generate',
+    '--ios',
+    '--android',
+    '--iconBackgroundColor',
+    '#ffffff',
+    '--iconBackgroundColorDark',
+    '#1d232a',
+    '--splashBackgroundColor',
+    '#ffffff',
+    '--splashBackgroundColorDark',
+    '#1d232a',
   ],
   { cwd: webDir, stdio: 'inherit' },
 );

@@ -6,6 +6,7 @@ import { computed } from '@preact/signals';
 import { machine, ApiServiceContext } from '../../services/ApiService.js';
 import { useContext, useEffect, useState } from 'preact/hooks';
 import { Trans, useLingui } from '@lingui/react/macro';
+import { useProfileList } from '../../services/hooks.js';
 
 const gearpumpAddon = computed(() => machine.value.capabilities.gearpumpAddon);
 
@@ -16,7 +17,8 @@ function MahlkonigRecipeProfiles({ formData, onChange }) {
   const { t } = useLingui();
   const apiService = useContext(ApiServiceContext);
   const [lastRecipe, setLastRecipe] = useState(null);
-  const [profiles, setProfiles] = useState([]);
+  const { profiles: allProfiles } = useProfileList();
+  const profiles = allProfiles.filter(p => !p.utility);
   const mapped = String(formData.mahlkonigRecipeProfiles || '').split(',');
   const count = Math.max(MAHLKONIG_MIN_RECIPES, mapped.length, lastRecipe || 0);
   const recipes = Array.from({ length: count }, (_, i) => i + 1);
@@ -26,10 +28,6 @@ function MahlkonigRecipeProfiles({ formData, onChange }) {
       .request({ tp: 'req:mahlkonig:status' })
       .then(res => setLastRecipe(res.grind?.recipe || null))
       .catch(() => setLastRecipe(null));
-    apiService
-      .request({ tp: 'req:profiles:list' })
-      .then(res => setProfiles((res.profiles || []).filter(p => !p.utility)))
-      .catch(() => setProfiles([]));
   }, [apiService]);
 
   const setProfile = (recipe, value) => {

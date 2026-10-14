@@ -22,7 +22,6 @@ import { useConfirmAction } from '../../hooks/useConfirmAction.js';
 import { ProfileAddCard } from './ProfileAddCard.jsx';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'preact/hooks';
-import { computed } from '@preact/signals';
 import { Spinner } from '../../components/Spinner.jsx';
 import Card from '../../components/Card.jsx';
 import { parseProfile } from './utils.js';
@@ -49,6 +48,7 @@ import { buildStatisticsProfileHref } from '../Statistics/utils/statisticsRoute.
 import { isSystemProfile } from '../../utils/systemProfiles.js';
 import { msg } from '@lingui/core/macro';
 import { Plural, Trans, useLingui } from '@lingui/react/macro';
+import { useProfileList } from '../../services/hooks.js';
 
 Chart.register(
   LineController,
@@ -65,8 +65,6 @@ const PhaseLabels = {
   preinfusion: msg`Pre-Infusion`,
   brew: msg({ message: 'Brew', context: 'phase type' }),
 };
-
-const connected = computed(() => machine.value.connected);
 
 function ProfileCard({
   data,
@@ -643,8 +641,13 @@ async function withExportedImage(profile) {
 export function ProfileList() {
   const { t } = useLingui();
   const apiService = useContext(ApiServiceContext);
-  const [profiles, setProfiles] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const {
+    profiles,
+    loading,
+    invalidate: invalidateProfiles,
+    setLoading,
+    setProfiles,
+  } = useProfileList();
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('extraction');
   const [isDragging, setIsDragging] = useState(false);
@@ -659,12 +662,6 @@ export function ProfileList() {
       setActiveTab('extraction');
     }
   }, [hasUtilityProfiles]);
-
-  const loadProfiles = async () => {
-    const response = await apiService.request({ tp: 'req:profiles:list' });
-    setProfiles(response.profiles);
-    setLoading(false);
-  };
 
   // Placeholder for future persistence of order (intentionally empty)
   // Debounced persistence of profile order (300ms)
@@ -744,7 +741,7 @@ export function ProfileList() {
         return normalized;
       });
     },
-    [persistProfileOrder],
+    [persistProfileOrder, setProfiles],
   );
 
   const moveProfileBottom = useCallback(
@@ -767,7 +764,7 @@ export function ProfileList() {
         return normalized;
       });
     },
-    [persistProfileOrder],
+    [persistProfileOrder, setProfiles],
   );
 
   const onDragStart = useCallback(() => {
@@ -840,7 +837,7 @@ export function ProfileList() {
         return next;
       });
     },
-    [activeTab, clearDropHighlights, persistProfileOrder],
+    [activeTab, clearDropHighlights, persistProfileOrder, setProfiles],
   );
 
   // Sorting via SortableJS
@@ -866,33 +863,21 @@ export function ProfileList() {
   }, [loading, searchTerm, onDragStart, onDragChange, onDragEnd]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => {
-    const loadData = async () => {
-      if (connected.value) {
-        await loadProfiles();
-      }
-    };
-    loadData();
-  }, [connected.value]);
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const onDelete = useCallback(
     async id => {
       setLoading(true);
       await apiService.request({ tp: 'req:profiles:delete', id });
-      await loadProfiles();
+      await invalidateProfiles();
     },
-    [apiService, setLoading],
+    [apiService, setLoading, invalidateProfiles],
   );
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // The status broadcast carries the new selection into the cached list
   const onSelect = useCallback(
     async id => {
-      setLoading(true);
       await apiService.request({ tp: 'req:profiles:select', id });
-      await loadProfiles();
     },
-    [apiService, setLoading],
+    [apiService],
   );
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -900,9 +885,9 @@ export function ProfileList() {
     async id => {
       setLoading(true);
       await apiService.request({ tp: 'req:profiles:favorite', id });
-      await loadProfiles();
+      await invalidateProfiles();
     },
-    [apiService, setLoading],
+    [apiService, setLoading, invalidateProfiles],
   );
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -910,9 +895,9 @@ export function ProfileList() {
     async id => {
       setLoading(true);
       await apiService.request({ tp: 'req:profiles:unfavorite', id });
-      await loadProfiles();
+      await invalidateProfiles();
     },
-    [apiService, setLoading],
+    [apiService, setLoading, invalidateProfiles],
   );
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -928,9 +913,9 @@ export function ProfileList() {
         copy.label = `${original.label} Copy`;
         await apiService.request({ tp: 'req:profiles:save', profile: copy });
       }
-      await loadProfiles();
+      await invalidateProfiles();
     },
-    [apiService, profiles, setLoading],
+    [apiService, profiles, setLoading, invalidateProfiles],
   );
 
   const onExport = useCallback(async () => {
@@ -966,7 +951,7 @@ export function ProfileList() {
           } catch {
             // Individual save errors are surfaced by WS timeout; continue to reload list.
           }
-          await loadProfiles();
+          await invalidateProfiles();
         }
       };
       reader.readAsText(file);
@@ -980,8 +965,8 @@ export function ProfileList() {
         await apiService.request({ tp: 'req:profiles:delete', id: p.id });
       }
     }
-    await loadProfiles();
-  }, [profiles, apiService]);
+    await invalidateProfiles();
+  }, [profiles, apiService, setLoading, invalidateProfiles]);
 
   if (loading) {
     return (

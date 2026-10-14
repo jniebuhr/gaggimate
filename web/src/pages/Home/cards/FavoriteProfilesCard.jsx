@@ -1,6 +1,5 @@
-import { useContext, useState } from 'preact/hooks';
-import { computed, useSignalEffect } from '@preact/signals';
-import { ApiServiceContext, machine } from '../../../services/ApiService.js';
+import { useContext } from 'preact/hooks';
+import { ApiServiceContext } from '../../../services/ApiService.js';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTemperatureFull } from '@fortawesome/free-solid-svg-icons/faTemperatureFull';
 import { faClock } from '@fortawesome/free-solid-svg-icons/faClock';
@@ -8,8 +7,7 @@ import { faScaleBalanced } from '@fortawesome/free-solid-svg-icons/faScaleBalanc
 import PropTypes from 'prop-types';
 import { Trans } from '@lingui/react/macro';
 import { SkeletonBlock } from '../../../components/SkeletonBlock.jsx';
-
-const connected = computed(() => machine.value.connected);
+import { useProfileList } from '../../../services/hooks.js';
 
 function ProfileMiniCard({ profile, isSelected, onSelect }) {
   const phases = Array.isArray(profile?.phases) ? profile.phases : [];
@@ -60,30 +58,8 @@ ProfileMiniCard.propTypes = {
 
 export function FavoriteProfilesCard({ selectedProfileId, inCard = false, compact = false }) {
   const apiService = useContext(ApiServiceContext);
-  const [favorites, setFavorites] = useState(null);
-  const [loading, setLoading] = useState(false);
-
-  useSignalEffect(() => {
-    if (!apiService || !connected.value) {
-      setLoading(false);
-      return;
-    }
-    let cancelled = false;
-    setLoading(true);
-    apiService
-      .request({ tp: 'req:profiles:list' })
-      .then(res => {
-        if (cancelled) return;
-        setFavorites((res.profiles ?? []).filter(p => p.favorite).slice(0, 3));
-        setLoading(false);
-      })
-      .catch(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  });
+  const { profiles, loading } = useProfileList();
+  const favorites = profiles.filter(p => p.favorite).slice(0, 3);
 
   const handleSelect = id => {
     apiService.request({ tp: 'req:profiles:select', id }).catch(() => {});
@@ -93,7 +69,7 @@ export function FavoriteProfilesCard({ selectedProfileId, inCard = false, compac
     ? 'flex flex-col gap-2'
     : 'card bg-base-100 flex flex-col gap-2 rounded-xl p-3';
 
-  if (loading || favorites === null) {
+  if (loading) {
     return (
       <div className={wrapperClass}>
         <SkeletonBlock className='h-2 w-20' />

@@ -2,13 +2,11 @@ import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
 import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
 import { faEllipsisVertical } from '@fortawesome/free-solid-svg-icons/faEllipsisVertical';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { useCallback, useEffect, useRef, useState, useContext } from 'preact/hooks';
+import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import { useRoute } from 'preact-iso';
 import { Plural, Trans, useLingui } from '@lingui/react/macro';
 import { t } from '@lingui/core/macro';
 import {
-  ApiServiceContext,
-  machine,
   prefetchSettings,
   updateSettingsCache,
   getCachedSettings,
@@ -23,6 +21,7 @@ import { getStoredTheme, handleThemeChange } from '../../utils/themeManager.js';
 
 import PageLayout from '../../components/PageLayout.jsx';
 import PageHeader from '../../components/PageHeader.jsx';
+import { useProfileList } from '../../services/hooks.js';
 import TabBar from '../../components/TabBar.jsx';
 
 import lazy from 'preact-iso/lazy';
@@ -256,12 +255,11 @@ function buildSubmitFormData(formData, autowakeupSchedules, restart) {
 
 export function Settings() {
   const { t } = useLingui();
-  const apiService = useContext(ApiServiceContext);
   const { params } = useRoute();
   const tab = params.tab || 'general';
   const isFormTab = ['general', 'machine', 'plugins'].includes(tab);
 
-  const [profiles, setProfiles] = useState([]);
+  const { profiles } = useProfileList();
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({});
   const [currentTheme, setCurrentTheme] = useState('light');
@@ -289,16 +287,6 @@ export function Settings() {
         });
     }
   }, [fetchedSettings]);
-
-  useEffect(() => {
-    const loadProfiles = async () => {
-      if (machine.value.connected) {
-        const response = await apiService.request({ tp: 'req:profiles:list', minimal: true });
-        setProfiles(response.profiles);
-      }
-    };
-    loadProfiles();
-  }, [machine.value.connected, apiService]);
 
   const formRef = useRef();
   const dropdownRef = useRef(null);
