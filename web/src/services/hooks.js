@@ -23,26 +23,53 @@ const profilesWithSelection = computed(() => {
   );
 });
 
+const RETRY_MIN_MS = 1000;
+const RETRY_MAX_MS = 30000;
+let profilesGeneration = 0;
+let retryTimer = null;
+let retryDelay = RETRY_MIN_MS;
+
+// A request sent on a dropped socket is never answered, so abandon it instead of joining it
 effect(() => {
-  if (!connected.value) profilesLoaded.value = false;
+  if (connected.value) return;
+  profilesLoaded.value = false;
+  profilesInflight = null;
+  profilesGeneration++;
+  clearTimeout(retryTimer);
+  retryDelay = RETRY_MIN_MS;
 });
+
+const scheduleRetry = apiService => {
+  clearTimeout(retryTimer);
+  retryTimer = setTimeout(() => {
+    if (connected.value && !profilesLoaded.value) loadProfiles(apiService);
+  }, retryDelay);
+  retryDelay = Math.min(retryDelay * 2, RETRY_MAX_MS);
+};
 
 const loadProfiles = apiService => {
   if (profilesInflight) return profilesInflight;
-  profilesInflight = apiService
+  clearTimeout(retryTimer);
+  const generation = profilesGeneration;
+  const request = apiService
     .request({ tp: 'req:profiles:list' })
     .then(response => {
+      if (generation !== profilesGeneration) return;
       profiles.value = response?.profiles ?? [];
       profilesLoaded.value = true;
+      profilesLoading.value = false;
+      retryDelay = RETRY_MIN_MS;
     })
     .catch(error => {
+      if (generation !== profilesGeneration) return;
       console.error('Failed to load profiles:', error);
+      scheduleRetry(apiService);
     })
     .finally(() => {
-      profilesInflight = null;
-      profilesLoading.value = false;
+      if (profilesInflight === request) profilesInflight = null;
     });
-  return profilesInflight;
+  profilesInflight = request;
+  return request;
 };
 
 const setProfilesLoading = loading => {
