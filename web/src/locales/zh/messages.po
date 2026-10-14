@@ -73,7 +73,7 @@ msgstr "{diffYears, plural, other {# 年前}}"
 
 #: src/app/ConnectionGate.jsx
 msgid "{host} isn't answering. Make sure the machine is on and your phone is on the same Wi-Fi network."
-msgstr "{host} 没有响应。请确认咖啡机已开机，并且手机与其连接在同一 Wi-Fi 网络。"
+msgstr "{host} 没有响应。请确认咖啡机已开机，并且手机与咖啡机处于同一 Wi-Fi 网络。"
 
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "{label} severity"
@@ -81,7 +81,7 @@ msgstr "{label} 严重程度"
 
 #: src/app/AppSettings.jsx
 msgid "{machineCount, plural, one {Watches # saved machine.} other {Watches all # saved machines.}}"
-msgstr "{machineCount, plural, one {监控 # 台已保存的咖啡机。} other {监控全部 # 台已保存的咖啡机。}}"
+msgstr "{machineCount, plural, other {监控 # 台已保存的咖啡机。}}"
 
 #: src/app/AppSettings.jsx
 msgid "{machineCount} saved"
@@ -117,11 +117,11 @@ msgstr "* 更改 Wi-Fi、时区或插件后需要重启。"
 
 #: src/pages/Statistics/components/toolbar/subcomponents.jsx
 msgid "+{moreErrorCount} more"
-msgstr "+{moreErrorCount} 条更多"
+msgstr "还有 {moreErrorCount} 条"
 
 #: src/pages/Statistics/components/toolbar/subcomponents.jsx
 msgid "+{moreWarningCount} more"
-msgstr "+{moreWarningCount} 条更多"
+msgstr "还有 {moreWarningCount} 条"
 
 #: src/pages/Settings/PluginCard.jsx
 msgid "<0>Brewing:</0> recipes with GbS turned on report each grind here; pressing the rotary knob afterwards starts the shot."
@@ -391,11 +391,11 @@ msgstr "平均目标值与偏差"
 #: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
 msgctxt "column type"
 msgid "Avg (tw)"
-msgstr "均值 (tw)"
+msgstr "均值 (时间加权)"
 
 #: src/pages/Statistics/components/PhaseStatistics.jsx
 msgid "Avg (TW)"
-msgstr "均值 (TW)"
+msgstr "均值 (时间加权)"
 
 #: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
 msgctxt "column type"
@@ -1026,7 +1026,7 @@ msgstr "无法连接到 {errorAddress}"
 
 #: src/app/MachineSetup.jsx
 msgid "Couldn't connect to {host}: {reason}. Make sure the machine is on and your phone is on the same Wi-Fi network."
-msgstr "无法连接到 {host}：{reason}。请确认咖啡机已开机，并且手机与其连接在同一 Wi-Fi 网络。"
+msgstr "无法连接到 {host}：{reason}。请确认咖啡机已开机，并且手机与咖啡机处于同一 Wi-Fi 网络。"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Cracking pressure of a grouphead mushroom valve (e.g. 4.0 on Delonghi machines). Subtracted from readings and added to targets only while a brew is running. Leave at 0.0 for a 3-way solenoid."
@@ -1719,7 +1719,7 @@ msgstr "导出萃取数据"
 
 #: src/pages/ShotAnalyzer/utils/columns.js
 msgid "Extended Record"
-msgstr "扩展记录"
+msgstr "含扩展记录"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "External LED ({extLedPct}%)"
@@ -3908,7 +3908,7 @@ msgstr "保存"
 #: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarModeHint.jsx
 msgctxt "import mode badge"
 msgid "SAVE"
-msgstr "SAVE"
+msgstr "保存"
 
 #: src/pages/Settings/StickyFormFooter.jsx
 msgid "Save & Restart"
@@ -4426,7 +4426,7 @@ msgstr "单品、拼配..."
 
 #: src/components/PumpFlowCalibration/api.js
 msgid "slog not ready, waiting for flush... ({attempt})"
-msgstr "slog 尚未就绪，等待刷新...（{attempt}）"
+msgstr "slog 尚未就绪，等待写入...（{attempt}）"
 
 #: src/pages/Settings/tabs/CalibrationTab.jsx
 msgid "Slope Window"
@@ -5489,7 +5489,7 @@ msgstr "查看"
 #: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarModeHint.jsx
 msgctxt "import mode badge"
 msgid "VIEW"
-msgstr "VIEW"
+msgstr "查看"
 
 #: src/pages/ProfileList/index.jsx
 msgid "View statistics for {label} profile"
@@ -5521,7 +5521,7 @@ msgstr "Visualizer.coffee 用户名"
 
 #: src/pages/ShotAnalyzer/utils/columns.js
 msgid "Volumetric Avail."
-msgstr "支持定量"
+msgstr "定量可用"
 
 #: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
 msgid "Volumetric target"
@@ -5583,7 +5583,7 @@ msgstr "热水按钮行为"
 
 #: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
 msgid "Water drawn"
-msgstr "已取水"
+msgstr "已取水量"
 
 #: src/utils/metricDefinitions.js
 msgid "Water Level"
@@ -5751,7 +5751,7 @@ msgstr "新的 PID 参数已成功保存。"
 
 #: src/app/MachineSetup.jsx
 msgid "Your phone needs to be on the same Wi-Fi network as the machine."
-msgstr "手机需要与咖啡机连接在同一 Wi-Fi 网络。"
+msgstr "手机需要与咖啡机处于同一 Wi-Fi 网络。"
 
 #: src/pages/ShotAnalyzer/components/EmptyState.jsx
 msgid "Your saved shots and profiles directly from the GaggiMate internal storage."
