@@ -97,6 +97,8 @@ class Settings {
     double getBrewDelay() const { return brewDelay.get(); }
     double getGrindDelay() const { return grindDelay.get(); }
     bool isDelayAdjust() const { return delayAdjust.get(); }
+    bool isMuseEnabled() const { return museEnabled.get(); }
+    bool isMuseBubbles() const { return museBubbles.get(); }
     bool isHeaterCoordinationEnabled() const { return heaterCoordinationEnabled.get(); }
     int getHeaterHandoverMs() const { return heaterHandoverMs.get(); }
     String getPid() const { return pid.get(); }
@@ -211,6 +213,8 @@ class Settings {
     void setBrewDelay(double brewDelay);
     void setGrindDelay(double grindDelay);
     void setDelayAdjust(bool delay_adjust);
+    void setMuseEnabled(bool muse_enabled);
+    void setMuseBubbles(bool muse_bubbles);
     void setPid(const String &pid);
     void setHeaterCoordinationEnabled(bool enabled);
     void setHeaterHandoverMs(int handoverMs);
@@ -322,6 +326,8 @@ class Settings {
     Property<double> brewDelay{registry, "del_br", 800.0};
     Property<double> grindDelay{registry, "del_gd", 1000.0};
     Property<bool> delayAdjust{registry, "del_ad", true};
+    Property<bool> museEnabled{registry, "muse_en", true}; // Muse avatar overlay (Phase 1)
+    Property<bool> museBubbles{registry, "muse_bb", true}; // Muse speech bubbles
     Property<int> startupMode{registry, "sm", MODE_STANDBY};
     Property<bool> autowakeupEnabled{registry, "ab_en", false};
     Property<std::vector<AutoWakeupSchedule>> autowakeupSchedules{registry, "ab_schedules", {AutoWakeupSchedule("07:00")}};

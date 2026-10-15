@@ -133,6 +133,10 @@ void Settings::setGrindDelay(double grind_Delay) { grindDelay.set(std::clamp(gri
 
 void Settings::setDelayAdjust(bool delay_adjust) { delayAdjust.set(delay_adjust); }
 
+void Settings::setMuseEnabled(bool muse_enabled) { museEnabled.set(muse_enabled); }
+
+void Settings::setMuseBubbles(bool muse_bubbles) { museBubbles.set(muse_bubbles); }
+
 void Settings::setStartupMode(const int startup_mode) { startupMode.set(startup_mode); }
 
 void Settings::setStandbyTimeout(int standby_timeout) { standbyTimeout.set(standby_timeout); }
