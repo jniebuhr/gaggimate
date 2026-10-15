@@ -1351,7 +1351,12 @@ String DefaultUI::getErrorMessage() { return controller->getSystemStateMessage()
 void DefaultUI::applyTheme() {
     const ::Settings &settings = controller->getSettings();
     int newThemeMode = settings.getThemeMode();
-#ifndef GAGGIMATE_SIM // Amoled-specific black theme override is device-only
+#ifdef GAGGIMATE_SIM_AMOLED
+    // Match the automatic true-black theme used by the physical AMOLED driver.
+    if (newThemeMode == 0) {
+        newThemeMode = THEME_ID_AMOLED_DARK;
+    }
+#elif !defined(GAGGIMATE_SIM)
     if (newThemeMode == 0 && panelDriver == AmoledDisplayDriver::getInstance()) {
         newThemeMode = THEME_ID_AMOLED_DARK;
     }
