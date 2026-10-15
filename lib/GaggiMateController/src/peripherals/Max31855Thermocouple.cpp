@@ -32,6 +32,7 @@ void Max31855Thermocouple::loop() {
         error_callback();
         return;
     }
+
     // If buffer has been filled up, remove the previous result from the error count
     if (resultCount == MAX31855_ERROR_WINDOW) {
         errorCount -= resultBuffer[bufferIndex];
@@ -58,8 +59,15 @@ void Max31855Thermocouple::loop() {
 
     if (temp <= 0.0f)
         return;
-    temperature = 0.2f * temp + 0.8f * temperature;
-    ESP_LOGV(LOG_TAG, "Updated temperature: %2f\n", temperature);
+
+    slidingWindow[windowCounter] = temp;
+    windowCounter = (windowCounter + 1) % slidingWindow.size();
+
+    auto copyWindow = slidingWindow;
+    std::sort(copyWindow.begin(), copyWindow.end());
+    temperature = copyWindow[MAX31855_WINDOW_SIZE/2];
+
+    ESP_LOGV(LOG_TAG, "Updated temperature: %2f, original: %2f\n", temperature, temp);
     callback(temperature);
 }
 
