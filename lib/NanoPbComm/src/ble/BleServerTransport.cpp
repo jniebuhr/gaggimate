@@ -46,6 +46,7 @@ void BleServerTransport::init(const String &deviceName, bool pairingWindow) {
     // First boot pairs openly; once a display has bonded, only it may connect (unless the pairing window is open).
     loadPairedPeer();
     if (_havePairedPeer) {
+        _peerUsesPrivacy = bondHasIrk(_pairedPeer);
         NimBLEDevice::whiteListAdd(_pairedPeer);
         pruneForeignBonds(_pairedPeer);
         ESP_LOGI(LOG_TAG, "Paired to display %s", _pairedPeer.toString().c_str());
@@ -65,15 +66,16 @@ void BleServerTransport::init(const String &deviceName, bool pairingWindow) {
     applyAdvertisingData();
     startAdv();
     ESP_LOGI(LOG_TAG, "BLE server started, advertising %s",
-             _pairingWindow    ? "(open, pairing window)"
-             : _havePairedPeer ? "(directed to paired display)"
-                               : (_whitelistOnly ? "(whitelist only)" : "(open, pairing mode)"));
+             _pairingWindow ? "(open, pairing window)"
+             : _havePairedPeer
+                 ? (_peerUsesPrivacy ? "(whitelist, paired display uses private addresses)" : "(directed to paired display)")
+                 : (_whitelistOnly ? "(whitelist only)" : "(open, pairing mode)"));
 }
 
 void BleServerTransport::startAdv() {
     if (_advertising == nullptr || _advertising->isAdvertising())
         return;
-    if (_havePairedPeer && !_pairingWindow) {
+    if (_havePairedPeer && !_pairingWindow && !_peerUsesPrivacy) {
         // Low-duty directed adverts are LL-dropped by every radio except the paired display's -- invisible to other scanners.
         _advertising->setAdvertisementType(BLE_GAP_CONN_MODE_DIR);
         _advertising->start(0, nullptr, &_pairedPeer);
@@ -120,6 +122,7 @@ void BleServerTransport::adoptPeer(const NimBLEAddress &address) {
         ESP_LOGW(LOG_TAG, "Replacing paired display %s with %s", _pairedPeer.toString().c_str(), address.toString().c_str());
     _pairingWindow = false;
     savePairedPeer(address);
+    _peerUsesPrivacy = bondHasIrk(address);
     pruneForeignBonds(address);
     // Reduce the (possibly legacy multi-bond) whitelist to this display; safe while connected, advertising is stopped.
     while (NimBLEDevice::getWhiteListCount() > 0)
@@ -153,6 +156,16 @@ void BleServerTransport::pruneForeignBonds(const NimBLEAddress &keep) {
     }
 }
 
+bool BleServerTransport::bondHasIrk(const NimBLEAddress &address) {
+    // A privacy-enabled display connects from rotating private addresses that a directed advert to its identity
+    // never reaches; such peers get undirected adverts and are matched by the whitelist through the resolving list.
+    struct ble_store_key_sec key = {};
+    memcpy(key.peer_addr.val, address.getNative(), 6);
+    key.peer_addr.type = address.getType();
+    struct ble_store_value_sec value;
+    return ble_store_read_peer_sec(&key, &value) == 0 && value.irk_present;
+}
+
 void BleServerTransport::loadPairedPeer() {
     Preferences prefs;
     if (!prefs.begin(NVS_NAMESPACE, true))
@@ -163,6 +176,20 @@ void BleServerTransport::loadPairedPeer() {
         ble_addr_t addr;
         memcpy(addr.val, buf, 6);
         addr.type = buf[6];
+        // Earlier builds adopted the peer before its identity arrived and stored a resolvable private address for
+        // privacy-enabled displays. It goes stale when the display rotates it, and pruning against it deleted the
+        // display's real bond. Forget it; the legacy-bond path re-adopts the display by its identity on its next
+        // encrypted link.
+        if (addr.type == BLE_ADDR_RANDOM && (addr.val[5] & 0xC0) == 0x40) {
+            ESP_LOGW(LOG_TAG, "Dropping stored private address %s; the paired display re-adopts by identity",
+                     NimBLEAddress(addr).toString().c_str());
+            prefs.end();
+            if (prefs.begin(NVS_NAMESPACE, false)) {
+                prefs.remove(NVS_PEER_KEY);
+                prefs.end();
+            }
+            return;
+        }
         _pairedPeer = NimBLEAddress(addr);
         _havePairedPeer = true;
     }
@@ -252,13 +279,32 @@ void BleServerTransport::onAuthenticationComplete(ble_gap_conn_desc *desc) {
     // Negotiate the controller's transmit length too; ATT MTU alone leaves
     // telemetry fragmented into small packets and can exhaust the BLE packet pool.
     _server->setDataLen(desc->conn_handle, BLE_DLE_OCTETS);
-    if (desc->sec_state.bonded)
-        adoptPeer(NimBLEAddress(desc->peer_id_addr));
+    if (desc->sec_state.bonded) {
+        _adoptPending = true;
+        tryAdoptPeer(desc->conn_handle);
+    }
+}
+
+void BleServerTransport::tryAdoptPeer(uint16_t connHandle) {
+    // On a first pairing this runs at encryption, before key distribution: a privacy-enabled display's identity address (and IRK)
+    // is not known yet and peer_id_addr is still its private address. Wait until the bond is stored under the identity address,
+    // whose IRK then sits in the controller's resolving list for the whitelist.
+    ble_gap_conn_desc desc;
+    if (ble_gap_conn_find(connHandle, &desc) != 0)
+        return;
+    struct ble_store_key_sec key = {};
+    key.peer_addr = desc.peer_id_addr;
+    struct ble_store_value_sec value;
+    if (ble_store_read_peer_sec(&key, &value) != 0)
+        return;
+    _adoptPending = false;
+    adoptPeer(NimBLEAddress(desc.peer_id_addr));
 }
 
 void BleServerTransport::onDisconnect(NimBLEServer *server) {
     _connected = false;
     _connHandle = BLE_HS_CONN_HANDLE_NONE;
+    _adoptPending = false;
     ESP_LOGI(LOG_TAG, "Client disconnected");
     _otaDfu.onDisconnect();
     emitConnection(false);
@@ -275,6 +321,8 @@ void BleServerTransport::disconnect() {
 void BleServerTransport::onWrite(NimBLECharacteristic *characteristic) {
     if (characteristic != _rxChar)
         return;
+    if (_adoptPending)
+        tryAdoptPeer(_connHandle);
     NimBLEAttValue value = characteristic->getValue();
     if (value.length() > 0)
         emitData(value.data(), value.length());
