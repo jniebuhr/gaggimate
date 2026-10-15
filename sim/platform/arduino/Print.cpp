@@ -22,6 +22,7 @@
  */
 
 #include "Arduino.h"
+#include <cstdarg> // va_start/va_copy below; not transitively included by host GCC
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
