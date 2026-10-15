@@ -1,4 +1,5 @@
 #include "WebSocketHandler.h"
+#include <esp_timer.h>
 #include <algorithm>
 #include <display/core/Controller.h>
 #include <display/core/ProfileManager.h>
@@ -398,6 +399,9 @@ void WebSocketHandler::publishState(unsigned long now) {
     JsonDocument doc(&psramAllocator);
     doc["tp"] = "evt:status";
     doc["m"] = controller->getMode();
+    doc["dip"] = WiFi.status() == WL_CONNECTED ? WiFi.localIP().toString() : "";
+    const auto wifiMode = WiFi.getMode();
+    doc["dap"] = (wifiMode == WIFI_AP || wifiMode == WIFI_AP_STA) ? WiFi.softAPIP().toString() : "";
     const Profile &profile = controller->getProfileManager()->getSelectedProfile();
     doc["p"] = profile.label;
     doc["puid"] = profile.id;
@@ -448,6 +452,7 @@ void WebSocketHandler::publishState(unsigned long now) {
 void WebSocketHandler::publishTelemetry() {
     statusDoc.clear();
     statusDoc["tp"] = "evt:status";
+    statusDoc["du"] = static_cast<uint32_t>(esp_timer_get_time() / 1000000LL);
     statusDoc["ct"] = round_to(controller->getCurrentTemp(), 3);
     statusDoc["cst"] = round_to(controller->getCurrentSteamTemp(), 3);
     statusDoc["tst"] = controller->getTargetSteamTemp();
