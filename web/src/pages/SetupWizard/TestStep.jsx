@@ -3,6 +3,7 @@ import { Trans, useLingui } from '@lingui/react/macro';
 import { msg } from '@lingui/core/macro';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
 import { Spinner } from '../../components/Spinner.jsx';
+import { InfoNote } from './InfoNote.jsx';
 
 const REASONS = {
   sensor: msg`The temperature sensor returned an invalid reading. Check the thermocouple and its wiring.`,
@@ -59,36 +60,29 @@ function useSetupTest(name) {
 }
 
 function ResultAlert({ status, error }) {
-  const { i18n } = useLingui();
+  const { t, i18n } = useLingui();
   if (error) {
     const text = REQUEST_ERRORS[error];
     return (
-      <div className='alert alert-error'>
-        <span>{text ? i18n._(text) : error}</span>
-      </div>
+      <InfoNote tone='error' title={t`Test not started`}>
+        {text ? i18n._(text) : error}
+      </InfoNote>
     );
   }
   if (!status || status.state === 'running') return null;
   const reason = status.reason && REASONS[status.reason] ? i18n._(REASONS[status.reason]) : null;
   if (status.state === 'aborted') {
     return (
-      <div className='alert alert-warning'>
-        <span>
-          <Trans>The test was stopped.</Trans>
-        </span>
-      </div>
+      <InfoNote tone='warning' title={t`Test stopped`}>
+        <Trans>The test was stopped before it finished.</Trans>
+      </InfoNote>
     );
   }
   const passed = status.state === 'passed';
   return (
-    <div className={`alert ${passed ? 'alert-success' : 'alert-error'}`}>
-      <div>
-        <div className='font-semibold'>
-          {passed ? <Trans>Test passed</Trans> : <Trans>Test failed</Trans>}
-        </div>
-        {reason && <div className='text-sm'>{reason}</div>}
-      </div>
-    </div>
+    <InfoNote tone={passed ? 'success' : 'error'} title={passed ? t`Test passed` : t`Test failed`}>
+      {reason}
+    </InfoNote>
   );
 }
 
@@ -163,11 +157,8 @@ function PressureTest() {
           and the valve opens, which should release the pressure to about 0 bar.
         </Trans>
       </p>
-      <div className='alert alert-warning'>
+      <InfoNote tone='warning' title={t`Caution: pressurized hot water`}>
         <div className='space-y-2'>
-          <div className='font-semibold'>
-            <Trans>Caution: pressurized hot water</Trans>
-          </div>
           <ul className='list-disc pl-5 text-sm'>
             <li>
               <Trans>Fill the water tank and close the steam knob.</Trans>
@@ -195,7 +186,7 @@ function PressureTest() {
             </span>
           </label>
         </div>
-      </div>
+      </InfoNote>
       {running && (
         <div className='flex items-center gap-2 text-sm'>
           <Spinner size={4} />
@@ -245,8 +236,8 @@ export function TestStep() {
           before you start.
         </Trans>
       </p>
-      <HeaterTest />
       {hasPressure && <PressureTest />}
+      <HeaterTest />
     </div>
   );
 }

@@ -384,16 +384,16 @@ msgstr "Cambia automáticamente al modo de extracción a la(s) hora(s) indicada(
 msgid "Autotune Complete!"
 msgstr "¡Autoajuste completado!"
 
+#: src/pages/SetupWizard/MachineStep.jsx
+msgid "Autotune failed"
+msgstr ""
+
 #: src/pages/Settings/tabs/CalibrationTab.jsx
 msgid "Autotune Failed"
 msgstr "Autoajuste fallido"
 
 #: src/pages/SetupWizard/MachineStep.jsx
-msgid "Autotune failed. Let the machine cool down and try again."
-msgstr ""
-
-#: src/pages/SetupWizard/MachineStep.jsx
-msgid "Autotune finished. New PID values: {result}"
+msgid "Autotune finished"
 msgstr ""
 
 #: src/pages/Settings/tabs/CalibrationTab.jsx
@@ -764,6 +764,11 @@ msgstr "Gráfica y métricas"
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Chart First"
 msgstr "Gráfica primero"
+
+#: src/pages/SetupWizard/index.jsx
+#: src/pages/SetupWizard/MachineStep.jsx
+msgid "Check the connection to your machine and try again."
+msgstr ""
 
 #: src/app/ConnectionGate.jsx
 msgid "Choose another machine"
@@ -2370,6 +2375,10 @@ msgstr "Duración (larga)"
 msgid "Length (Short)"
 msgstr "Duración (corta)"
 
+#: src/pages/SetupWizard/MachineStep.jsx
+msgid "Let the machine cool down and try again."
+msgstr ""
+
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "Let's make sure everything is wired up correctly. Make sure the water tank is filled before you start."
 msgstr ""
@@ -2532,7 +2541,7 @@ msgid "Machine Settings"
 msgstr "Ajustes de la máquina"
 
 #: src/pages/SetupWizard/MachineStep.jsx
-msgid "Machine settings saved."
+msgid "Machine settings saved"
 msgstr ""
 
 #: src/app/AppSettings.jsx
@@ -2818,6 +2827,10 @@ msgstr "Nunca"
 #: src/components/Navigation.jsx
 msgid "NEW"
 msgstr "NEW"
+
+#: src/pages/SetupWizard/MachineStep.jsx
+msgid "New PID values: {result}"
+msgstr ""
 
 #: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
 msgid "New shot did not appear in history — was it cancelled?"
@@ -4177,7 +4190,7 @@ msgstr "Guardando perfil de calibración..."
 
 #: src/pages/SetupWizard/index.jsx
 #: src/pages/SetupWizard/MachineStep.jsx
-msgid "Saving failed. Check the connection to your machine and try again."
+msgid "Saving failed"
 msgstr ""
 
 #: src/pages/ProfileEdit/ExtendedProfileForm.jsx
@@ -4267,6 +4280,10 @@ msgstr "Buscar {labelLower}..."
 
 #: src/pages/SetupWizard/WifiStep.jsx
 msgid "Search again"
+msgstr ""
+
+#: src/pages/SetupWizard/WifiStep.jsx
+msgid "Search failed"
 msgstr ""
 
 #: src/pages/Statistics/components/StatisticsSearchHelp.jsx
@@ -5248,7 +5265,15 @@ msgid "Test failed"
 msgstr ""
 
 #: src/pages/SetupWizard/TestStep.jsx
+msgid "Test not started"
+msgstr ""
+
+#: src/pages/SetupWizard/TestStep.jsx
 msgid "Test passed"
+msgstr ""
+
+#: src/pages/SetupWizard/TestStep.jsx
+msgid "Test stopped"
 msgstr ""
 
 #: src/pages/SetupWizard/index.jsx
@@ -5364,7 +5389,7 @@ msgid "The temperature sensor returned an invalid reading. Check the thermocoupl
 msgstr ""
 
 #: src/pages/SetupWizard/TestStep.jsx
-msgid "The test was stopped."
+msgid "The test was stopped before it finished."
 msgstr ""
 
 #: src/pages/Settings/tabs/SystemTab.jsx

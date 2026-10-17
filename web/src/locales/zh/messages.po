@@ -384,16 +384,16 @@ msgstr "在每天指定时间自动切换到冲煮模式。"
 msgid "Autotune Complete!"
 msgstr "自动整定完成！"
 
+#: src/pages/SetupWizard/MachineStep.jsx
+msgid "Autotune failed"
+msgstr ""
+
 #: src/pages/Settings/tabs/CalibrationTab.jsx
 msgid "Autotune Failed"
 msgstr "自动整定失败"
 
 #: src/pages/SetupWizard/MachineStep.jsx
-msgid "Autotune failed. Let the machine cool down and try again."
-msgstr ""
-
-#: src/pages/SetupWizard/MachineStep.jsx
-msgid "Autotune finished. New PID values: {result}"
+msgid "Autotune finished"
 msgstr ""
 
 #: src/pages/Settings/tabs/CalibrationTab.jsx
@@ -764,6 +764,11 @@ msgstr "图表与指标"
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Chart First"
 msgstr "图表优先"
+
+#: src/pages/SetupWizard/index.jsx
+#: src/pages/SetupWizard/MachineStep.jsx
+msgid "Check the connection to your machine and try again."
+msgstr ""
 
 #: src/app/ConnectionGate.jsx
 msgid "Choose another machine"
@@ -2370,6 +2375,10 @@ msgstr "长度（长）"
 msgid "Length (Short)"
 msgstr "长度（短）"
 
+#: src/pages/SetupWizard/MachineStep.jsx
+msgid "Let the machine cool down and try again."
+msgstr ""
+
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "Let's make sure everything is wired up correctly. Make sure the water tank is filled before you start."
 msgstr ""
@@ -2532,7 +2541,7 @@ msgid "Machine Settings"
 msgstr "咖啡机设置"
 
 #: src/pages/SetupWizard/MachineStep.jsx
-msgid "Machine settings saved."
+msgid "Machine settings saved"
 msgstr ""
 
 #: src/app/AppSettings.jsx
@@ -2818,6 +2827,10 @@ msgstr "从不"
 #: src/components/Navigation.jsx
 msgid "NEW"
 msgstr "NEW"
+
+#: src/pages/SetupWizard/MachineStep.jsx
+msgid "New PID values: {result}"
+msgstr ""
 
 #: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
 msgid "New shot did not appear in history — was it cancelled?"
@@ -4177,7 +4190,7 @@ msgstr "正在保存校准曲线..."
 
 #: src/pages/SetupWizard/index.jsx
 #: src/pages/SetupWizard/MachineStep.jsx
-msgid "Saving failed. Check the connection to your machine and try again."
+msgid "Saving failed"
 msgstr ""
 
 #: src/pages/ProfileEdit/ExtendedProfileForm.jsx
@@ -4267,6 +4280,10 @@ msgstr "搜索{labelLower}..."
 
 #: src/pages/SetupWizard/WifiStep.jsx
 msgid "Search again"
+msgstr ""
+
+#: src/pages/SetupWizard/WifiStep.jsx
+msgid "Search failed"
 msgstr ""
 
 #: src/pages/Statistics/components/StatisticsSearchHelp.jsx
@@ -5248,7 +5265,15 @@ msgid "Test failed"
 msgstr ""
 
 #: src/pages/SetupWizard/TestStep.jsx
+msgid "Test not started"
+msgstr ""
+
+#: src/pages/SetupWizard/TestStep.jsx
 msgid "Test passed"
+msgstr ""
+
+#: src/pages/SetupWizard/TestStep.jsx
+msgid "Test stopped"
 msgstr ""
 
 #: src/pages/SetupWizard/index.jsx
@@ -5364,7 +5389,7 @@ msgid "The temperature sensor returned an invalid reading. Check the thermocoupl
 msgstr ""
 
 #: src/pages/SetupWizard/TestStep.jsx
-msgid "The test was stopped."
+msgid "The test was stopped before it finished."
 msgstr ""
 
 #: src/pages/Settings/tabs/SystemTab.jsx

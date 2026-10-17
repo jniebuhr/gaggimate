@@ -384,17 +384,17 @@ msgstr "Automatically switch to brew mode at specified time(s) of day."
 msgid "Autotune Complete!"
 msgstr "Autotune Complete!"
 
+#: src/pages/SetupWizard/MachineStep.jsx
+msgid "Autotune failed"
+msgstr "Autotune failed"
+
 #: src/pages/Settings/tabs/CalibrationTab.jsx
 msgid "Autotune Failed"
 msgstr "Autotune Failed"
 
 #: src/pages/SetupWizard/MachineStep.jsx
-msgid "Autotune failed. Let the machine cool down and try again."
-msgstr "Autotune failed. Let the machine cool down and try again."
-
-#: src/pages/SetupWizard/MachineStep.jsx
-msgid "Autotune finished. New PID values: {result}"
-msgstr "Autotune finished. New PID values: {result}"
+msgid "Autotune finished"
+msgstr "Autotune finished"
 
 #: src/pages/Settings/tabs/CalibrationTab.jsx
 msgid "Autotune in Progress"
@@ -764,6 +764,11 @@ msgstr "Chart & Metrics"
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Chart First"
 msgstr "Chart First"
+
+#: src/pages/SetupWizard/index.jsx
+#: src/pages/SetupWizard/MachineStep.jsx
+msgid "Check the connection to your machine and try again."
+msgstr "Check the connection to your machine and try again."
 
 #: src/app/ConnectionGate.jsx
 msgid "Choose another machine"
@@ -2370,6 +2375,10 @@ msgstr "Length (Long)"
 msgid "Length (Short)"
 msgstr "Length (Short)"
 
+#: src/pages/SetupWizard/MachineStep.jsx
+msgid "Let the machine cool down and try again."
+msgstr "Let the machine cool down and try again."
+
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "Let's make sure everything is wired up correctly. Make sure the water tank is filled before you start."
 msgstr "Let's make sure everything is wired up correctly. Make sure the water tank is filled before you start."
@@ -2532,8 +2541,8 @@ msgid "Machine Settings"
 msgstr "Machine Settings"
 
 #: src/pages/SetupWizard/MachineStep.jsx
-msgid "Machine settings saved."
-msgstr "Machine settings saved."
+msgid "Machine settings saved"
+msgstr "Machine settings saved"
 
 #: src/app/AppSettings.jsx
 #: src/app/MachineSwitcher.jsx
@@ -2818,6 +2827,10 @@ msgstr "Never"
 #: src/components/Navigation.jsx
 msgid "NEW"
 msgstr "NEW"
+
+#: src/pages/SetupWizard/MachineStep.jsx
+msgid "New PID values: {result}"
+msgstr "New PID values: {result}"
 
 #: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
 msgid "New shot did not appear in history — was it cancelled?"
@@ -4177,8 +4190,8 @@ msgstr "Saving calibration profile..."
 
 #: src/pages/SetupWizard/index.jsx
 #: src/pages/SetupWizard/MachineStep.jsx
-msgid "Saving failed. Check the connection to your machine and try again."
-msgstr "Saving failed. Check the connection to your machine and try again."
+msgid "Saving failed"
+msgstr "Saving failed"
 
 #: src/pages/ProfileEdit/ExtendedProfileForm.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
@@ -4268,6 +4281,10 @@ msgstr "Search {labelLower}..."
 #: src/pages/SetupWizard/WifiStep.jsx
 msgid "Search again"
 msgstr "Search again"
+
+#: src/pages/SetupWizard/WifiStep.jsx
+msgid "Search failed"
+msgstr "Search failed"
 
 #: src/pages/Statistics/components/StatisticsSearchHelp.jsx
 msgid "Search help"
@@ -5248,8 +5265,16 @@ msgid "Test failed"
 msgstr "Test failed"
 
 #: src/pages/SetupWizard/TestStep.jsx
+msgid "Test not started"
+msgstr "Test not started"
+
+#: src/pages/SetupWizard/TestStep.jsx
 msgid "Test passed"
 msgstr "Test passed"
+
+#: src/pages/SetupWizard/TestStep.jsx
+msgid "Test stopped"
+msgstr "Test stopped"
 
 #: src/pages/SetupWizard/index.jsx
 msgid "Testing"
@@ -5364,8 +5389,8 @@ msgid "The temperature sensor returned an invalid reading. Check the thermocoupl
 msgstr "The temperature sensor returned an invalid reading. Check the thermocouple and its wiring."
 
 #: src/pages/SetupWizard/TestStep.jsx
-msgid "The test was stopped."
-msgstr "The test was stopped."
+msgid "The test was stopped before it finished."
+msgstr "The test was stopped before it finished."
 
 #: src/pages/Settings/tabs/SystemTab.jsx
 msgid "The update could not be completed and the device kept its current firmware. Check the network connection and start the update again."

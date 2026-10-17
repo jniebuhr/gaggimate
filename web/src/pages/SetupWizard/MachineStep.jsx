@@ -73,16 +73,14 @@ function Autotune({ wattage, onWattageChange }) {
         </div>
       )}
       {state === 'done' && (
-        <div className='alert alert-success'>
-          <span>{t`Autotune finished. New PID values: ${result}`}</span>
-        </div>
+        <InfoNote tone='success' title={t`Autotune finished`}>
+          {t`New PID values: ${result}`}
+        </InfoNote>
       )}
       {state === 'failed' && (
-        <div className='alert alert-error'>
-          <span>
-            <Trans>Autotune failed. Let the machine cool down and try again.</Trans>
-          </span>
-        </div>
+        <InfoNote tone='error' title={t`Autotune failed`}>
+          <Trans>Let the machine cool down and try again.</Trans>
+        </InfoNote>
       )}
       <div className='flex justify-end'>
         <button
@@ -224,19 +222,11 @@ export function MachineStep({ onSaved }) {
       )}
 
       {error && (
-        <div className='alert alert-error'>
-          <span>
-            <Trans>Saving failed. Check the connection to your machine and try again.</Trans>
-          </span>
-        </div>
+        <InfoNote tone='error' title={t`Saving failed`}>
+          <Trans>Check the connection to your machine and try again.</Trans>
+        </InfoNote>
       )}
-      {applied === selected && (
-        <div className='alert alert-success'>
-          <span>
-            <Trans>Machine settings saved.</Trans>
-          </span>
-        </div>
-      )}
+      {applied === selected && <InfoNote tone='success' title={t`Machine settings saved`} />}
       <div className='flex justify-end'>
         <button type='button' className='btn btn-primary' disabled={saving} onClick={apply}>
           {saving && <Spinner size={4} />}
