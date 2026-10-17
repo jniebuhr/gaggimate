@@ -25,7 +25,7 @@
 
 static EffectManager effect_mgr;
 
-static constexpr uint32_t STARTUP_FADE_MS = 1000; // standby fade-in duration on power-up
+static constexpr uint32_t STARTUP_FADE_MS = 1000; // start screen fade-in duration on power-up
 
 static constexpr int32_t GAUGE_TICK_LONG = 25;      // meter tick length on most screens
 static constexpr int32_t GAUGE_TICK_SHORT = 10;     // shortened tick length on profile / new-menu screens
@@ -225,10 +225,6 @@ void DefaultUI::init() {
         if (mode >= MODE_STANDBY && mode <= MODE_GRIND)
             changeScreen(screenForMode(mode));
     });
-    // The welcome screen stays up until the web/app setup wizard finishes or it is skipped on the device
-    welcomeActive = !controller->getSettings().isSetupDone();
-    if (welcomeActive)
-        changeScreen(SCREEN_ID_WELCOME_SCREEN);
     pluginManager->on("settings:changed", [this](Event const &) {
         if (welcomeActive && controller->getSettings().isSetupDone())
             onWelcomeContinue();
@@ -549,14 +545,20 @@ void DefaultUI::setupPanel() {
     applyGaugeSetpointStyle(gaugeSetpointsInside);
     setupState();
     applyTheme();
+    // First run boots straight into the welcome screen; it stays until the setup wizard finishes or is skipped
+    welcomeActive = !controller->getSettings().isSetupDone();
+    if (welcomeActive) {
+        eez_flow_set_screen(SCREEN_ID_WELCOME_SCREEN, LV_SCR_LOAD_ANIM_NONE, 0, 0);
+        currentScreen = targetScreen = SCREEN_ID_WELCOME_SCREEN;
+    }
     ui_tick();
 
-    lv_obj_t *standby = lv_scr_act();
+    lv_obj_t *startScreen = lv_scr_act();
     lv_obj_t *black = lv_obj_create(nullptr);
     lv_obj_set_style_bg_color(black, lv_color_black(), LV_PART_MAIN);
     lv_obj_set_style_bg_opa(black, LV_OPA_COVER, LV_PART_MAIN);
     lv_scr_load(black);
-    lv_scr_load_anim(standby, LV_SCR_LOAD_ANIM_FADE_ON, STARTUP_FADE_MS, 0, true);
+    lv_scr_load_anim(startScreen, LV_SCR_LOAD_ANIM_FADE_ON, STARTUP_FADE_MS, 0, true);
 
     lv_task_handler();
 
@@ -635,6 +637,12 @@ void DefaultUI::updateAccessQrCode(lv_obj_t *qrcode) {
 }
 
 void DefaultUI::handleScreenChange() {
+    // Loading a screen mid-fade frees the startup screen twice; wait for the boot fade to finish
+    const lv_disp_t *disp = lv_disp_get_default();
+    if (disp != nullptr && disp->scr_to_load != nullptr) {
+        rerender = true;
+        return;
+    }
     if (currentScreen != targetScreen) {
         if (currentScreen == SCREEN_ID_BREW_SCREEN)
             brewConfirmVisible = false; // leaving the brew screen dismisses the confirm overlay
