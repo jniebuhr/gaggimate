@@ -96,10 +96,16 @@ export function SetupWizard() {
   const [wifi, setWifi] = useState({ selected: null, ssid: '', secure: false, password: '' });
   const [joining, setJoining] = useState(null);
 
-  const enablePresetPlugins = preset => {
-    if (!preset?.plugins) return;
-    const enabled = Object.fromEntries(preset.plugins.map(key => [key, true]));
-    pluginForm.setFormData(formData => ({ ...formData, ...enabled }));
+  // Plugins switched on by the last applied preset; another preset (or a custom machine) resets them first
+  const [presetPlugins, setPresetPlugins] = useState([]);
+  const applyPresetPlugins = preset => {
+    const next = preset?.plugins || [];
+    const changes = Object.fromEntries([
+      ...presetPlugins.map(key => [key, pluginForm.initial[key]]),
+      ...next.map(key => [key, true]),
+    ]);
+    pluginForm.setFormData(formData => ({ ...formData, ...changes }));
+    setPresetPlugins(next);
   };
 
   const stepIds = ['tests', 'machine', 'plugins', ...(offerWifi ? ['wifi'] : []), 'done'];
@@ -203,7 +209,7 @@ export function SetupWizard() {
       </ul>
       <Card title={stepLabels[current]}>
         {current === 'tests' && <TestStep />}
-        {current === 'machine' && <MachineStep onSaved={enablePresetPlugins} />}
+        {current === 'machine' && <MachineStep onSaved={applyPresetPlugins} />}
         {current === 'plugins' && <PluginsStep form={pluginForm} />}
         {current === 'wifi' && <WifiStep wifi={wifi} onChange={setWifi} />}
         {current === 'done' && (
