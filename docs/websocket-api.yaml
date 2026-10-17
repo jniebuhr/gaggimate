@@ -583,8 +583,8 @@ components:
         required: [tp, success]
     SetupTestStartRequest:
       summary: >-
-        Start a setup-wizard hardware test. heater: steam setpoint for 10 s, then 3 s settling; passes on a rise of at
-        least 1 °C. pressure (pressure sensor only): pump at 100 % against the closed 3-way valve until pressure
+        Start a setup-wizard hardware test. heater: steam setpoint until the temperature rose by 2.5 °C (passes right away),
+        otherwise for 10 s plus 3 s settling. pressure (pressure sensor only): pump at 100 % against the closed 3-way valve until pressure
         plateaus (max 10 s), then pump off with the valve open for 5 s; passes on a peak of at least 10 bar and at most
         1 bar left after release. Progress and the result arrive as evt:setup:test.
       payload:
@@ -656,6 +656,9 @@ components:
             type: number
           rise:
             type: number
+          targetRise:
+            type: number
+            description: Rise in °C the heater test needs to pass.
           pressure:
             type: number
           maxPressure:

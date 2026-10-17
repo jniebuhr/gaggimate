@@ -5148,9 +5148,10 @@ msgstr ""
 msgid "Temperature Offset (°C)"
 msgstr "Compensación de temperatura (°C)"
 
-#. placeholder {0}: Number(status.rise).toFixed(1)
+#. placeholder {0}: rise.toFixed(1)
+#. placeholder {1}: targetRise.toFixed(1)
 #: src/pages/SetupWizard/TestStep.jsx
-msgid "Temperature rise: {0} °C"
+msgid "Temperature rise: {0} of {1} °C"
 msgstr ""
 
 #: src/pages/Settings/tabs/MachineTab.jsx
@@ -5234,7 +5235,7 @@ msgid "The grinder reaches GaggiMate at this address, so both need to share a ne
 msgstr "El molino accede a GaggiMate a través de esta dirección, así que ambos deben compartir red (el E64 WS solo usa 2.4 GHz) y la dirección no debe cambiar: resérvala para GaggiMate en tu router."
 
 #: src/pages/SetupWizard/TestStep.jsx
-msgid "The heater runs at full power for 10 seconds while GaggiMate checks that the boiler temperature rises."
+msgid "The heater runs at full power for up to 10 seconds and stops as soon as the boiler temperature has risen by a few degrees."
 msgstr ""
 
 #: src/pages/SetupWizard/machinePresets.js

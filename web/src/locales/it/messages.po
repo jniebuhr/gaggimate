@@ -5152,9 +5152,10 @@ msgstr ""
 msgid "Temperature Offset (°C)"
 msgstr "Offset temperatura (°C)"
 
-#. placeholder {0}: Number(status.rise).toFixed(1)
+#. placeholder {0}: rise.toFixed(1)
+#. placeholder {1}: targetRise.toFixed(1)
 #: src/pages/SetupWizard/TestStep.jsx
-msgid "Temperature rise: {0} °C"
+msgid "Temperature rise: {0} of {1} °C"
 msgstr ""
 
 #: src/pages/Settings/tabs/MachineTab.jsx
@@ -5238,7 +5239,7 @@ msgid "The grinder reaches GaggiMate at this address, so both need to share a ne
 msgstr "Il macinacaffè raggiunge GaggiMate a questo indirizzo, quindi entrambi devono essere sulla stessa rete (l'E64 WS supporta solo 2,4 GHz) e l'indirizzo non deve cambiare: riservalo a GaggiMate nel tuo router."
 
 #: src/pages/SetupWizard/TestStep.jsx
-msgid "The heater runs at full power for 10 seconds while GaggiMate checks that the boiler temperature rises."
+msgid "The heater runs at full power for up to 10 seconds and stops as soon as the boiler temperature has risen by a few degrees."
 msgstr ""
 
 #: src/pages/SetupWizard/machinePresets.js

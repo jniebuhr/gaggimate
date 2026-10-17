@@ -5148,10 +5148,11 @@ msgstr "Temperature offset (°C)"
 msgid "Temperature Offset (°C)"
 msgstr "Temperature Offset (°C)"
 
-#. placeholder {0}: Number(status.rise).toFixed(1)
+#. placeholder {0}: rise.toFixed(1)
+#. placeholder {1}: targetRise.toFixed(1)
 #: src/pages/SetupWizard/TestStep.jsx
-msgid "Temperature rise: {0} °C"
-msgstr "Temperature rise: {0} °C"
+msgid "Temperature rise: {0} of {1} °C"
+msgstr "Temperature rise: {0} of {1} °C"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Temperature Settings"
@@ -5234,8 +5235,8 @@ msgid "The grinder reaches GaggiMate at this address, so both need to share a ne
 msgstr "The grinder reaches GaggiMate at this address, so both need to share a network (the E64 WS is 2.4 GHz only) and the address must not change: reserve it for GaggiMate in your router."
 
 #: src/pages/SetupWizard/TestStep.jsx
-msgid "The heater runs at full power for 10 seconds while GaggiMate checks that the boiler temperature rises."
-msgstr "The heater runs at full power for 10 seconds while GaggiMate checks that the boiler temperature rises."
+msgid "The heater runs at full power for up to 10 seconds and stops as soon as the boiler temperature has risen by a few degrees."
+msgstr "The heater runs at full power for up to 10 seconds and stops as soon as the boiler temperature has risen by a few degrees."
 
 #: src/pages/SetupWizard/machinePresets.js
 msgid "The heating element sits in the water, so the boiler refill plugin is enabled in the next steps to keep the boiler filled."
