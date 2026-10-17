@@ -11,9 +11,9 @@ const REASONS = {
   alreadyHot: msg`The boiler is already hot, so the heater works.`,
   noRise: msg`The temperature did not rise. Check the heater wiring, the SSR and the thermal fuses.`,
   noPressure: msg`No pressure was measured. Check that the water tank is full, prime the pump and check the pressure sensor wiring.`,
-  lowPressure: msg`Pressure stayed below 6 bar. Prime the pump and check for leaks and the OPV setting.`,
+  lowPressure: msg`Pressure stayed below 10 bar. Prime the pump and check for leaks and the OPV setting.`,
   noRelease: msg`Pressure did not drop after opening the 3-way valve. Check the valve and its wiring.`,
-  highPressure: msg`Pressure peaked above 12.5 bar. That works, but you may want to adjust the OPV to around 9–10 bar.`,
+  highPressure: msg`Pressure peaked above 12.5 bar. That works, but you may want to adjust the OPV to around 10–11 bar.`,
 };
 
 const REQUEST_ERRORS = {

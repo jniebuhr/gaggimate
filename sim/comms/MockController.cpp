@@ -53,8 +53,8 @@ void MockController::update() {
         } else if (pumpMode == PumpControlMode::Flow) {
             fDest = targetFlow;
             pDest = std::min(11.0f, targetFlow * 4.0f);
-        } else { // power
-            pDest = pumpPower / 10.0f;
+        } else {                                                          // power
+            pDest = pumpPower / 100.0f * (brewValveOpen ? 10.0f : 12.0f); // closed valve: deadhead up to the OPV
             fDest = std::max(0.3f, pumpPower / 40.0f);
         }
     }
