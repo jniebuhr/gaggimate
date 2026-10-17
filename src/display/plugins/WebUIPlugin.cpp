@@ -587,6 +587,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["smartGrindMode"] = settings.getSmartGrindMode();
     doc["mahlkonigActive"] = settings.isMahlkonigActive();
     doc["mahlkonigRecipeProfiles"] = settings.getMahlkonigRecipeProfiles();
+    doc["apMode"] = apMode; // read-only, the setup wizard offers Wi-Fi setup in AP mode
     doc["deviceIp"] = apMode ? WIFI_AP_IP.toString() : WiFi.localIP().toString(); // read-only, for plugin setup hints
     doc["momentaryButtons"] = settings.isMomentaryButtons();
     doc["flushDuration"] = settings.getFlushDuration();

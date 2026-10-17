@@ -10,11 +10,12 @@ class Controller;
 class PluginManager;
 class WebSocketHandler;
 
-// Hardware checks for the first-run setup wizard: a timed heater test and a valve-closed pressure test.
+// First-run setup wizard backend: heater and valve-closed pressure tests, and Wi-Fi scans while in AP mode.
 class SetupWizardPlugin : public Plugin {
   public:
     enum class Test { NONE, HEATER, PRESSURE };
     enum class Phase { IDLE, HEATING, SETTLING, BUILDING, RELEASING, DONE };
+    enum class Scan { IDLE, REQUESTED, RUNNING };
 
     void setup(Controller *controller, PluginManager *pluginManager) override;
     void loop() override;
@@ -28,6 +29,8 @@ class SetupWizardPlugin : public Plugin {
     void finish(bool passed, const char *reason);
     void publish(const char *state, const char *reason = nullptr);
     float heaterTemp() const;
+    void startScan();
+    void publishScan(bool success);
 
     Controller *controller = nullptr;
     PluginManager *pluginManager = nullptr;
@@ -46,6 +49,10 @@ class SetupWizardPlugin : public Plugin {
     float maxPressure = 0.0f;
     float riseRef = 0.0f; // last pressure that counted as still rising
     float residualPressure = 0.0f;
+
+    std::atomic<Scan> scan{Scan::IDLE};
+    std::atomic<bool> scanDone{false}; // set from the Wi-Fi event task
+    unsigned long scanStarted = 0;
 };
 
 #endif // SETUPWIZARDPLUGIN_H

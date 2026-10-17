@@ -21,7 +21,18 @@ typedef enum {
     WL_DISCONNECTED = 6
 } wl_status_t;
 
-typedef enum { WIFI_MODE_NULL = 0, WIFI_STA = 1, WIFI_AP = 2, WIFI_AP_STA = 3 } wifi_mode_t;
+typedef enum {
+    WIFI_MODE_NULL = 0,
+    WIFI_MODE_STA = 1,
+    WIFI_MODE_AP = 2,
+    WIFI_MODE_APSTA = 3,
+    WIFI_STA = WIFI_MODE_STA,
+    WIFI_AP = WIFI_MODE_AP,
+    WIFI_AP_STA = WIFI_MODE_APSTA
+} wifi_mode_t;
+typedef enum { WIFI_AUTH_OPEN = 0, WIFI_AUTH_WPA2_PSK = 3 } wifi_auth_mode_t;
+#define WIFI_SCAN_RUNNING (-1)
+#define WIFI_SCAN_FAILED (-2)
 typedef enum { WIFI_POWER_19_5dBm = 78, WIFI_POWER_15dBm = 60, WIFI_POWER_7dBm = 28, WIFI_POWER_MINUS_1dBm = -4 } wifi_power_t;
 typedef int wifi_err_reason_t;
 
@@ -31,6 +42,7 @@ typedef enum {
     ARDUINO_EVENT_WIFI_STA_GOT_IP,
     ARDUINO_EVENT_WIFI_STA_LOST_IP,
     ARDUINO_EVENT_WIFI_STA_AUTHMODE_CHANGE,
+    ARDUINO_EVENT_WIFI_SCAN_DONE,
     ARDUINO_EVENT_MAX
 } WiFiEvent_t;
 typedef WiFiEvent_t arduino_event_id_t;
@@ -80,6 +92,7 @@ class WiFiClass {
         _mode = m;
         return true;
     }
+    wifi_mode_t getMode() { return _mode; }
     void setAutoReconnect(bool) {}
     bool config(IPAddress, IPAddress, IPAddress, IPAddress = IPAddress()) { return true; }
     void onEvent(WiFiEventFuncCb cb, WiFiEvent_t id = ARDUINO_EVENT_MAX) { _cbs.emplace_back(id, std::move(cb)); }
@@ -112,7 +125,25 @@ class WiFiClass {
     IPAddress softAPIP() { return IPAddress(4, 4, 4, 1); }
     int softAPgetStationNum() { return 0; }
     String macAddress() { return String("AA:BB:CC:DD:EE:FF"); }
-    int16_t scanNetworks(bool = false) { return 0; }
+    // Fake neighbourhood for the setup wizard; results are ready immediately and SCAN_DONE fires synchronously.
+    int16_t scanNetworks(bool = false) {
+        _scan = {{"HomeNetwork", -48, WIFI_AUTH_WPA2_PSK, 6},
+                 {"HomeNetwork", -71, WIFI_AUTH_WPA2_PSK, 11},
+                 {"Neighbour 5G", -77, WIFI_AUTH_WPA2_PSK, 1},
+                 {"CoffeeShop Guest", -82, WIFI_AUTH_OPEN, 1}};
+        WiFiEventInfo_t info;
+        memset(&info, 0, sizeof(info));
+        for (auto &c : _cbs)
+            if (c.first == ARDUINO_EVENT_WIFI_SCAN_DONE)
+                c.second(ARDUINO_EVENT_WIFI_SCAN_DONE, info);
+        return WIFI_SCAN_RUNNING;
+    }
+    int16_t scanComplete() { return static_cast<int16_t>(_scan.size()); }
+    void scanDelete() { _scan.clear(); }
+    String SSID(uint8_t i) { return i < _scan.size() ? String(_scan[i].ssid) : String(); }
+    int32_t RSSI(uint8_t i) { return i < _scan.size() ? _scan[i].rssi : 0; }
+    wifi_auth_mode_t encryptionType(uint8_t i) { return i < _scan.size() ? _scan[i].auth : WIFI_AUTH_OPEN; }
+    int32_t channel(uint8_t i) { return i < _scan.size() ? _scan[i].channel : 0; }
 
   private:
     void fireConnect() {
@@ -126,6 +157,13 @@ class WiFiClass {
                 c.second(ARDUINO_EVENT_WIFI_STA_GOT_IP, info);
     }
 
+    struct ScanResult {
+        const char *ssid;
+        int32_t rssi;
+        wifi_auth_mode_t auth;
+        int32_t channel;
+    };
+    std::vector<ScanResult> _scan;
     std::vector<std::pair<WiFiEvent_t, WiFiEventFuncCb>> _cbs;
     wl_status_t _status = WL_DISCONNECTED;
     wifi_mode_t _mode = WIFI_MODE_NULL;

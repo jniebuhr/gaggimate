@@ -1819,6 +1819,10 @@ msgctxt "process action"
 msgid "Finish"
 msgstr "Finish"
 
+#: src/pages/SetupWizard/index.jsx
+msgid "Finish and restart"
+msgstr "Finish and restart"
+
 #: src/pages/Home/cards/ProfileCard.jsx
 #: src/pages/Settings/tabs/SystemTab.jsx
 msgid "Finished"
@@ -1957,13 +1961,25 @@ msgstr "GaggiMate can connect to your smart home, grinder and more. Enable what 
 msgid "GaggiMate didn't accept the request. Check the connection and try again."
 msgstr "GaggiMate didn't accept the request. Check the connection and try again."
 
+#: src/pages/SetupWizard/index.jsx
+msgid "GaggiMate is joining {ssid}"
+msgstr "GaggiMate is joining {ssid}"
+
 #: src/pages/Settings/PluginCard.jsx
 msgid "GaggiMate is not affiliated with, endorsed by or supported by Mahlkönig or its parent company, the Hemro Group. Mahlkönig, E64 WS, Grind-by-Sync and Xenia are trademarks of their respective owners."
 msgstr "GaggiMate is not affiliated with, endorsed by or supported by Mahlkönig or its parent company, the Hemro Group. Mahlkönig, E64 WS, Grind-by-Sync and Xenia are trademarks of their respective owners."
 
+#: src/pages/SetupWizard/WifiStep.jsx
+msgid "GaggiMate is running its own Wi-Fi network. Pick your home network so you can reach GaggiMate from any device. It connects when it restarts at the end of the setup."
+msgstr "GaggiMate is running its own Wi-Fi network. Pick your home network so you can reach GaggiMate from any device. It connects when it restarts at the end of the setup."
+
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "GaggiMate reconnects automatically once the scale is switched on and in range."
 msgstr "GaggiMate reconnects automatically once the scale is switched on and in range."
+
+#: src/pages/SetupWizard/index.jsx
+msgid "GaggiMate restarts when you finish so it can connect to {joinSsid}. Plugins you enabled start with it."
+msgstr "GaggiMate restarts when you finish so it can connect to {joinSsid}. Plugins you enabled start with it."
 
 #: src/app/MachineSetup.jsx
 msgid "gaggimate.local or 192.168.1.20"
@@ -1988,6 +2004,10 @@ msgstr "Global metric averages"
 #: src/pages/_404.jsx
 msgid "Go Home"
 msgstr "Go Home"
+
+#: src/pages/SetupWizard/WifiStep.jsx
+msgid "Good"
+msgstr "Good"
 
 #: src/pages/ProfileEdit/ProfileMainInformation.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
@@ -2075,6 +2095,10 @@ msgstr "Heating test"
 #: src/components/SettingsFormField.jsx
 msgid "Hidden / Available"
 msgstr "Hidden / Available"
+
+#: src/pages/SetupWizard/WifiStep.jsx
+msgid "Hide"
+msgstr "Hide"
 
 #: src/pages/ShotAnalyzer/components/shotChart/controls/compareControls.jsx
 msgid "Hide compare annotations"
@@ -2169,6 +2193,10 @@ msgstr "Idle Color"
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Idle Filter Alpha"
 msgstr "Idle Filter Alpha"
+
+#: src/pages/SetupWizard/index.jsx
+msgid "If it can't connect, GaggiMate opens its own network again so you can correct the password in the settings."
+msgstr "If it can't connect, GaggiMate opens its own network again so you can correct the password in the settings."
 
 #: src/utils/warnings.js
 msgctxt "warning level"
@@ -2775,6 +2803,14 @@ msgstr "Name..."
 msgid "Network error: Unable to connect to visualizer.coffee"
 msgstr "Network error: Unable to connect to visualizer.coffee"
 
+#: src/pages/SetupWizard/WifiStep.jsx
+msgid "Network name (SSID)"
+msgstr "Network name (SSID)"
+
+#: src/pages/SetupWizard/WifiStep.jsx
+msgid "Networks nearby"
+msgstr "Networks nearby"
+
 #: src/pages/Settings/tabs/CleaningSection.jsx
 msgid "Never"
 msgstr "Never"
@@ -3089,6 +3125,10 @@ msgstr "OR"
 msgid "Or every"
 msgstr "Or every"
 
+#: src/pages/SetupWizard/WifiStep.jsx
+msgid "Other network…"
+msgstr "Other network…"
+
 #: src/pages/DashboardSettings/index.jsx
 msgid "Pack to top"
 msgstr "Pack to top"
@@ -3110,6 +3150,7 @@ msgid "password"
 msgstr "password"
 
 #: src/components/VisualizerUploadModal.jsx
+#: src/pages/SetupWizard/WifiStep.jsx
 msgid "Password"
 msgstr "Password"
 
@@ -4184,6 +4225,14 @@ msgstr "Scan for Devices"
 msgid "Scan for nearby Bluetooth scales to connect them to GaggiMate."
 msgstr "Scan for nearby Bluetooth scales to connect them to GaggiMate."
 
+#: src/pages/SetupWizard/WifiStep.jsx
+msgid "Scanning failed."
+msgstr "Scanning failed."
+
+#: src/pages/SetupWizard/WifiStep.jsx
+msgid "Scanning only works while GaggiMate runs its own Wi-Fi network."
+msgstr "Scanning only works while GaggiMate runs its own Wi-Fi network."
+
 #: src/pages/Settings/tabs/SystemTab.jsx
 msgid "Scanning shot history files..."
 msgstr "Scanning shot history files..."
@@ -4212,6 +4261,10 @@ msgstr "Scrub shot time"
 msgid "Search {labelLower}..."
 msgstr "Search {labelLower}..."
 
+#: src/pages/SetupWizard/WifiStep.jsx
+msgid "Search again"
+msgstr "Search again"
+
 #: src/pages/Statistics/components/StatisticsSearchHelp.jsx
 msgid "Search help"
 msgstr "Search help"
@@ -4232,6 +4285,10 @@ msgstr "Search..."
 #: src/app/MachineSetup.jsx
 msgid "Searching"
 msgstr "Searching"
+
+#: src/pages/SetupWizard/WifiStep.jsx
+msgid "Searching for networks…"
+msgstr "Searching for networks…"
 
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
@@ -4490,6 +4547,10 @@ msgstr "Shots / {granularityLabel}"
 msgid "Shots: {shotCount}"
 msgstr "Shots: {shotCount}"
 
+#: src/pages/SetupWizard/WifiStep.jsx
+msgid "Show"
+msgstr "Show"
+
 #: src/pages/Statistics/components/StatisticsMultiSelectDropdown.jsx
 msgid "Show all {labelLower}"
 msgstr "Show all {labelLower}"
@@ -4574,12 +4635,20 @@ msgid "Single Origin, Blend..."
 msgstr "Single Origin, Blend..."
 
 #: src/pages/SetupWizard/index.jsx
+msgid "Skip"
+msgstr "Skip"
+
+#: src/pages/SetupWizard/index.jsx
 msgid "Skip setup"
 msgstr "Skip setup"
 
 #: src/pages/SetupWizard/index.jsx
 msgid "Skip the setup wizard? You can run it later from Settings → System."
 msgstr "Skip the setup wizard? You can run it later from Settings → System."
+
+#: src/pages/SetupWizard/WifiStep.jsx
+msgid "Skip this to keep using the GaggiMate network. You can add your Wi-Fi later in the settings."
+msgstr "Skip this to keep using the GaggiMate network. You can add your Wi-Fi later in the settings."
 
 #: src/components/PumpFlowCalibration/api.js
 msgid "slog not ready, waiting for flush... ({attempt})"
@@ -4877,6 +4946,10 @@ msgstr "Storage & Memory"
 #: src/pages/ShotAnalyzer/components/EmptyState.jsx
 msgid "Stores imported external shots and profiles locally in this browser on this device. They are not automatically available in other browsers or on other devices."
 msgstr "Stores imported external shots and profiles locally in this browser on this device. They are not automatically available in other browsers or on other devices."
+
+#: src/pages/SetupWizard/WifiStep.jsx
+msgid "Strong"
+msgstr "Strong"
 
 #: src/pages/Settings/PluginCard.jsx
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
@@ -5246,9 +5319,21 @@ msgstr "The heating element sits in the water, so the boiler refill plugin is en
 msgid "The machine has been in steam mode for 5 minutes."
 msgstr "The machine has been in steam mode for 5 minutes."
 
+#: src/pages/SetupWizard/WifiStep.jsx
+msgid "The machine is busy, try again in a moment."
+msgstr "The machine is busy, try again in a moment."
+
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "The machine is busy. Stop the running process and try again."
 msgstr "The machine is busy. Stop the running process and try again."
+
+#: src/pages/SetupWizard/index.jsx
+msgid "The machine restarts and connects to your network. Connect this device to {ssid} as well, then open <0>http://{host}</0> or scan the QR code on the machine's display."
+msgstr "The machine restarts and connects to your network. Connect this device to {ssid} as well, then open <0>http://{host}</0> or scan the QR code on the machine's display."
+
+#: src/pages/SetupWizard/index.jsx
+msgid "The plugins you enabled start the next time the machine is switched on."
+msgstr "The plugins you enabled start the next time the machine is switched on."
 
 #: src/pages/Settings/PluginCard.jsx
 msgid "The profile's dose is saved to the shot history."
@@ -5857,6 +5942,10 @@ msgstr "Water Tank"
 msgid "Water tank low"
 msgstr "Water tank low"
 
+#: src/pages/SetupWizard/WifiStep.jsx
+msgid "Weak"
+msgstr "Weak"
+
 #: src/pages/Statistics/components/toolbar/constants.js
 msgctxt "shot source: browser storage"
 msgid "WEB"
@@ -5962,9 +6051,17 @@ msgstr "When the toggle is off, brightness will be set to 0"
 msgid "While GaggiMate is in the background it keeps watching your machines and shows a permanent “Watching machines” notification. This uses some extra battery."
 msgstr "While GaggiMate is in the background it keeps watching your machines and shows a permanent “Watching machines” notification. This uses some extra battery."
 
+#: src/pages/SetupWizard/index.jsx
+msgid "Wi-Fi"
+msgstr "Wi-Fi"
+
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Wi-Fi Password"
 msgstr "Wi-Fi Password"
+
+#: src/pages/SetupWizard/WifiStep.jsx
+msgid "Wi-Fi passwords have at least {WPA_MIN_PASSWORD} characters."
+msgstr "Wi-Fi passwords have at least {WPA_MIN_PASSWORD} characters."
 
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Wi-Fi SSID"

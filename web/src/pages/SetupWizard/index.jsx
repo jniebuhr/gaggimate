@@ -3,18 +3,37 @@ import { useLocation } from 'preact-iso';
 import { Trans, useLingui } from '@lingui/react/macro';
 import Card from '../../components/Card.jsx';
 import { Spinner } from '../../components/Spinner.jsx';
+import { getCachedSettings } from '../../services/ApiService.js';
 import { useProfileList } from '../../services/hooks.js';
 import { serializeAutoWakeupSchedules } from '../Settings/settingsForm.js';
 import { MachineStep } from './MachineStep.jsx';
 import { BOOT_PLUGIN_KEYS, PLUGIN_KEYS, PluginsStep, usePluginForm } from './PluginsStep.jsx';
 import { TestStep } from './TestStep.jsx';
+import { WifiStep, isWifiChoiceValid } from './WifiStep.jsx';
 import { postSettings, setupNeeded } from './setupState.js';
 
-function FinishStep() {
+function FinishStep({ joinSsid, pluginsPending }) {
   const { profiles } = useProfileList();
   const featured = profiles.filter(p => !p.utility).slice(0, 4);
   return (
     <div className='space-y-4'>
+      {joinSsid && (
+        <div className='alert alert-info'>
+          <span>
+            <Trans>
+              GaggiMate restarts when you finish so it can connect to {joinSsid}. Plugins you
+              enabled start with it.
+            </Trans>
+          </span>
+        </div>
+      )}
+      {pluginsPending && (
+        <div className='alert alert-info'>
+          <span>
+            <Trans>The plugins you enabled start the next time the machine is switched on.</Trans>
+          </span>
+        </div>
+      )}
       <p className='text-lg'>
         <Trans>Thank you for installing GaggiMate! Your machine is ready for its first shot.</Trans>
       </p>
@@ -43,6 +62,31 @@ function FinishStep() {
   );
 }
 
+// Shown after saving Wi-Fi: the machine restarts onto the home network and this page loses its connection.
+function JoiningWifi({ ssid }) {
+  const host = `${getCachedSettings()?.mdnsName || 'gaggimate'}.local`;
+  return (
+    <div className='mx-auto flex w-full max-w-xl flex-col gap-4 py-8'>
+      <h1 className='text-2xl font-bold'>
+        <Trans>GaggiMate is joining {ssid}</Trans>
+      </h1>
+      <p>
+        <Trans>
+          The machine restarts and connects to your network. Connect this device to {ssid} as well,
+          then open <span className='font-mono'>http://{host}</span> or scan the QR code on the
+          machine's display.
+        </Trans>
+      </p>
+      <p className='text-sm opacity-70'>
+        <Trans>
+          If it can't connect, GaggiMate opens its own network again so you can correct the password
+          in the settings.
+        </Trans>
+      </p>
+    </div>
+  );
+}
+
 export function SetupWizard() {
   const { t } = useLingui();
   const location = useLocation();
@@ -50,6 +94,9 @@ export function SetupWizard() {
   const [step, setStep] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
+  const [offerWifi] = useState(() => getCachedSettings()?.apMode === true);
+  const [wifi, setWifi] = useState({ selected: null, ssid: '', secure: false, password: '' });
+  const [joining, setJoining] = useState(null);
 
   const enablePresetPlugins = preset => {
     if (!preset?.plugins) return;
@@ -57,7 +104,15 @@ export function SetupWizard() {
     pluginForm.setFormData(formData => ({ ...formData, ...enabled }));
   };
 
-  const steps = [t`Testing`, t`Machine`, t`Plugins`, t`Done`];
+  const stepIds = ['tests', 'machine', 'plugins', ...(offerWifi ? ['wifi'] : []), 'done'];
+  const stepLabels = {
+    tests: t`Testing`,
+    machine: t`Machine`,
+    plugins: t`Plugins`,
+    wifi: t`Wi-Fi`,
+    done: t`Done`,
+  };
+  const current = stepIds[step];
 
   const savePlugins = async () => {
     const fields = Object.fromEntries(PLUGIN_KEYS.map(key => [key, pluginForm.formData[key]]));
@@ -65,15 +120,27 @@ export function SetupWizard() {
     await postSettings(fields);
   };
 
-  const needsRestart = () =>
-    BOOT_PLUGIN_KEYS.some(key => !!pluginForm.formData[key] !== !!pluginForm.initial[key]);
+  // Only new Wi-Fi credentials restart the machine; boot-time plugins load on the next power-up
+  const joinWifi = offerWifi && !!wifi.ssid;
+  const pluginsPending =
+    !joinWifi &&
+    BOOT_PLUGIN_KEYS.some(key => !!pluginForm.formData[key] && !pluginForm.initial[key]);
 
   const finish = async () => {
     setBusy(true);
     setError(false);
     try {
-      // Boot-time plugins only load after a restart; the web UI reconnects on its own
-      await postSettings({ setupDone: true, ...(needsRestart() ? { restart: 1 } : {}) });
+      await postSettings({
+        setupDone: true,
+        ...(joinWifi
+          ? { wifiSsid: wifi.ssid, wifiPassword: wifi.secure ? wifi.password : '' }
+          : {}),
+        ...(joinWifi ? { restart: 1 } : {}),
+      });
+      if (joinWifi) {
+        setJoining(wifi.ssid);
+        return;
+      }
       setupNeeded.value = false;
       location.route('/profiles');
     } catch {
@@ -94,8 +161,13 @@ export function SetupWizard() {
     location.route('/');
   };
 
+  const skipWifi = () => {
+    setWifi({ selected: null, ssid: '', secure: false, password: '' });
+    setStep(step + 1);
+  };
+
   const next = async () => {
-    if (step === 2) {
+    if (current === 'plugins') {
       setBusy(true);
       setError(false);
       try {
@@ -110,30 +182,35 @@ export function SetupWizard() {
     setStep(step + 1);
   };
 
+  if (joining) return <JoiningWifi ssid={joining} />;
+
   return (
     <div className='mx-auto flex w-full max-w-3xl flex-col gap-4 py-4'>
       <div className='flex flex-wrap items-center justify-between gap-2'>
         <h1 className='text-2xl font-bold'>
           <Trans>Welcome to GaggiMate</Trans>
         </h1>
-        {step < steps.length - 1 && (
+        {current !== 'done' && (
           <button type='button' className='btn btn-ghost btn-sm' onClick={skip}>
             <Trans>Skip setup</Trans>
           </button>
         )}
       </div>
       <ul className='steps w-full'>
-        {steps.map((label, i) => (
-          <li key={label} className={`step ${i <= step ? 'step-primary' : ''}`}>
-            {label}
+        {stepIds.map((id, i) => (
+          <li key={id} className={`step ${i <= step ? 'step-primary' : ''}`}>
+            {stepLabels[id]}
           </li>
         ))}
       </ul>
-      <Card title={steps[step]}>
-        {step === 0 && <TestStep />}
-        {step === 1 && <MachineStep onSaved={enablePresetPlugins} />}
-        {step === 2 && <PluginsStep form={pluginForm} />}
-        {step === 3 && <FinishStep />}
+      <Card title={stepLabels[current]}>
+        {current === 'tests' && <TestStep />}
+        {current === 'machine' && <MachineStep onSaved={enablePresetPlugins} />}
+        {current === 'plugins' && <PluginsStep form={pluginForm} />}
+        {current === 'wifi' && <WifiStep wifi={wifi} onChange={setWifi} />}
+        {current === 'done' && (
+          <FinishStep joinSsid={joinWifi ? wifi.ssid : null} pluginsPending={pluginsPending} />
+        )}
         {error && (
           <div className='alert alert-error'>
             <span>
@@ -150,15 +227,25 @@ export function SetupWizard() {
           >
             <Trans>Back</Trans>
           </button>
-          {step < steps.length - 1 ? (
-            <button type='button' className='btn btn-primary' disabled={busy} onClick={next}>
+          {current === 'wifi' && (
+            <button type='button' className='btn btn-ghost ml-auto' onClick={skipWifi}>
+              <Trans>Skip</Trans>
+            </button>
+          )}
+          {current !== 'done' ? (
+            <button
+              type='button'
+              className='btn btn-primary'
+              disabled={busy || (current === 'wifi' && !isWifiChoiceValid(wifi))}
+              onClick={next}
+            >
               {busy && <Spinner size={4} />}
               <Trans>Next</Trans>
             </button>
           ) : (
             <button type='button' className='btn btn-primary' disabled={busy} onClick={finish}>
               {busy && <Spinner size={4} />}
-              <Trans>Start brewing</Trans>
+              {joinWifi ? <Trans>Finish and restart</Trans> : <Trans>Start brewing</Trans>}
             </button>
           )}
         </div>

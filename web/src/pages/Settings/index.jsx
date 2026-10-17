@@ -66,7 +66,7 @@ import {
 } from './settingsForm.js';
 
 // Device facts GET /api/settings reports for display only; never saved, exported or imported.
-const READ_ONLY_KEYS = ['deviceIp', 'setupDone'];
+const READ_ONLY_KEYS = ['deviceIp', 'setupDone', 'apMode'];
 
 // Form-only fields that never come back from GET /api/settings.
 const FORM_ONLY_KEYS = [

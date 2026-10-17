@@ -1819,6 +1819,10 @@ msgctxt "process action"
 msgid "Finish"
 msgstr "終了"
 
+#: src/pages/SetupWizard/index.jsx
+msgid "Finish and restart"
+msgstr ""
+
 #: src/pages/Home/cards/ProfileCard.jsx
 #: src/pages/Settings/tabs/SystemTab.jsx
 msgid "Finished"
@@ -1957,13 +1961,25 @@ msgstr ""
 msgid "GaggiMate didn't accept the request. Check the connection and try again."
 msgstr "GaggiMate がリクエストを受け付けませんでした。接続を確認してもう一度お試しください。"
 
+#: src/pages/SetupWizard/index.jsx
+msgid "GaggiMate is joining {ssid}"
+msgstr ""
+
 #: src/pages/Settings/PluginCard.jsx
 msgid "GaggiMate is not affiliated with, endorsed by or supported by Mahlkönig or its parent company, the Hemro Group. Mahlkönig, E64 WS, Grind-by-Sync and Xenia are trademarks of their respective owners."
 msgstr "GaggiMate は、Mahlkönig およびその親会社である Hemro Group とは提携しておらず、承認や支援も受けていません。Mahlkönig、E64 WS、Grind-by-Sync、Xenia は各所有者の商標です。"
 
+#: src/pages/SetupWizard/WifiStep.jsx
+msgid "GaggiMate is running its own Wi-Fi network. Pick your home network so you can reach GaggiMate from any device. It connects when it restarts at the end of the setup."
+msgstr ""
+
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "GaggiMate reconnects automatically once the scale is switched on and in range."
 msgstr "スケールの電源が入り、範囲内に入ると GaggiMate は自動的に再接続します。"
+
+#: src/pages/SetupWizard/index.jsx
+msgid "GaggiMate restarts when you finish so it can connect to {joinSsid}. Plugins you enabled start with it."
+msgstr ""
 
 #: src/app/MachineSetup.jsx
 msgid "gaggimate.local or 192.168.1.20"
@@ -1988,6 +2004,10 @@ msgstr "全体のメトリクス平均"
 #: src/pages/_404.jsx
 msgid "Go Home"
 msgstr "ホームへ"
+
+#: src/pages/SetupWizard/WifiStep.jsx
+msgid "Good"
+msgstr ""
 
 #: src/pages/ProfileEdit/ProfileMainInformation.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
@@ -2075,6 +2095,10 @@ msgstr ""
 #: src/components/SettingsFormField.jsx
 msgid "Hidden / Available"
 msgstr "非表示 / 利用可能"
+
+#: src/pages/SetupWizard/WifiStep.jsx
+msgid "Hide"
+msgstr ""
 
 #: src/pages/ShotAnalyzer/components/shotChart/controls/compareControls.jsx
 msgid "Hide compare annotations"
@@ -2169,6 +2193,10 @@ msgstr "待機時の色"
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Idle Filter Alpha"
 msgstr "待機時フィルター Alpha"
+
+#: src/pages/SetupWizard/index.jsx
+msgid "If it can't connect, GaggiMate opens its own network again so you can correct the password in the settings."
+msgstr ""
 
 #: src/utils/warnings.js
 msgctxt "warning level"
@@ -2775,6 +2803,14 @@ msgstr "名前..."
 msgid "Network error: Unable to connect to visualizer.coffee"
 msgstr "ネットワークエラー: visualizer.coffee に接続できません"
 
+#: src/pages/SetupWizard/WifiStep.jsx
+msgid "Network name (SSID)"
+msgstr ""
+
+#: src/pages/SetupWizard/WifiStep.jsx
+msgid "Networks nearby"
+msgstr ""
+
 #: src/pages/Settings/tabs/CleaningSection.jsx
 msgid "Never"
 msgstr "なし"
@@ -3089,6 +3125,10 @@ msgstr "または"
 msgid "Or every"
 msgstr "または毎"
 
+#: src/pages/SetupWizard/WifiStep.jsx
+msgid "Other network…"
+msgstr ""
+
 #: src/pages/DashboardSettings/index.jsx
 msgid "Pack to top"
 msgstr "上詰め"
@@ -3110,6 +3150,7 @@ msgid "password"
 msgstr "パスワード"
 
 #: src/components/VisualizerUploadModal.jsx
+#: src/pages/SetupWizard/WifiStep.jsx
 msgid "Password"
 msgstr "パスワード"
 
@@ -4184,6 +4225,14 @@ msgstr "デバイスをスキャン"
 msgid "Scan for nearby Bluetooth scales to connect them to GaggiMate."
 msgstr "近くの Bluetooth スケールをスキャンして GaggiMate に接続します。"
 
+#: src/pages/SetupWizard/WifiStep.jsx
+msgid "Scanning failed."
+msgstr ""
+
+#: src/pages/SetupWizard/WifiStep.jsx
+msgid "Scanning only works while GaggiMate runs its own Wi-Fi network."
+msgstr ""
+
 #: src/pages/Settings/tabs/SystemTab.jsx
 msgid "Scanning shot history files..."
 msgstr "ショット履歴ファイルをスキャン中..."
@@ -4212,6 +4261,10 @@ msgstr "ショットの時間をスクラブ"
 msgid "Search {labelLower}..."
 msgstr "{labelLower} を検索..."
 
+#: src/pages/SetupWizard/WifiStep.jsx
+msgid "Search again"
+msgstr ""
+
 #: src/pages/Statistics/components/StatisticsSearchHelp.jsx
 msgid "Search help"
 msgstr "検索のヘルプ"
@@ -4232,6 +4285,10 @@ msgstr "検索..."
 #: src/app/MachineSetup.jsx
 msgid "Searching"
 msgstr "検索中"
+
+#: src/pages/SetupWizard/WifiStep.jsx
+msgid "Searching for networks…"
+msgstr ""
 
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
@@ -4490,6 +4547,10 @@ msgstr "ショット / {granularityLabel}"
 msgid "Shots: {shotCount}"
 msgstr "ショット: {shotCount}"
 
+#: src/pages/SetupWizard/WifiStep.jsx
+msgid "Show"
+msgstr ""
+
 #: src/pages/Statistics/components/StatisticsMultiSelectDropdown.jsx
 msgid "Show all {labelLower}"
 msgstr "すべての{labelLower}を表示"
@@ -4574,11 +4635,19 @@ msgid "Single Origin, Blend..."
 msgstr "シングルオリジン、ブレンド..."
 
 #: src/pages/SetupWizard/index.jsx
+msgid "Skip"
+msgstr ""
+
+#: src/pages/SetupWizard/index.jsx
 msgid "Skip setup"
 msgstr ""
 
 #: src/pages/SetupWizard/index.jsx
 msgid "Skip the setup wizard? You can run it later from Settings → System."
+msgstr ""
+
+#: src/pages/SetupWizard/WifiStep.jsx
+msgid "Skip this to keep using the GaggiMate network. You can add your Wi-Fi later in the settings."
 msgstr ""
 
 #: src/components/PumpFlowCalibration/api.js
@@ -4877,6 +4946,10 @@ msgstr "ストレージとメモリ"
 #: src/pages/ShotAnalyzer/components/EmptyState.jsx
 msgid "Stores imported external shots and profiles locally in this browser on this device. They are not automatically available in other browsers or on other devices."
 msgstr "インポートした外部のショットとプロファイルを、このデバイスのこのブラウザーにローカル保存します。他のブラウザーや他のデバイスでは自動的には利用できません。"
+
+#: src/pages/SetupWizard/WifiStep.jsx
+msgid "Strong"
+msgstr ""
 
 #: src/pages/Settings/PluginCard.jsx
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
@@ -5246,8 +5319,20 @@ msgstr ""
 msgid "The machine has been in steam mode for 5 minutes."
 msgstr "マシンが 5 分間スチームモードのままです。"
 
+#: src/pages/SetupWizard/WifiStep.jsx
+msgid "The machine is busy, try again in a moment."
+msgstr ""
+
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "The machine is busy. Stop the running process and try again."
+msgstr ""
+
+#: src/pages/SetupWizard/index.jsx
+msgid "The machine restarts and connects to your network. Connect this device to {ssid} as well, then open <0>http://{host}</0> or scan the QR code on the machine's display."
+msgstr ""
+
+#: src/pages/SetupWizard/index.jsx
+msgid "The plugins you enabled start the next time the machine is switched on."
 msgstr ""
 
 #: src/pages/Settings/PluginCard.jsx
@@ -5857,6 +5942,10 @@ msgstr "水タンク"
 msgid "Water tank low"
 msgstr "水タンクの残量低下"
 
+#: src/pages/SetupWizard/WifiStep.jsx
+msgid "Weak"
+msgstr ""
+
 #: src/pages/Statistics/components/toolbar/constants.js
 msgctxt "shot source: browser storage"
 msgid "WEB"
@@ -5962,9 +6051,17 @@ msgstr "オフにすると輝度は 0 に設定されます"
 msgid "While GaggiMate is in the background it keeps watching your machines and shows a permanent “Watching machines” notification. This uses some extra battery."
 msgstr "GaggiMate はバックグラウンドでもマシンの監視を続け、「マシンを監視中」という通知を常に表示します。バッテリーを多少多く消費します。"
 
+#: src/pages/SetupWizard/index.jsx
+msgid "Wi-Fi"
+msgstr ""
+
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Wi-Fi Password"
 msgstr "Wi-Fi パスワード"
+
+#: src/pages/SetupWizard/WifiStep.jsx
+msgid "Wi-Fi passwords have at least {WPA_MIN_PASSWORD} characters."
+msgstr ""
 
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Wi-Fi SSID"
