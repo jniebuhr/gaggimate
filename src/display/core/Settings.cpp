@@ -77,10 +77,13 @@ Settings::Settings() {
         sunriseIdle.initDefault(ColorConversion::toHex(sunriseR, sunriseG, sunriseB, sunriseW));
     }
     // Installs from before the setup wizard already generated an AP password; don't send them through it
-    const bool legacyInstall = !preferences.isKey("setup_ok") && preferences.isKey("wap");
+    const bool setupKnown = preferences.isKey("setup_ok");
+    const bool legacyInstall = !setupKnown && preferences.isKey("wap");
     preferences.end();
     if (legacyInstall) {
         setupDone.set(true);
+    } else if (!setupKnown) {
+        setupDone.persist(); // record "not done" now, or the AP password saved this boot reads as a legacy install next boot
     }
 
     xTaskCreate(loopTask, "Settings::loop", configMINIMAL_STACK_SIZE * 6, this, 1, &taskHandle);

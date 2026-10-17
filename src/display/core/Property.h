@@ -82,6 +82,9 @@ template <typename T> class Property : public PropertyBase {
     // Overrides the value without marking it dirty (migration defaults for absent keys).
     void initDefault(const T &newValue) { value = newValue; }
 
+    // Writes the current value even if unchanged, so a default is recorded as a key.
+    void persist() { dirty = true; }
+
     bool isDirty() const override { return dirty; }
 
     void load(Preferences &prefs) override { value = PreferencesCodec<T>::read(prefs, key, value); }
