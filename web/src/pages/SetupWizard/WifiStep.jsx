@@ -7,6 +7,7 @@ import { faRotate } from '@fortawesome/free-solid-svg-icons/faRotate';
 import { ApiServiceContext } from '../../services/ApiService.js';
 import { Spinner } from '../../components/Spinner.jsx';
 import { SettingsFormField } from '../../components/SettingsFormField.jsx';
+import { InfoNote } from './InfoNote.jsx';
 
 const OTHER = '\u0000other'; // can never collide with a real SSID
 export const WPA_MIN_PASSWORD = 8;
@@ -102,9 +103,9 @@ export function WifiStep({ wifi, onChange }) {
       </div>
 
       {errorText && (
-        <div className='alert alert-warning'>
-          <span>{errorText}</span>
-        </div>
+        <InfoNote tone='warning' title={t`Search failed`}>
+          {errorText}
+        </InfoNote>
       )}
       {networks === null && scanning && (
         <div className='flex items-center gap-2 text-sm opacity-70'>

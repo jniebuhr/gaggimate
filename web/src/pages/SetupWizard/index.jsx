@@ -210,11 +210,9 @@ export function SetupWizard() {
           <FinishStep joinSsid={joinWifi ? wifi.ssid : null} pluginsPending={pluginsPending} />
         )}
         {error && (
-          <div className='alert alert-error'>
-            <span>
-              <Trans>Saving failed. Check the connection to your machine and try again.</Trans>
-            </span>
-          </div>
+          <InfoNote tone='error' title={t`Saving failed`}>
+            <Trans>Check the connection to your machine and try again.</Trans>
+          </InfoNote>
         )}
         <div className='mt-4 flex justify-between gap-2'>
           <button
