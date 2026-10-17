@@ -3420,8 +3420,8 @@ msgid "Pressure Offset"
 msgstr "Pressure Offset"
 
 #: src/pages/SetupWizard/TestStep.jsx
-msgid "Pressure peaked above 12.5 bar. That works, but you may want to adjust the OPV to around 9–10 bar."
-msgstr "Pressure peaked above 12.5 bar. That works, but you may want to adjust the OPV to around 9–10 bar."
+msgid "Pressure peaked above 12.5 bar. That works, but you may want to adjust the OPV to around 10–11 bar."
+msgstr "Pressure peaked above 12.5 bar. That works, but you may want to adjust the OPV to around 10–11 bar."
 
 #: src/pages/Settings/PluginCard.jsx
 msgid "Pressure polynomial (a,b,c,d) for vane-/gear-pump internal leakage. Leave at 0,0,0,0 if uncalibrated."
@@ -3432,8 +3432,8 @@ msgid "Pressure Sensor Rating"
 msgstr "Pressure Sensor Rating"
 
 #: src/pages/SetupWizard/TestStep.jsx
-msgid "Pressure stayed below 6 bar. Prime the pump and check for leaks and the OPV setting."
-msgstr "Pressure stayed below 6 bar. Prime the pump and check for leaks and the OPV setting."
+msgid "Pressure stayed below 10 bar. Prime the pump and check for leaks and the OPV setting."
+msgstr "Pressure stayed below 10 bar. Prime the pump and check for leaks and the OPV setting."
 
 #: src/pages/ShotAnalyzer/utils/formatting.js
 msgid "Pressure Stop"

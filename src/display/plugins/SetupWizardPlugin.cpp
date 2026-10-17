@@ -16,7 +16,7 @@ constexpr unsigned long PRESSURE_PLATEAU_MS = 1500;
 constexpr unsigned long PRESSURE_RELEASE_MS = 5000;
 constexpr unsigned long PRESSURE_SAFETY_MS = 20000;
 constexpr float PRESSURE_PLATEAU_STEP = 0.1f;
-constexpr float PRESSURE_MIN_PEAK = 6.0f;
+constexpr float PRESSURE_MIN_PEAK = 10.0f;
 constexpr float PRESSURE_HIGH_PEAK = 12.5f;
 constexpr float PRESSURE_MAX_RESIDUAL = 1.0f;
 

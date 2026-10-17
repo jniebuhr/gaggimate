@@ -3424,7 +3424,7 @@ msgid "Pressure Offset"
 msgstr "Offset di pressione"
 
 #: src/pages/SetupWizard/TestStep.jsx
-msgid "Pressure peaked above 12.5 bar. That works, but you may want to adjust the OPV to around 9–10 bar."
+msgid "Pressure peaked above 12.5 bar. That works, but you may want to adjust the OPV to around 10–11 bar."
 msgstr ""
 
 #: src/pages/Settings/PluginCard.jsx
@@ -3436,7 +3436,7 @@ msgid "Pressure Sensor Rating"
 msgstr "Portata del sensore di pressione"
 
 #: src/pages/SetupWizard/TestStep.jsx
-msgid "Pressure stayed below 6 bar. Prime the pump and check for leaks and the OPV setting."
+msgid "Pressure stayed below 10 bar. Prime the pump and check for leaks and the OPV setting."
 msgstr ""
 
 #: src/pages/ShotAnalyzer/utils/formatting.js
