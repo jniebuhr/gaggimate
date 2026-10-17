@@ -6,7 +6,7 @@
 namespace {
 constexpr unsigned long HEATER_TEST_MS = 10000;
 constexpr unsigned long HEATER_SETTLE_MS = 3000; // sensor lags the element, keep watching after it is off
-constexpr float HEATER_MIN_RISE = 1.0f;
+constexpr float HEATER_MIN_RISE = 2.5f;
 constexpr float HEATER_HOT_MARGIN = 30.0f;   // this close to the steam target the heater has evidently worked
 constexpr float HEATER_ABORT_MARGIN = 15.0f; // steam mode starts the pump near its target
 
@@ -177,6 +177,12 @@ void SetupWizardPlugin::startHeaterTest() {
 void SetupWizardPlugin::loopHeater(unsigned long now) {
     const float temp = heaterTemp();
     peakTemp = std::max(peakTemp, temp);
+    if (*phase == Phase::HEATING && temp - startTemp >= HEATER_MIN_RISE) {
+        // Enough to prove the heater works, no need to keep heating
+        controller->activateStandby();
+        finish(true, nullptr);
+        return;
+    }
     if (*phase == Phase::HEATING) {
         const bool nearSteam = temp > static_cast<float>(controller->getSettings().getTargetSteamTemp()) - HEATER_ABORT_MARGIN;
         if (now - phaseStarted >= HEATER_TEST_MS || nearSteam || controller->getMode() != MODE_STEAM) {
@@ -276,6 +282,7 @@ void SetupWizardPlugin::publish(const char *state, const char *reason) {
         doc["startTemp"] = startTemp;
         doc["temp"] = heaterTemp();
         doc["rise"] = peakTemp - startTemp;
+        doc["targetRise"] = HEATER_MIN_RISE;
     } else {
         doc["pressure"] = controller->getCurrentPressure();
         doc["maxPressure"] = maxPressure;

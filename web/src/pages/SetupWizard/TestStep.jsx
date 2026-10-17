@@ -4,8 +4,6 @@ import { msg } from '@lingui/core/macro';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
 import { Spinner } from '../../components/Spinner.jsx';
 
-const HEATER_TEST_SECONDS = 13; // 10 s heating + 3 s settling
-
 const REASONS = {
   sensor: msg`The temperature sensor returned an invalid reading. Check the thermocouple and its wiring.`,
   alreadyHot: msg`The boiler is already hot, so the heater works.`,
@@ -97,24 +95,9 @@ function ResultAlert({ status, error }) {
 function HeaterTest() {
   const { t } = useLingui();
   const { status, error, start, abort } = useSetupTest('heater');
-  const [startedAt, setStartedAt] = useState(0);
-  const [now, setNow] = useState(Date.now());
   const running = status?.state === 'running';
-
-  useEffect(() => {
-    if (!running) return undefined;
-    const id = setInterval(() => setNow(Date.now()), 250);
-    return () => clearInterval(id);
-  }, [running]);
-
-  const onStart = () => {
-    setStartedAt(Date.now());
-    start();
-  };
-
-  const progress = running
-    ? Math.min(100, ((now - startedAt) / (HEATER_TEST_SECONDS * 1000)) * 100)
-    : 0;
+  const rise = Math.max(0, Number(status?.rise) || 0);
+  const targetRise = Number(status?.targetRise) || 2.5;
   const temp = status?.temp ?? machine.value.status.currentTemperature;
 
   return (
@@ -127,16 +110,20 @@ function HeaterTest() {
       </div>
       <p className='text-sm opacity-70'>
         <Trans>
-          The heater runs at full power for 10 seconds while GaggiMate checks that the boiler
-          temperature rises.
+          The heater runs at full power for up to 10 seconds and stops as soon as the boiler
+          temperature has risen by a few degrees.
         </Trans>
       </p>
       {running && (
         <div className='space-y-1'>
-          <progress className='progress progress-primary w-full' value={progress} max='100' />
-          {status.rise !== undefined && (
-            <div className='text-sm'>{t`Temperature rise: ${Number(status.rise).toFixed(1)} °C`}</div>
-          )}
+          <progress
+            className='progress progress-primary w-full'
+            value={Math.min(rise, targetRise)}
+            max={targetRise}
+          />
+          <div className='text-sm'>
+            {t`Temperature rise: ${rise.toFixed(1)} of ${targetRise.toFixed(1)} °C`}
+          </div>
         </div>
       )}
       <ResultAlert status={status} error={error} />
@@ -146,7 +133,7 @@ function HeaterTest() {
             <Trans>Stop</Trans>
           </button>
         ) : (
-          <button type='button' className='btn btn-primary' onClick={onStart}>
+          <button type='button' className='btn btn-primary' onClick={() => start()}>
             {status ? <Trans>Run again</Trans> : <Trans>Start heating test</Trans>}
           </button>
         )}
