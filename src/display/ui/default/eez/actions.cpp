@@ -240,6 +240,8 @@ void action_on_next_profile(lv_event_t *e) { controller.getUI()->onNextProfile()
 
 void action_on_profile_detail_toggle(lv_event_t *e) { controller.getUI()->onProfileDetailToggle(); }
 
+void action_on_welcome_continue(lv_event_t *e) { controller.getUI()->onWelcomeContinue(); }
+
 void action_on_brew_cancel(lv_event_t *e) {
     controller.deactivate();
     controller.clear();

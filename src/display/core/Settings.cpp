@@ -76,7 +76,12 @@ Settings::Settings() {
     if (!preferences.isKey("sr_i")) {
         sunriseIdle.initDefault(ColorConversion::toHex(sunriseR, sunriseG, sunriseB, sunriseW));
     }
+    // Installs from before the setup wizard already generated an AP password; don't send them through it
+    const bool legacyInstall = !preferences.isKey("setup_ok") && preferences.isKey("wap");
     preferences.end();
+    if (legacyInstall) {
+        setupDone.set(true);
+    }
 
     xTaskCreate(loopTask, "Settings::loop", configMINIMAL_STACK_SIZE * 6, this, 1, &taskHandle);
 }
@@ -174,6 +179,8 @@ void Settings::setStartupFillTime(int startup_fill_time) { startupFillTime.set(s
 void Settings::setSteamFillTime(int steam_fill_time) { steamFillTime.set(steam_fill_time); }
 
 void Settings::setSmartGrindActive(bool smart_grind_active) { smartGrindActive.set(smart_grind_active); }
+
+void Settings::setSetupDone(bool setup_done) { setupDone.set(setup_done); }
 
 void Settings::setMahlkonigActive(bool mahlkonig_active) { mahlkonigActive.set(mahlkonig_active); }
 
