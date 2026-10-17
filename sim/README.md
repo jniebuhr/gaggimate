@@ -53,6 +53,9 @@ IDE (CLion/VSCode) it shows up under the `display-sim` environment as the
   # convert to PNG on macOS: sips -s format png shot.bmp --out shot.png
   ```
 
+- **AP mode**: `--ap` clears the Wi-Fi credentials, so the display falls back to
+  its access point like a fresh device (setup wizard Wi-Fi step). The next run
+  without it seeds the sim network again.
 - **State** (settings, profiles, shot history) persists under `sim_data/`
   (git-ignored). Delete it to start fresh.
 
