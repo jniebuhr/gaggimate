@@ -3996,6 +3996,10 @@ msgstr "¿Restablecer las columnas a los valores predeterminados del sistema?"
 msgid "Reset Defaults"
 msgstr "Restablecer valores predeterminados"
 
+#: src/pages/SetupWizard/index.jsx
+msgid "Restart"
+msgstr ""
+
 #: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
 msgid "Restoring previous profile..."
 msgstr "Restaurando el perfil anterior..."

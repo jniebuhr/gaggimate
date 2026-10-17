@@ -3996,6 +3996,10 @@ msgstr "Reset columns to system defaults?"
 msgid "Reset Defaults"
 msgstr "Reset Defaults"
 
+#: src/pages/SetupWizard/index.jsx
+msgid "Restart"
+msgstr "Restart"
+
 #: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
 msgid "Restoring previous profile..."
 msgstr "Restoring previous profile..."

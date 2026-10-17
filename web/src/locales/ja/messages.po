@@ -3996,6 +3996,10 @@ msgstr "列をシステムのデフォルトにリセットしますか？"
 msgid "Reset Defaults"
 msgstr "デフォルトに戻す"
 
+#: src/pages/SetupWizard/index.jsx
+msgid "Restart"
+msgstr ""
+
 #: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
 msgid "Restoring previous profile..."
 msgstr "以前のプロファイルを復元中..."

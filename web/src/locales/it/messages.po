@@ -4000,6 +4000,10 @@ msgstr "Ripristinare le colonne ai valori di sistema predefiniti?"
 msgid "Reset Defaults"
 msgstr "Ripristina predefiniti"
 
+#: src/pages/SetupWizard/index.jsx
+msgid "Restart"
+msgstr ""
+
 #: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
 msgid "Restoring previous profile..."
 msgstr "Ripristino del profilo precedente..."

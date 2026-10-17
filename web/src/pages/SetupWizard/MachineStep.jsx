@@ -5,6 +5,7 @@ import { Spinner } from '../../components/Spinner.jsx';
 import { SettingsFormField } from '../../components/SettingsFormField.jsx';
 import { splitPidString } from '../Settings/settingsForm.js';
 import { DEFAULT_HEATER_WATTAGE, MACHINE_PRESETS } from './machinePresets.js';
+import { InfoNote } from './InfoNote.jsx';
 import { postSettings } from './setupState.js';
 
 const CUSTOM = 'custom';
@@ -174,11 +175,7 @@ export function MachineStep({ onSaved }) {
         ))}
       </div>
 
-      {preset?.note && (
-        <div className='alert alert-info'>
-          <span>{i18n._(preset.note)}</span>
-        </div>
-      )}
+      {preset?.note && <InfoNote title={preset.name}>{i18n._(preset.note)}</InfoNote>}
 
       {!preset && (
         <div className='bg-base-200 grid grid-cols-1 gap-x-4 rounded-lg p-4 sm:grid-cols-2'>

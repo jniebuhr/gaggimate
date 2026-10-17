@@ -6,6 +6,7 @@ import { Spinner } from '../../components/Spinner.jsx';
 import { getCachedSettings } from '../../services/ApiService.js';
 import { useProfileList } from '../../services/hooks.js';
 import { serializeAutoWakeupSchedules } from '../Settings/settingsForm.js';
+import { InfoNote } from './InfoNote.jsx';
 import { MachineStep } from './MachineStep.jsx';
 import { BOOT_PLUGIN_KEYS, PLUGIN_KEYS, PluginsStep, usePluginForm } from './PluginsStep.jsx';
 import { TestStep } from './TestStep.jsx';
@@ -13,26 +14,23 @@ import { WifiStep, isWifiChoiceValid } from './WifiStep.jsx';
 import { postSettings, setupNeeded } from './setupState.js';
 
 function FinishStep({ joinSsid, pluginsPending }) {
+  const { t } = useLingui();
   const { profiles } = useProfileList();
   const featured = profiles.filter(p => !p.utility).slice(0, 4);
   return (
     <div className='space-y-4'>
       {joinSsid && (
-        <div className='alert alert-info'>
-          <span>
-            <Trans>
-              GaggiMate restarts when you finish so it can connect to {joinSsid}. Plugins you
-              enabled start with it.
-            </Trans>
-          </span>
-        </div>
+        <InfoNote title={t`Restart`}>
+          <Trans>
+            GaggiMate restarts when you finish so it can connect to {joinSsid}. Plugins you enabled
+            start with it.
+          </Trans>
+        </InfoNote>
       )}
       {pluginsPending && (
-        <div className='alert alert-info'>
-          <span>
-            <Trans>The plugins you enabled start the next time the machine is switched on.</Trans>
-          </span>
-        </div>
+        <InfoNote title={t`Plugins`}>
+          <Trans>The plugins you enabled start the next time the machine is switched on.</Trans>
+        </InfoNote>
       )}
       <p className='text-lg'>
         <Trans>Thank you for installing GaggiMate! Your machine is ready for its first shot.</Trans>

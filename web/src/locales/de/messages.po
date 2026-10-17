@@ -3996,6 +3996,10 @@ msgstr "Spalten auf Systemstandard zurücksetzen?"
 msgid "Reset Defaults"
 msgstr "Standard wiederherstellen"
 
+#: src/pages/SetupWizard/index.jsx
+msgid "Restart"
+msgstr ""
+
 #: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
 msgid "Restoring previous profile..."
 msgstr "Vorheriges Profil wird wiederhergestellt..."

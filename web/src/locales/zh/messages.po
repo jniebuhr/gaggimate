@@ -3996,6 +3996,10 @@ msgstr "将列重置为系统默认值？"
 msgid "Reset Defaults"
 msgstr "恢复默认"
 
+#: src/pages/SetupWizard/index.jsx
+msgid "Restart"
+msgstr ""
+
 #: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
 msgid "Restoring previous profile..."
 msgstr "正在恢复之前的曲线..."
