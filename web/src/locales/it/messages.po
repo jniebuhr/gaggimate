@@ -5241,6 +5241,10 @@ msgstr "Il macinacaffè raggiunge GaggiMate a questo indirizzo, quindi entrambi 
 msgid "The heater runs at full power for 10 seconds while GaggiMate checks that the boiler temperature rises."
 msgstr ""
 
+#: src/pages/SetupWizard/machinePresets.js
+msgid "The heating element sits in the water, so the boiler refill plugin is enabled in the next steps to keep the boiler filled."
+msgstr ""
+
 #: src/app/appSettings.js
 msgid "The machine has been in steam mode for 5 minutes."
 msgstr "La macchina è in modalità vapore da 5 minuti."
@@ -5289,10 +5293,6 @@ msgstr "Tema"
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Theme & Notifications"
 msgstr "Tema e notifiche"
-
-#: src/pages/SetupWizard/MachineStep.jsx
-msgid "There are no tested PID values for this machine yet. After applying the preset, run the autotune below."
-msgstr ""
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Thermal Feedforward Gain"

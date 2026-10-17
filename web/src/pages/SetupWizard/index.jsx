@@ -51,6 +51,12 @@ export function SetupWizard() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
 
+  const enablePresetPlugins = preset => {
+    if (!preset?.plugins) return;
+    const enabled = Object.fromEntries(preset.plugins.map(key => [key, true]));
+    pluginForm.setFormData(formData => ({ ...formData, ...enabled }));
+  };
+
   const steps = [t`Testing`, t`Machine`, t`Plugins`, t`Done`];
 
   const savePlugins = async () => {
@@ -125,7 +131,7 @@ export function SetupWizard() {
       </ul>
       <Card title={steps[step]}>
         {step === 0 && <TestStep />}
-        {step === 1 && <MachineStep />}
+        {step === 1 && <MachineStep onSaved={enablePresetPlugins} />}
         {step === 2 && <PluginsStep form={pluginForm} />}
         {step === 3 && <FinishStep />}
         {error && (
