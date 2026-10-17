@@ -4,7 +4,7 @@ import { ApiServiceContext, getCachedSettings } from '../../services/ApiService.
 import { Spinner } from '../../components/Spinner.jsx';
 import { SettingsFormField } from '../../components/SettingsFormField.jsx';
 import { splitPidString } from '../Settings/settingsForm.js';
-import { MACHINE_PRESETS } from './machinePresets.js';
+import { DEFAULT_HEATER_WATTAGE, MACHINE_PRESETS } from './machinePresets.js';
 import { postSettings } from './setupState.js';
 
 const CUSTOM = 'custom';
@@ -98,12 +98,12 @@ function Autotune({ wattage, onWattageChange }) {
 }
 
 export function MachineStep({ onSaved }) {
-  const { t } = useLingui();
+  const { t, i18n } = useLingui();
   const [selected, setSelected] = useState(MACHINE_PRESETS[0].id);
   const [applied, setApplied] = useState(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(false);
-  const [wattage, setWattage] = useState(MACHINE_PRESETS[0].heaterWattage);
+  const [wattage, setWattage] = useState(DEFAULT_HEATER_WATTAGE);
   const [custom, setCustom] = useState(() => {
     const settings = getCachedSettings() || {};
     const { pid, kf } = splitPidString(settings.pid || MACHINE_PRESETS[0].settings.pid);
@@ -120,8 +120,6 @@ export function MachineStep({ onSaved }) {
   const select = id => {
     setSelected(id);
     setApplied(null);
-    const next = MACHINE_PRESETS.find(p => p.id === id);
-    if (next) setWattage(next.heaterWattage);
   };
 
   const apply = async () => {
@@ -137,7 +135,7 @@ export function MachineStep({ onSaved }) {
           };
       await postSettings(fields);
       setApplied(selected);
-      onSaved?.();
+      onSaved?.(preset);
     } catch {
       setError(true);
     } finally {
@@ -146,7 +144,7 @@ export function MachineStep({ onSaved }) {
   };
 
   const setCustomField = key => e => setCustom({ ...custom, [key]: e.currentTarget.value });
-  const showAutotune = preset ? preset.autotune && applied === selected : true;
+  const showAutotune = !preset;
 
   return (
     <div className='space-y-4'>
@@ -176,14 +174,9 @@ export function MachineStep({ onSaved }) {
         ))}
       </div>
 
-      {preset?.autotune && (
+      {preset?.note && (
         <div className='alert alert-info'>
-          <span>
-            <Trans>
-              There are no tested PID values for this machine yet. After applying the preset, run
-              the autotune below.
-            </Trans>
-          </span>
+          <span>{i18n._(preset.note)}</span>
         </div>
       )}
 
