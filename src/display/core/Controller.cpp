@@ -19,6 +19,7 @@
 #include <display/plugins/BoilerFillPlugin.h>
 #include <display/plugins/CleaningSchedulePlugin.h>
 #include <display/plugins/LedControlPlugin.h>
+#include <display/plugins/SetupWizardPlugin.h>
 #include <display/plugins/ShotHistoryPlugin.h>
 #include <display/plugins/SmartGrindPlugin.h>
 #include <display/plugins/WebUIPlugin.h>
@@ -120,6 +121,7 @@ void Controller::setup() {
     pluginManager->registerPlugin(new LedControlPlugin());
     pluginManager->registerPlugin(new AutoWakeupPlugin());
     pluginManager->registerPlugin(new CleaningSchedulePlugin());
+    pluginManager->registerPlugin(new SetupWizardPlugin());
     pluginManager->setup(this);
 
     pluginManager->on("profiles:profile:save", [this](Event const &event) {
@@ -527,7 +529,9 @@ void Controller::setupWifi() {
         const String apPassword = settings.getWifiApPassword();
         // WPA2 requires >= 8 chars; fall back to an open AP if somehow shorter.
         const bool secured = apPassword.length() >= WIFI_AP_PASSWORD_MIN_LENGTH;
-        WiFi.mode(WIFI_AP);
+        // APSTA keeps an idle station for setup-wizard network scans; it never connects until the next boot
+        WiFi.setAutoReconnect(false);
+        WiFi.mode(WIFI_AP_STA);
         WiFi.softAPConfig(WIFI_AP_IP, WIFI_AP_IP, WIFI_SUBNET_MASK);
         WiFi.softAP(WIFI_AP_SSID, secured ? apPassword.c_str() : nullptr);
         WiFi.setTxPower(WIFI_POWER_19_5dBm);

@@ -71,7 +71,7 @@ void NetworkWatchdogPlugin::recover(unsigned long now, unsigned long deadForMs) 
         logStats("egress-dead");
         ESP_LOGE(LOG_TAG, "No network egress for %lus while WiFi up -> WiFi reconnect", deadForMs / 1000);
         const wifi_mode_t mode = WiFi.getMode();
-        if (mode == WIFI_MODE_STA || mode == WIFI_MODE_APSTA)
+        if (mode == WIFI_MODE_STA) // the APSTA station only scans for the setup wizard
             WiFi.reconnect();
         return;
     }

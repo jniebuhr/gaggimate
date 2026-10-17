@@ -46,6 +46,10 @@ channels:
           - $ref: '#/components/messages/FlushStartResponse'
           - $ref: '#/components/messages/CleaningResponse'
           - $ref: '#/components/messages/FlushStopResponse'
+          - $ref: '#/components/messages/SetupTestResponse'
+          - $ref: '#/components/messages/SetupTestEvent'
+          - $ref: '#/components/messages/WifiScanResponse'
+          - $ref: '#/components/messages/WifiScanEvent'
     publish:
       description: Messages sent from the client to the server.
       message:
@@ -67,6 +71,9 @@ channels:
           - $ref: '#/components/messages/CleaningStartRequest'
           - $ref: '#/components/messages/CleaningCompleteRequest'
           - $ref: '#/components/messages/FlushStopRequest'
+          - $ref: '#/components/messages/SetupTestStartRequest'
+          - $ref: '#/components/messages/SetupTestAbortRequest'
+          - $ref: '#/components/messages/WifiScanRequest'
 components:
   schemas:
     StatusPayload:
@@ -577,6 +584,144 @@ components:
           success:
             type: boolean
         required: [tp, success]
+    SetupTestStartRequest:
+      summary: >-
+        Start a setup-wizard hardware test. heater: steam setpoint until the temperature rose by 2.5 °C (passes right away),
+        otherwise for 10 s plus 3 s settling. pressure (pressure sensor only): pump at 100 % against the closed 3-way valve until pressure
+        plateaus (max 10 s), then pump off with the valve open for 5 s; passes on a peak of at least 10 bar and at most
+        1 bar left after release. Progress and the result arrive as evt:setup:test.
+      payload:
+        type: object
+        properties:
+          tp:
+            type: string
+            enum: ['req:setup:test:start']
+          rid:
+            type: string
+          test:
+            type: string
+            enum: [heater, pressure]
+          ack:
+            type: boolean
+            description: Required true for the pressure test; the user confirmed the safety notice.
+        required: [tp, test]
+    SetupTestAbortRequest:
+      summary: Stop the running setup test and return to standby. Answered with res:setup:test:abort.
+      payload:
+        type: object
+        properties:
+          tp:
+            type: string
+            enum: ['req:setup:test:abort']
+          rid:
+            type: string
+        required: [tp]
+    SetupTestResponse:
+      payload:
+        type: object
+        properties:
+          tp:
+            type: string
+            enum: ['res:setup:test:start', 'res:setup:test:abort']
+          rid:
+            type: string
+          success:
+            type: boolean
+          error:
+            type: string
+            enum: [busy, notReady, noPressureSensor, ackRequired, unknownTest]
+        required: [tp, success]
+    SetupTestEvent:
+      summary: Setup test progress (every 250 ms while running) and its final state.
+      payload:
+        type: object
+        properties:
+          tp:
+            type: string
+            enum: ['evt:setup:test']
+          test:
+            type: string
+            enum: [heater, pressure]
+          state:
+            type: string
+            enum: [running, passed, failed, aborted]
+          phase:
+            type: string
+            enum: [idle, heating, settling, building, releasing, done]
+          reason:
+            type: string
+            description: >-
+              heater: sensor, alreadyHot (passed without heating), noRise. pressure: noPressure, lowPressure,
+              noRelease, highPressure (passed, OPV set above 12.5 bar).
+          startTemp:
+            type: number
+          temp:
+            type: number
+          rise:
+            type: number
+          targetRise:
+            type: number
+            description: Rise in °C the heater test needs to pass.
+          pressure:
+            type: number
+          maxPressure:
+            type: number
+          residualPressure:
+            type: number
+        required: [tp, test, state, phase]
+    WifiScanRequest:
+      summary: >-
+        Scan for Wi-Fi networks for the setup wizard. Only available in the AP fallback (APSTA, the station never
+        connects) and not while a setup test runs. The scan returns to the AP channel between channels. Results arrive
+        as evt:wifi:scan.
+      payload:
+        type: object
+        properties:
+          tp:
+            type: string
+            enum: ['req:wifi:scan']
+          rid:
+            type: string
+        required: [tp]
+    WifiScanResponse:
+      payload:
+        type: object
+        properties:
+          tp:
+            type: string
+            enum: ['res:wifi:scan']
+          rid:
+            type: string
+          success:
+            type: boolean
+          error:
+            type: string
+            enum: [notAp, busy]
+        required: [tp, success]
+    WifiScanEvent:
+      summary: Scan result, one entry per SSID (strongest access point), strongest first, at most 25; hidden networks are left out.
+      payload:
+        type: object
+        properties:
+          tp:
+            type: string
+            enum: ['evt:wifi:scan']
+          success:
+            type: boolean
+          networks:
+            type: array
+            items:
+              type: object
+              properties:
+                ssid:
+                  type: string
+                rssi:
+                  type: integer
+                secure:
+                  type: boolean
+                channel:
+                  type: integer
+        required: [tp, success, networks]
     FlushStartRequest:
       summary: Start a flush (brew valve open, pump on) for the configured flush duration; with duration 0 it runs until req:flush:stop. The valve stays open for one more second after the pump stops.
       payload:

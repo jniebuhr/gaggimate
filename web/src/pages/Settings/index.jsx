@@ -58,23 +58,15 @@ import { faPuzzlePiece } from '@fortawesome/free-solid-svg-icons/faPuzzlePiece';
 import { faBluetoothB } from '@fortawesome/free-brands-svg-icons/faBluetoothB';
 import { faRotate } from '@fortawesome/free-solid-svg-icons/faRotate';
 import { isApp } from '../../app/platform.js';
-
-const CHECKBOX_KEYS = [
-  'homekit',
-  'boilerFillActive',
-  'smartGrindActive',
-  'mahlkonigActive',
-  'homeAssistant',
-  'momentaryButtons',
-  'heaterCoordinationEnabled',
-  'delayAdjust',
-  'clock24hFormat',
-  'autowakeupEnabled',
-  'smartGrindToggle',
-];
+import {
+  CHECKBOX_KEYS,
+  parseAutoWakeupSchedules,
+  serializeAutoWakeupSchedules,
+  splitPidString,
+} from './settingsForm.js';
 
 // Device facts GET /api/settings reports for display only; never saved, exported or imported.
-const READ_ONLY_KEYS = ['deviceIp'];
+const READ_ONLY_KEYS = ['deviceIp', 'setupDone', 'apMode'];
 
 // Form-only fields that never come back from GET /api/settings.
 const FORM_ONLY_KEYS = [
@@ -91,38 +83,10 @@ const DEFAULT_SCALE_FACTOR_2 = 2500.0;
 const DEFAULT_HARDWARE_SCALE_SAMPLE_RATE_SPS = 10;
 const DEFAULT_HARDWARE_SCALE_FILTER_ALPHA = 0.8;
 
-function splitPidString(pidString) {
-  if (!pidString) return { pid: pidString, kf: '0.000' };
-  const parts = pidString.split(',');
-  if (parts.length >= 4) {
-    return { pid: parts.slice(0, 3).join(','), kf: parts[3] };
-  }
-  return { pid: pidString, kf: '0.000' };
-}
-
 function splitButtons(buttonBehavior) {
   if (!buttonBehavior) return {};
   const [button0, button1, button2] = buttonBehavior.split(',');
   return { button0, button1, button2 };
-}
-
-function parseAutoWakeupSchedules(autowakeupSchedules) {
-  const defaultSchedule = [{ time: '07:00', days: [true, true, true, true, true, true, true] }];
-  if (!autowakeupSchedules) {
-    return defaultSchedule;
-  }
-  const schedules = [];
-  if (typeof autowakeupSchedules === 'string' && autowakeupSchedules.trim()) {
-    const scheduleStrings = autowakeupSchedules.split(';');
-    for (const scheduleStr of scheduleStrings) {
-      const [time, daysStr] = scheduleStr.split('|');
-      if (time && daysStr && daysStr.length === 7) {
-        const days = daysStr.split('').map(d => d === '1');
-        schedules.push({ time, days });
-      }
-    }
-  }
-  return schedules.length > 0 ? schedules : defaultSchedule;
 }
 
 function transformFetchedSettings(fetchedSettings) {
@@ -167,12 +131,6 @@ function transformFetchedSettings(fetchedSettings) {
     settingsWithToggle.kf = split.kf;
   }
   return settingsWithToggle;
-}
-
-function serializeAutoWakeupSchedules(autowakeupSchedules) {
-  return autowakeupSchedules
-    .map(schedule => `${schedule.time}|${schedule.days.map(d => (d ? '1' : '0')).join('')}`)
-    .join(';');
 }
 
 function isTruthySetting(value) {

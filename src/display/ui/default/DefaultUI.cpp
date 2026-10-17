@@ -25,7 +25,7 @@
 
 static EffectManager effect_mgr;
 
-static constexpr uint32_t STARTUP_FADE_MS = 1000; // standby fade-in duration on power-up
+static constexpr uint32_t STARTUP_FADE_MS = 1000; // start screen fade-in duration on power-up
 
 static constexpr int32_t GAUGE_TICK_LONG = 25;      // meter tick length on most screens
 static constexpr int32_t GAUGE_TICK_SHORT = 10;     // shortened tick length on profile / new-menu screens
@@ -222,25 +222,12 @@ void DefaultUI::init() {
     pluginManager->on("controller:process:start", triggerRender);
     pluginManager->on("controller:mode:change", [this](Event const &event) {
         mode = event.getInt("value");
-        switch (mode) {
-        case MODE_STANDBY:
-            changeScreen(SCREEN_ID_STANDBY_SCREEN);
-            break;
-        case MODE_BREW:
-            changeScreen(SCREEN_ID_BREW_SCREEN);
-            break;
-        case MODE_GRIND:
-            changeScreen(SCREEN_ID_GRIND_SCREEN);
-            break;
-        case MODE_STEAM:
-            changeScreen(SCREEN_ID_STEAM_SCREEN);
-            break;
-        case MODE_WATER:
-            changeScreen(SCREEN_ID_WATER_SCREEN);
-            break;
-        default:
-            break;
-        };
+        if (mode >= MODE_STANDBY && mode <= MODE_GRIND)
+            changeScreen(screenForMode(mode));
+    });
+    pluginManager->on("settings:changed", [this](Event const &) {
+        if (welcomeActive && controller->getSettings().isSetupDone())
+            onWelcomeContinue();
     });
     pluginManager->on("controller:brew:start", [this](Event const &event) { changeScreen(SCREEN_ID_STATUS_SCREEN); });
     pluginManager->on("controller:brew:clear", [this](Event const &event) {
@@ -472,8 +459,28 @@ void DefaultUI::loadRequestedImage() {
     rerender = true;
 }
 
+ScreensEnum DefaultUI::screenForMode(int mode) {
+    switch (mode) {
+    case MODE_BREW:
+        return SCREEN_ID_BREW_SCREEN;
+    case MODE_GRIND:
+        return SCREEN_ID_GRIND_SCREEN;
+    case MODE_STEAM:
+        return SCREEN_ID_STEAM_SCREEN;
+    case MODE_WATER:
+        return SCREEN_ID_WATER_SCREEN;
+    default:
+        return SCREEN_ID_STANDBY_SCREEN;
+    }
+}
+
+void DefaultUI::onWelcomeContinue() {
+    welcomeActive = false;
+    changeScreen(screenForMode(mode));
+}
+
 void DefaultUI::changeScreen(ScreensEnum screen) {
-    targetScreen = screen;
+    targetScreen = welcomeActive ? SCREEN_ID_WELCOME_SCREEN : screen;
     brewScreenState = BrewScreenState::Brew;
     rerender = true;
     // Reset some submenus
@@ -538,14 +545,20 @@ void DefaultUI::setupPanel() {
     applyGaugeSetpointStyle(gaugeSetpointsInside);
     setupState();
     applyTheme();
+    // First run boots straight into the welcome screen; it stays until the setup wizard finishes or is skipped
+    welcomeActive = !controller->getSettings().isSetupDone();
+    if (welcomeActive) {
+        eez_flow_set_screen(SCREEN_ID_WELCOME_SCREEN, LV_SCR_LOAD_ANIM_NONE, 0, 0);
+        currentScreen = targetScreen = SCREEN_ID_WELCOME_SCREEN;
+    }
     ui_tick();
 
-    lv_obj_t *standby = lv_scr_act();
+    lv_obj_t *startScreen = lv_scr_act();
     lv_obj_t *black = lv_obj_create(nullptr);
     lv_obj_set_style_bg_color(black, lv_color_black(), LV_PART_MAIN);
     lv_obj_set_style_bg_opa(black, LV_OPA_COVER, LV_PART_MAIN);
     lv_scr_load(black);
-    lv_scr_load_anim(standby, LV_SCR_LOAD_ANIM_FADE_ON, STARTUP_FADE_MS, 0, true);
+    lv_scr_load_anim(startScreen, LV_SCR_LOAD_ANIM_FADE_ON, STARTUP_FADE_MS, 0, true);
 
     lv_task_handler();
 
@@ -575,35 +588,9 @@ void DefaultUI::setupState() {
     updateBrewProcess();
 
     effect_mgr.use_effect([this]() { return currentScreen == SCREEN_ID_INFO_SCREEN; },
-                          [=]() {
-                              String content = "";
-                              if (apActive) {
-                                  // WIFI: QR syntax — escape \ ; , : " in the password per the spec.
-                                  const String pw = controller->getSettings().getWifiApPassword();
-                                  String escaped;
-                                  escaped.reserve(pw.length() + 4);
-                                  for (size_t i = 0; i < pw.length(); i++) {
-                                      const char c = pw.charAt(i);
-                                      if (c == '\\' || c == ';' || c == ',' || c == ':' || c == '"') {
-                                          escaped += '\\';
-                                      }
-                                      escaped += c;
-                                  }
-                                  if (escaped.isEmpty()) {
-                                      content = "WIFI:S:GaggiMate;;;;";
-                                  } else {
-                                      content = "WIFI:S:GaggiMate;T:WPA;P:" + escaped + ";;";
-                                  }
-                              } else if (wifiConnected) {
-                                  content = "http://" + WiFi.localIP().toString() + "/";
-                              }
-                              if (content == "") {
-                                  return;
-                              }
-                              const char *data = content.c_str();
-                              lv_qrcode_update(objects.qrcode, data, strlen(data));
-                          },
-                          &wifiConnected, &apActive);
+                          [this]() { updateAccessQrCode(objects.qrcode); }, &wifiConnected, &apActive);
+    effect_mgr.use_effect([this]() { return currentScreen == SCREEN_ID_WELCOME_SCREEN; },
+                          [this]() { updateAccessQrCode(objects.qrcode_welcome); }, &wifiConnected, &apActive);
     effect_mgr.use_effect([this]() { return currentScreen == SCREEN_ID_MENU_SCREEN_NEW; },
                           [this]() {
                               int radius = 135;
@@ -620,7 +607,42 @@ void DefaultUI::setupState() {
                           &grindAvailable);
 }
 
+// AP mode: join-network QR (the captive portal opens the web UI); on Wi-Fi: the device URL.
+void DefaultUI::updateAccessQrCode(lv_obj_t *qrcode) {
+    String content = "";
+    if (apActive) {
+        // WIFI: QR syntax — escape \ ; , : " in the password per the spec.
+        const String pw = controller->getSettings().getWifiApPassword();
+        String escaped;
+        escaped.reserve(pw.length() + 4);
+        for (size_t i = 0; i < pw.length(); i++) {
+            const char c = pw.charAt(i);
+            if (c == '\\' || c == ';' || c == ',' || c == ':' || c == '"') {
+                escaped += '\\';
+            }
+            escaped += c;
+        }
+        if (escaped.isEmpty()) {
+            content = "WIFI:S:GaggiMate;;;;";
+        } else {
+            content = "WIFI:S:GaggiMate;T:WPA;P:" + escaped + ";;";
+        }
+    } else if (wifiConnected) {
+        content = "http://" + WiFi.localIP().toString() + "/";
+    }
+    if (content == "" || qrcode == nullptr) {
+        return;
+    }
+    lv_qrcode_update(qrcode, content.c_str(), content.length());
+}
+
 void DefaultUI::handleScreenChange() {
+    // Loading a screen mid-fade frees the startup screen twice; wait for the boot fade to finish
+    const lv_disp_t *disp = lv_disp_get_default();
+    if (disp != nullptr && disp->scr_to_load != nullptr) {
+        rerender = true;
+        return;
+    }
     if (currentScreen != targetScreen) {
         if (currentScreen == SCREEN_ID_BREW_SCREEN)
             brewConfirmVisible = false; // leaving the brew screen dismisses the confirm overlay

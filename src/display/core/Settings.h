@@ -115,6 +115,7 @@ class Settings {
     int getStartupFillTime() const { return startupFillTime.get(); }
     int getSteamFillTime() const { return steamFillTime.get(); }
     bool isSmartGrindActive() const { return smartGrindActive.get(); }
+    bool isSetupDone() const { return setupDone.get(); }
     bool isMahlkonigActive() const { return mahlkonigActive.get(); }
     String getMahlkonigRecipeProfiles() const { return mahlkonigRecipeProfiles.get(); }
     int getSmartGrindMode() const { return smartGrindMode.get(); }
@@ -229,6 +230,7 @@ class Settings {
     void setStartupFillTime(int startup_fill_time);
     void setSteamFillTime(int steam_fill_time);
     void setSmartGrindActive(bool smart_grind_active);
+    void setSetupDone(bool setup_done);
     void setMahlkonigActive(bool mahlkonig_active);
     void setMahlkonigRecipeProfiles(String profiles);
     void setSmartGrindIp(String smart_grind_ip);
@@ -334,6 +336,7 @@ class Settings {
     Property<String> savedScale{registry, "ssc", ""};
     Property<String> savedScaleName{registry, "sscn", ""}; // advertised BLE name, shown while the scale is out of range
     Property<bool> homekit{registry, "hk", false};
+    Property<bool> setupDone{registry, "setup_ok", false}; // first-run wizard finished
     Property<bool> volumetricTarget{registry, "vt", false};
     Property<bool> boilerFillActive{registry, "bf_a", false};
     Property<int> startupFillTime{registry, "bf_su", 5000};

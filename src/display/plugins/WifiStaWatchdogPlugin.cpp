@@ -27,10 +27,9 @@ void WifiStaWatchdogPlugin::loop() {
     if (!armed || updating)
         return;
 
-    // AP-fallback mode is its own world; setupWifi() lifted us here at boot
-    // and there is no STA to recover.  Skip rather than thrash WiFi.begin().
+    // AP-fallback mode (AP or APSTA, whose station only scans) is its own world; skip rather than thrash WiFi.begin().
     const wifi_mode_t mode = WiFi.getMode();
-    if (mode == WIFI_MODE_AP || mode == WIFI_MODE_NULL)
+    if (mode == WIFI_MODE_AP || mode == WIFI_MODE_APSTA || mode == WIFI_MODE_NULL)
         return;
 
     const unsigned long now = millis();

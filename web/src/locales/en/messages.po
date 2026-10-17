@@ -143,6 +143,10 @@ msgstr "A brew started on the machine."
 msgid "A cleaning warning is shown once either interval is reached; set an interval to 0 to turn it off. Running the cleaning profile to the end marks it complete."
 msgstr "A cleaning warning is shown once either interval is reached; set an interval to 0 to turn it off. Running the cleaning profile to the end marks it complete."
 
+#: src/pages/SetupWizard/index.jsx
+msgid "A few profiles come pre-installed so you can start right away, from a classic 9 bar shot to lever-style pressure curves:"
+msgstr "A few profiles come pre-installed so you can start right away, from a classic 9 bar shot to lever-style pressure curves:"
+
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "A given alpha behaves faster in time at 80 SPS because it is applied more often. Tune the two alpha values independently for your installed sample rate. Changing sample rate resets both values to 0.80 at 10 SPS or 0.40 at 80 SPS as sensible starting points."
 msgstr "A given alpha behaves faster in time at 80 SPS because it is applied more often. Tune the two alpha values independently for your installed sample rate. Changing sample rate resets both values to 0.80 at 10 SPS or 0.40 at 80 SPS as sensible starting points."
@@ -327,6 +331,10 @@ msgstr "App Settings"
 msgid "Appearance"
 msgstr "Appearance"
 
+#: src/pages/SetupWizard/MachineStep.jsx
+msgid "Apply preset"
+msgstr "Apply preset"
+
 #: src/pages/ShotAnalyzer/components/library/LibraryPanel.jsx
 msgid "Are you sure you want to delete \"{itemName}\"?"
 msgstr "Are you sure you want to delete \"{itemName}\"?"
@@ -376,13 +384,25 @@ msgstr "Automatically switch to brew mode at specified time(s) of day."
 msgid "Autotune Complete!"
 msgstr "Autotune Complete!"
 
+#: src/pages/SetupWizard/MachineStep.jsx
+msgid "Autotune failed"
+msgstr "Autotune failed"
+
 #: src/pages/Settings/tabs/CalibrationTab.jsx
 msgid "Autotune Failed"
 msgstr "Autotune Failed"
 
+#: src/pages/SetupWizard/MachineStep.jsx
+msgid "Autotune finished"
+msgstr "Autotune finished"
+
 #: src/pages/Settings/tabs/CalibrationTab.jsx
 msgid "Autotune in Progress"
 msgstr "Autotune in Progress"
+
+#: src/pages/SetupWizard/MachineStep.jsx
+msgid "Autotune in progress…"
+msgstr "Autotune in progress…"
 
 #: src/pages/Statistics/components/PhaseStatistics.jsx
 msgid "Average target value and deviation"
@@ -500,6 +520,7 @@ msgstr "Avg. Weight Flow"
 #: src/pages/ProfileEdit/ExtendedProfileForm.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
 #: src/pages/Settings/tabs/SystemTab.jsx
+#: src/pages/SetupWizard/index.jsx
 msgid "Back"
 msgstr "Back"
 
@@ -652,6 +673,10 @@ msgstr "Build"
 msgid "Build and show Shot Charts"
 msgstr "Build and show Shot Charts"
 
+#: src/pages/SetupWizard/TestStep.jsx
+msgid "Building pressure…"
+msgstr "Building pressure…"
+
 #: src/pages/ProfileList/index.jsx
 msgid "Built-in profile, can be edited but not deleted"
 msgstr "Built-in profile, can be edited but not deleted"
@@ -722,6 +747,10 @@ msgstr "Canvas capture is not supported in this browser."
 msgid "Canvas export is not supported in this environment."
 msgstr "Canvas export is not supported in this environment."
 
+#: src/pages/SetupWizard/TestStep.jsx
+msgid "Caution: pressurized hot water"
+msgstr "Caution: pressurized hot water"
+
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "celsius"
@@ -735,6 +764,11 @@ msgstr "Chart & Metrics"
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Chart First"
 msgstr "Chart First"
+
+#: src/pages/SetupWizard/index.jsx
+#: src/pages/SetupWizard/MachineStep.jsx
+msgid "Check the connection to your machine and try again."
+msgstr "Check the connection to your machine and try again."
 
 #: src/app/ConnectionGate.jsx
 msgid "Choose another machine"
@@ -1090,6 +1124,10 @@ msgstr "Current:"
 msgid "Currently Volumetric"
 msgstr "Currently Volumetric"
 
+#: src/pages/SetupWizard/MachineStep.jsx
+msgid "Custom machine"
+msgstr "Custom machine"
+
 #: src/components/Navigation.jsx
 msgid "Customize"
 msgstr "Customize"
@@ -1341,6 +1379,7 @@ msgid "Do you really want to export all {count} filtered shots? (Shots are downl
 msgstr "Do you really want to export all {count} filtered shots? (Shots are downloaded individually, one after the other.)"
 
 #: src/components/PumpFlowCalibration/Footer.jsx
+#: src/pages/SetupWizard/index.jsx
 msgid "Done"
 msgstr "Done"
 
@@ -1760,6 +1799,10 @@ msgstr "Failed to load statistics. Please try again."
 msgid "Favorite"
 msgstr "Favorite"
 
+#: src/pages/SetupWizard/MachineStep.jsx
+msgid "Feed-forward (Kf)"
+msgstr "Feed-forward (Kf)"
+
 #: src/pages/Statistics/components/StatisticsSearchHelp.jsx
 msgid "Fields"
 msgstr "Fields"
@@ -1767,6 +1810,10 @@ msgstr "Fields"
 #: src/pages/ShotAnalyzer/components/shotChart/single/useShotChartReplayExport.js
 msgid "File export failed."
 msgstr "File export failed."
+
+#: src/pages/SetupWizard/TestStep.jsx
+msgid "Fill the water tank and close the steam knob."
+msgstr "Fill the water tank and close the steam knob."
 
 #: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 msgid "Filter library source"
@@ -1776,6 +1823,10 @@ msgstr "Filter library source"
 msgctxt "process action"
 msgid "Finish"
 msgstr "Finish"
+
+#: src/pages/SetupWizard/index.jsx
+msgid "Finish and restart"
+msgstr "Finish and restart"
 
 #: src/pages/Home/cards/ProfileCard.jsx
 #: src/pages/Settings/tabs/SystemTab.jsx
@@ -1907,17 +1958,33 @@ msgstr "Full"
 msgid "GaggiMate (GM)"
 msgstr "GaggiMate (GM)"
 
+#: src/pages/SetupWizard/PluginsStep.jsx
+msgid "GaggiMate can connect to your smart home, grinder and more. Enable what you need now; you can always change this later in the settings."
+msgstr "GaggiMate can connect to your smart home, grinder and more. Enable what you need now; you can always change this later in the settings."
+
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "GaggiMate didn't accept the request. Check the connection and try again."
 msgstr "GaggiMate didn't accept the request. Check the connection and try again."
+
+#: src/pages/SetupWizard/index.jsx
+msgid "GaggiMate is joining {ssid}"
+msgstr "GaggiMate is joining {ssid}"
 
 #: src/pages/Settings/PluginCard.jsx
 msgid "GaggiMate is not affiliated with, endorsed by or supported by Mahlkönig or its parent company, the Hemro Group. Mahlkönig, E64 WS, Grind-by-Sync and Xenia are trademarks of their respective owners."
 msgstr "GaggiMate is not affiliated with, endorsed by or supported by Mahlkönig or its parent company, the Hemro Group. Mahlkönig, E64 WS, Grind-by-Sync and Xenia are trademarks of their respective owners."
 
+#: src/pages/SetupWizard/WifiStep.jsx
+msgid "GaggiMate is running its own Wi-Fi network. Pick your home network so you can reach GaggiMate from any device. It connects when it restarts at the end of the setup."
+msgstr "GaggiMate is running its own Wi-Fi network. Pick your home network so you can reach GaggiMate from any device. It connects when it restarts at the end of the setup."
+
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "GaggiMate reconnects automatically once the scale is switched on and in range."
 msgstr "GaggiMate reconnects automatically once the scale is switched on and in range."
+
+#: src/pages/SetupWizard/index.jsx
+msgid "GaggiMate restarts when you finish so it can connect to {joinSsid}. Plugins you enabled start with it."
+msgstr "GaggiMate restarts when you finish so it can connect to {joinSsid}. Plugins you enabled start with it."
 
 #: src/app/MachineSetup.jsx
 msgid "gaggimate.local or 192.168.1.20"
@@ -1942,6 +2009,10 @@ msgstr "Global metric averages"
 #: src/pages/_404.jsx
 msgid "Go Home"
 msgstr "Go Home"
+
+#: src/pages/SetupWizard/WifiStep.jsx
+msgid "Good"
+msgstr "Good"
 
 #: src/pages/ProfileEdit/ProfileMainInformation.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
@@ -2010,6 +2081,10 @@ msgstr "Heater handover pause (ms)"
 msgid "Heater Power"
 msgstr "Heater Power"
 
+#: src/pages/SetupWizard/MachineStep.jsx
+msgid "Heater wattage (W)"
+msgstr "Heater wattage (W)"
+
 #: src/pages/Settings/tabs/CalibrationTab.jsx
 msgid "Heater Wattage (W)"
 msgstr "Heater Wattage (W)"
@@ -2018,9 +2093,17 @@ msgstr "Heater Wattage (W)"
 msgid "Heater wattage in Watts (e.g. Gaggia Classic: 1360 W, Rancilio Silvia 120V: 950W, Rancilio Silvia 230V: 1100W)."
 msgstr "Heater wattage in Watts (e.g. Gaggia Classic: 1360 W, Rancilio Silvia 120V: 950W, Rancilio Silvia 230V: 1100W)."
 
+#: src/pages/SetupWizard/TestStep.jsx
+msgid "Heating test"
+msgstr "Heating test"
+
 #: src/components/SettingsFormField.jsx
 msgid "Hidden / Available"
 msgstr "Hidden / Available"
+
+#: src/pages/SetupWizard/WifiStep.jsx
+msgid "Hide"
+msgstr "Hide"
 
 #: src/pages/ShotAnalyzer/components/shotChart/controls/compareControls.jsx
 msgid "Hide compare annotations"
@@ -2100,6 +2183,10 @@ msgstr "How many ml/s to pump into the boiler during steaming"
 msgid "HX711 Sample Rate"
 msgstr "HX711 Sample Rate"
 
+#: src/pages/SetupWizard/TestStep.jsx
+msgid "I have read this and the machine is ready"
+msgstr "I have read this and the machine is ready"
+
 #: src/pages/Statistics/components/toolbar/subcomponents.jsx
 msgid "ID: {shotId}"
 msgstr "ID: {shotId}"
@@ -2111,6 +2198,10 @@ msgstr "Idle Color"
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Idle Filter Alpha"
 msgstr "Idle Filter Alpha"
+
+#: src/pages/SetupWizard/index.jsx
+msgid "If it can't connect, GaggiMate opens its own network again so you can correct the password in the settings."
+msgstr "If it can't connect, GaggiMate opens its own network again so you can correct the password in the settings."
 
 #: src/utils/warnings.js
 msgctxt "warning level"
@@ -2284,6 +2375,14 @@ msgstr "Length (Long)"
 msgid "Length (Short)"
 msgstr "Length (Short)"
 
+#: src/pages/SetupWizard/MachineStep.jsx
+msgid "Let the machine cool down and try again."
+msgstr "Let the machine cool down and try again."
+
+#: src/pages/SetupWizard/TestStep.jsx
+msgid "Let's make sure everything is wired up correctly. Make sure the water tank is filled before you start."
+msgstr "Let's make sure everything is wired up correctly. Make sure the water tank is filled before you start."
+
 #: src/pages/Settings/PluginCard.jsx
 msgid "Lets an E64 WS start shots with its knob and dial in its grind from the shot time and weight. A grind selects the profile mapped to its recipe, and the grinder's target weight overrides that profile's weight target. Save and restart to apply."
 msgstr "Lets an E64 WS start shots with its knob and dial in its grind from the shot time and weight. A grind selects the profile mapped to its recipe, and the grinder's target weight overrides that profile's weight target. Save and restart to apply."
@@ -2408,6 +2507,10 @@ msgctxt "weekday initial: Monday"
 msgid "M"
 msgstr "M"
 
+#: src/pages/SetupWizard/index.jsx
+msgid "Machine"
+msgstr "Machine"
+
 #: src/pages/Settings/index.jsx
 msgctxt "settings tab"
 msgid "Machine"
@@ -2437,6 +2540,10 @@ msgstr "Machine preheated"
 msgid "Machine Settings"
 msgstr "Machine Settings"
 
+#: src/pages/SetupWizard/MachineStep.jsx
+msgid "Machine settings saved"
+msgstr "Machine settings saved"
+
 #: src/app/AppSettings.jsx
 #: src/app/MachineSwitcher.jsx
 msgid "Machines"
@@ -2461,6 +2568,10 @@ msgstr "Maintain Pressure"
 #: src/pages/Settings/tabs/SystemTab.jsx
 msgid "Maintenance & Support"
 msgstr "Maintenance & Support"
+
+#: src/pages/SetupWizard/TestStep.jsx
+msgid "Make sure the drip tray is in place."
+msgstr "Make sure the drip tray is in place."
 
 #: src/pages/Settings/tabs/SystemTab.jsx
 msgid "Make sure to backup your profiles from the profiles screen before updating the display."
@@ -2701,6 +2812,14 @@ msgstr "Name..."
 msgid "Network error: Unable to connect to visualizer.coffee"
 msgstr "Network error: Unable to connect to visualizer.coffee"
 
+#: src/pages/SetupWizard/WifiStep.jsx
+msgid "Network name (SSID)"
+msgstr "Network name (SSID)"
+
+#: src/pages/SetupWizard/WifiStep.jsx
+msgid "Networks nearby"
+msgstr "Networks nearby"
+
 #: src/pages/Settings/tabs/CleaningSection.jsx
 msgid "Never"
 msgstr "Never"
@@ -2708,6 +2827,10 @@ msgstr "Never"
 #: src/components/Navigation.jsx
 msgid "NEW"
 msgstr "NEW"
+
+#: src/pages/SetupWizard/MachineStep.jsx
+msgid "New PID values: {result}"
+msgstr "New PID values: {result}"
 
 #: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
 msgid "New shot did not appear in history — was it cancelled?"
@@ -2718,6 +2841,7 @@ msgid "Newest First"
 msgstr "Newest First"
 
 #: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+#: src/pages/SetupWizard/index.jsx
 #: src/pages/ShotHistory/index.jsx
 msgid "Next"
 msgstr "Next"
@@ -2793,6 +2917,14 @@ msgstr "No pinned items found."
 #: src/pages/ShotAnalyzer/utils/formatting.js
 msgid "No preceding phase"
 msgstr "No preceding phase"
+
+#: src/pages/SetupWizard/TestStep.jsx
+msgid "No pressure sensor was detected."
+msgstr "No pressure sensor was detected."
+
+#: src/pages/SetupWizard/TestStep.jsx
+msgid "No pressure was measured. Check that the water tank is full, prime the pump and check the pressure sensor wiring."
+msgstr "No pressure was measured. Check that the water tank is full, prime the pump and check the pressure sensor wiring."
 
 #: src/pages/ShotAnalyzer/components/library/libraryDisplay.js
 msgid "No Profile Loaded"
@@ -3006,6 +3138,10 @@ msgstr "OR"
 msgid "Or every"
 msgstr "Or every"
 
+#: src/pages/SetupWizard/WifiStep.jsx
+msgid "Other network…"
+msgstr "Other network…"
+
 #: src/pages/DashboardSettings/index.jsx
 msgid "Pack to top"
 msgstr "Pack to top"
@@ -3027,6 +3163,7 @@ msgid "password"
 msgstr "password"
 
 #: src/components/VisualizerUploadModal.jsx
+#: src/pages/SetupWizard/WifiStep.jsx
 msgid "Password"
 msgstr "Password"
 
@@ -3043,6 +3180,17 @@ msgstr "Pause replay"
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotMetricCards.jsx
 msgid "Peak Pressure"
 msgstr "Peak Pressure"
+
+#. placeholder {0}: Number(status.maxPressure).toFixed(1)
+#. placeholder {1}: Number(status.residualPressure).toFixed(1)
+#: src/pages/SetupWizard/TestStep.jsx
+msgid "Peak pressure: {0} bar, after release: {1} bar"
+msgstr "Peak pressure: {0} bar, after release: {1} bar"
+
+#. placeholder {0}: Number(status.maxPressure).toFixed(1)
+#: src/pages/SetupWizard/TestStep.jsx
+msgid "Peak: {0} bar"
+msgstr "Peak: {0} bar"
 
 #: src/pages/ShotAnalyzer/components/shotChart/controls/compareControls.jsx
 msgid "Per Shot"
@@ -3127,6 +3275,14 @@ msgstr "Phases"
 msgid "Physical Buttons"
 msgstr "Physical Buttons"
 
+#: src/pages/SetupWizard/MachineStep.jsx
+msgid "Pick your machine to load matching defaults, or choose a custom machine to enter your own values or run an autotune."
+msgstr "Pick your machine to load matching defaults, or choose a custom machine to enter your own values or run an autotune."
+
+#: src/pages/SetupWizard/MachineStep.jsx
+msgid "PID autotune"
+msgstr "PID autotune"
+
 #: src/pages/Settings/tabs/CalibrationTab.jsx
 msgid "PID Autotune"
 msgstr "PID Autotune"
@@ -3134,6 +3290,10 @@ msgstr "PID Autotune"
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "PID Values"
 msgstr "PID Values"
+
+#: src/pages/SetupWizard/MachineStep.jsx
+msgid "PID values (Kp, Ki, Kd)"
+msgstr "PID values (Kp, Ki, Kd)"
 
 #: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
 msgid "Pin {displayName}"
@@ -3167,6 +3327,10 @@ msgstr "Place a scale with a cup under the steam wand. Close the steam valve jus
 msgid "Play statistics"
 msgstr "Play statistics"
 
+#: src/pages/SetupWizard/TestStep.jsx
+msgid "Please confirm the safety notice first."
+msgstr "Please confirm the safety notice first."
+
 #: src/pages/Settings/tabs/CalibrationTab.jsx
 msgid "Please ensure the boiler temperature is below 50°C before starting the autotune process."
 msgstr "Please ensure the boiler temperature is below 50°C before starting the autotune process."
@@ -3185,6 +3349,7 @@ msgstr "Please wake up GaggiMate from Standby to use Bluetooth scales."
 
 #: src/pages/Settings/index.jsx
 #: src/pages/Settings/tabs/PluginsTab.jsx
+#: src/pages/SetupWizard/index.jsx
 msgid "Plugins"
 msgstr "Plugins"
 
@@ -3291,6 +3456,10 @@ msgstr "Pressure above"
 msgid "Pressure below"
 msgstr "Pressure below"
 
+#: src/pages/SetupWizard/TestStep.jsx
+msgid "Pressure did not drop after opening the 3-way valve. Check the valve and its wiring."
+msgstr "Pressure did not drop after opening the 3-way valve. Check the valve and its wiring."
+
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
 msgid "Pressure in bar"
@@ -3304,6 +3473,10 @@ msgstr "Pressure Limit"
 msgid "Pressure Offset"
 msgstr "Pressure Offset"
 
+#: src/pages/SetupWizard/TestStep.jsx
+msgid "Pressure peaked above 12.5 bar. That works, but you may want to adjust the OPV to around 10–11 bar."
+msgstr "Pressure peaked above 12.5 bar. That works, but you may want to adjust the OPV to around 10–11 bar."
+
 #: src/pages/Settings/PluginCard.jsx
 msgid "Pressure polynomial (a,b,c,d) for vane-/gear-pump internal leakage. Leave at 0,0,0,0 if uncalibrated."
 msgstr "Pressure polynomial (a,b,c,d) for vane-/gear-pump internal leakage. Leave at 0,0,0,0 if uncalibrated."
@@ -3311,6 +3484,10 @@ msgstr "Pressure polynomial (a,b,c,d) for vane-/gear-pump internal leakage. Leav
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Pressure Sensor Rating"
 msgstr "Pressure Sensor Rating"
+
+#: src/pages/SetupWizard/TestStep.jsx
+msgid "Pressure stayed below 10 bar. Prime the pump and check for leaks and the OPV setting."
+msgstr "Pressure stayed below 10 bar. Prime the pump and check for leaks and the OPV setting."
 
 #: src/pages/ShotAnalyzer/utils/formatting.js
 msgid "Pressure Stop"
@@ -3323,6 +3500,10 @@ msgstr "Pressure target"
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
 msgid "Pressure Target"
 msgstr "Pressure Target"
+
+#: src/pages/SetupWizard/TestStep.jsx
+msgid "Pressure test"
+msgstr "Pressure test"
 
 #: src/pages/ProfileEdit/ExtendedProfileForm.jsx
 #: src/pages/ShotHistory/index.jsx
@@ -3749,6 +3930,10 @@ msgstr "Remove phase"
 msgid "Remove target"
 msgstr "Remove target"
 
+#: src/pages/SetupWizard/TestStep.jsx
+msgid "Remove the portafilter and place a cup under the group head: hot water comes out of the group head when the valve opens. Keep your hands clear."
+msgstr "Remove the portafilter and place a cup under the group head: hot water comes out of the group head when the valve opens. Keep your hands clear."
+
 #: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
 msgid "Removing calibration profile..."
 msgstr "Removing calibration profile..."
@@ -3824,6 +4009,10 @@ msgstr "Reset columns to system defaults?"
 msgid "Reset Defaults"
 msgstr "Reset Defaults"
 
+#: src/pages/SetupWizard/index.jsx
+msgid "Restart"
+msgstr "Restart"
+
 #: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
 msgid "Restoring previous profile..."
 msgstr "Restoring previous profile..."
@@ -3852,6 +4041,15 @@ msgstr "Review the stop reason for this phase. The algorithm was only able to id
 #: src/pages/Statistics/components/StatisticsSearchHelp.jsx
 msgid "Rules are separated with <0>;</0>. Visual filters and DSL are combined with AND."
 msgstr "Rules are separated with <0>;</0>. Visual filters and DSL are combined with AND."
+
+#: src/pages/SetupWizard/MachineStep.jsx
+#: src/pages/SetupWizard/TestStep.jsx
+msgid "Run again"
+msgstr "Run again"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Run Setup Wizard"
+msgstr "Run Setup Wizard"
 
 #: src/components/PumpFlowCalibration/Footer.jsx
 msgid "Running shot..."
@@ -3968,6 +4166,10 @@ msgstr "Save to Browser. Imported shots and profiles will now be saved to the br
 msgid "Save to machine"
 msgstr "Save to machine"
 
+#: src/pages/SetupWizard/MachineStep.jsx
+msgid "Save values"
+msgstr "Save values"
+
 #: src/app/MachineSetup.jsx
 msgctxt "machine status"
 msgid "Saved"
@@ -3985,6 +4187,11 @@ msgstr "Saved scale"
 #: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
 msgid "Saving calibration profile..."
 msgstr "Saving calibration profile..."
+
+#: src/pages/SetupWizard/index.jsx
+#: src/pages/SetupWizard/MachineStep.jsx
+msgid "Saving failed"
+msgstr "Saving failed"
 
 #: src/pages/ProfileEdit/ExtendedProfileForm.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
@@ -4035,6 +4242,14 @@ msgstr "Scan for Devices"
 msgid "Scan for nearby Bluetooth scales to connect them to GaggiMate."
 msgstr "Scan for nearby Bluetooth scales to connect them to GaggiMate."
 
+#: src/pages/SetupWizard/WifiStep.jsx
+msgid "Scanning failed."
+msgstr "Scanning failed."
+
+#: src/pages/SetupWizard/WifiStep.jsx
+msgid "Scanning only works while GaggiMate runs its own Wi-Fi network."
+msgstr "Scanning only works while GaggiMate runs its own Wi-Fi network."
+
 #: src/pages/Settings/tabs/SystemTab.jsx
 msgid "Scanning shot history files..."
 msgstr "Scanning shot history files..."
@@ -4063,6 +4278,14 @@ msgstr "Scrub shot time"
 msgid "Search {labelLower}..."
 msgstr "Search {labelLower}..."
 
+#: src/pages/SetupWizard/WifiStep.jsx
+msgid "Search again"
+msgstr "Search again"
+
+#: src/pages/SetupWizard/WifiStep.jsx
+msgid "Search failed"
+msgstr "Search failed"
+
 #: src/pages/Statistics/components/StatisticsSearchHelp.jsx
 msgid "Search help"
 msgstr "Search help"
@@ -4083,6 +4306,10 @@ msgstr "Search..."
 #: src/app/MachineSetup.jsx
 msgid "Searching"
 msgstr "Searching"
+
+#: src/pages/SetupWizard/WifiStep.jsx
+msgid "Searching for networks…"
+msgstr "Searching for networks…"
 
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
@@ -4341,6 +4568,10 @@ msgstr "Shots / {granularityLabel}"
 msgid "Shots: {shotCount}"
 msgstr "Shots: {shotCount}"
 
+#: src/pages/SetupWizard/WifiStep.jsx
+msgid "Show"
+msgstr "Show"
+
 #: src/pages/Statistics/components/StatisticsMultiSelectDropdown.jsx
 msgid "Show all {labelLower}"
 msgstr "Show all {labelLower}"
@@ -4423,6 +4654,22 @@ msgstr "Single Card"
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
 msgid "Single Origin, Blend..."
 msgstr "Single Origin, Blend..."
+
+#: src/pages/SetupWizard/index.jsx
+msgid "Skip"
+msgstr "Skip"
+
+#: src/pages/SetupWizard/index.jsx
+msgid "Skip setup"
+msgstr "Skip setup"
+
+#: src/pages/SetupWizard/index.jsx
+msgid "Skip the setup wizard? You can run it later from Settings → System."
+msgstr "Skip the setup wizard? You can run it later from Settings → System."
+
+#: src/pages/SetupWizard/WifiStep.jsx
+msgid "Skip this to keep using the GaggiMate network. You can add your Wi-Fi later in the settings."
+msgstr "Skip this to keep using the GaggiMate network. You can add your Wi-Fi later in the settings."
 
 #: src/components/PumpFlowCalibration/api.js
 msgid "slog not ready, waiting for flush... ({attempt})"
@@ -4526,6 +4773,10 @@ msgstr "Start"
 msgid "Start anyway"
 msgstr "Start anyway"
 
+#: src/pages/SetupWizard/MachineStep.jsx
+msgid "Start autotune"
+msgstr "Start autotune"
+
 #: src/pages/Settings/tabs/CalibrationTab.jsx
 msgid "Start Autotune"
 msgstr "Start Autotune"
@@ -4533,6 +4784,10 @@ msgstr "Start Autotune"
 #: src/pages/Home/BrewConfirmModal.jsx
 msgid "Start brew anyway?"
 msgstr "Start brew anyway?"
+
+#: src/pages/SetupWizard/index.jsx
+msgid "Start brewing"
+msgstr "Start brewing"
 
 #: src/components/PumpFlowCalibration/Footer.jsx
 msgid "Start calibration"
@@ -4546,9 +4801,17 @@ msgstr "Start date"
 msgid "Start from previous setpoint"
 msgstr "Start from previous setpoint"
 
+#: src/pages/SetupWizard/TestStep.jsx
+msgid "Start heating test"
+msgstr "Start heating test"
+
 #: src/pages/ShotAnalyzer/components/EmptyState.jsx
 msgid "Start or end compare mode."
 msgstr "Start or end compare mode."
+
+#: src/pages/SetupWizard/TestStep.jsx
+msgid "Start pressure test"
+msgstr "Start pressure test"
 
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 msgid "Start Ramp from"
@@ -4557,6 +4820,10 @@ msgstr "Start Ramp from"
 #: src/pages/ShotAnalyzer/utils/columns.js
 msgid "Start Volumetric"
 msgstr "Start Volumetric"
+
+#: src/pages/SetupWizard/MachineStep.jsx
+msgid "Start with a cold machine. The boiler heats at full power until GaggiMate has learned how it responds, then the PID values are saved. This takes 1–3 minutes."
+msgstr "Start with a cold machine. The boiler heats at full power until GaggiMate has learned how it responds, then the PID values are saved. This takes 1–3 minutes."
 
 #: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
 msgctxt "column type"
@@ -4636,6 +4903,10 @@ msgstr "Steam switch left on"
 msgid "Steam Temp"
 msgstr "Steam Temp"
 
+#: src/pages/SetupWizard/MachineStep.jsx
+msgid "Steam temperature (°C)"
+msgstr "Steam temperature (°C)"
+
 #: src/pages/DashboardSettings/index.jsx
 msgid "Stick first panel to top"
 msgstr "Stick first panel to top"
@@ -4647,6 +4918,10 @@ msgstr "Stick last panel to bottom"
 #: src/app/notifications.js
 msgid "Still in steam mode"
 msgstr "Still in steam mode"
+
+#: src/pages/SetupWizard/TestStep.jsx
+msgid "Stop"
+msgstr "Stop"
 
 #: src/pages/ShotAnalyzer/components/shotChart/tooltip/StaticTooltipContent.jsx
 msgctxt "shot stop"
@@ -4692,6 +4967,10 @@ msgstr "Storage & Memory"
 #: src/pages/ShotAnalyzer/components/EmptyState.jsx
 msgid "Stores imported external shots and profiles locally in this browser on this device. They are not automatically available in other browsers or on other devices."
 msgstr "Stores imported external shots and profiles locally in this browser on this device. They are not automatically available in other browsers or on other devices."
+
+#: src/pages/SetupWizard/WifiStep.jsx
+msgid "Strong"
+msgstr "Strong"
 
 #: src/pages/Settings/PluginCard.jsx
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
@@ -4955,9 +5234,19 @@ msgstr "Temperature in degrees Celsius"
 msgid "Temperature not stable"
 msgstr "Temperature not stable"
 
+#: src/pages/SetupWizard/MachineStep.jsx
+msgid "Temperature offset (°C)"
+msgstr "Temperature offset (°C)"
+
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Temperature Offset (°C)"
 msgstr "Temperature Offset (°C)"
+
+#. placeholder {0}: rise.toFixed(1)
+#. placeholder {1}: targetRise.toFixed(1)
+#: src/pages/SetupWizard/TestStep.jsx
+msgid "Temperature rise: {0} of {1} °C"
+msgstr "Temperature rise: {0} of {1} °C"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Temperature Settings"
@@ -4971,6 +5260,30 @@ msgstr "Temporary View (VIEW)"
 msgid "Test Duration (seconds)"
 msgstr "Test Duration (seconds)"
 
+#: src/pages/SetupWizard/TestStep.jsx
+msgid "Test failed"
+msgstr "Test failed"
+
+#: src/pages/SetupWizard/TestStep.jsx
+msgid "Test not started"
+msgstr "Test not started"
+
+#: src/pages/SetupWizard/TestStep.jsx
+msgid "Test passed"
+msgstr "Test passed"
+
+#: src/pages/SetupWizard/TestStep.jsx
+msgid "Test stopped"
+msgstr "Test stopped"
+
+#: src/pages/SetupWizard/index.jsx
+msgid "Testing"
+msgstr "Testing"
+
+#: src/pages/SetupWizard/index.jsx
+msgid "Thank you for installing GaggiMate! Your machine is ready for its first shot."
+msgstr "Thank you for installing GaggiMate! Your machine is ready for its first shot."
+
 #: src/app/MachineSetup.jsx
 msgid "The app forgets {host}. Nothing changes on the machine, and you can add it again any time."
 msgstr "The app forgets {host}. Nothing changes on the machine, and you can add it again any time."
@@ -4978,6 +5291,10 @@ msgstr "The app forgets {host}. Nothing changes on the machine, and you can add 
 #: src/pages/Settings/PluginCard.jsx
 msgid "The BLDC pump addon was detected in your system. You can change the pump control characteristics using the values below."
 msgstr "The BLDC pump addon was detected in your system. You can change the pump control characteristics using the values below."
+
+#: src/pages/SetupWizard/TestStep.jsx
+msgid "The boiler is already hot, so the heater works."
+msgstr "The boiler is already hot, so the heater works."
 
 #: src/app/appSettings.js
 msgid "The boiler reached brew temperature."
@@ -4994,6 +5311,10 @@ msgstr "The chart is shown for Pro profiles only"
 #: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
 msgid "The configured or inferred scale delay is unusually high. Review the scale-delay setting before relying on predictive weight stops."
 msgstr "The configured or inferred scale delay is unusually high. Review the scale-delay setting before relying on predictive weight stops."
+
+#: src/pages/SetupWizard/TestStep.jsx
+msgid "The controller is not connected yet."
+msgstr "The controller is not connected yet."
 
 #: src/app/notifications.js
 msgid "The controller reported an error."
@@ -5015,13 +5336,41 @@ msgstr "The following warnings are currently active:"
 msgid "The grinder reaches GaggiMate at this address, so both need to share a network (the E64 WS is 2.4 GHz only) and the address must not change: reserve it for GaggiMate in your router."
 msgstr "The grinder reaches GaggiMate at this address, so both need to share a network (the E64 WS is 2.4 GHz only) and the address must not change: reserve it for GaggiMate in your router."
 
+#: src/pages/SetupWizard/TestStep.jsx
+msgid "The heater runs at full power for up to 10 seconds and stops as soon as the boiler temperature has risen by a few degrees."
+msgstr "The heater runs at full power for up to 10 seconds and stops as soon as the boiler temperature has risen by a few degrees."
+
+#: src/pages/SetupWizard/machinePresets.js
+msgid "The heating element sits in the water, so the boiler refill plugin is enabled in the next steps to keep the boiler filled."
+msgstr "The heating element sits in the water, so the boiler refill plugin is enabled in the next steps to keep the boiler filled."
+
 #: src/app/appSettings.js
 msgid "The machine has been in steam mode for 5 minutes."
 msgstr "The machine has been in steam mode for 5 minutes."
 
+#: src/pages/SetupWizard/WifiStep.jsx
+msgid "The machine is busy, try again in a moment."
+msgstr "The machine is busy, try again in a moment."
+
+#: src/pages/SetupWizard/TestStep.jsx
+msgid "The machine is busy. Stop the running process and try again."
+msgstr "The machine is busy. Stop the running process and try again."
+
+#: src/pages/SetupWizard/index.jsx
+msgid "The machine restarts and connects to your network. Connect this device to {ssid} as well, then open <0>http://{host}</0> or scan the QR code on the machine's display."
+msgstr "The machine restarts and connects to your network. Connect this device to {ssid} as well, then open <0>http://{host}</0> or scan the QR code on the machine's display."
+
+#: src/pages/SetupWizard/index.jsx
+msgid "The plugins you enabled start the next time the machine is switched on."
+msgstr "The plugins you enabled start the next time the machine is switched on."
+
 #: src/pages/Settings/PluginCard.jsx
 msgid "The profile's dose is saved to the shot history."
 msgstr "The profile's dose is saved to the shot history."
+
+#: src/pages/SetupWizard/TestStep.jsx
+msgid "The pump runs with the 3-way valve closed until pressure stops rising. Then the pump stops and the valve opens, which should release the pressure to about 0 bar."
+msgstr "The pump runs with the 3-way valve closed until pressure stops rising. Then the pump stops and the valve opens, which should release the pressure to about 0 bar."
 
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "The scale was found, but the Bluetooth connection failed. Try again or restart the scale."
@@ -5030,6 +5379,18 @@ msgstr "The scale was found, but the Bluetooth connection failed. Try again or r
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "The scale wasn't found. Make sure it's switched on and nearby, then scan again."
 msgstr "The scale wasn't found. Make sure it's switched on and nearby, then scan again."
+
+#: src/pages/SetupWizard/TestStep.jsx
+msgid "The temperature did not rise. Check the heater wiring, the SSR and the thermal fuses."
+msgstr "The temperature did not rise. Check the heater wiring, the SSR and the thermal fuses."
+
+#: src/pages/SetupWizard/TestStep.jsx
+msgid "The temperature sensor returned an invalid reading. Check the thermocouple and its wiring."
+msgstr "The temperature sensor returned an invalid reading. Check the thermocouple and its wiring."
+
+#: src/pages/SetupWizard/TestStep.jsx
+msgid "The test was stopped before it finished."
+msgstr "The test was stopped before it finished."
 
 #: src/pages/Settings/tabs/SystemTab.jsx
 msgid "The update could not be completed and the device kept its current firmware. Check the network connection and start the update again."
@@ -5460,6 +5821,10 @@ msgstr "Valve closed"
 msgid "Valve open"
 msgstr "Valve open"
 
+#: src/pages/SetupWizard/TestStep.jsx
+msgid "Valve open, releasing pressure…"
+msgstr "Valve open, releasing pressure…"
+
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
 msgid "Valve state selection"
@@ -5606,6 +5971,10 @@ msgstr "Water Tank"
 msgid "Water tank low"
 msgstr "Water tank low"
 
+#: src/pages/SetupWizard/WifiStep.jsx
+msgid "Weak"
+msgstr "Weak"
+
 #: src/pages/Statistics/components/toolbar/constants.js
 msgctxt "shot source: browser storage"
 msgid "WEB"
@@ -5695,6 +6064,10 @@ msgstr "Weight reached"
 msgid "Weight Stop"
 msgstr "Weight Stop"
 
+#: src/pages/SetupWizard/index.jsx
+msgid "Welcome to GaggiMate"
+msgstr "Welcome to GaggiMate"
+
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "What percentage to run the pump at during steaming"
 msgstr "What percentage to run the pump at during steaming"
@@ -5707,9 +6080,17 @@ msgstr "When the toggle is off, brightness will be set to 0"
 msgid "While GaggiMate is in the background it keeps watching your machines and shows a permanent “Watching machines” notification. This uses some extra battery."
 msgstr "While GaggiMate is in the background it keeps watching your machines and shows a permanent “Watching machines” notification. This uses some extra battery."
 
+#: src/pages/SetupWizard/index.jsx
+msgid "Wi-Fi"
+msgstr "Wi-Fi"
+
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Wi-Fi Password"
 msgstr "Wi-Fi Password"
+
+#: src/pages/SetupWizard/WifiStep.jsx
+msgid "Wi-Fi passwords have at least {WPA_MIN_PASSWORD} characters."
+msgstr "Wi-Fi passwords have at least {WPA_MIN_PASSWORD} characters."
 
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Wi-Fi SSID"
@@ -5732,6 +6113,10 @@ msgstr "Yesterday"
 #: src/components/VisualizerUploadModal.jsx
 msgid "Yield:"
 msgstr "Yield:"
+
+#: src/pages/SetupWizard/index.jsx
+msgid "You can run this wizard again any time from Settings → System."
+msgstr "You can run this wizard again any time from Settings → System."
 
 #: src/components/VisualizerUploadModal.jsx
 msgid "Your credentials are only used for this upload and will be stored locally only if you choose to remember your username."

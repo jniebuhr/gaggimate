@@ -20,7 +20,8 @@ enum ScreensEnum {
     SCREEN_ID_GRIND_SCREEN = 7,
     SCREEN_ID_INFO_SCREEN = 8,
     SCREEN_ID_NEW_PROFILE_SCREEN = 9,
-    _SCREEN_ID_LAST = 9
+    SCREEN_ID_WELCOME_SCREEN = 10,
+    _SCREEN_ID_LAST = 10
 };
 
 typedef struct _objects_t {
@@ -33,6 +34,7 @@ typedef struct _objects_t {
     lv_obj_t *grind_screen;
     lv_obj_t *info_screen;
     lv_obj_t *new_profile_screen;
+    lv_obj_t *welcome_screen;
     lv_obj_t *brew_dials;
     lv_obj_t *brew_dials__temp_gauge;
     lv_obj_t *brew_dials__temp_gauge_full;
@@ -317,6 +319,16 @@ typedef struct _objects_t {
     lv_obj_t *select_profile_1;
     lv_obj_t *previous_profile_1;
     lv_obj_t *next_profile_1;
+    lv_obj_t *obj67;
+    lv_obj_t *obj68;
+    lv_obj_t *touch_icon_1;
+    lv_obj_t *standby_icons_2;
+    lv_obj_t *wifi_icon_2;
+    lv_obj_t *bluetooth_icon_2;
+    lv_obj_t *update_icon_2;
+    lv_obj_t *status_1;
+    lv_obj_t *qrcode_welcome;
+    lv_obj_t *obj69;
 } objects_t;
 
 extern objects_t objects;
@@ -412,6 +424,10 @@ void tick_screen_info_screen();
 void create_screen_new_profile_screen();
 void delete_screen_new_profile_screen();
 void tick_screen_new_profile_screen();
+
+void create_screen_welcome_screen();
+void delete_screen_welcome_screen();
+void tick_screen_welcome_screen();
 
 void create_user_widget_dials(lv_obj_t *parent_obj, void *flowState, int startWidgetIndex, user_widget_dials_state_t *state);
 void tick_user_widget_dials(void *flowState, int startWidgetIndex, user_widget_dials_state_t *state);
