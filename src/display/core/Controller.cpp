@@ -19,6 +19,7 @@
 #include <display/plugins/BoilerFillPlugin.h>
 #include <display/plugins/CleaningSchedulePlugin.h>
 #include <display/plugins/LedControlPlugin.h>
+#include <display/plugins/SetupWizardPlugin.h>
 #include <display/plugins/ShotHistoryPlugin.h>
 #include <display/plugins/SmartDosePlugin.h>
 #include <display/plugins/SmartGrindPlugin.h>
@@ -124,6 +125,7 @@ void Controller::setup() {
     pluginManager->registerPlugin(new LedControlPlugin());
     pluginManager->registerPlugin(new AutoWakeupPlugin());
     pluginManager->registerPlugin(new CleaningSchedulePlugin());
+    pluginManager->registerPlugin(new SetupWizardPlugin());
     pluginManager->setup(this);
 
     pluginManager->on("profiles:profile:save", [this](Event const &event) {
