@@ -22,7 +22,10 @@ import {
 export function MachineSwitcher({ collapsed = false }) {
   const { t } = useLingui();
   const [open, setOpen] = useState(false);
+  // Fixed position next to the button; the collapsed sidebar scrolls and would clip the menu.
+  const [menuPosition, setMenuPosition] = useState(null);
   const root = useRef(null);
+  const trigger = useRef(null);
   const current = activeMachine.value;
   const peekStates = useMachinePeeks(machines.value, open);
 
@@ -31,11 +34,14 @@ export function MachineSwitcher({ collapsed = false }) {
     if (!open) return undefined;
     const onPointer = event => !root.current?.contains(event.target) && setOpen(false);
     const onKey = event => event.key === 'Escape' && setOpen(false);
+    const onResize = () => setOpen(false);
     document.addEventListener('pointerdown', onPointer);
     document.addEventListener('keydown', onKey);
+    window.addEventListener('resize', onResize);
     return () => {
       document.removeEventListener('pointerdown', onPointer);
       document.removeEventListener('keydown', onKey);
+      window.removeEventListener('resize', onResize);
     };
   }, [open]);
 
@@ -68,8 +74,17 @@ export function MachineSwitcher({ collapsed = false }) {
     >
       <button
         type='button'
+        ref={trigger}
         aria-expanded={open}
-        onClick={() => setOpen(!open)}
+        onClick={() => {
+          if (!open && collapsed) {
+            const rect = trigger.current.getBoundingClientRect();
+            const edge =
+              trigger.current.closest('.sidebar')?.getBoundingClientRect().right ?? rect.right;
+            setMenuPosition({ left: edge + 8, bottom: window.innerHeight - rect.bottom });
+          }
+          setOpen(!open);
+        }}
         title={`${current.name} (${current.host})`}
         className={
           collapsed
@@ -100,7 +115,8 @@ export function MachineSwitcher({ collapsed = false }) {
         )}
       </button>
       <ul
-        className={`dropdown-content ${open ? '' : 'hidden'} menu bg-base-100 rounded-box border-base-300 z-10 mb-2 w-64 border p-2 shadow-lg`}
+        className={`dropdown-content ${open ? '' : 'hidden'} menu bg-base-100 rounded-box border-base-300 w-64 border p-2 shadow-lg ${collapsed ? 'z-[10000]' : 'z-10 mb-2'}`}
+        style={collapsed && menuPosition ? { position: 'fixed', ...menuPosition } : undefined}
       >
         <li className='menu-title'>
           <Trans>Machines</Trans>
