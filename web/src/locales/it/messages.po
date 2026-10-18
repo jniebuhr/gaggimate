@@ -322,7 +322,8 @@ msgstr "I frame di animazione non sono supportati in questo ambiente."
 msgid "Annotations"
 msgstr "Annotazioni"
 
-#: src/app/AppSettings.jsx src/components/Navigation.jsx
+#: src/app/AppSettings.jsx
+#: src/components/Navigation.jsx
 msgid "App Settings"
 msgstr "Impostazioni app"
 
@@ -496,8 +497,10 @@ msgstr "Temperatura media"
 msgid "Avg. Weight Flow"
 msgstr "Flusso di peso medio"
 
-#: src/app/MachineSetup.jsx src/components/PumpFlowCalibration/Footer.jsx
-#: src/pages/DashboardSettings/index.jsx src/pages/Home/BrewConfirmModal.jsx
+#: src/app/MachineSetup.jsx
+#: src/components/PumpFlowCalibration/Footer.jsx
+#: src/pages/DashboardSettings/index.jsx
+#: src/pages/Home/BrewConfirmModal.jsx
 #: src/pages/ProfileEdit/ExtendedProfileForm.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
 #: src/pages/Settings/tabs/SystemTab.jsx
@@ -566,7 +569,8 @@ msgstr "Caldaia a {temperature} °C"
 msgid "Boiler Refill Plugin"
 msgstr "Plugin di riempimento caldaia"
 
-#: src/app/machineStatus.js src/pages/Home/utils.js
+#: src/app/machineStatus.js
+#: src/pages/Home/utils.js
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgctxt "machine mode"
 msgid "Brew"
@@ -676,7 +680,8 @@ msgstr "Calibra cella di carico 1"
 msgid "Calibrate Load Cell 2"
 msgstr "Calibra cella di carico 2"
 
-#: src/pages/Settings/index.jsx src/pages/Settings/tabs/MachineTab.jsx
+#: src/pages/Settings/index.jsx
+#: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Calibration"
 msgstr "Calibrazione"
 
@@ -692,7 +697,8 @@ msgstr "Il fattore di calibrazione per tp={targetPressure} bar è fuori dall'int
 msgid "Can't reach {name}"
 msgstr "Impossibile raggiungere {name}"
 
-#: src/app/ConnectionGate.jsx src/app/MachineSetup.jsx
+#: src/app/ConnectionGate.jsx
+#: src/app/MachineSetup.jsx
 #: src/components/PumpFlowCalibration/Footer.jsx
 #: src/components/VisualizerUploadModal.jsx
 #: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
@@ -729,7 +735,8 @@ msgstr "celsius"
 msgid "Chart & Metrics"
 msgstr "Grafico e metriche"
 
-#: src/pages/DashboardSettings/index.jsx src/pages/Settings/tabs/GeneralTab.jsx
+#: src/pages/DashboardSettings/index.jsx
+#: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Chart First"
 msgstr "Prima il grafico"
 
@@ -765,7 +772,8 @@ msgstr "Fai clic su \"Scansiona\" per trovare bilance Bluetooth nelle vicinanze"
 msgid "Click to confirm"
 msgstr "Fai clic per confermare"
 
-#: src/pages/ProfileList/index.jsx src/pages/ShotHistory/HistoryCard.jsx
+#: src/pages/ProfileList/index.jsx
+#: src/pages/ShotHistory/HistoryCard.jsx
 msgid "Click to confirm delete"
 msgstr "Fai clic per confermare l'eliminazione"
 
@@ -773,7 +781,8 @@ msgstr "Fai clic per confermare l'eliminazione"
 msgid "Click to open the library. Use Import below or drop files here to import."
 msgstr "Fai clic per aprire la libreria. Usa Importa qui sotto o trascina qui i file per importarli."
 
-#: src/app/MachineSetup.jsx src/components/VisualizerUploadModal.jsx
+#: src/app/MachineSetup.jsx
+#: src/components/VisualizerUploadModal.jsx
 #: src/pages/Home/BrewConfirmModal.jsx
 msgid "Close"
 msgstr "Chiudi"
@@ -810,7 +819,8 @@ msgstr "Coefficienti"
 msgid "Coefficients saved to machine: {newCoeffs}"
 msgstr "Coefficienti salvati sulla macchina: {newCoeffs}"
 
-#: src/pages/Settings/tabs/GeneralTab.jsx src/utils/themeManager.js
+#: src/pages/Settings/tabs/GeneralTab.jsx
+#: src/utils/themeManager.js
 msgctxt "theme"
 msgid "Coffee"
 msgstr "Caffè"
@@ -894,7 +904,8 @@ msgstr "Configura acquisizione e filtraggio, poi azzera la tara e calibra ogni c
 msgid "Configured Scale Delay (ms)"
 msgstr "Ritardo bilancia configurato (ms)"
 
-#: src/components/ConfirmButton.jsx src/pages/ProfileList/index.jsx
+#: src/components/ConfirmButton.jsx
+#: src/pages/ProfileList/index.jsx
 #: src/pages/ShotHistory/HistoryCard.jsx
 msgid "Confirm"
 msgstr "Conferma"
@@ -911,7 +922,8 @@ msgstr "Conferma eliminazione del profilo {label}"
 msgid "Confirm deletion of shot"
 msgstr "Conferma eliminazione dell’estrazione"
 
-#: src/app/MachineSetup.jsx src/pages/Settings/tabs/BluetoothTab.jsx
+#: src/app/MachineSetup.jsx
+#: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "Connect"
 msgstr "Connetti"
 
@@ -1044,7 +1056,8 @@ msgstr "Coefficienti attuali:"
 msgid "Current Flow"
 msgstr "Flusso attuale"
 
-#: src/components/OverviewChart.jsx src/pages/ShotHistory/HistoryChart.jsx
+#: src/components/OverviewChart.jsx
+#: src/pages/ShotHistory/HistoryChart.jsx
 msgid "Current Pressure"
 msgstr "Pressione attuale"
 
@@ -1060,7 +1073,8 @@ msgstr "Flusso attuale pompa"
 msgid "Current streak:"
 msgstr "Serie attuale:"
 
-#: src/components/OverviewChart.jsx src/pages/ShotHistory/HistoryChart.jsx
+#: src/components/OverviewChart.jsx
+#: src/pages/ShotHistory/HistoryChart.jsx
 msgid "Current Temperature"
 msgstr "Temperatura attuale"
 
@@ -1088,7 +1102,8 @@ msgstr "Personalizza"
 msgid "Daily average: <0>{dailyAvg} shots</0>"
 msgstr "Media giornaliera: <0>{dailyAvg} estrazioni</0>"
 
-#: src/app/AppSettings.jsx src/pages/Settings/tabs/GeneralTab.jsx
+#: src/app/AppSettings.jsx
+#: src/pages/Settings/tabs/GeneralTab.jsx
 #: src/utils/themeManager.js
 msgctxt "theme"
 msgid "Dark"
@@ -1102,7 +1117,8 @@ msgstr "Tema scuro"
 msgid "Dashboard"
 msgstr "Dashboard"
 
-#: src/pages/DashboardSettings/index.jsx src/pages/Settings/tabs/GeneralTab.jsx
+#: src/pages/DashboardSettings/index.jsx
+#: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Dashboard Layout"
 msgstr "Layout dashboard"
 
@@ -1271,7 +1287,8 @@ msgstr "Descrizione"
 msgid "Deselect {itemName}"
 msgstr "Deseleziona {itemName}"
 
-#: src/components/Navigation.jsx src/pages/Settings/index.jsx
+#: src/components/Navigation.jsx
+#: src/pages/Settings/index.jsx
 msgid "Device Settings"
 msgstr "Impostazioni dispositivo"
 
@@ -1284,7 +1301,8 @@ msgstr "Differenza"
 msgid "Disable compare mode"
 msgstr "Disattiva modalità confronto"
 
-#: src/components/PumpFlowCalibration/Footer.jsx src/pages/Settings/index.jsx
+#: src/components/PumpFlowCalibration/Footer.jsx
+#: src/pages/Settings/index.jsx
 msgid "Discard"
 msgstr "Scarta"
 
@@ -1292,7 +1310,8 @@ msgstr "Scarta"
 msgid "Disconnect"
 msgstr "Disconnetti"
 
-#: src/pages/Settings/index.jsx src/pages/Settings/tabs/BluetoothTab.jsx
+#: src/pages/Settings/index.jsx
+#: src/pages/Settings/tabs/BluetoothTab.jsx
 #: src/pages/Settings/tabs/CalibrationTab.jsx
 msgid "Dismiss"
 msgstr "Ignora"
@@ -1450,7 +1469,8 @@ msgstr "Ease In Out"
 msgid "Ease Out"
 msgstr "Ease Out"
 
-#: src/pages/ProfileList/index.jsx src/pages/ShotHistory/ShotNotesCard.jsx
+#: src/pages/ProfileList/index.jsx
+#: src/pages/ShotHistory/ShotNotesCard.jsx
 msgid "Edit"
 msgstr "Modifica"
 
@@ -1761,7 +1781,8 @@ msgctxt "process action"
 msgid "Finish"
 msgstr "Termina"
 
-#: src/pages/Home/cards/ProfileCard.jsx src/pages/Settings/tabs/SystemTab.jsx
+#: src/pages/Home/cards/ProfileCard.jsx
+#: src/pages/Settings/tabs/SystemTab.jsx
 msgid "Finished"
 msgstr "Terminato"
 
@@ -1777,8 +1798,10 @@ msgstr "Firmware {version}: alcune funzioni potrebbero non essere disponibili."
 msgid "Flexible Space"
 msgstr "Spazio flessibile"
 
-#: src/components/ExtendedProfileChart.jsx src/pages/Home/cards/ProfileCard.jsx
-#: src/pages/Home/cards/RecentShotsCard.jsx src/utils/metricDefinitions.js
+#: src/components/ExtendedProfileChart.jsx
+#: src/pages/Home/cards/ProfileCard.jsx
+#: src/pages/Home/cards/RecentShotsCard.jsx
+#: src/utils/metricDefinitions.js
 msgid "Flow"
 msgstr "Flusso"
 
@@ -1892,6 +1915,10 @@ msgstr "GaggiMate (GM)"
 msgid "GaggiMate didn't accept the request. Check the connection and try again."
 msgstr "GaggiMate non ha accettato la richiesta. Controlla la connessione e riprova."
 
+#: src/app/shareFiles.js
+msgid "GaggiMate export"
+msgstr "Esportazione GaggiMate"
+
 #: src/pages/Settings/PluginCard.jsx
 msgid "GaggiMate is not affiliated with, endorsed by or supported by Mahlkönig or its parent company, the Hemro Group. Mahlkönig, E64 WS, Grind-by-Sync and Xenia are trademarks of their respective owners."
 msgstr "GaggiMate non è affiliato, approvato né supportato da Mahlkönig o dalla sua società madre, Hemro Group. Mahlkönig, E64 WS, Grind-by-Sync e Xenia sono marchi dei rispettivi proprietari."
@@ -1938,7 +1965,8 @@ msgstr "grammi al secondo"
 msgid "Grind"
 msgstr "Macinatura"
 
-#: src/app/machineStatus.js src/pages/Home/utils.js
+#: src/app/machineStatus.js
+#: src/pages/Home/utils.js
 msgctxt "machine mode"
 msgid "Grind"
 msgstr "Macinatura"
@@ -1965,7 +1993,8 @@ msgstr "Grado di macinatura"
 msgid "Grind target"
 msgstr "Obiettivo di macinatura"
 
-#: src/pages/Home/cards/ProfileCard.jsx src/pages/Home/utils.js
+#: src/pages/Home/cards/ProfileCard.jsx
+#: src/pages/Home/utils.js
 msgid "Grinding"
 msgstr "Macinatura in corso"
 
@@ -2267,7 +2296,8 @@ msgstr "Durata (brevi)"
 msgid "Lets an E64 WS start shots with its knob and dial in its grind from the shot time and weight. A grind selects the profile mapped to its recipe, and the grinder's target weight overrides that profile's weight target. Save and restart to apply."
 msgstr "Permette a un E64 WS di avviare le estrazioni con la sua manopola e di regolare la macinatura in base a tempo e peso dell’estrazione. Una macinatura seleziona il profilo associato alla sua ricetta e il peso obiettivo del macinacaffè sostituisce il peso obiettivo di quel profilo. Salva e riavvia per applicare."
 
-#: src/app/AppSettings.jsx src/pages/Settings/tabs/GeneralTab.jsx
+#: src/app/AppSettings.jsx
+#: src/pages/Settings/tabs/GeneralTab.jsx
 #: src/utils/themeManager.js
 msgctxt "theme"
 msgid "Light"
@@ -2415,7 +2445,8 @@ msgstr "Macchina preriscaldata"
 msgid "Machine Settings"
 msgstr "Impostazioni macchina"
 
-#: src/app/AppSettings.jsx src/app/MachineSwitcher.jsx
+#: src/app/AppSettings.jsx
+#: src/app/MachineSwitcher.jsx
 msgid "Machines"
 msgstr "Macchine"
 
@@ -2703,7 +2734,8 @@ msgstr "Avanti"
 msgid "Next shot"
 msgstr "Shot successivo"
 
-#: src/app/AppSettings.jsx src/pages/Settings/tabs/SystemTab.jsx
+#: src/app/AppSettings.jsx
+#: src/pages/Settings/tabs/SystemTab.jsx
 msgctxt "update channel"
 msgid "Nightly"
 msgstr "Nightly"
@@ -3159,7 +3191,8 @@ msgstr "Inserisci nome utente e password"
 msgid "Please wake up GaggiMate from Standby to use Bluetooth scales."
 msgstr "Riattiva GaggiMate dallo standby per usare le bilance Bluetooth."
 
-#: src/pages/Settings/index.jsx src/pages/Settings/tabs/PluginsTab.jsx
+#: src/pages/Settings/index.jsx
+#: src/pages/Settings/tabs/PluginsTab.jsx
 msgid "Plugins"
 msgstr "Plugin"
 
@@ -3231,7 +3264,8 @@ msgstr "Preset..."
 msgid "Press <0><1/></0> to build a statistic."
 msgstr "Premi <0><1/></0> per generare una statistica."
 
-#: src/components/ExtendedProfileChart.jsx src/pages/Home/cards/ProfileCard.jsx
+#: src/components/ExtendedProfileChart.jsx
+#: src/pages/Home/cards/ProfileCard.jsx
 #: src/pages/Home/cards/RecentShotsCard.jsx
 #: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
 #: src/pages/Statistics/components/MetricsTable.jsx
@@ -3324,7 +3358,8 @@ msgstr "Profilo Pro"
 msgid "Pro Profile"
 msgstr "Profilo Pro"
 
-#: src/pages/DashboardSettings/index.jsx src/pages/Settings/tabs/GeneralTab.jsx
+#: src/pages/DashboardSettings/index.jsx
+#: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Process Controls First"
 msgstr "Prima i controlli di processo"
 
@@ -3419,7 +3454,8 @@ msgstr "Profilo Z-A"
 msgid "Profile: {profileLabel}"
 msgstr "Profilo: {profileLabel}"
 
-#: src/components/Navigation.jsx src/pages/ProfileList/index.jsx
+#: src/components/Navigation.jsx
+#: src/pages/ProfileList/index.jsx
 #: src/pages/ShotAnalyzer/components/library/LibraryDropdown.jsx
 #: src/pages/Statistics/components/toolbar/subcomponents.jsx
 msgid "Profiles"
@@ -3519,7 +3555,8 @@ msgid "Pump off"
 msgstr "Pompa spenta"
 
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
-#: src/pages/ProfileEdit/StandardProfileForm.jsx src/utils/metricDefinitions.js
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+#: src/utils/metricDefinitions.js
 msgid "Pump Power"
 msgstr "Potenza pompa"
 
@@ -3581,7 +3618,8 @@ msgstr "Obiettivo acqua pompata"
 msgid "Query clause {clauseNumber}: {valueError}"
 msgstr "Clausola di ricerca {clauseNumber}: {valueError}"
 
-#: src/pages/Home/cards/FavoriteProfilesCard.jsx src/utils/panelDefinitions.js
+#: src/pages/Home/cards/FavoriteProfilesCard.jsx
+#: src/utils/panelDefinitions.js
 msgid "Quick Select"
 msgstr "Selezione rapida"
 
@@ -3690,7 +3728,8 @@ msgstr "Tempo relativo: <0>h</0> (adesso), <1>h-7d</1> (7 giorni fa)"
 msgid "Remember credentials"
 msgstr "Ricorda credenziali"
 
-#: src/app/MachineSetup.jsx src/pages/ProfileEdit/ProfileImageUpload.jsx
+#: src/app/MachineSetup.jsx
+#: src/pages/ProfileEdit/ProfileImageUpload.jsx
 msgid "Remove"
 msgstr "Rimuovi"
 
@@ -3862,7 +3901,8 @@ msgstr "Campione {sampleNumber}: {sampleValue}"
 msgid "Saturday"
 msgstr "Sabato"
 
-#: src/app/MachineSetup.jsx src/pages/ProfileEdit/ExtendedProfileForm.jsx
+#: src/app/MachineSetup.jsx
+#: src/pages/ProfileEdit/ExtendedProfileForm.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
 #: src/pages/ShotHistory/ShotNotesCard.jsx
 msgid "Save"
@@ -3911,7 +3951,8 @@ msgstr "Salva nome"
 msgid "Save profile"
 msgstr "Salva profilo"
 
-#: src/pages/Settings/index.jsx src/pages/Settings/StickyFormFooter.jsx
+#: src/pages/Settings/index.jsx
+#: src/pages/Settings/StickyFormFooter.jsx
 msgid "Save Settings"
 msgstr "Salva impostazioni"
 
@@ -4042,7 +4083,8 @@ msgstr "Cerca profili..."
 msgid "Search shots..."
 msgstr "Cerca shot..."
 
-#: src/pages/ProfileList/index.jsx src/pages/ShotHistory/index.jsx
+#: src/pages/ProfileList/index.jsx
+#: src/pages/ShotHistory/index.jsx
 msgid "Search..."
 msgstr "Cerca..."
 
@@ -4137,7 +4179,8 @@ msgstr "Imposta l'altezza dell'anteprima del grafico profilo mostrata nel pannel
 msgid "Sets the maximum number of columns. On smaller screens, fewer columns are used to keep metrics readable."
 msgstr "Imposta il numero massimo di colonne. Sugli schermi più piccoli vengono usate meno colonne per mantenere leggibili le metriche."
 
-#: src/components/Navigation.jsx src/pages/Settings/index.jsx
+#: src/components/Navigation.jsx
+#: src/pages/Settings/index.jsx
 msgid "Settings"
 msgstr "Impostazioni"
 
@@ -4230,7 +4273,8 @@ msgstr "I dati dello shot non sono validi o sono incompleti"
 msgid "Shot file remained empty after {seconds}s"
 msgstr "Il file dello shot è rimasto vuoto dopo {seconds}s"
 
-#: src/app/appSettings.js src/app/notifications.js
+#: src/app/appSettings.js
+#: src/app/notifications.js
 msgid "Shot finished"
 msgstr "Shot terminato"
 
@@ -4238,7 +4282,8 @@ msgstr "Shot terminato"
 msgid "Shot finished. Waiting for it to be saved to history..."
 msgstr "Shot terminato. In attesa del salvataggio nella cronologia..."
 
-#: src/components/Navigation.jsx src/pages/ShotHistory/index.jsx
+#: src/components/Navigation.jsx
+#: src/pages/ShotHistory/index.jsx
 msgid "Shot History"
 msgstr "Cronologia shot"
 
@@ -4268,7 +4313,8 @@ msgstr "Inizio shot"
 msgid "Shot start was cancelled on the machine."
 msgstr "L'avvio dello shot è stato annullato sulla macchina."
 
-#: src/app/appSettings.js src/app/notifications.js
+#: src/app/appSettings.js
+#: src/app/notifications.js
 msgid "Shot started"
 msgstr "Shot avviato"
 
@@ -4435,7 +4481,8 @@ msgstr "Acido"
 msgid "Space evenly"
 msgstr "Distribuisci uniformemente"
 
-#: src/app/AppSettings.jsx src/pages/Settings/tabs/SystemTab.jsx
+#: src/app/AppSettings.jsx
+#: src/pages/Settings/tabs/SystemTab.jsx
 msgctxt "update channel"
 msgid "Stable"
 msgstr "Stabile"
@@ -4445,7 +4492,8 @@ msgctxt "column preset"
 msgid "Standard"
 msgstr "Standard"
 
-#: src/app/machineStatus.js src/pages/Home/utils.js
+#: src/app/machineStatus.js
+#: src/pages/Home/utils.js
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgctxt "machine mode"
 msgid "Standby"
@@ -4539,7 +4587,8 @@ msgstr "Modalità all'avvio"
 msgid "Startup Profile"
 msgstr "Profilo all'avvio"
 
-#: src/components/Navigation.jsx src/pages/ProfileList/index.jsx
+#: src/components/Navigation.jsx
+#: src/pages/ProfileList/index.jsx
 #: src/pages/Statistics/components/statisticsView/StatisticsDetailSection.jsx
 #: src/pages/Statistics/index.jsx
 msgid "Statistics"
@@ -4557,7 +4606,8 @@ msgstr "DSL di ricerca statistiche"
 msgid "Std Dev"
 msgstr "Dev std"
 
-#: src/app/machineStatus.js src/pages/Home/utils.js
+#: src/app/machineStatus.js
+#: src/pages/Home/utils.js
 msgctxt "machine mode"
 msgid "Steam"
 msgstr "Vapore"
@@ -4710,7 +4760,8 @@ msgctxt "profile badge"
 msgid "System"
 msgstr "Sistema"
 
-#: src/app/AppSettings.jsx src/pages/Settings/tabs/GeneralTab.jsx
+#: src/app/AppSettings.jsx
+#: src/pages/Settings/tabs/GeneralTab.jsx
 #: src/utils/themeManager.js
 msgctxt "theme"
 msgid "System"
@@ -4790,7 +4841,8 @@ msgctxt "short for target pressure"
 msgid "Target P"
 msgstr "Obiet. P"
 
-#: src/components/OverviewChart.jsx src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/components/OverviewChart.jsx
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
 #: src/pages/ShotHistory/HistoryChart.jsx
 msgid "Target Pressure"
@@ -4991,7 +5043,8 @@ msgstr "La bilancia non è stata trovata. Assicurati che sia accesa e vicina, po
 msgid "The update could not be completed and the device kept its current firmware. Check the network connection and start the update again."
 msgstr "Non è stato possibile completare l'aggiornamento e il dispositivo ha mantenuto il firmware attuale. Controlla la connessione di rete e avvia di nuovo l'aggiornamento."
 
-#: src/app/AppSettings.jsx src/pages/Settings/tabs/GeneralTab.jsx
+#: src/app/AppSettings.jsx
+#: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Theme"
 msgstr "Tema"
 
@@ -5513,7 +5566,8 @@ msgstr "ATTENZIONE: vuoi davvero eliminare IRREVERSIBILMENTE tutti i {count} pro
 msgid "WARNING: Do you really want to IRREVOCABLY delete all {count} filtered shots?"
 msgstr "ATTENZIONE: vuoi davvero eliminare IRREVERSIBILMENTE tutti i {count} shot filtrati?"
 
-#: src/app/appSettings.js src/pages/Settings/tabs/GeneralTab.jsx
+#: src/app/appSettings.js
+#: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Warnings"
 msgstr "Avvisi"
 
@@ -5521,7 +5575,8 @@ msgstr "Avvisi"
 msgid "Warnings are shown on the display. An error additionally asks for confirmation before a brew starts."
 msgstr "Gli avvisi vengono mostrati sul display. Un errore chiede inoltre conferma prima di avviare un'erogazione."
 
-#: src/app/machineStatus.js src/pages/Home/utils.js
+#: src/app/machineStatus.js
+#: src/pages/Home/utils.js
 msgctxt "machine mode"
 msgid "Water"
 msgstr "Acqua"
@@ -5550,7 +5605,8 @@ msgstr "Acqua pompata"
 msgid "Water pumped in phase"
 msgstr "Acqua pompata nella fase"
 
-#: src/pages/Home/cards/WaterLevelCard.jsx src/utils/panelDefinitions.js
+#: src/pages/Home/cards/WaterLevelCard.jsx
+#: src/utils/panelDefinitions.js
 msgid "Water Tank"
 msgstr "Serbatoio dell'acqua"
 
@@ -5597,7 +5653,8 @@ msgstr "Settimana: {startText} - {endText}"
 msgid "weeks"
 msgstr "settimane"
 
-#: src/pages/DashboardSettings/index.jsx src/pages/Home/cards/ProfileCard.jsx
+#: src/pages/DashboardSettings/index.jsx
+#: src/pages/Home/cards/ProfileCard.jsx
 #: src/pages/Home/cards/RecentShotsCard.jsx
 #: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
 #: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js

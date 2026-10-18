@@ -1911,6 +1911,10 @@ msgstr "GaggiMate (GM)"
 msgid "GaggiMate didn't accept the request. Check the connection and try again."
 msgstr "GaggiMate がリクエストを受け付けませんでした。接続を確認してもう一度お試しください。"
 
+#: src/app/shareFiles.js
+msgid "GaggiMate export"
+msgstr "GaggiMate エクスポート"
+
 #: src/pages/Settings/PluginCard.jsx
 msgid "GaggiMate is not affiliated with, endorsed by or supported by Mahlkönig or its parent company, the Hemro Group. Mahlkönig, E64 WS, Grind-by-Sync and Xenia are trademarks of their respective owners."
 msgstr "GaggiMate は、Mahlkönig およびその親会社である Hemro Group とは提携しておらず、承認や支援も受けていません。Mahlkönig、E64 WS、Grind-by-Sync、Xenia は各所有者の商標です。"

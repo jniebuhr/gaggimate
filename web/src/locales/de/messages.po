@@ -1911,6 +1911,10 @@ msgstr "GaggiMate (GM)"
 msgid "GaggiMate didn't accept the request. Check the connection and try again."
 msgstr "GaggiMate hat die Anfrage nicht angenommen. Prüfe die Verbindung und versuche es erneut."
 
+#: src/app/shareFiles.js
+msgid "GaggiMate export"
+msgstr "GaggiMate-Export"
+
 #: src/pages/Settings/PluginCard.jsx
 msgid "GaggiMate is not affiliated with, endorsed by or supported by Mahlkönig or its parent company, the Hemro Group. Mahlkönig, E64 WS, Grind-by-Sync and Xenia are trademarks of their respective owners."
 msgstr "GaggiMate steht in keiner Verbindung zu Mahlkönig oder dessen Muttergesellschaft, der Hemro Group, und wird von diesen weder unterstützt noch empfohlen. Mahlkönig, E64 WS, Grind-by-Sync und Xenia sind Marken ihrer jeweiligen Inhaber."
