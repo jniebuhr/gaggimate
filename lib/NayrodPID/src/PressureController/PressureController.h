@@ -41,6 +41,7 @@ class PressureController {
 
   private:
     float getPumpDutyCycleForPressure();
+    void trackPressureOutput(float appliedOutput);
     void virtualScale();
     void filterSensor(float sampleTime);
     bool _pressureInitialized = false;
@@ -87,9 +88,11 @@ class PressureController {
     float _integralGain = 0.25f;       // Integral gain (dt/tau)
 
     // === Controller states ===
-    float _previousPressure = 0.0f; // Previous pressure reading (bar)
-    float _errorIntegral = 0.0f;    // Integral of pressure error
-    float _pumpDutyCycle = 0.0f;    // Calculated pump duty cycle (0-100%)
+    float _previousPressure = 0.0f;     // Previous pressure reading (bar)
+    float _errorIntegral = 0.0f;        // Integral of pressure error
+    float _pressureBaseDuty = 0.0f;     // Pressure command before integral and tracking bias (duty units, unclamped)
+    float _pressureTrackingBias = 0.0f; // Retained command contribution after selection (duty units, unclamped)
+    float _pumpDutyCycle = 0.0f;        // Unclamped pressure command (duty units; 1 = 100%)
 
     // === Flow estimation ===
     float _waterThroughPuckFlowRate = 0.0f; // Water through puck flow rate (ml/s)
