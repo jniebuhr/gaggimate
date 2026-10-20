@@ -505,7 +505,7 @@ void WebSocketHandler::publishTelemetry() {
             if (isVolumetric) {
                 Target t = brew->currentPhase.getVolumetricTarget();
                 pObj["pt"] = t.value;
-                pObj["pp"] = brew->currentVolume;
+                pObj["pp"] = brew->relativeVolume();
             } else {
                 pObj["pt"] = brew->getPhaseDuration();
                 pObj["pp"] = ts - brew->currentPhaseStarted;
