@@ -8,8 +8,10 @@ import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
 import { Tooltip } from '../../components/Tooltip.jsx';
 import { ProfileMainInformation } from './ProfileMainInformation.jsx';
 import { getProfilePhases, removePhaseAt, updatePhaseAt } from './profilePhases.js';
+import { Trans, useLingui } from '@lingui/react/macro';
 
 export function StandardProfileForm(props) {
+  const { t } = useLingui();
   const { data, onChange, onSave, saving = true, pressureAvailable = false } = props;
   const phases = getProfilePhases(data);
 
@@ -67,8 +69,8 @@ export function StandardProfileForm(props) {
           onChangeUtility={e => onFieldChange('utility', !!e.target.checked)}
         />
 
-        <Card sm={10} title='Brew Phases'>
-          <div className='space-y-4' role='group' aria-label='Brew phases configuration'>
+        <Card sm={10} title={t`Brew Phases`}>
+          <div className='space-y-4' role='group' aria-label={t`Brew phases configuration`}>
             {phases.map((value, index) => (
               <div key={index}>
                 {index > 0 && (
@@ -93,10 +95,12 @@ export function StandardProfileForm(props) {
                 type='button'
                 className='btn btn-outline gap-2'
                 onClick={onPhaseAdd}
-                aria-label='Add new brew phase'
+                aria-label={t`Add new brew phase`}
               >
                 <FontAwesomeIcon icon={faPlus} />
-                <span>Add phase</span>
+                <span>
+                  <Trans>Add phase</Trans>
+                </span>
               </button>
             </div>
           </div>
@@ -106,15 +110,17 @@ export function StandardProfileForm(props) {
       <div className='pt-4 lg:col-span-10'>
         <div className='flex flex-col gap-2 sm:flex-row'>
           <a href='/profiles' className='btn btn-outline'>
-            Back
+            <Trans>Back</Trans>
           </a>
           <button
             type='submit'
             className='btn btn-primary gap-2'
             disabled={saving}
-            aria-label={saving ? 'Saving profile...' : 'Save profile'}
+            aria-label={saving ? t`Saving profile...` : t`Save profile`}
           >
-            <span>Save</span>
+            <span>
+              <Trans>Save</Trans>
+            </span>
             {saving && <Spinner size={4} />}
           </button>
         </div>
@@ -124,6 +130,7 @@ export function StandardProfileForm(props) {
 }
 
 function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
+  const { t } = useLingui();
   const onFieldChange = (field, value) => {
     onChange({
       ...phase,
@@ -151,7 +158,8 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
   };
 
   const targets = phase?.targets || [];
-  const volumetricTarget = targets.find(t => t.type === 'volumetric') || {};
+  const volumetricTarget = targets.find(tg => tg.type === 'volumetric') || {};
+  const phaseNumber = index + 1;
   const targetWeight = volumetricTarget?.value || 0;
 
   const pumpPower = isNumber(phase.pump) ? phase.pump : 100;
@@ -163,43 +171,47 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
     <div
       className='bg-base-200 border-base-300 space-y-4 rounded-lg border p-4'
       role='group'
-      aria-label={`Phase ${index + 1} configuration`}
+      aria-label={t`Phase ${phaseNumber} configuration`}
     >
       <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
         <div className='form-control'>
           <label htmlFor={`phase-${index}-type`} className='mb-2 block text-sm font-medium'>
-            Phase Type
+            <Trans>Phase Type</Trans>
           </label>
           <select
             id={`phase-${index}-type`}
             className='select select-bordered w-full'
             onChange={e => onFieldChange('phase', e.target.value)}
             value={phase.phase}
-            aria-label='Select the type of brew phase'
+            aria-label={t`Select the type of brew phase`}
           >
-            <option value='preinfusion'>Pre-Infusion</option>
-            <option value='brew'>Brew</option>
+            <option value='preinfusion'>
+              <Trans>Pre-Infusion</Trans>
+            </option>
+            <option value='brew'>
+              <Trans context='phase type'>Brew</Trans>
+            </option>
           </select>
         </div>
         <div className='form-control'>
           <label htmlFor={`phase-${index}-name`} className='mb-2 block text-sm font-medium'>
-            Phase Name
+            <Trans>Phase Name</Trans>
           </label>
           <div className='flex gap-2'>
             <input
               id={`phase-${index}-name`}
               className='input input-bordered flex-1'
-              placeholder='Name...'
+              placeholder={t`Name...`}
               value={phase.name}
               onChange={e => onFieldChange('name', e.target.value)}
-              aria-label='Enter a name for this phase'
+              aria-label={t`Enter a name for this phase`}
             />
-            <Tooltip content='Delete this phase'>
+            <Tooltip content={t`Delete this phase`}>
               <button
                 type='button'
                 onClick={onRemove}
                 className='btn btn-sm btn-ghost text-error'
-                aria-label={`Delete phase ${index + 1}`}
+                aria-label={t`Delete phase ${phaseNumber}`}
               >
                 <FontAwesomeIcon icon={faTrashCan} />
               </button>
@@ -211,7 +223,7 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
       <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
         <div className='form-control'>
           <label htmlFor={`phase-${index}-duration`} className='mb-2 block text-sm font-medium'>
-            Duration
+            <Trans>Duration</Trans>
           </label>
           <div className='input-group'>
             <label htmlFor={`phase-${index}-duration`} className='input w-full'>
@@ -222,15 +234,15 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
                 min='1'
                 value={phase.duration}
                 onChange={e => onFieldChange('duration', e.target.value)}
-                aria-label='Duration in seconds'
+                aria-label={t`Duration in seconds`}
               />
-              <span aria-label='seconds'>s</span>
+              <span aria-label={t`seconds`}>s</span>
             </label>
           </div>
         </div>
         <div className='form-control'>
           <label htmlFor={`phase-${index}-target`} className='mb-2 block text-sm font-medium'>
-            Volumetric Target
+            <Trans>Volumetric Target</Trans>
           </label>
           <div className='input-group'>
             <label htmlFor={`phase-${index}-target`} className='input w-full'>
@@ -240,11 +252,11 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
                 type='number'
                 value={targetWeight}
                 onChange={e => onVolumetricTargetChange(parseFloat(e.target.value))}
-                aria-label='Target weight in grams'
+                aria-label={t`Target weight in grams`}
                 min='0'
                 step='0.1'
               />
-              <span aria-label='grams'>g</span>
+              <span aria-label={t`grams`}>g</span>
             </label>
           </div>
         </div>
@@ -252,25 +264,27 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
 
       <div className='form-control'>
         <fieldset>
-          <legend className='mb-2 block text-sm font-medium'>Valve</legend>
-          <div className='join' role='group' aria-label='Valve state selection'>
+          <legend className='mb-2 block text-sm font-medium'>
+            <Trans>Valve</Trans>
+          </legend>
+          <div className='join' role='group' aria-label={t`Valve state selection`}>
             <button
               type='button'
               className={`join-item btn btn-sm ${!phase.valve ? 'btn-primary' : 'btn-outline'}`}
               onClick={() => onFieldChange('valve', 0)}
               aria-pressed={!phase.valve}
-              aria-label='Valve closed'
+              aria-label={t`Valve closed`}
             >
-              Closed
+              <Trans context='valve state'>Closed</Trans>
             </button>
             <button
               type='button'
               className={`join-item btn btn-sm ${phase.valve ? 'btn-primary' : 'btn-outline'}`}
               onClick={() => onFieldChange('valve', 1)}
               aria-pressed={phase.valve}
-              aria-label='Valve open'
+              aria-label={t`Valve open`}
             >
-              Open
+              <Trans context='valve state'>Open</Trans>
             </button>
           </div>
         </fieldset>
@@ -278,25 +292,27 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
 
       <div className='form-control'>
         <fieldset>
-          <legend className='mb-2 block text-sm font-medium'>Pump Mode</legend>
-          <div className='join' role='group' aria-label='Pump mode selection'>
+          <legend className='mb-2 block text-sm font-medium'>
+            <Trans>Pump Mode</Trans>
+          </legend>
+          <div className='join' role='group' aria-label={t`Pump mode selection`}>
             <button
               type='button'
               className={`join-item btn btn-sm ${mode === 'off' ? 'btn-primary' : 'btn-outline'}`}
               onClick={() => onFieldChange('pump', 0)}
               aria-pressed={mode === 'off'}
-              aria-label='Pump off'
+              aria-label={t`Pump off`}
             >
-              Off
+              <Trans context='pump mode'>Off</Trans>
             </button>
             <button
               type='button'
               className={`join-item btn btn-sm ${mode === 'power' ? 'btn-primary' : 'btn-outline'}`}
               onClick={() => mode !== 'power' && onFieldChange('pump', 100)}
               aria-pressed={mode === 'power'}
-              aria-label='Pump power mode'
+              aria-label={t`Pump power mode`}
             >
-              Power
+              <Trans context='pump mode'>Power</Trans>
             </button>
             {pressureAvailable && (
               <>
@@ -312,9 +328,9 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
                     })
                   }
                   aria-pressed={mode === 'pressure'}
-                  aria-label='Pump pressure mode (PRO feature)'
+                  aria-label={t`Pump pressure mode (PRO feature)`}
                 >
-                  Pressure <sup>PRO</sup>
+                  <Trans context='pump mode'>Pressure</Trans> <sup>PRO</sup>
                 </button>
                 <button
                   type='button'
@@ -328,9 +344,9 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
                     })
                   }
                   aria-pressed={mode === 'flow'}
-                  aria-label='Pump flow mode (PRO feature)'
+                  aria-label={t`Pump flow mode (PRO feature)`}
                 >
-                  Flow <sup>PRO</sup>
+                  <Trans context='pump mode'>Flow</Trans> <sup>PRO</sup>
                 </button>
               </>
             )}
@@ -341,7 +357,7 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
       {mode === 'power' && (
         <div className='form-control'>
           <label htmlFor={`phase-${index}-power`} className='mb-2 block text-sm font-medium'>
-            Pump Power
+            <Trans>Pump Power</Trans>
           </label>
           <div className='input-group'>
             <label htmlFor={`phase-${index}-power`} className='input w-full'>
@@ -354,9 +370,9 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
                 max={100}
                 value={pumpPower}
                 onChange={e => onFieldChange('pump', parseFloat(e.target.value))}
-                aria-label='Pump power as percentage'
+                aria-label={t`Pump power as percentage`}
               />
-              <span aria-label='percent'>%</span>
+              <span aria-label={t`percent`}>%</span>
             </label>
           </div>
         </div>
@@ -366,7 +382,7 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
           <div className='form-control'>
             <label htmlFor={`phase-${index}-pressure`} className='mb-2 block text-sm font-medium'>
-              Pressure {mode === 'pressure' ? 'Target' : 'Limit'}
+              {mode === 'pressure' ? t`Pressure Target` : t`Pressure Limit`}
             </label>
             <div className='input-group'>
               <label htmlFor={`phase-${index}-pressure`} className='input w-full'>
@@ -379,7 +395,7 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
                   onChange={e =>
                     onFieldChange('pump', { ...phase.pump, pressure: parseFloat(e.target.value) })
                   }
-                  aria-label='Pressure in bar'
+                  aria-label={t`Pressure in bar`}
                   min='0'
                 />
                 <span aria-label='bar'>bar</span>
@@ -388,7 +404,7 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
           </div>
           <div className='form-control'>
             <label htmlFor={`phase-${index}-flow`} className='mb-2 block text-sm font-medium'>
-              Flow {mode === 'flow' ? 'Target' : 'Limit'}
+              {mode === 'flow' ? t`Flow Target` : t`Flow Limit`}
             </label>
             <div className='input-group'>
               <label htmlFor={`phase-${index}-flow`} className='input w-full'>
@@ -401,10 +417,10 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
                   onChange={e =>
                     onFieldChange('pump', { ...phase.pump, flow: parseFloat(e.target.value) })
                   }
-                  aria-label='Flow rate in grams per second'
+                  aria-label={t`Flow rate in grams per second`}
                   min='0'
                 />
-                <span aria-label='grams per second'>g/s</span>
+                <span aria-label={t`grams per second`}>g/s</span>
               </label>
             </div>
           </div>

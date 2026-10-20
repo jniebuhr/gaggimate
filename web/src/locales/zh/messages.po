@@ -1,0 +1,5762 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-13 16:54+0200\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: zh\n"
+
+#: src/pages/Statistics/components/StatisticsSearchHelp.jsx
+msgid "(exact)"
+msgstr "（精确）"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "(Page {currentPage} of {totalPages})"
+msgstr "（第 {currentPage} 页，共 {totalPages} 页）"
+
+#: src/pages/Statistics/components/StatisticsSearchHelp.jsx
+msgid "(same field = OR)"
+msgstr "（同一字段 = 或）"
+
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+msgid "(target {durationTarget}s, {durationDelta}s)"
+msgstr "（目标 {durationTarget}s，{durationDelta}s）"
+
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+msgid "(target {waterTarget}ml, {waterDelta}ml)"
+msgstr "（目标 {waterTarget}ml，{waterDelta}ml）"
+
+#. placeholder {0}: phase.shotCount
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+msgid "{0, plural, one {(# entry)} other {(# entries)}}"
+msgstr "{0, plural, other {（# 条）}}"
+
+#. placeholder {0}: data.stats.currentStreak
+#. placeholder {0}: data.stats.longestStreak
+#: src/pages/Statistics/components/ActivityHeatmap.jsx
+msgid "{0, plural, one {# day} other {# days}}"
+msgstr "{0, plural, other {# 天}}"
+
+#. placeholder {0}: phases.length
+#: src/pages/ProfileList/index.jsx
+msgid "{0, plural, one {# phase} other {# phases}}"
+msgstr "{0, plural, other {# 个阶段}}"
+
+#. placeholder {0}: toCount(value)
+#: src/pages/Statistics/components/toolbar/helpers.js
+msgid "{0, plural, one {# profile} other {# profiles}}"
+msgstr "{0, plural, other {# 条曲线}}"
+
+#. placeholder {0}: toCount(value)
+#. placeholder {0}: tooltip.cell.count
+#: src/pages/Statistics/components/ActivityHeatmap.jsx
+#: src/pages/Statistics/components/toolbar/helpers.js
+msgid "{0, plural, one {# shot} other {# shots}}"
+msgstr "{0, plural, other {# 次萃取}}"
+
+#: src/pages/Statistics/components/toolbar/helpers.js
+msgid "{candidateCount, plural, one {# candidate} other {# candidates}}"
+msgstr "{candidateCount, plural, other {# 个候选}}"
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
+msgid "{diffMonths, plural, one {# month ago} other {# months ago}}"
+msgstr "{diffMonths, plural, other {# 个月前}}"
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
+msgid "{diffWeeks, plural, one {# week ago} other {# weeks ago}}"
+msgstr "{diffWeeks, plural, other {# 周前}}"
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
+msgid "{diffYears, plural, one {# year ago} other {# years ago}}"
+msgstr "{diffYears, plural, other {# 年前}}"
+
+#: src/app/ConnectionGate.jsx
+msgid "{host} isn't answering. Make sure the machine is on and your phone is on the same Wi-Fi network."
+msgstr "{host} 没有响应。请确认咖啡机已开机，并且手机与咖啡机处于同一 Wi-Fi 网络。"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "{label} severity"
+msgstr "{label} 严重程度"
+
+#: src/app/AppSettings.jsx
+msgid "{machineCount, plural, one {Watches # saved machine.} other {Watches all # saved machines.}}"
+msgstr "{machineCount, plural, other {监控 # 台已保存的咖啡机。}}"
+
+#: src/app/AppSettings.jsx
+msgid "{machineCount} saved"
+msgstr "已保存 {machineCount} 台"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "{metricsColumns, plural, one {# column} other {# columns}}"
+msgstr "{metricsColumns, plural, other {# 列}}"
+
+#: src/app/AppSettings.jsx
+msgid "{pending} installs the next time you leave the app"
+msgstr "{pending} 将在你下次离开应用时安装"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "{recentShotCount, plural, one {# shot} other {# shots}}"
+msgstr "{recentShotCount, plural, other {# 次萃取}}"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "{rssi}dB (Roundtrip: {lat} ms, Resends: {rtx})"
+msgstr "{rssi}dB（往返：{lat} ms，重发：{rtx}）"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "{scaleName} disconnected"
+msgstr "{scaleName} 已断开"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "{totalFilteredItems} of {historyCount} shots"
+msgstr "{totalFilteredItems} / {historyCount} 次萃取"
+
+#: src/pages/Settings/StickyFormFooter.jsx
+msgid "* Restart required for Wi-Fi, Timezone, or Plugin changes."
+msgstr "* 更改 Wi-Fi、时区或插件后需要重启。"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "+{moreErrorCount} more"
+msgstr "还有 {moreErrorCount} 条"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "+{moreWarningCount} more"
+msgstr "还有 {moreWarningCount} 条"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "<0>Brewing:</0> recipes with GbS turned on report each grind here; pressing the rotary knob afterwards starts the shot."
+msgstr "<0>冲煮：</0>开启 GbS 的配方会在此报告每次研磨；之后按下旋钮即可开始萃取。"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "<0>Pairing:</0> GaggiMate shows up to the grinder as a Xenia machine. Under Settings → Connectivity → Machine To Machine, turn on Enable Xenia, then type the address above into Configuration. Automatic discovery does not see GaggiMate."
+msgstr "<0>配对：</0>GaggiMate 在磨豆机上显示为 Xenia 咖啡机。在 Settings → Connectivity → Machine To Machine 中开启 Enable Xenia，然后在 Configuration 中输入上方地址。自动发现无法找到 GaggiMate。"
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
+msgid "1 year ago"
+msgstr "1 年前"
+
+#: src/app/appSettings.js
+msgid "A brew started on the machine."
+msgstr "咖啡机上已开始冲煮。"
+
+#: src/pages/Settings/tabs/CleaningSection.jsx
+msgid "A cleaning warning is shown once either interval is reached; set an interval to 0 to turn it off. Running the cleaning profile to the end marks it complete."
+msgstr "达到任一间隔时将显示清洁提醒；将间隔设为 0 可关闭提醒。完整运行清洁曲线即标记为已完成。"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "A given alpha behaves faster in time at 80 SPS because it is applied more often. Tune the two alpha values independently for your installed sample rate. Changing sample rate resets both values to 0.80 at 10 SPS or 0.40 at 80 SPS as sensible starting points."
+msgstr "在 80 SPS 下，相同的 alpha 值在时间上响应更快，因为它被更频繁地应用。请根据实际安装的采样率分别调整两个 alpha 值。更改采样率会将两个值重置为合理的起始值：10 SPS 时为 0.80，80 SPS 时为 0.40。"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Access Point Password"
+msgstr "热点密码"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Actions for {label} profile"
+msgstr "{label} 曲线的操作"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Activate this if your coffee machine is equipped with momentary buttons. A momentary button set to Brew or a profile starts a flush instead when held."
+msgstr "如果你的咖啡机配备的是自复位按钮，请启用此项。设置为冲煮或某条曲线的自复位按钮在长按时会改为执行冲洗。"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgctxt "selected menu item"
+msgid "Active"
+msgstr "已启用"
+
+#: src/pages/Home/cards/ActionCard.jsx
+msgid "Active warnings"
+msgstr "当前警告"
+
+#: src/pages/Statistics/components/ActivityHeatmap.jsx
+msgid "Activity Heatmap"
+msgstr "活动热力图"
+
+#: src/components/PumpFlowCalibration/ResultsPanel.jsx
+msgid "actual flow"
+msgstr "实际流量"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Actual Weight of Calibration Object"
+msgstr "校准物体的实际重量"
+
+#: src/components/SettingsFormField.jsx
+msgid "Add"
+msgstr "添加"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Add {label} to favorites"
+msgstr "将 {label} 加入收藏"
+
+#: src/app/MachineSetup.jsx
+msgid "Add {name}"
+msgstr "添加 {name}"
+
+#: src/app/MachineSetup.jsx
+msgid "Add machine by address"
+msgstr "按地址添加咖啡机"
+
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Add new brew phase"
+msgstr "添加新冲煮阶段"
+
+#: src/pages/ProfileList/ProfileAddCard.jsx
+msgid "Add new profile"
+msgstr "添加新曲线"
+
+#: src/app/MachineSwitcher.jsx
+msgid "Add or manage machines"
+msgstr "添加或管理咖啡机"
+
+#: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Add phase"
+msgstr "添加阶段"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Add profile"
+msgstr "添加曲线"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Add schedule"
+msgstr "添加计划"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Add stop condition"
+msgstr "添加停止条件"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Add target"
+msgstr "添加目标"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Add to favorites"
+msgstr "加入收藏"
+
+#: src/app/MachineSetup.jsx
+msgid "Address"
+msgstr "地址"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Advanced"
+msgstr "高级"
+
+#: src/components/Navigation.jsx
+msgctxt "dashboard view"
+msgid "Advanced"
+msgstr "高级"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Alba Settings"
+msgstr "Alba 设置"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Align to grid"
+msgstr "对齐网格"
+
+#: src/pages/ShotAnalyzer/components/shotChart/single/SingleShotMetricPreview.jsx
+msgctxt "all metrics page"
+msgid "All"
+msgstr "全部"
+
+#: src/pages/Statistics/components/toolbar/constants.js
+msgctxt "statistics mode"
+msgid "All"
+msgstr "全部"
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgctxt "library source filter"
+msgid "ALL"
+msgstr "全部"
+
+#: src/pages/Statistics/components/toolbar/constants.js
+msgctxt "shot source: all sources"
+msgid "ALL"
+msgstr "全部"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "All available metrics are visible."
+msgstr "所有可用指标均已显示。"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "All available panels are visible."
+msgstr "所有可用面板均已显示。"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
+msgid "All Metrics"
+msgstr "全部指标"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "All Shots"
+msgstr "全部萃取"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Alt Relay / SSR2 Function"
+msgstr "备用继电器 / SSR2 功能"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Analysis complete."
+msgstr "分析完成。"
+
+#: src/pages/ShotAnalyzer/shotAnalyzer/ActiveAnalysisView.jsx
+msgid "Analysis Table"
+msgstr "分析表格"
+
+#: src/pages/Statistics/components/statisticsView/StatisticsView.jsx
+msgid "Analyzing shot {progressCurrent} of {progressTotal}..."
+msgstr "正在分析第 {progressCurrent} / {progressTotal} 次萃取..."
+
+#: src/components/PumpFlowCalibration/Footer.jsx
+msgid "Analyzing..."
+msgstr "正在分析..."
+
+#: src/pages/ShotAnalyzer/services/ReplayVideoExportService.js
+msgid "Animation frames are not supported in this environment."
+msgstr "此环境不支持动画帧。"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/compareControls.jsx
+msgid "Annotations"
+msgstr "注释"
+
+#: src/app/AppSettings.jsx
+#: src/components/Navigation.jsx
+msgid "App Settings"
+msgstr "应用设置"
+
+#: src/app/AppSettings.jsx
+msgid "Appearance"
+msgstr "外观"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryPanel.jsx
+msgid "Are you sure you want to delete \"{itemName}\"?"
+msgstr "确定要删除“{itemName}”吗？"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "At how many bars should the pump assist stop. This makes it so the pump will only run when steam is flowing."
+msgstr "泵辅助在多少 bar 时停止。这样泵只会在蒸汽流出时运行。"
+
+#: src/services/VisualizerService.js
+msgid "Authentication failed - please check your username and password"
+msgstr "认证失败 - 请检查用户名和密码"
+
+#: src/pages/Statistics/components/toolbar/constants.js
+msgctxt "date basis"
+msgid "Auto"
+msgstr "自动"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Auto (Bluetooth when connected)"
+msgstr "自动（连接时使用蓝牙）"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Auto Adjust"
+msgstr "自动调整"
+
+#: src/pages/Statistics/components/toolbar/helpers.js
+msgid "Auto Range"
+msgstr "自动范围"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Auto Wakeup Schedule"
+msgstr "自动唤醒计划"
+
+#: src/components/LanguageSelect.jsx
+msgid "Automatic"
+msgstr "自动"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Automatic Wakeup Schedule"
+msgstr "自动唤醒计划"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Automatically switch to brew mode at specified time(s) of day."
+msgstr "在每天指定时间自动切换到冲煮模式。"
+
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "Autotune Complete!"
+msgstr "自动整定完成！"
+
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "Autotune Failed"
+msgstr "自动整定失败"
+
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "Autotune in Progress"
+msgstr "自动整定进行中"
+
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+msgid "Average target value and deviation"
+msgstr "平均目标值与偏差"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
+msgctxt "column type"
+msgid "Avg (tw)"
+msgstr "均值 (时间加权)"
+
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+msgid "Avg (TW)"
+msgstr "均值 (时间加权)"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgctxt "column type"
+msgid "Avg ∅"
+msgstr "均值 ∅"
+
+#: src/pages/Statistics/components/ProfileGroupTable.jsx
+msgid "Avg Duration"
+msgstr "平均时长"
+
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+msgid "Avg Duration:"
+msgstr "平均时长："
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Avg Flow"
+msgstr "平均流量"
+
+#: src/pages/Statistics/components/ProfileGroupTable.jsx
+msgid "Avg Pressure"
+msgstr "平均压力"
+
+#: src/pages/Statistics/components/TrendChart.jsx
+msgid "Avg Pressure (bar)"
+msgstr "平均压力 (bar)"
+
+#: src/pages/Statistics/components/TrendChart.jsx
+msgid "Avg Puck Flow (ml/s)"
+msgstr "平均粉饼流量 (ml/s)"
+
+#: src/pages/Statistics/components/ProfileGroupTable.jsx
+msgid "Avg Pump Flow"
+msgstr "平均泵流量"
+
+#: src/pages/Statistics/components/TrendChart.jsx
+msgid "Avg Pump Flow (ml/s)"
+msgstr "平均泵流量 (ml/s)"
+
+#: src/pages/Statistics/components/ProfileGroupTable.jsx
+msgid "Avg Pumped Water"
+msgstr "平均泵水量"
+
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+msgid "Avg Pumped Water:"
+msgstr "平均泵水量："
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Avg Temp"
+msgstr "平均温度"
+
+#: src/pages/Statistics/components/TrendChart.jsx
+msgid "Avg Temp (℃)"
+msgstr "平均温度 (℃)"
+
+#: src/pages/Statistics/components/ProfileGroupTable.jsx
+msgid "Avg Weight"
+msgstr "平均重量"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+msgid "Avg. Liquid Resistance"
+msgstr "平均液体阻力"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+#: src/pages/Statistics/components/MetricsTable.jsx
+msgid "Avg. Peak Pressure"
+msgstr "平均峰值压力"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+msgid "Avg. Pressure"
+msgstr "平均压力"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+msgid "Avg. Puck Flow"
+msgstr "平均粉饼流量"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+msgid "Avg. Puck Resistance"
+msgstr "平均粉饼阻力"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMetricCards.jsx
+msgid "Avg. Pump Flow"
+msgstr "平均泵流量"
+
+#: src/pages/Statistics/components/MetricsTable.jsx
+msgid "Avg. Target Temperature"
+msgstr "平均目标温度"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMetricCards.jsx
+msgid "Avg. Temperature"
+msgstr "平均温度"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+msgid "Avg. Weight Flow"
+msgstr "平均重量流量"
+
+#: src/app/MachineSetup.jsx
+#: src/components/PumpFlowCalibration/Footer.jsx
+#: src/pages/DashboardSettings/index.jsx
+#: src/pages/Home/BrewConfirmModal.jsx
+#: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Back"
+msgstr "返回"
+
+#: src/pages/ShotAnalyzer/shotAnalyzer/ActiveAnalysisView.jsx
+msgid "Back to analyzer"
+msgstr "返回分析器"
+
+#: src/pages/Settings/tabs/CleaningSection.jsx
+msgid "Backflush"
+msgstr "反冲洗"
+
+#: src/utils/warnings.js
+msgid "Backflush due"
+msgstr "需要反冲洗"
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
+msgid "Balance / Taste"
+msgstr "平衡 / 口味"
+
+#: src/pages/ShotHistory/ShotNotesCard.jsx
+msgid "Balance/Taste"
+msgstr "平衡/口味"
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
+#: src/pages/ShotHistory/ShotNotesCard.jsx
+msgid "Balanced"
+msgstr "平衡"
+
+#: src/pages/ShotAnalyzer/utils/constants.js
+msgid "Basic Metrics"
+msgstr "基础指标"
+
+#: src/pages/ShotAnalyzer/components/shotChart/single/SingleShotMetricPreview.jsx
+msgid "Basics"
+msgstr "基础"
+
+#: src/pages/ShotHistory/ShotNotesCard.jsx
+msgid "Bean Type"
+msgstr "咖啡豆类型"
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
+msgid "Beans"
+msgstr "咖啡豆"
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
+#: src/pages/ShotHistory/ShotNotesCard.jsx
+msgid "Bitter"
+msgstr "苦"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "BLDC Pump Settings"
+msgstr "BLDC 泵设置"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Bluetooth Devices"
+msgstr "蓝牙设备"
+
+#: src/app/notifications.js
+msgid "Boiler at {temperature} °C"
+msgstr "锅炉温度 {temperature} °C"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Boiler Refill Plugin"
+msgstr "锅炉补水插件"
+
+#: src/app/machineStatus.js
+#: src/pages/Home/utils.js
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgctxt "machine mode"
+msgid "Brew"
+msgstr "冲煮"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+#: src/pages/ProfileList/index.jsx
+msgctxt "phase type"
+msgid "Brew"
+msgstr "冲煮"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgctxt "predictive scale delay"
+msgid "Brew"
+msgstr "冲煮"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Brew button"
+msgstr "冲煮按钮"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Brew Button Behavior"
+msgstr "冲煮按钮行为"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Brew Color"
+msgstr "冲煮颜色"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+msgid "Brew Mode"
+msgstr "冲煮模式"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Brew phases"
+msgstr "冲煮阶段"
+
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Brew Phases"
+msgstr "冲煮阶段"
+
+#: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Brew phases configuration"
+msgstr "冲煮阶段配置"
+
+#: src/components/OverviewChart.jsx
+msgid "Brew Progress - {windowSeconds}s View"
+msgstr "冲煮进度 - {windowSeconds}s 视图"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Brew Status Display"
+msgstr "冲煮状态显示"
+
+#: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Brewed by Time"
+msgstr "按时间冲煮"
+
+#: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Brewed by Weight"
+msgstr "按重量冲煮"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Brewing Filter Alpha"
+msgstr "冲煮滤波 Alpha"
+
+#: src/app/notifications.js
+msgid "Brewing…"
+msgstr "冲煮中…"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+msgid "BT Scale Connected"
+msgstr "蓝牙秤已连接"
+
+#: src/pages/Statistics/components/statisticsView/StatisticsView.jsx
+msgctxt "keyboard shortcut action"
+msgid "Build"
+msgstr "生成"
+
+#: src/pages/Statistics/components/statisticsView/StatisticsView.jsx
+msgid "Build and show Shot Charts"
+msgstr "生成并显示萃取图表"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Built-in profile, can be edited but not deleted"
+msgstr "内置曲线，可编辑但不可删除"
+
+#: src/pages/ShotAnalyzer/components/EmptyState.jsx
+msgid "Bulk upload and download are supported."
+msgstr "支持批量上传和下载。"
+
+#: src/pages/Statistics/components/toolbar/constants.js
+msgid "By Profile"
+msgstr "按曲线"
+
+#: src/pages/Statistics/components/toolbar/constants.js
+msgid "By Shots"
+msgstr "按萃取"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Calibrate Load Cell 1"
+msgstr "校准称重传感器 1"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Calibrate Load Cell 2"
+msgstr "校准称重传感器 2"
+
+#: src/pages/Settings/index.jsx
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Calibration"
+msgstr "校准"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Calibration cancelled."
+msgstr "校准已取消。"
+
+#: src/utils/pumpFlowCalibration.js
+msgid "Calibration factor for tp={targetPressure} bar is out of plausible range ({shownFactor}). Did pressure actually reach {targetPressure} bar during the Measure phase?"
+msgstr "tp={targetPressure} bar 的校准系数超出合理范围（{shownFactor}）。Measure 阶段压力是否真的达到了 {targetPressure} bar？"
+
+#: src/app/ConnectionGate.jsx
+msgid "Can't reach {name}"
+msgstr "无法连接 {name}"
+
+#: src/app/ConnectionGate.jsx
+#: src/app/MachineSetup.jsx
+#: src/components/PumpFlowCalibration/Footer.jsx
+#: src/components/VisualizerUploadModal.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+#: src/pages/ShotHistory/ShotNotesCard.jsx
+msgid "Cancel"
+msgstr "取消"
+
+#: src/app/MachineSetup.jsx
+msgid "Cancel renaming"
+msgstr "取消重命名"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+msgid "Cancel replay export"
+msgstr "取消回放导出"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Cannot delete the last schedule"
+msgstr "无法删除最后一个计划"
+
+#: src/pages/ShotAnalyzer/services/ReplayVideoExportService.js
+msgid "Canvas capture is not supported in this browser."
+msgstr "此浏览器不支持画布捕获。"
+
+#: src/pages/ShotAnalyzer/services/ReplayVideoExportService.js
+msgid "Canvas export is not supported in this environment."
+msgstr "此环境不支持画布导出。"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "celsius"
+msgstr "摄氏度"
+
+#: src/pages/ShotAnalyzer/components/shotChart/single/SingleShotMetricPreview.jsx
+msgid "Chart & Metrics"
+msgstr "图表与指标"
+
+#: src/pages/DashboardSettings/index.jsx
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Chart First"
+msgstr "图表优先"
+
+#: src/app/ConnectionGate.jsx
+msgid "Choose another machine"
+msgstr "选择其他咖啡机"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Choose which source to prefer when both hardware and Bluetooth scales are available."
+msgstr "选择同时存在硬件秤和蓝牙秤时优先使用的来源。"
+
+#: src/pages/Settings/tabs/CleaningSection.jsx
+msgid "Cleaning & Maintenance"
+msgstr "清洁与维护"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Clear date filter"
+msgstr "清除日期筛选"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Clear Date Filter"
+msgstr "清除日期筛选"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Clear filters and selections ({resetAriaCount})"
+msgstr "清除筛选和选择（{resetAriaCount}）"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Click \"Scan\" to discover Bluetooth scales nearby"
+msgstr "点击“扫描”以发现附近的蓝牙秤"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Click to confirm"
+msgstr "点击确认"
+
+#: src/pages/ProfileList/index.jsx
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Click to confirm delete"
+msgstr "点击确认删除"
+
+#: src/pages/ShotAnalyzer/components/library/StatusBar.jsx
+msgid "Click to open the library. Use Import below or drop files here to import."
+msgstr "点击打开库。使用下方的导入或将文件拖放到此处进行导入。"
+
+#: src/app/MachineSetup.jsx
+#: src/components/VisualizerUploadModal.jsx
+#: src/pages/Home/BrewConfirmModal.jsx
+msgid "Close"
+msgstr "关闭"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareChartLayout.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/single/SingleShotChart.jsx
+msgid "Close full display"
+msgstr "关闭全屏显示"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryDropdown.jsx
+msgid "Close library"
+msgstr "关闭库"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgctxt "valve state"
+msgid "Closed"
+msgstr "关闭"
+
+#: src/app/machines.js
+msgid "closed, code {code}"
+msgstr "已关闭，代码 {code}"
+
+#: src/pages/Statistics/components/StatisticsMultiSelectDropdown.jsx
+msgid "Cmd/Ctrl = Add"
+msgstr "Cmd/Ctrl = 添加"
+
+#: src/components/PumpFlowCalibration/ResultsPanel.jsx
+msgid "Coefficients"
+msgstr "系数"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Coefficients saved to machine: {newCoeffs}"
+msgstr "系数已保存到咖啡机：{newCoeffs}"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+#: src/utils/themeManager.js
+msgctxt "theme"
+msgid "Coffee"
+msgstr "咖啡"
+
+#: src/components/Navigation.jsx
+msgid "Collapse"
+msgstr "收起"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
+msgid "Collapse column settings"
+msgstr "收起列设置"
+
+#: src/components/Navigation.jsx
+msgid "Collapse navigation"
+msgstr "收起导航"
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Collapse shot details"
+msgstr "收起萃取详情"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Collapse statistics toolbar"
+msgstr "收起统计工具栏"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Column Spacing"
+msgstr "列间距"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Commutation Gain"
+msgstr "换相增益"
+
+#: src/pages/DashboardSettings/index.jsx
+msgctxt "panel view"
+msgid "Compact"
+msgstr "紧凑"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Compact mode is on — click to show the full panel"
+msgstr "紧凑模式已开启 — 点击显示完整面板"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgctxt "compare mode"
+msgid "Compare"
+msgstr "对比"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/controls/compareControls.jsx
+msgid "Compare alignment"
+msgstr "对比对齐方式"
+
+#: src/pages/ShotAnalyzer/shotAnalyzer/ActiveAnalysisView.jsx
+msgid "Compare analysis table"
+msgstr "对比分析表格"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+msgid "Compare Overlay"
+msgstr "对比叠加"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
+msgid "Compare shot"
+msgstr "对比萃取"
+
+#: src/pages/ShotAnalyzer/shotAnalyzer/ActiveAnalysisView.jsx
+msgid "Compare shot details"
+msgstr "对比萃取详情"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+msgid "Compare shot metrics"
+msgstr "对比萃取指标"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+msgid "Compare shots"
+msgstr "对比萃取"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Configure acquisition and filtering, then tare and calibrate each load cell."
+msgstr "配置采集和滤波，然后对每个称重传感器去皮并校准。"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+msgid "Configured Scale Delay (ms)"
+msgstr "已配置的秤延迟 (ms)"
+
+#: src/components/ConfirmButton.jsx
+#: src/pages/ProfileList/index.jsx
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Confirm"
+msgstr "确认"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Confirm deletion"
+msgstr "确认删除"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Confirm deletion of {label} profile"
+msgstr "确认删除 {label} 曲线"
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Confirm deletion of shot"
+msgstr "确认删除萃取记录"
+
+#: src/app/MachineSetup.jsx
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Connect"
+msgstr "连接"
+
+#: src/app/MachineSetup.jsx
+msgid "Connect to your GaggiMate"
+msgstr "连接到你的 GaggiMate"
+
+#: src/app/MachineSwitcher.jsx
+msgid "Connected"
+msgstr "已连接"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgctxt "scale state"
+msgid "Connected"
+msgstr "已连接"
+
+#: src/app/AppSettings.jsx
+msgid "Connected to <0>{name}</0>"
+msgstr "已连接到 <0>{name}</0>"
+
+#: src/app/MachineSwitcher.jsx
+msgid "Connecting"
+msgstr "连接中"
+
+#: src/app/MachineSwitcher.jsx
+msgid "Connecting to {host}…"
+msgstr "正在连接 {host}…"
+
+#: src/app/ConnectionGate.jsx
+msgid "Connecting to {name}…"
+msgstr "正在连接 {name}…"
+
+#: src/pages/Home/useDashboardState.js
+msgid "Connecting to the machine..."
+msgstr "正在连接咖啡机..."
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Connecting to the scale failed."
+msgstr "连接秤失败。"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Connecting..."
+msgstr "连接中..."
+
+#: src/app/MachineSetup.jsx
+msgid "Connecting…"
+msgstr "连接中…"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Control Column Style"
+msgstr "控制列样式"
+
+#: src/app/appSettings.js
+msgid "Controller errors and error-level warnings."
+msgstr "控制器错误和错误级警告。"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Controller Signal Strength"
+msgstr "控制器信号强度"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Controller Version"
+msgstr "控制器版本"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Controls how panels are distributed vertically: pack them to the top, or space them evenly across the column."
+msgstr "控制面板在垂直方向上的分布方式：靠顶部排列，或在列中均匀分布。"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Controls how the last, incomplete row of metrics is laid out: stretch items evenly to fill the row, or keep them aligned to the column grid."
+msgstr "控制最后一行未填满的指标如何排列：均匀拉伸填满整行，或保持与列网格对齐。"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Convergence Gain"
+msgstr "收敛增益"
+
+#: src/pages/ProfileEdit/index.jsx
+msgid "Convert to Pro"
+msgstr "转换为 Pro"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Could not delete calibration profile: {message}"
+msgstr "无法删除校准曲线：{message}"
+
+#: src/pages/Settings/index.jsx
+msgid "Could not import {importName}: {importMessage}"
+msgstr "无法导入 {importName}：{importMessage}"
+
+#: src/pages/ProfileEdit/ProfileImageUpload.jsx
+msgid "Could not read this image."
+msgstr "无法读取此图片。"
+
+#: src/utils/profileImage.js
+msgid "Could not remove image"
+msgstr "无法移除图片"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Could not restore previous profile: {message}"
+msgstr "无法恢复之前的曲线：{message}"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Couldn't connect to {errorAddress}"
+msgstr "无法连接到 {errorAddress}"
+
+#: src/app/MachineSetup.jsx
+msgid "Couldn't connect to {host}: {reason}. Make sure the machine is on and your phone is on the same Wi-Fi network."
+msgstr "无法连接到 {host}：{reason}。请确认咖啡机已开机，并且手机与咖啡机处于同一 Wi-Fi 网络。"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Cracking pressure of a grouphead mushroom valve (e.g. 4.0 on Delonghi machines). Subtracted from readings and added to targets only while a brew is running. Leave at 0.0 for a 3-way solenoid."
+msgstr "冲煮头蘑菇阀的开启压力（例如 Delonghi 咖啡机为 4.0）。仅在冲煮过程中从读数中减去并加到目标值上。使用三通电磁阀时保持 0.0。"
+
+#: src/components/Navigation.jsx
+msgid "Crafted with <0>{randomIcon}</0> in Italy by <1>Caffinnova S.r.l.</1>"
+msgstr "由 <1>Caffinnova S.r.l.</1> 在意大利用 <0>{randomIcon}</0> 打造"
+
+#: src/pages/ProfileEdit/index.jsx
+msgid "Create Profile"
+msgstr "创建曲线"
+
+#: src/utils/pumpFlowCalibration.js
+msgid "Current coefficients are not numeric: \"{raw}\""
+msgstr "当前系数不是数值：“{raw}”"
+
+#: src/components/PumpFlowCalibration/IdleSection.jsx
+msgid "Current coefficients:"
+msgstr "当前系数："
+
+#: src/components/OverviewChart.jsx
+msgid "Current Flow"
+msgstr "当前流量"
+
+#: src/components/OverviewChart.jsx
+#: src/pages/ShotHistory/HistoryChart.jsx
+msgid "Current Pressure"
+msgstr "当前压力"
+
+#: src/pages/ShotHistory/HistoryChart.jsx
+msgid "Current Puck Flow"
+msgstr "当前粉饼流量"
+
+#: src/pages/ShotHistory/HistoryChart.jsx
+msgid "Current Pump Flow"
+msgstr "当前泵流量"
+
+#: src/pages/Statistics/components/ActivityHeatmap.jsx
+msgid "Current streak:"
+msgstr "当前连续天数："
+
+#: src/components/OverviewChart.jsx
+#: src/pages/ShotHistory/HistoryChart.jsx
+msgid "Current Temperature"
+msgstr "当前温度"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Current value"
+msgstr "当前值"
+
+#: src/components/OverviewChart.jsx
+msgid "Current Weight"
+msgstr "当前重量"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Current:"
+msgstr "当前："
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+msgid "Currently Volumetric"
+msgstr "当前为定量模式"
+
+#: src/components/Navigation.jsx
+msgid "Customize"
+msgstr "自定义"
+
+#: src/pages/Statistics/components/ActivityHeatmap.jsx
+msgid "Daily average: <0>{dailyAvg} shots</0>"
+msgstr "日均：<0>{dailyAvg} 次萃取</0>"
+
+#: src/app/AppSettings.jsx
+#: src/pages/Settings/tabs/GeneralTab.jsx
+#: src/utils/themeManager.js
+msgctxt "theme"
+msgid "Dark"
+msgstr "深色"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Dark Theme"
+msgstr "深色主题"
+
+#: src/components/Navigation.jsx
+msgid "Dashboard"
+msgstr "仪表盘"
+
+#: src/pages/DashboardSettings/index.jsx
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Dashboard Layout"
+msgstr "仪表盘布局"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Dashboard Settings"
+msgstr "仪表盘设置"
+
+#: src/components/Navigation.jsx
+msgid "Dashboard view"
+msgstr "仪表盘视图"
+
+#: src/services/VisualizerService.js
+msgid "Data validation failed - the shot data format may be incorrect"
+msgstr "数据校验失败 - 萃取数据格式可能不正确"
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+#: src/pages/Statistics/components/StatisticsSearchHelp.jsx
+msgid "Date"
+msgstr "日期"
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Date (New)"
+msgstr "日期（最新）"
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Date (Old)"
+msgstr "日期（最早）"
+
+#: src/pages/Statistics/components/StatisticsSearchHelp.jsx
+msgid "Date basis (<0>Shot / Auto / Upload</0>) appears only when missing shot timestamps are detected."
+msgstr "仅在检测到缺失萃取时间戳时才显示日期依据（<0>萃取 / 自动 / 上传</0>）。"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Date Basis:"
+msgstr "日期依据："
+
+#: src/pages/Statistics/components/toolbar/helpers.js
+msgid "Date Range"
+msgstr "日期范围"
+
+#: src/pages/Statistics/components/statisticsView/helpers.js
+msgid "Date range invalid: From is after To."
+msgstr "日期范围无效：开始日期晚于结束日期。"
+
+#: src/components/VisualizerUploadModal.jsx
+msgid "Date:"
+msgstr "日期："
+
+#: src/pages/Statistics/utils/statisticsSearchDsl.js
+msgid "date: expression is empty."
+msgstr "date: 表达式为空。"
+
+#: src/pages/Statistics/utils/statisticsSearchDsl.js
+msgid "date: requires an operator (>, >=, <, <=, =). Example: date:>h-7d"
+msgstr "date: 需要一个运算符（>、>=、<、<=、=）。示例：date:>h-7d"
+
+#: src/pages/Statistics/components/TrendChart.jsx
+msgctxt "time bucket"
+msgid "Day"
+msgstr "天"
+
+#: src/pages/Settings/tabs/CleaningSection.jsx
+msgid "days"
+msgstr "天"
+
+#: src/pages/Statistics/components/ActivityHeatmap.jsx
+msgid "Days active: <0>{daysWithShots}</0>"
+msgstr "活跃天数：<0>{daysWithShots}</0>"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Days of week selection"
+msgstr "星期选择"
+
+#: src/pages/ShotAnalyzer/shotAnalyzer/ShotAnalyzer.jsx
+msgid "Deep Dive Shot Analyzer"
+msgstr "Deep Dive 萃取分析器"
+
+#: src/pages/Home/cards/ProfileCard.jsx
+msgctxt "profile"
+msgid "Default"
+msgstr "默认"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Default Steam Temperature"
+msgstr "默认蒸汽温度"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Default Water Temperature"
+msgstr "默认热水温度"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Define behavior for physical buttons when pressed. Make sure they are wired to the buttons header. Pressing the brew and steam buttons together (or a third button wired to both) triggers the water button behavior."
+msgstr "定义实体按钮按下时的行为。请确保它们已接到按钮排针上。同时按下冲煮和蒸汽按钮（或接到两者的第三个按钮）将触发热水按钮行为。"
+
+#: src/pages/ProfileEdit/ProfileMainInformation.jsx
+msgid "degrees Celsius"
+msgstr "摄氏度"
+
+#: src/pages/ProfileList/index.jsx
+#: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Delete"
+msgstr "删除"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Delete {label} profile"
+msgstr "删除 {label} 曲线"
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Delete All"
+msgstr "全部删除"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Delete all profiles"
+msgstr "删除所有曲线"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryPanel.jsx
+msgid "Delete failed: {message}"
+msgstr "删除失败：{message}"
+
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Delete phase {phaseNumber}"
+msgstr "删除阶段 {phaseNumber}"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
+msgid "Delete preset"
+msgstr "删除预设"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Delete profile"
+msgstr "删除曲线"
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Delete shot"
+msgstr "删除萃取记录"
+
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Delete this phase"
+msgstr "删除此阶段"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
+msgid "Delete this preset?"
+msgstr "删除此预设？"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Delete this schedule"
+msgstr "删除此计划"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Deleted profile"
+msgstr "已删除的曲线"
+
+#: src/pages/Settings/tabs/CleaningSection.jsx
+msgid "Descaling"
+msgstr "除垢"
+
+#: src/utils/warnings.js
+msgid "Descaling due"
+msgstr "需要除垢"
+
+#: src/pages/ProfileEdit/ProfileMainInformation.jsx
+msgid "Description"
+msgstr "描述"
+
+#: src/pages/Statistics/components/StatisticsMultiSelectDropdown.jsx
+msgid "Deselect {itemName}"
+msgstr "取消选择 {itemName}"
+
+#: src/components/Navigation.jsx
+#: src/pages/Settings/index.jsx
+msgid "Device Settings"
+msgstr "设备设置"
+
+#: src/pages/ShotAnalyzer/components/shotChart/tooltip/StaticTooltipContent.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/tooltip/tooltipModel.js
+msgid "Difference"
+msgstr "差值"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgid "Disable compare mode"
+msgstr "关闭对比模式"
+
+#: src/components/PumpFlowCalibration/Footer.jsx
+#: src/pages/Settings/index.jsx
+msgid "Discard"
+msgstr "放弃"
+
+#: src/app/MachineSwitcher.jsx
+msgid "Disconnect"
+msgstr "断开连接"
+
+#: src/pages/Settings/index.jsx
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "Dismiss"
+msgstr "忽略"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Display Settings"
+msgstr "显示设置"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Display Theme"
+msgstr "显示主题"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Display Version"
+msgstr "显示屏版本"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Distance from sensor to bottom of the tank"
+msgstr "传感器到水箱底部的距离"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Distance from sensor to the fill line"
+msgstr "传感器到加水线的距离"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryDropdown.jsx
+msgid "Do you really want to export all {count} filtered profiles? (Profiles are downloaded individually, one after the other.)"
+msgstr "确定要导出全部 {count} 条筛选出的曲线吗？（曲线将逐个依次下载。）"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryDropdown.jsx
+msgid "Do you really want to export all {count} filtered shots? (Shots are downloaded individually, one after the other.)"
+msgstr "确定要导出全部 {count} 条筛选出的萃取记录吗？（萃取记录将逐个依次下载。）"
+
+#: src/components/PumpFlowCalibration/Footer.jsx
+msgid "Done"
+msgstr "完成"
+
+#: src/pages/ProfileEdit/ProfileMainInformation.jsx
+msgid "Dose"
+msgstr "粉量"
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
+msgid "Dose In"
+msgstr "粉量"
+
+#: src/pages/ShotHistory/ShotNotesCard.jsx
+msgid "Dose In (g)"
+msgstr "粉量 (g)"
+
+#: src/pages/ProfileEdit/ProfileMainInformation.jsx
+msgid "Dose in g"
+msgstr "粉量 (g)"
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
+msgid "Dose Out"
+msgstr "出液量"
+
+#: src/pages/ShotHistory/ShotNotesCard.jsx
+msgid "Dose Out (g)"
+msgstr "出液量 (g)"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Download Support Data"
+msgstr "下载支持数据"
+
+#: src/pages/ShotAnalyzer/components/shotChart/constants.js
+msgid "Downloading export..."
+msgstr "正在下载导出..."
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Downloading shot #{shotId}"
+msgstr "正在下载萃取 #{shotId}"
+
+#: src/pages/ShotAnalyzer/components/EmptyState.jsx
+msgid "Drag and drop files onto the status bar or use the import icons in the shot and profile badges."
+msgstr "将文件拖放到状态栏，或使用萃取和曲线标签中的导入图标。"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Drag disabled on search result"
+msgstr "搜索结果中无法拖动"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Drag to reorder"
+msgstr "拖动以排序"
+
+#: src/pages/ShotAnalyzer/components/library/AnalyzerPanelSlot.jsx
+msgid "Drop shot or profile JSON here"
+msgstr "将萃取或曲线 JSON 拖放到此处"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Duplicate"
+msgstr "复制"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Duplicate {label} profile"
+msgstr "复制 {label} 曲线"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Duplicate profile"
+msgstr "复制曲线"
+
+#: src/pages/DashboardSettings/index.jsx
+#: src/pages/Home/cards/RecentShotsCard.jsx
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMetricCards.jsx
+#: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
+#: src/pages/Statistics/components/MetricsTable.jsx
+msgid "Duration"
+msgstr "时长"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+#: src/pages/Statistics/components/TrendChart.jsx
+msgid "Duration (s)"
+msgstr "时长 (s)"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Duration in seconds"
+msgstr "时长（秒）"
+
+#: src/components/VisualizerUploadModal.jsx
+msgid "Duration:"
+msgstr "时长："
+
+#: src/pages/ProfileList/index.jsx
+msgid "Duration: {duration}s"
+msgstr "时长：{duration}s"
+
+#: src/components/PumpFlowCalibration/IdleSection.jsx
+msgid "During the shot, adjust the valve so pressure reaches 1 bar, then 9 bar. Keep it stable during the <0>Measure</0> phases (10 s each)."
+msgstr "萃取过程中，调节阀门使压力先达到 1 bar，再达到 9 bar。在 <0>Measure</0> 阶段（每次 10 秒）保持稳定。"
+
+#: src/app/appSettings.js
+msgid "E.g. water tank low, scale battery low."
+msgstr "例如水箱水位低、秤电量低。"
+
+#: src/pages/ShotHistory/ShotNotesCard.jsx
+msgid "e.g., 2.5, Medium-Fine"
+msgstr "例如 2.5、中细"
+
+#: src/pages/ShotHistory/ShotNotesCard.jsx
+msgid "e.g., Single Origin, Blend"
+msgstr "例如单品、拼配"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Ease In"
+msgstr "缓入"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Ease In Out"
+msgstr "缓入缓出"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Ease Out"
+msgstr "缓出"
+
+#: src/pages/ProfileList/index.jsx
+#: src/pages/ShotHistory/ShotNotesCard.jsx
+msgid "Edit"
+msgstr "编辑"
+
+#: src/pages/ProfileEdit/index.jsx
+msgid "Edit {label}"
+msgstr "编辑 {label}"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Edit {label} profile"
+msgstr "编辑 {label} 曲线"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Edit date range filter"
+msgstr "编辑日期范围筛选"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Edit profile"
+msgstr "编辑曲线"
+
+#: src/pages/Statistics/utils/statisticsSearchDsl.js
+msgid "Empty date expression."
+msgstr "日期表达式为空。"
+
+#: src/pages/Statistics/utils/statisticsSearchDsl.js
+msgid "Empty value."
+msgstr "值为空。"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Enable Auto Wakeup"
+msgstr "启用自动唤醒"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Enable Boiler Refill"
+msgstr "启用锅炉补水"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgid "Enable compare mode"
+msgstr "开启对比模式"
+
+#: src/pages/Settings/tabs/HeaterCoordinationSection.jsx
+msgid "Enable heater coordination"
+msgstr "启用加热协调"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Enable Home Assistant"
+msgstr "启用 Home Assistant"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Enable HomeKit"
+msgstr "启用 HomeKit"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Enable Mahlkönig E64 WS Grind-by-Sync"
+msgstr "启用 Mahlkönig E64 WS Grind-by-Sync"
+
+#: src/app/AppSettings.jsx
+msgid "Enable notifications"
+msgstr "启用通知"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Enable Smart Grind"
+msgstr "启用智能研磨"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Enable standby display"
+msgstr "启用待机显示"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Enables compact mode for this panel"
+msgstr "为此面板启用紧凑模式"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "End date"
+msgstr "结束日期"
+
+#: src/pages/Statistics/components/statisticsView/StatisticsView.jsx
+msgctxt "keyboard key"
+msgid "Enter"
+msgstr "Enter"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Enter 2 values (flow at 1 bar, flow at 9 bar)"
+msgstr "输入 2 个值（1 bar 时的流量，9 bar 时的流量）"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Enter a name for this phase"
+msgstr "为此阶段输入名称"
+
+#: src/pages/ProfileEdit/ProfileMainInformation.jsx
+msgid "Enter a name for this profile"
+msgstr "为此曲线输入名称"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Enter the bar rating of the pressure sensor being used"
+msgstr "输入所用压力传感器的额定 bar 值"
+
+#: src/app/MachineSetup.jsx
+msgid "Enter the hostname or IP address of your machine."
+msgstr "输入咖啡机的主机名或 IP 地址。"
+
+#: src/components/VisualizerUploadModal.jsx
+msgid "Enter your password"
+msgstr "输入密码"
+
+#: src/components/VisualizerUploadModal.jsx
+msgid "Enter your username"
+msgstr "输入用户名"
+
+#: src/app/machines.js
+msgctxt "connection failure"
+msgid "error"
+msgstr "错误"
+
+#: src/app/notifications.js
+msgid "Error"
+msgstr "错误"
+
+#: src/utils/warnings.js
+msgctxt "warning level"
+msgid "Error"
+msgstr "错误"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Error Color"
+msgstr "错误颜色"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Error loading devices. Please try again."
+msgstr "加载设备出错，请重试。"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Error: {message}"
+msgstr "错误：{message}"
+
+#: src/app/appSettings.js
+msgid "Errors"
+msgstr "错误"
+
+#: src/components/PumpFlowCalibration/ResultsPanel.jsx
+msgid "estimated flow"
+msgstr "估算流量"
+
+#: src/utils/metricDefinitions.js
+msgid "Estimated Output"
+msgstr "估算出液量"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Even fill"
+msgstr "均匀填充"
+
+#: src/pages/Settings/tabs/CleaningSection.jsx
+msgid "Every"
+msgstr "每"
+
+#: src/pages/Statistics/components/StatisticsSearchHelp.jsx
+msgid "Examples"
+msgstr "示例"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgid "Excessive delay while writing samples. Possible causes include a slow SD card or high OS/system load."
+msgstr "写入样本时延迟过大。可能原因包括 SD 卡速度慢或系统负载过高。"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Exit on: {value}"
+msgstr "退出条件：{value}"
+
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+msgid "Exit Reasons"
+msgstr "退出原因"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
+msgid "Expand column settings"
+msgstr "展开列设置"
+
+#: src/components/Navigation.jsx
+msgid "Expand navigation"
+msgstr "展开导航"
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Expand shot details"
+msgstr "展开萃取详情"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Expand statistics toolbar"
+msgstr "展开统计工具栏"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+msgid "Explain WebM export"
+msgstr "WebM 导出说明"
+
+#: src/pages/ProfileList/index.jsx
+#: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Export"
+msgstr "导出"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Export {label} profile"
+msgstr "导出 {label} 曲线"
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Export All"
+msgstr "全部导出"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Export all profiles"
+msgstr "导出所有曲线"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+msgid "Export as WebM"
+msgstr "导出为 WebM"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+msgid "Export Chart"
+msgstr "导出图表"
+
+#: src/pages/ShotAnalyzer/components/library/StatusBar.jsx
+msgid "Export current profile"
+msgstr "导出当前曲线"
+
+#: src/pages/ShotAnalyzer/components/library/StatusBar.jsx
+msgid "Export current shot"
+msgstr "导出当前萃取"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryPanel.jsx
+msgid "Export failed: {message}"
+msgstr "导出失败：{message}"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+msgid "Export File"
+msgstr "导出文件"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Export profile"
+msgstr "导出曲线"
+
+#: src/pages/Settings/index.jsx
+msgid "Export settings"
+msgstr "导出设置"
+
+#: src/pages/Settings/index.jsx
+msgid "Export Settings"
+msgstr "导出设置"
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Export shot data"
+msgstr "导出萃取数据"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+msgid "Extended Record"
+msgstr "含扩展记录"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "External LED ({extLedPct}%)"
+msgstr "外部 LED（{extLedPct}%）"
+
+#: src/pages/ProfileList/index.jsx
+msgctxt "profile tab"
+msgid "Extraction"
+msgstr "萃取"
+
+#: src/pages/Settings/PluginCard.jsx
+msgctxt "Friday, one letter"
+msgid "F"
+msgstr "五"
+
+#: src/pages/Statistics/components/ActivityHeatmap.jsx
+msgctxt "weekday initial: Friday"
+msgid "F"
+msgstr "五"
+
+#: src/components/PumpFlowCalibration/ResultsPanel.jsx
+msgid "factor"
+msgstr "系数"
+
+#: src/pages/ShotAnalyzer/services/LibraryService.js
+msgid "Failed to load shot {idStr}: HTTP {status}"
+msgstr "加载萃取 {idStr} 失败：HTTP {status}"
+
+#: src/pages/Statistics/components/statisticsView/hooks.js
+msgid "Failed to load shots/profiles for filtering."
+msgstr "加载用于筛选的萃取/曲线失败。"
+
+#: src/pages/Statistics/components/statisticsView/hooks.js
+msgid "Failed to load statistics. Please try again."
+msgstr "加载统计数据失败，请重试。"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Favorite"
+msgstr "收藏"
+
+#: src/pages/Statistics/components/StatisticsSearchHelp.jsx
+msgid "Fields"
+msgstr "字段"
+
+#: src/pages/ShotAnalyzer/components/shotChart/single/useShotChartReplayExport.js
+msgid "File export failed."
+msgstr "文件导出失败。"
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Filter library source"
+msgstr "筛选库来源"
+
+#: src/pages/Home/utils.js
+msgctxt "process action"
+msgid "Finish"
+msgstr "完成"
+
+#: src/pages/Home/cards/ProfileCard.jsx
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Finished"
+msgstr "已完成"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Finished Color"
+msgstr "完成颜色"
+
+#: src/app/FirmwareWarning.jsx
+msgid "Firmware {version} – not all features may be available."
+msgstr "固件 {version} – 部分功能可能不可用。"
+
+#: src/utils/panelDefinitions.js
+msgid "Flexible Space"
+msgstr "弹性空间"
+
+#: src/components/ExtendedProfileChart.jsx
+#: src/pages/Home/cards/ProfileCard.jsx
+#: src/pages/Home/cards/RecentShotsCard.jsx
+#: src/utils/metricDefinitions.js
+msgid "Flow"
+msgstr "流量"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgctxt "pump mode"
+msgid "Flow"
+msgstr "流量"
+
+#: src/components/ExtendedProfileChart.jsx
+msgid "Flow (ml/s)"
+msgstr "流量 (ml/s)"
+
+#: src/pages/ShotAnalyzer/components/shotChart/single/SingleShotMetricPreview.jsx
+msgid "Flow & Volume"
+msgstr "流量与水量"
+
+#: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
+msgid "Flow above"
+msgstr "流量高于"
+
+#: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
+msgid "Flow below"
+msgstr "流量低于"
+
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Flow Limit"
+msgstr "流量限制"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Flow rate in grams per second"
+msgstr "流量（克/秒）"
+
+#: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
+msgid "Flow target"
+msgstr "流量目标"
+
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Flow Target"
+msgstr "流量目标"
+
+#: src/pages/Home/FlushButton.jsx
+msgctxt "action"
+msgid "Flush"
+msgstr "冲洗"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgctxt "button behavior"
+msgid "Flush"
+msgstr "冲洗"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgctxt "settings section"
+msgid "Flush"
+msgstr "冲洗"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Flush Duration"
+msgstr "冲洗时长"
+
+#: src/utils/warnings.js
+msgid "Flush recommended"
+msgstr "建议冲洗"
+
+#: src/pages/Home/FlushButton.jsx
+msgid "Flush water"
+msgstr "冲洗水"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Forget"
+msgstr "忘记"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Forgetting..."
+msgstr "正在忘记..."
+
+#: src/app/MachineSetup.jsx
+msgid "Found on your network"
+msgstr "在你的网络中发现"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Frag:"
+msgstr "碎片："
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Free Memory (Heap)"
+msgstr "可用内存（堆）"
+
+#: src/pages/Settings/PluginCard.jsx
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
+msgid "Friday"
+msgstr "星期五"
+
+#: src/pages/Statistics/components/toolbar/helpers.js
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgctxt "date range start"
+msgid "From"
+msgstr "从"
+
+#: src/pages/DashboardSettings/index.jsx
+msgctxt "panel view"
+msgid "Full"
+msgstr "完整"
+
+#: src/pages/ShotAnalyzer/components/EmptyState.jsx
+msgid "GaggiMate (GM)"
+msgstr "GaggiMate (GM)"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "GaggiMate didn't accept the request. Check the connection and try again."
+msgstr "GaggiMate 未接受该请求。请检查连接后重试。"
+
+#: src/app/shareFiles.js
+msgid "GaggiMate export"
+msgstr "GaggiMate 导出"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "GaggiMate is not affiliated with, endorsed by or supported by Mahlkönig or its parent company, the Hemro Group. Mahlkönig, E64 WS, Grind-by-Sync and Xenia are trademarks of their respective owners."
+msgstr "GaggiMate 与 Mahlkönig 或其母公司 Hemro Group 无关联，也未获得其认可或支持。Mahlkönig、E64 WS、Grind-by-Sync 和 Xenia 是其各自所有者的商标。"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "GaggiMate reconnects automatically once the scale is switched on and in range."
+msgstr "秤开机并处于范围内后，GaggiMate 会自动重新连接。"
+
+#: src/app/MachineSetup.jsx
+msgid "gaggimate.local or 192.168.1.20"
+msgstr "gaggimate.local 或 192.168.1.20"
+
+#: src/pages/Settings/index.jsx
+msgid "General"
+msgstr "常规"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "General Settings"
+msgstr "常规设置"
+
+#: src/pages/ProfileEdit/ProfileImageUpload.jsx
+msgid "GIF images are not supported. Please use PNG, JPEG, WebP or BMP."
+msgstr "不支持 GIF 图片。请使用 PNG、JPEG、WebP 或 BMP。"
+
+#: src/pages/Statistics/components/statisticsView/StatisticsDetailSection.jsx
+msgid "Global metric averages"
+msgstr "全局指标平均值"
+
+#: src/pages/_404.jsx
+msgid "Go Home"
+msgstr "返回首页"
+
+#: src/pages/ProfileEdit/ProfileMainInformation.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "grams"
+msgstr "克"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "grams per second"
+msgstr "克/秒"
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
+msgid "Grind"
+msgstr "研磨"
+
+#: src/app/machineStatus.js
+#: src/pages/Home/utils.js
+msgctxt "machine mode"
+msgid "Grind"
+msgstr "研磨"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgctxt "predictive scale delay"
+msgid "Grind"
+msgstr "研磨"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgctxt "relay function"
+msgid "Grind"
+msgstr "研磨"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Grind once with GbS to see which recipe number your grinder reports."
+msgstr "使用 GbS 研磨一次，即可查看磨豆机报告的配方编号。"
+
+#: src/pages/ShotHistory/ShotNotesCard.jsx
+msgid "Grind Setting"
+msgstr "研磨度"
+
+#: src/pages/Home/cards/ActionCard.jsx
+msgid "Grind target"
+msgstr "研磨目标"
+
+#: src/pages/Home/cards/ProfileCard.jsx
+#: src/pages/Home/utils.js
+msgid "Grinding"
+msgstr "研磨中"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Hardware"
+msgstr "硬件"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Hardware Scale"
+msgstr "硬件秤"
+
+#: src/pages/Settings/tabs/HeaterCoordinationSection.jsx
+msgid "Heater Coordination"
+msgstr "加热协调"
+
+#: src/pages/Settings/tabs/HeaterCoordinationSection.jsx
+msgid "Heater handover pause (ms)"
+msgstr "加热器切换暂停 (ms)"
+
+#: src/utils/metricDefinitions.js
+msgid "Heater Power"
+msgstr "加热功率"
+
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "Heater Wattage (W)"
+msgstr "加热器功率 (W)"
+
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "Heater wattage in Watts (e.g. Gaggia Classic: 1360 W, Rancilio Silvia 120V: 950W, Rancilio Silvia 230V: 1100W)."
+msgstr "加热器功率，单位为瓦（例如 Gaggia Classic：1360 W，Rancilio Silvia 120V：950W，Rancilio Silvia 230V：1100W）。"
+
+#: src/components/SettingsFormField.jsx
+msgid "Hidden / Available"
+msgstr "隐藏 / 可用"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/compareControls.jsx
+msgid "Hide compare annotations"
+msgstr "隐藏对比注释"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareChartLayout.jsx
+msgid "Hide detail charts"
+msgstr "隐藏详细图表"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Hide details"
+msgstr "隐藏详情"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Hide details for {label}"
+msgstr "隐藏 {label} 的详情"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/single/SingleShotChart.jsx
+msgid "Hide legend"
+msgstr "隐藏图例"
+
+#: src/components/VisualizerUploadModal.jsx
+msgid "Hide password"
+msgstr "隐藏密码"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTableCells.jsx
+msgid "High Scale Delay"
+msgstr "秤延迟过高"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgid "HIGH SCALE DELAY"
+msgstr "秤延迟过高"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Highest ID First"
+msgstr "ID 从大到小"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Highest Rated"
+msgstr "评分最高"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Highest Volume"
+msgstr "出液量最多"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgctxt "flush duration"
+msgid "Hold"
+msgstr "按住"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Hold runs the flush for as long as the button is held. The valve stays open for one more second after the pump stops."
+msgstr "按住模式下，按钮按住多久就冲洗多久。泵停止后阀门会再保持打开一秒。"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Home Assistant Discovery Topic"
+msgstr "Home Assistant 发现主题"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Home Assistant over MQTT (Deprecated)"
+msgstr "通过 MQTT 连接 Home Assistant（已弃用）"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "HomeKit Setup Code"
+msgstr "HomeKit 设置代码"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Hostname"
+msgstr "主机名"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "How many ml/s to pump into the boiler during steaming"
+msgstr "打蒸汽时向锅炉泵入的流量 (ml/s)"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "HX711 Sample Rate"
+msgstr "HX711 采样率"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "ID: {shotId}"
+msgstr "ID：{shotId}"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Idle Color"
+msgstr "空闲颜色"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Idle Filter Alpha"
+msgstr "空闲滤波 Alpha"
+
+#: src/utils/warnings.js
+msgctxt "warning level"
+msgid "Ignore"
+msgstr "忽略"
+
+#: src/pages/Settings/index.jsx
+msgid "Ignored unknown entries: {ignoredEntries}"
+msgstr "已忽略未知条目：{ignoredEntries}"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Ignored while a Flexible Space item is present in the panel list below."
+msgstr "下方面板列表中存在弹性空间项时此设置无效。"
+
+#: src/pages/ProfileEdit/ProfileImageUpload.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+msgid "Image"
+msgstr "图片"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/MobileStatusActionsMenu.jsx
+msgid "Import"
+msgstr "导入"
+
+#: src/pages/ShotAnalyzer/components/EmptyState.jsx
+msgid "Import a shot file or select one from your library to start analyzing."
+msgstr "导入萃取文件或从库中选择一个开始分析。"
+
+#: src/pages/ShotAnalyzer/components/library/libraryImport.js
+msgid "Import failed. Please check the file format."
+msgstr "导入失败。请检查文件格式。"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Import profiles"
+msgstr "导入曲线"
+
+#: src/pages/Settings/index.jsx
+msgid "Import settings"
+msgstr "导入设置"
+
+#: src/pages/Settings/index.jsx
+msgid "Import Settings"
+msgstr "导入设置"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgid "Import shot or profile"
+msgstr "导入萃取或曲线"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/MobileStatusActionsMenu.jsx
+msgid "Importing"
+msgstr "导入中"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgid "Importing shot or profile"
+msgstr "正在导入萃取或曲线"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+msgid "Include legend"
+msgstr "包含图例"
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "INCOMPLETE"
+msgstr "未完成"
+
+#: src/pages/Home/utils.js
+msgid "Infusion"
+msgstr "浸润"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgctxt "ramp style"
+msgid "Instant"
+msgstr "瞬时"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Integral Gain"
+msgstr "积分增益"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Internal error: ApiService unavailable."
+msgstr "内部错误：ApiService 不可用。"
+
+#: src/pages/Statistics/utils/statisticsSearchDsl.js
+msgid "Invalid calendar date."
+msgstr "无效的日历日期。"
+
+#: src/pages/Statistics/utils/statisticsSearchDsl.js
+msgid "Invalid date expression in \"{clauseRaw}\": {parseError}"
+msgstr "“{clauseRaw}”中的日期表达式无效：{parseError}"
+
+#: src/pages/Statistics/utils/statisticsSearchDsl.js
+msgid "Invalid date or time value."
+msgstr "无效的日期或时间值。"
+
+#: src/pages/Statistics/components/statisticsView/helpers.js
+msgid "Invalid date: {value}"
+msgstr "无效日期：{value}"
+
+#: src/pages/Statistics/components/statisticsView/helpers.js
+msgid "Invalid date/time: {value}"
+msgstr "无效日期/时间：{value}"
+
+#: src/utils/pumpFlowCalibration.js
+msgid "Invalid flow data for tp={targetPressure} bar (estimatedFlow={estimatedFlow}, actualFlow={actualFlow}). Did the scale see any weight increase during the shot?"
+msgstr "tp={targetPressure} bar 的流量数据无效（estimatedFlow={estimatedFlow}，actualFlow={actualFlow}）。萃取过程中秤是否检测到重量增加？"
+
+#: src/pages/Statistics/utils/statisticsSearchDsl.js
+msgid "Invalid pinned expression in \"{clauseRaw}\": {pinnedError}"
+msgstr "“{clauseRaw}”中的固定表达式无效：{pinnedError}"
+
+#: src/pages/Statistics/utils/statisticsSearchDsl.js
+msgid "Invalid relative day value."
+msgstr "无效的相对天数值。"
+
+#: src/services/VisualizerService.js
+msgid "Invalid shot data: missing required samples array"
+msgstr "无效的萃取数据：缺少必需的 samples 数组"
+
+#: src/services/VisualizerService.js
+msgid "Invalid shot data: samples array is empty"
+msgstr "无效的萃取数据：samples 数组为空"
+
+#: src/pages/Statistics/utils/statisticsSearchDsl.js
+msgid "Invalid value for {field}: {valueError}"
+msgstr "{field} 的值无效：{valueError}"
+
+#: src/app/AppSettings.jsx
+msgid "iOS only lets GaggiMate stay connected to your machines while the app is open. Notifications stop a few seconds after you switch to another app or lock your phone."
+msgstr "iOS 仅允许 GaggiMate 在应用打开时与咖啡机保持连接。切换到其他应用或锁屏几秒后，通知将停止。"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Keep selected profile"
+msgstr "保持所选曲线"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/ShotChartControls.jsx
+msgid "Keep this window focused while the replay is being recorded."
+msgstr "录制回放时请保持此窗口处于焦点。"
+
+#: src/app/MachineSetup.jsx
+msgid "Kitchen"
+msgstr "厨房"
+
+#: src/components/LanguageSelect.jsx
+msgid "Language"
+msgstr "语言"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Larger alpha responds faster with less smoothing; smaller alpha is smoother but slower."
+msgstr "alpha 越大响应越快、平滑越少；alpha 越小越平滑但响应越慢。"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Last Row Fill"
+msgstr "末行填充"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Last used profile"
+msgstr "上次使用的曲线"
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
+msgid "Last week"
+msgstr "上周"
+
+#: src/pages/Settings/tabs/CleaningSection.jsx
+msgid "Last: {lastTime} · {shotsSince, plural, one {# shot since} other {# shots since}}"
+msgstr "上次：{lastTime} · {shotsSince, plural, other {此后 # 次萃取}}"
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Length (Long)"
+msgstr "长度（长）"
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Length (Short)"
+msgstr "长度（短）"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Lets an E64 WS start shots with its knob and dial in its grind from the shot time and weight. A grind selects the profile mapped to its recipe, and the grinder's target weight overrides that profile's weight target. Save and restart to apply."
+msgstr "允许 E64 WS 通过旋钮启动萃取，并根据萃取时间和重量调整研磨度。研磨时会选择与其配方对应的曲线，磨豆机的目标重量将覆盖该曲线的重量目标。保存并重启后生效。"
+
+#: src/app/AppSettings.jsx
+#: src/pages/Settings/tabs/GeneralTab.jsx
+#: src/utils/themeManager.js
+msgctxt "theme"
+msgid "Light"
+msgstr "浅色"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Light Theme"
+msgstr "浅色主题"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgctxt "ramp style"
+msgid "Linear"
+msgstr "线性"
+
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+#: src/pages/Statistics/components/MetricsTable.jsx
+msgid "Liquid Resistance"
+msgstr "液体阻力"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+#: src/pages/ShotAnalyzer/utils/constants.js
+msgid "Liquid Resistance (bar·s/mL)"
+msgstr "液体阻力 (bar·s/mL)"
+
+#: src/app/machines.js
+msgid "live connection failed ({reason})"
+msgstr "实时连接失败（{reason}）"
+
+#: src/components/OverviewChart.jsx
+msgid "Live Metrics"
+msgstr "实时指标"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgid "Load a profile to open statistics"
+msgstr "加载曲线以打开统计"
+
+#: src/pages/ShotAnalyzer/components/library/libraryImport.js
+msgid "Load a secondary shot before importing a secondary profile."
+msgstr "导入次要曲线前，请先加载次要萃取。"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Load Cell 1 Scale Factor"
+msgstr "称重传感器 1 比例系数"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Load Cell 2 Scale Factor"
+msgstr "称重传感器 2 比例系数"
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Load first"
+msgstr "请先加载"
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Load shot data first by expanding the shot"
+msgstr "请先展开萃取以加载萃取数据"
+
+#: src/pages/Settings/index.jsx
+msgid "Loaded {importCount, plural, one {# setting} other {# settings}} from {importName}. All other settings are kept. Save to apply."
+msgstr "已从 {importName} 加载 {importCount, plural, other {# 项设置}}。其他设置保持不变。保存后生效。"
+
+#: src/components/Spinner.jsx
+msgid "Loading"
+msgstr "加载中"
+
+#: src/pages/Statistics/components/toolbar/helpers.js
+msgid "loading candidates"
+msgstr "正在加载候选项"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Loading profiles"
+msgstr "正在加载曲线"
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Loading shot data..."
+msgstr "正在加载萃取数据..."
+
+#: src/pages/ShotAnalyzer/components/EmptyState.jsx
+msgid "Local Browser Storage (WEB)"
+msgstr "本地浏览器存储 (WEB)"
+
+#: src/pages/Statistics/components/StatisticsSearchHelp.jsx
+msgid "Local browser time is used."
+msgstr "使用本地浏览器时间。"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Longest Duration"
+msgstr "时长最长"
+
+#: src/pages/Statistics/components/ActivityHeatmap.jsx
+msgid "Longest streak:"
+msgstr "最长连续天数："
+
+#: src/app/MachineSetup.jsx
+msgid "Looking for machines… If yours doesn't show up, add it by its address."
+msgstr "正在查找咖啡机… 如果你的咖啡机没有出现，请通过地址添加。"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Lowest ID first"
+msgstr "ID 从小到大"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Lowest Rated"
+msgstr "评分最低"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Lowest Volume"
+msgstr "出液量最少"
+
+#: src/pages/Settings/PluginCard.jsx
+msgctxt "Monday, one letter"
+msgid "M"
+msgstr "一"
+
+#: src/pages/Statistics/components/ActivityHeatmap.jsx
+msgctxt "weekday initial: Monday"
+msgid "M"
+msgstr "一"
+
+#: src/pages/Settings/index.jsx
+msgctxt "settings tab"
+msgid "Machine"
+msgstr "咖啡机"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Machine address for the grinder"
+msgstr "供磨豆机使用的咖啡机地址"
+
+#: src/app/notifications.js
+msgid "Machine error"
+msgstr "咖啡机错误"
+
+#: src/app/notifications.js
+msgid "Machine events"
+msgstr "咖啡机事件"
+
+#: src/pages/Home/cards/ActionCard.jsx
+msgid "Machine is ready, wake up to use"
+msgstr "咖啡机已就绪，唤醒即可使用"
+
+#: src/app/appSettings.js
+msgid "Machine preheated"
+msgstr "咖啡机已预热"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Machine Settings"
+msgstr "咖啡机设置"
+
+#: src/app/AppSettings.jsx
+#: src/app/MachineSwitcher.jsx
+msgid "Machines"
+msgstr "咖啡机"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Main Brightness (1-16)"
+msgstr "主亮度 (1-16)"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/compareControls.jsx
+msgid "Main Shot"
+msgstr "主萃取"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Maintain Flow"
+msgstr "保持流量"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Maintain Pressure"
+msgstr "保持压力"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Maintenance & Support"
+msgstr "维护与支持"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Make sure to backup your profiles from the profiles screen before updating the display."
+msgstr "更新显示屏前，请务必在曲线页面备份你的曲线。"
+
+#: src/app/AppSettings.jsx
+msgid "Manage machines"
+msgstr "管理咖啡机"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Manual date filter is active."
+msgstr "手动日期筛选已启用。"
+
+#: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
+msgid "Manually stopped"
+msgstr "手动停止"
+
+#: src/pages/ShotAnalyzer/utils/formatting.js
+msgid "Manually Stopped"
+msgstr "手动停止"
+
+#: src/pages/Settings/tabs/CleaningSection.jsx
+msgid "Mark complete"
+msgstr "标记为已完成"
+
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+msgid "Max"
+msgstr "最大"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Max Pressure"
+msgstr "最大压力"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Max Recent Shots"
+msgstr "最近萃取数量上限"
+
+#: src/pages/ShotAnalyzer/components/library/libraryDisplay.js
+msgid "Maximum {MAX_PINNED_PROFILES} pinned profiles"
+msgstr "最多固定 {MAX_PINNED_PROFILES} 条曲线"
+
+#: src/pages/ShotAnalyzer/components/library/libraryDisplay.js
+msgid "Maximum {MAX_PINNED_SHOTS_PER_PROFILE} pinned shots per profile"
+msgstr "每条曲线最多固定 {MAX_PINNED_SHOTS_PER_PROFILE} 次萃取"
+
+#: src/pages/ShotAnalyzer/components/library/libraryDisplay.js
+msgid "Maximum {MAX_PINNED_SHOTS_PER_PROFILE} pinned shots without a profile"
+msgstr "无曲线时最多固定 {MAX_PINNED_SHOTS_PER_PROFILE} 次萃取"
+
+#: src/pages/Statistics/components/statisticsView/helpers.js
+msgid "Maximum {maxPinned} pinned profiles"
+msgstr "最多固定 {maxPinned} 条曲线"
+
+#: src/pages/Statistics/components/statisticsView/helpers.js
+msgid "Maximum {maxPinned} pinned shots per profile"
+msgstr "每条曲线最多固定 {maxPinned} 次萃取"
+
+#: src/pages/Statistics/components/statisticsView/helpers.js
+msgid "Maximum {maxPinned} pinned shots without a profile"
+msgstr "无曲线时最多固定 {maxPinned} 次萃取"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Maximum Flow"
+msgstr "最大流量"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Maximum Flow (0 = Ignore)"
+msgstr "最大流量（0 = 忽略）"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Maximum Pressure"
+msgstr "最大压力"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Maximum Pressure (0 = Ignore)"
+msgstr "最大压力（0 = 忽略）"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Maximum Pump Power (0 - 1)"
+msgstr "最大泵功率 (0 - 1)"
+
+#: src/pages/ShotAnalyzer/services/ReplayVideoExportService.js
+msgid "MediaRecorder is not supported in this browser."
+msgstr "此浏览器不支持 MediaRecorder。"
+
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+msgid "Metric"
+msgstr "指标"
+
+#: src/pages/ShotAnalyzer/components/shotChart/MobileMetricPager.jsx
+msgid "Metric pages"
+msgstr "指标页面"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Metric Selection"
+msgstr "指标选择"
+
+#: src/components/OverviewChart.jsx
+msgid "Metrics - Recent Brew"
+msgstr "指标 - 最近冲煮"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Metrics Columns"
+msgstr "指标列数"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "milliliter per second"
+msgstr "毫升/秒"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "millimeter"
+msgstr "毫米"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "milliseconds"
+msgstr "毫秒"
+
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+msgid "Min"
+msgstr "最小"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+#: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
+msgctxt "column type"
+msgid "Min/Max"
+msgstr "最小/最大"
+
+#: src/pages/Settings/PluginCard.jsx
+msgctxt "smart grind mode"
+msgid "Mode"
+msgstr "模式"
+
+#: src/utils/panelDefinitions.js
+msgid "Mode Selector"
+msgstr "模式选择器"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Momentary Buttons"
+msgstr "自复位按钮"
+
+#: src/pages/Settings/PluginCard.jsx
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
+msgid "Monday"
+msgstr "星期一"
+
+#: src/pages/Statistics/components/TrendChart.jsx
+msgctxt "time bucket"
+msgid "Month"
+msgstr "月"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/MobileStatusActionsMenu.jsx
+#: src/pages/ShotAnalyzer/components/library/LibraryActionsMenu.jsx
+msgid "More actions"
+msgstr "更多操作"
+
+#: src/pages/Settings/index.jsx
+msgid "More options"
+msgstr "更多选项"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Move {label} to bottom"
+msgstr "将 {label} 移到底部"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Move {label} to top"
+msgstr "将 {label} 移到顶部"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Move to bottom"
+msgstr "移到底部"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Move to top"
+msgstr "移到顶部"
+
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "Moving-window length (samples) used for slope estimation. Larger values smooth MAX31855 quantisation but lag the inflection. 6 is the sweet spot."
+msgstr "用于斜率估算的滑动窗口长度（样本数）。值越大越能平滑 MAX31855 的量化误差，但拐点检测会滞后。6 为最佳值。"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "MQTT IP"
+msgstr "MQTT IP"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "MQTT Password"
+msgstr "MQTT 密码"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "MQTT Port"
+msgstr "MQTT 端口"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "MQTT User"
+msgstr "MQTT 用户名"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgid "Multi-Compare"
+msgstr "多重对比"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Multiple Cards"
+msgstr "多卡片"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Must match the physical RATE-jumper configuration on the HX711 board. This setting does not switch the RATE pin."
+msgstr "必须与 HX711 板上的 RATE 跳线物理配置一致。此设置不会切换 RATE 引脚。"
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Name"
+msgstr "名称"
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Name (A-Z)"
+msgstr "名称 (A-Z)"
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Name (Z-A)"
+msgstr "名称 (Z-A)"
+
+#: src/app/MachineSetup.jsx
+msgid "Name <0>(optional)</0>"
+msgstr "名称 <0>（可选）</0>"
+
+#: src/app/MachineSetup.jsx
+msgid "Name for {host}"
+msgstr "{host} 的名称"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
+msgid "Name for new Preset:"
+msgstr "新预设名称："
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Name..."
+msgstr "名称..."
+
+#: src/services/VisualizerService.js
+msgid "Network error: Unable to connect to visualizer.coffee"
+msgstr "网络错误：无法连接到 visualizer.coffee"
+
+#: src/pages/Settings/tabs/CleaningSection.jsx
+msgid "Never"
+msgstr "从不"
+
+#: src/components/Navigation.jsx
+msgid "NEW"
+msgstr "NEW"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "New shot did not appear in history — was it cancelled?"
+msgstr "新的萃取未出现在历史记录中 — 是否已取消？"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Newest First"
+msgstr "最新优先"
+
+#: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+#: src/pages/ShotHistory/index.jsx
+msgid "Next"
+msgstr "下一个"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgid "Next shot"
+msgstr "下一次萃取"
+
+#: src/app/AppSettings.jsx
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgctxt "update channel"
+msgid "Nightly"
+msgstr "每夜版"
+
+#: src/app/AppSettings.jsx
+msgid "Nightly gets new features first, built from the same code as the nightly firmware."
+msgstr "每夜版会最先获得新功能，与每夜版固件使用相同的代码构建。"
+
+#: src/app/machines.js
+msgid "no answer (timed out)"
+msgstr "无应答（超时）"
+
+#: src/pages/Statistics/components/statisticsView/helpers.js
+#: src/pages/Statistics/components/toolbar/helpers.js
+msgid "No date"
+msgstr "无日期"
+
+#: src/pages/Statistics/components/toolbar/helpers.js
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "No dates"
+msgstr "无日期"
+
+#: src/pages/Home/cards/FavoriteProfilesCard.jsx
+msgid "No favorites — mark profiles as ★ in the profile list"
+msgstr "暂无收藏 — 在曲线列表中将曲线标记为 ★"
+
+#: src/pages/ProfileEdit/ProfileImageUpload.jsx
+msgid "No image"
+msgstr "无图片"
+
+#: src/pages/Statistics/components/StatisticsMultiSelectDropdown.jsx
+msgid "No items found."
+msgstr "未找到项目。"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "No more types available"
+msgstr "没有更多可用类型"
+
+#: src/pages/ShotHistory/ShotNotesCard.jsx
+msgid "No notes added"
+msgstr "未添加备注"
+
+#: src/app/MachineSetup.jsx
+msgid "No other machines found."
+msgstr "未找到其他咖啡机。"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "No other profile found to switch back to."
+msgstr "未找到可切换回去的其他曲线。"
+
+#: src/pages/ProfileList/index.jsx
+msgid "No phases"
+msgstr "无阶段"
+
+#: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+msgid "No phases yet. Add a phase to configure brewing."
+msgstr "暂无阶段。添加一个阶段以配置冲煮。"
+
+#: src/pages/Statistics/components/StatisticsMultiSelectDropdown.jsx
+msgid "No pinned items found."
+msgstr "未找到固定的项目。"
+
+#: src/pages/ShotAnalyzer/utils/formatting.js
+msgid "No preceding phase"
+msgstr "无前一阶段"
+
+#: src/pages/ShotAnalyzer/components/library/libraryDisplay.js
+msgid "No Profile Loaded"
+msgstr "未加载曲线"
+
+#: src/pages/ShotAnalyzer/services/analyzer/shotAnalysis.js
+msgid "No sample data available for analysis."
+msgstr "没有可供分析的样本数据。"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "No scales found"
+msgstr "未找到秤"
+
+#: src/pages/ShotAnalyzer/components/EmptyState.jsx
+#: src/pages/ShotAnalyzer/components/library/libraryDisplay.js
+#: src/pages/ShotAnalyzer/components/useShotNotesState.js
+msgid "No Shot Loaded"
+msgstr "未加载萃取"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "No shots available"
+msgstr "没有可用的萃取记录"
+
+#: src/pages/Statistics/components/statisticsView/StatisticsView.jsx
+msgid "No shots found for the selected filters."
+msgstr "所选筛选条件下没有萃取记录。"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "No shots match your search and filter criteria"
+msgstr "没有符合搜索和筛选条件的萃取记录"
+
+#: src/pages/Statistics/components/statisticsView/StatisticsView.jsx
+msgid "No Statistics Built Yet"
+msgstr "尚未生成统计"
+
+#: src/pages/ShotAnalyzer/services/ReplayVideoExportService.js
+msgid "No supported video recorder was found for replay export."
+msgstr "未找到支持回放导出的视频录制器。"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/compareControls.jsx
+msgid "No Targets"
+msgstr "无目标"
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "No timestamp available"
+msgstr "无时间戳"
+
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "No valid gains were produced. Your existing PID settings have been preserved. Try increasing Test Duration or confirm the boiler was cold at start."
+msgstr "未生成有效的增益值。现有 PID 设置已保留。请尝试延长测试时长，或确认开始时锅炉处于冷态。"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgctxt "button behavior"
+msgid "None"
+msgstr "无"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgctxt "relay function"
+msgid "None"
+msgstr "无"
+
+#: src/components/PumpFlowCalibration/Footer.jsx
+msgid "Not connected to the machine"
+msgstr "未连接到咖啡机"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Not connected to Wi-Fi"
+msgstr "未连接 Wi-Fi"
+
+#: src/utils/pumpFlowCalibration.js
+msgid "Not enough samples for tp={targetPressure} bar (Measure phase). Was the valve closed enough to reach {targetPressure} bar?"
+msgstr "tp={targetPressure} bar 的样本不足（Measure 阶段）。阀门是否关得足够紧以达到 {targetPressure} bar？"
+
+#: src/app/MachineSetup.jsx
+msgid "Not found"
+msgstr "未找到"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Not in range. Switch it on to reconnect."
+msgstr "不在范围内。打开它以重新连接。"
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Not rated"
+msgstr "未评分"
+
+#: src/pages/ShotAnalyzer/services/analyzer/shotAnalysis.js
+msgid "Not recorded"
+msgstr "未记录"
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
+#: src/pages/ShotAnalyzer/shotAnalyzer/ActiveAnalysisView.jsx
+#: src/pages/ShotHistory/ShotNotesCard.jsx
+msgid "Notes"
+msgstr "备注"
+
+#: src/app/AppSettings.jsx
+msgid "Notifications"
+msgstr "通知"
+
+#: src/app/AppSettings.jsx
+msgid "Notifications are blocked. Allow them for GaggiMate in your phone's settings."
+msgstr "通知已被阻止。请在手机设置中允许 GaggiMate 发送通知。"
+
+#: src/pages/Home/cards/ProfileCard.jsx
+msgid "Now Brewing"
+msgstr "正在冲煮"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgctxt "pump mode"
+msgid "Off"
+msgstr "关闭"
+
+#: src/app/FirmwareWarning.jsx
+msgid "Old firmware"
+msgstr "旧版固件"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Oldest First"
+msgstr "最早优先"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "On startup (s)"
+msgstr "开机时 (s)"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "On steam deactivate (s)"
+msgstr "关闭蒸汽时 (s)"
+
+#: src/app/MachineSetup.jsx
+msgid "On this network"
+msgstr "在此网络中"
+
+#: src/pages/ShotAnalyzer/components/library/libraryImport.js
+msgid "Only profile files can be imported in the profile field."
+msgstr "曲线栏中只能导入曲线文件。"
+
+#: src/pages/ShotAnalyzer/components/library/libraryImport.js
+msgid "Only shot files can be imported in the shot field."
+msgstr "萃取栏中只能导入萃取文件。"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgctxt "valve state"
+msgid "Open"
+msgstr "打开"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Open actions menu for {label} profile"
+msgstr "打开 {label} 曲线的操作菜单"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+msgid "Open full display"
+msgstr "打开全屏显示"
+
+#: src/pages/Home/cards/RecentShotsCard.jsx
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Open in Analyzer"
+msgstr "在分析器中打开"
+
+#: src/pages/ShotAnalyzer/components/library/StatusBar.jsx
+msgid "Open library"
+msgstr "打开库"
+
+#: src/pages/ShotAnalyzer/components/EmptyState.jsx
+msgid "Open or close the library."
+msgstr "打开或关闭库。"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
+msgid "Open profile actions menu"
+msgstr "打开曲线操作菜单"
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Open profiles actions menu"
+msgstr "打开曲线列表操作菜单"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
+msgid "Open shot actions menu"
+msgstr "打开萃取操作菜单"
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Open shots actions menu"
+msgstr "打开萃取列表操作菜单"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgid "Open statistics"
+msgstr "打开统计"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/MobileStatusActionsMenu.jsx
+msgid "Open status actions menu"
+msgstr "打开状态操作菜单"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Open the Home app on your iOS device, select Add Accessory, and enter the setup code shown above."
+msgstr "在 iOS 设备上打开“家庭”App，选择“添加配件”，然后输入上方显示的设置代码。"
+
+#: src/pages/ShotAnalyzer/components/EmptyState.jsx
+msgid "Opens imported external shots and profiles temporarily without saving them to the browser library."
+msgstr "临时打开导入的外部萃取和曲线，不保存到浏览器库中。"
+
+#: src/pages/ProfileEdit/ProfileMainInformation.jsx
+msgid "Optional description for this profile"
+msgstr "此曲线的可选描述"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgctxt "stop condition separator"
+msgid "OR"
+msgstr "或"
+
+#: src/pages/Settings/tabs/CleaningSection.jsx
+msgid "Or every"
+msgstr "或每"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Pack to top"
+msgstr "靠顶部排列"
+
+#: src/pages/_404.jsx
+msgid "Page not found"
+msgstr "页面未找到"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Panel Selection"
+msgstr "面板选择"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Parsed {sampleCount} samples (v{version})."
+msgstr "已解析 {sampleCount} 个样本 (v{version})。"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "password"
+msgstr "密码"
+
+#: src/components/VisualizerUploadModal.jsx
+msgid "Password"
+msgstr "密码"
+
+#: src/pages/Home/utils.js
+msgctxt "process action"
+msgid "Pause"
+msgstr "暂停"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+msgid "Pause replay"
+msgstr "暂停回放"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMetricCards.jsx
+msgid "Peak Pressure"
+msgstr "峰值压力"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/compareControls.jsx
+msgid "Per Shot"
+msgstr "每次萃取"
+
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+#: src/pages/Statistics/components/statisticsView/StatisticsDetailSection.jsx
+msgid "Per-phase statistics"
+msgstr "各阶段统计"
+
+#: src/pages/Statistics/components/ProfileGroupTable.jsx
+#: src/pages/Statistics/components/statisticsView/StatisticsDetailSection.jsx
+msgid "Per-profile statistics"
+msgstr "各曲线统计"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "percent"
+msgstr "百分比"
+
+#: src/pages/ShotAnalyzer/components/shotChart/single/createShotChartConfigs.js
+msgid "Phase"
+msgstr "阶段"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTableChrome.jsx
+msgctxt "table column"
+msgid "Phase"
+msgstr "阶段"
+
+#: src/pages/ShotAnalyzer/services/analyzer/phaseAnalysis.js
+msgid "Phase {phaseNum}"
+msgstr "阶段 {phaseNum}"
+
+#: src/components/ExtendedProfileChart.jsx
+#: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTable.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/compare/compareModel.js
+#: src/pages/ShotAnalyzer/components/shotChart/tooltip/tooltipModel.js
+#: src/pages/ShotHistory/HistoryChart.jsx
+#: src/pages/Statistics/services/StatisticsService.js
+msgid "Phase {phaseNumber}"
+msgstr "阶段 {phaseNumber}"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Phase {phaseNumber} configuration"
+msgstr "阶段 {phaseNumber} 配置"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/compareModel.js
+#: src/pages/ShotAnalyzer/components/shotChart/tooltip/tooltipModel.js
+msgid "Phase {phaseNumber}: {phaseName}"
+msgstr "阶段 {phaseNumber}：{phaseName}"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Phase Name"
+msgstr "阶段名称"
+
+#: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+msgid "Phase navigation"
+msgstr "阶段导航"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgid "PHASE REVIEW ADVISED"
+msgstr "建议检查阶段"
+
+#: src/pages/ShotAnalyzer/utils/formatting.js
+msgid "Phase skipped"
+msgstr "阶段已跳过"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Phase Type"
+msgstr "阶段类型"
+
+#: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+msgid "Phases"
+msgstr "阶段"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Physical Buttons"
+msgstr "实体按钮"
+
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "PID Autotune"
+msgstr "PID 自动整定"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "PID Values"
+msgstr "PID 参数"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
+msgid "Pin {displayName}"
+msgstr "固定 {displayName}"
+
+#: src/pages/Statistics/components/StatisticsMultiSelectDropdown.jsx
+msgid "Pin {itemName}"
+msgstr "固定 {itemName}"
+
+#: src/pages/Statistics/components/StatisticsMultiSelectDropdown.jsx
+msgid "Pin {singularLabel}"
+msgstr "固定 {singularLabel}"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
+msgid "Pin profile"
+msgstr "固定曲线"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
+msgid "Pin shot"
+msgstr "固定萃取"
+
+#: src/pages/Statistics/utils/statisticsSearchDsl.js
+msgid "pinned: use true or false."
+msgstr "pinned：请使用 true 或 false。"
+
+#: src/components/PumpFlowCalibration/IdleSection.jsx
+msgid "Place a scale with a cup under the steam wand. Close the steam valve just enough so the machine can reach the target pressure during each <0>Build</0> phase."
+msgstr "在蒸汽棒下放置一台秤和一个杯子。将蒸汽阀关到刚好能让咖啡机在每个 <0>Build</0> 阶段达到目标压力。"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Play statistics"
+msgstr "播放统计"
+
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "Please ensure the boiler temperature is below 50°C before starting the autotune process."
+msgstr "开始自动整定前，请确保锅炉温度低于 50°C。"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Please ensure the scale is showing a weight and enter a valid calibration weight."
+msgstr "请确保秤正在显示重量，并输入有效的校准重量。"
+
+#: src/components/VisualizerUploadModal.jsx
+msgid "Please enter both username and password"
+msgstr "请输入用户名和密码"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Please wake up GaggiMate from Standby to use Bluetooth scales."
+msgstr "请将 GaggiMate 从待机中唤醒以使用蓝牙秤。"
+
+#: src/pages/Settings/index.jsx
+#: src/pages/Settings/tabs/PluginsTab.jsx
+msgid "Plugins"
+msgstr "插件"
+
+#: src/pages/ProfileEdit/ProfileImageUpload.jsx
+msgid "PNG, JPEG, WebP or BMP. GIFs are not supported. The image is cropped to a square and scaled to 300×300 pixels for the display."
+msgstr "PNG、JPEG、WebP 或 BMP。不支持 GIF。图片将被裁剪为正方形，并缩放为 300×300 像素用于显示屏。"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgctxt "pump mode"
+msgid "Power"
+msgstr "功率"
+
+#: src/pages/Settings/tabs/HeaterCoordinationSection.jsx
+msgid "Power the heaters one at a time instead of in parallel, brew boiler first. Only needed when the circuit cannot carry both heaters at once (e.g. 120 V); 230 V supplies can run both."
+msgstr "让加热器依次通电而非同时通电，先加热冲煮锅炉。仅在电路无法同时承载两个加热器时需要（例如 120 V）；230 V 电源可同时运行两者。"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+#: src/pages/ProfileList/index.jsx
+msgid "Pre-Infusion"
+msgstr "预浸泡"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Predictive Scale Delay"
+msgstr "预测秤延迟"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Prefer Bluetooth Scale"
+msgstr "优先使用蓝牙秤"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Prefer Hardware Scale (Built-in)"
+msgstr "优先使用硬件秤（内置）"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Preferred Scale Source"
+msgstr "首选秤来源"
+
+#: src/pages/Home/cards/ActionCard.jsx
+msgid "Preheating..."
+msgstr "预热中..."
+
+#: src/pages/Home/utils.js
+msgid "Preinfusion"
+msgstr "预浸泡"
+
+#: src/pages/ShotAnalyzer/components/shotChart/constants.js
+msgid "Preparing MP4 export..."
+msgstr "正在准备 MP4 导出..."
+
+#: src/pages/ShotAnalyzer/components/shotChart/constants.js
+msgid "Preparing shot JSON..."
+msgstr "正在准备萃取 JSON..."
+
+#: src/pages/Statistics/components/statisticsView/StatisticsView.jsx
+msgid "Preparing statistics..."
+msgstr "正在准备统计..."
+
+#: src/pages/ShotAnalyzer/components/shotChart/constants.js
+msgid "Preparing WebM export..."
+msgstr "正在准备 WebM 导出..."
+
+#: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
+msgid "Presets..."
+msgstr "预设..."
+
+#: src/pages/Statistics/components/statisticsView/StatisticsView.jsx
+msgid "Press <0><1/></0> to build a statistic."
+msgstr "按 <0><1/></0> 生成统计。"
+
+#: src/components/ExtendedProfileChart.jsx
+#: src/pages/Home/cards/ProfileCard.jsx
+#: src/pages/Home/cards/RecentShotsCard.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+#: src/pages/Statistics/components/MetricsTable.jsx
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+#: src/utils/metricDefinitions.js
+msgid "Pressure"
+msgstr "压力"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgctxt "pump mode"
+msgid "Pressure"
+msgstr "压力"
+
+#: src/components/ExtendedProfileChart.jsx
+#: src/pages/ShotAnalyzer/utils/columns.js
+#: src/pages/ShotAnalyzer/utils/constants.js
+msgid "Pressure (bar)"
+msgstr "压力 (bar)"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/single/SingleShotMetricPreview.jsx
+msgid "Pressure & Pump Flow"
+msgstr "压力与泵流量"
+
+#: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
+msgid "Pressure above"
+msgstr "压力高于"
+
+#: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
+msgid "Pressure below"
+msgstr "压力低于"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Pressure in bar"
+msgstr "压力（bar）"
+
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Pressure Limit"
+msgstr "压力限制"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Pressure Offset"
+msgstr "压力偏移"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Pressure polynomial (a,b,c,d) for vane-/gear-pump internal leakage. Leave at 0,0,0,0 if uncalibrated."
+msgstr "叶片泵/齿轮泵内部泄漏的压力多项式 (a,b,c,d)。未校准时保持 0,0,0,0。"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Pressure Sensor Rating"
+msgstr "压力传感器量程"
+
+#: src/pages/ShotAnalyzer/utils/formatting.js
+msgid "Pressure Stop"
+msgstr "压力停止"
+
+#: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
+msgid "Pressure target"
+msgstr "压力目标"
+
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Pressure Target"
+msgstr "压力目标"
+
+#: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+#: src/pages/ShotHistory/index.jsx
+msgid "Previous"
+msgstr "上一个"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgid "Previous shot"
+msgstr "上一次萃取"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Previous target"
+msgstr "上一个目标"
+
+#: src/pages/ProfileList/index.jsx
+msgctxt "profile type"
+msgid "Pro"
+msgstr "Pro"
+
+#: src/pages/ProfileEdit/ProfileTypeSelection.jsx
+msgid "Pro profile"
+msgstr "Pro 曲线"
+
+#: src/pages/ProfileEdit/ProfileTypeSelection.jsx
+msgid "Pro Profile"
+msgstr "Pro 曲线"
+
+#: src/pages/DashboardSettings/index.jsx
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Process Controls First"
+msgstr "过程控制优先"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Processing shot history files ({current}/{total})"
+msgstr "正在处理萃取历史文件（{current}/{total}）"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "profile"
+msgstr "曲线"
+
+#: src/pages/Home/cards/ProfileCard.jsx
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+#: src/pages/Statistics/components/ProfileGroupTable.jsx
+msgid "Profile"
+msgstr "曲线"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+msgctxt "export file type"
+msgid "Profile"
+msgstr "曲线"
+
+#: src/pages/ShotAnalyzer/services/LibraryService.js
+msgid "Profile {nameOrId} not found"
+msgstr "未找到曲线 {nameOrId}"
+
+#: src/pages/ShotAnalyzer/services/LibraryService.js
+msgid "Profile {nameOrId} not found in browser storage"
+msgstr "浏览器存储中未找到曲线 {nameOrId}"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Profile A-Z"
+msgstr "曲线 A-Z"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Profile Chart Height"
+msgstr "曲线图表高度"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Profile details for {label}"
+msgstr "{label} 的曲线详情"
+
+#: src/pages/ShotAnalyzer/services/LibraryService.js
+msgid "Profile ID missing for export"
+msgstr "导出时缺少曲线 ID"
+
+#: src/pages/ProfileEdit/ProfileImageUpload.jsx
+msgid "Profile image"
+msgstr "曲线图片"
+
+#: src/pages/ProfileEdit/ProfileMainInformation.jsx
+msgid "Profile Information"
+msgstr "曲线信息"
+
+#: src/pages/ShotAnalyzer/services/IndexedDBService.js
+msgid "Profile label is required for browser storage"
+msgstr "浏览器存储需要曲线标签"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Profile list"
+msgstr "曲线列表"
+
+#: src/pages/ShotAnalyzer/components/library/StatusBar.jsx
+msgid "Profile mismatch detected. Use Import below or drop files here to import."
+msgstr "检测到曲线不匹配。使用下方的导入或将文件拖放到此处进行导入。"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Profile per grinder recipe"
+msgstr "每个磨豆机配方对应的曲线"
+
+#: src/utils/panelDefinitions.js
+msgid "Profile Selector"
+msgstr "曲线选择器"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
+msgid "Profile Statistics"
+msgstr "曲线统计"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgid "Profile Stats"
+msgstr "曲线统计"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Profile type: {typeText}"
+msgstr "曲线类型：{typeText}"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Profile Z-A"
+msgstr "曲线 Z-A"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Profile: {profileLabel}"
+msgstr "曲线：{profileLabel}"
+
+#: src/components/Navigation.jsx
+#: src/pages/ProfileList/index.jsx
+#: src/pages/ShotAnalyzer/components/library/LibraryDropdown.jsx
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Profiles"
+msgstr "曲线"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Profiles ({profilePreviewCount})"
+msgstr "曲线（{profilePreviewCount}）"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Progress Bar"
+msgstr "进度条"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+#: src/pages/Statistics/components/MetricsTable.jsx
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+#: src/utils/metricDefinitions.js
+msgid "Puck Flow"
+msgstr "粉饼流量"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+#: src/pages/ShotAnalyzer/utils/constants.js
+msgid "Puck Flow (ml/s)"
+msgstr "粉饼流量 (ml/s)"
+
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+#: src/pages/ShotAnalyzer/components/shotChart/single/SingleShotMetricPreview.jsx
+#: src/pages/Statistics/components/MetricsTable.jsx
+#: src/utils/metricDefinitions.js
+msgid "Puck Resistance"
+msgstr "粉饼阻力"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+#: src/pages/ShotAnalyzer/utils/constants.js
+msgid "Puck Resistance (s·√bar/mL)"
+msgstr "粉饼阻力 (s·√bar/mL)"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Pump Assist Cutoff"
+msgstr "泵辅助截止压力"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+#: src/pages/Statistics/components/MetricsTable.jsx
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+msgid "Pump Flow"
+msgstr "泵流量"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+#: src/pages/ShotAnalyzer/utils/constants.js
+msgid "Pump Flow (ml/s)"
+msgstr "泵流量 (ml/s)"
+
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "Pump Flow Calibration"
+msgstr "泵流量校准"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Pump Flow Coefficients"
+msgstr "泵流量系数"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Pump flow mode"
+msgstr "泵流量模式"
+
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Pump flow mode (PRO feature)"
+msgstr "泵流量模式（PRO 功能）"
+
+#: src/pages/ShotAnalyzer/utils/formatting.js
+msgid "Pump Flow Stop"
+msgstr "泵流量停止"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Pump Maintain flow mode"
+msgstr "泵保持流量模式"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Pump Maintain pressure mode"
+msgstr "泵保持压力模式"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Pump Mode"
+msgstr "泵模式"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Pump mode selection"
+msgstr "泵模式选择"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Pump off"
+msgstr "泵关闭"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+#: src/utils/metricDefinitions.js
+msgid "Pump Power"
+msgstr "泵功率"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Pump power as percentage"
+msgstr "泵功率百分比"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Pump power mode"
+msgstr "泵功率模式"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Pump pressure mode"
+msgstr "泵压力模式"
+
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Pump pressure mode (PRO feature)"
+msgstr "泵压力模式（PRO 功能）"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Pump Slip Coefficients"
+msgstr "泵滑移系数"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMetricCards.jsx
+#: src/pages/Statistics/components/MetricsTable.jsx
+msgid "Pumped Water"
+msgstr "泵水量"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+#: src/pages/Statistics/components/TrendChart.jsx
+msgid "Pumped Water (ml)"
+msgstr "泵水量 (ml)"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgid "Pumped Water (phase)"
+msgstr "泵水量（阶段）"
+
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+msgid "Pumped Water (Phase)"
+msgstr "泵水量（阶段）"
+
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+msgid "Pumped Water (Total)"
+msgstr "泵水量（总计）"
+
+#: src/pages/ShotAnalyzer/utils/formatting.js
+msgid "Pumped Water Stop"
+msgstr "泵水量停止"
+
+#: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
+msgid "Pumped-water target"
+msgstr "泵水量目标"
+
+#: src/pages/Statistics/utils/statisticsSearchDsl.js
+msgid "Query clause {clauseNumber}: {valueError}"
+msgstr "查询子句 {clauseNumber}：{valueError}"
+
+#: src/pages/Home/cards/FavoriteProfilesCard.jsx
+#: src/utils/panelDefinitions.js
+msgid "Quick Select"
+msgstr "快速选择"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Ramp Length"
+msgstr "渐变时长"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Ramp Style"
+msgstr "渐变方式"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Ramp style selection"
+msgstr "渐变方式选择"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Ramp Target"
+msgstr "渐变目标"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Ramp target selection"
+msgstr "渐变目标选择"
+
+#: src/pages/Statistics/components/MetricsTable.jsx
+msgid "Range"
+msgstr "范围"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Rated Only"
+msgstr "仅已评分"
+
+#: src/pages/ShotHistory/ShotNotesCard.jsx
+msgid "Rating"
+msgstr "评分"
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Rating (High)"
+msgstr "评分（高）"
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Rating (Low)"
+msgstr "评分（低）"
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
+msgid "Ratio"
+msgstr "粉液比"
+
+#: src/pages/ShotHistory/ShotNotesCard.jsx
+msgid "Ratio (1:{ratioLabel})"
+msgstr "粉液比 (1:{ratioLabel})"
+
+#: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
+msgid "Ratio reached"
+msgstr "已达到粉液比"
+
+#: src/pages/ShotAnalyzer/utils/formatting.js
+msgid "Ratio Stop"
+msgstr "粉液比停止"
+
+#: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
+msgid "Ratio target"
+msgstr "粉液比目标"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+msgid "Raw Data Points"
+msgstr "原始数据点"
+
+#: src/app/notifications.js
+msgid "Ready to brew"
+msgstr "可以冲煮"
+
+#: src/pages/Home/cards/ActionCard.jsx
+msgid "Ready to steam, open wand"
+msgstr "可以打蒸汽，请打开蒸汽棒"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Rebuild Shot History"
+msgstr "重建萃取历史"
+
+#: src/pages/DashboardSettings/index.jsx
+#: src/pages/Home/cards/RecentShotsCard.jsx
+msgid "Recent Shots"
+msgstr "最近萃取"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Recipe {recipe}"
+msgstr "配方 {recipe}"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+msgid "Recorded Stop Reason"
+msgstr "记录的停止原因"
+
+#: src/pages/ShotAnalyzer/components/shotChart/constants.js
+msgid "Recording replay..."
+msgstr "正在录制回放..."
+
+#: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
+msgid "Reference shot"
+msgstr "参考萃取"
+
+#: src/pages/Statistics/components/StatisticsSearchHelp.jsx
+msgid "Relative time: <0>h</0> (now), <1>h-7d</1> (7 days ago)"
+msgstr "相对时间：<0>h</0>（现在），<1>h-7d</1>（7 天前）"
+
+#: src/components/VisualizerUploadModal.jsx
+msgid "Remember credentials"
+msgstr "记住凭据"
+
+#: src/app/MachineSetup.jsx
+#: src/pages/ProfileEdit/ProfileImageUpload.jsx
+msgid "Remove"
+msgstr "移除"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Remove {label} from favorites"
+msgstr "将 {label} 从收藏中移除"
+
+#: src/app/MachineSetup.jsx
+msgid "Remove {name}"
+msgstr "移除 {name}"
+
+#: src/app/MachineSetup.jsx
+msgid "Remove {name}?"
+msgstr "移除 {name}？"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Remove from favorites"
+msgstr "从收藏中移除"
+
+#: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+msgid "Remove phase"
+msgstr "移除阶段"
+
+#: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
+msgid "Remove target"
+msgstr "移除目标"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Removing calibration profile..."
+msgstr "正在移除校准曲线..."
+
+#: src/app/MachineSetup.jsx
+msgid "Rename"
+msgstr "重命名"
+
+#: src/app/MachineSetup.jsx
+msgid "Rename {name}"
+msgstr "重命名 {name}"
+
+#: src/pages/ShotAnalyzer/components/shotChart/constants.js
+msgid "Rendering PNG export..."
+msgstr "正在渲染 PNG 导出..."
+
+#: src/pages/ProfileEdit/ProfileImageUpload.jsx
+msgid "Replace image"
+msgstr "更换图片"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+msgid "Replay chart"
+msgstr "回放图表"
+
+#: src/pages/ShotAnalyzer/services/ReplayVideoExportService.js
+msgid "Replay export canvas could not be created."
+msgstr "无法创建回放导出画布。"
+
+#: src/pages/ShotAnalyzer/components/shotChart/constants.js
+#: src/pages/ShotAnalyzer/components/shotChart/single/useShotChartReplayExport.js
+msgid "Replay export failed."
+msgstr "回放导出失败。"
+
+#: src/pages/ShotAnalyzer/components/shotChart/single/useShotChartReplayExport.js
+#: src/pages/ShotAnalyzer/services/ReplayVideoExportService.js
+msgid "Replay export is not ready yet."
+msgstr "回放导出尚未就绪。"
+
+#: src/pages/ShotAnalyzer/services/ReplayVideoExportService.js
+msgid "Replay export timers are not supported in this environment."
+msgstr "此环境不支持回放导出计时器。"
+
+#: src/pages/ShotAnalyzer/components/shotChart/single/useShotChartReplayExport.js
+msgid "Replay export was cancelled."
+msgstr "回放导出已取消。"
+
+#: src/pages/ShotAnalyzer/services/ReplayVideoExportService.js
+msgid "Replay image export could not be created."
+msgstr "无法创建回放图片导出。"
+
+#: src/pages/ShotAnalyzer/components/shotChart/single/useShotChartReplayExport.js
+msgid "Replay image export failed."
+msgstr "回放图片导出失败。"
+
+#: src/pages/ShotAnalyzer/components/shotChart/single/useShotChartReplayExport.js
+#: src/pages/ShotAnalyzer/services/ReplayVideoExportService.js
+msgid "Replay image export is not ready yet."
+msgstr "回放图片导出尚未就绪。"
+
+#: src/pages/ShotAnalyzer/components/shotChart/single/useShotChartReplayExport.js
+msgid "Replay image export was cancelled."
+msgstr "回放图片导出已取消。"
+
+#: src/pages/ShotAnalyzer/services/ReplayVideoExportService.js
+msgid "Replay recording failed."
+msgstr "回放录制失败。"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
+msgid "Reset columns to system defaults?"
+msgstr "将列重置为系统默认值？"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
+msgid "Reset Defaults"
+msgstr "恢复默认"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Restoring previous profile..."
+msgstr "正在恢复之前的曲线..."
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+msgid "Resume replay"
+msgstr "继续回放"
+
+#: src/components/PumpFlowCalibration/Footer.jsx
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "Retry"
+msgstr "重试"
+
+#: src/pages/ShotAnalyzer/components/library/StatusBar.jsx
+msgid "Retry automatic profile search"
+msgstr "重试自动曲线搜索"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgid "REVIEW PHASE {phaseNumber}"
+msgstr "检查阶段 {phaseNumber}"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgid "Review the stop reason for this phase. The algorithm was only able to identify it after several intermediate calculations."
+msgstr "请检查此阶段的停止原因。算法经过多次中间计算后才得以识别。"
+
+#: src/pages/Statistics/components/StatisticsSearchHelp.jsx
+msgid "Rules are separated with <0>;</0>. Visual filters and DSL are combined with AND."
+msgstr "规则之间用 <0>;</0> 分隔。可视化筛选与 DSL 以 AND 组合。"
+
+#: src/components/PumpFlowCalibration/Footer.jsx
+msgid "Running shot..."
+msgstr "正在萃取..."
+
+#: src/pages/Settings/PluginCard.jsx
+msgctxt "Saturday, one letter"
+msgid "S"
+msgstr "六"
+
+#: src/pages/Settings/PluginCard.jsx
+msgctxt "Sunday, one letter"
+msgid "S"
+msgstr "日"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgctxt "column type, short for start/end"
+msgid "S/E"
+msgstr "始/终"
+
+#: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
+msgid "Safety timeout"
+msgstr "安全超时"
+
+#: src/pages/ShotAnalyzer/utils/formatting.js
+msgid "Safety Timeout"
+msgstr "安全超时"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTableCells.jsx
+msgid "Sample {sampleNumber}"
+msgstr "样本 {sampleNumber}"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTableCells.jsx
+msgid "Sample {sampleNumber}: {sampleValue}"
+msgstr "样本 {sampleNumber}：{sampleValue}"
+
+#: src/pages/Settings/PluginCard.jsx
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
+msgid "Saturday"
+msgstr "星期六"
+
+#: src/app/MachineSetup.jsx
+#: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+#: src/pages/ShotHistory/ShotNotesCard.jsx
+msgid "Save"
+msgstr "保存"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgctxt "import mode"
+msgid "Save"
+msgstr "保存"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarModeHint.jsx
+msgctxt "import mode badge"
+msgid "SAVE"
+msgstr "保存"
+
+#: src/pages/Settings/StickyFormFooter.jsx
+msgid "Save & Restart"
+msgstr "保存并重启"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
+msgid "Save as New Preset"
+msgstr "另存为新预设"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
+msgid "Save as Standard"
+msgstr "保存为标准"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Save Channel & Refresh"
+msgstr "保存渠道并刷新"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
+msgid "Save current selection as your new 'Standard'?"
+msgstr "将当前选择保存为新的“标准”？"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Save failed: {message}"
+msgstr "保存失败：{message}"
+
+#: src/app/MachineSetup.jsx
+msgid "Save name"
+msgstr "保存名称"
+
+#: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Save profile"
+msgstr "保存曲线"
+
+#: src/pages/Settings/index.jsx
+#: src/pages/Settings/StickyFormFooter.jsx
+msgid "Save Settings"
+msgstr "保存设置"
+
+#: src/pages/ProfileEdit/ProfileImageUpload.jsx
+msgid "Save the profile first to add an image."
+msgstr "请先保存曲线再添加图片。"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/MobileStatusActionsMenu.jsx
+msgid "Save to Browser"
+msgstr "保存到浏览器"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgid "Save to Browser. Click to switch imports to View temporarily."
+msgstr "保存到浏览器。点击可将导入切换为“临时查看”。"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarModeHint.jsx
+msgid "Save to Browser. Imported shots and profiles will now be saved to the browser library."
+msgstr "保存到浏览器。导入的萃取和曲线将保存到浏览器库中。"
+
+#: src/components/PumpFlowCalibration/Footer.jsx
+msgid "Save to machine"
+msgstr "保存到咖啡机"
+
+#: src/app/MachineSetup.jsx
+msgctxt "machine status"
+msgid "Saved"
+msgstr "已保存"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgctxt "scale state"
+msgid "Saved"
+msgstr "已保存"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Saved scale"
+msgstr "已保存的秤"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Saving calibration profile..."
+msgstr "正在保存校准曲线..."
+
+#: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Saving profile..."
+msgstr "正在保存曲线..."
+
+#: src/components/PumpFlowCalibration/Footer.jsx
+msgid "Saving..."
+msgstr "保存中..."
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Scale"
+msgstr "秤"
+
+#: src/utils/warnings.js
+msgid "Scale battery low"
+msgstr "秤电量低"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTableCells.jsx
+msgid "Scale Lost"
+msgstr "秤连接丢失"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgid "SCALE LOST"
+msgstr "秤连接丢失"
+
+#: src/utils/warnings.js
+msgid "Scale not connected"
+msgstr "秤未连接"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Scales"
+msgstr "秤"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Scales are automatically refreshed every 10 seconds. Use the scan button to discover new devices."
+msgstr "秤列表每 10 秒自动刷新。使用扫描按钮发现新设备。"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Scan failed"
+msgstr "扫描失败"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Scan for Devices"
+msgstr "扫描设备"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Scan for nearby Bluetooth scales to connect them to GaggiMate."
+msgstr "扫描附近的蓝牙秤并将其连接到 GaggiMate。"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Scanning shot history files..."
+msgstr "正在扫描萃取历史文件..."
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Scanning..."
+msgstr "扫描中..."
+
+#: src/components/TabBar.jsx
+msgid "Scroll tabs left"
+msgstr "向左滚动标签页"
+
+#: src/components/TabBar.jsx
+msgid "Scroll tabs right"
+msgstr "向右滚动标签页"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareChartCanvas.jsx
+msgid "Scrub compare time"
+msgstr "拖动对比时间"
+
+#: src/pages/ShotAnalyzer/components/shotChart/single/SingleShotChart.jsx
+msgid "Scrub shot time"
+msgstr "拖动萃取时间"
+
+#: src/pages/Statistics/components/StatisticsMultiSelectDropdown.jsx
+msgid "Search {labelLower}..."
+msgstr "搜索{labelLower}..."
+
+#: src/pages/Statistics/components/StatisticsSearchHelp.jsx
+msgid "Search help"
+msgstr "搜索帮助"
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Search profiles..."
+msgstr "搜索曲线..."
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Search shots..."
+msgstr "搜索萃取..."
+
+#: src/pages/ProfileList/index.jsx
+#: src/pages/ShotHistory/index.jsx
+msgid "Search..."
+msgstr "搜索..."
+
+#: src/app/MachineSetup.jsx
+msgid "Searching"
+msgstr "搜索中"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "seconds"
+msgstr "秒"
+
+#: src/pages/Statistics/components/StatisticsMultiSelectDropdown.jsx
+msgid "Select {itemName}"
+msgstr "选择 {itemName}"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Select {label} profile"
+msgstr "选择 {label} 曲线"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Select a JSON file containing profile data to import"
+msgstr "选择包含曲线数据的 JSON 文件进行导入"
+
+#: src/pages/Statistics/components/statisticsView/helpers.js
+msgid "Select one or more profiles."
+msgstr "选择一条或多条曲线。"
+
+#: src/pages/Statistics/components/statisticsView/helpers.js
+msgid "Select one or more shots."
+msgstr "选择一次或多次萃取。"
+
+#: src/pages/ProfileEdit/ProfileTypeSelection.jsx
+msgid "Select Pro profile type"
+msgstr "选择 Pro 曲线类型"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Select Profiles..."
+msgstr "选择曲线..."
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Select shot and profile sources"
+msgstr "选择萃取和曲线来源"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Select Shots..."
+msgstr "选择萃取..."
+
+#: src/pages/ProfileEdit/ProfileTypeSelection.jsx
+msgid "Select simple profile type"
+msgstr "选择简单曲线类型"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Select statistics mode"
+msgstr "选择统计模式"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Select the type of brew phase"
+msgstr "选择冲煮阶段类型"
+
+#: src/pages/Statistics/components/StatisticsMultiSelectDropdown.jsx
+msgid "Select..."
+msgstr "选择..."
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Selecting calibration profile..."
+msgstr "正在选择校准曲线..."
+
+#: src/services/VisualizerService.js
+msgid "Server error - the API may not support this data format or account type"
+msgstr "服务器错误 - API 可能不支持此数据格式或账户类型"
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
+msgid "Set rating to {value} of 5"
+msgstr "评分设为 {value} / 5"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Set to 0 to disable feedforward control."
+msgstr "设为 0 以禁用前馈控制。"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Set to current measurement: {distance}mm"
+msgstr "设为当前测量值：{distance}mm"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Sets the height of the profile chart preview shown in the Profile Selector panel."
+msgstr "设置曲线选择器面板中曲线图表预览的高度。"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Sets the maximum number of columns. On smaller screens, fewer columns are used to keep metrics readable."
+msgstr "设置最大列数。在较小屏幕上会使用更少的列以保持指标可读。"
+
+#: src/components/Navigation.jsx
+#: src/pages/Settings/index.jsx
+msgid "Settings"
+msgstr "设置"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Settings for this phone, like the theme and notifications, are in <0>App Settings</0>. The dashboard layout is in the dashboard's customize view."
+msgstr "本手机的设置（如主题和通知）位于 <0>应用设置</0> 中。仪表盘布局可在仪表盘的自定义视图中调整。"
+
+#: src/pages/Settings/index.jsx
+msgid "Settings have not loaded yet."
+msgstr "设置尚未加载。"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+msgid "Share"
+msgstr "分享"
+
+#: src/pages/Statistics/components/StatisticsMultiSelectDropdown.jsx
+msgid "Shift = Range"
+msgstr "Shift = 范围"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Shortest Duration"
+msgstr "时长最短"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "shot"
+msgstr "萃取"
+
+#: src/pages/Statistics/components/toolbar/constants.js
+msgctxt "date basis"
+msgid "Shot"
+msgstr "萃取"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+msgctxt "export file type"
+msgid "Shot"
+msgstr "萃取"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTableChrome.jsx
+msgctxt "table column"
+msgid "Shot"
+msgstr "萃取"
+
+#: src/pages/ShotAnalyzer/services/LibraryService.js
+msgid "Shot {idStr} not found in browser storage"
+msgstr "浏览器存储中未找到萃取 {idStr}"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTable.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/compare/compareChartConfig.js
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/controls/compareControls.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/tooltip/tooltipModel.js
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsPanel.jsx
+msgid "Shot {shotNumber}"
+msgstr "萃取 {shotNumber}"
+
+#: src/pages/ShotAnalyzer/shotAnalyzer/ActiveAnalysisView.jsx
+msgid "Shot analysis table"
+msgstr "萃取分析表格"
+
+#: src/components/Navigation.jsx
+msgid "Shot Analyzer"
+msgstr "萃取分析器"
+
+#: src/pages/ShotAnalyzer/components/library/AnalyzerPanelSlot.jsx
+msgid "Shot and profile import dropzone"
+msgstr "萃取和曲线导入拖放区"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Shot Card Metrics"
+msgstr "萃取卡片指标"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Shot Chart"
+msgstr "萃取图表"
+
+#: src/pages/Statistics/components/StatisticsShotCompareSection.jsx
+#: src/pages/Statistics/components/statisticsView/StatisticsDetailSection.jsx
+msgid "Shot Charts"
+msgstr "萃取图表"
+
+#: src/utils/panelDefinitions.js
+msgid "Shot Controls"
+msgstr "萃取控制"
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Shot data is invalid or incomplete"
+msgstr "萃取数据无效或不完整"
+
+#: src/components/PumpFlowCalibration/api.js
+msgid "Shot file remained empty after {seconds}s"
+msgstr "萃取文件在 {seconds}s 后仍为空"
+
+#: src/app/appSettings.js
+#: src/app/notifications.js
+msgid "Shot finished"
+msgstr "萃取完成"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Shot finished. Waiting for it to be saved to history..."
+msgstr "萃取完成。正在等待保存到历史记录..."
+
+#: src/components/Navigation.jsx
+#: src/pages/ShotHistory/index.jsx
+msgid "Shot History"
+msgstr "萃取历史"
+
+#: src/pages/ShotAnalyzer/services/LibraryService.js
+msgid "Shot ID missing for export"
+msgstr "导出时缺少萃取 ID"
+
+#: src/pages/ShotAnalyzer/components/shotChart/MobileMetricPager.jsx
+msgid "Shot metrics"
+msgstr "萃取指标"
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
+#: src/utils/panelDefinitions.js
+msgid "Shot Metrics"
+msgstr "萃取指标"
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
+#: src/pages/ShotHistory/ShotNotesCard.jsx
+msgid "Shot Notes"
+msgstr "萃取备注"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/compareModel.js
+msgid "Shot start"
+msgstr "萃取开始"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Shot start was cancelled on the machine."
+msgstr "咖啡机上的萃取启动已取消。"
+
+#: src/app/appSettings.js
+#: src/app/notifications.js
+msgid "Shot started"
+msgstr "萃取已开始"
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Shot uploaded successfully to visualizer.coffee!"
+msgstr "萃取已成功上传到 visualizer.coffee！"
+
+#: src/components/VisualizerUploadModal.jsx
+msgid "Shot:"
+msgstr "萃取："
+
+#: src/pages/Settings/tabs/CleaningSection.jsx
+msgid "shots"
+msgstr "萃取"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryDropdown.jsx
+#: src/pages/Statistics/components/ProfileGroupTable.jsx
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+#: src/pages/Statistics/components/TrendChart.jsx
+msgid "Shots"
+msgstr "萃取"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Shots ({shotPreviewCount})"
+msgstr "萃取（{shotPreviewCount}）"
+
+#: src/pages/Statistics/components/TrendChart.jsx
+msgid "Shots / {granularityLabel}"
+msgstr "萃取次数 / {granularityLabel}"
+
+#: src/pages/Statistics/components/TrendChart.jsx
+msgid "Shots: {shotCount}"
+msgstr "萃取次数：{shotCount}"
+
+#: src/pages/Statistics/components/StatisticsMultiSelectDropdown.jsx
+msgid "Show all {labelLower}"
+msgstr "显示全部{labelLower}"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/compareControls.jsx
+msgid "Show compare annotations"
+msgstr "显示对比注释"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareChartLayout.jsx
+msgid "Show detail charts"
+msgstr "显示详细图表"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Show details"
+msgstr "显示详情"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Show details for {label}"
+msgstr "显示 {label} 的详情"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/single/SingleShotChart.jsx
+msgid "Show legend"
+msgstr "显示图例"
+
+#: src/pages/ShotAnalyzer/components/shotChart/MobileMetricPager.jsx
+msgid "Show metric page {pageNumber}"
+msgstr "显示指标第 {pageNumber} 页"
+
+#: src/components/VisualizerUploadModal.jsx
+msgid "Show password"
+msgstr "显示密码"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Show Password"
+msgstr "显示密码"
+
+#: src/pages/Statistics/components/StatisticsMultiSelectDropdown.jsx
+msgid "Show pinned only {labelLower}"
+msgstr "仅显示固定的{labelLower}"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Show Recent Shots"
+msgstr "显示最近萃取"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Show the control column panels as separate cards, or group them into a single unified card."
+msgstr "将控制列面板显示为独立卡片，或合并为一张统一卡片。"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgid "Shown when the scale briefly loses connection during the brew. In this case, weight is ignored for stop detection for that brew, even if the scale reconnects later."
+msgstr "冲煮过程中秤短暂断开连接时显示。此时，即使秤之后重新连接，本次冲煮的停止检测也会忽略重量。"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Shuts off the process ahead of time based on the flow rate to account for any dripping or delays in the control."
+msgstr "根据流量提前停止过程，以补偿滴落或控制延迟。"
+
+#: src/components/Navigation.jsx
+msgctxt "dashboard view"
+msgid "Simple"
+msgstr "简单"
+
+#: src/pages/ProfileList/index.jsx
+msgctxt "profile type"
+msgid "Simple"
+msgstr "简单"
+
+#: src/pages/ProfileEdit/ProfileTypeSelection.jsx
+msgid "Simple profile"
+msgstr "简单曲线"
+
+#: src/pages/ProfileEdit/ProfileTypeSelection.jsx
+msgid "Simple Profile"
+msgstr "简单曲线"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Single Card"
+msgstr "单卡片"
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
+msgid "Single Origin, Blend..."
+msgstr "单品、拼配..."
+
+#: src/components/PumpFlowCalibration/api.js
+msgid "slog not ready, waiting for flush... ({attempt})"
+msgstr "slog 尚未就绪，等待写入...（{attempt}）"
+
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "Slope Window"
+msgstr "斜率窗口"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Slot {slotNumber}"
+msgstr "槽位 {slotNumber}"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgid "SLOW SAMPLING"
+msgstr "采样过慢"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Smart Grind Plugin"
+msgstr "智能研磨插件"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Snapshotting shot history..."
+msgstr "正在生成萃取历史快照..."
+
+#: src/pages/Statistics/components/statisticsView/helpers.js
+msgid "Some shots have no shot timestamp. Choose how date handling should treat them (Shot = exclude missing, Auto = fallback to upload time, Upload = upload time only)."
+msgstr "部分萃取没有萃取时间戳。请选择日期处理方式（萃取 = 排除缺失项，自动 = 回退到上传时间，上传 = 仅使用上传时间）。"
+
+#: src/pages/Statistics/components/statisticsView/helpers.js
+msgid "Some shots have no shot timestamp. Choose how date handling should treat them (Shot = exclude missing, Auto = fallback to upload time, Upload = upload time only). Some shots have no usable date at all and may still be excluded from date filtering."
+msgstr "部分萃取没有萃取时间戳。请选择日期处理方式（萃取 = 排除缺失项，自动 = 回退到上传时间，上传 = 仅使用上传时间）。部分萃取完全没有可用日期，仍可能被日期筛选排除。"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Some shots have no shot timestamp. Choose how date handling should treat them."
+msgstr "部分萃取没有萃取时间戳。请选择日期处理方式。"
+
+#: src/pages/Statistics/components/statisticsView/helpers.js
+msgid "Some shots have no usable shot timestamp. Date filtering may exclude them unless upload time is available."
+msgstr "部分萃取没有可用的萃取时间戳。除非有上传时间，否则日期筛选可能会将其排除。"
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
+#: src/pages/ShotHistory/ShotNotesCard.jsx
+msgid "Sour"
+msgstr "酸"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Space evenly"
+msgstr "均匀分布"
+
+#: src/app/AppSettings.jsx
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgctxt "update channel"
+msgid "Stable"
+msgstr "稳定版"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
+msgctxt "column preset"
+msgid "Standard"
+msgstr "标准"
+
+#: src/app/machineStatus.js
+#: src/pages/Home/utils.js
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgctxt "machine mode"
+msgid "Standby"
+msgstr "待机"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Standby Brightness (0-16)"
+msgstr "待机亮度 (0-16)"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Standby Brightness Timeout"
+msgstr "待机亮度超时"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Standby Timeout"
+msgstr "待机超时"
+
+#: src/pages/Settings/tabs/CleaningSection.jsx
+msgid "Start"
+msgstr "开始"
+
+#: src/components/OverviewChart.jsx
+msgctxt "brew start marker"
+msgid "Start"
+msgstr "开始"
+
+#: src/pages/ShotAnalyzer/components/shotChart/helpers/chartData.js
+msgctxt "first phase"
+msgid "Start"
+msgstr "开始"
+
+#: src/pages/Home/utils.js
+msgctxt "process action"
+msgid "Start"
+msgstr "开始"
+
+#: src/pages/Home/BrewConfirmModal.jsx
+msgid "Start anyway"
+msgstr "仍然开始"
+
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "Start Autotune"
+msgstr "开始自动整定"
+
+#: src/pages/Home/BrewConfirmModal.jsx
+msgid "Start brew anyway?"
+msgstr "仍要开始冲煮？"
+
+#: src/components/PumpFlowCalibration/Footer.jsx
+msgid "Start calibration"
+msgstr "开始校准"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Start date"
+msgstr "开始日期"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Start from previous setpoint"
+msgstr "从上一个设定值开始"
+
+#: src/pages/ShotAnalyzer/components/EmptyState.jsx
+msgid "Start or end compare mode."
+msgstr "开始或结束对比模式。"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Start Ramp from"
+msgstr "渐变起点"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+msgid "Start Volumetric"
+msgstr "开始定量"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
+msgctxt "column type"
+msgid "Start/End"
+msgstr "开始/结束"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Starting despite warnings: {warnings}"
+msgstr "忽略警告启动：{warnings}"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Starting shot — adjust the steam valve to reach 1 bar, then 9 bar."
+msgstr "正在开始萃取 — 调节蒸汽阀使压力先达到 1 bar，再达到 9 bar。"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Startup Mode"
+msgstr "启动模式"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Startup Profile"
+msgstr "启动曲线"
+
+#: src/components/Navigation.jsx
+#: src/pages/ProfileList/index.jsx
+#: src/pages/Statistics/components/statisticsView/StatisticsDetailSection.jsx
+#: src/pages/Statistics/index.jsx
+msgid "Statistics"
+msgstr "统计"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+msgid "Statistics chart averages"
+msgstr "统计图表平均值"
+
+#: src/pages/Statistics/components/StatisticsSearchHelp.jsx
+msgid "Statistics Search DSL"
+msgstr "统计搜索 DSL"
+
+#: src/pages/Statistics/components/MetricsTable.jsx
+msgid "Std Dev"
+msgstr "标准差"
+
+#: src/app/machineStatus.js
+#: src/pages/Home/utils.js
+msgctxt "machine mode"
+msgid "Steam"
+msgstr "蒸汽"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Steam Boiler (Coming Soon)"
+msgstr "蒸汽锅炉（即将推出）"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Steam button"
+msgstr "蒸汽按钮"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Steam Button Behavior"
+msgstr "蒸汽按钮行为"
+
+#: src/app/notifications.js
+msgid "Steam has been on for 5 minutes."
+msgstr "蒸汽已开启 5 分钟。"
+
+#: src/app/appSettings.js
+msgid "Steam mode left on"
+msgstr "蒸汽模式未关闭"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Steam Pump Assist"
+msgstr "蒸汽泵辅助"
+
+#: src/utils/warnings.js
+msgid "Steam switch left on"
+msgstr "蒸汽开关未关闭"
+
+#: src/utils/metricDefinitions.js
+msgid "Steam Temp"
+msgstr "蒸汽温度"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Stick first panel to top"
+msgstr "第一个面板固定在顶部"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Stick last panel to bottom"
+msgstr "最后一个面板固定在底部"
+
+#: src/app/notifications.js
+msgid "Still in steam mode"
+msgstr "仍处于蒸汽模式"
+
+#: src/pages/ShotAnalyzer/components/shotChart/tooltip/StaticTooltipContent.jsx
+msgctxt "shot stop"
+msgid "Stop"
+msgstr "停止"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTableChrome.jsx
+msgid "Stop reason"
+msgstr "停止原因"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+msgid "Stop replay and restore chart"
+msgstr "停止回放并恢复图表"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Stop when"
+msgstr "停止条件"
+
+#: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
+msgid "Stopped: Manually"
+msgstr "已停止：手动"
+
+#: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
+msgid "Stopped: Safety timeout"
+msgstr "已停止：安全超时"
+
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+msgid "Stops"
+msgstr "停止条件"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Storage (LittleFS)"
+msgstr "存储 (LittleFS)"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Storage (SD-Card)"
+msgstr "存储 (SD 卡)"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Storage & Memory"
+msgstr "存储与内存"
+
+#: src/pages/ShotAnalyzer/components/EmptyState.jsx
+msgid "Stores imported external shots and profiles locally in this browser on this device. They are not automatically available in other browsers or on other devices."
+msgstr "将导入的外部萃取和曲线保存在此设备的此浏览器中。它们不会自动出现在其他浏览器或其他设备上。"
+
+#: src/pages/Settings/PluginCard.jsx
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
+msgid "Sunday"
+msgstr "星期日"
+
+#: src/pages/ProfileEdit/ProfileTypeSelection.jsx
+msgid "Supports advanced pressure and flow controlled phases with ramps, different targets and further visualization."
+msgstr "支持高级压力和流量控制阶段，可设置渐变、不同目标并提供更多可视化。"
+
+#: src/pages/ProfileEdit/ProfileTypeSelection.jsx
+msgid "Supports creating of profiles with different brew phases and targets."
+msgstr "支持创建包含不同冲煮阶段和目标的曲线。"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/controls/compareControls.jsx
+msgid "Swap shot 1 and shot 2"
+msgstr "交换萃取 1 和萃取 2"
+
+#: src/pages/ShotAnalyzer/components/shotChart/MobileChartScrubber.jsx
+msgid "Swipe"
+msgstr "滑动"
+
+#: src/pages/ShotAnalyzer/components/EmptyState.jsx
+msgid "Switch between shots."
+msgstr "在萃取之间切换。"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgid "Switch import mode to Save to Browser"
+msgstr "将导入模式切换为保存到浏览器"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgid "Switch import mode to View temporarily"
+msgstr "将导入模式切换为临时查看"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Switch to compact view"
+msgstr "切换到紧凑视图"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Switch to extraction tab"
+msgstr "切换到萃取标签页"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Switch to full view"
+msgstr "切换到完整视图"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Switch to utility tab"
+msgstr "切换到工具标签页"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Switching to BREW mode..."
+msgstr "正在切换到冲煮模式..."
+
+#: src/pages/ProfileList/index.jsx
+msgctxt "profile badge"
+msgid "System"
+msgstr "系统"
+
+#: src/app/AppSettings.jsx
+#: src/pages/Settings/tabs/GeneralTab.jsx
+#: src/utils/themeManager.js
+msgctxt "theme"
+msgid "System"
+msgstr "跟随系统"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "System & Network"
+msgstr "系统与网络"
+
+#: src/pages/Settings/index.jsx
+msgid "System & Updates"
+msgstr "系统与更新"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "System in Standby"
+msgstr "系统待机中"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
+#: src/pages/ShotAnalyzer/utils/constants.js
+msgid "System Info"
+msgstr "系统信息"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "System Version & Updates"
+msgstr "系统版本与更新"
+
+#: src/pages/Settings/PluginCard.jsx
+msgctxt "Thursday, one letter"
+msgid "T"
+msgstr "四"
+
+#: src/pages/Settings/PluginCard.jsx
+msgctxt "Tuesday, one letter"
+msgid "T"
+msgstr "二"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Tare"
+msgstr "去皮"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Tare the scale, then place a known weight and calibrate each load cell."
+msgstr "先对秤去皮，然后放上已知重量的物体并校准每个称重传感器。"
+
+#: src/pages/Home/cards/ProfileCard.jsx
+msgctxt "process"
+msgid "Target"
+msgstr "目标"
+
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+msgid "Target (Delta)"
+msgstr "目标（偏差）"
+
+#: src/pages/ShotAnalyzer/components/shotChart/tooltip/StaticTooltipContent.jsx
+msgid "Target {targetText}"
+msgstr "目标 {targetText}"
+
+#: src/pages/ShotAnalyzer/components/shotChart/tooltip/StaticTooltipContent.jsx
+msgid "Target {targetValue}"
+msgstr "目标 {targetValue}"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/compareControls.jsx
+msgid "Target display mode"
+msgstr "目标显示模式"
+
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+msgctxt "short for target pump flow"
+msgid "Target F"
+msgstr "目标 F"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Target Flow"
+msgstr "目标流量"
+
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+msgctxt "short for target pressure"
+msgid "Target P"
+msgstr "目标 P"
+
+#: src/components/OverviewChart.jsx
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+#: src/pages/ShotHistory/HistoryChart.jsx
+msgid "Target Pressure"
+msgstr "目标压力"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+#: src/pages/ShotAnalyzer/utils/constants.js
+msgid "Target Pressure (bar)"
+msgstr "目标压力 (bar)"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+#: src/pages/ShotHistory/HistoryChart.jsx
+msgid "Target Pump Flow"
+msgstr "目标泵流量"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+#: src/pages/ShotAnalyzer/utils/constants.js
+msgid "Target Pump Flow (ml/s)"
+msgstr "目标泵流量 (ml/s)"
+
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+msgctxt "short for target temperature"
+msgid "Target T"
+msgstr "目标 T"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgid "Target Temp"
+msgstr "目标温度"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+#: src/pages/ShotAnalyzer/utils/constants.js
+msgid "Target Temp (℃)"
+msgstr "目标温度 (℃)"
+
+#: src/pages/Statistics/components/MetricsTable.jsx
+msgid "Target Temp Δ"
+msgstr "目标温度 Δ"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Target temperature"
+msgstr "目标温度"
+
+#: src/components/OverviewChart.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMetricCards.jsx
+#: src/pages/ShotHistory/HistoryChart.jsx
+msgid "Target Temperature"
+msgstr "目标温度"
+
+#: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
+msgid "Target value in {unit}"
+msgstr "目标值（{unit}）"
+
+#: src/components/OverviewChart.jsx
+msgid "Target Weight"
+msgstr "目标重量"
+
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Target weight in grams"
+msgstr "目标重量（克）"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Tasmota IP"
+msgstr "Tasmota IP"
+
+#: src/pages/ShotHistory/ShotNotesCard.jsx
+msgid "Tasting notes, brewing observations, etc..."
+msgstr "风味笔记、冲煮观察等..."
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
+msgid "Tasting notes, brewing observations..."
+msgstr "风味笔记、冲煮观察..."
+
+#: src/utils/metricDefinitions.js
+msgid "Temp"
+msgstr "温度"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+msgctxt "short for temperature"
+msgid "Temp"
+msgstr "温度"
+
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+msgctxt "temperature"
+msgid "Temp"
+msgstr "温度"
+
+#: src/pages/Home/cards/RecentShotsCard.jsx
+#: src/pages/ProfileEdit/ProfileMainInformation.jsx
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+#: src/pages/ShotAnalyzer/components/shotChart/single/SingleShotMetricPreview.jsx
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMetricCards.jsx
+#: src/pages/Statistics/components/MetricsTable.jsx
+msgid "Temperature"
+msgstr "温度"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+#: src/pages/ShotAnalyzer/utils/constants.js
+msgid "Temperature (℃)"
+msgstr "温度 (℃)"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Temperature (0 = Default)"
+msgstr "温度（0 = 默认）"
+
+#: src/components/ExtendedProfileChart.jsx
+msgid "Temperature History"
+msgstr "温度历史"
+
+#: src/pages/ProfileEdit/ProfileMainInformation.jsx
+msgid "Temperature in degrees Celsius"
+msgstr "温度（摄氏度）"
+
+#: src/utils/warnings.js
+msgid "Temperature not stable"
+msgstr "温度不稳定"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Temperature Offset (°C)"
+msgstr "温度偏移 (°C)"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Temperature Settings"
+msgstr "温度设置"
+
+#: src/pages/ShotAnalyzer/components/EmptyState.jsx
+msgid "Temporary View (VIEW)"
+msgstr "临时查看 (VIEW)"
+
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "Test Duration (seconds)"
+msgstr "测试时长（秒）"
+
+#: src/app/MachineSetup.jsx
+msgid "The app forgets {host}. Nothing changes on the machine, and you can add it again any time."
+msgstr "应用将忘记 {host}。咖啡机上不会有任何更改，你可以随时重新添加。"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "The BLDC pump addon was detected in your system. You can change the pump control characteristics using the values below."
+msgstr "系统中检测到 BLDC 泵附加组件。你可以使用以下数值更改泵的控制特性。"
+
+#: src/app/appSettings.js
+msgid "The boiler reached brew temperature."
+msgstr "锅炉已达到冲煮温度。"
+
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "The boiler will heat at full power until its temperature inflection is detected, then the SIMC tuning rule derives PID gains. Typically 1–3 minutes depending on machine."
+msgstr "锅炉将以全功率加热，直到检测到温度拐点，然后由 SIMC 整定规则推导出 PID 增益。根据咖啡机不同，通常需要 1–3 分钟。"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "The chart is shown for Pro profiles only"
+msgstr "仅 Pro 曲线显示图表"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgid "The configured or inferred scale delay is unusually high. Review the scale-delay setting before relying on predictive weight stops."
+msgstr "已配置或推算的秤延迟异常偏高。在依赖预测重量停止之前，请检查秤延迟设置。"
+
+#: src/app/notifications.js
+msgid "The controller reported an error."
+msgstr "控制器报告了错误。"
+
+#: src/pages/Settings/index.jsx
+msgid "The file contains no known settings."
+msgstr "文件中不包含已知设置。"
+
+#: src/pages/Settings/index.jsx
+msgid "The file does not contain a settings object."
+msgstr "文件中不包含设置对象。"
+
+#: src/pages/Home/BrewConfirmModal.jsx
+msgid "The following warnings are currently active:"
+msgstr "当前有以下警告："
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "The grinder reaches GaggiMate at this address, so both need to share a network (the E64 WS is 2.4 GHz only) and the address must not change: reserve it for GaggiMate in your router."
+msgstr "磨豆机通过此地址访问 GaggiMate，因此两者需处于同一网络（E64 WS 仅支持 2.4 GHz），且地址不能变化：请在路由器中为 GaggiMate 保留此地址。"
+
+#: src/app/appSettings.js
+msgid "The machine has been in steam mode for 5 minutes."
+msgstr "咖啡机已处于蒸汽模式 5 分钟。"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "The profile's dose is saved to the shot history."
+msgstr "曲线的粉量会保存到萃取历史中。"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "The scale was found, but the Bluetooth connection failed. Try again or restart the scale."
+msgstr "已找到秤，但蓝牙连接失败。请重试或重启秤。"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "The scale wasn't found. Make sure it's switched on and nearby, then scan again."
+msgstr "未找到秤。请确认秤已开机并在附近，然后重新扫描。"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "The update could not be completed and the device kept its current firmware. Check the network connection and start the update again."
+msgstr "更新未能完成，设备保留了当前固件。请检查网络连接并重新开始更新。"
+
+#: src/app/AppSettings.jsx
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Theme"
+msgstr "主题"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Theme & Notifications"
+msgstr "主题与通知"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Thermal Feedforward Gain"
+msgstr "热前馈增益"
+
+#: src/app/machines.js
+msgid "this address is not a GaggiMate"
+msgstr "此地址不是 GaggiMate"
+
+#: src/pages/ShotAnalyzer/services/ReplayVideoExportService.js
+msgid "This browser cannot record MP4 video. Please use WebM export instead."
+msgstr "此浏览器无法录制 MP4 视频。请改用 WebM 导出。"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+msgid "This browser records replay video as WebM natively."
+msgstr "此浏览器原生支持将回放视频录制为 WebM。"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "This feature allows connection to a Home Assistant or MQTT installation and push the current state. This feature is deprecated for usage with Home Assistant. Please see the <0>Home Assistant Integration</0> for a more up-to-date solution."
+msgstr "此功能可连接到 Home Assistant 或 MQTT 服务并推送当前状态。此功能已不建议用于 Home Assistant。请参阅 <0>Home Assistant 集成</0> 以获取更新的方案。"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "This feature controls a Tasmota Plug to turn off your grinder after the target has been reached."
+msgstr "此功能可控制 Tasmota 插座，在达到目标后关闭磨豆机。"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "This scale model couldn't be set up."
+msgstr "无法设置此型号的秤。"
+
+#: src/pages/Settings/PluginCard.jsx
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
+msgid "Thursday"
+msgstr "星期四"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgid "Time"
+msgstr "时间"
+
+#: src/pages/Home/TargetToggle.jsx
+msgctxt "brew target"
+msgid "Time"
+msgstr "时间"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgctxt "ramp target"
+msgid "Time"
+msgstr "时间"
+
+#: src/pages/ShotHistory/HistoryChart.jsx
+msgid "Time (s)"
+msgstr "时间 (s)"
+
+#: src/pages/ShotAnalyzer/utils/formatting.js
+msgid "Time Limit"
+msgstr "时间限制"
+
+#: src/pages/ShotAnalyzer/utils/formatting.js
+msgid "Time Stop"
+msgstr "时间停止"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Time Zone"
+msgstr "时区"
+
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+msgid "Time-Weighted Average"
+msgstr "时间加权平均"
+
+#: src/app/machines.js
+msgctxt "connection failure"
+msgid "timed out"
+msgstr "超时"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Timeout waiting for shot to finish (5min)."
+msgstr "等待萃取完成超时（5 分钟）。"
+
+#: src/pages/ProfileEdit/ProfileMainInformation.jsx
+msgid "Title"
+msgstr "标题"
+
+#: src/pages/Statistics/components/toolbar/helpers.js
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgctxt "date range end"
+msgid "To"
+msgstr "至"
+
+#: src/pages/Home/cards/RecentShotsCard.jsx
+msgid "Today"
+msgstr "今天"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Toggle advanced search"
+msgstr "切换高级搜索"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Toggle off and on at target"
+msgstr "在目标处关闭再开启"
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Toggle pinned profiles first"
+msgstr "切换固定曲线优先"
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Toggle pinned shots first"
+msgstr "切换固定萃取优先"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTable.jsx
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+msgid "Total"
+msgstr "总计"
+
+#: src/pages/Statistics/components/SummaryCards.jsx
+msgid "Total Duration"
+msgstr "总时长"
+
+#: src/pages/Statistics/components/SummaryCards.jsx
+msgid "Total Pumped Water"
+msgstr "总泵水量"
+
+#: src/pages/Statistics/components/SummaryCards.jsx
+msgid "Total Shots"
+msgstr "总萃取次数"
+
+#: src/pages/Statistics/components/SummaryCards.jsx
+msgid "Total Weight"
+msgstr "总重量"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTable.jsx
+msgid "Totals"
+msgstr "合计"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Transition duration in {rampUnit}"
+msgstr "过渡时长（{rampUnit}）"
+
+#: src/pages/Statistics/components/TrendChart.jsx
+msgid "Trend bucket size"
+msgstr "趋势分组大小"
+
+#: src/pages/Statistics/components/TrendChart.jsx
+msgid "Trend Chart"
+msgstr "趋势图"
+
+#: src/pages/Statistics/components/TrendChart.jsx
+msgid "Trend metric"
+msgstr "趋势指标"
+
+#: src/pages/Statistics/components/statisticsView/StatisticsDetailSection.jsx
+msgid "Trends"
+msgstr "趋势"
+
+#: src/app/ConnectionGate.jsx
+msgid "Try again"
+msgstr "重试"
+
+#: src/pages/Settings/PluginCard.jsx
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
+msgid "Tuesday"
+msgstr "星期二"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Turn off at target"
+msgstr "在目标处关闭"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Turn on at start, off at target"
+msgstr "开始时开启，目标处关闭"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Unavailable / uncalibrated"
+msgstr "不可用 / 未校准"
+
+#: src/pages/Statistics/utils/statisticsSearchDsl.js
+msgid "Unclosed quoted value."
+msgstr "引号内的值未闭合。"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Unfavorite"
+msgstr "取消收藏"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "unknown"
+msgstr "未知"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
+#: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
+#: src/pages/ShotAnalyzer/utils/formatting.js
+#: src/pages/ShotAnalyzer/utils/profiles.js
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+msgid "Unknown"
+msgstr "未知"
+
+#: src/app/machineStatus.js
+msgctxt "machine mode"
+msgid "Unknown"
+msgstr "未知"
+
+#: src/pages/Home/cards/RecentShotsCard.jsx
+msgctxt "profile"
+msgid "Unknown"
+msgstr "未知"
+
+#: src/pages/Statistics/components/toolbar/helpers.js
+msgid "unknown candidates"
+msgstr "未知候选项"
+
+#: src/pages/Statistics/utils/statisticsSearchDsl.js
+msgid "Unknown error."
+msgstr "未知错误。"
+
+#: src/pages/Statistics/utils/statisticsSearchDsl.js
+msgid "Unknown field \"{fieldRaw}\". Supported: {supportedFields}."
+msgstr "未知字段“{fieldRaw}”。支持的字段：{supportedFields}。"
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Unknown Profile"
+msgstr "未知曲线"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Unknown Scale"
+msgstr "未知秤"
+
+#: src/pages/Statistics/components/statisticsView/helpers.js
+msgid "Unknown Shot"
+msgstr "未知萃取"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
+msgid "Unpin {displayName}"
+msgstr "取消固定 {displayName}"
+
+#: src/pages/Statistics/components/StatisticsMultiSelectDropdown.jsx
+msgid "Unpin {itemName}"
+msgstr "取消固定 {itemName}"
+
+#: src/pages/Statistics/components/StatisticsMultiSelectDropdown.jsx
+msgid "Unpin {singularLabel}"
+msgstr "取消固定 {singularLabel}"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
+msgid "Unpin profile"
+msgstr "取消固定曲线"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
+msgid "Unpin shot"
+msgstr "取消固定萃取"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Unrated Only"
+msgstr "仅未评分"
+
+#: src/pages/Statistics/utils/statisticsSearchDsl.js
+msgid "Unsupported date expression. Use DD.MM.YYYY, optional HH:MM, or h-7d."
+msgstr "不支持的日期表达式。请使用 DD.MM.YYYY、可选的 HH:MM，或 h-7d。"
+
+#: src/pages/ProfileEdit/ProfileImageUpload.jsx
+msgid "Unsupported file type. Please use PNG, JPEG, WebP or BMP."
+msgstr "不支持的文件类型。请使用 PNG、JPEG、WebP 或 BMP。"
+
+#: src/pages/ShotAnalyzer/services/analyzer/delayTracking.js
+msgid "Unusually high inferred delay in Phase {phaseNumber} ({delayMs} ms)."
+msgstr "阶段 {phaseNumber} 的推算延迟异常偏高（{delayMs} ms）。"
+
+#: src/pages/ShotAnalyzer/services/analyzer/delayTracking.js
+msgid "Unusually high inferred delay in Phase {phaseNumber}."
+msgstr "阶段 {phaseNumber} 的推算延迟异常偏高。"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Update both"
+msgstr "同时更新"
+
+#: src/app/AppSettings.jsx
+msgid "Update channel"
+msgstr "更新渠道"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Update Channel"
+msgstr "更新渠道"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Update Controller"
+msgstr "更新控制器"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Update Display"
+msgstr "更新显示屏"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Update failed"
+msgstr "更新失败"
+
+#: src/app/AppSettings.jsx
+msgid "Updates"
+msgstr "更新"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Updating controller firmware"
+msgstr "正在更新控制器固件"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Updating Display filesystem"
+msgstr "正在更新显示屏文件系统"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Updating Display firmware"
+msgstr "正在更新显示屏固件"
+
+#: src/pages/Statistics/components/toolbar/constants.js
+msgctxt "date basis"
+msgid "Upload"
+msgstr "上传"
+
+#: src/utils/profileImage.js
+msgid "Upload failed"
+msgstr "上传失败"
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Upload failed: {errorMessage}"
+msgstr "上传失败：{errorMessage}"
+
+#: src/pages/ProfileEdit/ProfileImageUpload.jsx
+msgid "Upload image"
+msgstr "上传图片"
+
+#: src/components/VisualizerUploadModal.jsx
+msgid "Upload Shot"
+msgstr "上传萃取"
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Upload to visualizer.coffee"
+msgstr "上传到 visualizer.coffee"
+
+#: src/components/VisualizerUploadModal.jsx
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Upload to Visualizer.coffee"
+msgstr "上传到 Visualizer.coffee"
+
+#: src/components/VisualizerUploadModal.jsx
+msgid "Uploading..."
+msgstr "上传中..."
+
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "Upper bound on the identification test. Most espresso boilers resolve within 60–120 s. Extend if Autotune fails before peak slope is detected."
+msgstr "辨识测试的时长上限。大多数意式咖啡机锅炉在 60–120 秒内完成。如果自动整定在检测到峰值斜率前失败，请延长此值。"
+
+#: src/pages/Statistics/components/StatisticsSearchHelp.jsx
+msgid "Use <0>></0>, <1>>=</1>, <2><</2>, <3><=</3>, <4>=</4>"
+msgstr "使用 <0>></0>、<1>>=</1>、<2><</2>、<3><=</3>、<4>=</4>"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Use 24h Format"
+msgstr "使用 24 小时制"
+
+#: src/pages/Statistics/components/toolbar/helpers.js
+msgid "Use shot timestamp only"
+msgstr "仅使用萃取时间戳"
+
+#: src/pages/Statistics/components/toolbar/helpers.js
+msgid "Use shot timestamp, fallback to upload time"
+msgstr "使用萃取时间戳，缺失时回退到上传时间"
+
+#: src/pages/ShotAnalyzer/components/EmptyState.jsx
+msgid "Use the status bar toggle to switch between <0>View temporarily</0> and <1>Save to Browser</1> before importing."
+msgstr "导入前，使用状态栏开关在 <0>临时查看</0> 和 <1>保存到浏览器</1> 之间切换。"
+
+#: src/pages/Statistics/components/toolbar/helpers.js
+msgid "Use upload time only"
+msgstr "仅使用上传时间"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Used for the GaggiMate hotspot when no Wi-Fi is configured (min. 8 characters)."
+msgstr "未配置 Wi-Fi 时用于 GaggiMate 热点（至少 8 个字符）。"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "user"
+msgstr "用户"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "User Preferences"
+msgstr "用户偏好"
+
+#: src/services/VisualizerService.js
+msgid "Username and password are required"
+msgstr "需要用户名和密码"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Using auto range from current shot selection."
+msgstr "使用当前萃取选择的自动范围。"
+
+#: src/pages/ProfileList/index.jsx
+msgctxt "profile tab"
+msgid "Utility"
+msgstr "工具"
+
+#: src/pages/ProfileEdit/ProfileMainInformation.jsx
+msgid "Utility profile"
+msgstr "工具曲线"
+
+#: src/pages/ProfileEdit/ProfileMainInformation.jsx
+msgid "Utility profile toggle"
+msgstr "工具曲线开关"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Valve"
+msgstr "阀门"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Valve closed"
+msgstr "阀门关闭"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Valve open"
+msgstr "阀门打开"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Valve state selection"
+msgstr "阀门状态选择"
+
+#: src/app/AppSettings.jsx
+msgid "Version {bundleVersion}"
+msgstr "版本 {bundleVersion}"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+msgid "Video"
+msgstr "视频"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+msgid "Video (unsupported)"
+msgstr "视频（不支持）"
+
+#: src/pages/ShotAnalyzer/components/shotChart/single/useShotChartReplayExport.js
+msgid "Video export is not supported in this browser."
+msgstr "此浏览器不支持视频导出。"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgctxt "import mode"
+msgid "View"
+msgstr "查看"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarModeHint.jsx
+msgctxt "import mode badge"
+msgid "VIEW"
+msgstr "查看"
+
+#: src/pages/ProfileList/index.jsx
+msgid "View statistics for {label} profile"
+msgstr "查看 {label} 曲线的统计"
+
+#: src/pages/ProfileList/index.jsx
+msgid "View statistics for this profile"
+msgstr "查看此曲线的统计"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/MobileStatusActionsMenu.jsx
+msgid "View temporarily"
+msgstr "临时查看"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgid "View temporarily. Click to switch imports to Save to Browser."
+msgstr "临时查看。点击可将导入切换为“保存到浏览器”。"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarModeHint.jsx
+msgid "View temporarily. Imported shots and profiles will now open temporarily in the analyzer."
+msgstr "临时查看。导入的萃取和曲线将临时在分析器中打开。"
+
+#: src/components/SettingsFormField.jsx
+msgid "Visible"
+msgstr "可见"
+
+#: src/components/VisualizerUploadModal.jsx
+msgid "Visualizer.coffee Username"
+msgstr "Visualizer.coffee 用户名"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+msgid "Volumetric Avail."
+msgstr "定量可用"
+
+#: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
+msgid "Volumetric target"
+msgstr "定量目标"
+
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Volumetric Target"
+msgstr "定量目标"
+
+#: src/pages/Settings/PluginCard.jsx
+msgctxt "Wednesday, one letter"
+msgid "W"
+msgstr "三"
+
+#: src/pages/Statistics/components/ActivityHeatmap.jsx
+msgctxt "weekday initial: Wednesday"
+msgid "W"
+msgstr "三"
+
+#: src/utils/warnings.js
+msgctxt "warning level"
+msgid "Warn"
+msgstr "警告"
+
+#: src/app/notifications.js
+msgid "Warning"
+msgstr "警告"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryDropdown.jsx
+msgid "WARNING: Do you really want to IRREVOCABLY delete all {count} filtered profiles?"
+msgstr "警告：确定要不可撤销地删除全部 {count} 条筛选出的曲线吗？"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryDropdown.jsx
+msgid "WARNING: Do you really want to IRREVOCABLY delete all {count} filtered shots?"
+msgstr "警告：确定要不可撤销地删除全部 {count} 条筛选出的萃取记录吗？"
+
+#: src/app/appSettings.js
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Warnings"
+msgstr "警告"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Warnings are shown on the display. An error additionally asks for confirmation before a brew starts."
+msgstr "警告会显示在显示屏上。错误级别还会在冲煮开始前要求确认。"
+
+#: src/app/machineStatus.js
+#: src/pages/Home/utils.js
+msgctxt "machine mode"
+msgid "Water"
+msgstr "热水"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Water button"
+msgstr "热水按钮"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Water Button Behavior"
+msgstr "热水按钮行为"
+
+#: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
+msgid "Water drawn"
+msgstr "已取水量"
+
+#: src/utils/metricDefinitions.js
+msgid "Water Level"
+msgstr "水位"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Water pumped"
+msgstr "已泵水量"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Water pumped in phase"
+msgstr "阶段内泵水量"
+
+#: src/pages/Home/cards/WaterLevelCard.jsx
+#: src/utils/panelDefinitions.js
+msgid "Water Tank"
+msgstr "水箱"
+
+#: src/utils/warnings.js
+msgid "Water tank low"
+msgstr "水箱水位低"
+
+#: src/pages/Statistics/components/toolbar/constants.js
+msgctxt "shot source: browser storage"
+msgid "WEB"
+msgstr "WEB"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Web Settings"
+msgstr "网页设置"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+msgid "WebM is the recommended replay video format in browsers with native WebM recording support."
+msgstr "在原生支持 WebM 录制的浏览器中，WebM 是推荐的回放视频格式。"
+
+#: src/pages/ShotAnalyzer/services/LibraryService.js
+msgid "WebSocket not connected"
+msgstr "WebSocket 未连接"
+
+#: src/pages/Settings/PluginCard.jsx
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
+msgid "Wednesday"
+msgstr "星期三"
+
+#: src/pages/Statistics/components/TrendChart.jsx
+msgctxt "time bucket"
+msgid "Week"
+msgstr "周"
+
+#: src/pages/Statistics/utils/trendBuckets.js
+msgid "Week: {startText}"
+msgstr "周：{startText}"
+
+#: src/pages/Statistics/utils/trendBuckets.js
+msgid "Week: {startText} - {endText}"
+msgstr "周：{startText} - {endText}"
+
+#: src/pages/Settings/tabs/CleaningSection.jsx
+msgid "weeks"
+msgstr "周"
+
+#: src/pages/DashboardSettings/index.jsx
+#: src/pages/Home/cards/ProfileCard.jsx
+#: src/pages/Home/cards/RecentShotsCard.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMetricCards.jsx
+#: src/pages/ShotHistory/HistoryChart.jsx
+#: src/pages/Statistics/components/MetricsTable.jsx
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+#: src/utils/metricDefinitions.js
+msgid "Weight"
+msgstr "重量"
+
+#: src/pages/Home/TargetToggle.jsx
+msgctxt "brew target"
+msgid "Weight"
+msgstr "重量"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+#: src/pages/ShotAnalyzer/utils/constants.js
+#: src/pages/Statistics/components/TrendChart.jsx
+msgid "Weight (g)"
+msgstr "重量 (g)"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgid "Weight (total)"
+msgstr "重量（总计）"
+
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+#: src/pages/ShotHistory/HistoryChart.jsx
+msgid "Weight Flow"
+msgstr "重量流量"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+#: src/pages/ShotAnalyzer/utils/constants.js
+msgid "Weight Flow (g/s)"
+msgstr "重量流量 (g/s)"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Weight in phase"
+msgstr "阶段内重量"
+
+#: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
+msgid "Weight reached"
+msgstr "已达到重量"
+
+#: src/pages/ShotAnalyzer/utils/formatting.js
+msgid "Weight Stop"
+msgstr "重量停止"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "What percentage to run the pump at during steaming"
+msgstr "打蒸汽时泵的运行功率百分比"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "When the toggle is off, brightness will be set to 0"
+msgstr "开关关闭时，亮度将设为 0"
+
+#: src/app/AppSettings.jsx
+msgid "While GaggiMate is in the background it keeps watching your machines and shows a permanent “Watching machines” notification. This uses some extra battery."
+msgstr "GaggiMate 在后台运行时会持续监控你的咖啡机，并显示一条常驻的“正在监控咖啡机”通知。这会额外消耗一些电量。"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Wi-Fi Password"
+msgstr "Wi-Fi 密码"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Wi-Fi SSID"
+msgstr "Wi-Fi SSID"
+
+#: src/app/appSettings.js
+msgid "With shot time and weight."
+msgstr "包含萃取时间和重量。"
+
+#: src/pages/Statistics/components/TrendChart.jsx
+msgctxt "time bucket"
+msgid "Year"
+msgstr "年"
+
+#: src/pages/Home/cards/RecentShotsCard.jsx
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
+msgid "Yesterday"
+msgstr "昨天"
+
+#: src/components/VisualizerUploadModal.jsx
+msgid "Yield:"
+msgstr "出液量："
+
+#: src/components/VisualizerUploadModal.jsx
+msgid "Your credentials are only used for this upload and will be stored locally only if you choose to remember your username."
+msgstr "你的凭据仅用于本次上传；只有在你选择记住用户名时才会保存在本地。"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Your grinder last ground recipe {lastRecipe}."
+msgstr "你的磨豆机上次研磨的是配方 {lastRecipe}。"
+
+#: src/app/MachineSetup.jsx
+msgid "Your machines"
+msgstr "你的咖啡机"
+
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "Your new PID values have been saved successfully."
+msgstr "新的 PID 参数已成功保存。"
+
+#: src/app/MachineSetup.jsx
+msgid "Your phone needs to be on the same Wi-Fi network as the machine."
+msgstr "手机需要与咖啡机处于同一 Wi-Fi 网络。"
+
+#: src/pages/ShotAnalyzer/components/EmptyState.jsx
+msgid "Your saved shots and profiles directly from the GaggiMate internal storage."
+msgstr "直接来自 GaggiMate 内部存储的已保存萃取和曲线。"

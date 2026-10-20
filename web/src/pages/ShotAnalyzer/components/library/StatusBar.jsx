@@ -5,6 +5,7 @@
 
 import { cleanName, analyzerUiColors } from '../../utils/analyzerUtils';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { t } from '@lingui/core/macro';
 import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes';
 import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons/faTriangleExclamation';
 import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown';
@@ -12,6 +13,7 @@ import { faCircleNotch } from '@fortawesome/free-solid-svg-icons/faCircleNotch';
 import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
 import { faRotateRight } from '@fortawesome/free-solid-svg-icons/faRotateRight';
 import { getAnalyzerIconButtonClasses } from '../analyzerControlStyles';
+import { getLoadedNameLabel } from './libraryDisplay';
 
 function getProfileBadgeClasses({ isMismatch, currentProfile, badgeBaseClass, loadedShadowClass }) {
   if (isMismatch) return `${badgeBaseClass} ${loadedShadowClass} border-transparent text-white`;
@@ -42,9 +44,9 @@ function getGhostedBadgeClasses(baseClasses, isActive) {
 
 function getProfileBadgeTitle(isMismatch) {
   if (isMismatch) {
-    return 'Profile mismatch detected. Use Import below or drop files here to import.';
+    return t`Profile mismatch detected. Use Import below or drop files here to import.`;
   }
-  return 'Click to open the library. Use Import below or drop files here to import.';
+  return t`Click to open the library. Use Import below or drop files here to import.`;
 }
 
 function getCompareSlotBadgeClasses({ currentShot, ghosted }) {
@@ -58,7 +60,7 @@ function getShotBadgeLabel(currentShot, currentShotName) {
   if (currentShot?.source === 'gaggimate') {
     return `#${currentShot.id}`;
   }
-  return cleanName(currentShotName);
+  return getLoadedNameLabel(cleanName(currentShotName));
 }
 
 function getMismatchProfileBadgeStyle({ isMismatch, ghosted }) {
@@ -141,7 +143,7 @@ function ProfileTrailingControl({
   onUnloadProfile,
   activeBadgeIconButtonClasses,
 }) {
-  const retryTitle = 'Retry automatic profile search';
+  const retryTitle = t`Retry automatic profile search`;
   const hasDismissibleProfileState =
     isSearchingProfile || cleanName(currentProfileName || '').toLowerCase() !== 'no profile loaded';
 
@@ -268,19 +270,19 @@ function ShotBadge({
     <div
       data-import-target='shot'
       className={shotBadgeClasses}
-      title='Click to open the library. Use Import below or drop files here to import.'
+      title={t`Click to open the library. Use Import below or drop files here to import.`}
     >
       <BadgeExportControl
         available={Boolean(currentShot)}
         activeBadgeIconButtonClasses={activeBadgeIconButtonClasses}
         onExport={onExportShot}
-        label='Export current shot'
+        label={t`Export current shot`}
       />
       <button
         type='button'
         onClick={handleShotPanelToggle}
         className={`mx-1.5 flex min-w-0 flex-1 items-center justify-center self-stretch overflow-hidden text-center ${compact ? 'text-xs font-medium' : 'text-sm font-semibold'}`}
-        title='Open library'
+        title={t`Open library`}
       >
         <span className='inline-flex max-w-full min-w-0 flex-1 items-center justify-center gap-1'>
           <span className='min-w-0 truncate'>
@@ -330,7 +332,7 @@ function ProfileBadge({
         available={Boolean(currentProfile)}
         activeBadgeIconButtonClasses={activeBadgeIconButtonClasses}
         onExport={onExportProfile}
-        label='Export current profile'
+        label={t`Export current profile`}
       />
       <button
         type='button'
@@ -345,7 +347,7 @@ function ProfileBadge({
           <span
             className={`min-w-0 truncate ${isSearchingProfile && !currentProfile ? 'italic opacity-75' : ''}`}
           >
-            {cleanName(currentProfileName)}
+            {getLoadedNameLabel(cleanName(currentProfileName))}
           </span>
           {isSearchingProfile ? (
             <FontAwesomeIcon icon={faCircleNotch} spin className='shrink-0 text-xs opacity-60' />

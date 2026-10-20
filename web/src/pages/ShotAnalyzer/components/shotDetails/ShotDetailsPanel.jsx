@@ -1,5 +1,6 @@
 /** Orchestrates single- and compare-shot detail cards and tab selection. */
 
+import { t } from '@lingui/core/macro';
 import { ShotDetailsCard } from './ShotDetailsCard';
 
 function getCompareDetailTabKey(entry, index) {
@@ -7,11 +8,14 @@ function getCompareDetailTabKey(entry, index) {
 }
 
 function CompareShotTabs({ entries = [], activeIndex = 0, onChange = () => {} }) {
-  const tabs = entries.map((entry, index) => ({
-    id: getCompareDetailTabKey(entry, index),
-    index,
-    label: `Shot ${index + 1}`,
-  }));
+  const tabs = entries.map((entry, index) => {
+    const shotNumber = index + 1;
+    return {
+      id: getCompareDetailTabKey(entry, index),
+      index,
+      label: t`Shot ${shotNumber}`,
+    };
+  });
 
   if (tabs.length <= 1) return null;
 

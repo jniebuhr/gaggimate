@@ -10,6 +10,8 @@ void on_ble_measurement(float value);
 constexpr unsigned long UPDATE_INTERVAL_MS = 1000;
 // Listening window after a scan request before scale:scan:complete; the lib's scan itself is continuous.
 constexpr unsigned long SCAN_WINDOW_MS = 5000;
+// Restart period of the continuous scale scan; NimBLE keeps advertisers whose scan response never arrived until the scan ends.
+constexpr unsigned long SCAN_REFRESH_MS = 60000;
 
 class BLEScalePlugin : public Plugin {
   public:
@@ -67,6 +69,7 @@ class BLEScalePlugin : public Plugin {
     void onProcessStart() const;
     void pollScaleMetadata();
 
+    void maintainScan(unsigned long now);
     void establishConnection();
     void emitScanComplete();
     void emitConnectError(const std::string &address, const char *reason);
@@ -80,6 +83,7 @@ class BLEScalePlugin : public Plugin {
     std::atomic<bool> forgetRequested{false}; // set by forget() from any task, consumed in loop()
     bool scanWindowOpen = false;
     unsigned long scanDeadline = 0;
+    unsigned long scanRunningSince = 0; // 0 = scanner not running
 
     unsigned long lastUpdate = 0;
 

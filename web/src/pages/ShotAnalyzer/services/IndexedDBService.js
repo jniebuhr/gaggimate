@@ -5,6 +5,7 @@
  * These are temporary uploads for analysis and NOT saved to GaggiMate controller
  */
 
+import { t } from '@lingui/core/macro';
 import { openDB } from 'idb';
 
 const DB_NAME = 'gaggimate-analyzer';
@@ -135,7 +136,7 @@ class IndexedDBService {
     const db = await this.init();
     const normalizedProfile = normalizeStoredProfile(profile);
     if (!normalizedProfile) {
-      throw new Error('Profile label is required for browser storage');
+      throw new Error(t`Profile label is required for browser storage`);
     }
 
     // Add source tag and storage timestamp

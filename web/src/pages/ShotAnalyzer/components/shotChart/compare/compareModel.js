@@ -1,5 +1,6 @@
 /* global globalThis */
 
+import { t } from '@lingui/core/macro';
 import { INITIAL_VISIBILITY, MAIN_CHART_HEIGHT_DEFAULT } from '../constants';
 import { buildShotChartModel } from '../buildShotChartModel';
 import { getShotChartBrewModeMeta } from '../labelVisuals';
@@ -211,7 +212,7 @@ export function getCompareModels({
   const compareAlignmentOptions =
     shotStylePreset === 'analyzer'
       ? getComparePhaseAlignmentOptions(rawCompareModels)
-      : [{ value: COMPARE_ALIGNMENT_SHOT_START, label: 'Shot start' }];
+      : [{ value: COMPARE_ALIGNMENT_SHOT_START, label: t`Shot start` }];
   const resolvedCompareAlignmentMode =
     shotStylePreset === 'analyzer'
       ? normalizeCompareAlignmentMode(compareAlignmentMode, compareAlignmentOptions)
@@ -243,7 +244,7 @@ function getComparePhaseAlignmentOptions(compareModels) {
     Array.isArray(model?.phaseOverviewRows) ? model.phaseOverviewRows : [],
   );
   if (modelRows.length === 0 || modelRows.some(rows => rows.length === 0)) {
-    return [{ value: COMPARE_ALIGNMENT_SHOT_START, label: 'Shot start' }];
+    return [{ value: COMPARE_ALIGNMENT_SHOT_START, label: t`Shot start` }];
   }
 
   const commonPhaseCount = Math.min(...modelRows.map(rows => rows.length));
@@ -261,11 +262,11 @@ function getComparePhaseAlignmentOptions(compareModels) {
     };
   });
 
-  return [{ value: COMPARE_ALIGNMENT_SHOT_START, label: 'Shot start' }, ...phaseOptions];
+  return [{ value: COMPARE_ALIGNMENT_SHOT_START, label: t`Shot start` }, ...phaseOptions];
 }
 
 function formatComparePhaseAlignmentLabel(phaseNumber, phaseName) {
-  return phaseName ? `Phase ${phaseNumber}: ${phaseName}` : `Phase ${phaseNumber}`;
+  return phaseName ? t`Phase ${phaseNumber}: ${phaseName}` : t`Phase ${phaseNumber}`;
 }
 
 function parsePhaseAlignmentNumber(alignmentMode) {

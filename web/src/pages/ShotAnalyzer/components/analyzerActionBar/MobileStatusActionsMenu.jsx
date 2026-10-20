@@ -5,6 +5,7 @@
 import { createPortal } from 'preact/compat';
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons/faCircleNotch';
 import { faEllipsisVertical } from '@fortawesome/free-solid-svg-icons/faEllipsisVertical';
 import { faEye } from '@fortawesome/free-solid-svg-icons/faEye';
@@ -66,7 +67,7 @@ function MobileStatusActionsMenuPortal({
           spin={isImporting}
           className='w-4 text-sm'
         />
-        <span>{isImporting ? 'Importing' : 'Import'}</span>
+        <span>{isImporting ? <Trans>Importing</Trans> : <Trans>Import</Trans>}</span>
       </button>
 
       {showImportModeToggle ? (
@@ -83,7 +84,9 @@ function MobileStatusActionsMenuPortal({
             icon={isBrowserImportMode ? faLaptopFile : faEye}
             className='w-4 text-sm'
           />
-          <span>{isBrowserImportMode ? 'Save to Browser' : 'View temporarily'}</span>
+          <span>
+            {isBrowserImportMode ? <Trans>Save to Browser</Trans> : <Trans>View temporarily</Trans>}
+          </span>
         </button>
       ) : null}
     </div>,
@@ -147,6 +150,7 @@ export function MobileStatusActionsMenu({
 
   const menuItemClasses =
     'text-base-content/80 hover:bg-base-content/5 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-45';
+  const { t } = useLingui();
 
   return (
     <div className='ml-auto sm:hidden'>
@@ -155,10 +159,10 @@ export function MobileStatusActionsMenu({
         type='button'
         className={buttonClasses}
         onClick={toggleMenu}
-        aria-label='Open status actions menu'
+        aria-label={t`Open status actions menu`}
         aria-expanded={isOpen}
         aria-haspopup='menu'
-        title='More actions'
+        title={t`More actions`}
       >
         <FontAwesomeIcon icon={faEllipsisVertical} className='text-sm' />
       </button>

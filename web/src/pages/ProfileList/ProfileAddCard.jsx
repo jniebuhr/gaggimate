@@ -1,6 +1,7 @@
 import Card from '../../components/Card.jsx';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
+import { Trans } from '@lingui/react/macro';
 
 export function ProfileAddCard() {
   return (
@@ -10,7 +11,9 @@ export function ProfileAddCard() {
         className='text-base-content hover:text-primary flex cursor-pointer flex-col items-center justify-center gap-2 p-4 transition-colors'
       >
         <FontAwesomeIcon icon={faPlus} className='text-4xl' />
-        <span className='text-base font-medium'>Add new profile</span>
+        <span className='text-base font-medium'>
+          <Trans>Add new profile</Trans>
+        </span>
       </a>
     </Card>
   );

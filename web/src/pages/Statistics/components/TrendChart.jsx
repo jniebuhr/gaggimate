@@ -1,7 +1,7 @@
 /* global globalThis */
 
 import { useEffect, useRef, useState } from 'preact/hooks';
-import Chart from 'chart.js/auto';
+import Chart from '../../../utils/lineChart.js';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown';
 import {
@@ -14,64 +14,69 @@ import {
   getAnalyzerSurfaceTriggerClasses,
 } from '../../ShotAnalyzer/components/analyzerControlStyles';
 import { CardTitle } from '../../../components/CardTitle';
+import { msg } from '@lingui/core/macro';
+import { Trans, useLingui } from '@lingui/react/macro';
 
 // Chart-level trend aggregation stays local to this component so users can switch
 // metric and bucket size without rerunning StatisticsService.
 const TREND_METRICS = [
   {
     key: 'duration',
-    label: 'Duration (s)',
+    label: msg`Duration (s)`,
     colorVar: '--statistics-trend-duration',
     color: '#64748b',
   },
-  { key: 'weight', label: 'Weight (g)', colorVar: '--analyzer-weight-text', color: '#8B5CF6' },
+  { key: 'weight', label: msg`Weight (g)`, colorVar: '--analyzer-weight-text', color: '#8B5CF6' },
   {
     key: 'water',
-    label: 'Pumped Water (ml)',
+    label: msg`Pumped Water (ml)`,
     colorVar: '--statistics-trend-water',
     color: '#0EA5E9',
   },
   {
     key: 'shotCount',
-    label: 'Shots',
+    label: msg`Shots`,
     colorVar: '--statistics-trend-shots-brown',
     color: '#8B5E3C',
   },
   {
     key: 'avgPressure',
-    label: 'Avg Pressure (bar)',
+    label: msg`Avg Pressure (bar)`,
     colorVar: '--analyzer-pressure-text',
     color: '#0066CC',
   },
   {
     key: 'avgFlow',
-    label: 'Avg Pump Flow (ml/s)',
+    label: msg`Avg Pump Flow (ml/s)`,
     colorVar: '--analyzer-flow-text',
     color: '#63993D',
   },
   {
     key: 'avgTemp',
-    label: 'Avg Temp (\u2103)',
+    label: msg`Avg Temp (℃)`,
     colorVar: '--analyzer-temp-text',
     color: '#F0561D',
   },
   {
     key: 'avgPuckFlow',
-    label: 'Avg Puck Flow (ml/s)',
+    label: msg`Avg Puck Flow (ml/s)`,
     colorVar: '--analyzer-puckflow-text',
     color: '#059669',
   },
 ];
 
 const GRANULARITY_OPTIONS = [
-  { value: 'day', label: 'Day' },
-  { value: 'week', label: 'Week' },
-  { value: 'month', label: 'Month' },
-  { value: 'year', label: 'Year' },
+  { value: 'day', label: msg({ message: 'Day', context: 'time bucket' }) },
+  { value: 'week', label: msg({ message: 'Week', context: 'time bucket' }) },
+  { value: 'month', label: msg({ message: 'Month', context: 'time bucket' }) },
+  { value: 'year', label: msg({ message: 'Year', context: 'time bucket' }) },
 ];
 
 function getGranularityLabel(granularity) {
-  return GRANULARITY_OPTIONS.find(option => option.value === granularity)?.label || 'Month';
+  return (
+    GRANULARITY_OPTIONS.find(option => option.value === granularity)?.label ||
+    GRANULARITY_OPTIONS[2].label
+  );
 }
 
 function getAdaptiveMaxTicks(containerWidth) {
@@ -130,6 +135,7 @@ const CHART_TOOLTIP_TITLE_FONT = { family: CHART_FONT_FAMILY, size: 11, weight: 
 const CHART_TOOLTIP_BODY_FONT = { family: CHART_FONT_FAMILY, size: 10, weight: '400' };
 
 export function TrendChart({ trends }) {
+  const { t, i18n } = useLingui();
   const containerRef = useRef(null);
   const canvasRef = useRef(null);
   const chartInstance = useRef(null);
@@ -172,10 +178,9 @@ export function TrendChart({ trends }) {
     const tickColor = resolveCssColorVar('--statistics-trend-axis-tick', '#888');
     const gridColor = resolveCssColorVar('--statistics-trend-grid', 'rgba(200, 200, 200, 0.1)');
     const tooltipBg = resolveCssColorVar('--statistics-trend-tooltip-bg', 'rgba(20, 20, 20, 0.9)');
+    const granularityLabel = i18n._(getGranularityLabel(selectedGranularity));
     const metricLabel =
-      metricDef.key === 'shotCount'
-        ? `Shots / ${getGranularityLabel(selectedGranularity)}`
-        : metricDef.label;
+      metricDef.key === 'shotCount' ? t`Shots / ${granularityLabel}` : i18n._(metricDef.label);
     const data = aggregateTrendsByGranularity(trends, metricDef.key, selectedGranularity);
     const maxTicksLimit = getAdaptiveMaxTicks(containerWidth);
 
@@ -219,7 +224,8 @@ export function TrendChart({ trends }) {
                   if (metricDef.key === 'shotCount') return [];
                   const raw = ctx?.[0]?.raw;
                   if (!raw || !Number.isFinite(raw.shotCount)) return [];
-                  return [`Shots: ${raw.shotCount}`];
+                  const shotCount = raw.shotCount;
+                  return [t`Shots: ${shotCount}`];
                 },
               },
             },
@@ -261,14 +267,16 @@ export function TrendChart({ trends }) {
         chartInstance.current = null;
       }
     };
-  }, [trends, selectedMetric, selectedGranularity, containerWidth]);
+  }, [trends, selectedMetric, selectedGranularity, containerWidth, t, i18n]);
 
   if (!trends || trends.length === 0) return null;
 
   return (
     <div>
       <div className='mb-2 flex items-center justify-between gap-2 px-1'>
-        <CardTitle className='px-0.5 py-1'>Trend Chart</CardTitle>
+        <CardTitle className='px-0.5 py-1'>
+          <Trans>Trend Chart</Trans>
+        </CardTitle>
         <div className='ml-auto flex items-center gap-1.5'>
           <div
             className={`relative flex shrink-0 ${ANALYZER_COMPACT_CONTROL_HEIGHT_CLASS} items-center`}
@@ -279,12 +287,12 @@ export function TrendChart({ trends }) {
               })}
               value={selectedMetric}
               onChange={e => setSelectedMetric(e.target.value)}
-              aria-label='Trend metric'
-              title='Trend metric'
+              aria-label={t`Trend metric`}
+              title={t`Trend metric`}
             >
               {TREND_METRICS.map(m => (
                 <option key={m.key} value={m.key}>
-                  {m.label}
+                  {i18n._(m.label)}
                 </option>
               ))}
             </select>
@@ -301,12 +309,12 @@ export function TrendChart({ trends }) {
               })}
               value={selectedGranularity}
               onChange={e => setSelectedGranularity(e.target.value)}
-              aria-label='Trend bucket size'
-              title='Trend bucket size'
+              aria-label={t`Trend bucket size`}
+              title={t`Trend bucket size`}
             >
               {GRANULARITY_OPTIONS.map(option => (
                 <option key={option.value} value={option.value}>
-                  {option.label}
+                  {i18n._(option.label)}
                 </option>
               ))}
             </select>

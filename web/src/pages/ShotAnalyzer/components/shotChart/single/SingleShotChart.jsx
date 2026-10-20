@@ -4,9 +4,10 @@
 
 import { createPortal } from 'preact/compat';
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
-import Chart from 'chart.js/auto';
+import Chart from '../../../../../utils/lineChart.js';
 import annotationPlugin from 'chartjs-plugin-annotation';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { faMinus } from '@fortawesome/free-solid-svg-icons/faMinus';
 import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import {
@@ -84,6 +85,7 @@ import {
 Chart.register(annotationPlugin);
 
 export function SingleShotChart({ shotData, profileData, results, desktopCardHeight = 0 }) {
+  const { t } = useLingui();
   // These refs point to the mounted DOM and Chart.js instances. They stay local
   // to the component because only the top-level orchestrator owns mounting and teardown.
   const hoverAreaRef = useRef(null);
@@ -756,7 +758,7 @@ export function SingleShotChart({ shotData, profileData, results, desktopCardHei
     scrubberMax > 0 ? (
       <MobileChartScrubber
         active={hasActiveScrubValue}
-        ariaLabel='Scrub shot time'
+        ariaLabel={t`Scrub shot time`}
         insets={scrubberInsets}
         max={scrubberMax}
         onInput={updateScrubberFromNativeInput}
@@ -877,7 +879,9 @@ export function SingleShotChart({ shotData, profileData, results, desktopCardHei
             className='text-xs'
             aria-hidden='true'
           />
-          <span>{isMobileSeriesLegendExpanded ? 'Hide legend' : 'Show legend'}</span>
+          <span>
+            {isMobileSeriesLegendExpanded ? <Trans>Hide legend</Trans> : <Trans>Show legend</Trans>}
+          </span>
         </button>
         {isMobileSeriesLegendExpanded ? (
           <ShotChartLegendToggles
@@ -922,7 +926,7 @@ export function SingleShotChart({ shotData, profileData, results, desktopCardHei
           onClick={() => {
             if (!isControlsLocked) toggleFullDisplay();
           }}
-          aria-label='Close full display'
+          aria-label={t`Close full display`}
         />
         <div className='shot-chart-full-display__panel'>
           {controls}

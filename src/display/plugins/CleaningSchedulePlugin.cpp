@@ -29,6 +29,7 @@ void CleaningSchedulePlugin::setup(Controller *controller, PluginManager *plugin
 
     pluginManager->on("webui:ws:register",
                       [this](Event const &event) { registerWsHandlers(event.getPointer<WebSocketHandler>("ws")); });
+    pluginManager->on("controller:brew:start", [this](Event const &) { onBrewStart(); });
     pluginManager->on("controller:brew:end", [this](Event const &) { onBrewEnd(); });
 }
 
@@ -109,30 +110,33 @@ void CleaningSchedulePlugin::completeDescaling() {
     ESP_LOGI("CleaningSchedulePlugin", "Descaling completed");
 }
 
-// A finished cleaning profile resets its schedule; every other non-utility brew counts as a shot.
-void CleaningSchedulePlugin::onBrewEnd() {
+// Starting a cleaning profile resets its schedule.
+void CleaningSchedulePlugin::onBrewStart() {
     String profileId;
-    bool finished = false;
-    bool utility = false;
+    {
+        std::lock_guard<std::recursive_mutex> guard(controller->getProcessLock());
+        Process *current = controller->getProcess();
+        if (current == nullptr || current->getType() != MODE_BREW)
+            return;
+        profileId = static_cast<BrewProcess *>(current)->profile.id;
+    }
+    if (profileId == BACKFLUSH_PROFILE_ID)
+        completeBackflush();
+    else if (profileId == DESCALING_PROFILE_ID)
+        completeDescaling();
+}
+
+// Every non-utility brew counts as a shot.
+void CleaningSchedulePlugin::onBrewEnd() {
+    bool shot;
     {
         std::lock_guard<std::recursive_mutex> guard(controller->getProcessLock());
         Process *last = controller->getLastProcess();
-        if (last == nullptr || last->getType() != MODE_BREW)
-            return;
-        auto *brew = static_cast<BrewProcess *>(last);
-        profileId = brew->profile.id;
-        finished = brew->processPhase == ProcessPhase::FINISHED;
-        utility = brew->isUtility();
+        shot = last != nullptr && last->getType() == MODE_BREW && !static_cast<BrewProcess *>(last)->isUtility();
     }
-    if (profileId == BACKFLUSH_PROFILE_ID) {
-        if (finished)
-            completeBackflush();
-    } else if (profileId == DESCALING_PROFILE_ID) {
-        if (finished)
-            completeDescaling();
-    } else if (!utility) {
-        Settings &settings = controller->getSettings();
-        settings.setShotsSinceBackflush(settings.getShotsSinceBackflush() + 1);
-        settings.setShotsSinceDescaling(settings.getShotsSinceDescaling() + 1);
-    }
+    if (!shot)
+        return;
+    Settings &settings = controller->getSettings();
+    settings.setShotsSinceBackflush(settings.getShotsSinceBackflush() + 1);
+    settings.setShotsSinceDescaling(settings.getShotsSinceDescaling() + 1);
 }

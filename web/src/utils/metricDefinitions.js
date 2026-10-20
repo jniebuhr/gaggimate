@@ -1,9 +1,12 @@
+import { msg } from '@lingui/core/macro';
+import { withTranslatedLabel } from './translatedLabel.js';
+
 /**
  * Each entry describes one dashboard metric cell.
  *
  * Fields:
  *   id         — unique string key; stored in localStorage to represent order/visibility
- *   label      — display label shown in the cell header
+ *   labelMsg   — msg descriptor; exposed translated as `label` (display label in the cell header)
  *   required   — if true: always visible, freely reorderable, but cannot be removed by the user
  *   available  — (ds) => bool — return false to hide this metric from the dashboard and the
  *                Settings configurator pool. ds is either the useDashboardState() result
@@ -21,7 +24,7 @@
 export const METRIC_DEFINITIONS = [
   {
     id: 'pressure',
-    label: 'Pressure',
+    labelMsg: msg`Pressure`,
     required: false,
     available: () => true,
     getValue: ds => (ds.currentPressure ?? 0).toFixed(1),
@@ -31,7 +34,7 @@ export const METRIC_DEFINITIONS = [
   },
   {
     id: 'flow',
-    label: 'Flow',
+    labelMsg: msg`Flow`,
     required: false,
     available: () => true,
     getValue: ds => `${(ds.currentFlow ?? 0).toFixed(1)} ml/s`,
@@ -41,7 +44,7 @@ export const METRIC_DEFINITIONS = [
   },
   {
     id: 'temp',
-    label: 'Temp',
+    labelMsg: msg`Temp`,
     required: true,
     available: () => true,
     getValue: ds => `${(ds.currentTemperature ?? 0).toFixed(1)}°`,
@@ -54,7 +57,7 @@ export const METRIC_DEFINITIONS = [
   },
   {
     id: 'steamtemp',
-    label: 'Steam Temp',
+    labelMsg: msg`Steam Temp`,
     required: true,
     available: ds => ds.dualBoiler,
     getValue: ds => `${(ds.currentSteamTemperature ?? 0).toFixed(1)}°`,
@@ -65,7 +68,7 @@ export const METRIC_DEFINITIONS = [
   },
   {
     id: 'pumppower',
-    label: 'Pump Power',
+    labelMsg: msg`Pump Power`,
     required: false,
     available: () => true,
     getValue: ds => `${Math.round(ds.currentPumpPower ?? 0)}%`,
@@ -75,7 +78,7 @@ export const METRIC_DEFINITIONS = [
   },
   {
     id: 'heaterpower',
-    label: 'Heater Power',
+    labelMsg: msg`Heater Power`,
     required: false,
     available: () => true,
     getValue: ds => `${Math.round(ds.mode === 0 ? 0 : (ds.currentBoilerPower ?? 0))}%`,
@@ -85,7 +88,7 @@ export const METRIC_DEFINITIONS = [
   },
   {
     id: 'puckresistance',
-    label: 'Puck Resistance',
+    labelMsg: msg`Puck Resistance`,
     required: false,
     available: () => true,
     getValue: ds => {
@@ -97,7 +100,7 @@ export const METRIC_DEFINITIONS = [
   },
   {
     id: 'puckflow',
-    label: 'Puck Flow',
+    labelMsg: msg`Puck Flow`,
     required: false,
     available: () => true,
     getValue: ds => `${(ds.currentPuckFlow ?? 0).toFixed(1)} ml/s`,
@@ -106,7 +109,7 @@ export const METRIC_DEFINITIONS = [
   },
   {
     id: 'estimatedoutput',
-    label: 'Estimated Output',
+    labelMsg: msg`Estimated Output`,
     required: false,
     available: () => true,
     getValue: ds => {
@@ -118,7 +121,7 @@ export const METRIC_DEFINITIONS = [
   },
   {
     id: 'waterlevel',
-    label: 'Water Level',
+    labelMsg: msg`Water Level`,
     required: false,
     available: ds => !!ds.tofDistance,
     getValue: ds => (ds.waterLevelPercent !== null ? `${Math.round(ds.waterLevelPercent)}%` : '—'),
@@ -128,7 +131,7 @@ export const METRIC_DEFINITIONS = [
   },
   {
     id: 'weight',
-    label: 'Weight',
+    labelMsg: msg`Weight`,
     required: false,
     available: () => true, // always configurable; getValue shows '—' when scale not connected
     getValue: ds => (ds.volumetricAvailable ? `${(ds.currentWeight ?? 0).toFixed(1)}g` : '—'),
@@ -145,4 +148,4 @@ export const METRIC_DEFINITIONS = [
     onDecrease: ds => ds.lowerTarget,
     onIncrease: ds => ds.raiseTarget,
   },
-];
+].map(withTranslatedLabel);

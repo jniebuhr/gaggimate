@@ -44,6 +44,9 @@ jobs:
           git describe --tags --dirty --match "v*" > out/version.txt
       - name: Build Web
         run: ./scripts/build_webui.sh
+      - name: Package app web bundle
+        # Live update for the native app (web/src/app/updates.js), attached to the same release as the firmware.
+        run: BUNDLE_VERSION="$(cat out/version.txt)" web/scripts/package-app-bundle.sh out "${{ github.ref_name }}"
       - name: Build controller
         run: |
           pio run -e controller
@@ -125,7 +128,7 @@ jobs:
         uses: ncipollo/release-action@bcfe5470707e8832e12347755757cec0eb3c22af
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          artifacts: release/*.bin
+          artifacts: release/*.bin,release/app-web.zip,release/app-web.json
           generateReleaseNotes: true
           allowUpdates: true
           token: ${{ secrets.GITHUB_TOKEN }}

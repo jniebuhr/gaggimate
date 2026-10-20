@@ -5,6 +5,7 @@
 
 import { useState, useEffect } from 'preact/hooks';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import { faMinus } from '@fortawesome/free-solid-svg-icons/faMinus';
 import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown';
@@ -50,6 +51,7 @@ export function ColumnControls({
   isIntegrated = false,
   headerChildren = null,
 }) {
+  const { t } = useLingui();
   const [expanded, setExpanded] = useState(false);
   const [presets, setPresets] = useState([]);
   const [selectedPresetId, setSelectedPresetId] = useState('');
@@ -93,19 +95,19 @@ export function ColumnControls({
   };
 
   const applyFactoryReset = () => {
-    if (confirm('Reset columns to system defaults?')) {
+    if (confirm(t`Reset columns to system defaults?`)) {
       onColumnsChange(getDefaultColumns());
       setSelectedPresetId('');
     }
   };
 
   const saveAsStandard = () => {
-    if (!confirm("Save current selection as your new 'Standard'?")) return;
+    if (!confirm(t`Save current selection as your new 'Standard'?`)) return;
     saveToStorage(ANALYZER_DB_KEYS.USER_STANDARD, Array.from(activeColumns));
   };
 
   const saveAsPreset = () => {
-    const name = prompt('Name for new Preset:');
+    const name = prompt(t`Name for new Preset:`);
     if (!name) return;
     const newPreset = { id: Date.now().toString(), name, columns: Array.from(activeColumns) };
     const updated = [...presets, newPreset];
@@ -117,7 +119,7 @@ export function ColumnControls({
   const deletePreset = e => {
     e.stopPropagation();
     if (!selectedPresetId || Object.values(BUILT_IN_PRESET_IDS).includes(selectedPresetId)) return;
-    if (!confirm('Delete this preset?')) return;
+    if (!confirm(t`Delete this preset?`)) return;
     const updated = presets.filter(p => p.id !== selectedPresetId);
     setPresets(updated);
     saveToStorage(ANALYZER_DB_KEYS.PRESETS, updated);
@@ -129,9 +131,9 @@ export function ColumnControls({
    */
   const getDetailedLabel = col => {
     let suffix = '';
-    if (col.type === 'se') suffix = ' Start/End';
-    else if (col.type === 'mm') suffix = ' Min/Max';
-    else if (col.type === 'avg') suffix = ' Avg (tw)';
+    if (col.type === 'se') suffix = ` ${t({ message: 'Start/End', context: 'column type' })}`;
+    else if (col.type === 'mm') suffix = ` ${t({ message: 'Min/Max', context: 'column type' })}`;
+    else if (col.type === 'avg') suffix = ` ${t({ message: 'Avg (tw)', context: 'column type' })}`;
     return col.label + suffix;
   };
 
@@ -160,7 +162,7 @@ export function ColumnControls({
           type='button'
           className='hover:bg-base-content/5 absolute inset-0 z-0 cursor-pointer rounded-md transition-colors duration-150'
           onClick={handleHeaderToggle}
-          aria-label={expanded ? 'Collapse column settings' : 'Expand column settings'}
+          aria-label={expanded ? t`Collapse column settings` : t`Expand column settings`}
           aria-expanded={expanded}
         />
         {/* Left Side: Toggle & Controls */}
@@ -177,8 +179,8 @@ export function ColumnControls({
                 className={getAnalyzerIconButtonClasses({
                   className: ANALYZER_ACTION_ICON_BUTTON_CLASS,
                 })}
-                title={expanded ? 'Collapse column settings' : 'Expand column settings'}
-                aria-label={expanded ? 'Collapse column settings' : 'Expand column settings'}
+                title={expanded ? t`Collapse column settings` : t`Expand column settings`}
+                aria-label={expanded ? t`Collapse column settings` : t`Expand column settings`}
               >
                 <FontAwesomeIcon
                   icon={expanded ? faMinus : faPlus}
@@ -194,7 +196,7 @@ export function ColumnControls({
                   className: `hidden sm:inline-flex ${TABLE_TOOLBAR_TEXT_BUTTON_CLASS}`,
                 })}
               >
-                Standard
+                <Trans context='column preset'>Standard</Trans>
               </button>
 
               <div className='relative flex h-8 min-h-0 items-center'>
@@ -220,10 +222,10 @@ export function ColumnControls({
                   })}
                 >
                   <option value='' disabled>
-                    Presets...
+                    {t`Presets...`}
                   </option>
-                  <option value={BUILT_IN_PRESET_IDS.ALL_METRICS}>All Metrics</option>
-                  <option value={BUILT_IN_PRESET_IDS.SYSTEM_INFO}>System Info</option>
+                  <option value={BUILT_IN_PRESET_IDS.ALL_METRICS}>{t`All Metrics`}</option>
+                  <option value={BUILT_IN_PRESET_IDS.SYSTEM_INFO}>{t`System Info`}</option>
                   <option disabled>──────────</option>
                   {presets.map(p => (
                     <option key={p.id} value={p.id}>
@@ -245,8 +247,8 @@ export function ColumnControls({
                       tone: 'error',
                       className: ANALYZER_ACTION_ICON_BUTTON_CLASS,
                     })}
-                    title='Delete preset'
-                    aria-label='Delete preset'
+                    title={t`Delete preset`}
+                    aria-label={t`Delete preset`}
                   >
                     <FontAwesomeIcon
                       icon={faTrashCan}
@@ -334,7 +336,7 @@ export function ColumnControls({
               type='button'
               className='hover:bg-base-content/5 absolute inset-0 z-0 cursor-pointer transition-colors duration-150'
               onClick={collapseControls}
-              aria-label='Collapse column settings'
+              aria-label={t`Collapse column settings`}
             />
             {/* Left Actions: Reset - Wrapped to stop propagation */}
             <div className='relative z-10 flex items-center gap-2'>
@@ -347,7 +349,7 @@ export function ColumnControls({
                     '!text-base-content/75 hover:!text-error h-8 min-h-0 gap-1.5 px-3 text-sm font-normal tracking-normal normal-case',
                 })}
               >
-                <FontAwesomeIcon icon={faUndo} /> Reset Defaults
+                <FontAwesomeIcon icon={faUndo} /> <Trans>Reset Defaults</Trans>
               </button>
             </div>
 
@@ -358,8 +360,8 @@ export function ColumnControls({
               className={getAnalyzerIconButtonClasses({
                 className: `relative z-10 ${ANALYZER_ACTION_ICON_BUTTON_CLASS}`,
               })}
-              title='Collapse column settings'
-              aria-label='Collapse column settings'
+              title={t`Collapse column settings`}
+              aria-label={t`Collapse column settings`}
             >
               <FontAwesomeIcon icon={faMinus} />
             </button>
@@ -373,7 +375,7 @@ export function ColumnControls({
                   className: TABLE_TOOLBAR_TEXT_BUTTON_CLASS,
                 })}
               >
-                Save as Standard
+                <Trans>Save as Standard</Trans>
               </button>
               <button
                 type='button'
@@ -382,7 +384,7 @@ export function ColumnControls({
                   className: `border-base-content/10 bg-transparent shadow-none ${TABLE_TOOLBAR_TEXT_BUTTON_CLASS}`,
                 })}
               >
-                Save as New Preset
+                <Trans>Save as New Preset</Trans>
               </button>
             </div>
           </div>

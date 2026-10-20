@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import { notesService } from '../services/NotesService';
 import { cleanName, detectDoseFromProfileName, getShotStorageKey } from '../utils/analyzerUtils';
@@ -20,7 +21,7 @@ export function getShotDateTimeLabel(timestamp) {
 }
 
 export function getAnalyzerShotDisplayName(currentShot, currentShotName = '') {
-  if (!currentShot) return 'No Shot Loaded';
+  if (!currentShot) return t`No Shot Loaded`;
   if (currentShot.source === 'gaggimate') return `#${currentShot.id || currentShotName || '-'}`;
   return cleanName(
     currentShotName || currentShot.name || currentShot.storageKey || currentShot.id || '-',

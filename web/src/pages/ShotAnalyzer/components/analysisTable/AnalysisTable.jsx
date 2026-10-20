@@ -2,6 +2,8 @@
 
 import { Fragment } from 'preact';
 import { useRef } from 'preact/hooks';
+import { t } from '@lingui/core/macro';
+import { Trans } from '@lingui/react/macro';
 import { cleanName, columnConfig } from '../../utils/analyzerUtils';
 import { ColumnControls } from './ColumnControls';
 import {
@@ -24,6 +26,14 @@ import {
   useTouchOptimizedPointer,
   useVerticalWheelForwarding,
 } from './useAnalysisTableInteraction';
+
+function getShotAriaLabel(shotNumber) {
+  return t`Shot ${shotNumber}`;
+}
+
+function getPhaseHeading(phaseNumber) {
+  return t`Phase ${phaseNumber}`;
+}
 
 export function AnalysisTable({
   results,
@@ -149,7 +159,7 @@ export function AnalysisTable({
                         colSpan={compareTableColumnCount}
                         className={`border-base-content/10 px-3 py-2 text-left text-xs ${tableHeaderTextClass}`}
                       >
-                        Phase {phaseIndex + 1}
+                        {getPhaseHeading(phaseIndex + 1)}
                       </td>
                     </tr>
                     {compareEntries.map((entry, compareIndex) => {
@@ -172,7 +182,7 @@ export function AnalysisTable({
                                 ]
                                   .filter(Boolean)
                                   .join(' ')}
-                                aria-label={`Shot ${compareIndex + 1}`}
+                                aria-label={getShotAriaLabel(compareIndex + 1)}
                               >
                                 {compareIndex + 1}
                               </span>
@@ -216,7 +226,7 @@ export function AnalysisTable({
                     colSpan={compareTableColumnCount}
                     className={`border-base-content/10 border-t-2 px-3 py-2 text-left text-xs ${tableHeaderTextClass}`}
                   >
-                    Totals
+                    <Trans>Totals</Trans>
                   </td>
                 </tr>
                 {compareEntries.map((entry, compareIndex) => (
@@ -234,7 +244,7 @@ export function AnalysisTable({
                           ]
                             .filter(Boolean)
                             .join(' ')}
-                          aria-label={`Shot ${compareIndex + 1}`}
+                          aria-label={getShotAriaLabel(compareIndex + 1)}
                         >
                           {compareIndex + 1}
                         </span>
@@ -248,7 +258,7 @@ export function AnalysisTable({
                     <td
                       className={`px-2 py-2 text-left whitespace-nowrap ${strongDividerClass} ${primaryTableTextClass}`}
                     >
-                      Total
+                      <Trans>Total</Trans>
                     </td>
                     {visibleColumns.map(col => (
                       <td
@@ -311,7 +321,7 @@ export function AnalysisTable({
                     <td
                       className={`px-2 py-2 text-left ${strongDividerClass} ${tableHeaderTextClass}`}
                     >
-                      Total
+                      <Trans>Total</Trans>
                     </td>
                     {visibleColumns.map(col => (
                       <td

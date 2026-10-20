@@ -3,6 +3,8 @@
 // - free-text clauses combine with AND
 // - repeated field clauses combine with OR (except date clauses, which combine with AND)
 // - date expressions are evaluated in local/browser time
+import { t } from '@lingui/core/macro';
+
 const SUPPORTED_FIELDS = new Set(['name', 'profile', 'id', 'source', 'date', 'pinned']);
 const SUPPORTED_FIELD_LIST = Array.from(SUPPORTED_FIELDS).join(', ');
 const SOURCE_ALIASES = {
@@ -56,7 +58,7 @@ function splitQueryClauses(queryString) {
 function parseQuotedOrPlainValue(rawValue) {
   const trimmed = String(rawValue ?? '').trim();
   if (!trimmed) {
-    return { error: 'Empty value.' };
+    return { error: t`Empty value.` };
   }
 
   const startsQuote = trimmed.startsWith('"');
@@ -64,7 +66,7 @@ function parseQuotedOrPlainValue(rawValue) {
 
   if (startsQuote || endsQuote) {
     if (!(startsQuote && endsQuote) || trimmed.length < 2) {
-      return { error: 'Unclosed quoted value.' };
+      return { error: t`Unclosed quoted value.` };
     }
     const inner = trimmed.slice(1, -1).replaceAll('\\"', '"').replaceAll('\\\\', '\\');
     return { value: inner.trim(), exact: true };
@@ -77,7 +79,7 @@ function parsePinnedBooleanValue(rawValue) {
   const value = normalizeText(rawValue);
   if (['true', 'yes', '1'].includes(value)) return { value: true, error: null };
   if (['false', 'no', '0'].includes(value)) return { value: false, error: null };
-  return { value: null, error: 'pinned: use true or false.' };
+  return { value: null, error: t`pinned: use true or false.` };
 }
 
 export function parseStatisticsQuery(queryString) {
@@ -95,9 +97,11 @@ export function parseStatisticsQuery(queryString) {
     if (!fieldMatch) {
       const freeValue = parseQuotedOrPlainValue(trimmed);
       if (freeValue.error) {
+        const clauseNumber = index + 1;
+        const valueError = freeValue.error;
         errors.push({
           code: 'invalid_free_text',
-          message: `Query clause ${index + 1}: ${freeValue.error}`,
+          message: t`Query clause ${clauseNumber}: ${valueError}`,
           raw: trimmed,
         });
         return;
@@ -116,9 +120,10 @@ export function parseStatisticsQuery(queryString) {
     const field = normalizeText(fieldRaw);
 
     if (!SUPPORTED_FIELDS.has(field)) {
+      const supportedFields = SUPPORTED_FIELD_LIST;
       warnings.push({
         code: 'unknown_field',
-        message: `Unknown field "${fieldRaw}". Supported: ${SUPPORTED_FIELD_LIST}.`,
+        message: t`Unknown field "${fieldRaw}". Supported: ${supportedFields}.`,
         raw: trimmed,
       });
       return;
@@ -129,7 +134,7 @@ export function parseStatisticsQuery(queryString) {
       if (!dateMatch) {
         errors.push({
           code: 'date_operator_required',
-          message: `date: requires an operator (>, >=, <, <=, =). Example: date:>h-7d`,
+          message: t`date: requires an operator (>, >=, <, <=, =). Example: date:>h-7d`,
           raw: trimmed,
         });
         return;
@@ -140,7 +145,7 @@ export function parseStatisticsQuery(queryString) {
       if (!exprTrimmed) {
         errors.push({
           code: 'date_expression_missing',
-          message: 'date: expression is empty.',
+          message: t`date: expression is empty.`,
           raw: trimmed,
         });
         return;
@@ -158,9 +163,10 @@ export function parseStatisticsQuery(queryString) {
 
     const parsedValue = parseQuotedOrPlainValue(valueRaw);
     if (parsedValue.error) {
+      const valueError = parsedValue.error;
       errors.push({
         code: 'invalid_field_value',
-        message: `Invalid value for ${field}: ${parsedValue.error}`,
+        message: t`Invalid value for ${field}: ${valueError}`,
         raw: trimmed,
       });
       return;
@@ -224,7 +230,7 @@ function parseAbsoluteLocalDateExpression(expr) {
     minute < 0 ||
     minute > 59
   ) {
-    return { error: 'Invalid date or time value.' };
+    return { error: t`Invalid date or time value.` };
   }
 
   const date = new Date(year, month - 1, day, hour, minute, 0, 0);
@@ -235,7 +241,7 @@ function parseAbsoluteLocalDateExpression(expr) {
     date.getHours() !== hour ||
     date.getMinutes() !== minute
   ) {
-    return { error: 'Invalid calendar date.' };
+    return { error: t`Invalid calendar date.` };
   }
 
   return { valueMs: date.getTime(), hasTime };
@@ -244,7 +250,7 @@ function parseAbsoluteLocalDateExpression(expr) {
 export function parseDateExpressionToEpochMs(expr, now = new Date()) {
   const trimmed = String(expr ?? '').trim();
   if (!trimmed) {
-    return { valueMs: null, hasTime: false, error: 'Empty date expression.' };
+    return { valueMs: null, hasTime: false, error: t`Empty date expression.` };
   }
 
   // `h` means "now" for historical reasons; both `d` and legacy `t` are accepted as day suffixes.
@@ -258,7 +264,7 @@ export function parseDateExpressionToEpochMs(expr, now = new Date()) {
 
     const amount = Number(amountRaw);
     if (!Number.isFinite(amount)) {
-      return { valueMs: null, hasTime: false, error: 'Invalid relative day value.' };
+      return { valueMs: null, hasTime: false, error: t`Invalid relative day value.` };
     }
     const deltaMs = amount * 24 * 60 * 60 * 1000;
     const next = sign === '+' ? baseMs + deltaMs : baseMs - deltaMs;
@@ -270,7 +276,7 @@ export function parseDateExpressionToEpochMs(expr, now = new Date()) {
     return {
       valueMs: null,
       hasTime: false,
-      error: 'Unsupported date expression. Use DD.MM.YYYY, optional HH:MM, or h-7d.',
+      error: t`Unsupported date expression. Use DD.MM.YYYY, optional HH:MM, or h-7d.`,
     };
   }
   if (absolute.error) {
@@ -352,10 +358,12 @@ function matchesSourceClause(shotMeta, clause) {
 function compileDateClause(clause, options) {
   const parsed = parseDateExpressionToEpochMs(clause.value, options.now);
   if (parsed.error || !Number.isFinite(parsed.valueMs)) {
+    const clauseRaw = clause.raw;
+    const parseError = parsed.error || t`Unknown error.`;
     return {
       error: {
         code: 'date_parse_failed',
-        message: `Invalid date expression in "${clause.raw}": ${parsed.error || 'Unknown error.'}`,
+        message: t`Invalid date expression in "${clauseRaw}": ${parseError}`,
         raw: clause.raw,
       },
       matcher: null,
@@ -438,9 +446,11 @@ function groupShotCandidateClauses({ clauses, now, dateBasisMode, errors }) {
         ? (() => {
             const parsedPinned = parsePinnedBooleanValue(clause.value);
             if (parsedPinned.error) {
+              const clauseRaw = clause.raw;
+              const pinnedError = parsedPinned.error;
               errors.push({
                 code: 'pinned_value_invalid',
-                message: `Invalid pinned expression in "${clause.raw}": ${parsedPinned.error}`,
+                message: t`Invalid pinned expression in "${clauseRaw}": ${pinnedError}`,
                 raw: clause.raw,
               });
               return null;

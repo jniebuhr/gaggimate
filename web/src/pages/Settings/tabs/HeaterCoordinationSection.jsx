@@ -1,10 +1,12 @@
+import { Trans, useLingui } from '@lingui/react/macro';
 import Section from '../../../components/Card.jsx';
 import { machine } from '../../../services/ApiService.js';
 
 export function HeaterCoordinationSection({ formData, onChange }) {
+  const { t } = useLingui();
   if (!machine.value.capabilities.dualBoiler) return null;
   return (
-    <Section title='Heater Coordination' className='h-full'>
+    <Section title={t`Heater Coordination`} className='h-full'>
       <label
         htmlFor='heaterCoordinationEnabled'
         className='label cursor-pointer justify-start gap-3'
@@ -17,14 +19,21 @@ export function HeaterCoordinationSection({ formData, onChange }) {
           checked={!!formData.heaterCoordinationEnabled}
           onChange={onChange('heaterCoordinationEnabled')}
         />
-        <span>Enable heater coordination</span>
+        <span>
+          <Trans>Enable heater coordination</Trans>
+        </span>
       </label>
       <p className='mb-4 text-sm opacity-70'>
-        Power the heaters one at a time instead of in parallel, brew boiler first. Only needed when
-        the circuit cannot carry both heaters at once (e.g. 120 V); 230 V supplies can run both.
+        <Trans>
+          Power the heaters one at a time instead of in parallel, brew boiler first. Only needed
+          when the circuit cannot carry both heaters at once (e.g. 120 V); 230 V supplies can run
+          both.
+        </Trans>
       </p>
       <label htmlFor='heaterHandoverMs' className='fieldset'>
-        <span className='fieldset-label'>Heater handover pause (ms)</span>
+        <span className='fieldset-label'>
+          <Trans>Heater handover pause (ms)</Trans>
+        </span>
         <input
           id='heaterHandoverMs'
           name='heaterHandoverMs'

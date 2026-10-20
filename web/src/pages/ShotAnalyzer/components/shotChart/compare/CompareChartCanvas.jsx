@@ -1,7 +1,8 @@
 /* global globalThis */
 
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
-import Chart from 'chart.js/auto';
+import { useLingui } from '@lingui/react/macro';
+import Chart from '../../../../../utils/lineChart.js';
 import {
   areTooltipStatesEqual,
   createHiddenExternalTooltipLayout,
@@ -47,6 +48,7 @@ export function CompareChartCanvas({
   staticMetricContext = null,
   useStaticTooltip = false,
 }) {
+  const { t } = useLingui();
   const canvasRef = useRef(null);
   const chartRef = useRef(null);
   const containerRef = useRef(null);
@@ -393,7 +395,7 @@ export function CompareChartCanvas({
       {shouldRenderMobileScrubber ? (
         <MobileChartScrubber
           active={hasActiveScrubValue}
-          ariaLabel='Scrub compare time'
+          ariaLabel={t`Scrub compare time`}
           insets={scrubberInsets}
           max={scrubberMax}
           min={scrubberMin}

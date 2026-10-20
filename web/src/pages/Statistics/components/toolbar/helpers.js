@@ -5,6 +5,7 @@ import {
   SEGMENT_BUTTON_BASE_CLASS,
   COMPACT_SEGMENT_BUTTON_BASE_CLASS,
 } from './constants';
+import { plural, t } from '@lingui/core/macro';
 
 export function getPrimaryDropdownToneClasses() {
   return 'bg-primary text-primary-content hover:bg-primary/92';
@@ -92,32 +93,49 @@ export function getDateRangeDisplay({
 
   if (hasManualDateFilter) {
     if (fromText && toText) {
-      return { label: 'Date Range', fromText, toText, isAuto: false };
+      return { label: t`Date Range`, fromText, toText, isAuto: false };
     }
     if (fromText) {
-      return { label: 'From', fromText, toText: '', isAuto: false };
+      return {
+        label: t({ message: 'From', context: 'date range start' }),
+        fromText,
+        toText: '',
+        isAuto: false,
+      };
     }
     if (toText) {
-      return { label: 'To', fromText: '', toText, isAuto: false };
+      return {
+        label: t({ message: 'To', context: 'date range end' }),
+        fromText: '',
+        toText,
+        isAuto: false,
+      };
     }
-    return { label: 'Date Range', fromText: 'No dates', toText: '', isAuto: false };
+    return { label: t`Date Range`, fromText: t`No dates`, toText: '', isAuto: false };
   }
 
   if (fromText || toText) {
-    return { label: 'Auto Range', fromText: fromText || 'No date', toText, isAuto: true };
+    return { label: t`Auto Range`, fromText: fromText || t`No date`, toText, isAuto: true };
   }
 
-  return { label: 'Auto Range', fromText: 'No dates', toText: '', isAuto: true };
+  return { label: t`Auto Range`, fromText: t`No dates`, toText: '', isAuto: true };
 }
 
-export function formatCountLabel(value, singular, plural) {
+function toCount(value) {
   const numericValue = Number(value);
-  if (!Number.isFinite(numericValue)) return `0 ${plural}`;
-  return `${numericValue} ${numericValue === 1 ? singular : plural}`;
+  return Number.isFinite(numericValue) ? numericValue : 0;
+}
+
+export function formatShotCountLabel(value) {
+  return plural(toCount(value), { one: '# shot', other: '# shots' });
+}
+
+export function formatProfileCountLabel(value) {
+  return plural(toCount(value), { one: '# profile', other: '# profiles' });
 }
 
 export function formatCollapsedDateRangeText(startValue, endValue) {
-  const fromText = formatToolbarDateTimeDisplay(startValue) || 'No dates';
+  const fromText = formatToolbarDateTimeDisplay(startValue) || t`No dates`;
   const toText = formatToolbarDateTimeDisplay(endValue) || '';
   return toText ? `${fromText} - ${toText}` : fromText;
 }
@@ -126,20 +144,20 @@ export function getCandidateSummary({ metadataLoading, candidateCount }) {
   if (metadataLoading) {
     return {
       candidateLabel: '...',
-      resetAriaCount: 'loading candidates',
+      resetAriaCount: t`loading candidates`,
     };
   }
 
   if (Number.isFinite(candidateCount)) {
     return {
       candidateLabel: String(candidateCount),
-      resetAriaCount: `${candidateCount} candidates`,
+      resetAriaCount: plural(candidateCount, { one: '# candidate', other: '# candidates' }),
     };
   }
 
   return {
     candidateLabel: '-',
-    resetAriaCount: 'unknown candidates',
+    resetAriaCount: t`unknown candidates`,
   };
 }
 
@@ -158,9 +176,9 @@ export function getToolbarMessages({ parseErrors, parseWarnings, metadataError }
 }
 
 export function getDateBasisOptionTitle(value) {
-  if (value === 'shot') return 'Use shot timestamp only';
-  if (value === 'auto') return 'Use shot timestamp, fallback to upload time';
-  return 'Use upload time only';
+  if (value === 'shot') return t`Use shot timestamp only`;
+  if (value === 'auto') return t`Use shot timestamp, fallback to upload time`;
+  return t`Use upload time only`;
 }
 
 export function closeParentDetails(target) {

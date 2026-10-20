@@ -196,17 +196,41 @@ void BLEScalePlugin::update() {
         // Poll slow-changing metadata (battery, unit). Flow rate is
         // emitted inline with each weight measurement, not polled here.
         pollScaleMetadata();
-    } else if (!doConnect && controller->getSettings().getSavedScale() != "" && scanner != nullptr) {
-        // Protected scanner access with null checks
-        auto discoveredScales = scanner->getDiscoveredScales();
-        for (const auto &d : discoveredScales) {
-            if (d.getAddress().toString() == controller->getSettings().getSavedScale().c_str()) {
-                ESP_LOGI("BLEScalePlugin", "Connecting to last known scale");
-                connect(d.getAddress().toString());
-                break;
+    } else if (!doConnect && scanner != nullptr) {
+        if (controller->getSettings().getSavedScale() != "") {
+            auto discoveredScales = scanner->getDiscoveredScales();
+            for (const auto &d : discoveredScales) {
+                if (d.getAddress().toString() == controller->getSettings().getSavedScale().c_str()) {
+                    ESP_LOGI("BLEScalePlugin", "Connecting to last known scale");
+                    connect(d.getAddress().toString());
+                    return;
+                }
             }
         }
+        maintainScan(millis());
     }
+}
+
+// Keeps the scale scan alive and bounded while no scale is connected.
+void BLEScalePlugin::maintainScan(unsigned long now) {
+    if (!scanner->isScanRunning()) {
+        scanRunningSince = 0;
+        scanner->initializeAsyncScan();
+        return;
+    }
+    if (scanRunningSince == 0) {
+        scanRunningSince = now;
+        return;
+    }
+    // The NimBLE scan is shared: a client connect (EBUSY) or a host reset stops it behind the scanner's back.
+    if (!NimBLEDevice::getScan()->isScanning()) {
+        ESP_LOGW("BLEScalePlugin", "Scale scan stopped externally, restarting");
+    } else if (scanWindowOpen || now - scanRunningSince < SCAN_REFRESH_MS) {
+        return;
+    }
+    // stop() + clearResults() frees NimBLE's pending results, which otherwise grow for the whole session.
+    scanner->restartAsyncScan();
+    scanRunningSince = now;
 }
 
 void BLEScalePlugin::connect(const std::string &uuid) {
