@@ -27,6 +27,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <stdarg.h>
+
 #include "Print.h"
 extern "C" {
 #include "time.h"
