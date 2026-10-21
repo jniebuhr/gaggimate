@@ -88,6 +88,8 @@ index rating, and a non-empty `doseOut` overrides the recorded volume.
 ```
 
 Removes the shot log and its notes and marks the index entry deleted. Response `msg` is `"Ok"`.
+If the log file cannot be removed, the response carries `"error": "Delete failed"` and the
+index entry is left untouched.
 
 ### Delete all shots
 
