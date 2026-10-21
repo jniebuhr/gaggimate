@@ -1,3 +1,5 @@
+import { useEffect, useId, useRef } from 'preact/hooks';
+
 export default function ConfirmDeleteModal({
   title,
   description,
@@ -12,12 +14,39 @@ export default function ConfirmDeleteModal({
   onConfirm,
   onCancelBusy,
 }) {
+  const titleId = useId();
+  const cancelRef = useRef(null);
+
+  useEffect(() => {
+    cancelRef.current?.focus();
+  }, []);
+
+  useEffect(() => {
+    if (busy) return;
+    const onKeyDown = event => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        event.stopPropagation();
+        onClose();
+      }
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [busy, onClose]);
+
   return (
     <div className='bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black p-4'>
-      <div className='max-h-[90vh] w-full max-w-md overflow-y-auto rounded-lg bg-white shadow-xl dark:bg-gray-800'>
+      <div
+        role='dialog'
+        aria-modal='true'
+        aria-labelledby={titleId}
+        className='max-h-[90vh] w-full max-w-md overflow-y-auto rounded-lg bg-white shadow-xl dark:bg-gray-800'
+      >
         <div className='p-6'>
           <div className='mb-4 flex items-center justify-between'>
-            <h3 className='text-lg font-semibold'>{title}</h3>
+            <h3 id={titleId} className='text-lg font-semibold'>
+              {title}
+            </h3>
             {!busy && (
               <button
                 onClick={onClose}
@@ -59,6 +88,7 @@ export default function ConfirmDeleteModal({
             ) : (
               <>
                 <button
+                  ref={cancelRef}
                   type='button'
                   onClick={onClose}
                   disabled={busy}
