@@ -602,14 +602,19 @@ void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &respo
         while (paddedId.length() < 6) {
             paddedId = "0" + paddedId;
         }
-        fs->remove("/h/" + paddedId + ".slog");
-        fs->remove(notesPath(id.toInt()));
-        fs->remove(legacyNotesPath(id.toInt()));
+        if (!fs->remove("/h/" + paddedId + ".slog")) {
+            // Report the failure so the bulk delete loop can surface the id
+            // instead of counting a shot that is still on disk as deleted.
+            response["error"] = "Delete failed";
+        } else {
+            fs->remove(notesPath(id.toInt()));
+            fs->remove(legacyNotesPath(id.toInt()));
 
-        // Mark as deleted in index
-        markIndexDeleted(id.toInt());
+            // Mark as deleted in index
+            markIndexDeleted(id.toInt());
 
-        response["msg"] = "Ok";
+            response["msg"] = "Ok";
+        }
     } else if (type == "req:history:delete-all") {
         if (recording || extendedRecording || isFileOpen) {
             response["error"] = "Recording in progress";

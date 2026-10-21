@@ -35,40 +35,10 @@ import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
 import { faFilterCircleXmark } from '@fortawesome/free-solid-svg-icons/faFilterCircleXmark';
 import { Tooltip } from '../../components/Tooltip.jsx';
 import { downloadJson } from '../../utils/download.js';
+import { toExportShot } from './exportShot.js';
+import ConfirmDeleteModal from './ConfirmDeleteModal.jsx';
 
 const connected = computed(() => machine.value.connected);
-
-function round2(v) {
-  if (v == null || Number.isNaN(v)) return v;
-  return Math.round((v + Number.EPSILON) * 100) / 100;
-}
-
-// Same shaping as HistoryCard's single-shot export so bulk files stay compatible.
-function toExportShot(shot, notes) {
-  const exportData = { ...shot, notes: notes ?? shot.notes ?? null };
-  if (Array.isArray(exportData.samples)) {
-    exportData.samples = exportData.samples.map(s => ({
-      t: s.t,
-      tt: round2(s.tt),
-      ct: round2(s.ct),
-      tp: round2(s.tp),
-      cp: round2(s.cp),
-      fl: round2(s.fl),
-      tf: round2(s.tf),
-      pf: round2(s.pf),
-      vf: round2(s.vf),
-      v: round2(s.v),
-      ev: round2(s.ev),
-      pr: round2(s.pr),
-      wp: round2(s.wp),
-      systemInfo: s.systemInfo,
-      phaseNumber: s.phaseNumber,
-      phaseDisplayNumber: s.phaseDisplayNumber,
-    }));
-  }
-  exportData.volume = round2(exportData.volume);
-  return exportData;
-}
 
 export function ShotHistory() {
   const apiService = useContext(ApiServiceContext);
@@ -368,8 +338,13 @@ export function ShotHistory() {
     setShowDeleteFilteredModal(false);
     setDeletingFiltered(false);
     setDeleteFilteredProgress({ current: 0, total: 0 });
-    setSearchTerm('');
-    setCurrentPage(1);
+    // Keep the search term when the run was cancelled or some shots failed, so
+    // the remaining matches (and any failures) stay visible.
+    const completed = !cancelled && failedIds.length === 0;
+    if (completed) {
+      setSearchTerm('');
+      setCurrentPage(1);
+    }
     await loadHistory();
     if (cancelled) return;
     if (failedIds.length > 0) {
@@ -618,117 +593,29 @@ export function ShotHistory() {
       )}
 
       {showDeleteAllModal && (
-        <div className='bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black p-4'>
-          <div className='max-h-[90vh] w-full max-w-md overflow-y-auto rounded-lg bg-white shadow-xl dark:bg-gray-800'>
-            <div className='p-6'>
-              <div className='mb-4 flex items-center justify-between'>
-                <h3 className='text-lg font-semibold'>Delete all shots?</h3>
-                {!deletingAll && (
-                  <button
-                    onClick={() => setShowDeleteAllModal(false)}
-                    className='text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
-                    aria-label='Close'
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
-              <p className='mb-6 text-sm text-gray-600 dark:text-gray-300'>
-                This will permanently delete all {history.length} shots from the device. This cannot
-                be undone.
-              </p>
-              <div className='flex justify-end space-x-3'>
-                <button
-                  type='button'
-                  onClick={() => setShowDeleteAllModal(false)}
-                  disabled={deletingAll}
-                  className='rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300 disabled:opacity-50 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500'
-                >
-                  Cancel
-                </button>
-                <button
-                  type='button'
-                  onClick={onDeleteAll}
-                  disabled={deletingAll}
-                  className='rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50'
-                >
-                  {deletingAll ? 'Deleting…' : 'Delete all'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <ConfirmDeleteModal
+          title='Delete all shots?'
+          description={`This will permanently delete all ${history.length} shots from the device. This cannot be undone.`}
+          confirmLabel='Delete all'
+          busyLabel='Deleting…'
+          descriptionClassName='mb-6 text-sm text-gray-600 dark:text-gray-300'
+          busy={deletingAll}
+          onClose={() => setShowDeleteAllModal(false)}
+          onConfirm={onDeleteAll}
+        />
       )}
 
       {showDeleteFilteredModal && (
-        <div className='bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black p-4'>
-          <div className='max-h-[90vh] w-full max-w-md overflow-y-auto rounded-lg bg-white shadow-xl dark:bg-gray-800'>
-            <div className='p-6'>
-              <div className='mb-4 flex items-center justify-between'>
-                <h3 className='text-lg font-semibold'>Delete filtered shots?</h3>
-                {!deletingFiltered && (
-                  <button
-                    onClick={() => setShowDeleteFilteredModal(false)}
-                    className='text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
-                    aria-label='Close'
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
-              <p className='mb-4 text-sm text-gray-600 dark:text-gray-300'>
-                This will permanently delete the {totalFilteredItems} shots matching your current
-                search and filters (across all pages). This cannot be undone.
-              </p>
-              {deletingFiltered && (
-                <div className='mb-4 text-center'>
-                  <div className='mb-2 text-sm font-semibold opacity-70'>
-                    {deleteFilteredProgress.total > 0
-                      ? `Deleting shot ${deleteFilteredProgress.current} of ${deleteFilteredProgress.total}...`
-                      : 'Preparing deletion...'}
-                  </div>
-                  {deleteFilteredProgress.total > 0 ? (
-                    <progress
-                      className='progress progress-error w-full max-w-xs'
-                      value={deleteFilteredProgress.current}
-                      max={deleteFilteredProgress.total}
-                    />
-                  ) : (
-                    <progress className='progress progress-error w-full max-w-xs' />
-                  )}
-                </div>
-              )}
-              <div className='flex justify-end space-x-3'>
-                {deletingFiltered ? (
-                  <button
-                    type='button'
-                    onClick={cancelBulk}
-                    className='rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500'
-                  >
-                    Cancel deletion
-                  </button>
-                ) : (
-                  <>
-                    <button
-                      type='button'
-                      onClick={() => setShowDeleteFilteredModal(false)}
-                      className='rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500'
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type='button'
-                      onClick={onDeleteFiltered}
-                      className='rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50'
-                    >
-                      Delete {totalFilteredItems} shots
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
+        <ConfirmDeleteModal
+          title='Delete filtered shots?'
+          description={`This will permanently delete the ${totalFilteredItems} shots matching your current search and filters (across all pages). This cannot be undone.`}
+          confirmLabel={`Delete ${totalFilteredItems} shots`}
+          busy={deletingFiltered}
+          progress={deleteFilteredProgress}
+          onClose={() => setShowDeleteFilteredModal(false)}
+          onConfirm={onDeleteFiltered}
+          onCancelBusy={cancelBulk}
+        />
       )}
     </>
   );
