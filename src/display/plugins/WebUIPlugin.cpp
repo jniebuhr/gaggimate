@@ -385,6 +385,14 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setStartupFillTime(request->arg("startupFillTime").toInt() * 1000);
             if (request->hasArg("steamFillTime"))
                 settings->setSteamFillTime(request->arg("steamFillTime").toInt() * 1000);
+            if (request->hasArg("smartDoseActive")) settings->setSmartDoseActive(parseBoolArg(request->arg("smartDoseActive")));
+            if (request->hasArg("smartDoseAutomagic")) settings->setSmartDoseAutomagic(parseBoolArg(request->arg("smartDoseAutomagic")));
+            if (request->hasArg("dosingCupEnabled")) settings->setDosingCupEnabled(parseBoolArg(request->arg("dosingCupEnabled")));
+            if (request->hasArg("portafilterEnabled")) settings->setPortafilterEnabled(parseBoolArg(request->arg("portafilterEnabled")));
+            if (request->hasArg("portafilterScale")) settings->setPortafilterScale(request->arg("portafilterScale"));
+            if (request->hasArg("smartDoseMode")) settings->setSmartDoseMode(request->arg("smartDoseMode"));
+            if (request->hasArg("manualDoseScale")) settings->setManualDoseScale(request->arg("manualDoseScale"));
+            if (request->hasArg("smartDoseScale")) settings->setSmartDoseScale(request->arg("smartDoseScale"));
             if (request->hasArg("smartGrindActive"))
                 settings->setSmartGrindActive(parseBoolArg(request->arg("smartGrindActive")));
             if (request->hasArg("smartGrindIp"))
@@ -579,6 +587,16 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["boilerFillActive"] = settings.isBoilerFillActive();
     doc["startupFillTime"] = settings.getStartupFillTime() / 1000;
     doc["steamFillTime"] = settings.getSteamFillTime() / 1000;
+    doc["smartDoseActive"] = settings.isSmartDoseActive();
+    doc["smartDoseAutomagic"] = settings.isSmartDoseAutomagic();
+    doc["dosingCupEnabled"] = settings.isDosingCupEnabled();
+    doc["portafilterEnabled"] = settings.isPortafilterEnabled();
+    doc["portafilterScale"] = settings.getPortafilterScale();
+    doc["portafilterWeight"] = settings.getPortafilterWeight();
+    doc["smartDoseMode"] = settings.getSmartDoseMode();
+    doc["smartDoseScale"] = settings.getSmartDoseScale();
+    doc["manualDoseScale"] = settings.getManualDoseScale();
+    doc["dosingCupWeight"] = settings.getDosingCupWeight();
     doc["smartGrindActive"] = settings.isSmartGrindActive();
     doc["smartGrindIp"] = settings.getSmartGrindIp();
     doc["smartGrindMode"] = settings.getSmartGrindMode();

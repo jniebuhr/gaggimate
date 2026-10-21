@@ -21,6 +21,7 @@
 #include <display/plugins/LedControlPlugin.h>
 #include <display/plugins/ShotHistoryPlugin.h>
 #include <display/plugins/SmartGrindPlugin.h>
+#include <display/plugins/SmartDosePlugin.h>
 #include <display/plugins/WebUIPlugin.h>
 #include <display/plugins/mahlkonig/MahlkonigPlugin.h>
 #include <display/util/FsUtil.h>
@@ -117,6 +118,7 @@ void Controller::setup() {
 #ifndef GAGGIMATE_SIM
     pluginManager->registerPlugin(&BLEScales);
 #endif
+    pluginManager->registerPlugin(&SmartDose);
     pluginManager->registerPlugin(new LedControlPlugin());
     pluginManager->registerPlugin(new AutoWakeupPlugin());
     pluginManager->registerPlugin(new CleaningSchedulePlugin());
