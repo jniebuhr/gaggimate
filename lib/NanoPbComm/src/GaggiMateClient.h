@@ -68,6 +68,7 @@ class GaggiMateClient {
     gm::Payload buildAutotune(uint32_t testTime, uint32_t samples, uint32_t heaterWattage);
     gm::Payload buildPressureScale(float scale);
     gm::Payload buildTare();
+    gm::Payload buildHardwareScaleTare();
     gm::Payload buildScaleFactors(float scaleFactor1, float scaleFactor2, uint16_t sampleRateSps = 10,
                                   float idleFilterAlpha = 0.80f, float activeFilterAlpha = 0.80f) {
         gm::Payload p = gaggimate_Payload_init_zero;
@@ -98,6 +99,7 @@ class GaggiMateClient {
         _endpoint.send(buildScaleFactors(scaleFactor1, scaleFactor2, sampleRateSps, idleFilterAlpha, activeFilterAlpha));
     }
     void tare();
+    void tareHardwareScale();
     // Drive several LED channels in one message; per-channel sends would coalesce down to a single channel.
     void sendLedControl(const LedChannelCommand *channels, size_t count);
 

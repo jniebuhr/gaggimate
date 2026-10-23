@@ -43,6 +43,7 @@ message Payload {
         AutotuneRequest autotune = 8;
         PressureScale pressure_scale = 9;
         Tare tare = 10;
+        HardwareScaleTare hardware_scale_tare = 31;
         LedControl led = 11;
         ScaleFactors scale_factors = 12;
         HeaterSettings heater = 13;
@@ -144,7 +145,10 @@ message PressureScale {
     float scale = 1;
 }
 
+// Reset pump-derived volume counters only.
 message Tare {}
+
+message HardwareScaleTare {}
 
 message ScaleFactors {
     float scale_factor1 = 1;

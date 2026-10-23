@@ -19,7 +19,7 @@ using std::vector;
 // Protocol version the firmware checks against; report the same so there's no
 // "protocol mismatch" path in the simulator.
 namespace gm_proto {
-static constexpr uint32_t PROTOCOL_VERSION = 8;
+static constexpr uint32_t PROTOCOL_VERSION = 9;
 }
 
 // Stand-in for the nanopb gm::Payload: a tagged command the build*() helpers
@@ -38,6 +38,7 @@ struct Payload {
         PressureScale,
         ScaleFactors,
         Tare,
+        HardwareScaleTare,
         Led
     } type = None;
     BoilerCommand boiler;
@@ -93,6 +94,7 @@ class GaggiMateClient {
     gm::Payload buildAutotune(uint32_t testTime, uint32_t samples, uint32_t heaterWattage);
     gm::Payload buildPressureScale(float scale);
     gm::Payload buildTare();
+    gm::Payload buildHardwareScaleTare();
     gm::Payload buildScaleFactors(float, float, uint16_t = 10, float = 0.80f, float = 0.80f) {
         return {gm::Payload::ScaleFactors};
     }
@@ -109,6 +111,7 @@ class GaggiMateClient {
     void sendPressureScale(float scale);
     void sendScaleFactors(float, float, uint16_t = 10, float = 0.80f, float = 0.80f) {} // no hardware scale in the mock
     void tare();
+    void tareHardwareScale();
     void sendLedControl(const LedChannelCommand *channels, size_t count);
 
     void send(const gm::Payload &payload);
