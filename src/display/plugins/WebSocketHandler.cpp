@@ -287,7 +287,7 @@ void WebSocketHandler::handleWebSocketData(AsyncWebSocket *server, AsyncWebSocke
                 } else if (msgType == "req:flush:start") {
                     handleFlushStart(client->id(), doc);
                 } else if (msgType == "req:scale:tare") {
-                    controller->getClientController()->tare();
+                    controller->getClientController()->tareHardwareScale();
                 } else if (msgType == "req:flush:stop") {
                     handleFlushStop(client->id(), doc);
                 } else if (auto it = pluginRequestHandlers.find(msgType); it != pluginRequestHandlers.end()) {

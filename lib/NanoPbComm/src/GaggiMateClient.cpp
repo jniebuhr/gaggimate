@@ -130,6 +130,12 @@ gm::Payload GaggiMateClient::buildTare() {
     return p;
 }
 
+gm::Payload GaggiMateClient::buildHardwareScaleTare() {
+    gm::Payload p = gaggimate_Payload_init_zero;
+    p.which_content = gaggimate_Payload_hardware_scale_tare_tag;
+    return p;
+}
+
 gm::Payload GaggiMateClient::buildLedControl(const LedChannelCommand *channels, size_t count) {
     gm::Payload p = gaggimate_Payload_init_zero;
     p.which_content = gaggimate_Payload_led_tag;
@@ -176,6 +182,7 @@ void GaggiMateClient::sendAutotune(uint32_t testTime, uint32_t samples, uint32_t
 void GaggiMateClient::sendPressureScale(float scale) { _endpoint.send(buildPressureScale(scale)); }
 
 void GaggiMateClient::tare() { _endpoint.send(buildTare()); }
+void GaggiMateClient::tareHardwareScale() { _endpoint.send(buildHardwareScaleTare()); }
 void GaggiMateClient::sendLedControl(const LedChannelCommand *channels, size_t count) {
     _endpoint.send(buildLedControl(channels, count));
 }

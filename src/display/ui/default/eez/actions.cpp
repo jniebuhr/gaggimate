@@ -60,6 +60,7 @@ void action_on_flush(lv_event_t *e) {
 
 void action_on_volumetric_hold(lv_event_t *e) {
     controller.getClientController()->tare();
+    controller.getClientController()->tareHardwareScale();
     BLEScales.tare();
 };
 

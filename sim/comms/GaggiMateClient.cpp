@@ -67,6 +67,7 @@ gm::Payload GaggiMateClient::buildPumpSettings(float, float, float, float, float
 gm::Payload GaggiMateClient::buildAutotune(uint32_t, uint32_t, uint32_t) { return {gm::Payload::Autotune}; }
 gm::Payload GaggiMateClient::buildPressureScale(float) { return {gm::Payload::PressureScale}; }
 gm::Payload GaggiMateClient::buildTare() { return {gm::Payload::Tare}; }
+gm::Payload GaggiMateClient::buildHardwareScaleTare() { return {gm::Payload::HardwareScaleTare}; }
 gm::Payload GaggiMateClient::buildLedControl(const LedChannelCommand *, size_t) { return {gm::Payload::Led}; }
 
 void GaggiMateClient::send(const gm::Payload &payload) {
@@ -109,4 +110,5 @@ void GaggiMateClient::sendAutotune(uint32_t, uint32_t, uint32_t) {
 }
 void GaggiMateClient::sendPressureScale(float) {}
 void GaggiMateClient::tare() { _mock.tareScale(); }
+void GaggiMateClient::tareHardwareScale() {} // The simulator has no hardware-scale model.
 void GaggiMateClient::sendLedControl(const LedChannelCommand *, size_t) {}

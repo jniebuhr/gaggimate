@@ -296,6 +296,8 @@ void Controller::setupBluetooth() {
     });
     pluginManager->on("ota:update:end", [this](Event const &) { applyConnectionPriority(true); });
     pluginManager->on("history:shot:recorded", [this](Event const &) { comms.tare(); });
+    pluginManager->on("controller:brew:prestart", [this](Event const &) { comms.tareHardwareScale(); });
+    pluginManager->on("controller:grind:start", [this](Event const &) { comms.tareHardwareScale(); });
     comms.onSensorData([this](float temp, float temp2, float pressure, float puckFlow, float pumpFlow, float puckResistance,
                               float pumpPower, float heaterPower, float waterPumped) {
         onTempRead(temp);
