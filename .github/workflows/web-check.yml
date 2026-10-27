@@ -1,0 +1,35 @@
+name: Web Check
+
+on:
+  push:
+    paths:
+      - 'web/**'
+      - '.github/workflows/web-check.yml'
+  pull_request:
+    paths:
+      - 'web/**'
+      - '.github/workflows/web-check.yml'
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+          cache-dependency-path: web/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Lint
+        run: npm run lint:check
+      - name: Format check
+        run: npm run format:check
+      # Checks files that opt in with `// @ts-check`; see web/jsconfig.json.
+      - name: Type check
+        run: npm run typecheck
