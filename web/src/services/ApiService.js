@@ -280,6 +280,7 @@ export default class ApiService {
     map('hp', 'currentBoilerPower', v => v ?? 0);
     map('pkr', 'currentPuckResistance', v => v ?? 0);
     map('pf', 'currentPuckFlow', v => v ?? 0);
+    // @ts-expect-error The firmware never sends `cv` (WebSocketHandler::publishTelemetry), so this stays 0.
     map('cv', 'currentCoffeeVolume', v => v ?? 0);
     map('up', 'update', v => !!v);
     map('warn', 'warnings', parseWarningStates);
@@ -365,7 +366,6 @@ export const createMachineState = () => {
       selectedProfile: '',
       selectedProfileId: null,
       brewTargetDuration: 0,
-      brewTargetVolume: 0,
       grindTargetDuration: 0,
       grindTargetVolume: 0,
       grindTarget: 0,

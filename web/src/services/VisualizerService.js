@@ -15,7 +15,7 @@ export class VisualizerService {
 
   /**
    * Convert shot data from gaggimate format to visualizer.coffee format
-   * @param {Object} shot - Shot data from gaggimate
+   * @param {Object} shotData - Shot data from gaggimate
    * @param {Object} profileData - Optional full profile data from ProfileManager
    * @returns {Object} - Formatted data for visualizer.coffee
    */
