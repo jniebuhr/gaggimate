@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * Service for uploading shots to visualizer.coffee
  *

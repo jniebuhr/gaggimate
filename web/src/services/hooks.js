@@ -1,3 +1,4 @@
+// @ts-check
 import { useCallback, useContext } from 'preact/hooks';
 import { ApiServiceContext, machine } from './ApiService.js';
 import { signal, computed, effect, useSignalEffect } from '@preact/signals';
@@ -9,9 +10,14 @@ const useApiService = () => {
 const connected = computed(() => machine.value.connected);
 const selectedProfileId = computed(() => machine.value.status.selectedProfileId);
 
+// Full profile shape is schema/profile.json; only what this module touches is typed so far.
+/** @typedef {{ id: string, selected?: boolean, [key: string]: any }} ProfileSummary */
+
+/** @type {import('@preact/signals').Signal<ProfileSummary[]>} */
 const profiles = signal([]);
 const profilesLoaded = signal(false);
 const profilesLoading = signal(true);
+/** @type {Promise<void> | null} */
 let profilesInflight = null;
 
 // Overlay the broadcast selection
@@ -26,7 +32,8 @@ const profilesWithSelection = computed(() => {
 const RETRY_MIN_MS = 1000;
 const RETRY_MAX_MS = 30000;
 let profilesGeneration = 0;
-let retryTimer = null;
+/** @type {ReturnType<typeof setTimeout> | undefined} */
+let retryTimer;
 let retryDelay = RETRY_MIN_MS;
 
 // A request sent on a dropped socket is never answered, so abandon it instead of joining it
@@ -39,6 +46,7 @@ effect(() => {
   retryDelay = RETRY_MIN_MS;
 });
 
+/** @param {import('./ApiService.js').default} apiService */
 const scheduleRetry = apiService => {
   clearTimeout(retryTimer);
   retryTimer = setTimeout(() => {
@@ -47,6 +55,7 @@ const scheduleRetry = apiService => {
   retryDelay = Math.min(retryDelay * 2, RETRY_MAX_MS);
 };
 
+/** @param {import('./ApiService.js').default} apiService */
 const loadProfiles = apiService => {
   if (profilesInflight) return profilesInflight;
   clearTimeout(retryTimer);
@@ -72,10 +81,12 @@ const loadProfiles = apiService => {
   return request;
 };
 
+/** @param {boolean} loading */
 const setProfilesLoading = loading => {
   profilesLoading.value = loading;
 };
 
+/** @param {ProfileSummary[] | ((current: ProfileSummary[]) => ProfileSummary[])} update */
 const setProfiles = update => {
   profiles.value = typeof update === 'function' ? update(profiles.value) : update;
 };
