@@ -1,4 +1,5 @@
 import { useRef, useState } from 'preact/hooks';
+import { useLingui } from '@lingui/react/macro';
 import { formatMetricValue } from '../../utils/analyzerUtils';
 
 function getNextMetricPageKey(pages, activePageKey, direction) {
@@ -30,12 +31,13 @@ export function MobileMetricValue({ row }) {
 }
 
 export function MobileMetricGrid({
-  ariaLabel = 'Shot metrics',
+  ariaLabel = null,
   className = '',
   entryClassName = '',
   entries,
   footer = null,
 }) {
+  const { t } = useLingui();
   const hasMetrics = entries.some(entry => entry.rows.length > 0);
 
   if (!hasMetrics) return null;
@@ -44,7 +46,7 @@ export function MobileMetricGrid({
     <div className='shot-chart-tooltip__compact-content shot-chart-tooltip__compact-content--compare-preview'>
       <div
         className={['shot-chart-compare-mobile-metrics', className].filter(Boolean).join(' ')}
-        aria-label={ariaLabel}
+        aria-label={ariaLabel || t`Shot metrics`}
       >
         {entries.map(({ key, rows }, index) => (
           <div
@@ -71,6 +73,7 @@ export function MobileMetricPager({
   pages,
   renderPage,
 }) {
+  const { t } = useLingui();
   const pointerStartXRef = useRef(null);
   const pointerStartYRef = useRef(null);
   const [dragOffset, setDragOffset] = useState(0);
@@ -150,27 +153,30 @@ export function MobileMetricPager({
           ))}
         </div>
       </div>
-      <div className='shot-chart-mobile-metric-pager__dots' aria-label='Metric pages'>
-        {pages.map((page, index) => (
-          <button
-            type='button'
-            key={page.key}
-            className={[
-              'shot-chart-mobile-metric-pager__dot',
-              index === activeIndex ? 'shot-chart-mobile-metric-pager__dot--active' : '',
-            ]
-              .filter(Boolean)
-              .join(' ')}
-            onClick={() => {
-              if (page.key !== activePageKey) onPageChange(page.key);
-            }}
-            onPointerDown={event => {
-              event.stopPropagation();
-            }}
-            aria-label={`Show metric page ${index + 1}`}
-            aria-current={index === activeIndex ? 'page' : undefined}
-          />
-        ))}
+      <div className='shot-chart-mobile-metric-pager__dots' aria-label={t`Metric pages`}>
+        {pages.map((page, index) => {
+          const pageNumber = index + 1;
+          return (
+            <button
+              type='button'
+              key={page.key}
+              className={[
+                'shot-chart-mobile-metric-pager__dot',
+                index === activeIndex ? 'shot-chart-mobile-metric-pager__dot--active' : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+              onClick={() => {
+                if (page.key !== activePageKey) onPageChange(page.key);
+              }}
+              onPointerDown={event => {
+                event.stopPropagation();
+              }}
+              aria-label={t`Show metric page ${pageNumber}`}
+              aria-current={index === activeIndex ? 'page' : undefined}
+            />
+          );
+        })}
       </div>
     </div>
   );

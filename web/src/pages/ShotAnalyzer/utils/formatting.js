@@ -1,4 +1,24 @@
+import { msg, t } from '@lingui/core/macro';
+import { i18n } from '../../../i18n.js';
 import { COMPARE_TARGET_DISPLAY_MODES, TIMESTAMP_SECONDS_THRESHOLD } from './constants';
+
+// Analyzer stop reasons stay English internally; translate only for display.
+const STOP_REASON_MESSAGES = {
+  'Weight Stop': msg`Weight Stop`,
+  'Pressure Stop': msg`Pressure Stop`,
+  'Pump Flow Stop': msg`Pump Flow Stop`,
+  'Pumped Water Stop': msg`Pumped Water Stop`,
+  'Time Stop': msg`Time Stop`,
+  'Ratio Stop': msg`Ratio Stop`,
+  'Safety Timeout': msg`Safety Timeout`,
+  'Manually Stopped': msg`Manually Stopped`,
+  'Time Limit': msg`Time Limit`,
+};
+
+function translateStopReason(reason) {
+  const message = STOP_REASON_MESSAGES[reason];
+  return message ? i18n._(message) : reason;
+}
 
 export function formatMetricValue(value, digits = 1) {
   const numericValue = Number(value);
@@ -22,21 +42,21 @@ export function getDisplayStopReasonParts(reason = '') {
   }
 
   if (displayReason === 'Phase skipped') {
-    return { skipNotice: 'Phase skipped', stopReason: '' };
+    return { skipNotice: t`Phase skipped`, stopReason: '' };
   }
 
   if (displayReason === 'Phase skipped (no preceding phase)') {
-    return { skipNotice: 'Phase skipped', stopReason: 'No preceding phase' };
+    return { skipNotice: t`Phase skipped`, stopReason: t`No preceding phase` };
   }
 
   if (hasSkippedSuffix) {
     return {
-      skipNotice: 'Phase skipped',
-      stopReason: displayReason,
+      skipNotice: t`Phase skipped`,
+      stopReason: translateStopReason(displayReason),
     };
   }
 
-  return { skipNotice: '', stopReason: displayReason };
+  return { skipNotice: '', stopReason: translateStopReason(displayReason) };
 }
 
 export const cleanName = name => {
@@ -63,11 +83,11 @@ export const formatDuration = samples => {
 };
 
 export const getShotDisplayName = shot => {
-  if (!shot) return 'Unknown';
+  if (!shot) return t`Unknown`;
   if (shot.source === 'gaggimate') {
-    return `#${shot.id || shot.name || 'Unknown'}`;
+    return `#${shot.id || shot.name || t`Unknown`}`;
   }
-  return cleanName(shot.name || shot.storageKey || shot.id || 'Unknown');
+  return cleanName(shot.name || shot.storageKey || shot.id || t`Unknown`);
 };
 
 export const calculateRatio = (doseIn, doseOut) => {

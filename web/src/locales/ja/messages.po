@@ -1,0 +1,5762 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-13 16:54+0200\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: ja\n"
+
+#: src/pages/Statistics/components/StatisticsSearchHelp.jsx
+msgid "(exact)"
+msgstr "（完全一致）"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "(Page {currentPage} of {totalPages})"
+msgstr "（{currentPage} / {totalPages} ページ）"
+
+#: src/pages/Statistics/components/StatisticsSearchHelp.jsx
+msgid "(same field = OR)"
+msgstr "（同じフィールド = OR）"
+
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+msgid "(target {durationTarget}s, {durationDelta}s)"
+msgstr "（目標 {durationTarget}s、{durationDelta}s）"
+
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+msgid "(target {waterTarget}ml, {waterDelta}ml)"
+msgstr "（目標 {waterTarget}ml、{waterDelta}ml）"
+
+#. placeholder {0}: phase.shotCount
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+msgid "{0, plural, one {(# entry)} other {(# entries)}}"
+msgstr "{0, plural, other {（# 件）}}"
+
+#. placeholder {0}: data.stats.currentStreak
+#. placeholder {0}: data.stats.longestStreak
+#: src/pages/Statistics/components/ActivityHeatmap.jsx
+msgid "{0, plural, one {# day} other {# days}}"
+msgstr "{0, plural, other {# 日}}"
+
+#. placeholder {0}: phases.length
+#: src/pages/ProfileList/index.jsx
+msgid "{0, plural, one {# phase} other {# phases}}"
+msgstr "{0, plural, other {# フェーズ}}"
+
+#. placeholder {0}: toCount(value)
+#: src/pages/Statistics/components/toolbar/helpers.js
+msgid "{0, plural, one {# profile} other {# profiles}}"
+msgstr "{0, plural, other {# プロファイル}}"
+
+#. placeholder {0}: toCount(value)
+#. placeholder {0}: tooltip.cell.count
+#: src/pages/Statistics/components/ActivityHeatmap.jsx
+#: src/pages/Statistics/components/toolbar/helpers.js
+msgid "{0, plural, one {# shot} other {# shots}}"
+msgstr "{0, plural, other {# ショット}}"
+
+#: src/pages/Statistics/components/toolbar/helpers.js
+msgid "{candidateCount, plural, one {# candidate} other {# candidates}}"
+msgstr "{candidateCount, plural, other {# 件の候補}}"
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
+msgid "{diffMonths, plural, one {# month ago} other {# months ago}}"
+msgstr "{diffMonths, plural, other {# か月前}}"
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
+msgid "{diffWeeks, plural, one {# week ago} other {# weeks ago}}"
+msgstr "{diffWeeks, plural, other {# 週間前}}"
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
+msgid "{diffYears, plural, one {# year ago} other {# years ago}}"
+msgstr "{diffYears, plural, other {# 年前}}"
+
+#: src/app/ConnectionGate.jsx
+msgid "{host} isn't answering. Make sure the machine is on and your phone is on the same Wi-Fi network."
+msgstr "{host} が応答しません。マシンの電源が入っていて、スマートフォンが同じ Wi-Fi ネットワークに接続されていることを確認してください。"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "{label} severity"
+msgstr "{label} の重要度"
+
+#: src/app/AppSettings.jsx
+msgid "{machineCount, plural, one {Watches # saved machine.} other {Watches all # saved machines.}}"
+msgstr "{machineCount, plural, other {保存済みの # 台のマシンをすべて監視します。}}"
+
+#: src/app/AppSettings.jsx
+msgid "{machineCount} saved"
+msgstr "{machineCount} 台保存済み"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "{metricsColumns, plural, one {# column} other {# columns}}"
+msgstr "{metricsColumns, plural, other {# 列}}"
+
+#: src/app/AppSettings.jsx
+msgid "{pending} installs the next time you leave the app"
+msgstr "{pending} は次回アプリを離れたときにインストールされます"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "{recentShotCount, plural, one {# shot} other {# shots}}"
+msgstr "{recentShotCount, plural, other {# ショット}}"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "{rssi}dB (Roundtrip: {lat} ms, Resends: {rtx})"
+msgstr "{rssi}dB（往復: {lat} ms、再送: {rtx}）"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "{scaleName} disconnected"
+msgstr "{scaleName} の接続が切れました"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "{totalFilteredItems} of {historyCount} shots"
+msgstr "{historyCount} 件中 {totalFilteredItems} 件のショット"
+
+#: src/pages/Settings/StickyFormFooter.jsx
+msgid "* Restart required for Wi-Fi, Timezone, or Plugin changes."
+msgstr "* Wi-Fi、タイムゾーン、プラグインの変更には再起動が必要です。"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "+{moreErrorCount} more"
+msgstr "ほか {moreErrorCount} 件"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "+{moreWarningCount} more"
+msgstr "ほか {moreWarningCount} 件"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "<0>Brewing:</0> recipes with GbS turned on report each grind here; pressing the rotary knob afterwards starts the shot."
+msgstr "<0>抽出:</0> GbS を有効にしたレシピでは、挽くたびにここへ報告されます。その後ロータリーノブを押すとショットが始まります。"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "<0>Pairing:</0> GaggiMate shows up to the grinder as a Xenia machine. Under Settings → Connectivity → Machine To Machine, turn on Enable Xenia, then type the address above into Configuration. Automatic discovery does not see GaggiMate."
+msgstr "<0>ペアリング:</0> GaggiMate はグラインダーから Xenia マシンとして認識されます。Settings → Connectivity → Machine To Machine で Enable Xenia をオンにし、上記のアドレスを Configuration に入力してください。自動検出では GaggiMate は見つかりません。"
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
+msgid "1 year ago"
+msgstr "1 年前"
+
+#: src/app/appSettings.js
+msgid "A brew started on the machine."
+msgstr "マシンで抽出が開始されました。"
+
+#: src/pages/Settings/tabs/CleaningSection.jsx
+msgid "A cleaning warning is shown once either interval is reached; set an interval to 0 to turn it off. Running the cleaning profile to the end marks it complete."
+msgstr "いずれかの間隔に達するとクリーニングの警告が表示されます。間隔を 0 にするとオフになります。クリーニングプロファイルを最後まで実行すると完了として記録されます。"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "A given alpha behaves faster in time at 80 SPS because it is applied more often. Tune the two alpha values independently for your installed sample rate. Changing sample rate resets both values to 0.80 at 10 SPS or 0.40 at 80 SPS as sensible starting points."
+msgstr "同じ alpha 値でも 80 SPS ではより頻繁に適用されるため、時間的には速く反応します。2 つの alpha 値は、使用するサンプルレートに合わせてそれぞれ調整してください。サンプルレートを変更すると、妥当な初期値として両方の値が 10 SPS では 0.80、80 SPS では 0.40 にリセットされます。"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Access Point Password"
+msgstr "アクセスポイントのパスワード"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Actions for {label} profile"
+msgstr "{label} プロファイルの操作"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Activate this if your coffee machine is equipped with momentary buttons. A momentary button set to Brew or a profile starts a flush instead when held."
+msgstr "コーヒーマシンにモメンタリーボタンが付いている場合は有効にしてください。抽出またはプロファイルに設定したモメンタリーボタンを長押しすると、代わりにフラッシュが始まります。"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgctxt "selected menu item"
+msgid "Active"
+msgstr "有効"
+
+#: src/pages/Home/cards/ActionCard.jsx
+msgid "Active warnings"
+msgstr "有効な警告"
+
+#: src/pages/Statistics/components/ActivityHeatmap.jsx
+msgid "Activity Heatmap"
+msgstr "アクティビティヒートマップ"
+
+#: src/components/PumpFlowCalibration/ResultsPanel.jsx
+msgid "actual flow"
+msgstr "実流量"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Actual Weight of Calibration Object"
+msgstr "キャリブレーション用分銅の実重量"
+
+#: src/components/SettingsFormField.jsx
+msgid "Add"
+msgstr "追加"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Add {label} to favorites"
+msgstr "{label} をお気に入りに追加"
+
+#: src/app/MachineSetup.jsx
+msgid "Add {name}"
+msgstr "{name} を追加"
+
+#: src/app/MachineSetup.jsx
+msgid "Add machine by address"
+msgstr "アドレスでマシンを追加"
+
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Add new brew phase"
+msgstr "新しい抽出フェーズを追加"
+
+#: src/pages/ProfileList/ProfileAddCard.jsx
+msgid "Add new profile"
+msgstr "新しいプロファイルを追加"
+
+#: src/app/MachineSwitcher.jsx
+msgid "Add or manage machines"
+msgstr "マシンの追加・管理"
+
+#: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Add phase"
+msgstr "フェーズを追加"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Add profile"
+msgstr "プロファイルを追加"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Add schedule"
+msgstr "スケジュールを追加"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Add stop condition"
+msgstr "停止条件を追加"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Add target"
+msgstr "目標を追加"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Add to favorites"
+msgstr "お気に入りに追加"
+
+#: src/app/MachineSetup.jsx
+msgid "Address"
+msgstr "アドレス"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Advanced"
+msgstr "詳細設定"
+
+#: src/components/Navigation.jsx
+msgctxt "dashboard view"
+msgid "Advanced"
+msgstr "詳細"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Alba Settings"
+msgstr "Alba 設定"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Align to grid"
+msgstr "グリッドに揃える"
+
+#: src/pages/ShotAnalyzer/components/shotChart/single/SingleShotMetricPreview.jsx
+msgctxt "all metrics page"
+msgid "All"
+msgstr "すべて"
+
+#: src/pages/Statistics/components/toolbar/constants.js
+msgctxt "statistics mode"
+msgid "All"
+msgstr "すべて"
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgctxt "library source filter"
+msgid "ALL"
+msgstr "ALL"
+
+#: src/pages/Statistics/components/toolbar/constants.js
+msgctxt "shot source: all sources"
+msgid "ALL"
+msgstr "ALL"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "All available metrics are visible."
+msgstr "利用可能なメトリクスはすべて表示されています。"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "All available panels are visible."
+msgstr "利用可能なパネルはすべて表示されています。"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
+msgid "All Metrics"
+msgstr "すべてのメトリクス"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "All Shots"
+msgstr "すべてのショット"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Alt Relay / SSR2 Function"
+msgstr "Alt リレー / SSR2 の機能"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Analysis complete."
+msgstr "分析が完了しました。"
+
+#: src/pages/ShotAnalyzer/shotAnalyzer/ActiveAnalysisView.jsx
+msgid "Analysis Table"
+msgstr "分析テーブル"
+
+#: src/pages/Statistics/components/statisticsView/StatisticsView.jsx
+msgid "Analyzing shot {progressCurrent} of {progressTotal}..."
+msgstr "ショットを分析中 {progressCurrent} / {progressTotal}..."
+
+#: src/components/PumpFlowCalibration/Footer.jsx
+msgid "Analyzing..."
+msgstr "分析中..."
+
+#: src/pages/ShotAnalyzer/services/ReplayVideoExportService.js
+msgid "Animation frames are not supported in this environment."
+msgstr "この環境ではアニメーションフレームはサポートされていません。"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/compareControls.jsx
+msgid "Annotations"
+msgstr "注釈"
+
+#: src/app/AppSettings.jsx
+#: src/components/Navigation.jsx
+msgid "App Settings"
+msgstr "アプリ設定"
+
+#: src/app/AppSettings.jsx
+msgid "Appearance"
+msgstr "外観"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryPanel.jsx
+msgid "Are you sure you want to delete \"{itemName}\"?"
+msgstr "「{itemName}」を削除してもよろしいですか？"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "At how many bars should the pump assist stop. This makes it so the pump will only run when steam is flowing."
+msgstr "ポンプアシストを停止する圧力（bar）。スチームが出ているときだけポンプが動作するようになります。"
+
+#: src/services/VisualizerService.js
+msgid "Authentication failed - please check your username and password"
+msgstr "認証に失敗しました。ユーザー名とパスワードを確認してください"
+
+#: src/pages/Statistics/components/toolbar/constants.js
+msgctxt "date basis"
+msgid "Auto"
+msgstr "自動"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Auto (Bluetooth when connected)"
+msgstr "自動（接続時は Bluetooth）"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Auto Adjust"
+msgstr "自動調整"
+
+#: src/pages/Statistics/components/toolbar/helpers.js
+msgid "Auto Range"
+msgstr "自動レンジ"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Auto Wakeup Schedule"
+msgstr "自動ウェイクアップのスケジュール"
+
+#: src/components/LanguageSelect.jsx
+msgid "Automatic"
+msgstr "自動"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Automatic Wakeup Schedule"
+msgstr "自動ウェイクアップのスケジュール"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Automatically switch to brew mode at specified time(s) of day."
+msgstr "指定した時刻に自動で抽出モードに切り替えます。"
+
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "Autotune Complete!"
+msgstr "オートチューン完了！"
+
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "Autotune Failed"
+msgstr "オートチューン失敗"
+
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "Autotune in Progress"
+msgstr "オートチューン実行中"
+
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+msgid "Average target value and deviation"
+msgstr "目標値の平均と偏差"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
+msgctxt "column type"
+msgid "Avg (tw)"
+msgstr "平均 (tw)"
+
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+msgid "Avg (TW)"
+msgstr "平均 (TW)"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgctxt "column type"
+msgid "Avg ∅"
+msgstr "平均 ∅"
+
+#: src/pages/Statistics/components/ProfileGroupTable.jsx
+msgid "Avg Duration"
+msgstr "平均時間"
+
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+msgid "Avg Duration:"
+msgstr "平均時間:"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Avg Flow"
+msgstr "平均流量"
+
+#: src/pages/Statistics/components/ProfileGroupTable.jsx
+msgid "Avg Pressure"
+msgstr "平均圧力"
+
+#: src/pages/Statistics/components/TrendChart.jsx
+msgid "Avg Pressure (bar)"
+msgstr "平均圧力 (bar)"
+
+#: src/pages/Statistics/components/TrendChart.jsx
+msgid "Avg Puck Flow (ml/s)"
+msgstr "平均パック流量 (ml/s)"
+
+#: src/pages/Statistics/components/ProfileGroupTable.jsx
+msgid "Avg Pump Flow"
+msgstr "平均ポンプ流量"
+
+#: src/pages/Statistics/components/TrendChart.jsx
+msgid "Avg Pump Flow (ml/s)"
+msgstr "平均ポンプ流量 (ml/s)"
+
+#: src/pages/Statistics/components/ProfileGroupTable.jsx
+msgid "Avg Pumped Water"
+msgstr "平均送水量"
+
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+msgid "Avg Pumped Water:"
+msgstr "平均送水量:"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Avg Temp"
+msgstr "平均温度"
+
+#: src/pages/Statistics/components/TrendChart.jsx
+msgid "Avg Temp (℃)"
+msgstr "平均温度 (℃)"
+
+#: src/pages/Statistics/components/ProfileGroupTable.jsx
+msgid "Avg Weight"
+msgstr "平均重量"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+msgid "Avg. Liquid Resistance"
+msgstr "平均液体抵抗"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+#: src/pages/Statistics/components/MetricsTable.jsx
+msgid "Avg. Peak Pressure"
+msgstr "平均ピーク圧力"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+msgid "Avg. Pressure"
+msgstr "平均圧力"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+msgid "Avg. Puck Flow"
+msgstr "平均パック流量"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+msgid "Avg. Puck Resistance"
+msgstr "平均パック抵抗"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMetricCards.jsx
+msgid "Avg. Pump Flow"
+msgstr "平均ポンプ流量"
+
+#: src/pages/Statistics/components/MetricsTable.jsx
+msgid "Avg. Target Temperature"
+msgstr "平均目標温度"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMetricCards.jsx
+msgid "Avg. Temperature"
+msgstr "平均温度"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+msgid "Avg. Weight Flow"
+msgstr "平均重量流量"
+
+#: src/app/MachineSetup.jsx
+#: src/components/PumpFlowCalibration/Footer.jsx
+#: src/pages/DashboardSettings/index.jsx
+#: src/pages/Home/BrewConfirmModal.jsx
+#: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Back"
+msgstr "戻る"
+
+#: src/pages/ShotAnalyzer/shotAnalyzer/ActiveAnalysisView.jsx
+msgid "Back to analyzer"
+msgstr "アナライザーに戻る"
+
+#: src/pages/Settings/tabs/CleaningSection.jsx
+msgid "Backflush"
+msgstr "バックフラッシュ"
+
+#: src/utils/warnings.js
+msgid "Backflush due"
+msgstr "バックフラッシュの時期です"
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
+msgid "Balance / Taste"
+msgstr "バランス / 味"
+
+#: src/pages/ShotHistory/ShotNotesCard.jsx
+msgid "Balance/Taste"
+msgstr "バランス/味"
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
+#: src/pages/ShotHistory/ShotNotesCard.jsx
+msgid "Balanced"
+msgstr "バランス良好"
+
+#: src/pages/ShotAnalyzer/utils/constants.js
+msgid "Basic Metrics"
+msgstr "基本メトリクス"
+
+#: src/pages/ShotAnalyzer/components/shotChart/single/SingleShotMetricPreview.jsx
+msgid "Basics"
+msgstr "基本"
+
+#: src/pages/ShotHistory/ShotNotesCard.jsx
+msgid "Bean Type"
+msgstr "豆の種類"
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
+msgid "Beans"
+msgstr "豆"
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
+#: src/pages/ShotHistory/ShotNotesCard.jsx
+msgid "Bitter"
+msgstr "苦味"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "BLDC Pump Settings"
+msgstr "BLDC ポンプ設定"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Bluetooth Devices"
+msgstr "Bluetooth デバイス"
+
+#: src/app/notifications.js
+msgid "Boiler at {temperature} °C"
+msgstr "ボイラー {temperature} °C"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Boiler Refill Plugin"
+msgstr "ボイラー給水プラグイン"
+
+#: src/app/machineStatus.js
+#: src/pages/Home/utils.js
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgctxt "machine mode"
+msgid "Brew"
+msgstr "抽出"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+#: src/pages/ProfileList/index.jsx
+msgctxt "phase type"
+msgid "Brew"
+msgstr "抽出"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgctxt "predictive scale delay"
+msgid "Brew"
+msgstr "抽出"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Brew button"
+msgstr "抽出ボタン"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Brew Button Behavior"
+msgstr "抽出ボタンの動作"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Brew Color"
+msgstr "抽出の色"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+msgid "Brew Mode"
+msgstr "抽出モード"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Brew phases"
+msgstr "抽出フェーズ"
+
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Brew Phases"
+msgstr "抽出フェーズ"
+
+#: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Brew phases configuration"
+msgstr "抽出フェーズの設定"
+
+#: src/components/OverviewChart.jsx
+msgid "Brew Progress - {windowSeconds}s View"
+msgstr "抽出の進行 - {windowSeconds}s 表示"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Brew Status Display"
+msgstr "抽出ステータス表示"
+
+#: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Brewed by Time"
+msgstr "時間で抽出"
+
+#: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Brewed by Weight"
+msgstr "重量で抽出"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Brewing Filter Alpha"
+msgstr "抽出フィルター Alpha"
+
+#: src/app/notifications.js
+msgid "Brewing…"
+msgstr "抽出中…"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+msgid "BT Scale Connected"
+msgstr "BT スケール接続済み"
+
+#: src/pages/Statistics/components/statisticsView/StatisticsView.jsx
+msgctxt "keyboard shortcut action"
+msgid "Build"
+msgstr "構築"
+
+#: src/pages/Statistics/components/statisticsView/StatisticsView.jsx
+msgid "Build and show Shot Charts"
+msgstr "ショットチャートを作成して表示"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Built-in profile, can be edited but not deleted"
+msgstr "組み込みプロファイル（編集可、削除不可）"
+
+#: src/pages/ShotAnalyzer/components/EmptyState.jsx
+msgid "Bulk upload and download are supported."
+msgstr "一括アップロードとダウンロードに対応しています。"
+
+#: src/pages/Statistics/components/toolbar/constants.js
+msgid "By Profile"
+msgstr "プロファイル別"
+
+#: src/pages/Statistics/components/toolbar/constants.js
+msgid "By Shots"
+msgstr "ショット別"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Calibrate Load Cell 1"
+msgstr "ロードセル 1 のキャリブレーション"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Calibrate Load Cell 2"
+msgstr "ロードセル 2 のキャリブレーション"
+
+#: src/pages/Settings/index.jsx
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Calibration"
+msgstr "キャリブレーション"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Calibration cancelled."
+msgstr "キャリブレーションをキャンセルしました。"
+
+#: src/utils/pumpFlowCalibration.js
+msgid "Calibration factor for tp={targetPressure} bar is out of plausible range ({shownFactor}). Did pressure actually reach {targetPressure} bar during the Measure phase?"
+msgstr "tp={targetPressure} bar のキャリブレーション係数が妥当な範囲外です（{shownFactor}）。測定フェーズ中に圧力が実際に {targetPressure} bar に達しましたか？"
+
+#: src/app/ConnectionGate.jsx
+msgid "Can't reach {name}"
+msgstr "{name} に接続できません"
+
+#: src/app/ConnectionGate.jsx
+#: src/app/MachineSetup.jsx
+#: src/components/PumpFlowCalibration/Footer.jsx
+#: src/components/VisualizerUploadModal.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+#: src/pages/ShotHistory/ShotNotesCard.jsx
+msgid "Cancel"
+msgstr "キャンセル"
+
+#: src/app/MachineSetup.jsx
+msgid "Cancel renaming"
+msgstr "名前の変更をキャンセル"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+msgid "Cancel replay export"
+msgstr "リプレイのエクスポートをキャンセル"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Cannot delete the last schedule"
+msgstr "最後のスケジュールは削除できません"
+
+#: src/pages/ShotAnalyzer/services/ReplayVideoExportService.js
+msgid "Canvas capture is not supported in this browser."
+msgstr "このブラウザーはキャンバスのキャプチャに対応していません。"
+
+#: src/pages/ShotAnalyzer/services/ReplayVideoExportService.js
+msgid "Canvas export is not supported in this environment."
+msgstr "この環境ではキャンバスのエクスポートはサポートされていません。"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "celsius"
+msgstr "摂氏"
+
+#: src/pages/ShotAnalyzer/components/shotChart/single/SingleShotMetricPreview.jsx
+msgid "Chart & Metrics"
+msgstr "チャートとメトリクス"
+
+#: src/pages/DashboardSettings/index.jsx
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Chart First"
+msgstr "チャート優先"
+
+#: src/app/ConnectionGate.jsx
+msgid "Choose another machine"
+msgstr "別のマシンを選択"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Choose which source to prefer when both hardware and Bluetooth scales are available."
+msgstr "ハードウェアスケールと Bluetooth スケールの両方が利用できる場合に、どちらを優先するかを選択します。"
+
+#: src/pages/Settings/tabs/CleaningSection.jsx
+msgid "Cleaning & Maintenance"
+msgstr "クリーニングとメンテナンス"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Clear date filter"
+msgstr "日付フィルターをクリア"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Clear Date Filter"
+msgstr "日付フィルターをクリア"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Clear filters and selections ({resetAriaCount})"
+msgstr "フィルターと選択をクリア（{resetAriaCount}）"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Click \"Scan\" to discover Bluetooth scales nearby"
+msgstr "「スキャン」をクリックして近くの Bluetooth スケールを検出します"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Click to confirm"
+msgstr "クリックして確定"
+
+#: src/pages/ProfileList/index.jsx
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Click to confirm delete"
+msgstr "クリックして削除を確定"
+
+#: src/pages/ShotAnalyzer/components/library/StatusBar.jsx
+msgid "Click to open the library. Use Import below or drop files here to import."
+msgstr "クリックしてライブラリを開きます。下のインポートを使うか、ここにファイルをドロップしてインポートします。"
+
+#: src/app/MachineSetup.jsx
+#: src/components/VisualizerUploadModal.jsx
+#: src/pages/Home/BrewConfirmModal.jsx
+msgid "Close"
+msgstr "閉じる"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareChartLayout.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/single/SingleShotChart.jsx
+msgid "Close full display"
+msgstr "全画面表示を閉じる"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryDropdown.jsx
+msgid "Close library"
+msgstr "ライブラリを閉じる"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgctxt "valve state"
+msgid "Closed"
+msgstr "閉"
+
+#: src/app/machines.js
+msgid "closed, code {code}"
+msgstr "切断（コード {code}）"
+
+#: src/pages/Statistics/components/StatisticsMultiSelectDropdown.jsx
+msgid "Cmd/Ctrl = Add"
+msgstr "Cmd/Ctrl = 追加"
+
+#: src/components/PumpFlowCalibration/ResultsPanel.jsx
+msgid "Coefficients"
+msgstr "係数"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Coefficients saved to machine: {newCoeffs}"
+msgstr "係数をマシンに保存しました: {newCoeffs}"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+#: src/utils/themeManager.js
+msgctxt "theme"
+msgid "Coffee"
+msgstr "コーヒー"
+
+#: src/components/Navigation.jsx
+msgid "Collapse"
+msgstr "折りたたむ"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
+msgid "Collapse column settings"
+msgstr "列設定を折りたたむ"
+
+#: src/components/Navigation.jsx
+msgid "Collapse navigation"
+msgstr "ナビゲーションを折りたたむ"
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Collapse shot details"
+msgstr "ショットの詳細を折りたたむ"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Collapse statistics toolbar"
+msgstr "統計ツールバーを折りたたむ"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Column Spacing"
+msgstr "列の間隔"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Commutation Gain"
+msgstr "転流ゲイン"
+
+#: src/pages/DashboardSettings/index.jsx
+msgctxt "panel view"
+msgid "Compact"
+msgstr "コンパクト"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Compact mode is on — click to show the full panel"
+msgstr "コンパクトモードがオンです。クリックするとパネル全体を表示します"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgctxt "compare mode"
+msgid "Compare"
+msgstr "比較"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/controls/compareControls.jsx
+msgid "Compare alignment"
+msgstr "比較の位置合わせ"
+
+#: src/pages/ShotAnalyzer/shotAnalyzer/ActiveAnalysisView.jsx
+msgid "Compare analysis table"
+msgstr "比較分析テーブル"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+msgid "Compare Overlay"
+msgstr "比較オーバーレイ"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
+msgid "Compare shot"
+msgstr "ショットを比較"
+
+#: src/pages/ShotAnalyzer/shotAnalyzer/ActiveAnalysisView.jsx
+msgid "Compare shot details"
+msgstr "比較ショットの詳細"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+msgid "Compare shot metrics"
+msgstr "比較ショットのメトリクス"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+msgid "Compare shots"
+msgstr "ショットを比較"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Configure acquisition and filtering, then tare and calibrate each load cell."
+msgstr "取得とフィルタリングを設定してから、各ロードセルの風袋引きとキャリブレーションを行います。"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+msgid "Configured Scale Delay (ms)"
+msgstr "設定済みのスケール遅延 (ms)"
+
+#: src/components/ConfirmButton.jsx
+#: src/pages/ProfileList/index.jsx
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Confirm"
+msgstr "確定"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Confirm deletion"
+msgstr "削除の確認"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Confirm deletion of {label} profile"
+msgstr "{label} プロファイルの削除を確認"
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Confirm deletion of shot"
+msgstr "ショットの削除を確認"
+
+#: src/app/MachineSetup.jsx
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Connect"
+msgstr "接続"
+
+#: src/app/MachineSetup.jsx
+msgid "Connect to your GaggiMate"
+msgstr "GaggiMate に接続"
+
+#: src/app/MachineSwitcher.jsx
+msgid "Connected"
+msgstr "接続済み"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgctxt "scale state"
+msgid "Connected"
+msgstr "接続済み"
+
+#: src/app/AppSettings.jsx
+msgid "Connected to <0>{name}</0>"
+msgstr "<0>{name}</0> に接続しました"
+
+#: src/app/MachineSwitcher.jsx
+msgid "Connecting"
+msgstr "接続中"
+
+#: src/app/MachineSwitcher.jsx
+msgid "Connecting to {host}…"
+msgstr "{host} に接続中…"
+
+#: src/app/ConnectionGate.jsx
+msgid "Connecting to {name}…"
+msgstr "{name} に接続中…"
+
+#: src/pages/Home/useDashboardState.js
+msgid "Connecting to the machine..."
+msgstr "マシンに接続中..."
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Connecting to the scale failed."
+msgstr "スケールへの接続に失敗しました。"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Connecting..."
+msgstr "接続中..."
+
+#: src/app/MachineSetup.jsx
+msgid "Connecting…"
+msgstr "接続中…"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Control Column Style"
+msgstr "コントロール列のスタイル"
+
+#: src/app/appSettings.js
+msgid "Controller errors and error-level warnings."
+msgstr "コントローラーのエラーとエラーレベルの警告。"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Controller Signal Strength"
+msgstr "コントローラーの信号強度"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Controller Version"
+msgstr "コントローラーのバージョン"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Controls how panels are distributed vertically: pack them to the top, or space them evenly across the column."
+msgstr "パネルの縦方向の配置を設定します。上詰めにするか、列全体に均等に配置します。"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Controls how the last, incomplete row of metrics is laid out: stretch items evenly to fill the row, or keep them aligned to the column grid."
+msgstr "メトリクスの最後の不完全な行の配置を設定します。項目を均等に伸ばして行を埋めるか、列のグリッドに揃えたままにします。"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Convergence Gain"
+msgstr "収束ゲイン"
+
+#: src/pages/ProfileEdit/index.jsx
+msgid "Convert to Pro"
+msgstr "Pro に変換"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Could not delete calibration profile: {message}"
+msgstr "キャリブレーションプロファイルを削除できませんでした: {message}"
+
+#: src/pages/Settings/index.jsx
+msgid "Could not import {importName}: {importMessage}"
+msgstr "{importName} をインポートできませんでした: {importMessage}"
+
+#: src/pages/ProfileEdit/ProfileImageUpload.jsx
+msgid "Could not read this image."
+msgstr "この画像を読み込めませんでした。"
+
+#: src/utils/profileImage.js
+msgid "Could not remove image"
+msgstr "画像を削除できませんでした"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Could not restore previous profile: {message}"
+msgstr "以前のプロファイルを復元できませんでした: {message}"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Couldn't connect to {errorAddress}"
+msgstr "{errorAddress} に接続できませんでした"
+
+#: src/app/MachineSetup.jsx
+msgid "Couldn't connect to {host}: {reason}. Make sure the machine is on and your phone is on the same Wi-Fi network."
+msgstr "{host} に接続できませんでした: {reason}。マシンの電源が入っていて、スマートフォンが同じ Wi-Fi ネットワークに接続されていることを確認してください。"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Cracking pressure of a grouphead mushroom valve (e.g. 4.0 on Delonghi machines). Subtracted from readings and added to targets only while a brew is running. Leave at 0.0 for a 3-way solenoid."
+msgstr "グループヘッドのマッシュルームバルブのクラッキング圧（例: Delonghi のマシンでは 4.0）。抽出中のみ、測定値から差し引き、目標値に加算されます。三方弁ソレノイドの場合は 0.0 のままにしてください。"
+
+#: src/components/Navigation.jsx
+msgid "Crafted with <0>{randomIcon}</0> in Italy by <1>Caffinnova S.r.l.</1>"
+msgstr "<1>Caffinnova S.r.l.</1> がイタリアで <0>{randomIcon}</0> を込めて制作"
+
+#: src/pages/ProfileEdit/index.jsx
+msgid "Create Profile"
+msgstr "プロファイルを作成"
+
+#: src/utils/pumpFlowCalibration.js
+msgid "Current coefficients are not numeric: \"{raw}\""
+msgstr "現在の係数が数値ではありません: 「{raw}」"
+
+#: src/components/PumpFlowCalibration/IdleSection.jsx
+msgid "Current coefficients:"
+msgstr "現在の係数:"
+
+#: src/components/OverviewChart.jsx
+msgid "Current Flow"
+msgstr "現在の流量"
+
+#: src/components/OverviewChart.jsx
+#: src/pages/ShotHistory/HistoryChart.jsx
+msgid "Current Pressure"
+msgstr "現在の圧力"
+
+#: src/pages/ShotHistory/HistoryChart.jsx
+msgid "Current Puck Flow"
+msgstr "現在のパック流量"
+
+#: src/pages/ShotHistory/HistoryChart.jsx
+msgid "Current Pump Flow"
+msgstr "現在のポンプ流量"
+
+#: src/pages/Statistics/components/ActivityHeatmap.jsx
+msgid "Current streak:"
+msgstr "現在の連続記録:"
+
+#: src/components/OverviewChart.jsx
+#: src/pages/ShotHistory/HistoryChart.jsx
+msgid "Current Temperature"
+msgstr "現在の温度"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Current value"
+msgstr "現在の値"
+
+#: src/components/OverviewChart.jsx
+msgid "Current Weight"
+msgstr "現在の重量"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Current:"
+msgstr "現在:"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+msgid "Currently Volumetric"
+msgstr "現在は容量制御"
+
+#: src/components/Navigation.jsx
+msgid "Customize"
+msgstr "カスタマイズ"
+
+#: src/pages/Statistics/components/ActivityHeatmap.jsx
+msgid "Daily average: <0>{dailyAvg} shots</0>"
+msgstr "1 日の平均: <0>{dailyAvg} ショット</0>"
+
+#: src/app/AppSettings.jsx
+#: src/pages/Settings/tabs/GeneralTab.jsx
+#: src/utils/themeManager.js
+msgctxt "theme"
+msgid "Dark"
+msgstr "ダーク"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Dark Theme"
+msgstr "ダークテーマ"
+
+#: src/components/Navigation.jsx
+msgid "Dashboard"
+msgstr "ダッシュボード"
+
+#: src/pages/DashboardSettings/index.jsx
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Dashboard Layout"
+msgstr "ダッシュボードのレイアウト"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Dashboard Settings"
+msgstr "ダッシュボード設定"
+
+#: src/components/Navigation.jsx
+msgid "Dashboard view"
+msgstr "ダッシュボード表示"
+
+#: src/services/VisualizerService.js
+msgid "Data validation failed - the shot data format may be incorrect"
+msgstr "データの検証に失敗しました。ショットデータの形式が正しくない可能性があります"
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+#: src/pages/Statistics/components/StatisticsSearchHelp.jsx
+msgid "Date"
+msgstr "日付"
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Date (New)"
+msgstr "日付（新しい順）"
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Date (Old)"
+msgstr "日付（古い順）"
+
+#: src/pages/Statistics/components/StatisticsSearchHelp.jsx
+msgid "Date basis (<0>Shot / Auto / Upload</0>) appears only when missing shot timestamps are detected."
+msgstr "日付基準（<0>ショット / 自動 / アップロード</0>）は、ショットのタイムスタンプの欠落が検出された場合にのみ表示されます。"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Date Basis:"
+msgstr "日付基準:"
+
+#: src/pages/Statistics/components/toolbar/helpers.js
+msgid "Date Range"
+msgstr "期間"
+
+#: src/pages/Statistics/components/statisticsView/helpers.js
+msgid "Date range invalid: From is after To."
+msgstr "期間が無効です: 開始日が終了日より後になっています。"
+
+#: src/components/VisualizerUploadModal.jsx
+msgid "Date:"
+msgstr "日付:"
+
+#: src/pages/Statistics/utils/statisticsSearchDsl.js
+msgid "date: expression is empty."
+msgstr "date: 式が空です。"
+
+#: src/pages/Statistics/utils/statisticsSearchDsl.js
+msgid "date: requires an operator (>, >=, <, <=, =). Example: date:>h-7d"
+msgstr "date: 演算子（>, >=, <, <=, =）が必要です。例: date:>h-7d"
+
+#: src/pages/Statistics/components/TrendChart.jsx
+msgctxt "time bucket"
+msgid "Day"
+msgstr "日"
+
+#: src/pages/Settings/tabs/CleaningSection.jsx
+msgid "days"
+msgstr "日"
+
+#: src/pages/Statistics/components/ActivityHeatmap.jsx
+msgid "Days active: <0>{daysWithShots}</0>"
+msgstr "アクティブな日数: <0>{daysWithShots}</0>"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Days of week selection"
+msgstr "曜日の選択"
+
+#: src/pages/ShotAnalyzer/shotAnalyzer/ShotAnalyzer.jsx
+msgid "Deep Dive Shot Analyzer"
+msgstr "Deep Dive ショットアナライザー"
+
+#: src/pages/Home/cards/ProfileCard.jsx
+msgctxt "profile"
+msgid "Default"
+msgstr "デフォルト"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Default Steam Temperature"
+msgstr "デフォルトのスチーム温度"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Default Water Temperature"
+msgstr "デフォルトの給湯温度"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Define behavior for physical buttons when pressed. Make sure they are wired to the buttons header. Pressing the brew and steam buttons together (or a third button wired to both) triggers the water button behavior."
+msgstr "物理ボタンを押したときの動作を設定します。ボタンがボタン用ヘッダーに配線されていることを確認してください。抽出ボタンとスチームボタンを同時に押す（または両方に配線した 3 つ目のボタンを押す）と、給湯ボタンの動作が実行されます。"
+
+#: src/pages/ProfileEdit/ProfileMainInformation.jsx
+msgid "degrees Celsius"
+msgstr "摂氏"
+
+#: src/pages/ProfileList/index.jsx
+#: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Delete"
+msgstr "削除"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Delete {label} profile"
+msgstr "{label} プロファイルを削除"
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Delete All"
+msgstr "すべて削除"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Delete all profiles"
+msgstr "すべてのプロファイルを削除"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryPanel.jsx
+msgid "Delete failed: {message}"
+msgstr "削除に失敗しました: {message}"
+
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Delete phase {phaseNumber}"
+msgstr "フェーズ {phaseNumber} を削除"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
+msgid "Delete preset"
+msgstr "プリセットを削除"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Delete profile"
+msgstr "プロファイルを削除"
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Delete shot"
+msgstr "ショットを削除"
+
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Delete this phase"
+msgstr "このフェーズを削除"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
+msgid "Delete this preset?"
+msgstr "このプリセットを削除しますか？"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Delete this schedule"
+msgstr "このスケジュールを削除"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Deleted profile"
+msgstr "プロファイルを削除しました"
+
+#: src/pages/Settings/tabs/CleaningSection.jsx
+msgid "Descaling"
+msgstr "デスケーリング"
+
+#: src/utils/warnings.js
+msgid "Descaling due"
+msgstr "デスケーリングの時期です"
+
+#: src/pages/ProfileEdit/ProfileMainInformation.jsx
+msgid "Description"
+msgstr "説明"
+
+#: src/pages/Statistics/components/StatisticsMultiSelectDropdown.jsx
+msgid "Deselect {itemName}"
+msgstr "{itemName} の選択を解除"
+
+#: src/components/Navigation.jsx
+#: src/pages/Settings/index.jsx
+msgid "Device Settings"
+msgstr "デバイス設定"
+
+#: src/pages/ShotAnalyzer/components/shotChart/tooltip/StaticTooltipContent.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/tooltip/tooltipModel.js
+msgid "Difference"
+msgstr "差分"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgid "Disable compare mode"
+msgstr "比較モードを無効にする"
+
+#: src/components/PumpFlowCalibration/Footer.jsx
+#: src/pages/Settings/index.jsx
+msgid "Discard"
+msgstr "破棄"
+
+#: src/app/MachineSwitcher.jsx
+msgid "Disconnect"
+msgstr "切断"
+
+#: src/pages/Settings/index.jsx
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "Dismiss"
+msgstr "閉じる"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Display Settings"
+msgstr "ディスプレイ設定"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Display Theme"
+msgstr "ディスプレイのテーマ"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Display Version"
+msgstr "ディスプレイのバージョン"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Distance from sensor to bottom of the tank"
+msgstr "センサーからタンク底面までの距離"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Distance from sensor to the fill line"
+msgstr "センサーから満水ラインまでの距離"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryDropdown.jsx
+msgid "Do you really want to export all {count} filtered profiles? (Profiles are downloaded individually, one after the other.)"
+msgstr "絞り込まれた {count} 件のプロファイルをすべてエクスポートしますか？（プロファイルは 1 件ずつ順番にダウンロードされます。）"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryDropdown.jsx
+msgid "Do you really want to export all {count} filtered shots? (Shots are downloaded individually, one after the other.)"
+msgstr "絞り込まれた {count} 件のショットをすべてエクスポートしますか？（ショットは 1 件ずつ順番にダウンロードされます。）"
+
+#: src/components/PumpFlowCalibration/Footer.jsx
+msgid "Done"
+msgstr "完了"
+
+#: src/pages/ProfileEdit/ProfileMainInformation.jsx
+msgid "Dose"
+msgstr "ドーズ"
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
+msgid "Dose In"
+msgstr "粉量"
+
+#: src/pages/ShotHistory/ShotNotesCard.jsx
+msgid "Dose In (g)"
+msgstr "粉量 (g)"
+
+#: src/pages/ProfileEdit/ProfileMainInformation.jsx
+msgid "Dose in g"
+msgstr "粉量 (g)"
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
+msgid "Dose Out"
+msgstr "抽出量"
+
+#: src/pages/ShotHistory/ShotNotesCard.jsx
+msgid "Dose Out (g)"
+msgstr "抽出量 (g)"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Download Support Data"
+msgstr "サポートデータをダウンロード"
+
+#: src/pages/ShotAnalyzer/components/shotChart/constants.js
+msgid "Downloading export..."
+msgstr "エクスポートをダウンロード中..."
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Downloading shot #{shotId}"
+msgstr "ショット #{shotId} をダウンロード中"
+
+#: src/pages/ShotAnalyzer/components/EmptyState.jsx
+msgid "Drag and drop files onto the status bar or use the import icons in the shot and profile badges."
+msgstr "ステータスバーにファイルをドラッグ＆ドロップするか、ショットとプロファイルのバッジにあるインポートアイコンを使用してください。"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Drag disabled on search result"
+msgstr "検索結果ではドラッグできません"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Drag to reorder"
+msgstr "ドラッグして並べ替え"
+
+#: src/pages/ShotAnalyzer/components/library/AnalyzerPanelSlot.jsx
+msgid "Drop shot or profile JSON here"
+msgstr "ショットまたはプロファイルの JSON をここにドロップ"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Duplicate"
+msgstr "複製"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Duplicate {label} profile"
+msgstr "{label} プロファイルを複製"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Duplicate profile"
+msgstr "プロファイルを複製"
+
+#: src/pages/DashboardSettings/index.jsx
+#: src/pages/Home/cards/RecentShotsCard.jsx
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMetricCards.jsx
+#: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
+#: src/pages/Statistics/components/MetricsTable.jsx
+msgid "Duration"
+msgstr "時間"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+#: src/pages/Statistics/components/TrendChart.jsx
+msgid "Duration (s)"
+msgstr "時間 (s)"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Duration in seconds"
+msgstr "時間（秒）"
+
+#: src/components/VisualizerUploadModal.jsx
+msgid "Duration:"
+msgstr "時間:"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Duration: {duration}s"
+msgstr "時間: {duration}s"
+
+#: src/components/PumpFlowCalibration/IdleSection.jsx
+msgid "During the shot, adjust the valve so pressure reaches 1 bar, then 9 bar. Keep it stable during the <0>Measure</0> phases (10 s each)."
+msgstr "ショット中にバルブを調整し、圧力を 1 bar、次に 9 bar に合わせてください。<0>Measure</0>フェーズ（各 10 秒）の間は安定させてください。"
+
+#: src/app/appSettings.js
+msgid "E.g. water tank low, scale battery low."
+msgstr "例: 水タンクの残量低下、スケールのバッテリー残量低下。"
+
+#: src/pages/ShotHistory/ShotNotesCard.jsx
+msgid "e.g., 2.5, Medium-Fine"
+msgstr "例: 2.5、中細挽き"
+
+#: src/pages/ShotHistory/ShotNotesCard.jsx
+msgid "e.g., Single Origin, Blend"
+msgstr "例: シングルオリジン、ブレンド"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Ease In"
+msgstr "イーズイン"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Ease In Out"
+msgstr "イーズインアウト"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Ease Out"
+msgstr "イーズアウト"
+
+#: src/pages/ProfileList/index.jsx
+#: src/pages/ShotHistory/ShotNotesCard.jsx
+msgid "Edit"
+msgstr "編集"
+
+#: src/pages/ProfileEdit/index.jsx
+msgid "Edit {label}"
+msgstr "{label} を編集"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Edit {label} profile"
+msgstr "{label} プロファイルを編集"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Edit date range filter"
+msgstr "期間フィルターを編集"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Edit profile"
+msgstr "プロファイルを編集"
+
+#: src/pages/Statistics/utils/statisticsSearchDsl.js
+msgid "Empty date expression."
+msgstr "日付の式が空です。"
+
+#: src/pages/Statistics/utils/statisticsSearchDsl.js
+msgid "Empty value."
+msgstr "値が空です。"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Enable Auto Wakeup"
+msgstr "自動ウェイクアップを有効にする"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Enable Boiler Refill"
+msgstr "ボイラー給水を有効にする"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgid "Enable compare mode"
+msgstr "比較モードを有効にする"
+
+#: src/pages/Settings/tabs/HeaterCoordinationSection.jsx
+msgid "Enable heater coordination"
+msgstr "ヒーター協調を有効にする"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Enable Home Assistant"
+msgstr "Home Assistant を有効にする"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Enable HomeKit"
+msgstr "HomeKit を有効にする"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Enable Mahlkönig E64 WS Grind-by-Sync"
+msgstr "Mahlkönig E64 WS Grind-by-Sync を有効にする"
+
+#: src/app/AppSettings.jsx
+msgid "Enable notifications"
+msgstr "通知を有効にする"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Enable Smart Grind"
+msgstr "スマートグラインドを有効にする"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Enable standby display"
+msgstr "スタンバイ画面を有効にする"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Enables compact mode for this panel"
+msgstr "このパネルのコンパクトモードを有効にします"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "End date"
+msgstr "終了日"
+
+#: src/pages/Statistics/components/statisticsView/StatisticsView.jsx
+msgctxt "keyboard key"
+msgid "Enter"
+msgstr "Enter"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Enter 2 values (flow at 1 bar, flow at 9 bar)"
+msgstr "2 つの値を入力（1 bar 時の流量、9 bar 時の流量）"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Enter a name for this phase"
+msgstr "このフェーズの名前を入力"
+
+#: src/pages/ProfileEdit/ProfileMainInformation.jsx
+msgid "Enter a name for this profile"
+msgstr "このプロファイルの名前を入力"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Enter the bar rating of the pressure sensor being used"
+msgstr "使用している圧力センサーの定格（bar）を入力してください"
+
+#: src/app/MachineSetup.jsx
+msgid "Enter the hostname or IP address of your machine."
+msgstr "マシンのホスト名または IP アドレスを入力してください。"
+
+#: src/components/VisualizerUploadModal.jsx
+msgid "Enter your password"
+msgstr "パスワードを入力"
+
+#: src/components/VisualizerUploadModal.jsx
+msgid "Enter your username"
+msgstr "ユーザー名を入力"
+
+#: src/app/machines.js
+msgctxt "connection failure"
+msgid "error"
+msgstr "エラー"
+
+#: src/app/notifications.js
+msgid "Error"
+msgstr "エラー"
+
+#: src/utils/warnings.js
+msgctxt "warning level"
+msgid "Error"
+msgstr "エラー"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Error Color"
+msgstr "エラーの色"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Error loading devices. Please try again."
+msgstr "デバイスの読み込み中にエラーが発生しました。もう一度お試しください。"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Error: {message}"
+msgstr "エラー: {message}"
+
+#: src/app/appSettings.js
+msgid "Errors"
+msgstr "エラー"
+
+#: src/components/PumpFlowCalibration/ResultsPanel.jsx
+msgid "estimated flow"
+msgstr "推定流量"
+
+#: src/utils/metricDefinitions.js
+msgid "Estimated Output"
+msgstr "推定抽出量"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Even fill"
+msgstr "均等に埋める"
+
+#: src/pages/Settings/tabs/CleaningSection.jsx
+msgid "Every"
+msgstr "毎"
+
+#: src/pages/Statistics/components/StatisticsSearchHelp.jsx
+msgid "Examples"
+msgstr "例"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgid "Excessive delay while writing samples. Possible causes include a slow SD card or high OS/system load."
+msgstr "サンプルの書き込み中に過度な遅延が発生しました。SD カードが遅い、または OS/システムの負荷が高いことが考えられます。"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Exit on: {value}"
+msgstr "終了条件: {value}"
+
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+msgid "Exit Reasons"
+msgstr "終了理由"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
+msgid "Expand column settings"
+msgstr "列設定を展開"
+
+#: src/components/Navigation.jsx
+msgid "Expand navigation"
+msgstr "ナビゲーションを展開"
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Expand shot details"
+msgstr "ショットの詳細を展開"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Expand statistics toolbar"
+msgstr "統計ツールバーを展開"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+msgid "Explain WebM export"
+msgstr "WebM エクスポートについて"
+
+#: src/pages/ProfileList/index.jsx
+#: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Export"
+msgstr "エクスポート"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Export {label} profile"
+msgstr "{label} プロファイルをエクスポート"
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Export All"
+msgstr "すべてエクスポート"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Export all profiles"
+msgstr "すべてのプロファイルをエクスポート"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+msgid "Export as WebM"
+msgstr "WebM としてエクスポート"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+msgid "Export Chart"
+msgstr "チャートをエクスポート"
+
+#: src/pages/ShotAnalyzer/components/library/StatusBar.jsx
+msgid "Export current profile"
+msgstr "現在のプロファイルをエクスポート"
+
+#: src/pages/ShotAnalyzer/components/library/StatusBar.jsx
+msgid "Export current shot"
+msgstr "現在のショットをエクスポート"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryPanel.jsx
+msgid "Export failed: {message}"
+msgstr "エクスポートに失敗しました: {message}"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+msgid "Export File"
+msgstr "ファイルをエクスポート"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Export profile"
+msgstr "プロファイルをエクスポート"
+
+#: src/pages/Settings/index.jsx
+msgid "Export settings"
+msgstr "設定をエクスポート"
+
+#: src/pages/Settings/index.jsx
+msgid "Export Settings"
+msgstr "設定をエクスポート"
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Export shot data"
+msgstr "ショットデータをエクスポート"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+msgid "Extended Record"
+msgstr "拡張記録"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "External LED ({extLedPct}%)"
+msgstr "外部 LED（{extLedPct}%）"
+
+#: src/pages/ProfileList/index.jsx
+msgctxt "profile tab"
+msgid "Extraction"
+msgstr "抽出"
+
+#: src/pages/Settings/PluginCard.jsx
+msgctxt "Friday, one letter"
+msgid "F"
+msgstr "金"
+
+#: src/pages/Statistics/components/ActivityHeatmap.jsx
+msgctxt "weekday initial: Friday"
+msgid "F"
+msgstr "金"
+
+#: src/components/PumpFlowCalibration/ResultsPanel.jsx
+msgid "factor"
+msgstr "係数"
+
+#: src/pages/ShotAnalyzer/services/LibraryService.js
+msgid "Failed to load shot {idStr}: HTTP {status}"
+msgstr "ショット {idStr} の読み込みに失敗しました: HTTP {status}"
+
+#: src/pages/Statistics/components/statisticsView/hooks.js
+msgid "Failed to load shots/profiles for filtering."
+msgstr "絞り込み用のショット/プロファイルの読み込みに失敗しました。"
+
+#: src/pages/Statistics/components/statisticsView/hooks.js
+msgid "Failed to load statistics. Please try again."
+msgstr "統計の読み込みに失敗しました。もう一度お試しください。"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Favorite"
+msgstr "お気に入り"
+
+#: src/pages/Statistics/components/StatisticsSearchHelp.jsx
+msgid "Fields"
+msgstr "フィールド"
+
+#: src/pages/ShotAnalyzer/components/shotChart/single/useShotChartReplayExport.js
+msgid "File export failed."
+msgstr "ファイルのエクスポートに失敗しました。"
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Filter library source"
+msgstr "ライブラリのソースで絞り込む"
+
+#: src/pages/Home/utils.js
+msgctxt "process action"
+msgid "Finish"
+msgstr "終了"
+
+#: src/pages/Home/cards/ProfileCard.jsx
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Finished"
+msgstr "完了"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Finished Color"
+msgstr "完了時の色"
+
+#: src/app/FirmwareWarning.jsx
+msgid "Firmware {version} – not all features may be available."
+msgstr "ファームウェア {version} – 一部の機能は利用できない場合があります。"
+
+#: src/utils/panelDefinitions.js
+msgid "Flexible Space"
+msgstr "フレキシブルスペース"
+
+#: src/components/ExtendedProfileChart.jsx
+#: src/pages/Home/cards/ProfileCard.jsx
+#: src/pages/Home/cards/RecentShotsCard.jsx
+#: src/utils/metricDefinitions.js
+msgid "Flow"
+msgstr "流量"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgctxt "pump mode"
+msgid "Flow"
+msgstr "流量"
+
+#: src/components/ExtendedProfileChart.jsx
+msgid "Flow (ml/s)"
+msgstr "流量 (ml/s)"
+
+#: src/pages/ShotAnalyzer/components/shotChart/single/SingleShotMetricPreview.jsx
+msgid "Flow & Volume"
+msgstr "流量と水量"
+
+#: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
+msgid "Flow above"
+msgstr "流量が次より上"
+
+#: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
+msgid "Flow below"
+msgstr "流量が次より下"
+
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Flow Limit"
+msgstr "流量制限"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Flow rate in grams per second"
+msgstr "流量（グラム/秒）"
+
+#: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
+msgid "Flow target"
+msgstr "流量目標"
+
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Flow Target"
+msgstr "流量目標"
+
+#: src/pages/Home/FlushButton.jsx
+msgctxt "action"
+msgid "Flush"
+msgstr "フラッシュ"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgctxt "button behavior"
+msgid "Flush"
+msgstr "フラッシュ"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgctxt "settings section"
+msgid "Flush"
+msgstr "フラッシュ"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Flush Duration"
+msgstr "フラッシュ時間"
+
+#: src/utils/warnings.js
+msgid "Flush recommended"
+msgstr "フラッシュを推奨"
+
+#: src/pages/Home/FlushButton.jsx
+msgid "Flush water"
+msgstr "フラッシュ水量"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Forget"
+msgstr "削除"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Forgetting..."
+msgstr "削除中..."
+
+#: src/app/MachineSetup.jsx
+msgid "Found on your network"
+msgstr "ネットワーク上で検出"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Frag:"
+msgstr "断片化:"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Free Memory (Heap)"
+msgstr "空きメモリ（ヒープ）"
+
+#: src/pages/Settings/PluginCard.jsx
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
+msgid "Friday"
+msgstr "金曜日"
+
+#: src/pages/Statistics/components/toolbar/helpers.js
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgctxt "date range start"
+msgid "From"
+msgstr "開始"
+
+#: src/pages/DashboardSettings/index.jsx
+msgctxt "panel view"
+msgid "Full"
+msgstr "フル"
+
+#: src/pages/ShotAnalyzer/components/EmptyState.jsx
+msgid "GaggiMate (GM)"
+msgstr "GaggiMate (GM)"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "GaggiMate didn't accept the request. Check the connection and try again."
+msgstr "GaggiMate がリクエストを受け付けませんでした。接続を確認してもう一度お試しください。"
+
+#: src/app/shareFiles.js
+msgid "GaggiMate export"
+msgstr "GaggiMate エクスポート"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "GaggiMate is not affiliated with, endorsed by or supported by Mahlkönig or its parent company, the Hemro Group. Mahlkönig, E64 WS, Grind-by-Sync and Xenia are trademarks of their respective owners."
+msgstr "GaggiMate は、Mahlkönig およびその親会社である Hemro Group とは提携しておらず、承認や支援も受けていません。Mahlkönig、E64 WS、Grind-by-Sync、Xenia は各所有者の商標です。"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "GaggiMate reconnects automatically once the scale is switched on and in range."
+msgstr "スケールの電源が入り、範囲内に入ると GaggiMate は自動的に再接続します。"
+
+#: src/app/MachineSetup.jsx
+msgid "gaggimate.local or 192.168.1.20"
+msgstr "gaggimate.local または 192.168.1.20"
+
+#: src/pages/Settings/index.jsx
+msgid "General"
+msgstr "一般"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "General Settings"
+msgstr "一般設定"
+
+#: src/pages/ProfileEdit/ProfileImageUpload.jsx
+msgid "GIF images are not supported. Please use PNG, JPEG, WebP or BMP."
+msgstr "GIF 画像には対応していません。PNG、JPEG、WebP、BMP を使用してください。"
+
+#: src/pages/Statistics/components/statisticsView/StatisticsDetailSection.jsx
+msgid "Global metric averages"
+msgstr "全体のメトリクス平均"
+
+#: src/pages/_404.jsx
+msgid "Go Home"
+msgstr "ホームへ"
+
+#: src/pages/ProfileEdit/ProfileMainInformation.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "grams"
+msgstr "グラム"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "grams per second"
+msgstr "グラム/秒"
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
+msgid "Grind"
+msgstr "グラインド"
+
+#: src/app/machineStatus.js
+#: src/pages/Home/utils.js
+msgctxt "machine mode"
+msgid "Grind"
+msgstr "グラインド"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgctxt "predictive scale delay"
+msgid "Grind"
+msgstr "グラインド"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgctxt "relay function"
+msgid "Grind"
+msgstr "グラインド"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Grind once with GbS to see which recipe number your grinder reports."
+msgstr "GbS で一度挽いて、グラインダーが報告するレシピ番号を確認してください。"
+
+#: src/pages/ShotHistory/ShotNotesCard.jsx
+msgid "Grind Setting"
+msgstr "挽き目"
+
+#: src/pages/Home/cards/ActionCard.jsx
+msgid "Grind target"
+msgstr "グラインド目標"
+
+#: src/pages/Home/cards/ProfileCard.jsx
+#: src/pages/Home/utils.js
+msgid "Grinding"
+msgstr "グラインド中"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Hardware"
+msgstr "ハードウェア"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Hardware Scale"
+msgstr "ハードウェアスケール"
+
+#: src/pages/Settings/tabs/HeaterCoordinationSection.jsx
+msgid "Heater Coordination"
+msgstr "ヒーター協調"
+
+#: src/pages/Settings/tabs/HeaterCoordinationSection.jsx
+msgid "Heater handover pause (ms)"
+msgstr "ヒーター切り替え時の休止 (ms)"
+
+#: src/utils/metricDefinitions.js
+msgid "Heater Power"
+msgstr "ヒーター出力"
+
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "Heater Wattage (W)"
+msgstr "ヒーター出力 (W)"
+
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "Heater wattage in Watts (e.g. Gaggia Classic: 1360 W, Rancilio Silvia 120V: 950W, Rancilio Silvia 230V: 1100W)."
+msgstr "ヒーターの消費電力（ワット）（例: Gaggia Classic: 1360 W、Rancilio Silvia 120V: 950W、Rancilio Silvia 230V: 1100W）。"
+
+#: src/components/SettingsFormField.jsx
+msgid "Hidden / Available"
+msgstr "非表示 / 利用可能"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/compareControls.jsx
+msgid "Hide compare annotations"
+msgstr "比較の注釈を非表示"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareChartLayout.jsx
+msgid "Hide detail charts"
+msgstr "詳細チャートを非表示"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Hide details"
+msgstr "詳細を非表示"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Hide details for {label}"
+msgstr "{label} の詳細を非表示"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/single/SingleShotChart.jsx
+msgid "Hide legend"
+msgstr "凡例を非表示"
+
+#: src/components/VisualizerUploadModal.jsx
+msgid "Hide password"
+msgstr "パスワードを隠す"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTableCells.jsx
+msgid "High Scale Delay"
+msgstr "スケール遅延大"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgid "HIGH SCALE DELAY"
+msgstr "スケール遅延大"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Highest ID First"
+msgstr "ID の大きい順"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Highest Rated"
+msgstr "評価の高い順"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Highest Volume"
+msgstr "量の多い順"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgctxt "flush duration"
+msgid "Hold"
+msgstr "長押し"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Hold runs the flush for as long as the button is held. The valve stays open for one more second after the pump stops."
+msgstr "長押しでは、ボタンを押している間フラッシュが続きます。ポンプ停止後、バルブはさらに 1 秒間開いたままになります。"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Home Assistant Discovery Topic"
+msgstr "Home Assistant 検出トピック"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Home Assistant over MQTT (Deprecated)"
+msgstr "MQTT 経由の Home Assistant（非推奨）"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "HomeKit Setup Code"
+msgstr "HomeKit セットアップコード"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Hostname"
+msgstr "ホスト名"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "How many ml/s to pump into the boiler during steaming"
+msgstr "スチーム中にボイラーへ送る水量 (ml/s)"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "HX711 Sample Rate"
+msgstr "HX711 サンプルレート"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "ID: {shotId}"
+msgstr "ID: {shotId}"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Idle Color"
+msgstr "待機時の色"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Idle Filter Alpha"
+msgstr "待機時フィルター Alpha"
+
+#: src/utils/warnings.js
+msgctxt "warning level"
+msgid "Ignore"
+msgstr "無視"
+
+#: src/pages/Settings/index.jsx
+msgid "Ignored unknown entries: {ignoredEntries}"
+msgstr "不明な項目を無視しました: {ignoredEntries}"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Ignored while a Flexible Space item is present in the panel list below."
+msgstr "下のパネル一覧にフレキシブルスペースがある場合は無視されます。"
+
+#: src/pages/ProfileEdit/ProfileImageUpload.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+msgid "Image"
+msgstr "画像"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/MobileStatusActionsMenu.jsx
+msgid "Import"
+msgstr "インポート"
+
+#: src/pages/ShotAnalyzer/components/EmptyState.jsx
+msgid "Import a shot file or select one from your library to start analyzing."
+msgstr "ショットファイルをインポートするか、ライブラリから選択して分析を開始してください。"
+
+#: src/pages/ShotAnalyzer/components/library/libraryImport.js
+msgid "Import failed. Please check the file format."
+msgstr "インポートに失敗しました。ファイル形式を確認してください。"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Import profiles"
+msgstr "プロファイルをインポート"
+
+#: src/pages/Settings/index.jsx
+msgid "Import settings"
+msgstr "設定をインポート"
+
+#: src/pages/Settings/index.jsx
+msgid "Import Settings"
+msgstr "設定をインポート"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgid "Import shot or profile"
+msgstr "ショットまたはプロファイルをインポート"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/MobileStatusActionsMenu.jsx
+msgid "Importing"
+msgstr "インポート中"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgid "Importing shot or profile"
+msgstr "ショットまたはプロファイルをインポート中"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+msgid "Include legend"
+msgstr "凡例を含める"
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "INCOMPLETE"
+msgstr "未完了"
+
+#: src/pages/Home/utils.js
+msgid "Infusion"
+msgstr "インフュージョン"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgctxt "ramp style"
+msgid "Instant"
+msgstr "即時"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Integral Gain"
+msgstr "積分ゲイン"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Internal error: ApiService unavailable."
+msgstr "内部エラー: ApiService が利用できません。"
+
+#: src/pages/Statistics/utils/statisticsSearchDsl.js
+msgid "Invalid calendar date."
+msgstr "無効な日付です。"
+
+#: src/pages/Statistics/utils/statisticsSearchDsl.js
+msgid "Invalid date expression in \"{clauseRaw}\": {parseError}"
+msgstr "「{clauseRaw}」の日付式が無効です: {parseError}"
+
+#: src/pages/Statistics/utils/statisticsSearchDsl.js
+msgid "Invalid date or time value."
+msgstr "日付または時刻の値が無効です。"
+
+#: src/pages/Statistics/components/statisticsView/helpers.js
+msgid "Invalid date: {value}"
+msgstr "無効な日付: {value}"
+
+#: src/pages/Statistics/components/statisticsView/helpers.js
+msgid "Invalid date/time: {value}"
+msgstr "無効な日時: {value}"
+
+#: src/utils/pumpFlowCalibration.js
+msgid "Invalid flow data for tp={targetPressure} bar (estimatedFlow={estimatedFlow}, actualFlow={actualFlow}). Did the scale see any weight increase during the shot?"
+msgstr "tp={targetPressure} bar の流量データが無効です（estimatedFlow={estimatedFlow}、actualFlow={actualFlow}）。ショット中にスケールで重量の増加は検出されましたか？"
+
+#: src/pages/Statistics/utils/statisticsSearchDsl.js
+msgid "Invalid pinned expression in \"{clauseRaw}\": {pinnedError}"
+msgstr "「{clauseRaw}」の固定式が無効です: {pinnedError}"
+
+#: src/pages/Statistics/utils/statisticsSearchDsl.js
+msgid "Invalid relative day value."
+msgstr "相対日数の値が無効です。"
+
+#: src/services/VisualizerService.js
+msgid "Invalid shot data: missing required samples array"
+msgstr "無効なショットデータ: 必須の samples 配列がありません"
+
+#: src/services/VisualizerService.js
+msgid "Invalid shot data: samples array is empty"
+msgstr "無効なショットデータ: samples 配列が空です"
+
+#: src/pages/Statistics/utils/statisticsSearchDsl.js
+msgid "Invalid value for {field}: {valueError}"
+msgstr "{field} の値が無効です: {valueError}"
+
+#: src/app/AppSettings.jsx
+msgid "iOS only lets GaggiMate stay connected to your machines while the app is open. Notifications stop a few seconds after you switch to another app or lock your phone."
+msgstr "iOS では、アプリを開いている間しか GaggiMate がマシンとの接続を維持できません。別のアプリに切り替えたりスマートフォンをロックしたりすると、数秒後に通知が停止します。"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Keep selected profile"
+msgstr "選択中のプロファイルを維持"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/ShotChartControls.jsx
+msgid "Keep this window focused while the replay is being recorded."
+msgstr "リプレイの録画中はこのウィンドウを前面に表示したままにしてください。"
+
+#: src/app/MachineSetup.jsx
+msgid "Kitchen"
+msgstr "キッチン"
+
+#: src/components/LanguageSelect.jsx
+msgid "Language"
+msgstr "言語"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Larger alpha responds faster with less smoothing; smaller alpha is smoother but slower."
+msgstr "alpha が大きいほど反応が速く平滑化は弱くなり、小さいほど滑らかですが反応は遅くなります。"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Last Row Fill"
+msgstr "最終行の配置"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Last used profile"
+msgstr "最後に使用したプロファイル"
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
+msgid "Last week"
+msgstr "先週"
+
+#: src/pages/Settings/tabs/CleaningSection.jsx
+msgid "Last: {lastTime} · {shotsSince, plural, one {# shot since} other {# shots since}}"
+msgstr "前回: {lastTime} · {shotsSince, plural, other {以降 # ショット}}"
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Length (Long)"
+msgstr "長さ（長い順）"
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Length (Short)"
+msgstr "長さ（短い順）"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Lets an E64 WS start shots with its knob and dial in its grind from the shot time and weight. A grind selects the profile mapped to its recipe, and the grinder's target weight overrides that profile's weight target. Save and restart to apply."
+msgstr "E64 WS のノブでショットを開始し、ショットの時間と重量から挽き目を調整できるようにします。挽くとそのレシピに割り当てられたプロファイルが選択され、グラインダーの目標重量がそのプロファイルの重量目標より優先されます。保存して再起動すると適用されます。"
+
+#: src/app/AppSettings.jsx
+#: src/pages/Settings/tabs/GeneralTab.jsx
+#: src/utils/themeManager.js
+msgctxt "theme"
+msgid "Light"
+msgstr "ライト"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Light Theme"
+msgstr "ライトテーマ"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgctxt "ramp style"
+msgid "Linear"
+msgstr "リニア"
+
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+#: src/pages/Statistics/components/MetricsTable.jsx
+msgid "Liquid Resistance"
+msgstr "液体抵抗"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+#: src/pages/ShotAnalyzer/utils/constants.js
+msgid "Liquid Resistance (bar·s/mL)"
+msgstr "液体抵抗 (bar·s/mL)"
+
+#: src/app/machines.js
+msgid "live connection failed ({reason})"
+msgstr "ライブ接続に失敗しました（{reason}）"
+
+#: src/components/OverviewChart.jsx
+msgid "Live Metrics"
+msgstr "ライブメトリクス"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgid "Load a profile to open statistics"
+msgstr "統計を開くにはプロファイルを読み込んでください"
+
+#: src/pages/ShotAnalyzer/components/library/libraryImport.js
+msgid "Load a secondary shot before importing a secondary profile."
+msgstr "セカンダリプロファイルをインポートする前に、セカンダリショットを読み込んでください。"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Load Cell 1 Scale Factor"
+msgstr "ロードセル 1 のスケール係数"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Load Cell 2 Scale Factor"
+msgstr "ロードセル 2 のスケール係数"
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Load first"
+msgstr "先に読み込んでください"
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Load shot data first by expanding the shot"
+msgstr "ショットを展開して先にショットデータを読み込んでください"
+
+#: src/pages/Settings/index.jsx
+msgid "Loaded {importCount, plural, one {# setting} other {# settings}} from {importName}. All other settings are kept. Save to apply."
+msgstr "{importName} から {importCount, plural, other {# 件の設定}}を読み込みました。その他の設定は保持されます。保存すると適用されます。"
+
+#: src/components/Spinner.jsx
+msgid "Loading"
+msgstr "読み込み中"
+
+#: src/pages/Statistics/components/toolbar/helpers.js
+msgid "loading candidates"
+msgstr "候補を読み込み中"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Loading profiles"
+msgstr "プロファイルを読み込み中"
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Loading shot data..."
+msgstr "ショットデータを読み込み中..."
+
+#: src/pages/ShotAnalyzer/components/EmptyState.jsx
+msgid "Local Browser Storage (WEB)"
+msgstr "ローカルブラウザーストレージ (WEB)"
+
+#: src/pages/Statistics/components/StatisticsSearchHelp.jsx
+msgid "Local browser time is used."
+msgstr "ローカルブラウザーの時刻を使用します。"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Longest Duration"
+msgstr "時間の長い順"
+
+#: src/pages/Statistics/components/ActivityHeatmap.jsx
+msgid "Longest streak:"
+msgstr "最長連続記録:"
+
+#: src/app/MachineSetup.jsx
+msgid "Looking for machines… If yours doesn't show up, add it by its address."
+msgstr "マシンを検索中… 表示されない場合は、アドレスで追加してください。"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Lowest ID first"
+msgstr "ID の小さい順"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Lowest Rated"
+msgstr "評価の低い順"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Lowest Volume"
+msgstr "量の少ない順"
+
+#: src/pages/Settings/PluginCard.jsx
+msgctxt "Monday, one letter"
+msgid "M"
+msgstr "月"
+
+#: src/pages/Statistics/components/ActivityHeatmap.jsx
+msgctxt "weekday initial: Monday"
+msgid "M"
+msgstr "月"
+
+#: src/pages/Settings/index.jsx
+msgctxt "settings tab"
+msgid "Machine"
+msgstr "マシン"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Machine address for the grinder"
+msgstr "グラインダー用のマシンアドレス"
+
+#: src/app/notifications.js
+msgid "Machine error"
+msgstr "マシンエラー"
+
+#: src/app/notifications.js
+msgid "Machine events"
+msgstr "マシンのイベント"
+
+#: src/pages/Home/cards/ActionCard.jsx
+msgid "Machine is ready, wake up to use"
+msgstr "マシンの準備ができました。スリープを解除して使用してください"
+
+#: src/app/appSettings.js
+msgid "Machine preheated"
+msgstr "マシンの予熱が完了しました"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Machine Settings"
+msgstr "マシン設定"
+
+#: src/app/AppSettings.jsx
+#: src/app/MachineSwitcher.jsx
+msgid "Machines"
+msgstr "マシン"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Main Brightness (1-16)"
+msgstr "メイン輝度（1-16）"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/compareControls.jsx
+msgid "Main Shot"
+msgstr "メインショット"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Maintain Flow"
+msgstr "流量を維持"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Maintain Pressure"
+msgstr "圧力を維持"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Maintenance & Support"
+msgstr "メンテナンスとサポート"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Make sure to backup your profiles from the profiles screen before updating the display."
+msgstr "ディスプレイを更新する前に、プロファイル画面からプロファイルをバックアップしてください。"
+
+#: src/app/AppSettings.jsx
+msgid "Manage machines"
+msgstr "マシンを管理"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Manual date filter is active."
+msgstr "手動の日付フィルターが有効です。"
+
+#: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
+msgid "Manually stopped"
+msgstr "手動停止"
+
+#: src/pages/ShotAnalyzer/utils/formatting.js
+msgid "Manually Stopped"
+msgstr "手動停止"
+
+#: src/pages/Settings/tabs/CleaningSection.jsx
+msgid "Mark complete"
+msgstr "完了にする"
+
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+msgid "Max"
+msgstr "最大"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Max Pressure"
+msgstr "最大圧力"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Max Recent Shots"
+msgstr "最近のショットの最大数"
+
+#: src/pages/ShotAnalyzer/components/library/libraryDisplay.js
+msgid "Maximum {MAX_PINNED_PROFILES} pinned profiles"
+msgstr "固定できるプロファイルは最大 {MAX_PINNED_PROFILES} 件です"
+
+#: src/pages/ShotAnalyzer/components/library/libraryDisplay.js
+msgid "Maximum {MAX_PINNED_SHOTS_PER_PROFILE} pinned shots per profile"
+msgstr "プロファイルごとに固定できるショットは最大 {MAX_PINNED_SHOTS_PER_PROFILE} 件です"
+
+#: src/pages/ShotAnalyzer/components/library/libraryDisplay.js
+msgid "Maximum {MAX_PINNED_SHOTS_PER_PROFILE} pinned shots without a profile"
+msgstr "プロファイルなしで固定できるショットは最大 {MAX_PINNED_SHOTS_PER_PROFILE} 件です"
+
+#: src/pages/Statistics/components/statisticsView/helpers.js
+msgid "Maximum {maxPinned} pinned profiles"
+msgstr "固定できるプロファイルは最大 {maxPinned} 件です"
+
+#: src/pages/Statistics/components/statisticsView/helpers.js
+msgid "Maximum {maxPinned} pinned shots per profile"
+msgstr "プロファイルごとに固定できるショットは最大 {maxPinned} 件です"
+
+#: src/pages/Statistics/components/statisticsView/helpers.js
+msgid "Maximum {maxPinned} pinned shots without a profile"
+msgstr "プロファイルなしで固定できるショットは最大 {maxPinned} 件です"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Maximum Flow"
+msgstr "最大流量"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Maximum Flow (0 = Ignore)"
+msgstr "最大流量（0 = 無視）"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Maximum Pressure"
+msgstr "最大圧力"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Maximum Pressure (0 = Ignore)"
+msgstr "最大圧力（0 = 無視）"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Maximum Pump Power (0 - 1)"
+msgstr "最大ポンプ出力（0 - 1）"
+
+#: src/pages/ShotAnalyzer/services/ReplayVideoExportService.js
+msgid "MediaRecorder is not supported in this browser."
+msgstr "このブラウザーは MediaRecorder に対応していません。"
+
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+msgid "Metric"
+msgstr "メトリクス"
+
+#: src/pages/ShotAnalyzer/components/shotChart/MobileMetricPager.jsx
+msgid "Metric pages"
+msgstr "メトリクスのページ"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Metric Selection"
+msgstr "メトリクスの選択"
+
+#: src/components/OverviewChart.jsx
+msgid "Metrics - Recent Brew"
+msgstr "メトリクス - 直近の抽出"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Metrics Columns"
+msgstr "メトリクスの列数"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "milliliter per second"
+msgstr "ミリリットル/秒"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "millimeter"
+msgstr "ミリメートル"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "milliseconds"
+msgstr "ミリ秒"
+
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+msgid "Min"
+msgstr "最小"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+#: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
+msgctxt "column type"
+msgid "Min/Max"
+msgstr "最小/最大"
+
+#: src/pages/Settings/PluginCard.jsx
+msgctxt "smart grind mode"
+msgid "Mode"
+msgstr "モード"
+
+#: src/utils/panelDefinitions.js
+msgid "Mode Selector"
+msgstr "モード選択"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Momentary Buttons"
+msgstr "モメンタリーボタン"
+
+#: src/pages/Settings/PluginCard.jsx
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
+msgid "Monday"
+msgstr "月曜日"
+
+#: src/pages/Statistics/components/TrendChart.jsx
+msgctxt "time bucket"
+msgid "Month"
+msgstr "月"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/MobileStatusActionsMenu.jsx
+#: src/pages/ShotAnalyzer/components/library/LibraryActionsMenu.jsx
+msgid "More actions"
+msgstr "その他の操作"
+
+#: src/pages/Settings/index.jsx
+msgid "More options"
+msgstr "その他のオプション"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Move {label} to bottom"
+msgstr "{label} を一番下へ移動"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Move {label} to top"
+msgstr "{label} を一番上へ移動"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Move to bottom"
+msgstr "一番下へ移動"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Move to top"
+msgstr "一番上へ移動"
+
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "Moving-window length (samples) used for slope estimation. Larger values smooth MAX31855 quantisation but lag the inflection. 6 is the sweet spot."
+msgstr "傾き推定に使う移動ウィンドウの長さ（サンプル数）。値を大きくすると MAX31855 の量子化が平滑化されますが、変曲点の検出が遅れます。6 が最適です。"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "MQTT IP"
+msgstr "MQTT IP"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "MQTT Password"
+msgstr "MQTT パスワード"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "MQTT Port"
+msgstr "MQTT ポート"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "MQTT User"
+msgstr "MQTT ユーザー"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgid "Multi-Compare"
+msgstr "複数比較"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Multiple Cards"
+msgstr "複数カード"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Must match the physical RATE-jumper configuration on the HX711 board. This setting does not switch the RATE pin."
+msgstr "HX711 基板の RATE ジャンパーの物理的な設定と一致させる必要があります。この設定で RATE ピンが切り替わるわけではありません。"
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Name"
+msgstr "名前"
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Name (A-Z)"
+msgstr "名前（A-Z）"
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Name (Z-A)"
+msgstr "名前（Z-A）"
+
+#: src/app/MachineSetup.jsx
+msgid "Name <0>(optional)</0>"
+msgstr "名前 <0>（任意）</0>"
+
+#: src/app/MachineSetup.jsx
+msgid "Name for {host}"
+msgstr "{host} の名前"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
+msgid "Name for new Preset:"
+msgstr "新しいプリセットの名前:"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Name..."
+msgstr "名前..."
+
+#: src/services/VisualizerService.js
+msgid "Network error: Unable to connect to visualizer.coffee"
+msgstr "ネットワークエラー: visualizer.coffee に接続できません"
+
+#: src/pages/Settings/tabs/CleaningSection.jsx
+msgid "Never"
+msgstr "なし"
+
+#: src/components/Navigation.jsx
+msgid "NEW"
+msgstr "NEW"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "New shot did not appear in history — was it cancelled?"
+msgstr "新しいショットが履歴に表示されませんでした。キャンセルされましたか？"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Newest First"
+msgstr "新しい順"
+
+#: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+#: src/pages/ShotHistory/index.jsx
+msgid "Next"
+msgstr "次へ"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgid "Next shot"
+msgstr "次のショット"
+
+#: src/app/AppSettings.jsx
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgctxt "update channel"
+msgid "Nightly"
+msgstr "Nightly"
+
+#: src/app/AppSettings.jsx
+msgid "Nightly gets new features first, built from the same code as the nightly firmware."
+msgstr "Nightly では新機能をいち早く利用できます。Nightly ファームウェアと同じコードからビルドされています。"
+
+#: src/app/machines.js
+msgid "no answer (timed out)"
+msgstr "応答なし（タイムアウト）"
+
+#: src/pages/Statistics/components/statisticsView/helpers.js
+#: src/pages/Statistics/components/toolbar/helpers.js
+msgid "No date"
+msgstr "日付なし"
+
+#: src/pages/Statistics/components/toolbar/helpers.js
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "No dates"
+msgstr "日付なし"
+
+#: src/pages/Home/cards/FavoriteProfilesCard.jsx
+msgid "No favorites — mark profiles as ★ in the profile list"
+msgstr "お気に入りがありません。プロファイル一覧でプロファイルに ★ を付けてください"
+
+#: src/pages/ProfileEdit/ProfileImageUpload.jsx
+msgid "No image"
+msgstr "画像なし"
+
+#: src/pages/Statistics/components/StatisticsMultiSelectDropdown.jsx
+msgid "No items found."
+msgstr "項目が見つかりません。"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "No more types available"
+msgstr "追加できる種類はもうありません"
+
+#: src/pages/ShotHistory/ShotNotesCard.jsx
+msgid "No notes added"
+msgstr "メモはありません"
+
+#: src/app/MachineSetup.jsx
+msgid "No other machines found."
+msgstr "他のマシンが見つかりません。"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "No other profile found to switch back to."
+msgstr "切り替えて戻れる他のプロファイルが見つかりません。"
+
+#: src/pages/ProfileList/index.jsx
+msgid "No phases"
+msgstr "フェーズなし"
+
+#: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+msgid "No phases yet. Add a phase to configure brewing."
+msgstr "まだフェーズがありません。フェーズを追加して抽出を設定してください。"
+
+#: src/pages/Statistics/components/StatisticsMultiSelectDropdown.jsx
+msgid "No pinned items found."
+msgstr "固定された項目が見つかりません。"
+
+#: src/pages/ShotAnalyzer/utils/formatting.js
+msgid "No preceding phase"
+msgstr "前のフェーズなし"
+
+#: src/pages/ShotAnalyzer/components/library/libraryDisplay.js
+msgid "No Profile Loaded"
+msgstr "プロファイルが読み込まれていません"
+
+#: src/pages/ShotAnalyzer/services/analyzer/shotAnalysis.js
+msgid "No sample data available for analysis."
+msgstr "分析に使用できるサンプルデータがありません。"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "No scales found"
+msgstr "スケールが見つかりません"
+
+#: src/pages/ShotAnalyzer/components/EmptyState.jsx
+#: src/pages/ShotAnalyzer/components/library/libraryDisplay.js
+#: src/pages/ShotAnalyzer/components/useShotNotesState.js
+msgid "No Shot Loaded"
+msgstr "ショットが読み込まれていません"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "No shots available"
+msgstr "利用できるショットがありません"
+
+#: src/pages/Statistics/components/statisticsView/StatisticsView.jsx
+msgid "No shots found for the selected filters."
+msgstr "選択したフィルターに一致するショットが見つかりません。"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "No shots match your search and filter criteria"
+msgstr "検索条件とフィルター条件に一致するショットがありません"
+
+#: src/pages/Statistics/components/statisticsView/StatisticsView.jsx
+msgid "No Statistics Built Yet"
+msgstr "統計はまだ作成されていません"
+
+#: src/pages/ShotAnalyzer/services/ReplayVideoExportService.js
+msgid "No supported video recorder was found for replay export."
+msgstr "リプレイのエクスポートに対応したビデオレコーダーが見つかりませんでした。"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/compareControls.jsx
+msgid "No Targets"
+msgstr "目標なし"
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "No timestamp available"
+msgstr "タイムスタンプがありません"
+
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "No valid gains were produced. Your existing PID settings have been preserved. Try increasing Test Duration or confirm the boiler was cold at start."
+msgstr "有効なゲインが得られませんでした。既存の PID 設定は保持されています。テスト時間を長くするか、開始時にボイラーが冷えていたか確認してください。"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgctxt "button behavior"
+msgid "None"
+msgstr "なし"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgctxt "relay function"
+msgid "None"
+msgstr "なし"
+
+#: src/components/PumpFlowCalibration/Footer.jsx
+msgid "Not connected to the machine"
+msgstr "マシンに接続されていません"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Not connected to Wi-Fi"
+msgstr "Wi-Fi に接続されていません"
+
+#: src/utils/pumpFlowCalibration.js
+msgid "Not enough samples for tp={targetPressure} bar (Measure phase). Was the valve closed enough to reach {targetPressure} bar?"
+msgstr "tp={targetPressure} bar（測定フェーズ）のサンプルが不足しています。{targetPressure} bar に達するまでバルブを十分に閉じましたか？"
+
+#: src/app/MachineSetup.jsx
+msgid "Not found"
+msgstr "見つかりません"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Not in range. Switch it on to reconnect."
+msgstr "範囲外です。電源を入れると再接続します。"
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Not rated"
+msgstr "未評価"
+
+#: src/pages/ShotAnalyzer/services/analyzer/shotAnalysis.js
+msgid "Not recorded"
+msgstr "記録なし"
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
+#: src/pages/ShotAnalyzer/shotAnalyzer/ActiveAnalysisView.jsx
+#: src/pages/ShotHistory/ShotNotesCard.jsx
+msgid "Notes"
+msgstr "メモ"
+
+#: src/app/AppSettings.jsx
+msgid "Notifications"
+msgstr "通知"
+
+#: src/app/AppSettings.jsx
+msgid "Notifications are blocked. Allow them for GaggiMate in your phone's settings."
+msgstr "通知がブロックされています。スマートフォンの設定で GaggiMate の通知を許可してください。"
+
+#: src/pages/Home/cards/ProfileCard.jsx
+msgid "Now Brewing"
+msgstr "抽出中"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgctxt "pump mode"
+msgid "Off"
+msgstr "オフ"
+
+#: src/app/FirmwareWarning.jsx
+msgid "Old firmware"
+msgstr "古いファームウェア"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Oldest First"
+msgstr "古い順"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "On startup (s)"
+msgstr "起動時 (s)"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "On steam deactivate (s)"
+msgstr "スチーム解除時 (s)"
+
+#: src/app/MachineSetup.jsx
+msgid "On this network"
+msgstr "このネットワーク上"
+
+#: src/pages/ShotAnalyzer/components/library/libraryImport.js
+msgid "Only profile files can be imported in the profile field."
+msgstr "プロファイル欄にはプロファイルファイルのみインポートできます。"
+
+#: src/pages/ShotAnalyzer/components/library/libraryImport.js
+msgid "Only shot files can be imported in the shot field."
+msgstr "ショット欄にはショットファイルのみインポートできます。"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgctxt "valve state"
+msgid "Open"
+msgstr "開"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Open actions menu for {label} profile"
+msgstr "{label} プロファイルの操作メニューを開く"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+msgid "Open full display"
+msgstr "全画面表示を開く"
+
+#: src/pages/Home/cards/RecentShotsCard.jsx
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Open in Analyzer"
+msgstr "アナライザーで開く"
+
+#: src/pages/ShotAnalyzer/components/library/StatusBar.jsx
+msgid "Open library"
+msgstr "ライブラリを開く"
+
+#: src/pages/ShotAnalyzer/components/EmptyState.jsx
+msgid "Open or close the library."
+msgstr "ライブラリを開閉します。"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
+msgid "Open profile actions menu"
+msgstr "プロファイルの操作メニューを開く"
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Open profiles actions menu"
+msgstr "プロファイル一覧の操作メニューを開く"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
+msgid "Open shot actions menu"
+msgstr "ショットの操作メニューを開く"
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Open shots actions menu"
+msgstr "ショット一覧の操作メニューを開く"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgid "Open statistics"
+msgstr "統計を開く"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/MobileStatusActionsMenu.jsx
+msgid "Open status actions menu"
+msgstr "ステータスの操作メニューを開く"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Open the Home app on your iOS device, select Add Accessory, and enter the setup code shown above."
+msgstr "iOS デバイスでホームアプリを開き、「アクセサリを追加」を選択して、上記のセットアップコードを入力してください。"
+
+#: src/pages/ShotAnalyzer/components/EmptyState.jsx
+msgid "Opens imported external shots and profiles temporarily without saving them to the browser library."
+msgstr "インポートした外部のショットやプロファイルを、ブラウザーのライブラリに保存せず一時的に開きます。"
+
+#: src/pages/ProfileEdit/ProfileMainInformation.jsx
+msgid "Optional description for this profile"
+msgstr "このプロファイルの説明（任意）"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgctxt "stop condition separator"
+msgid "OR"
+msgstr "または"
+
+#: src/pages/Settings/tabs/CleaningSection.jsx
+msgid "Or every"
+msgstr "または毎"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Pack to top"
+msgstr "上詰め"
+
+#: src/pages/_404.jsx
+msgid "Page not found"
+msgstr "ページが見つかりません"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Panel Selection"
+msgstr "パネルの選択"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Parsed {sampleCount} samples (v{version})."
+msgstr "{sampleCount} 件のサンプルを解析しました（v{version}）。"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "password"
+msgstr "パスワード"
+
+#: src/components/VisualizerUploadModal.jsx
+msgid "Password"
+msgstr "パスワード"
+
+#: src/pages/Home/utils.js
+msgctxt "process action"
+msgid "Pause"
+msgstr "一時停止"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+msgid "Pause replay"
+msgstr "リプレイを一時停止"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMetricCards.jsx
+msgid "Peak Pressure"
+msgstr "ピーク圧力"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/compareControls.jsx
+msgid "Per Shot"
+msgstr "ショットごと"
+
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+#: src/pages/Statistics/components/statisticsView/StatisticsDetailSection.jsx
+msgid "Per-phase statistics"
+msgstr "フェーズ別の統計"
+
+#: src/pages/Statistics/components/ProfileGroupTable.jsx
+#: src/pages/Statistics/components/statisticsView/StatisticsDetailSection.jsx
+msgid "Per-profile statistics"
+msgstr "プロファイル別の統計"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "percent"
+msgstr "パーセント"
+
+#: src/pages/ShotAnalyzer/components/shotChart/single/createShotChartConfigs.js
+msgid "Phase"
+msgstr "フェーズ"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTableChrome.jsx
+msgctxt "table column"
+msgid "Phase"
+msgstr "フェーズ"
+
+#: src/pages/ShotAnalyzer/services/analyzer/phaseAnalysis.js
+msgid "Phase {phaseNum}"
+msgstr "フェーズ {phaseNum}"
+
+#: src/components/ExtendedProfileChart.jsx
+#: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTable.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/compare/compareModel.js
+#: src/pages/ShotAnalyzer/components/shotChart/tooltip/tooltipModel.js
+#: src/pages/ShotHistory/HistoryChart.jsx
+#: src/pages/Statistics/services/StatisticsService.js
+msgid "Phase {phaseNumber}"
+msgstr "フェーズ {phaseNumber}"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Phase {phaseNumber} configuration"
+msgstr "フェーズ {phaseNumber} の設定"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/compareModel.js
+#: src/pages/ShotAnalyzer/components/shotChart/tooltip/tooltipModel.js
+msgid "Phase {phaseNumber}: {phaseName}"
+msgstr "フェーズ {phaseNumber}: {phaseName}"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Phase Name"
+msgstr "フェーズ名"
+
+#: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+msgid "Phase navigation"
+msgstr "フェーズのナビゲーション"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgid "PHASE REVIEW ADVISED"
+msgstr "フェーズの確認を推奨"
+
+#: src/pages/ShotAnalyzer/utils/formatting.js
+msgid "Phase skipped"
+msgstr "フェーズをスキップしました"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Phase Type"
+msgstr "フェーズの種類"
+
+#: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+msgid "Phases"
+msgstr "フェーズ"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Physical Buttons"
+msgstr "物理ボタン"
+
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "PID Autotune"
+msgstr "PID オートチューン"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "PID Values"
+msgstr "PID 値"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
+msgid "Pin {displayName}"
+msgstr "{displayName} を固定"
+
+#: src/pages/Statistics/components/StatisticsMultiSelectDropdown.jsx
+msgid "Pin {itemName}"
+msgstr "{itemName} を固定"
+
+#: src/pages/Statistics/components/StatisticsMultiSelectDropdown.jsx
+msgid "Pin {singularLabel}"
+msgstr "{singularLabel} を固定"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
+msgid "Pin profile"
+msgstr "プロファイルを固定"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
+msgid "Pin shot"
+msgstr "ショットを固定"
+
+#: src/pages/Statistics/utils/statisticsSearchDsl.js
+msgid "pinned: use true or false."
+msgstr "pinned: true または false を指定してください。"
+
+#: src/components/PumpFlowCalibration/IdleSection.jsx
+msgid "Place a scale with a cup under the steam wand. Close the steam valve just enough so the machine can reach the target pressure during each <0>Build</0> phase."
+msgstr "スチームワンドの下にカップを載せたスケールを置いてください。各<0>Build</0>フェーズ中にマシンが目標圧力に達する程度まで、スチームバルブを閉じてください。"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Play statistics"
+msgstr "統計を再生"
+
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "Please ensure the boiler temperature is below 50°C before starting the autotune process."
+msgstr "オートチューンを開始する前に、ボイラー温度が 50°C 未満であることを確認してください。"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Please ensure the scale is showing a weight and enter a valid calibration weight."
+msgstr "スケールに重量が表示されていることを確認し、有効なキャリブレーション重量を入力してください。"
+
+#: src/components/VisualizerUploadModal.jsx
+msgid "Please enter both username and password"
+msgstr "ユーザー名とパスワードの両方を入力してください"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Please wake up GaggiMate from Standby to use Bluetooth scales."
+msgstr "Bluetooth スケールを使用するには、GaggiMate をスタンバイから復帰させてください。"
+
+#: src/pages/Settings/index.jsx
+#: src/pages/Settings/tabs/PluginsTab.jsx
+msgid "Plugins"
+msgstr "プラグイン"
+
+#: src/pages/ProfileEdit/ProfileImageUpload.jsx
+msgid "PNG, JPEG, WebP or BMP. GIFs are not supported. The image is cropped to a square and scaled to 300×300 pixels for the display."
+msgstr "PNG、JPEG、WebP、BMP に対応しています。GIF には対応していません。画像は正方形に切り抜かれ、ディスプレイ用に 300×300 ピクセルに縮小されます。"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgctxt "pump mode"
+msgid "Power"
+msgstr "出力"
+
+#: src/pages/Settings/tabs/HeaterCoordinationSection.jsx
+msgid "Power the heaters one at a time instead of in parallel, brew boiler first. Only needed when the circuit cannot carry both heaters at once (e.g. 120 V); 230 V supplies can run both."
+msgstr "ヒーターを同時ではなく 1 つずつ、抽出ボイラーから順に通電します。回路が両方のヒーターを同時に賄えない場合（例: 120 V）にのみ必要です。230 V 電源なら両方を動かせます。"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+#: src/pages/ProfileList/index.jsx
+msgid "Pre-Infusion"
+msgstr "プレインフュージョン"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Predictive Scale Delay"
+msgstr "予測スケール遅延"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Prefer Bluetooth Scale"
+msgstr "Bluetooth スケールを優先"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Prefer Hardware Scale (Built-in)"
+msgstr "ハードウェアスケール（内蔵）を優先"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Preferred Scale Source"
+msgstr "優先するスケールソース"
+
+#: src/pages/Home/cards/ActionCard.jsx
+msgid "Preheating..."
+msgstr "予熱中..."
+
+#: src/pages/Home/utils.js
+msgid "Preinfusion"
+msgstr "プレインフュージョン"
+
+#: src/pages/ShotAnalyzer/components/shotChart/constants.js
+msgid "Preparing MP4 export..."
+msgstr "MP4 エクスポートを準備中..."
+
+#: src/pages/ShotAnalyzer/components/shotChart/constants.js
+msgid "Preparing shot JSON..."
+msgstr "ショット JSON を準備中..."
+
+#: src/pages/Statistics/components/statisticsView/StatisticsView.jsx
+msgid "Preparing statistics..."
+msgstr "統計を準備中..."
+
+#: src/pages/ShotAnalyzer/components/shotChart/constants.js
+msgid "Preparing WebM export..."
+msgstr "WebM エクスポートを準備中..."
+
+#: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
+msgid "Presets..."
+msgstr "プリセット..."
+
+#: src/pages/Statistics/components/statisticsView/StatisticsView.jsx
+msgid "Press <0><1/></0> to build a statistic."
+msgstr "<0><1/></0> を押して統計を作成します。"
+
+#: src/components/ExtendedProfileChart.jsx
+#: src/pages/Home/cards/ProfileCard.jsx
+#: src/pages/Home/cards/RecentShotsCard.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+#: src/pages/Statistics/components/MetricsTable.jsx
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+#: src/utils/metricDefinitions.js
+msgid "Pressure"
+msgstr "圧力"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgctxt "pump mode"
+msgid "Pressure"
+msgstr "圧力"
+
+#: src/components/ExtendedProfileChart.jsx
+#: src/pages/ShotAnalyzer/utils/columns.js
+#: src/pages/ShotAnalyzer/utils/constants.js
+msgid "Pressure (bar)"
+msgstr "圧力 (bar)"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/single/SingleShotMetricPreview.jsx
+msgid "Pressure & Pump Flow"
+msgstr "圧力とポンプ流量"
+
+#: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
+msgid "Pressure above"
+msgstr "圧力が次より上"
+
+#: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
+msgid "Pressure below"
+msgstr "圧力が次より下"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Pressure in bar"
+msgstr "圧力 (bar)"
+
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Pressure Limit"
+msgstr "圧力制限"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Pressure Offset"
+msgstr "圧力オフセット"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Pressure polynomial (a,b,c,d) for vane-/gear-pump internal leakage. Leave at 0,0,0,0 if uncalibrated."
+msgstr "ベーンポンプ/ギアポンプの内部リーク用の圧力多項式 (a,b,c,d)。未キャリブレーションの場合は 0,0,0,0 のままにしてください。"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Pressure Sensor Rating"
+msgstr "圧力センサーの定格"
+
+#: src/pages/ShotAnalyzer/utils/formatting.js
+msgid "Pressure Stop"
+msgstr "圧力で停止"
+
+#: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
+msgid "Pressure target"
+msgstr "圧力目標"
+
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Pressure Target"
+msgstr "圧力目標"
+
+#: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+#: src/pages/ShotHistory/index.jsx
+msgid "Previous"
+msgstr "前へ"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgid "Previous shot"
+msgstr "前のショット"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Previous target"
+msgstr "前の目標"
+
+#: src/pages/ProfileList/index.jsx
+msgctxt "profile type"
+msgid "Pro"
+msgstr "Pro"
+
+#: src/pages/ProfileEdit/ProfileTypeSelection.jsx
+msgid "Pro profile"
+msgstr "Pro プロファイル"
+
+#: src/pages/ProfileEdit/ProfileTypeSelection.jsx
+msgid "Pro Profile"
+msgstr "Pro プロファイル"
+
+#: src/pages/DashboardSettings/index.jsx
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Process Controls First"
+msgstr "プロセス操作を優先"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Processing shot history files ({current}/{total})"
+msgstr "ショット履歴ファイルを処理中（{current}/{total}）"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "profile"
+msgstr "プロファイル"
+
+#: src/pages/Home/cards/ProfileCard.jsx
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+#: src/pages/Statistics/components/ProfileGroupTable.jsx
+msgid "Profile"
+msgstr "プロファイル"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+msgctxt "export file type"
+msgid "Profile"
+msgstr "プロファイル"
+
+#: src/pages/ShotAnalyzer/services/LibraryService.js
+msgid "Profile {nameOrId} not found"
+msgstr "プロファイル {nameOrId} が見つかりません"
+
+#: src/pages/ShotAnalyzer/services/LibraryService.js
+msgid "Profile {nameOrId} not found in browser storage"
+msgstr "ブラウザーストレージにプロファイル {nameOrId} が見つかりません"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Profile A-Z"
+msgstr "プロファイル A-Z"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Profile Chart Height"
+msgstr "プロファイルチャートの高さ"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Profile details for {label}"
+msgstr "{label} のプロファイル詳細"
+
+#: src/pages/ShotAnalyzer/services/LibraryService.js
+msgid "Profile ID missing for export"
+msgstr "エクスポートするプロファイル ID がありません"
+
+#: src/pages/ProfileEdit/ProfileImageUpload.jsx
+msgid "Profile image"
+msgstr "プロファイル画像"
+
+#: src/pages/ProfileEdit/ProfileMainInformation.jsx
+msgid "Profile Information"
+msgstr "プロファイル情報"
+
+#: src/pages/ShotAnalyzer/services/IndexedDBService.js
+msgid "Profile label is required for browser storage"
+msgstr "ブラウザーストレージにはプロファイルのラベルが必要です"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Profile list"
+msgstr "プロファイル一覧"
+
+#: src/pages/ShotAnalyzer/components/library/StatusBar.jsx
+msgid "Profile mismatch detected. Use Import below or drop files here to import."
+msgstr "プロファイルの不一致を検出しました。下のインポートを使うか、ここにファイルをドロップしてインポートしてください。"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Profile per grinder recipe"
+msgstr "グラインダーレシピごとのプロファイル"
+
+#: src/utils/panelDefinitions.js
+msgid "Profile Selector"
+msgstr "プロファイル選択"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
+msgid "Profile Statistics"
+msgstr "プロファイル統計"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgid "Profile Stats"
+msgstr "プロファイル統計"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Profile type: {typeText}"
+msgstr "プロファイルの種類: {typeText}"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Profile Z-A"
+msgstr "プロファイル Z-A"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Profile: {profileLabel}"
+msgstr "プロファイル: {profileLabel}"
+
+#: src/components/Navigation.jsx
+#: src/pages/ProfileList/index.jsx
+#: src/pages/ShotAnalyzer/components/library/LibraryDropdown.jsx
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Profiles"
+msgstr "プロファイル"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Profiles ({profilePreviewCount})"
+msgstr "プロファイル（{profilePreviewCount}）"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Progress Bar"
+msgstr "プログレスバー"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+#: src/pages/Statistics/components/MetricsTable.jsx
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+#: src/utils/metricDefinitions.js
+msgid "Puck Flow"
+msgstr "パック流量"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+#: src/pages/ShotAnalyzer/utils/constants.js
+msgid "Puck Flow (ml/s)"
+msgstr "パック流量 (ml/s)"
+
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+#: src/pages/ShotAnalyzer/components/shotChart/single/SingleShotMetricPreview.jsx
+#: src/pages/Statistics/components/MetricsTable.jsx
+#: src/utils/metricDefinitions.js
+msgid "Puck Resistance"
+msgstr "パック抵抗"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+#: src/pages/ShotAnalyzer/utils/constants.js
+msgid "Puck Resistance (s·√bar/mL)"
+msgstr "パック抵抗 (s·√bar/mL)"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Pump Assist Cutoff"
+msgstr "ポンプアシストのカットオフ"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+#: src/pages/Statistics/components/MetricsTable.jsx
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+msgid "Pump Flow"
+msgstr "ポンプ流量"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+#: src/pages/ShotAnalyzer/utils/constants.js
+msgid "Pump Flow (ml/s)"
+msgstr "ポンプ流量 (ml/s)"
+
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "Pump Flow Calibration"
+msgstr "ポンプ流量のキャリブレーション"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Pump Flow Coefficients"
+msgstr "ポンプ流量係数"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Pump flow mode"
+msgstr "ポンプ流量モード"
+
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Pump flow mode (PRO feature)"
+msgstr "ポンプ流量モード（PRO 機能）"
+
+#: src/pages/ShotAnalyzer/utils/formatting.js
+msgid "Pump Flow Stop"
+msgstr "ポンプ流量で停止"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Pump Maintain flow mode"
+msgstr "ポンプの流量維持モード"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Pump Maintain pressure mode"
+msgstr "ポンプの圧力維持モード"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Pump Mode"
+msgstr "ポンプモード"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Pump mode selection"
+msgstr "ポンプモードの選択"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Pump off"
+msgstr "ポンプ停止"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+#: src/utils/metricDefinitions.js
+msgid "Pump Power"
+msgstr "ポンプ出力"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Pump power as percentage"
+msgstr "ポンプ出力（パーセント）"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Pump power mode"
+msgstr "ポンプ出力モード"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Pump pressure mode"
+msgstr "ポンプ圧力モード"
+
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Pump pressure mode (PRO feature)"
+msgstr "ポンプ圧力モード（PRO 機能）"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Pump Slip Coefficients"
+msgstr "ポンプスリップ係数"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMetricCards.jsx
+#: src/pages/Statistics/components/MetricsTable.jsx
+msgid "Pumped Water"
+msgstr "送水量"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+#: src/pages/Statistics/components/TrendChart.jsx
+msgid "Pumped Water (ml)"
+msgstr "送水量 (ml)"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgid "Pumped Water (phase)"
+msgstr "送水量（フェーズ）"
+
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+msgid "Pumped Water (Phase)"
+msgstr "送水量（フェーズ）"
+
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+msgid "Pumped Water (Total)"
+msgstr "送水量（合計）"
+
+#: src/pages/ShotAnalyzer/utils/formatting.js
+msgid "Pumped Water Stop"
+msgstr "送水量で停止"
+
+#: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
+msgid "Pumped-water target"
+msgstr "送水量の目標"
+
+#: src/pages/Statistics/utils/statisticsSearchDsl.js
+msgid "Query clause {clauseNumber}: {valueError}"
+msgstr "クエリ条件 {clauseNumber}: {valueError}"
+
+#: src/pages/Home/cards/FavoriteProfilesCard.jsx
+#: src/utils/panelDefinitions.js
+msgid "Quick Select"
+msgstr "クイック選択"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Ramp Length"
+msgstr "ランプの長さ"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Ramp Style"
+msgstr "ランプのスタイル"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Ramp style selection"
+msgstr "ランプのスタイルの選択"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Ramp Target"
+msgstr "ランプの目標"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Ramp target selection"
+msgstr "ランプの目標の選択"
+
+#: src/pages/Statistics/components/MetricsTable.jsx
+msgid "Range"
+msgstr "範囲"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Rated Only"
+msgstr "評価済みのみ"
+
+#: src/pages/ShotHistory/ShotNotesCard.jsx
+msgid "Rating"
+msgstr "評価"
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Rating (High)"
+msgstr "評価（高い順）"
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Rating (Low)"
+msgstr "評価（低い順）"
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
+msgid "Ratio"
+msgstr "比率"
+
+#: src/pages/ShotHistory/ShotNotesCard.jsx
+msgid "Ratio (1:{ratioLabel})"
+msgstr "比率（1:{ratioLabel}）"
+
+#: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
+msgid "Ratio reached"
+msgstr "比率に到達"
+
+#: src/pages/ShotAnalyzer/utils/formatting.js
+msgid "Ratio Stop"
+msgstr "比率で停止"
+
+#: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
+msgid "Ratio target"
+msgstr "比率の目標"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+msgid "Raw Data Points"
+msgstr "生データポイント"
+
+#: src/app/notifications.js
+msgid "Ready to brew"
+msgstr "抽出の準備ができました"
+
+#: src/pages/Home/cards/ActionCard.jsx
+msgid "Ready to steam, open wand"
+msgstr "スチームの準備ができました。ワンドを開いてください"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Rebuild Shot History"
+msgstr "ショット履歴を再構築"
+
+#: src/pages/DashboardSettings/index.jsx
+#: src/pages/Home/cards/RecentShotsCard.jsx
+msgid "Recent Shots"
+msgstr "最近のショット"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Recipe {recipe}"
+msgstr "レシピ {recipe}"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+msgid "Recorded Stop Reason"
+msgstr "記録された停止理由"
+
+#: src/pages/ShotAnalyzer/components/shotChart/constants.js
+msgid "Recording replay..."
+msgstr "リプレイを録画中..."
+
+#: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
+msgid "Reference shot"
+msgstr "基準ショット"
+
+#: src/pages/Statistics/components/StatisticsSearchHelp.jsx
+msgid "Relative time: <0>h</0> (now), <1>h-7d</1> (7 days ago)"
+msgstr "相対時間: <0>h</0>（現在）、<1>h-7d</1>（7 日前）"
+
+#: src/components/VisualizerUploadModal.jsx
+msgid "Remember credentials"
+msgstr "認証情報を保存"
+
+#: src/app/MachineSetup.jsx
+#: src/pages/ProfileEdit/ProfileImageUpload.jsx
+msgid "Remove"
+msgstr "削除"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Remove {label} from favorites"
+msgstr "{label} をお気に入りから削除"
+
+#: src/app/MachineSetup.jsx
+msgid "Remove {name}"
+msgstr "{name} を削除"
+
+#: src/app/MachineSetup.jsx
+msgid "Remove {name}?"
+msgstr "{name} を削除しますか？"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Remove from favorites"
+msgstr "お気に入りから削除"
+
+#: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+msgid "Remove phase"
+msgstr "フェーズを削除"
+
+#: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
+msgid "Remove target"
+msgstr "目標を削除"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Removing calibration profile..."
+msgstr "キャリブレーションプロファイルを削除中..."
+
+#: src/app/MachineSetup.jsx
+msgid "Rename"
+msgstr "名前を変更"
+
+#: src/app/MachineSetup.jsx
+msgid "Rename {name}"
+msgstr "{name} の名前を変更"
+
+#: src/pages/ShotAnalyzer/components/shotChart/constants.js
+msgid "Rendering PNG export..."
+msgstr "PNG エクスポートをレンダリング中..."
+
+#: src/pages/ProfileEdit/ProfileImageUpload.jsx
+msgid "Replace image"
+msgstr "画像を置き換え"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+msgid "Replay chart"
+msgstr "チャートをリプレイ"
+
+#: src/pages/ShotAnalyzer/services/ReplayVideoExportService.js
+msgid "Replay export canvas could not be created."
+msgstr "リプレイのエクスポート用キャンバスを作成できませんでした。"
+
+#: src/pages/ShotAnalyzer/components/shotChart/constants.js
+#: src/pages/ShotAnalyzer/components/shotChart/single/useShotChartReplayExport.js
+msgid "Replay export failed."
+msgstr "リプレイのエクスポートに失敗しました。"
+
+#: src/pages/ShotAnalyzer/components/shotChart/single/useShotChartReplayExport.js
+#: src/pages/ShotAnalyzer/services/ReplayVideoExportService.js
+msgid "Replay export is not ready yet."
+msgstr "リプレイのエクスポートはまだ準備できていません。"
+
+#: src/pages/ShotAnalyzer/services/ReplayVideoExportService.js
+msgid "Replay export timers are not supported in this environment."
+msgstr "この環境ではリプレイのエクスポート用タイマーはサポートされていません。"
+
+#: src/pages/ShotAnalyzer/components/shotChart/single/useShotChartReplayExport.js
+msgid "Replay export was cancelled."
+msgstr "リプレイのエクスポートはキャンセルされました。"
+
+#: src/pages/ShotAnalyzer/services/ReplayVideoExportService.js
+msgid "Replay image export could not be created."
+msgstr "リプレイの画像エクスポートを作成できませんでした。"
+
+#: src/pages/ShotAnalyzer/components/shotChart/single/useShotChartReplayExport.js
+msgid "Replay image export failed."
+msgstr "リプレイの画像エクスポートに失敗しました。"
+
+#: src/pages/ShotAnalyzer/components/shotChart/single/useShotChartReplayExport.js
+#: src/pages/ShotAnalyzer/services/ReplayVideoExportService.js
+msgid "Replay image export is not ready yet."
+msgstr "リプレイの画像エクスポートはまだ準備できていません。"
+
+#: src/pages/ShotAnalyzer/components/shotChart/single/useShotChartReplayExport.js
+msgid "Replay image export was cancelled."
+msgstr "リプレイの画像エクスポートはキャンセルされました。"
+
+#: src/pages/ShotAnalyzer/services/ReplayVideoExportService.js
+msgid "Replay recording failed."
+msgstr "リプレイの録画に失敗しました。"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
+msgid "Reset columns to system defaults?"
+msgstr "列をシステムのデフォルトにリセットしますか？"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
+msgid "Reset Defaults"
+msgstr "デフォルトに戻す"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Restoring previous profile..."
+msgstr "以前のプロファイルを復元中..."
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+msgid "Resume replay"
+msgstr "リプレイを再開"
+
+#: src/components/PumpFlowCalibration/Footer.jsx
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "Retry"
+msgstr "再試行"
+
+#: src/pages/ShotAnalyzer/components/library/StatusBar.jsx
+msgid "Retry automatic profile search"
+msgstr "プロファイルの自動検索を再試行"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgid "REVIEW PHASE {phaseNumber}"
+msgstr "フェーズ {phaseNumber} を確認"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgid "Review the stop reason for this phase. The algorithm was only able to identify it after several intermediate calculations."
+msgstr "このフェーズの停止理由を確認してください。アルゴリズムは複数の中間計算を経てようやくこれを特定できました。"
+
+#: src/pages/Statistics/components/StatisticsSearchHelp.jsx
+msgid "Rules are separated with <0>;</0>. Visual filters and DSL are combined with AND."
+msgstr "ルールは <0>;</0> で区切ります。ビジュアルフィルターと DSL は AND で結合されます。"
+
+#: src/components/PumpFlowCalibration/Footer.jsx
+msgid "Running shot..."
+msgstr "ショット実行中..."
+
+#: src/pages/Settings/PluginCard.jsx
+msgctxt "Saturday, one letter"
+msgid "S"
+msgstr "土"
+
+#: src/pages/Settings/PluginCard.jsx
+msgctxt "Sunday, one letter"
+msgid "S"
+msgstr "日"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgctxt "column type, short for start/end"
+msgid "S/E"
+msgstr "開/終"
+
+#: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
+msgid "Safety timeout"
+msgstr "安全タイムアウト"
+
+#: src/pages/ShotAnalyzer/utils/formatting.js
+msgid "Safety Timeout"
+msgstr "安全タイムアウト"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTableCells.jsx
+msgid "Sample {sampleNumber}"
+msgstr "サンプル {sampleNumber}"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTableCells.jsx
+msgid "Sample {sampleNumber}: {sampleValue}"
+msgstr "サンプル {sampleNumber}: {sampleValue}"
+
+#: src/pages/Settings/PluginCard.jsx
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
+msgid "Saturday"
+msgstr "土曜日"
+
+#: src/app/MachineSetup.jsx
+#: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+#: src/pages/ShotHistory/ShotNotesCard.jsx
+msgid "Save"
+msgstr "保存"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgctxt "import mode"
+msgid "Save"
+msgstr "保存"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarModeHint.jsx
+msgctxt "import mode badge"
+msgid "SAVE"
+msgstr "保存"
+
+#: src/pages/Settings/StickyFormFooter.jsx
+msgid "Save & Restart"
+msgstr "保存して再起動"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
+msgid "Save as New Preset"
+msgstr "新しいプリセットとして保存"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
+msgid "Save as Standard"
+msgstr "標準として保存"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Save Channel & Refresh"
+msgstr "チャンネルを保存して更新"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
+msgid "Save current selection as your new 'Standard'?"
+msgstr "現在の選択を新しい「標準」として保存しますか？"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Save failed: {message}"
+msgstr "保存に失敗しました: {message}"
+
+#: src/app/MachineSetup.jsx
+msgid "Save name"
+msgstr "名前を保存"
+
+#: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Save profile"
+msgstr "プロファイルを保存"
+
+#: src/pages/Settings/index.jsx
+#: src/pages/Settings/StickyFormFooter.jsx
+msgid "Save Settings"
+msgstr "設定を保存"
+
+#: src/pages/ProfileEdit/ProfileImageUpload.jsx
+msgid "Save the profile first to add an image."
+msgstr "画像を追加するには、先にプロファイルを保存してください。"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/MobileStatusActionsMenu.jsx
+msgid "Save to Browser"
+msgstr "ブラウザーに保存"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgid "Save to Browser. Click to switch imports to View temporarily."
+msgstr "ブラウザーに保存。クリックするとインポートを一時表示に切り替えます。"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarModeHint.jsx
+msgid "Save to Browser. Imported shots and profiles will now be saved to the browser library."
+msgstr "ブラウザーに保存。インポートしたショットとプロファイルはブラウザーのライブラリに保存されます。"
+
+#: src/components/PumpFlowCalibration/Footer.jsx
+msgid "Save to machine"
+msgstr "マシンに保存"
+
+#: src/app/MachineSetup.jsx
+msgctxt "machine status"
+msgid "Saved"
+msgstr "保存済み"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgctxt "scale state"
+msgid "Saved"
+msgstr "保存済み"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Saved scale"
+msgstr "保存済みのスケール"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Saving calibration profile..."
+msgstr "キャリブレーションプロファイルを保存中..."
+
+#: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Saving profile..."
+msgstr "プロファイルを保存中..."
+
+#: src/components/PumpFlowCalibration/Footer.jsx
+msgid "Saving..."
+msgstr "保存中..."
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Scale"
+msgstr "スケール"
+
+#: src/utils/warnings.js
+msgid "Scale battery low"
+msgstr "スケールのバッテリー残量低下"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTableCells.jsx
+msgid "Scale Lost"
+msgstr "スケール切断"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgid "SCALE LOST"
+msgstr "スケール切断"
+
+#: src/utils/warnings.js
+msgid "Scale not connected"
+msgstr "スケールが接続されていません"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Scales"
+msgstr "スケール"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Scales are automatically refreshed every 10 seconds. Use the scan button to discover new devices."
+msgstr "スケールは 10 秒ごとに自動更新されます。新しいデバイスを検出するにはスキャンボタンを使用してください。"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Scan failed"
+msgstr "スキャンに失敗しました"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Scan for Devices"
+msgstr "デバイスをスキャン"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Scan for nearby Bluetooth scales to connect them to GaggiMate."
+msgstr "近くの Bluetooth スケールをスキャンして GaggiMate に接続します。"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Scanning shot history files..."
+msgstr "ショット履歴ファイルをスキャン中..."
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Scanning..."
+msgstr "スキャン中..."
+
+#: src/components/TabBar.jsx
+msgid "Scroll tabs left"
+msgstr "タブを左にスクロール"
+
+#: src/components/TabBar.jsx
+msgid "Scroll tabs right"
+msgstr "タブを右にスクロール"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareChartCanvas.jsx
+msgid "Scrub compare time"
+msgstr "比較の時間をスクラブ"
+
+#: src/pages/ShotAnalyzer/components/shotChart/single/SingleShotChart.jsx
+msgid "Scrub shot time"
+msgstr "ショットの時間をスクラブ"
+
+#: src/pages/Statistics/components/StatisticsMultiSelectDropdown.jsx
+msgid "Search {labelLower}..."
+msgstr "{labelLower} を検索..."
+
+#: src/pages/Statistics/components/StatisticsSearchHelp.jsx
+msgid "Search help"
+msgstr "検索のヘルプ"
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Search profiles..."
+msgstr "プロファイルを検索..."
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Search shots..."
+msgstr "ショットを検索..."
+
+#: src/pages/ProfileList/index.jsx
+#: src/pages/ShotHistory/index.jsx
+msgid "Search..."
+msgstr "検索..."
+
+#: src/app/MachineSetup.jsx
+msgid "Searching"
+msgstr "検索中"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "seconds"
+msgstr "秒"
+
+#: src/pages/Statistics/components/StatisticsMultiSelectDropdown.jsx
+msgid "Select {itemName}"
+msgstr "{itemName} を選択"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Select {label} profile"
+msgstr "{label} プロファイルを選択"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Select a JSON file containing profile data to import"
+msgstr "インポートするプロファイルデータを含む JSON ファイルを選択してください"
+
+#: src/pages/Statistics/components/statisticsView/helpers.js
+msgid "Select one or more profiles."
+msgstr "1 つ以上のプロファイルを選択してください。"
+
+#: src/pages/Statistics/components/statisticsView/helpers.js
+msgid "Select one or more shots."
+msgstr "1 つ以上のショットを選択してください。"
+
+#: src/pages/ProfileEdit/ProfileTypeSelection.jsx
+msgid "Select Pro profile type"
+msgstr "Pro プロファイルの種類を選択"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Select Profiles..."
+msgstr "プロファイルを選択..."
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Select shot and profile sources"
+msgstr "ショットとプロファイルのソースを選択"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Select Shots..."
+msgstr "ショットを選択..."
+
+#: src/pages/ProfileEdit/ProfileTypeSelection.jsx
+msgid "Select simple profile type"
+msgstr "シンプルプロファイルの種類を選択"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Select statistics mode"
+msgstr "統計モードを選択"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Select the type of brew phase"
+msgstr "抽出フェーズの種類を選択"
+
+#: src/pages/Statistics/components/StatisticsMultiSelectDropdown.jsx
+msgid "Select..."
+msgstr "選択..."
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Selecting calibration profile..."
+msgstr "キャリブレーションプロファイルを選択中..."
+
+#: src/services/VisualizerService.js
+msgid "Server error - the API may not support this data format or account type"
+msgstr "サーバーエラー - API がこのデータ形式またはアカウントの種類に対応していない可能性があります"
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
+msgid "Set rating to {value} of 5"
+msgstr "評価を 5 段階中 {value} に設定"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Set to 0 to disable feedforward control."
+msgstr "0 に設定するとフィードフォワード制御が無効になります。"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Set to current measurement: {distance}mm"
+msgstr "現在の測定値に設定: {distance}mm"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Sets the height of the profile chart preview shown in the Profile Selector panel."
+msgstr "プロファイル選択パネルに表示するプロファイルチャートのプレビューの高さを設定します。"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Sets the maximum number of columns. On smaller screens, fewer columns are used to keep metrics readable."
+msgstr "最大列数を設定します。小さい画面では、メトリクスを読みやすくするため列数が少なくなります。"
+
+#: src/components/Navigation.jsx
+#: src/pages/Settings/index.jsx
+msgid "Settings"
+msgstr "設定"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Settings for this phone, like the theme and notifications, are in <0>App Settings</0>. The dashboard layout is in the dashboard's customize view."
+msgstr "テーマや通知など、このスマートフォンの設定は<0>アプリ設定</0>にあります。ダッシュボードのレイアウトはダッシュボードのカスタマイズ画面で設定します。"
+
+#: src/pages/Settings/index.jsx
+msgid "Settings have not loaded yet."
+msgstr "設定はまだ読み込まれていません。"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+msgid "Share"
+msgstr "共有"
+
+#: src/pages/Statistics/components/StatisticsMultiSelectDropdown.jsx
+msgid "Shift = Range"
+msgstr "Shift = 範囲"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Shortest Duration"
+msgstr "時間の短い順"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "shot"
+msgstr "ショット"
+
+#: src/pages/Statistics/components/toolbar/constants.js
+msgctxt "date basis"
+msgid "Shot"
+msgstr "ショット"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+msgctxt "export file type"
+msgid "Shot"
+msgstr "ショット"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTableChrome.jsx
+msgctxt "table column"
+msgid "Shot"
+msgstr "ショット"
+
+#: src/pages/ShotAnalyzer/services/LibraryService.js
+msgid "Shot {idStr} not found in browser storage"
+msgstr "ブラウザーストレージにショット {idStr} が見つかりません"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTable.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/compare/compareChartConfig.js
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/controls/compareControls.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/tooltip/tooltipModel.js
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsPanel.jsx
+msgid "Shot {shotNumber}"
+msgstr "ショット {shotNumber}"
+
+#: src/pages/ShotAnalyzer/shotAnalyzer/ActiveAnalysisView.jsx
+msgid "Shot analysis table"
+msgstr "ショット分析テーブル"
+
+#: src/components/Navigation.jsx
+msgid "Shot Analyzer"
+msgstr "ショットアナライザー"
+
+#: src/pages/ShotAnalyzer/components/library/AnalyzerPanelSlot.jsx
+msgid "Shot and profile import dropzone"
+msgstr "ショットとプロファイルのインポート用ドロップゾーン"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Shot Card Metrics"
+msgstr "ショットカードのメトリクス"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Shot Chart"
+msgstr "ショットチャート"
+
+#: src/pages/Statistics/components/StatisticsShotCompareSection.jsx
+#: src/pages/Statistics/components/statisticsView/StatisticsDetailSection.jsx
+msgid "Shot Charts"
+msgstr "ショットチャート"
+
+#: src/utils/panelDefinitions.js
+msgid "Shot Controls"
+msgstr "ショット操作"
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Shot data is invalid or incomplete"
+msgstr "ショットデータが無効または不完全です"
+
+#: src/components/PumpFlowCalibration/api.js
+msgid "Shot file remained empty after {seconds}s"
+msgstr "{seconds}s 経過してもショットファイルが空のままです"
+
+#: src/app/appSettings.js
+#: src/app/notifications.js
+msgid "Shot finished"
+msgstr "ショット終了"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Shot finished. Waiting for it to be saved to history..."
+msgstr "ショットが終了しました。履歴への保存を待っています..."
+
+#: src/components/Navigation.jsx
+#: src/pages/ShotHistory/index.jsx
+msgid "Shot History"
+msgstr "ショット履歴"
+
+#: src/pages/ShotAnalyzer/services/LibraryService.js
+msgid "Shot ID missing for export"
+msgstr "エクスポートするショット ID がありません"
+
+#: src/pages/ShotAnalyzer/components/shotChart/MobileMetricPager.jsx
+msgid "Shot metrics"
+msgstr "ショットのメトリクス"
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
+#: src/utils/panelDefinitions.js
+msgid "Shot Metrics"
+msgstr "ショットのメトリクス"
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
+#: src/pages/ShotHistory/ShotNotesCard.jsx
+msgid "Shot Notes"
+msgstr "ショットのメモ"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/compareModel.js
+msgid "Shot start"
+msgstr "ショット開始"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Shot start was cancelled on the machine."
+msgstr "マシンでショットの開始がキャンセルされました。"
+
+#: src/app/appSettings.js
+#: src/app/notifications.js
+msgid "Shot started"
+msgstr "ショットが開始されました"
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Shot uploaded successfully to visualizer.coffee!"
+msgstr "visualizer.coffee へのショットのアップロードに成功しました！"
+
+#: src/components/VisualizerUploadModal.jsx
+msgid "Shot:"
+msgstr "ショット:"
+
+#: src/pages/Settings/tabs/CleaningSection.jsx
+msgid "shots"
+msgstr "ショット"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryDropdown.jsx
+#: src/pages/Statistics/components/ProfileGroupTable.jsx
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+#: src/pages/Statistics/components/TrendChart.jsx
+msgid "Shots"
+msgstr "ショット"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Shots ({shotPreviewCount})"
+msgstr "ショット（{shotPreviewCount}）"
+
+#: src/pages/Statistics/components/TrendChart.jsx
+msgid "Shots / {granularityLabel}"
+msgstr "ショット / {granularityLabel}"
+
+#: src/pages/Statistics/components/TrendChart.jsx
+msgid "Shots: {shotCount}"
+msgstr "ショット: {shotCount}"
+
+#: src/pages/Statistics/components/StatisticsMultiSelectDropdown.jsx
+msgid "Show all {labelLower}"
+msgstr "すべての{labelLower}を表示"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/compareControls.jsx
+msgid "Show compare annotations"
+msgstr "比較の注釈を表示"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareChartLayout.jsx
+msgid "Show detail charts"
+msgstr "詳細チャートを表示"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Show details"
+msgstr "詳細を表示"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Show details for {label}"
+msgstr "{label} の詳細を表示"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/single/SingleShotChart.jsx
+msgid "Show legend"
+msgstr "凡例を表示"
+
+#: src/pages/ShotAnalyzer/components/shotChart/MobileMetricPager.jsx
+msgid "Show metric page {pageNumber}"
+msgstr "メトリクスのページ {pageNumber} を表示"
+
+#: src/components/VisualizerUploadModal.jsx
+msgid "Show password"
+msgstr "パスワードを表示"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Show Password"
+msgstr "パスワードを表示"
+
+#: src/pages/Statistics/components/StatisticsMultiSelectDropdown.jsx
+msgid "Show pinned only {labelLower}"
+msgstr "固定された{labelLower}のみ表示"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Show Recent Shots"
+msgstr "最近のショットを表示"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Show the control column panels as separate cards, or group them into a single unified card."
+msgstr "コントロール列のパネルを個別のカードとして表示するか、1 つのカードにまとめて表示します。"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgid "Shown when the scale briefly loses connection during the brew. In this case, weight is ignored for stop detection for that brew, even if the scale reconnects later."
+msgstr "抽出中にスケールの接続が一時的に途切れたときに表示されます。この場合、後でスケールが再接続しても、その抽出では停止判定に重量が使われません。"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Shuts off the process ahead of time based on the flow rate to account for any dripping or delays in the control."
+msgstr "滴下や制御の遅延を考慮して、流量に基づき早めにプロセスを停止します。"
+
+#: src/components/Navigation.jsx
+msgctxt "dashboard view"
+msgid "Simple"
+msgstr "シンプル"
+
+#: src/pages/ProfileList/index.jsx
+msgctxt "profile type"
+msgid "Simple"
+msgstr "シンプル"
+
+#: src/pages/ProfileEdit/ProfileTypeSelection.jsx
+msgid "Simple profile"
+msgstr "シンプルプロファイル"
+
+#: src/pages/ProfileEdit/ProfileTypeSelection.jsx
+msgid "Simple Profile"
+msgstr "シンプルプロファイル"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Single Card"
+msgstr "単一カード"
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
+msgid "Single Origin, Blend..."
+msgstr "シングルオリジン、ブレンド..."
+
+#: src/components/PumpFlowCalibration/api.js
+msgid "slog not ready, waiting for flush... ({attempt})"
+msgstr "slog の準備ができていません。フラッシュを待機中...（{attempt}）"
+
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "Slope Window"
+msgstr "傾きウィンドウ"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Slot {slotNumber}"
+msgstr "スロット {slotNumber}"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgid "SLOW SAMPLING"
+msgstr "低速サンプリング"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Smart Grind Plugin"
+msgstr "スマートグラインドプラグイン"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Snapshotting shot history..."
+msgstr "ショット履歴のスナップショットを作成中..."
+
+#: src/pages/Statistics/components/statisticsView/helpers.js
+msgid "Some shots have no shot timestamp. Choose how date handling should treat them (Shot = exclude missing, Auto = fallback to upload time, Upload = upload time only)."
+msgstr "一部のショットにショットのタイムスタンプがありません。日付の扱い方を選択してください（ショット = 欠落分を除外、自動 = アップロード時刻で代替、アップロード = アップロード時刻のみ）。"
+
+#: src/pages/Statistics/components/statisticsView/helpers.js
+msgid "Some shots have no shot timestamp. Choose how date handling should treat them (Shot = exclude missing, Auto = fallback to upload time, Upload = upload time only). Some shots have no usable date at all and may still be excluded from date filtering."
+msgstr "一部のショットにショットのタイムスタンプがありません。日付の扱い方を選択してください（ショット = 欠落分を除外、自動 = アップロード時刻で代替、アップロード = アップロード時刻のみ）。使用可能な日付がまったくないショットは、日付による絞り込みから除外される場合があります。"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Some shots have no shot timestamp. Choose how date handling should treat them."
+msgstr "一部のショットにショットのタイムスタンプがありません。日付の扱い方を選択してください。"
+
+#: src/pages/Statistics/components/statisticsView/helpers.js
+msgid "Some shots have no usable shot timestamp. Date filtering may exclude them unless upload time is available."
+msgstr "一部のショットに使用可能なショットのタイムスタンプがありません。アップロード時刻がない場合、日付による絞り込みで除外されることがあります。"
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
+#: src/pages/ShotHistory/ShotNotesCard.jsx
+msgid "Sour"
+msgstr "酸味"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Space evenly"
+msgstr "均等に配置"
+
+#: src/app/AppSettings.jsx
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgctxt "update channel"
+msgid "Stable"
+msgstr "Stable"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
+msgctxt "column preset"
+msgid "Standard"
+msgstr "標準"
+
+#: src/app/machineStatus.js
+#: src/pages/Home/utils.js
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgctxt "machine mode"
+msgid "Standby"
+msgstr "スタンバイ"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Standby Brightness (0-16)"
+msgstr "スタンバイ時の輝度（0-16）"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Standby Brightness Timeout"
+msgstr "スタンバイ輝度のタイムアウト"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Standby Timeout"
+msgstr "スタンバイまでの時間"
+
+#: src/pages/Settings/tabs/CleaningSection.jsx
+msgid "Start"
+msgstr "開始"
+
+#: src/components/OverviewChart.jsx
+msgctxt "brew start marker"
+msgid "Start"
+msgstr "開始"
+
+#: src/pages/ShotAnalyzer/components/shotChart/helpers/chartData.js
+msgctxt "first phase"
+msgid "Start"
+msgstr "開始"
+
+#: src/pages/Home/utils.js
+msgctxt "process action"
+msgid "Start"
+msgstr "開始"
+
+#: src/pages/Home/BrewConfirmModal.jsx
+msgid "Start anyway"
+msgstr "それでも開始"
+
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "Start Autotune"
+msgstr "オートチューンを開始"
+
+#: src/pages/Home/BrewConfirmModal.jsx
+msgid "Start brew anyway?"
+msgstr "それでも抽出を開始しますか？"
+
+#: src/components/PumpFlowCalibration/Footer.jsx
+msgid "Start calibration"
+msgstr "キャリブレーションを開始"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Start date"
+msgstr "開始日"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Start from previous setpoint"
+msgstr "前回の設定値から開始"
+
+#: src/pages/ShotAnalyzer/components/EmptyState.jsx
+msgid "Start or end compare mode."
+msgstr "比較モードを開始または終了します。"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Start Ramp from"
+msgstr "ランプの開始値"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+msgid "Start Volumetric"
+msgstr "容量制御を開始"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
+msgctxt "column type"
+msgid "Start/End"
+msgstr "開始/終了"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Starting despite warnings: {warnings}"
+msgstr "警告を無視して開始: {warnings}"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Starting shot — adjust the steam valve to reach 1 bar, then 9 bar."
+msgstr "ショットを開始します。スチームバルブを調整して 1 bar、次に 9 bar に合わせてください。"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Startup Mode"
+msgstr "起動時のモード"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Startup Profile"
+msgstr "起動時のプロファイル"
+
+#: src/components/Navigation.jsx
+#: src/pages/ProfileList/index.jsx
+#: src/pages/Statistics/components/statisticsView/StatisticsDetailSection.jsx
+#: src/pages/Statistics/index.jsx
+msgid "Statistics"
+msgstr "統計"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+msgid "Statistics chart averages"
+msgstr "統計チャートの平均"
+
+#: src/pages/Statistics/components/StatisticsSearchHelp.jsx
+msgid "Statistics Search DSL"
+msgstr "統計検索 DSL"
+
+#: src/pages/Statistics/components/MetricsTable.jsx
+msgid "Std Dev"
+msgstr "標準偏差"
+
+#: src/app/machineStatus.js
+#: src/pages/Home/utils.js
+msgctxt "machine mode"
+msgid "Steam"
+msgstr "スチーム"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Steam Boiler (Coming Soon)"
+msgstr "スチームボイラー（近日対応）"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Steam button"
+msgstr "スチームボタン"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Steam Button Behavior"
+msgstr "スチームボタンの動作"
+
+#: src/app/notifications.js
+msgid "Steam has been on for 5 minutes."
+msgstr "スチームが 5 分間オンになっています。"
+
+#: src/app/appSettings.js
+msgid "Steam mode left on"
+msgstr "スチームモードがオンのままです"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Steam Pump Assist"
+msgstr "スチームのポンプアシスト"
+
+#: src/utils/warnings.js
+msgid "Steam switch left on"
+msgstr "スチームスイッチがオンのままです"
+
+#: src/utils/metricDefinitions.js
+msgid "Steam Temp"
+msgstr "スチーム温度"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Stick first panel to top"
+msgstr "最初のパネルを上に固定"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Stick last panel to bottom"
+msgstr "最後のパネルを下に固定"
+
+#: src/app/notifications.js
+msgid "Still in steam mode"
+msgstr "まだスチームモードです"
+
+#: src/pages/ShotAnalyzer/components/shotChart/tooltip/StaticTooltipContent.jsx
+msgctxt "shot stop"
+msgid "Stop"
+msgstr "停止"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTableChrome.jsx
+msgid "Stop reason"
+msgstr "停止理由"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+msgid "Stop replay and restore chart"
+msgstr "リプレイを停止してチャートを復元"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Stop when"
+msgstr "停止条件"
+
+#: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
+msgid "Stopped: Manually"
+msgstr "停止: 手動"
+
+#: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
+msgid "Stopped: Safety timeout"
+msgstr "停止: 安全タイムアウト"
+
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+msgid "Stops"
+msgstr "停止"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Storage (LittleFS)"
+msgstr "ストレージ (LittleFS)"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Storage (SD-Card)"
+msgstr "ストレージ (SD カード)"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Storage & Memory"
+msgstr "ストレージとメモリ"
+
+#: src/pages/ShotAnalyzer/components/EmptyState.jsx
+msgid "Stores imported external shots and profiles locally in this browser on this device. They are not automatically available in other browsers or on other devices."
+msgstr "インポートした外部のショットとプロファイルを、このデバイスのこのブラウザーにローカル保存します。他のブラウザーや他のデバイスでは自動的には利用できません。"
+
+#: src/pages/Settings/PluginCard.jsx
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
+msgid "Sunday"
+msgstr "日曜日"
+
+#: src/pages/ProfileEdit/ProfileTypeSelection.jsx
+msgid "Supports advanced pressure and flow controlled phases with ramps, different targets and further visualization."
+msgstr "ランプ、さまざまな目標、さらに詳細な可視化を備えた、高度な圧力・流量制御フェーズに対応しています。"
+
+#: src/pages/ProfileEdit/ProfileTypeSelection.jsx
+msgid "Supports creating of profiles with different brew phases and targets."
+msgstr "異なる抽出フェーズと目標を持つプロファイルを作成できます。"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/controls/compareControls.jsx
+msgid "Swap shot 1 and shot 2"
+msgstr "ショット 1 とショット 2 を入れ替え"
+
+#: src/pages/ShotAnalyzer/components/shotChart/MobileChartScrubber.jsx
+msgid "Swipe"
+msgstr "スワイプ"
+
+#: src/pages/ShotAnalyzer/components/EmptyState.jsx
+msgid "Switch between shots."
+msgstr "ショットを切り替えます。"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgid "Switch import mode to Save to Browser"
+msgstr "インポートモードを「ブラウザーに保存」に切り替え"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgid "Switch import mode to View temporarily"
+msgstr "インポートモードを「一時表示」に切り替え"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Switch to compact view"
+msgstr "コンパクト表示に切り替え"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Switch to extraction tab"
+msgstr "抽出タブに切り替え"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Switch to full view"
+msgstr "フル表示に切り替え"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Switch to utility tab"
+msgstr "ユーティリティタブに切り替え"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Switching to BREW mode..."
+msgstr "抽出モードに切り替え中..."
+
+#: src/pages/ProfileList/index.jsx
+msgctxt "profile badge"
+msgid "System"
+msgstr "システム"
+
+#: src/app/AppSettings.jsx
+#: src/pages/Settings/tabs/GeneralTab.jsx
+#: src/utils/themeManager.js
+msgctxt "theme"
+msgid "System"
+msgstr "システム"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "System & Network"
+msgstr "システムとネットワーク"
+
+#: src/pages/Settings/index.jsx
+msgid "System & Updates"
+msgstr "システムとアップデート"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "System in Standby"
+msgstr "システムはスタンバイ中です"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
+#: src/pages/ShotAnalyzer/utils/constants.js
+msgid "System Info"
+msgstr "システム情報"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "System Version & Updates"
+msgstr "システムのバージョンとアップデート"
+
+#: src/pages/Settings/PluginCard.jsx
+msgctxt "Thursday, one letter"
+msgid "T"
+msgstr "木"
+
+#: src/pages/Settings/PluginCard.jsx
+msgctxt "Tuesday, one letter"
+msgid "T"
+msgstr "火"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Tare"
+msgstr "風袋引き"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Tare the scale, then place a known weight and calibrate each load cell."
+msgstr "スケールの風袋引きを行ってから既知の重さの分銅を載せ、各ロードセルをキャリブレーションします。"
+
+#: src/pages/Home/cards/ProfileCard.jsx
+msgctxt "process"
+msgid "Target"
+msgstr "目標"
+
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+msgid "Target (Delta)"
+msgstr "目標（差分）"
+
+#: src/pages/ShotAnalyzer/components/shotChart/tooltip/StaticTooltipContent.jsx
+msgid "Target {targetText}"
+msgstr "目標 {targetText}"
+
+#: src/pages/ShotAnalyzer/components/shotChart/tooltip/StaticTooltipContent.jsx
+msgid "Target {targetValue}"
+msgstr "目標 {targetValue}"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/compareControls.jsx
+msgid "Target display mode"
+msgstr "目標の表示モード"
+
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+msgctxt "short for target pump flow"
+msgid "Target F"
+msgstr "目標 F"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Target Flow"
+msgstr "目標流量"
+
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+msgctxt "short for target pressure"
+msgid "Target P"
+msgstr "目標 P"
+
+#: src/components/OverviewChart.jsx
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+#: src/pages/ShotHistory/HistoryChart.jsx
+msgid "Target Pressure"
+msgstr "目標圧力"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+#: src/pages/ShotAnalyzer/utils/constants.js
+msgid "Target Pressure (bar)"
+msgstr "目標圧力 (bar)"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+#: src/pages/ShotHistory/HistoryChart.jsx
+msgid "Target Pump Flow"
+msgstr "目標ポンプ流量"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+#: src/pages/ShotAnalyzer/utils/constants.js
+msgid "Target Pump Flow (ml/s)"
+msgstr "目標ポンプ流量 (ml/s)"
+
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+msgctxt "short for target temperature"
+msgid "Target T"
+msgstr "目標 T"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgid "Target Temp"
+msgstr "目標温度"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+#: src/pages/ShotAnalyzer/utils/constants.js
+msgid "Target Temp (℃)"
+msgstr "目標温度 (℃)"
+
+#: src/pages/Statistics/components/MetricsTable.jsx
+msgid "Target Temp Δ"
+msgstr "目標温度 Δ"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Target temperature"
+msgstr "目標温度"
+
+#: src/components/OverviewChart.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMetricCards.jsx
+#: src/pages/ShotHistory/HistoryChart.jsx
+msgid "Target Temperature"
+msgstr "目標温度"
+
+#: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
+msgid "Target value in {unit}"
+msgstr "目標値（{unit}）"
+
+#: src/components/OverviewChart.jsx
+msgid "Target Weight"
+msgstr "目標重量"
+
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Target weight in grams"
+msgstr "目標重量（グラム）"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Tasmota IP"
+msgstr "Tasmota IP"
+
+#: src/pages/ShotHistory/ShotNotesCard.jsx
+msgid "Tasting notes, brewing observations, etc..."
+msgstr "テイスティングノート、抽出時の気づきなど..."
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
+msgid "Tasting notes, brewing observations..."
+msgstr "テイスティングノート、抽出時の気づき..."
+
+#: src/utils/metricDefinitions.js
+msgid "Temp"
+msgstr "温度"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+msgctxt "short for temperature"
+msgid "Temp"
+msgstr "温度"
+
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+msgctxt "temperature"
+msgid "Temp"
+msgstr "温度"
+
+#: src/pages/Home/cards/RecentShotsCard.jsx
+#: src/pages/ProfileEdit/ProfileMainInformation.jsx
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+#: src/pages/ShotAnalyzer/components/shotChart/single/SingleShotMetricPreview.jsx
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMetricCards.jsx
+#: src/pages/Statistics/components/MetricsTable.jsx
+msgid "Temperature"
+msgstr "温度"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+#: src/pages/ShotAnalyzer/utils/constants.js
+msgid "Temperature (℃)"
+msgstr "温度 (℃)"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Temperature (0 = Default)"
+msgstr "温度（0 = デフォルト）"
+
+#: src/components/ExtendedProfileChart.jsx
+msgid "Temperature History"
+msgstr "温度履歴"
+
+#: src/pages/ProfileEdit/ProfileMainInformation.jsx
+msgid "Temperature in degrees Celsius"
+msgstr "温度（摂氏）"
+
+#: src/utils/warnings.js
+msgid "Temperature not stable"
+msgstr "温度が安定していません"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Temperature Offset (°C)"
+msgstr "温度オフセット (°C)"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Temperature Settings"
+msgstr "温度設定"
+
+#: src/pages/ShotAnalyzer/components/EmptyState.jsx
+msgid "Temporary View (VIEW)"
+msgstr "一時表示 (VIEW)"
+
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "Test Duration (seconds)"
+msgstr "テスト時間（秒）"
+
+#: src/app/MachineSetup.jsx
+msgid "The app forgets {host}. Nothing changes on the machine, and you can add it again any time."
+msgstr "アプリから {host} を削除します。マシン側には何も変更はなく、いつでも再度追加できます。"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "The BLDC pump addon was detected in your system. You can change the pump control characteristics using the values below."
+msgstr "システムで BLDC ポンプアドオンが検出されました。以下の値でポンプ制御の特性を変更できます。"
+
+#: src/app/appSettings.js
+msgid "The boiler reached brew temperature."
+msgstr "ボイラーが抽出温度に達しました。"
+
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "The boiler will heat at full power until its temperature inflection is detected, then the SIMC tuning rule derives PID gains. Typically 1–3 minutes depending on machine."
+msgstr "ボイラーは温度の変曲点が検出されるまで全出力で加熱し、その後 SIMC チューニング則で PID ゲインを算出します。マシンにより通常 1～3 分かかります。"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "The chart is shown for Pro profiles only"
+msgstr "チャートは Pro プロファイルでのみ表示されます"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgid "The configured or inferred scale delay is unusually high. Review the scale-delay setting before relying on predictive weight stops."
+msgstr "設定または推定されたスケール遅延が異常に大きくなっています。予測重量停止を使う前にスケール遅延の設定を確認してください。"
+
+#: src/app/notifications.js
+msgid "The controller reported an error."
+msgstr "コントローラーがエラーを報告しました。"
+
+#: src/pages/Settings/index.jsx
+msgid "The file contains no known settings."
+msgstr "ファイルに既知の設定が含まれていません。"
+
+#: src/pages/Settings/index.jsx
+msgid "The file does not contain a settings object."
+msgstr "ファイルに設定オブジェクトが含まれていません。"
+
+#: src/pages/Home/BrewConfirmModal.jsx
+msgid "The following warnings are currently active:"
+msgstr "現在有効な警告:"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "The grinder reaches GaggiMate at this address, so both need to share a network (the E64 WS is 2.4 GHz only) and the address must not change: reserve it for GaggiMate in your router."
+msgstr "グラインダーはこのアドレスで GaggiMate に接続するため、両方が同じネットワーク上にある必要があり（E64 WS は 2.4 GHz のみ対応）、アドレスが変わってはいけません。ルーターで GaggiMate 用にアドレスを予約してください。"
+
+#: src/app/appSettings.js
+msgid "The machine has been in steam mode for 5 minutes."
+msgstr "マシンが 5 分間スチームモードのままです。"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "The profile's dose is saved to the shot history."
+msgstr "プロファイルのドーズがショット履歴に保存されます。"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "The scale was found, but the Bluetooth connection failed. Try again or restart the scale."
+msgstr "スケールは見つかりましたが、Bluetooth 接続に失敗しました。もう一度試すか、スケールを再起動してください。"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "The scale wasn't found. Make sure it's switched on and nearby, then scan again."
+msgstr "スケールが見つかりませんでした。電源が入っていて近くにあることを確認してから、もう一度スキャンしてください。"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "The update could not be completed and the device kept its current firmware. Check the network connection and start the update again."
+msgstr "アップデートを完了できず、デバイスは現在のファームウェアのままです。ネットワーク接続を確認して、もう一度アップデートを開始してください。"
+
+#: src/app/AppSettings.jsx
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Theme"
+msgstr "テーマ"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Theme & Notifications"
+msgstr "テーマと通知"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Thermal Feedforward Gain"
+msgstr "熱フィードフォワードゲイン"
+
+#: src/app/machines.js
+msgid "this address is not a GaggiMate"
+msgstr "このアドレスは GaggiMate ではありません"
+
+#: src/pages/ShotAnalyzer/services/ReplayVideoExportService.js
+msgid "This browser cannot record MP4 video. Please use WebM export instead."
+msgstr "このブラウザーは MP4 動画を録画できません。代わりに WebM エクスポートを使用してください。"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+msgid "This browser records replay video as WebM natively."
+msgstr "このブラウザーはリプレイ動画を WebM でネイティブに録画します。"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "This feature allows connection to a Home Assistant or MQTT installation and push the current state. This feature is deprecated for usage with Home Assistant. Please see the <0>Home Assistant Integration</0> for a more up-to-date solution."
+msgstr "この機能は Home Assistant または MQTT に接続し、現在の状態を送信します。Home Assistant での使用には非推奨です。より新しい方法については <0>Home Assistant 連携</0>を参照してください。"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "This feature controls a Tasmota Plug to turn off your grinder after the target has been reached."
+msgstr "この機能は Tasmota プラグを制御し、目標に達した後にグラインダーをオフにします。"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "This scale model couldn't be set up."
+msgstr "このスケールモデルをセットアップできませんでした。"
+
+#: src/pages/Settings/PluginCard.jsx
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
+msgid "Thursday"
+msgstr "木曜日"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgid "Time"
+msgstr "時間"
+
+#: src/pages/Home/TargetToggle.jsx
+msgctxt "brew target"
+msgid "Time"
+msgstr "時間"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgctxt "ramp target"
+msgid "Time"
+msgstr "時間"
+
+#: src/pages/ShotHistory/HistoryChart.jsx
+msgid "Time (s)"
+msgstr "時間 (s)"
+
+#: src/pages/ShotAnalyzer/utils/formatting.js
+msgid "Time Limit"
+msgstr "時間制限"
+
+#: src/pages/ShotAnalyzer/utils/formatting.js
+msgid "Time Stop"
+msgstr "時間で停止"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Time Zone"
+msgstr "タイムゾーン"
+
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+msgid "Time-Weighted Average"
+msgstr "時間加重平均"
+
+#: src/app/machines.js
+msgctxt "connection failure"
+msgid "timed out"
+msgstr "タイムアウト"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Timeout waiting for shot to finish (5min)."
+msgstr "ショットの終了待ちがタイムアウトしました（5 分）。"
+
+#: src/pages/ProfileEdit/ProfileMainInformation.jsx
+msgid "Title"
+msgstr "タイトル"
+
+#: src/pages/Statistics/components/toolbar/helpers.js
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgctxt "date range end"
+msgid "To"
+msgstr "終了"
+
+#: src/pages/Home/cards/RecentShotsCard.jsx
+msgid "Today"
+msgstr "今日"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Toggle advanced search"
+msgstr "詳細検索の切り替え"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Toggle off and on at target"
+msgstr "オフにして目標でオン"
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Toggle pinned profiles first"
+msgstr "固定したプロファイルを先頭に表示"
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Toggle pinned shots first"
+msgstr "固定したショットを先頭に表示"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTable.jsx
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+msgid "Total"
+msgstr "合計"
+
+#: src/pages/Statistics/components/SummaryCards.jsx
+msgid "Total Duration"
+msgstr "合計時間"
+
+#: src/pages/Statistics/components/SummaryCards.jsx
+msgid "Total Pumped Water"
+msgstr "合計送水量"
+
+#: src/pages/Statistics/components/SummaryCards.jsx
+msgid "Total Shots"
+msgstr "総ショット数"
+
+#: src/pages/Statistics/components/SummaryCards.jsx
+msgid "Total Weight"
+msgstr "合計重量"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTable.jsx
+msgid "Totals"
+msgstr "合計"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Transition duration in {rampUnit}"
+msgstr "遷移時間（{rampUnit}）"
+
+#: src/pages/Statistics/components/TrendChart.jsx
+msgid "Trend bucket size"
+msgstr "トレンドの集計単位"
+
+#: src/pages/Statistics/components/TrendChart.jsx
+msgid "Trend Chart"
+msgstr "トレンドチャート"
+
+#: src/pages/Statistics/components/TrendChart.jsx
+msgid "Trend metric"
+msgstr "トレンドのメトリクス"
+
+#: src/pages/Statistics/components/statisticsView/StatisticsDetailSection.jsx
+msgid "Trends"
+msgstr "トレンド"
+
+#: src/app/ConnectionGate.jsx
+msgid "Try again"
+msgstr "再試行"
+
+#: src/pages/Settings/PluginCard.jsx
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
+msgid "Tuesday"
+msgstr "火曜日"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Turn off at target"
+msgstr "目標でオフ"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Turn on at start, off at target"
+msgstr "開始時にオン、目標でオフ"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Unavailable / uncalibrated"
+msgstr "利用不可 / 未キャリブレーション"
+
+#: src/pages/Statistics/utils/statisticsSearchDsl.js
+msgid "Unclosed quoted value."
+msgstr "引用符で囲まれた値が閉じられていません。"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Unfavorite"
+msgstr "お気に入り解除"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "unknown"
+msgstr "不明"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
+#: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
+#: src/pages/ShotAnalyzer/utils/formatting.js
+#: src/pages/ShotAnalyzer/utils/profiles.js
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+msgid "Unknown"
+msgstr "不明"
+
+#: src/app/machineStatus.js
+msgctxt "machine mode"
+msgid "Unknown"
+msgstr "不明"
+
+#: src/pages/Home/cards/RecentShotsCard.jsx
+msgctxt "profile"
+msgid "Unknown"
+msgstr "不明"
+
+#: src/pages/Statistics/components/toolbar/helpers.js
+msgid "unknown candidates"
+msgstr "不明な候補"
+
+#: src/pages/Statistics/utils/statisticsSearchDsl.js
+msgid "Unknown error."
+msgstr "不明なエラーです。"
+
+#: src/pages/Statistics/utils/statisticsSearchDsl.js
+msgid "Unknown field \"{fieldRaw}\". Supported: {supportedFields}."
+msgstr "不明なフィールド「{fieldRaw}」。対応フィールド: {supportedFields}。"
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Unknown Profile"
+msgstr "不明なプロファイル"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Unknown Scale"
+msgstr "不明なスケール"
+
+#: src/pages/Statistics/components/statisticsView/helpers.js
+msgid "Unknown Shot"
+msgstr "不明なショット"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
+msgid "Unpin {displayName}"
+msgstr "{displayName} の固定を解除"
+
+#: src/pages/Statistics/components/StatisticsMultiSelectDropdown.jsx
+msgid "Unpin {itemName}"
+msgstr "{itemName} の固定を解除"
+
+#: src/pages/Statistics/components/StatisticsMultiSelectDropdown.jsx
+msgid "Unpin {singularLabel}"
+msgstr "{singularLabel} の固定を解除"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
+msgid "Unpin profile"
+msgstr "プロファイルの固定を解除"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
+msgid "Unpin shot"
+msgstr "ショットの固定を解除"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Unrated Only"
+msgstr "未評価のみ"
+
+#: src/pages/Statistics/utils/statisticsSearchDsl.js
+msgid "Unsupported date expression. Use DD.MM.YYYY, optional HH:MM, or h-7d."
+msgstr "サポートされていない日付式です。DD.MM.YYYY（HH:MM は任意）または h-7d を使用してください。"
+
+#: src/pages/ProfileEdit/ProfileImageUpload.jsx
+msgid "Unsupported file type. Please use PNG, JPEG, WebP or BMP."
+msgstr "サポートされていないファイル形式です。PNG、JPEG、WebP、BMP を使用してください。"
+
+#: src/pages/ShotAnalyzer/services/analyzer/delayTracking.js
+msgid "Unusually high inferred delay in Phase {phaseNumber} ({delayMs} ms)."
+msgstr "フェーズ {phaseNumber} の推定遅延が異常に大きくなっています（{delayMs} ms）。"
+
+#: src/pages/ShotAnalyzer/services/analyzer/delayTracking.js
+msgid "Unusually high inferred delay in Phase {phaseNumber}."
+msgstr "フェーズ {phaseNumber} の推定遅延が異常に大きくなっています。"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Update both"
+msgstr "両方を更新"
+
+#: src/app/AppSettings.jsx
+msgid "Update channel"
+msgstr "アップデートチャンネル"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Update Channel"
+msgstr "アップデートチャンネル"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Update Controller"
+msgstr "コントローラーを更新"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Update Display"
+msgstr "ディスプレイを更新"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Update failed"
+msgstr "アップデートに失敗しました"
+
+#: src/app/AppSettings.jsx
+msgid "Updates"
+msgstr "アップデート"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Updating controller firmware"
+msgstr "コントローラーのファームウェアを更新中"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Updating Display filesystem"
+msgstr "ディスプレイのファイルシステムを更新中"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Updating Display firmware"
+msgstr "ディスプレイのファームウェアを更新中"
+
+#: src/pages/Statistics/components/toolbar/constants.js
+msgctxt "date basis"
+msgid "Upload"
+msgstr "アップロード"
+
+#: src/utils/profileImage.js
+msgid "Upload failed"
+msgstr "アップロードに失敗しました"
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Upload failed: {errorMessage}"
+msgstr "アップロードに失敗しました: {errorMessage}"
+
+#: src/pages/ProfileEdit/ProfileImageUpload.jsx
+msgid "Upload image"
+msgstr "画像をアップロード"
+
+#: src/components/VisualizerUploadModal.jsx
+msgid "Upload Shot"
+msgstr "ショットをアップロード"
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Upload to visualizer.coffee"
+msgstr "visualizer.coffee にアップロード"
+
+#: src/components/VisualizerUploadModal.jsx
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Upload to Visualizer.coffee"
+msgstr "Visualizer.coffee にアップロード"
+
+#: src/components/VisualizerUploadModal.jsx
+msgid "Uploading..."
+msgstr "アップロード中..."
+
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "Upper bound on the identification test. Most espresso boilers resolve within 60–120 s. Extend if Autotune fails before peak slope is detected."
+msgstr "同定テストの上限時間です。ほとんどのエスプレッソボイラーは 60～120 秒以内に収まります。最大傾きが検出される前にオートチューンが失敗する場合は延長してください。"
+
+#: src/pages/Statistics/components/StatisticsSearchHelp.jsx
+msgid "Use <0>></0>, <1>>=</1>, <2><</2>, <3><=</3>, <4>=</4>"
+msgstr "<0>></0>、<1>>=</1>、<2><</2>、<3><=</3>、<4>=</4> を使用します"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Use 24h Format"
+msgstr "24 時間表示を使用"
+
+#: src/pages/Statistics/components/toolbar/helpers.js
+msgid "Use shot timestamp only"
+msgstr "ショットのタイムスタンプのみを使用"
+
+#: src/pages/Statistics/components/toolbar/helpers.js
+msgid "Use shot timestamp, fallback to upload time"
+msgstr "ショットのタイムスタンプを使用し、なければアップロード時刻を使用"
+
+#: src/pages/ShotAnalyzer/components/EmptyState.jsx
+msgid "Use the status bar toggle to switch between <0>View temporarily</0> and <1>Save to Browser</1> before importing."
+msgstr "インポートする前に、ステータスバーの切り替えで<0>一時表示</0>と<1>ブラウザーに保存</1>を切り替えてください。"
+
+#: src/pages/Statistics/components/toolbar/helpers.js
+msgid "Use upload time only"
+msgstr "アップロード時刻のみを使用"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Used for the GaggiMate hotspot when no Wi-Fi is configured (min. 8 characters)."
+msgstr "Wi-Fi が未設定のときの GaggiMate ホットスポットに使用します（8 文字以上）。"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "user"
+msgstr "ユーザー"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "User Preferences"
+msgstr "ユーザー設定"
+
+#: src/services/VisualizerService.js
+msgid "Username and password are required"
+msgstr "ユーザー名とパスワードが必要です"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Using auto range from current shot selection."
+msgstr "現在選択中のショットから自動レンジを使用しています。"
+
+#: src/pages/ProfileList/index.jsx
+msgctxt "profile tab"
+msgid "Utility"
+msgstr "ユーティリティ"
+
+#: src/pages/ProfileEdit/ProfileMainInformation.jsx
+msgid "Utility profile"
+msgstr "ユーティリティプロファイル"
+
+#: src/pages/ProfileEdit/ProfileMainInformation.jsx
+msgid "Utility profile toggle"
+msgstr "ユーティリティプロファイルの切り替え"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Valve"
+msgstr "バルブ"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Valve closed"
+msgstr "バルブ閉"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Valve open"
+msgstr "バルブ開"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Valve state selection"
+msgstr "バルブ状態の選択"
+
+#: src/app/AppSettings.jsx
+msgid "Version {bundleVersion}"
+msgstr "バージョン {bundleVersion}"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+msgid "Video"
+msgstr "動画"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+msgid "Video (unsupported)"
+msgstr "動画（非対応）"
+
+#: src/pages/ShotAnalyzer/components/shotChart/single/useShotChartReplayExport.js
+msgid "Video export is not supported in this browser."
+msgstr "このブラウザーは動画のエクスポートに対応していません。"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgctxt "import mode"
+msgid "View"
+msgstr "表示"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarModeHint.jsx
+msgctxt "import mode badge"
+msgid "VIEW"
+msgstr "VIEW"
+
+#: src/pages/ProfileList/index.jsx
+msgid "View statistics for {label} profile"
+msgstr "{label} プロファイルの統計を表示"
+
+#: src/pages/ProfileList/index.jsx
+msgid "View statistics for this profile"
+msgstr "このプロファイルの統計を表示"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/MobileStatusActionsMenu.jsx
+msgid "View temporarily"
+msgstr "一時表示"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgid "View temporarily. Click to switch imports to Save to Browser."
+msgstr "一時表示。クリックするとインポートを「ブラウザーに保存」に切り替えます。"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarModeHint.jsx
+msgid "View temporarily. Imported shots and profiles will now open temporarily in the analyzer."
+msgstr "一時表示。インポートしたショットとプロファイルはアナライザーで一時的に開かれます。"
+
+#: src/components/SettingsFormField.jsx
+msgid "Visible"
+msgstr "表示中"
+
+#: src/components/VisualizerUploadModal.jsx
+msgid "Visualizer.coffee Username"
+msgstr "Visualizer.coffee のユーザー名"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+msgid "Volumetric Avail."
+msgstr "容量制御可"
+
+#: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
+msgid "Volumetric target"
+msgstr "容量の目標"
+
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Volumetric Target"
+msgstr "容量の目標"
+
+#: src/pages/Settings/PluginCard.jsx
+msgctxt "Wednesday, one letter"
+msgid "W"
+msgstr "水"
+
+#: src/pages/Statistics/components/ActivityHeatmap.jsx
+msgctxt "weekday initial: Wednesday"
+msgid "W"
+msgstr "水"
+
+#: src/utils/warnings.js
+msgctxt "warning level"
+msgid "Warn"
+msgstr "警告"
+
+#: src/app/notifications.js
+msgid "Warning"
+msgstr "警告"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryDropdown.jsx
+msgid "WARNING: Do you really want to IRREVOCABLY delete all {count} filtered profiles?"
+msgstr "警告: 絞り込まれた {count} 件のプロファイルをすべて削除しますか？この操作は元に戻せません。"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryDropdown.jsx
+msgid "WARNING: Do you really want to IRREVOCABLY delete all {count} filtered shots?"
+msgstr "警告: 絞り込まれた {count} 件のショットをすべて削除しますか？この操作は元に戻せません。"
+
+#: src/app/appSettings.js
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Warnings"
+msgstr "警告"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Warnings are shown on the display. An error additionally asks for confirmation before a brew starts."
+msgstr "警告はディスプレイに表示されます。エラーの場合は、抽出開始前に確認も求められます。"
+
+#: src/app/machineStatus.js
+#: src/pages/Home/utils.js
+msgctxt "machine mode"
+msgid "Water"
+msgstr "給湯"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Water button"
+msgstr "給湯ボタン"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Water Button Behavior"
+msgstr "給湯ボタンの動作"
+
+#: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
+msgid "Water drawn"
+msgstr "抽出した水量"
+
+#: src/utils/metricDefinitions.js
+msgid "Water Level"
+msgstr "水位"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Water pumped"
+msgstr "送水量"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Water pumped in phase"
+msgstr "フェーズの送水量"
+
+#: src/pages/Home/cards/WaterLevelCard.jsx
+#: src/utils/panelDefinitions.js
+msgid "Water Tank"
+msgstr "水タンク"
+
+#: src/utils/warnings.js
+msgid "Water tank low"
+msgstr "水タンクの残量低下"
+
+#: src/pages/Statistics/components/toolbar/constants.js
+msgctxt "shot source: browser storage"
+msgid "WEB"
+msgstr "WEB"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Web Settings"
+msgstr "Web 設定"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+msgid "WebM is the recommended replay video format in browsers with native WebM recording support."
+msgstr "WebM のネイティブ録画に対応したブラウザーでは、WebM がおすすめのリプレイ動画形式です。"
+
+#: src/pages/ShotAnalyzer/services/LibraryService.js
+msgid "WebSocket not connected"
+msgstr "WebSocket が接続されていません"
+
+#: src/pages/Settings/PluginCard.jsx
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
+msgid "Wednesday"
+msgstr "水曜日"
+
+#: src/pages/Statistics/components/TrendChart.jsx
+msgctxt "time bucket"
+msgid "Week"
+msgstr "週"
+
+#: src/pages/Statistics/utils/trendBuckets.js
+msgid "Week: {startText}"
+msgstr "週: {startText}"
+
+#: src/pages/Statistics/utils/trendBuckets.js
+msgid "Week: {startText} - {endText}"
+msgstr "週: {startText} - {endText}"
+
+#: src/pages/Settings/tabs/CleaningSection.jsx
+msgid "weeks"
+msgstr "週"
+
+#: src/pages/DashboardSettings/index.jsx
+#: src/pages/Home/cards/ProfileCard.jsx
+#: src/pages/Home/cards/RecentShotsCard.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMetricCards.jsx
+#: src/pages/ShotHistory/HistoryChart.jsx
+#: src/pages/Statistics/components/MetricsTable.jsx
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+#: src/utils/metricDefinitions.js
+msgid "Weight"
+msgstr "重量"
+
+#: src/pages/Home/TargetToggle.jsx
+msgctxt "brew target"
+msgid "Weight"
+msgstr "重量"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+#: src/pages/ShotAnalyzer/utils/constants.js
+#: src/pages/Statistics/components/TrendChart.jsx
+msgid "Weight (g)"
+msgstr "重量 (g)"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgid "Weight (total)"
+msgstr "重量（合計）"
+
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+#: src/pages/ShotHistory/HistoryChart.jsx
+msgid "Weight Flow"
+msgstr "重量流量"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+#: src/pages/ShotAnalyzer/utils/constants.js
+msgid "Weight Flow (g/s)"
+msgstr "重量流量 (g/s)"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Weight in phase"
+msgstr "フェーズの重量"
+
+#: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
+msgid "Weight reached"
+msgstr "重量に到達"
+
+#: src/pages/ShotAnalyzer/utils/formatting.js
+msgid "Weight Stop"
+msgstr "重量で停止"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "What percentage to run the pump at during steaming"
+msgstr "スチーム中にポンプを動かす割合（%）"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "When the toggle is off, brightness will be set to 0"
+msgstr "オフにすると輝度は 0 に設定されます"
+
+#: src/app/AppSettings.jsx
+msgid "While GaggiMate is in the background it keeps watching your machines and shows a permanent “Watching machines” notification. This uses some extra battery."
+msgstr "GaggiMate はバックグラウンドでもマシンの監視を続け、「マシンを監視中」という通知を常に表示します。バッテリーを多少多く消費します。"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Wi-Fi Password"
+msgstr "Wi-Fi パスワード"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Wi-Fi SSID"
+msgstr "Wi-Fi SSID"
+
+#: src/app/appSettings.js
+msgid "With shot time and weight."
+msgstr "ショットの時間と重量を使用。"
+
+#: src/pages/Statistics/components/TrendChart.jsx
+msgctxt "time bucket"
+msgid "Year"
+msgstr "年"
+
+#: src/pages/Home/cards/RecentShotsCard.jsx
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
+msgid "Yesterday"
+msgstr "昨日"
+
+#: src/components/VisualizerUploadModal.jsx
+msgid "Yield:"
+msgstr "抽出量:"
+
+#: src/components/VisualizerUploadModal.jsx
+msgid "Your credentials are only used for this upload and will be stored locally only if you choose to remember your username."
+msgstr "認証情報はこのアップロードにのみ使用され、ユーザー名を保存する場合のみローカルに保存されます。"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Your grinder last ground recipe {lastRecipe}."
+msgstr "グラインダーが最後に挽いたレシピは {lastRecipe} です。"
+
+#: src/app/MachineSetup.jsx
+msgid "Your machines"
+msgstr "マイマシン"
+
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "Your new PID values have been saved successfully."
+msgstr "新しい PID 値を保存しました。"
+
+#: src/app/MachineSetup.jsx
+msgid "Your phone needs to be on the same Wi-Fi network as the machine."
+msgstr "スマートフォンをマシンと同じ Wi-Fi ネットワークに接続する必要があります。"
+
+#: src/pages/ShotAnalyzer/components/EmptyState.jsx
+msgid "Your saved shots and profiles directly from the GaggiMate internal storage."
+msgstr "GaggiMate の内部ストレージに保存されたショットとプロファイルを直接表示します。"

@@ -4,6 +4,7 @@
 
 import { useState, useEffect, useContext, useRef, useCallback } from 'preact/hooks';
 import { useRoute } from 'preact-iso';
+import { Trans } from '@lingui/react/macro';
 import { LibraryPanel } from '../components/LibraryPanel';
 import { EmptyState } from '../components/EmptyState.jsx';
 import { useAnalyzerMobileSubpageNavigation } from '../components/useAnalyzerMobileSubpageNavigation';
@@ -959,7 +960,9 @@ export function ShotAnalyzer() {
     <div className='shot-analyzer-page pb-20'>
       {/* Header */}
       <div className='mb-4 flex flex-row items-center gap-2'>
-        <h2 className='flex-grow text-2xl font-bold sm:text-3xl'>Deep Dive Shot Analyzer</h2>
+        <h2 className='flex-grow text-2xl font-bold sm:text-3xl'>
+          <Trans>Deep Dive Shot Analyzer</Trans>
+        </h2>
       </div>
 
       <div className='w-full'>

@@ -1,3 +1,4 @@
+import { Trans } from '@lingui/react/macro';
 import { CompareShotCharts } from '../../ShotAnalyzer/components/shotChart/CompareShotCharts';
 import { STATISTICS_SECTION_TITLE_CLASS } from './statisticsUi';
 
@@ -36,7 +37,11 @@ export function StatisticsShotCompareSection({
   if (embedded) {
     return (
       <div className='space-y-2'>
-        {showTitle && <h3 className={STATISTICS_SECTION_TITLE_CLASS}>Shot Charts</h3>}
+        {showTitle && (
+          <h3 className={STATISTICS_SECTION_TITLE_CLASS}>
+            <Trans>Shot Charts</Trans>
+          </h3>
+        )}
         {content}
       </div>
     );
@@ -44,7 +49,11 @@ export function StatisticsShotCompareSection({
 
   return (
     <div className='space-y-2'>
-      {showTitle && <h3 className={STATISTICS_SECTION_TITLE_CLASS}>Shot Charts</h3>}
+      {showTitle && (
+        <h3 className={STATISTICS_SECTION_TITLE_CLASS}>
+          <Trans>Shot Charts</Trans>
+        </h3>
+      )}
 
       <div className={`${STATISTICS_COMPARE_PANEL_CLASS} px-1.5 py-2 sm:px-2`}>{content}</div>
     </div>

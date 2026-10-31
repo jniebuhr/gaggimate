@@ -7,6 +7,7 @@ import {
   WATER_DRAWN_PHASE_LABEL,
   WATER_DRAWN_TOTAL_LABEL,
 } from '../constants';
+import { t } from '@lingui/core/macro';
 import { getShotChartDisplayLabel } from '../labelVisuals';
 import { createHiddenExternalTooltipState } from './tooltipState';
 
@@ -79,7 +80,8 @@ function buildCompareDifferenceRow(rows) {
 
   return {
     label: firstRow.label,
-    displayLabel: 'Difference',
+    displayLabel: t`Difference`,
+    isDifference: true,
     valueText: formattedValue,
     color: firstRow.color,
     spacerBefore: true,
@@ -208,7 +210,8 @@ function buildCompareExternalTooltipRows({ chart, xValue }) {
       const shotOrder = Number.isFinite(dataset.compareTooltipShotOrder)
         ? dataset.compareTooltipShotOrder
         : 999;
-      const shotLabel = `Shot ${shotOrder + 1}`;
+      const shotNumber = shotOrder + 1;
+      const shotLabel = t`Shot ${shotNumber}`;
       const waterGetter = dataset.compareTooltipGetHoverWaterValuesAtX;
       if (typeof waterGetter === 'function' && !waterByShotOrder.has(shotOrder)) {
         const { totalWaterMl, phaseWaterMl, phaseTotalWaterMl } = waterGetter(xValue);
@@ -367,8 +370,8 @@ function buildPhaseTooltipSummaries({ xValue, phaseTooltipGroups, showPhaseNames
 }
 
 function buildPhaseLabel(phaseNumber, phaseName) {
-  if (!phaseName) return `Phase ${phaseNumber}`;
-  return `Phase ${phaseNumber}: ${phaseName}`;
+  if (!phaseName) return t`Phase ${phaseNumber}`;
+  return t`Phase ${phaseNumber}: ${phaseName}`;
 }
 
 function resolveTitleLines({ isCompareTooltipMode, compareXValue, tooltip }) {

@@ -1,3 +1,6 @@
+import { msg, t } from '@lingui/core/macro';
+import { i18n } from '../../../../i18n.js';
+
 export const PHASE_EXIT_REASON = Object.freeze({
   UNKNOWN: 0,
   TARGET_VOLUMETRIC: 1,
@@ -12,47 +15,47 @@ export const PHASE_EXIT_REASON = Object.freeze({
 
 const EXIT_REASON_META = Object.freeze({
   [PHASE_EXIT_REASON.UNKNOWN]: {
-    label: 'Unknown',
+    label: msg`Unknown`,
     stopReason: '',
     exitType: null,
   },
   [PHASE_EXIT_REASON.TARGET_VOLUMETRIC]: {
-    label: 'Volumetric target',
+    label: msg`Volumetric target`,
     stopReason: 'Weight Stop',
     exitType: 'volumetric',
   },
   [PHASE_EXIT_REASON.TARGET_PRESSURE]: {
-    label: 'Pressure target',
+    label: msg`Pressure target`,
     stopReason: 'Pressure Stop',
     exitType: 'pressure',
   },
   [PHASE_EXIT_REASON.TARGET_FLOW]: {
-    label: 'Flow target',
+    label: msg`Flow target`,
     stopReason: 'Pump Flow Stop',
     exitType: 'flow',
   },
   [PHASE_EXIT_REASON.TARGET_PUMPED]: {
-    label: 'Pumped-water target',
+    label: msg`Pumped-water target`,
     stopReason: 'Pumped Water Stop',
     exitType: 'pumped',
   },
   [PHASE_EXIT_REASON.DURATION]: {
-    label: 'Duration',
+    label: msg`Duration`,
     stopReason: 'Time Stop',
     exitType: 'duration',
   },
   [PHASE_EXIT_REASON.SAFETY]: {
-    label: 'Safety timeout',
+    label: msg`Safety timeout`,
     stopReason: 'Safety Timeout',
     exitType: 'safety',
   },
   [PHASE_EXIT_REASON.ABORTED]: {
-    label: 'Manually stopped',
+    label: msg`Manually stopped`,
     stopReason: 'Manually Stopped',
     exitType: 'manual',
   },
   [PHASE_EXIT_REASON.TARGET_RATIO]: {
-    label: 'Ratio target',
+    label: msg`Ratio target`,
     stopReason: 'Ratio Stop',
     exitType: 'ratio',
   },
@@ -72,6 +75,10 @@ export function getPhaseExitReasonMeta(value) {
   return EXIT_REASON_META[normalizePhaseExitReasonCode(value)];
 }
 
+export function getPhaseExitReasonLabel(value) {
+  return i18n._(getPhaseExitReasonMeta(value).label);
+}
+
 export function isKnownPhaseExitReason(value) {
   return normalizePhaseExitReasonCode(value) !== PHASE_EXIT_REASON.UNKNOWN;
 }
@@ -81,13 +88,13 @@ export function isSafetyExitReason(value) {
 }
 
 export function getBrewModeLabel(isBrewByWeight) {
-  return isBrewByWeight ? 'Brewed by Weight' : 'Brewed by Time';
+  return isBrewByWeight ? t`Brewed by Weight` : t`Brewed by Time`;
 }
 
 export function getBrewCompletionLabel(isBrewByWeight, finalExitReason) {
   const code = normalizePhaseExitReasonCode(finalExitReason);
-  if (code === PHASE_EXIT_REASON.ABORTED) return 'Stopped: Manually';
-  if (code === PHASE_EXIT_REASON.SAFETY) return 'Stopped: Safety timeout';
+  if (code === PHASE_EXIT_REASON.ABORTED) return t`Stopped: Manually`;
+  if (code === PHASE_EXIT_REASON.SAFETY) return t`Stopped: Safety timeout`;
   return getBrewModeLabel(isBrewByWeight);
 }
 

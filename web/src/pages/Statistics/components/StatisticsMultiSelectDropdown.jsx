@@ -10,6 +10,7 @@ import {
   STATISTICS_DROPDOWN_PANEL_SURFACE_CLASS,
   STATISTICS_DROPDOWN_PANEL_SURFACE_STYLE,
 } from './statisticsDropdownSurface';
+import { Trans, useLingui } from '@lingui/react/macro';
 
 /* global globalThis */
 
@@ -90,6 +91,8 @@ function StatisticsMultiSelectRow({
   onCirclePointerDown,
   onCircleClick,
 }) {
+  const { t } = useLingui();
+  const itemName = item.primary || item.id;
   return (
     <div
       data-stat-multi-item-id={item.id}
@@ -99,7 +102,7 @@ function StatisticsMultiSelectRow({
     >
       <button
         type='button'
-        aria-label={`${isSelected ? 'Deselect' : 'Select'} ${item.primary || item.id}`}
+        aria-label={isSelected ? t`Deselect ${itemName}` : t`Select ${itemName}`}
         className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border transition-colors ${getAccentCircleClasses(accentTone, isSelected)}`}
         onClick={event => onCircleClick(item.id, index, event)}
         onPointerDown={event => {
@@ -129,9 +132,12 @@ function StatisticsMultiSelectRow({
       {onTogglePin ? (
         <button
           type='button'
-          aria-label={`${item.isPinned ? 'Unpin' : 'Pin'} ${item.primary || item.id}`}
+          aria-label={item.isPinned ? t`Unpin ${itemName}` : t`Pin ${itemName}`}
           aria-disabled={!item.isPinned && !!item.pinDisabledReason}
-          title={item.pinDisabledReason || `${item.isPinned ? 'Unpin' : 'Pin'} ${singularLabel}`}
+          title={
+            item.pinDisabledReason ||
+            (item.isPinned ? t`Unpin ${singularLabel}` : t`Pin ${singularLabel}`)
+          }
           className={getAnalyzerIconButtonClasses({
             tone: item.isPinned ? 'primary' : 'subtle',
             className: `h-5 w-5 shrink-0 bg-transparent p-0 text-[11px] ${
@@ -153,17 +159,19 @@ function StatisticsMultiSelectRow({
 
 export function StatisticsMultiSelectDropdown({
   label,
+  itemLabel,
   items,
   selectedIds,
   onChange,
   onTogglePin,
   disabled = false,
   accentTone = 'neutral',
-  emptyText = 'Select...',
+  emptyText,
   maxVisibleItems = 12,
   triggerClassName = 'h-11 min-h-0',
   rootClassName = '',
 }) {
+  const { t } = useLingui();
   const rootRef = useRef(null);
   const triggerRef = useRef(null);
   const listRef = useRef(null);
@@ -425,9 +433,13 @@ export function StatisticsMultiSelectDropdown({
   }, [items, selectedIds]);
 
   const selectedCount = selectedSet.size;
-  const triggerText = selectedCount > 0 ? `${label} (${selectedCount})` : emptyText;
+  const triggerText = selectedCount > 0 ? `${label} (${selectedCount})` : emptyText || t`Select...`;
+  const labelLower = String(label ?? '').toLowerCase();
+  const pinnedToggleLabel = showPinnedOnly
+    ? t`Show all ${labelLower}`
+    : t`Show pinned only ${labelLower}`;
   const panelMaxHeight = Math.max(8, Number(maxVisibleItems) || 12) * 36;
-  const singularLabel = getSingularLabel(label);
+  const singularLabel = itemLabel || getSingularLabel(label);
 
   return (
     <div ref={rootRef} className={`relative ${rootClassName}`.trim()}>
@@ -464,14 +476,14 @@ export function StatisticsMultiSelectDropdown({
                 type='text'
                 value={searchTerm}
                 onInput={e => setSearchTerm(e.target.value)}
-                placeholder={`Search ${label.toLowerCase()}...`}
+                placeholder={t`Search ${labelLower}...`}
                 className='input input-sm input-bordered border-base-content/10 bg-base-100/70 h-8 min-h-0 w-full flex-1 text-xs'
               />
               {onTogglePin ? (
                 <button
                   type='button'
-                  aria-label={`${showPinnedOnly ? 'Show all' : 'Show pinned only'} ${label.toLowerCase()}`}
-                  title={`${showPinnedOnly ? 'Show all' : 'Show pinned only'} ${label.toLowerCase()}`}
+                  aria-label={pinnedToggleLabel}
+                  title={pinnedToggleLabel}
                   onClick={() => setShowPinnedOnly(value => !value)}
                   className={getAnalyzerIconButtonClasses({
                     tone: showPinnedOnly ? 'primary' : 'subtle',
@@ -492,7 +504,7 @@ export function StatisticsMultiSelectDropdown({
           >
             {filteredItems.length === 0 ? (
               <div className='px-2 py-3 text-xs opacity-60'>
-                {showPinnedOnly ? 'No pinned items found.' : 'No items found.'}
+                {showPinnedOnly ? t`No pinned items found.` : t`No items found.`}
               </div>
             ) : (
               filteredItems.map((item, index) => {
@@ -521,8 +533,12 @@ export function StatisticsMultiSelectDropdown({
           </div>
 
           <div className='border-base-content/8 flex items-center justify-between border-t px-2 py-1.5 text-[10px] opacity-60'>
-            <span>Shift = Range</span>
-            <span>Cmd/Ctrl = Add</span>
+            <span>
+              <Trans>Shift = Range</Trans>
+            </span>
+            <span>
+              <Trans>Cmd/Ctrl = Add</Trans>
+            </span>
           </div>
         </div>
       )}

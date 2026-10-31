@@ -1,4 +1,6 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { msg } from '@lingui/core/macro';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { faGears } from '@fortawesome/free-solid-svg-icons/faGears';
 import { faTag } from '@fortawesome/free-solid-svg-icons/faTag';
 import { faPenToSquare } from '@fortawesome/free-solid-svg-icons/faPenToSquare';
@@ -12,9 +14,9 @@ import { ShotMainInfoCard } from './ShotMainInfoCard';
 import { MetricValueGrid } from './ShotMetricCards';
 
 const tasteOptions = [
-  { value: 'bitter', label: 'Bitter' },
-  { value: 'balanced', label: 'Balanced' },
-  { value: 'sour', label: 'Sour' },
+  { value: 'bitter', label: msg`Bitter` },
+  { value: 'balanced', label: msg`Balanced` },
+  { value: 'sour', label: msg`Sour` },
 ];
 
 const fieldLabelClass =
@@ -71,6 +73,7 @@ function DetailField({ icon, label, children, className = '', action = null }) {
 }
 
 export function ShotDetailsCard({ entry, isCompare }) {
+  const { t, i18n } = useLingui();
   const { flushSave, handleFieldChange, loading, notes, updateAndSave } = useShotNotesState({
     currentShot: entry.shot,
   });
@@ -90,7 +93,9 @@ export function ShotDetailsCard({ entry, isCompare }) {
 
       <div className={duplicateMobileMetricsClass}>
         <div className='app-card-surface min-w-0 flex-col rounded-xl p-3 lg:p-2.5 xl:p-3'>
-          <CardTitle className='mb-3'>Shot Metrics</CardTitle>
+          <CardTitle className='mb-3'>
+            <Trans>Shot Metrics</Trans>
+          </CardTitle>
           <MetricValueGrid
             total={entry.results?.total}
             excludeKeys={['duration', 'w', 'tt']}
@@ -100,9 +105,11 @@ export function ShotDetailsCard({ entry, isCompare }) {
       </div>
 
       <div className='app-card-surface flex flex-1 flex-col gap-3 rounded-xl p-3 lg:p-2.5 xl:p-3'>
-        <CardTitle>Shot Notes</CardTitle>
+        <CardTitle>
+          <Trans>Shot Notes</Trans>
+        </CardTitle>
         <div className='grid grid-cols-2 gap-3'>
-          <DetailField icon={faWeightScale} label='Dose In'>
+          <DetailField icon={faWeightScale} label={t`Dose In`}>
             <input
               type='number'
               step='0.1'
@@ -117,7 +124,7 @@ export function ShotDetailsCard({ entry, isCompare }) {
               placeholder='18.0'
             />
           </DetailField>
-          <DetailField icon={faWeightScale} label='Dose Out'>
+          <DetailField icon={faWeightScale} label={t`Dose Out`}>
             <input
               type='number'
               step='0.1'
@@ -134,16 +141,16 @@ export function ShotDetailsCard({ entry, isCompare }) {
               placeholder='36.0'
             />
           </DetailField>
-          <DetailField icon={faDivide} label='Ratio' className='col-span-2'>
+          <DetailField icon={faDivide} label={t`Ratio`} className='col-span-2'>
             <input
               type='text'
               readOnly
-              aria-label='Ratio'
+              aria-label={t`Ratio`}
               className={`${inputClass} bg-base-200/50 text-base-content/70 cursor-default`}
               value={notes.ratio ? `1:${notes.ratio}` : '—'}
             />
           </DetailField>
-          <DetailField icon={faGears} label='Grind' className='col-span-2'>
+          <DetailField icon={faGears} label={t`Grind`} className='col-span-2'>
             <input
               type='text'
               className={inputClass}
@@ -153,17 +160,17 @@ export function ShotDetailsCard({ entry, isCompare }) {
               placeholder='2.5'
             />
           </DetailField>
-          <DetailField icon={faTag} label='Beans' className='col-span-2'>
+          <DetailField icon={faTag} label={t`Beans`} className='col-span-2'>
             <input
               type='text'
               className={inputClass}
               value={notes.beanType || ''}
               onInput={event => handleFieldChange('beanType', event.target.value)}
               onBlur={flushSave}
-              placeholder='Single Origin, Blend...'
+              placeholder={t`Single Origin, Blend...`}
             />
           </DetailField>
-          <DetailField icon={faYinYang} label='Balance / Taste' className='col-span-2'>
+          <DetailField icon={faYinYang} label={t`Balance / Taste`} className='col-span-2'>
             <div className='bg-base-200/70 flex w-full min-w-0 rounded-full p-0.5'>
               {tasteOptions.map(option => (
                 <button
@@ -177,7 +184,7 @@ export function ShotDetailsCard({ entry, isCompare }) {
                   style={getSelectedTasteButtonStyle(option.value)}
                   onClick={() => updateAndSave('balanceTaste', option.value)}
                 >
-                  <span className='truncate'>{option.label}</span>
+                  <span className='truncate'>{i18n._(option.label)}</span>
                 </button>
               ))}
             </div>
@@ -185,7 +192,7 @@ export function ShotDetailsCard({ entry, isCompare }) {
         </div>
         <DetailField
           icon={faPenToSquare}
-          label='Notes'
+          label={t`Notes`}
           className='flex min-h-0 flex-1 flex-col'
           action={
             <span className='text-base-content/45 text-xs'>{(notes.notes || '').length}/200</span>
@@ -197,7 +204,7 @@ export function ShotDetailsCard({ entry, isCompare }) {
             maxLength={200}
             onInput={event => handleFieldChange('notes', event.target.value)}
             onBlur={flushSave}
-            placeholder='Tasting notes, brewing observations...'
+            placeholder={t`Tasting notes, brewing observations...`}
           />
         </DetailField>
       </div>

@@ -1,3 +1,6 @@
+import { msg } from '@lingui/core/macro';
+import { i18n } from '../../../i18n.js';
+
 export const ANALYZER_DB_KEYS = {
   SHOTS: 'gaggimate_shots',
   PROFILES: 'gaggimate_profiles',
@@ -27,21 +30,32 @@ export const MAX_AUTO_DETECTED_DOSE_GRAMS = 30;
 
 export const TIMESTAMP_SECONDS_THRESHOLD = 10_000_000_000;
 
-export const groups = {
-  basics: 'Basic Metrics',
-  pressure: 'Pressure (bar)',
-  target_pressure: 'Target Pressure (bar)',
-  flow: 'Pump Flow (ml/s)',
-  target_flow: 'Target Pump Flow (ml/s)',
-  puckflow: 'Puck Flow (ml/s)',
-  puckresistance: 'Puck Resistance (s·√bar/mL)',
-  liquidresistance: 'Liquid Resistance (bar·s/mL)',
-  temp: 'Temperature (℃)',
-  target_temp: 'Target Temp (℃)',
-  weight: 'Weight (g)',
-  weightflow: 'Weight Flow (g/s)',
-  system: 'System Info',
+const groupMessages = {
+  basics: msg`Basic Metrics`,
+  pressure: msg`Pressure (bar)`,
+  target_pressure: msg`Target Pressure (bar)`,
+  flow: msg`Pump Flow (ml/s)`,
+  target_flow: msg`Target Pump Flow (ml/s)`,
+  puckflow: msg`Puck Flow (ml/s)`,
+  puckresistance: msg`Puck Resistance (s·√bar/mL)`,
+  liquidresistance: msg`Liquid Resistance (bar·s/mL)`,
+  temp: msg`Temperature (℃)`,
+  target_temp: msg`Target Temp (℃)`,
+  weight: msg`Weight (g)`,
+  weightflow: msg`Weight Flow (g/s)`,
+  system: msg`System Info`,
 };
+
+// Getters translate on access, so labels follow the active locale without module-load `t`.
+export const groups = Object.defineProperties(
+  {},
+  Object.fromEntries(
+    Object.entries(groupMessages).map(([key, message]) => [
+      key,
+      { enumerable: true, get: () => i18n._(message) },
+    ]),
+  ),
+);
 
 export const utilityColors = {
   stopRed: 'var(--analyzer-pred-stop-red)',

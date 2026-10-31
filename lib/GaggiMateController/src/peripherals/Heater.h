@@ -4,6 +4,7 @@
 #include "Max31855Thermocouple.h"
 #include "TemperatureSensor.h"
 #include <SimplePID/SimplePID.h>
+#include <atomic>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 
@@ -17,6 +18,8 @@ using heater_autotune_fail_callback_t = std::function<void()>;
 // caller didn't supply a wattage.
 using pid_result_callback_t = std::function<void(float Kp, float Ki, float Kd, float Kff)>;
 
+class HeaterCoordinator;
+
 class Heater {
   public:
     Heater(TemperatureSensor *sensor, uint8_t heaterPin, const heater_error_callback_t &error_callback,
@@ -29,6 +32,11 @@ class Heater {
     float getDutyCycle() const { return output / TUNER_OUTPUT_SPAN * 100.0f; }
     void setTunings(float Kp, float Ki, float Kd);
     void autotune(int testTimeSec, int windowSize, int heaterWattage);
+    bool isAutotuning() const { return autotuning; }
+    // Safety off: clears the setpoint and aborts a running autotune.
+    void stop();
+    // Must be attached before setup() starts the heater task.
+    void setCoordinator(HeaterCoordinator *coordinator) { this->coordinator = coordinator; }
 
     // Thermal feedforward control
     void setThermalFeedforward(float *pumpFlowPtr = nullptr, float incomingWaterTemp = 23.0f, int *valveStatusPtr = nullptr);
@@ -40,6 +48,8 @@ class Heater {
     void loopPid();
     void loopAutotune();
     float softPwm(uint32_t windowSize);
+    void requestOutput(bool on);
+    void writeOutput(bool on);
     void plot(float optimumOutput, float outputScale, uint8_t everyNth);
     float calculateDisturbanceFeedforwardGain();
     float calculateSafetyScaling(float tempError);
@@ -52,22 +62,17 @@ class Heater {
     heater_error_callback_t error_callback;
     pid_result_callback_t pid_callback;
     heater_autotune_fail_callback_t autotune_fail_callback;
+    HeaterCoordinator *coordinator = nullptr;
 
     float temperature = 0.0f;
     float output = 0.0f;
     float setpoint = 0.0f;
-    float Kp = 2.4;
-    float Ki = 40;
-    float Kd = 10;
     int plotCount = 0;
 
-    bool relayStatus = false;
     unsigned long windowStartTime = 0;
-    unsigned long nextSwitchTime = 0;
 
     // Autotune variables
-    bool startup = true;
-    bool autotuning = false;
+    std::atomic<bool> autotuning{false};
     // Stashed at autotune-start (BLE field 3) so loopAutotune can derive
     // combinedKff = 1000 / wattage on completion. 0 ⇒ caller didn't supply
     // wattage (older display firmware) ⇒ skip combinedKff derivation.
@@ -88,6 +93,8 @@ class Heater {
 
     const char *LOG_TAG = "Heater";
     static void loopTask(void *arg);
+
+    friend class HeaterCoordinator;
 };
 
 #endif // HEATER_H

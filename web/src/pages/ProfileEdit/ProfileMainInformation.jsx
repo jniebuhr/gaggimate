@@ -1,14 +1,16 @@
 import Card from '../../components/Card.jsx';
 import { isSystemProfile } from '../../utils/systemProfiles.js';
 import { ProfileImageUpload } from './ProfileImageUpload.jsx';
+import { Trans, useLingui } from '@lingui/react/macro';
 
 export function ProfileMainInformation(props) {
+  const { t } = useLingui();
   console.log(props.data);
   return (
-    <Card sm={10} title='Profile Information'>
+    <Card sm={10} title={t`Profile Information`}>
       <div className='form-control'>
         <label htmlFor='label' className='mb-2 block text-sm font-medium'>
-          Title
+          <Trans>Title</Trans>
         </label>
         <input
           id='label'
@@ -16,13 +18,13 @@ export function ProfileMainInformation(props) {
           className='input input-bordered w-full'
           value={props.data?.label}
           onChange={props.onChangeLabel}
-          aria-label='Enter a name for this profile'
+          aria-label={t`Enter a name for this profile`}
           required
         />
       </div>
       <div className='form-control'>
         <label htmlFor='description' className='mb-2 block text-sm font-medium'>
-          Description
+          <Trans>Description</Trans>
         </label>
         <textarea
           id='description'
@@ -31,12 +33,12 @@ export function ProfileMainInformation(props) {
           className='textarea textarea-bordered w-full text-wrap'
           value={props.data?.description}
           onChange={props.onChangeDescription}
-          aria-label='Optional description for this profile'
+          aria-label={t`Optional description for this profile`}
         />
       </div>
       <div className='form-control'>
         <label htmlFor='temperature' className='mb-2 block text-sm font-medium'>
-          Temperature
+          <Trans>Temperature</Trans>
         </label>
         <div className='input-group'>
           <label htmlFor='temperature' className='input w-full'>
@@ -47,18 +49,18 @@ export function ProfileMainInformation(props) {
               className='grow'
               value={props.data?.temperature}
               onChange={props.onChangeTemperature}
-              aria-label='Temperature in degrees Celsius'
+              aria-label={t`Temperature in degrees Celsius`}
               min='0'
               max='150'
               step='0.1'
             />
-            <span aria-label='degrees Celsius'>°C</span>
+            <span aria-label={t`degrees Celsius`}>°C</span>
           </label>
         </div>
       </div>
       <div className='form-control'>
         <label htmlFor='dose' className='mb-2 block text-sm font-medium'>
-          Dose
+          <Trans>Dose</Trans>
         </label>
         <div className='input-group'>
           <label htmlFor='dose' className='input w-full'>
@@ -69,12 +71,12 @@ export function ProfileMainInformation(props) {
               className='grow'
               value={props.data?.dose}
               onChange={props.onChangeDose}
-              aria-label='Dose in g'
+              aria-label={t`Dose in g`}
               min='0'
               max='100'
               step='0.1'
             />
-            <span aria-label='grams'>g</span>
+            <span aria-label={t`grams`}>g</span>
           </label>
         </div>
       </div>
@@ -82,9 +84,9 @@ export function ProfileMainInformation(props) {
         <label
           htmlFor='utility'
           className='mb-2 block text-sm font-medium'
-          aria-label='Utility profile toggle'
+          aria-label={t`Utility profile toggle`}
         >
-          Utility profile
+          <Trans>Utility profile</Trans>
         </label>
         <input
           id='utility'

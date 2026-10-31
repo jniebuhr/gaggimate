@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'preact/hooks';
 import { useRoute } from 'preact-iso';
+import { Trans } from '@lingui/react/macro';
 import { StatisticsView } from './components/StatisticsView';
 import {
   normalizeStatisticsSourceSelection,
@@ -53,7 +54,9 @@ export function StatisticsPage() {
   return (
     <div className='pb-20'>
       <div className='mb-4 flex flex-row items-center gap-2'>
-        <h2 className='flex-grow text-2xl font-bold sm:text-3xl'>Statistics</h2>
+        <h2 className='flex-grow text-2xl font-bold sm:text-3xl'>
+          <Trans>Statistics</Trans>
+        </h2>
       </div>
 
       <div className='w-full'>

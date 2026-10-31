@@ -12,9 +12,11 @@ DimmedPump::DimmedPump(uint8_t ssr_pin, uint8_t sense_pin, PressureSensor *press
 
 void DimmedPump::setup() {
     _cps = _psm.cps();
+    ESP_LOGI("DimmedPump", "Detected ZC frequency: %dHz", _cps);
     if (_cps > 70) {
         _cps = _cps / 2;
         _psm.setDivider(2);
+        ESP_LOGI("DimmedPump", "Detected 2 signals per wave, dividing down to %dHz", _cps);
     }
     xTaskCreate(loopTask, "DimmedPump::loop", configMINIMAL_STACK_SIZE * 4, this, 1, &taskHandle);
 }

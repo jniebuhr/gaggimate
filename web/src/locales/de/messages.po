@@ -1,0 +1,5762 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-10-13 16:54+0200\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: de\n"
+
+#: src/pages/Statistics/components/StatisticsSearchHelp.jsx
+msgid "(exact)"
+msgstr "(exakt)"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "(Page {currentPage} of {totalPages})"
+msgstr "(Seite {currentPage} von {totalPages})"
+
+#: src/pages/Statistics/components/StatisticsSearchHelp.jsx
+msgid "(same field = OR)"
+msgstr "(gleiches Feld = ODER)"
+
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+msgid "(target {durationTarget}s, {durationDelta}s)"
+msgstr "(Ziel {durationTarget}s, {durationDelta}s)"
+
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+msgid "(target {waterTarget}ml, {waterDelta}ml)"
+msgstr "(Ziel {waterTarget}ml, {waterDelta}ml)"
+
+#. placeholder {0}: phase.shotCount
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+msgid "{0, plural, one {(# entry)} other {(# entries)}}"
+msgstr "{0, plural, one {(# Eintrag)} other {(# Einträge)}}"
+
+#. placeholder {0}: data.stats.currentStreak
+#. placeholder {0}: data.stats.longestStreak
+#: src/pages/Statistics/components/ActivityHeatmap.jsx
+msgid "{0, plural, one {# day} other {# days}}"
+msgstr "{0, plural, one {# Tag} other {# Tage}}"
+
+#. placeholder {0}: phases.length
+#: src/pages/ProfileList/index.jsx
+msgid "{0, plural, one {# phase} other {# phases}}"
+msgstr "{0, plural, one {# Phase} other {# Phasen}}"
+
+#. placeholder {0}: toCount(value)
+#: src/pages/Statistics/components/toolbar/helpers.js
+msgid "{0, plural, one {# profile} other {# profiles}}"
+msgstr "{0, plural, one {# Profil} other {# Profile}}"
+
+#. placeholder {0}: toCount(value)
+#. placeholder {0}: tooltip.cell.count
+#: src/pages/Statistics/components/ActivityHeatmap.jsx
+#: src/pages/Statistics/components/toolbar/helpers.js
+msgid "{0, plural, one {# shot} other {# shots}}"
+msgstr "{0, plural, one {# Shot} other {# Shots}}"
+
+#: src/pages/Statistics/components/toolbar/helpers.js
+msgid "{candidateCount, plural, one {# candidate} other {# candidates}}"
+msgstr "{candidateCount, plural, one {# Kandidat} other {# Kandidaten}}"
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
+msgid "{diffMonths, plural, one {# month ago} other {# months ago}}"
+msgstr "{diffMonths, plural, one {vor # Monat} other {vor # Monaten}}"
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
+msgid "{diffWeeks, plural, one {# week ago} other {# weeks ago}}"
+msgstr "{diffWeeks, plural, one {vor # Woche} other {vor # Wochen}}"
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
+msgid "{diffYears, plural, one {# year ago} other {# years ago}}"
+msgstr "{diffYears, plural, one {vor # Jahr} other {vor # Jahren}}"
+
+#: src/app/ConnectionGate.jsx
+msgid "{host} isn't answering. Make sure the machine is on and your phone is on the same Wi-Fi network."
+msgstr "{host} antwortet nicht. Stelle sicher, dass die Maschine eingeschaltet ist und dein Smartphone im selben Wi-Fi-Netzwerk ist."
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "{label} severity"
+msgstr "Schweregrad {label}"
+
+#: src/app/AppSettings.jsx
+msgid "{machineCount, plural, one {Watches # saved machine.} other {Watches all # saved machines.}}"
+msgstr "{machineCount, plural, one {Überwacht # gespeicherte Maschine.} other {Überwacht alle # gespeicherten Maschinen.}}"
+
+#: src/app/AppSettings.jsx
+msgid "{machineCount} saved"
+msgstr "{machineCount} gespeichert"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "{metricsColumns, plural, one {# column} other {# columns}}"
+msgstr "{metricsColumns, plural, one {# Spalte} other {# Spalten}}"
+
+#: src/app/AppSettings.jsx
+msgid "{pending} installs the next time you leave the app"
+msgstr "{pending} wird installiert, wenn du die App das nächste Mal verlässt"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "{recentShotCount, plural, one {# shot} other {# shots}}"
+msgstr "{recentShotCount, plural, one {# Shot} other {# Shots}}"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "{rssi}dB (Roundtrip: {lat} ms, Resends: {rtx})"
+msgstr "{rssi}dB (Roundtrip: {lat} ms, Wiederholungen: {rtx})"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "{scaleName} disconnected"
+msgstr "{scaleName} getrennt"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "{totalFilteredItems} of {historyCount} shots"
+msgstr "{totalFilteredItems} von {historyCount} Shots"
+
+#: src/pages/Settings/StickyFormFooter.jsx
+msgid "* Restart required for Wi-Fi, Timezone, or Plugin changes."
+msgstr "* Neustart erforderlich bei Änderungen an Wi-Fi, Zeitzone oder Plugins."
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "+{moreErrorCount} more"
+msgstr "+{moreErrorCount} weitere"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "+{moreWarningCount} more"
+msgstr "+{moreWarningCount} weitere"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "<0>Brewing:</0> recipes with GbS turned on report each grind here; pressing the rotary knob afterwards starts the shot."
+msgstr "<0>Bezug:</0> Rezepte mit aktiviertem GbS melden hier jeden Mahlvorgang; ein anschließender Druck auf den Drehknopf startet den Shot."
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "<0>Pairing:</0> GaggiMate shows up to the grinder as a Xenia machine. Under Settings → Connectivity → Machine To Machine, turn on Enable Xenia, then type the address above into Configuration. Automatic discovery does not see GaggiMate."
+msgstr "<0>Kopplung:</0> GaggiMate erscheint für die Mühle als Xenia-Maschine. Aktiviere unter Settings → Connectivity → Machine To Machine die Option Enable Xenia und gib dann die obige Adresse unter Configuration ein. Die automatische Erkennung findet GaggiMate nicht."
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
+msgid "1 year ago"
+msgstr "vor 1 Jahr"
+
+#: src/app/appSettings.js
+msgid "A brew started on the machine."
+msgstr "Ein Bezug wurde an der Maschine gestartet."
+
+#: src/pages/Settings/tabs/CleaningSection.jsx
+msgid "A cleaning warning is shown once either interval is reached; set an interval to 0 to turn it off. Running the cleaning profile to the end marks it complete."
+msgstr "Eine Reinigungswarnung wird angezeigt, sobald eines der Intervalle erreicht ist; setze ein Intervall auf 0, um es zu deaktivieren. Wenn das Reinigungsprofil bis zum Ende läuft, gilt die Reinigung als erledigt."
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "A given alpha behaves faster in time at 80 SPS because it is applied more often. Tune the two alpha values independently for your installed sample rate. Changing sample rate resets both values to 0.80 at 10 SPS or 0.40 at 80 SPS as sensible starting points."
+msgstr "Ein gegebenes Alpha wirkt bei 80 SPS zeitlich schneller, weil es öfter angewendet wird. Stimme die beiden Alpha-Werte unabhängig voneinander für deine installierte Abtastrate ab. Eine Änderung der Abtastrate setzt beide Werte als sinnvollen Ausgangspunkt auf 0,80 bei 10 SPS bzw. 0,40 bei 80 SPS zurück."
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Access Point Password"
+msgstr "Access-Point-Passwort"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Actions for {label} profile"
+msgstr "Aktionen für Profil {label}"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Activate this if your coffee machine is equipped with momentary buttons. A momentary button set to Brew or a profile starts a flush instead when held."
+msgstr "Aktiviere dies, wenn deine Kaffeemaschine Taster hat. Ein Taster, der auf Bezug oder ein Profil eingestellt ist, startet stattdessen eine Spülung, wenn er gedrückt gehalten wird."
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgctxt "selected menu item"
+msgid "Active"
+msgstr "Aktiv"
+
+#: src/pages/Home/cards/ActionCard.jsx
+msgid "Active warnings"
+msgstr "Aktive Warnungen"
+
+#: src/pages/Statistics/components/ActivityHeatmap.jsx
+msgid "Activity Heatmap"
+msgstr "Aktivitäts-Heatmap"
+
+#: src/components/PumpFlowCalibration/ResultsPanel.jsx
+msgid "actual flow"
+msgstr "tatsächlicher Durchfluss"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Actual Weight of Calibration Object"
+msgstr "Tatsächliches Gewicht des Kalibriergewichts"
+
+#: src/components/SettingsFormField.jsx
+msgid "Add"
+msgstr "Hinzufügen"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Add {label} to favorites"
+msgstr "{label} zu Favoriten hinzufügen"
+
+#: src/app/MachineSetup.jsx
+msgid "Add {name}"
+msgstr "{name} hinzufügen"
+
+#: src/app/MachineSetup.jsx
+msgid "Add machine by address"
+msgstr "Maschine per Adresse hinzufügen"
+
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Add new brew phase"
+msgstr "Neue Bezugsphase hinzufügen"
+
+#: src/pages/ProfileList/ProfileAddCard.jsx
+msgid "Add new profile"
+msgstr "Neues Profil hinzufügen"
+
+#: src/app/MachineSwitcher.jsx
+msgid "Add or manage machines"
+msgstr "Maschinen hinzufügen oder verwalten"
+
+#: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Add phase"
+msgstr "Phase hinzufügen"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Add profile"
+msgstr "Profil hinzufügen"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Add schedule"
+msgstr "Zeitplan hinzufügen"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Add stop condition"
+msgstr "Stoppbedingung hinzufügen"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Add target"
+msgstr "Ziel hinzufügen"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Add to favorites"
+msgstr "Zu Favoriten hinzufügen"
+
+#: src/app/MachineSetup.jsx
+msgid "Address"
+msgstr "Adresse"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Advanced"
+msgstr "Erweitert"
+
+#: src/components/Navigation.jsx
+msgctxt "dashboard view"
+msgid "Advanced"
+msgstr "Erweitert"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Alba Settings"
+msgstr "Alba-Einstellungen"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Align to grid"
+msgstr "Am Raster ausrichten"
+
+#: src/pages/ShotAnalyzer/components/shotChart/single/SingleShotMetricPreview.jsx
+msgctxt "all metrics page"
+msgid "All"
+msgstr "Alle"
+
+#: src/pages/Statistics/components/toolbar/constants.js
+msgctxt "statistics mode"
+msgid "All"
+msgstr "Alle"
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgctxt "library source filter"
+msgid "ALL"
+msgstr "ALLE"
+
+#: src/pages/Statistics/components/toolbar/constants.js
+msgctxt "shot source: all sources"
+msgid "ALL"
+msgstr "ALLE"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "All available metrics are visible."
+msgstr "Alle verfügbaren Metriken sind sichtbar."
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "All available panels are visible."
+msgstr "Alle verfügbaren Panels sind sichtbar."
+
+#: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
+msgid "All Metrics"
+msgstr "Alle Metriken"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "All Shots"
+msgstr "Alle Shots"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Alt Relay / SSR2 Function"
+msgstr "Funktion Alt-Relais / SSR2"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Analysis complete."
+msgstr "Analyse abgeschlossen."
+
+#: src/pages/ShotAnalyzer/shotAnalyzer/ActiveAnalysisView.jsx
+msgid "Analysis Table"
+msgstr "Analysetabelle"
+
+#: src/pages/Statistics/components/statisticsView/StatisticsView.jsx
+msgid "Analyzing shot {progressCurrent} of {progressTotal}..."
+msgstr "Analysiere Shot {progressCurrent} von {progressTotal}..."
+
+#: src/components/PumpFlowCalibration/Footer.jsx
+msgid "Analyzing..."
+msgstr "Analysiere..."
+
+#: src/pages/ShotAnalyzer/services/ReplayVideoExportService.js
+msgid "Animation frames are not supported in this environment."
+msgstr "Animationsframes werden in dieser Umgebung nicht unterstützt."
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/compareControls.jsx
+msgid "Annotations"
+msgstr "Anmerkungen"
+
+#: src/app/AppSettings.jsx
+#: src/components/Navigation.jsx
+msgid "App Settings"
+msgstr "App-Einstellungen"
+
+#: src/app/AppSettings.jsx
+msgid "Appearance"
+msgstr "Darstellung"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryPanel.jsx
+msgid "Are you sure you want to delete \"{itemName}\"?"
+msgstr "Möchtest du „{itemName}“ wirklich löschen?"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "At how many bars should the pump assist stop. This makes it so the pump will only run when steam is flowing."
+msgstr "Bei wie viel bar die Pumpenunterstützung stoppen soll. Dadurch läuft die Pumpe nur, wenn Dampf strömt."
+
+#: src/services/VisualizerService.js
+msgid "Authentication failed - please check your username and password"
+msgstr "Authentifizierung fehlgeschlagen – bitte prüfe Benutzername und Passwort"
+
+#: src/pages/Statistics/components/toolbar/constants.js
+msgctxt "date basis"
+msgid "Auto"
+msgstr "Auto"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Auto (Bluetooth when connected)"
+msgstr "Auto (Bluetooth, wenn verbunden)"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Auto Adjust"
+msgstr "Automatisch anpassen"
+
+#: src/pages/Statistics/components/toolbar/helpers.js
+msgid "Auto Range"
+msgstr "Automatischer Bereich"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Auto Wakeup Schedule"
+msgstr "Zeitplan für automatisches Aufwecken"
+
+#: src/components/LanguageSelect.jsx
+msgid "Automatic"
+msgstr "Automatisch"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Automatic Wakeup Schedule"
+msgstr "Zeitplan für automatisches Aufwecken"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Automatically switch to brew mode at specified time(s) of day."
+msgstr "Zu festgelegten Tageszeiten automatisch in den Bezugsmodus wechseln."
+
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "Autotune Complete!"
+msgstr "Autotune abgeschlossen!"
+
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "Autotune Failed"
+msgstr "Autotune fehlgeschlagen"
+
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "Autotune in Progress"
+msgstr "Autotune läuft"
+
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+msgid "Average target value and deviation"
+msgstr "Durchschnittlicher Zielwert und Abweichung"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
+msgctxt "column type"
+msgid "Avg (tw)"
+msgstr "Ø (zg)"
+
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+msgid "Avg (TW)"
+msgstr "Ø (ZG)"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgctxt "column type"
+msgid "Avg ∅"
+msgstr "Ø ∅"
+
+#: src/pages/Statistics/components/ProfileGroupTable.jsx
+msgid "Avg Duration"
+msgstr "Ø Dauer"
+
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+msgid "Avg Duration:"
+msgstr "Ø Dauer:"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Avg Flow"
+msgstr "Ø Durchfluss"
+
+#: src/pages/Statistics/components/ProfileGroupTable.jsx
+msgid "Avg Pressure"
+msgstr "Ø Druck"
+
+#: src/pages/Statistics/components/TrendChart.jsx
+msgid "Avg Pressure (bar)"
+msgstr "Ø Druck (bar)"
+
+#: src/pages/Statistics/components/TrendChart.jsx
+msgid "Avg Puck Flow (ml/s)"
+msgstr "Ø Puck-Durchfluss (ml/s)"
+
+#: src/pages/Statistics/components/ProfileGroupTable.jsx
+msgid "Avg Pump Flow"
+msgstr "Ø Pumpendurchfluss"
+
+#: src/pages/Statistics/components/TrendChart.jsx
+msgid "Avg Pump Flow (ml/s)"
+msgstr "Ø Pumpendurchfluss (ml/s)"
+
+#: src/pages/Statistics/components/ProfileGroupTable.jsx
+msgid "Avg Pumped Water"
+msgstr "Ø gepumptes Wasser"
+
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+msgid "Avg Pumped Water:"
+msgstr "Ø gepumptes Wasser:"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Avg Temp"
+msgstr "Ø Temp."
+
+#: src/pages/Statistics/components/TrendChart.jsx
+msgid "Avg Temp (℃)"
+msgstr "Ø Temp. (℃)"
+
+#: src/pages/Statistics/components/ProfileGroupTable.jsx
+msgid "Avg Weight"
+msgstr "Ø Gewicht"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+msgid "Avg. Liquid Resistance"
+msgstr "Ø Flüssigkeitswiderstand"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+#: src/pages/Statistics/components/MetricsTable.jsx
+msgid "Avg. Peak Pressure"
+msgstr "Ø Spitzendruck"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+msgid "Avg. Pressure"
+msgstr "Ø Druck"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+msgid "Avg. Puck Flow"
+msgstr "Ø Puck-Durchfluss"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+msgid "Avg. Puck Resistance"
+msgstr "Ø Puck-Widerstand"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMetricCards.jsx
+msgid "Avg. Pump Flow"
+msgstr "Ø Pumpendurchfluss"
+
+#: src/pages/Statistics/components/MetricsTable.jsx
+msgid "Avg. Target Temperature"
+msgstr "Ø Zieltemperatur"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMetricCards.jsx
+msgid "Avg. Temperature"
+msgstr "Ø Temperatur"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+msgid "Avg. Weight Flow"
+msgstr "Ø Gewichtsfluss"
+
+#: src/app/MachineSetup.jsx
+#: src/components/PumpFlowCalibration/Footer.jsx
+#: src/pages/DashboardSettings/index.jsx
+#: src/pages/Home/BrewConfirmModal.jsx
+#: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Back"
+msgstr "Zurück"
+
+#: src/pages/ShotAnalyzer/shotAnalyzer/ActiveAnalysisView.jsx
+msgid "Back to analyzer"
+msgstr "Zurück zum Analyzer"
+
+#: src/pages/Settings/tabs/CleaningSection.jsx
+msgid "Backflush"
+msgstr "Rückspülen"
+
+#: src/utils/warnings.js
+msgid "Backflush due"
+msgstr "Rückspülen fällig"
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
+msgid "Balance / Taste"
+msgstr "Balance / Geschmack"
+
+#: src/pages/ShotHistory/ShotNotesCard.jsx
+msgid "Balance/Taste"
+msgstr "Balance/Geschmack"
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
+#: src/pages/ShotHistory/ShotNotesCard.jsx
+msgid "Balanced"
+msgstr "Ausgewogen"
+
+#: src/pages/ShotAnalyzer/utils/constants.js
+msgid "Basic Metrics"
+msgstr "Grundlegende Metriken"
+
+#: src/pages/ShotAnalyzer/components/shotChart/single/SingleShotMetricPreview.jsx
+msgid "Basics"
+msgstr "Grundlagen"
+
+#: src/pages/ShotHistory/ShotNotesCard.jsx
+msgid "Bean Type"
+msgstr "Bohnensorte"
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
+msgid "Beans"
+msgstr "Bohnen"
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
+#: src/pages/ShotHistory/ShotNotesCard.jsx
+msgid "Bitter"
+msgstr "Bitter"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "BLDC Pump Settings"
+msgstr "BLDC-Pumpeneinstellungen"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Bluetooth Devices"
+msgstr "Bluetooth-Geräte"
+
+#: src/app/notifications.js
+msgid "Boiler at {temperature} °C"
+msgstr "Boiler bei {temperature} °C"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Boiler Refill Plugin"
+msgstr "Boiler-Nachfüll-Plugin"
+
+#: src/app/machineStatus.js
+#: src/pages/Home/utils.js
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgctxt "machine mode"
+msgid "Brew"
+msgstr "Bezug"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+#: src/pages/ProfileList/index.jsx
+msgctxt "phase type"
+msgid "Brew"
+msgstr "Bezug"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgctxt "predictive scale delay"
+msgid "Brew"
+msgstr "Bezug"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Brew button"
+msgstr "Bezugstaste"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Brew Button Behavior"
+msgstr "Verhalten der Bezugstaste"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Brew Color"
+msgstr "Bezugsfarbe"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+msgid "Brew Mode"
+msgstr "Bezugsmodus"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Brew phases"
+msgstr "Bezugsphasen"
+
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Brew Phases"
+msgstr "Bezugsphasen"
+
+#: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Brew phases configuration"
+msgstr "Konfiguration der Bezugsphasen"
+
+#: src/components/OverviewChart.jsx
+msgid "Brew Progress - {windowSeconds}s View"
+msgstr "Bezugsfortschritt – {windowSeconds}s-Ansicht"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Brew Status Display"
+msgstr "Bezugsstatusanzeige"
+
+#: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Brewed by Time"
+msgstr "Bezug nach Zeit"
+
+#: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Brewed by Weight"
+msgstr "Bezug nach Gewicht"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Brewing Filter Alpha"
+msgstr "Filter-Alpha beim Bezug"
+
+#: src/app/notifications.js
+msgid "Brewing…"
+msgstr "Bezug läuft…"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+msgid "BT Scale Connected"
+msgstr "BT-Waage verbunden"
+
+#: src/pages/Statistics/components/statisticsView/StatisticsView.jsx
+msgctxt "keyboard shortcut action"
+msgid "Build"
+msgstr "Erstellen"
+
+#: src/pages/Statistics/components/statisticsView/StatisticsView.jsx
+msgid "Build and show Shot Charts"
+msgstr "Shot-Diagramme erstellen und anzeigen"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Built-in profile, can be edited but not deleted"
+msgstr "Integriertes Profil, kann bearbeitet, aber nicht gelöscht werden"
+
+#: src/pages/ShotAnalyzer/components/EmptyState.jsx
+msgid "Bulk upload and download are supported."
+msgstr "Massen-Upload und -Download werden unterstützt."
+
+#: src/pages/Statistics/components/toolbar/constants.js
+msgid "By Profile"
+msgstr "Nach Profil"
+
+#: src/pages/Statistics/components/toolbar/constants.js
+msgid "By Shots"
+msgstr "Nach Shots"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Calibrate Load Cell 1"
+msgstr "Wägezelle 1 kalibrieren"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Calibrate Load Cell 2"
+msgstr "Wägezelle 2 kalibrieren"
+
+#: src/pages/Settings/index.jsx
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Calibration"
+msgstr "Kalibrierung"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Calibration cancelled."
+msgstr "Kalibrierung abgebrochen."
+
+#: src/utils/pumpFlowCalibration.js
+msgid "Calibration factor for tp={targetPressure} bar is out of plausible range ({shownFactor}). Did pressure actually reach {targetPressure} bar during the Measure phase?"
+msgstr "Der Kalibrierfaktor für tp={targetPressure} bar liegt außerhalb des plausiblen Bereichs ({shownFactor}). Hat der Druck in der Measure-Phase tatsächlich {targetPressure} bar erreicht?"
+
+#: src/app/ConnectionGate.jsx
+msgid "Can't reach {name}"
+msgstr "{name} nicht erreichbar"
+
+#: src/app/ConnectionGate.jsx
+#: src/app/MachineSetup.jsx
+#: src/components/PumpFlowCalibration/Footer.jsx
+#: src/components/VisualizerUploadModal.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+#: src/pages/ShotHistory/ShotNotesCard.jsx
+msgid "Cancel"
+msgstr "Abbrechen"
+
+#: src/app/MachineSetup.jsx
+msgid "Cancel renaming"
+msgstr "Umbenennen abbrechen"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+msgid "Cancel replay export"
+msgstr "Replay-Export abbrechen"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Cannot delete the last schedule"
+msgstr "Der letzte Zeitplan kann nicht gelöscht werden"
+
+#: src/pages/ShotAnalyzer/services/ReplayVideoExportService.js
+msgid "Canvas capture is not supported in this browser."
+msgstr "Canvas-Aufnahme wird in diesem Browser nicht unterstützt."
+
+#: src/pages/ShotAnalyzer/services/ReplayVideoExportService.js
+msgid "Canvas export is not supported in this environment."
+msgstr "Canvas-Export wird in dieser Umgebung nicht unterstützt."
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "celsius"
+msgstr "Celsius"
+
+#: src/pages/ShotAnalyzer/components/shotChart/single/SingleShotMetricPreview.jsx
+msgid "Chart & Metrics"
+msgstr "Diagramm & Metriken"
+
+#: src/pages/DashboardSettings/index.jsx
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Chart First"
+msgstr "Diagramm zuerst"
+
+#: src/app/ConnectionGate.jsx
+msgid "Choose another machine"
+msgstr "Andere Maschine wählen"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Choose which source to prefer when both hardware and Bluetooth scales are available."
+msgstr "Wähle, welche Quelle bevorzugt wird, wenn sowohl Hardware- als auch Bluetooth-Waagen verfügbar sind."
+
+#: src/pages/Settings/tabs/CleaningSection.jsx
+msgid "Cleaning & Maintenance"
+msgstr "Reinigung & Wartung"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Clear date filter"
+msgstr "Datumsfilter löschen"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Clear Date Filter"
+msgstr "Datumsfilter löschen"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Clear filters and selections ({resetAriaCount})"
+msgstr "Filter und Auswahl zurücksetzen ({resetAriaCount})"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Click \"Scan\" to discover Bluetooth scales nearby"
+msgstr "Klicke auf „Nach Geräten suchen“, um Bluetooth-Waagen in der Nähe zu finden"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Click to confirm"
+msgstr "Zum Bestätigen klicken"
+
+#: src/pages/ProfileList/index.jsx
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Click to confirm delete"
+msgstr "Zum Bestätigen des Löschens klicken"
+
+#: src/pages/ShotAnalyzer/components/library/StatusBar.jsx
+msgid "Click to open the library. Use Import below or drop files here to import."
+msgstr "Klicken, um die Bibliothek zu öffnen. Nutze unten Importieren oder lege Dateien hier ab, um sie zu importieren."
+
+#: src/app/MachineSetup.jsx
+#: src/components/VisualizerUploadModal.jsx
+#: src/pages/Home/BrewConfirmModal.jsx
+msgid "Close"
+msgstr "Schließen"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareChartLayout.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/single/SingleShotChart.jsx
+msgid "Close full display"
+msgstr "Vollanzeige schließen"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryDropdown.jsx
+msgid "Close library"
+msgstr "Bibliothek schließen"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgctxt "valve state"
+msgid "Closed"
+msgstr "Geschlossen"
+
+#: src/app/machines.js
+msgid "closed, code {code}"
+msgstr "geschlossen, Code {code}"
+
+#: src/pages/Statistics/components/StatisticsMultiSelectDropdown.jsx
+msgid "Cmd/Ctrl = Add"
+msgstr "Cmd/Strg = Hinzufügen"
+
+#: src/components/PumpFlowCalibration/ResultsPanel.jsx
+msgid "Coefficients"
+msgstr "Koeffizienten"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Coefficients saved to machine: {newCoeffs}"
+msgstr "Koeffizienten auf der Maschine gespeichert: {newCoeffs}"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+#: src/utils/themeManager.js
+msgctxt "theme"
+msgid "Coffee"
+msgstr "Kaffee"
+
+#: src/components/Navigation.jsx
+msgid "Collapse"
+msgstr "Einklappen"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
+msgid "Collapse column settings"
+msgstr "Spalteneinstellungen einklappen"
+
+#: src/components/Navigation.jsx
+msgid "Collapse navigation"
+msgstr "Navigation einklappen"
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Collapse shot details"
+msgstr "Shot-Details einklappen"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Collapse statistics toolbar"
+msgstr "Statistik-Werkzeugleiste einklappen"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Column Spacing"
+msgstr "Spaltenabstand"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Commutation Gain"
+msgstr "Kommutierungsverstärkung"
+
+#: src/pages/DashboardSettings/index.jsx
+msgctxt "panel view"
+msgid "Compact"
+msgstr "Kompakt"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Compact mode is on — click to show the full panel"
+msgstr "Kompaktmodus ist aktiv – klicken, um das volle Panel anzuzeigen"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgctxt "compare mode"
+msgid "Compare"
+msgstr "Vergleichen"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/controls/compareControls.jsx
+msgid "Compare alignment"
+msgstr "Vergleichsausrichtung"
+
+#: src/pages/ShotAnalyzer/shotAnalyzer/ActiveAnalysisView.jsx
+msgid "Compare analysis table"
+msgstr "Vergleichs-Analysetabelle"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+msgid "Compare Overlay"
+msgstr "Vergleichs-Overlay"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
+msgid "Compare shot"
+msgstr "Shot vergleichen"
+
+#: src/pages/ShotAnalyzer/shotAnalyzer/ActiveAnalysisView.jsx
+msgid "Compare shot details"
+msgstr "Details des Vergleichs-Shots"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+msgid "Compare shot metrics"
+msgstr "Metriken des Vergleichs-Shots"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+msgid "Compare shots"
+msgstr "Shots vergleichen"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Configure acquisition and filtering, then tare and calibrate each load cell."
+msgstr "Konfiguriere Erfassung und Filterung, dann tariere und kalibriere jede Wägezelle."
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+msgid "Configured Scale Delay (ms)"
+msgstr "Konfigurierte Waagenverzögerung (ms)"
+
+#: src/components/ConfirmButton.jsx
+#: src/pages/ProfileList/index.jsx
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Confirm"
+msgstr "Bestätigen"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Confirm deletion"
+msgstr "Löschen bestätigen"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Confirm deletion of {label} profile"
+msgstr "Löschen des Profils {label} bestätigen"
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Confirm deletion of shot"
+msgstr "Löschen des Shots bestätigen"
+
+#: src/app/MachineSetup.jsx
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Connect"
+msgstr "Verbinden"
+
+#: src/app/MachineSetup.jsx
+msgid "Connect to your GaggiMate"
+msgstr "Mit deinem GaggiMate verbinden"
+
+#: src/app/MachineSwitcher.jsx
+msgid "Connected"
+msgstr "Verbunden"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgctxt "scale state"
+msgid "Connected"
+msgstr "Verbunden"
+
+#: src/app/AppSettings.jsx
+msgid "Connected to <0>{name}</0>"
+msgstr "Verbunden mit <0>{name}</0>"
+
+#: src/app/MachineSwitcher.jsx
+msgid "Connecting"
+msgstr "Verbinde"
+
+#: src/app/MachineSwitcher.jsx
+msgid "Connecting to {host}…"
+msgstr "Verbinde mit {host}…"
+
+#: src/app/ConnectionGate.jsx
+msgid "Connecting to {name}…"
+msgstr "Verbinde mit {name}…"
+
+#: src/pages/Home/useDashboardState.js
+msgid "Connecting to the machine..."
+msgstr "Verbinde mit der Maschine..."
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Connecting to the scale failed."
+msgstr "Verbindung zur Waage fehlgeschlagen."
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Connecting..."
+msgstr "Verbinde..."
+
+#: src/app/MachineSetup.jsx
+msgid "Connecting…"
+msgstr "Verbinde…"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Control Column Style"
+msgstr "Stil der Bedienspalte"
+
+#: src/app/appSettings.js
+msgid "Controller errors and error-level warnings."
+msgstr "Controller-Fehler und Warnungen der Fehlerstufe."
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Controller Signal Strength"
+msgstr "Signalstärke des Controllers"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Controller Version"
+msgstr "Controller-Version"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Controls how panels are distributed vertically: pack them to the top, or space them evenly across the column."
+msgstr "Legt fest, wie Panels vertikal verteilt werden: oben gestapelt oder gleichmäßig über die Spalte verteilt."
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Controls how the last, incomplete row of metrics is laid out: stretch items evenly to fill the row, or keep them aligned to the column grid."
+msgstr "Legt fest, wie die letzte, unvollständige Zeile der Metriken angeordnet wird: Elemente gleichmäßig strecken, um die Zeile zu füllen, oder am Spaltenraster ausgerichtet lassen."
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Convergence Gain"
+msgstr "Konvergenzverstärkung"
+
+#: src/pages/ProfileEdit/index.jsx
+msgid "Convert to Pro"
+msgstr "In Pro umwandeln"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Could not delete calibration profile: {message}"
+msgstr "Kalibrierprofil konnte nicht gelöscht werden: {message}"
+
+#: src/pages/Settings/index.jsx
+msgid "Could not import {importName}: {importMessage}"
+msgstr "{importName} konnte nicht importiert werden: {importMessage}"
+
+#: src/pages/ProfileEdit/ProfileImageUpload.jsx
+msgid "Could not read this image."
+msgstr "Dieses Bild konnte nicht gelesen werden."
+
+#: src/utils/profileImage.js
+msgid "Could not remove image"
+msgstr "Bild konnte nicht entfernt werden"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Could not restore previous profile: {message}"
+msgstr "Vorheriges Profil konnte nicht wiederhergestellt werden: {message}"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Couldn't connect to {errorAddress}"
+msgstr "Verbindung zu {errorAddress} fehlgeschlagen"
+
+#: src/app/MachineSetup.jsx
+msgid "Couldn't connect to {host}: {reason}. Make sure the machine is on and your phone is on the same Wi-Fi network."
+msgstr "Verbindung zu {host} fehlgeschlagen: {reason}. Stelle sicher, dass die Maschine eingeschaltet ist und dein Smartphone im selben Wi-Fi-Netzwerk ist."
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Cracking pressure of a grouphead mushroom valve (e.g. 4.0 on Delonghi machines). Subtracted from readings and added to targets only while a brew is running. Leave at 0.0 for a 3-way solenoid."
+msgstr "Öffnungsdruck eines Pilzventils in der Brühgruppe (z. B. 4.0 bei Delonghi-Maschinen). Wird nur während eines Bezugs von den Messwerten abgezogen und zu den Zielwerten addiert. Für ein 3-Wege-Magnetventil auf 0.0 lassen."
+
+#: src/components/Navigation.jsx
+msgid "Crafted with <0>{randomIcon}</0> in Italy by <1>Caffinnova S.r.l.</1>"
+msgstr "Mit <0>{randomIcon}</0> in Italien gefertigt von <1>Caffinnova S.r.l.</1>"
+
+#: src/pages/ProfileEdit/index.jsx
+msgid "Create Profile"
+msgstr "Profil erstellen"
+
+#: src/utils/pumpFlowCalibration.js
+msgid "Current coefficients are not numeric: \"{raw}\""
+msgstr "Aktuelle Koeffizienten sind nicht numerisch: „{raw}“"
+
+#: src/components/PumpFlowCalibration/IdleSection.jsx
+msgid "Current coefficients:"
+msgstr "Aktuelle Koeffizienten:"
+
+#: src/components/OverviewChart.jsx
+msgid "Current Flow"
+msgstr "Aktueller Durchfluss"
+
+#: src/components/OverviewChart.jsx
+#: src/pages/ShotHistory/HistoryChart.jsx
+msgid "Current Pressure"
+msgstr "Aktueller Druck"
+
+#: src/pages/ShotHistory/HistoryChart.jsx
+msgid "Current Puck Flow"
+msgstr "Aktueller Puck-Durchfluss"
+
+#: src/pages/ShotHistory/HistoryChart.jsx
+msgid "Current Pump Flow"
+msgstr "Aktueller Pumpendurchfluss"
+
+#: src/pages/Statistics/components/ActivityHeatmap.jsx
+msgid "Current streak:"
+msgstr "Aktuelle Serie:"
+
+#: src/components/OverviewChart.jsx
+#: src/pages/ShotHistory/HistoryChart.jsx
+msgid "Current Temperature"
+msgstr "Aktuelle Temperatur"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Current value"
+msgstr "Aktueller Wert"
+
+#: src/components/OverviewChart.jsx
+msgid "Current Weight"
+msgstr "Aktuelles Gewicht"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Current:"
+msgstr "Aktuell:"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+msgid "Currently Volumetric"
+msgstr "Derzeit volumetrisch"
+
+#: src/components/Navigation.jsx
+msgid "Customize"
+msgstr "Anpassen"
+
+#: src/pages/Statistics/components/ActivityHeatmap.jsx
+msgid "Daily average: <0>{dailyAvg} shots</0>"
+msgstr "Tagesdurchschnitt: <0>{dailyAvg} Shots</0>"
+
+#: src/app/AppSettings.jsx
+#: src/pages/Settings/tabs/GeneralTab.jsx
+#: src/utils/themeManager.js
+msgctxt "theme"
+msgid "Dark"
+msgstr "Dunkel"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Dark Theme"
+msgstr "Dunkles Design"
+
+#: src/components/Navigation.jsx
+msgid "Dashboard"
+msgstr "Dashboard"
+
+#: src/pages/DashboardSettings/index.jsx
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Dashboard Layout"
+msgstr "Dashboard-Layout"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Dashboard Settings"
+msgstr "Dashboard-Einstellungen"
+
+#: src/components/Navigation.jsx
+msgid "Dashboard view"
+msgstr "Dashboard-Ansicht"
+
+#: src/services/VisualizerService.js
+msgid "Data validation failed - the shot data format may be incorrect"
+msgstr "Datenvalidierung fehlgeschlagen – das Format der Shot-Daten ist möglicherweise fehlerhaft"
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+#: src/pages/Statistics/components/StatisticsSearchHelp.jsx
+msgid "Date"
+msgstr "Datum"
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Date (New)"
+msgstr "Datum (neu)"
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Date (Old)"
+msgstr "Datum (alt)"
+
+#: src/pages/Statistics/components/StatisticsSearchHelp.jsx
+msgid "Date basis (<0>Shot / Auto / Upload</0>) appears only when missing shot timestamps are detected."
+msgstr "Die Datumsbasis (<0>Shot / Auto / Upload</0>) erscheint nur, wenn fehlende Shot-Zeitstempel erkannt werden."
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Date Basis:"
+msgstr "Datumsbasis:"
+
+#: src/pages/Statistics/components/toolbar/helpers.js
+msgid "Date Range"
+msgstr "Zeitraum"
+
+#: src/pages/Statistics/components/statisticsView/helpers.js
+msgid "Date range invalid: From is after To."
+msgstr "Ungültiger Zeitraum: Von liegt nach Bis."
+
+#: src/components/VisualizerUploadModal.jsx
+msgid "Date:"
+msgstr "Datum:"
+
+#: src/pages/Statistics/utils/statisticsSearchDsl.js
+msgid "date: expression is empty."
+msgstr "date: Ausdruck ist leer."
+
+#: src/pages/Statistics/utils/statisticsSearchDsl.js
+msgid "date: requires an operator (>, >=, <, <=, =). Example: date:>h-7d"
+msgstr "date: erfordert einen Operator (>, >=, <, <=, =). Beispiel: date:>h-7d"
+
+#: src/pages/Statistics/components/TrendChart.jsx
+msgctxt "time bucket"
+msgid "Day"
+msgstr "Tag"
+
+#: src/pages/Settings/tabs/CleaningSection.jsx
+msgid "days"
+msgstr "Tage"
+
+#: src/pages/Statistics/components/ActivityHeatmap.jsx
+msgid "Days active: <0>{daysWithShots}</0>"
+msgstr "Aktive Tage: <0>{daysWithShots}</0>"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Days of week selection"
+msgstr "Auswahl der Wochentage"
+
+#: src/pages/ShotAnalyzer/shotAnalyzer/ShotAnalyzer.jsx
+msgid "Deep Dive Shot Analyzer"
+msgstr "Deep Dive Shot Analyzer"
+
+#: src/pages/Home/cards/ProfileCard.jsx
+msgctxt "profile"
+msgid "Default"
+msgstr "Standard"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Default Steam Temperature"
+msgstr "Standard-Dampftemperatur"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Default Water Temperature"
+msgstr "Standard-Wassertemperatur"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Define behavior for physical buttons when pressed. Make sure they are wired to the buttons header. Pressing the brew and steam buttons together (or a third button wired to both) triggers the water button behavior."
+msgstr "Lege das Verhalten der physischen Tasten fest. Stelle sicher, dass sie am Tasten-Header angeschlossen sind. Werden Bezugs- und Dampftaste gleichzeitig gedrückt (oder eine dritte Taste, die mit beiden verbunden ist), wird das Verhalten der Wassertaste ausgelöst."
+
+#: src/pages/ProfileEdit/ProfileMainInformation.jsx
+msgid "degrees Celsius"
+msgstr "Grad Celsius"
+
+#: src/pages/ProfileList/index.jsx
+#: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Delete"
+msgstr "Löschen"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Delete {label} profile"
+msgstr "Profil {label} löschen"
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Delete All"
+msgstr "Alle löschen"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Delete all profiles"
+msgstr "Alle Profile löschen"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryPanel.jsx
+msgid "Delete failed: {message}"
+msgstr "Löschen fehlgeschlagen: {message}"
+
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Delete phase {phaseNumber}"
+msgstr "Phase {phaseNumber} löschen"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
+msgid "Delete preset"
+msgstr "Voreinstellung löschen"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Delete profile"
+msgstr "Profil löschen"
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Delete shot"
+msgstr "Shot löschen"
+
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Delete this phase"
+msgstr "Diese Phase löschen"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
+msgid "Delete this preset?"
+msgstr "Diese Voreinstellung löschen?"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Delete this schedule"
+msgstr "Diesen Zeitplan löschen"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Deleted profile"
+msgstr "Profil gelöscht"
+
+#: src/pages/Settings/tabs/CleaningSection.jsx
+msgid "Descaling"
+msgstr "Entkalken"
+
+#: src/utils/warnings.js
+msgid "Descaling due"
+msgstr "Entkalken fällig"
+
+#: src/pages/ProfileEdit/ProfileMainInformation.jsx
+msgid "Description"
+msgstr "Beschreibung"
+
+#: src/pages/Statistics/components/StatisticsMultiSelectDropdown.jsx
+msgid "Deselect {itemName}"
+msgstr "{itemName} abwählen"
+
+#: src/components/Navigation.jsx
+#: src/pages/Settings/index.jsx
+msgid "Device Settings"
+msgstr "Geräteeinstellungen"
+
+#: src/pages/ShotAnalyzer/components/shotChart/tooltip/StaticTooltipContent.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/tooltip/tooltipModel.js
+msgid "Difference"
+msgstr "Differenz"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgid "Disable compare mode"
+msgstr "Vergleichsmodus deaktivieren"
+
+#: src/components/PumpFlowCalibration/Footer.jsx
+#: src/pages/Settings/index.jsx
+msgid "Discard"
+msgstr "Verwerfen"
+
+#: src/app/MachineSwitcher.jsx
+msgid "Disconnect"
+msgstr "Trennen"
+
+#: src/pages/Settings/index.jsx
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "Dismiss"
+msgstr "Ausblenden"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Display Settings"
+msgstr "Displayeinstellungen"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Display Theme"
+msgstr "Display-Design"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Display Version"
+msgstr "Display-Version"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Distance from sensor to bottom of the tank"
+msgstr "Abstand vom Sensor zum Boden des Tanks"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Distance from sensor to the fill line"
+msgstr "Abstand vom Sensor zur Füllmarkierung"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryDropdown.jsx
+msgid "Do you really want to export all {count} filtered profiles? (Profiles are downloaded individually, one after the other.)"
+msgstr "Möchtest du wirklich alle {count} gefilterten Profile exportieren? (Profile werden einzeln nacheinander heruntergeladen.)"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryDropdown.jsx
+msgid "Do you really want to export all {count} filtered shots? (Shots are downloaded individually, one after the other.)"
+msgstr "Möchtest du wirklich alle {count} gefilterten Shots exportieren? (Shots werden einzeln nacheinander heruntergeladen.)"
+
+#: src/components/PumpFlowCalibration/Footer.jsx
+msgid "Done"
+msgstr "Fertig"
+
+#: src/pages/ProfileEdit/ProfileMainInformation.jsx
+msgid "Dose"
+msgstr "Dosis"
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
+msgid "Dose In"
+msgstr "Dosis"
+
+#: src/pages/ShotHistory/ShotNotesCard.jsx
+msgid "Dose In (g)"
+msgstr "Dosis (g)"
+
+#: src/pages/ProfileEdit/ProfileMainInformation.jsx
+msgid "Dose in g"
+msgstr "Dosis in g"
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
+msgid "Dose Out"
+msgstr "Ausbeute"
+
+#: src/pages/ShotHistory/ShotNotesCard.jsx
+msgid "Dose Out (g)"
+msgstr "Ausbeute (g)"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Download Support Data"
+msgstr "Supportdaten herunterladen"
+
+#: src/pages/ShotAnalyzer/components/shotChart/constants.js
+msgid "Downloading export..."
+msgstr "Export wird heruntergeladen..."
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Downloading shot #{shotId}"
+msgstr "Shot #{shotId} wird heruntergeladen"
+
+#: src/pages/ShotAnalyzer/components/EmptyState.jsx
+msgid "Drag and drop files onto the status bar or use the import icons in the shot and profile badges."
+msgstr "Ziehe Dateien auf die Statusleiste oder nutze die Import-Symbole in den Shot- und Profil-Badges."
+
+#: src/pages/ProfileList/index.jsx
+msgid "Drag disabled on search result"
+msgstr "Ziehen bei Suchergebnissen deaktiviert"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Drag to reorder"
+msgstr "Zum Sortieren ziehen"
+
+#: src/pages/ShotAnalyzer/components/library/AnalyzerPanelSlot.jsx
+msgid "Drop shot or profile JSON here"
+msgstr "Shot- oder Profil-JSON hier ablegen"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Duplicate"
+msgstr "Duplizieren"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Duplicate {label} profile"
+msgstr "Profil {label} duplizieren"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Duplicate profile"
+msgstr "Profil duplizieren"
+
+#: src/pages/DashboardSettings/index.jsx
+#: src/pages/Home/cards/RecentShotsCard.jsx
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMetricCards.jsx
+#: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
+#: src/pages/Statistics/components/MetricsTable.jsx
+msgid "Duration"
+msgstr "Dauer"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+#: src/pages/Statistics/components/TrendChart.jsx
+msgid "Duration (s)"
+msgstr "Dauer (s)"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Duration in seconds"
+msgstr "Dauer in Sekunden"
+
+#: src/components/VisualizerUploadModal.jsx
+msgid "Duration:"
+msgstr "Dauer:"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Duration: {duration}s"
+msgstr "Dauer: {duration}s"
+
+#: src/components/PumpFlowCalibration/IdleSection.jsx
+msgid "During the shot, adjust the valve so pressure reaches 1 bar, then 9 bar. Keep it stable during the <0>Measure</0> phases (10 s each)."
+msgstr "Stelle das Ventil während des Shots so ein, dass der Druck 1 bar und dann 9 bar erreicht. Halte ihn während der <0>Measure</0>-Phasen (je 10 s) stabil."
+
+#: src/app/appSettings.js
+msgid "E.g. water tank low, scale battery low."
+msgstr "Z. B. Wassertank leer, Waagenakku schwach."
+
+#: src/pages/ShotHistory/ShotNotesCard.jsx
+msgid "e.g., 2.5, Medium-Fine"
+msgstr "z. B. 2,5, mittelfein"
+
+#: src/pages/ShotHistory/ShotNotesCard.jsx
+msgid "e.g., Single Origin, Blend"
+msgstr "z. B. Single Origin, Blend"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Ease In"
+msgstr "Ease In"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Ease In Out"
+msgstr "Ease In Out"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Ease Out"
+msgstr "Ease Out"
+
+#: src/pages/ProfileList/index.jsx
+#: src/pages/ShotHistory/ShotNotesCard.jsx
+msgid "Edit"
+msgstr "Bearbeiten"
+
+#: src/pages/ProfileEdit/index.jsx
+msgid "Edit {label}"
+msgstr "{label} bearbeiten"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Edit {label} profile"
+msgstr "Profil {label} bearbeiten"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Edit date range filter"
+msgstr "Zeitraumfilter bearbeiten"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Edit profile"
+msgstr "Profil bearbeiten"
+
+#: src/pages/Statistics/utils/statisticsSearchDsl.js
+msgid "Empty date expression."
+msgstr "Leerer Datumsausdruck."
+
+#: src/pages/Statistics/utils/statisticsSearchDsl.js
+msgid "Empty value."
+msgstr "Leerer Wert."
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Enable Auto Wakeup"
+msgstr "Automatisches Aufwecken aktivieren"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Enable Boiler Refill"
+msgstr "Boiler-Nachfüllung aktivieren"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgid "Enable compare mode"
+msgstr "Vergleichsmodus aktivieren"
+
+#: src/pages/Settings/tabs/HeaterCoordinationSection.jsx
+msgid "Enable heater coordination"
+msgstr "Heizungskoordination aktivieren"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Enable Home Assistant"
+msgstr "Home Assistant aktivieren"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Enable HomeKit"
+msgstr "HomeKit aktivieren"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Enable Mahlkönig E64 WS Grind-by-Sync"
+msgstr "Mahlkönig E64 WS Grind-by-Sync aktivieren"
+
+#: src/app/AppSettings.jsx
+msgid "Enable notifications"
+msgstr "Benachrichtigungen aktivieren"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Enable Smart Grind"
+msgstr "Smart Grind aktivieren"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Enable standby display"
+msgstr "Standby-Anzeige aktivieren"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Enables compact mode for this panel"
+msgstr "Aktiviert den Kompaktmodus für dieses Panel"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "End date"
+msgstr "Enddatum"
+
+#: src/pages/Statistics/components/statisticsView/StatisticsView.jsx
+msgctxt "keyboard key"
+msgid "Enter"
+msgstr "Enter"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Enter 2 values (flow at 1 bar, flow at 9 bar)"
+msgstr "Gib 2 Werte ein (Durchfluss bei 1 bar, Durchfluss bei 9 bar)"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Enter a name for this phase"
+msgstr "Gib einen Namen für diese Phase ein"
+
+#: src/pages/ProfileEdit/ProfileMainInformation.jsx
+msgid "Enter a name for this profile"
+msgstr "Gib einen Namen für dieses Profil ein"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Enter the bar rating of the pressure sensor being used"
+msgstr "Gib den Nennwert (bar) des verwendeten Drucksensors ein"
+
+#: src/app/MachineSetup.jsx
+msgid "Enter the hostname or IP address of your machine."
+msgstr "Gib den Hostnamen oder die IP-Adresse deiner Maschine ein."
+
+#: src/components/VisualizerUploadModal.jsx
+msgid "Enter your password"
+msgstr "Passwort eingeben"
+
+#: src/components/VisualizerUploadModal.jsx
+msgid "Enter your username"
+msgstr "Benutzername eingeben"
+
+#: src/app/machines.js
+msgctxt "connection failure"
+msgid "error"
+msgstr "Fehler"
+
+#: src/app/notifications.js
+msgid "Error"
+msgstr "Fehler"
+
+#: src/utils/warnings.js
+msgctxt "warning level"
+msgid "Error"
+msgstr "Fehler"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Error Color"
+msgstr "Fehlerfarbe"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Error loading devices. Please try again."
+msgstr "Fehler beim Laden der Geräte. Bitte versuche es erneut."
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Error: {message}"
+msgstr "Fehler: {message}"
+
+#: src/app/appSettings.js
+msgid "Errors"
+msgstr "Fehler"
+
+#: src/components/PumpFlowCalibration/ResultsPanel.jsx
+msgid "estimated flow"
+msgstr "geschätzter Durchfluss"
+
+#: src/utils/metricDefinitions.js
+msgid "Estimated Output"
+msgstr "Geschätzte Ausbeute"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Even fill"
+msgstr "Gleichmäßig füllen"
+
+#: src/pages/Settings/tabs/CleaningSection.jsx
+msgid "Every"
+msgstr "Alle"
+
+#: src/pages/Statistics/components/StatisticsSearchHelp.jsx
+msgid "Examples"
+msgstr "Beispiele"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgid "Excessive delay while writing samples. Possible causes include a slow SD card or high OS/system load."
+msgstr "Zu hohe Verzögerung beim Schreiben der Messwerte. Mögliche Ursachen sind eine langsame SD-Karte oder hohe System-/OS-Last."
+
+#: src/pages/ProfileList/index.jsx
+msgid "Exit on: {value}"
+msgstr "Beenden bei: {value}"
+
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+msgid "Exit Reasons"
+msgstr "Abbruchgründe"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
+msgid "Expand column settings"
+msgstr "Spalteneinstellungen ausklappen"
+
+#: src/components/Navigation.jsx
+msgid "Expand navigation"
+msgstr "Navigation ausklappen"
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Expand shot details"
+msgstr "Shot-Details ausklappen"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Expand statistics toolbar"
+msgstr "Statistik-Werkzeugleiste ausklappen"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+msgid "Explain WebM export"
+msgstr "WebM-Export erklären"
+
+#: src/pages/ProfileList/index.jsx
+#: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Export"
+msgstr "Exportieren"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Export {label} profile"
+msgstr "Profil {label} exportieren"
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Export All"
+msgstr "Alle exportieren"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Export all profiles"
+msgstr "Alle Profile exportieren"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+msgid "Export as WebM"
+msgstr "Als WebM exportieren"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+msgid "Export Chart"
+msgstr "Diagramm exportieren"
+
+#: src/pages/ShotAnalyzer/components/library/StatusBar.jsx
+msgid "Export current profile"
+msgstr "Aktuelles Profil exportieren"
+
+#: src/pages/ShotAnalyzer/components/library/StatusBar.jsx
+msgid "Export current shot"
+msgstr "Aktuellen Shot exportieren"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryPanel.jsx
+msgid "Export failed: {message}"
+msgstr "Export fehlgeschlagen: {message}"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+msgid "Export File"
+msgstr "Datei exportieren"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Export profile"
+msgstr "Profil exportieren"
+
+#: src/pages/Settings/index.jsx
+msgid "Export settings"
+msgstr "Einstellungen exportieren"
+
+#: src/pages/Settings/index.jsx
+msgid "Export Settings"
+msgstr "Exporteinstellungen"
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Export shot data"
+msgstr "Shot-Daten exportieren"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+msgid "Extended Record"
+msgstr "Erweiterte Aufzeichnung"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "External LED ({extLedPct}%)"
+msgstr "Externe LED ({extLedPct}%)"
+
+#: src/pages/ProfileList/index.jsx
+msgctxt "profile tab"
+msgid "Extraction"
+msgstr "Extraktion"
+
+#: src/pages/Settings/PluginCard.jsx
+msgctxt "Friday, one letter"
+msgid "F"
+msgstr "F"
+
+#: src/pages/Statistics/components/ActivityHeatmap.jsx
+msgctxt "weekday initial: Friday"
+msgid "F"
+msgstr "F"
+
+#: src/components/PumpFlowCalibration/ResultsPanel.jsx
+msgid "factor"
+msgstr "Faktor"
+
+#: src/pages/ShotAnalyzer/services/LibraryService.js
+msgid "Failed to load shot {idStr}: HTTP {status}"
+msgstr "Shot {idStr} konnte nicht geladen werden: HTTP {status}"
+
+#: src/pages/Statistics/components/statisticsView/hooks.js
+msgid "Failed to load shots/profiles for filtering."
+msgstr "Shots/Profile zum Filtern konnten nicht geladen werden."
+
+#: src/pages/Statistics/components/statisticsView/hooks.js
+msgid "Failed to load statistics. Please try again."
+msgstr "Statistiken konnten nicht geladen werden. Bitte versuche es erneut."
+
+#: src/pages/ProfileList/index.jsx
+msgid "Favorite"
+msgstr "Favorit"
+
+#: src/pages/Statistics/components/StatisticsSearchHelp.jsx
+msgid "Fields"
+msgstr "Felder"
+
+#: src/pages/ShotAnalyzer/components/shotChart/single/useShotChartReplayExport.js
+msgid "File export failed."
+msgstr "Dateiexport fehlgeschlagen."
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Filter library source"
+msgstr "Bibliotheksquelle filtern"
+
+#: src/pages/Home/utils.js
+msgctxt "process action"
+msgid "Finish"
+msgstr "Beenden"
+
+#: src/pages/Home/cards/ProfileCard.jsx
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Finished"
+msgstr "Beendet"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Finished Color"
+msgstr "Farbe für Beendet"
+
+#: src/app/FirmwareWarning.jsx
+msgid "Firmware {version} – not all features may be available."
+msgstr "Firmware {version} – möglicherweise sind nicht alle Funktionen verfügbar."
+
+#: src/utils/panelDefinitions.js
+msgid "Flexible Space"
+msgstr "Flexibler Abstand"
+
+#: src/components/ExtendedProfileChart.jsx
+#: src/pages/Home/cards/ProfileCard.jsx
+#: src/pages/Home/cards/RecentShotsCard.jsx
+#: src/utils/metricDefinitions.js
+msgid "Flow"
+msgstr "Durchfluss"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgctxt "pump mode"
+msgid "Flow"
+msgstr "Durchfluss"
+
+#: src/components/ExtendedProfileChart.jsx
+msgid "Flow (ml/s)"
+msgstr "Durchfluss (ml/s)"
+
+#: src/pages/ShotAnalyzer/components/shotChart/single/SingleShotMetricPreview.jsx
+msgid "Flow & Volume"
+msgstr "Durchfluss & Volumen"
+
+#: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
+msgid "Flow above"
+msgstr "Durchfluss über"
+
+#: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
+msgid "Flow below"
+msgstr "Durchfluss unter"
+
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Flow Limit"
+msgstr "Durchflussgrenze"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Flow rate in grams per second"
+msgstr "Durchflussrate in Gramm pro Sekunde"
+
+#: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
+msgid "Flow target"
+msgstr "Durchflussziel"
+
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Flow Target"
+msgstr "Durchflussziel"
+
+#: src/pages/Home/FlushButton.jsx
+msgctxt "action"
+msgid "Flush"
+msgstr "Spülen"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgctxt "button behavior"
+msgid "Flush"
+msgstr "Spülen"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgctxt "settings section"
+msgid "Flush"
+msgstr "Spülen"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Flush Duration"
+msgstr "Spüldauer"
+
+#: src/utils/warnings.js
+msgid "Flush recommended"
+msgstr "Spülen empfohlen"
+
+#: src/pages/Home/FlushButton.jsx
+msgid "Flush water"
+msgstr "Wasser spülen"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Forget"
+msgstr "Vergessen"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Forgetting..."
+msgstr "Wird vergessen..."
+
+#: src/app/MachineSetup.jsx
+msgid "Found on your network"
+msgstr "In deinem Netzwerk gefunden"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Frag:"
+msgstr "Frag.:"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Free Memory (Heap)"
+msgstr "Freier Speicher (Heap)"
+
+#: src/pages/Settings/PluginCard.jsx
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
+msgid "Friday"
+msgstr "Freitag"
+
+#: src/pages/Statistics/components/toolbar/helpers.js
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgctxt "date range start"
+msgid "From"
+msgstr "Von"
+
+#: src/pages/DashboardSettings/index.jsx
+msgctxt "panel view"
+msgid "Full"
+msgstr "Voll"
+
+#: src/pages/ShotAnalyzer/components/EmptyState.jsx
+msgid "GaggiMate (GM)"
+msgstr "GaggiMate (GM)"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "GaggiMate didn't accept the request. Check the connection and try again."
+msgstr "GaggiMate hat die Anfrage nicht angenommen. Prüfe die Verbindung und versuche es erneut."
+
+#: src/app/shareFiles.js
+msgid "GaggiMate export"
+msgstr "GaggiMate-Export"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "GaggiMate is not affiliated with, endorsed by or supported by Mahlkönig or its parent company, the Hemro Group. Mahlkönig, E64 WS, Grind-by-Sync and Xenia are trademarks of their respective owners."
+msgstr "GaggiMate steht in keiner Verbindung zu Mahlkönig oder dessen Muttergesellschaft, der Hemro Group, und wird von diesen weder unterstützt noch empfohlen. Mahlkönig, E64 WS, Grind-by-Sync und Xenia sind Marken ihrer jeweiligen Inhaber."
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "GaggiMate reconnects automatically once the scale is switched on and in range."
+msgstr "GaggiMate verbindet sich automatisch wieder, sobald die Waage eingeschaltet und in Reichweite ist."
+
+#: src/app/MachineSetup.jsx
+msgid "gaggimate.local or 192.168.1.20"
+msgstr "gaggimate.local oder 192.168.1.20"
+
+#: src/pages/Settings/index.jsx
+msgid "General"
+msgstr "Allgemein"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "General Settings"
+msgstr "Allgemeine Einstellungen"
+
+#: src/pages/ProfileEdit/ProfileImageUpload.jsx
+msgid "GIF images are not supported. Please use PNG, JPEG, WebP or BMP."
+msgstr "GIF-Bilder werden nicht unterstützt. Bitte verwende PNG, JPEG, WebP oder BMP."
+
+#: src/pages/Statistics/components/statisticsView/StatisticsDetailSection.jsx
+msgid "Global metric averages"
+msgstr "Globale Durchschnittswerte der Metriken"
+
+#: src/pages/_404.jsx
+msgid "Go Home"
+msgstr "Zur Startseite"
+
+#: src/pages/ProfileEdit/ProfileMainInformation.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "grams"
+msgstr "Gramm"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "grams per second"
+msgstr "Gramm pro Sekunde"
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
+msgid "Grind"
+msgstr "Mahlen"
+
+#: src/app/machineStatus.js
+#: src/pages/Home/utils.js
+msgctxt "machine mode"
+msgid "Grind"
+msgstr "Mahlen"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgctxt "predictive scale delay"
+msgid "Grind"
+msgstr "Mahlen"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgctxt "relay function"
+msgid "Grind"
+msgstr "Mahlen"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Grind once with GbS to see which recipe number your grinder reports."
+msgstr "Mahle einmal mit GbS, um zu sehen, welche Rezeptnummer deine Mühle meldet."
+
+#: src/pages/ShotHistory/ShotNotesCard.jsx
+msgid "Grind Setting"
+msgstr "Mahlgrad"
+
+#: src/pages/Home/cards/ActionCard.jsx
+msgid "Grind target"
+msgstr "Mahlziel"
+
+#: src/pages/Home/cards/ProfileCard.jsx
+#: src/pages/Home/utils.js
+msgid "Grinding"
+msgstr "Mahlen"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Hardware"
+msgstr "Hardware"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Hardware Scale"
+msgstr "Hardware-Waage"
+
+#: src/pages/Settings/tabs/HeaterCoordinationSection.jsx
+msgid "Heater Coordination"
+msgstr "Heizungskoordination"
+
+#: src/pages/Settings/tabs/HeaterCoordinationSection.jsx
+msgid "Heater handover pause (ms)"
+msgstr "Übergabepause der Heizung (ms)"
+
+#: src/utils/metricDefinitions.js
+msgid "Heater Power"
+msgstr "Heizleistung"
+
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "Heater Wattage (W)"
+msgstr "Heizleistung (W)"
+
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "Heater wattage in Watts (e.g. Gaggia Classic: 1360 W, Rancilio Silvia 120V: 950W, Rancilio Silvia 230V: 1100W)."
+msgstr "Heizleistung in Watt (z. B. Gaggia Classic: 1360 W, Rancilio Silvia 120V: 950W, Rancilio Silvia 230V: 1100W)."
+
+#: src/components/SettingsFormField.jsx
+msgid "Hidden / Available"
+msgstr "Ausgeblendet / Verfügbar"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/compareControls.jsx
+msgid "Hide compare annotations"
+msgstr "Vergleichsanmerkungen ausblenden"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareChartLayout.jsx
+msgid "Hide detail charts"
+msgstr "Detaildiagramme ausblenden"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Hide details"
+msgstr "Details ausblenden"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Hide details for {label}"
+msgstr "Details für {label} ausblenden"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/single/SingleShotChart.jsx
+msgid "Hide legend"
+msgstr "Legende ausblenden"
+
+#: src/components/VisualizerUploadModal.jsx
+msgid "Hide password"
+msgstr "Passwort verbergen"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTableCells.jsx
+msgid "High Scale Delay"
+msgstr "Hohe Waagenverzögerung"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgid "HIGH SCALE DELAY"
+msgstr "HOHE WAAGENVERZÖGERUNG"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Highest ID First"
+msgstr "Höchste ID zuerst"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Highest Rated"
+msgstr "Am besten bewertet"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Highest Volume"
+msgstr "Höchstes Volumen"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgctxt "flush duration"
+msgid "Hold"
+msgstr "Halten"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Hold runs the flush for as long as the button is held. The valve stays open for one more second after the pump stops."
+msgstr "Bei Halten läuft die Spülung, solange die Taste gedrückt ist. Das Ventil bleibt nach dem Stoppen der Pumpe noch eine Sekunde geöffnet."
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Home Assistant Discovery Topic"
+msgstr "Home Assistant Discovery-Topic"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Home Assistant over MQTT (Deprecated)"
+msgstr "Home Assistant über MQTT (veraltet)"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "HomeKit Setup Code"
+msgstr "HomeKit-Setup-Code"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Hostname"
+msgstr "Hostname"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "How many ml/s to pump into the boiler during steaming"
+msgstr "Wie viele ml/s beim Dampfen in den Boiler gepumpt werden"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "HX711 Sample Rate"
+msgstr "HX711-Abtastrate"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "ID: {shotId}"
+msgstr "ID: {shotId}"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Idle Color"
+msgstr "Leerlauffarbe"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Idle Filter Alpha"
+msgstr "Filter-Alpha im Leerlauf"
+
+#: src/utils/warnings.js
+msgctxt "warning level"
+msgid "Ignore"
+msgstr "Ignorieren"
+
+#: src/pages/Settings/index.jsx
+msgid "Ignored unknown entries: {ignoredEntries}"
+msgstr "Unbekannte Einträge ignoriert: {ignoredEntries}"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Ignored while a Flexible Space item is present in the panel list below."
+msgstr "Wird ignoriert, solange sich ein Element „Flexibler Abstand“ in der Panel-Liste unten befindet."
+
+#: src/pages/ProfileEdit/ProfileImageUpload.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+msgid "Image"
+msgstr "Bild"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/MobileStatusActionsMenu.jsx
+msgid "Import"
+msgstr "Importieren"
+
+#: src/pages/ShotAnalyzer/components/EmptyState.jsx
+msgid "Import a shot file or select one from your library to start analyzing."
+msgstr "Importiere eine Shot-Datei oder wähle eine aus deiner Bibliothek, um mit der Analyse zu beginnen."
+
+#: src/pages/ShotAnalyzer/components/library/libraryImport.js
+msgid "Import failed. Please check the file format."
+msgstr "Import fehlgeschlagen. Bitte prüfe das Dateiformat."
+
+#: src/pages/ProfileList/index.jsx
+msgid "Import profiles"
+msgstr "Profile importieren"
+
+#: src/pages/Settings/index.jsx
+msgid "Import settings"
+msgstr "Einstellungen importieren"
+
+#: src/pages/Settings/index.jsx
+msgid "Import Settings"
+msgstr "Importeinstellungen"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgid "Import shot or profile"
+msgstr "Shot oder Profil importieren"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/MobileStatusActionsMenu.jsx
+msgid "Importing"
+msgstr "Importiere"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgid "Importing shot or profile"
+msgstr "Shot oder Profil wird importiert"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+msgid "Include legend"
+msgstr "Legende einschließen"
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "INCOMPLETE"
+msgstr "UNVOLLSTÄNDIG"
+
+#: src/pages/Home/utils.js
+msgid "Infusion"
+msgstr "Infusion"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgctxt "ramp style"
+msgid "Instant"
+msgstr "Sofort"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Integral Gain"
+msgstr "Integralverstärkung"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Internal error: ApiService unavailable."
+msgstr "Interner Fehler: ApiService nicht verfügbar."
+
+#: src/pages/Statistics/utils/statisticsSearchDsl.js
+msgid "Invalid calendar date."
+msgstr "Ungültiges Kalenderdatum."
+
+#: src/pages/Statistics/utils/statisticsSearchDsl.js
+msgid "Invalid date expression in \"{clauseRaw}\": {parseError}"
+msgstr "Ungültiger Datumsausdruck in „{clauseRaw}“: {parseError}"
+
+#: src/pages/Statistics/utils/statisticsSearchDsl.js
+msgid "Invalid date or time value."
+msgstr "Ungültiger Datums- oder Zeitwert."
+
+#: src/pages/Statistics/components/statisticsView/helpers.js
+msgid "Invalid date: {value}"
+msgstr "Ungültiges Datum: {value}"
+
+#: src/pages/Statistics/components/statisticsView/helpers.js
+msgid "Invalid date/time: {value}"
+msgstr "Ungültiges Datum/Uhrzeit: {value}"
+
+#: src/utils/pumpFlowCalibration.js
+msgid "Invalid flow data for tp={targetPressure} bar (estimatedFlow={estimatedFlow}, actualFlow={actualFlow}). Did the scale see any weight increase during the shot?"
+msgstr "Ungültige Durchflussdaten für tp={targetPressure} bar (estimatedFlow={estimatedFlow}, actualFlow={actualFlow}). Hat die Waage während des Shots eine Gewichtszunahme gemessen?"
+
+#: src/pages/Statistics/utils/statisticsSearchDsl.js
+msgid "Invalid pinned expression in \"{clauseRaw}\": {pinnedError}"
+msgstr "Ungültiger Pinned-Ausdruck in „{clauseRaw}“: {pinnedError}"
+
+#: src/pages/Statistics/utils/statisticsSearchDsl.js
+msgid "Invalid relative day value."
+msgstr "Ungültiger relativer Tageswert."
+
+#: src/services/VisualizerService.js
+msgid "Invalid shot data: missing required samples array"
+msgstr "Ungültige Shot-Daten: erforderliches samples-Array fehlt"
+
+#: src/services/VisualizerService.js
+msgid "Invalid shot data: samples array is empty"
+msgstr "Ungültige Shot-Daten: samples-Array ist leer"
+
+#: src/pages/Statistics/utils/statisticsSearchDsl.js
+msgid "Invalid value for {field}: {valueError}"
+msgstr "Ungültiger Wert für {field}: {valueError}"
+
+#: src/app/AppSettings.jsx
+msgid "iOS only lets GaggiMate stay connected to your machines while the app is open. Notifications stop a few seconds after you switch to another app or lock your phone."
+msgstr "iOS erlaubt GaggiMate nur, mit deinen Maschinen verbunden zu bleiben, solange die App geöffnet ist. Benachrichtigungen enden wenige Sekunden, nachdem du zu einer anderen App wechselst oder dein Smartphone sperrst."
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Keep selected profile"
+msgstr "Ausgewähltes Profil beibehalten"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/ShotChartControls.jsx
+msgid "Keep this window focused while the replay is being recorded."
+msgstr "Lass dieses Fenster im Fokus, während das Replay aufgezeichnet wird."
+
+#: src/app/MachineSetup.jsx
+msgid "Kitchen"
+msgstr "Küche"
+
+#: src/components/LanguageSelect.jsx
+msgid "Language"
+msgstr "Sprache"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Larger alpha responds faster with less smoothing; smaller alpha is smoother but slower."
+msgstr "Ein größeres Alpha reagiert schneller mit weniger Glättung; ein kleineres Alpha glättet stärker, ist aber langsamer."
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Last Row Fill"
+msgstr "Füllung der letzten Zeile"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Last used profile"
+msgstr "Zuletzt verwendetes Profil"
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
+msgid "Last week"
+msgstr "Letzte Woche"
+
+#: src/pages/Settings/tabs/CleaningSection.jsx
+msgid "Last: {lastTime} · {shotsSince, plural, one {# shot since} other {# shots since}}"
+msgstr "Zuletzt: {lastTime} · {shotsSince, plural, one {# Shot seitdem} other {# Shots seitdem}}"
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Length (Long)"
+msgstr "Länge (lang)"
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Length (Short)"
+msgstr "Länge (kurz)"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Lets an E64 WS start shots with its knob and dial in its grind from the shot time and weight. A grind selects the profile mapped to its recipe, and the grinder's target weight overrides that profile's weight target. Save and restart to apply."
+msgstr "Ermöglicht einer E64 WS, Shots mit ihrem Knopf zu starten und ihren Mahlgrad anhand von Shot-Zeit und Gewicht einzustellen. Ein Mahlvorgang wählt das Profil, das seinem Rezept zugeordnet ist, und das Zielgewicht der Mühle überschreibt das Gewichtsziel dieses Profils. Zum Übernehmen speichern und neu starten."
+
+#: src/app/AppSettings.jsx
+#: src/pages/Settings/tabs/GeneralTab.jsx
+#: src/utils/themeManager.js
+msgctxt "theme"
+msgid "Light"
+msgstr "Hell"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Light Theme"
+msgstr "Helles Design"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgctxt "ramp style"
+msgid "Linear"
+msgstr "Linear"
+
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+#: src/pages/Statistics/components/MetricsTable.jsx
+msgid "Liquid Resistance"
+msgstr "Flüssigkeitswiderstand"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+#: src/pages/ShotAnalyzer/utils/constants.js
+msgid "Liquid Resistance (bar·s/mL)"
+msgstr "Flüssigkeitswiderstand (bar·s/mL)"
+
+#: src/app/machines.js
+msgid "live connection failed ({reason})"
+msgstr "Live-Verbindung fehlgeschlagen ({reason})"
+
+#: src/components/OverviewChart.jsx
+msgid "Live Metrics"
+msgstr "Live-Metriken"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgid "Load a profile to open statistics"
+msgstr "Lade ein Profil, um die Statistiken zu öffnen"
+
+#: src/pages/ShotAnalyzer/components/library/libraryImport.js
+msgid "Load a secondary shot before importing a secondary profile."
+msgstr "Lade einen zweiten Shot, bevor du ein zweites Profil importierst."
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Load Cell 1 Scale Factor"
+msgstr "Skalierungsfaktor Wägezelle 1"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Load Cell 2 Scale Factor"
+msgstr "Skalierungsfaktor Wägezelle 2"
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Load first"
+msgstr "Zuerst laden"
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Load shot data first by expanding the shot"
+msgstr "Lade zuerst die Shot-Daten, indem du den Shot ausklappst"
+
+#: src/pages/Settings/index.jsx
+msgid "Loaded {importCount, plural, one {# setting} other {# settings}} from {importName}. All other settings are kept. Save to apply."
+msgstr "{importCount, plural, one {# Einstellung} other {# Einstellungen}} aus {importName} geladen. Alle anderen Einstellungen bleiben erhalten. Zum Übernehmen speichern."
+
+#: src/components/Spinner.jsx
+msgid "Loading"
+msgstr "Lädt"
+
+#: src/pages/Statistics/components/toolbar/helpers.js
+msgid "loading candidates"
+msgstr "Kandidaten werden geladen"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Loading profiles"
+msgstr "Profile werden geladen"
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Loading shot data..."
+msgstr "Shot-Daten werden geladen..."
+
+#: src/pages/ShotAnalyzer/components/EmptyState.jsx
+msgid "Local Browser Storage (WEB)"
+msgstr "Lokaler Browserspeicher (WEB)"
+
+#: src/pages/Statistics/components/StatisticsSearchHelp.jsx
+msgid "Local browser time is used."
+msgstr "Es wird die lokale Browserzeit verwendet."
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Longest Duration"
+msgstr "Längste Dauer"
+
+#: src/pages/Statistics/components/ActivityHeatmap.jsx
+msgid "Longest streak:"
+msgstr "Längste Serie:"
+
+#: src/app/MachineSetup.jsx
+msgid "Looking for machines… If yours doesn't show up, add it by its address."
+msgstr "Suche nach Maschinen… Falls deine nicht erscheint, füge sie über ihre Adresse hinzu."
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Lowest ID first"
+msgstr "Niedrigste ID zuerst"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Lowest Rated"
+msgstr "Am schlechtesten bewertet"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Lowest Volume"
+msgstr "Niedrigstes Volumen"
+
+#: src/pages/Settings/PluginCard.jsx
+msgctxt "Monday, one letter"
+msgid "M"
+msgstr "M"
+
+#: src/pages/Statistics/components/ActivityHeatmap.jsx
+msgctxt "weekday initial: Monday"
+msgid "M"
+msgstr "M"
+
+#: src/pages/Settings/index.jsx
+msgctxt "settings tab"
+msgid "Machine"
+msgstr "Maschine"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Machine address for the grinder"
+msgstr "Maschinenadresse für die Mühle"
+
+#: src/app/notifications.js
+msgid "Machine error"
+msgstr "Maschinenfehler"
+
+#: src/app/notifications.js
+msgid "Machine events"
+msgstr "Maschinenereignisse"
+
+#: src/pages/Home/cards/ActionCard.jsx
+msgid "Machine is ready, wake up to use"
+msgstr "Maschine ist bereit, zum Verwenden aufwecken"
+
+#: src/app/appSettings.js
+msgid "Machine preheated"
+msgstr "Maschine vorgeheizt"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Machine Settings"
+msgstr "Maschineneinstellungen"
+
+#: src/app/AppSettings.jsx
+#: src/app/MachineSwitcher.jsx
+msgid "Machines"
+msgstr "Maschinen"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Main Brightness (1-16)"
+msgstr "Haupthelligkeit (1-16)"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/compareControls.jsx
+msgid "Main Shot"
+msgstr "Haupt-Shot"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Maintain Flow"
+msgstr "Durchfluss halten"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Maintain Pressure"
+msgstr "Druck halten"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Maintenance & Support"
+msgstr "Wartung & Support"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Make sure to backup your profiles from the profiles screen before updating the display."
+msgstr "Sichere deine Profile über die Profilseite, bevor du das Display aktualisierst."
+
+#: src/app/AppSettings.jsx
+msgid "Manage machines"
+msgstr "Maschinen verwalten"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Manual date filter is active."
+msgstr "Manueller Datumsfilter ist aktiv."
+
+#: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
+msgid "Manually stopped"
+msgstr "Manuell gestoppt"
+
+#: src/pages/ShotAnalyzer/utils/formatting.js
+msgid "Manually Stopped"
+msgstr "Manuell gestoppt"
+
+#: src/pages/Settings/tabs/CleaningSection.jsx
+msgid "Mark complete"
+msgstr "Als erledigt markieren"
+
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+msgid "Max"
+msgstr "Max."
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Max Pressure"
+msgstr "Max. Druck"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Max Recent Shots"
+msgstr "Max. letzte Shots"
+
+#: src/pages/ShotAnalyzer/components/library/libraryDisplay.js
+msgid "Maximum {MAX_PINNED_PROFILES} pinned profiles"
+msgstr "Maximal {MAX_PINNED_PROFILES} angeheftete Profile"
+
+#: src/pages/ShotAnalyzer/components/library/libraryDisplay.js
+msgid "Maximum {MAX_PINNED_SHOTS_PER_PROFILE} pinned shots per profile"
+msgstr "Maximal {MAX_PINNED_SHOTS_PER_PROFILE} angeheftete Shots pro Profil"
+
+#: src/pages/ShotAnalyzer/components/library/libraryDisplay.js
+msgid "Maximum {MAX_PINNED_SHOTS_PER_PROFILE} pinned shots without a profile"
+msgstr "Maximal {MAX_PINNED_SHOTS_PER_PROFILE} angeheftete Shots ohne Profil"
+
+#: src/pages/Statistics/components/statisticsView/helpers.js
+msgid "Maximum {maxPinned} pinned profiles"
+msgstr "Maximal {maxPinned} angeheftete Profile"
+
+#: src/pages/Statistics/components/statisticsView/helpers.js
+msgid "Maximum {maxPinned} pinned shots per profile"
+msgstr "Maximal {maxPinned} angeheftete Shots pro Profil"
+
+#: src/pages/Statistics/components/statisticsView/helpers.js
+msgid "Maximum {maxPinned} pinned shots without a profile"
+msgstr "Maximal {maxPinned} angeheftete Shots ohne Profil"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Maximum Flow"
+msgstr "Maximaler Durchfluss"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Maximum Flow (0 = Ignore)"
+msgstr "Maximaler Durchfluss (0 = ignorieren)"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Maximum Pressure"
+msgstr "Maximaler Druck"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Maximum Pressure (0 = Ignore)"
+msgstr "Maximaler Druck (0 = ignorieren)"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Maximum Pump Power (0 - 1)"
+msgstr "Maximale Pumpenleistung (0 - 1)"
+
+#: src/pages/ShotAnalyzer/services/ReplayVideoExportService.js
+msgid "MediaRecorder is not supported in this browser."
+msgstr "MediaRecorder wird in diesem Browser nicht unterstützt."
+
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+msgid "Metric"
+msgstr "Metrik"
+
+#: src/pages/ShotAnalyzer/components/shotChart/MobileMetricPager.jsx
+msgid "Metric pages"
+msgstr "Metrikseiten"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Metric Selection"
+msgstr "Metrikauswahl"
+
+#: src/components/OverviewChart.jsx
+msgid "Metrics - Recent Brew"
+msgstr "Metriken – letzter Bezug"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Metrics Columns"
+msgstr "Metrikspalten"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "milliliter per second"
+msgstr "Milliliter pro Sekunde"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "millimeter"
+msgstr "Millimeter"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "milliseconds"
+msgstr "Millisekunden"
+
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+msgid "Min"
+msgstr "Min."
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+#: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
+msgctxt "column type"
+msgid "Min/Max"
+msgstr "Min./Max."
+
+#: src/pages/Settings/PluginCard.jsx
+msgctxt "smart grind mode"
+msgid "Mode"
+msgstr "Modus"
+
+#: src/utils/panelDefinitions.js
+msgid "Mode Selector"
+msgstr "Modusauswahl"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Momentary Buttons"
+msgstr "Taster"
+
+#: src/pages/Settings/PluginCard.jsx
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
+msgid "Monday"
+msgstr "Montag"
+
+#: src/pages/Statistics/components/TrendChart.jsx
+msgctxt "time bucket"
+msgid "Month"
+msgstr "Monat"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/MobileStatusActionsMenu.jsx
+#: src/pages/ShotAnalyzer/components/library/LibraryActionsMenu.jsx
+msgid "More actions"
+msgstr "Weitere Aktionen"
+
+#: src/pages/Settings/index.jsx
+msgid "More options"
+msgstr "Weitere Optionen"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Move {label} to bottom"
+msgstr "{label} nach unten verschieben"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Move {label} to top"
+msgstr "{label} nach oben verschieben"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Move to bottom"
+msgstr "Nach unten verschieben"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Move to top"
+msgstr "Nach oben verschieben"
+
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "Moving-window length (samples) used for slope estimation. Larger values smooth MAX31855 quantisation but lag the inflection. 6 is the sweet spot."
+msgstr "Länge des gleitenden Fensters (Messwerte) für die Steigungsschätzung. Größere Werte glätten die MAX31855-Quantisierung, verzögern aber den Wendepunkt. 6 ist der ideale Wert."
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "MQTT IP"
+msgstr "MQTT-IP"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "MQTT Password"
+msgstr "MQTT-Passwort"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "MQTT Port"
+msgstr "MQTT-Port"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "MQTT User"
+msgstr "MQTT-Benutzer"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgid "Multi-Compare"
+msgstr "Mehrfachvergleich"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Multiple Cards"
+msgstr "Mehrere Karten"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Must match the physical RATE-jumper configuration on the HX711 board. This setting does not switch the RATE pin."
+msgstr "Muss der physischen RATE-Jumper-Konfiguration auf der HX711-Platine entsprechen. Diese Einstellung schaltet den RATE-Pin nicht um."
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Name"
+msgstr "Name"
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Name (A-Z)"
+msgstr "Name (A–Z)"
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Name (Z-A)"
+msgstr "Name (Z–A)"
+
+#: src/app/MachineSetup.jsx
+msgid "Name <0>(optional)</0>"
+msgstr "Name <0>(optional)</0>"
+
+#: src/app/MachineSetup.jsx
+msgid "Name for {host}"
+msgstr "Name für {host}"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
+msgid "Name for new Preset:"
+msgstr "Name für neue Voreinstellung:"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Name..."
+msgstr "Name..."
+
+#: src/services/VisualizerService.js
+msgid "Network error: Unable to connect to visualizer.coffee"
+msgstr "Netzwerkfehler: Verbindung zu visualizer.coffee nicht möglich"
+
+#: src/pages/Settings/tabs/CleaningSection.jsx
+msgid "Never"
+msgstr "Nie"
+
+#: src/components/Navigation.jsx
+msgid "NEW"
+msgstr "NEU"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "New shot did not appear in history — was it cancelled?"
+msgstr "Neuer Shot ist nicht im Verlauf erschienen – wurde er abgebrochen?"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Newest First"
+msgstr "Neueste zuerst"
+
+#: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+#: src/pages/ShotHistory/index.jsx
+msgid "Next"
+msgstr "Weiter"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgid "Next shot"
+msgstr "Nächster Shot"
+
+#: src/app/AppSettings.jsx
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgctxt "update channel"
+msgid "Nightly"
+msgstr "Nightly"
+
+#: src/app/AppSettings.jsx
+msgid "Nightly gets new features first, built from the same code as the nightly firmware."
+msgstr "Nightly erhält neue Funktionen zuerst und wird aus demselben Code wie die Nightly-Firmware erstellt."
+
+#: src/app/machines.js
+msgid "no answer (timed out)"
+msgstr "keine Antwort (Zeitüberschreitung)"
+
+#: src/pages/Statistics/components/statisticsView/helpers.js
+#: src/pages/Statistics/components/toolbar/helpers.js
+msgid "No date"
+msgstr "Kein Datum"
+
+#: src/pages/Statistics/components/toolbar/helpers.js
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "No dates"
+msgstr "Keine Daten"
+
+#: src/pages/Home/cards/FavoriteProfilesCard.jsx
+msgid "No favorites — mark profiles as ★ in the profile list"
+msgstr "Keine Favoriten – markiere Profile in der Profilliste mit ★"
+
+#: src/pages/ProfileEdit/ProfileImageUpload.jsx
+msgid "No image"
+msgstr "Kein Bild"
+
+#: src/pages/Statistics/components/StatisticsMultiSelectDropdown.jsx
+msgid "No items found."
+msgstr "Keine Einträge gefunden."
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "No more types available"
+msgstr "Keine weiteren Typen verfügbar"
+
+#: src/pages/ShotHistory/ShotNotesCard.jsx
+msgid "No notes added"
+msgstr "Keine Notizen hinzugefügt"
+
+#: src/app/MachineSetup.jsx
+msgid "No other machines found."
+msgstr "Keine anderen Maschinen gefunden."
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "No other profile found to switch back to."
+msgstr "Kein anderes Profil zum Zurückwechseln gefunden."
+
+#: src/pages/ProfileList/index.jsx
+msgid "No phases"
+msgstr "Keine Phasen"
+
+#: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+msgid "No phases yet. Add a phase to configure brewing."
+msgstr "Noch keine Phasen. Füge eine Phase hinzu, um den Bezug zu konfigurieren."
+
+#: src/pages/Statistics/components/StatisticsMultiSelectDropdown.jsx
+msgid "No pinned items found."
+msgstr "Keine angehefteten Einträge gefunden."
+
+#: src/pages/ShotAnalyzer/utils/formatting.js
+msgid "No preceding phase"
+msgstr "Keine vorherige Phase"
+
+#: src/pages/ShotAnalyzer/components/library/libraryDisplay.js
+msgid "No Profile Loaded"
+msgstr "Kein Profil geladen"
+
+#: src/pages/ShotAnalyzer/services/analyzer/shotAnalysis.js
+msgid "No sample data available for analysis."
+msgstr "Keine Messdaten für die Analyse verfügbar."
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "No scales found"
+msgstr "Keine Waagen gefunden"
+
+#: src/pages/ShotAnalyzer/components/EmptyState.jsx
+#: src/pages/ShotAnalyzer/components/library/libraryDisplay.js
+#: src/pages/ShotAnalyzer/components/useShotNotesState.js
+msgid "No Shot Loaded"
+msgstr "Kein Shot geladen"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "No shots available"
+msgstr "Keine Shots verfügbar"
+
+#: src/pages/Statistics/components/statisticsView/StatisticsView.jsx
+msgid "No shots found for the selected filters."
+msgstr "Keine Shots für die gewählten Filter gefunden."
+
+#: src/pages/ShotHistory/index.jsx
+msgid "No shots match your search and filter criteria"
+msgstr "Keine Shots entsprechen deinen Such- und Filterkriterien"
+
+#: src/pages/Statistics/components/statisticsView/StatisticsView.jsx
+msgid "No Statistics Built Yet"
+msgstr "Noch keine Statistiken erstellt"
+
+#: src/pages/ShotAnalyzer/services/ReplayVideoExportService.js
+msgid "No supported video recorder was found for replay export."
+msgstr "Kein unterstützter Videorecorder für den Replay-Export gefunden."
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/compareControls.jsx
+msgid "No Targets"
+msgstr "Keine Ziele"
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "No timestamp available"
+msgstr "Kein Zeitstempel verfügbar"
+
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "No valid gains were produced. Your existing PID settings have been preserved. Try increasing Test Duration or confirm the boiler was cold at start."
+msgstr "Es wurden keine gültigen Verstärkungen ermittelt. Deine bestehenden PID-Einstellungen wurden beibehalten. Erhöhe die Testdauer oder stelle sicher, dass der Boiler zu Beginn kalt war."
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgctxt "button behavior"
+msgid "None"
+msgstr "Keine"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgctxt "relay function"
+msgid "None"
+msgstr "Keine"
+
+#: src/components/PumpFlowCalibration/Footer.jsx
+msgid "Not connected to the machine"
+msgstr "Nicht mit der Maschine verbunden"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Not connected to Wi-Fi"
+msgstr "Nicht mit Wi-Fi verbunden"
+
+#: src/utils/pumpFlowCalibration.js
+msgid "Not enough samples for tp={targetPressure} bar (Measure phase). Was the valve closed enough to reach {targetPressure} bar?"
+msgstr "Nicht genug Messwerte für tp={targetPressure} bar (Measure-Phase). War das Ventil weit genug geschlossen, um {targetPressure} bar zu erreichen?"
+
+#: src/app/MachineSetup.jsx
+msgid "Not found"
+msgstr "Nicht gefunden"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Not in range. Switch it on to reconnect."
+msgstr "Nicht in Reichweite. Schalte sie ein, um die Verbindung wiederherzustellen."
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Not rated"
+msgstr "Nicht bewertet"
+
+#: src/pages/ShotAnalyzer/services/analyzer/shotAnalysis.js
+msgid "Not recorded"
+msgstr "Nicht aufgezeichnet"
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
+#: src/pages/ShotAnalyzer/shotAnalyzer/ActiveAnalysisView.jsx
+#: src/pages/ShotHistory/ShotNotesCard.jsx
+msgid "Notes"
+msgstr "Notizen"
+
+#: src/app/AppSettings.jsx
+msgid "Notifications"
+msgstr "Benachrichtigungen"
+
+#: src/app/AppSettings.jsx
+msgid "Notifications are blocked. Allow them for GaggiMate in your phone's settings."
+msgstr "Benachrichtigungen sind blockiert. Erlaube sie für GaggiMate in den Einstellungen deines Smartphones."
+
+#: src/pages/Home/cards/ProfileCard.jsx
+msgid "Now Brewing"
+msgstr "Bezug läuft"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgctxt "pump mode"
+msgid "Off"
+msgstr "Aus"
+
+#: src/app/FirmwareWarning.jsx
+msgid "Old firmware"
+msgstr "Alte Firmware"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Oldest First"
+msgstr "Älteste zuerst"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "On startup (s)"
+msgstr "Beim Start (s)"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "On steam deactivate (s)"
+msgstr "Beim Deaktivieren von Dampf (s)"
+
+#: src/app/MachineSetup.jsx
+msgid "On this network"
+msgstr "In diesem Netzwerk"
+
+#: src/pages/ShotAnalyzer/components/library/libraryImport.js
+msgid "Only profile files can be imported in the profile field."
+msgstr "Im Profilfeld können nur Profildateien importiert werden."
+
+#: src/pages/ShotAnalyzer/components/library/libraryImport.js
+msgid "Only shot files can be imported in the shot field."
+msgstr "Im Shot-Feld können nur Shot-Dateien importiert werden."
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgctxt "valve state"
+msgid "Open"
+msgstr "Offen"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Open actions menu for {label} profile"
+msgstr "Aktionsmenü für Profil {label} öffnen"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+msgid "Open full display"
+msgstr "Vollanzeige öffnen"
+
+#: src/pages/Home/cards/RecentShotsCard.jsx
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Open in Analyzer"
+msgstr "Im Analyzer öffnen"
+
+#: src/pages/ShotAnalyzer/components/library/StatusBar.jsx
+msgid "Open library"
+msgstr "Bibliothek öffnen"
+
+#: src/pages/ShotAnalyzer/components/EmptyState.jsx
+msgid "Open or close the library."
+msgstr "Bibliothek öffnen oder schließen."
+
+#: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
+msgid "Open profile actions menu"
+msgstr "Profil-Aktionsmenü öffnen"
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Open profiles actions menu"
+msgstr "Profile-Aktionsmenü öffnen"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
+msgid "Open shot actions menu"
+msgstr "Shot-Aktionsmenü öffnen"
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Open shots actions menu"
+msgstr "Shots-Aktionsmenü öffnen"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgid "Open statistics"
+msgstr "Statistiken öffnen"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/MobileStatusActionsMenu.jsx
+msgid "Open status actions menu"
+msgstr "Status-Aktionsmenü öffnen"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Open the Home app on your iOS device, select Add Accessory, and enter the setup code shown above."
+msgstr "Öffne die Home-App auf deinem iOS-Gerät, wähle Gerät hinzufügen und gib den oben angezeigten Setup-Code ein."
+
+#: src/pages/ShotAnalyzer/components/EmptyState.jsx
+msgid "Opens imported external shots and profiles temporarily without saving them to the browser library."
+msgstr "Öffnet importierte externe Shots und Profile vorübergehend, ohne sie in der Browserbibliothek zu speichern."
+
+#: src/pages/ProfileEdit/ProfileMainInformation.jsx
+msgid "Optional description for this profile"
+msgstr "Optionale Beschreibung für dieses Profil"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgctxt "stop condition separator"
+msgid "OR"
+msgstr "ODER"
+
+#: src/pages/Settings/tabs/CleaningSection.jsx
+msgid "Or every"
+msgstr "Oder alle"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Pack to top"
+msgstr "Oben stapeln"
+
+#: src/pages/_404.jsx
+msgid "Page not found"
+msgstr "Seite nicht gefunden"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Panel Selection"
+msgstr "Panelauswahl"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Parsed {sampleCount} samples (v{version})."
+msgstr "{sampleCount} Messwerte eingelesen (v{version})."
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "password"
+msgstr "Passwort"
+
+#: src/components/VisualizerUploadModal.jsx
+msgid "Password"
+msgstr "Passwort"
+
+#: src/pages/Home/utils.js
+msgctxt "process action"
+msgid "Pause"
+msgstr "Pausieren"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+msgid "Pause replay"
+msgstr "Replay pausieren"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMetricCards.jsx
+msgid "Peak Pressure"
+msgstr "Spitzendruck"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/compareControls.jsx
+msgid "Per Shot"
+msgstr "Pro Shot"
+
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+#: src/pages/Statistics/components/statisticsView/StatisticsDetailSection.jsx
+msgid "Per-phase statistics"
+msgstr "Statistiken pro Phase"
+
+#: src/pages/Statistics/components/ProfileGroupTable.jsx
+#: src/pages/Statistics/components/statisticsView/StatisticsDetailSection.jsx
+msgid "Per-profile statistics"
+msgstr "Statistiken pro Profil"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "percent"
+msgstr "Prozent"
+
+#: src/pages/ShotAnalyzer/components/shotChart/single/createShotChartConfigs.js
+msgid "Phase"
+msgstr "Phase"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTableChrome.jsx
+msgctxt "table column"
+msgid "Phase"
+msgstr "Phase"
+
+#: src/pages/ShotAnalyzer/services/analyzer/phaseAnalysis.js
+msgid "Phase {phaseNum}"
+msgstr "Phase {phaseNum}"
+
+#: src/components/ExtendedProfileChart.jsx
+#: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTable.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/compare/compareModel.js
+#: src/pages/ShotAnalyzer/components/shotChart/tooltip/tooltipModel.js
+#: src/pages/ShotHistory/HistoryChart.jsx
+#: src/pages/Statistics/services/StatisticsService.js
+msgid "Phase {phaseNumber}"
+msgstr "Phase {phaseNumber}"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Phase {phaseNumber} configuration"
+msgstr "Konfiguration von Phase {phaseNumber}"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/compareModel.js
+#: src/pages/ShotAnalyzer/components/shotChart/tooltip/tooltipModel.js
+msgid "Phase {phaseNumber}: {phaseName}"
+msgstr "Phase {phaseNumber}: {phaseName}"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Phase Name"
+msgstr "Phasenname"
+
+#: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+msgid "Phase navigation"
+msgstr "Phasennavigation"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgid "PHASE REVIEW ADVISED"
+msgstr "PHASENPRÜFUNG EMPFOHLEN"
+
+#: src/pages/ShotAnalyzer/utils/formatting.js
+msgid "Phase skipped"
+msgstr "Phase übersprungen"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Phase Type"
+msgstr "Phasentyp"
+
+#: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+msgid "Phases"
+msgstr "Phasen"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Physical Buttons"
+msgstr "Physische Tasten"
+
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "PID Autotune"
+msgstr "PID-Autotune"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "PID Values"
+msgstr "PID-Werte"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
+msgid "Pin {displayName}"
+msgstr "{displayName} anheften"
+
+#: src/pages/Statistics/components/StatisticsMultiSelectDropdown.jsx
+msgid "Pin {itemName}"
+msgstr "{itemName} anheften"
+
+#: src/pages/Statistics/components/StatisticsMultiSelectDropdown.jsx
+msgid "Pin {singularLabel}"
+msgstr "{singularLabel} anheften"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
+msgid "Pin profile"
+msgstr "Profil anheften"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
+msgid "Pin shot"
+msgstr "Shot anheften"
+
+#: src/pages/Statistics/utils/statisticsSearchDsl.js
+msgid "pinned: use true or false."
+msgstr "pinned: verwende true oder false."
+
+#: src/components/PumpFlowCalibration/IdleSection.jsx
+msgid "Place a scale with a cup under the steam wand. Close the steam valve just enough so the machine can reach the target pressure during each <0>Build</0> phase."
+msgstr "Stelle eine Waage mit einer Tasse unter die Dampflanze. Schließe das Dampfventil gerade so weit, dass die Maschine in jeder <0>Build</0>-Phase den Zieldruck erreichen kann."
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Play statistics"
+msgstr "Statistiken abspielen"
+
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "Please ensure the boiler temperature is below 50°C before starting the autotune process."
+msgstr "Stelle sicher, dass die Boilertemperatur unter 50°C liegt, bevor du das Autotune startest."
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Please ensure the scale is showing a weight and enter a valid calibration weight."
+msgstr "Stelle sicher, dass die Waage ein Gewicht anzeigt, und gib ein gültiges Kalibriergewicht ein."
+
+#: src/components/VisualizerUploadModal.jsx
+msgid "Please enter both username and password"
+msgstr "Bitte gib Benutzername und Passwort ein"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Please wake up GaggiMate from Standby to use Bluetooth scales."
+msgstr "Bitte wecke GaggiMate aus dem Standby, um Bluetooth-Waagen zu verwenden."
+
+#: src/pages/Settings/index.jsx
+#: src/pages/Settings/tabs/PluginsTab.jsx
+msgid "Plugins"
+msgstr "Plugins"
+
+#: src/pages/ProfileEdit/ProfileImageUpload.jsx
+msgid "PNG, JPEG, WebP or BMP. GIFs are not supported. The image is cropped to a square and scaled to 300×300 pixels for the display."
+msgstr "PNG, JPEG, WebP oder BMP. GIFs werden nicht unterstützt. Das Bild wird für das Display quadratisch zugeschnitten und auf 300×300 Pixel skaliert."
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgctxt "pump mode"
+msgid "Power"
+msgstr "Leistung"
+
+#: src/pages/Settings/tabs/HeaterCoordinationSection.jsx
+msgid "Power the heaters one at a time instead of in parallel, brew boiler first. Only needed when the circuit cannot carry both heaters at once (e.g. 120 V); 230 V supplies can run both."
+msgstr "Die Heizungen nacheinander statt parallel betreiben, zuerst den Brühboiler. Nur nötig, wenn der Stromkreis nicht beide Heizungen gleichzeitig tragen kann (z. B. 120 V); bei 230 V können beide laufen."
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+#: src/pages/ProfileList/index.jsx
+msgid "Pre-Infusion"
+msgstr "Präinfusion"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Predictive Scale Delay"
+msgstr "Vorausschauende Waagenverzögerung"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Prefer Bluetooth Scale"
+msgstr "Bluetooth-Waage bevorzugen"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Prefer Hardware Scale (Built-in)"
+msgstr "Hardware-Waage bevorzugen (integriert)"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Preferred Scale Source"
+msgstr "Bevorzugte Waagenquelle"
+
+#: src/pages/Home/cards/ActionCard.jsx
+msgid "Preheating..."
+msgstr "Heizt vor..."
+
+#: src/pages/Home/utils.js
+msgid "Preinfusion"
+msgstr "Präinfusion"
+
+#: src/pages/ShotAnalyzer/components/shotChart/constants.js
+msgid "Preparing MP4 export..."
+msgstr "MP4-Export wird vorbereitet..."
+
+#: src/pages/ShotAnalyzer/components/shotChart/constants.js
+msgid "Preparing shot JSON..."
+msgstr "Shot-JSON wird vorbereitet..."
+
+#: src/pages/Statistics/components/statisticsView/StatisticsView.jsx
+msgid "Preparing statistics..."
+msgstr "Statistiken werden vorbereitet..."
+
+#: src/pages/ShotAnalyzer/components/shotChart/constants.js
+msgid "Preparing WebM export..."
+msgstr "WebM-Export wird vorbereitet..."
+
+#: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
+msgid "Presets..."
+msgstr "Voreinstellungen..."
+
+#: src/pages/Statistics/components/statisticsView/StatisticsView.jsx
+msgid "Press <0><1/></0> to build a statistic."
+msgstr "Drücke <0><1/></0>, um eine Statistik zu erstellen."
+
+#: src/components/ExtendedProfileChart.jsx
+#: src/pages/Home/cards/ProfileCard.jsx
+#: src/pages/Home/cards/RecentShotsCard.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+#: src/pages/Statistics/components/MetricsTable.jsx
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+#: src/utils/metricDefinitions.js
+msgid "Pressure"
+msgstr "Druck"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgctxt "pump mode"
+msgid "Pressure"
+msgstr "Druck"
+
+#: src/components/ExtendedProfileChart.jsx
+#: src/pages/ShotAnalyzer/utils/columns.js
+#: src/pages/ShotAnalyzer/utils/constants.js
+msgid "Pressure (bar)"
+msgstr "Druck (bar)"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/single/SingleShotMetricPreview.jsx
+msgid "Pressure & Pump Flow"
+msgstr "Druck & Pumpendurchfluss"
+
+#: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
+msgid "Pressure above"
+msgstr "Druck über"
+
+#: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
+msgid "Pressure below"
+msgstr "Druck unter"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Pressure in bar"
+msgstr "Druck in bar"
+
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Pressure Limit"
+msgstr "Druckgrenze"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Pressure Offset"
+msgstr "Druck-Offset"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Pressure polynomial (a,b,c,d) for vane-/gear-pump internal leakage. Leave at 0,0,0,0 if uncalibrated."
+msgstr "Druckpolynom (a,b,c,d) für die interne Leckage von Flügelzellen-/Zahnradpumpen. Bei fehlender Kalibrierung auf 0,0,0,0 lassen."
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Pressure Sensor Rating"
+msgstr "Nennwert des Drucksensors"
+
+#: src/pages/ShotAnalyzer/utils/formatting.js
+msgid "Pressure Stop"
+msgstr "Druckstopp"
+
+#: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
+msgid "Pressure target"
+msgstr "Druckziel"
+
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Pressure Target"
+msgstr "Druckziel"
+
+#: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+#: src/pages/ShotHistory/index.jsx
+msgid "Previous"
+msgstr "Zurück"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgid "Previous shot"
+msgstr "Vorheriger Shot"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Previous target"
+msgstr "Vorheriges Ziel"
+
+#: src/pages/ProfileList/index.jsx
+msgctxt "profile type"
+msgid "Pro"
+msgstr "Pro"
+
+#: src/pages/ProfileEdit/ProfileTypeSelection.jsx
+msgid "Pro profile"
+msgstr "Pro-Profil"
+
+#: src/pages/ProfileEdit/ProfileTypeSelection.jsx
+msgid "Pro Profile"
+msgstr "Pro-Profil"
+
+#: src/pages/DashboardSettings/index.jsx
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Process Controls First"
+msgstr "Prozesssteuerung zuerst"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Processing shot history files ({current}/{total})"
+msgstr "Shot-Verlaufsdateien werden verarbeitet ({current}/{total})"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "profile"
+msgstr "Profil"
+
+#: src/pages/Home/cards/ProfileCard.jsx
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+#: src/pages/Statistics/components/ProfileGroupTable.jsx
+msgid "Profile"
+msgstr "Profil"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+msgctxt "export file type"
+msgid "Profile"
+msgstr "Profil"
+
+#: src/pages/ShotAnalyzer/services/LibraryService.js
+msgid "Profile {nameOrId} not found"
+msgstr "Profil {nameOrId} nicht gefunden"
+
+#: src/pages/ShotAnalyzer/services/LibraryService.js
+msgid "Profile {nameOrId} not found in browser storage"
+msgstr "Profil {nameOrId} nicht im Browserspeicher gefunden"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Profile A-Z"
+msgstr "Profil A–Z"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Profile Chart Height"
+msgstr "Höhe des Profildiagramms"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Profile details for {label}"
+msgstr "Profildetails für {label}"
+
+#: src/pages/ShotAnalyzer/services/LibraryService.js
+msgid "Profile ID missing for export"
+msgstr "Profil-ID für den Export fehlt"
+
+#: src/pages/ProfileEdit/ProfileImageUpload.jsx
+msgid "Profile image"
+msgstr "Profilbild"
+
+#: src/pages/ProfileEdit/ProfileMainInformation.jsx
+msgid "Profile Information"
+msgstr "Profilinformationen"
+
+#: src/pages/ShotAnalyzer/services/IndexedDBService.js
+msgid "Profile label is required for browser storage"
+msgstr "Für den Browserspeicher ist eine Profilbezeichnung erforderlich"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Profile list"
+msgstr "Profilliste"
+
+#: src/pages/ShotAnalyzer/components/library/StatusBar.jsx
+msgid "Profile mismatch detected. Use Import below or drop files here to import."
+msgstr "Profilabweichung erkannt. Nutze unten Importieren oder lege Dateien hier ab, um sie zu importieren."
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Profile per grinder recipe"
+msgstr "Profil pro Mühlenrezept"
+
+#: src/utils/panelDefinitions.js
+msgid "Profile Selector"
+msgstr "Profilauswahl"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
+msgid "Profile Statistics"
+msgstr "Profilstatistiken"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgid "Profile Stats"
+msgstr "Profilstatistik"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Profile type: {typeText}"
+msgstr "Profiltyp: {typeText}"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Profile Z-A"
+msgstr "Profil Z–A"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Profile: {profileLabel}"
+msgstr "Profil: {profileLabel}"
+
+#: src/components/Navigation.jsx
+#: src/pages/ProfileList/index.jsx
+#: src/pages/ShotAnalyzer/components/library/LibraryDropdown.jsx
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Profiles"
+msgstr "Profile"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Profiles ({profilePreviewCount})"
+msgstr "Profile ({profilePreviewCount})"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Progress Bar"
+msgstr "Fortschrittsbalken"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+#: src/pages/Statistics/components/MetricsTable.jsx
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+#: src/utils/metricDefinitions.js
+msgid "Puck Flow"
+msgstr "Puck-Durchfluss"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+#: src/pages/ShotAnalyzer/utils/constants.js
+msgid "Puck Flow (ml/s)"
+msgstr "Puck-Durchfluss (ml/s)"
+
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+#: src/pages/ShotAnalyzer/components/shotChart/single/SingleShotMetricPreview.jsx
+#: src/pages/Statistics/components/MetricsTable.jsx
+#: src/utils/metricDefinitions.js
+msgid "Puck Resistance"
+msgstr "Puck-Widerstand"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+#: src/pages/ShotAnalyzer/utils/constants.js
+msgid "Puck Resistance (s·√bar/mL)"
+msgstr "Puck-Widerstand (s·√bar/mL)"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Pump Assist Cutoff"
+msgstr "Abschaltung der Pumpenunterstützung"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+#: src/pages/Statistics/components/MetricsTable.jsx
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+msgid "Pump Flow"
+msgstr "Pumpendurchfluss"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+#: src/pages/ShotAnalyzer/utils/constants.js
+msgid "Pump Flow (ml/s)"
+msgstr "Pumpendurchfluss (ml/s)"
+
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "Pump Flow Calibration"
+msgstr "Kalibrierung des Pumpendurchflusses"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Pump Flow Coefficients"
+msgstr "Pumpendurchfluss-Koeffizienten"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Pump flow mode"
+msgstr "Pumpen-Durchflussmodus"
+
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Pump flow mode (PRO feature)"
+msgstr "Pumpen-Durchflussmodus (PRO-Funktion)"
+
+#: src/pages/ShotAnalyzer/utils/formatting.js
+msgid "Pump Flow Stop"
+msgstr "Pumpendurchfluss-Stopp"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Pump Maintain flow mode"
+msgstr "Pumpenmodus Durchfluss halten"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Pump Maintain pressure mode"
+msgstr "Pumpenmodus Druck halten"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Pump Mode"
+msgstr "Pumpenmodus"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Pump mode selection"
+msgstr "Auswahl des Pumpenmodus"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Pump off"
+msgstr "Pumpe aus"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+#: src/utils/metricDefinitions.js
+msgid "Pump Power"
+msgstr "Pumpenleistung"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Pump power as percentage"
+msgstr "Pumpenleistung in Prozent"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Pump power mode"
+msgstr "Pumpen-Leistungsmodus"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Pump pressure mode"
+msgstr "Pumpen-Druckmodus"
+
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Pump pressure mode (PRO feature)"
+msgstr "Pumpen-Druckmodus (PRO-Funktion)"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Pump Slip Coefficients"
+msgstr "Pumpen-Schlupfkoeffizienten"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMetricCards.jsx
+#: src/pages/Statistics/components/MetricsTable.jsx
+msgid "Pumped Water"
+msgstr "Gepumptes Wasser"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+#: src/pages/Statistics/components/TrendChart.jsx
+msgid "Pumped Water (ml)"
+msgstr "Gepumptes Wasser (ml)"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgid "Pumped Water (phase)"
+msgstr "Gepumptes Wasser (Phase)"
+
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+msgid "Pumped Water (Phase)"
+msgstr "Gepumptes Wasser (Phase)"
+
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+msgid "Pumped Water (Total)"
+msgstr "Gepumptes Wasser (gesamt)"
+
+#: src/pages/ShotAnalyzer/utils/formatting.js
+msgid "Pumped Water Stop"
+msgstr "Stopp nach gepumptem Wasser"
+
+#: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
+msgid "Pumped-water target"
+msgstr "Ziel für gepumptes Wasser"
+
+#: src/pages/Statistics/utils/statisticsSearchDsl.js
+msgid "Query clause {clauseNumber}: {valueError}"
+msgstr "Abfrageklausel {clauseNumber}: {valueError}"
+
+#: src/pages/Home/cards/FavoriteProfilesCard.jsx
+#: src/utils/panelDefinitions.js
+msgid "Quick Select"
+msgstr "Schnellauswahl"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Ramp Length"
+msgstr "Rampenlänge"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Ramp Style"
+msgstr "Rampenstil"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Ramp style selection"
+msgstr "Auswahl des Rampenstils"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Ramp Target"
+msgstr "Rampenziel"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Ramp target selection"
+msgstr "Auswahl des Rampenziels"
+
+#: src/pages/Statistics/components/MetricsTable.jsx
+msgid "Range"
+msgstr "Bereich"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Rated Only"
+msgstr "Nur bewertete"
+
+#: src/pages/ShotHistory/ShotNotesCard.jsx
+msgid "Rating"
+msgstr "Bewertung"
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Rating (High)"
+msgstr "Bewertung (hoch)"
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Rating (Low)"
+msgstr "Bewertung (niedrig)"
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
+msgid "Ratio"
+msgstr "Verhältnis"
+
+#: src/pages/ShotHistory/ShotNotesCard.jsx
+msgid "Ratio (1:{ratioLabel})"
+msgstr "Verhältnis (1:{ratioLabel})"
+
+#: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
+msgid "Ratio reached"
+msgstr "Verhältnis erreicht"
+
+#: src/pages/ShotAnalyzer/utils/formatting.js
+msgid "Ratio Stop"
+msgstr "Verhältnisstopp"
+
+#: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
+msgid "Ratio target"
+msgstr "Verhältnisziel"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+msgid "Raw Data Points"
+msgstr "Rohdatenpunkte"
+
+#: src/app/notifications.js
+msgid "Ready to brew"
+msgstr "Bereit zum Bezug"
+
+#: src/pages/Home/cards/ActionCard.jsx
+msgid "Ready to steam, open wand"
+msgstr "Bereit zum Dampfen, Dampflanze öffnen"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Rebuild Shot History"
+msgstr "Shot-Verlauf neu aufbauen"
+
+#: src/pages/DashboardSettings/index.jsx
+#: src/pages/Home/cards/RecentShotsCard.jsx
+msgid "Recent Shots"
+msgstr "Letzte Shots"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Recipe {recipe}"
+msgstr "Rezept {recipe}"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+msgid "Recorded Stop Reason"
+msgstr "Aufgezeichneter Stoppgrund"
+
+#: src/pages/ShotAnalyzer/components/shotChart/constants.js
+msgid "Recording replay..."
+msgstr "Replay wird aufgezeichnet..."
+
+#: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
+msgid "Reference shot"
+msgstr "Referenz-Shot"
+
+#: src/pages/Statistics/components/StatisticsSearchHelp.jsx
+msgid "Relative time: <0>h</0> (now), <1>h-7d</1> (7 days ago)"
+msgstr "Relative Zeit: <0>h</0> (jetzt), <1>h-7d</1> (vor 7 Tagen)"
+
+#: src/components/VisualizerUploadModal.jsx
+msgid "Remember credentials"
+msgstr "Zugangsdaten merken"
+
+#: src/app/MachineSetup.jsx
+#: src/pages/ProfileEdit/ProfileImageUpload.jsx
+msgid "Remove"
+msgstr "Entfernen"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Remove {label} from favorites"
+msgstr "{label} aus Favoriten entfernen"
+
+#: src/app/MachineSetup.jsx
+msgid "Remove {name}"
+msgstr "{name} entfernen"
+
+#: src/app/MachineSetup.jsx
+msgid "Remove {name}?"
+msgstr "{name} entfernen?"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Remove from favorites"
+msgstr "Aus Favoriten entfernen"
+
+#: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+msgid "Remove phase"
+msgstr "Phase entfernen"
+
+#: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
+msgid "Remove target"
+msgstr "Ziel entfernen"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Removing calibration profile..."
+msgstr "Kalibrierprofil wird entfernt..."
+
+#: src/app/MachineSetup.jsx
+msgid "Rename"
+msgstr "Umbenennen"
+
+#: src/app/MachineSetup.jsx
+msgid "Rename {name}"
+msgstr "{name} umbenennen"
+
+#: src/pages/ShotAnalyzer/components/shotChart/constants.js
+msgid "Rendering PNG export..."
+msgstr "PNG-Export wird gerendert..."
+
+#: src/pages/ProfileEdit/ProfileImageUpload.jsx
+msgid "Replace image"
+msgstr "Bild ersetzen"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+msgid "Replay chart"
+msgstr "Replay-Diagramm"
+
+#: src/pages/ShotAnalyzer/services/ReplayVideoExportService.js
+msgid "Replay export canvas could not be created."
+msgstr "Canvas für den Replay-Export konnte nicht erstellt werden."
+
+#: src/pages/ShotAnalyzer/components/shotChart/constants.js
+#: src/pages/ShotAnalyzer/components/shotChart/single/useShotChartReplayExport.js
+msgid "Replay export failed."
+msgstr "Replay-Export fehlgeschlagen."
+
+#: src/pages/ShotAnalyzer/components/shotChart/single/useShotChartReplayExport.js
+#: src/pages/ShotAnalyzer/services/ReplayVideoExportService.js
+msgid "Replay export is not ready yet."
+msgstr "Replay-Export ist noch nicht bereit."
+
+#: src/pages/ShotAnalyzer/services/ReplayVideoExportService.js
+msgid "Replay export timers are not supported in this environment."
+msgstr "Timer für den Replay-Export werden in dieser Umgebung nicht unterstützt."
+
+#: src/pages/ShotAnalyzer/components/shotChart/single/useShotChartReplayExport.js
+msgid "Replay export was cancelled."
+msgstr "Replay-Export wurde abgebrochen."
+
+#: src/pages/ShotAnalyzer/services/ReplayVideoExportService.js
+msgid "Replay image export could not be created."
+msgstr "Replay-Bildexport konnte nicht erstellt werden."
+
+#: src/pages/ShotAnalyzer/components/shotChart/single/useShotChartReplayExport.js
+msgid "Replay image export failed."
+msgstr "Replay-Bildexport fehlgeschlagen."
+
+#: src/pages/ShotAnalyzer/components/shotChart/single/useShotChartReplayExport.js
+#: src/pages/ShotAnalyzer/services/ReplayVideoExportService.js
+msgid "Replay image export is not ready yet."
+msgstr "Replay-Bildexport ist noch nicht bereit."
+
+#: src/pages/ShotAnalyzer/components/shotChart/single/useShotChartReplayExport.js
+msgid "Replay image export was cancelled."
+msgstr "Replay-Bildexport wurde abgebrochen."
+
+#: src/pages/ShotAnalyzer/services/ReplayVideoExportService.js
+msgid "Replay recording failed."
+msgstr "Replay-Aufzeichnung fehlgeschlagen."
+
+#: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
+msgid "Reset columns to system defaults?"
+msgstr "Spalten auf Systemstandard zurücksetzen?"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
+msgid "Reset Defaults"
+msgstr "Standard wiederherstellen"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Restoring previous profile..."
+msgstr "Vorheriges Profil wird wiederhergestellt..."
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+msgid "Resume replay"
+msgstr "Replay fortsetzen"
+
+#: src/components/PumpFlowCalibration/Footer.jsx
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "Retry"
+msgstr "Erneut versuchen"
+
+#: src/pages/ShotAnalyzer/components/library/StatusBar.jsx
+msgid "Retry automatic profile search"
+msgstr "Automatische Profilsuche wiederholen"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgid "REVIEW PHASE {phaseNumber}"
+msgstr "PHASE {phaseNumber} PRÜFEN"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgid "Review the stop reason for this phase. The algorithm was only able to identify it after several intermediate calculations."
+msgstr "Prüfe den Stoppgrund dieser Phase. Der Algorithmus konnte ihn erst nach mehreren Zwischenberechnungen bestimmen."
+
+#: src/pages/Statistics/components/StatisticsSearchHelp.jsx
+msgid "Rules are separated with <0>;</0>. Visual filters and DSL are combined with AND."
+msgstr "Regeln werden mit <0>;</0> getrennt. Visuelle Filter und DSL werden mit UND verknüpft."
+
+#: src/components/PumpFlowCalibration/Footer.jsx
+msgid "Running shot..."
+msgstr "Shot läuft..."
+
+#: src/pages/Settings/PluginCard.jsx
+msgctxt "Saturday, one letter"
+msgid "S"
+msgstr "S"
+
+#: src/pages/Settings/PluginCard.jsx
+msgctxt "Sunday, one letter"
+msgid "S"
+msgstr "S"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgctxt "column type, short for start/end"
+msgid "S/E"
+msgstr "A/E"
+
+#: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
+msgid "Safety timeout"
+msgstr "Sicherheits-Timeout"
+
+#: src/pages/ShotAnalyzer/utils/formatting.js
+msgid "Safety Timeout"
+msgstr "Sicherheits-Timeout"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTableCells.jsx
+msgid "Sample {sampleNumber}"
+msgstr "Messwert {sampleNumber}"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTableCells.jsx
+msgid "Sample {sampleNumber}: {sampleValue}"
+msgstr "Messwert {sampleNumber}: {sampleValue}"
+
+#: src/pages/Settings/PluginCard.jsx
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
+msgid "Saturday"
+msgstr "Samstag"
+
+#: src/app/MachineSetup.jsx
+#: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+#: src/pages/ShotHistory/ShotNotesCard.jsx
+msgid "Save"
+msgstr "Speichern"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgctxt "import mode"
+msgid "Save"
+msgstr "Speichern"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarModeHint.jsx
+msgctxt "import mode badge"
+msgid "SAVE"
+msgstr "SAVE"
+
+#: src/pages/Settings/StickyFormFooter.jsx
+msgid "Save & Restart"
+msgstr "Speichern & neu starten"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
+msgid "Save as New Preset"
+msgstr "Als neue Voreinstellung speichern"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
+msgid "Save as Standard"
+msgstr "Als Standard speichern"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Save Channel & Refresh"
+msgstr "Kanal speichern & aktualisieren"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
+msgid "Save current selection as your new 'Standard'?"
+msgstr "Aktuelle Auswahl als neuen „Standard“ speichern?"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Save failed: {message}"
+msgstr "Speichern fehlgeschlagen: {message}"
+
+#: src/app/MachineSetup.jsx
+msgid "Save name"
+msgstr "Name speichern"
+
+#: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Save profile"
+msgstr "Profil speichern"
+
+#: src/pages/Settings/index.jsx
+#: src/pages/Settings/StickyFormFooter.jsx
+msgid "Save Settings"
+msgstr "Einstellungen speichern"
+
+#: src/pages/ProfileEdit/ProfileImageUpload.jsx
+msgid "Save the profile first to add an image."
+msgstr "Speichere das Profil zuerst, um ein Bild hinzuzufügen."
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/MobileStatusActionsMenu.jsx
+msgid "Save to Browser"
+msgstr "Im Browser speichern"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgid "Save to Browser. Click to switch imports to View temporarily."
+msgstr "Im Browser speichern. Klicken, um Importe vorübergehend auf Ansehen umzuschalten."
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarModeHint.jsx
+msgid "Save to Browser. Imported shots and profiles will now be saved to the browser library."
+msgstr "Im Browser speichern. Importierte Shots und Profile werden jetzt in der Browserbibliothek gespeichert."
+
+#: src/components/PumpFlowCalibration/Footer.jsx
+msgid "Save to machine"
+msgstr "Auf der Maschine speichern"
+
+#: src/app/MachineSetup.jsx
+msgctxt "machine status"
+msgid "Saved"
+msgstr "Gespeichert"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgctxt "scale state"
+msgid "Saved"
+msgstr "Gespeichert"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Saved scale"
+msgstr "Gespeicherte Waage"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Saving calibration profile..."
+msgstr "Kalibrierprofil wird gespeichert..."
+
+#: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Saving profile..."
+msgstr "Profil wird gespeichert..."
+
+#: src/components/PumpFlowCalibration/Footer.jsx
+msgid "Saving..."
+msgstr "Speichert..."
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Scale"
+msgstr "Waage"
+
+#: src/utils/warnings.js
+msgid "Scale battery low"
+msgstr "Waagenakku schwach"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTableCells.jsx
+msgid "Scale Lost"
+msgstr "Waage verloren"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgid "SCALE LOST"
+msgstr "WAAGE VERLOREN"
+
+#: src/utils/warnings.js
+msgid "Scale not connected"
+msgstr "Waage nicht verbunden"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Scales"
+msgstr "Waagen"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Scales are automatically refreshed every 10 seconds. Use the scan button to discover new devices."
+msgstr "Waagen werden alle 10 Sekunden automatisch aktualisiert. Nutze die Suchtaste, um neue Geräte zu finden."
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Scan failed"
+msgstr "Suche fehlgeschlagen"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Scan for Devices"
+msgstr "Nach Geräten suchen"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Scan for nearby Bluetooth scales to connect them to GaggiMate."
+msgstr "Suche nach Bluetooth-Waagen in der Nähe, um sie mit GaggiMate zu verbinden."
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Scanning shot history files..."
+msgstr "Shot-Verlaufsdateien werden durchsucht..."
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Scanning..."
+msgstr "Suche..."
+
+#: src/components/TabBar.jsx
+msgid "Scroll tabs left"
+msgstr "Tabs nach links scrollen"
+
+#: src/components/TabBar.jsx
+msgid "Scroll tabs right"
+msgstr "Tabs nach rechts scrollen"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareChartCanvas.jsx
+msgid "Scrub compare time"
+msgstr "Vergleichszeit verschieben"
+
+#: src/pages/ShotAnalyzer/components/shotChart/single/SingleShotChart.jsx
+msgid "Scrub shot time"
+msgstr "Shot-Zeit verschieben"
+
+#: src/pages/Statistics/components/StatisticsMultiSelectDropdown.jsx
+msgid "Search {labelLower}..."
+msgstr "{labelLower} durchsuchen..."
+
+#: src/pages/Statistics/components/StatisticsSearchHelp.jsx
+msgid "Search help"
+msgstr "Suchhilfe"
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Search profiles..."
+msgstr "Profile durchsuchen..."
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Search shots..."
+msgstr "Shots durchsuchen..."
+
+#: src/pages/ProfileList/index.jsx
+#: src/pages/ShotHistory/index.jsx
+msgid "Search..."
+msgstr "Suchen..."
+
+#: src/app/MachineSetup.jsx
+msgid "Searching"
+msgstr "Suche"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "seconds"
+msgstr "Sekunden"
+
+#: src/pages/Statistics/components/StatisticsMultiSelectDropdown.jsx
+msgid "Select {itemName}"
+msgstr "{itemName} auswählen"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Select {label} profile"
+msgstr "Profil {label} auswählen"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Select a JSON file containing profile data to import"
+msgstr "Wähle eine JSON-Datei mit Profildaten zum Importieren"
+
+#: src/pages/Statistics/components/statisticsView/helpers.js
+msgid "Select one or more profiles."
+msgstr "Wähle ein oder mehrere Profile."
+
+#: src/pages/Statistics/components/statisticsView/helpers.js
+msgid "Select one or more shots."
+msgstr "Wähle einen oder mehrere Shots."
+
+#: src/pages/ProfileEdit/ProfileTypeSelection.jsx
+msgid "Select Pro profile type"
+msgstr "Profiltyp Pro wählen"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Select Profiles..."
+msgstr "Profile auswählen..."
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Select shot and profile sources"
+msgstr "Shot- und Profilquellen auswählen"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Select Shots..."
+msgstr "Shots auswählen..."
+
+#: src/pages/ProfileEdit/ProfileTypeSelection.jsx
+msgid "Select simple profile type"
+msgstr "Profiltyp Einfach wählen"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Select statistics mode"
+msgstr "Statistikmodus wählen"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Select the type of brew phase"
+msgstr "Wähle den Typ der Bezugsphase"
+
+#: src/pages/Statistics/components/StatisticsMultiSelectDropdown.jsx
+msgid "Select..."
+msgstr "Auswählen..."
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Selecting calibration profile..."
+msgstr "Kalibrierprofil wird ausgewählt..."
+
+#: src/services/VisualizerService.js
+msgid "Server error - the API may not support this data format or account type"
+msgstr "Serverfehler – die API unterstützt dieses Datenformat oder diesen Kontotyp möglicherweise nicht"
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
+msgid "Set rating to {value} of 5"
+msgstr "Bewertung auf {value} von 5 setzen"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Set to 0 to disable feedforward control."
+msgstr "Auf 0 setzen, um die Vorsteuerung zu deaktivieren."
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Set to current measurement: {distance}mm"
+msgstr "Auf aktuellen Messwert setzen: {distance}mm"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Sets the height of the profile chart preview shown in the Profile Selector panel."
+msgstr "Legt die Höhe der Profildiagramm-Vorschau im Panel Profilauswahl fest."
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Sets the maximum number of columns. On smaller screens, fewer columns are used to keep metrics readable."
+msgstr "Legt die maximale Anzahl an Spalten fest. Auf kleineren Bildschirmen werden weniger Spalten verwendet, damit die Metriken lesbar bleiben."
+
+#: src/components/Navigation.jsx
+#: src/pages/Settings/index.jsx
+msgid "Settings"
+msgstr "Einstellungen"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Settings for this phone, like the theme and notifications, are in <0>App Settings</0>. The dashboard layout is in the dashboard's customize view."
+msgstr "Einstellungen für dieses Smartphone, etwa Design und Benachrichtigungen, findest du unter <0>App-Einstellungen</0>. Das Dashboard-Layout wird in der Anpassungsansicht des Dashboards festgelegt."
+
+#: src/pages/Settings/index.jsx
+msgid "Settings have not loaded yet."
+msgstr "Die Einstellungen wurden noch nicht geladen."
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+msgid "Share"
+msgstr "Teilen"
+
+#: src/pages/Statistics/components/StatisticsMultiSelectDropdown.jsx
+msgid "Shift = Range"
+msgstr "Umschalt = Bereich"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Shortest Duration"
+msgstr "Kürzeste Dauer"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "shot"
+msgstr "Shot"
+
+#: src/pages/Statistics/components/toolbar/constants.js
+msgctxt "date basis"
+msgid "Shot"
+msgstr "Shot"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+msgctxt "export file type"
+msgid "Shot"
+msgstr "Shot"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTableChrome.jsx
+msgctxt "table column"
+msgid "Shot"
+msgstr "Shot"
+
+#: src/pages/ShotAnalyzer/services/LibraryService.js
+msgid "Shot {idStr} not found in browser storage"
+msgstr "Shot {idStr} nicht im Browserspeicher gefunden"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTable.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/compare/compareChartConfig.js
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/controls/compareControls.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/tooltip/tooltipModel.js
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsPanel.jsx
+msgid "Shot {shotNumber}"
+msgstr "Shot {shotNumber}"
+
+#: src/pages/ShotAnalyzer/shotAnalyzer/ActiveAnalysisView.jsx
+msgid "Shot analysis table"
+msgstr "Shot-Analysetabelle"
+
+#: src/components/Navigation.jsx
+msgid "Shot Analyzer"
+msgstr "Shot Analyzer"
+
+#: src/pages/ShotAnalyzer/components/library/AnalyzerPanelSlot.jsx
+msgid "Shot and profile import dropzone"
+msgstr "Ablagebereich für Shot- und Profilimport"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Shot Card Metrics"
+msgstr "Metriken der Shot-Karte"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Shot Chart"
+msgstr "Shot-Diagramm"
+
+#: src/pages/Statistics/components/StatisticsShotCompareSection.jsx
+#: src/pages/Statistics/components/statisticsView/StatisticsDetailSection.jsx
+msgid "Shot Charts"
+msgstr "Shot-Diagramme"
+
+#: src/utils/panelDefinitions.js
+msgid "Shot Controls"
+msgstr "Shot-Steuerung"
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Shot data is invalid or incomplete"
+msgstr "Shot-Daten sind ungültig oder unvollständig"
+
+#: src/components/PumpFlowCalibration/api.js
+msgid "Shot file remained empty after {seconds}s"
+msgstr "Shot-Datei war nach {seconds}s noch leer"
+
+#: src/app/appSettings.js
+#: src/app/notifications.js
+msgid "Shot finished"
+msgstr "Shot beendet"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Shot finished. Waiting for it to be saved to history..."
+msgstr "Shot beendet. Warte darauf, dass er im Verlauf gespeichert wird..."
+
+#: src/components/Navigation.jsx
+#: src/pages/ShotHistory/index.jsx
+msgid "Shot History"
+msgstr "Shot-Verlauf"
+
+#: src/pages/ShotAnalyzer/services/LibraryService.js
+msgid "Shot ID missing for export"
+msgstr "Shot-ID für den Export fehlt"
+
+#: src/pages/ShotAnalyzer/components/shotChart/MobileMetricPager.jsx
+msgid "Shot metrics"
+msgstr "Shot-Metriken"
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
+#: src/utils/panelDefinitions.js
+msgid "Shot Metrics"
+msgstr "Shot-Metriken"
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
+#: src/pages/ShotHistory/ShotNotesCard.jsx
+msgid "Shot Notes"
+msgstr "Shot-Notizen"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/compareModel.js
+msgid "Shot start"
+msgstr "Shot-Start"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Shot start was cancelled on the machine."
+msgstr "Der Shot-Start wurde an der Maschine abgebrochen."
+
+#: src/app/appSettings.js
+#: src/app/notifications.js
+msgid "Shot started"
+msgstr "Shot gestartet"
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Shot uploaded successfully to visualizer.coffee!"
+msgstr "Shot erfolgreich zu visualizer.coffee hochgeladen!"
+
+#: src/components/VisualizerUploadModal.jsx
+msgid "Shot:"
+msgstr "Shot:"
+
+#: src/pages/Settings/tabs/CleaningSection.jsx
+msgid "shots"
+msgstr "Shots"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryDropdown.jsx
+#: src/pages/Statistics/components/ProfileGroupTable.jsx
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+#: src/pages/Statistics/components/TrendChart.jsx
+msgid "Shots"
+msgstr "Shots"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Shots ({shotPreviewCount})"
+msgstr "Shots ({shotPreviewCount})"
+
+#: src/pages/Statistics/components/TrendChart.jsx
+msgid "Shots / {granularityLabel}"
+msgstr "Shots / {granularityLabel}"
+
+#: src/pages/Statistics/components/TrendChart.jsx
+msgid "Shots: {shotCount}"
+msgstr "Shots: {shotCount}"
+
+#: src/pages/Statistics/components/StatisticsMultiSelectDropdown.jsx
+msgid "Show all {labelLower}"
+msgstr "Alle {labelLower} anzeigen"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/compareControls.jsx
+msgid "Show compare annotations"
+msgstr "Vergleichsanmerkungen anzeigen"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareChartLayout.jsx
+msgid "Show detail charts"
+msgstr "Detaildiagramme anzeigen"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Show details"
+msgstr "Details anzeigen"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Show details for {label}"
+msgstr "Details für {label} anzeigen"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/single/SingleShotChart.jsx
+msgid "Show legend"
+msgstr "Legende anzeigen"
+
+#: src/pages/ShotAnalyzer/components/shotChart/MobileMetricPager.jsx
+msgid "Show metric page {pageNumber}"
+msgstr "Metrikseite {pageNumber} anzeigen"
+
+#: src/components/VisualizerUploadModal.jsx
+msgid "Show password"
+msgstr "Passwort anzeigen"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Show Password"
+msgstr "Passwort anzeigen"
+
+#: src/pages/Statistics/components/StatisticsMultiSelectDropdown.jsx
+msgid "Show pinned only {labelLower}"
+msgstr "Nur angeheftete {labelLower} anzeigen"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Show Recent Shots"
+msgstr "Letzte Shots anzeigen"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Show the control column panels as separate cards, or group them into a single unified card."
+msgstr "Zeige die Panels der Bedienspalte als separate Karten oder fasse sie in einer einzigen Karte zusammen."
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgid "Shown when the scale briefly loses connection during the brew. In this case, weight is ignored for stop detection for that brew, even if the scale reconnects later."
+msgstr "Wird angezeigt, wenn die Waage während des Bezugs kurz die Verbindung verliert. In diesem Fall wird das Gewicht für die Stopperkennung dieses Bezugs ignoriert, auch wenn sich die Waage später wieder verbindet."
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Shuts off the process ahead of time based on the flow rate to account for any dripping or delays in the control."
+msgstr "Beendet den Vorgang anhand der Durchflussrate vorzeitig, um Nachtropfen oder Verzögerungen in der Steuerung auszugleichen."
+
+#: src/components/Navigation.jsx
+msgctxt "dashboard view"
+msgid "Simple"
+msgstr "Einfach"
+
+#: src/pages/ProfileList/index.jsx
+msgctxt "profile type"
+msgid "Simple"
+msgstr "Einfach"
+
+#: src/pages/ProfileEdit/ProfileTypeSelection.jsx
+msgid "Simple profile"
+msgstr "Einfaches Profil"
+
+#: src/pages/ProfileEdit/ProfileTypeSelection.jsx
+msgid "Simple Profile"
+msgstr "Einfaches Profil"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Single Card"
+msgstr "Einzelne Karte"
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
+msgid "Single Origin, Blend..."
+msgstr "Single Origin, Blend..."
+
+#: src/components/PumpFlowCalibration/api.js
+msgid "slog not ready, waiting for flush... ({attempt})"
+msgstr "slog nicht bereit, warte auf Flush... ({attempt})"
+
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "Slope Window"
+msgstr "Steigungsfenster"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Slot {slotNumber}"
+msgstr "Slot {slotNumber}"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgid "SLOW SAMPLING"
+msgstr "LANGSAME ABTASTUNG"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Smart Grind Plugin"
+msgstr "Smart-Grind-Plugin"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Snapshotting shot history..."
+msgstr "Snapshot des Shot-Verlaufs wird erstellt..."
+
+#: src/pages/Statistics/components/statisticsView/helpers.js
+msgid "Some shots have no shot timestamp. Choose how date handling should treat them (Shot = exclude missing, Auto = fallback to upload time, Upload = upload time only)."
+msgstr "Einige Shots haben keinen Shot-Zeitstempel. Wähle, wie die Datumsverarbeitung sie behandeln soll (Shot = fehlende ausschließen, Auto = auf Upload-Zeit zurückgreifen, Upload = nur Upload-Zeit)."
+
+#: src/pages/Statistics/components/statisticsView/helpers.js
+msgid "Some shots have no shot timestamp. Choose how date handling should treat them (Shot = exclude missing, Auto = fallback to upload time, Upload = upload time only). Some shots have no usable date at all and may still be excluded from date filtering."
+msgstr "Einige Shots haben keinen Shot-Zeitstempel. Wähle, wie die Datumsverarbeitung sie behandeln soll (Shot = fehlende ausschließen, Auto = auf Upload-Zeit zurückgreifen, Upload = nur Upload-Zeit). Einige Shots haben überhaupt kein verwendbares Datum und werden möglicherweise trotzdem von der Datumsfilterung ausgeschlossen."
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Some shots have no shot timestamp. Choose how date handling should treat them."
+msgstr "Einige Shots haben keinen Shot-Zeitstempel. Wähle, wie die Datumsverarbeitung sie behandeln soll."
+
+#: src/pages/Statistics/components/statisticsView/helpers.js
+msgid "Some shots have no usable shot timestamp. Date filtering may exclude them unless upload time is available."
+msgstr "Einige Shots haben keinen verwendbaren Shot-Zeitstempel. Die Datumsfilterung schließt sie möglicherweise aus, sofern keine Upload-Zeit verfügbar ist."
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
+#: src/pages/ShotHistory/ShotNotesCard.jsx
+msgid "Sour"
+msgstr "Sauer"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Space evenly"
+msgstr "Gleichmäßig verteilen"
+
+#: src/app/AppSettings.jsx
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgctxt "update channel"
+msgid "Stable"
+msgstr "Stabil"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
+msgctxt "column preset"
+msgid "Standard"
+msgstr "Standard"
+
+#: src/app/machineStatus.js
+#: src/pages/Home/utils.js
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgctxt "machine mode"
+msgid "Standby"
+msgstr "Standby"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Standby Brightness (0-16)"
+msgstr "Standby-Helligkeit (0-16)"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Standby Brightness Timeout"
+msgstr "Timeout für Standby-Helligkeit"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Standby Timeout"
+msgstr "Standby-Timeout"
+
+#: src/pages/Settings/tabs/CleaningSection.jsx
+msgid "Start"
+msgstr "Start"
+
+#: src/components/OverviewChart.jsx
+msgctxt "brew start marker"
+msgid "Start"
+msgstr "Start"
+
+#: src/pages/ShotAnalyzer/components/shotChart/helpers/chartData.js
+msgctxt "first phase"
+msgid "Start"
+msgstr "Start"
+
+#: src/pages/Home/utils.js
+msgctxt "process action"
+msgid "Start"
+msgstr "Starten"
+
+#: src/pages/Home/BrewConfirmModal.jsx
+msgid "Start anyway"
+msgstr "Trotzdem starten"
+
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "Start Autotune"
+msgstr "Autotune starten"
+
+#: src/pages/Home/BrewConfirmModal.jsx
+msgid "Start brew anyway?"
+msgstr "Bezug trotzdem starten?"
+
+#: src/components/PumpFlowCalibration/Footer.jsx
+msgid "Start calibration"
+msgstr "Kalibrierung starten"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Start date"
+msgstr "Startdatum"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Start from previous setpoint"
+msgstr "Vom vorherigen Sollwert starten"
+
+#: src/pages/ShotAnalyzer/components/EmptyState.jsx
+msgid "Start or end compare mode."
+msgstr "Vergleichsmodus starten oder beenden."
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Start Ramp from"
+msgstr "Rampe starten ab"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+msgid "Start Volumetric"
+msgstr "Volumetrisch starten"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
+msgctxt "column type"
+msgid "Start/End"
+msgstr "Start/Ende"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Starting despite warnings: {warnings}"
+msgstr "Start trotz Warnungen: {warnings}"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Starting shot — adjust the steam valve to reach 1 bar, then 9 bar."
+msgstr "Shot startet – stelle das Dampfventil so ein, dass 1 bar und dann 9 bar erreicht werden."
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Startup Mode"
+msgstr "Startmodus"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Startup Profile"
+msgstr "Startprofil"
+
+#: src/components/Navigation.jsx
+#: src/pages/ProfileList/index.jsx
+#: src/pages/Statistics/components/statisticsView/StatisticsDetailSection.jsx
+#: src/pages/Statistics/index.jsx
+msgid "Statistics"
+msgstr "Statistiken"
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+msgid "Statistics chart averages"
+msgstr "Durchschnittswerte der Statistikdiagramme"
+
+#: src/pages/Statistics/components/StatisticsSearchHelp.jsx
+msgid "Statistics Search DSL"
+msgstr "Statistik-Such-DSL"
+
+#: src/pages/Statistics/components/MetricsTable.jsx
+msgid "Std Dev"
+msgstr "Std.-Abw."
+
+#: src/app/machineStatus.js
+#: src/pages/Home/utils.js
+msgctxt "machine mode"
+msgid "Steam"
+msgstr "Dampf"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Steam Boiler (Coming Soon)"
+msgstr "Dampfboiler (demnächst)"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Steam button"
+msgstr "Dampftaste"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Steam Button Behavior"
+msgstr "Verhalten der Dampftaste"
+
+#: src/app/notifications.js
+msgid "Steam has been on for 5 minutes."
+msgstr "Dampf ist seit 5 Minuten eingeschaltet."
+
+#: src/app/appSettings.js
+msgid "Steam mode left on"
+msgstr "Dampfmodus eingeschaltet gelassen"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Steam Pump Assist"
+msgstr "Pumpenunterstützung beim Dampfen"
+
+#: src/utils/warnings.js
+msgid "Steam switch left on"
+msgstr "Dampfschalter eingeschaltet gelassen"
+
+#: src/utils/metricDefinitions.js
+msgid "Steam Temp"
+msgstr "Dampftemp."
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Stick first panel to top"
+msgstr "Erstes Panel oben fixieren"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Stick last panel to bottom"
+msgstr "Letztes Panel unten fixieren"
+
+#: src/app/notifications.js
+msgid "Still in steam mode"
+msgstr "Noch im Dampfmodus"
+
+#: src/pages/ShotAnalyzer/components/shotChart/tooltip/StaticTooltipContent.jsx
+msgctxt "shot stop"
+msgid "Stop"
+msgstr "Stopp"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTableChrome.jsx
+msgid "Stop reason"
+msgstr "Stoppgrund"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+msgid "Stop replay and restore chart"
+msgstr "Replay stoppen und Diagramm wiederherstellen"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Stop when"
+msgstr "Stoppen, wenn"
+
+#: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
+msgid "Stopped: Manually"
+msgstr "Gestoppt: manuell"
+
+#: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
+msgid "Stopped: Safety timeout"
+msgstr "Gestoppt: Sicherheits-Timeout"
+
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+msgid "Stops"
+msgstr "Stopps"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Storage (LittleFS)"
+msgstr "Speicher (LittleFS)"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Storage (SD-Card)"
+msgstr "Speicher (SD-Karte)"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Storage & Memory"
+msgstr "Speicher & Arbeitsspeicher"
+
+#: src/pages/ShotAnalyzer/components/EmptyState.jsx
+msgid "Stores imported external shots and profiles locally in this browser on this device. They are not automatically available in other browsers or on other devices."
+msgstr "Speichert importierte externe Shots und Profile lokal in diesem Browser auf diesem Gerät. Sie sind nicht automatisch in anderen Browsern oder auf anderen Geräten verfügbar."
+
+#: src/pages/Settings/PluginCard.jsx
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
+msgid "Sunday"
+msgstr "Sonntag"
+
+#: src/pages/ProfileEdit/ProfileTypeSelection.jsx
+msgid "Supports advanced pressure and flow controlled phases with ramps, different targets and further visualization."
+msgstr "Unterstützt erweiterte druck- und durchflussgesteuerte Phasen mit Rampen, unterschiedlichen Zielen und zusätzlicher Visualisierung."
+
+#: src/pages/ProfileEdit/ProfileTypeSelection.jsx
+msgid "Supports creating of profiles with different brew phases and targets."
+msgstr "Unterstützt das Erstellen von Profilen mit verschiedenen Bezugsphasen und Zielen."
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/controls/compareControls.jsx
+msgid "Swap shot 1 and shot 2"
+msgstr "Shot 1 und Shot 2 tauschen"
+
+#: src/pages/ShotAnalyzer/components/shotChart/MobileChartScrubber.jsx
+msgid "Swipe"
+msgstr "Wischen"
+
+#: src/pages/ShotAnalyzer/components/EmptyState.jsx
+msgid "Switch between shots."
+msgstr "Zwischen Shots wechseln."
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgid "Switch import mode to Save to Browser"
+msgstr "Importmodus auf Im Browser speichern umschalten"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgid "Switch import mode to View temporarily"
+msgstr "Importmodus vorübergehend auf Ansehen umschalten"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Switch to compact view"
+msgstr "Zur Kompaktansicht wechseln"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Switch to extraction tab"
+msgstr "Zum Tab Extraktion wechseln"
+
+#: src/pages/DashboardSettings/index.jsx
+msgid "Switch to full view"
+msgstr "Zur Vollansicht wechseln"
+
+#: src/pages/ProfileList/index.jsx
+msgid "Switch to utility tab"
+msgstr "Zum Tab Hilfsmittel wechseln"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Switching to BREW mode..."
+msgstr "Wechsle in den BEZUGS-Modus..."
+
+#: src/pages/ProfileList/index.jsx
+msgctxt "profile badge"
+msgid "System"
+msgstr "System"
+
+#: src/app/AppSettings.jsx
+#: src/pages/Settings/tabs/GeneralTab.jsx
+#: src/utils/themeManager.js
+msgctxt "theme"
+msgid "System"
+msgstr "System"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "System & Network"
+msgstr "System & Netzwerk"
+
+#: src/pages/Settings/index.jsx
+msgid "System & Updates"
+msgstr "System & Updates"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "System in Standby"
+msgstr "System im Standby"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
+#: src/pages/ShotAnalyzer/utils/constants.js
+msgid "System Info"
+msgstr "Systeminfo"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "System Version & Updates"
+msgstr "Systemversion & Updates"
+
+#: src/pages/Settings/PluginCard.jsx
+msgctxt "Thursday, one letter"
+msgid "T"
+msgstr "D"
+
+#: src/pages/Settings/PluginCard.jsx
+msgctxt "Tuesday, one letter"
+msgid "T"
+msgstr "D"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Tare"
+msgstr "Tarieren"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Tare the scale, then place a known weight and calibrate each load cell."
+msgstr "Tariere die Waage, lege dann ein bekanntes Gewicht auf und kalibriere jede Wägezelle."
+
+#: src/pages/Home/cards/ProfileCard.jsx
+msgctxt "process"
+msgid "Target"
+msgstr "Ziel"
+
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+msgid "Target (Delta)"
+msgstr "Ziel (Delta)"
+
+#: src/pages/ShotAnalyzer/components/shotChart/tooltip/StaticTooltipContent.jsx
+msgid "Target {targetText}"
+msgstr "Ziel {targetText}"
+
+#: src/pages/ShotAnalyzer/components/shotChart/tooltip/StaticTooltipContent.jsx
+msgid "Target {targetValue}"
+msgstr "Ziel {targetValue}"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/compareControls.jsx
+msgid "Target display mode"
+msgstr "Anzeigemodus für Ziele"
+
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+msgctxt "short for target pump flow"
+msgid "Target F"
+msgstr "Ziel F"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Target Flow"
+msgstr "Zieldurchfluss"
+
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+msgctxt "short for target pressure"
+msgid "Target P"
+msgstr "Ziel D"
+
+#: src/components/OverviewChart.jsx
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+#: src/pages/ShotHistory/HistoryChart.jsx
+msgid "Target Pressure"
+msgstr "Zieldruck"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+#: src/pages/ShotAnalyzer/utils/constants.js
+msgid "Target Pressure (bar)"
+msgstr "Zieldruck (bar)"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+#: src/pages/ShotHistory/HistoryChart.jsx
+msgid "Target Pump Flow"
+msgstr "Ziel-Pumpendurchfluss"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+#: src/pages/ShotAnalyzer/utils/constants.js
+msgid "Target Pump Flow (ml/s)"
+msgstr "Ziel-Pumpendurchfluss (ml/s)"
+
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+msgctxt "short for target temperature"
+msgid "Target T"
+msgstr "Ziel T"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgid "Target Temp"
+msgstr "Zieltemp."
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+#: src/pages/ShotAnalyzer/utils/constants.js
+msgid "Target Temp (℃)"
+msgstr "Zieltemp. (℃)"
+
+#: src/pages/Statistics/components/MetricsTable.jsx
+msgid "Target Temp Δ"
+msgstr "Zieltemp. Δ"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Target temperature"
+msgstr "Zieltemperatur"
+
+#: src/components/OverviewChart.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMetricCards.jsx
+#: src/pages/ShotHistory/HistoryChart.jsx
+msgid "Target Temperature"
+msgstr "Zieltemperatur"
+
+#: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
+msgid "Target value in {unit}"
+msgstr "Zielwert in {unit}"
+
+#: src/components/OverviewChart.jsx
+msgid "Target Weight"
+msgstr "Zielgewicht"
+
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Target weight in grams"
+msgstr "Zielgewicht in Gramm"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Tasmota IP"
+msgstr "Tasmota-IP"
+
+#: src/pages/ShotHistory/ShotNotesCard.jsx
+msgid "Tasting notes, brewing observations, etc..."
+msgstr "Geschmacksnotizen, Beobachtungen zum Bezug usw. ..."
+
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
+msgid "Tasting notes, brewing observations..."
+msgstr "Geschmacksnotizen, Beobachtungen zum Bezug..."
+
+#: src/utils/metricDefinitions.js
+msgid "Temp"
+msgstr "Temp."
+
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+msgctxt "short for temperature"
+msgid "Temp"
+msgstr "Temp."
+
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+msgctxt "temperature"
+msgid "Temp"
+msgstr "Temp."
+
+#: src/pages/Home/cards/RecentShotsCard.jsx
+#: src/pages/ProfileEdit/ProfileMainInformation.jsx
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+#: src/pages/ShotAnalyzer/components/shotChart/single/SingleShotMetricPreview.jsx
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMetricCards.jsx
+#: src/pages/Statistics/components/MetricsTable.jsx
+msgid "Temperature"
+msgstr "Temperatur"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+#: src/pages/ShotAnalyzer/utils/constants.js
+msgid "Temperature (℃)"
+msgstr "Temperatur (℃)"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Temperature (0 = Default)"
+msgstr "Temperatur (0 = Standard)"
+
+#: src/components/ExtendedProfileChart.jsx
+msgid "Temperature History"
+msgstr "Temperaturverlauf"
+
+#: src/pages/ProfileEdit/ProfileMainInformation.jsx
+msgid "Temperature in degrees Celsius"
+msgstr "Temperatur in Grad Celsius"
+
+#: src/utils/warnings.js
+msgid "Temperature not stable"
+msgstr "Temperatur nicht stabil"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Temperature Offset (°C)"
+msgstr "Temperatur-Offset (°C)"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Temperature Settings"
+msgstr "Temperatureinstellungen"
+
+#: src/pages/ShotAnalyzer/components/EmptyState.jsx
+msgid "Temporary View (VIEW)"
+msgstr "Temporäre Ansicht (VIEW)"
+
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "Test Duration (seconds)"
+msgstr "Testdauer (Sekunden)"
+
+#: src/app/MachineSetup.jsx
+msgid "The app forgets {host}. Nothing changes on the machine, and you can add it again any time."
+msgstr "Die App vergisst {host}. An der Maschine ändert sich nichts, und du kannst sie jederzeit wieder hinzufügen."
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "The BLDC pump addon was detected in your system. You can change the pump control characteristics using the values below."
+msgstr "Das BLDC-Pumpen-Addon wurde in deinem System erkannt. Mit den folgenden Werten kannst du die Regelcharakteristik der Pumpe ändern."
+
+#: src/app/appSettings.js
+msgid "The boiler reached brew temperature."
+msgstr "Der Boiler hat die Brühtemperatur erreicht."
+
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "The boiler will heat at full power until its temperature inflection is detected, then the SIMC tuning rule derives PID gains. Typically 1–3 minutes depending on machine."
+msgstr "Der Boiler heizt mit voller Leistung, bis sein Temperatur-Wendepunkt erkannt wird; anschließend leitet die SIMC-Regel die PID-Verstärkungen ab. Dauert je nach Maschine meist 1–3 Minuten."
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "The chart is shown for Pro profiles only"
+msgstr "Das Diagramm wird nur für Pro-Profile angezeigt"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgid "The configured or inferred scale delay is unusually high. Review the scale-delay setting before relying on predictive weight stops."
+msgstr "Die konfigurierte oder ermittelte Waagenverzögerung ist ungewöhnlich hoch. Prüfe die Einstellung der Waagenverzögerung, bevor du dich auf vorausschauende Gewichtsstopps verlässt."
+
+#: src/app/notifications.js
+msgid "The controller reported an error."
+msgstr "Der Controller hat einen Fehler gemeldet."
+
+#: src/pages/Settings/index.jsx
+msgid "The file contains no known settings."
+msgstr "Die Datei enthält keine bekannten Einstellungen."
+
+#: src/pages/Settings/index.jsx
+msgid "The file does not contain a settings object."
+msgstr "Die Datei enthält kein Einstellungsobjekt."
+
+#: src/pages/Home/BrewConfirmModal.jsx
+msgid "The following warnings are currently active:"
+msgstr "Folgende Warnungen sind derzeit aktiv:"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "The grinder reaches GaggiMate at this address, so both need to share a network (the E64 WS is 2.4 GHz only) and the address must not change: reserve it for GaggiMate in your router."
+msgstr "Die Mühle erreicht GaggiMate unter dieser Adresse, daher müssen beide im selben Netzwerk sein (die E64 WS unterstützt nur 2,4 GHz) und die Adresse darf sich nicht ändern: Reserviere sie in deinem Router für GaggiMate."
+
+#: src/app/appSettings.js
+msgid "The machine has been in steam mode for 5 minutes."
+msgstr "Die Maschine ist seit 5 Minuten im Dampfmodus."
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "The profile's dose is saved to the shot history."
+msgstr "Die Dosis des Profils wird im Shot-Verlauf gespeichert."
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "The scale was found, but the Bluetooth connection failed. Try again or restart the scale."
+msgstr "Die Waage wurde gefunden, aber die Bluetooth-Verbindung ist fehlgeschlagen. Versuche es erneut oder starte die Waage neu."
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "The scale wasn't found. Make sure it's switched on and nearby, then scan again."
+msgstr "Die Waage wurde nicht gefunden. Stelle sicher, dass sie eingeschaltet und in der Nähe ist, und suche dann erneut."
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "The update could not be completed and the device kept its current firmware. Check the network connection and start the update again."
+msgstr "Das Update konnte nicht abgeschlossen werden; das Gerät behält seine aktuelle Firmware. Prüfe die Netzwerkverbindung und starte das Update erneut."
+
+#: src/app/AppSettings.jsx
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Theme"
+msgstr "Design"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Theme & Notifications"
+msgstr "Design & Benachrichtigungen"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Thermal Feedforward Gain"
+msgstr "Thermische Vorsteuerungsverstärkung"
+
+#: src/app/machines.js
+msgid "this address is not a GaggiMate"
+msgstr "diese Adresse ist kein GaggiMate"
+
+#: src/pages/ShotAnalyzer/services/ReplayVideoExportService.js
+msgid "This browser cannot record MP4 video. Please use WebM export instead."
+msgstr "Dieser Browser kann kein MP4-Video aufnehmen. Bitte verwende stattdessen den WebM-Export."
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+msgid "This browser records replay video as WebM natively."
+msgstr "Dieser Browser nimmt Replay-Videos nativ als WebM auf."
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "This feature allows connection to a Home Assistant or MQTT installation and push the current state. This feature is deprecated for usage with Home Assistant. Please see the <0>Home Assistant Integration</0> for a more up-to-date solution."
+msgstr "Diese Funktion ermöglicht die Verbindung mit einer Home-Assistant- oder MQTT-Installation und überträgt den aktuellen Status. Für die Verwendung mit Home Assistant ist diese Funktion veraltet. Eine aktuellere Lösung findest du in der <0>Home-Assistant-Integration</0>."
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "This feature controls a Tasmota Plug to turn off your grinder after the target has been reached."
+msgstr "Diese Funktion steuert eine Tasmota-Steckdose, um deine Mühle nach Erreichen des Ziels auszuschalten."
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "This scale model couldn't be set up."
+msgstr "Dieses Waagenmodell konnte nicht eingerichtet werden."
+
+#: src/pages/Settings/PluginCard.jsx
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
+msgid "Thursday"
+msgstr "Donnerstag"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgid "Time"
+msgstr "Zeit"
+
+#: src/pages/Home/TargetToggle.jsx
+msgctxt "brew target"
+msgid "Time"
+msgstr "Zeit"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgctxt "ramp target"
+msgid "Time"
+msgstr "Zeit"
+
+#: src/pages/ShotHistory/HistoryChart.jsx
+msgid "Time (s)"
+msgstr "Zeit (s)"
+
+#: src/pages/ShotAnalyzer/utils/formatting.js
+msgid "Time Limit"
+msgstr "Zeitlimit"
+
+#: src/pages/ShotAnalyzer/utils/formatting.js
+msgid "Time Stop"
+msgstr "Zeitstopp"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Time Zone"
+msgstr "Zeitzone"
+
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+msgid "Time-Weighted Average"
+msgstr "Zeitgewichteter Durchschnitt"
+
+#: src/app/machines.js
+msgctxt "connection failure"
+msgid "timed out"
+msgstr "Zeitüberschreitung"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "Timeout waiting for shot to finish (5min)."
+msgstr "Zeitüberschreitung beim Warten auf das Ende des Shots (5 min)."
+
+#: src/pages/ProfileEdit/ProfileMainInformation.jsx
+msgid "Title"
+msgstr "Titel"
+
+#: src/pages/Statistics/components/toolbar/helpers.js
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgctxt "date range end"
+msgid "To"
+msgstr "Bis"
+
+#: src/pages/Home/cards/RecentShotsCard.jsx
+msgid "Today"
+msgstr "Heute"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Toggle advanced search"
+msgstr "Erweiterte Suche umschalten"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Toggle off and on at target"
+msgstr "Aus- und beim Ziel wieder einschalten"
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Toggle pinned profiles first"
+msgstr "Angeheftete Profile zuerst umschalten"
+
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Toggle pinned shots first"
+msgstr "Angeheftete Shots zuerst umschalten"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTable.jsx
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+msgid "Total"
+msgstr "Gesamt"
+
+#: src/pages/Statistics/components/SummaryCards.jsx
+msgid "Total Duration"
+msgstr "Gesamtdauer"
+
+#: src/pages/Statistics/components/SummaryCards.jsx
+msgid "Total Pumped Water"
+msgstr "Gepumptes Wasser gesamt"
+
+#: src/pages/Statistics/components/SummaryCards.jsx
+msgid "Total Shots"
+msgstr "Shots gesamt"
+
+#: src/pages/Statistics/components/SummaryCards.jsx
+msgid "Total Weight"
+msgstr "Gesamtgewicht"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTable.jsx
+msgid "Totals"
+msgstr "Summen"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Transition duration in {rampUnit}"
+msgstr "Übergangsdauer in {rampUnit}"
+
+#: src/pages/Statistics/components/TrendChart.jsx
+msgid "Trend bucket size"
+msgstr "Intervallgröße des Trends"
+
+#: src/pages/Statistics/components/TrendChart.jsx
+msgid "Trend Chart"
+msgstr "Trenddiagramm"
+
+#: src/pages/Statistics/components/TrendChart.jsx
+msgid "Trend metric"
+msgstr "Trendmetrik"
+
+#: src/pages/Statistics/components/statisticsView/StatisticsDetailSection.jsx
+msgid "Trends"
+msgstr "Trends"
+
+#: src/app/ConnectionGate.jsx
+msgid "Try again"
+msgstr "Erneut versuchen"
+
+#: src/pages/Settings/PluginCard.jsx
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
+msgid "Tuesday"
+msgstr "Dienstag"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Turn off at target"
+msgstr "Beim Ziel ausschalten"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Turn on at start, off at target"
+msgstr "Beim Start ein-, beim Ziel ausschalten"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Unavailable / uncalibrated"
+msgstr "Nicht verfügbar / nicht kalibriert"
+
+#: src/pages/Statistics/utils/statisticsSearchDsl.js
+msgid "Unclosed quoted value."
+msgstr "Nicht geschlossener Wert in Anführungszeichen."
+
+#: src/pages/ProfileList/index.jsx
+msgid "Unfavorite"
+msgstr "Aus Favoriten entfernen"
+
+#: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
+msgid "unknown"
+msgstr "unbekannt"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
+#: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
+#: src/pages/ShotAnalyzer/utils/formatting.js
+#: src/pages/ShotAnalyzer/utils/profiles.js
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+msgid "Unknown"
+msgstr "Unbekannt"
+
+#: src/app/machineStatus.js
+msgctxt "machine mode"
+msgid "Unknown"
+msgstr "Unbekannt"
+
+#: src/pages/Home/cards/RecentShotsCard.jsx
+msgctxt "profile"
+msgid "Unknown"
+msgstr "Unbekannt"
+
+#: src/pages/Statistics/components/toolbar/helpers.js
+msgid "unknown candidates"
+msgstr "unbekannte Kandidaten"
+
+#: src/pages/Statistics/utils/statisticsSearchDsl.js
+msgid "Unknown error."
+msgstr "Unbekannter Fehler."
+
+#: src/pages/Statistics/utils/statisticsSearchDsl.js
+msgid "Unknown field \"{fieldRaw}\". Supported: {supportedFields}."
+msgstr "Unbekanntes Feld „{fieldRaw}“. Unterstützt: {supportedFields}."
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Unknown Profile"
+msgstr "Unbekanntes Profil"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Unknown Scale"
+msgstr "Unbekannte Waage"
+
+#: src/pages/Statistics/components/statisticsView/helpers.js
+msgid "Unknown Shot"
+msgstr "Unbekannter Shot"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
+msgid "Unpin {displayName}"
+msgstr "{displayName} lösen"
+
+#: src/pages/Statistics/components/StatisticsMultiSelectDropdown.jsx
+msgid "Unpin {itemName}"
+msgstr "{itemName} lösen"
+
+#: src/pages/Statistics/components/StatisticsMultiSelectDropdown.jsx
+msgid "Unpin {singularLabel}"
+msgstr "{singularLabel} lösen"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
+msgid "Unpin profile"
+msgstr "Profil lösen"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
+msgid "Unpin shot"
+msgstr "Shot lösen"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Unrated Only"
+msgstr "Nur unbewertete"
+
+#: src/pages/Statistics/utils/statisticsSearchDsl.js
+msgid "Unsupported date expression. Use DD.MM.YYYY, optional HH:MM, or h-7d."
+msgstr "Nicht unterstützter Datumsausdruck. Verwende TT.MM.JJJJ, optional HH:MM, oder h-7d."
+
+#: src/pages/ProfileEdit/ProfileImageUpload.jsx
+msgid "Unsupported file type. Please use PNG, JPEG, WebP or BMP."
+msgstr "Nicht unterstützter Dateityp. Bitte verwende PNG, JPEG, WebP oder BMP."
+
+#: src/pages/ShotAnalyzer/services/analyzer/delayTracking.js
+msgid "Unusually high inferred delay in Phase {phaseNumber} ({delayMs} ms)."
+msgstr "Ungewöhnlich hohe ermittelte Verzögerung in Phase {phaseNumber} ({delayMs} ms)."
+
+#: src/pages/ShotAnalyzer/services/analyzer/delayTracking.js
+msgid "Unusually high inferred delay in Phase {phaseNumber}."
+msgstr "Ungewöhnlich hohe ermittelte Verzögerung in Phase {phaseNumber}."
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Update both"
+msgstr "Beide aktualisieren"
+
+#: src/app/AppSettings.jsx
+msgid "Update channel"
+msgstr "Update-Kanal"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Update Channel"
+msgstr "Update-Kanal"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Update Controller"
+msgstr "Controller aktualisieren"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Update Display"
+msgstr "Display aktualisieren"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Update failed"
+msgstr "Update fehlgeschlagen"
+
+#: src/app/AppSettings.jsx
+msgid "Updates"
+msgstr "Updates"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Updating controller firmware"
+msgstr "Controller-Firmware wird aktualisiert"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Updating Display filesystem"
+msgstr "Display-Dateisystem wird aktualisiert"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Updating Display firmware"
+msgstr "Display-Firmware wird aktualisiert"
+
+#: src/pages/Statistics/components/toolbar/constants.js
+msgctxt "date basis"
+msgid "Upload"
+msgstr "Upload"
+
+#: src/utils/profileImage.js
+msgid "Upload failed"
+msgstr "Upload fehlgeschlagen"
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Upload failed: {errorMessage}"
+msgstr "Upload fehlgeschlagen: {errorMessage}"
+
+#: src/pages/ProfileEdit/ProfileImageUpload.jsx
+msgid "Upload image"
+msgstr "Bild hochladen"
+
+#: src/components/VisualizerUploadModal.jsx
+msgid "Upload Shot"
+msgstr "Shot hochladen"
+
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Upload to visualizer.coffee"
+msgstr "Zu visualizer.coffee hochladen"
+
+#: src/components/VisualizerUploadModal.jsx
+#: src/pages/ShotHistory/HistoryCard.jsx
+msgid "Upload to Visualizer.coffee"
+msgstr "Zu Visualizer.coffee hochladen"
+
+#: src/components/VisualizerUploadModal.jsx
+msgid "Uploading..."
+msgstr "Lädt hoch..."
+
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "Upper bound on the identification test. Most espresso boilers resolve within 60–120 s. Extend if Autotune fails before peak slope is detected."
+msgstr "Obergrenze für den Identifikationstest. Die meisten Espresso-Boiler sind innerhalb von 60–120 s fertig. Verlängere den Wert, wenn Autotune fehlschlägt, bevor die maximale Steigung erkannt wird."
+
+#: src/pages/Statistics/components/StatisticsSearchHelp.jsx
+msgid "Use <0>></0>, <1>>=</1>, <2><</2>, <3><=</3>, <4>=</4>"
+msgstr "Verwende <0>></0>, <1>>=</1>, <2><</2>, <3><=</3>, <4>=</4>"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Use 24h Format"
+msgstr "24-Stunden-Format verwenden"
+
+#: src/pages/Statistics/components/toolbar/helpers.js
+msgid "Use shot timestamp only"
+msgstr "Nur Shot-Zeitstempel verwenden"
+
+#: src/pages/Statistics/components/toolbar/helpers.js
+msgid "Use shot timestamp, fallback to upload time"
+msgstr "Shot-Zeitstempel verwenden, sonst Upload-Zeit"
+
+#: src/pages/ShotAnalyzer/components/EmptyState.jsx
+msgid "Use the status bar toggle to switch between <0>View temporarily</0> and <1>Save to Browser</1> before importing."
+msgstr "Nutze vor dem Import den Schalter in der Statusleiste, um zwischen <0>Vorübergehend ansehen</0> und <1>Im Browser speichern</1> zu wechseln."
+
+#: src/pages/Statistics/components/toolbar/helpers.js
+msgid "Use upload time only"
+msgstr "Nur Upload-Zeit verwenden"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Used for the GaggiMate hotspot when no Wi-Fi is configured (min. 8 characters)."
+msgstr "Wird für den GaggiMate-Hotspot verwendet, wenn kein Wi-Fi konfiguriert ist (mind. 8 Zeichen)."
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "user"
+msgstr "Benutzer"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "User Preferences"
+msgstr "Benutzereinstellungen"
+
+#: src/services/VisualizerService.js
+msgid "Username and password are required"
+msgstr "Benutzername und Passwort sind erforderlich"
+
+#: src/pages/Statistics/components/toolbar/subcomponents.jsx
+msgid "Using auto range from current shot selection."
+msgstr "Automatischer Bereich aus der aktuellen Shot-Auswahl wird verwendet."
+
+#: src/pages/ProfileList/index.jsx
+msgctxt "profile tab"
+msgid "Utility"
+msgstr "Hilfsmittel"
+
+#: src/pages/ProfileEdit/ProfileMainInformation.jsx
+msgid "Utility profile"
+msgstr "Hilfsprofil"
+
+#: src/pages/ProfileEdit/ProfileMainInformation.jsx
+msgid "Utility profile toggle"
+msgstr "Hilfsprofil umschalten"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Valve"
+msgstr "Ventil"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Valve closed"
+msgstr "Ventil geschlossen"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Valve open"
+msgstr "Ventil offen"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Valve state selection"
+msgstr "Auswahl des Ventilzustands"
+
+#: src/app/AppSettings.jsx
+msgid "Version {bundleVersion}"
+msgstr "Version {bundleVersion}"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+msgid "Video"
+msgstr "Video"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+msgid "Video (unsupported)"
+msgstr "Video (nicht unterstützt)"
+
+#: src/pages/ShotAnalyzer/components/shotChart/single/useShotChartReplayExport.js
+msgid "Video export is not supported in this browser."
+msgstr "Videoexport wird in diesem Browser nicht unterstützt."
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgctxt "import mode"
+msgid "View"
+msgstr "Ansehen"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarModeHint.jsx
+msgctxt "import mode badge"
+msgid "VIEW"
+msgstr "VIEW"
+
+#: src/pages/ProfileList/index.jsx
+msgid "View statistics for {label} profile"
+msgstr "Statistiken für Profil {label} anzeigen"
+
+#: src/pages/ProfileList/index.jsx
+msgid "View statistics for this profile"
+msgstr "Statistiken für dieses Profil anzeigen"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/MobileStatusActionsMenu.jsx
+msgid "View temporarily"
+msgstr "Vorübergehend ansehen"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgid "View temporarily. Click to switch imports to Save to Browser."
+msgstr "Vorübergehend ansehen. Klicken, um Importe auf Im Browser speichern umzuschalten."
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarModeHint.jsx
+msgid "View temporarily. Imported shots and profiles will now open temporarily in the analyzer."
+msgstr "Vorübergehend ansehen. Importierte Shots und Profile werden jetzt vorübergehend im Analyzer geöffnet."
+
+#: src/components/SettingsFormField.jsx
+msgid "Visible"
+msgstr "Sichtbar"
+
+#: src/components/VisualizerUploadModal.jsx
+msgid "Visualizer.coffee Username"
+msgstr "Visualizer.coffee-Benutzername"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+msgid "Volumetric Avail."
+msgstr "Volumetrisch verfügbar"
+
+#: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
+msgid "Volumetric target"
+msgstr "Volumetrisches Ziel"
+
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
+msgid "Volumetric Target"
+msgstr "Volumetrisches Ziel"
+
+#: src/pages/Settings/PluginCard.jsx
+msgctxt "Wednesday, one letter"
+msgid "W"
+msgstr "M"
+
+#: src/pages/Statistics/components/ActivityHeatmap.jsx
+msgctxt "weekday initial: Wednesday"
+msgid "W"
+msgstr "M"
+
+#: src/utils/warnings.js
+msgctxt "warning level"
+msgid "Warn"
+msgstr "Warnen"
+
+#: src/app/notifications.js
+msgid "Warning"
+msgstr "Warnung"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryDropdown.jsx
+msgid "WARNING: Do you really want to IRREVOCABLY delete all {count} filtered profiles?"
+msgstr "WARNUNG: Möchtest du wirklich alle {count} gefilterten Profile UNWIDERRUFLICH löschen?"
+
+#: src/pages/ShotAnalyzer/components/library/LibraryDropdown.jsx
+msgid "WARNING: Do you really want to IRREVOCABLY delete all {count} filtered shots?"
+msgstr "WARNUNG: Möchtest du wirklich alle {count} gefilterten Shots UNWIDERRUFLICH löschen?"
+
+#: src/app/appSettings.js
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Warnings"
+msgstr "Warnungen"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Warnings are shown on the display. An error additionally asks for confirmation before a brew starts."
+msgstr "Warnungen werden auf dem Display angezeigt. Bei einem Fehler wird zusätzlich vor dem Start eines Bezugs eine Bestätigung verlangt."
+
+#: src/app/machineStatus.js
+#: src/pages/Home/utils.js
+msgctxt "machine mode"
+msgid "Water"
+msgstr "Heißwasser"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Water button"
+msgstr "Wassertaste"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Water Button Behavior"
+msgstr "Verhalten der Wassertaste"
+
+#: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
+msgid "Water drawn"
+msgstr "Wasser entnommen"
+
+#: src/utils/metricDefinitions.js
+msgid "Water Level"
+msgstr "Wasserstand"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Water pumped"
+msgstr "Wasser gepumpt"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Water pumped in phase"
+msgstr "In der Phase gepumptes Wasser"
+
+#: src/pages/Home/cards/WaterLevelCard.jsx
+#: src/utils/panelDefinitions.js
+msgid "Water Tank"
+msgstr "Wassertank"
+
+#: src/utils/warnings.js
+msgid "Water tank low"
+msgstr "Wassertank fast leer"
+
+#: src/pages/Statistics/components/toolbar/constants.js
+msgctxt "shot source: browser storage"
+msgid "WEB"
+msgstr "WEB"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Web Settings"
+msgstr "Web-Einstellungen"
+
+#: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+msgid "WebM is the recommended replay video format in browsers with native WebM recording support."
+msgstr "WebM ist das empfohlene Replay-Videoformat in Browsern mit nativer WebM-Aufnahme."
+
+#: src/pages/ShotAnalyzer/services/LibraryService.js
+msgid "WebSocket not connected"
+msgstr "WebSocket nicht verbunden"
+
+#: src/pages/Settings/PluginCard.jsx
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
+msgid "Wednesday"
+msgstr "Mittwoch"
+
+#: src/pages/Statistics/components/TrendChart.jsx
+msgctxt "time bucket"
+msgid "Week"
+msgstr "Woche"
+
+#: src/pages/Statistics/utils/trendBuckets.js
+msgid "Week: {startText}"
+msgstr "Woche: {startText}"
+
+#: src/pages/Statistics/utils/trendBuckets.js
+msgid "Week: {startText} - {endText}"
+msgstr "Woche: {startText} - {endText}"
+
+#: src/pages/Settings/tabs/CleaningSection.jsx
+msgid "weeks"
+msgstr "Wochen"
+
+#: src/pages/DashboardSettings/index.jsx
+#: src/pages/Home/cards/ProfileCard.jsx
+#: src/pages/Home/cards/RecentShotsCard.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMetricCards.jsx
+#: src/pages/ShotHistory/HistoryChart.jsx
+#: src/pages/Statistics/components/MetricsTable.jsx
+#: src/pages/Statistics/components/PhaseStatistics.jsx
+#: src/utils/metricDefinitions.js
+msgid "Weight"
+msgstr "Gewicht"
+
+#: src/pages/Home/TargetToggle.jsx
+msgctxt "brew target"
+msgid "Weight"
+msgstr "Gewicht"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+#: src/pages/ShotAnalyzer/utils/constants.js
+#: src/pages/Statistics/components/TrendChart.jsx
+msgid "Weight (g)"
+msgstr "Gewicht (g)"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgid "Weight (total)"
+msgstr "Gewicht (gesamt)"
+
+#: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
+#: src/pages/ShotHistory/HistoryChart.jsx
+msgid "Weight Flow"
+msgstr "Gewichtsfluss"
+
+#: src/pages/ShotAnalyzer/utils/columns.js
+#: src/pages/ShotAnalyzer/utils/constants.js
+msgid "Weight Flow (g/s)"
+msgstr "Gewichtsfluss (g/s)"
+
+#: src/pages/ProfileEdit/ExtendedPhase.jsx
+msgid "Weight in phase"
+msgstr "Gewicht in der Phase"
+
+#: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
+msgid "Weight reached"
+msgstr "Gewicht erreicht"
+
+#: src/pages/ShotAnalyzer/utils/formatting.js
+msgid "Weight Stop"
+msgstr "Gewichtsstopp"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "What percentage to run the pump at during steaming"
+msgstr "Mit wie viel Prozent die Pumpe beim Dampfen laufen soll"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "When the toggle is off, brightness will be set to 0"
+msgstr "Wenn der Schalter aus ist, wird die Helligkeit auf 0 gesetzt"
+
+#: src/app/AppSettings.jsx
+msgid "While GaggiMate is in the background it keeps watching your machines and shows a permanent “Watching machines” notification. This uses some extra battery."
+msgstr "Solange GaggiMate im Hintergrund ist, überwacht die App weiterhin deine Maschinen und zeigt eine dauerhafte Benachrichtigung „Watching machines“ an. Das verbraucht etwas mehr Akku."
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Wi-Fi Password"
+msgstr "Wi-Fi-Passwort"
+
+#: src/pages/Settings/tabs/GeneralTab.jsx
+msgid "Wi-Fi SSID"
+msgstr "Wi-Fi-SSID"
+
+#: src/app/appSettings.js
+msgid "With shot time and weight."
+msgstr "Mit Shot-Zeit und Gewicht."
+
+#: src/pages/Statistics/components/TrendChart.jsx
+msgctxt "time bucket"
+msgid "Year"
+msgstr "Jahr"
+
+#: src/pages/Home/cards/RecentShotsCard.jsx
+#: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
+msgid "Yesterday"
+msgstr "Gestern"
+
+#: src/components/VisualizerUploadModal.jsx
+msgid "Yield:"
+msgstr "Ausbeute:"
+
+#: src/components/VisualizerUploadModal.jsx
+msgid "Your credentials are only used for this upload and will be stored locally only if you choose to remember your username."
+msgstr "Deine Zugangsdaten werden nur für diesen Upload verwendet und nur dann lokal gespeichert, wenn du dich entscheidest, deinen Benutzernamen zu merken."
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Your grinder last ground recipe {lastRecipe}."
+msgstr "Deine Mühle hat zuletzt Rezept {lastRecipe} gemahlen."
+
+#: src/app/MachineSetup.jsx
+msgid "Your machines"
+msgstr "Deine Maschinen"
+
+#: src/pages/Settings/tabs/CalibrationTab.jsx
+msgid "Your new PID values have been saved successfully."
+msgstr "Deine neuen PID-Werte wurden erfolgreich gespeichert."
+
+#: src/app/MachineSetup.jsx
+msgid "Your phone needs to be on the same Wi-Fi network as the machine."
+msgstr "Dein Smartphone muss im selben Wi-Fi-Netzwerk wie die Maschine sein."
+
+#: src/pages/ShotAnalyzer/components/EmptyState.jsx
+msgid "Your saved shots and profiles directly from the GaggiMate internal storage."
+msgstr "Deine gespeicherten Shots und Profile direkt aus dem internen Speicher von GaggiMate."

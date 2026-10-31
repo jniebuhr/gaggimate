@@ -1,7 +1,7 @@
 /** Coordinates compare state, chart models, controls, and shared Chart.js lifecycles. */
 
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
-import Chart from 'chart.js/auto';
+import Chart from '../../../../../utils/lineChart.js';
 import annotationPlugin from 'chartjs-plugin-annotation';
 import { getLegendColorByLabel, getNeutralAxisTickColor, getShotChartColors } from '../helpers';
 import {

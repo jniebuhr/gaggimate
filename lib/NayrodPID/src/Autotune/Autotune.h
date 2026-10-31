@@ -104,6 +104,7 @@ class Autotune {
     // ------------------- State machine flags and moments --------------------
 
     float initialTemp = 0.0f;  // first temp sample this test
+    float timeOrigin = 0.0f;   // caller time of the first sample; all stored times are relative to it
     float initialSlope = 0.0f; // noise-floor slope at step time
 
     unsigned int currentConfirmations = 0;

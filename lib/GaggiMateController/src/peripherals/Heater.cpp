@@ -1,4 +1,5 @@
 #include "Heater.h"
+#include "HeaterCoordinator.h"
 #include <Arduino.h>
 #include <algorithm>
 #include <cmath>
@@ -45,8 +46,7 @@ void Heater::loop() {
 
     if (sensor->isErrorState() || setpoint <= 0.0f) {
         simplePid->setMode(SimplePID::Control::manual);
-        digitalWrite(heaterPin, LOW);
-        relayStatus = false;
+        requestOutput(false);
         temperature = sensor->read();
         return;
     }
@@ -68,6 +68,12 @@ void Heater::setTunings(float Kp, float Ki, float Kd) {
         simplePid->reset();
         ESP_LOGV(LOG_TAG, "Set tunings to Kp: %f, Ki: %f, Kd: %f", Kp, Ki, Kd);
     }
+}
+
+void Heater::stop() {
+    autotuning = false;
+    setSetpoint(0.0f);
+    requestOutput(false); // cut the relay now instead of on the heater task's next tick
 }
 
 void Heater::setThermalFeedforward(float *pumpFlowPtr, float incomingWaterTemp, int *valveStatusPtr) {
@@ -132,7 +138,7 @@ void Heater::loopAutotune() {
     autotuner->reset();
     long microseconds;
     long loopInterval = (static_cast<long>(TUNER_OUTPUT_SPAN) - 1L) * 1000L;
-    while (!autotuner->isFinished()) {
+    while (autotuning && !autotuner->isFinished()) {
         microseconds = micros();
         // Re-check sensor every iteration. Heater::loop entry gate sampled
         // once — mid-test fault would leave relay stuck at full power for
@@ -155,7 +161,7 @@ void Heater::loopAutotune() {
         }
         ESP_LOGI(LOG_TAG, "Autotuner Cycle: Temperature=%.2f", temperature);
         autotuner->update(temperature, millis() / 1000.0f);
-        while (micros() - microseconds < loopInterval) {
+        while (autotuning && micros() - microseconds < loopInterval) {
             softPwm(TUNER_OUTPUT_SPAN);
             vTaskDelay(1 / portTICK_PERIOD_MS);
         }
@@ -173,8 +179,11 @@ void Heater::loopAutotune() {
         }
     }
     output = 0.0f;
-    autotuning = false;
     softPwm(TUNER_OUTPUT_SPAN);
+    if (!autotuning.exchange(false)) {
+        ESP_LOGW(LOG_TAG, "Autotune aborted by safety stop");
+        return;
+    }
 
     if (autotuner->isTimedOut()) {
         // Reaction/inflection never detected in window. Keep NVS PID — never
@@ -221,22 +230,18 @@ float Heater::softPwm(uint32_t windowSize) {
     }
     float optimumOutput = output;
 
-    // PWM relay output
-    if (!relayStatus && static_cast<unsigned long>(optimumOutput) > (msNow - windowStartTime)) {
-        if (msNow > nextSwitchTime) {
-            nextSwitchTime = msNow;
-            relayStatus = true;
-            digitalWrite(heaterPin, HIGH);
-        }
-    } else if (relayStatus && static_cast<unsigned long>(optimumOutput) < (msNow - windowStartTime)) {
-        if (msNow > nextSwitchTime) {
-            nextSwitchTime = msNow;
-            relayStatus = false;
-            digitalWrite(heaterPin, LOW);
-        }
-    }
+    requestOutput(static_cast<unsigned long>(optimumOutput) > (msNow - windowStartTime));
     return optimumOutput;
 }
+
+void Heater::requestOutput(bool on) {
+    if (coordinator != nullptr)
+        coordinator->request(this, on);
+    else
+        writeOutput(on);
+}
+
+void Heater::writeOutput(bool on) { digitalWrite(heaterPin, on ? HIGH : LOW); }
 
 void Heater::plot(float optimumOutput, float outputScale, uint8_t everyNth) {
     if (plotCount >= everyNth) {

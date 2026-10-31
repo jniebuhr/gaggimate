@@ -1,3 +1,5 @@
+import { t } from '@lingui/core/macro';
+
 const THEME_STORAGE_KEY = 'gaggimate-daisyui-theme';
 const AVAILABLE_THEMES = ['system', 'light', 'dark', 'coffee', 'nord'];
 
@@ -40,9 +42,15 @@ export function applyTheme(theme) {
 }
 
 export function getAvailableThemes() {
+  const labels = {
+    system: t({ message: 'System', context: 'theme' }),
+    light: t({ message: 'Light', context: 'theme' }),
+    dark: t({ message: 'Dark', context: 'theme' }),
+    coffee: t({ message: 'Coffee', context: 'theme' }),
+  };
   return AVAILABLE_THEMES.map(theme => ({
     value: theme,
-    label: theme.charAt(0).toUpperCase() + theme.slice(1),
+    label: labels[theme] ?? theme.charAt(0).toUpperCase() + theme.slice(1),
   }));
 }
 

@@ -1,3 +1,5 @@
+import { t } from '@lingui/core/macro';
+
 // Profile images live on the device SD card as a 4-byte LVGL header (true color, 300x300) + RGB565 little endian pixels.
 export const PROFILE_IMAGE_SIZE = 300;
 export const ACCEPTED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/bmp'];
@@ -80,12 +82,12 @@ export async function uploadProfileImage(id, buffer) {
     headers: { 'Content-Type': 'application/octet-stream' },
     body: buffer,
   });
-  if (!response.ok) throw new Error((await response.text()) || 'Upload failed');
+  if (!response.ok) throw new Error((await response.text()) || t`Upload failed`);
 }
 
 export async function deleteProfileImage(id) {
   const response = await fetch(imageUrl(id), { method: 'DELETE' });
-  if (!response.ok) throw new Error((await response.text()) || 'Could not remove image');
+  if (!response.ok) throw new Error((await response.text()) || t`Could not remove image`);
 }
 
 // Export format: the "image" field of a profile, as a PNG data URL. Returns null when the profile has no image.

@@ -4,6 +4,7 @@ import { indexedDBService } from '../../services/IndexedDBService';
 import { notesService } from '../../services/NotesService';
 import { cleanName } from '../../utils/analyzerUtils';
 import { useCallback } from 'preact/hooks';
+import { t } from '@lingui/core/macro';
 
 function createImportOutcome() {
   return {
@@ -137,15 +138,15 @@ function showImportOutcomeAlerts({ outcome, targetType }) {
   if (outcome.appliedImportCount > 0) return;
 
   if (outcome.blockedSecondaryProfileImport) {
-    alert('Load a secondary shot before importing a secondary profile.');
+    alert(t`Load a secondary shot before importing a secondary profile.`);
     return;
   }
 
   if (outcome.mismatchedImportCount > 0) {
     alert(
       targetType === 'shot'
-        ? 'Only shot files can be imported in the shot field.'
-        : 'Only profile files can be imported in the profile field.',
+        ? t`Only shot files can be imported in the shot field.`
+        : t`Only profile files can be imported in the profile field.`,
     );
   }
 }
@@ -193,7 +194,7 @@ export function useLibraryPanelImportHandler({
           showImportOutcomeAlerts({ outcome, targetType });
         } catch (error) {
           console.error('Import error:', error);
-          alert('Import failed. Please check the file format.');
+          alert(t`Import failed. Please check the file format.`);
         } finally {
           setImporting(false);
           refreshLibraries();

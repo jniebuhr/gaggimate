@@ -1,4 +1,7 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { msg, plural, t } from '@lingui/core/macro';
+import { useLingui } from '@lingui/react/macro';
+import { i18n } from '../../../../i18n.js';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons/faCircleNotch';
 import { faEye } from '@fortawesome/free-solid-svg-icons/faEye';
 import { cleanName } from '../../utils/analyzerUtils';
@@ -7,13 +10,13 @@ import { getAnalyzerShotDisplayName, getShotDateTimeLabel } from '../useShotNote
 import { ShotSummaryMetricsRow } from './ShotMetricCards';
 
 const WEEKDAY_LABELS = [
-  'Sunday',
-  'Monday',
-  'Tuesday',
-  'Wednesday',
-  'Thursday',
-  'Friday',
-  'Saturday',
+  msg`Sunday`,
+  msg`Monday`,
+  msg`Tuesday`,
+  msg`Wednesday`,
+  msg`Thursday`,
+  msg`Friday`,
+  msg`Saturday`,
 ];
 
 function getRelativeDayLabel(timestamp) {
@@ -37,28 +40,29 @@ function getRelativeDayLabel(timestamp) {
     yesterday.getFullYear() === shotDate.getFullYear() &&
     yesterday.getMonth() === shotDate.getMonth() &&
     yesterday.getDate() === shotDate.getDate();
-  if (isYesterday) return 'Yesterday';
+  if (isYesterday) return t`Yesterday`;
 
   // Approximate day diff for remaining cases
   const diffDays = Math.floor((now - shotDate) / (1000 * 60 * 60 * 24));
   if (diffDays < 0) return '';
 
-  if (diffDays <= 6) return WEEKDAY_LABELS[shotDate.getDay()];
+  if (diffDays <= 6) return i18n._(WEEKDAY_LABELS[shotDate.getDay()]);
 
-  if (diffDays <= 13) return 'Last week';
+  if (diffDays <= 13) return t`Last week`;
 
   const diffWeeks = Math.floor(diffDays / 7);
-  if (diffWeeks <= 4) return `${diffWeeks} weeks ago`;
+  if (diffWeeks <= 4) return plural(diffWeeks, { one: '# week ago', other: '# weeks ago' });
 
   const diffMonths = Math.floor(diffDays / 30);
-  if (diffMonths < 12) return `${diffMonths} month${diffMonths > 1 ? 's' : ''} ago`;
+  if (diffMonths < 12) return plural(diffMonths, { one: '# month ago', other: '# months ago' });
 
   const diffYears = Math.floor(diffDays / 365);
-  if (diffYears < 2) return '1 year ago';
-  return `${diffYears} years ago`;
+  if (diffYears < 2) return t`1 year ago`;
+  return plural(diffYears, { one: '# year ago', other: '# years ago' });
 }
 
 function RatingControl({ rating, onChange }) {
+  const { t } = useLingui();
   return (
     <div className='flex min-h-8 items-center gap-0.5 lg:min-h-7 xl:min-h-8'>
       {[1, 2, 3, 4, 5].map(value => (
@@ -72,7 +76,7 @@ function RatingControl({ rating, onChange }) {
           }`}
           onClick={() => onChange(value)}
           title={`${value}/5`}
-          aria-label={`Set rating to ${value} of 5`}
+          aria-label={t`Set rating to ${value} of 5`}
         >
           ★
         </button>

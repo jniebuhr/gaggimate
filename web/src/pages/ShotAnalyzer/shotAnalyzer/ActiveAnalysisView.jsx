@@ -3,6 +3,8 @@
 /* global globalThis */
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
+import { msg } from '@lingui/core/macro';
+import { useLingui } from '@lingui/react/macro';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronLeft } from '@fortawesome/free-solid-svg-icons/faChevronLeft';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight';
@@ -63,13 +65,14 @@ export function getCompareDetailsKey(isCompareActive, shotDetailsEntries) {
 }
 
 function MobileAnalyzerSubpageHeader({ onBack, subtitle, title }) {
+  const { t } = useLingui();
   return (
     <div className='flex items-center gap-3'>
       <button
         type='button'
         className='app-card-surface text-base-content/75 hover:text-base-content flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-xl transition-colors'
         onClick={onBack}
-        aria-label='Back to analyzer'
+        aria-label={t`Back to analyzer`}
       >
         <FontAwesomeIcon icon={faChevronLeft} aria-hidden='true' />
       </button>
@@ -100,11 +103,11 @@ function MobileAnalyzerSubpageAction({ label, onClick }) {
 
 function getMobileAnalyzerSubpageMeta({ isCompareActive, showMobileAnalysisPage }) {
   if (!showMobileAnalysisPage) {
-    return { subtitle: 'Compare shot details', title: 'Notes' };
+    return { subtitle: msg`Compare shot details`, title: msg`Notes` };
   }
   return {
-    subtitle: isCompareActive ? 'Compare analysis table' : 'Shot analysis table',
-    title: 'Analysis Table',
+    subtitle: isCompareActive ? msg`Compare analysis table` : msg`Shot analysis table`,
+    title: msg`Analysis Table`,
   };
 }
 
@@ -185,6 +188,7 @@ export function ActiveAnalysisView({
   singleDesktopChartStyle,
   singleDesktopDetailsHeight,
 }) {
+  const { t, i18n } = useLingui();
   const alignmentClass = 'lg:items-start';
   const {
     desktopStickyDetailsClass,
@@ -247,8 +251,8 @@ export function ActiveAnalysisView({
         <div ref={mobileSubpageRef} className='analyzer-mobile-scroll-target space-y-3 lg:hidden'>
           <MobileAnalyzerSubpageHeader
             onBack={closeMobileSubpage}
-            title={mobileSubpageMeta.title}
-            subtitle={mobileSubpageMeta.subtitle}
+            title={i18n._(mobileSubpageMeta.title)}
+            subtitle={i18n._(mobileSubpageMeta.subtitle)}
           />
           {showCompareMobileDetailsPage ? (
             <ShotDetailsPanel
@@ -314,7 +318,7 @@ export function ActiveAnalysisView({
         {isCompareActive ? (
           <div className='analyzer-mobile-stack-layer analyzer-mobile-stack-layer--details mt-3 lg:hidden'>
             <MobileAnalyzerSubpageAction
-              label='Notes'
+              label={t`Notes`}
               onClick={() => handleOpenMobileSubpage('notes')}
             />
           </div>
@@ -324,7 +328,7 @@ export function ActiveAnalysisView({
           <>
             <div className='analyzer-mobile-stack-layer analyzer-mobile-stack-layer--analysis mt-3 lg:hidden'>
               <MobileAnalyzerSubpageAction
-                label='Analysis Table'
+                label={t`Analysis Table`}
                 onClick={() => handleOpenMobileSubpage('analysis')}
               />
             </div>

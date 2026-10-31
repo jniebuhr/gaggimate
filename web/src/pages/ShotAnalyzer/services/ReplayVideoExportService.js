@@ -1,5 +1,6 @@
 /* global globalThis */
 
+import { t } from '@lingui/core/macro';
 import { REPLAY_TARGET_FPS } from '../components/shotChart/constants';
 
 const EXPORT_FPS = REPLAY_TARGET_FPS;
@@ -25,7 +26,7 @@ function getMediaRecorderConstructor() {
 function createExportCanvas() {
   const browserDocument = getBrowserWindow()?.document;
   if (browserDocument === undefined) {
-    throw new TypeError('Canvas export is not supported in this environment.');
+    throw new TypeError(t`Canvas export is not supported in this environment.`);
   }
   return browserDocument.createElement('canvas');
 }
@@ -61,7 +62,7 @@ function wait(ms, signal) {
     throwIfAborted(signal);
     const browserWindow = getBrowserWindow();
     if (!browserWindow) {
-      reject(new TypeError('Replay export timers are not supported in this environment.'));
+      reject(new TypeError(t`Replay export timers are not supported in this environment.`));
       return;
     }
     const handleAbort = () => {
@@ -85,7 +86,7 @@ function waitForAnimationFrame(signal) {
     throwIfAborted(signal);
     const browserWindow = getBrowserWindow();
     if (!browserWindow) {
-      reject(new TypeError('Animation frames are not supported in this environment.'));
+      reject(new TypeError(t`Animation frames are not supported in this environment.`));
       return;
     }
     const handleAbort = () => {
@@ -455,7 +456,7 @@ function createCompositionCanvas({ mainCanvas, tempCanvas, legendItems, config }
   compositionCanvas.height = layout.outputHeight;
   const ctx = compositionCanvas.getContext('2d', { alpha: false });
   if (!ctx) {
-    throw new Error('Replay export canvas could not be created.');
+    throw new Error(t`Replay export canvas could not be created.`);
   }
 
   return { compositionCanvas, layout, ctx };
@@ -465,7 +466,7 @@ function canvasToBlob(canvas, mimeType) {
   return new Promise((resolve, reject) => {
     canvas.toBlob(blob => {
       if (!blob) {
-        reject(new Error('Replay image export could not be created.'));
+        reject(new Error(t`Replay image export could not be created.`));
         return;
       }
       resolve(blob);
@@ -508,11 +509,11 @@ export function getVideoExportCapabilities() {
 
 async function recordCanvas(canvas, fps, renderFrames, signal, recorderMimeType) {
   if (typeof canvas.captureStream !== 'function') {
-    throw new TypeError('Canvas capture is not supported in this browser.');
+    throw new TypeError(t`Canvas capture is not supported in this browser.`);
   }
   const MediaRecorderCtor = getMediaRecorderConstructor();
   if (MediaRecorderCtor === undefined) {
-    throw new TypeError('MediaRecorder is not supported in this browser.');
+    throw new TypeError(t`MediaRecorder is not supported in this browser.`);
   }
 
   const stream = canvas.captureStream(fps);
@@ -538,7 +539,7 @@ async function recordCanvas(canvas, fps, renderFrames, signal, recorderMimeType)
       }
     };
     errorHandler = event => {
-      recorderError = event?.error || new Error('Replay recording failed.');
+      recorderError = event?.error || new Error(t`Replay recording failed.`);
       reject(recorderError);
     };
     stopHandler = () => {
@@ -600,7 +601,7 @@ export async function exportReplayVideo({
 }) {
   throwIfAborted(signal);
   if (!mainCanvas || !tempCanvas || !runtime) {
-    throw new Error('Replay export is not ready yet.');
+    throw new Error(t`Replay export is not ready yet.`);
   }
 
   const { compositionCanvas, layout, ctx } = createCompositionCanvas({
@@ -614,8 +615,8 @@ export async function exportReplayVideo({
   if (!recorderMimeType) {
     throw new Error(
       config.exportFormat === 'mp4'
-        ? 'This browser cannot record MP4 video. Please use WebM export instead.'
-        : 'No supported video recorder was found for replay export.',
+        ? t`This browser cannot record MP4 video. Please use WebM export instead.`
+        : t`No supported video recorder was found for replay export.`,
     );
   }
 
@@ -694,7 +695,7 @@ export async function exportReplayImage({
 }) {
   throwIfAborted(signal);
   if (!mainCanvas || !tempCanvas) {
-    throw new Error('Replay image export is not ready yet.');
+    throw new Error(t`Replay image export is not ready yet.`);
   }
 
   const { compositionCanvas, layout, ctx } = createCompositionCanvas({

@@ -8,6 +8,7 @@ import {
   STATISTICS_DROPDOWN_PANEL_SURFACE_STYLE,
 } from './statisticsDropdownSurface';
 import './StatisticsSearchHelp.css';
+import { Trans, useLingui } from '@lingui/react/macro';
 
 /* global globalThis */
 
@@ -17,24 +18,32 @@ const STATISTICS_SEARCH_HELP_FLOATING_ATTR = 'data-statistics-toolbar-floating-p
 function StatisticsSearchHelpContent() {
   return (
     <div className='space-y-2 text-xs leading-relaxed'>
-      <p className='font-semibold'>Statistics Search DSL</p>
+      <p className='font-semibold'>
+        <Trans>Statistics Search DSL</Trans>
+      </p>
       <p className='opacity-80'>
-        Rules are separated with <code>;</code>. Visual filters and DSL are combined with AND.
+        <Trans>
+          Rules are separated with <code>;</code>. Visual filters and DSL are combined with AND.
+        </Trans>
       </p>
       <div className='bg-base-200/60 rounded-lg p-2'>
-        <p className='font-semibold'>Fields</p>
+        <p className='font-semibold'>
+          <Trans>Fields</Trans>
+        </p>
         <p>
           <code>name</code>, <code>profile</code>, <code>id</code>, <code>source</code>,{' '}
           <code>date</code>, <code>pinned</code>
         </p>
       </div>
       <div className='bg-base-200/60 rounded-lg p-2'>
-        <p className='font-semibold'>Examples</p>
-        <p>
-          <code>name:325; name:326;</code> (same field = OR)
+        <p className='font-semibold'>
+          <Trans>Examples</Trans>
         </p>
         <p>
-          <code>name:&quot;325&quot;;</code> (exact)
+          <code>name:325; name:326;</code> <Trans>(same field = OR)</Trans>
+        </p>
+        <p>
+          <code>name:&quot;325&quot;;</code> <Trans>(exact)</Trans>
         </p>
         <p>
           <code>profile:3_0_25; date:&gt;h-7d;</code>
@@ -47,18 +56,28 @@ function StatisticsSearchHelpContent() {
         </p>
       </div>
       <div className='bg-base-200/60 rounded-lg p-2'>
-        <p className='font-semibold'>Date</p>
-        <p>
-          Use <code>&gt;</code>, <code>&gt;=</code>, <code>&lt;</code>, <code>&lt;=</code>,{' '}
-          <code>=</code>
+        <p className='font-semibold'>
+          <Trans>Date</Trans>
         </p>
         <p>
-          Relative time: <code>h</code> (now), <code>h-7d</code> (7 days ago)
+          <Trans>
+            Use <code>&gt;</code>, <code>&gt;=</code>, <code>&lt;</code>, <code>&lt;=</code>,{' '}
+            <code>=</code>
+          </Trans>
         </p>
-        <p className='opacity-70'>Local browser time is used.</p>
+        <p>
+          <Trans>
+            Relative time: <code>h</code> (now), <code>h-7d</code> (7 days ago)
+          </Trans>
+        </p>
         <p className='opacity-70'>
-          Date basis (<code>Shot / Auto / Upload</code>) appears only when missing shot timestamps
-          are detected.
+          <Trans>Local browser time is used.</Trans>
+        </p>
+        <p className='opacity-70'>
+          <Trans>
+            Date basis (<code>Shot / Auto / Upload</code>) appears only when missing shot timestamps
+            are detected.
+          </Trans>
         </p>
       </div>
     </div>
@@ -66,6 +85,7 @@ function StatisticsSearchHelpContent() {
 }
 
 export function StatisticsSearchHelp() {
+  const { t } = useLingui();
   const detailsRef = useRef(null);
   const [isOpen, setIsOpen] = useState(false);
   const [isMobileViewport, setIsMobileViewport] = useState(
@@ -132,8 +152,8 @@ export function StatisticsSearchHelp() {
           className:
             'text-base-content/60 hover:text-base-content flex h-9 min-h-0 w-9 list-none items-center justify-center bg-transparent px-0',
         })} [&::-webkit-details-marker]:hidden`}
-        aria-label='Search help'
-        title='Search help'
+        aria-label={t`Search help`}
+        title={t`Search help`}
       >
         <FontAwesomeIcon icon={faCircleQuestion} className='text-sm' />
       </summary>

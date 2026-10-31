@@ -37,8 +37,12 @@ void Autotune::reset() {
 void Autotune::update(float temperature, float currentTime) {
     if (finished)
         return;
-    if (values.empty())
+    if (values.empty()) {
         initialTemp = temperature;
+        timeOrigin = currentTime;
+    }
+    // Fit on time since the first sample; absolute uptime squared in float cancels catastrophically.
+    currentTime -= timeOrigin;
 
     values.push_back(temperature);
     times.push_back(currentTime);

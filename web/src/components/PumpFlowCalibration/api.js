@@ -4,6 +4,7 @@
 import { parseBinaryIndex } from '../../pages/ShotHistory/parseBinaryIndex.js';
 import { parseBinaryShot } from '../../pages/ShotHistory/parseBinaryShot.js';
 import { SLOG_FETCH_DELAY_MS, SLOG_FETCH_RETRIES } from './constants.js';
+import { t } from '@lingui/core/macro';
 
 const SHOT_FLAG_DELETED = 0x02;
 const SLOG_HEADER_V4 = 128;
@@ -42,14 +43,13 @@ async function fetchShotReady(id, onWait) {
       throw new Error(`GET slog ${r.status}`);
     }
     if (onWait && (attempt === 1 || attempt % 3 === 0)) {
-      onWait(`slog not ready, waiting for flush... (${attempt})`);
+      onWait(t`slog not ready, waiting for flush... (${attempt})`);
     }
     if (attempt === SLOG_FETCH_RETRIES) break;
     await new Promise(res => setTimeout(res, SLOG_FETCH_DELAY_MS));
   }
-  throw new Error(
-    `Shot file remained empty after ${(SLOG_FETCH_RETRIES * SLOG_FETCH_DELAY_MS) / 1000}s`,
-  );
+  const seconds = (SLOG_FETCH_RETRIES * SLOG_FETCH_DELAY_MS) / 1000;
+  throw new Error(t`Shot file remained empty after ${seconds}s`);
 }
 
 export async function fetchAndParseShot(id, onWait) {

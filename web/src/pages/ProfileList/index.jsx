@@ -22,7 +22,6 @@ import { useConfirmAction } from '../../hooks/useConfirmAction.js';
 import { ProfileAddCard } from './ProfileAddCard.jsx';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'preact/hooks';
-import { computed } from '@preact/signals';
 import { Spinner } from '../../components/Spinner.jsx';
 import Card from '../../components/Card.jsx';
 import { parseProfile } from './utils.js';
@@ -47,6 +46,9 @@ import { faSearch } from '@fortawesome/free-solid-svg-icons/faSearch';
 import { faAnglesDown, faAnglesUp, faGripVertical } from '@fortawesome/free-solid-svg-icons';
 import { buildStatisticsProfileHref } from '../Statistics/utils/statisticsRoute.js';
 import { isSystemProfile } from '../../utils/systemProfiles.js';
+import { msg } from '@lingui/core/macro';
+import { Plural, Trans, useLingui } from '@lingui/react/macro';
+import { useProfileList } from '../../services/hooks.js';
 
 Chart.register(
   LineController,
@@ -60,11 +62,9 @@ Chart.register(
 );
 
 const PhaseLabels = {
-  preinfusion: 'Pre-Infusion',
-  brew: 'Brew',
+  preinfusion: msg`Pre-Infusion`,
+  brew: msg({ message: 'Brew', context: 'phase type' }),
 };
-
-const connected = computed(() => machine.value.connected);
 
 function ProfileCard({
   data,
@@ -82,6 +82,7 @@ function ProfileCard({
   isFirst,
   isLast,
 }) {
+  const { t } = useLingui();
   const { armed: confirmDelete, armOrRun: confirmOrDelete } = useConfirmAction(4000);
   const [tooltipsDisabled, setTooltipsDisabled] = useState(false);
 
@@ -98,7 +99,11 @@ function ProfileCard({
   }, [onMoveBottom, data.id]);
 
   const bookmarkClass = data.favorite ? 'text-warning' : 'text-base-content/60';
-  const typeText = data.type === 'pro' ? 'Pro' : 'Simple';
+  const label = data.label;
+  const typeText =
+    data.type === 'pro'
+      ? t({ message: 'Pro', context: 'profile type' })
+      : t({ message: 'Simple', context: 'profile type' });
   const isSystem = isSystemProfile(data.id);
   const typeClass = data.type === 'pro' ? 'badge badge-primary' : 'badge badge-neutral';
   const favoriteToggleDisabled = data.favorite ? unfavoriteDisabled : favoriteDisabled;
@@ -217,7 +222,7 @@ function ProfileCard({
                     type='checkbox'
                     onClick={() => onSelect(data.id)}
                     className='checkbox checkbox-success checkbox-sm'
-                    aria-label={`Select ${data.label} profile`}
+                    aria-label={t`Select ${label} profile`}
                   />
                 </label>
               </div>
@@ -231,25 +236,27 @@ function ProfileCard({
                 </span>
                 <span
                   className={`${typeClass} badge-sm lg:badge-md font-medium`}
-                  aria-label={`Profile type: ${typeText}`}
+                  aria-label={t`Profile type: ${typeText}`}
                 >
                   {typeText}
                 </span>
                 {isSystem && (
                   <span
                     className='badge badge-outline badge-sm lg:badge-md font-medium'
-                    title='Built-in profile, can be edited but not deleted'
+                    title={t`Built-in profile, can be edited but not deleted`}
                   >
-                    System
+                    <Trans context='profile badge'>System</Trans>
                   </span>
                 )}
                 <button
                   onClick={onToggleDetails}
                   className='btn btn-xs btn-ghost self-start'
-                  aria-label={`${detailsCollapsed ? 'Show' : 'Hide'} details for ${data.label}`}
+                  aria-label={
+                    detailsCollapsed ? t`Show details for ${label}` : t`Hide details for ${label}`
+                  }
                   aria-expanded={!detailsCollapsed}
                   aria-controls={detailsSectionId}
-                  title={detailsCollapsed ? 'Show details' : 'Hide details'}
+                  title={detailsCollapsed ? t`Show details` : t`Hide details`}
                 >
                   <FontAwesomeIcon
                     icon={faChevronRight}
@@ -261,7 +268,7 @@ function ProfileCard({
               <div
                 className='flex flex-1 flex-row justify-end gap-2'
                 role='group'
-                aria-label={`Actions for ${data.label} profile`}
+                aria-label={t`Actions for ${label} profile`}
               >
                 {/* Mobile: Popover actions menu */}
                 <div>
@@ -269,7 +276,7 @@ function ProfileCard({
                     ref={kebabRef}
                     onClick={toggleMenu}
                     className='btn btn-sm btn-ghost sm:hidden'
-                    aria-label={`Open actions menu for ${data.label} profile`}
+                    aria-label={t`Open actions menu for ${label} profile`}
                     aria-haspopup='menu'
                     aria-expanded={menuOpen}
                     aria-controls={`profile-${data.id}-menu`}
@@ -298,13 +305,13 @@ function ProfileCard({
                             className={`justify-start ${favoriteToggleClass}`}
                             aria-label={
                               data.favorite
-                                ? `Remove ${data.label} from favorites`
-                                : `Add ${data.label} to favorites`
+                                ? t`Remove ${label} from favorites`
+                                : t`Add ${label} to favorites`
                             }
                             aria-pressed={data.favorite}
                           >
                             <FontAwesomeIcon icon={faStar} className={bookmarkClass} />
-                            <span>{data.favorite ? 'Unfavorite' : 'Favorite'}</span>
+                            <span>{data.favorite ? t`Unfavorite` : t`Favorite`}</span>
                           </button>
                         </li>
                         <li role='none'>
@@ -312,10 +319,12 @@ function ProfileCard({
                             role='menuitem'
                             href={`/profiles/${data.id}`}
                             onClick={closeMenu}
-                            aria-label={`Edit ${data.label} profile`}
+                            aria-label={t`Edit ${label} profile`}
                           >
                             <FontAwesomeIcon icon={faPen} />
-                            <span>Edit</span>
+                            <span>
+                              <Trans>Edit</Trans>
+                            </span>
                           </a>
                         </li>
                         <li role='none'>
@@ -324,10 +333,12 @@ function ProfileCard({
                             href={statsHref}
                             onClick={closeMenu}
                             className='text-success justify-start'
-                            aria-label={`View statistics for ${data.label} profile`}
+                            aria-label={t`View statistics for ${label} profile`}
                           >
                             <FontAwesomeIcon icon={faChartSimple} />
-                            <span>Statistics</span>
+                            <span>
+                              <Trans>Statistics</Trans>
+                            </span>
                           </a>
                         </li>
                         <li role='none'>
@@ -338,10 +349,12 @@ function ProfileCard({
                               closeMenu();
                             }}
                             className='text-primary justify-start'
-                            aria-label={`Export ${data.label} profile`}
+                            aria-label={t`Export ${label} profile`}
                           >
                             <FontAwesomeIcon icon={faFileExport} />
-                            <span>Export</span>
+                            <span>
+                              <Trans>Export</Trans>
+                            </span>
                           </button>
                         </li>
                         <li role='none'>
@@ -352,10 +365,12 @@ function ProfileCard({
                               closeMenu();
                             }}
                             className='text-success justify-start'
-                            aria-label={`Duplicate ${data.label} profile`}
+                            aria-label={t`Duplicate ${label} profile`}
                           >
                             <FontAwesomeIcon icon={faCopy} />
-                            <span>Duplicate</span>
+                            <span>
+                              <Trans>Duplicate</Trans>
+                            </span>
                           </button>
                         </li>
                         {!isSystem && (
@@ -371,13 +386,13 @@ function ProfileCard({
                               className={`justify-start ${confirmDelete ? 'bg-error text-error-content rounded font-semibold' : 'text-error'}`}
                               aria-label={
                                 confirmDelete
-                                  ? `Confirm deletion of ${data.label} profile`
-                                  : `Delete ${data.label} profile`
+                                  ? t`Confirm deletion of ${label} profile`
+                                  : t`Delete ${label} profile`
                               }
-                              title={confirmDelete ? 'Click to confirm delete' : 'Delete profile'}
+                              title={confirmDelete ? t`Click to confirm delete` : t`Delete profile`}
                             >
                               <FontAwesomeIcon icon={faTrashCan} />
-                              <span>{confirmDelete ? 'Confirm' : 'Delete'}</span>
+                              <span>{confirmDelete ? t`Confirm` : t`Delete`}</span>
                             </button>
                           </li>
                         )}
@@ -390,61 +405,61 @@ function ProfileCard({
                 <div
                   className='hidden flex-row justify-end gap-2 sm:flex'
                   role='group'
-                  aria-label={`Actions for ${data.label} profile`}
+                  aria-label={t`Actions for ${label} profile`}
                 >
-                  <Tooltip content={data.favorite ? 'Remove from favorites' : 'Add to favorites'}>
+                  <Tooltip content={data.favorite ? t`Remove from favorites` : t`Add to favorites`}>
                     <button
                       onClick={onFavoriteToggle}
                       disabled={favoriteToggleDisabled}
                       className={`btn btn-sm btn-ghost ${favoriteToggleClass}`}
                       aria-label={
                         data.favorite
-                          ? `Remove ${data.label} from favorites`
-                          : `Add ${data.label} to favorites`
+                          ? t`Remove ${label} from favorites`
+                          : t`Add ${label} to favorites`
                       }
                       aria-pressed={data.favorite}
                     >
                       <FontAwesomeIcon icon={faStar} className={bookmarkClass} />
                     </button>
                   </Tooltip>
-                  <Tooltip content='Edit profile'>
+                  <Tooltip content={t`Edit profile`}>
                     <a
                       href={`/profiles/${data.id}`}
                       className='btn btn-sm btn-ghost'
-                      aria-label={`Edit ${data.label} profile`}
+                      aria-label={t`Edit ${label} profile`}
                     >
                       <FontAwesomeIcon icon={faPen} />
                     </a>
                   </Tooltip>
-                  <Tooltip content='View statistics for this profile'>
+                  <Tooltip content={t`View statistics for this profile`}>
                     <a
                       href={statsHref}
                       className='btn btn-sm btn-ghost text-success'
-                      aria-label={`View statistics for ${data.label} profile`}
+                      aria-label={t`View statistics for ${label} profile`}
                     >
                       <FontAwesomeIcon icon={faChartSimple} />
                     </a>
                   </Tooltip>
-                  <Tooltip content='Export profile'>
+                  <Tooltip content={t`Export profile`}>
                     <button
                       onClick={onDownload}
                       className='btn btn-sm btn-ghost text-primary'
-                      aria-label={`Export ${data.label} profile`}
+                      aria-label={t`Export ${label} profile`}
                     >
                       <FontAwesomeIcon icon={faFileExport} />
                     </button>
                   </Tooltip>
-                  <Tooltip content='Duplicate profile'>
+                  <Tooltip content={t`Duplicate profile`}>
                     <button
                       onClick={() => onDuplicate(data.id)}
                       className='btn btn-sm btn-ghost text-success'
-                      aria-label={`Duplicate ${data.label} profile`}
+                      aria-label={t`Duplicate ${label} profile`}
                     >
                       <FontAwesomeIcon icon={faCopy} />
                     </button>
                   </Tooltip>
                   {!isSystem && (
-                    <Tooltip content={confirmDelete ? 'Click to confirm' : 'Delete profile'}>
+                    <Tooltip content={confirmDelete ? t`Click to confirm` : t`Delete profile`}>
                       <button
                         onClick={() => {
                           confirmOrDelete(() => onDelete(data.id));
@@ -452,12 +467,16 @@ function ProfileCard({
                         className={`btn btn-sm btn-ghost ${confirmDelete ? 'bg-error text-error-content' : 'text-error'}`}
                         aria-label={
                           confirmDelete
-                            ? `Confirm deletion of ${data.label} profile`
-                            : `Delete ${data.label} profile`
+                            ? t`Confirm deletion of ${label} profile`
+                            : t`Delete ${label} profile`
                         }
                       >
                         <FontAwesomeIcon icon={faTrashCan} />
-                        {confirmDelete && <span className='ml-2 font-semibold'>Confirm</span>}
+                        {confirmDelete && (
+                          <span className='ml-2 font-semibold'>
+                            <Trans>Confirm</Trans>
+                          </span>
+                        )}
                       </button>
                     </Tooltip>
                   )}
@@ -479,38 +498,35 @@ function ProfileCard({
                     {totalDurationSeconds}s
                   </span>
                   {phases.length > 0 &&
-                    phases[phases.length - 1]?.targets?.some(t => t.type === 'volumetric') && (
+                    phases[phases.length - 1]?.targets?.some(tg => tg.type === 'volumetric') && (
                       <span className='text-base-content/60 badge badge-xs md:badge-sm badge-outline'>
                         <FontAwesomeIcon icon={faScaleBalanced} />
-                        {`${phases[phases.length - 1].targets.find(t => t.type === 'volumetric').value}g`}
+                        {`${phases[phases.length - 1].targets.find(tg => tg.type === 'volumetric').value}g`}
                       </span>
                     )}
                   {phases.length > 0 && (
                     <span className='text-base-content/60 badge badge-xs md:badge-sm badge-outline'>
-                      {phases.length} phase{phases.length === 1 ? '' : 's'}
+                      <Plural value={phases.length} one='# phase' other='# phases' />
                     </span>
                   )}
                 </div>
               </div>
             )}
-            <div
-              className='flex flex-row gap-2 py-2'
-              aria-label={`Profile details for ${data.label}`}
-            >
+            <div className='flex flex-row gap-2 py-2' aria-label={t`Profile details for ${label}`}>
               <div className='flex flex-col justify-evenly pr-1'>
-                <Tooltip content='Move to top' disabled={isDragging || tooltipsDisabled}>
+                <Tooltip content={t`Move to top`} disabled={isDragging || tooltipsDisabled}>
                   <button
                     onClick={handleMoveTop}
                     disabled={isFirst}
                     className='drag-to-top btn btn-sm btn-ghost'
-                    aria-label={`Move ${data.label} to top`}
+                    aria-label={t`Move ${label} to top`}
                     aria-disabled={isFirst}
                   >
                     <FontAwesomeIcon icon={faAnglesUp} />
                   </button>
                 </Tooltip>
                 <Tooltip
-                  content={`${disabledDrag ? 'Drag disabled on search result' : 'Drag to reorder'}`}
+                  content={disabledDrag ? t`Drag disabled on search result` : t`Drag to reorder`}
                   disabled={isDragging}
                 >
                   <div
@@ -519,12 +535,12 @@ function ProfileCard({
                     <FontAwesomeIcon icon={faGripVertical} />
                   </div>
                 </Tooltip>
-                <Tooltip content='Move to bottom' disabled={isDragging || tooltipsDisabled}>
+                <Tooltip content={t`Move to bottom`} disabled={isDragging || tooltipsDisabled}>
                   <button
                     onClick={handleMoveBottom}
                     disabled={isLast}
                     className='drag-to-bottom btn btn-sm btn-ghost'
-                    aria-label={`Move ${data.label} to bottom`}
+                    aria-label={t`Move ${label} to bottom`}
                     aria-disabled={isLast}
                   >
                     <FontAwesomeIcon icon={faAnglesDown} />
@@ -547,12 +563,17 @@ function ProfileCard({
 }
 
 function SimpleContent({ phases }) {
+  const { t } = useLingui();
   if (phases.length === 0) {
-    return <div className='text-base-content/60 text-sm'>No phases</div>;
+    return (
+      <div className='text-base-content/60 text-sm'>
+        <Trans>No phases</Trans>
+      </div>
+    );
   }
 
   return (
-    <div className='flex flex-row items-center gap-2' role='list' aria-label='Brew phases'>
+    <div className='flex flex-row items-center gap-2' role='list' aria-label={t`Brew phases`}>
       {phases.map((phase, i) => (
         <div key={i} className='flex flex-row items-center gap-2' role='listitem'>
           {i > 0 && <SimpleDivider />}
@@ -575,20 +596,32 @@ function SimpleDivider() {
 }
 
 function SimpleStep(props) {
+  const { i18n } = useLingui();
+  const duration = props.duration;
+  const phaseLabel = PhaseLabels[props.phase];
   return (
     <div className='bg-base-100 border-base-300 flex flex-col gap-1 rounded-lg border p-3'>
       <div className='flex flex-row gap-2'>
-        <span className='text-base-content text-sm font-bold'>{PhaseLabels[props.phase]}</span>
+        <span className='text-base-content text-sm font-bold'>
+          {phaseLabel ? i18n._(phaseLabel) : undefined}
+        </span>
         <span className='text-base-content/70 text-sm'>{props.type}</span>
       </div>
       <div className='text-base-content/60 text-sm italic'>
-        {props.targets.length === 0 && <span>Duration: {props.duration}s</span>}
-        {props.targets.map((t, i) => (
-          <span key={i}>
-            Exit on: {t.value}
-            {t.type === 'volumetric' && 'g'}
+        {props.targets.length === 0 && (
+          <span>
+            <Trans>Duration: {duration}s</Trans>
           </span>
-        ))}
+        )}
+        {props.targets.map((target, i) => {
+          const value = target.value;
+          return (
+            <span key={i}>
+              <Trans>Exit on: {value}</Trans>
+              {target.type === 'volumetric' && 'g'}
+            </span>
+          );
+        })}
       </div>
     </div>
   );
@@ -606,9 +639,15 @@ async function withExportedImage(profile) {
 }
 
 export function ProfileList() {
+  const { t } = useLingui();
   const apiService = useContext(ApiServiceContext);
-  const [profiles, setProfiles] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const {
+    profiles,
+    loading,
+    invalidate: invalidateProfiles,
+    setLoading,
+    setProfiles,
+  } = useProfileList();
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('extraction');
   const [isDragging, setIsDragging] = useState(false);
@@ -623,12 +662,6 @@ export function ProfileList() {
       setActiveTab('extraction');
     }
   }, [hasUtilityProfiles]);
-
-  const loadProfiles = async () => {
-    const response = await apiService.request({ tp: 'req:profiles:list' });
-    setProfiles(response.profiles);
-    setLoading(false);
-  };
 
   // Placeholder for future persistence of order (intentionally empty)
   // Debounced persistence of profile order (300ms)
@@ -708,7 +741,7 @@ export function ProfileList() {
         return normalized;
       });
     },
-    [persistProfileOrder],
+    [persistProfileOrder, setProfiles],
   );
 
   const moveProfileBottom = useCallback(
@@ -731,7 +764,7 @@ export function ProfileList() {
         return normalized;
       });
     },
-    [persistProfileOrder],
+    [persistProfileOrder, setProfiles],
   );
 
   const onDragStart = useCallback(() => {
@@ -804,7 +837,7 @@ export function ProfileList() {
         return next;
       });
     },
-    [activeTab, clearDropHighlights, persistProfileOrder],
+    [activeTab, clearDropHighlights, persistProfileOrder, setProfiles],
   );
 
   // Sorting via SortableJS
@@ -830,33 +863,21 @@ export function ProfileList() {
   }, [loading, searchTerm, onDragStart, onDragChange, onDragEnd]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => {
-    const loadData = async () => {
-      if (connected.value) {
-        await loadProfiles();
-      }
-    };
-    loadData();
-  }, [connected.value]);
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const onDelete = useCallback(
     async id => {
       setLoading(true);
       await apiService.request({ tp: 'req:profiles:delete', id });
-      await loadProfiles();
+      await invalidateProfiles();
     },
-    [apiService, setLoading],
+    [apiService, setLoading, invalidateProfiles],
   );
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // The status broadcast carries the new selection into the cached list
   const onSelect = useCallback(
     async id => {
-      setLoading(true);
       await apiService.request({ tp: 'req:profiles:select', id });
-      await loadProfiles();
     },
-    [apiService, setLoading],
+    [apiService],
   );
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -864,9 +885,9 @@ export function ProfileList() {
     async id => {
       setLoading(true);
       await apiService.request({ tp: 'req:profiles:favorite', id });
-      await loadProfiles();
+      await invalidateProfiles();
     },
-    [apiService, setLoading],
+    [apiService, setLoading, invalidateProfiles],
   );
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -874,9 +895,9 @@ export function ProfileList() {
     async id => {
       setLoading(true);
       await apiService.request({ tp: 'req:profiles:unfavorite', id });
-      await loadProfiles();
+      await invalidateProfiles();
     },
-    [apiService, setLoading],
+    [apiService, setLoading, invalidateProfiles],
   );
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -892,9 +913,9 @@ export function ProfileList() {
         copy.label = `${original.label} Copy`;
         await apiService.request({ tp: 'req:profiles:save', profile: copy });
       }
-      await loadProfiles();
+      await invalidateProfiles();
     },
-    [apiService, profiles, setLoading],
+    [apiService, profiles, setLoading, invalidateProfiles],
   );
 
   const onExport = useCallback(async () => {
@@ -930,7 +951,7 @@ export function ProfileList() {
           } catch {
             // Individual save errors are surfaced by WS timeout; continue to reload list.
           }
-          await loadProfiles();
+          await invalidateProfiles();
         }
       };
       reader.readAsText(file);
@@ -944,8 +965,8 @@ export function ProfileList() {
         await apiService.request({ tp: 'req:profiles:delete', id: p.id });
       }
     }
-    await loadProfiles();
-  }, [profiles, apiService]);
+    await invalidateProfiles();
+  }, [profiles, apiService, setLoading, invalidateProfiles]);
 
   if (loading) {
     return (
@@ -953,7 +974,7 @@ export function ProfileList() {
         className='flex w-full flex-row items-center justify-center py-16'
         role='status'
         aria-live='polite'
-        aria-label='Loading profiles'
+        aria-label={t`Loading profiles`}
       >
         <Spinner size={8} />
       </div>
@@ -963,7 +984,9 @@ export function ProfileList() {
   return (
     <>
       <div className='mb-4 flex flex-row items-center gap-2'>
-        <h1 className='flex-grow text-2xl font-bold sm:text-3xl'>Profiles</h1>
+        <h1 className='flex-grow text-2xl font-bold sm:text-3xl'>
+          <Trans>Profiles</Trans>
+        </h1>
       </div>
 
       <div className='mb-4 flex flex-col items-center gap-2 sm:flex-row'>
@@ -974,7 +997,7 @@ export function ProfileList() {
             <FontAwesomeIcon icon={faSearch} />
             <input
               type='text'
-              placeholder='Search...'
+              placeholder={t`Search...`}
               value={searchTerm}
               onChange={e => {
                 setSearchTerm(e.target.value);
@@ -984,21 +1007,21 @@ export function ProfileList() {
           </label>
         </div>
         <div className='flex flex-grow items-center justify-end gap-2'>
-          <Tooltip content='Export all profiles'>
+          <Tooltip content={t`Export all profiles`}>
             <button
               id='export-profiles'
               onClick={onExport}
               className='btn btn-ghost btn-sm'
-              aria-label='Export all profiles'
+              aria-label={t`Export all profiles`}
             >
               <FontAwesomeIcon icon={faFileExport} />
             </button>
           </Tooltip>
-          <Tooltip content='Import profiles'>
+          <Tooltip content={t`Import profiles`}>
             <label
               htmlFor='profileImport'
               className='btn btn-ghost btn-sm cursor-pointer'
-              aria-label='Import profiles'
+              aria-label={t`Import profiles`}
             >
               <FontAwesomeIcon icon={faFileImport} />
             </label>
@@ -1009,17 +1032,17 @@ export function ProfileList() {
             id='profileImport'
             type='file'
             accept='.json,application/json,.tcl'
-            aria-label='Select a JSON file containing profile data to import'
+            aria-label={t`Select a JSON file containing profile data to import`}
           />
           <ConfirmButton
             onAction={onClear}
             icon={faTrashCan}
-            tooltip='Delete all profiles'
-            confirmTooltip='Confirm deletion'
+            tooltip={t`Delete all profiles`}
+            confirmTooltip={t`Confirm deletion`}
           />
         </div>
       </div>
-      <div className='mb-4' aria-label='Add profile'>
+      <div className='mb-4' aria-label={t`Add profile`}>
         <ProfileAddCard />
       </div>
       {hasUtilityProfiles && (
@@ -1028,24 +1051,24 @@ export function ProfileList() {
             role='tab'
             className={`tab ${activeTab === 'extraction' ? 'tab-active' : ''}`}
             onClick={() => setActiveTab('extraction')}
-            aria-label='Switch to extraction tab'
+            aria-label={t`Switch to extraction tab`}
           >
-            Extraction
+            <Trans context='profile tab'>Extraction</Trans>
           </button>
           <button
             role='tab'
             className={`tab ${activeTab === 'utility' ? 'tab-active' : ''}`}
             onClick={() => setActiveTab('utility')}
-            aria-label='Switch to utility tab'
+            aria-label={t`Switch to utility tab`}
           >
-            Utility
+            <Trans context='profile tab'>Utility</Trans>
           </button>
         </div>
       )}
       <div
         className='grid grid-cols-1 gap-4 lg:grid-cols-12'
         role='list'
-        aria-label='Profile list'
+        aria-label={t`Profile list`}
         ref={containerRef}
       >
         {profilesToShow

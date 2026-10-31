@@ -7,6 +7,7 @@ import {
   THIN_LINE_WIDTH,
   VISIBILITY_KEY_BY_LABEL,
 } from '../constants';
+import { getShotChartShortLabel } from '../labelVisuals';
 
 function getLegendItemStyle(label) {
   if (LEGEND_BLOCK_LABELS.has(label)) return 'block';
@@ -30,7 +31,7 @@ export function getVisibleLegendItemsForExport({
     if (key && !visibility[key]) return items;
 
     items.push({
-      label,
+      label: getShotChartShortLabel(label),
       color: legendColorByLabel[label] || '#94a3b8',
       style: getLegendItemStyle(label),
       lineWidth: LEGEND_THIN_LINE_LABELS.has(label) ? THIN_LINE_WIDTH : STANDARD_LINE_WIDTH,

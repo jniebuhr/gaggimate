@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro';
 import { isWeightType } from './exitReasons.js';
 
 /* global globalThis */
@@ -31,9 +32,9 @@ export function analyzerDebug(enabled, message, payload = null) {
 export function getDelayReviewMessage(phaseNumber, delayMs) {
   if (!phaseNumber) return null;
   if (delayMs != null) {
-    return `Unusually high inferred delay in Phase ${phaseNumber} (${delayMs} ms).`;
+    return t`Unusually high inferred delay in Phase ${phaseNumber} (${delayMs} ms).`;
   }
-  return `Unusually high inferred delay in Phase ${phaseNumber}.`;
+  return t`Unusually high inferred delay in Phase ${phaseNumber}.`;
 }
 
 export function createDelayTotals() {

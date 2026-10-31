@@ -5,48 +5,73 @@ import linkSlashAlt from '../assets/warnings/link-slash-alt.svg?raw';
 import batteryExclamation from '../assets/warnings/battery-exclamation-2.svg?raw';
 import highTemperatureAlert from '../assets/warnings/high-temperature-alert.svg?raw';
 import broom from '../assets/warnings/broom.svg?raw';
+import { msg } from '@lingui/core/macro';
+import { withTranslatedLabel } from './translatedLabel.js';
 
 export const WARNING_LEVEL = { IGNORE: 0, WARN: 1, ERROR: 2 };
 
-export const WARNING_LEVELS = [
-  { value: WARNING_LEVEL.IGNORE, label: 'Ignore', activeClass: 'btn-primary' },
-  { value: WARNING_LEVEL.WARN, label: 'Warn', activeClass: 'btn-warning' },
-  { value: WARNING_LEVEL.ERROR, label: 'Error', activeClass: 'btn-error' },
-];
+// `label` is a getter so every consumer reads the string in the active locale.
+const translated = entries => entries.map(withTranslatedLabel);
+
+export const WARNING_LEVELS = translated([
+  {
+    value: WARNING_LEVEL.IGNORE,
+    labelMsg: msg({ message: 'Ignore', context: 'warning level' }),
+    activeClass: 'btn-primary',
+  },
+  {
+    value: WARNING_LEVEL.WARN,
+    labelMsg: msg({ message: 'Warn', context: 'warning level' }),
+    activeClass: 'btn-warning',
+  },
+  {
+    value: WARNING_LEVEL.ERROR,
+    labelMsg: msg({ message: 'Error', context: 'warning level' }),
+    activeClass: 'btn-error',
+  },
+]);
 
 // Keys match WarningManager on the firmware; icons are the same SVGs the display uses.
-export const WARNINGS = [
-  { key: 'water', label: 'Water tank low', settingKey: 'warnWaterLevel', icon: tintSlash },
+export const WARNINGS = translated([
+  { key: 'water', labelMsg: msg`Water tank low`, settingKey: 'warnWaterLevel', icon: tintSlash },
   {
     key: 'temperature',
-    label: 'Temperature not stable',
+    labelMsg: msg`Temperature not stable`,
     settingKey: 'warnTemperature',
     icon: highTemperatureAlert,
   },
   {
     key: 'switch',
-    label: 'Steam switch left on',
+    labelMsg: msg`Steam switch left on`,
     settingKey: 'warnSteamSwitch',
     icon: lightSwitchOff,
   },
-  { key: 'flush', label: 'Flush recommended', settingKey: 'warnFlush', icon: raindropsFilled },
+  {
+    key: 'flush',
+    labelMsg: msg`Flush recommended`,
+    settingKey: 'warnFlush',
+    icon: raindropsFilled,
+  },
   {
     key: 'scaleConnected',
-    label: 'Scale not connected',
+    labelMsg: msg`Scale not connected`,
     settingKey: 'warnScaleConnected',
     icon: linkSlashAlt,
   },
   {
     key: 'scaleBattery',
-    label: 'Scale battery low',
+    labelMsg: msg`Scale battery low`,
     settingKey: 'warnScaleBattery',
     icon: batteryExclamation,
   },
-  { key: 'backflush', label: 'Backflush due', settingKey: 'warnBackflush', icon: broom },
-  { key: 'descaling', label: 'Descaling due', settingKey: 'warnDescaling', icon: broom },
-];
+  { key: 'backflush', labelMsg: msg`Backflush due`, settingKey: 'warnBackflush', icon: broom },
+  { key: 'descaling', labelMsg: msg`Descaling due`, settingKey: 'warnDescaling', icon: broom },
+]);
 
 export const warningByKey = key => WARNINGS.find(w => w.key === key);
+
+// Translated label for a firmware warning key, falling back to the key itself.
+export const warningLabel = key => warningByKey(key)?.label ?? key;
 
 // Expand the compact firmware form ({k, l, a}) used in evt:status and evt:brew:confirm.
 export function parseWarningStates(raw) {

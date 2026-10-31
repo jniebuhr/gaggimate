@@ -176,9 +176,9 @@ void GaggiMateServer::registerHandlers() {
         if (_relayCb)
             _relayCb(static_cast<uint8_t>(p.content.relay.index), p.content.relay.open);
     });
-    _endpoint.on(gaggimate_Payload_pid_tag, [this](const gm::Payload &p) {
-        if (_pidCb)
-            _pidCb(p.content.pid.kp, p.content.pid.ki, p.content.pid.kd, p.content.pid.kf);
+    _endpoint.on(gaggimate_Payload_heater_tag, [this](const gm::Payload &p) {
+        if (_heaterSettingsCb)
+            _heaterSettingsCb(p.content.heater);
     });
     _endpoint.on(gaggimate_Payload_pump_model_tag, [this](const gm::Payload &p) {
         if (_pumpSettingsCb)

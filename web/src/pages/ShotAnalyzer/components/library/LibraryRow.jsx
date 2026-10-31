@@ -3,6 +3,7 @@
  */
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { useLingui } from '@lingui/react/macro';
 import { faChartArea } from '@fortawesome/free-solid-svg-icons/faChartArea';
 import { faChartSimple } from '@fortawesome/free-solid-svg-icons/faChartSimple';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons/faCircleNotch';
@@ -62,6 +63,8 @@ function CompareSelectionControl({
   isCompareReference,
   onCompareToggle,
 }) {
+  const { t } = useLingui();
+  const compareLabel = isCompareReference ? t`Reference shot` : t`Compare shot`;
   return (
     <span className='flex h-6 w-6 shrink-0 items-center justify-center'>
       {isComparePending ? (
@@ -71,8 +74,8 @@ function CompareSelectionControl({
           type='checkbox'
           checked={isCompareSelected}
           disabled={isCompareSelectionDisabled}
-          title={isCompareReference ? 'Reference shot' : 'Compare shot'}
-          aria-label={isCompareReference ? 'Reference shot' : 'Compare shot'}
+          title={compareLabel}
+          aria-label={compareLabel}
           onClick={event => event.stopPropagation()}
           onChange={event => onCompareToggle?.(event.currentTarget.checked)}
           className='checkbox checkbox-xs border-base-content/20 rounded-sm'
@@ -95,14 +98,20 @@ function LibraryCompareBadge({ compareBadgeNumber }) {
 }
 
 function LibraryPinButton({ item, isPinned, pinDisabledReason, onPinToggle, displayName, isShot }) {
+  const { t } = useLingui();
   if (!onPinToggle) return null;
+
+  const pinAriaLabel = isPinned ? t`Unpin ${displayName}` : t`Pin ${displayName}`;
+  let pinTitle;
+  if (isShot) pinTitle = isPinned ? t`Unpin shot` : t`Pin shot`;
+  else pinTitle = isPinned ? t`Unpin profile` : t`Pin profile`;
 
   return (
     <button
       type='button'
-      aria-label={`${isPinned ? 'Unpin' : 'Pin'} ${displayName}`}
+      aria-label={pinAriaLabel}
       aria-disabled={!isPinned && !!pinDisabledReason}
-      title={pinDisabledReason || `${isPinned ? 'Unpin' : 'Pin'} ${isShot ? 'shot' : 'profile'}`}
+      title={pinDisabledReason || pinTitle}
       onClick={event => {
         stopRowClick(event);
         if (!isPinned && pinDisabledReason) return;
@@ -129,11 +138,12 @@ function LibraryActionsCell({
   onDelete,
   statisticsIcon,
 }) {
+  const { t } = useLingui();
   const actions = [
     ...(!isShot
       ? [
           {
-            label: 'Profile Statistics',
+            label: t`Profile Statistics`,
             icon: statisticsIcon,
             tone: 'success',
             href: profileStatsHref || '/statistics',
@@ -142,12 +152,12 @@ function LibraryActionsCell({
         ]
       : []),
     {
-      label: 'Export',
+      label: t`Export`,
       icon: faFileExport,
       onSelect: () => onExport(item),
     },
     {
-      label: 'Delete',
+      label: t`Delete`,
       icon: faTrashCan,
       tone: 'error',
       onSelect: () => onDelete(item),
@@ -157,7 +167,7 @@ function LibraryActionsCell({
   return (
     <LibraryActionsMenu
       actions={actions}
-      ariaLabel={`Open ${isShot ? 'shot' : 'profile'} actions menu`}
+      ariaLabel={isShot ? t`Open shot actions menu` : t`Open profile actions menu`}
       buttonClassName='h-6 w-6'
       placement='top'
     />
@@ -187,7 +197,8 @@ export function LibraryRow({
   onPinToggle,
   columnCount = 1,
 }) {
-  const itemName = isShot ? item.name || item.label || 'Unknown' : getProfileDisplayLabel(item);
+  const { t } = useLingui();
+  const itemName = isShot ? item.name || item.label || t`Unknown` : getProfileDisplayLabel(item);
   const displayName = getLibraryDisplayName(item, itemName, isShot);
 
   // Format Date & Time

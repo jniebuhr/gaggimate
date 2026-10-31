@@ -1,4 +1,5 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { faArrowUpRightFromSquare } from '@fortawesome/free-solid-svg-icons/faArrowUpRightFromSquare';
 import { faCircleInfo } from '@fortawesome/free-solid-svg-icons/faCircleInfo';
 import { faDownLeftAndUpRightToCenter } from '@fortawesome/free-solid-svg-icons/faDownLeftAndUpRightToCenter';
@@ -16,10 +17,11 @@ import {
   getAnalyzerTextButtonClasses,
 } from '../../analyzerControlStyles';
 
-function getReplayActionLabel({ isReplaying, isReplayPaused }) {
-  if (isReplaying) return 'Pause replay';
-  if (isReplayPaused) return 'Resume replay';
-  return 'Replay chart';
+function useReplayActionLabel({ isReplaying, isReplayPaused }) {
+  const { t } = useLingui();
+  if (isReplaying) return t`Pause replay`;
+  if (isReplayPaused) return t`Resume replay`;
+  return t`Replay chart`;
 }
 
 function ChartActionDivider() {
@@ -46,6 +48,7 @@ function ShotMediaExportMenu({
   buttonIconStyle = ANALYZER_ACTION_ICON_STYLE,
   menuClassName = 'absolute top-full right-0 z-[70] mt-2',
 }) {
+  const { t } = useLingui();
   const fileExportTypes = ['shot', 'profile'].filter(type =>
     exportMenuState.exportType?.includes(type),
   );
@@ -64,9 +67,9 @@ function ShotMediaExportMenu({
         onClick={onExportMenuToggle}
         className={`${buttonClassName} ${exportMenuState.open ? 'text-base-content/90' : ''}`}
         disabled={isControlsLocked}
-        aria-label='Share'
+        aria-label={t`Share`}
         aria-expanded={exportMenuState.open}
-        title='Share'
+        title={t`Share`}
       >
         <FontAwesomeIcon
           icon={faArrowUpRightFromSquare}
@@ -78,15 +81,17 @@ function ShotMediaExportMenu({
         <div
           className={`bg-base-100/95 border-base-content/10 w-[min(92vw,15rem)] rounded-xl border p-3 text-[12px] shadow-xl backdrop-blur-md ${menuClassName}`}
         >
-          <div className='mb-2 text-xs font-medium opacity-60'>Export Chart</div>
+          <div className='mb-2 text-xs font-medium opacity-60'>
+            <Trans>Export Chart</Trans>
+          </div>
           <div className='space-y-1'>
             {[
               {
                 value: 'video',
-                label: hasVideoExportSupport ? 'Video' : 'Video (unsupported)',
+                label: hasVideoExportSupport ? t`Video` : t`Video (unsupported)`,
                 disabled: !hasVideoExportSupport,
               },
-              { value: 'image', label: 'Image' },
+              { value: 'image', label: t`Image` },
             ].map(option => (
               <label
                 key={option.value}
@@ -121,12 +126,24 @@ function ShotMediaExportMenu({
               checked={exportMenuState.includeLegend}
               onChange={event => onIncludeLegendChange(event.currentTarget.checked)}
             />
-            <span className='text-sm'>Include legend</span>
+            <span className='text-sm'>
+              <Trans>Include legend</Trans>
+            </span>
           </label>
-          <div className='mt-3 mb-2 text-xs font-medium opacity-60'>Export File</div>
+          <div className='mt-3 mb-2 text-xs font-medium opacity-60'>
+            <Trans>Export File</Trans>
+          </div>
           {[
-            { value: 'shot', label: 'Shot', disabled: false },
-            { value: 'profile', label: 'Profile', disabled: !profileExportAvailable },
+            {
+              value: 'shot',
+              label: t({ message: 'Shot', context: 'export file type' }),
+              disabled: false,
+            },
+            {
+              value: 'profile',
+              label: t({ message: 'Profile', context: 'export file type' }),
+              disabled: !profileExportAvailable,
+            },
           ].map(option => (
             <label
               key={option.value}
@@ -163,7 +180,9 @@ function ShotMediaExportMenu({
                       onExportFormatChange(event.currentTarget.checked ? 'webm' : 'mp4')
                     }
                   />
-                  <span className='text-sm'>Export as WebM</span>
+                  <span className='text-sm'>
+                    <Trans>Export as WebM</Trans>
+                  </span>
                 </label>
                 <button
                   type='button'
@@ -171,9 +190,9 @@ function ShotMediaExportMenu({
                   className={getAnalyzerIconButtonClasses({
                     className: 'h-6 min-h-0 w-6 p-0',
                   })}
-                  aria-label='Explain WebM export'
+                  aria-label={t`Explain WebM export`}
                   aria-expanded={exportMenuState.showFormatInfo}
-                  title='Explain WebM export'
+                  title={t`Explain WebM export`}
                 >
                   <FontAwesomeIcon icon={faCircleInfo} className='text-xs opacity-70' />
                 </button>
@@ -181,8 +200,8 @@ function ShotMediaExportMenu({
               {exportMenuState.showFormatInfo ? (
                 <p className='text-base-content/70 mt-2 pr-1 text-xs leading-relaxed'>
                   {shouldLockWebmToggle
-                    ? 'This browser records replay video as WebM natively.'
-                    : 'WebM is the recommended replay video format in browsers with native WebM recording support.'}
+                    ? t`This browser records replay video as WebM natively.`
+                    : t`WebM is the recommended replay video format in browsers with native WebM recording support.`}
                 </p>
               ) : null}
             </div>
@@ -195,14 +214,14 @@ function ShotMediaExportMenu({
                 className: 'h-7 min-h-0 px-2.5 text-xs font-medium',
               })}
             >
-              Cancel
+              <Trans>Cancel</Trans>
             </button>
             <button
               type='button'
               onClick={onExportAction}
               className='btn btn-primary btn-xs h-7 min-h-0 px-2.5'
             >
-              Export
+              <Trans>Export</Trans>
             </button>
           </div>
         </div>
@@ -218,7 +237,7 @@ function ReplayActionButton({
   isReplaying,
   onReplayToggle,
 }) {
-  const replayActionLabel = getReplayActionLabel({ isReplaying, isReplayPaused });
+  const replayActionLabel = useReplayActionLabel({ isReplaying, isReplayPaused });
 
   return (
     <button
@@ -244,7 +263,10 @@ function StopReplayButton({
   isVideoExportActive,
   onStop,
 }) {
-  const stopLabel = isVideoExportActive ? 'Cancel replay export' : 'Stop replay and restore chart';
+  const { t } = useLingui();
+  const stopLabel = isVideoExportActive
+    ? t`Cancel replay export`
+    : t`Stop replay and restore chart`;
 
   return (
     <button
@@ -423,14 +445,16 @@ function FullDisplayButton({
   isFullDisplay,
   onFullDisplayToggle,
 }) {
+  const { t } = useLingui();
+  const fullDisplayLabel = isFullDisplay ? t`Close full display` : t`Open full display`;
   return (
     <button
       type='button'
       onClick={onFullDisplayToggle}
       className={chartActionButtonClasses}
       disabled={isControlsLocked}
-      aria-label={isFullDisplay ? 'Close full display' : 'Open full display'}
-      title={isFullDisplay ? 'Close full display' : 'Open full display'}
+      aria-label={fullDisplayLabel}
+      title={fullDisplayLabel}
     >
       <FontAwesomeIcon
         icon={isFullDisplay ? faDownLeftAndUpRightToCenter : faUpRightAndDownLeftFromCenter}

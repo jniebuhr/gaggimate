@@ -6,6 +6,7 @@
  * Input: Array of { analysis, meta: { id, timestamp, profileName, source } }
  * Output: StatisticsResult object
  */
+import { t } from '@lingui/core/macro';
 
 function averageOf(values) {
   if (!values.length) return 0;
@@ -313,7 +314,8 @@ function buildPhaseMap(entries) {
   for (const { analysis } of entries) {
     if (!analysis.phases) continue;
     for (const phase of analysis.phases) {
-      const name = phase.displayName || phase.name || `Phase ${phase.number + 1}`;
+      const phaseNumber = phase.number + 1;
+      const name = phase.displayName || phase.name || t`Phase ${phaseNumber}`;
       if (!phaseMap.has(name)) {
         phaseMap.set(name, []);
       }

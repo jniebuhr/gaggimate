@@ -18,9 +18,9 @@ static constexpr const char *INFO_CHAR_UUID = "f8d7203b-e00c-48e2-83ba-37ff49cdb
 // Legacy error characteristic; displays <= v1.8.1 dereference it unchecked, so the server keeps an inert stub (GM-221).
 static constexpr const char *LEGACY_ERROR_CHAR_UUID = "d6676ec7-820c-41de-820d-95620749003b";
 
-// Protocol 7 combines upstream protocol 6 with hardware scale support.
+// Protocol 8 replaces PidSettings with HeaterSettings; controllers keep heaters off until they receive it.
 // Update controller and display together.
-static constexpr uint32_t PROTOCOL_VERSION = 7;
+static constexpr uint32_t PROTOCOL_VERSION = 8;
 
 // Outbound priorities (higher wins in the queue).
 enum Priority : uint8_t {

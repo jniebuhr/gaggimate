@@ -1,5 +1,6 @@
 /** Analyzes executed phases, including target exits, delay inference, and final-phase fallbacks. */
 
+import { t } from '@lingui/core/macro';
 import {
   LAST_PHASE_ESTIMATED_DELAY_MAX_MS,
   LAST_PHASE_OVERSHOOT_MAX_G,
@@ -33,6 +34,7 @@ import {
 import { calculatePumpedWater } from './waterIntegration';
 import {
   getBrewModeLabel,
+  getPhaseExitReasonLabel,
   getPhaseExitReasonMeta,
   isKnownPhaseExitReason,
   isWeightType,
@@ -598,7 +600,7 @@ export function analyzeExecutedPhase({
   const weightSamples = getFinalWeightSamples(samples);
   const weightEndSample = getFinalWeightSample(samples) || getPhaseEndSample(samples);
   const rawName = phaseNameMap[phaseNum];
-  const displayName = rawName || `Phase ${phaseNum}`;
+  const displayName = rawName || t`Phase ${phaseNum}`;
   const sysInfo = getPhaseEndSample(samples).systemInfo || {};
   const sysAnomalies = getPhaseSysAnomalies(samples, sysInfo);
   const bluetoothScaleConnection = getBluetoothScaleConnectionState(
@@ -662,7 +664,7 @@ export function analyzeExecutedPhase({
       stats: getPhaseStats(samples, weightSamples, sysInfo, sysAnomalies, {
         brewModeLabel: getBrewModeLabel(isBrewByWeight),
         configuredScaleDelayMs: Math.max(0, Number(shotData.brewDelay) || 0),
-        recordedStopReason: getPhaseExitReasonMeta(normalizedRecordedExitReasonCode).label,
+        recordedStopReason: getPhaseExitReasonLabel(normalizedRecordedExitReasonCode),
       }),
       exit: {
         code: exitState.exitCode,

@@ -1,10 +1,13 @@
 import { computed } from '@preact/signals';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye } from '@fortawesome/free-solid-svg-icons/faEye';
 import { faEyeSlash } from '@fortawesome/free-solid-svg-icons/faEyeSlash';
 import { timezones } from '../../../config/zones.js';
 import { DASHBOARD_LAYOUTS } from '../../../utils/dashboardManager.js';
+import { isApp } from '../../../app/platform.js';
 import Section from '../../../components/Card.jsx';
+import { LanguageSelect } from '../../../components/LanguageSelect.jsx';
 import { machine } from '../../../services/ApiService.js';
 import { WarningIcon } from '../../../components/WarningIcon.jsx';
 import { WARNING_LEVELS, WARNINGS } from '../../../utils/warnings.js';
@@ -19,6 +22,7 @@ const pressureAvailable = computed(() => machine.value.capabilities.pressure);
 const FLUSH_DURATION_STEPS = [0, 5, 10, 15, 20];
 
 function ButtonBehaviorSelect({ id, label, value, onChange, profiles }) {
+  const { t } = useLingui();
   return (
     <SettingsFormField label={label} htmlFor={id} noMargin>
       <select
@@ -28,22 +32,27 @@ function ButtonBehaviorSelect({ id, label, value, onChange, profiles }) {
         value={value}
         onChange={onChange}
       >
-        <option value='none'>None</option>
-        <option value='brew'>Brew button</option>
-        <option value='steam'>Steam button</option>
-        <option value='water'>Water button</option>
-        <option value='flush'>Flush</option>
+        <option value='none'>{t({ message: 'None', context: 'button behavior' })}</option>
+        <option value='brew'>{t`Brew button`}</option>
+        <option value='steam'>{t`Steam button`}</option>
+        <option value='water'>{t`Water button`}</option>
+        <option value='flush'>{t({ message: 'Flush', context: 'button behavior' })}</option>
         {profiles.map(p => (
-          <option key={p.id} value={p.id}>
-            Profile: {p.label}
-          </option>
+          <ProfileOption key={p.id} profile={p} />
         ))}
       </select>
     </SettingsFormField>
   );
 }
 
+function ProfileOption({ profile }) {
+  const { t } = useLingui();
+  const profileLabel = profile.label;
+  return <option value={profile.id}>{t`Profile: ${profileLabel}`}</option>;
+}
+
 function WarningLevelSelect({ id, label, icon, value, onChange }) {
+  const { t } = useLingui();
   const current = Number(value ?? 1);
   return (
     <SettingsFormField
@@ -56,7 +65,7 @@ function WarningLevelSelect({ id, label, icon, value, onChange }) {
       htmlFor={id}
       noMargin
     >
-      <div className='join w-full' role='group' aria-label={`${label} severity`}>
+      <div className='join w-full' role='group' aria-label={t`${label} severity`}>
         {WARNING_LEVELS.map(l => (
           <button
             key={l.value}
@@ -76,6 +85,7 @@ function WarningLevelSelect({ id, label, icon, value, onChange }) {
 }
 
 function PasswordField({ id, label, placeholder, value, onChange, shown, setShown, ...rest }) {
+  const { t } = useLingui();
   return (
     <label className='input w-full'>
       <input
@@ -90,7 +100,7 @@ function PasswordField({ id, label, placeholder, value, onChange, shown, setShow
       <button
         type='button'
         className='hover:text-primary cursor-pointer focus:outline-none'
-        aria-label='Show Password'
+        aria-label={t`Show Password`}
         onClick={() => setShown(!shown)}
       >
         <FontAwesomeIcon icon={shown ? faEyeSlash : faEye} />
@@ -112,13 +122,14 @@ export function GeneralTab({
   setShowApPassword,
 }) {
   // Snap legacy free-form values onto the 5 s steps the slider offers.
+  const { t } = useLingui();
   const flushDuration = Math.min(20, Math.round(Number(formData.flushDuration ?? 5) / 5) * 5);
   return (
     <div className='space-y-4 sm:space-y-6 lg:grid lg:grid-cols-2 lg:gap-4'>
       {/* User Preferences */}
-      <Section title='User Preferences' className='h-full'>
+      <Section title={t`User Preferences`} className='h-full'>
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-          <SettingsFormField label='Startup Mode' htmlFor='startup-mode' noMargin>
+          <SettingsFormField label={t`Startup Mode`} htmlFor='startup-mode' noMargin>
             <select
               id='startup-mode'
               name='startupMode'
@@ -126,14 +137,14 @@ export function GeneralTab({
               onChange={onChange('startupMode')}
             >
               <option value='standby' selected={formData.startupMode === 'standby'}>
-                Standby
+                {t({ message: 'Standby', context: 'machine mode' })}
               </option>
               <option value='brew' selected={formData.startupMode === 'brew'}>
-                Brew
+                {t({ message: 'Brew', context: 'machine mode' })}
               </option>
             </select>
           </SettingsFormField>
-          <SettingsFormField label='Startup Profile' htmlFor='startup-profile' noMargin>
+          <SettingsFormField label={t`Startup Profile`} htmlFor='startup-profile' noMargin>
             <select
               id='startup-profile'
               name='startupProfile'
@@ -141,7 +152,7 @@ export function GeneralTab({
               value={formData.startupProfile || ''}
               onChange={onChange('startupProfile')}
             >
-              <option value=''>Last used profile</option>
+              <option value=''>{t`Last used profile`}</option>
               {profiles.map(profile => (
                 <option key={profile.id} value={profile.id}>
                   {profile.label}
@@ -150,10 +161,10 @@ export function GeneralTab({
             </select>
           </SettingsFormField>
           <InputGroupField
-            label='Standby Timeout'
+            label={t`Standby Timeout`}
             htmlFor='standbyTimeout'
             unit='s'
-            unitAriaLabel='seconds'
+            unitAriaLabel={t`seconds`}
             noMargin
           >
             <input
@@ -169,14 +180,18 @@ export function GeneralTab({
 
         {/* Predictive Scale Delay */}
         <div className='border-base-content/5 mt-6 border-t pt-6'>
-          <h3 className='text-md text-base-content mb-2 font-semibold'>Predictive Scale Delay</h3>
+          <h3 className='text-md text-base-content mb-2 font-semibold'>
+            <Trans>Predictive Scale Delay</Trans>
+          </h3>
           <p className='text-base-content/85 mb-4 text-sm opacity-70'>
-            Shuts off the process ahead of time based on the flow rate to account for any dripping
-            or delays in the control.
+            <Trans>
+              Shuts off the process ahead of time based on the flow rate to account for any dripping
+              or delays in the control.
+            </Trans>
           </p>
           <div className='mb-4'>
             <ToggleField
-              label='Auto Adjust'
+              label={t`Auto Adjust`}
               htmlFor='delayAdjust'
               checked={!!formData.delayAdjust}
               onChange={onChange('delayAdjust')}
@@ -184,10 +199,10 @@ export function GeneralTab({
           </div>
           <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
             <InputGroupField
-              label='Brew'
+              label={t({ message: 'Brew', context: 'predictive scale delay' })}
               htmlFor='brewDelay'
               unit='ms'
-              unitAriaLabel='milliseconds'
+              unitAriaLabel={t`milliseconds`}
               noMargin
             >
               <input
@@ -202,10 +217,10 @@ export function GeneralTab({
               />
             </InputGroupField>
             <InputGroupField
-              label='Grind'
+              label={t({ message: 'Grind', context: 'predictive scale delay' })}
               htmlFor='grindDelay'
               unit='ms'
-              unitAriaLabel='milliseconds'
+              unitAriaLabel={t`milliseconds`}
               noMargin
             >
               <input
@@ -224,11 +239,13 @@ export function GeneralTab({
 
         {/* Flush */}
         <div className='border-base-content/5 mt-6 border-t pt-6'>
-          <h3 className='text-md text-base-content mb-2 font-semibold'>Flush</h3>
+          <h3 className='text-md text-base-content mb-2 font-semibold'>
+            <Trans context='settings section'>Flush</Trans>
+          </h3>
           <SettingsFormField
-            label='Flush Duration'
+            label={t`Flush Duration`}
             htmlFor='flushDuration'
-            helpText='Hold runs the flush for as long as the button is held. The valve stays open for one more second after the pump stops.'
+            helpText={t`Hold runs the flush for as long as the button is held. The valve stays open for one more second after the pump stops.`}
             noMargin
           >
             <input
@@ -244,7 +261,9 @@ export function GeneralTab({
             />
             <div className='mt-1 flex justify-between px-1 text-xs opacity-70' aria-hidden='true'>
               {FLUSH_DURATION_STEPS.map(step => (
-                <span key={step}>{step === 0 ? 'Hold' : `${step}s`}</span>
+                <span key={step}>
+                  {step === 0 ? t({ message: 'Hold', context: 'flush duration' }) : `${step}s`}
+                </span>
               ))}
             </div>
           </SettingsFormField>
@@ -252,42 +271,48 @@ export function GeneralTab({
 
         {/* Buttons */}
         <div className='border-base-content/5 mt-6 border-t pt-6'>
-          <h3 className='text-md text-base-content mb-2 font-semibold'>Physical Buttons</h3>
+          <h3 className='text-md text-base-content mb-2 font-semibold'>
+            <Trans>Physical Buttons</Trans>
+          </h3>
           <p className='text-base-content/85 mb-4 text-sm opacity-70'>
-            Define behavior for physical buttons when pressed. Make sure they are wired to the
-            buttons header. Pressing the brew and steam buttons together (or a third button wired to
-            both) triggers the water button behavior.
+            <Trans>
+              Define behavior for physical buttons when pressed. Make sure they are wired to the
+              buttons header. Pressing the brew and steam buttons together (or a third button wired
+              to both) triggers the water button behavior.
+            </Trans>
           </p>
           <div className='mb-4'>
             <ToggleField
-              label='Momentary Buttons'
+              label={t`Momentary Buttons`}
               htmlFor='momentaryButtons'
               checked={!!formData.momentaryButtons}
               onChange={onChange('momentaryButtons')}
             />
           </div>
           <p className='text-base-content/85 mb-4 text-sm opacity-70'>
-            Activate this if your coffee machine is equipped with momentary buttons. A momentary
-            button set to Brew or a profile starts a flush instead when held.
+            <Trans>
+              Activate this if your coffee machine is equipped with momentary buttons. A momentary
+              button set to Brew or a profile starts a flush instead when held.
+            </Trans>
           </p>
           <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
             <ButtonBehaviorSelect
               id='button0'
-              label='Brew Button Behavior'
+              label={t`Brew Button Behavior`}
               value={formData.button0}
               onChange={onChange('button0')}
               profiles={profiles}
             />
             <ButtonBehaviorSelect
               id='button1'
-              label='Steam Button Behavior'
+              label={t`Steam Button Behavior`}
               value={formData.button1}
               onChange={onChange('button1')}
               profiles={profiles}
             />
             <ButtonBehaviorSelect
               id='button2'
-              label='Water Button Behavior'
+              label={t`Water Button Behavior`}
               value={formData.button2}
               onChange={onChange('button2')}
               profiles={profiles}
@@ -297,9 +322,9 @@ export function GeneralTab({
       </Section>
 
       {/* Display Settings */}
-      <Section title='Display Settings' className='h-full'>
+      <Section title={t`Display Settings`} className='h-full'>
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-          <SettingsFormField label='Main Brightness (1-16)' htmlFor='mainBrightness' noMargin>
+          <SettingsFormField label={t`Main Brightness (1-16)`} htmlFor='mainBrightness' noMargin>
             <input
               id='mainBrightness'
               name='mainBrightness'
@@ -312,7 +337,7 @@ export function GeneralTab({
               onChange={onChange('mainBrightness')}
             />
           </SettingsFormField>
-          <SettingsFormField label='Display Theme' htmlFor='themeMode' noMargin>
+          <SettingsFormField label={t`Display Theme`} htmlFor='themeMode' noMargin>
             <select
               id='themeMode'
               name='themeMode'
@@ -320,15 +345,15 @@ export function GeneralTab({
               value={formData.themeMode}
               onChange={onChange('themeMode')}
             >
-              <option value={0}>Dark Theme</option>
-              <option value={1}>Light Theme</option>
+              <option value={0}>{t`Dark Theme`}</option>
+              <option value={1}>{t`Light Theme`}</option>
             </select>
           </SettingsFormField>
           {pressureAvailable.value && (
             <SettingsFormField
-              label='Brew Status Display'
+              label={t`Brew Status Display`}
               htmlFor='statusDisplayMode'
-              helpText='The chart is shown for Pro profiles only'
+              helpText={t`The chart is shown for Pro profiles only`}
               noMargin
             >
               <select
@@ -338,8 +363,8 @@ export function GeneralTab({
                 value={formData.statusDisplayMode ?? 0}
                 onChange={onChange('statusDisplayMode')}
               >
-                <option value={0}>Progress Bar</option>
-                <option value={1}>Shot Chart</option>
+                <option value={0}>{t`Progress Bar`}</option>
+                <option value={1}>{t`Shot Chart`}</option>
               </select>
             </SettingsFormField>
           )}
@@ -349,7 +374,7 @@ export function GeneralTab({
         <div className='border-base-content/5 mt-6 border-t pt-6'>
           <div className='mb-4'>
             <ToggleField
-              label='Enable standby display'
+              label={t`Enable standby display`}
               htmlFor='standbyDisplayEnabled'
               checked={!!formData.standbyDisplayEnabled}
               onChange={onChange('standbyDisplayEnabled')}
@@ -357,9 +382,9 @@ export function GeneralTab({
           </div>
           <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
             <SettingsFormField
-              label='Standby Brightness (0-16)'
+              label={t`Standby Brightness (0-16)`}
               htmlFor='standbyBrightness'
-              helpText='When the toggle is off, brightness will be set to 0'
+              helpText={t`When the toggle is off, brightness will be set to 0`}
               noMargin
             >
               <input
@@ -376,10 +401,10 @@ export function GeneralTab({
               />
             </SettingsFormField>
             <InputGroupField
-              label='Standby Brightness Timeout'
+              label={t`Standby Brightness Timeout`}
               htmlFor='standbyBrightnessTimeout'
               unit='s'
-              unitAriaLabel='seconds'
+              unitAriaLabel={t`seconds`}
               noMargin
             >
               <input
@@ -396,62 +421,78 @@ export function GeneralTab({
         </div>
       </Section>
 
-      {/* Web Settings */}
-      <Section title='Web Settings' className='h-full'>
-        <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-          <SettingsFormField label='Theme' htmlFor='webui-theme' noMargin>
-            <select
-              id='webui-theme'
-              name='webui-theme'
-              className='select select-bordered w-full'
-              value={currentTheme}
-              onChange={e => {
-                setCurrentTheme(e.target.value);
-                handleThemeChange(e);
-              }}
-            >
-              <option value='system'>System</option>
-              <option value='light'>Light</option>
-              <option value='dark'>Dark</option>
-              <option value='coffee'>Coffee</option>
-              <option value='nord'>Nord</option>
-            </select>
-          </SettingsFormField>
-          <SettingsFormField label='Dashboard Layout' htmlFor='dashboardLayout' noMargin>
-            <select
-              id='dashboardLayout'
-              name='dashboardLayout'
-              className='select select-bordered w-full'
-              value={formData.dashboardLayout || DASHBOARD_LAYOUTS.ORDER_FIRST}
-              onChange={e => {
-                onChange('dashboardLayout')(e);
-              }}
-            >
-              <option value={DASHBOARD_LAYOUTS.ORDER_FIRST}>Process Controls First</option>
-              <option value={DASHBOARD_LAYOUTS.ORDER_LAST}>Chart First</option>
-            </select>
-          </SettingsFormField>
-        </div>
-      </Section>
+      {/* Web Settings — in the app these live in App Settings and the dashboard customizer */}
+      {isApp && (
+        <Section title={t`Theme & Notifications`} className='h-full'>
+          <p className='text-sm'>
+            <Trans>
+              Settings for this phone, like the theme and notifications, are in{' '}
+              <a href='/app-settings' className='link link-primary font-medium'>
+                App Settings
+              </a>
+              . The dashboard layout is in the dashboard's customize view.
+            </Trans>
+          </p>
+        </Section>
+      )}
+      {!isApp && (
+        <Section title={t`Web Settings`} className='h-full'>
+          <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+            <SettingsFormField label={t`Theme`} htmlFor='webui-theme' noMargin>
+              <select
+                id='webui-theme'
+                name='webui-theme'
+                className='select select-bordered w-full'
+                value={currentTheme}
+                onChange={e => {
+                  setCurrentTheme(e.target.value);
+                  handleThemeChange(e);
+                }}
+              >
+                <option value='system'>{t({ message: 'System', context: 'theme' })}</option>
+                <option value='light'>{t({ message: 'Light', context: 'theme' })}</option>
+                <option value='dark'>{t({ message: 'Dark', context: 'theme' })}</option>
+                <option value='coffee'>{t({ message: 'Coffee', context: 'theme' })}</option>
+                <option value='nord'>Nord</option>
+              </select>
+            </SettingsFormField>
+            <LanguageSelect />
+            <SettingsFormField label={t`Dashboard Layout`} htmlFor='dashboardLayout' noMargin>
+              <select
+                id='dashboardLayout'
+                name='dashboardLayout'
+                className='select select-bordered w-full'
+                value={formData.dashboardLayout || DASHBOARD_LAYOUTS.ORDER_FIRST}
+                onChange={e => {
+                  onChange('dashboardLayout')(e);
+                }}
+              >
+                <option value={DASHBOARD_LAYOUTS.ORDER_FIRST}>{t`Process Controls First`}</option>
+                <option value={DASHBOARD_LAYOUTS.ORDER_LAST}>{t`Chart First`}</option>
+              </select>
+            </SettingsFormField>
+          </div>
+        </Section>
+      )}
 
       {/* Network / System Preferences */}
-      <Section title='System & Network' className='h-full'>
+      <Section title={t`System & Network`} className='h-full'>
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-          <SettingsFormField label='Wi-Fi SSID' htmlFor='wifiSsid' noMargin>
+          <SettingsFormField label={t`Wi-Fi SSID`} htmlFor='wifiSsid' noMargin>
             <input
               id='wifiSsid'
               name='wifiSsid'
               type='text'
               className='input input-bordered w-full'
-              placeholder='Wi-Fi SSID'
+              placeholder={t`Wi-Fi SSID`}
               value={formData.wifiSsid}
               onChange={onChange('wifiSsid')}
             />
           </SettingsFormField>
-          <SettingsFormField label='Wi-Fi Password' htmlFor='wifiPassword' noMargin>
+          <SettingsFormField label={t`Wi-Fi Password`} htmlFor='wifiPassword' noMargin>
             <PasswordField
               id='wifiPassword'
-              label='Wi-Fi Password'
+              label={t`Wi-Fi Password`}
               value={formData.wifiPassword}
               onChange={onChange('wifiPassword')}
               shown={showWifiPassword}
@@ -459,14 +500,14 @@ export function GeneralTab({
             />
           </SettingsFormField>
           <SettingsFormField
-            label='Access Point Password'
+            label={t`Access Point Password`}
             htmlFor='apPassword'
-            helpText='Used for the GaggiMate hotspot when no Wi-Fi is configured (min. 8 characters).'
+            helpText={t`Used for the GaggiMate hotspot when no Wi-Fi is configured (min. 8 characters).`}
             noMargin
           >
             <PasswordField
               id='apPassword'
-              label='Access Point Password'
+              label={t`Access Point Password`}
               minLength={8}
               maxLength={63}
               value={formData.apPassword}
@@ -475,18 +516,18 @@ export function GeneralTab({
               setShown={setShowApPassword}
             />
           </SettingsFormField>
-          <SettingsFormField label='Hostname' htmlFor='mdnsName' noMargin>
+          <SettingsFormField label={t`Hostname`} htmlFor='mdnsName' noMargin>
             <input
               id='mdnsName'
               name='mdnsName'
               type='text'
               className='input input-bordered w-full'
-              placeholder='Hostname'
+              placeholder={t`Hostname`}
               value={formData.mdnsName}
               onChange={onChange('mdnsName')}
             />
           </SettingsFormField>
-          <SettingsFormField label='Time Zone' htmlFor='timezone' noMargin>
+          <SettingsFormField label={t`Time Zone`} htmlFor='timezone' noMargin>
             <select
               id='timezone'
               name='timezone'
@@ -505,7 +546,7 @@ export function GeneralTab({
         {/* Clock */}
         <div className='border-base-content/5 mt-6 border-t pt-6'>
           <ToggleField
-            label='Use 24h Format'
+            label={t`Use 24h Format`}
             htmlFor='clock24hFormat'
             checked={!!formData.clock24hFormat}
             onChange={onChange('clock24hFormat')}
@@ -514,10 +555,12 @@ export function GeneralTab({
       </Section>
 
       {/* Warnings */}
-      <Section title='Warnings' className='h-full'>
+      <Section title={t`Warnings`} className='h-full'>
         <p className='text-base-content/70 mb-4 text-sm'>
-          Warnings are shown on the display. An error additionally asks for confirmation before a
-          brew starts.
+          <Trans>
+            Warnings are shown on the display. An error additionally asks for confirmation before a
+            brew starts.
+          </Trans>
         </p>
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
           {WARNINGS.map(w => (

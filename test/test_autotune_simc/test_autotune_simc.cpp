@@ -32,7 +32,7 @@
 // noise_amp = uniform ±noise_amp/sample (MAX31855 LSB ≈ 0.25 °C)
 static void drive_synthetic(Autotune &at, float L, float k_prime, float tau2,
                             float dt_sec = 1.0f, float total_sec = 180.0f,
-                            float noise_amp = 0.0f) {
+                            float noise_amp = 0.0f, float time_offset = 0.0f) {
     const float t0 = 20.0f; // starting temperature
     // Integer counter + derived `t` avoids float accumulation drift on long
     // runs (Sonar cpp:S2193 — counters not float).
@@ -55,7 +55,7 @@ static void drive_synthetic(Autotune &at, float L, float k_prime, float tau2,
             // Quantise to MAX31855 LSB (0.25 °C) — match real hardware signal.
             temp = std::round(temp / 0.25f) * 0.25f;
         }
-        at.update(temp, t);
+        at.update(temp, t + time_offset); // offset emulates a caller passing uptime seconds
         if (at.isFinished()) break;
     }
 }
@@ -148,11 +148,30 @@ static void test_tau2_recovery_with_quantisation() {
 void setUp(void) { /* no framework-level setup needed */ }
 void tearDown(void) { /* no framework-level teardown needed */ }
 
+// Identification must not depend on uptime: float LS sums over millis()/1000 overstated k' 30 % after 1 h.
+static void test_identification_independent_of_uptime() {
+    Autotune base;
+    drive_synthetic(base, 17.17f, 0.188f, 3.5f, 1.0f, 180.0f, 0.0f, 0.0f);
+    TEST_ASSERT_TRUE(base.isFinished());
+    for (const float offset : {3600.0f, 36000.0f, 360000.0f}) {
+        Autotune at;
+        drive_synthetic(at, 17.17f, 0.188f, 3.5f, 1.0f, 180.0f, 0.0f, offset);
+        const std::string msg = "uptime offset " + std::to_string(static_cast<int>(offset)) + " s";
+        TEST_ASSERT_TRUE_MESSAGE(at.isFinished(), msg.c_str());
+        TEST_ASSERT_FALSE_MESSAGE(at.isTimedOut(), msg.c_str());
+        TEST_ASSERT_FLOAT_WITHIN_MESSAGE(0.02f * base.getSystemGain(), base.getSystemGain(), at.getSystemGain(),
+                                         msg.c_str());
+        TEST_ASSERT_FLOAT_WITHIN_MESSAGE(0.5f, base.getSystemDelay(), at.getSystemDelay(), msg.c_str());
+        TEST_ASSERT_FLOAT_WITHIN_MESSAGE(0.02f * base.getKp(), base.getKp(), at.getKp(), msg.c_str());
+    }
+}
+
 int main(int argc, char **argv) {
     UNITY_BEGIN();
     RUN_TEST(test_simc_boiler_typical);
     RUN_TEST(test_simc_clamp_guard_zero_slope);
     RUN_TEST(test_tau2_recovery_noiseless);
     RUN_TEST(test_tau2_recovery_with_quantisation);
+    RUN_TEST(test_identification_independent_of_uptime);
     return UNITY_END();
 }

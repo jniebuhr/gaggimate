@@ -4,6 +4,7 @@
  * Explains the dual-source system to users.
  */
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Trans } from '@lingui/react/macro';
 import { faEye } from '@fortawesome/free-solid-svg-icons/faEye';
 import { analyzerUiColors } from '../utils/analyzerUtils.js';
 import { Spinner } from '../../../components/Spinner.jsx';
@@ -42,9 +43,11 @@ export function EmptyState({ loading }) {
         {/* Info Box */}
         <div className='app-card-surface w-full space-y-6 rounded-xl p-8 text-left'>
           <div className='border-base-content/10 space-y-2 border-b pb-4 text-center'>
-            <h2 className='text-base-content text-2xl font-bold'>No Shot Loaded</h2>
+            <h2 className='text-base-content text-2xl font-bold'>
+              <Trans>No Shot Loaded</Trans>
+            </h2>
             <p className='text-base-content text-sm opacity-70'>
-              Import a shot file or select one from your library to start analyzing.
+              <Trans>Import a shot file or select one from your library to start analyzing.</Trans>
             </p>
           </div>
 
@@ -56,9 +59,13 @@ export function EmptyState({ loading }) {
 
             <div className='flex-1'>
               {/* REMOVED HOVER EFFECT */}
-              <h3 className='text-base-content mb-1 text-sm font-bold'>GaggiMate (GM)</h3>
+              <h3 className='text-base-content mb-1 text-sm font-bold'>
+                <Trans>GaggiMate (GM)</Trans>
+              </h3>
               <p className='text-base-content text-xs leading-relaxed'>
-                Your saved shots and profiles directly from the GaggiMate internal storage.
+                <Trans>
+                  Your saved shots and profiles directly from the GaggiMate internal storage.
+                </Trans>
               </p>
             </div>
           </div>
@@ -73,10 +80,14 @@ export function EmptyState({ loading }) {
             </div>
 
             <div className='flex-1'>
-              <h3 className='text-base-content mb-1 text-sm font-bold'>Temporary View (VIEW)</h3>
+              <h3 className='text-base-content mb-1 text-sm font-bold'>
+                <Trans>Temporary View (VIEW)</Trans>
+              </h3>
               <p className='text-base-content text-xs leading-relaxed'>
-                Opens imported external shots and profiles temporarily without saving them to the
-                browser library.
+                <Trans>
+                  Opens imported external shots and profiles temporarily without saving them to the
+                  browser library.
+                </Trans>
               </p>
             </div>
           </div>
@@ -93,29 +104,38 @@ export function EmptyState({ loading }) {
             <div className='flex-1'>
               {/* REMOVED HOVER EFFECT */}
               <h3 className='text-base-content mb-1 text-sm font-bold'>
-                Local Browser Storage (WEB)
+                <Trans>Local Browser Storage (WEB)</Trans>
               </h3>
               <div className='text-base-content text-xs leading-relaxed'>
-                Stores imported external shots and profiles locally in this browser on this device.
-                They are not automatically available in other browsers or on other devices.
+                <Trans>
+                  Stores imported external shots and profiles locally in this browser on this
+                  device. They are not automatically available in other browsers or on other
+                  devices.
+                </Trans>
               </div>
             </div>
           </div>
 
           <div className='text-base-content text-xs leading-relaxed'>
             <span className='block'>
-              Drag and drop files onto the status bar or use the import icons in the shot and
-              profile badges.
+              <Trans>
+                Drag and drop files onto the status bar or use the import icons in the shot and
+                profile badges.
+              </Trans>
             </span>
             <span className='mt-1 block'>
-              Use the status bar toggle to switch between{' '}
-              <span className='text-base-content font-bold'>View temporarily</span> and{' '}
-              <span className='font-bold' style={{ color: analyzerUiColors.sourceBadgeWebText }}>
-                Save to Browser
-              </span>{' '}
-              before importing.
+              <Trans>
+                Use the status bar toggle to switch between{' '}
+                <span className='text-base-content font-bold'>View temporarily</span> and{' '}
+                <span className='font-bold' style={{ color: analyzerUiColors.sourceBadgeWebText }}>
+                  Save to Browser
+                </span>{' '}
+                before importing.
+              </Trans>
             </span>
-            <span className='mt-1 block'>Bulk upload and download are supported.</span>
+            <span className='mt-1 block'>
+              <Trans>Bulk upload and download are supported.</Trans>
+            </span>
           </div>
 
           <div className='bg-base-content/5 h-px w-full'></div>
@@ -125,19 +145,19 @@ export function EmptyState({ loading }) {
               <span className='bg-base-content/8 border-base-content/10 mr-2 inline-flex min-w-6 items-center justify-center rounded-md border px-1.5 py-0.5 font-bold'>
                 X
               </span>{' '}
-              Open or close the library.
+              <Trans>Open or close the library.</Trans>
             </div>
             <div className='text-base-content'>
               <span className='bg-base-content/8 border-base-content/10 mr-2 inline-flex min-w-6 items-center justify-center rounded-md border px-1.5 py-0.5 font-bold'>
                 C
               </span>{' '}
-              Start or end compare mode.
+              <Trans>Start or end compare mode.</Trans>
             </div>
             <div className='text-base-content'>
               <span className='bg-base-content/8 border-base-content/10 mr-2 inline-flex min-w-12 items-center justify-center rounded-md border px-1.5 py-0.5 font-bold'>
                 ← →
               </span>{' '}
-              Switch between shots.
+              <Trans>Switch between shots.</Trans>
             </div>
           </div>
         </div>

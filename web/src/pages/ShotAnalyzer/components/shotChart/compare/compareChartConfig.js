@@ -1,4 +1,5 @@
 import { areTooltipStatesEqual, buildExternalTooltipState } from '../ShotChartExternalTooltip';
+import { t } from '@lingui/core/macro';
 import { UNIT_BY_LABEL } from '../constants';
 import {
   createChartPointElementConfig,
@@ -112,12 +113,15 @@ export function getCompareAnnotations({
 }
 
 function getComparePhaseTooltipGroups(compareModels, compareShotLegendItems = []) {
-  return compareModels.map(({ entry, model }, index) => ({
-    rows: model.phaseOverviewRows || [],
-    shotLabel: entry.label || `Shot ${index + 1}`,
-    shotNumber: index + 1,
-    color: entry.accentColor || compareShotLegendItems[index]?.color || null,
-  }));
+  return compareModels.map(({ entry, model }, index) => {
+    const shotNumber = index + 1;
+    return {
+      rows: model.phaseOverviewRows || [],
+      shotLabel: entry.label || t`Shot ${shotNumber}`,
+      shotNumber,
+      color: entry.accentColor || compareShotLegendItems[index]?.color || null,
+    };
+  });
 }
 
 export function getCompareMainChartConfig({

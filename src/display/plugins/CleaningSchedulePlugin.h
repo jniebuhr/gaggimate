@@ -22,6 +22,7 @@ class CleaningSchedulePlugin : public Plugin {
     bool startCleaning(const char *profileId);
     void completeBackflush();
     void completeDescaling();
+    void onBrewStart();
     void onBrewEnd();
 
     Controller *controller = nullptr;

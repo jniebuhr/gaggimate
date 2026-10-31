@@ -1,25 +1,22 @@
+import { msg, t } from '@lingui/core/macro';
+import { i18n } from '../../../../i18n.js';
 import { utilityColors } from '../../utils/analyzerUtils';
 
 const NEUTRAL_STATUS_BADGE_CLASS = 'bg-base-content/10 text-base-content/80 border-base-content/15';
-const WARNING_BADGE_HIGH_SCALE_LABEL = 'HIGH SCALE DELAY';
-const WARNING_BADGE_SCALE_LOST_LABEL = 'SCALE LOST';
-const WARNING_BADGE_SLOW_SAMPLING_LABEL = 'SLOW SAMPLING';
+const WARNING_BADGE_HIGH_SCALE_LABEL = msg`HIGH SCALE DELAY`;
+const WARNING_BADGE_SCALE_LOST_LABEL = msg`SCALE LOST`;
+const WARNING_BADGE_SLOW_SAMPLING_LABEL = msg`SLOW SAMPLING`;
 
 const WARNING_HELP_COPY = {
-  delayReview:
-    'Review the stop reason for this phase. The algorithm was only able to identify it after several intermediate calculations.',
-  highScaleDelay:
-    'The configured or inferred scale delay is unusually high. Review the scale-delay setting before relying on predictive weight stops.',
-  scaleLost:
-    'Shown when the scale briefly loses connection during the brew. In this case, weight is ignored for stop detection for that brew, even if the scale reconnects later.',
-  slowSampling:
-    'Excessive delay while writing samples. Possible causes include a slow SD card or high OS/system load.',
+  delayReview: msg`Review the stop reason for this phase. The algorithm was only able to identify it after several intermediate calculations.`,
+  highScaleDelay: msg`The configured or inferred scale delay is unusually high. Review the scale-delay setting before relying on predictive weight stops.`,
+  scaleLost: msg`Shown when the scale briefly loses connection during the brew. In this case, weight is ignored for stop detection for that brew, even if the scale reconnects later.`,
+  slowSampling: msg`Excessive delay while writing samples. Possible causes include a slow SD card or high OS/system load.`,
 };
 
 function getDelayReviewLabel(results) {
-  return results?.delayReviewPhaseNumber
-    ? `REVIEW PHASE ${results.delayReviewPhaseNumber}`
-    : 'PHASE REVIEW ADVISED';
+  const phaseNumber = results?.delayReviewPhaseNumber;
+  return phaseNumber ? t`REVIEW PHASE ${phaseNumber}` : t`PHASE REVIEW ADVISED`;
 }
 
 export function buildAnalysisWarningBadges(results) {
@@ -34,9 +31,9 @@ export function buildAnalysisWarningBadges(results) {
         : '';
     badges.push({
       key: 'slow-sampling',
-      label: `${WARNING_BADGE_SLOW_SAMPLING_LABEL}${intervalSuffix}`,
+      label: `${i18n._(WARNING_BADGE_SLOW_SAMPLING_LABEL)}${intervalSuffix}`,
       colorClass: 'text-white shadow-sm',
-      details: WARNING_HELP_COPY.slowSampling,
+      details: i18n._(WARNING_HELP_COPY.slowSampling),
       style: {
         backgroundColor: utilityColors.warningOrange,
         borderColor: utilityColors.warningOrange,
@@ -47,9 +44,9 @@ export function buildAnalysisWarningBadges(results) {
   if (results?.globalScaleLost) {
     badges.push({
       key: 'scale-lost',
-      label: WARNING_BADGE_SCALE_LOST_LABEL,
+      label: i18n._(WARNING_BADGE_SCALE_LOST_LABEL),
       colorClass: 'text-white shadow-sm',
-      details: WARNING_HELP_COPY.scaleLost,
+      details: i18n._(WARNING_HELP_COPY.scaleLost),
       style: {
         backgroundColor: utilityColors.warningOrange,
         borderColor: utilityColors.warningOrange,
@@ -61,9 +58,9 @@ export function buildAnalysisWarningBadges(results) {
     const delaySuffix = results.highScaleDelayMs ? ` (${results.highScaleDelayMs} ms)` : '';
     badges.push({
       key: 'high-scale-delay',
-      label: `${WARNING_BADGE_HIGH_SCALE_LABEL}${delaySuffix}`,
+      label: `${i18n._(WARNING_BADGE_HIGH_SCALE_LABEL)}${delaySuffix}`,
       colorClass: 'text-white shadow-sm',
-      details: WARNING_HELP_COPY.highScaleDelay,
+      details: i18n._(WARNING_HELP_COPY.highScaleDelay),
       style: {
         backgroundColor: utilityColors.warningOrange,
         borderColor: utilityColors.warningOrange,
@@ -76,7 +73,7 @@ export function buildAnalysisWarningBadges(results) {
       key: 'delay-review',
       label: getDelayReviewLabel(results),
       colorClass: NEUTRAL_STATUS_BADGE_CLASS,
-      details: results.delayReviewMessage || WARNING_HELP_COPY.delayReview,
+      details: results.delayReviewMessage || i18n._(WARNING_HELP_COPY.delayReview),
     });
   }
 
@@ -91,22 +88,22 @@ function stripTrailingParentheticalSuffix(value) {
 }
 
 function getAnalysisHeaderBaseLabel(col) {
-  if (col.id === 'duration') return 'Time';
-  if (col.id === 'water') return 'Pumped Water (phase)';
-  if (col.id === 'weight') return 'Weight (total)';
-  if (col.group === 'flow') return 'Pump Flow';
-  if (col.group === 'target_flow') return 'Target Pump Flow';
-  if (col.group === 'puckflow') return 'Puck Flow';
-  if (col.group === 'temp') return 'Temperature';
-  if (col.group === 'target_temp') return 'Target Temp';
+  if (col.id === 'duration') return t`Time`;
+  if (col.id === 'water') return t`Pumped Water (phase)`;
+  if (col.id === 'weight') return t`Weight (total)`;
+  if (col.group === 'flow') return t`Pump Flow`;
+  if (col.group === 'target_flow') return t`Target Pump Flow`;
+  if (col.group === 'puckflow') return t`Puck Flow`;
+  if (col.group === 'temp') return t`Temperature`;
+  if (col.group === 'target_temp') return t`Target Temp`;
   return stripTrailingParentheticalSuffix(col.label);
 }
 
 export function getAnalysisHeaderLabel(col) {
   const suffixByType = {
-    se: ' S/E',
-    mm: ' Min/Max',
-    avg: ' Avg ∅',
+    se: ` ${t({ message: 'S/E', context: 'column type, short for start/end' })}`,
+    mm: ` ${t({ message: 'Min/Max', context: 'column type' })}`,
+    avg: ` ${t({ message: 'Avg ∅', context: 'column type' })}`,
   };
 
   return `${getAnalysisHeaderBaseLabel(col)}${suffixByType[col.type] || ''}`;

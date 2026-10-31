@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'preact/hooks';
 import { useQuery } from 'preact-fetching';
+import { Trans, useLingui } from '@lingui/react/macro';
+import { msg } from '@lingui/core/macro';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faScaleBalanced } from '@fortawesome/free-solid-svg-icons/faScaleBalanced';
 import { machine, updateScaleState } from '../../../services/ApiService.js';
@@ -17,11 +19,10 @@ const DISCONNECT_BANNER_MS = 60000;
 const CONNECT_PENDING_MS = 15000;
 
 const CONNECT_ERROR_MESSAGES = {
-  not_found: "The scale wasn't found. Make sure it's switched on and nearby, then scan again.",
-  connect_failed:
-    'The scale was found, but the Bluetooth connection failed. Try again or restart the scale.',
-  unsupported: "This scale model couldn't be set up.",
-  request_failed: "GaggiMate didn't accept the request. Check the connection and try again.",
+  not_found: msg`The scale wasn't found. Make sure it's switched on and nearby, then scan again.`,
+  connect_failed: msg`The scale was found, but the Bluetooth connection failed. Try again or restart the scale.`,
+  unsupported: msg`This scale model couldn't be set up.`,
+  request_failed: msg`GaggiMate didn't accept the request. Check the connection and try again.`,
 };
 
 async function fetchJson(url, options) {
@@ -47,6 +48,7 @@ function batteryColorClass(pct) {
 }
 
 export function BluetoothTab() {
+  const { t, i18n } = useLingui();
   const [key, setKey] = useState(0);
   const [scaleData, setScaleData] = useState([]);
   const [connectingUuid, setConnectingUuid] = useState(null);
@@ -193,14 +195,18 @@ export function BluetoothTab() {
   }, []);
 
   const loading = isLoading || isInfoLoading;
+  const errorAddress = connectError?.address;
+  const errorMessage = CONNECT_ERROR_MESSAGES[connectError?.reason];
+  const scaleName =
+    (disconnected && (scaleModelName(disconnected.name) || disconnected.name)) || t`Scale`;
 
   return (
     <div className='space-y-4 sm:space-y-6'>
-      <Section title='Bluetooth Devices'>
+      <Section title={t`Bluetooth Devices`}>
         <div className='flex flex-col gap-4'>
           <div className='border-base-content/5 flex flex-row items-center justify-between gap-4 border-b pb-4'>
             <span className='text-base-content/75 text-sm'>
-              Scan for nearby Bluetooth scales to connect them to GaggiMate.
+              <Trans>Scan for nearby Bluetooth scales to connect them to GaggiMate.</Trans>
             </span>
             <button
               type='button'
@@ -208,7 +214,7 @@ export function BluetoothTab() {
               onClick={onScan}
               disabled={isScanning || mode === 0}
             >
-              {mode > 0 && isScanning ? 'Scanning...' : 'Scan for Devices'}
+              {mode > 0 && isScanning ? t`Scanning...` : t`Scan for Devices`}
               {mode > 0 && isScanning && <Spinner size={4} className='ml-2' />}
             </button>
           </div>
@@ -216,20 +222,16 @@ export function BluetoothTab() {
           {mode > 0 && connectError && (
             <ScaleNotice
               kind='error'
-              title={
-                connectError.address ? `Couldn't connect to ${connectError.address}` : 'Scan failed'
-              }
-              message={
-                CONNECT_ERROR_MESSAGES[connectError.reason] || 'Connecting to the scale failed.'
-              }
+              title={errorAddress ? t`Couldn't connect to ${errorAddress}` : t`Scan failed`}
+              message={errorMessage ? i18n._(errorMessage) : t`Connecting to the scale failed.`}
               onDismiss={() => updateScaleState({ connectError: null })}
             />
           )}
           {mode > 0 && disconnected && (
             <ScaleNotice
               kind='warning'
-              title={`${scaleModelName(disconnected.name) || disconnected.name || 'Scale'} disconnected`}
-              message='GaggiMate reconnects automatically once the scale is switched on and in range.'
+              title={t`${scaleName} disconnected`}
+              message={t`GaggiMate reconnects automatically once the scale is switched on and in range.`}
               onDismiss={() => updateScaleState({ disconnected: null })}
             />
           )}
@@ -239,9 +241,11 @@ export function BluetoothTab() {
               <div className='border-base-content/8 bg-base-200/40 rounded-xl border py-12 text-center'>
                 <div className='flex flex-col items-center space-y-4'>
                   <div>
-                    <h3 className='text-base-content text-lg font-medium'>System in Standby</h3>
+                    <h3 className='text-base-content text-lg font-medium'>
+                      <Trans>System in Standby</Trans>
+                    </h3>
                     <p className='text-base-content/70 text-sm'>
-                      Please wake up GaggiMate from Standby to use Bluetooth scales.
+                      <Trans>Please wake up GaggiMate from Standby to use Bluetooth scales.</Trans>
                     </p>
                   </div>
                 </div>
@@ -265,8 +269,10 @@ export function BluetoothTab() {
             <div className='mt-4'>
               <div className='alert alert-warning text-xs'>
                 <span>
-                  Scales are automatically refreshed every 10 seconds. Use the scan button to
-                  discover new devices.
+                  <Trans>
+                    Scales are automatically refreshed every 10 seconds. Use the scan button to
+                    discover new devices.
+                  </Trans>
                 </span>
               </div>
             </div>
@@ -288,7 +294,7 @@ function ScaleNotice({ kind, title, message, onDismiss }) {
         <span className='text-sm'>{message}</span>
       </div>
       <button type='button' className='btn btn-ghost btn-sm' onClick={onDismiss}>
-        Dismiss
+        <Trans>Dismiss</Trans>
       </button>
     </div>
   );
@@ -305,10 +311,13 @@ function ScaleList(props) {
     onConnect,
     onForget,
   } = props;
+  const { t } = useLingui();
   if (isError || isInfoError) {
     return (
       <div className='alert alert-error'>
-        <span>Error loading devices. Please try again.</span>
+        <span>
+          <Trans>Error loading devices. Please try again.</Trans>
+        </span>
       </div>
     );
   }
@@ -338,7 +347,7 @@ function ScaleList(props) {
                   </div>
                   <div>
                     <h4 className='text-base-content font-bold'>
-                      {model || scale.name || (scale.saved ? 'Saved scale' : 'Unknown Scale')}
+                      {model || scale.name || (scale.saved ? t`Saved scale` : t`Unknown Scale`)}
                       <span
                         className={`ml-2 inline-block h-2 w-2 rounded-full ${
                           scale.connected ? 'bg-success' : 'bg-base-content/20'
@@ -348,13 +357,15 @@ function ScaleList(props) {
                     {model && <p className='text-base-content/60 text-xs'>{scale.name}</p>}
                     {scale.outOfRange && (
                       <p className='text-base-content/60 text-xs'>
-                        Not in range. Switch it on to reconnect.
+                        <Trans>Not in range. Switch it on to reconnect.</Trans>
                       </p>
                     )}
                     <p className='text-base-content/70 flex items-center space-x-2 text-sm'>
                       <span className='font-mono text-xs'>{scale.uuid}</span>
                       {scale.saved && !scale.connected && (
-                        <span className='badge badge-ghost badge-xs'>Saved</span>
+                        <span className='badge badge-ghost badge-xs'>
+                          <Trans context='scale state'>Saved</Trans>
+                        </span>
                       )}
                       {scale.connected && scale.hasBattery && typeof scale.battery === 'number' && (
                         <span
@@ -367,7 +378,11 @@ function ScaleList(props) {
                   </div>
                 </div>
                 <div className='flex w-full items-center gap-2 md:w-auto'>
-                  {scale.connected && <div className='badge badge-success gap-2'>Connected</div>}
+                  {scale.connected && (
+                    <div className='badge badge-success gap-2'>
+                      <Trans context='scale state'>Connected</Trans>
+                    </div>
+                  )}
                   {!scale.connected && !scale.outOfRange && (
                     <button
                       type='button'
@@ -375,7 +390,7 @@ function ScaleList(props) {
                       onClick={() => onConnect(scale.uuid)}
                       disabled={!!connectingUuid || !!forgettingUuid}
                     >
-                      {connectingUuid === scale.uuid ? 'Connecting...' : 'Connect'}
+                      {connectingUuid === scale.uuid ? t`Connecting...` : t`Connect`}
                       {connectingUuid === scale.uuid && <Spinner size={4} className='ml-2' />}
                     </button>
                   )}
@@ -386,7 +401,7 @@ function ScaleList(props) {
                       onClick={() => onForget(scale.uuid)}
                       disabled={!!forgettingUuid}
                     >
-                      {forgettingUuid === scale.uuid ? 'Forgetting...' : 'Forget'}
+                      {forgettingUuid === scale.uuid ? t`Forgetting...` : t`Forget`}
                     </button>
                   )}
                 </div>
@@ -401,9 +416,11 @@ function ScaleList(props) {
               <FontAwesomeIcon icon={faScaleBalanced} />
             </div>
             <div>
-              <h3 className='text-base-content text-lg font-medium'>No scales found</h3>
+              <h3 className='text-base-content text-lg font-medium'>
+                <Trans>No scales found</Trans>
+              </h3>
               <p className='text-base-content/70 text-sm'>
-                Click "Scan" to discover Bluetooth scales nearby
+                <Trans>Click "Scan" to discover Bluetooth scales nearby</Trans>
               </p>
             </div>
           </div>

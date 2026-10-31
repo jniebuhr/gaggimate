@@ -12,6 +12,7 @@ import {
   SHOT_SAVED_POLL_RETRIES,
 } from './constants.js';
 import { CALIBRATION_PROFILE, CALIBRATION_PROFILE_ID } from './profile.js';
+import { t } from '@lingui/core/macro';
 
 /**
  * usePumpFlowCalibration
@@ -75,7 +76,7 @@ export function usePumpFlowCalibration({ currentCoeffs, onApplied }) {
     if (waitRejectRef.current !== null) {
       const reject = waitRejectRef.current;
       waitRejectRef.current = null;
-      reject(new Error('Calibration cancelled.'));
+      reject(new Error(t`Calibration cancelled.`));
     }
   }, [apiService]);
 
@@ -113,18 +114,19 @@ export function usePumpFlowCalibration({ currentCoeffs, onApplied }) {
           safetyIdRef.current = null;
           waitRejectRef.current = null;
           detachStatusListener();
-          reject(new Error('Timeout waiting for shot to finish (5min).'));
+          reject(new Error(t`Timeout waiting for shot to finish (5min).`));
         }, SHOT_END_TIMEOUT_MS);
         // Error-level warnings (e.g. still heating) park the start behind a confirmation only Home shows.
         listen('evt:brew:confirm', m => {
           const labels = activeWarnings(parseWarningStates(m.warn)).map(w => w.label);
-          pushLog(`Starting despite warnings: ${labels.join(', ') || 'unknown'}`, 'warn');
+          const warnings = labels.join(', ') || t`unknown`;
+          pushLog(t`Starting despite warnings: ${warnings}`, 'warn');
           apiService.send({ tp: 'req:process:activate', ignoreWarnings: true });
         });
         listen('evt:brew:confirm:cancel', () => {
           waitRejectRef.current = null;
           detachStatusListener();
-          reject(new Error('Shot start was cancelled on the machine.'));
+          reject(new Error(t`Shot start was cancelled on the machine.`));
         });
         listen('evt:status', m => {
           // State-only frames carry no process key; only telemetry frames say whether it's active.
@@ -162,13 +164,13 @@ export function usePumpFlowCalibration({ currentCoeffs, onApplied }) {
       });
       savedWakeRef.current = null;
     }
-    throw new Error('New shot did not appear in history — was it cancelled?');
+    throw new Error(t`New shot did not appear in history — was it cancelled?`);
   }, []);
 
   const start = useCallback(async () => {
     if (inFlightRef.current) return;
     if (!apiService) {
-      pushLog('Internal error: ApiService unavailable.', 'err');
+      pushLog(t`Internal error: ApiService unavailable.`, 'err');
       setPhase(PHASE.ERROR);
       return;
     }
@@ -191,21 +193,21 @@ export function usePumpFlowCalibration({ currentCoeffs, onApplied }) {
       // waste a full calibration shot (water + scale + portafilter).
       const [c1, c9] = parseCoeffs(currentCoeffs);
 
-      pushLog('Saving calibration profile...');
+      pushLog(t`Saving calibration profile...`);
       await apiService.request({ tp: 'req:profiles:save', profile: CALIBRATION_PROFILE });
 
-      pushLog('Selecting calibration profile...');
+      pushLog(t`Selecting calibration profile...`);
       await apiService.request({ tp: 'req:profiles:select', id: CALIBRATION_PROFILE_ID });
 
-      pushLog('Switching to BREW mode...');
+      pushLog(t`Switching to BREW mode...`);
       apiService.send({ tp: 'req:change-mode', mode: MODE_BREW });
       await new Promise(r => setTimeout(r, POST_MODE_SETTLE_MS));
 
-      pushLog('Snapshotting shot history...');
+      pushLog(t`Snapshotting shot history...`);
       const before = await fetchShotIndex();
       const preIds = new Set(before.map(e => e.id));
 
-      pushLog('Starting shot — adjust the steam valve to reach 1 bar, then 9 bar.', 'ok');
+      pushLog(t`Starting shot — adjust the steam valve to reach 1 bar, then 9 bar.`, 'ok');
       // Subscribe to evt:status BEFORE activating so a fast a:0→1→0 transition
       // (or a status arriving in the same tick) can't slip past the listener.
       const shotEnd = waitForShotEnd();
@@ -218,32 +220,35 @@ export function usePumpFlowCalibration({ currentCoeffs, onApplied }) {
       apiService.send({ tp: 'req:process:activate' });
       await shotEnd;
 
-      pushLog('Shot finished. Waiting for it to be saved to history...', 'ok');
+      pushLog(t`Shot finished. Waiting for it to be saved to history...`, 'ok');
       const shotId = await waitForSavedShot(preIds);
       detachStatusListener();
-      pushLog(`Downloading shot #${shotId}`);
+      pushLog(t`Downloading shot #${shotId}`);
       setPhase(PHASE.ANALYZING);
 
       const shot = await fetchAndParseShot(shotId, msg => pushLog(msg, 'warn'));
-      pushLog(`Parsed ${shot.samples.length} samples (v${shot.version}).`);
+      const sampleCount = shot.samples.length;
+      const version = shot.version;
+      pushLog(t`Parsed ${sampleCount} samples (v${version}).`);
 
       const oneBar = analyze(shot.samples, 1);
       const nineBar = analyze(shot.samples, 9);
       const newCoeffs = `${(c1 * oneBar.factor).toFixed(3)},${(c9 * nineBar.factor).toFixed(3)}`;
       setResults({ oneBar, nineBar, newCoeffs });
 
-      pushLog('Analysis complete.', 'ok');
+      pushLog(t`Analysis complete.`, 'ok');
       setPhase(PHASE.DONE);
     } catch (err) {
       detachStatusListener();
-      pushLog(`Error: ${err.message}`, 'err');
+      const message = err.message;
+      pushLog(t`Error: ${message}`, 'err');
       setPhase(PHASE.ERROR);
     } finally {
       // Best-effort cleanup: put the user back on their previous profile and
       // remove the calibration profile from the machine. Failures here are
       // surfaced as warnings — they don't undo a successful calibration.
       try {
-        pushLog('Restoring previous profile...');
+        pushLog(t`Restoring previous profile...`);
         let profileToRestore = restoreProfileRef.current;
         if (!profileToRestore) {
           // Never leave the machine on the profile we are about to delete.
@@ -253,16 +258,18 @@ export function usePumpFlowCalibration({ currentCoeffs, onApplied }) {
         if (profileToRestore) {
           await apiService.request({ tp: 'req:profiles:select', id: profileToRestore });
         } else {
-          pushLog('No other profile found to switch back to.', 'warn');
+          pushLog(t`No other profile found to switch back to.`, 'warn');
         }
       } catch (e) {
-        pushLog(`Could not restore previous profile: ${e.message}`, 'warn');
+        const message = e.message;
+        pushLog(t`Could not restore previous profile: ${message}`, 'warn');
       }
       try {
-        pushLog('Removing calibration profile...');
+        pushLog(t`Removing calibration profile...`);
         await apiService.request({ tp: 'req:profiles:delete', id: CALIBRATION_PROFILE_ID });
       } catch (e) {
-        pushLog(`Could not delete calibration profile: ${e.message}`, 'warn');
+        const message = e.message;
+        pushLog(t`Could not delete calibration profile: ${message}`, 'warn');
       }
       inFlightRef.current = false;
     }
@@ -281,11 +288,13 @@ export function usePumpFlowCalibration({ currentCoeffs, onApplied }) {
     setSaving(true);
     try {
       updateSettingsCache(await postCoefficients(results.newCoeffs));
-      pushLog(`Coefficients saved to machine: ${results.newCoeffs}`, 'ok');
+      const newCoeffs = results.newCoeffs;
+      pushLog(t`Coefficients saved to machine: ${newCoeffs}`, 'ok');
       setSaved(true);
       onApplied?.(results.newCoeffs);
     } catch (err) {
-      pushLog(`Save failed: ${err.message}`, 'err');
+      const message = err.message;
+      pushLog(t`Save failed: ${message}`, 'err');
     } finally {
       setSaving(false);
     }

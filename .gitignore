@@ -18,3 +18,5 @@ sim_data/
 
 # Local release staging (scripts/release.sh)
 out/
+
+web/store

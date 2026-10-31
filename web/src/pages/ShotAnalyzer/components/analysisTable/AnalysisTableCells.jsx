@@ -1,4 +1,6 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { t } from '@lingui/core/macro';
+import { Trans } from '@lingui/react/macro';
 import { faExclamationTriangle, faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { getDisplayStopReasonParts, utilityColors } from '../../utils/analyzerUtils';
 import { isSafetyExitReason, isWeightType } from '../../services/analyzer/exitReasons.js';
@@ -282,7 +284,9 @@ function getWeightWarnings({ phase, isWeightCol, subTextSize }) {
         className='mt-0.5 flex items-center justify-end gap-1 font-bold'
       >
         <FontAwesomeIcon icon={faExclamationTriangle} />
-        <span>Scale Lost</span>
+        <span>
+          <Trans>Scale Lost</Trans>
+        </span>
       </div>,
     );
   }
@@ -296,7 +300,7 @@ function getWeightWarnings({ phase, isWeightCol, subTextSize }) {
       >
         <FontAwesomeIcon icon={faExclamationTriangle} />
         <span>
-          High Scale Delay
+          <Trans>High Scale Delay</Trans>
           {phase.estimatedScaleDelayMs ? ` (${phase.estimatedScaleDelayMs} ms)` : ''}
         </span>
       </div>,
@@ -327,6 +331,8 @@ function getCellHitState({ phase, col }) {
 }
 
 function renderBooleanCellContent({ booleanContent, booleanAnomaly, subTextSize }) {
+  const sampleNumber = booleanAnomaly?.sampleInPhase;
+  const sampleValue = String(booleanAnomaly?.value);
   return (
     <div className='flex h-full flex-col items-end justify-center pb-1'>
       <div className='flex items-center'>{booleanContent}</div>
@@ -334,10 +340,10 @@ function renderBooleanCellContent({ booleanContent, booleanAnomaly, subTextSize 
         <div
           style={subTextSize}
           className='text-base-content/55 mt-0.5 flex flex-col items-end leading-tight font-medium tracking-normal'
-          title={`Sample ${booleanAnomaly.sampleInPhase}: ${String(booleanAnomaly.value)}`}
+          title={t`Sample ${sampleNumber}: ${sampleValue}`}
         >
           <span>
-            Sample {booleanAnomaly.sampleInPhase}
+            <Trans>Sample {sampleNumber}</Trans>
             {Number.isFinite(booleanAnomaly.sampleCountInPhase)
               ? ` (${booleanAnomaly.sampleCountInPhase})`
               : ''}

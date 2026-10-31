@@ -12,7 +12,8 @@ import {
   STATISTICS_RUN_BUTTON_TONE_CLASS,
 } from './constants';
 import {
-  formatCountLabel,
+  formatShotCountLabel,
+  formatProfileCountLabel,
   formatCollapsedDateRangeText,
   getDateRangeDisplay,
   getCandidateSummary,
@@ -144,8 +145,8 @@ export function StatisticsToolbar({
   const toolbarPassiveLayerClass = useBlankCollapseLayer ? 'pointer-events-none' : '';
   const toolbarControlClass = useBlankCollapseLayer ? 'pointer-events-auto' : '';
   const busyDropdownClass = isBusy ? 'pointer-events-none opacity-40' : '';
-  const collapsedShotCountLabel = formatCountLabel(builtShotCount, 'shot', 'shots');
-  const collapsedProfileCountLabel = formatCountLabel(builtProfileCount, 'profile', 'profiles');
+  const collapsedShotCountLabel = formatShotCountLabel(builtShotCount);
+  const collapsedProfileCountLabel = formatProfileCountLabel(builtProfileCount);
   const collapsedDateRangeText = formatCollapsedDateRangeText(
     builtDateRangeStartMs,
     builtDateRangeEndMs,

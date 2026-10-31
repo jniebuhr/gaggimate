@@ -5,6 +5,7 @@
 import { LibraryRow } from './LibraryRow';
 import { LibraryActionsMenu } from './LibraryActionsMenu';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown';
 import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
 import { faThumbtack } from '@fortawesome/free-solid-svg-icons/faThumbtack';
@@ -73,7 +74,11 @@ function renderLibrarySourceOptionContent(value) {
     );
   }
 
-  return <span>ALL</span>;
+  return (
+    <span>
+      <Trans context='library source filter'>ALL</Trans>
+    </span>
+  );
 }
 
 function renderLibrarySourceHeaderContent(value) {
@@ -153,6 +158,7 @@ export function LibrarySection({
   onPinnedFirstToggle,
   isLoading,
 }) {
+  const { t } = useLingui();
   const getSortIcon = k => {
     const isActive = sortKey === k;
     return (
@@ -169,6 +175,7 @@ export function LibrarySection({
   // inside that cell instead of adding separate narrow columns.
   const showCompareSelection = false;
   const { columnCount } = getLibraryColumnLayout(isShot, showCompareSelection);
+  const pinnedFirstLabel = isShot ? t`Toggle pinned shots first` : t`Toggle pinned profiles first`;
   const hasCompareBadges = items.some(item => Boolean(getCompareBadgeNumber?.(item)));
 
   return (
@@ -186,16 +193,16 @@ export function LibrarySection({
             </span>
           </h3>
           <LibraryActionsMenu
-            ariaLabel={`Open ${title.toLowerCase()} actions menu`}
+            ariaLabel={isShot ? t`Open shots actions menu` : t`Open profiles actions menu`}
             buttonClassName='h-7 w-7 p-1.5'
             actions={[
               {
-                label: 'Export All',
+                label: t`Export All`,
                 icon: faFileExport,
                 onSelect: onExportAll,
               },
               {
-                label: 'Delete All',
+                label: t`Delete All`,
                 icon: faTrashCan,
                 tone: 'error',
                 onSelect: onDeleteAll,
@@ -206,7 +213,7 @@ export function LibrarySection({
         <div className='flex min-w-0 gap-2'>
           <input
             type='text'
-            placeholder={`Search ${title.toLowerCase()}...`}
+            placeholder={isShot ? t`Search shots...` : t`Search profiles...`}
             value={searchValue}
             onInput={e => onSearchChange(e.target.value)}
             className='library-toolbar-field bg-base-100/50 border-base-content/10 focus:border-primary h-9 min-w-0 flex-1 rounded-md border px-3 text-sm outline-none'
@@ -219,14 +226,14 @@ export function LibrarySection({
             }}
             className='library-toolbar-field bg-base-100/50 border-base-content/10 hover:bg-base-content/5 hover:border-base-content/20 focus:border-primary h-9 max-w-[8.5rem] shrink-0 cursor-pointer rounded-md border px-2 text-xs transition-colors outline-none sm:max-w-none'
           >
-            {isShot && <option value='shotDate-desc'>Date (New)</option>}
-            {isShot && <option value='shotDate-asc'>Date (Old)</option>}
-            <option value='name-asc'>Name (A-Z)</option>
-            <option value='name-desc'>Name (Z-A)</option>
-            {isShot && <option value='data.rating-desc'>Rating (High)</option>}
-            {isShot && <option value='data.rating-asc'>Rating (Low)</option>}
-            {isShot && <option value='duration-desc'>Length (Long)</option>}
-            {isShot && <option value='duration-asc'>Length (Short)</option>}
+            {isShot && <option value='shotDate-desc'>{t`Date (New)`}</option>}
+            {isShot && <option value='shotDate-asc'>{t`Date (Old)`}</option>}
+            <option value='name-asc'>{t`Name (A-Z)`}</option>
+            <option value='name-desc'>{t`Name (Z-A)`}</option>
+            {isShot && <option value='data.rating-desc'>{t`Rating (High)`}</option>}
+            {isShot && <option value='data.rating-asc'>{t`Rating (Low)`}</option>}
+            {isShot && <option value='duration-desc'>{t`Length (Long)`}</option>}
+            {isShot && <option value='duration-asc'>{t`Length (Short)`}</option>}
           </select>
         </div>
       </div>
@@ -256,7 +263,9 @@ export function LibrarySection({
                     })}
                     onClick={() => onSortChange('name')}
                   >
-                    <span className='truncate'>Name</span>
+                    <span className='truncate'>
+                      <Trans>Name</Trans>
+                    </span>
                     {getSortIcon('name')}
                   </button>
                   {onPinnedFirstToggle ? (
@@ -274,8 +283,8 @@ export function LibrarySection({
                         // does not mutate the pinned items themselves.
                         onPinnedFirstToggle();
                       }}
-                      aria-label={`Toggle pinned ${isShot ? 'shots' : 'profiles'} first`}
-                      title={`Toggle pinned ${isShot ? 'shots' : 'profiles'} first`}
+                      aria-label={pinnedFirstLabel}
+                      title={pinnedFirstLabel}
                     >
                       <FontAwesomeIcon icon={faThumbtack} />
                     </button>
@@ -288,8 +297,8 @@ export function LibrarySection({
                         className:
                           'flex h-full w-full cursor-pointer list-none items-center justify-center gap-1 px-1 py-2 text-xs font-medium outline-none [&::-webkit-details-marker]:hidden',
                       })}
-                      aria-label='Filter library source'
-                      title='Filter library source'
+                      aria-label={t`Filter library source`}
+                      title={t`Filter library source`}
                     >
                       {renderLibrarySourceHeaderContent(sourceFilter)}
                       <FontAwesomeIcon
@@ -331,13 +340,15 @@ export function LibrarySection({
                       })}
                       onClick={() => onSortChange('shotDate')}
                     >
-                      <span>Date</span>
+                      <span>
+                        <Trans>Date</Trans>
+                      </span>
                       {getSortIcon('shotDate')}
                     </button>
                   ) : null}
                   {isShot ? (
                     <span className='library-row-grid__profile text-base-content/70 text-left text-xs font-medium tracking-normal'>
-                      Profile
+                      <Trans>Profile</Trans>
                     </span>
                   ) : null}
                   <span className='library-row-grid__actions' aria-hidden='true' />

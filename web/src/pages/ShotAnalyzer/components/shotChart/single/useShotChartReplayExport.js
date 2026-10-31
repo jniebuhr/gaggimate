@@ -8,6 +8,7 @@
  */
 
 import { useEffect, useRef, useState } from 'preact/hooks';
+import { t } from '@lingui/core/macro';
 import { downloadBlob } from '../../../../../utils/download';
 import {
   exportReplayImage,
@@ -620,7 +621,7 @@ export function useShotChartReplayExport({
     if (isVideoExportUnavailable) {
       setReplayExportStatusSafely({
         status: 'error',
-        error: 'Video export is not supported in this browser.',
+        error: t`Video export is not supported in this browser.`,
       });
       return;
     }
@@ -631,7 +632,7 @@ export function useShotChartReplayExport({
     if (!runtime || !mainChart?.canvas || !tempChart?.canvas) {
       setReplayExportStatusSafely({
         status: 'error',
-        error: 'Replay export is not ready yet.',
+        error: t`Replay export is not ready yet.`,
       });
       return;
     }
@@ -676,8 +677,9 @@ export function useShotChartReplayExport({
         status: 'error',
         error:
           error?.name === 'AbortError'
-            ? 'Replay export was cancelled.'
-            : error?.message || 'Replay export failed.',
+            ? t`Replay export was cancelled.`
+            : error?.message || t`Replay export failed.`,
+        isCancelled: error?.name === 'AbortError',
       });
     } finally {
       finishExportSession();
@@ -691,7 +693,7 @@ export function useShotChartReplayExport({
     if (!runtime || !mainChart?.canvas || !tempChart?.canvas) {
       setReplayExportStatusSafely({
         status: 'error',
-        error: 'Replay image export is not ready yet.',
+        error: t`Replay image export is not ready yet.`,
       });
       return;
     }
@@ -727,8 +729,8 @@ export function useShotChartReplayExport({
         status: 'error',
         error:
           error?.name === 'AbortError'
-            ? 'Replay image export was cancelled.'
-            : error?.message || 'Replay image export failed.',
+            ? t`Replay image export was cancelled.`
+            : error?.message || t`Replay image export failed.`,
       });
     } finally {
       finishExportSession();
@@ -818,7 +820,7 @@ export function useShotChartReplayExport({
       } catch (error) {
         setReplayExportStatusSafely({
           status: 'error',
-          error: error?.message || 'File export failed.',
+          error: error?.message || t`File export failed.`,
         });
       }
       return;
@@ -839,7 +841,7 @@ export function useShotChartReplayExport({
   }, []);
 
   useEffect(() => {
-    if (replayExportStatus.error !== 'Replay export was cancelled.') return undefined;
+    if (!replayExportStatus.isCancelled) return undefined;
     const browserWindow = globalThis.window;
     const browserDocument = globalThis.document;
     if (browserWindow && browserDocument) {
@@ -861,7 +863,7 @@ export function useShotChartReplayExport({
       };
     }
     return undefined;
-  }, [replayExportStatus.error]);
+  }, [replayExportStatus.error, replayExportStatus.isCancelled]);
 
   useEffect(() => {
     const browserDocument = globalThis.document;

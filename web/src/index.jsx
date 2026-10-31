@@ -1,5 +1,12 @@
 import './style.css';
 import { initializeTheme } from './utils/themeManager.js';
+import { I18nProvider } from '@lingui/react';
+import { activateLocale, i18n } from './i18n.js';
+import { isApp } from './app/platform.js';
+import { hasConnected, initApp, onAppRendered } from './app/index.js';
+import { ConnectionGate } from './app/ConnectionGate.jsx';
+import { activeMachine, showMachineSetup } from './app/machines.js';
+import { MachineSetup } from './app/MachineSetup.jsx';
 
 if (import.meta.env.DEV) {
   // Dev-only Preact warnings; stripped from production builds.
@@ -30,11 +37,16 @@ const ShotAnalyzer = lazy(() => import('./pages/ShotAnalyzer/index.jsx').then(m 
 const StatisticsPage = lazy(() =>
   import('./pages/Statistics/index.jsx').then(m => m.StatisticsPage),
 );
+// PURE lets the firmware build drop this app-only page entirely.
+const AppSettings = /* @__PURE__ */ lazy(() =>
+  import('./app/AppSettings.jsx').then(m => m.AppSettings),
+);
 const DashboardSettings = lazy(() =>
   import('./pages/DashboardSettings/index.jsx').then(m => m.DashboardSettings),
 );
 
-const apiService = new ApiService();
+// Created in boot() so the app knows which machine to connect to first.
+let apiService;
 const DESKTOP_NAV_COLLAPSED_STORAGE_KEY = 'gaggimate.desktopNavCollapsed';
 
 function readInitialDesktopNavCollapsed() {
@@ -87,10 +99,16 @@ export function App() {
     return () => window.removeEventListener('open-mobile-nav', handleOpenNav);
   }, []);
 
+  if (isApp && !activeMachine.value) return <MachineSetup mandatory />;
+  if (isApp && !hasConnected.value) {
+    return showMachineSetup.value ? <MachineSetup /> : <ConnectionGate />;
+  }
+
   return (
     <LocationProvider>
       <ApiServiceContext.Provider value={apiService}>
-        <div className='bg-base-300 flex h-screen overflow-hidden'>
+        {isApp && showMachineSetup.value && <MachineSetup />}
+        <div className='bg-base-300 flex h-screen overflow-hidden pt-[env(safe-area-inset-top)] pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)]'>
           <Navigation
             collapsed={navCollapsed}
             onToggleCollapsed={() => setNavCollapsed(collapsed => !collapsed)}
@@ -106,6 +124,7 @@ export function App() {
                       <Route path='/profiles' component={ProfileList} />
                       <Route path='/profiles/:id' component={ProfileEdit} />
                       <Route path='/settings/:tab?' component={Settings} />
+                      {isApp && <Route path='/app-settings' component={AppSettings} />}
                       {/* Legacy routes now live in settings tabs */}
                       <Route path='/ota' component={RedirectTo('/settings/system')} />
                       <Route path='/scales' component={RedirectTo('/settings/bluetooth')} />
@@ -127,7 +146,7 @@ export function App() {
             </div>
           </div>
           {navCollapsed && (
-            <div className='fab end-auto left-4 md:hidden landscape:hidden'>
+            <div className='fab end-auto bottom-[max(1rem,env(safe-area-inset-bottom))] left-[max(1rem,env(safe-area-inset-left))] md:hidden landscape:hidden'>
               <button
                 className='btn btn-lg btn-circle btn-primary'
                 onClick={() => setNavCollapsed(false)}
@@ -142,7 +161,19 @@ export function App() {
   );
 }
 
-// Must be called before render
-initializeTheme();
+async function boot() {
+  if (isApp) await initApp();
+  apiService = new ApiService();
+  // Must be called before render
+  initializeTheme();
+  await activateLocale();
+  render(
+    <I18nProvider i18n={i18n}>
+      <App />
+    </I18nProvider>,
+    document.getElementById('app'),
+  );
+  if (isApp) onAppRendered(apiService);
+}
 
-render(<App />, document.getElementById('app'));
+boot();

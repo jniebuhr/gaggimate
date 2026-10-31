@@ -1,3 +1,5 @@
+import { Trans } from '@lingui/react/macro';
+
 export function MobileChartScrubber({
   active = false,
   ariaLabel,
@@ -35,7 +37,7 @@ export function MobileChartScrubber({
     >
       <div className='shot-chart-mobile-scrubber__track' aria-hidden='true' />
       <div className='shot-chart-mobile-scrubber__hint' aria-hidden='true'>
-        Swipe
+        <Trans>Swipe</Trans>
       </div>
       <input
         type='range'

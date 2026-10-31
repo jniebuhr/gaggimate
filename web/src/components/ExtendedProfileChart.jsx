@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { Chart } from 'chart.js';
 import { ChartComponent } from './Chart';
+import { t } from '@lingui/core/macro';
 
 const POINT_INTERVAL = 0.1; // s
 
 const skipped = (ctx, value) => (!ctx.p0.raw.target ? value : undefined);
 const pressureDatasetDefaults = {
-  label: 'Pressure',
   borderColor: 'rgb(75, 192, 192)',
   tension: 0.4,
   cubicInterpolationMode: 'monotone',
@@ -18,7 +18,6 @@ const pressureDatasetDefaults = {
 };
 
 const flowDatasetDefaults = {
-  label: 'Flow',
   borderColor: 'rgb(255, 192, 192)',
   tension: 0.4,
   cubicInterpolationMode: 'monotone',
@@ -135,10 +134,12 @@ function makeChartData(
       datasets: [
         {
           ...pressureDatasetDefaults,
+          label: t`Pressure`,
           data: prepareData(phases, 'pressure'),
         },
         {
           ...flowDatasetDefaults,
+          label: t`Flow`,
           data: prepareData(phases, 'flow'),
         },
       ],
@@ -180,7 +181,7 @@ function makeChartData(
         },
         title: {
           display: false,
-          text: 'Temperature History',
+          text: t`Temperature History`,
           font: {
             size: window.innerWidth < 640 ? 14 : 16,
           },
@@ -213,7 +214,7 @@ function makeChartData(
           position: 'left',
           title: {
             display: true,
-            text: 'Pressure (bar)',
+            text: t`Pressure (bar)`,
           },
           min: 0,
           max: 12,
@@ -229,7 +230,7 @@ function makeChartData(
           position: 'right',
           title: {
             display: true,
-            text: 'Flow (ml/s)',
+            text: t`Flow (ml/s)`,
           },
           min: 0,
           max: 10,
@@ -272,7 +273,8 @@ function makeChartData(
 
   for (let i = 0; i < phases.length; i++) {
     const phase = phases[i];
-    const phaseName = phase.name || `Phase ${i + 1}`;
+    const phaseNumber = i + 1;
+    const phaseName = phase.name || t`Phase ${phaseNumber}`;
 
     chartData.options.plugins.annotation.annotations.push({
       type: 'line',

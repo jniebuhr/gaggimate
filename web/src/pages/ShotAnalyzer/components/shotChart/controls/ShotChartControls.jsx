@@ -3,6 +3,7 @@
 /** Composes responsive legend, replay/export, and compare controls for shot charts. */
 
 import { useEffect, useState } from 'preact/hooks';
+import { Trans } from '@lingui/react/macro';
 import { LEGEND_ORDER } from '../constants';
 import { COMPARE_TARGET_DISPLAY_MODES } from '../../../utils/analyzerUtils';
 import {
@@ -42,7 +43,7 @@ function ReplayFocusHint({ isCompareMode, shouldShowReplayFocusHint }) {
     return (
       <div className='mb-2 px-1'>
         <div className='border-base-content/10 bg-base-100/70 inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-medium text-[var(--analyzer-warning-orange)] shadow-sm'>
-          Keep this window focused while the replay is being recorded.
+          <Trans>Keep this window focused while the replay is being recorded.</Trans>
         </div>
       </div>
     );

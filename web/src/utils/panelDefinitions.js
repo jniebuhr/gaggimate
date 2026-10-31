@@ -4,13 +4,15 @@ import { FavoriteProfilesCard } from '../pages/Home/cards/FavoriteProfilesCard.j
 import { MetricsPanelWrapper } from '../pages/Home/cards/MetricsPanelWrapper.jsx';
 import { WaterLevelCard } from '../pages/Home/cards/WaterLevelCard.jsx';
 import { ActionCard } from '../pages/Home/cards/ActionCard.jsx';
+import { msg } from '@lingui/core/macro';
+import { withTranslatedLabel } from './translatedLabel.js';
 
 /**
  * Each entry describes one panel in the dashboard control column.
  *
  * Fields:
  *   id               — unique string key; stored in localStorage to represent order/visibility
- *   label            — display name shown in the Settings configurator
+ *   labelMsg         — msg descriptor; exposed translated as `label` (name in the Settings configurator)
  *   required         — if true: always visible, freely reorderable, cannot be removed by the user
  *   available        — (ds) => bool — return false to hide from dashboard AND settings pool.
  *                      ds is the useDashboardState() return value.
@@ -29,17 +31,17 @@ export const SPACER_ID = '__spacer__';
  * top-packed group and a bottom-packed group. Deliberately has no
  * component/props/containerClass since it's never rendered as a real panel.
  */
-export const SPACER_DEFINITION = {
+export const SPACER_DEFINITION = withTranslatedLabel({
   id: SPACER_ID,
-  label: 'Flexible Space',
+  labelMsg: msg`Flexible Space`,
   required: false,
   available: () => true,
-};
+});
 
 export const PANEL_DEFINITIONS = [
   {
     id: 'mode',
-    label: 'Mode Selector',
+    labelMsg: msg`Mode Selector`,
     required: true,
     supportsCompact: true,
     available: () => true,
@@ -53,7 +55,7 @@ export const PANEL_DEFINITIONS = [
   },
   {
     id: 'profile',
-    label: 'Profile Selector',
+    labelMsg: msg`Profile Selector`,
     required: false,
     supportsCompact: true,
     available: ds => ds.mode !== 4,
@@ -70,7 +72,7 @@ export const PANEL_DEFINITIONS = [
   },
   {
     id: 'favorites',
-    label: 'Quick Select',
+    labelMsg: msg`Quick Select`,
     required: false,
     supportsCompact: true,
     available: ds => ds.mode !== 4,
@@ -81,7 +83,7 @@ export const PANEL_DEFINITIONS = [
   },
   {
     id: 'metrics',
-    label: 'Shot Metrics',
+    labelMsg: msg`Shot Metrics`,
     required: true,
     supportsCompact: true,
     available: () => true,
@@ -90,7 +92,7 @@ export const PANEL_DEFINITIONS = [
   },
   {
     id: 'watertank',
-    label: 'Water Tank',
+    labelMsg: msg`Water Tank`,
     required: false,
     available: ds => ds.waterLevelPercent !== null,
     availableInSettings: status => !!status.tofDistance,
@@ -101,7 +103,7 @@ export const PANEL_DEFINITIONS = [
   },
   {
     id: 'action',
-    label: 'Shot Controls',
+    labelMsg: msg`Shot Controls`,
     required: true,
     available: () => true,
     availableInSettings: () => true,
@@ -134,4 +136,4 @@ export const PANEL_DEFINITIONS = [
       volumetricAvailable: ds.volumetricAvailable,
     }),
   },
-];
+].map(withTranslatedLabel);
