@@ -94,6 +94,7 @@ class Controller {
 #ifndef GAGGIMATE_HEADLESS
     DefaultUI *getUI() const { return ui; }
     bool areGaugeSetpointsInside() const { return gaugeSetpointsInside; }
+    bool hasOledPanel() const { return oledPanel; }
 #endif
     bool isErrorState() const { return error > 0; }
     int getError() const { return error; }
@@ -214,6 +215,7 @@ class Controller {
     DefaultUI *ui = nullptr;
     Driver *driver = nullptr;
     bool gaugeSetpointsInside = false;
+    bool oledPanel = false;
 #endif
     GaggiMateClient comms;
     ButtonHandler buttons;

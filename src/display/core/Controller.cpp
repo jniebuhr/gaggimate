@@ -245,6 +245,7 @@ void Controller::setupPanel() {
     // Run this for both real and simulated panels. In particular, the AMOLED
     // simulator should exercise the same indicator-placement branch as hardware.
     if (driver != nullptr && model == PANEL_AMOLED) {
+        oledPanel = true;
         ESP_LOGI(LOG_TAG, "AMOLED/OLED driver loaded, setting indicators visibility to inside position");
         gaugeSetpointsInside = true;
     } else {
