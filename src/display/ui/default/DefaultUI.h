@@ -87,6 +87,7 @@ class DefaultUI {
 
     void handleScreenChange();
     void updateOledScreensaver(unsigned long now);
+    void stopOledScreensaver();
 
     // Animate the dial meters' tick length (short on profile/menu/info and chart-mode status, long elsewhere).
     void animateGaugeTicks(bool fromShort, bool toShort);

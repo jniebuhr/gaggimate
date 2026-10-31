@@ -30,6 +30,8 @@ static constexpr uint32_t STARTUP_FADE_MS = 1000; // standby fade-in duration on
 static constexpr unsigned long STARFIELD_FRAME_MS = 33;
 static constexpr float STARFIELD_SPEED = 0.003f;
 
+static float randomStarCoordinate() { return random(-2500, 2501) / 1000.0f; }
+
 static constexpr int32_t GAUGE_TICK_LONG = 25;      // meter tick length on most screens
 static constexpr int32_t GAUGE_TICK_SHORT = 10;     // shortened tick length on profile / new-menu screens
 static constexpr uint32_t GAUGE_TICK_ANIM_MS = 300; // tick length transition duration
@@ -419,7 +421,6 @@ void DefaultUI::loop() {
 void DefaultUI::updateOledScreensaver(unsigned long now) {
     if (!controller->hasOledPanel() || mode != MODE_STANDBY || currentScreen != SCREEN_ID_STANDBY_SCREEN ||
         standbyEnterTime == 0 || objects.standby_screen == nullptr) {
-        starfieldActive = false;
         return;
     }
 
@@ -442,8 +443,8 @@ void DefaultUI::updateOledScreensaver(unsigned long now) {
         lv_obj_set_style_bg_color(objects.standby_screen, lv_color_black(), LV_PART_MAIN);
 
         for (StarfieldStar &star : starfieldStars) {
-            star.x = random(-1000, 1001) / 1000.0f;
-            star.y = random(-1000, 1001) / 1000.0f;
+            star.x = randomStarCoordinate();
+            star.y = randomStarCoordinate();
             star.z = random(10, 101) / 10.0f;
             star.object = lv_obj_create(objects.standby_screen);
             lv_obj_remove_style_all(star.object);
@@ -461,8 +462,8 @@ void DefaultUI::updateOledScreensaver(unsigned long now) {
     for (StarfieldStar &star : starfieldStars) {
         star.z -= elapsed * STARFIELD_SPEED;
         if (star.z < 0.5f) {
-            star.x = random(-1000, 1001) / 1000.0f;
-            star.y = random(-1000, 1001) / 1000.0f;
+            star.x = randomStarCoordinate();
+            star.y = randomStarCoordinate();
             star.z = 10.0f;
         }
 
@@ -470,8 +471,8 @@ void DefaultUI::updateOledScreensaver(unsigned long now) {
         int y = centerY + static_cast<int>(star.y * centerY / star.z);
 
         if (x < 0 || x >= centerX * 2 || y < 0 || y >= centerY * 2) {
-            star.x = random(-1000, 1001) / 1000.0f;
-            star.y = random(-1000, 1001) / 1000.0f;
+            star.x = randomStarCoordinate();
+            star.y = randomStarCoordinate();
             star.z = 10.0f;
             x = centerX + static_cast<int>(star.x * centerX / star.z);
             y = centerY + static_cast<int>(star.y * centerY / star.z);
@@ -483,6 +484,23 @@ void DefaultUI::updateOledScreensaver(unsigned long now) {
         lv_obj_set_size(star.object, size, size);
         lv_obj_set_style_bg_opa(star.object, brightness, LV_PART_MAIN);
     }
+}
+
+void DefaultUI::stopOledScreensaver() {
+    if (!starfieldActive)
+        return;
+
+    for (StarfieldStar &star : starfieldStars) {
+        if (star.object != nullptr) {
+            lv_obj_del(star.object);
+            star.object = nullptr;
+        }
+    }
+    starfieldActive = false;
+
+    lv_obj_clear_flag(objects.obj3, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_clear_flag(objects.standby_icons, LV_OBJ_FLAG_HIDDEN);
+    tick_screen_standby_screen();
 }
 
 void DefaultUI::loopProfiles() {
@@ -695,6 +713,8 @@ void DefaultUI::setupState() {
 
 void DefaultUI::handleScreenChange() {
     if (currentScreen != targetScreen) {
+        if (currentScreen == SCREEN_ID_STANDBY_SCREEN)
+            stopOledScreensaver();
         if (currentScreen == SCREEN_ID_BREW_SCREEN)
             brewConfirmVisible = false; // leaving the brew screen dismisses the confirm overlay
         if (targetScreen == SCREEN_ID_STANDBY_SCREEN) {
