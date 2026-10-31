@@ -87,7 +87,6 @@ class DefaultUI {
 
     void handleScreenChange();
     void updateOledScreensaver(unsigned long now);
-    void setOledScreensaverActive(bool active);
 
     // Animate the dial meters' tick length (short on profile/menu/info and chart-mode status, long elsewhere).
     void animateGaugeTicks(bool fromShort, bool toShort);
@@ -245,9 +244,6 @@ class DefaultUI {
 
     // Standby brightness control
     unsigned long standbyEnterTime = 0;
-    bool oledScreensaverActive = false;
-    bool oledScreensaverLogoVisible = true;
-    lv_color_t standbyBackgroundColor = lv_color_black();
 
     xTaskHandle taskHandle;
     static void loopTask(void *arg);

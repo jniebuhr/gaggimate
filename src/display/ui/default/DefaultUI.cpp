@@ -416,55 +416,25 @@ void DefaultUI::loop() {
 }
 
 void DefaultUI::updateOledScreensaver(unsigned long now) {
-    const bool shouldBeActive = controller->hasOledPanel() && mode == MODE_STANDBY &&
-                                currentScreen == SCREEN_ID_STANDBY_SCREEN && standbyEnterTime != 0 &&
-                                now - standbyEnterTime >= OLED_SCREENSAVER_TIMEOUT_MS;
-    setOledScreensaverActive(shouldBeActive);
-
-    if (!oledScreensaverActive || objects.obj3 == nullptr)
+    if (!controller->hasOledPanel() || mode != MODE_STANDBY || currentScreen != SCREEN_ID_STANDBY_SCREEN ||
+        standbyEnterTime == 0)
         return;
 
-    const unsigned long screensaverElapsed = now - standbyEnterTime - OLED_SCREENSAVER_TIMEOUT_MS;
-    const bool logoVisible = (screensaverElapsed / OLED_SCREENSAVER_FLASH_INTERVAL_MS) % 2 == 0;
-    if (logoVisible != oledScreensaverLogoVisible) {
-        oledScreensaverLogoVisible = logoVisible;
-        if (logoVisible)
-            lv_obj_clear_flag(objects.obj3, LV_OBJ_FLAG_HIDDEN);
-        else
-            lv_obj_add_flag(objects.obj3, LV_OBJ_FLAG_HIDDEN);
-    }
-
-    // EEZ updates standby widget visibility in ui_tick(), so enforce the
-    // screensaver's logo-only layout afterwards on every pass.
-    for (lv_obj_t *obj : {objects.touch_icon, objects.time, objects.standby_icons, objects.status}) {
-        if (obj != nullptr)
-            lv_obj_add_flag(obj, LV_OBJ_FLAG_HIDDEN);
-    }
-}
-
-void DefaultUI::setOledScreensaverActive(bool active) {
-    if (active == oledScreensaverActive)
+    const unsigned long standbyTime = now - standbyEnterTime;
+    if (standbyTime < OLED_SCREENSAVER_TIMEOUT_MS)
         return;
 
-    oledScreensaverActive = active;
-    oledScreensaverLogoVisible = true;
-    if (objects.standby_screen == nullptr)
-        return;
+    lv_obj_add_flag(objects.touch_icon, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(objects.time, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(objects.standby_icons, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(objects.status, LV_OBJ_FLAG_HIDDEN);
 
-    if (active) {
-        standbyBackgroundColor = lv_obj_get_style_bg_color(objects.standby_screen, LV_PART_MAIN);
-        lv_obj_set_style_bg_color(objects.standby_screen, lv_color_black(), LV_PART_MAIN);
-        if (objects.obj3 != nullptr)
-            lv_obj_clear_flag(objects.obj3, LV_OBJ_FLAG_HIDDEN);
-    } else {
-        lv_obj_set_style_bg_color(objects.standby_screen, standbyBackgroundColor, LV_PART_MAIN);
-        if (objects.obj3 != nullptr)
-            lv_obj_clear_flag(objects.obj3, LV_OBJ_FLAG_HIDDEN);
-        if (objects.standby_icons != nullptr)
-            lv_obj_clear_flag(objects.standby_icons, LV_OBJ_FLAG_HIDDEN);
-        // Restore the EEZ-controlled visibility of the other standby widgets.
-        tick_screen_standby_screen();
-    }
+    const unsigned long screensaverTime = standbyTime - OLED_SCREENSAVER_TIMEOUT_MS;
+    const bool showLogo = (screensaverTime / OLED_SCREENSAVER_FLASH_INTERVAL_MS) % 2 == 0;
+    if (showLogo)
+        lv_obj_clear_flag(objects.obj3, LV_OBJ_FLAG_HIDDEN);
+    else
+        lv_obj_add_flag(objects.obj3, LV_OBJ_FLAG_HIDDEN);
 }
 
 void DefaultUI::loopProfiles() {
