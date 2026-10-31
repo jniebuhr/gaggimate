@@ -245,6 +245,17 @@ class DefaultUI {
     // Standby brightness control
     unsigned long standbyEnterTime = 0;
 
+    struct StarfieldStar {
+        float x = 0.0f;
+        float y = 0.0f;
+        float z = 0.0f;
+        lv_obj_t *object = nullptr;
+    };
+    static constexpr size_t STARFIELD_STAR_COUNT = 64;
+    StarfieldStar starfieldStars[STARFIELD_STAR_COUNT];
+    bool starfieldActive = false;
+    unsigned long lastStarfieldUpdate = 0;
+
     xTaskHandle taskHandle;
     static void loopTask(void *arg);
     xTaskHandle profileTaskHandle;

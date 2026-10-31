@@ -27,7 +27,8 @@
 static EffectManager effect_mgr;
 
 static constexpr uint32_t STARTUP_FADE_MS = 1000; // standby fade-in duration on power-up
-static_assert(OLED_SCREENSAVER_FLASH_INTERVAL_MS > 0, "OLED screensaver flash interval must be greater than zero");
+static constexpr unsigned long STARFIELD_FRAME_MS = 33;
+static constexpr float STARFIELD_SPEED = 0.003f;
 
 static constexpr int32_t GAUGE_TICK_LONG = 25;      // meter tick length on most screens
 static constexpr int32_t GAUGE_TICK_SHORT = 10;     // shortened tick length on profile / new-menu screens
@@ -417,8 +418,10 @@ void DefaultUI::loop() {
 
 void DefaultUI::updateOledScreensaver(unsigned long now) {
     if (!controller->hasOledPanel() || mode != MODE_STANDBY || currentScreen != SCREEN_ID_STANDBY_SCREEN ||
-        standbyEnterTime == 0)
+        standbyEnterTime == 0 || objects.standby_screen == nullptr) {
+        starfieldActive = false;
         return;
+    }
 
     const unsigned long standbyTime = now - standbyEnterTime;
     if (standbyTime < OLED_SCREENSAVER_TIMEOUT_MS)
@@ -428,13 +431,58 @@ void DefaultUI::updateOledScreensaver(unsigned long now) {
     lv_obj_add_flag(objects.time, LV_OBJ_FLAG_HIDDEN);
     lv_obj_add_flag(objects.standby_icons, LV_OBJ_FLAG_HIDDEN);
     lv_obj_add_flag(objects.status, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(objects.obj3, LV_OBJ_FLAG_HIDDEN);
 
-    const unsigned long screensaverTime = standbyTime - OLED_SCREENSAVER_TIMEOUT_MS;
-    const bool showLogo = (screensaverTime / OLED_SCREENSAVER_FLASH_INTERVAL_MS) % 2 == 0;
-    if (showLogo)
-        lv_obj_clear_flag(objects.obj3, LV_OBJ_FLAG_HIDDEN);
-    else
-        lv_obj_add_flag(objects.obj3, LV_OBJ_FLAG_HIDDEN);
+    const int centerX = lv_disp_get_hor_res(lv_disp_get_default()) / 2;
+    const int centerY = lv_disp_get_ver_res(lv_disp_get_default()) / 2;
+
+    if (!starfieldActive) {
+        starfieldActive = true;
+        lastStarfieldUpdate = now - STARFIELD_FRAME_MS;
+        lv_obj_set_style_bg_color(objects.standby_screen, lv_color_black(), LV_PART_MAIN);
+
+        for (StarfieldStar &star : starfieldStars) {
+            star.x = random(-1000, 1001) / 1000.0f;
+            star.y = random(-1000, 1001) / 1000.0f;
+            star.z = random(10, 101) / 10.0f;
+            star.object = lv_obj_create(objects.standby_screen);
+            lv_obj_remove_style_all(star.object);
+            lv_obj_set_style_bg_color(star.object, lv_color_white(), LV_PART_MAIN);
+            lv_obj_set_style_bg_opa(star.object, LV_OPA_COVER, LV_PART_MAIN);
+            lv_obj_clear_flag(star.object, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE);
+        }
+    }
+
+    const unsigned long elapsed = now - lastStarfieldUpdate;
+    if (elapsed < STARFIELD_FRAME_MS)
+        return;
+    lastStarfieldUpdate = now;
+
+    for (StarfieldStar &star : starfieldStars) {
+        star.z -= elapsed * STARFIELD_SPEED;
+        if (star.z < 0.5f) {
+            star.x = random(-1000, 1001) / 1000.0f;
+            star.y = random(-1000, 1001) / 1000.0f;
+            star.z = 10.0f;
+        }
+
+        int x = centerX + static_cast<int>(star.x * centerX / star.z);
+        int y = centerY + static_cast<int>(star.y * centerY / star.z);
+
+        if (x < 0 || x >= centerX * 2 || y < 0 || y >= centerY * 2) {
+            star.x = random(-1000, 1001) / 1000.0f;
+            star.y = random(-1000, 1001) / 1000.0f;
+            star.z = 10.0f;
+            x = centerX + static_cast<int>(star.x * centerX / star.z);
+            y = centerY + static_cast<int>(star.y * centerY / star.z);
+        }
+
+        const int size = star.z < 2.0f ? 3 : star.z < 5.0f ? 2 : 1;
+        const lv_opa_t brightness = static_cast<lv_opa_t>(255 - static_cast<int>(star.z * 15));
+        lv_obj_set_pos(star.object, x, y);
+        lv_obj_set_size(star.object, size, size);
+        lv_obj_set_style_bg_opa(star.object, brightness, LV_PART_MAIN);
+    }
 }
 
 void DefaultUI::loopProfiles() {
