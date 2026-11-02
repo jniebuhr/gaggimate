@@ -285,8 +285,8 @@ export function ExtendedPhase({ phase, index, onChange, pressureAvailable }) {
                 className='grow'
                 type='number'
                 step='1'
-                min={0}
-                max={100}
+                min='0'
+                max='100'
                 value={pumpPower.toString()}
                 onChange={e => onFieldChange('pump', parseFloat(e.currentTarget.value))}
                 aria-label={t`Pump power as percentage`}
@@ -556,7 +556,7 @@ export function ExtendedPhase({ phase, index, onChange, pressureAvailable }) {
         <div className='dropdown'>
           <Tooltip content={t`Add stop condition`}>
             <div
-              tabIndex='0'
+              tabIndex={0}
               role='button'
               className='join-item btn btn-sm btn-outline'
               aria-label={t`Add target`}
@@ -565,7 +565,7 @@ export function ExtendedPhase({ phase, index, onChange, pressureAvailable }) {
             </div>
           </Tooltip>
           <ul
-            tabIndex='0'
+            tabIndex={0}
             className='menu dropdown-content bg-base-100 rounded-box z-1 w-52 p-2 shadow-sm'
           >
             {availableTargetTypes.map(tt => (

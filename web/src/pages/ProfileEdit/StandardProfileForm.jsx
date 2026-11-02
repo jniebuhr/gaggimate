@@ -371,8 +371,8 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
                 className='grow'
                 type='number'
                 step='1'
-                min={0}
-                max={100}
+                min='0'
+                max='100'
                 value={pumpPower}
                 onChange={e => onFieldChange('pump', parseFloat(e.currentTarget.value))}
                 aria-label={t`Pump power as percentage`}

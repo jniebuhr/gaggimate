@@ -239,8 +239,8 @@ export function GeneralTab({
               name='flushDuration'
               type='range'
               className='range w-full'
-              min={0}
-              max={20}
+              min='0'
+              max='20'
               step={5}
               value={flushDuration}
               onChange={onChange('flushDuration')}

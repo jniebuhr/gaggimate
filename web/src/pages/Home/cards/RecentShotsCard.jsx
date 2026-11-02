@@ -24,7 +24,7 @@ function getRelativeDayLabel(timestamp) {
   const today = new Date();
   const shotDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
   const todayDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  const diffDays = Math.round((todayDay - shotDay) / 86400000);
+  const diffDays = Math.round((todayDay.getTime() - shotDay.getTime()) / 86400000);
   if (diffDays === 0) return t`Today`;
   if (diffDays === 1) return t`Yesterday`;
   return d.toLocaleDateString([], { weekday: 'long' });

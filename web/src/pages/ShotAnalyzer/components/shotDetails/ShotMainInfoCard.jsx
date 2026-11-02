@@ -43,7 +43,7 @@ function getRelativeDayLabel(timestamp) {
   if (isYesterday) return t`Yesterday`;
 
   // Approximate day diff for remaining cases
-  const diffDays = Math.floor((now - shotDate) / (1000 * 60 * 60 * 24));
+  const diffDays = Math.floor((now.getTime() - shotDate.getTime()) / (1000 * 60 * 60 * 24));
   if (diffDays < 0) return '';
 
   if (diffDays <= 6) return i18n._(WEEKDAY_LABELS[shotDate.getDay()]);

@@ -157,7 +157,7 @@ export function calculateShotMetrics(shotData, rawProfileData, settings) {
   const phaseNameMap = buildPhaseNameMap(shotData.phaseTransitions);
   const phases = groupSamplesByPhase(gSamples);
 
-  const sortedPhaseKeys = Object.keys(phases).sort((a, b) => a - b);
+  const sortedPhaseKeys = Object.keys(phases).sort((a, b) => Number(a) - Number(b));
   const lastPhaseKey = sortedPhaseKeys.at(-1);
   const profilePhaseIndices = resolveProfilePhaseIndices(
     sortedPhaseKeys,

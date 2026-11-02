@@ -128,9 +128,9 @@ function formatUniqueTrendMetricTick(value, index, ticks, metricKey) {
 }
 
 const CHART_FONT_FAMILY = 'Montserrat, sans-serif';
-const CHART_TICK_FONT = { family: CHART_FONT_FAMILY, size: 10, weight: '400' };
-const CHART_TOOLTIP_TITLE_FONT = { family: CHART_FONT_FAMILY, size: 11, weight: '700' };
-const CHART_TOOLTIP_BODY_FONT = { family: CHART_FONT_FAMILY, size: 10, weight: '400' };
+const CHART_TICK_FONT = { family: CHART_FONT_FAMILY, size: 10, weight: 400 };
+const CHART_TOOLTIP_TITLE_FONT = { family: CHART_FONT_FAMILY, size: 11, weight: 700 };
+const CHART_TOOLTIP_BODY_FONT = { family: CHART_FONT_FAMILY, size: 10, weight: 400 };
 
 export function TrendChart({ trends }) {
   const { t, i18n } = useLingui();

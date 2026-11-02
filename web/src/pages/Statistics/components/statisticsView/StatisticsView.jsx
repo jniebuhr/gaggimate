@@ -401,7 +401,7 @@ export function StatisticsView({ initialContext }) {
             <progress
               className='progress progress-primary w-full max-w-xs'
               value={progress.current}
-              max={progress.total}
+              max={String(progress.total)}
             />
           ) : (
             <progress className='progress progress-primary w-full max-w-xs' />

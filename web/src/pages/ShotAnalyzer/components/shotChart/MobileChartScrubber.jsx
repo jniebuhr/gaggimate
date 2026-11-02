@@ -41,7 +41,7 @@ export function MobileChartScrubber({
       </div>
       <input
         type='range'
-        min={min}
+        min={String(min)}
         max={max}
         step='0.1'
         value={value}

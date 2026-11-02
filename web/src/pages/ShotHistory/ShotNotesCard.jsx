@@ -374,7 +374,7 @@ export default function ShotNotesCard({ shot, onNotesUpdate, onNotesLoaded }) {
         {isEditing ? (
           <textarea
             className='textarea textarea-bordered w-full'
-            rows='4'
+            rows={4}
             value={notes.notes}
             maxLength={200}
             onChange={e => handleInputChange('notes', e.currentTarget.value)}
