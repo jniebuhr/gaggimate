@@ -4,6 +4,13 @@ import annotationPlugin from 'chartjs-plugin-annotation';
 
 Chart.register(annotationPlugin);
 
+/**
+ * @param {object} props
+ * @param {import('chart.js').ChartConfiguration | any} props.data - Chart.js config
+ * @param {string} [props.className]
+ * @param {string} [props.chartClassName]
+ * @param {import('preact').JSX.CSSProperties} [props.style]
+ */
 export function ChartComponent({ data, className, chartClassName, style }) {
   const [chart, setChart] = useState(null);
   const ref = useRef();

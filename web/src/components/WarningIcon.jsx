@@ -1,6 +1,12 @@
 import PropTypes from 'prop-types';
 
 // Inline one of the display's warning SVGs so it follows the text color.
+/**
+ * @param {object} props
+ * @param {string} props.icon - Raw SVG markup
+ * @param {string} [props.title]
+ * @param {string} [props.className]
+ */
 export function WarningIcon({ icon, title, className = '' }) {
   const svg = icon
     .replace(/ id="[^"]*"| data-name="[^"]*"/g, '')

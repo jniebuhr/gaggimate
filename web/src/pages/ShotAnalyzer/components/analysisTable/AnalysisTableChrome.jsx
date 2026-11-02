@@ -211,6 +211,13 @@ export function StatusBadge({ label, colorClass = '', style = {}, details }) {
   );
 }
 
+/**
+ * @param {object} props
+ * @param {import('@fortawesome/fontawesome-svg-core').IconDefinition} props.icon
+ * @param {() => void} props.onClick
+ * @param {string} [props.className]
+ * @param {string} [props.title]
+ */
 const ScrollBtn = ({ icon, onClick, className = '', title }) => (
   <button
     onClick={onClick}

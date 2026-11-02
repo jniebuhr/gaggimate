@@ -92,6 +92,15 @@ function applyHoverForChart(chart, xValue, pointerClientY, showTooltip = true, o
   chart.update('none');
 }
 
+/**
+ * @param {object} options
+ * @param {any} options.mainChart
+ * @param {any} options.tempChart
+ * @param {number} options.xValue
+ * @param {number | null | undefined} options.pointerClientY
+ * @param {string} [options.tooltipSource]
+ * @param {(xValue: number) => void} [options.onHoverXChange]
+ */
 export function applyShotChartHoverAtX({
   mainChart,
   tempChart,
@@ -256,6 +265,19 @@ export function attachTempChartLayoutSync({ mainChart, tempChart }) {
   };
 }
 
+/**
+ * @param {object} options
+ * @param {HTMLElement | null} options.hoverArea
+ * @param {any} options.mainChart
+ * @param {any} options.tempChart
+ * @param {() => void} options.hideExternalTooltip
+ * @param {{ current: any }} options.clearAllHoverRef
+ * @param {{ current: boolean }} options.isReplayingRef
+ * @param {{ current: boolean }} options.isExportingRef
+ * @param {(xValue: number | null) => void} [options.onHoverXChange]
+ * @param {boolean} [options.disableDirectHoverOnMobile]
+ * @returns {() => void} Detaches the listeners.
+ */
 export function attachShotChartHoverSync({
   hoverArea,
   mainChart,

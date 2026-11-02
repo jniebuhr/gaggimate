@@ -357,6 +357,15 @@ function buildPhaseRanges(phases) {
   return ranges;
 }
 
+/**
+ * @param {object} props
+ * @param {any} props.data - Profile (with `phases`)
+ * @param {string} [props.className]
+ * @param {number | null} [props.selectedPhase]
+ * @param {((index: number) => void) | null} [props.onPhaseClick]
+ * @param {boolean} [props.showPhaseLabels]
+ * @param {import('preact').JSX.CSSProperties} [props.style]
+ */
 export function ExtendedProfileChart({
   data,
   className = 'max-h-36 w-full',

@@ -10,6 +10,15 @@ export const COLUMN_TYPES = {
   TEXT: 'text',
 };
 
+/**
+ * @param {object} opts
+ * @param {string} opts.id
+ * @param {string | import('@lingui/core').MessageDescriptor} opts.label
+ * @param {string} opts.type
+ * @param {string} opts.group
+ * @param {boolean} [opts.default]
+ * @param {string} [opts.targetType]
+ */
 export function createColumn({ id, label, type, group, default: isDefault = false, targetType }) {
   const col = {
     id,

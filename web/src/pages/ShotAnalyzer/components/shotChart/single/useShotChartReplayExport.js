@@ -155,7 +155,12 @@ export function useShotChartReplayExport({
     showFormatInfo: false,
   });
   const [isReplayExporting, setIsReplayExporting] = useState(false);
-  const [replayExportStatus, setReplayExportStatus] = useState({ status: 'idle', error: null });
+  const [replayExportStatus, setReplayExportStatus] = useState(
+    /** @type {{ status: string, error: string | null, isCancelled?: boolean }} */ ({
+      status: 'idle',
+      error: null,
+    }),
+  );
 
   // Capability detection lives here so the UI and export handlers resolve the same
   // effective format instead of duplicating browser-specific decisions in multiple places.

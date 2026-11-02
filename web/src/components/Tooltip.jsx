@@ -10,11 +10,14 @@ import { computePosition, flip, shift, offset, autoUpdate } from '@floating-ui/d
  * @param {string} props.content - Tooltip text content
  * @param {preact.ComponentChildren} props.children - Trigger element
  * @param {'top'|'bottom'|'left'|'right'} [props.placement='top'] - Preferred placement
+ * @param {boolean} [props.disabled=false] - Hide and suppress the tooltip
  */
 export function Tooltip({ content, children, placement = 'top', disabled = false }) {
   const [isVisible, setIsVisible] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [actualPlacement, setActualPlacement] = useState(placement);
+  const [actualPlacement, setActualPlacement] = useState(
+    /** @type {import('@floating-ui/dom').Placement} */ (placement),
+  );
   const triggerRef = useRef(null);
   const tooltipRef = useRef(null);
 

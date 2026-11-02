@@ -1,3 +1,11 @@
+/**
+ * @param {object} props
+ * @param {import('preact').ComponentChildren} props.title
+ * @param {import('preact').ComponentChildren} [props.actions]
+ * @param {import('preact').ComponentChildren} [props.tabs]
+ * @param {string} [props.className]
+ * @param {boolean} [props.noStack]
+ */
 export default function PageHeader({ title, actions, tabs, className = '', noStack = false }) {
   const flexClasses = noStack
     ? 'flex flex-row items-center justify-between gap-4'

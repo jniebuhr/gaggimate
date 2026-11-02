@@ -17,6 +17,13 @@ import {
   isWeightType,
 } from '../../services/analyzer/exitReasons.js';
 
+/**
+ * @param {object} props
+ * @param {any} props.phase
+ * @param {number} [props.phaseIndex]
+ * @param {any} props.results
+ * @param {'all' | 'phase' | 'reason'} [props.section]
+ */
 export function ComparePhaseLabel({ phase, results, section = 'all' }) {
   if (!phase) {
     return <div className='text-base-content/45 leading-tight font-medium'>-</div>;
@@ -420,6 +427,7 @@ function renderMetricCellValue({
   warning = false,
 }) {
   const isStopValue = mainValueIsCalculated ? calcIsStopReason : isHit && !calcIsStopReason;
+  /** @type {import('preact').JSX.CSSProperties} */
   let style = {};
   if (isStopValue) {
     style = {

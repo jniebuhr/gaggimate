@@ -166,7 +166,7 @@ function isLibraryHotkeyTypingTarget(target) {
       : globalThis.document?.activeElement;
   if (!activeElement) return false;
   const tag = activeElement.tagName?.toLowerCase();
-  if (activeElement.isContentEditable) return true;
+  if (/** @type {HTMLElement} */ (activeElement).isContentEditable) return true;
   if (tag === 'input' || tag === 'textarea' || tag === 'select') return true;
   return !!activeElement.closest(
     'input, textarea, select, [contenteditable="true"], [role="textbox"]',

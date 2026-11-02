@@ -107,6 +107,18 @@ export function buildShotAnalyzerViewModel({
   };
 }
 
+/**
+ * @param {object} options
+ * @param {{
+ *   shotSource?: string,
+ *   profileSource?: string,
+ *   profileName?: string,
+ *   preferredDetailSection?: string | null,
+ * }} [options.context]
+ * @param {any} options.currentProfile
+ * @param {string} options.currentProfileName
+ * @param {any} options.currentShot
+ */
 export function persistStatisticsInitialContext({
   context = {},
   currentProfile,

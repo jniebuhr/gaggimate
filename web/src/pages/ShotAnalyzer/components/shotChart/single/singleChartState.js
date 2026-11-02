@@ -52,6 +52,10 @@ function getDefaultSingleChartVisibility() {
   };
 }
 
+/**
+ * @param {any} storedVisibility
+ * @returns {Record<string, boolean>}
+ */
 export function normalizeSingleChartVisibility(storedVisibility) {
   const defaultVisibility = getDefaultSingleChartVisibility();
   if (!storedVisibility || typeof storedVisibility !== 'object') return defaultVisibility;

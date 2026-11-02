@@ -6,6 +6,15 @@ import { faLock } from '@fortawesome/free-solid-svg-icons/faLock';
 import { faXmark } from '@fortawesome/free-solid-svg-icons/faXmark';
 import { Trans } from '@lingui/react/macro';
 
+/**
+ * @param {object} props
+ * @param {import('preact').ComponentChildren} props.label
+ * @param {string} [props.htmlFor]
+ * @param {import('preact').ComponentChildren} [props.helpText]
+ * @param {import('preact').ComponentChildren} [props.children]
+ * @param {string} [props.className]
+ * @param {boolean} [props.noMargin]
+ */
 export function SettingsFormField({
   label,
   htmlFor,
@@ -31,6 +40,16 @@ export function SettingsFormField({
   );
 }
 
+/**
+ * @param {object} props
+ * @param {import('preact').ComponentChildren} props.label
+ * @param {string} [props.htmlFor]
+ * @param {import('preact').ComponentChildren} [props.unit]
+ * @param {string} [props.unitAriaLabel]
+ * @param {import('preact').ComponentChildren} [props.helpText]
+ * @param {import('preact').ComponentChildren} [props.children]
+ * @param {boolean} [props.noMargin]
+ */
 export function InputGroupField({
   label,
   htmlFor,
@@ -56,6 +75,14 @@ export function InputGroupField({
   );
 }
 
+/**
+ * @param {object} props
+ * @param {import('preact').ComponentChildren} props.label
+ * @param {string} props.htmlFor
+ * @param {boolean} props.checked
+ * @param {(e: import('preact').JSX.TargetedEvent<HTMLInputElement, Event>) => void} props.onChange
+ * @param {import('preact').ComponentChildren} [props.helpText]
+ */
 export function ToggleField({ label, htmlFor, checked, onChange, helpText }) {
   return (
     <div className='form-control'>
@@ -76,6 +103,15 @@ export function ToggleField({ label, htmlFor, checked, onChange, helpText }) {
   );
 }
 
+/**
+ * @param {object} props
+ * @param {string[]} props.order
+ * @param {Record<string, any>} props.definitions
+ * @param {{id: string, label: import('preact').ComponentChildren}[]} props.hidden - Definitions not in `order`
+ * @param {(order: string[]) => void} props.onOrderChange
+ * @param {import('preact').ComponentChildren} [props.emptyMessage]
+ * @param {(def: any) => import('preact').ComponentChildren} [props.extraControls]
+ */
 export function SortableConfigurator({
   order,
   definitions,
@@ -173,7 +209,8 @@ export function SortableConfigurator({
                   }
                 }}
                 onDragLeave={e => {
-                  if (!e.currentTarget.contains(e.relatedTarget)) updateDragOver(null);
+                  if (!e.currentTarget.contains(/** @type {Node | null} */ (e.relatedTarget)))
+                    updateDragOver(null);
                 }}
                 onDrop={e => {
                   e.preventDefault();
