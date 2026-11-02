@@ -54,7 +54,7 @@ export function StatisticsPage() {
   return (
     <div className='pb-20'>
       <div className='mb-4 flex flex-row items-center gap-2'>
-        <h2 className='flex-grow text-2xl font-bold sm:text-3xl'>
+        <h2 className='grow text-2xl font-bold sm:text-3xl'>
           <Trans>Statistics</Trans>
         </h2>
       </div>

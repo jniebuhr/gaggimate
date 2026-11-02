@@ -152,10 +152,10 @@ export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) 
             <FontAwesomeIcon icon={expanded ? faMinus : faPlus} className='h-3 w-3' />
           </button>
 
-          <div className='min-w-0 flex-grow'>
+          <div className='min-w-0 grow'>
             {/* Header Row */}
             <div className='mb-1 flex flex-row items-start justify-between gap-3'>
-              <div className='min-w-0 flex-grow'>
+              <div className='min-w-0 grow'>
                 <h3 className='text-base-content truncate text-base font-semibold'>
                   {profileTitle}
                 </h3>

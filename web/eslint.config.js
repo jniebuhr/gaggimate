@@ -24,6 +24,8 @@ export default [
           ignore: [
             // Plain CSS classes from our own stylesheets, which Tailwind doesn't register.
             '^(app|shot|library|analyzer|analysis|statistics|action|profile|tooltip)-',
+            // Other plain CSS classes and hooks for JS selectors.
+            '^(sidebar|drag-handle|no-scrollbar|shimmer)$',
             // daisyUI classes that only exist inside compound selectors.
             '^(dropdown-content|dropdown-open|modal-open|tab-active|indicator-item)$',
           ],

@@ -26,7 +26,7 @@ const status = computed(() => machine.value.status);
 function SunriseColorField({ id, label, value, fallback, onChange }) {
   return (
     <SettingsFormField label={label} htmlFor={id} noMargin>
-      <label className='input input-bordered w-full cursor-pointer p-1' htmlFor={id}>
+      <label className='input w-full cursor-pointer p-1' htmlFor={id}>
         <div className='h-full w-full rounded-sm' style={{ backgroundColor: value || fallback }}>
           <input
             id={id}
@@ -55,7 +55,7 @@ function TankDistanceField({ id, label, value, error, onChange, onUseCurrent }) 
   return (
     <SettingsFormField label={label} htmlFor={id} error={error} noMargin>
       <div className='flex flex-row gap-2'>
-        <div className='input-group flex-grow'>
+        <div className='grow'>
           <label htmlFor={id} className={`input w-full ${error ? 'input-error' : ''}`}>
             <input
               ref={inputRef}
@@ -313,7 +313,7 @@ export function MachineTab({ formData, onChange, setField, profiles = [] }) {
                     id='pumpModelCoeffs'
                     name='pumpModelCoeffs'
                     type='text'
-                    className='input input-bordered w-full'
+                    className='input w-full'
                     placeholder='10.205,5.521'
                     value={formData.pumpModelCoeffs}
                     onChange={onChange('pumpModelCoeffs')}
@@ -425,7 +425,7 @@ export function MachineTab({ formData, onChange, setField, profiles = [] }) {
                     <select
                       id='altRelayFunction'
                       name='altRelayFunction'
-                      className='select select-bordered w-full'
+                      className='select w-full'
                       value={formData.altRelayFunction ?? 1}
                       onChange={onChange('altRelayFunction')}
                     >
@@ -475,7 +475,7 @@ export function MachineTab({ formData, onChange, setField, profiles = [] }) {
               <select
                 id='preferredScaleSource'
                 name='preferredScaleSource'
-                className='select select-bordered w-full'
+                className='select w-full'
                 value={formData.preferredScaleSource || 'auto'}
                 onChange={onChange('preferredScaleSource')}
               >
@@ -508,7 +508,7 @@ export function MachineTab({ formData, onChange, setField, profiles = [] }) {
                 <select
                   id='hardwareScaleSampleRateSps'
                   name='hardwareScaleSampleRateSps'
-                  className='select select-bordered w-full'
+                  className='select w-full'
                   value={formData.hardwareScaleSampleRateSps || 10}
                   onChange={changeHardwareScaleSampleRate}
                 >
@@ -526,7 +526,7 @@ export function MachineTab({ formData, onChange, setField, profiles = [] }) {
                   id='hardwareScaleIdleAlpha'
                   name='hardwareScaleIdleAlpha'
                   type='number'
-                  className='input input-bordered w-full'
+                  className='input w-full'
                   min='0.05'
                   max='1'
                   step='0.01'
@@ -544,7 +544,7 @@ export function MachineTab({ formData, onChange, setField, profiles = [] }) {
                   id='hardwareScaleActiveAlpha'
                   name='hardwareScaleActiveAlpha'
                   type='number'
-                  className='input input-bordered w-full'
+                  className='input w-full'
                   min='0.05'
                   max='1'
                   step='0.01'
@@ -591,7 +591,7 @@ export function MachineTab({ formData, onChange, setField, profiles = [] }) {
               htmlFor='calibrationWeight'
               noMargin
             >
-              <label className='input input-bordered w-full'>
+              <label className='input w-full'>
                 <input
                   id='calibrationWeight'
                   type='number'
@@ -642,7 +642,7 @@ export function MachineTab({ formData, onChange, setField, profiles = [] }) {
                     id='scaleFactor1'
                     name='scaleFactor1'
                     type='number'
-                    className='input input-bordered w-full'
+                    className='input w-full'
                     min='-50000'
                     max='50000'
                     step='0.01'
@@ -667,7 +667,7 @@ export function MachineTab({ formData, onChange, setField, profiles = [] }) {
                     id='scaleFactor2'
                     name='scaleFactor2'
                     type='number'
-                    className='input input-bordered w-full'
+                    className='input w-full'
                     min='-50000'
                     max='50000'
                     step='0.01'
@@ -793,7 +793,7 @@ export function MachineTab({ formData, onChange, setField, profiles = [] }) {
               </Trans>
             </p>
 
-            <div className='form-control'>
+            <div>
               <label htmlFor='commutationGain' className='mb-2 block text-sm font-medium'>
                 <Trans>Commutation Gain</Trans>
               </label>
@@ -801,7 +801,7 @@ export function MachineTab({ formData, onChange, setField, profiles = [] }) {
                 id='commutationGain'
                 name='commutationGain'
                 type='number'
-                className='input input-bordered w-full'
+                className='input w-full'
                 placeholder='0'
                 min='0'
                 max='100'
@@ -811,7 +811,7 @@ export function MachineTab({ formData, onChange, setField, profiles = [] }) {
               />
             </div>
 
-            <div className='form-control'>
+            <div>
               <label htmlFor='convergenceGain' className='mb-2 block text-sm font-medium'>
                 <Trans>Convergence Gain</Trans>
               </label>
@@ -819,7 +819,7 @@ export function MachineTab({ formData, onChange, setField, profiles = [] }) {
                 id='convergenceGain'
                 name='convergenceGain'
                 type='number'
-                className='input input-bordered w-full'
+                className='input w-full'
                 placeholder='0'
                 min='0'
                 max='100'
@@ -829,7 +829,7 @@ export function MachineTab({ formData, onChange, setField, profiles = [] }) {
               />
             </div>
 
-            <div className='form-control'>
+            <div>
               <label htmlFor='integralGain' className='mb-2 block text-sm font-medium'>
                 <Trans>Integral Gain</Trans>
               </label>
@@ -837,7 +837,7 @@ export function MachineTab({ formData, onChange, setField, profiles = [] }) {
                 id='integralGain'
                 name='integralGain'
                 type='number'
-                className='input input-bordered w-full'
+                className='input w-full'
                 placeholder='0'
                 min='0'
                 max='100'
@@ -846,7 +846,7 @@ export function MachineTab({ formData, onChange, setField, profiles = [] }) {
                 onChange={onChange('integralGain')}
               />
             </div>
-            <div className='form-control'>
+            <div>
               <label htmlFor='maxPumpPower' className='mb-2 block text-sm font-medium'>
                 <Trans>Maximum Pump Power (0 - 1)</Trans>
               </label>
@@ -858,12 +858,12 @@ export function MachineTab({ formData, onChange, setField, profiles = [] }) {
                 min='0'
                 max='1'
                 step='any'
-                className='input input-bordered w-full'
+                className='input w-full'
                 value={formData.maxPumpPower?.toString()}
                 onChange={onChange('maxPumpPower')}
               />
             </div>
-            <div className='form-control'>
+            <div>
               <label htmlFor='pumpSlipCoeffs' className='mb-2 block text-sm font-medium'>
                 <Trans>Pump Slip Coefficients</Trans>
               </label>
@@ -871,7 +871,7 @@ export function MachineTab({ formData, onChange, setField, profiles = [] }) {
                 id='pumpSlipCoeffs'
                 name='pumpSlipCoeffs'
                 type='text'
-                className='input input-bordered w-full'
+                className='input w-full'
                 placeholder='0,0,0,0'
                 value={formData.pumpSlipCoeffs}
                 onChange={onChange('pumpSlipCoeffs')}

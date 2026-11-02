@@ -4,7 +4,7 @@ export function SkeletonBlock({ className = '', style }) {
   return (
     <div
       aria-hidden='true'
-      className={`shimmer${className ? ` ${className}` : ''}`}
+      className={className ? `shimmer ${className}` : 'shimmer'}
       style={style}
     />
   );

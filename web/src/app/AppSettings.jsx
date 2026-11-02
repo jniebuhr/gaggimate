@@ -47,7 +47,7 @@ export function AppSettings() {
         <SettingsFormField label={t`Theme`} htmlFor='app-theme' noMargin>
           <select
             id='app-theme'
-            className='select select-bordered w-full'
+            className='select w-full'
             value={theme}
             onChange={e => {
               setTheme(e.target.value);
@@ -116,7 +116,7 @@ export function AppSettings() {
         >
           <select
             id='app-update-channel'
-            className='select select-bordered w-full'
+            className='select w-full'
             value={appSettings.value.updateChannel}
             onChange={async e => {
               await setUpdateChannel(e.target.value);

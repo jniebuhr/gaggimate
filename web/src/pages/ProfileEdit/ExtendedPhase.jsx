@@ -67,13 +67,13 @@ export function ExtendedPhase({ phase, index, onChange, pressureAvailable }) {
       aria-label={t`Phase ${phaseNumber} configuration`}
     >
       <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-        <div className='form-control'>
+        <div>
           <label htmlFor={`phase-${index}-type`} className='mb-2 block text-sm font-medium'>
             <Trans>Phase Type</Trans>
           </label>
           <select
             id={`phase-${index}-type`}
-            className='select select-bordered w-full'
+            className='select w-full'
             onChange={e => onFieldChange('phase', e.target.value)}
             value={phase.phase}
             aria-label={t`Select the type of brew phase`}
@@ -86,14 +86,14 @@ export function ExtendedPhase({ phase, index, onChange, pressureAvailable }) {
             </option>
           </select>
         </div>
-        <div className='form-control'>
+        <div>
           <label htmlFor={`phase-${index}-name`} className='mb-2 block text-sm font-medium'>
             <Trans>Phase Name</Trans>
           </label>
           <div className='flex gap-2'>
             <input
               id={`phase-${index}-name`}
-              className='input input-bordered flex-1'
+              className='input flex-1'
               placeholder={t`Name...`}
               value={phase.name}
               onChange={e => onFieldChange('name', e.target.value)}
@@ -104,11 +104,11 @@ export function ExtendedPhase({ phase, index, onChange, pressureAvailable }) {
       </div>
 
       <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-        <div className='form-control'>
+        <div>
           <label htmlFor={`phase-${index}-duration`} className='mb-2 block text-sm font-medium'>
             <Trans>Duration</Trans>
           </label>
-          <div className='input-group'>
+          <div>
             <label htmlFor={`phase-${index}-duration`} className='input w-full'>
               <input
                 id={`phase-${index}-duration`}
@@ -123,11 +123,11 @@ export function ExtendedPhase({ phase, index, onChange, pressureAvailable }) {
             </label>
           </div>
         </div>
-        <div className='form-control'>
+        <div>
           <label htmlFor={`phase-${index}-temperature`} className='mb-2 block text-sm font-medium'>
             <Trans>Temperature (0 = Default)</Trans>
           </label>
-          <div className='input-group'>
+          <div>
             <label htmlFor={`phase-${index}-temperature`} className='input w-full'>
               <input
                 id={`phase-${index}-target`}
@@ -145,7 +145,7 @@ export function ExtendedPhase({ phase, index, onChange, pressureAvailable }) {
         </div>
       </div>
 
-      <div className='form-control'>
+      <div>
         <fieldset>
           <legend className='mb-2 block text-sm font-medium'>
             <Trans>Valve</Trans>
@@ -173,7 +173,7 @@ export function ExtendedPhase({ phase, index, onChange, pressureAvailable }) {
         </fieldset>
       </div>
 
-      <div className='form-control'>
+      <div>
         <fieldset>
           <legend className='mb-2 block text-sm font-medium'>
             <Trans>Pump Mode</Trans>
@@ -274,11 +274,11 @@ export function ExtendedPhase({ phase, index, onChange, pressureAvailable }) {
       </div>
 
       {mode === 'power' && (
-        <div className='form-control'>
+        <div>
           <label htmlFor={`phase-${index}-power`} className='mb-2 block text-sm font-medium'>
             <Trans>Pump Power</Trans>
           </label>
-          <div className='input-group'>
+          <div>
             <label htmlFor={`phase-${index}-power`} className='input w-full'>
               <input
                 id={`phase-${index}-power`}
@@ -303,7 +303,7 @@ export function ExtendedPhase({ phase, index, onChange, pressureAvailable }) {
         mode === 'hold-flow') && (
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
           {mode !== 'hold-pressure' && (
-            <div className='form-control'>
+            <div>
               <label htmlFor={`phase-${index}-pressure`} className='mb-2 block text-sm font-medium'>
                 {mode === 'pressure'
                   ? t`Target Pressure`
@@ -311,7 +311,7 @@ export function ExtendedPhase({ phase, index, onChange, pressureAvailable }) {
                     ? t`Maximum Pressure (0 = Ignore)`
                     : t`Maximum Pressure`}
               </label>
-              <div className='input-group'>
+              <div>
                 <label htmlFor={`phase-${index}-pressure`} className='input w-full'>
                   <input
                     id={`phase-${index}-pressure`}
@@ -331,7 +331,7 @@ export function ExtendedPhase({ phase, index, onChange, pressureAvailable }) {
             </div>
           )}
           {mode !== 'hold-flow' && (
-            <div className='form-control'>
+            <div>
               <label htmlFor={`phase-${index}-flow`} className='mb-2 block text-sm font-medium'>
                 {mode === 'flow'
                   ? t`Target Flow`
@@ -339,7 +339,7 @@ export function ExtendedPhase({ phase, index, onChange, pressureAvailable }) {
                     ? t`Maximum Flow (0 = Ignore)`
                     : t`Maximum Flow`}
               </label>
-              <div className='input-group'>
+              <div>
                 <label htmlFor={`phase-${index}-flow`} className='input w-full'>
                   <input
                     id={`phase-${index}-flow`}
@@ -362,7 +362,7 @@ export function ExtendedPhase({ phase, index, onChange, pressureAvailable }) {
       )}
 
       <div className='grid grid-cols-1 gap-4'>
-        <div className='form-control'>
+        <div>
           <fieldset>
             <legend className='mb-2 block text-sm font-medium'>
               <Trans>Ramp Style</Trans>
@@ -432,7 +432,7 @@ export function ExtendedPhase({ phase, index, onChange, pressureAvailable }) {
       {phase.transition?.type !== 'instant' && (
         <>
           <div className='grid grid-cols-1 gap-4'>
-            <div className='form-control'>
+            <div>
               <fieldset>
                 <legend className='mb-2 block text-sm font-medium'>
                   <Trans>Ramp Target</Trans>
@@ -480,14 +480,14 @@ export function ExtendedPhase({ phase, index, onChange, pressureAvailable }) {
             </div>
           </div>
           <div className='grid grid-cols-1 gap-4'>
-            <div className='form-control'>
+            <div>
               <label
                 htmlFor={`phase-${index}-transition-duration`}
                 className='mb-2 block text-sm font-medium'
               >
                 <Trans>Ramp Length</Trans>
               </label>
-              <div className='input-group'>
+              <div>
                 <label htmlFor={`phase-${index}-transition-duration`} className='input w-full'>
                   <input
                     id={`phase-${index}-transition-duration`}
@@ -508,7 +508,7 @@ export function ExtendedPhase({ phase, index, onChange, pressureAvailable }) {
                 </label>
               </div>
             </div>
-            <div className='form-control'>
+            <div>
               <fieldset>
                 <legend className='mb-2 block text-sm font-medium'>
                   <Trans>Start Ramp from</Trans>

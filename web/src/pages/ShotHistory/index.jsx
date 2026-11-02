@@ -203,7 +203,7 @@ export function ShotHistory() {
     <>
       <div className='mb-6'>
         <div className='mb-4 flex flex-row items-center gap-2'>
-          <h2 className='flex-grow text-2xl font-bold sm:text-3xl'>
+          <h2 className='grow text-2xl font-bold sm:text-3xl'>
             <Trans>Shot History</Trans>
           </h2>
           <span className='text-base-content/70 text-sm'>
@@ -215,7 +215,7 @@ export function ShotHistory() {
         {/* Controls Row */}
         <div className='flex flex-col gap-3 sm:flex-row sm:items-center'>
           {/* Search */}
-          <div className='relative max-w-md flex-grow'>
+          <div className='relative max-w-md grow'>
             <FontAwesomeIcon
               icon={faSearch}
               className='text-base-content/50 absolute top-1/2 left-3 -translate-y-1/2 transform text-sm'
@@ -228,7 +228,7 @@ export function ShotHistory() {
                 setSearchTerm(e.target.value);
                 setCurrentPage(1); // Reset to page 1 when searching
               }}
-              className='input input-bordered w-full pr-4 pl-10 text-sm'
+              className='input w-full pr-4 pl-10 text-sm'
             />
           </div>
 
@@ -243,7 +243,7 @@ export function ShotHistory() {
                 setSortOrder(newSortOrder);
                 setCurrentPage(1); // Reset to page 1 when sorting
               }}
-              className='select select-bordered text-sm'
+              className='select text-sm'
             >
               <option value='date-desc'>{t`Newest First`}</option>
               <option value='date-asc'>{t`Oldest First`}</option>
@@ -269,7 +269,7 @@ export function ShotHistory() {
                 setFilterBy(e.target.value);
                 setCurrentPage(1); // Reset to page 1 when filtering
               }}
-              className='select select-bordered text-sm'
+              className='select text-sm'
             >
               <option value='all'>{t`All Shots`}</option>
               <option value='rated'>{t`Rated Only`}</option>

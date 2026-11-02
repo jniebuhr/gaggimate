@@ -390,7 +390,7 @@ export function DateRangeDropdown({
               type='date'
               value={dateFromLocal}
               onInput={e => onDateFromChange(e.target.value)}
-              className='analyzer-statistics-datetime input input-bordered border-base-content/10 bg-base-100/50 h-9 min-h-0 w-full text-xs'
+              className='analyzer-statistics-datetime input border-base-content/10 bg-base-100/50 h-9 min-h-0 w-full text-xs'
               disabled={isBusy}
               aria-label={t`Start date`}
               title={t`Start date`}
@@ -405,7 +405,7 @@ export function DateRangeDropdown({
               type='date'
               value={dateToLocal}
               onInput={e => onDateToChange(e.target.value)}
-              className='analyzer-statistics-datetime input input-bordered border-base-content/10 bg-base-100/50 h-9 min-h-0 w-full text-xs'
+              className='analyzer-statistics-datetime input border-base-content/10 bg-base-100/50 h-9 min-h-0 w-full text-xs'
               disabled={isBusy}
               aria-label={t`End date`}
               title={t`End date`}
@@ -469,7 +469,7 @@ export function AdvancedSearchControls({
             onFocus={() => setShowDslSelectionPreview(true)}
             onClick={() => setShowDslSelectionPreview(true)}
             placeholder='name:"325"; profile:3_0_25; date:>h-7d;'
-            className='input input-bordered border-base-content/10 bg-base-100/50 h-9 min-h-0 w-full text-xs'
+            className='input border-base-content/10 bg-base-100/50 h-9 min-h-0 w-full text-xs'
             disabled={isBusy}
           />
         </div>
