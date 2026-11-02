@@ -1,5 +1,3 @@
-/* global globalThis */
-
 import { MAIN_CHART_HEIGHT_DEFAULT, TEMP_CHART_HEIGHT_RATIO } from '../constants';
 
 const MOBILE_CHART_STACK_GAP = 12;
