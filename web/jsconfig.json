@@ -1,12 +1,16 @@
 {
   "compilerOptions": {
     "target": "ES2020",
+    // The code already uses ES2022 APIs (Array.prototype.at, Object.hasOwn, replaceAll).
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "moduleResolution": "bundler",
     "noEmit": true,
     "allowJs": true,
     // Opt-in per file with `// @ts-check` (see npm run typecheck).
     "checkJs": false,
+    // Don't type-check untyped JS inside dependencies (e.g. sortablejs).
+    "maxNodeModuleJsDepth": 0,
 
     /* Preact Config */
     "jsx": "react-jsx",
