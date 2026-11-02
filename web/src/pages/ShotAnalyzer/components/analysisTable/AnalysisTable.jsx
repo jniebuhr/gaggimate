@@ -13,11 +13,7 @@ import {
 } from './AnalysisTableChrome';
 import { CellContent, ComparePhaseLabel } from './AnalysisTableCells';
 import { getAnalysisTableResults } from './analysisTablePhases';
-import {
-  buildAnalysisWarningBadges,
-  getCompareRowStyle,
-  hasAnalysisProfilePhaseStops,
-} from './analysisTableModel';
+import { buildAnalysisWarningBadges, getCompareRowStyle } from './analysisTableModel';
 import {
   ANALYSIS_SCROLLBAR_HIDE_STYLE,
   getAnalysisTouchInteractionStyle,
@@ -61,7 +57,6 @@ export function AnalysisTable({
     ...compareTableEntries.map(entry => entry.tableResults?.phases?.length || 0),
     0,
   );
-  const hasProfilePhaseStops = hasAnalysisProfilePhaseStops(results);
 
   const scrollTable = amount => scrollAnalysisTable(tableContainerRef, amount);
   const scrollToBound = direction => scrollAnalysisTableToBound(tableContainerRef, direction);
@@ -76,7 +71,6 @@ export function AnalysisTable({
   const subtleDividerClass = 'border-base-content/5';
   const strongDividerClass = 'border-base-content/12 border-r-2';
   const tableHeaderTextClass = 'text-base-content leading-tight font-medium tracking-normal';
-  const tableHeaderSubtextClass = 'text-base-content/55 leading-tight font-medium tracking-normal';
   const primaryTableTextClass = 'text-base-content/90 font-medium';
   const tableSubtextClass = 'text-base-content/55 leading-tight font-medium';
   const tableLegendTextClass = 'text-base-content/75 text-xs font-normal tracking-normal';
@@ -156,12 +150,10 @@ export function AnalysisTable({
           >
             <AnalysisTableHeader
               compareMode={compareMode}
-              hasProfilePhaseStops={hasProfilePhaseStops}
               visibleColumns={visibleColumns}
               subtleDividerClass={subtleDividerClass}
               strongDividerClass={strongDividerClass}
               tableHeaderTextClass={tableHeaderTextClass}
-              tableHeaderSubtextClass={tableHeaderSubtextClass}
             />
 
             {compareMode ? (

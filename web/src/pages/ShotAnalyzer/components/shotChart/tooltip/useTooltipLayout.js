@@ -1,4 +1,3 @@
-// @ts-check
 import { useLayoutEffect } from 'preact/hooks';
 import { computeExternalTooltipPosition } from '../helpers';
 import {

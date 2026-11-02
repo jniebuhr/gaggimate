@@ -1,4 +1,3 @@
-// @ts-check
 /** Stable public entry point for shot-chart controls and legend constants. */
 
 export {

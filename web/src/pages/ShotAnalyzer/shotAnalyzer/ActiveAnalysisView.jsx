@@ -1,4 +1,3 @@
-// @ts-check
 /** Renders the responsive chart, details, and analysis-table composition. */
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';

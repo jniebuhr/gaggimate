@@ -1,4 +1,3 @@
-// @ts-check
 import { useRef, useState } from 'preact/hooks';
 import { useLingui } from '@lingui/react/macro';
 import { formatMetricValue } from '../../utils/analyzerUtils';

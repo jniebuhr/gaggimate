@@ -1,4 +1,3 @@
-// @ts-check
 /** Stable public entry point for tooltip state, model, layout, and presentation modules. */
 
 export {

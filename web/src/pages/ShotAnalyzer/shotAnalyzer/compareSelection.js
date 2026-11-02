@@ -1,4 +1,3 @@
-// @ts-check
 /** Coordinates secondary-shot loading, retries, and automatic profile matching. */
 
 import { libraryService } from '../services/LibraryService';

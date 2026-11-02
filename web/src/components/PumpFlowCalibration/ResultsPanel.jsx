@@ -1,4 +1,3 @@
-// @ts-check
 import { Trans, useLingui } from '@lingui/react/macro';
 
 export default function ResultsPanel({ results, currentCoeffs }) {

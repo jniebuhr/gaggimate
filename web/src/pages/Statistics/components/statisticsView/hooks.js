@@ -1,4 +1,3 @@
-// @ts-check
 // Custom hooks for StatisticsView state management: metadata, filters, compare, detail section, and bulk selection
 import { useState, useEffect, useRef, useMemo } from 'preact/hooks';
 import { libraryService } from '../../../ShotAnalyzer/services/LibraryService';

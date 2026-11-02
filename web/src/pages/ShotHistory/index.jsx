@@ -516,7 +516,7 @@ export function ShotHistory() {
             <progress
               className='progress progress-primary w-full max-w-xs'
               value={exportProgress.current}
-              max={exportProgress.total}
+              max={String(exportProgress.total)}
             />
           ) : (
             <progress className='progress progress-primary w-full max-w-xs' />

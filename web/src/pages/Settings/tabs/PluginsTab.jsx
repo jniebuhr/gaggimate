@@ -1,4 +1,3 @@
-// @ts-check
 import { useLingui } from '@lingui/react/macro';
 import { PluginCard } from '../PluginCard.jsx';
 import Section from '../../../components/Card.jsx';

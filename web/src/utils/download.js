@@ -1,4 +1,3 @@
-// @ts-check
 import { isApp } from '../app/platform.js';
 
 function anchorDownload(blob, filename) {

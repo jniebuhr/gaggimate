@@ -1,4 +1,3 @@
-// @ts-check
 // Parser for .slog binary shot files
 // Mirrors shot_log_format.h (keep in sync)
 // Header: v4=128 bytes, v5+=512 bytes

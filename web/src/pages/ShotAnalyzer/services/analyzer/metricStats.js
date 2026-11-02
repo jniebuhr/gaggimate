@@ -1,4 +1,3 @@
-// @ts-check
 /**
  * Helper: Calculate statistics for a metric across samples
  * @param {Array} samples - Shot samples

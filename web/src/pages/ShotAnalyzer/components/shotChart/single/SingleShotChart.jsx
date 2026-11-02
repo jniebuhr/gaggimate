@@ -1,4 +1,3 @@
-// @ts-check
 /** Coordinates the single-chart lifecycle, responsive layout, hover, replay, and export. */
 
 import { createPortal } from 'preact/compat';

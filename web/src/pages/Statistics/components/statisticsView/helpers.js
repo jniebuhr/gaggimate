@@ -1,4 +1,3 @@
-// @ts-check
 // Pure helper functions for StatisticsView: date parsing, profile/shot pinning, selection, candidate filtering, and display formatting
 import {
   cleanName,

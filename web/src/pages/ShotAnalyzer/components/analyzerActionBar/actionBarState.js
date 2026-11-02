@@ -1,4 +1,3 @@
-// @ts-check
 export function isTypingTarget(target) {
   const activeElement =
     typeof Element !== 'undefined' && target instanceof Element ? target : document.activeElement;

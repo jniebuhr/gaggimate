@@ -1,4 +1,3 @@
-// @ts-check
 /** Owns the viewport-positioned mobile import and mode actions menu. */
 
 import { createPortal } from 'preact/compat';

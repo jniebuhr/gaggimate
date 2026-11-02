@@ -1,4 +1,3 @@
-// @ts-check
 import { useEffect, useState } from 'preact/hooks';
 import ApiService, { createMachineState } from '../services/ApiService.js';
 import { activeMachineId } from './machines.js';

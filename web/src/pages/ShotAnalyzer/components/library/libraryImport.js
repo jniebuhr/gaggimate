@@ -1,4 +1,3 @@
-// @ts-check
 /** Coordinates file-import side effects and summarizes outcomes for the library UI. */
 
 import { indexedDBService } from '../../services/IndexedDBService';

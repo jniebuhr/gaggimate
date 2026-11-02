@@ -1,4 +1,3 @@
-// @ts-check
 const PREDICTIVE_WINDOW_MS = 4000;
 
 /**

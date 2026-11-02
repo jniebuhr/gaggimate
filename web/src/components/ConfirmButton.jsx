@@ -1,4 +1,3 @@
-// @ts-check
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useCallback, useState } from 'preact/hooks';
 import { Trans } from '@lingui/react/macro';

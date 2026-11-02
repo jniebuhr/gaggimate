@@ -1,4 +1,3 @@
-// @ts-check
 import PropTypes from 'prop-types';
 
 // Inline one of the display's warning SVGs so it follows the text color.

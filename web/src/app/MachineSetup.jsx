@@ -1,4 +1,3 @@
-// @ts-check
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { createPortal } from 'preact/compat';
 import { Trans, useLingui } from '@lingui/react/macro';

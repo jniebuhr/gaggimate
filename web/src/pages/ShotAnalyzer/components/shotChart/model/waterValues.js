@@ -1,4 +1,3 @@
-// @ts-check
 import { findLastSampleIndexAtOrBeforeX } from '../helpers';
 
 export function buildPhaseHoverRanges(

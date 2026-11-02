@@ -1,4 +1,3 @@
-// @ts-check
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import { useLingui } from '@lingui/react/macro';
 import Chart from '../../../../../utils/lineChart.js';

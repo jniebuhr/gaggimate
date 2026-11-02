@@ -1,4 +1,3 @@
-// @ts-check
 // Pure helper functions for StatisticsToolbar: label formatting and source label construction
 import {
   DATE_ONLY_PATTERN,

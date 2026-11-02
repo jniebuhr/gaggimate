@@ -1,4 +1,3 @@
-// @ts-check
 /** Coordinates analyzer state, loading, matching, and compare workflows. */
 
 import { useState, useEffect, useContext, useRef, useCallback } from 'preact/hooks';

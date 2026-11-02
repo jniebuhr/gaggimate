@@ -1,4 +1,3 @@
-// @ts-check
 /**
  * IndexedDBService.js
  *

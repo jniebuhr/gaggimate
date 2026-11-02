@@ -1,4 +1,3 @@
-// @ts-check
 import { useMemo, useRef } from 'preact/hooks';
 import { Chart } from 'chart.js';
 import { ChartComponent } from './Chart';

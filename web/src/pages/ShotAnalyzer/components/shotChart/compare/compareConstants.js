@@ -1,4 +1,3 @@
-// @ts-check
 export const SHOT_STYLE_PRESETS = {
   analyzer: {
     opacities: [1, 0.46, 0.34, 0.26, 0.2, 0.15],

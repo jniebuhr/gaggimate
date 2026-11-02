@@ -138,6 +138,7 @@ export default function SmartDoseControl({ dose, inCard = false }) {
             measurement={measurement}
             active={owner === accessory}
             phase={dose.phase}
+            // @ts-expect-error SmartDoseMeasurement has no automagic prop; it is ignored
             automagic={dose.automagic}
           />
         ))}

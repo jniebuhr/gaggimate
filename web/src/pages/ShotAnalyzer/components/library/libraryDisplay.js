@@ -1,4 +1,3 @@
-// @ts-check
 import { t } from '@lingui/core/macro';
 import { libraryService } from '../../services/LibraryService';
 import {

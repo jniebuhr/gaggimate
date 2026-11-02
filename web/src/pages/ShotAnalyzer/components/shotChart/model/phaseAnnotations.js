@@ -1,4 +1,3 @@
-// @ts-check
 /** Builds phase, stop, and overview metadata shared by chart rendering and tooltips. */
 
 import { faClock } from '@fortawesome/free-solid-svg-icons/faClock';

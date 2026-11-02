@@ -1,4 +1,3 @@
-// @ts-check
 import SmartDoseControl from '../components/SmartDoseControl.jsx';
 import { ModeCard } from '../pages/Home/cards/ModeCard.jsx';
 import { ProfileCard } from '../pages/Home/cards/ProfileCard.jsx';

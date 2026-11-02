@@ -1,4 +1,3 @@
-// @ts-check
 /** Tracks the active scale, falling back to Bluetooth for legacy upstream histories.
  * The exported name and returned state key are retained for existing callers.
  */

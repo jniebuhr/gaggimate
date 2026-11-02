@@ -1,4 +1,3 @@
-// @ts-check
 export function getTooltipRowTextKey(row) {
   return `${row?.shotLabel || ''}|${row?.label || ''}|${row?.displayLabel || ''}|${row?.valueText || ''}|${
     row?.color || ''

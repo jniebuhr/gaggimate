@@ -1,4 +1,3 @@
-// @ts-check
 import { grindAvailable } from '../../utils/grind.js';
 import { computed } from '@preact/signals';
 import { useContext, useEffect, useState } from 'preact/hooks';

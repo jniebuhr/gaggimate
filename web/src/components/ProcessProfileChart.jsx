@@ -1,4 +1,3 @@
-// @ts-check
 import { ExtendedProfileChart } from './ExtendedProfileChart.jsx';
 
 /**

@@ -1,4 +1,3 @@
-// @ts-check
 /**
  * StatusBar.jsx
  * * Merges seamlessly with the dropdown when expanded.

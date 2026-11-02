@@ -1,4 +1,3 @@
-// @ts-check
 import PropTypes from 'prop-types';
 import { METRIC_DEFINITIONS } from '../../../utils/metricDefinitions.js';
 import { metricOrderSignal } from '../../../utils/dashboardManager.js';

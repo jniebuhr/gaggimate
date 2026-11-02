@@ -1,4 +1,3 @@
-// @ts-check
 // Main StatisticsToolbar component: orchestrates source/mode/date controls, profile/shot selectors, run button, and search help
 import { useState, useRef } from 'preact/hooks';
 import {

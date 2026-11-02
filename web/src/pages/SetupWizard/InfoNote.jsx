@@ -16,6 +16,12 @@ const TONES = {
   },
 };
 
+/**
+ * @param {object} props
+ * @param {import('preact').ComponentChildren} [props.title]
+ * @param {'primary' | 'success' | 'warning' | 'error'} [props.tone]
+ * @param {import('preact').ComponentChildren} [props.children]
+ */
 export function InfoNote({ title, tone = 'primary', children }) {
   const style = TONES[tone] || TONES.primary;
   return (

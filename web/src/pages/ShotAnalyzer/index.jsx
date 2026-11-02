@@ -1,4 +1,3 @@
-// @ts-check
 /** Stable route entry point for the Shot Analyzer page. */
 
 import './ShotAnalyzer.css';

@@ -1,4 +1,3 @@
-// @ts-check
 import { getProfilePhaseDisplayName } from './profilePhases.js';
 /** Analyzes executed phases, including target exits, delay inference, and final-phase fallbacks. */
 

@@ -1,4 +1,3 @@
-// @ts-check
 import { computed } from '@preact/signals';
 import { machine } from '../../services/ApiService.js';
 import { PHASE } from './constants.js';

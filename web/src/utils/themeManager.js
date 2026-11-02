@@ -1,4 +1,3 @@
-// @ts-check
 import { t } from '@lingui/core/macro';
 
 const THEME_STORAGE_KEY = 'gaggimate-daisyui-theme';

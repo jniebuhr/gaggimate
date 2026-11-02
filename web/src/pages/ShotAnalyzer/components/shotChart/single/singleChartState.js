@@ -1,4 +1,3 @@
-// @ts-check
 import { createHiddenExternalTooltipState } from '../ShotChartExternalTooltip';
 import { INITIAL_VISIBILITY, SINGLE_METRIC_PAGE_KEYS } from '../constants';
 import { isStaticMobileTooltipViewport } from '../scrubberUtils';

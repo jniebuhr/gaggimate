@@ -1,4 +1,3 @@
-// @ts-check
 /**
  * Shared hover styling for Shot Analyzer controls.
  * Keeping the interaction shell centralized helps the table, chart, library,

@@ -1,4 +1,3 @@
-// @ts-check
 /**
  * hoverSync.js
  *

@@ -1,4 +1,3 @@
-// @ts-check
 import { t } from '@lingui/core/macro';
 
 // App web views ignore <a download>, so exports are written to the cache and handed to the share sheet.

@@ -135,6 +135,8 @@ export function useShotNotesState({ currentShot, isSelectionPending = false } = 
       autoFillFields: new Set(),
       errorReported: false,
       active: true,
+      /** @type {Promise<void> | null} */
+      ready: null,
     }),
     [notesKey, source],
   );

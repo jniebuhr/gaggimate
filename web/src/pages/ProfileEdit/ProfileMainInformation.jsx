@@ -1,4 +1,3 @@
-// @ts-check
 import Card from '../../components/Card.jsx';
 import { isSystemProfile } from '../../utils/systemProfiles.js';
 import { ProfileImageUpload } from './ProfileImageUpload.jsx';

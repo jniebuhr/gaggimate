@@ -1,4 +1,3 @@
-// @ts-check
 // Parser for index.bin binary shot index files
 // Mirrors shot_log_format.h ShotIndexHeader and ShotIndexEntry (keep in sync)
 

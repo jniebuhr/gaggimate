@@ -1,4 +1,3 @@
-// @ts-check
 import { useLayoutEffect, useState } from 'preact/hooks';
 
 function resetMeasuredDesktopDetailsHeight(setDesktopSingleDetailsHeight) {

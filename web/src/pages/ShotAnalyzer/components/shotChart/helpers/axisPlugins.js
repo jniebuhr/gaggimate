@@ -1,4 +1,3 @@
-// @ts-check
 import {
   CHART_LABEL_FONT_FAMILY,
   drawFontAwesomeIcon,

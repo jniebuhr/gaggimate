@@ -7,8 +7,7 @@
     "moduleResolution": "bundler",
     "noEmit": true,
     "allowJs": true,
-    // Opt-in per file with `// @ts-check` (see npm run typecheck).
-    "checkJs": false,
+    "checkJs": true,
     // Don't type-check untyped JS inside dependencies (e.g. sortablejs).
     "maxNodeModuleJsDepth": 0,
 

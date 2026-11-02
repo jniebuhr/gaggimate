@@ -1,4 +1,3 @@
-// @ts-check
 import { Fragment } from 'preact';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Trans, useLingui } from '@lingui/react/macro';

@@ -1,4 +1,3 @@
-// @ts-check
 import { useEffect, useState } from 'preact/hooks';
 import { Trans } from '@lingui/react/macro';
 import { GmLogoIcon } from '../components/GmLogoIcon.jsx';

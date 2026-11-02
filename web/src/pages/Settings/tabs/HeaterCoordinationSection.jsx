@@ -1,4 +1,3 @@
-// @ts-check
 import { Trans } from '@lingui/react/macro';
 import { machine } from '../../../services/ApiService.js';
 

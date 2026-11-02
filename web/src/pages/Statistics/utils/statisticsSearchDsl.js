@@ -1,4 +1,3 @@
-// @ts-check
 // Statistics DSL parser/compiler used by the toolbar query input.
 // Semantics:
 // - free-text clauses combine with AND

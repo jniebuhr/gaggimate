@@ -1,4 +1,3 @@
-// @ts-check
 import { signal } from '@preact/signals';
 
 const DASHBOARD_LAYOUT_KEY = 'dashboardLayout';

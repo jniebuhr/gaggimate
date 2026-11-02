@@ -1,4 +1,3 @@
-// @ts-check
 /**
  * EmptyState.jsx
  * * Empty state component for Shot Analyzer.

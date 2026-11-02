@@ -1,4 +1,3 @@
-// @ts-check
 // Shared route helpers keep Analyzer/ProfileList -> Statistics deep links consistent.
 export const VALID_STATISTICS_SOURCES = ['gaggimate', 'browser'];
 export const VALID_STATISTICS_SOURCE_SELECTIONS = ['gaggimate', 'browser', 'both'];

@@ -1,4 +1,3 @@
-// @ts-check
 import { signal } from '@preact/signals';
 import { appSettings } from './appSettings.js';
 

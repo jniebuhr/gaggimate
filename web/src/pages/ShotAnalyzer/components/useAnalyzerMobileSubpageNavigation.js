@@ -1,4 +1,3 @@
-// @ts-check
 import { useCallback, useEffect, useState } from 'preact/hooks';
 
 const ANALYZER_SUBPAGE_HISTORY_KEY = '__gaggimateAnalyzerSubpage';

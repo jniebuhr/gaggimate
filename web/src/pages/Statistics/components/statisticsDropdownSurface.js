@@ -1,4 +1,3 @@
-// @ts-check
 export const STATISTICS_DROPDOWN_PANEL_SURFACE_CLASS =
   'pointer-events-auto isolate z-[150] overflow-hidden rounded-xl border border-base-content/12 shadow-2xl';
 

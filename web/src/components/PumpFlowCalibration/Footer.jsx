@@ -1,4 +1,3 @@
-// @ts-check
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons/faSpinner';
 import { PrimaryButton, SecondaryButton } from './Buttons.jsx';

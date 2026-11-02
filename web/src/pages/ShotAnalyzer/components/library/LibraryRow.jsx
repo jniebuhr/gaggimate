@@ -1,4 +1,3 @@
-// @ts-check
 /**
  * LibraryRow.jsx
  */

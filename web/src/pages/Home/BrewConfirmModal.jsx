@@ -1,4 +1,3 @@
-// @ts-check
 import PropTypes from 'prop-types';
 import { createPortal } from 'preact/compat';
 import { Trans, useLingui } from '@lingui/react/macro';

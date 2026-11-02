@@ -1,4 +1,3 @@
-// @ts-check
 import { Trans } from '@lingui/react/macro';
 import { CompareShotCharts } from '../../ShotAnalyzer/components/shotChart/CompareShotCharts';
 import { STATISTICS_SECTION_TITLE_CLASS } from './statisticsUi';

@@ -1,4 +1,3 @@
-// @ts-check
 export const CHART_LABEL_FONT_FAMILY =
   'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
 

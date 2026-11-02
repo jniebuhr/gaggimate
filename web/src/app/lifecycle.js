@@ -1,4 +1,3 @@
-// @ts-check
 import { effect } from '@preact/signals';
 import { WARNINGS } from '../utils/warnings.js';
 import { appSettings } from './appSettings.js';

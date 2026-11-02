@@ -1,4 +1,3 @@
-// @ts-check
 /** Orchestrates single- and compare-shot detail cards and tab selection. */
 
 import { t } from '@lingui/core/macro';

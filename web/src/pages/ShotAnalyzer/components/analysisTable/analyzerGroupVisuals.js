@@ -1,4 +1,3 @@
-// @ts-check
 import { faBullseye } from '@fortawesome/free-solid-svg-icons/faBullseye';
 import { faClock } from '@fortawesome/free-solid-svg-icons/faClock';
 import { faDroplet } from '@fortawesome/free-solid-svg-icons/faDroplet';

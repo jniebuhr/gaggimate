@@ -1,4 +1,3 @@
-// @ts-check
 export function CardTitle({ children, className = '' }) {
   return (
     <h3

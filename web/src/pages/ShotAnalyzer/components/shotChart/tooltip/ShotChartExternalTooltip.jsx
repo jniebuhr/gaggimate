@@ -1,4 +1,3 @@
-// @ts-check
 import { createHiddenExternalTooltipLayout } from './tooltipState';
 import { FloatingTooltipContent } from './FloatingTooltipContent';
 import { StaticCompactTooltipContent, StaticTooltipContent } from './StaticTooltipContent';

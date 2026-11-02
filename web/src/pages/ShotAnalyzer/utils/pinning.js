@@ -1,4 +1,3 @@
-// @ts-check
 import {
   ANALYZER_DB_KEYS,
   MAX_PINNED_PROFILES,

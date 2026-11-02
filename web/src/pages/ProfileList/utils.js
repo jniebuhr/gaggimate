@@ -1,4 +1,3 @@
-// @ts-check
 import { TclConverter } from './TclConverter.js';
 
 export function parseProfile(input) {

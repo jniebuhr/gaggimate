@@ -1,4 +1,3 @@
-// @ts-check
 import { getLatestStatisticsChartEntries } from '../../utils/statisticsChartEntries';
 // Shot analysis engine: metrics computation, compare entry building, profile/date-range extraction
 import {

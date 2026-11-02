@@ -1,4 +1,3 @@
-// @ts-check
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faLaptopFile } from '@fortawesome/free-solid-svg-icons/faLaptopFile';
 import { analyzerUiColors } from '../utils/analyzerUtils';

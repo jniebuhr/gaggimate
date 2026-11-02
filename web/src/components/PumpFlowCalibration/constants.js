@@ -1,4 +1,3 @@
-// @ts-check
 // Feature-scoped constants for the calibration state machine and I/O timing.
 // Kept in the feature folder because none of these are meaningful elsewhere.
 

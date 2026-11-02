@@ -1,4 +1,3 @@
-// @ts-check
 import { useCallback, useContext } from 'preact/hooks';
 import { ApiServiceContext, machine } from './ApiService.js';
 import { signal, computed, effect, useSignalEffect } from '@preact/signals';

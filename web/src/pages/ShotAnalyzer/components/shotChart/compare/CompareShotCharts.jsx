@@ -1,4 +1,3 @@
-// @ts-check
 /** Coordinates compare state, chart models, controls, and shared Chart.js lifecycles. */
 
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';

@@ -114,7 +114,7 @@ function HeaterTest() {
           <progress
             className='progress progress-primary w-full'
             value={Math.min(rise, targetRise)}
-            max={targetRise}
+            max={String(targetRise)}
           />
           <div className='text-sm'>
             {t`Temperature rise: ${rise.toFixed(1)} of ${targetRise.toFixed(1)} °C`}

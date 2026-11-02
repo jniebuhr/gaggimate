@@ -1,4 +1,3 @@
-// @ts-check
 /** Public chart entry point that selects the single-shot or compare implementation. */
 
 import { CompareShotCharts } from './shotChart/CompareShotCharts';

@@ -1,4 +1,3 @@
-// @ts-check
 import { t } from '@lingui/core/macro';
 import { REPLAY_TARGET_FPS } from '../components/shotChart/constants';
 

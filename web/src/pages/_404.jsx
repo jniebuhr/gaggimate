@@ -1,4 +1,3 @@
-// @ts-check
 import { Trans } from '@lingui/react/macro';
 
 export function NotFound() {

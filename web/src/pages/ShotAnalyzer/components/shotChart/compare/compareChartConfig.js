@@ -1,4 +1,3 @@
-// @ts-check
 import { areTooltipStatesEqual, buildExternalTooltipState } from '../ShotChartExternalTooltip';
 import { t } from '@lingui/core/macro';
 import { UNIT_BY_LABEL } from '../constants';

@@ -1,4 +1,3 @@
-// @ts-check
 import { useLingui } from '@lingui/react/macro';
 
 /**

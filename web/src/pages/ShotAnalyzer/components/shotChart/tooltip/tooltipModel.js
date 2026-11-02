@@ -1,4 +1,3 @@
-// @ts-check
 import {
   EXTERNAL_TOOLTIP_FALLBACK_OFFSET_X,
   TOOLTIP_GROUP_BY_LABEL,

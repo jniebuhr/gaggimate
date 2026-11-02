@@ -1,4 +1,3 @@
-// @ts-check
 import {
   LEGEND_BLOCK_LABELS,
   LEGEND_DASHED_LABELS,

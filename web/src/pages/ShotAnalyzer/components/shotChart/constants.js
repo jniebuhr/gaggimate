@@ -1,4 +1,3 @@
-// @ts-check
 import { t } from '@lingui/core/macro';
 
 export const TARGET_FLOW_MAX = 12;

@@ -1,4 +1,3 @@
-// @ts-check
 const SCALE_SPIKE_WINDOW_SEC = 2;
 
 const SCALE_SPIKE_SUPPORT_RATIO = 0.85;

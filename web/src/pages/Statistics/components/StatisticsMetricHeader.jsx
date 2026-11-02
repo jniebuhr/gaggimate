@@ -1,4 +1,3 @@
-// @ts-check
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { STATISTICS_DENSE_VALUE_CLASS, STATISTICS_METRIC_LABEL_CLASS } from './statisticsUi';
 

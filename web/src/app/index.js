@@ -1,4 +1,3 @@
-// @ts-check
 import { effect, signal } from '@preact/signals';
 import { machine } from '../services/ApiService.js';
 import {

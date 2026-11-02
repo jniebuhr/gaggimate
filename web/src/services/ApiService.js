@@ -1,4 +1,3 @@
-// @ts-check
 import { createContext } from 'preact';
 import { parseWarningStates } from '../utils/warnings.js';
 import { signal } from '@preact/signals';

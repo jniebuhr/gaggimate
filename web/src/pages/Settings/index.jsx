@@ -1,4 +1,3 @@
-// @ts-check
 import { confirmProfileApply, waitForMachineHardware } from '../../utils/machineProfiles.js';
 import { requestSettings } from '../../utils/settingsRequest.js';
 import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';

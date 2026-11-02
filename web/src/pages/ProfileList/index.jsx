@@ -939,8 +939,8 @@ export function ProfileList() {
     };
   }, [loading, searchTerm, onDragStart, onDragChange, onDragEnd]);
 
-  const [pendingById, setPendingById] = useState({});
-  const withPending = useCallback(async (id, kind, task) => {
+  const [pendingById, setPendingById] = useState(/** @type {Record<string, string>} */ ({}));
+  const withPending = useCallback(async (/** @type {string} */ id, kind, task) => {
     setPendingById(prev => ({ ...prev, [id]: kind }));
     try {
       await task();

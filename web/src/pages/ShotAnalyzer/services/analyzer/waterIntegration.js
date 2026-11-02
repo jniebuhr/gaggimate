@@ -1,4 +1,3 @@
-// @ts-check
 /** Resolves recorded pump-counter values before falling back to flow integration. */
 
 function getRecordedPumpedWater(sample) {

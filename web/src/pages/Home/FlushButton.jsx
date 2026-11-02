@@ -1,4 +1,3 @@
-// @ts-check
 import PropTypes from 'prop-types';
 import { useEffect } from 'preact/hooks';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';

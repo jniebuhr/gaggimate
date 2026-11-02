@@ -1,4 +1,3 @@
-// @ts-check
 import { Chart } from 'chart.js';
 import { ChartComponent } from '../../components/Chart.jsx';
 import { t } from '@lingui/core/macro';

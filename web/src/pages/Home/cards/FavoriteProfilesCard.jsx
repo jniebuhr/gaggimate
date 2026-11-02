@@ -1,4 +1,3 @@
-// @ts-check
 import { useContext } from 'preact/hooks';
 import { ApiServiceContext } from '../../../services/ApiService.js';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
