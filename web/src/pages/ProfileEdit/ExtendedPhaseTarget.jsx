@@ -58,12 +58,12 @@ export function ExtendedPhaseTarget({ onChange, target, index, onRemove }) {
   return (
     <>
       <div className='grid grid-cols-1 gap-4'>
-        <div className='form-control'>
+        <div>
           <label htmlFor={`phase-${index}-target-value`} className='mb-2 block text-sm font-medium'>
             {i18n._(targetType.label)}
           </label>
           <div className='flex flex-row gap-2'>
-            <div className='input-group flex-grow'>
+            <div className='grow'>
               <label htmlFor={`phase-${index}-target-value`} className='input w-full'>
                 {targetType.unitPosition === 'left' && (
                   <span aria-label={targetType.unit}>{targetType.unit}</span>

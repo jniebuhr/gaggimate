@@ -77,7 +77,7 @@ export function LibraryDropdown({
         aria-label={t`Close library`}
       />
       <div style={dropdownStyle}>
-        <div className='library-panel-dropdown-surface app-card-surface animate-fade-in-down origin-top overflow-hidden rounded-b-xl'>
+        <div className='library-panel-dropdown-surface app-card-surface origin-top overflow-hidden rounded-b-xl'>
           <LibraryMobileSectionTabs
             activeSection={mobileActiveSection}
             onSectionChange={onMobileSectionChange}

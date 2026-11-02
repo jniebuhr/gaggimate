@@ -105,7 +105,7 @@ export function GeneralTab({
             <select
               id='startup-mode'
               name='startupMode'
-              className='select select-bordered w-full'
+              className='select w-full'
               onChange={onChange('startupMode')}
             >
               <option value='standby' selected={formData.startupMode === 'standby'}>
@@ -120,7 +120,7 @@ export function GeneralTab({
             <select
               id='startup-profile'
               name='startupProfile'
-              className='select select-bordered w-full'
+              className='select w-full'
               value={formData.startupProfile || ''}
               onChange={onChange('startupProfile')}
             >
@@ -152,7 +152,7 @@ export function GeneralTab({
 
         {/* Predictive Scale Delay */}
         <div className='border-base-content/5 mt-6 border-t pt-6'>
-          <h3 className='text-md text-base-content mb-2 font-semibold'>
+          <h3 className='text-base-content mb-2 font-semibold'>
             <Trans>Predictive Scale Delay</Trans>
           </h3>
           <p className='text-base-content/85 mb-4 text-sm opacity-70'>
@@ -213,7 +213,7 @@ export function GeneralTab({
 
         {/* Flush */}
         <div className='border-base-content/5 mt-6 border-t pt-6'>
-          <h3 className='text-md text-base-content mb-2 font-semibold'>
+          <h3 className='text-base-content mb-2 font-semibold'>
             <Trans context='settings section'>Flush</Trans>
           </h3>
           <SettingsFormField
@@ -253,7 +253,7 @@ export function GeneralTab({
                 id='mainBrightness'
                 name='mainBrightness'
                 type='number'
-                className='input input-bordered w-full'
+                className='input w-full'
                 placeholder='16'
                 min='1'
                 max='16'
@@ -265,7 +265,7 @@ export function GeneralTab({
               <select
                 id='themeMode'
                 name='themeMode'
-                className='select select-bordered w-full'
+                className='select w-full'
                 value={formData.themeMode}
                 onChange={onChange('themeMode')}
               >
@@ -283,7 +283,7 @@ export function GeneralTab({
                 <select
                   id='statusDisplayMode'
                   name='statusDisplayMode'
-                  className='select select-bordered w-full'
+                  className='select w-full'
                   value={formData.statusDisplayMode ?? 0}
                   onChange={onChange('statusDisplayMode')}
                 >
@@ -315,7 +315,7 @@ export function GeneralTab({
                   id='standbyBrightness'
                   name='standbyBrightness'
                   type='number'
-                  className='input input-bordered w-full'
+                  className='input w-full'
                   placeholder='8'
                   min='0'
                   max='16'
@@ -367,7 +367,7 @@ export function GeneralTab({
               <select
                 id='webui-theme'
                 name='webui-theme'
-                className='select select-bordered w-full'
+                className='select w-full'
                 value={currentTheme}
                 onChange={e => {
                   setCurrentTheme(e.target.value);
@@ -386,7 +386,7 @@ export function GeneralTab({
               <select
                 id='dashboardLayout'
                 name='dashboardLayout'
-                className='select select-bordered w-full'
+                className='select w-full'
                 value={formData.dashboardLayout || DASHBOARD_LAYOUTS.ORDER_FIRST}
                 onChange={e => {
                   onChange('dashboardLayout')(e);
@@ -408,7 +408,7 @@ export function GeneralTab({
               id='wifiSsid'
               name='wifiSsid'
               type='text'
-              className='input input-bordered w-full'
+              className='input w-full'
               placeholder={t`Wi-Fi SSID`}
               value={formData.wifiSsid}
               onChange={onChange('wifiSsid')}
@@ -446,7 +446,7 @@ export function GeneralTab({
               id='mdnsName'
               name='mdnsName'
               type='text'
-              className='input input-bordered w-full'
+              className='input w-full'
               placeholder={t`Hostname`}
               value={formData.mdnsName}
               onChange={onChange('mdnsName')}
@@ -456,7 +456,7 @@ export function GeneralTab({
             <select
               id='timezone'
               name='timezone'
-              className='select select-bordered w-full'
+              className='select w-full'
               onChange={onChange('timezone')}
             >
               {timezones.map(tz => (

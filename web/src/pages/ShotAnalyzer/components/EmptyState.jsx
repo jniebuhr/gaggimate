@@ -54,7 +54,7 @@ export function EmptyState({ loading }) {
 
           {/* GM Section */}
           <div className='flex items-start gap-4'>
-            <div className='flex h-8 w-10 flex-shrink-0 items-center justify-center'>
+            <div className='flex h-8 w-10 shrink-0 items-center justify-center'>
               <SourceMarker source='gaggimate' variant='large' />
             </div>
 
@@ -76,7 +76,7 @@ export function EmptyState({ loading }) {
 
           {/* VIEW Section */}
           <div className='flex items-start gap-4'>
-            <div className='text-base-content/45 flex h-8 w-10 flex-shrink-0 items-center justify-center'>
+            <div className='text-base-content/45 flex h-8 w-10 shrink-0 items-center justify-center'>
               <FontAwesomeIcon icon={faEye} className='text-lg' />
             </div>
 
@@ -98,7 +98,7 @@ export function EmptyState({ loading }) {
 
           {/* WEB Section */}
           <div className='flex items-start gap-4'>
-            <div className='flex h-8 w-10 flex-shrink-0 items-center justify-center'>
+            <div className='flex h-8 w-10 shrink-0 items-center justify-center'>
               <SourceMarker source='browser' variant='large' />
             </div>
 

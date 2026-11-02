@@ -235,7 +235,7 @@ export function LibraryRow({
     >
       <td colSpan={columnCount} className='px-0 py-0.5'>
         <div
-          className={`library-row-grid library-row-grid--${isShot ? 'shot' : 'profile'} relative rounded-xl px-3 py-2 transition-all duration-200 ${rowClasses}`}
+          className={`library-row-grid ${isShot ? 'library-row-grid--shot' : 'library-row-grid--profile'} relative rounded-xl px-3 py-2 transition-all duration-200 ${rowClasses}`}
         >
           <LibraryCompareBadge compareBadgeNumber={compareBadgeNumber} />
           {showCompareSelection ? (

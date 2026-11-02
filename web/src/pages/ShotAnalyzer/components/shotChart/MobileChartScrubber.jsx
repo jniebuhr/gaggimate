@@ -1,5 +1,10 @@
 import { Trans } from '@lingui/react/macro';
 
+const VARIANT_CLASSES = {
+  single: 'shot-chart-mobile-scrubber--single',
+  compare: 'shot-chart-mobile-scrubber--compare',
+};
+
 export function MobileChartScrubber({
   active = false,
   ariaLabel,
@@ -25,7 +30,7 @@ export function MobileChartScrubber({
   return (
     <div
       ref={scrubberRef}
-      className={`shot-chart-mobile-scrubber shot-chart-mobile-scrubber--${variant} ${
+      className={`shot-chart-mobile-scrubber ${VARIANT_CLASSES[variant] ?? ''} ${
         active ? 'shot-chart-mobile-scrubber--active' : ''
       }`}
       style={{

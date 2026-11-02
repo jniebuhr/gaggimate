@@ -269,7 +269,7 @@ export function ColumnControls({
 
       {/* Expandable Selection Area */}
       {expanded && (
-        <div className='border-base-content/10 animate-fade-in bg-base-100/50 border-t border-b px-4 pt-5 pb-5'>
+        <div className='border-base-content/10 bg-base-100/50 border-t border-b px-4 pt-5 pb-5'>
           <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4'>
             {Object.keys(groupedColumns).map(groupKey => {
               const cols = groupedColumns[groupKey];

@@ -24,7 +24,7 @@ const fieldLabelClass =
 const inputClass =
   'border-base-content/10 bg-base-100/80 text-base-content input input-xs min-h-8 w-full rounded-md text-xs lg:min-h-7 xl:min-h-8';
 const textareaClass =
-  'border-base-content/10 bg-base-100/80 text-base-content textarea textarea-bordered textarea-xs min-h-[5rem] w-full rounded-md !text-xs leading-relaxed lg:min-h-[4rem] xl:min-h-[5rem]';
+  'border-base-content/10 bg-base-100/80 text-base-content textarea textarea-xs min-h-[5rem] w-full rounded-md !text-xs leading-relaxed lg:min-h-[4rem] xl:min-h-[5rem]';
 const EMPTY_DOSE_DEFAULTS = {
   doseIn: 18,
   doseOut: 36,

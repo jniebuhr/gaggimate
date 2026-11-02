@@ -8,21 +8,21 @@ export function ProfileMainInformation(props) {
   console.log(props.data);
   return (
     <Card sm={10} title={t`Profile Information`}>
-      <div className='form-control'>
+      <div>
         <label htmlFor='label' className='mb-2 block text-sm font-medium'>
           <Trans>Title</Trans>
         </label>
         <input
           id='label'
           name='label'
-          className='input input-bordered w-full'
+          className='input w-full'
           value={props.data?.label}
           onChange={props.onChangeLabel}
           aria-label={t`Enter a name for this profile`}
           required
         />
       </div>
-      <div className='form-control'>
+      <div>
         <label htmlFor='description' className='mb-2 block text-sm font-medium'>
           <Trans>Description</Trans>
         </label>
@@ -30,17 +30,17 @@ export function ProfileMainInformation(props) {
           id='description'
           name='description'
           rows={2}
-          className='textarea textarea-bordered w-full text-wrap'
+          className='textarea w-full text-wrap'
           value={props.data?.description}
           onChange={props.onChangeDescription}
           aria-label={t`Optional description for this profile`}
         />
       </div>
-      <div className='form-control'>
+      <div>
         <label htmlFor='temperature' className='mb-2 block text-sm font-medium'>
           <Trans>Temperature</Trans>
         </label>
-        <div className='input-group'>
+        <div>
           <label htmlFor='temperature' className='input w-full'>
             <input
               id='temperature'
@@ -58,11 +58,11 @@ export function ProfileMainInformation(props) {
           </label>
         </div>
       </div>
-      <div className='form-control'>
+      <div>
         <label htmlFor='dose' className='mb-2 block text-sm font-medium'>
           <Trans>Dose</Trans>
         </label>
-        <div className='input-group'>
+        <div>
           <label htmlFor='dose' className='input w-full'>
             <input
               id='dose'
@@ -80,7 +80,7 @@ export function ProfileMainInformation(props) {
           </label>
         </div>
       </div>
-      <div className='form-control'>
+      <div>
         <label
           htmlFor='utility'
           className='mb-2 block text-sm font-medium'

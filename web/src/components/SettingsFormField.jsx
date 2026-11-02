@@ -16,7 +16,7 @@ export function SettingsFormField({
   noMargin = false,
 }) {
   return (
-    <div className={`form-control ${noMargin ? '' : 'mb-3'} ${className}`}>
+    <div className={`${noMargin ? '' : 'mb-3'} ${className}`}>
       <label htmlFor={htmlFor} className='mb-1 block text-sm font-medium'>
         {label}
       </label>
@@ -41,11 +41,11 @@ export function InputGroupField({
   noMargin = false,
 }) {
   return (
-    <div className={`form-control ${noMargin ? '' : 'mb-3'}`}>
+    <div className={`${noMargin ? '' : 'mb-3'}`}>
       <label htmlFor={htmlFor} className='mb-1 block text-sm font-medium'>
         {label}
       </label>
-      <div className='input-group'>
+      <div>
         <label htmlFor={htmlFor} className='input w-full'>
           {children}
           <span aria-label={unitAriaLabel}>{unit}</span>
@@ -58,10 +58,10 @@ export function InputGroupField({
 
 export function ToggleField({ label, htmlFor, checked, onChange, helpText }) {
   return (
-    <div className='form-control'>
+    <div>
       <label htmlFor={htmlFor} className='label cursor-pointer'>
         {/* Explicit color: older WebViews resolve daisyUI's color-mix(currentColor) label color to transparent. */}
-        <span className='label-text text-base-content text-sm font-medium'>{label}</span>
+        <span className='text-base-content text-sm font-medium'>{label}</span>
         <input
           id={htmlFor}
           name={htmlFor}
@@ -143,7 +143,7 @@ export function SortableConfigurator({
           <Trans>Visible</Trans>
         </div>
         <div
-          className={`flex flex-col gap-1 rounded-lg transition-all duration-200${draggingSource === 'available' ? 'bg-primary/5 ring-primary/40 ring-1' : ''}`}
+          className={`flex flex-col gap-1 rounded-lg transition-all duration-200 ${draggingSource === 'available' ? 'bg-primary/5 ring-primary/40 ring-1' : ''}`}
           onDragOver={e => e.preventDefault()}
           onDrop={e => {
             e.preventDefault();
@@ -209,7 +209,7 @@ export function SortableConfigurator({
                     type='button'
                     disabled={idx === 0}
                     onClick={() => move(id, 'up')}
-                    className='btn btn-ghost btn-xs flex h-5 w-5 items-center justify-center rounded p-0'
+                    className='btn btn-ghost btn-xs flex h-5 w-5 items-center justify-center rounded-sm p-0'
                   >
                     <FontAwesomeIcon icon={faChevronUp} className='h-2.5 w-2.5' />
                   </button>
@@ -217,7 +217,7 @@ export function SortableConfigurator({
                     type='button'
                     disabled={idx === order.length - 1}
                     onClick={() => move(id, 'down')}
-                    className='btn btn-ghost btn-xs flex h-5 w-5 items-center justify-center rounded p-0'
+                    className='btn btn-ghost btn-xs flex h-5 w-5 items-center justify-center rounded-sm p-0'
                   >
                     <FontAwesomeIcon icon={faChevronDown} className='h-2.5 w-2.5' />
                   </button>
@@ -230,7 +230,7 @@ export function SortableConfigurator({
                   <button
                     type='button'
                     onClick={() => remove(id)}
-                    className='btn btn-ghost btn-xs text-error flex h-6 w-6 items-center justify-center rounded p-0'
+                    className='btn btn-ghost btn-xs text-error flex h-6 w-6 items-center justify-center rounded-sm p-0'
                   >
                     <FontAwesomeIcon icon={faXmark} className='h-3.5 w-3.5' />
                   </button>
@@ -252,7 +252,7 @@ export function SortableConfigurator({
               draggable
               onDragStart={e => startDrag(e, def.id, 'available')}
               onDragEnd={endDrag}
-              className={`border-base-content/10 bg-base-100 flex min-h-14 cursor-grab items-center gap-2 rounded-lg border px-2 py-1.5 transition-all duration-150${draggingId === def.id ? 'opacity-40' : ''}`}
+              className={`border-base-content/10 bg-base-100 flex min-h-14 cursor-grab items-center gap-2 rounded-lg border px-2 py-1.5 transition-all duration-150 ${draggingId === def.id ? 'opacity-40' : ''}`}
             >
               <span className='text-base-content/20 select-none'>⠿</span>
               <span className='flex-1 text-sm'>{def.label}</span>

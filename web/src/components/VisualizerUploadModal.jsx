@@ -77,7 +77,7 @@ export default function VisualizerUploadModal({
   if (!isOpen) return null;
 
   return (
-    <div className='bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black p-4'>
+    <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4'>
       <div className='max-h-[90vh] w-full max-w-md overflow-y-auto rounded-lg bg-white shadow-xl dark:bg-gray-800'>
         <div className='p-6'>
           <div className='mb-4 flex items-center justify-between'>
@@ -181,7 +181,7 @@ export default function VisualizerUploadModal({
                 checked={rememberCredentials}
                 onChange={e => setRememberCredentials(e.target.checked)}
                 disabled={isUploading}
-                className='h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50'
+                className='h-4 w-4 rounded-sm border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50'
               />
               <label htmlFor='remember' className='ml-2 text-sm text-gray-600 dark:text-gray-300'>
                 <Trans>Remember credentials</Trans>
