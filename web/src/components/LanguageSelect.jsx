@@ -15,8 +15,8 @@ export function LanguageSelect() {
         className='select select-bordered w-full'
         value={value}
         onChange={async e => {
-          setValue(e.target.value);
-          await setLocale(e.target.value);
+          setValue(e.currentTarget.value);
+          await setLocale(e.currentTarget.value);
           // Messages are resolved when components render, so reload to apply everywhere.
           window.location.reload();
         }}

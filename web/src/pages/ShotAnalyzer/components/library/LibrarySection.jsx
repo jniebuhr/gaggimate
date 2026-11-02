@@ -251,13 +251,13 @@ export function LibrarySection({
             type='text'
             placeholder={isShot ? t`Search shots...` : t`Search profiles...`}
             value={searchValue}
-            onInput={e => onSearchChange(e.target.value)}
+            onInput={e => onSearchChange(e.currentTarget.value)}
             className='library-toolbar-field bg-base-100/50 border-base-content/10 focus:border-primary h-9 min-w-0 flex-1 rounded-md border px-3 text-sm outline-none'
           />
           <select
             value={`${sortKey}-${sortOrder}`}
             onChange={e => {
-              const [k, o] = e.target.value.split('-');
+              const [k, o] = e.currentTarget.value.split('-');
               onSortChange(k, o);
             }}
             className='library-toolbar-field bg-base-100/50 border-base-content/10 hover:bg-base-content/5 hover:border-base-content/20 focus:border-primary h-9 max-w-[8.5rem] shrink-0 cursor-pointer rounded-md border px-2 text-xs transition-colors outline-none sm:max-w-none'

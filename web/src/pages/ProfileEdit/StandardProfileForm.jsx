@@ -186,7 +186,7 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
           <select
             id={`phase-${index}-type`}
             className='select select-bordered w-full'
-            onChange={e => onFieldChange('phase', e.target.value)}
+            onChange={e => onFieldChange('phase', e.currentTarget.value)}
             value={phase.phase}
             aria-label={t`Select the type of brew phase`}
           >
@@ -208,7 +208,7 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
               className='input input-bordered flex-1'
               placeholder={t`Name...`}
               value={phase.name}
-              onChange={e => onFieldChange('name', e.target.value)}
+              onChange={e => onFieldChange('name', e.currentTarget.value)}
               aria-label={t`Enter a name for this phase`}
             />
             <Tooltip content={t`Delete this phase`}>
@@ -238,7 +238,7 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
                 type='number'
                 min='1'
                 value={phase.duration}
-                onChange={e => onFieldChange('duration', e.target.value)}
+                onChange={e => onFieldChange('duration', e.currentTarget.value)}
                 aria-label={t`Duration in seconds`}
               />
               <span aria-label={t`seconds`}>s</span>
@@ -256,7 +256,7 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
                 className='grow'
                 type='number'
                 value={targetWeight}
-                onChange={e => onVolumetricTargetChange(parseFloat(e.target.value))}
+                onChange={e => onVolumetricTargetChange(parseFloat(e.currentTarget.value))}
                 aria-label={t`Target weight in grams`}
                 min='0'
                 step='0.1'
@@ -374,7 +374,7 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
                 min={0}
                 max={100}
                 value={pumpPower}
-                onChange={e => onFieldChange('pump', parseFloat(e.target.value))}
+                onChange={e => onFieldChange('pump', parseFloat(e.currentTarget.value))}
                 aria-label={t`Pump power as percentage`}
               />
               <span aria-label={t`percent`}>%</span>
@@ -398,7 +398,10 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
                   step='0.01'
                   value={pressure}
                   onChange={e =>
-                    onFieldChange('pump', { ...phase.pump, pressure: parseFloat(e.target.value) })
+                    onFieldChange('pump', {
+                      ...phase.pump,
+                      pressure: parseFloat(e.currentTarget.value),
+                    })
                   }
                   aria-label={t`Pressure in bar`}
                   min='0'
@@ -420,7 +423,10 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
                   step='0.01'
                   value={flow}
                   onChange={e =>
-                    onFieldChange('pump', { ...phase.pump, flow: parseFloat(e.target.value) })
+                    onFieldChange('pump', {
+                      ...phase.pump,
+                      flow: parseFloat(e.currentTarget.value),
+                    })
                   }
                   aria-label={t`Flow rate in grams per second`}
                   min='0'

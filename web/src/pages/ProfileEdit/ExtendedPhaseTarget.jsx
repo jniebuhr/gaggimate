@@ -76,7 +76,7 @@ export function ExtendedPhaseTarget({ onChange, target, index, onRemove }) {
                   onChange={e =>
                     onChange({
                       ...target,
-                      value: parseFloat(e.target.value),
+                      value: parseFloat(e.currentTarget.value),
                     })
                   }
                   aria-label={t`Target value in ${unit}`}

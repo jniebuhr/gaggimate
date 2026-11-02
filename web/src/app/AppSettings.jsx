@@ -50,7 +50,7 @@ export function AppSettings() {
             className='select select-bordered w-full'
             value={theme}
             onChange={e => {
-              setTheme(e.target.value);
+              setTheme(e.currentTarget.value);
               handleThemeChange(e);
             }}
           >
@@ -119,7 +119,7 @@ export function AppSettings() {
             className='select select-bordered w-full'
             value={appSettings.value.updateChannel}
             onChange={async e => {
-              await setUpdateChannel(e.target.value);
+              await setUpdateChannel(e.currentTarget.value);
               checkForUpdate();
             }}
           >

@@ -74,7 +74,7 @@ export function ExtendedPhase({ phase, index, onChange, pressureAvailable }) {
           <select
             id={`phase-${index}-type`}
             className='select select-bordered w-full'
-            onChange={e => onFieldChange('phase', e.target.value)}
+            onChange={e => onFieldChange('phase', e.currentTarget.value)}
             value={phase.phase}
             aria-label={t`Select the type of brew phase`}
           >
@@ -96,7 +96,7 @@ export function ExtendedPhase({ phase, index, onChange, pressureAvailable }) {
               className='input input-bordered flex-1'
               placeholder={t`Name...`}
               value={phase.name}
-              onChange={e => onFieldChange('name', e.target.value)}
+              onChange={e => onFieldChange('name', e.currentTarget.value)}
               aria-label={t`Enter a name for this phase`}
             />
           </div>
@@ -116,7 +116,7 @@ export function ExtendedPhase({ phase, index, onChange, pressureAvailable }) {
                 type='number'
                 min='1'
                 value={phase.duration}
-                onChange={e => onFieldChange('duration', e.target.value)}
+                onChange={e => onFieldChange('duration', e.currentTarget.value)}
                 aria-label={t`Duration in seconds`}
               />
               <span aria-label={t`seconds`}>s</span>
@@ -134,7 +134,7 @@ export function ExtendedPhase({ phase, index, onChange, pressureAvailable }) {
                 className='grow'
                 type='number'
                 value={`${phase.temperature || 0}`}
-                onChange={e => onFieldChange('temperature', parseFloat(e.target.value))}
+                onChange={e => onFieldChange('temperature', parseFloat(e.currentTarget.value))}
                 aria-label={t`Target temperature`}
                 min='0'
                 step='0.1'
@@ -288,7 +288,7 @@ export function ExtendedPhase({ phase, index, onChange, pressureAvailable }) {
                 min={0}
                 max={100}
                 value={pumpPower.toString()}
-                onChange={e => onFieldChange('pump', parseFloat(e.target.value))}
+                onChange={e => onFieldChange('pump', parseFloat(e.currentTarget.value))}
                 aria-label={t`Pump power as percentage`}
               />
               <span aria-label={t`percent`}>%</span>
@@ -321,7 +321,10 @@ export function ExtendedPhase({ phase, index, onChange, pressureAvailable }) {
                     min={mode === 'pressure' ? '0.1' : '0'}
                     value={pressure.toString()}
                     onChange={e =>
-                      onFieldChange('pump', { ...phase.pump, pressure: parseFloat(e.target.value) })
+                      onFieldChange('pump', {
+                        ...phase.pump,
+                        pressure: parseFloat(e.currentTarget.value),
+                      })
                     }
                     aria-label={t`Pressure in bar`}
                   />
@@ -348,7 +351,10 @@ export function ExtendedPhase({ phase, index, onChange, pressureAvailable }) {
                     step='0.01'
                     value={flow.toString()}
                     onChange={e =>
-                      onFieldChange('pump', { ...phase.pump, flow: parseFloat(e.target.value) })
+                      onFieldChange('pump', {
+                        ...phase.pump,
+                        flow: parseFloat(e.currentTarget.value),
+                      })
                     }
                     aria-label={t`Flow rate in grams per second`}
                     min={mode === 'flow' ? '0.1' : '0'}
@@ -497,7 +503,7 @@ export function ExtendedPhase({ phase, index, onChange, pressureAvailable }) {
                     onChange={e =>
                       onFieldChange('transition', {
                         ...phase.transition,
-                        duration: parseFloat(e.target.value),
+                        duration: parseFloat(e.currentTarget.value),
                       })
                     }
                     aria-label={t`Transition duration in ${rampUnit}`}

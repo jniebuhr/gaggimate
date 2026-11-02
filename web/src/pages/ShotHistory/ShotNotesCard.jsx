@@ -258,7 +258,7 @@ export default function ShotNotesCard({ shot, onNotesUpdate, onNotesLoaded }) {
               type='text'
               className='input input-bordered w-full'
               value={notes.beanType}
-              onChange={e => handleInputChange('beanType', e.target.value)}
+              onChange={e => handleInputChange('beanType', e.currentTarget.value)}
               placeholder={t`e.g., Single Origin, Blend`}
             />
           ) : (
@@ -279,7 +279,7 @@ export default function ShotNotesCard({ shot, onNotesUpdate, onNotesLoaded }) {
               step='0.1'
               className='input input-bordered w-full'
               value={notes.doseIn}
-              onChange={e => handleInputChange('doseIn', e.target.value)}
+              onChange={e => handleInputChange('doseIn', e.currentTarget.value)}
               placeholder='18.0'
             />
           ) : (
@@ -300,7 +300,7 @@ export default function ShotNotesCard({ shot, onNotesUpdate, onNotesLoaded }) {
               step='0.1'
               className='input input-bordered w-full'
               value={notes.doseOut}
-              onChange={e => handleInputChange('doseOut', e.target.value)}
+              onChange={e => handleInputChange('doseOut', e.currentTarget.value)}
               placeholder='36.0'
             />
           ) : (
@@ -330,7 +330,7 @@ export default function ShotNotesCard({ shot, onNotesUpdate, onNotesLoaded }) {
               type='text'
               className='input input-bordered w-full'
               value={notes.grindSetting}
-              onChange={e => handleInputChange('grindSetting', e.target.value)}
+              onChange={e => handleInputChange('grindSetting', e.currentTarget.value)}
               placeholder={t`e.g., 2.5, Medium-Fine`}
             />
           ) : (
@@ -349,7 +349,7 @@ export default function ShotNotesCard({ shot, onNotesUpdate, onNotesLoaded }) {
             <select
               className='select select-bordered w-full'
               value={notes.balanceTaste}
-              onChange={e => handleInputChange('balanceTaste', e.target.value)}
+              onChange={e => handleInputChange('balanceTaste', e.currentTarget.value)}
             >
               <option value='bitter'>{tasteLabels.bitter}</option>
               <option value='balanced'>{tasteLabels.balanced}</option>
@@ -377,7 +377,7 @@ export default function ShotNotesCard({ shot, onNotesUpdate, onNotesLoaded }) {
             rows='4'
             value={notes.notes}
             maxLength={200}
-            onChange={e => handleInputChange('notes', e.target.value)}
+            onChange={e => handleInputChange('notes', e.currentTarget.value)}
             placeholder={t`Tasting notes, brewing observations, etc...`}
           />
         ) : (

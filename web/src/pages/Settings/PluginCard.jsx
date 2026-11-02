@@ -169,7 +169,7 @@ export function PluginCard({
                         type='time'
                         className='input input-bordered input-sm md:input-md w-auto min-w-0 pr-6 text-center'
                         value={schedule.time}
-                        onChange={e => updateAutoWakeupTime(scheduleIndex, e.target.value)}
+                        onChange={e => updateAutoWakeupTime(scheduleIndex, e.currentTarget.value)}
                         disabled={!formData.autowakeupEnabled}
                       />
                     </div>

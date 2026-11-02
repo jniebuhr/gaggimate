@@ -1125,7 +1125,7 @@ export function ProfileList() {
               placeholder={t`Search...`}
               value={searchTerm}
               onChange={e => {
-                setSearchTerm(e.target.value);
+                setSearchTerm(e.currentTarget.value);
               }}
               className='grow'
             />

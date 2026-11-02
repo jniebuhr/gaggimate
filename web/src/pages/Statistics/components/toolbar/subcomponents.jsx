@@ -389,7 +389,7 @@ export function DateRangeDropdown({
             <input
               type='date'
               value={dateFromLocal}
-              onInput={e => onDateFromChange(e.target.value)}
+              onInput={e => onDateFromChange(e.currentTarget.value)}
               className='analyzer-statistics-datetime input input-bordered border-base-content/10 bg-base-100/50 h-9 min-h-0 w-full text-xs'
               disabled={isBusy}
               aria-label={t`Start date`}
@@ -404,7 +404,7 @@ export function DateRangeDropdown({
             <input
               type='date'
               value={dateToLocal}
-              onInput={e => onDateToChange(e.target.value)}
+              onInput={e => onDateToChange(e.currentTarget.value)}
               className='analyzer-statistics-datetime input input-bordered border-base-content/10 bg-base-100/50 h-9 min-h-0 w-full text-xs'
               disabled={isBusy}
               aria-label={t`End date`}
@@ -463,8 +463,8 @@ export function AdvancedSearchControls({
             type='text'
             value={query}
             onInput={e => {
-              setShowDslSelectionPreview(!!String(e.target.value || '').trim());
-              onQueryChange(e.target.value);
+              setShowDslSelectionPreview(!!String(e.currentTarget.value || '').trim());
+              onQueryChange(e.currentTarget.value);
             }}
             onFocus={() => setShowDslSelectionPreview(true)}
             onClick={() => setShowDslSelectionPreview(true)}
