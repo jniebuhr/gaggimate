@@ -36,6 +36,7 @@ const connected = computed(() => machine.value.connected);
 
 export function ShotHistory() {
   const { t } = useLingui();
+  const isConnected = connected.value;
   const apiService = useContext(ApiServiceContext);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -97,11 +98,11 @@ export function ShotHistory() {
     }
   };
   useEffect(() => {
-    if (connected.value) {
+    if (isConnected) {
       loadHistory();
     }
     return () => loadHistoryAbortRef.current?.abort();
-  }, [connected.value]);
+  }, [isConnected]);
 
   const onDelete = useCallback(
     async id => {
@@ -160,7 +161,7 @@ export function ShotHistory() {
           comparison = (a.volume || 0) - (b.volume || 0);
           break;
         case 'id':
-          comparison = parseInt(a.id) - parseInt(b.id);
+          comparison = parseInt(a.id, 10) - parseInt(b.id, 10);
           break;
         case 'date':
         default:
@@ -171,7 +172,7 @@ export function ShotHistory() {
           } else if (b.timestamp >= 10000) {
             comparison = -1;
           } else {
-            comparison = parseInt(a.id) - parseInt(b.id);
+            comparison = parseInt(a.id, 10) - parseInt(b.id, 10);
           }
       }
 
@@ -280,7 +281,7 @@ export function ShotHistory() {
       </div>
 
       <div className='grid grid-cols-1 gap-3 lg:grid-cols-12'>
-        {paginatedHistory.map((item, idx) => (
+        {paginatedHistory.map(item => (
           <HistoryCard
             key={item.id}
             shot={item}

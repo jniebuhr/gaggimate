@@ -143,6 +143,7 @@ export function ActivityHeatmap({ trends }) {
   const [containerWidth, setContainerWidth] = useState(0);
 
   const data = useMemo(() => buildHeatmapData(trends || []), [trends]);
+  const tooltipOpen = Boolean(tooltip);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -159,7 +160,7 @@ export function ActivityHeatmap({ trends }) {
   }, []);
 
   useEffect(() => {
-    if (!tooltip) return;
+    if (!tooltipOpen) return;
     const dismiss = () => setTooltip(null);
     const onPointerDown = e => {
       if (!containerRef.current?.contains(e.target)) setTooltip(null);
@@ -170,7 +171,7 @@ export function ActivityHeatmap({ trends }) {
       window.removeEventListener('scroll', dismiss, true);
       window.removeEventListener('pointerdown', onPointerDown, true);
     };
-  }, [!!tooltip]);
+  }, [tooltipOpen]);
 
   if (!data || data.stats.totalShots === 0) return null;
 

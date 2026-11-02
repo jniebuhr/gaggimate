@@ -62,7 +62,7 @@ export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) 
     }
     exportData.volume = round2(exportData.volume);
     // duration left as integer ms
-    downloadJson(exportData, 'shot-' + shot.id + '.json');
+    downloadJson(exportData, `shot-${shot.id}.json`);
   }, [shot, shotNotes]);
 
   const handleNotesLoaded = useCallback(notes => {
@@ -80,14 +80,14 @@ export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) 
   const profileTitle = shot.profile || t`Unknown Profile`;
   let formattedDate = t`No timestamp available`;
   if (date.getFullYear() > 1970) {
-    formattedDate =
-      date.toLocaleDateString() +
-      ' ' +
-      date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    formattedDate = `${date.toLocaleDateString()} ${date.toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+    })}`;
   }
 
   const handleUpload = useCallback(
-    async (username, password, rememberCredentials) => {
+    async (username, password) => {
       setIsUploading(true);
       try {
         // Validate shot data

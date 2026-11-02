@@ -1,7 +1,7 @@
 import Sortable, { MultiDrag } from 'sortablejs';
 try {
   Sortable?.mount(new MultiDrag());
-} catch (error) {
+} catch {
   // to avoid error when vite is reloading the page in dev mode
 }
 
@@ -678,7 +678,7 @@ export function ProfileList() {
         if (!orderedIds) return;
         try {
           await apiService.request({ tp: 'req:profiles:reorder', order: orderedIds });
-        } catch (e) {
+        } catch {
           // optional: log or surface error
         }
       }, 300);
@@ -862,7 +862,6 @@ export function ProfileList() {
     };
   }, [loading, searchTerm, onDragStart, onDragChange, onDragEnd]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const onDelete = useCallback(
     async id => {
       setLoading(true);
@@ -880,7 +879,6 @@ export function ProfileList() {
     [apiService],
   );
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const onFavorite = useCallback(
     async id => {
       setLoading(true);
@@ -890,7 +888,6 @@ export function ProfileList() {
     [apiService, setLoading, invalidateProfiles],
   );
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const onUnfavorite = useCallback(
     async id => {
       setLoading(true);
@@ -900,7 +897,6 @@ export function ProfileList() {
     [apiService, setLoading, invalidateProfiles],
   );
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const onDuplicate = useCallback(
     async id => {
       setLoading(true);

@@ -1,12 +1,12 @@
 import { ExtendedPhaseTarget, TargetTypes } from './ExtendedPhaseTarget.jsx';
 import { isNumber } from 'chart.js/helpers';
-import { useCallback } from 'preact/hooks';
+import { Fragment } from 'preact';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import { Tooltip } from '../../components/Tooltip.jsx';
 import { Trans, useLingui } from '@lingui/react/macro';
 
-export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvailable }) {
+export function ExtendedPhase({ phase, index, onChange, pressureAvailable }) {
   const { t, i18n } = useLingui();
   const onFieldChange = (field, value) => {
     onChange({
@@ -527,7 +527,7 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
                   </button>
                   <button
                     type='button'
-                    className={`join-item btn btn-sm ${!!phase.transition?.adaptive ? 'btn-primary' : 'btn-outline'}`}
+                    className={`join-item btn btn-sm ${phase.transition?.adaptive ? 'btn-primary' : 'btn-outline'}`}
                     onClick={() =>
                       onFieldChange('transition', { ...phase.transition, adaptive: true })
                     }
@@ -566,7 +566,7 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
               <li key={`${tt.type}-${tt.operator}`}>
                 <span
                   role='button'
-                  onClick={e =>
+                  onClick={() =>
                     onTargetAdd({
                       type: tt.type,
                       operator: tt.operator,
@@ -589,20 +589,19 @@ export function ExtendedPhase({ phase, index, onChange, onRemove, pressureAvaila
         </div>
       </div>
       {targets.map((target, idx) => (
-        <>
+        <Fragment key={idx}>
           {idx !== 0 && (
-            <div key={`sep-${idx}`} className='divider'>
+            <div className='divider'>
               <Trans context='stop condition separator'>OR</Trans>
             </div>
           )}
           <ExtendedPhaseTarget
             onChange={value => onTargetChange(idx, value)}
             onRemove={() => onTargetRemove(idx)}
-            key={`target-${idx}`}
             target={target}
             index={idx}
           />
-        </>
+        </Fragment>
       ))}
     </div>
   );

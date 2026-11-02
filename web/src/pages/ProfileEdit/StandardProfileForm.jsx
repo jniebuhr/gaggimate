@@ -151,7 +151,7 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
       targets: [
         {
           type: 'volumetric',
-          value: value,
+          value,
         },
       ],
     });

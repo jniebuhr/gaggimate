@@ -21,7 +21,9 @@ export function ChartComponent({ data, className, chartClassName, style }) {
         newChart.destroy();
       }
     };
-  }, []); // Empty dependency array - only run on mount
+    // Later data changes are applied by the effect below, not by recreating the chart.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Update chart data when history changes
   useEffect(() => {

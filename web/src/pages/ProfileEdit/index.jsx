@@ -17,8 +17,6 @@ import { ApiServiceContext, machine } from '../../services/ApiService.js';
 import { computed } from '@preact/signals';
 import { Spinner } from '../../components/Spinner.jsx';
 import { ExtendedProfileForm } from './ExtendedProfileForm.jsx';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
 import { Trans, useLingui } from '@lingui/react/macro';
 
 Chart.register(
@@ -37,6 +35,7 @@ const pressureAvailable = computed(() => machine.value.capabilities.pressure);
 
 export function ProfileEdit() {
   const { t } = useLingui();
+  const isConnected = connected.value;
   const apiService = useContext(ApiServiceContext);
   const location = useLocation();
   const [loading, setLoading] = useState(true);
@@ -98,7 +97,7 @@ export function ProfileEdit() {
           ],
         });
         setLoading(false);
-      } else if (connected.value) {
+      } else if (isConnected) {
         const response = await apiService.request({ tp: 'req:profiles:load', id: params.id });
         setData({
           ...response.profile,
@@ -108,7 +107,7 @@ export function ProfileEdit() {
       }
     }
     fetchData();
-  }, [params.id, setData, connected.value, apiService]);
+  }, [params.id, setData, isConnected, apiService]);
   const onSave = useCallback(
     async data => {
       setSaving(true);
@@ -118,7 +117,7 @@ export function ProfileEdit() {
       setSaving(false);
       location.route('/profiles');
     },
-    [apiService, params.id, location],
+    [apiService, location],
   );
   const onConvert = useCallback(() => {
     setData({

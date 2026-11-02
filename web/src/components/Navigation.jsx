@@ -3,10 +3,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHome } from '@fortawesome/free-solid-svg-icons/faHome';
 import { faList } from '@fortawesome/free-solid-svg-icons/faList';
 import { faTimeline } from '@fortawesome/free-solid-svg-icons/faTimeline';
-import { faBluetoothB } from '@fortawesome/free-brands-svg-icons/faBluetoothB';
 import { faCog } from '@fortawesome/free-solid-svg-icons/faCog';
 import { faMobileScreen } from '@fortawesome/free-solid-svg-icons/faMobileScreen';
-import { faRotate } from '@fortawesome/free-solid-svg-icons/faRotate';
 import { faMagnifyingGlassChart } from '@fortawesome/free-solid-svg-icons/faMagnifyingGlassChart';
 import { faChartSimple } from '@fortawesome/free-solid-svg-icons/faChartSimple';
 import { faCircleChevronLeft } from '@fortawesome/free-solid-svg-icons/faCircleChevronLeft';
@@ -190,7 +188,7 @@ function MenuItem({
       >
         <FontAwesomeIcon size='md' icon={icon} />
         {isUnread && (
-          <span className='indicator-item status status-warning absolute -top-0 -right-0'></span>
+          <span className='indicator-item status status-warning absolute -top-0 -right-0' />
         )}
         {isExpanded ? (
           <div className='indicator'>
