@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * StatisticsService.js
  * Pure aggregation logic for multi-shot statistics.

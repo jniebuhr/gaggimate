@@ -1,3 +1,4 @@
+// @ts-check
 import { t } from '@lingui/core/macro';
 
 export function getPhaseName(shot, phaseNumber) {

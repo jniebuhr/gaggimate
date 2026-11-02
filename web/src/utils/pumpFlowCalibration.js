@@ -1,3 +1,4 @@
+// @ts-check
 import { t } from '@lingui/core/macro';
 
 // Pure pump-flow calibration math. No I/O, no state — safe to call from

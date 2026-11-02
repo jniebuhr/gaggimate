@@ -1,3 +1,4 @@
+// @ts-check
 // Intentionally themed as a terminal: neutral content stays readable on a
 // dark panel across all DaisyUI themes (light/dark/coffee/nord).
 

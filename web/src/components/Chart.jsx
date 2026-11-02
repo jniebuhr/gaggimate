@@ -1,3 +1,4 @@
+// @ts-check
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { Chart } from 'chart.js';
 import annotationPlugin from 'chartjs-plugin-annotation';

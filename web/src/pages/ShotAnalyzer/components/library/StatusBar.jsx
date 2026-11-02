@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * StatusBar.jsx
  * * Merges seamlessly with the dropdown when expanded.
@@ -409,6 +410,7 @@ export function StatusBar({
     compact,
     ghosted,
     currentShot,
+    // @ts-expect-error compareMode is passed but getStatusBarViewModel never reads it
     compareMode,
     currentProfile,
     isMismatch,

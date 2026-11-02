@@ -1,3 +1,4 @@
+// @ts-check
 import { TARGET_FLOW_MAX, TARGET_PRESSURE_MAX } from '../constants';
 import { getSpikeResistantSeriesMax, safeMax, safeMin, toNumberOrNull } from '../helpers';
 import { createPumpedWaterSource } from '../../../services/analyzer/waterIntegration';

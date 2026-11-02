@@ -1,3 +1,4 @@
+// @ts-check
 import Card from '../../components/Card.jsx';
 import { Spinner } from '../../components/Spinner.jsx';
 import { ExtendedProfileChart } from '../../components/ExtendedProfileChart.jsx';
@@ -144,7 +145,6 @@ export function ExtendedProfileForm(props) {
                 phase={currentPhase}
                 index={currentPhaseIndex}
                 onChange={phase => onPhaseChange(currentPhaseIndex, phase)}
-                onRemove={() => onPhaseRemove(currentPhaseIndex)}
                 pressureAvailable={pressureAvailable}
               />
             ) : (

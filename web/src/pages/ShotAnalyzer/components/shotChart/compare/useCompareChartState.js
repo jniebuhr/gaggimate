@@ -1,3 +1,4 @@
+// @ts-check
 import { useEffect, useLayoutEffect, useState } from 'preact/hooks';
 import { ANALYZER_DB_KEYS, loadFromStorage, saveToStorage } from '../../../utils/analyzerUtils';
 import { COMPARE_ALIGNMENT_SHOT_START, COMPARE_LEGEND_KEY_BY_LABEL } from './compareConstants';

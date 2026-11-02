@@ -1,3 +1,4 @@
+// @ts-check
 // Types for the device WebSocket (/ws). Type-only module: import with
 // `/** @typedef {import('./machineTypes.js').MachineState} MachineState */`.
 // Wire shapes mirror WebSocketHandler.cpp on the firmware and docs/websocket-api.yaml.

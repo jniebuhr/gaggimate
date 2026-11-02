@@ -1,3 +1,4 @@
+// @ts-check
 import { i18n } from '@lingui/core';
 
 // UI languages, in picker order; labels stay in their own language.

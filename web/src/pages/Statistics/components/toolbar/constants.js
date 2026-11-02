@@ -1,3 +1,4 @@
+// @ts-check
 // Constants for StatisticsToolbar: source/mode/date options and run button tone class
 import { msg } from '@lingui/core/macro';
 

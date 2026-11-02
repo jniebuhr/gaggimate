@@ -1,3 +1,4 @@
+// @ts-check
 import { ShotMainInfoCard } from './ShotMainInfoCard';
 import { useShotNotesState } from '../useShotNotesState';
 

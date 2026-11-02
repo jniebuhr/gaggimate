@@ -1,3 +1,4 @@
+// @ts-check
 import { t } from '@lingui/core/macro';
 import { MAX_AUTO_DETECTED_DOSE_GRAMS } from './constants';
 import { cleanName } from './formatting';

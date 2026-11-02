@@ -1,3 +1,4 @@
+// @ts-check
 import { useState, useRef, useEffect, useCallback } from 'preact/hooks';
 import { createPortal } from 'preact/compat';
 import { computePosition, flip, shift, offset, autoUpdate } from '@floating-ui/dom';

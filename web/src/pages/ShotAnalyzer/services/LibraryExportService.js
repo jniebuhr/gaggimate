@@ -1,3 +1,4 @@
+// @ts-check
 import { downloadJson, downloadJsonQueue } from '../../../utils/download';
 import { libraryService } from './LibraryService';
 

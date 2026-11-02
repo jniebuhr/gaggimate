@@ -1,3 +1,4 @@
+// @ts-check
 /** Coordinates analyzer state, loading, matching, and compare workflows. */
 
 import { useState, useEffect, useContext, useRef, useCallback } from 'preact/hooks';
@@ -1020,6 +1021,7 @@ export function ShotAnalyzer() {
             onCompareSwap={handleSwapCompareSlots}
             onRetryProfileSearch={handleRetryProfileSearch}
             onRetryCompareProfileSearch={handleRetryCompareProfileSearch}
+            // @ts-expect-error the library panel does not accept isMatchingProfile; the prop is ignored
             isMatchingProfile={isMatchingProfile}
             isSearchingProfile={isSearchingProfile}
             compareIsSearchingProfile={compareIsSearchingProfile}

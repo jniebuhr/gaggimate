@@ -1,3 +1,4 @@
+// @ts-check
 import { Trans } from '@lingui/react/macro';
 import { fmt } from '../utils/format';
 import { STATISTICS_SECTION_TITLE_CLASS, STATISTICS_TABLE_NUMBER_CLASS } from './statisticsUi';

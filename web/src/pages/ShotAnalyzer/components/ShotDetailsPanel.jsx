@@ -1,3 +1,4 @@
+// @ts-check
 /** Stable import path for the shot details components. */
 
 export { ShotDetailsPanel } from './shotDetails/ShotDetailsPanel';

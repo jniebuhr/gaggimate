@@ -1,3 +1,4 @@
+// @ts-check
 import { machine } from '../services/ApiService.js';
 import { Chart } from 'chart.js';
 import { ChartComponent } from './Chart.jsx';

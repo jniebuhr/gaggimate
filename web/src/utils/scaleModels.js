@@ -1,3 +1,4 @@
+// @ts-check
 // Advertised BLE name prefix → friendly model name; mirrors the esp-arduino-ble-scales matchers.
 /** @type {[RegExp, string][]} */
 const SCALE_MODELS = [

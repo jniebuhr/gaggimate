@@ -1,3 +1,4 @@
+// @ts-check
 // Auxiliary profile used exclusively by the pump-flow calibration tool.
 // Embedded (instead of loaded from the machine) so calibration runs are
 // reproducible regardless of which profiles the user has stored.

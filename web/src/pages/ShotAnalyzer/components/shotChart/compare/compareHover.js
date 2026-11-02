@@ -1,3 +1,4 @@
+// @ts-check
 import { areTooltipStatesEqual } from '../ShotChartExternalTooltip';
 
 export function clearCompareChartHover(chart) {

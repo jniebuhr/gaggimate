@@ -1,3 +1,4 @@
+// @ts-check
 export function TooltipShotBadge({ shotNumber, color, className }) {
   if (shotNumber !== null && shotNumber !== undefined) {
     return (

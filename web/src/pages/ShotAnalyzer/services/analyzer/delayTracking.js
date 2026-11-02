@@ -1,3 +1,4 @@
+// @ts-check
 import { t } from '@lingui/core/macro';
 import { isWeightType } from './exitReasons.js';
 

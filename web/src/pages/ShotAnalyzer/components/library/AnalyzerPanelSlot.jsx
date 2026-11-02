@@ -1,3 +1,4 @@
+// @ts-check
 import { AnalyzerActionBar } from '../AnalyzerActionBar';
 import { StatusBar } from './StatusBar';
 import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';

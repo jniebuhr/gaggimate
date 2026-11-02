@@ -1,3 +1,4 @@
+// @ts-check
 /** Owns asynchronous library loading, persisted filters, hotkeys, and sticky layout state. */
 
 import { libraryService } from '../../services/LibraryService';

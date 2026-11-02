@@ -1,3 +1,4 @@
+// @ts-check
 // GitHub-style activity heatmap: rolling 12-month view of daily shot counts with streak tracking
 import { useState, useMemo, useRef, useEffect } from 'preact/hooks';
 import { getDayStartLocalMs, getIsoWeekStartLocalMs, formatDateLocal } from '../utils/trendBuckets';

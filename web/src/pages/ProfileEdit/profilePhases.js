@@ -1,3 +1,4 @@
+// @ts-check
 export function getProfilePhases(data) {
   return Array.isArray(data?.phases) ? data.phases : [];
 }

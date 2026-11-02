@@ -1,3 +1,4 @@
+// @ts-check
 import { useEffect, useState } from 'preact/hooks';
 
 export const ANALYSIS_SCROLLBAR_HIDE_STYLE = {

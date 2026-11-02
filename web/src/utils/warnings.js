@@ -1,3 +1,4 @@
+// @ts-check
 import tintSlash from '../assets/warnings/tint-slash.svg?raw';
 import raindropsFilled from '../assets/warnings/raindrops-filled.svg?raw';
 import lightSwitchOff from '../assets/warnings/light-switch-off.svg?raw';

@@ -1,3 +1,4 @@
+// @ts-check
 // HTTP helpers used by the calibration flow. Wrap the firmware endpoints so
 // the hook deals with parsed shots and typed errors, not fetch plumbing.
 

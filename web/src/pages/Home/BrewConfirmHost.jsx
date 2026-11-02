@@ -1,3 +1,4 @@
+// @ts-check
 import { useContext, useEffect, useState } from 'preact/hooks';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
 import { activeWarnings, parseWarningStates } from '../../utils/warnings.js';

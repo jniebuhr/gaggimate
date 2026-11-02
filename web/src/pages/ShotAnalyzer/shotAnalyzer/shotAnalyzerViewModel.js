@@ -1,3 +1,4 @@
+// @ts-check
 import { getShotDisplayName, getShotIdentityKey } from '../utils/analyzerUtils';
 import { buildStatisticsProfileHref } from '../../Statistics/utils/statisticsRoute';
 import { buildShotDetailsEntries, getCompareDetailsKey } from './ActiveAnalysisView';

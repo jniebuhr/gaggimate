@@ -1,3 +1,4 @@
+// @ts-check
 import { useContext } from 'preact/hooks';
 import { useLocation } from 'preact-iso';
 import PropTypes from 'prop-types';

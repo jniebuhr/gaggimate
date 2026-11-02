@@ -1,3 +1,4 @@
+// @ts-check
 import { useCallback, useContext, useEffect, useRef, useState } from 'preact/hooks';
 import { ApiServiceContext, machine, updateSettingsCache } from '../../services/ApiService.js';
 import { analyze, parseCoeffs } from '../../utils/pumpFlowCalibration.js';

@@ -1,3 +1,4 @@
+// @ts-check
 import { useRef, useState } from 'preact/hooks';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown';
@@ -11,6 +12,7 @@ import { Trans } from '@lingui/react/macro';
  * @param {import('preact').ComponentChildren} props.label
  * @param {string} [props.htmlFor]
  * @param {import('preact').ComponentChildren} [props.helpText]
+ * @param {import('preact').ComponentChildren} [props.error]
  * @param {import('preact').ComponentChildren} [props.children]
  * @param {string} [props.className]
  * @param {boolean} [props.noMargin]

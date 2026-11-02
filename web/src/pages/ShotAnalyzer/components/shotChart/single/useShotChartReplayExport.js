@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * useShotChartReplayExport.js
  *
@@ -184,6 +185,7 @@ export function useShotChartReplayExport({
   const replayExportStatusLabel = replayExportStatus.error
     ? replayExportStatus.error
     : getReplayExportStatusLabel(replayExportStatus.status, effectiveVideoExportFormat || 'mp4');
+  // @ts-expect-error getReplayExportStatusHint takes no arguments (it is a stub that always returns '')
   const replayExportStatusHint = getReplayExportStatusHint(replayExportStatus.status);
 
   const setReplayExportStatusSafely = nextStatus => {

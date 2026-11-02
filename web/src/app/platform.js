@@ -1,3 +1,4 @@
+// @ts-check
 // True when built with `--mode app` for the Capacitor native shell.
 export const isApp = import.meta.env.VITE_PLATFORM === 'app';
 

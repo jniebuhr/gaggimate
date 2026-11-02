@@ -1,3 +1,4 @@
+// @ts-check
 /** Identifies recorded sample gaps that exceed the normal 255 ms cadence. */
 
 export const SLOW_SAMPLE_INTERVAL_THRESHOLD_MS = 255;

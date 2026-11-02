@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * @param {object} props
  * @param {number} [props.xs] - Grid column span (1-12) per breakpoint

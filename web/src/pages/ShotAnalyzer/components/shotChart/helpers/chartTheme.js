@@ -1,3 +1,4 @@
+// @ts-check
 import {
   CHART_COLOR_FALLBACKS,
   CHART_COLOR_TOKEN_MAP,

@@ -1,3 +1,4 @@
+// @ts-check
 /** Composes responsive legend, replay/export, and compare controls for shot charts. */
 
 import { useEffect, useState } from 'preact/hooks';

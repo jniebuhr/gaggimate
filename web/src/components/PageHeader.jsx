@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * @param {object} props
  * @param {import('preact').ComponentChildren} props.title

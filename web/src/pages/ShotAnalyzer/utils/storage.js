@@ -1,3 +1,4 @@
+// @ts-check
 import { ANALYZER_DB_KEYS } from './constants';
 
 export const saveToStorage = (key, value, storage = localStorage) => {

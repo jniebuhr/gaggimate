@@ -1,3 +1,4 @@
+// @ts-check
 import { effect } from '@preact/signals';
 import { t } from '@lingui/core/macro';
 import { WARNING_LEVEL, warningByKey } from '../utils/warnings.js';

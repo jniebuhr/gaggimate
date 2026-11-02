@@ -1,3 +1,4 @@
+// @ts-check
 import { computed, signal } from '@preact/signals';
 import { t } from '@lingui/core/macro';
 import { isApp } from './platform.js';

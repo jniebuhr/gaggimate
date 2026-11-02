@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * Stable public entry point for low-level ShotChart helpers.
  * Implementations are grouped by responsibility under ./helpers/.

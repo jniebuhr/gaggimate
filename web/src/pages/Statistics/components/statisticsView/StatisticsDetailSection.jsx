@@ -1,3 +1,4 @@
+// @ts-check
 // Sub-components for the Statistics view detail section: header bar and panel body with metrics, profile groups, phase stats, trend chart, and compare
 import { useLingui } from '@lingui/react/macro';
 import { STATISTICS_PANEL_CLASS } from './constants';

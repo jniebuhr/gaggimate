@@ -1,3 +1,4 @@
+// @ts-check
 /** Resolves profile exit targets against measured and delay-adjusted shot values. */
 
 import { LAST_PHASE_OVERSHOOT_MAX_G } from './delayTracking';

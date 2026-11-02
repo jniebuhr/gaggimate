@@ -1,3 +1,4 @@
+// @ts-check
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { useLocation } from 'preact-iso';
 import { useLingui } from '@lingui/react/macro';

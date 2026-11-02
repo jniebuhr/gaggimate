@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * Main library surface for the Shot Analyzer.
  * Coordinates library state, selection, and the extracted presentation modules.

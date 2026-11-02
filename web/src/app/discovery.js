@@ -1,3 +1,4 @@
+// @ts-check
 import { signal } from '@preact/signals';
 
 // Native mDNS browser for _gaggimate._tcp (ios/App/App/MachineDiscoveryPlugin.swift, android MachineDiscoveryPlugin.java).
