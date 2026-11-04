@@ -220,7 +220,11 @@ function ProfileCard({
                   <input
                     checked={data.selected}
                     type='checkbox'
-                    onClick={() => onSelect(data.id)}
+                    onClick={e => {
+                      // Keep the box driven by data.selected: the browser must not toggle it itself
+                      e.preventDefault();
+                      if (!data.selected) onSelect(data.id);
+                    }}
                     className='checkbox checkbox-success checkbox-sm'
                     aria-label={t`Select ${label} profile`}
                   />
