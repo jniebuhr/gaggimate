@@ -236,20 +236,24 @@ function ProfileCard({
           <div className='mx-2 flex flex-row items-center gap-2 align-middle'>
             <div className='flex min-w-0 flex-grow flex-row items-center gap-4'>
               {/* CheckBox */}
-              <div>
-                <label className='cursor-pointer'>
-                  <input
-                    checked={data.selected}
-                    type='checkbox'
-                    onClick={e => {
-                      // Keep the box driven by data.selected: the browser must not toggle it itself
-                      e.preventDefault();
-                      onSelect(data.id, data.selected);
-                    }}
-                    className='checkbox checkbox-success checkbox-sm'
-                    aria-label={t`Select ${label} profile`}
-                  />
-                </label>
+              <div className='flex size-5 items-center justify-center'>
+                {visiblePending === 'select' ? (
+                  <Spinner size={4} />
+                ) : (
+                  <label className='cursor-pointer'>
+                    <input
+                      checked={data.selected}
+                      type='checkbox'
+                      onClick={e => {
+                        // Keep the box driven by data.selected: the browser must not toggle it itself
+                        e.preventDefault();
+                        onSelect(data.id, data.selected);
+                      }}
+                      className='checkbox checkbox-success checkbox-sm'
+                      aria-label={t`Select ${label} profile`}
+                    />
+                  </label>
+                )}
               </div>
               {/* Label and Type */}
               <div className='flex flex-row flex-wrap items-center gap-4'>
@@ -941,13 +945,17 @@ export function ProfileList() {
       if (pendingSelectionRef.current === id) return;
       if (alreadySelected && pendingSelectionRef.current === null) return;
       pendingSelectionRef.current = id;
-      try {
-        await apiService.request({ tp: 'req:profiles:select', id });
-      } finally {
-        if (pendingSelectionRef.current === id) pendingSelectionRef.current = null;
-      }
+      return withPending(id, 'select', async () => {
+        try {
+          await apiService.request({ tp: 'req:profiles:select', id });
+        } catch {
+          // Timeout or closed socket: the checkbox simply stays where it was.
+        } finally {
+          if (pendingSelectionRef.current === id) pendingSelectionRef.current = null;
+        }
+      });
     },
-    [apiService],
+    [apiService, withPending],
   );
 
   const setFavorite = useCallback(
