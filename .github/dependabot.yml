@@ -1,0 +1,35 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /web
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: chore(web)
+    # Packages that have to move together share a group, otherwise their separate PRs fail on peer dependencies.
+    # A package lands in the first group that matches it.
+    groups:
+      lingui:
+        patterns: ['@lingui/*']
+      vite:
+        patterns: ['vite', '@preact/preset-vite']
+      tailwind:
+        patterns: ['tailwindcss', '@tailwindcss/*', 'daisyui', 'prettier-plugin-tailwindcss']
+      capacitor:
+        patterns: ['@capacitor/*', '@capgo/*']
+      fontawesome:
+        patterns: ['@fortawesome/*']
+      minor-and-patch:
+        update-types: [minor, patch]
+
+  # Scans .github/workflows; add the .github/actions/* dirs here if a composite action starts using other actions.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: chore(ci)
+    groups:
+      actions:
+        patterns: ['*']
