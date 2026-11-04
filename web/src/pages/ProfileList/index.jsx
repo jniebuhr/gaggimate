@@ -467,7 +467,11 @@ function ProfileCard({
                       className='btn btn-sm btn-ghost text-success'
                       aria-label={t`Duplicate ${label} profile`}
                     >
-                      <FontAwesomeIcon icon={faCopy} />
+                      {pending === 'duplicate' ? (
+                        <Spinner size={4} />
+                      ) : (
+                        <FontAwesomeIcon icon={faCopy} />
+                      )}
                     </button>
                   </Tooltip>
                   {!isSystem && (
@@ -945,21 +949,27 @@ export function ProfileList() {
     [apiService, setProfiles, withPending],
   );
 
+  // The machine assigns the new id and may favorite the copy on its own, so the list is reloaded
+  // quietly (no page spinner) once the copy is saved, while the source card shows a spinner.
   const onDuplicate = useCallback(
-    async id => {
-      setLoading(true);
-      const original = profiles.find(p => p.id === id);
-      if (original) {
-        const copy = { ...original };
-        delete copy.id;
-        delete copy.selected;
-        delete copy.favorite;
-        copy.label = `${original.label} Copy`;
-        await apiService.request({ tp: 'req:profiles:save', profile: copy });
-      }
-      await invalidateProfiles();
-    },
-    [apiService, profiles, setLoading, invalidateProfiles],
+    id =>
+      withPending(id, 'duplicate', async () => {
+        const original = profiles.find(p => p.id === id);
+        if (original) {
+          const copy = { ...original };
+          delete copy.id;
+          delete copy.selected;
+          delete copy.favorite;
+          copy.label = `${original.label} Copy`;
+          try {
+            await apiService.request({ tp: 'req:profiles:save', profile: copy });
+          } catch {
+            // Resynced below.
+          }
+        }
+        await invalidateProfiles();
+      }),
+    [apiService, profiles, invalidateProfiles, withPending],
   );
 
   const onExport = useCallback(async () => {
