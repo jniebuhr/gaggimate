@@ -66,6 +66,22 @@ const PhaseLabels = {
   brew: msg({ message: 'Brew', context: 'phase type' }),
 };
 
+// Delay function for turning icons into spinners while awaiting response
+function useDelayedValue(value, delayMs) {
+  const [delayed, setDelayed] = useState();
+  useEffect(() => {
+    if (!value) {
+      setDelayed(undefined);
+      return undefined;
+    }
+    const timer = setTimeout(() => setDelayed(value), delayMs);
+    return () => clearTimeout(timer);
+  }, [value, delayMs]);
+  return value ? delayed : undefined;
+}
+
+const PENDING_VISUAL_DELAY_MS = 200;
+
 function ProfileCard({
   data,
   onDelete,
@@ -83,6 +99,7 @@ function ProfileCard({
   isLast,
 }) {
   const { t } = useLingui();
+  const visiblePending = useDelayedValue(pending, PENDING_VISUAL_DELAY_MS);
   const { armed: confirmDelete, armOrRun: confirmOrDelete } = useConfirmAction(4000);
   const [tooltipsDisabled, setTooltipsDisabled] = useState(false);
 
@@ -210,7 +227,7 @@ function ProfileCard({
       className={`profile-card-container mb-2 ${pending ? 'pointer-events-none' : ''}`}
     >
       <div
-        className={`flex flex-row items-center transition-opacity ${pending ? 'opacity-50' : ''}`}
+        className={`flex flex-row items-center transition-opacity ${visiblePending ? 'opacity-50' : ''}`}
         role='group'
         aria-labelledby={`profile-${data.id}-title`}
         aria-busy={Boolean(pending)}
@@ -289,7 +306,11 @@ function ProfileCard({
                     aria-expanded={menuOpen}
                     aria-controls={`profile-${data.id}-menu`}
                   >
-                    {pending ? <Spinner size={4} /> : <FontAwesomeIcon icon={faEllipsisVertical} />}
+                    {visiblePending ? (
+                      <Spinner size={4} />
+                    ) : (
+                      <FontAwesomeIcon icon={faEllipsisVertical} />
+                    )}
                   </button>
                   {menuOpen && (
                     <div
@@ -427,7 +448,7 @@ function ProfileCard({
                       }
                       aria-pressed={data.favorite}
                     >
-                      {pending === 'favorite' ? (
+                      {visiblePending === 'favorite' ? (
                         <Spinner size={4} />
                       ) : (
                         <FontAwesomeIcon icon={faStar} className={bookmarkClass} />
@@ -467,7 +488,7 @@ function ProfileCard({
                       className='btn btn-sm btn-ghost text-success'
                       aria-label={t`Duplicate ${label} profile`}
                     >
-                      {pending === 'duplicate' ? (
+                      {visiblePending === 'duplicate' ? (
                         <Spinner size={4} />
                       ) : (
                         <FontAwesomeIcon icon={faCopy} />
@@ -487,7 +508,7 @@ function ProfileCard({
                             : t`Delete ${label} profile`
                         }
                       >
-                        {pending === 'delete' ? (
+                        {visiblePending === 'delete' ? (
                           <Spinner size={4} />
                         ) : (
                           <FontAwesomeIcon icon={faTrashCan} />
