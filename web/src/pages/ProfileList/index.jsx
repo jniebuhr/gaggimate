@@ -70,9 +70,9 @@ function ProfileCard({
   data,
   onDelete,
   onSelect,
-  onFavorite,
-  onUnfavorite,
+  onSetFavorite,
   onDuplicate,
+  pending,
   favoriteDisabled,
   unfavoriteDisabled,
   disabledDrag,
@@ -110,9 +110,8 @@ function ProfileCard({
   const favoriteToggleClass = favoriteToggleDisabled ? 'opacity-50 cursor-not-allowed' : '';
 
   const onFavoriteToggle = useCallback(() => {
-    if (data.favorite && !unfavoriteDisabled) onUnfavorite(data.id);
-    else if (!data.favorite && !favoriteDisabled) onFavorite(data.id);
-  }, [data.favorite, unfavoriteDisabled, favoriteDisabled, onUnfavorite, onFavorite, data.id]);
+    if (!favoriteToggleDisabled) onSetFavorite(data.id, !data.favorite);
+  }, [favoriteToggleDisabled, onSetFavorite, data.id, data.favorite]);
 
   const onDownload = useCallback(async () => {
     const download = await withExportedImage(data);
@@ -205,11 +204,16 @@ function ProfileCard({
   }, [menuOpen, positionPopover]);
 
   return (
-    <Card sm={12} role='listitem' className='profile-card-container mb-2'>
+    <Card
+      sm={12}
+      role='listitem'
+      className={`profile-card-container mb-2 ${pending ? 'pointer-events-none' : ''}`}
+    >
       <div
-        className='flex flex-row items-center'
+        className={`flex flex-row items-center transition-opacity ${pending ? 'opacity-50' : ''}`}
         role='group'
         aria-labelledby={`profile-${data.id}-title`}
+        aria-busy={Boolean(pending)}
       >
         <div className='flex flex-grow flex-col overflow-hidden'>
           <div className='mx-2 flex flex-row items-center gap-2 align-middle'>
@@ -285,7 +289,7 @@ function ProfileCard({
                     aria-expanded={menuOpen}
                     aria-controls={`profile-${data.id}-menu`}
                   >
-                    <FontAwesomeIcon icon={faEllipsisVertical} />
+                    {pending ? <Spinner size={4} /> : <FontAwesomeIcon icon={faEllipsisVertical} />}
                   </button>
                   {menuOpen && (
                     <div
@@ -423,7 +427,11 @@ function ProfileCard({
                       }
                       aria-pressed={data.favorite}
                     >
-                      <FontAwesomeIcon icon={faStar} className={bookmarkClass} />
+                      {pending === 'favorite' ? (
+                        <Spinner size={4} />
+                      ) : (
+                        <FontAwesomeIcon icon={faStar} className={bookmarkClass} />
+                      )}
                     </button>
                   </Tooltip>
                   <Tooltip content={t`Edit profile`}>
@@ -866,6 +874,19 @@ export function ProfileList() {
     };
   }, [loading, searchTerm, onDragStart, onDragChange, onDragEnd]);
 
+  const [pendingById, setPendingById] = useState({});
+  const withPending = useCallback(async (id, kind, task) => {
+    setPendingById(prev => ({ ...prev, [id]: kind }));
+    try {
+      await task();
+    } finally {
+      setPendingById(prev => {
+        const { [id]: _done, ...rest } = prev;
+        return rest;
+      });
+    }
+  }, []);
+
   const onDelete = useCallback(
     async id => {
       setLoading(true);
@@ -892,22 +913,24 @@ export function ProfileList() {
     [apiService],
   );
 
-  const onFavorite = useCallback(
-    async id => {
-      setLoading(true);
-      await apiService.request({ tp: 'req:profiles:favorite', id });
-      await invalidateProfiles();
+  const setFavorite = useCallback(
+    (id, favorite) => {
+      const apply = value =>
+        setProfiles(prev => prev.map(p => (p.id === id ? { ...p, favorite: value } : p)));
+      apply(favorite);
+      return withPending(id, 'favorite', async () => {
+        try {
+          const response = await apiService.request({
+            tp: favorite ? 'req:profiles:favorite' : 'req:profiles:unfavorite',
+            id,
+          });
+          if (response?.error) apply(!favorite);
+        } catch {
+          apply(!favorite);
+        }
+      });
     },
-    [apiService, setLoading, invalidateProfiles],
-  );
-
-  const onUnfavorite = useCallback(
-    async id => {
-      setLoading(true);
-      await apiService.request({ tp: 'req:profiles:unfavorite', id });
-      await invalidateProfiles();
-    },
-    [apiService, setLoading, invalidateProfiles],
+    [apiService, setProfiles, withPending],
   );
 
   const onDuplicate = useCallback(
@@ -1087,11 +1110,11 @@ export function ProfileList() {
               key={data.id}
               data={data}
               onDelete={onDelete}
+              pending={pendingById[data.id]}
               onSelect={onSelect}
               favoriteDisabled={favoriteDisabled}
               unfavoriteDisabled={unfavoriteDisabled}
-              onUnfavorite={onUnfavorite}
-              onFavorite={onFavorite}
+              onSetFavorite={setFavorite}
               onDuplicate={onDuplicate}
               disabledDrag={!!searchTerm.trim()}
               isDragging={isDragging}
