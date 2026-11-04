@@ -483,7 +483,11 @@ function ProfileCard({
                             : t`Delete ${label} profile`
                         }
                       >
-                        <FontAwesomeIcon icon={faTrashCan} />
+                        {pending === 'delete' ? (
+                          <Spinner size={4} />
+                        ) : (
+                          <FontAwesomeIcon icon={faTrashCan} />
+                        )}
                         {confirmDelete && (
                           <span className='ml-2 font-semibold'>
                             <Trans>Confirm</Trans>
@@ -888,12 +892,20 @@ export function ProfileList() {
   }, []);
 
   const onDelete = useCallback(
-    async id => {
-      setLoading(true);
-      await apiService.request({ tp: 'req:profiles:delete', id });
-      await invalidateProfiles();
-    },
-    [apiService, setLoading, invalidateProfiles],
+    id =>
+      withPending(id, 'delete', async () => {
+        try {
+          const response = await apiService.request({ tp: 'req:profiles:delete', id });
+          if (response?.error) {
+            await invalidateProfiles();
+            return;
+          }
+          setProfiles(prev => prev.filter(p => p.id !== id));
+        } catch {
+          await invalidateProfiles();
+        }
+      }),
+    [apiService, setProfiles, invalidateProfiles, withPending],
   );
 
   // onSelect will exit early if the requested id is the same as the pending id
