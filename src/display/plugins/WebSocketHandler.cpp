@@ -365,7 +365,9 @@ void WebSocketHandler::handleProfileRequest(uint32_t clientId, JsonDocument &req
         }
     } else if (type == "req:profiles:select") {
         auto id = request["id"].as<String>();
-        profileManager->selectProfile(id);
+        if (!profileManager->selectProfile(id)) {
+            response["error"] = F("Profile not found");
+        }
     } else if (type == "req:profiles:favorite") {
         auto id = request["id"].as<String>();
         if (!profileManager->addFavoritedProfile(id)) {

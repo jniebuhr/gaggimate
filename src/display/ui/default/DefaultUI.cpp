@@ -520,8 +520,9 @@ void DefaultUI::onProfileSelect() {
             id = favoritedProfileIds[currentProfileIdx];
         }
     }
-    if (!id.isEmpty()) {
-        profileManager->selectProfile(id);
+    if (id.isEmpty() || !profileManager->selectProfile(id)) {
+        reloadProfiles();
+        return;
     }
     profileDirty = false;
     changeScreen(SCREEN_ID_BREW_SCREEN);

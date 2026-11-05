@@ -295,12 +295,18 @@ uint8_t *ProfileManager::loadProfileImage(const String &uuid) {
     return pixels;
 }
 
-void ProfileManager::selectProfile(const String &uuid) {
+bool ProfileManager::selectProfile(const String &uuid) {
+    Profile profile{};
+    if (!loadProfile(uuid, profile)) {
+        ESP_LOGW("ProfileManager", "Refusing to select unreadable profile %s", uuid.c_str());
+        return false;
+    }
     ESP_LOGI("ProfileManager", "Selecting profile %s", uuid.c_str());
     _settings.setSelectedProfile(uuid);
-    selectedProfile = Profile{};
-    loadSelectedProfile(selectedProfile);
+    selectedProfile = std::move(profile);
+    selectedProfile.selected = true;
     _plugin_manager->trigger("profiles:profile:select", "id", uuid);
+    return true;
 }
 
 Profile &ProfileManager::getSelectedProfile() { return selectedProfile; }
