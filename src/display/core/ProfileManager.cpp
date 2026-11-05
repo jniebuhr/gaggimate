@@ -68,6 +68,24 @@ void ProfileManager::ensureSystemProfiles() {
     }
 }
 
+String ProfileManager::findReplacementProfile(const String &excludeId) {
+    auto usable = [&](const String &id) {
+        if (id == excludeId || isSystemProfile(id))
+            return false;
+        Profile candidate{};
+        return loadProfile(id, candidate);
+    };
+    for (const auto &id : getFavoritedProfiles(true)) {
+        if (usable(id))
+            return id;
+    }
+    for (const auto &id : listProfiles()) {
+        if (usable(id))
+            return id;
+    }
+    return String();
+}
+
 String ProfileManager::profilePath(const String &uuid) const { return _dir + "/" + uuid + ".json"; }
 
 void ProfileManager::migrate(const std::vector<String> &existingProfiles) {
@@ -237,6 +255,16 @@ bool ProfileManager::deleteProfile(const String &uuid) {
     if (isSystemProfile(uuid)) {
         ESP_LOGW("ProfileManager", "Refusing to delete system profile %s", uuid.c_str());
         return false;
+    }
+    if (uuid == _settings.getSelectedProfile()) {
+        const String replacementProfileId = findReplacementProfile(uuid);
+
+        if (replacementProfileId.isEmpty()) {
+            ESP_LOGW("ProfileManager", "Refusing to delete profile %s: no other profile to select", uuid.c_str());
+            return false;
+        }
+        if (!selectProfile(replacementProfileId))
+            return false;
     }
     removeFavoritedProfile(uuid);
     if (_settings.getStartupProfile() == uuid) {

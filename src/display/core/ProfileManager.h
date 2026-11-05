@@ -48,6 +48,7 @@ class ProfileManager {
     String profilePath(const String &uuid) const;
     void migrate(const std::vector<String> &existingProfiles);
     void ensureSystemProfiles();
+    String findReplacementProfile(const String &excludeId);
 };
 
 #endif // PROFILEMANAGER_H
