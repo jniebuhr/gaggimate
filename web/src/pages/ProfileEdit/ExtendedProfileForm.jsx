@@ -164,7 +164,7 @@ export function ExtendedProfileForm(props) {
           <button
             type='submit'
             className='btn btn-primary gap-2'
-            disabled={saving}
+            disabled={saving || phases.length === 0}
             aria-label={saving ? t`Saving profile...` : t`Save profile`}
           >
             <span>
