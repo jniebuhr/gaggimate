@@ -2787,6 +2787,7 @@ msgid "No phases"
 msgstr "无阶段"
 
 #: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
 msgid "No phases yet. Add a phase to configure brewing."
 msgstr "暂无阶段。添加一个阶段以配置冲煮。"
 

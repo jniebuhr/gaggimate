@@ -90,6 +90,11 @@ export function StandardProfileForm(props) {
                 />
               </div>
             ))}
+            {phases.length === 0 && (
+              <p className='text-base-content/60 text-sm'>
+                <Trans>No phases yet. Add a phase to configure brewing.</Trans>
+              </p>
+            )}
             <div className='flex flex-row justify-center pt-4'>
               <button
                 type='button'
