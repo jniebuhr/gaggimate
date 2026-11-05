@@ -352,8 +352,9 @@ void WebSocketHandler::handleProfileRequest(uint32_t clientId, JsonDocument &req
     } else if (type == "req:profiles:save") {
         auto obj = request["profile"].as<JsonObject>();
         Profile profile;
-        parseProfile(obj, profile);
-        if (!profileManager->saveProfile(profile)) {
+        if (!parseProfile(obj, profile)) {
+            response["error"] = F("Invalid profile");
+        } else if (!profileManager->saveProfile(profile)) {
             response["error"] = F("Save failed");
         }
         auto respObj = response["profile"].to<JsonObject>();
