@@ -1,3 +1,4 @@
+import { requestSettings } from '../../utils/settingsRequest.js';
 import { signal } from '@preact/signals';
 import {
   invalidateSettingsCache,
@@ -7,6 +8,25 @@ import {
 
 // True while the machine reports a first run that has not finished the setup wizard.
 export const setupNeeded = signal(false);
+
+export function setupSteps(offerWifi, configureLater) {
+  return [
+    'machine',
+    ...(configureLater ? ['plugins'] : ['tests', 'plugins']),
+    ...(offerWifi ? ['wifi'] : []),
+    'done',
+  ];
+}
+
+// Keep deferred machine setup in the existing persisted wizard progress field.
+export function parseSetupStep(value = '') {
+  const configureLater = value.startsWith('custom:');
+  return { step: configureLater ? value.slice(7) : value, configureLater };
+}
+
+export function savedSetupStep(step, configureLater) {
+  return configureLater ? `custom:${step}` : step;
+}
 
 export async function checkSetup({ fresh = false } = {}) {
   if (fresh) invalidateSettingsCache(); // another machine was selected in the app
@@ -26,13 +46,11 @@ export async function postSettings(fields) {
     if (value === undefined || value === null) continue;
     body.set(key, typeof value === 'boolean' ? (value ? '1' : '0') : String(value));
   }
-  const response = await fetch('/api/settings', {
+  const data = await requestSettings({
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: body.toString(),
   });
-  if (!response.ok) throw new Error(`POST /api/settings ${response.status}`);
-  const data = await response.json();
   updateSettingsCache(data);
   return data;
 }

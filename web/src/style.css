@@ -766,3 +766,13 @@ html[data-theme='coffee'] {
     background-color: var(--color-base-300);
   }
 }
+
+/* Amber stays readable on light themes; dark themes use their warning yellow. */
+.machine-profile-difference {
+  color: #92400e;
+}
+
+html[data-theme='dark'] .machine-profile-difference,
+html[data-theme='coffee'] .machine-profile-difference {
+  color: var(--color-warning);
+}

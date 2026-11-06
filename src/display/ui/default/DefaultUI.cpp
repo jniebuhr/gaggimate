@@ -734,7 +734,8 @@ void DefaultUI::updateState() {
     targetTemp = static_cast<int>(controller->getTargetTemp());
     pressureAvailable = controller->getSystemInfo().capabilities.pressure ? 1 : 0;
     wifiConnected = WiFi.status() == WL_CONNECTED;
-    grindAvailable = settings.isSmartGrindActive() || settings.getAltRelayFunction() == ALT_RELAY_GRIND;
+    grindAvailable = settings.isSmartGrindActive() ||
+                     (!controller->getSystemInfo().capabilities.dualBoiler && settings.getAltRelayFunction() == ALT_RELAY_GRIND);
     dualBoiler = controller->getSystemInfo().capabilities.dualBoiler ? 1 : 0;
 
     uiFlags.brew_adjustments(brewScreenState == BrewScreenState::Settings);

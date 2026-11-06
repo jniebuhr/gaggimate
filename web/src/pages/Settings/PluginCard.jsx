@@ -2,13 +2,10 @@ import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import homekitImage from '../../assets/homekit.png';
 import { faCalendarDays } from '@fortawesome/free-solid-svg-icons/faCalendarDays';
-import { computed } from '@preact/signals';
-import { machine, ApiServiceContext } from '../../services/ApiService.js';
+import { ApiServiceContext } from '../../services/ApiService.js';
 import { useContext, useEffect, useState } from 'preact/hooks';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { useProfileList } from '../../services/hooks.js';
-
-const gearpumpAddon = computed(() => machine.value.capabilities.gearpumpAddon);
 
 const MAHLKONIG_MIN_RECIPES = 4;
 
@@ -524,115 +521,6 @@ export function PluginCard({
           </div>
         )}
       </div>
-
-      {gearpumpAddon.value && (
-        <div className='bg-base-200 rounded-lg p-4'>
-          <div className='flex items-center justify-between'>
-            <span className='text-xl font-medium'>
-              <Trans>BLDC Pump Settings</Trans>
-            </span>
-          </div>
-          <div className='border-base-300 mt-4 space-y-4 border-t pt-4'>
-            <p className='text-sm opacity-70'>
-              <Trans>
-                The BLDC pump addon was detected in your system. You can change the pump control
-                characteristics using the values below.
-              </Trans>
-            </p>
-
-            <div className='form-control'>
-              <label htmlFor='commutationGain' className='mb-2 block text-sm font-medium'>
-                <Trans>Commutation Gain</Trans>
-              </label>
-              <input
-                id='commutationGain'
-                name='commutationGain'
-                type='number'
-                className='input input-bordered w-full'
-                placeholder='0'
-                min='0'
-                max='100'
-                step='any'
-                value={formData.commutationGain?.toString()}
-                onChange={onChange('commutationGain')}
-              />
-            </div>
-
-            <div className='form-control'>
-              <label htmlFor='convergenceGain' className='mb-2 block text-sm font-medium'>
-                <Trans>Convergence Gain</Trans>
-              </label>
-              <input
-                id='convergenceGain'
-                name='convergenceGain'
-                type='number'
-                className='input input-bordered w-full'
-                placeholder='0'
-                min='0'
-                max='100'
-                step='any'
-                value={formData.convergenceGain?.toString()}
-                onChange={onChange('convergenceGain')}
-              />
-            </div>
-
-            <div className='form-control'>
-              <label htmlFor='integralGain' className='mb-2 block text-sm font-medium'>
-                <Trans>Integral Gain</Trans>
-              </label>
-              <input
-                id='integralGain'
-                name='integralGain'
-                type='number'
-                className='input input-bordered w-full'
-                placeholder='0'
-                min='0'
-                max='100'
-                step='any'
-                value={formData.integralGain?.toString()}
-                onChange={onChange('integralGain')}
-              />
-            </div>
-            <div className='form-control'>
-              <label htmlFor='maxPumpPower' className='mb-2 block text-sm font-medium'>
-                <Trans>Maximum Pump Power (0 - 1)</Trans>
-              </label>
-              <input
-                id='maxPumpPower'
-                name='maxPumpPower'
-                type='number'
-                placeholder='0'
-                min='0'
-                max='1'
-                step='any'
-                className='input input-bordered w-full'
-                value={formData.maxPumpPower?.toString()}
-                onChange={onChange('maxPumpPower')}
-              />
-            </div>
-            <div className='form-control'>
-              <label htmlFor='pumpSlipCoeffs' className='mb-2 block text-sm font-medium'>
-                <Trans>Pump Slip Coefficients</Trans>
-              </label>
-              <input
-                id='pumpSlipCoeffs'
-                name='pumpSlipCoeffs'
-                type='text'
-                className='input input-bordered w-full'
-                placeholder='0,0,0,0'
-                value={formData.pumpSlipCoeffs}
-                onChange={onChange('pumpSlipCoeffs')}
-              />
-              <span className='mt-1 text-xs opacity-70'>
-                <Trans>
-                  Pressure polynomial (a,b,c,d) for vane-/gear-pump internal leakage. Leave at
-                  0,0,0,0 if uncalibrated.
-                </Trans>
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

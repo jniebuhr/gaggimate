@@ -179,7 +179,7 @@ void Controller::seedSDCard() {
     if (marker)
         marker.close();
     bool ok = true;
-    for (const char *dir : {"/p", "/h"}) {
+    for (const char *dir : {"/p", "/h", "/m"}) {
         if (LittleFS.exists(dir))
             ok = fs_util::copyTree(LittleFS, SD_MMC, dir) && ok;
     }

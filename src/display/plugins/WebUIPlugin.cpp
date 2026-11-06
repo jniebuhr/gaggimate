@@ -4,6 +4,8 @@
 #include <SD_MMC.h>
 #include <algorithm>
 #include <display/core/Controller.h>
+#include <display/core/MachineProfileStore.h>
+#include <display/core/MachineProfiles.h>
 #include <display/core/ProfileImage.h>
 #include <display/core/ProfileManager.h>
 #include <display/models/profile.h>
@@ -188,6 +190,8 @@ void WebUIPlugin::setupServer() {
     if (controller->isSDCard()) {
         fs = &SD_MMC;
     }
+    machineProfiles = new MachineProfileStore(*fs);
+    server.on("/api/machine-profiles", [this](AsyncWebServerRequest *request) { handleMachineProfiles(request); });
     server
         .on(AsyncURIMatcher::prefix("/api/history/"), HTTP_ANY,
             [](AsyncWebServerRequest *request) { request->send(503, "text/plain", "Update in progress"); })
@@ -316,9 +320,90 @@ static bool parseBoolArg(const String &value) {
     return !(value.isEmpty() || value == "0" || value.equalsIgnoreCase("false") || value.equalsIgnoreCase("off"));
 }
 
+void WebUIPlugin::handleMachineProfiles(AsyncWebServerRequest *request) {
+    if (controller->isUpdating()) {
+        request->send(503, "application/json", "{\"error\":\"Update in progress\"}");
+        return;
+    }
+    JsonDocument doc(&psramAllocator);
+    String error;
+    bool ok = false;
+    int status = 400;
+    if (request->method() == HTTP_GET) {
+        if (request->hasArg("id")) {
+            ok = loadBuiltinMachineProfile(request->arg("id"), doc) || machineProfiles->load(request->arg("id"), doc, error);
+            status = 404;
+        } else {
+            ok = machineProfiles->list(doc.to<JsonArray>(), error);
+            if (ok)
+                addBuiltinMachineProfiles(doc.as<JsonArray>());
+            status = 500;
+        }
+    } else if (request->method() == HTTP_POST && request->hasArg("profile")) {
+        const String raw = request->arg("profile");
+        if (raw.length() > 3500 || deserializeJson(doc, raw))
+            error = "Invalid machine profile JSON";
+        else
+            ok = machineProfiles->save(doc.as<JsonVariantConst>(), error, request->arg("replace") == "1");
+    } else if (request->method() == HTTP_DELETE && request->hasArg("id")) {
+        JsonDocument active(&psramAllocator);
+        const String selection = controller->getSettings().getMachineProfileSelection();
+        if (selection.length() && deserializeJson(active, selection))
+            error = "Could not verify active machine profile";
+        else if (active["id"].as<String>() == request->arg("id"))
+            error = "Cannot delete the active machine profile";
+        else
+            ok = machineProfiles->remove(request->arg("id"), error);
+        doc["ok"] = ok;
+    } else
+        error = "Invalid machine profile request";
+    if (!ok) {
+        doc.clear();
+        doc["error"] = error;
+    }
+    AsyncResponseStream *response = request->beginResponseStream("application/json");
+    response->setCode(ok ? 200 : status);
+    response->addHeader("Cache-Control", "no-store");
+    serializeJson(doc, *response);
+    request->send(response);
+}
+
 void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     if (request->method() == HTTP_POST) {
-        controller->getSettings().batchUpdate([request](Settings *settings) {
+        if (request->hasArg("setupStep")) {
+            const String step = request->arg("setupStep");
+            if (step != "machine" && step != "tests" && step != "plugins" && step != "wifi" && step != "done" &&
+                step != "custom:plugins" && step != "custom:wifi" && step != "custom:done") {
+                request->send(400, "application/json", "{\"error\":\"Invalid setup step\"}");
+                return;
+            }
+        }
+        String profileError;
+        if (!validateMachineProfileRequest(request, controller->getSystemInfo(), false, profileError)) {
+            JsonDocument failure;
+            failure["error"] = profileError;
+            String body;
+            serializeJson(failure, body);
+            request->send(400, "application/json", body);
+            return;
+        }
+        const bool profileChanged =
+            request->hasArg("machineProfileSelection") &&
+            request->arg("machineProfileSelection") != controller->getSettings().getMachineProfileSelection();
+        if (profileChanged && (controller->isActive() || controller->isUpdating() || controller->isAutotuning())) {
+            request->send(409, "application/json",
+                          "{\"error\":\"Stop the current process before applying a machine configuration\"}");
+            return;
+        }
+        if (profileChanged)
+            controller->activateStandby();
+        bool saved = false;
+        controller->getSettings().batchUpdate([request, &saved, &profileError](Settings *settings) {
+            if (request->hasArg("machineProfileSelection") &&
+                !settings->setMachineProfileSelection(request->arg("machineProfileSelection"))) {
+                profileError = "Could not create machine profile reference; previous selection retained";
+                return;
+            }
             if (request->hasArg("startupMode"))
                 settings->setStartupMode(request->arg("startupMode") == "brew" ? MODE_BREW : MODE_STANDBY);
             if (request->hasArg("startupProfile"))
@@ -377,6 +462,8 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setWifiPassword(request->arg("wifiPassword"));
             if (request->hasArg("apPassword") && request->arg("apPassword").length() >= WIFI_AP_PASSWORD_MIN_LENGTH)
                 settings->setWifiApPassword(request->arg("apPassword"));
+            if (request->hasArg("setupStep"))
+                settings->setSetupStep(request->arg("setupStep"));
             if (request->hasArg("setupDone"))
                 settings->setSetupDone(parseBoolArg(request->arg("setupDone")));
             if (request->hasArg("homekit"))
@@ -537,22 +624,37 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 }
                 settings->setAutoWakeupSchedules(schedules);
             }
-            settings->save(true);
+            saved = settings->save(true);
         });
+        if (!saved) {
+            JsonDocument failure;
+            failure["error"] = (profileError.isEmpty() ? controller->getSettings().getSaveError() : profileError) +
+                               ". Restart cancelled; retry saving.";
+            String body;
+            serializeJson(failure, body);
+            request->send(500, "application/json", body);
+            return;
+        }
         pluginManager->trigger("settings:changed");
         controller->setTargetTemp(controller->getTargetTemp());
+        controller->setPressureScale();
         controller->setScaleFactors();
         controller->setHeaterSettings();
         controller->setPumpModelCoeffs();
     }
 
-    AsyncResponseStream *response = request->beginResponseStream("application/json");
     JsonDocument doc(&psramAllocator);
     Settings const &settings = controller->getSettings();
+    doc["controllerError"] = controller->getError();
     doc["startupMode"] = settings.getStartupMode() == MODE_BREW ? "brew" : "standby";
     doc["startupProfile"] = settings.getStartupProfile();
     doc["targetSteamTemp"] = settings.getTargetSteamTemp();
     doc["targetWaterTemp"] = settings.getTargetWaterTemp();
+    if (!addMachineProfileSettings(doc, settings, controller->getSystemInfo(), false)) {
+        request->send(500, "application/json", "{\"error\":\"Could not read machine profile settings\"}");
+        return;
+    }
+    doc["setupStep"] = settings.getSetupStep();
     doc["setupDone"] = settings.isSetupDone();
     doc["homekit"] = settings.isHomekit();
     doc["homeAssistant"] = settings.isHomeAssistant();
@@ -652,6 +754,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
         }
     }
     doc["autowakeupSchedules"] = schedulesStr;
+    AsyncResponseStream *response = request->beginResponseStream("application/json");
     serializeJson(doc, *response);
     request->send(response);
 

@@ -1,3 +1,5 @@
+import { requestSettings } from '../../utils/settingsRequest.js';
+import { confirmProfileApply } from '../../utils/machineProfiles.js';
 import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
 import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
 import { faEllipsisVertical } from '@fortawesome/free-solid-svg-icons/faEllipsisVertical';
@@ -66,7 +68,15 @@ import {
 } from './settingsForm.js';
 
 // Device facts GET /api/settings reports for display only; never saved, exported or imported.
-const READ_ONLY_KEYS = ['deviceIp', 'setupDone', 'apMode'];
+const READ_ONLY_KEYS = [
+  'deviceIp',
+  'setupDone',
+  'apMode',
+  'machineProfileBoard',
+  'machineProfileCapabilities',
+  'machineHardwareConfiguration',
+  'machineProfileSupportedFields',
+];
 
 // Form-only fields that never come back from GET /api/settings.
 const FORM_ONLY_KEYS = [
@@ -348,15 +358,14 @@ export function Settings() {
     async (e, restart = false) => {
       if (e) e.preventDefault();
       setSubmitting(true);
-      const form = formRef.current;
       const formDataToSubmit = buildSubmitFormData(formData, autowakeupSchedules, restart);
 
       try {
-        const response = await fetch(form.action, {
-          method: 'post',
+        if (!(await confirmProfileApply(formData))) return;
+        const data = await requestSettings({
+          method: 'POST',
           body: formDataToSubmit,
         });
-        const data = await response.json();
 
         const splitPid = data.pid ? splitPidString(data.pid) : null;
         const buttonFields = data.buttonBehavior ? splitButtons(data.buttonBehavior) : {};
@@ -374,6 +383,7 @@ export function Settings() {
         setImportNotice(null);
       } catch (error) {
         console.error('Failed to save settings:', error);
+        window.alert(error.message);
       } finally {
         setSubmitting(false);
       }
@@ -589,7 +599,12 @@ export function Settings() {
           (isLoading ? (
             <MachineTabSkeleton />
           ) : (
-            <LazyMachineTab formData={formData} onChange={onChange} setField={setField} />
+            <LazyMachineTab
+              formData={formData}
+              onChange={onChange}
+              setField={setField}
+              profiles={profiles}
+            />
           ))}
         {tab === 'plugins' &&
           (isLoading ? (

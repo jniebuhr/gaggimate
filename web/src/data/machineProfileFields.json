@@ -1,0 +1,224 @@
+{
+  "pid": {
+    "label": "PID and feedforward gains",
+    "type": "csv",
+    "lengths": [4]
+  },
+  "temperatureOffset": {
+    "label": "Temperature offset (\u00b0C)",
+    "type": "integer",
+    "min": -50,
+    "max": 100
+  },
+  "pumpModelCoeffs": {
+    "label": "Pump flow coefficients",
+    "type": "csv",
+    "lengths": [2, 4],
+    "capability": "pressure"
+  },
+  "pressureScaling": {
+    "label": "Pressure sensor rating (bar)",
+    "type": "number",
+    "min": 0.1,
+    "max": 100,
+    "capability": "pressure"
+  },
+  "pressureOffset": {
+    "label": "Pressure offset (bar)",
+    "type": "number",
+    "min": 0,
+    "max": 20,
+    "capability": "pressure"
+  },
+  "steamPumpPercentage": {
+    "label": "Steam pump assist (stored units: %, or 0.1 ml/s with pressure control)",
+    "type": "number",
+    "min": 0,
+    "max": 100,
+    "singleBoiler": true
+  },
+  "steamPumpCutoff": {
+    "label": "Pump assist cutoff (bar)",
+    "type": "number",
+    "min": 0,
+    "max": 20,
+    "capability": "pressure",
+    "singleBoiler": true
+  },
+  "altRelayFunction": {
+    "label": "Alt relay function",
+    "type": "integer",
+    "values": [0, 1],
+    "singleBoiler": true,
+    "options": {
+      "0": "None",
+      "1": "Grind"
+    }
+  },
+  "heaterCoordinationEnabled": {
+    "label": "Heater coordination",
+    "type": "boolean",
+    "capability": "dualBoiler"
+  },
+  "heaterHandoverMs": {
+    "label": "Heater handover pause (ms)",
+    "type": "integer",
+    "min": 20,
+    "max": 5000,
+    "capability": "dualBoiler"
+  },
+  "targetSteamTemp": {
+    "label": "Steam temperature (\u00b0C)",
+    "type": "integer",
+    "min": 100,
+    "max": 165
+  },
+  "targetWaterTemp": {
+    "label": "Water temperature (\u00b0C)",
+    "type": "integer",
+    "min": 0,
+    "max": 110
+  },
+  "ntcBrewNominalResistance": {
+    "label": "Brew NTC resistance at 25\u00b0C (\u03a9)",
+    "type": "number",
+    "min": 100,
+    "max": 1000000,
+    "capability": "dualBoiler",
+    "hardware": true,
+    "restart": true
+  },
+  "ntcBrewSeriesResistance": {
+    "label": "Brew Divider resistance (\u03a9)",
+    "type": "number",
+    "min": 100,
+    "max": 1000000,
+    "capability": "dualBoiler",
+    "hardware": true,
+    "restart": true
+  },
+  "ntcBrewSupplyVoltage": {
+    "label": "Brew Divider supply (V)",
+    "type": "number",
+    "min": 0.5,
+    "max": 5.5,
+    "capability": "dualBoiler",
+    "hardware": true,
+    "restart": true
+  },
+  "ntcBrewBeta": {
+    "label": "Brew NTC Beta (K)",
+    "type": "number",
+    "min": 1000,
+    "max": 10000,
+    "capability": "dualBoiler",
+    "hardware": true,
+    "restart": true
+  },
+  "ntcSteamNominalResistance": {
+    "label": "Steam NTC resistance at 25\u00b0C (\u03a9)",
+    "type": "number",
+    "min": 100,
+    "max": 1000000,
+    "capability": "dualBoiler",
+    "hardware": true,
+    "restart": true
+  },
+  "ntcSteamSeriesResistance": {
+    "label": "Steam Divider resistance (\u03a9)",
+    "type": "number",
+    "min": 100,
+    "max": 1000000,
+    "capability": "dualBoiler",
+    "hardware": true,
+    "restart": true
+  },
+  "ntcSteamSupplyVoltage": {
+    "label": "Steam Divider supply (V)",
+    "type": "number",
+    "min": 0.5,
+    "max": 5.5,
+    "capability": "dualBoiler",
+    "hardware": true,
+    "restart": true
+  },
+  "ntcSteamBeta": {
+    "label": "Steam NTC Beta (K)",
+    "type": "number",
+    "min": 1000,
+    "max": 10000,
+    "capability": "dualBoiler",
+    "hardware": true,
+    "restart": true
+  },
+  "tankLevelEnabled": {
+    "label": "Tank level sensor",
+    "type": "boolean",
+    "capability": "dualBoiler",
+    "hardware": true,
+    "restart": true
+  },
+  "steamLevelEnabled": {
+    "label": "Steam boiler level sensor",
+    "type": "boolean",
+    "capability": "dualBoiler",
+    "hardware": true,
+    "restart": true
+  },
+  "systemLedEnabled": {
+    "label": "System LED",
+    "type": "boolean",
+    "capability": "dualBoiler",
+    "hardware": true,
+    "restart": true
+  },
+  "steamRefillMode": {
+    "label": "Steam refill arrangement",
+    "type": "integer",
+    "values": [0, 1, 2],
+    "capability": "dualBoiler",
+    "hardware": true,
+    "restart": false,
+    "options": {
+      "0": "Disabled",
+      "1": "Refill valve and brew pump",
+      "2": "Separate steam refill pump"
+    }
+  },
+  "steamRefillPostClearSeconds": {
+    "label": "Refill after level clears (seconds)",
+    "type": "integer",
+    "min": 0,
+    "max": 120,
+    "capability": "dualBoiler",
+    "hardware": true,
+    "restart": false
+  },
+  "steamLevelDebounceChecks": {
+    "label": "Steam level debounce (100 ms checks)",
+    "type": "integer",
+    "min": 1,
+    "max": 100,
+    "capability": "dualBoiler",
+    "hardware": true,
+    "restart": true
+  },
+  "rememberSteamState": {
+    "label": "Remember steam enabled state",
+    "type": "boolean",
+    "capability": "dualBoiler",
+    "hardware": true,
+    "restart": false
+  },
+  "independentSteamControl": {
+    "label": "Independent steam heater toggle",
+    "type": "boolean",
+    "capability": "dualBoiler",
+    "hardware": true,
+    "restart": false
+  },
+  "momentaryButtons": {
+    "label": "Momentary buttons",
+    "type": "boolean"
+  }
+}

@@ -4,9 +4,12 @@
 
 #include <Arduino.h>
 #include <Preferences.h>
+#include <atomic>
 #include <display/core/Property.h>
 #include <display/core/constants.h>
 #include <display/core/utils.h>
+#include <esp_err.h>
+#include <mutex>
 #include <vector>
 
 constexpr uint16_t DEFAULT_HARDWARE_SCALE_SAMPLE_RATE_SPS = 10;
@@ -68,6 +71,13 @@ template <> struct PreferencesCodec<std::vector<AutoWakeupSchedule>> {
     static void write(Preferences &prefs, const char *key, const std::vector<AutoWakeupSchedule> &value);
 };
 
+// Persist only a compact profile reference, retaining legacy JSON reads.
+struct MachineProfileSelectionCodec {
+    static String read(Preferences &prefs, const char *key, const String &def);
+    static void write(Preferences &prefs, const char *key, const String &value);
+    static std::atomic<esp_err_t> lastError;
+};
+
 class Settings;
 using SettingsCallback = std::function<void(Settings *)>;
 
@@ -76,7 +86,8 @@ class Settings {
     Settings();
 
     void batchUpdate(const SettingsCallback &callback);
-    void save(bool noDelay = false);
+    bool save(bool noDelay = false);
+    String getSaveError() const;
 
     // Getters and setters
     int getTargetSteamTemp() const { return targetSteamTemp.get(); }
@@ -99,6 +110,8 @@ class Settings {
     bool isDelayAdjust() const { return delayAdjust.get(); }
     bool isHeaterCoordinationEnabled() const { return heaterCoordinationEnabled.get(); }
     int getHeaterHandoverMs() const { return heaterHandoverMs.get(); }
+    String getMachineProfileSelection() const { return machineProfileSelection.get(); }
+    bool setMachineProfileSelection(const String &v);
     String getPid() const { return pid.get(); }
     String getPumpModelCoeffs() const { return pumpModelCoeffs.get(); }
     String getPumpSlipCoeffs() const { return pumpSlipCoeffs.get(); }
@@ -115,6 +128,8 @@ class Settings {
     int getStartupFillTime() const { return startupFillTime.get(); }
     int getSteamFillTime() const { return steamFillTime.get(); }
     bool isSmartGrindActive() const { return smartGrindActive.get(); }
+    String getSetupStep() const { return setupStep.get(); }
+    void setSetupStep(const String &value) { setupStep.set(value); }
     bool isSetupDone() const { return setupDone.get(); }
     bool isMahlkonigActive() const { return mahlkonigActive.get(); }
     String getMahlkonigRecipeProfiles() const { return mahlkonigRecipeProfiles.get(); }
@@ -303,6 +318,7 @@ class Settings {
     void setMaxPumpPower(float maxPumpPower);
 
   private:
+    std::mutex saveMutex;
     Preferences preferences;
     PropertyRegistry registry; // must precede the properties, they register themselves here
 
@@ -336,6 +352,7 @@ class Settings {
     Property<String> savedScale{registry, "ssc", ""};
     Property<String> savedScaleName{registry, "sscn", ""}; // advertised BLE name, shown while the scale is out of range
     Property<bool> homekit{registry, "hk", false};
+    Property<String> setupStep{registry, "setup_step", "machine"};
     Property<bool> setupDone{registry, "setup_ok", false}; // first-run wizard finished
     Property<bool> volumetricTarget{registry, "vt", false};
     Property<bool> boilerFillActive{registry, "bf_a", false};
@@ -364,8 +381,10 @@ class Settings {
     Property<float> steamPumpCutoff{registry, "spc", DEFAULT_STEAM_PUMP_CUTOFF};
     Property<int> historyIndex{registry, "hi", 0};
 
-    Property<bool> heaterCoordinationEnabled{registry, "hco", false};
+    Property<bool> heaterCoordinationEnabled{registry, "hco", true};
     Property<int> heaterHandoverMs{registry, "hcg", DEFAULT_HEATER_HANDOVER_MS};
+
+    Property<String, MachineProfileSelectionCodec> machineProfileSelection{registry, "mc_profile", ""};
 
     // Display settings
     Property<int> mainBrightness{registry, "main_b", 16};
@@ -419,7 +438,7 @@ class Settings {
     Property<float> integralGain{registry, "p_ig", DEFAULT_INTEGRAL_GAIN};
     Property<float> maxPumpPower{registry, "p_mp", 1.0f};
 
-    void doSave();
+    bool doSave();
     xTaskHandle taskHandle;
     [[noreturn]] static void loopTask(void *arg);
 };

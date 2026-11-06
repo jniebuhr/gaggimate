@@ -1,8 +1,11 @@
 #include "Settings.h"
+#include "MachineProfiles.h"
 
 #include <algorithm>
 #include <cmath>
 #include <display/util/ColorConversion.h>
+#include <memory>
+#include <nvs.h>
 #include <utility>
 
 std::vector<AutoWakeupSchedule>
@@ -59,11 +62,55 @@ void PreferencesCodec<std::vector<AutoWakeupSchedule>>::write(Preferences &prefs
     prefs.putString(key, serialized);
 }
 
+std::atomic<esp_err_t> MachineProfileSelectionCodec::lastError{ESP_OK};
+
+String MachineProfileSelectionCodec::read(Preferences &prefs, const char *key, const String &def) {
+    if (prefs.getType(key) != PT_BLOB)
+        return prefs.getString(key, def); // Existing firmware stored a string.
+    const size_t size = prefs.getBytesLength(key);
+    if (size == 0 || size > 3501)
+        return def;
+    std::unique_ptr<char[]> bytes(new (std::nothrow) char[size]);
+    if (!bytes || prefs.getBytes(key, bytes.get(), size) != size || bytes[size - 1] != '\0')
+        return def;
+    return String(bytes.get());
+}
+
+void MachineProfileSelectionCodec::write(Preferences &, const char *key, const String &value) {
+    // Use the NVS API here to retain the precise error; Preferences only returns a byte count.
+    nvs_handle_t handle;
+    esp_err_t error = nvs_open(PREFERENCES_KEY, NVS_READWRITE, &handle);
+    if (error == ESP_OK) {
+        error = nvs_set_blob(handle, key, value.c_str(), value.length() + 1);
+        if (error == ESP_OK)
+            error = nvs_commit(handle);
+        nvs_close(handle);
+    }
+    lastError = error;
+}
+
+String Settings::getSaveError() const {
+    const esp_err_t error = MachineProfileSelectionCodec::lastError.load();
+    return error == ESP_OK ? String("Settings storage readback failed")
+                           : String("Machine profile storage: ") + esp_err_to_name(error);
+}
+
+bool Settings::setMachineProfileSelection(const String &value) {
+    String reference;
+    if (!machineProfileReference(value, reference))
+        return false;
+    machineProfileSelection.set(reference);
+    return true;
+}
+
 Settings::Settings() {
     preferences.begin(PREFERENCES_KEY, true);
     for (auto *property : registry) {
         property->load(preferences);
     }
+    // Migrate an older full snapshot without reapplying any machine values.
+    if (!setMachineProfileSelection(machineProfileSelection.get()))
+        ESP_LOGW("MachineProfile", "Could not convert saved profile reference; keeping the existing selection");
 
     // Legacy migrations: derive defaults for keys that were never persisted
     if (!preferences.isKey("sg_m")) {
@@ -80,6 +127,7 @@ Settings::Settings() {
     const bool setupKnown = preferences.isKey("setup_ok");
     const bool legacyInstall = !setupKnown && preferences.isKey("wap");
     preferences.end();
+    logMachineProfile("Loaded", machineProfileSelection.get());
     if (legacyInstall) {
         setupDone.set(true);
     } else if (!setupKnown) {
@@ -94,11 +142,7 @@ void Settings::batchUpdate(const SettingsCallback &callback) {
     callback(this);
 }
 
-void Settings::save(bool noDelay) {
-    if (noDelay) {
-        doSave();
-    }
-}
+bool Settings::save(bool noDelay) { return !noDelay || doSave(); }
 
 void Settings::setTargetSteamTemp(const int target_steam_temp) { targetSteamTemp.set(target_steam_temp); }
 
@@ -354,16 +398,34 @@ void Settings::setIntegralGain(float integral_gain) { integralGain.set(integral_
 
 void Settings::setMaxPumpPower(float max_pump_power) { maxPumpPower.set(max_pump_power); }
 
-void Settings::doSave() {
+bool Settings::doSave() {
+    // The periodic task and immediate WebUI saves share one Preferences handle.
+    std::lock_guard<std::mutex> lock(saveMutex);
     if (std::none_of(registry.begin(), registry.end(), [](const PropertyBase *property) { return property->isDirty(); })) {
-        return;
+        return true;
     }
     ESP_LOGI("Settings", "Saving changed settings");
-    preferences.begin(PREFERENCES_KEY, false);
+    if (!preferences.begin(PREFERENCES_KEY, false)) {
+        ESP_LOGE("Settings", "Could not open settings storage");
+        return false;
+    }
+    const bool profileChanged = machineProfileSelection.isDirty();
     for (auto *property : registry) {
         property->store(preferences);
     }
+    const bool profileSaved =
+        !profileChanged || (preferences.isKey("mc_profile") &&
+                            MachineProfileSelectionCodec::read(preferences, "mc_profile", "") == machineProfileSelection.get());
+    if (!profileSaved) {
+        // Property::store clears dirty before writing; keep a failed snapshot pending.
+        machineProfileSelection.persist();
+        ESP_LOGE("Settings", "Could not persist machine profile selection (free NVS entries: %u)",
+                 static_cast<unsigned>(preferences.freeEntries()));
+    }
     preferences.end();
+    if (profileChanged && profileSaved)
+        logMachineProfile("Selected", machineProfileSelection.get());
+    return profileSaved;
 }
 
 [[noreturn]] void Settings::loopTask(void *arg) {

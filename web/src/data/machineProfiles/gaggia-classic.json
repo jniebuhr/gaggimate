@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "id": "gaggia-classic",
+  "name": "Gaggia Classic (1991\u20132014)",
+  "revision": 1,
+  "requires": {
+    "dualBoiler": false
+  },
+  "settings": {
+    "pid": "58.397,1.027,249.055,0",
+    "temperatureOffset": 8
+  }
+}

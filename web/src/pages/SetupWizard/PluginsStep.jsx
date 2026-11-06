@@ -1,6 +1,8 @@
-import { useState } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { Trans } from '@lingui/react/macro';
-import { getCachedSettings } from '../../services/ApiService.js';
+import { getCachedSettings, updateSettingsCache } from '../../services/ApiService.js';
+import { requestSettings } from '../../utils/settingsRequest.js';
+import { Spinner } from '../../components/Spinner.jsx';
 import { PluginCard } from '../Settings/PluginCard.jsx';
 import { CHECKBOX_KEYS, parseAutoWakeupSchedules } from '../Settings/settingsForm.js';
 
@@ -39,23 +41,78 @@ export const BOOT_PLUGIN_KEYS = [
 ];
 
 export function usePluginForm() {
-  const [formData, setFormData] = useState(() => {
-    const settings = getCachedSettings() || {};
-    return Object.fromEntries(PLUGIN_KEYS.map(key => [key, settings[key]]));
-  });
-  const [initial] = useState(formData);
-  const [schedules, setSchedules] = useState(() =>
+  const [formData, setFormData] = useState(() => getCachedSettings() || {});
+  const [initial, setInitial] = useState(formData);
+  const [schedules, updateSchedules] = useState(() =>
     parseAutoWakeupSchedules(getCachedSettings()?.autowakeupSchedules),
   );
-  return { formData, setFormData, initial, schedules, setSchedules };
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
+  const edits = useRef({});
+  const schedulesEdited = useRef(false);
+
+  const setFields = values => {
+    Object.assign(edits.current, values);
+    setFormData(previous => ({ ...previous, ...values }));
+  };
+  const setSchedules = values => {
+    schedulesEdited.current = true;
+    updateSchedules(values);
+  };
+  const onSettingSaved = (key, value, settings) => {
+    updateSettingsCache(settings);
+    setFields({ [key]: value });
+    setInitial(previous => ({ ...previous, [key]: value }));
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setLoadError('');
+    requestSettings()
+      .then(settings => {
+        if (cancelled) return;
+        updateSettingsCache(settings);
+        setInitial(settings);
+        // Keep explicit edits and preset recommendations made while the fetch was pending.
+        setFormData({ ...settings, ...edits.current });
+        if (!schedulesEdited.current)
+          updateSchedules(parseAutoWakeupSchedules(settings.autowakeupSchedules));
+      })
+      .catch(error => {
+        if (!cancelled) setLoadError(error.message);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [reloadKey]);
+
+  return {
+    formData,
+    setFields,
+    initial,
+    schedules,
+    setSchedules,
+    loading,
+    loadError,
+    saving,
+    setSaving,
+    onSettingSaved,
+    retry: () => setReloadKey(value => value + 1),
+  };
 }
 
 export function PluginsStep({ form }) {
-  const { formData, setFormData, schedules, setSchedules } = form;
+  const { formData, setFields, schedules, setSchedules } = form;
 
   const onChange = key => e => {
     const value = CHECKBOX_KEYS.includes(key) ? !formData[key] : e.currentTarget.value;
-    setFormData({ ...formData, [key]: value });
+    setFields({ [key]: value });
   };
 
   const updateSchedule = (index, patch) =>
@@ -63,6 +120,24 @@ export function PluginsStep({ form }) {
       schedules.map((schedule, i) => (i === index ? { ...schedule, ...patch } : schedule)),
     );
 
+  if (form.loading)
+    return (
+      <div role='status' className='flex items-center gap-2'>
+        <Spinner size={4} />
+        <Trans>Loading plugin settings…</Trans>
+      </div>
+    );
+  if (form.loadError)
+    return (
+      <div className='space-y-3'>
+        <p role='alert' className='text-error'>
+          {form.loadError}
+        </p>
+        <button type='button' className='btn btn-outline btn-sm' onClick={form.retry}>
+          <Trans>Retry</Trans>
+        </button>
+      </div>
+    );
   return (
     <div className='space-y-4'>
       <p>
@@ -72,6 +147,9 @@ export function PluginsStep({ form }) {
         </Trans>
       </p>
       <PluginCard
+        onSettingSaved={form.onSettingSaved}
+        onSaving={form.setSaving}
+        settingsDisabled={form.saving}
         formData={formData}
         onChange={onChange}
         autowakeupSchedules={schedules}
