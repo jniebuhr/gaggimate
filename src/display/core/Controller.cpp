@@ -997,13 +997,13 @@ void Controller::lowerTemp() {
 }
 
 void Controller::raiseSteamTemp() {
-    float temp = getTargetSteamTemp();
+    float temp = settings.getTargetSteamTemp();
     temp = constrain(temp + 1.0f, MIN_TEMP, MAX_TEMP);
     settings.setTargetSteamTemp(static_cast<int>(temp));
 }
 
 void Controller::lowerSteamTemp() {
-    float temp = getTargetSteamTemp();
+    float temp = settings.getTargetSteamTemp();
     temp = constrain(temp - 1.0f, MIN_TEMP, MAX_TEMP);
     settings.setTargetSteamTemp(static_cast<int>(temp));
 }
