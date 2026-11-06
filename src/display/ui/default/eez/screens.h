@@ -46,6 +46,7 @@ typedef struct _objects_t {
     lv_obj_t *brew_dials__pressure_text;
     lv_obj_t *brew_dials__temp_text;
     lv_obj_t *brew_dials__temp_text_full;
+    lv_obj_t *brew_dials__temp_text2;
     lv_obj_t *obj0;
     lv_obj_t *obj0__steam_switch_on;
     lv_obj_t *obj0__scale_lost;
@@ -65,6 +66,7 @@ typedef struct _objects_t {
     lv_obj_t *status_dials__pressure_text;
     lv_obj_t *status_dials__temp_text;
     lv_obj_t *status_dials__temp_text_full;
+    lv_obj_t *status_dials__temp_text2;
     lv_obj_t *new_menu_dials;
     lv_obj_t *new_menu_dials__temp_gauge;
     lv_obj_t *new_menu_dials__temp_gauge_full;
@@ -76,6 +78,7 @@ typedef struct _objects_t {
     lv_obj_t *new_menu_dials__pressure_text;
     lv_obj_t *new_menu_dials__temp_text;
     lv_obj_t *new_menu_dials__temp_text_full;
+    lv_obj_t *new_menu_dials__temp_text2;
     lv_obj_t *obj1;
     lv_obj_t *obj1__steam_switch_on;
     lv_obj_t *obj1__scale_lost;
@@ -95,6 +98,7 @@ typedef struct _objects_t {
     lv_obj_t *steam_dials__pressure_text;
     lv_obj_t *steam_dials__temp_text;
     lv_obj_t *steam_dials__temp_text_full;
+    lv_obj_t *steam_dials__temp_text2;
     lv_obj_t *water_dials;
     lv_obj_t *water_dials__temp_gauge;
     lv_obj_t *water_dials__temp_gauge_full;
@@ -106,6 +110,7 @@ typedef struct _objects_t {
     lv_obj_t *water_dials__pressure_text;
     lv_obj_t *water_dials__temp_text;
     lv_obj_t *water_dials__temp_text_full;
+    lv_obj_t *water_dials__temp_text2;
     lv_obj_t *grind_dials;
     lv_obj_t *grind_dials__temp_gauge;
     lv_obj_t *grind_dials__temp_gauge_full;
@@ -117,6 +122,7 @@ typedef struct _objects_t {
     lv_obj_t *grind_dials__pressure_text;
     lv_obj_t *grind_dials__temp_text;
     lv_obj_t *grind_dials__temp_text_full;
+    lv_obj_t *grind_dials__temp_text2;
     lv_obj_t *obj2;
     lv_obj_t *obj2__temp_gauge;
     lv_obj_t *obj2__temp_gauge_full;
@@ -128,6 +134,7 @@ typedef struct _objects_t {
     lv_obj_t *obj2__pressure_text;
     lv_obj_t *obj2__temp_text;
     lv_obj_t *obj2__temp_text_full;
+    lv_obj_t *obj2__temp_text2;
     lv_obj_t *profile_dials_1;
     lv_obj_t *profile_dials_1__temp_gauge;
     lv_obj_t *profile_dials_1__temp_gauge_full;
@@ -139,6 +146,7 @@ typedef struct _objects_t {
     lv_obj_t *profile_dials_1__pressure_text;
     lv_obj_t *profile_dials_1__temp_text;
     lv_obj_t *profile_dials_1__temp_text_full;
+    lv_obj_t *profile_dials_1__temp_text2;
     lv_obj_t *obj3;
     lv_obj_t *touch_icon;
     lv_obj_t *time;
@@ -148,7 +156,6 @@ typedef struct _objects_t {
     lv_obj_t *update_icon;
     lv_obj_t *status;
     lv_obj_t *obj4;
-    lv_obj_t *obj5;
     lv_obj_t *start_button;
     lv_obj_t *control_container;
     lv_obj_t *mode_switch;
@@ -156,7 +163,7 @@ typedef struct _objects_t {
     lv_obj_t *flow_prediction_icon;
     lv_obj_t *weight_label;
     lv_obj_t *profile_info;
-    lv_obj_t *obj6;
+    lv_obj_t *obj5;
     lv_obj_t *profile_select_button;
     lv_obj_t *profile_name;
     lv_obj_t *settings_button;
@@ -165,21 +172,22 @@ typedef struct _objects_t {
     lv_obj_t *target_temp;
     lv_obj_t *down_temp_button;
     lv_obj_t *up_temp_button;
-    lv_obj_t *obj7;
+    lv_obj_t *obj6;
     lv_obj_t *brew_target_time_container;
     lv_obj_t *target_duration;
-    lv_obj_t *obj8;
+    lv_obj_t *obj7;
     lv_obj_t *up_duration_button;
     lv_obj_t *down_duration_button;
     lv_obj_t *brew_target_weight_container;
     lv_obj_t *target_weight_1;
-    lv_obj_t *obj9;
+    lv_obj_t *obj8;
     lv_obj_t *up_weight_button;
     lv_obj_t *down_weight_button;
     lv_obj_t *remove_volumetric_button;
     lv_obj_t *save_button;
     lv_obj_t *accept_button;
     lv_obj_t *save_as_new_button;
+    lv_obj_t *obj9;
     lv_obj_t *confirm_dialog;
     lv_obj_t *obj10;
     lv_obj_t *obj11;
