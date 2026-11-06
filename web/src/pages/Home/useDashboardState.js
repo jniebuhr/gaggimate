@@ -1,3 +1,4 @@
+import { grindAvailable } from '../../utils/grind.js';
 import { computed } from '@preact/signals';
 import { useContext, useEffect, useState } from 'preact/hooks';
 import { useQuery } from 'preact-fetching';
@@ -45,7 +46,7 @@ export function useDashboardState() {
 
   const isSmartGrindEnabled = settings?.smartGrindActive || false;
   const altRelayFunction = settings?.altRelayFunction ?? 1;
-  const isGrindAvailable = isSmartGrindEnabled || altRelayFunction === 1;
+  const isGrindAvailable = grindAvailable(settings, caps);
   const showGrindTab = isGrindAvailable || isGrinding;
   // Dual boilers steam and dispense water from brew mode; keep a hidden tab while it is the current mode.
   const steamWaterAvailable = !caps?.dualBoiler;

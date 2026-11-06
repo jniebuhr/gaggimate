@@ -27,6 +27,7 @@ const String RELEASE_URL = "https://github.com/jniebuhr/gaggimate/releases/";
 #endif
 
 class ProfileManager;
+class MachineProfileStore;
 
 class WebUIPlugin : public Plugin {
   public:
@@ -47,6 +48,7 @@ class WebUIPlugin : public Plugin {
     // Serves the web UI from the firmware-embedded, memory-mapped flash blob
     // (catch-all for any path not claimed by an explicit route). [GM-106]
     void serveWebAsset(AsyncWebServerRequest *request);
+    void handleMachineProfiles(AsyncWebServerRequest *request);
     void handleSettings(AsyncWebServerRequest *request) const;
     void handleBLEScaleList(AsyncWebServerRequest *request);
     void handleBLEScaleScan(AsyncWebServerRequest *request);
@@ -70,6 +72,7 @@ class WebUIPlugin : public Plugin {
     PluginManager *pluginManager = nullptr;
     DNSServer *dnsServer = nullptr;
     ProfileManager *profileManager = nullptr;
+    MachineProfileStore *machineProfiles = nullptr;
 
     long lastUpdateCheck = 0;
     long lastDns = 0;

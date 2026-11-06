@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "id": "rancilio-silvia",
+  "name": "Rancilio Silvia",
+  "revision": 1,
+  "requires": {
+    "dualBoiler": false
+  },
+  "settings": {
+    "pid": "112.315,0.658,1436.887,0",
+    "temperatureOffset": 5
+  },
+  "plugins": ["boilerFillActive"]
+}

@@ -1,240 +1,220 @@
-import { useContext, useEffect, useState } from 'preact/hooks';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
+import { faMinus } from '@fortawesome/free-solid-svg-icons/faMinus';
+import { MachineProfileControl } from '../../components/MachineProfileControl.jsx';
+import {
+  machineTemperatureFault,
+  currentProfileValues,
+  machineBoardName,
+  parseProfileSelection,
+  profileToForm,
+  profileProblems,
+  confirmProfileApply,
+  PROFILE_FIELDS,
+} from '../../utils/machineProfiles.js';
+import { useEffect, useState } from 'preact/hooks';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { ApiServiceContext, getCachedSettings } from '../../services/ApiService.js';
+import { getCachedSettings, updateSettingsCache } from '../../services/ApiService.js';
+import { requestSettings } from '../../utils/settingsRequest.js';
 import { Spinner } from '../../components/Spinner.jsx';
-import { SettingsFormField } from '../../components/SettingsFormField.jsx';
 import { splitPidString } from '../Settings/settingsForm.js';
-import { DEFAULT_HEATER_WATTAGE, MACHINE_PRESETS } from './machinePresets.js';
 import { InfoNote } from './InfoNote.jsx';
 import { postSettings } from './setupState.js';
 
-const CUSTOM = 'custom';
-
-function Autotune({ wattage, onWattageChange }) {
+export function MachineStep({ onSaved, onDirty, onConfigure }) {
   const { t } = useLingui();
-  const apiService = useContext(ApiServiceContext);
-  const [state, setState] = useState('idle');
-  const [result, setResult] = useState(null);
-
+  const [formData, setFormData] = useState(() => {
+    const settings = getCachedSettings() || {};
+    return { ...settings, ...splitPidString(settings.pid) };
+  });
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   useEffect(() => {
-    const ok = apiService.on('evt:autotune-result', event => {
-      setResult(event.pid);
-      setState('done');
-    });
-    const failed = apiService.on('evt:autotune-failed', () => setState('failed'));
-    return () => {
-      apiService.off('evt:autotune-result', ok);
-      apiService.off('evt:autotune-failed', failed);
+    let cancelled = false;
+    let timer;
+    const refresh = async () => {
+      try {
+        const settings = await requestSettings({}, 5000);
+        if (cancelled) return;
+        updateSettingsCache(settings);
+        setFormData({ ...settings, ...splitPidString(settings.pid) });
+        setLoadError('');
+        if (settings.machineProfileBoard) {
+          setLoading(false);
+          return;
+        }
+      } catch (err) {
+        if (cancelled) return;
+        setLoadError(err.message);
+      }
+      timer = setTimeout(refresh, 1000);
     };
-  }, [apiService]);
-
-  const start = () => {
-    setResult(null);
-    setState('running');
+    refresh();
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, []);
+  const [saving, setSaving] = useState(false);
+  const [applied, setApplied] = useState(false);
+  const [confirmation, setConfirmation] = useState(null);
+  const [error, setError] = useState('');
+  const setFields = values => {
+    setFormData(previous => ({ ...previous, ...values }));
+    setApplied(false);
+    setConfirmation(null);
+    onDirty?.();
+  };
+  const caps = formData.machineProfileCapabilities || {};
+  const detectedCapabilities = [
+    { label: caps.dualBoiler ? t`Dual boiler` : t`Single boiler`, available: true },
+    { label: t`Pressure control`, available: caps.pressure },
+    { label: t`Hardware scales`, available: caps.hardwareScale },
+    { label: t`Gear pump add-on`, available: caps.gearpumpAddon },
+    { label: t`Alba add-on`, available: caps.albaAddon },
+  ];
+  const [resolvedProfile, setResolvedProfile] = useState(null);
+  const selection = parseProfileSelection(formData.machineProfileSelection);
+  const profile = selection?.settings
+    ? selection
+    : resolvedProfile?.id === selection?.id
+      ? resolvedProfile
+      : null;
+  const problems = profile ? profileProblems(profile, formData) : [];
+  const apply = async (confirmed = false) => {
+    if (loading || !profile || saving || problems.length) return;
+    setSaving(true);
+    setError('');
     try {
-      apiService.send({
-        tp: 'req:autotune-start',
-        time: 120,
-        samples: 6,
-        wattage: Number(wattage),
+      const appliedData = selection?.settings
+        ? formData
+        : { ...formData, ...profileToForm(profile) };
+      const accepted = await confirmProfileApply(appliedData, changed => {
+        if (confirmed && JSON.stringify(changed) === JSON.stringify(confirmation)) return true;
+        setConfirmation(changed);
+        return false;
       });
-    } catch {
-      setState('failed');
+      if (!accepted) return;
+      setConfirmation(null);
+      const values = currentProfileValues(
+        appliedData,
+        formData.machineProfileCapabilities || {},
+        !!formData.machineHardwareConfiguration,
+      );
+      const saved = await postSettings({
+        ...values,
+        machineProfileSelection: appliedData.machineProfileSelection || '',
+      });
+      const temperatureFault = machineTemperatureFault(saved);
+      if (temperatureFault) throw new Error(temperatureFault);
+      setFormData(appliedData);
+      setApplied(true);
+      onSaved?.(profile);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
     }
   };
-
   return (
-    <div className='bg-base-200 space-y-3 rounded-lg p-4'>
-      <span className='text-lg font-medium'>
-        <Trans>PID autotune</Trans>
-      </span>
+    <div className='space-y-4'>
       <p className='text-sm opacity-70'>
-        <Trans>
-          Start with a cold machine. The boiler heats at full power until GaggiMate has learned how
-          it responds, then the PID values are saved. This takes 1–3 minutes.
-        </Trans>
+        <Trans>Select your machine and apply recommended defaults.</Trans>
       </p>
-      <SettingsFormField label={t`Heater wattage (W)`} htmlFor='setupWattage'>
-        <input
-          id='setupWattage'
-          type='number'
-          className='input input-bordered w-full'
-          min='100'
-          max='3000'
-          value={wattage}
-          disabled={state === 'running'}
-          onInput={e => onWattageChange(e.currentTarget.value)}
-        />
-      </SettingsFormField>
-      {state === 'running' && (
-        <div className='flex items-center gap-2'>
+      <MachineProfileControl
+        formData={formData}
+        setFields={setFields}
+        onProfileResolved={setResolvedProfile}
+        wizard
+        disabled={saving || loading}
+      />
+      <button
+        type='button'
+        className='link link-primary text-left text-sm'
+        disabled={saving}
+        onClick={onConfigure}
+      >
+        <Trans>Machine not listed? Continue setup and configure it later.</Trans>
+      </button>
+      {loading && (
+        <div role='status' className='flex items-center gap-2 text-sm opacity-70'>
           <Spinner size={4} />
-          <Trans>Autotune in progress…</Trans>
+          <Trans>Waiting for controller configuration…</Trans>
         </div>
       )}
-      {state === 'done' && (
-        <InfoNote tone='success' title={t`Autotune finished`}>
-          {t`New PID values: ${result}`}
+      {loadError && (
+        <p role='alert' className='text-error'>
+          {loadError}
+        </p>
+      )}
+      {error && (
+        <InfoNote tone='error' title={t`Saving failed`}>
+          {error}
         </InfoNote>
       )}
-      {state === 'failed' && (
-        <InfoNote tone='error' title={t`Autotune failed`}>
-          <Trans>Let the machine cool down and try again.</Trans>
+      {applied && <InfoNote tone='success' title={t`Machine settings saved`} />}
+      {confirmation && (
+        <InfoNote tone='warning' title={t`Replace these machine settings?`}>
+          <ul className='list-inside list-disc'>
+            {confirmation.map(([key, value]) => (
+              <li key={key}>
+                {PROFILE_FIELDS[key].label}: {String(value)}
+              </li>
+            ))}
+          </ul>
+          <div className='mt-3 flex justify-end gap-2'>
+            <button
+              type='button'
+              className='btn btn-ghost'
+              disabled={saving}
+              onClick={() => setConfirmation(null)}
+            >
+              <Trans>Cancel</Trans>
+            </button>
+            <button
+              type='button'
+              className='btn btn-primary'
+              disabled={saving}
+              onClick={() => apply(true)}
+            >
+              <Trans>Apply Preset</Trans>
+            </button>
+          </div>
         </InfoNote>
       )}
       <div className='flex justify-end'>
         <button
           type='button'
           className='btn btn-primary'
-          disabled={state === 'running' || !(Number(wattage) > 0)}
-          onClick={start}
+          disabled={loading || saving || !!confirmation || !profile || problems.length > 0}
+          onClick={() => apply()}
         >
-          {state === 'idle' ? <Trans>Start autotune</Trans> : <Trans>Run again</Trans>}
+          {saving && <Spinner size={4} />}
+          {!saving && <Trans>Apply Preset</Trans>}
         </button>
       </div>
-    </div>
-  );
-}
-
-export function MachineStep({ onSaved }) {
-  const { t, i18n } = useLingui();
-  const [selected, setSelected] = useState(MACHINE_PRESETS[0].id);
-  const [applied, setApplied] = useState(null);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState(false);
-  const [wattage, setWattage] = useState(DEFAULT_HEATER_WATTAGE);
-  const [custom, setCustom] = useState(() => {
-    const settings = getCachedSettings() || {};
-    const { pid, kf } = splitPidString(settings.pid || MACHINE_PRESETS[0].settings.pid);
-    return {
-      pid,
-      kf,
-      temperatureOffset: settings.temperatureOffset ?? 0,
-      targetSteamTemp: settings.targetSteamTemp ?? 145,
-    };
-  });
-
-  const preset = MACHINE_PRESETS.find(p => p.id === selected);
-
-  const select = id => {
-    setSelected(id);
-    setApplied(null);
-  };
-
-  const apply = async () => {
-    setSaving(true);
-    setError(false);
-    try {
-      const fields = preset
-        ? preset.settings
-        : {
-            pid: `${custom.pid},${custom.kf}`,
-            temperatureOffset: custom.temperatureOffset,
-            targetSteamTemp: custom.targetSteamTemp,
-          };
-      await postSettings(fields);
-      setApplied(selected);
-      onSaved?.(preset);
-    } catch {
-      setError(true);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const setCustomField = key => e => setCustom({ ...custom, [key]: e.currentTarget.value });
-  const showAutotune = !preset;
-
-  return (
-    <div className='space-y-4'>
-      <p>
-        <Trans>
-          Pick your machine to load matching defaults, or choose a custom machine to enter your own
-          values or run an autotune.
-        </Trans>
-      </p>
-      <div className='grid grid-cols-1 gap-2 sm:grid-cols-2'>
-        {[...MACHINE_PRESETS, { id: CUSTOM, name: t`Custom machine` }].map(option => (
-          <label
-            key={option.id}
-            className={`bg-base-200 flex cursor-pointer items-center gap-3 rounded-lg border-2 p-3 ${
-              selected === option.id ? 'border-primary' : 'border-transparent'
-            }`}
-          >
-            <input
-              type='radio'
-              name='setupMachine'
-              className='radio radio-primary'
-              checked={selected === option.id}
-              onChange={() => select(option.id)}
-            />
-            <span className='font-medium'>{option.name}</span>
-          </label>
-        ))}
-      </div>
-
-      {preset?.note && <InfoNote title={preset.name}>{i18n._(preset.note)}</InfoNote>}
-
-      {!preset && (
-        <div className='bg-base-200 grid grid-cols-1 gap-x-4 rounded-lg p-4 sm:grid-cols-2'>
-          <SettingsFormField
-            label={t`PID values (Kp, Ki, Kd)`}
-            htmlFor='setupPid'
-            className='sm:col-span-2'
-          >
-            <input
-              id='setupPid'
-              type='text'
-              className='input input-bordered w-full'
-              value={custom.pid}
-              onInput={setCustomField('pid')}
-            />
-          </SettingsFormField>
-          <SettingsFormField label={t`Feed-forward (Kf)`} htmlFor='setupKf'>
-            <input
-              id='setupKf'
-              type='number'
-              step='any'
-              className='input input-bordered w-full'
-              value={custom.kf}
-              onInput={setCustomField('kf')}
-            />
-          </SettingsFormField>
-          <SettingsFormField label={t`Temperature offset (°C)`} htmlFor='setupOffset'>
-            <input
-              id='setupOffset'
-              type='number'
-              className='input input-bordered w-full'
-              value={custom.temperatureOffset}
-              onInput={setCustomField('temperatureOffset')}
-            />
-          </SettingsFormField>
-          <SettingsFormField label={t`Steam temperature (°C)`} htmlFor='setupSteam'>
-            <input
-              id='setupSteam'
-              type='number'
-              className='input input-bordered w-full'
-              value={custom.targetSteamTemp}
-              onInput={setCustomField('targetSteamTemp')}
-            />
-          </SettingsFormField>
+      {!loading && formData.machineProfileBoard && (
+        <div className='border-base-content/10 space-y-2 border-t pt-4 text-sm'>
+          <p className='font-medium'>
+            <Trans>Detected board</Trans>: {machineBoardName(formData.machineProfileBoard, caps)}
+          </p>
+          <ul className='grid grid-cols-1 gap-x-4 gap-y-2 sm:grid-cols-2'>
+            {detectedCapabilities.map(({ label, available }) => (
+              <li
+                key={label}
+                className={`flex items-center gap-2 ${available ? '' : 'opacity-40'}`}
+              >
+                <FontAwesomeIcon
+                  icon={available ? faCheck : faMinus}
+                  className={available ? 'text-success' : ''}
+                />
+                <span>{label}</span>
+                <span className='sr-only'>{available ? t`Available` : t`Not detected`}</span>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
-
-      {error && (
-        <InfoNote tone='error' title={t`Saving failed`}>
-          <Trans>Check the connection to your machine and try again.</Trans>
-        </InfoNote>
-      )}
-      {applied === selected && <InfoNote tone='success' title={t`Machine settings saved`} />}
-      <div className='flex justify-end'>
-        <button type='button' className='btn btn-primary' disabled={saving} onClick={apply}>
-          {saving && <Spinner size={4} />}
-          {preset ? <Trans>Apply preset</Trans> : <Trans>Save values</Trans>}
-        </button>
-      </div>
-
-      {showAutotune && <Autotune wattage={wattage} onWattageChange={setWattage} />}
     </div>
   );
 }

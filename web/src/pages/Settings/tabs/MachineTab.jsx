@@ -1,3 +1,7 @@
+import { isProfileFieldLocked } from '../../../utils/machineProfiles.js';
+import { PhysicalButtonsSection } from './PhysicalButtonsSection.jsx';
+import { MachineProfileControl } from '../../../components/MachineProfileControl.jsx';
+import { MachineProfileFields } from '../../../components/MachineProfileFields.jsx';
 import { useCallback, useContext, useState } from 'preact/hooks';
 import { computed } from '@preact/signals';
 import { Trans, useLingui } from '@lingui/react/macro';
@@ -11,6 +15,7 @@ import { faWeightScale } from '@fortawesome/free-solid-svg-icons/faWeightScale';
 import { InputGroupField, SettingsFormField } from '../../../components/SettingsFormField.jsx';
 import { CleaningSection } from './CleaningSection.jsx';
 
+const gearpumpAddon = computed(() => machine.value.capabilities.gearpumpAddon);
 const ledControl = computed(() => machine.value.capabilities.ledControl);
 const pressureAvailable = computed(() => machine.value.capabilities.pressure);
 const tofDistance = computed(() => machine.value.status.tofDistance);
@@ -66,7 +71,7 @@ function TankDistanceField({ id, label, value, onChange, onUseCurrent }) {
   );
 }
 
-export function MachineTab({ formData, onChange, setField }) {
+export function MachineTab({ formData, onChange, setField, profiles = [] }) {
   const { t } = useLingui();
   const apiService = useContext(ApiServiceContext);
   const [steamPumpDraft, setSteamPumpDraft] = useState(null);
@@ -125,239 +130,293 @@ export function MachineTab({ formData, onChange, setField }) {
   const extLedPct = ((formData.sunriseExtBrightness / 255) * 100).toFixed(0);
 
   return (
-    <div className='space-y-4 sm:space-y-6 lg:grid lg:grid-cols-2 lg:gap-4'>
-      {/* Machine Hardware Settings */}
-      <Section title={t`Machine Settings`} className='h-full'>
-        <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-          <InputGroupField
-            label={t`PID Values`}
-            htmlFor='pid'
-            unit={
-              <>
-                K<sub>p</sub>, K<sub>i</sub>, K<sub>d</sub>
-              </>
+    <div className='grid grid-cols-1 items-start gap-4 sm:gap-6 lg:grid-cols-2 lg:gap-4'>
+      <div className='lg:col-span-2'>
+        <Section title={t`Machine Configuration`}>
+          <MachineProfileControl
+            formData={formData}
+            setFields={values =>
+              Object.entries(values).forEach(([key, value]) => setField(key, value))
             }
-            noMargin
-          >
-            <input
-              id='pid'
-              name='pid'
-              type='text'
-              className='grow'
-              placeholder='2.0, 0.1, 0.01'
-              value={formData.pid}
-              onChange={onChange('pid')}
-            />
-          </InputGroupField>
-          <InputGroupField
-            label={t`Thermal Feedforward Gain`}
-            htmlFor='kf'
-            unit={
-              <>
-                K<sub>ff</sub>
-              </>
-            }
-            helpText={t`Set to 0 to disable feedforward control.`}
-            noMargin
-          >
-            <input
-              id='kf'
-              name='kf'
-              type='number'
-              step='0.001'
-              className='grow'
-              placeholder='0.600'
-              value={formData.kf}
-              onChange={onChange('kf')}
-            />
-          </InputGroupField>
-          <SettingsFormField
-            label={t`Pump Flow Coefficients`}
-            htmlFor='pumpModelCoeffs'
-            helpText={t`Enter 2 values (flow at 1 bar, flow at 9 bar)`}
-            noMargin
-          >
-            <input
-              id='pumpModelCoeffs'
-              name='pumpModelCoeffs'
-              type='text'
-              className='input input-bordered w-full'
-              placeholder='10.205,5.521'
-              value={formData.pumpModelCoeffs}
-              onChange={onChange('pumpModelCoeffs')}
-            />
-          </SettingsFormField>
-          <InputGroupField
-            label={t`Temperature Offset (°C)`}
-            htmlFor='temperatureOffset'
-            unit='°C'
-            unitAriaLabel={t`celsius`}
-            noMargin
-          >
-            <input
-              id='temperatureOffset'
-              name='temperatureOffset'
-              type='number'
-              step='any'
-              className='grow'
-              placeholder='0'
-              value={formData.temperatureOffset}
-              onChange={onChange('temperatureOffset')}
-            />
-          </InputGroupField>
-          {pressureAvailable.value && (
+          />
+        </Section>
+      </div>
+      <Section title={t`Heating & Pump Settings`} className='h-full'>
+        <div className='space-y-6'>
+          <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
             <InputGroupField
-              label={t`Pressure Offset`}
-              htmlFor='pressureOffset'
-              unit='bar'
-              helpText={t`Cracking pressure of a grouphead mushroom valve (e.g. 4.0 on Delonghi machines). Subtracted from readings and added to targets only while a brew is running. Leave at 0.0 for a 3-way solenoid.`}
+              label={t`Default Steam Temperature`}
+              htmlFor='targetSteamTemp'
+              unit='°C'
+              unitAriaLabel={t`celsius`}
               noMargin
             >
               <input
-                id='pressureOffset'
-                name='pressureOffset'
+                disabled={isProfileFieldLocked(formData, 'targetSteamTemp')}
+                id='targetSteamTemp'
+                name='targetSteamTemp'
                 type='number'
-                step='any'
-                className='grow'
-                placeholder='0.0'
-                value={formData.pressureOffset}
-                onChange={onChange('pressureOffset')}
+                placeholder='135'
+                value={formData.targetSteamTemp}
+                onChange={onChange('targetSteamTemp')}
               />
             </InputGroupField>
-          )}
-          {pressureAvailable.value && (
-            <InputGroupField
-              label={t`Pressure Sensor Rating`}
-              htmlFor='pressureScaling'
-              unit='bar'
-              helpText={t`Enter the bar rating of the pressure sensor being used`}
-              noMargin
-            >
-              <input
-                id='pressureScaling'
-                name='pressureScaling'
-                type='number'
-                step='any'
-                className='grow'
-                placeholder='0.0'
-                value={formData.pressureScaling}
-                onChange={onChange('pressureScaling')}
-              />
-            </InputGroupField>
-          )}
-          <InputGroupField
-            label={t`Steam Pump Assist`}
-            htmlFor='steamPumpPercentage'
-            unit={pressureAvailable.value ? 'ml/s' : '%'}
-            unitAriaLabel={pressureAvailable.value ? t`milliliter per second` : t`percent`}
-            helpText={
-              pressureAvailable.value
-                ? t`How many ml/s to pump into the boiler during steaming`
-                : t`What percentage to run the pump at during steaming`
-            }
-            noMargin
-          >
-            <input
-              id='steamPumpPercentage'
-              name='steamPumpPercentage'
-              type='number'
-              step='0.1'
-              className='grow'
-              placeholder={pressureAvailable.value ? '0.0' : '0.0 %'}
-              value={
-                steamPumpDraft ??
-                String(formData.steamPumpPercentage / (pressureAvailable.value ? 10 : 1))
-              }
-              onChange={e => setSteamPumpDraft(e.target.value)}
-              onBlur={e => {
-                setSteamPumpDraft(null);
-                setField(
-                  'steamPumpPercentage',
-                  (parseFloat(e.target.value) * (pressureAvailable.value ? 10 : 1)).toFixed(0),
-                );
-              }}
-            />
-          </InputGroupField>
-          {pressureAvailable.value && (
-            <InputGroupField
-              label={t`Pump Assist Cutoff`}
-              htmlFor='steamPumpCutoff'
-              unit='bar'
-              helpText={t`At how many bars should the pump assist stop. This makes it so the pump will only run when steam is flowing.`}
-              noMargin
-            >
-              <input
-                id='steamPumpCutoff'
-                name='steamPumpCutoff'
-                type='number'
-                step='any'
-                className='grow'
-                placeholder='0.0'
-                value={formData.steamPumpCutoff}
-                onChange={onChange('steamPumpCutoff')}
-              />
-            </InputGroupField>
-          )}
-          <SettingsFormField
-            label={t`Alt Relay / SSR2 Function`}
-            htmlFor='altRelayFunction'
-            noMargin
-          >
-            <select
-              id='altRelayFunction'
-              name='altRelayFunction'
-              className='select select-bordered w-full'
-              value={formData.altRelayFunction ?? 1}
-              onChange={onChange('altRelayFunction')}
-            >
-              <option value={0}>{t({ message: 'None', context: 'relay function' })}</option>
-              <option value={1}>{t({ message: 'Grind', context: 'relay function' })}</option>
-              <option value={2} disabled className='text-gray-400'>
-                {t`Steam Boiler (Coming Soon)`}
-              </option>
-            </select>
-          </SettingsFormField>
-        </div>
-      </Section>
-      {/* Temperature Settings */}
-      <Section title={t`Temperature Settings`} className='h-full md:order-3'>
-        <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-          <InputGroupField
-            label={t`Default Steam Temperature`}
-            htmlFor='targetSteamTemp'
-            unit='°C'
-            unitAriaLabel={t`celsius`}
-            noMargin
-          >
-            <input
-              id='targetSteamTemp'
-              name='targetSteamTemp'
-              type='number'
-              placeholder='135'
-              value={formData.targetSteamTemp}
-              onChange={onChange('targetSteamTemp')}
-            />
-          </InputGroupField>
-          <InputGroupField
-            label={t`Default Water Temperature`}
-            htmlFor='targetWaterTemp'
-            unit='°C'
-            unitAriaLabel={t`celsius`}
-            noMargin
-          >
-            <input
-              id='targetWaterTemp'
-              name='targetWaterTemp'
-              type='number'
-              placeholder='80'
-              value={formData.targetWaterTemp}
-              onChange={onChange('targetWaterTemp')}
-            />
-          </InputGroupField>
+            {!machine.value.capabilities.dualBoiler && (
+              <InputGroupField
+                label={t`Default Water Temperature`}
+                htmlFor='targetWaterTemp'
+                unit='°C'
+                unitAriaLabel={t`celsius`}
+                noMargin
+              >
+                <input
+                  id='targetWaterTemp'
+                  name='targetWaterTemp'
+                  type='number'
+                  placeholder='80'
+                  value={formData.targetWaterTemp}
+                  onChange={onChange('targetWaterTemp')}
+                />
+              </InputGroupField>
+            )}
+          </div>
+          <details className='border-base-content/10 border-t pt-4'>
+            <summary className='cursor-pointer font-medium'>
+              <Trans>Heating Parameters</Trans>
+            </summary>
+            <fieldset disabled={!!formData.machineProfileSelection} className='mt-4 space-y-4'>
+              <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+                <InputGroupField
+                  label={t`PID Values`}
+                  htmlFor='pid'
+                  unit={
+                    <>
+                      K<sub>p</sub>, K<sub>i</sub>, K<sub>d</sub>
+                    </>
+                  }
+                  noMargin
+                >
+                  <input
+                    id='pid'
+                    name='pid'
+                    type='text'
+                    className='grow'
+                    placeholder='2.0, 0.1, 0.01'
+                    value={formData.pid}
+                    onChange={onChange('pid')}
+                  />
+                </InputGroupField>
+                <InputGroupField
+                  label={t`Thermal Feedforward Gain`}
+                  htmlFor='kf'
+                  unit={
+                    <>
+                      K<sub>ff</sub>
+                    </>
+                  }
+                  helpText={t`Set to 0 to disable feedforward control.`}
+                  noMargin
+                >
+                  <input
+                    id='kf'
+                    name='kf'
+                    type='number'
+                    step='0.001'
+                    className='grow'
+                    placeholder='0.600'
+                    value={formData.kf}
+                    onChange={onChange('kf')}
+                  />
+                </InputGroupField>
+              </div>
+              <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+                <InputGroupField
+                  label={t`Temperature Offset (°C)`}
+                  htmlFor='temperatureOffset'
+                  unit='°C'
+                  unitAriaLabel={t`celsius`}
+                  noMargin
+                >
+                  <input
+                    id='temperatureOffset'
+                    name='temperatureOffset'
+                    type='number'
+                    step='any'
+                    className='grow'
+                    placeholder='0'
+                    value={formData.temperatureOffset}
+                    onChange={onChange('temperatureOffset')}
+                  />
+                </InputGroupField>
+              </div>
+            </fieldset>
+          </details>
+          <details className='border-base-content/10 border-t pt-4'>
+            <summary className='cursor-pointer font-medium'>
+              <Trans>Pump Parameters</Trans>
+            </summary>
+            <fieldset disabled={!!formData.machineProfileSelection} className='mt-4'>
+              <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+                <SettingsFormField
+                  label={t`Pump Flow Coefficients`}
+                  htmlFor='pumpModelCoeffs'
+                  helpText={t`Enter 2 values (flow at 1 bar, flow at 9 bar)`}
+                  noMargin
+                >
+                  <input
+                    id='pumpModelCoeffs'
+                    name='pumpModelCoeffs'
+                    type='text'
+                    className='input input-bordered w-full'
+                    placeholder='10.205,5.521'
+                    value={formData.pumpModelCoeffs}
+                    onChange={onChange('pumpModelCoeffs')}
+                  />
+                </SettingsFormField>
+                {pressureAvailable.value && (
+                  <InputGroupField
+                    label={t`Pressure Offset`}
+                    htmlFor='pressureOffset'
+                    unit='bar'
+                    helpText={t`Cracking pressure of a grouphead mushroom valve (e.g. 4.0 on Delonghi machines). Subtracted from readings and added to targets only while a brew is running. Leave at 0.0 for a 3-way solenoid.`}
+                    noMargin
+                  >
+                    <input
+                      id='pressureOffset'
+                      name='pressureOffset'
+                      type='number'
+                      step='any'
+                      className='grow'
+                      placeholder='0.0'
+                      value={formData.pressureOffset}
+                      onChange={onChange('pressureOffset')}
+                    />
+                  </InputGroupField>
+                )}
+                {pressureAvailable.value && (
+                  <InputGroupField
+                    label={t`Pressure Sensor Rating`}
+                    htmlFor='pressureScaling'
+                    unit='bar'
+                    helpText={t`Enter the bar rating of the pressure sensor being used`}
+                    noMargin
+                  >
+                    <input
+                      id='pressureScaling'
+                      name='pressureScaling'
+                      type='number'
+                      step='any'
+                      className='grow'
+                      placeholder='0.0'
+                      value={formData.pressureScaling}
+                      onChange={onChange('pressureScaling')}
+                    />
+                  </InputGroupField>
+                )}
+                {!machine.value.capabilities.dualBoiler && (
+                  <InputGroupField
+                    label={t`Steam Pump Assist`}
+                    htmlFor='steamPumpPercentage'
+                    unit={pressureAvailable.value ? 'ml/s' : '%'}
+                    unitAriaLabel={pressureAvailable.value ? t`milliliter per second` : t`percent`}
+                    helpText={
+                      pressureAvailable.value
+                        ? t`How many ml/s to pump into the boiler during steaming`
+                        : t`What percentage to run the pump at during steaming`
+                    }
+                    noMargin
+                  >
+                    <input
+                      id='steamPumpPercentage'
+                      name='steamPumpPercentage'
+                      type='number'
+                      step='0.1'
+                      className='grow'
+                      placeholder={pressureAvailable.value ? '0.0' : '0.0 %'}
+                      value={
+                        steamPumpDraft ??
+                        String(formData.steamPumpPercentage / (pressureAvailable.value ? 10 : 1))
+                      }
+                      onChange={e => setSteamPumpDraft(e.target.value)}
+                      onBlur={e => {
+                        setSteamPumpDraft(null);
+                        setField(
+                          'steamPumpPercentage',
+                          (parseFloat(e.target.value) * (pressureAvailable.value ? 10 : 1)).toFixed(
+                            0,
+                          ),
+                        );
+                      }}
+                    />
+                  </InputGroupField>
+                )}
+                {pressureAvailable.value && !machine.value.capabilities.dualBoiler && (
+                  <InputGroupField
+                    label={t`Pump Assist Cutoff`}
+                    htmlFor='steamPumpCutoff'
+                    unit='bar'
+                    helpText={t`At how many bars should the pump assist stop. This makes it so the pump will only run when steam is flowing.`}
+                    noMargin
+                  >
+                    <input
+                      id='steamPumpCutoff'
+                      name='steamPumpCutoff'
+                      type='number'
+                      step='any'
+                      className='grow'
+                      placeholder='0.0'
+                      value={formData.steamPumpCutoff}
+                      onChange={onChange('steamPumpCutoff')}
+                    />
+                  </InputGroupField>
+                )}
+                {!machine.value.capabilities.dualBoiler && (
+                  <SettingsFormField
+                    label={t`Alt Relay / SSR2 Function`}
+                    htmlFor='altRelayFunction'
+                    noMargin
+                  >
+                    <select
+                      id='altRelayFunction'
+                      name='altRelayFunction'
+                      className='select select-bordered w-full'
+                      value={formData.altRelayFunction ?? 1}
+                      onChange={onChange('altRelayFunction')}
+                    >
+                      <option value={0}>{t({ message: 'None', context: 'relay function' })}</option>
+                      <option value={1}>
+                        {t({ message: 'Grind', context: 'relay function' })}
+                      </option>
+                      <option value={2} disabled className='text-gray-400'>
+                        {t`Steam Boiler (Coming Soon)`}
+                      </option>
+                    </select>
+                  </SettingsFormField>
+                )}
+              </div>
+            </fieldset>
+          </details>
         </div>
       </Section>
 
-      <HeaterCoordinationSection formData={formData} onChange={onChange} />
+      {machine.value.capabilities.dualBoiler && (
+        <Section title={t`Dual Boiler Hardware`}>
+          <MachineProfileFields
+            formData={formData}
+            hardwareOnly
+            setFields={values =>
+              Object.entries(values).forEach(([key, value]) => setField(key, value))
+            }
+          />
+          <fieldset
+            disabled={!!formData.machineProfileSelection}
+            className='border-base-content/10 mt-6 border-t pt-4'
+          >
+            <HeaterCoordinationSection formData={formData} onChange={onChange} />
+          </fieldset>
+        </Section>
+      )}
+      <PhysicalButtonsSection formData={formData} onChange={onChange} profiles={profiles} />
       {hardwareScaleAvailable.value && (
         <Section title={t`Scales`}>
           <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
@@ -576,8 +635,6 @@ export function MachineTab({ formData, onChange, setField }) {
         </Section>
       )}
 
-      <CleaningSection formData={formData} onChange={onChange} setField={setField} />
-
       {/* Alba Settings */}
       {ledControl.value && (
         <Section title={t`Alba Settings`} className='h-full'>
@@ -647,6 +704,110 @@ export function MachineTab({ formData, onChange, setField }) {
           </SettingsFormField>
         </Section>
       )}
+      {gearpumpAddon.value && (
+        <Section title={t`BLDC Pump Settings`}>
+          <div className='space-y-4'>
+            <p className='text-sm opacity-70'>
+              <Trans>
+                The BLDC pump addon was detected in your system. You can change the pump control
+                characteristics using the values below.
+              </Trans>
+            </p>
+
+            <div className='form-control'>
+              <label htmlFor='commutationGain' className='mb-2 block text-sm font-medium'>
+                <Trans>Commutation Gain</Trans>
+              </label>
+              <input
+                id='commutationGain'
+                name='commutationGain'
+                type='number'
+                className='input input-bordered w-full'
+                placeholder='0'
+                min='0'
+                max='100'
+                step='any'
+                value={formData.commutationGain?.toString()}
+                onChange={onChange('commutationGain')}
+              />
+            </div>
+
+            <div className='form-control'>
+              <label htmlFor='convergenceGain' className='mb-2 block text-sm font-medium'>
+                <Trans>Convergence Gain</Trans>
+              </label>
+              <input
+                id='convergenceGain'
+                name='convergenceGain'
+                type='number'
+                className='input input-bordered w-full'
+                placeholder='0'
+                min='0'
+                max='100'
+                step='any'
+                value={formData.convergenceGain?.toString()}
+                onChange={onChange('convergenceGain')}
+              />
+            </div>
+
+            <div className='form-control'>
+              <label htmlFor='integralGain' className='mb-2 block text-sm font-medium'>
+                <Trans>Integral Gain</Trans>
+              </label>
+              <input
+                id='integralGain'
+                name='integralGain'
+                type='number'
+                className='input input-bordered w-full'
+                placeholder='0'
+                min='0'
+                max='100'
+                step='any'
+                value={formData.integralGain?.toString()}
+                onChange={onChange('integralGain')}
+              />
+            </div>
+            <div className='form-control'>
+              <label htmlFor='maxPumpPower' className='mb-2 block text-sm font-medium'>
+                <Trans>Maximum Pump Power (0 - 1)</Trans>
+              </label>
+              <input
+                id='maxPumpPower'
+                name='maxPumpPower'
+                type='number'
+                placeholder='0'
+                min='0'
+                max='1'
+                step='any'
+                className='input input-bordered w-full'
+                value={formData.maxPumpPower?.toString()}
+                onChange={onChange('maxPumpPower')}
+              />
+            </div>
+            <div className='form-control'>
+              <label htmlFor='pumpSlipCoeffs' className='mb-2 block text-sm font-medium'>
+                <Trans>Pump Slip Coefficients</Trans>
+              </label>
+              <input
+                id='pumpSlipCoeffs'
+                name='pumpSlipCoeffs'
+                type='text'
+                className='input input-bordered w-full'
+                placeholder='0,0,0,0'
+                value={formData.pumpSlipCoeffs}
+                onChange={onChange('pumpSlipCoeffs')}
+              />
+              <span className='mt-1 text-xs opacity-70'>
+                <Trans>
+                  Pressure polynomial (a,b,c,d) for vane-/gear-pump internal leakage. Leave at
+                  0,0,0,0 if uncalibrated.
+                </Trans>
+              </span>
+            </div>
+          </div>
+        </Section>
+      )}
+      <CleaningSection formData={formData} onChange={onChange} setField={setField} />
     </div>
   );
 }

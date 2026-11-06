@@ -20,7 +20,7 @@ void LedControlPlugin::loop() {
 }
 
 void LedControlPlugin::updateControl() {
-    Settings settings = this->controller->getSettings();
+    const Settings &settings = this->controller->getSettings();
     int mode = this->controller->getMode();
     if (mode == MODE_STANDBY) {
         sendControl(0, 0, 0, 0, 0);

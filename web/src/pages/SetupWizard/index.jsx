@@ -11,9 +11,15 @@ import { MachineStep } from './MachineStep.jsx';
 import { BOOT_PLUGIN_KEYS, PLUGIN_KEYS, PluginsStep, usePluginForm } from './PluginsStep.jsx';
 import { TestStep } from './TestStep.jsx';
 import { WifiStep, isWifiChoiceValid } from './WifiStep.jsx';
-import { postSettings, setupNeeded } from './setupState.js';
+import {
+  postSettings,
+  setupNeeded,
+  setupSteps,
+  parseSetupStep,
+  savedSetupStep,
+} from './setupState.js';
 
-function FinishStep({ joinSsid, pluginsPending }) {
+function FinishStep({ joinSsid, pluginsPending, configureLater }) {
   const { t } = useLingui();
   const { profiles } = useProfileList();
   const featured = profiles.filter(p => !p.utility).slice(0, 4);
@@ -33,13 +39,25 @@ function FinishStep({ joinSsid, pluginsPending }) {
         </InfoNote>
       )}
       <p className='text-lg'>
-        <Trans>Thank you for installing GaggiMate! Your machine is ready for its first shot.</Trans>
+        {configureLater ? (
+          <Trans>Thank you for installing GaggiMate!</Trans>
+        ) : (
+          <Trans>
+            Thank you for installing GaggiMate! Your machine is ready for its first shot.
+          </Trans>
+        )}
       </p>
       <p>
-        <Trans>
-          A few profiles come pre-installed so you can start right away, from a classic 9 bar shot
-          to lever-style pressure curves:
-        </Trans>
+        {configureLater ? (
+          <Trans>
+            A few brew profiles come pre-installed for use after configuring your machine:
+          </Trans>
+        ) : (
+          <Trans>
+            A few profiles come pre-installed so you can start right away, from a classic 9 bar shot
+            to lever-style pressure curves:
+          </Trans>
+        )}
       </p>
       {featured.length > 0 && (
         <ul className='grid grid-cols-1 gap-2 sm:grid-cols-2'>
@@ -56,12 +74,28 @@ function FinishStep({ joinSsid, pluginsPending }) {
       <p className='text-sm opacity-70'>
         <Trans>You can run this wizard again any time from Settings → System.</Trans>
       </p>
+      {configureLater && <MachineSetupReminder reconnect={!!joinSsid} />}
     </div>
   );
 }
 
+function MachineSetupReminder({ reconnect }) {
+  return (
+    <InfoNote tone='warning' title={<Trans>Machine configuration required</Trans>}>
+      {reconnect ? (
+        <Trans>
+          After the restart, reconnect to your Wi-Fi network and open Settings → Machine to
+          configure your machine before use.
+        </Trans>
+      ) : (
+        <Trans>Open Settings → Machine to configure your machine before use.</Trans>
+      )}
+    </InfoNote>
+  );
+}
+
 // Shown after saving Wi-Fi: the machine restarts onto the home network and this page loses its connection.
-function JoiningWifi({ ssid }) {
+function JoiningWifi({ ssid, configureLater }) {
   const host = `${getCachedSettings()?.mdnsName || 'gaggimate'}.local`;
   return (
     <div className='mx-auto flex w-full max-w-xl flex-col gap-4 py-8'>
@@ -81,6 +115,7 @@ function JoiningWifi({ ssid }) {
           in the settings.
         </Trans>
       </p>
+      {configureLater && <MachineSetupReminder reconnect />}
     </div>
   );
 }
@@ -89,26 +124,44 @@ export function SetupWizard() {
   const { t } = useLingui();
   const location = useLocation();
   const pluginForm = usePluginForm();
-  const [step, setStep] = useState(0);
+  const [offerWifi] = useState(() => getCachedSettings()?.apMode === true);
+  const [configureLater, setConfigureLater] = useState(
+    () => parseSetupStep(getCachedSettings()?.setupStep).configureLater,
+  );
+  const [step, setStep] = useState(() => {
+    const saved = getCachedSettings();
+    const progress = parseSetupStep(saved?.setupStep);
+    const order = setupSteps(offerWifi, progress.configureLater);
+    return saved?.machineHardwareReady === false && !progress.configureLater
+      ? 0
+      : Math.max(0, order.indexOf(progress.step));
+  });
+  const [machineSaved, setMachineSaved] = useState(
+    () =>
+      !!getCachedSettings()?.setupStep &&
+      getCachedSettings()?.setupStep !== 'machine' &&
+      getCachedSettings()?.machineHardwareReady !== false,
+  );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
-  const [offerWifi] = useState(() => getCachedSettings()?.apMode === true);
   const [wifi, setWifi] = useState({ selected: null, ssid: '', secure: false, password: '' });
   const [joining, setJoining] = useState(null);
 
   // Plugins switched on by the last applied preset; another preset (or a custom machine) resets them first
   const [presetPlugins, setPresetPlugins] = useState([]);
   const applyPresetPlugins = preset => {
+    setConfigureLater(false);
+    setMachineSaved(true);
     const next = preset?.plugins || [];
     const changes = Object.fromEntries([
       ...presetPlugins.map(key => [key, pluginForm.initial[key]]),
       ...next.map(key => [key, true]),
     ]);
-    pluginForm.setFormData(formData => ({ ...formData, ...changes }));
+    pluginForm.setFields(changes);
     setPresetPlugins(next);
   };
 
-  const stepIds = ['tests', 'machine', 'plugins', ...(offerWifi ? ['wifi'] : []), 'done'];
+  const stepIds = setupSteps(offerWifi, configureLater);
   const stepLabels = {
     tests: t`Testing`,
     machine: t`Machine`,
@@ -116,7 +169,7 @@ export function SetupWizard() {
     wifi: t`Wi-Fi`,
     done: t`Done`,
   };
-  const current = stepIds[step];
+  const current = stepIds[Math.min(step, stepIds.length - 1)];
 
   const savePlugins = async () => {
     const fields = Object.fromEntries(PLUGIN_KEYS.map(key => [key, pluginForm.formData[key]]));
@@ -136,6 +189,7 @@ export function SetupWizard() {
     try {
       await postSettings({
         setupDone: true,
+        setupStep: savedSetupStep('done', configureLater),
         ...(joinWifi
           ? { wifiSsid: wifi.ssid, wifiPassword: wifi.secure ? wifi.password : '' }
           : {}),
@@ -146,7 +200,7 @@ export function SetupWizard() {
         return;
       }
       setupNeeded.value = false;
-      location.route('/profiles');
+      location.route(configureLater ? '/settings/machine' : '/profiles');
     } catch {
       setError(true);
     } finally {
@@ -154,23 +208,40 @@ export function SetupWizard() {
     }
   };
 
-  const skip = async () => {
-    if (!confirm(t`Skip the setup wizard? You can run it later from Settings → System.`)) return;
+  const skip = async (target = '/') => {
     try {
       await postSettings({ setupDone: true });
     } catch {
       // Still let the user in; the wizard shows again next time.
     }
     setupNeeded.value = false;
-    location.route('/');
+    location.route(target);
   };
 
   const skipWifi = () => {
     setWifi({ selected: null, ssid: '', secure: false, password: '' });
-    setStep(step + 1);
+    return next();
+  };
+
+  const configureMachineLater = async () => {
+    if (busy) return;
+    setBusy(true);
+    setError(false);
+    try {
+      await postSettings({ setupStep: savedSetupStep('plugins', true) });
+      setConfigureLater(true);
+      setMachineSaved(false);
+      setStep(1);
+    } catch {
+      setError(true);
+    } finally {
+      setBusy(false);
+    }
   };
 
   const next = async () => {
+    if (current === 'plugins' && (pluginForm.loading || pluginForm.loadError || pluginForm.saving))
+      return;
     if (current === 'plugins') {
       setBusy(true);
       setError(false);
@@ -183,10 +254,16 @@ export function SetupWizard() {
       }
       setBusy(false);
     }
+    try {
+      await postSettings({ setupStep: savedSetupStep(stepIds[step + 1], configureLater) });
+    } catch {
+      setError(true);
+      return;
+    }
     setStep(step + 1);
   };
 
-  if (joining) return <JoiningWifi ssid={joining} />;
+  if (joining) return <JoiningWifi ssid={joining} configureLater={configureLater} />;
 
   return (
     <div className='mx-auto flex w-full max-w-3xl flex-col gap-4 py-4'>
@@ -195,7 +272,12 @@ export function SetupWizard() {
           <Trans>Welcome to GaggiMate</Trans>
         </h1>
         {current !== 'done' && (
-          <button type='button' className='btn btn-ghost btn-sm' onClick={skip}>
+          <button
+            type='button'
+            className='btn btn-ghost btn-sm'
+            disabled={busy || pluginForm.saving}
+            onClick={() => skip()}
+          >
             <Trans>Skip setup</Trans>
           </button>
         )}
@@ -209,11 +291,21 @@ export function SetupWizard() {
       </ul>
       <Card title={stepLabels[current]}>
         {current === 'tests' && <TestStep />}
-        {current === 'machine' && <MachineStep onSaved={applyPresetPlugins} />}
+        {current === 'machine' && (
+          <MachineStep
+            onSaved={applyPresetPlugins}
+            onDirty={() => setMachineSaved(false)}
+            onConfigure={configureMachineLater}
+          />
+        )}
         {current === 'plugins' && <PluginsStep form={pluginForm} />}
         {current === 'wifi' && <WifiStep wifi={wifi} onChange={setWifi} />}
         {current === 'done' && (
-          <FinishStep joinSsid={joinWifi ? wifi.ssid : null} pluginsPending={pluginsPending} />
+          <FinishStep
+            joinSsid={joinWifi ? wifi.ssid : null}
+            pluginsPending={pluginsPending}
+            configureLater={configureLater}
+          />
         )}
         {error && (
           <InfoNote tone='error' title={t`Saving failed`}>
@@ -224,7 +316,7 @@ export function SetupWizard() {
           <button
             type='button'
             className='btn btn-ghost'
-            disabled={step === 0 || busy}
+            disabled={step === 0 || busy || pluginForm.saving}
             onClick={() => setStep(step - 1)}
           >
             <Trans>Back</Trans>
@@ -238,7 +330,13 @@ export function SetupWizard() {
             <button
               type='button'
               className='btn btn-primary'
-              disabled={busy || (current === 'wifi' && !isWifiChoiceValid(wifi))}
+              disabled={
+                busy ||
+                pluginForm.saving ||
+                (current === 'plugins' && (pluginForm.loading || !!pluginForm.loadError)) ||
+                (current === 'machine' && !machineSaved) ||
+                (current === 'wifi' && !isWifiChoiceValid(wifi))
+              }
               onClick={next}
             >
               {busy && <Spinner size={4} />}
