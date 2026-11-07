@@ -1774,8 +1774,7 @@ void Controller::handleProfileButton(bool pressed, const String &id) {
         return;
     }
     std::vector<String> profileIds = profileManager->listProfiles();
-    if (std::find(profileIds.begin(), profileIds.end(), id) != profileIds.end()) {
-        profileManager->selectProfile(id);
+    if (std::find(profileIds.begin(), profileIds.end(), id) != profileIds.end() && profileManager->selectProfile(id)) {
         activate();
     }
 }
