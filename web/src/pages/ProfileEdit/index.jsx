@@ -116,6 +116,11 @@ export function ProfileEdit() {
       setSaving(true);
       console.log(data);
       const response = await apiService.request({ tp: 'req:profiles:save', profile: data });
+      if (response?.error) {
+        // Rejected by the machine: keep the form as the user left it and stay on the page
+        setSaving(false);
+        return;
+      }
       setData(response.profile);
       await invalidateProfiles();
       setSaving(false);
