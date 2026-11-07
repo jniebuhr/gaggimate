@@ -445,6 +445,8 @@ void DefaultUI::loopProfiles() {
             favoritedProfileIds = std::move(validIds);
             favoritedProfiles = std::move(profiles);
             favoritedHasImage = std::move(hasImage);
+            const int count = static_cast<int>(favoritedProfileIds.size());
+            currentProfileIdx = count == 0 ? 0 : std::min(currentProfileIdx, count - 1);
             profilesGeneration++;
         }
         profileLoaded = 1;
