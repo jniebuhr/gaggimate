@@ -309,7 +309,7 @@ export function ShotHistory() {
       return;
     }
     const day = new Date().toISOString().slice(0, 10);
-    downloadJson(
+    void downloadJson(
       { exportedAt: new Date().toISOString(), count: exported.length, shots: exported },
       `shot-history-export-${day}.json`,
     );

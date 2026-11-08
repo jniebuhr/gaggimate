@@ -899,7 +899,7 @@ bool ShotHistoryPlugin::deleteAllHistory(size_t &deleted) {
     if (directory && directory.isDirectory()) {
         File file = directory.openNextFile();
         while (file) {
-            String name = String(file.name());
+            auto name = String(file.name());
             file.close();
             // file.name() yields a bare name on some filesystems and a full
             // path on others — normalize before matching.

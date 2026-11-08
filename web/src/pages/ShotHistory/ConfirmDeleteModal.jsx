@@ -36,11 +36,14 @@ export default function ConfirmDeleteModal({
 
   return (
     <div className='bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black p-4'>
-      <div
-        role='dialog'
+      {/* Native <dialog> opened via the open attribute: the overlay div keeps
+          the visual backdrop and the reset classes undo the UA border/padding,
+          so the layout is unchanged while assistive tech gets real semantics. */}
+      <dialog
+        open
         aria-modal='true'
         aria-labelledby={titleId}
-        className='max-h-[90vh] w-full max-w-md overflow-y-auto rounded-lg bg-white shadow-xl dark:bg-gray-800'
+        className='static m-0 max-h-[90vh] w-full max-w-md overflow-y-auto rounded-lg border-none bg-white p-0 shadow-xl dark:bg-gray-800'
       >
         <div className='p-6'>
           <div className='mb-4 flex items-center justify-between'>
@@ -108,7 +111,7 @@ export default function ConfirmDeleteModal({
             )}
           </div>
         </div>
-      </div>
+      </dialog>
     </div>
   );
 }
