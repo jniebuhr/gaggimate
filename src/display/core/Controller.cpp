@@ -1432,7 +1432,7 @@ void Controller::onPressureRead(float pressure) {
     if (isBrewActive())
         p = std::max(0.0f, p - settings.getPressureOffset());
     Event event = pluginManager->trigger("boiler:pressure:change", "value", p);
-    this->pressure = event.getFloat("value");
+    this->pressure.store(event.getFloat("value"), std::memory_order_relaxed);
 }
 
 void Controller::updateLastAction() { lastAction = millis(); }

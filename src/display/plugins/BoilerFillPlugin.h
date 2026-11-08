@@ -15,6 +15,7 @@ class BoilerFillPlugin : public Plugin {
     bool startFillProcess(bool startup);
 
     Controller *controller = nullptr;
+    bool startupFillPending = false;
     bool steamFillPending = false;
 };
 

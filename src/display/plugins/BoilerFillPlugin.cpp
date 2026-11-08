@@ -37,7 +37,8 @@ void BoilerFillPlugin::setup(Controller *controller, PluginManager *pluginManage
         // Pro: plugin on = always fill. Timed machines: 0 disables.
         if (!this->usePressureFill() && this->controller->getSettings().getStartupFillTime() == 0)
             return;
-        this->startFillProcess(true);
+        if (!this->startFillProcess(true))
+            this->startupFillPending = true;
     });
     pluginManager->on("controller:mode:change", [this](Event const &event) {
         // Event fires before mode is assigned, so getMode() is still the previous mode.
@@ -61,7 +62,15 @@ void BoilerFillPlugin::setup(Controller *controller, PluginManager *pluginManage
 }
 
 void BoilerFillPlugin::loop() {
-    if (!steamFillPending || controller == nullptr)
+    if (controller == nullptr)
+        return;
+
+    if (startupFillPending && controller->isReady() && !controller->isActive()) {
+        if (startFillProcess(true))
+            startupFillPending = false;
+    }
+
+    if (!steamFillPending)
         return;
 
     const int mode = controller->getMode();

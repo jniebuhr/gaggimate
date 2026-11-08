@@ -78,7 +78,7 @@ class Controller {
     bool isSDCard() const { return sdcard; }
     virtual float getTargetPressure() const { return targetPressure; }
     virtual float getTargetFlow() const { return targetFlow; }
-    virtual float getCurrentPressure() const { return pressure; }
+    virtual float getCurrentPressure() const { return pressure.load(std::memory_order_relaxed); }
     virtual float getCurrentPuckFlow() const { return currentPuckFlow; }
     virtual float getCurrentPumpFlow() const { return currentPumpFlow; }
     virtual float getCurrentPumpPower() const { return currentPumpPower; }
@@ -262,7 +262,7 @@ class Controller {
     int mode = MODE_BREW;
     float currentTemp = 0.0f;
     float currentSteamTemp = 0.0f;
-    float pressure = 0.0f;
+    std::atomic<float> pressure{0.0f};
     float targetPressure = 0.0f;
     float currentPuckFlow = 0.0f;
     float currentPumpFlow = 0.0f;
