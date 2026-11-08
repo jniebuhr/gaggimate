@@ -100,6 +100,7 @@ function ProfileCard({
 }) {
   const { t } = useLingui();
   const visiblePending = useDelayedValue(pending, PENDING_VISUAL_DELAY_MS);
+  const busy = Boolean(pending);
   const { armed: confirmDelete, armOrRun: confirmOrDelete } = useConfirmAction(4000);
   const [tooltipsDisabled, setTooltipsDisabled] = useState(false);
 
@@ -249,6 +250,7 @@ function ProfileCard({
                         e.preventDefault();
                         onSelect(data.id, data.selected);
                       }}
+                      disabled={busy}
                       className='checkbox checkbox-success checkbox-sm'
                       aria-label={t`Select ${label} profile`}
                     />
@@ -304,6 +306,7 @@ function ProfileCard({
                   <button
                     ref={kebabRef}
                     onClick={toggleMenu}
+                    disabled={busy}
                     className='btn btn-sm btn-ghost sm:hidden'
                     aria-label={t`Open actions menu for ${label} profile`}
                     aria-haspopup='menu'
@@ -334,7 +337,7 @@ function ProfileCard({
                               onFavoriteToggle();
                               closeMenu();
                             }}
-                            disabled={favoriteToggleDisabled}
+                            disabled={favoriteToggleDisabled || busy}
                             className={`justify-start ${favoriteToggleClass}`}
                             aria-label={
                               data.favorite
@@ -381,6 +384,7 @@ function ProfileCard({
                               onDownload();
                               closeMenu();
                             }}
+                            disabled={busy}
                             className='text-primary justify-start'
                             aria-label={t`Export ${label} profile`}
                           >
@@ -397,6 +401,7 @@ function ProfileCard({
                               onDuplicate(data.id);
                               closeMenu();
                             }}
+                            disabled={busy}
                             className='text-success justify-start'
                             aria-label={t`Duplicate ${label} profile`}
                           >
@@ -416,6 +421,7 @@ function ProfileCard({
                                   closeMenu();
                                 });
                               }}
+                              disabled={busy}
                               className={`justify-start ${confirmDelete ? 'bg-error text-error-content rounded font-semibold' : 'text-error'}`}
                               aria-label={
                                 confirmDelete
@@ -443,7 +449,7 @@ function ProfileCard({
                   <Tooltip content={data.favorite ? t`Remove from favorites` : t`Add to favorites`}>
                     <button
                       onClick={onFavoriteToggle}
-                      disabled={favoriteToggleDisabled}
+                      disabled={favoriteToggleDisabled || busy}
                       className={`btn btn-sm btn-ghost ${favoriteToggleClass}`}
                       aria-label={
                         data.favorite
@@ -480,6 +486,7 @@ function ProfileCard({
                   <Tooltip content={t`Export profile`}>
                     <button
                       onClick={onDownload}
+                      disabled={busy}
                       className='btn btn-sm btn-ghost text-primary'
                       aria-label={t`Export ${label} profile`}
                     >
@@ -489,6 +496,7 @@ function ProfileCard({
                   <Tooltip content={t`Duplicate profile`}>
                     <button
                       onClick={() => onDuplicate(data.id)}
+                      disabled={busy}
                       className='btn btn-sm btn-ghost text-success'
                       aria-label={t`Duplicate ${label} profile`}
                     >
@@ -505,6 +513,7 @@ function ProfileCard({
                         onClick={() => {
                           confirmOrDelete(() => onDelete(data.id));
                         }}
+                        disabled={busy}
                         className={`btn btn-sm btn-ghost ${confirmDelete ? 'bg-error text-error-content' : 'text-error'}`}
                         aria-label={
                           confirmDelete
@@ -562,7 +571,7 @@ function ProfileCard({
                 <Tooltip content={t`Move to top`} disabled={isDragging || tooltipsDisabled}>
                   <button
                     onClick={handleMoveTop}
-                    disabled={isFirst}
+                    disabled={isFirst || busy}
                     className='drag-to-top btn btn-sm btn-ghost'
                     aria-label={t`Move ${label} to top`}
                     aria-disabled={isFirst}
@@ -583,7 +592,7 @@ function ProfileCard({
                 <Tooltip content={t`Move to bottom`} disabled={isDragging || tooltipsDisabled}>
                   <button
                     onClick={handleMoveBottom}
-                    disabled={isLast}
+                    disabled={isLast || busy}
                     className='drag-to-bottom btn btn-sm btn-ghost'
                     aria-label={t`Move ${label} to bottom`}
                     aria-disabled={isLast}
