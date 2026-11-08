@@ -13,9 +13,8 @@ class PressureFillProcess : public Process {
     using PressureReader = std::function<float()>;
 
     PressureFillProcess(PressureReader reader, float pressureThreshold, unsigned long holdTimeMs, unsigned long maxTimeMs)
-        : getPressure(std::move(reader)), pressureThreshold(pressureThreshold), holdTimeMs(holdTimeMs), maxTimeMs(maxTimeMs) {
-        started = millis();
-    }
+        : getPressure(std::move(reader)), pressureThreshold(pressureThreshold), holdTimeMs(holdTimeMs), maxTimeMs(maxTimeMs),
+          started(millis()) {}
 
     bool isRelayActive() override { return false; }
 
