@@ -6,6 +6,9 @@
 class AmoledDisplayDriver : public Driver {
   public:
     bool isCompatible() override;
+    // Detected hw variant index for NVS caching; selectVariant restores it without probing
+    int getVariant() const { return variant; }
+    bool selectVariant(int variant);
     void init() override;
     void setBrightness(int brightness) override { panel->setBrightness(brightness); };
     bool supportsSDCard() override;
@@ -25,6 +28,7 @@ class AmoledDisplayDriver : public Driver {
     Amoled_DisplayPanel *panel = nullptr;
 
     AmoledHwConfig hwConfig{};
+    int variant = -1;
 
     AmoledDisplayDriver() {};
 };

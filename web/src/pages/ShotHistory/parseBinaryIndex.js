@@ -11,14 +11,22 @@ const SHOT_FLAG_DELETED = 0x02;
 const SHOT_FLAG_HAS_NOTES = 0x04;
 
 const WEIGHT_SCALE = 10;
+const TEMP_SCALE = 10;
+const PRESSURE_SCALE = 10;
+const FLOW_SCALE = 100;
 
 function decodeCString(bytes) {
-  let out = '';
+  // Bytes are a null-terminated UTF-8 C string. Decode as UTF-8 — appending
+  // String.fromCharCode(byte) treats each byte as a Latin-1 code point, which
+  // mangles multibyte characters (e.g. "é" 0xC3 0xA9 -> "Ã©").
+  let end = bytes.length;
   for (let i = 0; i < bytes.length; i++) {
-    if (bytes[i] === 0) break;
-    out += String.fromCharCode(bytes[i]);
+    if (bytes[i] === 0) {
+      end = i;
+      break;
+    }
   }
-  return out;
+  return new TextDecoder('utf-8').decode(bytes.subarray(0, end));
 }
 
 /**
@@ -73,6 +81,11 @@ export function parseBinaryIndex(arrayBuffer) {
     const profileId = decodeCString(profileIdBytes);
     const profileName = decodeCString(profileNameBytes);
 
+    // Per-shot aggregates; 0 means "not recorded" (entries written by older firmware)
+    const avgTempRaw = view.getUint16(base + 96, true);
+    const maxPressureRaw = view.getUint16(base + 98, true);
+    const avgFlowRaw = view.getUint16(base + 100, true);
+
     // Convert volume from scaled integer to float
     const volumeFloat = volume > 0 ? volume / WEIGHT_SCALE : null;
 
@@ -85,6 +98,9 @@ export function parseBinaryIndex(arrayBuffer) {
       flags,
       profileId,
       profileName,
+      avgTemp: avgTempRaw > 0 ? avgTempRaw / TEMP_SCALE : null,
+      maxPressure: maxPressureRaw > 0 ? maxPressureRaw / PRESSURE_SCALE : null,
+      avgFlow: avgFlowRaw > 0 ? avgFlowRaw / FLOW_SCALE : null,
       // Computed flags
       completed: !!(flags & SHOT_FLAG_COMPLETED),
       deleted: !!(flags & SHOT_FLAG_DELETED),
@@ -123,6 +139,9 @@ export function indexToShotList(indexData) {
       volume: entry.volume,
       rating: entry.rating > 0 ? entry.rating : null, // Only include rating if > 0
       incomplete: entry.incomplete,
+      avgTemp: entry.avgTemp,
+      maxPressure: entry.maxPressure,
+      avgFlow: entry.avgFlow,
       notes: null,
       loaded: false,
       data: null,

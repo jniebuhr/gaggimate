@@ -2,75 +2,182 @@
 
 #include <WiFi.h>
 #include <display/core/Controller.h>
+#include <display/core/ProfileImage.h>
 #include <display/core/process/BrewProcess.h>
 #include <display/core/process/Process.h>
 #include <display/core/zones.h>
+#ifndef GAGGIMATE_SIM // hardware panel drivers are device-only
 #include <display/drivers/AmoledDisplayDriver.h>
 #include <display/drivers/LilyGoDriver.h>
 #include <display/drivers/WaveshareDriver.h>
 #include <display/drivers/common/LV_Helper.h>
+#endif
+#include <cmath>
 #include <display/main.h>
-#include <display/ui/default/lvgl/ui_theme_manager.h>
-#include <display/ui/default/lvgl/ui_themes.h>
 #include <display/ui/utils/effects.h>
+#include <esp32-hal-psram.h>
+#include <utility>
 
 #include "esp_sntp.h"
 
+#include <display/ui/default/eez/images.h>
+#include <display/ui/default/eez/ui.h>
+
 static EffectManager effect_mgr;
+
+static constexpr uint32_t STARTUP_FADE_MS = 1000; // standby fade-in duration on power-up
+
+static constexpr int32_t GAUGE_TICK_LONG = 25;      // meter tick length on most screens
+static constexpr int32_t GAUGE_TICK_SHORT = 10;     // shortened tick length on profile / new-menu screens
+static constexpr uint32_t GAUGE_TICK_ANIM_MS = 300; // tick length transition duration
+static constexpr int16_t GAUGE_SETPOINT_INSIDE_PIVOT_X = -195;
+
+static void applyGaugeSetpointVisibility(lv_obj_t *obj, bool inside) {
+    if (lv_obj_check_type(obj, &lv_meter_class)) {
+        auto *meter = reinterpret_cast<lv_meter_t *>(obj);
+        for (auto *indicator = static_cast<lv_meter_indicator_t *>(_lv_ll_get_head(&meter->indicator_ll)); indicator != nullptr;
+             indicator = static_cast<lv_meter_indicator_t *>(_lv_ll_get_next(&meter->indicator_ll, indicator))) {
+            if (indicator->type == LV_METER_INDICATOR_TYPE_NEEDLE_IMG) {
+                const bool isInsideIndicator = indicator->type_data.needle_img.src == &img_indicator_small_inside;
+                indicator->opa = inside == isInsideIndicator ? LV_OPA_COVER : LV_OPA_TRANSP;
+                lv_obj_invalidate(obj);
+            }
+        }
+    }
+
+    const uint32_t childCount = lv_obj_get_child_cnt(obj);
+    for (uint32_t i = 0; i < childCount; i++)
+        applyGaugeSetpointVisibility(lv_obj_get_child(obj, i), inside);
+}
+
+// Profile, menu and info screens, plus the status screen in chart mode, show shortened meter ticks.
+static bool isShortTickScreen(ScreensEnum s, bool chartMode) {
+    return s == SCREEN_ID_MENU_SCREEN_NEW || s == SCREEN_ID_INFO_SCREEN || s == SCREEN_ID_NEW_PROFILE_SCREEN ||
+           (chartMode && s == SCREEN_ID_STATUS_SCREEN);
+}
+
+// Format a millisecond duration as "m:ss" for the brew/profile time labels.
+static void formatDuration(unsigned long ms, char *buf, size_t len) {
+    const double seconds = ms / 1000.0;
+    const int minutes = static_cast<int>(seconds / 60.0);
+    const int secs = static_cast<int>(seconds) % 60;
+    snprintf(buf, len, "%d:%02d", minutes, secs);
+}
+
+static float clampPercentage(float pct) { return pct < 0.0f ? 0.0f : (pct > 100.0f ? 100.0f : pct); }
+
+// Shot chart styling, after the community concept UI: thin lines, endpoint dot, no grid or fill.
+// Theme color slots (Pressure, Progress, Temperature, Warning) so the chart matches the rest of the UI.
+static constexpr int SHOT_THEME_COLORS[SHOT_SERIES_COUNT] = {7, 7, 2, 2, 6, 8};
+static constexpr int SHOT_GUIDE_COLOR = 3; // theme SemiDark, for the baseline and phase markers
+static constexpr lv_coord_t SHOT_DOT_RADIUS = 3;
+static constexpr bool SHOT_IS_TARGET[SHOT_SERIES_COUNT] = {false, true, false, true, false, false};
+static constexpr lv_coord_t SHOT_CHART_SCALE = 1000;    // every series is normalised to 0..1000 of its own range
+static constexpr float SHOT_FLOW_RANGE_DEFAULT = 12.0f; // bar / ml/s
+static constexpr float SHOT_WEIGHT_RANGE_DEFAULT = 50.0f;
+static constexpr float SHOT_TEMP_RANGE = 10.0f; // profile temperature centred, ±10 °C
+static constexpr uint32_t SHOT_ZOOM_ANIM_MS = 400;
+static constexpr int32_t SHOT_ZOOM_ANIM_STEPS = 1000;
+
+// Pressure teal and flow pink as in the web UI's profile chart, deepened where the profile card is light (dark themes).
+static constexpr uint32_t PROFILE_COLORS[3][2] = {{0x2a8f8f, 0xe05a5a}, {0x4bc0c0, 0xffc0c0}, {0x2a8f8f, 0xe05a5a}};
+static constexpr lv_coord_t PROFILE_LINE_WIDTH = 4;     // limit lines draw dashed and thinner
+static constexpr float PROFILE_CHART_STEP = 0.1f;       // s, matches the web UI profile chart
+static constexpr float PROFILE_CHART_MIN_RANGE = 10.0f; // bar / ml/s
+
+static float applyEasing(float t, TransitionType type) {
+    if (t <= 0.0f)
+        return 0.0f;
+    if (t >= 1.0f)
+        return 1.0f;
+    switch (type) {
+    case TransitionType::LINEAR:
+        return t;
+    case TransitionType::EASE_IN:
+        return t * t;
+    case TransitionType::EASE_OUT:
+        return 1.0f - (1.0f - t) * (1.0f - t);
+    case TransitionType::EASE_IN_OUT:
+        return t < 0.5f ? 2.0f * t * t : 1.0f - 2.0f * (1.0f - t) * (1.0f - t);
+    default:
+        return 1.0f;
+    }
+}
+
+static lv_coord_t scaleShotValue(float value, float min, float max) {
+    const int32_t scaled = lroundf((value - min) / (max - min) * SHOT_CHART_SCALE);
+    return static_cast<lv_coord_t>(LV_CLAMP(0, scaled, SHOT_CHART_SCALE));
+}
+
+// Grow a range in whole steps until it fits value.
+static float growShotRange(float range, float value, float step) {
+    while (value > range)
+        range += step;
+    return range;
+}
+
+// Shared look of the live shot chart and the profile preview chart: thin lines, no grid, baseline and phase markers.
+static void styleTrendChart(lv_obj_t *chart, uint16_t points) {
+    lv_chart_set_type(chart, LV_CHART_TYPE_LINE);
+    lv_chart_set_point_count(chart, points);
+    lv_chart_set_range(chart, LV_CHART_AXIS_PRIMARY_Y, 0, SHOT_CHART_SCALE);
+    lv_chart_set_div_line_count(chart, 0, 0);
+    lv_obj_set_style_border_opa(chart, LV_OPA_TRANSP, LV_PART_MAIN);
+    lv_obj_set_style_line_width(chart, 0, LV_PART_MAIN);
+    // Inset the plot by the dot radius so endpoint dots at the edges aren't clipped by the chart bounds.
+    lv_obj_set_style_pad_all(chart, SHOT_DOT_RADIUS, LV_PART_MAIN);
+    lv_obj_set_style_pad_left(chart, 0, LV_PART_MAIN);
+    lv_obj_set_style_line_width(chart, 2, LV_PART_ITEMS);
+    lv_obj_set_style_size(chart, 0, LV_PART_INDICATOR);
+}
+
+// The chart shares one line descriptor across all series, so set every field each segment.
+static void styleTrendLine(lv_draw_line_dsc_t *line, bool secondary, lv_coord_t width = 2) {
+    line->dash_width = secondary ? width + 1 : 0;
+    line->dash_gap = secondary ? width + 1 : 0;
+    line->opa = secondary ? LV_OPA_60 : LV_OPA_COVER;
+    line->width = secondary ? width * 3 / 4 : width;
+}
+
+// Drawn before the series so the guides sit behind the lines.
+static void drawTrendGuides(lv_event_t *e, int theme, const bool *phaseMarks, int markCount, int pointCount) {
+    lv_obj_t *chart = lv_event_get_target(e);
+    lv_draw_ctx_t *drawCtx = lv_event_get_draw_ctx(e);
+    lv_area_t content;
+    lv_obj_get_content_coords(chart, &content);
+    const lv_coord_t width = lv_obj_get_content_width(chart);
+    const lv_coord_t bottom = content.y1 + lv_obj_get_content_height(chart);
+
+    lv_draw_line_dsc_t line;
+    lv_draw_line_dsc_init(&line);
+    line.color = lv_color_hex(theme_colors[theme][SHOT_GUIDE_COLOR]);
+    line.width = 1;
+    line.opa = LV_OPA_40;
+    const lv_point_t baseStart = {content.x1, bottom};
+    const lv_point_t baseEnd = {content.x2, bottom};
+    lv_draw_line(drawCtx, &line, &baseStart, &baseEnd);
+
+    line.opa = LV_OPA_30;
+    line.dash_width = 2;
+    line.dash_gap = 3;
+    for (int i = 0; i < markCount; i++) {
+        if (!phaseMarks[i])
+            continue;
+        const lv_coord_t x = static_cast<lv_coord_t>(content.x1 + width * i / (pointCount - 1));
+        const lv_point_t top = {x, content.y1};
+        const lv_point_t base = {x, bottom};
+        lv_draw_line(drawCtx, &line, &top, &base);
+    }
+}
+
+// EEZ string setters allocate a fresh StringRef on the LVGL heap each call; skip unchanged text to cut churn.
+static bool stringChanged(const char *current, const char *next) {
+    return current == nullptr || next == nullptr || strcmp(current, next) != 0;
+}
 
 int16_t calculate_angle(int set_temp, int range, int offset) {
     const double percentage = static_cast<double>(set_temp) / static_cast<double>(MAX_TEMP);
     return (percentage * ((double)range)) - range / 2 - offset;
-}
-
-void DefaultUI::updateTempHistory() {
-    if (currentTemp > 0) {
-        tempHistory[tempHistoryIndex] = currentTemp;
-        tempHistoryIndex += 1;
-    }
-
-    if (tempHistoryIndex > TEMP_HISTORY_LENGTH) {
-        tempHistoryIndex = 0;
-        isTempHistoryInitialized = true;
-    }
-
-    if (tempHistoryIndex % 4 == 0) {
-        heatingFlash = !heatingFlash;
-        rerender = true;
-    }
-}
-
-void DefaultUI::updateTempStableFlag() {
-    if (isTempHistoryInitialized) {
-        float totalError = 0.0f;
-        float maxError = 0.0f;
-        for (uint16_t i = 0; i < TEMP_HISTORY_LENGTH; i++) {
-            float error = abs(tempHistory[i] - targetTemp);
-            totalError += error;
-            maxError = error > maxError ? error : maxError;
-        }
-
-        const float avgError = totalError / TEMP_HISTORY_LENGTH;
-        const float errorMargin = max(2.0f, static_cast<float>(targetTemp) * 0.02f);
-
-        isTemperatureStable = avgError < errorMargin && maxError <= errorMargin;
-    }
-
-    // instantly reset stability if setpoint has changed
-    if (prevTargetTemp != targetTemp) {
-        isTemperatureStable = false;
-    }
-
-    prevTargetTemp = targetTemp;
-}
-
-void DefaultUI::adjustHeatingIndicator(lv_obj_t *dials) {
-    lv_obj_t *heatingIcon = ui_comp_get_child(dials, UI_COMP_DIALS_TEMPICON);
-    lv_obj_set_style_img_recolor(heatingIcon, lv_color_hex(isTemperatureStable ? 0x00D100 : 0xF62C2C),
-                                 LV_PART_MAIN | LV_STATE_DEFAULT);
-    if (!isTemperatureStable) {
-        lv_obj_set_style_opa(heatingIcon, heatingFlash ? LV_OPA_50 : LV_OPA_100, LV_PART_MAIN | LV_STATE_DEFAULT);
-    }
 }
 
 void DefaultUI::reloadProfiles() { profileLoaded = 0; }
@@ -78,6 +185,7 @@ void DefaultUI::reloadProfiles() { profileLoaded = 0; }
 DefaultUI::DefaultUI(Controller *controller, Driver *driver, PluginManager *pluginManager)
     : controller(controller), panelDriver(driver), pluginManager(pluginManager) {
     setupPanel();
+    xTaskCreatePinnedToCore(loopTask, "DefaultUI::loop", configMINIMAL_STACK_SIZE * 6, this, 1, &taskHandle, 1);
 }
 
 void DefaultUI::init() {
@@ -104,70 +212,68 @@ void DefaultUI::init() {
             rerender = true;
         }
     });
-    pluginManager->on("controller:targetVolume:change", [=](Event const &event) {
-        targetVolume = event.getFloat("value");
-        rerender = true;
-    });
-    pluginManager->on("controller:targetDuration:change", [=](Event const &event) {
-        targetDuration = event.getFloat("value");
-        rerender = true;
-    });
-    pluginManager->on("controller:grindDuration:change", [=](Event const &event) {
-        grindDuration = event.getInt("value");
-        rerender = true;
-    });
-    pluginManager->on("controller:grindVolume:change", [=](Event const &event) {
-        grindVolume = event.getFloat("value");
-        rerender = true;
-    });
+    pluginManager->on("controller:targetVolume:change", [=](Event const &event) { rerender = true; });
+    pluginManager->on("controller:targetDuration:change", [=](Event const &event) { rerender = true; });
+    pluginManager->on("controller:grindDuration:change", [=](Event const &event) { rerender = true; });
+    pluginManager->on("controller:grindVolume:change", [=](Event const &event) { rerender = true; });
+    pluginManager->on("controller:grind:end", triggerRender);
+    pluginManager->on("controller:grind:start", triggerRender);
     pluginManager->on("controller:process:end", triggerRender);
     pluginManager->on("controller:process:start", triggerRender);
     pluginManager->on("controller:mode:change", [this](Event const &event) {
         mode = event.getInt("value");
         switch (mode) {
         case MODE_STANDBY:
-            changeScreen(&ui_StandbyScreen, &ui_StandbyScreen_screen_init);
+            changeScreen(SCREEN_ID_STANDBY_SCREEN);
             break;
         case MODE_BREW:
-            changeScreen(&ui_BrewScreen, &ui_BrewScreen_screen_init);
+            changeScreen(SCREEN_ID_BREW_SCREEN);
             break;
         case MODE_GRIND:
-            changeScreen(&ui_GrindScreen, &ui_GrindScreen_screen_init);
+            changeScreen(SCREEN_ID_GRIND_SCREEN);
             break;
         case MODE_STEAM:
-            changeScreen(&ui_SimpleProcessScreen, &ui_SimpleProcessScreen_screen_init);
+            changeScreen(SCREEN_ID_STEAM_SCREEN);
             break;
         case MODE_WATER:
-            changeScreen(&ui_SimpleProcessScreen, &ui_SimpleProcessScreen_screen_init);
+            changeScreen(SCREEN_ID_WATER_SCREEN);
             break;
         default:
             break;
         };
     });
-    pluginManager->on("controller:brew:start",
-                      [this](Event const &event) { changeScreen(&ui_StatusScreen, &ui_StatusScreen_screen_init); });
+    pluginManager->on("controller:brew:start", [this](Event const &event) { changeScreen(SCREEN_ID_STATUS_SCREEN); });
     pluginManager->on("controller:brew:clear", [this](Event const &event) {
-        if (lv_scr_act() == ui_StatusScreen) {
-            changeScreen(&ui_BrewScreen, &ui_BrewScreen_screen_init);
+        if (eez_flow_get_current_screen() == SCREEN_ID_STATUS_SCREEN) {
+            changeScreen(SCREEN_ID_BREW_SCREEN);
         }
     });
     pluginManager->on("controller:bluetooth:waiting", [this](Event const &) {
         waitingForController = true;
         rerender = true;
     });
+    pluginManager->on("controller:brew:confirm", [this](Event const &) {
+        if (eez_flow_get_current_screen() != SCREEN_ID_BREW_SCREEN)
+            changeScreen(SCREEN_ID_BREW_SCREEN);
+        setBrewConfirmVisible(true);
+    });
+    // Answered elsewhere (web UI, other client): drop the overlay.
+    pluginManager->on("controller:brew:confirm:cancel", [this](Event const &) { setBrewConfirmVisible(false); });
+    pluginManager->on("controller:brew:start", [this](Event const &) { setBrewConfirmVisible(false); });
     pluginManager->on("controller:bluetooth:connect", [this](Event const &) {
         waitingForController = false;
-        rerender = true;
-        initialized = true;
-        if (lv_scr_act() == ui_StandbyScreen) {
-            Settings &settings = controller->getSettings();
+        if (eez_flow_get_current_screen() == SCREEN_ID_STANDBY_SCREEN && !controller->getSystemInfo().protocolMismatch &&
+            !initialized) {
+            ::Settings &settings = controller->getSettings();
             if (settings.getStartupMode() == MODE_BREW) {
-                changeScreen(&ui_BrewScreen, &ui_BrewScreen_screen_init);
+                changeScreen(SCREEN_ID_BREW_SCREEN);
             } else {
-                standbyEnterTime = millis();
+                standbyEnterTime = ::millis();
             }
         }
+        initialized = true;
         pressureAvailable = controller->getSystemInfo().capabilities.pressure;
+        rerender = true;
     });
     pluginManager->on("controller:bluetooth:disconnect", [this](Event const &) {
         waitingForController = true;
@@ -178,14 +284,12 @@ void DefaultUI::init() {
         apActive = event.getInt("AP");
     });
     pluginManager->on("ota:update:start", [this](Event const &) {
-        updateActive = true;
         rerender = true;
-        changeScreen(&ui_StandbyScreen, &ui_StandbyScreen_screen_init);
+        changeScreen(SCREEN_ID_STANDBY_SCREEN);
     });
     pluginManager->on("ota:update:end", [this](Event const &) {
-        updateActive = false;
         rerender = true;
-        changeScreen(&ui_StandbyScreen, &ui_StandbyScreen_screen_init);
+        changeScreen(SCREEN_ID_STANDBY_SCREEN);
     });
     pluginManager->on("ota:update:status", [this](Event const &event) {
         rerender = true;
@@ -193,46 +297,68 @@ void DefaultUI::init() {
     });
     pluginManager->on("controller:error", [this](Event const &) {
         rerender = true;
-        changeScreen(&ui_StandbyScreen, &ui_StandbyScreen_screen_init);
+        changeScreen(SCREEN_ID_STANDBY_SCREEN);
     });
-    pluginManager->on("controller:autotune:start",
-                      [this](Event const &) { changeScreen(&ui_StandbyScreen, &ui_StandbyScreen_screen_init); });
-    pluginManager->on("controller:autotune:result",
-                      [this](Event const &) { changeScreen(&ui_StandbyScreen, &ui_StandbyScreen_screen_init); });
+    pluginManager->on("controller:protocol:mismatch", [this](Event const &) {
+        // Incompatible firmware on the other end: control is inhibited (OTA only),
+        // so surface it on the standby screen like a runaway error.
+        rerender = true;
+        changeScreen(SCREEN_ID_STANDBY_SCREEN);
+    });
+    pluginManager->on("controller:autotune:start", [this](Event const &) { changeScreen(SCREEN_ID_STANDBY_SCREEN); });
+    pluginManager->on("controller:autotune:result", [this](Event const &) { changeScreen(SCREEN_ID_STANDBY_SCREEN); });
 
     pluginManager->on("profiles:profile:select", [this](Event const &event) {
-        profileManager->loadSelectedProfile(selectedProfile);
-        selectedProfileId = event.getString("id");
-        targetDuration = profileManager->getSelectedProfile().getTotalDuration();
-        targetVolume = profileManager->getSelectedProfile().getTotalVolume();
-        profileVolumetric = profileManager->getSelectedProfile().isVolumetric();
         reloadProfiles();
         rerender = true;
     });
     pluginManager->on("profiles:profile:favorite", [this](Event const &event) { reloadProfiles(); });
     pluginManager->on("profiles:profile:unfavorite", [this](Event const &event) { reloadProfiles(); });
     pluginManager->on("profiles:profile:save", [this](Event const &event) { reloadProfiles(); });
-    pluginManager->on("controller:volumetric-measurement:bluetooth:change", [=](Event const &event) {
+    pluginManager->on("profiles:image:change", [this](Event const &) {
+        imageGeneration++;
+        reloadProfiles();
+        rerender = true;
+    });
+    pluginManager->on("controller:volumetric-measurement:active:change", [=](Event const &event) {
         double newWeight = event.getFloat("value");
-        if (round(newWeight * 10.0) != round(bluetoothWeight * 10.0)) {
-            bluetoothWeight = newWeight;
+        if (round(newWeight * 10.0) != round(activeWeight * 10.0)) {
+            activeWeight = newWeight;
             rerender = true;
         }
     });
-    setupState();
-    setupReactive();
-    xTaskCreatePinnedToCore(loopTask, "DefaultUI::loop", configMINIMAL_STACK_SIZE * 6, this, 1, &taskHandle, 1);
-    xTaskCreatePinnedToCore(profileLoopTask, "DefaultUI::loopProfiles", configMINIMAL_STACK_SIZE * 4, this, 1, &profileTaskHandle,
-                            0);
+    // Task names cap at 15 chars; "DefaultUI::loopProfiles" read as "DefaultUI::loop" in panics. SD + JSON need the headroom.
+    xTaskCreatePinnedToCore(profileLoopTask, "UI::profiles", configMINIMAL_STACK_SIZE * 6, this, 1, &profileTaskHandle, 0);
+}
+
+// True while any pointer input device (the touch panel) is pressed.
+static bool pointerPressed() {
+    for (lv_indev_t *indev = lv_indev_get_next(nullptr); indev != nullptr; indev = lv_indev_get_next(indev)) {
+        if (lv_indev_get_type(indev) == LV_INDEV_TYPE_POINTER && indev->proc.state == LV_INDEV_STATE_PRESSED)
+            return true;
+    }
+    return false;
 }
 
 void DefaultUI::loop() {
-    const unsigned long now = millis();
+    const unsigned long now = ::millis();
     const unsigned long diff = now - lastRender;
 
+    if (touchFlushHeld) {
+        if (!controller->isActive()) {
+            touchFlushHeld = false;
+        } else if (!pointerPressed()) {
+            touchFlushHeld = false;
+            controller->onFlushRelease();
+        }
+    }
+
     if (now - lastTempLog > TEMP_HISTORY_INTERVAL) {
-        updateTempHistory();
         lastTempLog = now;
+        if (++heatingFlashTick % 4 == 0) {
+            heatingFlash = !heatingFlash;
+            rerender = true;
+        }
     }
 
     if ((controller->isActive() && diff > RERENDER_INTERVAL_ACTIVE) || diff > RERENDER_INTERVAL_IDLE) {
@@ -242,59 +368,115 @@ void DefaultUI::loop() {
     if (rerender) {
         rerender = false;
         lastRender = now;
-        error = controller->isErrorState();
-        autotuning = controller->isAutotuning();
-        const Settings &settings = controller->getSettings();
-        volumetricAvailable = controller->isVolumetricAvailable();
-        bluetoothScales = controller->isBluetoothScaleHealthy();
-        volumetricMode = volumetricAvailable && settings.isVolumetricTarget();
-        brewVolumetric = volumetricAvailable && profileVolumetric;
-        grindActive = controller->isGrindActive();
-        active = controller->isActive();
-        smartGrindActive = settings.isSmartGrindActive();
-        grindAvailable = smartGrindActive || settings.getAltRelayFunction() == ALT_RELAY_GRIND;
         applyTheme();
         if (controller->isErrorState()) {
-            changeScreen(&ui_StandbyScreen, &ui_StandbyScreen_screen_init);
+            changeScreen(SCREEN_ID_STANDBY_SCREEN);
         }
-        updateTempStableFlag();
+        updateState();
+        // Fill the EEZ data models before handleScreenChange() creates/ticks a screen (undefined fields abort the flow).
+        updateSystemStatus();
+        updateWarnings();
+        updateProfileInfo();
+        updateBoiler();
+        updateBrewProcess();
+        updateShotChart();
+        currentWeight = FloatValue(activeWeight);
+        eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_SCALE_WEIGHT_CURRENT, currentWeight);
+
+        char timeBuf[12];
+        formatDuration(controller->getSettings().getTargetGrindDuration(), timeBuf, sizeof(timeBuf));
+        if (stringChanged(grindTimeTarget.getString(), timeBuf)) {
+            grindTimeTarget = StringValue(timeBuf);
+            eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_GRIND_TIME_TARGET, grindTimeTarget);
+        }
+        grindWeightTarget = FloatValue(controller->getSettings().getTargetGrindVolume());
+        eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_GRIND_WEIGHT_TARGET, grindWeightTarget);
+
         handleScreenChange();
-        currentScreen = lv_scr_act();
-        if (lv_scr_act() == ui_StandbyScreen)
-            updateStandbyScreen();
-        if (lv_scr_act() == ui_StatusScreen)
-            updateStatusScreen();
+        currentScreen = static_cast<ScreensEnum>(eez_flow_get_current_screen());
+        updateProfilePreview();
         effect_mgr.evaluate_all();
+
+        if (currentScreen == SCREEN_ID_STANDBY_SCREEN) {
+            if (standbyEnterTime > 0) {
+                const Settings &settings = controller->getSettings();
+                const unsigned long now = millis();
+                if (now - standbyEnterTime >= settings.getStandbyBrightnessTimeout()) {
+                    setBrightness(settings.getStandbyBrightness());
+                }
+            }
+        }
     }
 
+    ui_tick();
     lv_task_handler();
 }
 
 void DefaultUI::loopProfiles() {
     if (!profileLoaded) {
-        favoritedProfileIds.clear();
-        favoritedProfiles.clear();
-        favoritedProfileIds.emplace_back(controller->getSettings().getSelectedProfile());
-        for (auto &id : profileManager->getFavoritedProfiles()) {
-            if (std::find(favoritedProfileIds.begin(), favoritedProfileIds.end(), id) == favoritedProfileIds.end())
-                favoritedProfileIds.emplace_back(id);
+        // Build into locals and swap under the lock — the UI task reads these concurrently (GM-147).
+        const auto favoritedIds = profileManager->getFavoritedProfiles();
+        std::vector<String> ids;
+        ids.reserve(favoritedIds.size() + 1);
+        ids.emplace_back(controller->getSettings().getSelectedProfile());
+        for (const auto &id : favoritedIds) {
+            if (std::find(ids.begin(), ids.end(), id) == ids.end())
+                ids.emplace_back(id);
         }
-        for (const auto &profileId : favoritedProfileIds) {
+        std::vector<Profile> profiles;
+        std::vector<bool> hasImage;
+        profiles.reserve(ids.size());
+        hasImage.reserve(ids.size());
+        const std::vector<String> imageIds = controller->isSDCard() ? profileManager->listProfileImages() : std::vector<String>{};
+        for (const auto &profileId : ids) {
             Profile profile{};
             profileManager->loadProfile(profileId, profile);
-            favoritedProfiles.emplace_back(profile);
+            profiles.emplace_back(std::move(profile));
+            hasImage.push_back(std::find(imageIds.begin(), imageIds.end(), profileId) != imageIds.end());
+        }
+        {
+            std::lock_guard<std::mutex> guard(profilesMutex);
+            favoritedProfileIds = std::move(ids);
+            favoritedProfiles = std::move(profiles);
+            favoritedHasImage = std::move(hasImage);
+            profilesGeneration++;
         }
         profileLoaded = 1;
     }
+    loadRequestedImage();
 }
 
-void DefaultUI::changeScreen(lv_obj_t **screen, void (*target_init)()) {
-    targetScreen = screen;
-    targetScreenInit = target_init;
+// SD reads stay on this task: a slow or failing card must not block rendering or overflow the UI task's stack.
+void DefaultUI::loadRequestedImage() {
+    String wanted;
+    int request;
+    {
+        std::lock_guard<std::mutex> guard(imageMutex);
+        wanted = imageWantedId;
+        request = imageRequest;
+    }
+    const int generation = imageGeneration;
+    if (wanted.isEmpty() || (request == imageLoadedRequest && generation == imageLoadedGeneration))
+        return;
+    uint8_t *pixels = profileManager->loadProfileImage(wanted);
+    imageLoadedRequest = request;
+    imageLoadedGeneration = generation;
+    if (pixels == nullptr)
+        return;
+    {
+        std::lock_guard<std::mutex> guard(imageMutex);
+        free(imagePending);
+        imagePending = pixels;
+        imagePendingId = wanted;
+    }
     rerender = true;
+}
 
-    // Reset some submenus
+void DefaultUI::changeScreen(ScreensEnum screen) {
+    targetScreen = screen;
     brewScreenState = BrewScreenState::Brew;
+    rerender = true;
+    // Reset some submenus
 }
 
 void DefaultUI::changeBrewScreenMode(BrewScreenState state) {
@@ -304,12 +486,15 @@ void DefaultUI::changeBrewScreenMode(BrewScreenState state) {
 
 void DefaultUI::onProfileSwitch() {
     currentProfileIdx = 0;
-    changeScreen(&ui_ProfileScreen, ui_ProfileScreen_screen_init);
+    profileDetailsVisible = false;
+    changeScreen(SCREEN_ID_NEW_PROFILE_SCREEN);
 }
 
 void DefaultUI::onNextProfile() {
-    if (currentProfileIdx < favoritedProfileIds.size() - 1) {
+    std::lock_guard<std::mutex> guard(profilesMutex);
+    if (currentProfileIdx + 1 < static_cast<int>(favoritedProfileIds.size())) {
         currentProfileIdx++;
+        profileDetailsVisible = false;
     }
     rerender = true;
 }
@@ -317,603 +502,873 @@ void DefaultUI::onNextProfile() {
 void DefaultUI::onPreviousProfile() {
     if (currentProfileIdx > 0) {
         currentProfileIdx--;
+        profileDetailsVisible = false;
     }
     rerender = true;
 }
 
+void DefaultUI::onProfileDetailToggle() {
+    profileDetailsVisible = !profileDetailsVisible;
+    rerender = true;
+}
+
 void DefaultUI::onProfileSelect() {
-    profileManager->selectProfile(favoritedProfileIds[currentProfileIdx]);
+    String id;
+    {
+        std::lock_guard<std::mutex> guard(profilesMutex);
+        if (currentProfileIdx >= 0 && currentProfileIdx < static_cast<int>(favoritedProfileIds.size())) {
+            id = favoritedProfileIds[currentProfileIdx];
+        }
+    }
+    if (!id.isEmpty()) {
+        profileManager->selectProfile(id);
+    }
     profileDirty = false;
-    changeScreen(&ui_BrewScreen, ui_BrewScreen_screen_init);
+    changeScreen(SCREEN_ID_BREW_SCREEN);
 }
 
 void DefaultUI::onVolumetricDelete() {
     controller->onVolumetricDelete();
-    profileVolumetric = profileManager->getSelectedProfile().isVolumetric();
     profileDirty = true;
 }
 
 void DefaultUI::setupPanel() {
     ui_init();
+    gaugeSetpointsInside = controller->areGaugeSetpointsInside();
+    applyGaugeSetpointStyle(gaugeSetpointsInside);
+    setupState();
+    applyTheme();
+    ui_tick();
+
+    lv_obj_t *standby = lv_scr_act();
+    lv_obj_t *black = lv_obj_create(nullptr);
+    lv_obj_set_style_bg_color(black, lv_color_black(), LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(black, LV_OPA_COVER, LV_PART_MAIN);
+    lv_scr_load(black);
+    lv_scr_load_anim(standby, LV_SCR_LOAD_ANIM_FADE_ON, STARTUP_FADE_MS, 0, true);
+
     lv_task_handler();
 
     delay(100);
     // Set initial brightness based on settings
-    const Settings &settings = controller->getSettings();
+    const ::Settings &settings = controller->getSettings();
     setBrightness(settings.getMainBrightness());
 }
 
 void DefaultUI::setupState() {
-    error = controller->isErrorState();
-    autotuning = controller->isAutotuning();
-    const Settings &settings = controller->getSettings();
-    volumetricAvailable = controller->isVolumetricAvailable();
-    volumetricMode = volumetricAvailable && settings.isVolumetricTarget();
-    grindActive = controller->isGrindActive();
-    active = controller->isActive();
-    smartGrindActive = settings.isSmartGrindActive();
-    grindAvailable = smartGrindActive || settings.getAltRelayFunction() == ALT_RELAY_GRIND;
-    mode = controller->getMode();
-    currentTemp = static_cast<int>(controller->getCurrentTemp());
-    targetTemp = static_cast<int>(controller->getTargetTemp());
-    targetDuration = profileManager->getSelectedProfile().getTotalDuration();
-    targetVolume = profileManager->getSelectedProfile().getTotalVolume();
-    grindDuration = settings.getTargetGrindDuration();
-    grindVolume = settings.getTargetGrindVolume();
-    pressureAvailable = controller->getSystemInfo().capabilities.pressure ? 1 : 0;
-    pressureScaling = std::ceil(settings.getPressureScaling());
-    selectedProfileId = settings.getSelectedProfile();
-    profileManager->loadSelectedProfile(selectedProfile);
-    profileVolumetric = selectedProfile.isVolumetric();
-}
+    eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_SCALE_WEIGHT_CURRENT, currentWeight);
+    eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_GRIND_WEIGHT_TARGET, grindWeightTarget);
+    eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_GRIND_TIME_TARGET, grindTimeTarget);
 
-void DefaultUI::setupReactive() {
-    effect_mgr.use_effect([=] { return currentScreen == ui_MenuScreen; }, [=]() { adjustDials(ui_MenuScreen_dials); },
-                          &pressureAvailable);
-    effect_mgr.use_effect([=] { return currentScreen == ui_StatusScreen; }, [=]() { adjustDials(ui_StatusScreen_dials); },
-                          &pressureAvailable);
-    effect_mgr.use_effect([=] { return currentScreen == ui_BrewScreen; }, [=]() { adjustDials(ui_BrewScreen_dials); },
-                          &pressureAvailable);
-    effect_mgr.use_effect([=] { return currentScreen == ui_GrindScreen; }, [=]() { adjustDials(ui_GrindScreen_dials); },
-                          &pressureAvailable);
-    effect_mgr.use_effect([=] { return currentScreen == ui_SimpleProcessScreen; },
-                          [=]() { adjustDials(ui_SimpleProcessScreen_dials); }, &pressureAvailable);
-    effect_mgr.use_effect([=] { return currentScreen == ui_ProfileScreen; }, [=]() { adjustDials(ui_ProfileScreen_dials); },
-                          &pressureAvailable);
-    effect_mgr.use_effect([=] { return currentScreen == ui_BrewScreen; }, [=]() { adjustHeatingIndicator(ui_BrewScreen_dials); },
-                          &isTemperatureStable, &heatingFlash);
-    effect_mgr.use_effect([=] { return currentScreen == ui_SimpleProcessScreen; },
-                          [=]() { adjustHeatingIndicator(ui_SimpleProcessScreen_dials); }, &isTemperatureStable, &heatingFlash);
-    effect_mgr.use_effect([=] { return currentScreen == ui_MenuScreen; }, [=]() { adjustHeatingIndicator(ui_MenuScreen_dials); },
-                          &isTemperatureStable, &heatingFlash);
-    effect_mgr.use_effect([=] { return currentScreen == ui_ProfileScreen; },
-                          [=]() { adjustHeatingIndicator(ui_ProfileScreen_dials); }, &isTemperatureStable, &heatingFlash);
-    effect_mgr.use_effect([=] { return currentScreen == ui_GrindScreen; },
-                          [=]() { adjustHeatingIndicator(ui_GrindScreen_dials); }, &isTemperatureStable, &heatingFlash);
-    effect_mgr.use_effect([=] { return currentScreen == ui_StatusScreen; },
-                          [=]() { adjustHeatingIndicator(ui_StatusScreen_dials); }, &isTemperatureStable, &heatingFlash);
-    effect_mgr.use_effect([=] { return currentScreen == ui_SimpleProcessScreen; },
-                          [=]() { lv_label_set_text(ui_SimpleProcessScreen_mainLabel5, mode == MODE_STEAM ? "Steam" : "Water"); },
-                          &mode);
-    effect_mgr.use_effect([=] { return currentScreen == ui_MenuScreen; },
+    eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_SYSTEM, systemStatus);
+    eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_WARNINGS, warnings);
+    eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_PREVIEW_PROFILE, previewProfileInfo);
+    eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_SELECTED_PROFILE, selectedProfileInfo);
+    eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_BOILER, boiler);
+    eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_UI_FLAGS, uiFlags);
+    eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_BREW_PROCESS_INFO, brewProcess);
+
+    updateState();
+    updateSystemStatus();
+    updateProfileInfo();
+    updateBoiler();
+    updateBrewProcess();
+
+    effect_mgr.use_effect([this]() { return currentScreen == SCREEN_ID_INFO_SCREEN; },
                           [=]() {
-                              lv_arc_set_value(uic_MenuScreen_dials_tempGauge, currentTemp);
-                              lv_label_set_text_fmt(uic_MenuScreen_dials_tempText, "%d°C", currentTemp);
-                          },
-                          &currentTemp);
-    effect_mgr.use_effect([=] { return currentScreen == ui_StatusScreen; },
-                          [=]() {
-                              lv_arc_set_value(uic_StatusScreen_dials_tempGauge, currentTemp);
-                              lv_label_set_text_fmt(uic_StatusScreen_dials_tempText, "%d°C", currentTemp);
-                          },
-                          &currentTemp);
-    effect_mgr.use_effect([=] { return currentScreen == ui_BrewScreen; },
-                          [=]() {
-                              lv_arc_set_value(uic_BrewScreen_dials_tempGauge, currentTemp);
-                              lv_label_set_text_fmt(uic_BrewScreen_dials_tempText, "%d°C", currentTemp);
-                          },
-                          &currentTemp);
-    effect_mgr.use_effect([=] { return currentScreen == ui_GrindScreen; },
-                          [=]() {
-                              lv_arc_set_value(uic_GrindScreen_dials_tempGauge, currentTemp);
-                              lv_label_set_text_fmt(uic_GrindScreen_dials_tempText, "%d°C", currentTemp);
-                          },
-                          &currentTemp);
-    effect_mgr.use_effect([=] { return currentScreen == ui_SimpleProcessScreen; },
-                          [=]() {
-                              lv_arc_set_value(uic_SimpleProcessScreen_dials_tempGauge, currentTemp);
-                              lv_label_set_text_fmt(uic_SimpleProcessScreen_dials_tempText, "%d°C", currentTemp);
-                          },
-                          &currentTemp);
-    effect_mgr.use_effect([=] { return currentScreen == ui_ProfileScreen; },
-                          [=]() {
-                              lv_arc_set_value(uic_ProfileScreen_dials_tempGauge, currentTemp);
-                              lv_label_set_text_fmt(uic_ProfileScreen_dials_tempText, "%d°C", currentTemp);
-                          },
-                          &currentTemp);
-    effect_mgr.use_effect([=] { return currentScreen == ui_MenuScreen; }, [=]() { adjustTempTarget(ui_MenuScreen_dials); },
-                          &targetTemp);
-    effect_mgr.use_effect([=] { return currentScreen == ui_StatusScreen; },
-                          [=]() {
-                              lv_label_set_text_fmt(ui_StatusScreen_targetTemp, "%d°C", targetTemp);
-                              adjustTempTarget(ui_StatusScreen_dials);
-                          },
-                          &targetTemp);
-    effect_mgr.use_effect([=] { return currentScreen == ui_BrewScreen; },
-                          [=]() {
-                              lv_label_set_text_fmt(ui_BrewScreen_targetTemp, "%d°C", targetTemp);
-                              adjustTempTarget(ui_BrewScreen_dials);
-                          },
-                          &targetTemp);
-    effect_mgr.use_effect([=] { return currentScreen == ui_GrindScreen; }, [=]() { adjustTempTarget(ui_GrindScreen_dials); },
-                          &targetTemp);
-    effect_mgr.use_effect([=] { return currentScreen == ui_SimpleProcessScreen; },
-                          [=]() {
-                              lv_label_set_text_fmt(ui_SimpleProcessScreen_targetTemp, "%d°C", targetTemp);
-                              adjustTempTarget(ui_SimpleProcessScreen_dials);
-                          },
-                          &targetTemp);
-    effect_mgr.use_effect([=] { return currentScreen == ui_ProfileScreen; }, [=]() { adjustTempTarget(ui_ProfileScreen_dials); },
-                          &targetTemp);
-    effect_mgr.use_effect([=] { return currentScreen == ui_MenuScreen; },
-                          [=]() {
-                              lv_arc_set_value(uic_MenuScreen_dials_pressureGauge, pressure * 10.0f);
-                              lv_label_set_text_fmt(uic_MenuScreen_dials_pressureText, "%.1f bar", pressure);
-                          },
-                          &pressure);
-    effect_mgr.use_effect([=] { return currentScreen == ui_StatusScreen; },
-                          [=]() {
-                              lv_arc_set_value(uic_StatusScreen_dials_pressureGauge, pressure * 10.0f);
-                              lv_label_set_text_fmt(uic_StatusScreen_dials_pressureText, "%.1f bar", pressure);
-                          },
-                          &pressure);
-    effect_mgr.use_effect([=] { return currentScreen == ui_BrewScreen; },
-                          [=]() {
-                              lv_arc_set_value(uic_BrewScreen_dials_pressureGauge, pressure * 10.0f);
-                              lv_label_set_text_fmt(uic_BrewScreen_dials_pressureText, "%.1f bar", pressure);
-                          },
-                          &pressure);
-    effect_mgr.use_effect([=] { return currentScreen == ui_GrindScreen; },
-                          [=]() {
-                              lv_arc_set_value(uic_GrindScreen_dials_pressureGauge, pressure * 10.0f);
-                              lv_label_set_text_fmt(uic_GrindScreen_dials_pressureText, "%.1f bar", pressure);
-                          },
-                          &pressure);
-    effect_mgr.use_effect([=] { return currentScreen == ui_SimpleProcessScreen; },
-                          [=]() {
-                              lv_arc_set_value(uic_SimpleProcessScreen_dials_pressureGauge, pressure * 10.0f);
-                              lv_label_set_text_fmt(uic_SimpleProcessScreen_dials_pressureText, "%.1f bar", pressure);
-                          },
-                          &pressure);
-    effect_mgr.use_effect([=] { return currentScreen == ui_ProfileScreen; },
-                          [=]() {
-                              lv_arc_set_value(uic_ProfileScreen_dials_pressureGauge, pressure * 10.0f);
-                              lv_label_set_text_fmt(uic_ProfileScreen_dials_pressureText, "%.1f bar", pressure);
-                          },
-                          &pressure);
-    effect_mgr.use_effect([=] { return currentScreen == ui_StandbyScreen; },
-                          [=]() {
-                              updateAvailable ? lv_obj_clear_flag(ui_StandbyScreen_updateIcon, LV_OBJ_FLAG_HIDDEN)
-                                              : lv_obj_add_flag(ui_StandbyScreen_updateIcon, LV_OBJ_FLAG_HIDDEN);
-                          },
-                          &updateAvailable);
-    effect_mgr.use_effect([=] { return currentScreen == ui_StandbyScreen; },
-                          [=]() {
-                              bool deactivated = true;
-                              if (updateActive) {
-                                  lv_label_set_text_fmt(ui_StandbyScreen_mainLabel, "Updating...");
-                              } else if (error) {
-                                  if (controller->getError() == ERROR_CODE_RUNAWAY) {
-                                      lv_label_set_text_fmt(ui_StandbyScreen_mainLabel, "Temperature error, please restart");
+                              String content = "";
+                              if (apActive) {
+                                  // WIFI: QR syntax — escape \ ; , : " in the password per the spec.
+                                  const String pw = controller->getSettings().getWifiApPassword();
+                                  String escaped;
+                                  escaped.reserve(pw.length() + 4);
+                                  for (size_t i = 0; i < pw.length(); i++) {
+                                      const char c = pw.charAt(i);
+                                      if (c == '\\' || c == ';' || c == ',' || c == ':' || c == '"') {
+                                          escaped += '\\';
+                                      }
+                                      escaped += c;
                                   }
-                              } else if (autotuning) {
-                                  lv_label_set_text_fmt(ui_StandbyScreen_mainLabel, "Autotuning...");
-                              } else if (waitingForController) {
-                                  lv_label_set_text_fmt(ui_StandbyScreen_mainLabel, "Waiting for controller...");
-                              } else {
-                                  deactivated = !initialized;
+                                  if (escaped.isEmpty()) {
+                                      content = "WIFI:S:GaggiMate;;;;";
+                                  } else {
+                                      content = "WIFI:S:GaggiMate;T:WPA;P:" + escaped + ";;";
+                                  }
+                              } else if (wifiConnected) {
+                                  content = "http://" + WiFi.localIP().toString() + "/";
                               }
-                              _ui_flag_modify(ui_StandbyScreen_mainLabel, LV_OBJ_FLAG_HIDDEN, deactivated);
-                              _ui_flag_modify(ui_StandbyScreen_touchIcon, LV_OBJ_FLAG_HIDDEN, !deactivated);
-                              _ui_flag_modify(ui_StandbyScreen_statusContainer, LV_OBJ_FLAG_HIDDEN, !deactivated);
-                          },
-                          &updateAvailable, &error, &autotuning, &waitingForController, &initialized);
-    effect_mgr.use_effect([=] { return currentScreen == ui_BrewScreen; },
-                          [=]() {
-                              if (brewVolumetric) {
-                                  lv_label_set_text_fmt(ui_BrewScreen_targetDuration, "%.1fg", targetVolume);
-                              } else {
-                                  const double secondsDouble = targetDuration;
-                                  const auto minutes = static_cast<int>(secondsDouble / 60.0);
-                                  const auto seconds = static_cast<int>(secondsDouble) % 60;
-                                  lv_label_set_text_fmt(ui_BrewScreen_targetDuration, "%2d:%02d", minutes, seconds);
+                              if (content == "") {
+                                  return;
                               }
+                              const char *data = content.c_str();
+                              lv_qrcode_update(objects.qrcode, data, strlen(data));
                           },
-                          &targetDuration, &targetVolume, &brewVolumetric);
-    effect_mgr.use_effect([=] { return currentScreen == ui_GrindScreen; },
-                          [=]() {
-                              if (volumetricMode) {
-                                  lv_label_set_text_fmt(ui_GrindScreen_targetDuration, "%.1fg", grindVolume);
-                              } else {
-                                  const double secondsDouble = grindDuration / 1000.0;
-                                  const auto minutes = static_cast<int>(secondsDouble / 60.0);
-                                  const auto seconds = static_cast<int>(secondsDouble) % 60;
-                                  lv_label_set_text_fmt(ui_GrindScreen_targetDuration, "%2d:%02d", minutes, seconds);
-                              }
-                          },
-                          &grindDuration, &grindVolume, &volumetricMode);
-    effect_mgr.use_effect([=] { return currentScreen == ui_BrewScreen; },
-                          [=]() {
-                              lv_img_set_src(ui_BrewScreen_Image4, brewVolumetric ? &ui_img_1424216268 : &ui_img_360122106);
-                              _ui_flag_modify(ui_BrewScreen_byTimeButton, LV_OBJ_FLAG_HIDDEN, brewVolumetric);
-                          },
-                          &brewVolumetric);
-    effect_mgr.use_effect(
-        [=] { return currentScreen == ui_GrindScreen; },
-        [=]() {
-            lv_img_set_src(ui_GrindScreen_targetSymbol, volumetricMode ? &ui_img_1424216268 : &ui_img_360122106);
-            ui_object_set_themeable_style_property(ui_GrindScreen_weightLabel, LV_PART_MAIN | LV_STATE_DEFAULT,
-                                                   LV_STYLE_TEXT_COLOR,
-                                                   volumetricMode ? _ui_theme_color_Dark : _ui_theme_color_NiceWhite);
-            ui_object_set_themeable_style_property(ui_GrindScreen_volumetricButton, LV_PART_MAIN | LV_STATE_DEFAULT,
-                                                   LV_STYLE_IMG_RECOLOR,
-                                                   volumetricMode ? _ui_theme_color_Dark : _ui_theme_color_NiceWhite);
-            ui_object_set_themeable_style_property(ui_GrindScreen_modeSwitch, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_BG_COLOR,
-                                                   volumetricMode ? _ui_theme_color_NiceWhite : _ui_theme_color_Dark);
-        },
-        &volumetricMode);
-    effect_mgr.use_effect([=] { return currentScreen == ui_GrindScreen; },
-                          [=]() { _ui_flag_modify(ui_GrindScreen_modeSwitch, LV_OBJ_FLAG_HIDDEN, volumetricAvailable); },
-                          &volumetricAvailable);
-    effect_mgr.use_effect([=] { return currentScreen == ui_SimpleProcessScreen; },
-                          [=]() {
-                              if (mode == MODE_STEAM) {
-                                  _ui_flag_modify(ui_SimpleProcessScreen_goButton, LV_OBJ_FLAG_HIDDEN, active);
-                                  lv_imgbtn_set_src(ui_SimpleProcessScreen_goButton, LV_IMGBTN_STATE_RELEASED, nullptr,
-                                                    &ui_img_691326438, nullptr);
-                              } else {
-                                  lv_imgbtn_set_src(ui_SimpleProcessScreen_goButton, LV_IMGBTN_STATE_RELEASED, nullptr,
-                                                    active ? &ui_img_1456692430 : &ui_img_445946954, nullptr);
-                              }
-                          },
-                          &active, &mode);
-    effect_mgr.use_effect([=] { return currentScreen == ui_GrindScreen; },
-                          [=]() {
-                              lv_imgbtn_set_src(ui_GrindScreen_startButton, LV_IMGBTN_STATE_RELEASED, nullptr,
-                                                grindActive ? &ui_img_1456692430 : &ui_img_445946954, nullptr);
-                          },
-                          &grindActive);
-    effect_mgr.use_effect([=] { return currentScreen == ui_BrewScreen; },
-                          [=] { lv_label_set_text(ui_BrewScreen_profileName, selectedProfile.label.c_str()); },
-                          &selectedProfileId);
-
-    effect_mgr.use_effect(
-        [=] { return currentScreen == ui_ProfileScreen; },
-        [=] {
-            if (profileLoaded) {
-                _ui_flag_modify(ui_ProfileScreen_profileDetails, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_REMOVE);
-                _ui_flag_modify(ui_ProfileScreen_loadingSpinner, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_ADD);
-                lv_label_set_text(ui_ProfileScreen_profileName, favoritedProfiles[currentProfileIdx].label.c_str());
-                lv_label_set_text(ui_ProfileScreen_mainLabel, currentProfileIdx == 0 ? "Current profile" : "Select profile");
-
-                const auto minutes = static_cast<int>(favoritedProfiles[currentProfileIdx].getTotalDuration() / 60.0 - 0.5);
-                const auto seconds = static_cast<int>(favoritedProfiles[currentProfileIdx].getTotalDuration()) % 60;
-                lv_label_set_text_fmt(ui_ProfileScreen_targetDuration2, "%2d:%02d", minutes, seconds);
-                lv_label_set_text_fmt(ui_ProfileScreen_targetTemp2, "%d°C",
-                                      static_cast<int>(favoritedProfiles[currentProfileIdx].temperature));
-                unsigned int phaseCount = favoritedProfiles[currentProfileIdx].getPhaseCount();
-                unsigned int stepCount = favoritedProfiles[currentProfileIdx].phases.size();
-                lv_label_set_text_fmt(ui_ProfileScreen_stepsLabel, "%d step%s", stepCount, stepCount > 1 ? "s" : "");
-                lv_label_set_text_fmt(ui_ProfileScreen_phasesLabel, "%d phase%s", phaseCount, phaseCount > 1 ? "s" : "");
-            } else {
-                _ui_flag_modify(ui_ProfileScreen_profileDetails, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_ADD);
-                _ui_flag_modify(ui_ProfileScreen_loadingSpinner, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_REMOVE);
-            }
-
-            ui_object_set_themeable_style_property(ui_ProfileScreen_previousProfileBtn, LV_PART_MAIN | LV_STATE_DEFAULT,
-                                                   LV_STYLE_IMG_RECOLOR,
-                                                   currentProfileIdx > 0 ? _ui_theme_color_NiceWhite : _ui_theme_color_SemiDark);
-            ui_object_set_themeable_style_property(ui_ProfileScreen_previousProfileBtn, LV_PART_MAIN | LV_STATE_DEFAULT,
-                                                   LV_STYLE_IMG_RECOLOR_OPA,
-                                                   currentProfileIdx > 0 ? _ui_theme_alpha_NiceWhite : _ui_theme_alpha_SemiDark);
-            ui_object_set_themeable_style_property(
-                ui_ProfileScreen_nextProfileBtn, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_IMG_RECOLOR,
-                currentProfileIdx < favoritedProfiles.size() - 1 ? _ui_theme_color_NiceWhite : _ui_theme_color_SemiDark);
-            ui_object_set_themeable_style_property(
-                ui_ProfileScreen_nextProfileBtn, LV_PART_MAIN | LV_STATE_DEFAULT, LV_STYLE_IMG_RECOLOR_OPA,
-                currentProfileIdx < favoritedProfiles.size() - 1 ? _ui_theme_alpha_NiceWhite : _ui_theme_alpha_SemiDark);
-        },
-        &currentProfileIdx, &profileLoaded);
-
-    // Show/hide grind button based on SmartGrind setting or Alt Relay function
-    effect_mgr.use_effect([=] { return currentScreen == ui_MenuScreen; },
-                          [=]() {
-                              grindAvailable ? lv_obj_clear_flag(ui_MenuScreen_grindBtn, LV_OBJ_FLAG_HIDDEN)
-                                             : lv_obj_add_flag(ui_MenuScreen_grindBtn, LV_OBJ_FLAG_HIDDEN);
+                          &wifiConnected, &apActive);
+    effect_mgr.use_effect([this]() { return currentScreen == SCREEN_ID_MENU_SCREEN_NEW; },
+                          [this]() {
+                              int radius = 135;
+                              int count = grindAvailable ? 4 : 3;
+                              int step = 360 / (grindAvailable ? 4 : 3);
+                              int iconOffset = grindAvailable ? 1 : 0;
+                              int rotationOffset = count == 4 ? 45 : 0;
+                              positionMenuIcon(objects.btn_brew_1, step * 0 - rotationOffset, radius);
+                              positionMenuIcon(objects.btn_steam_1, step * 1 - rotationOffset, radius);
+                              positionMenuIcon(objects.btn_water_1, step * 2 - rotationOffset, radius);
+                              positionMenuIcon(objects.btn_grind_1, step * 3 - rotationOffset, radius);
+                              // positionMenuIcon(objects.btn_settings_1, step * (3 + iconOffset) - rotationOffset, radius);
                           },
                           &grindAvailable);
-    effect_mgr.use_effect([=] { return currentScreen == ui_BrewScreen; },
-                          [=]() {
-                              if (volumetricAvailable && bluetoothScales) {
-                                  lv_label_set_text_fmt(ui_BrewScreen_weightLabel, "%.1fg", bluetoothWeight);
-                              } else {
-                                  lv_label_set_text(ui_BrewScreen_weightLabel, "-");
-                              }
-                          },
-                          &bluetoothWeight, &volumetricAvailable, &bluetoothScales);
-    effect_mgr.use_effect([=] { return currentScreen == ui_GrindScreen; },
-                          [=]() {
-                              if (volumetricAvailable && bluetoothScales) {
-                                  lv_label_set_text_fmt(ui_GrindScreen_weightLabel, "%.1fg", bluetoothWeight);
-                              } else {
-                                  lv_label_set_text(ui_GrindScreen_weightLabel, "-");
-                              }
-                          },
-                          &bluetoothWeight, &volumetricAvailable, &bluetoothScales);
-    effect_mgr.use_effect(
-        [=] { return currentScreen == ui_BrewScreen; },
-        [=]() {
-            _ui_flag_modify(ui_BrewScreen_adjustments, LV_OBJ_FLAG_HIDDEN, brewScreenState == BrewScreenState::Settings);
-            _ui_flag_modify(ui_BrewScreen_acceptButton, LV_OBJ_FLAG_HIDDEN, brewScreenState == BrewScreenState::Settings);
-            _ui_flag_modify(ui_BrewScreen_saveButton, LV_OBJ_FLAG_HIDDEN, brewScreenState == BrewScreenState::Settings);
-            _ui_flag_modify(ui_BrewScreen_saveAsNewButton, LV_OBJ_FLAG_HIDDEN, brewScreenState == BrewScreenState::Settings);
-            _ui_flag_modify(ui_BrewScreen_startButton, LV_OBJ_FLAG_HIDDEN, brewScreenState == BrewScreenState::Brew);
-            _ui_flag_modify(ui_BrewScreen_profileInfo, LV_OBJ_FLAG_HIDDEN, brewScreenState == BrewScreenState::Brew);
-            _ui_flag_modify(ui_BrewScreen_modeSwitch, LV_OBJ_FLAG_HIDDEN,
-                            brewScreenState == BrewScreenState::Brew && volumetricAvailable);
-            if (volumetricAvailable) {
-                lv_img_set_src(ui_BrewScreen_volumetricButton, bluetoothScales ? &ui_img_1424216268 : &ui_img_flowmeter_png);
-            }
-        },
-        &brewScreenState, &volumetricAvailable, &bluetoothScales);
-    effect_mgr.use_effect(
-        [=] { return currentScreen == ui_BrewScreen; },
-        [=]() {
-            ui_object_set_themeable_style_property(ui_BrewScreen_saveButton, LV_PART_MAIN | LV_STATE_DEFAULT,
-                                                   LV_STYLE_IMG_RECOLOR,
-                                                   profileDirty ? _ui_theme_color_NiceWhite : _ui_theme_color_SemiDark);
-            ui_object_set_themeable_style_property(ui_BrewScreen_saveButton, LV_PART_MAIN | LV_STATE_DEFAULT,
-                                                   LV_STYLE_IMG_RECOLOR_OPA,
-                                                   profileDirty ? _ui_theme_alpha_NiceWhite : _ui_theme_alpha_SemiDark);
-            ui_object_set_themeable_style_property(ui_BrewScreen_saveAsNewButton, LV_PART_MAIN | LV_STATE_DEFAULT,
-                                                   LV_STYLE_IMG_RECOLOR,
-                                                   profileDirty ? _ui_theme_color_NiceWhite : _ui_theme_color_SemiDark);
-            ui_object_set_themeable_style_property(ui_BrewScreen_saveAsNewButton, LV_PART_MAIN | LV_STATE_DEFAULT,
-                                                   LV_STYLE_IMG_RECOLOR_OPA,
-                                                   profileDirty ? _ui_theme_alpha_NiceWhite : _ui_theme_alpha_SemiDark);
-        },
-        &brewScreenState, &profileDirty);
-    effect_mgr.use_effect([=] { return currentScreen == ui_StandbyScreen; },
-                          [=]() { lv_img_set_src(ui_StandbyScreen_logo, christmasMode ? &ui_img_1510335 : &ui_img_logo_png); },
-                          &christmasMode);
 }
 
 void DefaultUI::handleScreenChange() {
-    lv_obj_t *current = lv_scr_act();
-
-    if (current != *targetScreen) {
-        if (*targetScreen == ui_StandbyScreen) {
-            standbyEnterTime = millis();
-        } else if (current == ui_StandbyScreen) {
-            const Settings &settings = controller->getSettings();
+    if (currentScreen != targetScreen) {
+        if (currentScreen == SCREEN_ID_BREW_SCREEN)
+            brewConfirmVisible = false; // leaving the brew screen dismisses the confirm overlay
+        if (targetScreen == SCREEN_ID_STANDBY_SCREEN) {
+            standbyEnterTime = ::millis();
+        } else if (currentScreen == SCREEN_ID_STANDBY_SCREEN) {
+            const ::Settings &settings = controller->getSettings();
             setBrightness(settings.getMainBrightness());
         }
-
-        _ui_screen_change(targetScreen, LV_SCR_LOAD_ANIM_NONE, 0, 0, targetScreenInit);
-        lv_obj_del(current);
+        eez_flow_set_screen(targetScreen, LV_SCR_LOAD_ANIM_NONE, 0, 0);
+        // Dial widgets are created lazily by EEZ, so apply the current choice after
+        // the new screen's pair of indicators exists.
+        applyGaugeSetpointStyle(gaugeSetpointsInside);
+        animateGaugeTicks(isShortTickScreen(currentScreen, tickChartMode), isShortTickScreen(targetScreen, tickChartMode));
         rerender = true;
     }
 }
 
-void DefaultUI::updateStandbyScreen() {
-    if (standbyEnterTime > 0) {
-        const Settings &settings = controller->getSettings();
-        const unsigned long now = millis();
-        if (now - standbyEnterTime >= settings.getStandbyBrightnessTimeout()) {
-            setBrightness(settings.getStandbyBrightness());
+// Collect every lv_meter under obj (the dial gauges) so their tick length can be animated together.
+void DefaultUI::collectMeters(lv_obj_t *obj) {
+    const uint32_t n = lv_obj_get_child_cnt(obj);
+    for (uint32_t i = 0; i < n; i++) {
+        lv_obj_t *child = lv_obj_get_child(obj, i);
+        if (gaugeCount < 4 && lv_obj_check_type(child, &lv_meter_class)) {
+            gaugeMeters[gaugeCount++] = child;
         }
+        collectMeters(child);
     }
-
-    if (!apActive && WiFi.status() == WL_CONNECTED && !updateActive && !error && !autotuning && !waitingForController &&
-        initialized) {
-        time_t now;
-        struct tm timeinfo;
-
-        localtime_r(&now, &timeinfo);
-        // allocate enough space for both 12h/24h time formats
-        if (getLocalTime(&timeinfo, 500)) {
-            char time[9];
-            Settings &settings = controller->getSettings();
-            const char *format = settings.isClock24hFormat() ? "%H:%M" : "%I:%M %p";
-            strftime(time, sizeof(time), format, &timeinfo);
-            lv_label_set_text(ui_StandbyScreen_time, time);
-            lv_obj_clear_flag(ui_StandbyScreen_time, LV_OBJ_FLAG_HIDDEN);
-
-            christmasMode = (timeinfo.tm_mon == 11 && timeinfo.tm_mday < 27) || (timeinfo.tm_mon == 0 && timeinfo.tm_mday < 6);
-        }
-    } else {
-        lv_obj_add_flag(ui_StandbyScreen_time, LV_OBJ_FLAG_HIDDEN);
-    }
-    controller->getClientController()->isConnected() ? lv_obj_clear_flag(ui_StandbyScreen_bluetoothIcon, LV_OBJ_FLAG_HIDDEN)
-                                                     : lv_obj_add_flag(ui_StandbyScreen_bluetoothIcon, LV_OBJ_FLAG_HIDDEN);
-    !apActive &&WiFi.status() == WL_CONNECTED ? lv_obj_clear_flag(ui_StandbyScreen_wifiIcon, LV_OBJ_FLAG_HIDDEN)
-                                              : lv_obj_add_flag(ui_StandbyScreen_wifiIcon, LV_OBJ_FLAG_HIDDEN);
 }
 
-void DefaultUI::updateStatusScreen() const {
-    // Copy process pointers to avoid race conditions with controller thread
+void DefaultUI::setGaugeTickLength(int32_t len) {
+    const int16_t insidePivotX = GAUGE_SETPOINT_INSIDE_PIVOT_X - (GAUGE_TICK_LONG - len);
+    for (uint8_t i = 0; i < gaugeCount; i++) {
+        auto *meter = reinterpret_cast<lv_meter_t *>(gaugeMeters[i]);
+        auto *scale = static_cast<lv_meter_scale_t *>(_lv_ll_get_head(&meter->scale_ll));
+        if (scale != nullptr) {
+            scale->tick_length = static_cast<uint16_t>(len);
+        }
+        for (auto *indicator = static_cast<lv_meter_indicator_t *>(_lv_ll_get_head(&meter->indicator_ll)); indicator != nullptr;
+             indicator = static_cast<lv_meter_indicator_t *>(_lv_ll_get_next(&meter->indicator_ll, indicator))) {
+            if (indicator->type == LV_METER_INDICATOR_TYPE_NEEDLE_IMG &&
+                indicator->type_data.needle_img.src == &img_indicator_small_inside) {
+                indicator->type_data.needle_img.pivot.x = insidePivotX;
+            }
+        }
+        lv_obj_invalidate(gaugeMeters[i]);
+    }
+}
+
+void DefaultUI::applyGaugeSetpointStyle(bool inside) { applyGaugeSetpointVisibility(lv_scr_act(), inside); }
+
+void DefaultUI::gaugeTickAnimCb(void *var, int32_t v) { static_cast<DefaultUI *>(var)->setGaugeTickLength(v); }
+
+void DefaultUI::animateGaugeTicks(bool fromShort, bool toShort) {
+    const int32_t fromLen = fromShort ? GAUGE_TICK_SHORT : GAUGE_TICK_LONG;
+    const int32_t toLen = toShort ? GAUGE_TICK_SHORT : GAUGE_TICK_LONG;
+
+    lv_anim_del(this, gaugeTickAnimCb); // cancel any in-flight tick animation
+    gaugeCount = 0;
+    collectMeters(lv_scr_act());
+    if (gaugeCount == 0) {
+        return;
+    }
+    // Start at the previous screen's length so the ticks morph continuously in both directions.
+    setGaugeTickLength(fromLen);
+    if (fromLen == toLen) {
+        return;
+    }
+    lv_anim_t a;
+    lv_anim_init(&a);
+    lv_anim_set_var(&a, this);
+    lv_anim_set_exec_cb(&a, gaugeTickAnimCb);
+    lv_anim_set_values(&a, fromLen, toLen);
+    lv_anim_set_time(&a, GAUGE_TICK_ANIM_MS);
+    lv_anim_set_path_cb(&a, lv_anim_path_ease_out);
+    lv_anim_start(&a);
+}
+
+void DefaultUI::positionMenuIcon(lv_obj_t *obj, int angle, int radius) {
+    int x = sin(angle * M_PI / 180) * radius;
+    int y = -1 * cos(angle * M_PI / 180) * radius;
+    lv_obj_set_pos(obj, x, y);
+}
+
+void DefaultUI::updateState() {
+    const auto &settings = controller->getSettings();
+    mode = controller->getMode();
+    currentTemp = static_cast<int>(controller->getCurrentTemp());
+    targetTemp = static_cast<int>(controller->getTargetTemp());
+    pressureAvailable = controller->getSystemInfo().capabilities.pressure ? 1 : 0;
+    wifiConnected = WiFi.status() == WL_CONNECTED;
+    grindAvailable = settings.isSmartGrindActive() || settings.getAltRelayFunction() == ALT_RELAY_GRIND;
+    dualBoiler = controller->getSystemInfo().capabilities.dualBoiler ? 1 : 0;
+
+    uiFlags.brew_adjustments(brewScreenState == BrewScreenState::Settings);
+    uiFlags.active(controller->isActive());
+    uiFlags.grind_active(controller->isGrindActive());
+    uiFlags.grind_volumetric(controller->isVolumetricAvailable() && settings.isVolumetricTarget());
+    uiFlags.heating_flash(heatingFlash);
+    uiFlags.temperature_stable(controller->getWarnings().isTemperatureStable());
+    uiFlags.has_prev_profile(currentProfileIdx > 0);
+    uiFlags.brew_confirm_visible(brewConfirmVisible);
+    uiFlags.profile_details_visible(profileDetailsVisible);
+    const bool chartMode = settings.getStatusDisplayMode() == STATUS_DISPLAY_CHART && pressureAvailable && isProShot();
+    uiFlags.chart_mode(chartMode);
+    if (chartMode != tickChartMode) {
+        // Re-animate the ring when the mode flips while the status screen is open.
+        if (currentScreen == SCREEN_ID_STATUS_SCREEN && currentScreen == targetScreen)
+            animateGaugeTicks(!chartMode, chartMode);
+        tickChartMode = chartMode;
+    }
+    {
+        std::lock_guard<std::mutex> guard(profilesMutex);
+        uiFlags.has_next_profile(currentProfileIdx + 1 < static_cast<int>(favoritedProfileIds.size()));
+    }
+}
+
+// The chart needs pressure data, so it only applies to Pro profiles; prefer the running brew's profile.
+bool DefaultUI::isProShot() {
+    if (!initialized)
+        return false;
+    std::lock_guard<std::recursive_mutex> guard(controller->getProcessLock());
     Process *process = controller->getProcess();
-    Process *lastProcess = controller->getLastProcess();
+    if (process == nullptr)
+        process = controller->getLastProcess();
+    if (process != nullptr && process->getType() == MODE_BREW)
+        return static_cast<BrewProcess *>(process)->profile.type == "pro";
+    return profileManager->getSelectedProfile().type == "pro";
+}
 
+void DefaultUI::updateSystemStatus() {
+    const auto &settings = controller->getSettings();
+    systemStatus.bluetooth(controller->getClientController()->isConnected());
+    systemStatus.wifi(!apActive && WiFi.status() == WL_CONNECTED);
+    const bool error = controller->getSystemState() != SYSTEM_READY;
+    systemStatus.error(error);
+    const String errorLabel = error ? getErrorMessage() : "";
+    if (stringChanged(systemStatus.error_label(), errorLabel.c_str()))
+        systemStatus.error_label(errorLabel.c_str());
+    systemStatus.volumetric_available(controller->isVolumetricAvailable());
+    systemStatus.bluetooth_scales(controller->isScaleSourceHealthy(controller->getEffectiveScaleSource()));
+    systemStatus.controller_version(controller->getSystemInfo().version.c_str());
+    systemStatus.display_version(BUILD_GIT_VERSION);
+    systemStatus.update_available(updateAvailable);
+    systemStatus.in_menu(currentScreen == SCREEN_ID_MENU_SCREEN_NEW);
+    systemStatus.pressure_available(pressureAvailable);
+    systemStatus.grind_available(grindAvailable);
+    systemStatus.mode(mode);
+    const String ip = apActive ? String("4.4.4.1") : WiFi.localIP().toString();
+    if (stringChanged(systemStatus.ip(), ip.c_str()))
+        systemStatus.ip(ip.c_str());
+    const String network = apActive ? String("GaggiMate") : systemStatus.wifi() ? settings.getWifiSsid() : String("Disconnected");
+    if (stringChanged(systemStatus.network(), network.c_str()))
+        systemStatus.network(network.c_str());
+    systemStatus.ap_active(apActive);
+
+    char timeBuf[12] = "";
+    struct tm timeinfo;
+    if (getLocalTime(&timeinfo, 5)) {
+        strftime(timeBuf, sizeof(timeBuf), settings.isClock24hFormat() ? "%H:%M" : "%I:%M %p", &timeinfo);
+        if (!settings.isClock24hFormat() && timeBuf[0] == '0')
+            timeBuf[0] = ' ';
+    }
+    if (stringChanged(systemStatus.time(), timeBuf))
+        systemStatus.time(timeBuf);
+}
+
+void DefaultUI::updateWarnings() {
+    const WarningManager &wm = controller->getWarnings();
+    warnings.waterWarn(wm.isWarn(WARNING_WATER));
+    warnings.waterError(wm.isError(WARNING_WATER));
+    warnings.flushWarn(wm.isWarn(WARNING_FLUSH));
+    warnings.flushError(wm.isError(WARNING_FLUSH));
+    warnings.switchWarn(wm.isWarn(WARNING_SWITCH));
+    warnings.switchError(wm.isError(WARNING_SWITCH));
+    warnings.scaleConnectedWarn(wm.isWarn(WARNING_SCALE_CONNECTED));
+    warnings.scaleConnectedError(wm.isError(WARNING_SCALE_CONNECTED));
+    warnings.scaleBatteryWarn(wm.isWarn(WARNING_SCALE_BATTERY));
+    warnings.scaleBatteryError(wm.isError(WARNING_SCALE_BATTERY));
+    warnings.temperatureWarn(wm.isWarn(WARNING_TEMPERATURE));
+    warnings.temperatureError(wm.isError(WARNING_TEMPERATURE));
+    warnings.cleanWarn(wm.isWarn(WARNING_BACKFLUSH) || wm.isWarn(WARNING_DESCALING));
+    warnings.cleanError(wm.isError(WARNING_BACKFLUSH) || wm.isError(WARNING_DESCALING));
+    const String labels = wm.getLabels();
+    if (stringChanged(warnings.labels(), labels.c_str()))
+        warnings.labels(labels.c_str());
+}
+
+static void populateProfileInfo(ProfileInfoValue &info, const Profile &profile, bool isCurrent, bool hasImage) {
+    char timeBuf[12];
+    formatDuration(static_cast<unsigned long>(profile.getTotalDuration() * 1000.0f), timeBuf, sizeof(timeBuf));
+    if (stringChanged(info.name(), profile.label.c_str()))
+        info.name(profile.label.c_str());
+    info.temperature(profile.temperature);
+    if (stringChanged(info.time(), timeBuf))
+        info.time(timeBuf);
+    info.phases(static_cast<int>(profile.getPhaseCount()));
+    info.steps(static_cast<int>(profile.phases.size()));
+    info.is_volumetric(profile.isVolumetric());
+    info.is_current(isCurrent);
+    info.target_weight(profile.getTotalVolume());
+    info.is_pro(profile.type == "pro");
+    info.has_image(hasImage);
+}
+
+void DefaultUI::updateProfileInfo() {
+    if (!initialized) {
+        return;
+    }
+    const Profile &selected = profileManager->getSelectedProfile();
+    bool populated = false;
+    bool selectedHasImage = false;
+    {
+        std::lock_guard<std::mutex> guard(profilesMutex);
+        // The profile task always puts the selected profile first.
+        selectedHasImage = !favoritedProfileIds.empty() && favoritedProfileIds[0] == selected.id && favoritedHasImage[0];
+        if (!favoritedProfiles.empty() && currentProfileIdx >= 0 &&
+            currentProfileIdx < static_cast<int>(favoritedProfiles.size())) {
+            populateProfileInfo(previewProfileInfo, favoritedProfiles[currentProfileIdx], currentProfileIdx == 0,
+                                favoritedHasImage[currentProfileIdx]);
+            populated = true;
+        }
+    }
+    populateProfileInfo(selectedProfileInfo, selected, true, selectedHasImage);
+    selectedProfileInfo.dirty(profileDirty);
+    if (!populated) {
+        populateProfileInfo(previewProfileInfo, selected, true, selectedHasImage);
+    }
+}
+
+void DefaultUI::updateBoiler() {
+    const ::Settings &settings = controller->getSettings();
+    bool showSteamTemp = dualBoiler && currentScreen == SCREEN_ID_STEAM_SCREEN;
+    boiler.current_temperature(showSteamTemp ? controller->getCurrentSteamTemp() : controller->getCurrentTemp());
+    boiler.target_temperature(showSteamTemp ? controller->getTargetSteamTemp() : controller->getTargetTemp());
+    boiler.current_pressure(pressure);
+    boiler.target_pressure(controller->getTargetPressure());
+    boiler.max_temperature(160.0f);
+    boiler.max_pressure(settings.getPressureScaling());
+}
+
+// Mirror the live BrewProcess into brew_process_info; every field must stay valid/typed or the StatusScreen flow aborts.
+void DefaultUI::updateBrewProcess() {
+    if (!initialized) {
+        return;
+    }
+
+    const Profile &selected = profileManager->getSelectedProfile();
+    char buf[12];
+
+    // Profile-derived defaults so the struct is valid even before a process runs.
+    formatDuration(static_cast<unsigned long>(selected.getTotalDuration() * 1000.0f), buf, sizeof(buf));
+    brewProcess.profile_temperature(selected.temperature);
+    if (stringChanged(brewProcess.profile_time(), buf))
+        brewProcess.profile_time(buf);
+    brewProcess.profile_phases(static_cast<int>(selected.getPhaseCount()));
+    brewProcess.profile_steps(static_cast<int>(selected.phases.size()));
+    brewProcess.profile_is_volumetric(selected.isVolumetric());
+    brewProcess.profile_is_current(true);
+    brewProcess.profile_target_weight(selected.getTotalVolume());
+    brewProcess.boiler_target_temperature(controller->getTargetTemp());
+    brewProcess.current_flow(controller->getCurrentPumpFlow());
+
+    // Hold the process lock across every deref below — the logic/AsyncTCP/BLE tasks delete
+    // the process at any time (GM-147).
+    std::lock_guard<std::recursive_mutex> guard(controller->getProcessLock());
+    Process *process = controller->getProcess();
     if (process == nullptr) {
-        process = lastProcess;
+        process = controller->getLastProcess();
     }
-    if (process == nullptr || process->getType() != MODE_BREW) {
+    const bool validBrew = process != nullptr && process->getType() == MODE_BREW;
+    if (!validBrew) {
+        if (stringChanged(brewProcess.phase_type(), ""))
+            brewProcess.phase_type("");
+        if (stringChanged(brewProcess.phase_name(), ""))
+            brewProcess.phase_name("");
+        brewProcess.phase_value_current(0.0f);
+        brewProcess.phase_value_target(0.0f);
+        brewProcess.phase_value_is_weight(false);
+        if (stringChanged(brewProcess.elapsed_time(), "0:00"))
+            brewProcess.elapsed_time("0:00");
+        brewProcess.elapsed_percentage(0.0f);
+        brewProcess.is_complete(false);
         return;
     }
 
-    // Additional safety: Validate that the process pointer is still valid
-    // by checking if it matches either current or last process
-    if (process != controller->getProcess() && process != controller->getLastProcess()) {
-        ESP_LOGW("DefaultUI", "Process pointer became invalid during access, skipping update");
+    auto *bp = static_cast<BrewProcess *>(process);
+    if (bp->profile.phases.empty() || bp->phaseIndex >= bp->profile.phases.size()) {
+        // Object is mid-mutation/invalid: keep the last valid values.
         return;
     }
 
-    auto *brewProcess = static_cast<BrewProcess *>(process);
-    if (brewProcess == nullptr) {
-        ESP_LOGE("DefaultUI", "brewProcess is null after cast");
-        return;
-    }
+    const Phase phase = bp->currentPhase;
+    const bool active = process->isActive();
 
-    // Validate the brewProcess object before accessing its members
-    // Check if the object is in a reasonable state by validating key fields
-    if (brewProcess->profile.phases.empty() || brewProcess->phaseIndex >= brewProcess->profile.phases.size()) {
-        ESP_LOGE("DefaultUI", "brewProcess phaseIndex out of bounds: %u >= %zu", brewProcess->phaseIndex,
-                 brewProcess->profile.phases.size());
-        return;
-    }
+    // Live profile fields from the running process.
+    formatDuration(bp->getTotalDuration(), buf, sizeof(buf));
+    brewProcess.profile_temperature(bp->profile.temperature);
+    if (stringChanged(brewProcess.profile_time(), buf))
+        brewProcess.profile_time(buf);
+    brewProcess.profile_phases(static_cast<int>(bp->profile.getPhaseCount()));
+    brewProcess.profile_steps(static_cast<int>(bp->profile.phases.size()));
+    brewProcess.profile_is_volumetric(bp->target == ProcessTarget::VOLUMETRIC);
+    brewProcess.profile_target_weight(bp->getBrewVolume());
+    brewProcess.boiler_target_temperature(bp->getTemperature());
+    brewProcess.current_volume(bp->currentVolume);
 
-    // Final safety check before accessing brewProcess members
-    if (!brewProcess) {
-        ESP_LOGE("DefaultUI", "brewProcess became null after validation");
-        return;
-    }
+    const char *phaseType = phase.phase == PhaseType::PHASE_TYPE_BREW ? "BREW" : "INFUSION";
+    if (stringChanged(brewProcess.phase_type(), phaseType))
+        brewProcess.phase_type(phaseType);
 
-    const auto phase = brewProcess->currentPhase;
-
-    unsigned long now = millis();
-    if (!process->isActive()) {
-        // Add bounds check for finished timestamp
-        if (brewProcess && brewProcess->finished > 0) {
-            now = brewProcess->finished;
-        }
-    }
-
-    lv_label_set_text(ui_StatusScreen_stepLabel, phase.phase == PhaseType::PHASE_TYPE_BREW ? "BREW" : "INFUSION");
-    String phaseText = "Finished";
-    if (process->isActive()) {
-        phaseText = phase.name;
+    String phaseName = "Finished";
+    if (active) {
+        phaseName = phase.name;
     } else if (controller->getSettings().isDelayAdjust() && !process->isComplete()) {
-        phaseText = "Calibrating...";
+        phaseName = "Calibrating...";
     }
-    lv_label_set_text(ui_StatusScreen_phaseLabel, phaseText.c_str());
+    if (stringChanged(brewProcess.phase_name(), phaseName.c_str()))
+        brewProcess.phase_name(phaseName.c_str());
 
-    // Add bounds check for processStarted timestamp
-    if (brewProcess && brewProcess->processStarted > 0 && now >= brewProcess->processStarted) {
-        const unsigned long processDuration = now - brewProcess->processStarted;
-        const double processSecondsDouble = processDuration / 1000.0;
-        const auto processMinutes = static_cast<int>(processSecondsDouble / 60.0);
-        const auto processSeconds = static_cast<int>(processSecondsDouble) % 60;
-        lv_label_set_text_fmt(ui_StatusScreen_currentDuration, "%2d:%02d", processMinutes, processSeconds);
-    } else {
-        lv_label_set_text_fmt(ui_StatusScreen_currentDuration, "00:00");
+    unsigned long now = ::millis();
+    if (!active && bp->finished > 0) {
+        now = bp->finished;
     }
+    const unsigned long elapsedMs = (bp->processStarted > 0 && now >= bp->processStarted) ? now - bp->processStarted : 0;
+    formatDuration(elapsedMs, buf, sizeof(buf));
+    if (stringChanged(brewProcess.elapsed_time(), buf))
+        brewProcess.elapsed_time(buf);
 
-    if (brewProcess && brewProcess->target == ProcessTarget::VOLUMETRIC && phase.hasVolumetricTarget()) {
-        Target target = phase.getVolumetricTarget();
-        lv_bar_set_value(ui_StatusScreen_brewBar, brewProcess->currentVolume * 10.0, LV_ANIM_OFF);
-        lv_bar_set_range(ui_StatusScreen_brewBar, 0, target.value * 10.0 + 1.0);
-        lv_label_set_text_fmt(ui_StatusScreen_brewLabel, "%.1f / %.1fg", brewProcess->currentVolume, target.value);
-    } else if (brewProcess) {
-        // Add bounds check for currentPhaseStarted timestamp
-        if (brewProcess->currentPhaseStarted > 0 && now >= brewProcess->currentPhaseStarted) {
-            const unsigned long progress = now - brewProcess->currentPhaseStarted;
-            lv_bar_set_value(ui_StatusScreen_brewBar, progress, LV_ANIM_OFF);
-            lv_bar_set_range(ui_StatusScreen_brewBar, 0, std::max(static_cast<int>(brewProcess->getPhaseDuration()), 1));
-            lv_label_set_text_fmt(ui_StatusScreen_brewLabel, "%d / %ds", progress / 1000, brewProcess->getPhaseDuration() / 1000);
-        } else {
-            lv_bar_set_value(ui_StatusScreen_brewBar, 0, LV_ANIM_OFF);
-            lv_bar_set_range(ui_StatusScreen_brewBar, 0, 1);
-            lv_label_set_text(ui_StatusScreen_brewLabel, "0s");
+    const bool weightTarget = bp->target == ProcessTarget::VOLUMETRIC && phase.hasVolumetricTarget();
+    brewProcess.phase_value_is_weight(weightTarget);
+    if (weightTarget) {
+        float target = 0.0f;
+        Target volumetricTarget = phase.getVolumetricTarget();
+        if (volumetricTarget.type == TargetType::TARGET_TYPE_VOLUMETRIC) {
+            target = volumetricTarget.value;
+        } else if (volumetricTarget.type == TargetType::TARGET_TYPE_RATIO && bp->profile.dose > 0.0f) {
+            target = volumetricTarget.value * bp->profile.dose;
         }
-    }
-
-    if (brewProcess && brewProcess->target == ProcessTarget::TIME) {
-        const unsigned long targetDuration = brewProcess->getTotalDuration();
-        const double targetSecondsDouble = targetDuration / 1000.0;
-        const auto targetMinutes = static_cast<int>(targetSecondsDouble / 60.0);
-        const auto targetSeconds = static_cast<int>(targetSecondsDouble) % 60;
-        lv_label_set_text_fmt(ui_StatusScreen_targetDuration, "%2d:%02d", targetMinutes, targetSeconds);
-    } else if (brewProcess) {
-        lv_label_set_text_fmt(ui_StatusScreen_targetDuration, "%.1fg", brewProcess->getBrewVolume());
-    }
-    if (brewProcess) {
-        lv_img_set_src(ui_StatusScreen_Image8,
-                       brewProcess->target == ProcessTarget::TIME ? &ui_img_360122106 : &ui_img_1424216268);
-    }
-
-    if (brewProcess && brewProcess->isAdvancedPump()) {
-        float pressure = brewProcess->getPumpPressure();
-        const double percentage = 1.0 - static_cast<double>(pressure) / static_cast<double>(pressureScaling);
-        adjustTarget(uic_StatusScreen_dials_pressureTarget, percentage, -62.0, 124.0);
+        const float current = static_cast<float>(bp->currentVolume);
+        brewProcess.phase_value_current(current);
+        brewProcess.phase_value_target(target);
+        brewProcess.elapsed_percentage(target > 0.0f ? clampPercentage(current / target * 100.0f) : 0.0f);
     } else {
-        const double percentage = 1.0 - 0.5;
-        adjustTarget(uic_StatusScreen_dials_pressureTarget, percentage, -62.0, 124.0);
+        const unsigned long phaseElapsed =
+            (bp->currentPhaseStarted > 0 && now >= bp->currentPhaseStarted) ? now - bp->currentPhaseStarted : 0;
+        const float current = phaseElapsed / 1000.0f;
+        const float target = bp->getPhaseDuration() / 1000.0f;
+        brewProcess.phase_value_current(current);
+        brewProcess.phase_value_target(target);
+        brewProcess.elapsed_percentage(target > 0.0f ? clampPercentage(current / target * 100.0f) : 0.0f);
     }
 
-    // Brew finished adjustments
-    if (process->isActive()) {
-        lv_obj_add_flag(ui_StatusScreen_brewVolume, LV_OBJ_FLAG_HIDDEN);
+    brewProcess.is_complete(process->isComplete());
+}
+
+void DefaultUI::updateMenuScreen() {}
+
+void DefaultUI::setupShotChart() {
+    shotChart = objects.shot_chart;
+    styleTrendChart(shotChart, SHOT_CHART_POINTS);
+    for (int i = 0; i < SHOT_SERIES_COUNT; i++) {
+        shotSeries[i] = lv_chart_add_series(shotChart, lv_color_hex(0), LV_CHART_AXIS_PRIMARY_Y);
+        lv_chart_set_ext_y_array(shotChart, shotSeries[i], shotPoints[i]);
+    }
+    applyShotChartTheme();
+    lv_obj_add_event_cb(shotChart, shotChartDrawCb, LV_EVENT_DRAW_PART_BEGIN, this);
+    lv_obj_add_event_cb(shotChart, shotChartDrawCb, LV_EVENT_DRAW_PART_END, this);
+    lv_obj_add_event_cb(shotChart, shotChartBackgroundCb, LV_EVENT_DRAW_MAIN_BEGIN, this);
+    if (shotHistory == nullptr) {
+        shotHistory = static_cast<ShotSample *>(ps_malloc(SHOT_HISTORY_POINTS * sizeof(ShotSample)));
+        resetShotChart(controller->getTargetTemp(), 0.0f);
     } else {
-        // Re-validate brewProcess pointer before accessing members
-        if (brewProcess && brewProcess->target == ProcessTarget::VOLUMETRIC) {
-            lv_obj_clear_flag(ui_StatusScreen_brewVolume, LV_OBJ_FLAG_HIDDEN);
-        }
-        lv_obj_add_flag(ui_StatusScreen_barContainer, LV_OBJ_FLAG_HIDDEN);
-        lv_obj_add_flag(ui_StatusScreen_labelContainer, LV_OBJ_FLAG_HIDDEN);
-        if (brewProcess) {
-            lv_label_set_text_fmt(ui_StatusScreen_brewVolume, "%.1lfg", brewProcess->currentVolume);
-        }
-        lv_imgbtn_set_src(ui_StatusScreen_pauseButton, LV_IMGBTN_STATE_RELEASED, nullptr, &ui_img_631115820, nullptr);
+        renderShotChart(); // screen was recreated; redraw from the kept history
     }
 }
 
-void DefaultUI::adjustDials(lv_obj_t *dials) {
-    lv_obj_t *tempGauge = ui_comp_get_child(dials, UI_COMP_DIALS_TEMPGAUGE);
-    lv_obj_t *tempText = ui_comp_get_child(dials, UI_COMP_DIALS_TEMPTEXT);
-    lv_obj_t *pressureTarget = ui_comp_get_child(dials, UI_COMP_DIALS_PRESSURETARGET);
-    lv_obj_t *pressureGauge = ui_comp_get_child(dials, UI_COMP_DIALS_PRESSUREGAUGE);
-    lv_obj_t *pressureText = ui_comp_get_child(dials, UI_COMP_DIALS_PRESSURETEXT);
-    lv_obj_t *pressureSymbol = ui_comp_get_child(dials, UI_COMP_DIALS_IMAGE6);
-    _ui_flag_modify(pressureTarget, LV_OBJ_FLAG_HIDDEN, pressureAvailable);
-    _ui_flag_modify(pressureGauge, LV_OBJ_FLAG_HIDDEN, pressureAvailable);
-    _ui_flag_modify(pressureText, LV_OBJ_FLAG_HIDDEN, pressureAvailable);
-    _ui_flag_modify(pressureSymbol, LV_OBJ_FLAG_HIDDEN, pressureAvailable);
-    lv_obj_set_x(tempText, pressureAvailable ? -50 : 0);
-    lv_obj_set_y(tempText, pressureAvailable ? -205 : -180);
-    lv_arc_set_bg_angles(tempGauge, 118, pressureAvailable ? 242 : 62);
-    lv_arc_set_range(pressureGauge, 0, pressureScaling * 10);
+void DefaultUI::applyShotChartTheme() {
+    if (shotChart == nullptr)
+        return;
+    const int theme = currentThemeMode >= 0 ? currentThemeMode : 0;
+    for (int i = 0; i < SHOT_SERIES_COUNT; i++)
+        lv_chart_set_series_color(shotChart, shotSeries[i], lv_color_hex(theme_colors[theme][SHOT_THEME_COLORS[i]]));
+    lv_chart_refresh(shotChart);
 }
 
-inline void DefaultUI::adjustTempTarget(lv_obj_t *dials) {
-    double gaugeAngle = pressureAvailable ? 124.0 : 304;
-    double gaugeStart = pressureAvailable ? 118.0 : -62;
-    double percentage = static_cast<double>(targetTemp) / 160.0;
-    lv_obj_t *tempTarget = ui_comp_get_child(dials, UI_COMP_DIALS_TEMPTARGET);
-    adjustTarget(tempTarget, percentage, gaugeStart, gaugeAngle);
+void DefaultUI::resetShotChart(float targetTemperature, float targetWeight) {
+    shotHistoryStart = 0;
+    shotHistoryCount = 0;
+    shotPhasePending = false;
+    lastShotSample = 0;
+    shotFlowRange = SHOT_FLOW_RANGE_DEFAULT;
+    shotWeightRange = targetWeight > 0.0f ? growShotRange(10.0f, targetWeight * 1.1f, 10.0f) : SHOT_WEIGHT_RANGE_DEFAULT;
+    shotTempMin = targetTemperature - SHOT_TEMP_RANGE;
+    shotTempMax = targetTemperature + SHOT_TEMP_RANGE;
+    renderShotChart();
 }
+
+void DefaultUI::updateShotChart() {
+    if (objects.shot_chart == nullptr)
+        return;
+    if (objects.shot_chart != shotChart)
+        setupShotChart();
+
+    std::lock_guard<std::recursive_mutex> guard(controller->getProcessLock());
+    Process *process = controller->getProcess();
+    if (process == nullptr || process->getType() != MODE_BREW || !process->isActive()) {
+        if (shotChartLive) {
+            shotChartLive = false;
+            zoomOutShotChart();
+        }
+        return;
+    }
+    auto *bp = static_cast<BrewProcess *>(process);
+    const bool volumetric = controller->isVolumetricAvailable();
+    if (bp->processStarted != shotChartStarted) {
+        shotChartStarted = bp->processStarted;
+        shotChartLive = true;
+        lv_anim_del(this, shotChartZoomAnimCb);
+        shotChartZoom = 0.0f;
+        resetShotChart(bp->getTemperature(), volumetric ? static_cast<float>(bp->getBrewVolume()) : 0.0f);
+        shotPhaseIndex = bp->phaseIndex;
+    }
+    if (bp->phaseIndex != shotPhaseIndex) {
+        shotPhaseIndex = bp->phaseIndex;
+        shotPhasePending = true;
+    }
+    const unsigned long now = ::millis();
+    if (lastShotSample != 0 && now - lastShotSample < SHOT_CHART_SAMPLE_INTERVAL)
+        return;
+    // Advance by the interval, not to now, so the coarse UI tick doesn't stretch the 30 s window.
+    const bool behind = lastShotSample == 0 || now - lastShotSample >= 2 * SHOT_CHART_SAMPLE_INTERVAL;
+    lastShotSample = behind ? now : lastShotSample + SHOT_CHART_SAMPLE_INTERVAL;
+    addShotChartSample(volumetric ? static_cast<float>(bp->currentVolume) : -1.0f);
+}
+
+void DefaultUI::addShotChartSample(float weight) {
+    if (shotHistory == nullptr)
+        return;
+    const float pressure = controller->getCurrentPressure();
+    const float flow = controller->getCurrentPumpFlow();
+    const float targetPressure = controller->getTargetPressure();
+    const float targetFlow = controller->getTargetFlow();
+    shotFlowRange = growShotRange(shotFlowRange, LV_MAX(LV_MAX(pressure, flow), LV_MAX(targetPressure, targetFlow)), 2.0f);
+    shotWeightRange = growShotRange(shotWeightRange, weight, 10.0f);
+
+    // Oldest sample is overwritten once the 2 min history is full.
+    if (shotHistoryCount == SHOT_HISTORY_POINTS) {
+        shotHistoryStart = (shotHistoryStart + 1) % SHOT_HISTORY_POINTS;
+        shotHistoryCount--;
+    }
+    ShotSample &sample = shotHistory[(shotHistoryStart + shotHistoryCount) % SHOT_HISTORY_POINTS];
+    sample.values[SHOT_PRESSURE] = pressure;
+    sample.values[SHOT_TARGET_PRESSURE] = targetPressure > 0.0f ? targetPressure : NAN;
+    sample.values[SHOT_FLOW] = flow;
+    sample.values[SHOT_TARGET_FLOW] = targetFlow > 0.0f ? targetFlow : NAN;
+    sample.values[SHOT_TEMPERATURE] = controller->getCurrentTemp();
+    sample.values[SHOT_WEIGHT] = weight >= 0.0f ? weight : NAN;
+    sample.phaseStart = shotPhasePending;
+    shotPhasePending = false;
+    shotHistoryCount++;
+    renderShotChart();
+}
+
+// Zoom from the live window out to the whole shot; the window's left edge eases back to the shot start.
+void DefaultUI::zoomOutShotChart() {
+    lv_anim_del(this, shotChartZoomAnimCb);
+    if (shotHistoryCount <= SHOT_CHART_POINTS) {
+        shotChartZoom = 1.0f; // the whole shot is already visible
+        return;
+    }
+    lv_anim_t a;
+    lv_anim_init(&a);
+    lv_anim_set_var(&a, this);
+    lv_anim_set_exec_cb(&a, shotChartZoomAnimCb);
+    lv_anim_set_values(&a, 0, SHOT_ZOOM_ANIM_STEPS);
+    lv_anim_set_time(&a, SHOT_ZOOM_ANIM_MS);
+    lv_anim_set_path_cb(&a, lv_anim_path_ease_in_out);
+    lv_anim_start(&a);
+}
+
+void DefaultUI::shotChartZoomAnimCb(void *var, int32_t value) {
+    auto *ui = static_cast<DefaultUI *>(var);
+    ui->shotChartZoom = static_cast<float>(value) / SHOT_ZOOM_ANIM_STEPS;
+    if (ui->shotChart != nullptr && ui->shotChart == objects.shot_chart)
+        ui->renderShotChart();
+}
+
+// Samples the history window ending at the latest sample; zoom 0 shows the last 30 s, zoom 1 the whole shot.
+void DefaultUI::renderShotChart() {
+    const int total = shotHistory != nullptr ? shotHistoryCount : 0;
+    const int count = LV_MIN(total, SHOT_CHART_POINTS);
+    const float windowStart = (total - count) * (1.0f - shotChartZoom);
+    const float step = count > 1 ? (total - 1 - windowStart) / (count - 1) : 0.0f;
+    int previous = -1;
+    for (int j = 0; j < SHOT_CHART_POINTS; j++) {
+        shotPhaseMarks[j] = false;
+        if (j >= count) {
+            for (auto &series : shotPoints)
+                series[j] = LV_CHART_POINT_NONE;
+            continue;
+        }
+        const int pick = j == count - 1 ? total - 1 : lroundf(windowStart + j * step);
+        // A point carries a phase mark if any sample it skips over started a phase.
+        for (int k = previous < 0 ? pick : previous + 1; k <= pick; k++)
+            shotPhaseMarks[j] |= shotHistory[(shotHistoryStart + k) % SHOT_HISTORY_POINTS].phaseStart;
+        previous = pick;
+        const ShotSample &sample = shotHistory[(shotHistoryStart + pick) % SHOT_HISTORY_POINTS];
+        for (int i = 0; i < SHOT_SERIES_COUNT; i++) {
+            const float value = sample.values[i];
+            if (std::isnan(value))
+                shotPoints[i][j] = LV_CHART_POINT_NONE;
+            else if (i == SHOT_TEMPERATURE)
+                shotPoints[i][j] = scaleShotValue(value, shotTempMin, shotTempMax);
+            else
+                shotPoints[i][j] = scaleShotValue(value, 0.0f, i == SHOT_WEIGHT ? shotWeightRange : shotFlowRange);
+        }
+    }
+    shotPointCount = count;
+    lv_chart_refresh(shotChart);
+}
+
+void DefaultUI::shotChartBackgroundCb(lv_event_t *e) {
+    auto *ui = static_cast<DefaultUI *>(lv_event_get_user_data(e));
+    const int theme = ui->currentThemeMode >= 0 ? ui->currentThemeMode : 0;
+    drawTrendGuides(e, theme, ui->shotPhaseMarks, ui->shotPointCount, SHOT_CHART_POINTS);
+}
+
+void DefaultUI::shotChartDrawCb(lv_event_t *e) {
+    auto *dsc = lv_event_get_draw_part_dsc(e);
+    if (dsc == nullptr || dsc->part != LV_PART_ITEMS || dsc->line_dsc == nullptr || dsc->sub_part_ptr == nullptr)
+        return;
+    auto *ui = static_cast<DefaultUI *>(lv_event_get_user_data(e));
+    int index = 0;
+    while (index < SHOT_SERIES_COUNT && ui->shotSeries[index] != dsc->sub_part_ptr)
+        index++;
+    if (index == SHOT_SERIES_COUNT)
+        return;
+
+    if (lv_event_get_code(e) == LV_EVENT_DRAW_PART_BEGIN) {
+        styleTrendLine(dsc->line_dsc, SHOT_IS_TARGET[index]);
+        return;
+    }
+
+    if (SHOT_IS_TARGET[index] || dsc->p2 == nullptr || dsc->id != ui->shotPointCount - 2)
+        return;
+    lv_draw_rect_dsc_t dot;
+    lv_draw_rect_dsc_init(&dot);
+    dot.radius = LV_RADIUS_CIRCLE;
+    dot.bg_color = dsc->line_dsc->color;
+    dot.bg_opa = LV_OPA_COVER;
+    const lv_area_t area = {
+        static_cast<lv_coord_t>(dsc->p2->x - SHOT_DOT_RADIUS), static_cast<lv_coord_t>(dsc->p2->y - SHOT_DOT_RADIUS),
+        static_cast<lv_coord_t>(dsc->p2->x + SHOT_DOT_RADIUS), static_cast<lv_coord_t>(dsc->p2->y + SHOT_DOT_RADIUS)};
+    lv_draw_rect(dsc->draw_ctx, &dot, &area);
+}
+
+// Show the preview profile's image once the profile task has loaded it, and redraw the pro chart when the previewed profile
+// changes.
+void DefaultUI::updateProfilePreview() {
+    if (currentScreen != SCREEN_ID_NEW_PROFILE_SCREEN || objects.profile_preview == nullptr)
+        return;
+    String id;
+    bool hasImage = false;
+    bool isPro = false;
+    Profile profile;
+    {
+        std::lock_guard<std::mutex> guard(profilesMutex);
+        if (currentProfileIdx < 0 || currentProfileIdx >= static_cast<int>(favoritedProfiles.size()))
+            return;
+        id = favoritedProfileIds[currentProfileIdx];
+        hasImage = favoritedHasImage[currentProfileIdx];
+        isPro = favoritedProfiles[currentProfileIdx].type == "pro";
+        if (isPro && (id != profileChartId || profilesGeneration != profileChartGeneration)) {
+            profile = favoritedProfiles[currentProfileIdx];
+            profileChartId = id;
+            profileChartGeneration = profilesGeneration;
+        }
+    }
+
+    uint8_t *pixels = nullptr;
+    {
+        std::lock_guard<std::mutex> guard(imageMutex);
+        const String wanted = hasImage ? id : String();
+        if (wanted != imageWantedId) {
+            imageWantedId = wanted;
+            imageRequest++;
+        }
+        if (imagePending != nullptr && imagePendingId == imageWantedId) {
+            pixels = imagePending;
+            imagePending = nullptr;
+        }
+    }
+    if (pixels != nullptr) {
+        // Alternate descriptors so LVGL sees a new source; the old pixels are freed once replaced.
+        imageDscIndex ^= 1;
+        lv_img_dsc_t &dsc = imageDsc[imageDscIndex];
+        dsc.header.always_zero = 0;
+        dsc.header.cf = LV_IMG_CF_TRUE_COLOR;
+        dsc.header.w = profile_image::SIZE;
+        dsc.header.h = profile_image::SIZE;
+        dsc.data_size = profile_image::FILE_BYTES - profile_image::HEADER_BYTES;
+        dsc.data = pixels;
+        lv_img_set_src(objects.profile_preview, &dsc);
+        free(imageShown);
+        imageShown = pixels;
+        imageShownId = id;
+    } else if (imageShown != nullptr && imageShownId != id) {
+        lv_img_set_src(objects.profile_preview, nullptr); // don't flash the previous profile's image while loading
+        free(imageShown);
+        imageShown = nullptr;
+        imageShownId = "";
+    }
+
+    lv_obj_t *chart = objects.profile_chart;
+    if (!isPro || chart == nullptr)
+        return;
+    if (chart != profileChart) {
+        setupProfileChart(chart);
+        profileChartGeneration = -1; // re-render into the new chart
+    }
+    if (!profile.id.isEmpty())
+        renderProfileChart(profile);
+}
+
+void DefaultUI::setupProfileChart(lv_obj_t *chart) {
+    profileChart = chart;
+    styleTrendChart(chart, PROFILE_CHART_POINTS);
+    const int theme = currentThemeMode >= 0 ? currentThemeMode : 0;
+    for (int i = 0; i < 2; i++) {
+        profileSeries[i] = lv_chart_add_series(chart, lv_color_hex(PROFILE_COLORS[theme][i]), LV_CHART_AXIS_PRIMARY_Y);
+        lv_chart_set_ext_y_array(chart, profileSeries[i], profilePoints[i]);
+    }
+    lv_obj_add_event_cb(chart, profileChartDrawCb, LV_EVENT_DRAW_PART_BEGIN, this);
+    lv_obj_add_event_cb(chart, profileChartBackgroundCb, LV_EVENT_DRAW_MAIN_BEGIN, this);
+}
+
+// Same simulation as the web UI's ExtendedProfileChart: the pump target ramps per transition, the other value is a limit.
+void DefaultUI::renderProfileChart(const Profile &profile) {
+    const float total = profile.getTotalDuration();
+    float pressure[PROFILE_CHART_POINTS] = {};
+    float flow[PROFILE_CHART_POINTS] = {};
+    bool pressureTarget[PROFILE_CHART_POINTS] = {};
+    bool phaseMarks[PROFILE_CHART_POINTS] = {};
+    bool phasePending = false;
+    int out = 0;
+    float maxValue = PROFILE_CHART_MIN_RANGE;
+
+    if (!profile.phases.empty() && total > 0.0f) {
+        size_t phaseIndex = 0;
+        float time = 0.0f;
+        float phaseTime = 0.0f;
+        float currentPressure = 0.0f;
+        float currentFlow = 0.0f;
+        float startPressure = 0.0f;
+        float startFlow = 0.0f;
+        float effectivePressure = profile.phases[0].pumpAdvanced.pressure;
+        float effectiveFlow = profile.phases[0].pumpAdvanced.flow;
+        while (phaseIndex < profile.phases.size() && out < PROFILE_CHART_POINTS) {
+            const Phase &phase = profile.phases[phaseIndex];
+            const bool simple = phase.pumpIsSimple;
+            const bool isPressure = !simple && phase.pumpAdvanced.target == PumpTarget::PUMP_TARGET_PRESSURE;
+            const float transition = phase.transition.duration > 0.0f ? phase.transition.duration : phase.duration;
+            const float alpha = transition > 0.0f ? applyEasing(phaseTime / transition, phase.transition.type) : 1.0f;
+            const float limitPressure = simple ? 0.0f : phase.pumpAdvanced.pressure;
+            const float limitFlow = simple ? 0.0f : phase.pumpAdvanced.flow;
+            currentFlow = !simple && !isPressure ? startFlow + (effectiveFlow - startFlow) * alpha : limitFlow;
+            currentPressure = isPressure ? startPressure + (effectivePressure - startPressure) * alpha : limitPressure;
+            while (out < PROFILE_CHART_POINTS && time >= total * out / (PROFILE_CHART_POINTS - 1)) {
+                pressure[out] = LV_MAX(currentPressure, 0.0f);
+                flow[out] = LV_MAX(currentFlow, 0.0f);
+                pressureTarget[out] = isPressure;
+                phaseMarks[out] = phasePending;
+                phasePending = false;
+                maxValue = LV_MAX(maxValue, LV_MAX(pressure[out], flow[out]));
+                out++;
+            }
+            time += PROFILE_CHART_STEP;
+            phaseTime += PROFILE_CHART_STEP;
+            if (phaseTime >= phase.duration) {
+                phaseTime = 0.0f;
+                if (++phaseIndex < profile.phases.size()) {
+                    phasePending = true;
+                    startFlow = currentFlow;
+                    startPressure = currentPressure;
+                    const PumpAdvanced &next = profile.phases[phaseIndex].pumpAdvanced;
+                    effectiveFlow = next.flow == -1 ? currentFlow : next.flow;
+                    effectivePressure = next.pressure == -1 ? currentPressure : next.pressure;
+                }
+            }
+        }
+    }
+
+    const float range = growShotRange(PROFILE_CHART_MIN_RANGE, maxValue * 1.1f, 2.0f);
+    for (int i = 0; i < PROFILE_CHART_POINTS; i++) {
+        const bool valid = i < out;
+        const bool lastValid = out > 0 && i >= out;
+        const int src = lastValid ? out - 1 : i;
+        profilePoints[0][i] = valid || lastValid ? scaleShotValue(pressure[src], 0.0f, range) : LV_CHART_POINT_NONE;
+        profilePoints[1][i] = valid || lastValid ? scaleShotValue(flow[src], 0.0f, range) : LV_CHART_POINT_NONE;
+        profilePointIsTarget[0][i] = pressureTarget[src];
+        profilePointIsTarget[1][i] = !pressureTarget[src];
+        profilePhaseMarks[i] = valid && phaseMarks[i];
+    }
+    lv_chart_refresh(profileChart);
+}
+
+// The controlled value draws solid, the limit dashed (as in the web UI).
+void DefaultUI::profileChartDrawCb(lv_event_t *e) {
+    auto *dsc = lv_event_get_draw_part_dsc(e);
+    if (dsc == nullptr || dsc->part != LV_PART_ITEMS || dsc->line_dsc == nullptr || dsc->sub_part_ptr == nullptr)
+        return;
+    auto *ui = static_cast<DefaultUI *>(lv_event_get_user_data(e));
+    const int series = ui->profileSeries[0] == dsc->sub_part_ptr ? 0 : ui->profileSeries[1] == dsc->sub_part_ptr ? 1 : -1;
+    if (series < 0 || dsc->id >= PROFILE_CHART_POINTS)
+        return;
+    styleTrendLine(dsc->line_dsc, !ui->profilePointIsTarget[series][dsc->id], PROFILE_LINE_WIDTH);
+}
+
+void DefaultUI::profileChartBackgroundCb(lv_event_t *e) {
+    auto *ui = static_cast<DefaultUI *>(lv_event_get_user_data(e));
+    const int theme = ui->currentThemeMode >= 0 ? ui->currentThemeMode : 0;
+    drawTrendGuides(e, theme, ui->profilePhaseMarks, PROFILE_CHART_POINTS, PROFILE_CHART_POINTS);
+}
+
+String DefaultUI::getErrorMessage() { return controller->getSystemStateMessage(); }
 
 void DefaultUI::applyTheme() {
-    const Settings &settings = controller->getSettings();
+    const ::Settings &settings = controller->getSettings();
     int newThemeMode = settings.getThemeMode();
+#ifndef GAGGIMATE_SIM // Amoled-specific black theme override is device-only
+    if (newThemeMode == 0 && panelDriver == AmoledDisplayDriver::getInstance()) {
+        newThemeMode = THEME_ID_AMOLED_DARK;
+    }
+#endif
 
     if (newThemeMode != currentThemeMode) {
         currentThemeMode = newThemeMode;
-        ui_theme_set(currentThemeMode);
-
-        if (AmoledDisplayDriver::getInstance() == panelDriver && currentThemeMode == UI_THEME_DEFAULT) {
-            enable_amoled_black_theme_override(lv_disp_get_default());
+        // Via EEZ so its selected index updates too; on-demand screens (new profile) read it when created.
+        static const char *const THEME_NAMES[] = {"Dark", "Light", "AmoledDark"};
+        eez_flow_set_theme(THEME_NAMES[currentThemeMode]);
+        applyShotChartTheme();
+        if (profileChart != nullptr) {
+            for (int i = 0; i < 2; i++)
+                lv_chart_set_series_color(profileChart, profileSeries[i], lv_color_hex(PROFILE_COLORS[currentThemeMode][i]));
+            lv_chart_refresh(profileChart);
         }
     }
-}
-
-void DefaultUI::adjustTarget(lv_obj_t *obj, double percentage, double start, double range) const {
-    double angle = start + range - range * percentage;
-
-    lv_img_set_angle(obj, angle * -10);
-    int x = static_cast<int>(std::cos(angle * M_PI / 180.0f) * 235.0);
-    int y = static_cast<int>(std::sin(angle * M_PI / 180.0f) * -235.0);
-    lv_obj_set_pos(obj, x, y);
 }
 
 void DefaultUI::loopTask(void *arg) {

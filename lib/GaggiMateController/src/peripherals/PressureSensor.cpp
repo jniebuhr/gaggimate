@@ -1,54 +1,56 @@
 #include "PressureSensor.h"
 #include "Wire.h"
 
-PressureSensor::PressureSensor(uint8_t sda_pin, uint8_t scl_pin, const pressure_callback_t &callback, float pressure_scale,
-                               float voltage_floor, float voltage_ceil)
-    : _sda_pin(sda_pin), _scl_pin(scl_pin), _pressure_scale(pressure_scale), _callback(callback), taskHandle(nullptr) {
+PressureSensor::PressureSensor(ADSAdc *adc, PressureControlRate controlRate, float pressure_scale, float voltage_floor,
+                               float voltage_ceil, uint8_t channel)
+    : _sampleTime(pressureControlPeriodS(controlRate)), _pressure_scale(pressure_scale), _adc(adc), _channel(channel),
+      _filter(_sampleTime, PRESSURE_KF_MEASUREMENT_NOISE, PRESSURE_KF_ACCEL_NOISE, PRESSURE_KF_RATE_LEAK) {
     _adc_floor = static_cast<int16_t>(voltage_floor / ADC_STEP);
     _pressure_adc_range = (voltage_ceil - voltage_floor) / ADC_STEP;
     _pressure_step = pressure_scale / _pressure_adc_range;
 }
 
 void PressureSensor::setup() {
-    Wire1.begin(_sda_pin, _scl_pin);
-    ESP_LOGV(LOG_TAG, "Initializing pressure sensor on SDA: %d, SCL: %d", _sda_pin, _scl_pin);
-    delay(100);
-    ads = new ADS1115(0x48, &Wire1);
-    if (!ads->begin()) {
-        ESP_LOGE(LOG_TAG, "Failed to initialize ADS1115");
-    }
-    ads->setGain(0);
-    ads->setDataRate(4);
-    ads->setMode(0);
-    ads->readADC(0);
-    xTaskCreate(loopTask, "PressureSensor::loop", configMINIMAL_STACK_SIZE * 4, this, 1, &taskHandle);
+    _adc->registerCallback([this](uint8_t channel, int reading) {
+        if (channel == _channel) {
+            onReading(reading);
+        }
+    });
 }
 
-void PressureSensor::loop() {
-    if (ads->isConnected()) {
-        int16_t reading = ads->readADC();
-        reading = reading - _adc_floor;
-        float pressure = reading * _pressure_step;
-        _raw_pressure = pressure;
-        _pressure = 0.05f * pressure + 0.95f * _pressure;
-        _raw_pressure = std::clamp(_raw_pressure, 0.0f, _pressure_scale);
-        _pressure = std::clamp(_pressure, 0.0f, _pressure_scale);
-        ESP_LOGV(LOG_TAG, "ADC Reading: %d, Pressure Reading: %f, Pressure Step: %f, Floor: %d", reading, _pressure,
-                 _pressure_step, _adc_floor);
-        _callback(_pressure);
-    }
+void PressureSensor::onReading(int reading) {
+    reading = reading - _adc_floor;
+    const float pressure = static_cast<float>(reading) * _pressure_step;
+    portENTER_CRITICAL(&_mux);
+    _raw_pressure = std::clamp(pressure, 0.0f, _pressure_scale);
+    _sum += _raw_pressure;
+    ++_count;
+    portEXIT_CRITICAL(&_mux);
+}
+
+bool PressureSensor::consumeAverage() {
+    portENTER_CRITICAL(&_mux);
+    const float sum = _sum;
+    const uint32_t count = _count;
+    _sum = 0;
+    _count = 0;
+    portEXIT_CRITICAL(&_mux);
+    if (!count)
+        return false;
+    const int64_t now = esp_timer_get_time();
+    if (_lastWindowUs)
+        _sampleTime = (now - _lastWindowUs) / 1000000.0f;
+    _lastWindowUs = now;
+    _averagedPressure = sum / count;
+    const float dt = std::clamp(_sampleTime, 0.0005f, 0.1f);
+    _filter.setSampleTime(dt);
+    // Preserve the supplied patch's time-scaled rate leakage.
+    _filter.setRateLeak(powf(PRESSURE_KF_RATE_LEAK, dt / 0.030f));
+    _pressure = std::clamp(_filter.updateEstimate(_averagedPressure), 0.0f, _pressure_scale);
+    return true;
 }
 
 void PressureSensor::setScale(float pressure_scale) {
     _pressure_scale = pressure_scale;
     _pressure_step = pressure_scale / _pressure_adc_range;
-}
-
-[[noreturn]] void PressureSensor::loopTask(void *arg) {
-    TickType_t lastWake = xTaskGetTickCount();
-    auto *sensor = static_cast<PressureSensor *>(arg);
-    while (true) {
-        sensor->loop();
-        xTaskDelayUntil(&lastWake, pdMS_TO_TICKS(PRESSURE_READ_INTERVAL_MS));
-    }
 }

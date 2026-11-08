@@ -37,6 +37,15 @@ channels:
           - $ref: '#/components/messages/ProfilesFavoriteResponse'
           - $ref: '#/components/messages/ProfilesUnfavoriteResponse'
           - $ref: '#/components/messages/ProfilesReorderResponse'
+          - $ref: '#/components/messages/BrewConfirmEvent'
+          - $ref: '#/components/messages/BrewConfirmCancelEvent'
+          - $ref: '#/components/messages/ScaleScanCompleteEvent'
+          - $ref: '#/components/messages/ScaleConnectErrorEvent'
+          - $ref: '#/components/messages/ScaleConnectSuccessEvent'
+          - $ref: '#/components/messages/ScaleDisconnectEvent'
+          - $ref: '#/components/messages/FlushStartResponse'
+          - $ref: '#/components/messages/CleaningResponse'
+          - $ref: '#/components/messages/FlushStopResponse'
     publish:
       description: Messages sent from the client to the server.
       message:
@@ -52,10 +61,21 @@ channels:
           - $ref: '#/components/messages/ProfilesFavoriteRequest'
           - $ref: '#/components/messages/ProfilesUnfavoriteRequest'
           - $ref: '#/components/messages/ProfilesReorderRequest'
+          - $ref: '#/components/messages/ProcessActivateRequest'
+          - $ref: '#/components/messages/BrewConfirmCancelRequest'
+          - $ref: '#/components/messages/FlushStartRequest'
+          - $ref: '#/components/messages/CleaningStartRequest'
+          - $ref: '#/components/messages/CleaningCompleteRequest'
+          - $ref: '#/components/messages/FlushStopRequest'
 components:
   schemas:
     StatusPayload:
       type: object
+      description: >-
+        Partial by design: a frame carries either the fast telemetry (every 500 ms) or the
+        slow-changing state (sent when it changes, at least every 10 s, and in full to a client
+        right after it connects). Consumers merge each frame onto their last known status; a key
+        that is absent keeps its previous value, a key sent as null clears it.
       properties:
         tp:
           type: string
@@ -72,6 +92,24 @@ components:
         fl:
           type: number
           description: Current flow
+        sys:
+          type: object
+          description: Display system state (slow-state frame), mirrors the standby screen label.
+          properties:
+            s:
+              type: string
+              enum: [starting, waiting, ready, updating, autotuning, mismatch, error]
+            m:
+              type: string
+              description: Human-readable message shown on the display, empty when ready
+            c:
+              type: integer
+              description: Controller error code (0 = none)
+        warn:
+          type: array
+          description: Machine warnings, one entry per warning type.
+          items:
+            $ref: '#/components/schemas/WarningState'
         pt:
           type: number
           description: Target pressure
@@ -88,6 +126,22 @@ components:
           type: boolean
           description: Indicates dimming capability
       required: [tp]
+    WarningState:
+      type: object
+      properties:
+        k:
+          type: string
+          enum: [water, flush, switch, scaleConnected, scaleBattery, temperature, backflush, descaling]
+          description: Warning key
+        l:
+          type: integer
+          enum: [0, 1, 2]
+          description: Configured severity (0 = ignore, 1 = warn, 2 = error)
+        a:
+          type: boolean
+          description: Whether the underlying condition is currently true
+      required: [k, l]
+
     OtaSettingsPayload:
       type: object
       properties:
@@ -119,8 +173,13 @@ components:
           enum: ['evt:ota-progress']
         phase:
           type: integer
+          description: >-
+            0 idle, 1 display firmware, 2 display filesystem (unused), 3 controller firmware,
+            4 finished, 5 failed (download or flashing gave up; the device keeps its current firmware)
+          enum: [0, 1, 2, 3, 4, 5]
         progress:
           type: integer
+          description: Percent of the current phase. Downloads retry and resume on connection loss, so it never goes backwards within a phase.
       required: [tp, phase, progress]
     AutotuneResultPayload:
       type: object
@@ -380,4 +439,196 @@ components:
           rid:
             type: string
           # No error field; success implied
+        required: [tp]
+
+    BrewConfirmEvent:
+      summary: A brew start was blocked by an error-level warning and needs confirmation.
+      payload:
+        type: object
+        properties:
+          tp:
+            type: string
+            enum: ['evt:brew:confirm']
+          warn:
+            type: array
+            description: Active warnings that are not ignored (active flag omitted, always true).
+            items:
+              $ref: '#/components/schemas/WarningState'
+        required: [tp, warn]
+
+    ProcessActivateRequest:
+      summary: Start the process for the current mode.
+      payload:
+        type: object
+        properties:
+          tp:
+            type: string
+            enum: ['req:process:activate']
+          ignoreWarnings:
+            type: boolean
+            default: false
+            description: Start the brew even though an error-level warning is active (answer to evt:brew:confirm).
+        required: [tp]
+
+    BrewConfirmCancelEvent:
+      summary: A UI declined the brew confirmation; every client should dismiss its dialog. A confirmed start is visible as an active process in evt:status.
+      payload:
+        type: object
+        properties:
+          tp:
+            type: string
+            enum: ['evt:brew:confirm:cancel']
+        required: [tp]
+
+    ScaleScanCompleteEvent:
+      summary: The listening window (5 s) after POST /api/scales/scan closed, or a connect attempt aborted it. Sent immediately when no scan could run (a scale is already connected). Discovery itself keeps running in the background.
+      payload:
+        type: object
+        properties:
+          tp:
+            type: string
+            enum: ['evt:scale:scan:complete']
+          count:
+            type: integer
+            description: Number of supported scales discovered so far.
+        required: [tp, count]
+
+    ScaleConnectErrorEvent:
+      summary: Connecting to a BLE scale failed, after a user connect or the saved-scale auto-connect.
+      payload:
+        type: object
+        properties:
+          tp:
+            type: string
+            enum: ['evt:scale:connect:error']
+          address:
+            type: string
+          reason:
+            type: string
+            enum: ['not_found', 'connect_failed', 'unsupported']
+            description: not_found = not in the discovered list, connect_failed = BLE connection failed, unsupported = no driver could be created.
+        required: [tp, address, reason]
+
+    ScaleConnectSuccessEvent:
+      summary: A BLE scale connected.
+      payload:
+        type: object
+        properties:
+          tp:
+            type: string
+            enum: ['evt:scale:connect:success']
+          address:
+            type: string
+          name:
+            type: string
+            description: Advertised BLE name.
+        required: [tp, address, name]
+
+    ScaleDisconnectEvent:
+      summary: A connected BLE scale was lost while the machine is awake; the display rescans and reconnects automatically. Not sent for the intentional disconnect on standby.
+      payload:
+        type: object
+        properties:
+          tp:
+            type: string
+            enum: ['evt:scale:disconnect']
+          address:
+            type: string
+          name:
+            type: string
+            description: Advertised BLE name.
+        required: [tp, address, name]
+
+    CleaningStartRequest:
+      summary: Select the backflush or descaling system profile and start it in brew mode; error-level warnings trigger evt:brew:confirm as usual. Answered with res:cleaning:<task>:start (success false while a process is running).
+      payload:
+        type: object
+        properties:
+          tp:
+            type: string
+            enum: ['req:cleaning:backflush:start', 'req:cleaning:descaling:start']
+          rid:
+            type: string
+        required: [tp]
+    CleaningCompleteRequest:
+      summary: Mark backflush or descaling as done now, resetting its time and shot counters. Running the profile to the end does the same. Answered with res:cleaning:<task>:complete.
+      payload:
+        type: object
+        properties:
+          tp:
+            type: string
+            enum: ['req:cleaning:backflush:complete', 'req:cleaning:descaling:complete']
+          rid:
+            type: string
+        required: [tp]
+    CleaningResponse:
+      payload:
+        type: object
+        properties:
+          tp:
+            type: string
+            enum:
+              - 'res:cleaning:backflush:start'
+              - 'res:cleaning:descaling:start'
+              - 'res:cleaning:backflush:complete'
+              - 'res:cleaning:descaling:complete'
+          rid:
+            type: string
+          success:
+            type: boolean
+        required: [tp, success]
+    FlushStartRequest:
+      summary: Start a flush (brew valve open, pump on) for the configured flush duration; with duration 0 it runs until req:flush:stop. The valve stays open for one more second after the pump stops.
+      payload:
+        type: object
+        properties:
+          tp:
+            type: string
+            enum: ['req:flush:start']
+          rid:
+            type: string
+        required: [tp]
+    FlushStartResponse:
+      payload:
+        type: object
+        properties:
+          tp:
+            type: string
+            enum: ['res:flush:start']
+          rid:
+            type: string
+          success:
+            type: boolean
+        required: [tp]
+    FlushStopRequest:
+      summary: End a hold-to-flush (flush duration 0). Ignored while a fixed-length flush runs.
+      payload:
+        type: object
+        properties:
+          tp:
+            type: string
+            enum: ['req:flush:stop']
+          rid:
+            type: string
+        required: [tp]
+    FlushStopResponse:
+      payload:
+        type: object
+        properties:
+          tp:
+            type: string
+            enum: ['res:flush:stop']
+          rid:
+            type: string
+          success:
+            type: boolean
+        required: [tp]
+    BrewConfirmCancelRequest:
+      summary: Decline the pending brew confirmation on behalf of all UIs.
+      payload:
+        type: object
+        properties:
+          tp:
+            type: string
+            enum: ['req:brew:confirm:cancel']
         required: [tp]

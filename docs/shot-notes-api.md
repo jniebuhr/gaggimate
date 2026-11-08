@@ -1,186 +1,165 @@
-# Shot Notes API Extension
+# Shot History & Notes API
 
-This document describes the new shot notes functionality added to the ShotHistoryPlugin.
+How shot history and per-shot notes are stored on the device and accessed by clients. Schemas:
+[`schema/shot_notes.json`](../schema/shot_notes.json) (notes) and
+[`schema/shot_history.json`](../schema/shot_history.json) (shot JSON export).
 
-## Enhanced Shot History API
+## Storage
 
-The existing shot history API endpoints have been enhanced to automatically include notes data when available.
+Shot files live in `/h/` on the history filesystem (SD card if present, LittleFS otherwise). Each shot is
+identified by an increasing numeric id; files use the id zero-padded to 6 digits:
 
-### Get Shot History List
-**Request Type:** `req:history:list`
+| File             | Content                                                                                     |
+| ---------------- | ------------------------------------------------------------------------------------------- |
+| `/h/000031.slog` | Binary shot log (format in `src/display/models/shot_log_format.h`)                          |
+| `/h/000031.json` | Shot notes (`schema/shot_notes.json`)                                                       |
+| `/h/index.bin`   | Binary shot index (one entry per shot: timestamp, duration, volume, rating, profile, stats) |
 
-**Response:**
+Notes saved by firmware between the shot index (#449) and GM-251 used the unpadded id (`/h/31.json`). The
+firmware renames such a file onto the padded name the first time the shot's notes are read or saved, or when
+the index is rebuilt.
+
+Shots of 7.5 s or less are discarded. When free space runs low, the oldest shots and their notes are deleted.
+
+## HTTP endpoints
+
+| Path                                  | Response                                                                            |
+| ------------------------------------- | ----------------------------------------------------------------------------------- |
+| `GET /api/history/index.bin`          | Full shot index (binary, parsed by `web/src/pages/ShotHistory/parseBinaryIndex.js`) |
+| `GET /api/history/recent.bin?limit=N` | Newest `N` (1–50, default 8) non-deleted entries, same format as `index.bin`        |
+| `GET /api/history/000031.slog`        | Binary shot log (parsed by `web/src/pages/ShotHistory/parseBinaryShot.js`)          |
+| `GET /api/history/000031.json`        | Raw notes file                                                                      |
+
+All `/api/history/` requests return `503` while a firmware update is running.
+
+## WebSocket requests
+
+Requests carry a `rid` that is echoed in the response. Shot ids may be sent padded (`"000031"`) or unpadded
+(`"31"`); the web UI sends the unpadded id.
+
+### Get notes
+
 ```json
-{
-  "tp": "res:history:list",
-  "rid": "unique-request-id",
-  "history": [
-    {
-      "id": "000001",
-      "history": "1,Profile Name,1692123456\n0,85.0,84.5,9.0,8.7,2.1,2.0,1.8,0.0,0.0,0.0\n...",
-      "notes": {
-        "id": "000001",
-        "rating": 4,
-        "doseIn": 18.5,
-        "doseOut": 37.2,
-        "ratio": 2.01,
-        "grindSetting": "2.5",
-        "balanceTaste": "balanced",
-        "notes": "Great shot with nice crema and balanced flavor",
-        "timestamp": 1692123456
-      }
-    }
-  ]
-}
+{ "tp": "req:history:notes:get", "rid": "1", "id": "31" }
 ```
 
-### Get Single Shot History
-**Request Type:** `req:history:get`
-
-**Response:**
-```json
-{
-  "tp": "res:history:get",
-  "rid": "unique-request-id",
-  "history": "1,Profile Name,1692123456\n0,85.0,84.5,9.0,8.7,2.1,2.0,1.8,0.0,0.0,0.0\n...",
-  "notes": {
-    "id": "000001",
-    "rating": 4,
-    "doseIn": 18.5,
-    "doseOut": 37.2,
-    "ratio": 2.01,
-    "grindSetting": "2.5",
-    "balanceTaste": "balanced",
-    "notes": "Great shot with nice crema and balanced flavor",
-    "timestamp": 1692123456
-  }
-}
-```
-
-## New Shot Notes API Endpoints
-
-### Get Shot Notes
-**Request Type:** `req:history:notes:get`
-
-**Request:**
-```json
-{
-  "tp": "req:history:notes:get",
-  "id": "000001",
-  "rid": "unique-request-id"
-}
-```
-
-**Response:**
 ```json
 {
   "tp": "res:history:notes:get",
-  "rid": "unique-request-id",
+  "rid": "1",
   "notes": {
-    "id": "000001",
+    "id": "31",
     "rating": 4,
-    "doseIn": 18.5,
-    "doseOut": 37.2,
-    "ratio": 2.01,
+    "beanType": "Ethiopia Guji",
+    "doseIn": "18.0",
+    "doseOut": "36.4",
+    "ratio": "2.02",
     "grindSetting": "2.5",
     "balanceTaste": "balanced",
-    "notes": "Great shot with nice crema and balanced flavor",
-    "timestamp": 1692123456
+    "notes": "Sweet, slightly thin body"
   }
 }
 ```
 
-### Save Shot Notes
-**Request Type:** `req:history:notes:save`
+`notes` is `null` if the shot has no notes.
 
-**Request:**
+### Save notes
+
 ```json
 {
   "tp": "req:history:notes:save",
-  "id": "000001",
-  "rid": "unique-request-id",
-  "notes": {
-    "id": "000001",
-    "rating": 4,
-    "doseIn": 18.5,
-    "doseOut": 37.2,
-    "ratio": 2.01,
-    "grindSetting": "2.5",
-    "balanceTaste": "balanced",
-    "notes": "Great shot with nice crema and balanced flavor"
-  }
+  "rid": "2",
+  "id": "31",
+  "notes": { "rating": 4, "doseOut": "36.4" }
 }
 ```
 
-**Response:**
 ```json
-{
-  "tp": "res:history:notes:save",
-  "rid": "unique-request-id",
-  "msg": "Ok"
-}
+{ "tp": "res:history:notes:save", "rid": "2", "msg": "Ok" }
 ```
 
-## File Structure
+The notes object replaces the stored file. The firmware also updates the shot index: `rating` becomes the
+index rating, and a non-empty `doseOut` overrides the recorded volume.
 
-For each shot ID (e.g., "000001"), two files are created:
-- `/h/000001.dat` - Contains shot history data (existing)
-- `/h/000001.json` - Contains shot notes data (new)
+### Delete a shot
 
-## Frontend Implementation
+```json
+{ "tp": "req:history:delete", "rid": "3", "id": "31" }
+```
 
-The new `ShotNotesCard` component provides:
-- Star rating system (1-5 stars)
-- Dose in/out fields with automatic ratio calculation
-- Grind setting input
-- Balance/taste selector (bitter, balanced, sour)
-- Free-form notes text area
-- Edit/save functionality
+Removes the shot log and its notes and marks the index entry deleted. Response `msg` is `"Ok"`.
 
-The dose out field is automatically pre-populated with the final volume measurement from the shot data.
+### Rebuild the index
 
-### Enhanced Export Functionality
+```json
+{ "tp": "req:history:rebuild", "rid": "4" }
+```
 
-The shot history export has been enhanced to automatically include notes data:
-- Export filename: `{shot-id}-complete.json`
-- Contains both shot history data and notes data in a single JSON file
-- Notes are automatically included if they exist for the shot
-- Maintains backward compatibility - shots without notes export normally
+Answered immediately with `"msg": "Rebuild started"`; progress arrives as `evt:history-rebuild-progress`
+events (see `docs/websocket-api.yaml`).
 
-### Export Data Structure
+### Shot saved event
+
+`evt:history-shot-saved` with the new shot `id` is sent once a finished shot is written to the history,
+which can be several seconds after the brew ends while the scale weight settles.
+
+## Automatic notes
+
+When a shot is saved and its profile has a dose, the firmware writes that dose to the notes' `doseIn` unless
+the notes already contain one. The dose comes from the profile as it was when the shot started, including any
+temporary adjustments.
+
+## Shot JSON export
+
+The Shot History card download (`shot-<id>.json`) and the Shot Analyzer export contain the parsed shot log
+merged with its index entry and notes; see `schema/shot_history.json` for all fields.
 
 ```json
 {
-  "id": "000001",
-  "version": "1",
-  "profile": "Profile Name",
-  "timestamp": 1692123456,
-  "duration": 30000,
-  "volume": 37.2,
-  "samples": [...],
+  "id": "31",
+  "version": 8,
+  "profile": "Ratio profile",
+  "profileId": "ef3jX3olik",
+  "timestamp": 1791121751,
+  "duration": 29150,
+  "volume": 58.9,
+  "rating": null,
+  "incomplete": false,
+  "phaseTransitions": [
+    {
+      "sampleIndex": 0,
+      "phaseNumber": 0,
+      "phaseName": "Pump",
+      "transitionReason": 0,
+      "transitionReasonLabel": "Unknown"
+    }
+  ],
+  "finalExitReason": 9,
+  "finalExitReasonLabel": "Ratio target",
+  "brewDelay": 0,
+  "samples": [
+    {
+      "t": 0,
+      "tt": 93,
+      "ct": 92.8,
+      "tp": 1,
+      "cp": 0.2,
+      "fl": 3.1,
+      "tf": 0,
+      "pf": 0,
+      "vf": 0,
+      "v": 0,
+      "ev": 0,
+      "pr": 0,
+      "wp": 0
+    }
+  ],
   "notes": {
-    "id": "000001",
-    "rating": 4,
-    "doseIn": 18.5,
-    "doseOut": 37.2,
-    "ratio": 2.01,
-    "grindSetting": "2.5",
-    "balanceTaste": "balanced",
-    "notes": "Great shot with nice crema and balanced flavor",
-    "timestamp": 1692123456
+    "id": "31",
+    "doseIn": "30.0",
+    "doseOut": "58.9",
+    "ratio": "1.96",
+    "balanceTaste": "balanced"
   }
 }
 ```
-
-## Schema
-
-The shot notes follow the schema defined in `/schema/shot_notes.json`:
-- `id`: Shot ID (required)
-- `rating`: Star rating 0-5
-- `doseIn`: Input dose in grams
-- `doseOut`: Output dose in grams
-- `ratio`: Calculated ratio (doseOut/doseIn)
-- `grindSetting`: String description of grind setting
-- `balanceTaste`: One of "bitter", "balanced", "sour"
-- `notes`: Free-form text notes
-- `timestamp`: When notes were last updated

@@ -59,6 +59,8 @@ void HomekitPlugin::setup(Controller *controller, PluginManager *pluginManager) 
         int apMode = event.getInt("AP");
         if (apMode)
             return;
+        if (accessory != nullptr)
+            return;
         homeSpan.setHostNameSuffix("");
         homeSpan.setPortNum(HOMESPAN_PORT);
         homeSpan.begin(Category::Thermostats, DEVICE_NAME, this->controller->getSettings().getMdnsName().c_str());

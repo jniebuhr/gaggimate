@@ -21,18 +21,31 @@ static bool detectI2CDevice(uint8_t address, const char *deviceName = nullptr) {
     return false;
 }
 
+// Variant indices are persisted in NVS (GM-140) — only append, never reorder
+static constexpr AmoledHwConfig VARIANTS[] = {LILYGO_T_DISPLAY_S3_DS_HW_CONFIG, WAVESHARE_S3_TOUCH_AMOLED_1_43_HW_CONFIG,
+                                              WAVESHARE_S3_AMOLED_HW_CONFIG};
+static constexpr const char *VARIANT_NAMES[] = {"LilyGo T-Display", "Waveshare 1.43\" AMOLED Display",
+                                                "Waveshare AMOLED Display"};
+static constexpr int VARIANT_COUNT = sizeof(VARIANTS) / sizeof(VARIANTS[0]);
+
 bool AmoledDisplayDriver::isCompatible() {
-    ESP_LOGI("AmoledDisplayDriver", "Testing LilyGo T-Display...");
-    if (testHw(LILYGO_T_DISPLAY_S3_DS_HW_CONFIG)) {
-        hwConfig = LILYGO_T_DISPLAY_S3_DS_HW_CONFIG;
-        return true;
-    }
-    ESP_LOGI("AmoledDisplayDriver", "Testing Waveshare AMOLED Display...");
-    if (testHw(WAVESHARE_S3_AMOLED_HW_CONFIG)) {
-        hwConfig = WAVESHARE_S3_AMOLED_HW_CONFIG;
-        return true;
+    for (int i = 0; i < VARIANT_COUNT; i++) {
+        ESP_LOGI("AmoledDisplayDriver", "Testing %s...", VARIANT_NAMES[i]);
+        if (testHw(VARIANTS[i])) {
+            hwConfig = VARIANTS[i];
+            variant = i;
+            return true;
+        }
     }
     return false;
+}
+
+bool AmoledDisplayDriver::selectVariant(int variant) {
+    if (variant < 0 || variant >= VARIANT_COUNT)
+        return false;
+    hwConfig = VARIANTS[variant];
+    this->variant = variant;
+    return true;
 }
 
 void AmoledDisplayDriver::init() {
@@ -59,9 +72,10 @@ bool AmoledDisplayDriver::testHw(AmoledHwConfig hwConfig) {
     if (!Wire.begin(hwConfig.i2c_sda, hwConfig.i2c_scl))
         return false;
 
-    // Required: PCF8563 (RTC) and SY6970 (Battery management)
+    // Required: PCF8563 (RTC) when present, and a touch sensor
     // Touch sensor: Either CST92XX (1.75 inch) or FT3168 (1.43 inch)
-    bool pcf8563Found = detectI2CDevice(PCF8563_DEVICE_ADDRESS, "PCF8563 RTC");
+    // Some boards (e.g. Waveshare 1.43") have no PCF8563 RTC; skip that check for them
+    bool pcf8563Found = (hwConfig.pcf8563_int == -1) || detectI2CDevice(PCF8563_DEVICE_ADDRESS, "PCF8563 RTC");
 
     bool touchFound = detectI2CDevice(CST92XX_DEVICE_ADDRESS, "CST92XX Touch Sensor") ||
                       detectI2CDevice(FT3168_DEVICE_ADDRESS, "FT3168 Touch Sensor");

@@ -3,7 +3,10 @@
 // - free-text clauses combine with AND
 // - repeated field clauses combine with OR (except date clauses, which combine with AND)
 // - date expressions are evaluated in local/browser time
-const SUPPORTED_FIELDS = new Set(['name', 'profile', 'id', 'source', 'date']);
+import { t } from '@lingui/core/macro';
+
+const SUPPORTED_FIELDS = new Set(['name', 'profile', 'id', 'source', 'date', 'pinned']);
+const SUPPORTED_FIELD_LIST = Array.from(SUPPORTED_FIELDS).join(', ');
 const SOURCE_ALIASES = {
   gm: 'gaggimate',
   gaggimate: 'gaggimate',
@@ -55,7 +58,7 @@ function splitQueryClauses(queryString) {
 function parseQuotedOrPlainValue(rawValue) {
   const trimmed = String(rawValue ?? '').trim();
   if (!trimmed) {
-    return { error: 'Empty value.' };
+    return { error: t`Empty value.` };
   }
 
   const startsQuote = trimmed.startsWith('"');
@@ -63,13 +66,20 @@ function parseQuotedOrPlainValue(rawValue) {
 
   if (startsQuote || endsQuote) {
     if (!(startsQuote && endsQuote) || trimmed.length < 2) {
-      return { error: 'Unclosed quoted value.' };
+      return { error: t`Unclosed quoted value.` };
     }
     const inner = trimmed.slice(1, -1).replaceAll('\\"', '"').replaceAll('\\\\', '\\');
     return { value: inner.trim(), exact: true };
   }
 
   return { value: trimmed, exact: false };
+}
+
+function parsePinnedBooleanValue(rawValue) {
+  const value = normalizeText(rawValue);
+  if (['true', 'yes', '1'].includes(value)) return { value: true, error: null };
+  if (['false', 'no', '0'].includes(value)) return { value: false, error: null };
+  return { value: null, error: t`pinned: use true or false.` };
 }
 
 export function parseStatisticsQuery(queryString) {
@@ -87,9 +97,11 @@ export function parseStatisticsQuery(queryString) {
     if (!fieldMatch) {
       const freeValue = parseQuotedOrPlainValue(trimmed);
       if (freeValue.error) {
+        const clauseNumber = index + 1;
+        const valueError = freeValue.error;
         errors.push({
           code: 'invalid_free_text',
-          message: `Query clause ${index + 1}: ${freeValue.error}`,
+          message: t`Query clause ${clauseNumber}: ${valueError}`,
           raw: trimmed,
         });
         return;
@@ -108,9 +120,10 @@ export function parseStatisticsQuery(queryString) {
     const field = normalizeText(fieldRaw);
 
     if (!SUPPORTED_FIELDS.has(field)) {
+      const supportedFields = SUPPORTED_FIELD_LIST;
       warnings.push({
         code: 'unknown_field',
-        message: `Unknown field "${fieldRaw}". Supported: name, profile, id, source, date.`,
+        message: t`Unknown field "${fieldRaw}". Supported: ${supportedFields}.`,
         raw: trimmed,
       });
       return;
@@ -121,7 +134,7 @@ export function parseStatisticsQuery(queryString) {
       if (!dateMatch) {
         errors.push({
           code: 'date_operator_required',
-          message: `date: requires an operator (>, >=, <, <=, =). Example: date:>h-7d`,
+          message: t`date: requires an operator (>, >=, <, <=, =). Example: date:>h-7d`,
           raw: trimmed,
         });
         return;
@@ -132,7 +145,7 @@ export function parseStatisticsQuery(queryString) {
       if (!exprTrimmed) {
         errors.push({
           code: 'date_expression_missing',
-          message: 'date: expression is empty.',
+          message: t`date: expression is empty.`,
           raw: trimmed,
         });
         return;
@@ -150,9 +163,10 @@ export function parseStatisticsQuery(queryString) {
 
     const parsedValue = parseQuotedOrPlainValue(valueRaw);
     if (parsedValue.error) {
+      const valueError = parsedValue.error;
       errors.push({
         code: 'invalid_field_value',
-        message: `Invalid value for ${field}: ${parsedValue.error}`,
+        message: t`Invalid value for ${field}: ${valueError}`,
         raw: trimmed,
       });
       return;
@@ -216,7 +230,7 @@ function parseAbsoluteLocalDateExpression(expr) {
     minute < 0 ||
     minute > 59
   ) {
-    return { error: 'Invalid date or time value.' };
+    return { error: t`Invalid date or time value.` };
   }
 
   const date = new Date(year, month - 1, day, hour, minute, 0, 0);
@@ -227,7 +241,7 @@ function parseAbsoluteLocalDateExpression(expr) {
     date.getHours() !== hour ||
     date.getMinutes() !== minute
   ) {
-    return { error: 'Invalid calendar date.' };
+    return { error: t`Invalid calendar date.` };
   }
 
   return { valueMs: date.getTime(), hasTime };
@@ -236,7 +250,7 @@ function parseAbsoluteLocalDateExpression(expr) {
 export function parseDateExpressionToEpochMs(expr, now = new Date()) {
   const trimmed = String(expr ?? '').trim();
   if (!trimmed) {
-    return { valueMs: null, hasTime: false, error: 'Empty date expression.' };
+    return { valueMs: null, hasTime: false, error: t`Empty date expression.` };
   }
 
   // `h` means "now" for historical reasons; both `d` and legacy `t` are accepted as day suffixes.
@@ -250,7 +264,7 @@ export function parseDateExpressionToEpochMs(expr, now = new Date()) {
 
     const amount = Number(amountRaw);
     if (!Number.isFinite(amount)) {
-      return { valueMs: null, hasTime: false, error: 'Invalid relative day value.' };
+      return { valueMs: null, hasTime: false, error: t`Invalid relative day value.` };
     }
     const deltaMs = amount * 24 * 60 * 60 * 1000;
     const next = sign === '+' ? baseMs + deltaMs : baseMs - deltaMs;
@@ -262,7 +276,7 @@ export function parseDateExpressionToEpochMs(expr, now = new Date()) {
     return {
       valueMs: null,
       hasTime: false,
-      error: 'Unsupported date expression. Use DD.MM.YYYY, optional HH:MM, or h-7d.',
+      error: t`Unsupported date expression. Use DD.MM.YYYY, optional HH:MM, or h-7d.`,
     };
   }
   if (absolute.error) {
@@ -344,10 +358,12 @@ function matchesSourceClause(shotMeta, clause) {
 function compileDateClause(clause, options) {
   const parsed = parseDateExpressionToEpochMs(clause.value, options.now);
   if (parsed.error || !Number.isFinite(parsed.valueMs)) {
+    const clauseRaw = clause.raw;
+    const parseError = parsed.error || t`Unknown error.`;
     return {
       error: {
         code: 'date_parse_failed',
-        message: `Invalid date expression in "${clause.raw}": ${parsed.error || 'Unknown error.'}`,
+        message: t`Invalid date expression in "${clauseRaw}": ${parseError}`,
         raw: clause.raw,
       },
       matcher: null,
@@ -387,6 +403,13 @@ function matchClauseAgainstShotMeta(shotMeta, clause, ctx) {
     return ctx.dateMatchers.every(matcher => matcher(shotMeta));
   }
 
+  if (clause.field === 'pinned') {
+    // The predicate callback is allowed to fold together direct shot pins and
+    // profile-derived pins so the DSL does not need to know where the pin came from.
+    const isPinned = !!ctx.matchesPinnedShot?.(shotMeta);
+    return clause.pinnedValue ? isPinned : !isPinned;
+  }
+
   if (clause.field === 'source') {
     return matchesSourceClause(shotMeta, clause);
   }
@@ -395,13 +418,7 @@ function matchClauseAgainstShotMeta(shotMeta, clause, ctx) {
   return matchesTextClause(values, clause);
 }
 
-export function buildShotCandidatePredicate(parsedQuery, options = {}) {
-  const now = options.now instanceof Date ? options.now : new Date();
-  const dateBasisMode = options.dateBasisMode || 'auto';
-  const errors = [...(parsedQuery?.errors || [])];
-  const warnings = [...(parsedQuery?.warnings || [])];
-  const clauses = Array.isArray(parsedQuery?.clauses) ? parsedQuery.clauses : [];
-
+function groupShotCandidateClauses({ clauses, now, dateBasisMode, errors }) {
   const freeClauses = [];
   const fieldClauseGroups = new Map();
   const dateMatchers = [];
@@ -424,11 +441,55 @@ export function buildShotCandidatePredicate(parsedQuery, options = {}) {
       continue;
     }
 
-    // Group same-field clauses so the predicate can apply OR within each field.
-    const arr = fieldClauseGroups.get(clause.field) || [];
-    arr.push(clause);
-    fieldClauseGroups.set(clause.field, arr);
+    const groupedClause =
+      clause.field === 'pinned'
+        ? (() => {
+            const parsedPinned = parsePinnedBooleanValue(clause.value);
+            if (parsedPinned.error) {
+              const clauseRaw = clause.raw;
+              const pinnedError = parsedPinned.error;
+              errors.push({
+                code: 'pinned_value_invalid',
+                message: t`Invalid pinned expression in "${clauseRaw}": ${pinnedError}`,
+                raw: clause.raw,
+              });
+              return null;
+            }
+
+            return { ...clause, pinnedValue: parsedPinned.value };
+          })()
+        : clause;
+
+    if (!groupedClause) continue;
+
+    const groupedClauses = fieldClauseGroups.get(clause.field) || [];
+    groupedClauses.push(groupedClause);
+    fieldClauseGroups.set(clause.field, groupedClauses);
   }
+
+  return {
+    freeClauses,
+    fieldClauseGroups,
+    dateMatchers,
+  };
+}
+
+export function buildShotCandidatePredicate(parsedQuery, options = {}) {
+  const now = options.now instanceof Date ? options.now : new Date();
+  const dateBasisMode = options.dateBasisMode || 'auto';
+  // Callers own the cross-feature pin semantics. Statistics passes a matcher
+  // that treats "pinned" as either a directly pinned shot or a shot whose
+  // profile is pinned.
+  const matchesPinnedShot = options.matchesPinnedShot || (() => false);
+  const errors = [...(parsedQuery?.errors || [])];
+  const warnings = [...(parsedQuery?.warnings || [])];
+  const clauses = Array.isArray(parsedQuery?.clauses) ? parsedQuery.clauses : [];
+  const { freeClauses, fieldClauseGroups, dateMatchers } = groupShotCandidateClauses({
+    clauses,
+    now,
+    dateBasisMode,
+    errors,
+  });
 
   const predicate = shotMeta => {
     if (!shotMeta) return false;
@@ -444,7 +505,7 @@ export function buildShotCandidatePredicate(parsedQuery, options = {}) {
     for (const [, groupClauses] of fieldClauseGroups.entries()) {
       let matched = false;
       for (const clause of groupClauses) {
-        if (matchClauseAgainstShotMeta(shotMeta, clause, { dateMatchers })) {
+        if (matchClauseAgainstShotMeta(shotMeta, clause, { dateMatchers, matchesPinnedShot })) {
           matched = true;
           break;
         }

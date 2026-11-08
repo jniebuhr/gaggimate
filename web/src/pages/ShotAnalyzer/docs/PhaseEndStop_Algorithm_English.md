@@ -20,13 +20,12 @@ The following steps are executed for each phase. The goal is to determine which 
 
 - Preparation: Check time-based stops first, as they do not require special logic. Also no tolerance calculation, since shot.json already uses rounded values.
 - Step 1: Check values at stop time (Delay = 0 ms) Take the last sample of the current phase (for the last phase: last non-extended sample) Check all targets against the current values (cp for pressure, fl for flow, v for weight, cumulative pumped volume) If match: set exitReason, estimatedDelay = 0
-- Step 2: Check first sample of next phase (Delay = 1 × sampleInterval) Take the first sample of the following phase Continue cumulative values (do not reset): pumped: previous cumulative value + nextSample.fl \* dt weight: nextSample.v directly (is global)
+- Step 2: Check first sample of next phase (Delay = nextSample.t − anchor.t) Take the first sample of the following phase. Continue cumulative values (do not reset): pumped: previous cumulative value + last phase flow × actual dt; weight: nextSample.v directly (is global).
   - Direction check (for all target types including pressure/flow): For gte targets: nextValue >= currentValue → direction correct For lte targets: nextValue <= currentValue → direction correct
-  - If direction is correct: check actual value against target If direction is not correct: use prediction: For weight: getRegressionWeightRate() × sampleInterval/1000 + last value For pressure/flow: slope from the last two phase samples × sampleInterval/1000 + last value For pumped: lastFlow \* sampleInterval/1000 + cumulative value
-  - If match: set exitReason, estimatedDelay = sampleInterval
-- Step 3: Check second sample of next phase (Delay = 2 × sampleInterval) Identical to Step 2, but using the second sample of the next phase Direction check: comparison with the value from Step 2 (or prediction if Step 2 used prediction) Prediction uses 2 × sampleInterval as time horizon (from the last phase sample)
-  - If match: set exitReason, estimatedDelay = 2 × sampleInterval Set delayReviewHint → User receives “REVIEW PHASE N” badge
-- Step 4: Predictive Extrapolation (Fallback) If no match after Step 3: continue linear extrapolation Continue extrapolating in sampleInterval steps until target is reached Reasonable maximum: LAST_PHASE_ESTIMATED_DELAY_MAX_MS (4000 ms) Set delayReviewHint
+  - If direction is correct: check actual value against target. If direction is not correct: use a prediction at that same actual delay.
+  - If match: set exitReason and estimatedDelay to the actual timestamp difference.
+- Step 3: Check second sample of next phase with the same actual-timestamp rule. If match: set exitReason and estimatedDelay to that actual difference and set delayReviewHint when applicable.
+- Step 4: Predictive Extrapolation (Fallback) If no match after Step 3: start after the second observed sample and continue linear extrapolation in fixed 100-ms steps until the target is reached. Reasonable maximum: LAST_PHASE_ESTIMATED_DELAY_MAX_MS (4000 ms). Set delayReviewHint.
 
 ### Mode: Manual, Fixed Delay (isAutoAdjusted = false)
 
@@ -41,4 +40,4 @@ The following steps are executed for each phase. The goal is to determine which 
 - Scale-lost detection: weight targets are skipped if scale is lost
 - Brew-by-Time: duration >= profDur check
 - Extended-recording filtering: for the last phase, the last non-extended sample is used as the anchor point
-- SampleInterval: Read from shotData.sampleInterval, Fallback: 250 ms (default sampling rate)
+- The stored sampleInterval remains part of the shot data, but target-delay matching uses actual sample timestamps; only unobserved future values use the fixed 100-ms prediction step.

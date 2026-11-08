@@ -5,6 +5,8 @@
  * equivalent to what would be in a JSON export from gaggimate.
  */
 
+import { t } from '@lingui/core/macro';
+
 export class VisualizerService {
   constructor() {
     this.baseUrl = 'https://visualizer.coffee/api/shots/upload';
@@ -19,11 +21,11 @@ export class VisualizerService {
   // Format shot data as a Gaggimate-style shot file for visualizer.coffee API
   formatShotData(shotData, profileData = null) {
     if (!shotData || !shotData.samples || !Array.isArray(shotData.samples)) {
-      throw new Error('Invalid shot data: missing required samples array');
+      throw new Error(t`Invalid shot data: missing required samples array`);
     }
 
     if (shotData.samples.length === 0) {
-      throw new Error('Invalid shot data: samples array is empty');
+      throw new Error(t`Invalid shot data: samples array is empty`);
     }
 
     // Calculate timestamp (Unix timestamp in seconds)
@@ -109,7 +111,7 @@ export class VisualizerService {
    */
   async uploadShot(shot, username, password, profileData = null) {
     if (!username || !password) {
-      throw new Error('Username and password are required');
+      throw new Error(t`Username and password are required`);
     }
 
     const formattedData = this.formatShotData(shot, profileData);
@@ -136,18 +138,18 @@ export class VisualizerService {
 
         // Check if it's an authentication error
         if (response.status === 401 || response.status === 403) {
-          throw new Error('Authentication failed - please check your username and password');
+          throw new Error(t`Authentication failed - please check your username and password`);
         }
 
         // Check if it's a validation error
         if (response.status === 422) {
-          throw new Error('Data validation failed - the shot data format may be incorrect');
+          throw new Error(t`Data validation failed - the shot data format may be incorrect`);
         }
 
         // Try to extract useful error info from HTML response
         let errorMsg = `HTTP ${response.status}`;
         if (errorText.includes('No coffee for you')) {
-          errorMsg = 'Server error - the API may not support this data format or account type';
+          errorMsg = t`Server error - the API may not support this data format or account type`;
         }
 
         throw new Error(errorMsg);
@@ -156,7 +158,7 @@ export class VisualizerService {
       return await response.json();
     } catch (fetchError) {
       if (fetchError.name === 'TypeError') {
-        throw new Error('Network error: Unable to connect to visualizer.coffee');
+        throw new Error(t`Network error: Unable to connect to visualizer.coffee`);
       }
       throw fetchError;
     }

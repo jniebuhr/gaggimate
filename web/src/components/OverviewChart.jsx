@@ -2,6 +2,7 @@ import { machine } from '../services/ApiService.js';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { Chart } from 'chart.js';
 import { ChartComponent } from './Chart.jsx';
+import { t } from '@lingui/core/macro';
 
 // Global state to track phase transitions during brewing
 let phaseTransitions = [];
@@ -184,7 +185,7 @@ function getChartData(data) {
         borderWidth: 2, // Slightly thicker for brew start
         label: {
           display: true,
-          content: initialPhaseName || 'Start',
+          content: initialPhaseName || t({ message: 'Start', context: 'brew start marker' }),
           rotation: -90,
           position: 'end', // anchor at top of line
           xAdjust: -10, // tweak first label inward to compensate for y-axis padding
@@ -203,17 +204,18 @@ function getChartData(data) {
     }
   }
 
+  const windowSeconds = Math.round(timeWindowMs / 1000);
   const latestData = data[data.length - 1];
   const showWeights = latestData && latestData.volumetricAvailable && latestData.brewTarget;
   const datasets = [
     {
-      label: 'Current Temperature',
+      label: t`Current Temperature`,
       borderColor: '#F0561D',
       pointStyle: false,
       data: data.map(i => ({ x: i.timestamp.toISOString(), y: i.currentTemperature })),
     },
     {
-      label: 'Target Temperature',
+      label: t`Target Temperature`,
       fill: true,
       borderColor: '#731F00',
       borderDash: [6, 6],
@@ -221,14 +223,14 @@ function getChartData(data) {
       data: data.map(i => ({ x: i.timestamp.toISOString(), y: i.targetTemperature })),
     },
     {
-      label: 'Current Pressure',
+      label: t`Current Pressure`,
       borderColor: '#0066CC',
       pointStyle: false,
       yAxisID: 'y1',
       data: data.map(i => ({ x: i.timestamp.toISOString(), y: i.currentPressure })),
     },
     {
-      label: 'Target Pressure',
+      label: t`Target Pressure`,
       fill: true,
       borderColor: '#003366',
       borderDash: [6, 6],
@@ -237,7 +239,7 @@ function getChartData(data) {
       data: data.map(i => ({ x: i.timestamp.toISOString(), y: i.targetPressure })),
     },
     {
-      label: 'Current Flow',
+      label: t`Current Flow`,
       borderColor: '#63993D',
       pointStyle: false,
       yAxisID: 'y1',
@@ -246,14 +248,14 @@ function getChartData(data) {
   ];
   if (showWeights) {
     datasets.push({
-      label: 'Current Weight',
+      label: t`Current Weight`,
       borderColor: '#8B5CF6',
       pointStyle: false,
       yAxisID: 'y2',
       data: data.map(i => ({ x: i.timestamp.toISOString(), y: i.currentWeight || 0 })),
     });
     datasets.push({
-      label: 'Target Weight',
+      label: t`Target Weight`,
       fill: true,
       borderColor: '#4C1D95',
       borderDash: [6, 6],
@@ -302,10 +304,10 @@ function getChartData(data) {
         title: {
           display: true,
           text: isBrewActive
-            ? `Brew Progress - ${Math.round(timeWindowMs / 1000)}s View`
+            ? t`Brew Progress - ${windowSeconds}s View`
             : phaseTransitions.length > 0
-              ? 'Temperature History - Recent Brew'
-              : 'Temperature History',
+              ? t`Metrics - Recent Brew`
+              : t`Live Metrics`,
           font: {
             size: window.innerWidth < 640 ? 14 : 16,
           },
@@ -414,7 +416,7 @@ export function OverviewChart() {
 
   return (
     <ChartComponent
-      className='h-full min-h-[200px] w-full flex-1 lg:min-h-[350px]'
+      className='h-full min-h-[200px] w-full flex-1 lg:min-h-[350px] landscape:max-lg:min-h-0'
       chartClassName='h-full w-full'
       data={chartData}
     />

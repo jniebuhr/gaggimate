@@ -8,9 +8,14 @@ import { faChevronLeft } from '@fortawesome/free-solid-svg-icons/faChevronLeft';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight';
 import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
+import { ProfileMainInformation } from './ProfileMainInformation.jsx';
+import { getProfilePhases, removePhaseAt, updatePhaseAt } from './profilePhases.js';
+import { Trans, useLingui } from '@lingui/react/macro';
 
 export function ExtendedProfileForm(props) {
+  const { t } = useLingui();
   const { data, onChange, onSave, saving = true, pressureAvailable = false } = props;
+  const phases = getProfilePhases(data);
   const [currentPhaseIndex, setCurrentPhaseIndex] = useState(0);
 
   const onFieldChange = (field, value) => {
@@ -21,18 +26,17 @@ export function ExtendedProfileForm(props) {
   };
 
   const onPhaseChange = (index, value) => {
-    const newData = {
+    onChange({
       ...data,
-    };
-    newData.phases[index] = value;
-    onChange(newData);
+      phases: updatePhaseAt(phases, index, value),
+    });
   };
 
   const onPhaseAdd = () => {
     onChange({
       ...data,
       phases: [
-        ...data.phases,
+        ...phases,
         {
           phase: 'brew',
           name: 'New Phase',
@@ -43,29 +47,24 @@ export function ExtendedProfileForm(props) {
             type: 'instant',
             duration: 0,
             adaptive: true,
+            target: 'time',
           },
           targets: [],
         },
       ],
     });
-    setCurrentPhaseIndex(data.phases.length);
+    setCurrentPhaseIndex(phases.length);
   };
 
   const onPhaseRemove = index => {
-    const newData = {
+    onChange({
       ...data,
-      phases: [],
-    };
-    for (let i = 0; i < data.phases.length; i++) {
-      if (i !== index) {
-        newData.phases.push(data.phases[i]);
-      }
-    }
-    onChange(newData);
+      phases: removePhaseAt(phases, index),
+    });
     setCurrentPhaseIndex(0);
   };
 
-  const currentPhase = data.phases[currentPhaseIndex];
+  const currentPhase = phases[currentPhaseIndex];
 
   return (
     <form
@@ -75,76 +74,36 @@ export function ExtendedProfileForm(props) {
       }}
     >
       <div className='grid grid-cols-1 gap-4 lg:grid-cols-10'>
-        <Card sm={10} title='Profile Information'>
-          <div className='form-control'>
-            <label htmlFor='label' className='mb-2 block text-sm font-medium'>
-              Title
-            </label>
-            <input
-              id='label'
-              name='label'
-              className='input input-bordered w-full'
-              value={data?.label}
-              onChange={e => onFieldChange('label', e.target.value)}
-              aria-label='Enter a name for this profile'
-              required
-            />
-          </div>
-          <div className='form-control'>
-            <label htmlFor='description' className='mb-2 block text-sm font-medium'>
-              Description
-            </label>
-            <input
-              id='description'
-              name='description'
-              className='input input-bordered w-full'
-              value={data?.description}
-              onChange={e => onFieldChange('description', e.target.value)}
-              aria-label='Optional description for this profile'
-            />
-          </div>
-          <div className='form-control'>
-            <label htmlFor='temperature' className='mb-2 block text-sm font-medium'>
-              Temperature
-            </label>
-            <div className='input-group'>
-              <label htmlFor='temperature' className='input w-full'>
-                <input
-                  id='temperature'
-                  name='temperature'
-                  type='number'
-                  className='grow'
-                  value={data?.temperature}
-                  onChange={e => onFieldChange('temperature', e.target.value)}
-                  aria-label='Temperature in degrees Celsius'
-                  min='0'
-                  max='150'
-                  step='0.1'
-                />
-                <span aria-label='degrees Celsius'>°C</span>
-              </label>
-            </div>
-          </div>
-        </Card>
+        <ProfileMainInformation
+          data={data}
+          onChangeLabel={e => onFieldChange('label', e.target.value)}
+          onChangeDescription={e => onFieldChange('description', e.target.value)}
+          onChangeTemperature={e => onFieldChange('temperature', e.target.value)}
+          onChangeDose={e => onFieldChange('dose', e.target.value)}
+          onChangeUtility={e => onFieldChange('utility', !!e.target.checked)}
+        />
         <Card sm={10}>
           <ExtendedProfileChart
-            data={data}
+            data={{ ...data, phases }}
             selectedPhase={currentPhaseIndex}
             className='max-h-72 w-full'
+            onPhaseClick={setCurrentPhaseIndex}
           />
         </Card>
         <Card sm={10}>
           <div className='card-header flex items-center gap-4'>
-            <h2 className='card-title flex-grow text-lg sm:text-xl'>Phases</h2>
+            <h2 className='card-title flex-grow text-lg sm:text-xl'>
+              <Trans>Phases</Trans>
+            </h2>
             <h5 className='card-subtitle text-sm sm:text-base'>
-              {currentPhaseIndex + 1} / {data.phases.length}
+              {phases.length > 0 ? `${currentPhaseIndex + 1} / ${phases.length}` : '0 / 0'}
             </h5>
             <div>
-              <div className='join' role='group' aria-label='Phase navigation'>
+              <div className='join' role='group' aria-label={t`Phase navigation`}>
                 <button
                   type='button'
                   className={`join-item btn btn-outline max-sm:btn-sm`}
-                  aria-label='Previous'
+                  aria-label={t`Previous`}
                   disabled={currentPhaseIndex === 0}
                   onClick={() => setCurrentPhaseIndex(currentPhaseIndex - 1)}
                 >
@@ -153,8 +112,8 @@ export function ExtendedProfileForm(props) {
                 <button
                   type='button'
                   className={`join-item btn btn-outline max-sm:btn-sm`}
-                  aria-label='Next'
-                  disabled={currentPhaseIndex === data.phases.length - 1}
+                  aria-label={t`Next`}
+                  disabled={phases.length === 0 || currentPhaseIndex === phases.length - 1}
                   onClick={() => setCurrentPhaseIndex(currentPhaseIndex + 1)}
                 >
                   <FontAwesomeIcon icon={faChevronRight} />
@@ -164,7 +123,7 @@ export function ExtendedProfileForm(props) {
             <button
               type='button'
               className={`join-item btn btn-outline max-sm:btn-sm`}
-              aria-label='Add phase'
+              aria-label={t`Add phase`}
               onClick={() => onPhaseAdd()}
             >
               <FontAwesomeIcon icon={faPlus} />
@@ -172,20 +131,27 @@ export function ExtendedProfileForm(props) {
             <button
               type='button'
               className={`join-item btn btn-outline text-error max-sm:btn-sm`}
-              aria-label='Remove phase'
+              aria-label={t`Remove phase`}
+              disabled={phases.length === 0}
               onClick={() => onPhaseRemove(currentPhaseIndex)}
             >
               <FontAwesomeIcon icon={faTrashCan} />
             </button>
           </div>
-          <div className='space-y-4' role='group' aria-label='Brew phases configuration'>
-            <ExtendedPhase
-              phase={currentPhase}
-              index={currentPhaseIndex}
-              onChange={phase => onPhaseChange(currentPhaseIndex, phase)}
-              onRemove={() => onPhaseRemove(currentPhaseIndex)}
-              pressureAvailable={pressureAvailable}
-            />
+          <div className='space-y-4' role='group' aria-label={t`Brew phases configuration`}>
+            {currentPhase ? (
+              <ExtendedPhase
+                phase={currentPhase}
+                index={currentPhaseIndex}
+                onChange={phase => onPhaseChange(currentPhaseIndex, phase)}
+                onRemove={() => onPhaseRemove(currentPhaseIndex)}
+                pressureAvailable={pressureAvailable}
+              />
+            ) : (
+              <p className='text-base-content/60 text-sm'>
+                <Trans>No phases yet. Add a phase to configure brewing.</Trans>
+              </p>
+            )}
           </div>
         </Card>
       </div>
@@ -193,15 +159,17 @@ export function ExtendedProfileForm(props) {
       <div className='pt-4 lg:col-span-10'>
         <div className='flex flex-col gap-2 sm:flex-row'>
           <a href='/profiles' className='btn btn-outline'>
-            Back
+            <Trans>Back</Trans>
           </a>
           <button
             type='submit'
             className='btn btn-primary gap-2'
             disabled={saving}
-            aria-label={saving ? 'Saving profile...' : 'Save profile'}
+            aria-label={saving ? t`Saving profile...` : t`Save profile`}
           >
-            <span>Save</span>
+            <span>
+              <Trans>Save</Trans>
+            </span>
             {saving && <Spinner size={4} />}
           </button>
         </div>

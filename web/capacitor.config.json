@@ -1,0 +1,36 @@
+{
+  "appId": "eu.gaggimate.mobile",
+  "appName": "GaggiMate",
+  "webDir": "dist-app",
+  "server": {
+    "androidScheme": "http",
+    "cleartext": true
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 4000,
+      "launchAutoHide": true,
+      "launchFadeOutDuration": 400,
+      "showSpinner": false
+    },
+    "CapacitorHttp": {
+      "enabled": true
+    },
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_gaggimate"
+    },
+    "CapacitorUpdater": {
+      "autoUpdate": false,
+      "statsUrl": "",
+      "updateUrl": "",
+      "channelUrl": ""
+    }
+  },
+  "experimental": {
+    "ios": {
+      "spm": {
+        "swiftToolsVersion": "6.0"
+      }
+    }
+  }
+}

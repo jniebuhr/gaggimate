@@ -1,16 +1,24 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "shot_notes.json",
   "title": "Shot Notes Schema",
+  "description": "User notes for one shot, stored next to its shot log as /h/<6-digit id>.json and exchanged via req:history:notes:get/save. Numeric fields are strings because they hold the raw form input.",
   "type": "object",
   "additionalProperties": false,
+  "definitions": {
+    "numericString": {
+      "type": "string",
+      "pattern": "^$|^[0-9]+(\\.[0-9]+)?$"
+    }
+  },
   "properties": {
     "id": {
-      "description": "Shot ID matching the .dat file",
+      "description": "Shot id without zero padding (e.g. \"31\"); the firmware locates the file by the request id, so this field is informational",
       "type": "string"
     },
     "rating": {
-      "description": "Star rating out of 5",
-      "type": "number",
+      "description": "Star rating, 0 = unrated",
+      "type": "integer",
       "minimum": 0,
       "maximum": 5
     },
@@ -19,38 +27,30 @@
       "type": "string"
     },
     "doseIn": {
-      "description": "Dose in grams",
-      "type": "number",
-      "minimum": 0
+      "description": "Dose in grams; written automatically at the end of a shot from the profile's dose when empty",
+      "$ref": "#/definitions/numericString"
     },
     "doseOut": {
-      "description": "Dose out in grams",
-      "type": "number",
-      "minimum": 0
+      "description": "Yield in grams; when set, overrides the recorded volume in the shot index",
+      "$ref": "#/definitions/numericString"
     },
     "ratio": {
-      "description": "Ratio (dose out / dose in)",
-      "type": "number",
-      "minimum": 0
+      "description": "doseOut / doseIn with two decimals, computed by the web UI",
+      "$ref": "#/definitions/numericString"
     },
     "grindSetting": {
-      "description": "Grind setting as string",
+      "description": "Grind setting as free text",
       "type": "string"
     },
     "balanceTaste": {
-      "description": "Balance/taste selector",
+      "description": "Taste balance",
       "type": "string",
       "enum": ["bitter", "balanced", "sour"]
     },
     "notes": {
-      "description": "User notes",
+      "description": "Free-form user notes",
       "type": "string",
       "maxLength": 200
-    },
-    "timestamp": {
-      "description": "Timestamp when notes were last updated",
-      "type": "integer"
     }
-  },
-  "required": ["id"]
+  }
 }

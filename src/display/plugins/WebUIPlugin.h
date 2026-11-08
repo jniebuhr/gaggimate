@@ -9,14 +9,22 @@
 #include <ArduinoJson.h>
 #include <ESPAsyncWebServer.h>
 #include <display/core/Plugin.h>
+#include <display/plugins/WebSocketHandler.h>
+#include <display/util/PsramAllocator.h>
 
-constexpr size_t UPDATE_CHECK_INTERVAL = 5 * 60 * 1000;
-constexpr size_t CLEANUP_PERIOD = 5 * 1000;
-constexpr size_t STATUS_PERIOD = 500;
-constexpr size_t DNS_PERIOD = 10;
+constexpr size_t UPDATE_CHECK_INTERVAL = 30 * 60 * 1000;
+constexpr size_t DNS_PERIOD = 50;
 
 const String LOCAL_URL = "http://4.4.4.1/";
 const String RELEASE_URL = "https://github.com/jniebuhr/gaggimate/releases/";
+// Headless builds must pull their own release assets; the screen firmware would not boot on them.
+#ifdef GAGGIMATE_HEADLESS
+#define OTA_DISPLAY_FIRMWARE "display-headless-firmware.bin"
+#define OTA_DISPLAY_FILESYSTEM "display-headless-filesystem.bin"
+#else
+#define OTA_DISPLAY_FIRMWARE "display-firmware.bin"
+#define OTA_DISPLAY_FILESYSTEM "display-filesystem.bin"
+#endif
 
 class ProfileManager;
 
@@ -31,45 +39,50 @@ class WebUIPlugin : public Plugin {
     void start();
     void stop();
 
-    // Websocket handlers
-    void handleWebSocketData(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data,
-                             size_t len);
-    void handleOTASettings(uint32_t clientId, JsonDocument &request);
-    void handleOTAStart(uint32_t clientId, JsonDocument &request);
-    void handleAutotuneStart(uint32_t clientId, JsonDocument &request);
-    void handleProfileRequest(uint32_t clientId, JsonDocument &request);
-    void handleFlushStart(uint32_t clientId, JsonDocument &request);
+    // OTA requests arrive over the WebSocket but are executed here, where GitHubOTA lives
+    void handleOTASettings(JsonDocument &request);
+    void handleOTAStart(JsonDocument &request);
 
     // HTTP handlers
+    // Serves the web UI from the firmware-embedded, memory-mapped flash blob
+    // (catch-all for any path not claimed by an explicit route). [GM-106]
+    void serveWebAsset(AsyncWebServerRequest *request);
     void handleSettings(AsyncWebServerRequest *request) const;
     void handleBLEScaleList(AsyncWebServerRequest *request);
     void handleBLEScaleScan(AsyncWebServerRequest *request);
     void handleBLEScaleConnect(AsyncWebServerRequest *request);
     void handleBLEScaleInfo(AsyncWebServerRequest *request);
+    void handleBLEScaleForget(AsyncWebServerRequest *request);
     void updateOTAStatus(const String &version);
     void updateOTAProgress(uint8_t phase, int progress);
-    void sendAutotuneResult();
 
     // Core dump download
     void handleCoreDumpDownload(AsyncWebServerRequest *request);
 
+    // Profile images on the SD card (pre-converted 300x300 RGB565 from the web UI)
+    void handleProfileImage(AsyncWebServerRequest *request);
+    void handleProfileImageBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total);
+
     GitHubOTA *ota = nullptr;
     AsyncWebServer server;
-    AsyncWebSocket ws;
+    WebSocketHandler wsHandler;
     Controller *controller = nullptr;
     PluginManager *pluginManager = nullptr;
     DNSServer *dnsServer = nullptr;
     ProfileManager *profileManager = nullptr;
 
     long lastUpdateCheck = 0;
-    long lastStatus = 0;
-    long lastCleanup = 0;
     long lastDns = 0;
     bool updating = false;
     bool apMode = false;
     bool serverRunning = false;
+    bool pluginHooksRegistered = false;
     String updateComponent = "";
-    float currentBluetoothWeight = 0.0f;
+
+    // One upload at a time; a new upload takes over a stale one whose client went away.
+    AsyncWebServerRequest *imageUploadRequest = nullptr;
+    File imageUploadFile;
+    String imageUploadError;
 };
 
 #endif // WEBUIPLUGIN_H

@@ -1,10 +1,8 @@
 #include "PressureController.h"
 #include "SimpleKalmanFilter/SimpleKalmanFilter.h"
+#include <Arduino.h> // ESP_LOGI (reset())
 #include <algorithm>
 #include <math.h>
-
-// Helper function to return the sign of a float
-inline float sign(float x) { return (x > 0.0f) - (x < 0.0f); }
 
 // Static utility function for first-order low-pass filtering
 void PressureController::applyLowPassFilter(float *filteredValue, float rawValue, float cutoffFreq, float dt) {
@@ -23,7 +21,7 @@ PressureController::PressureController(float dt, float *rawPressureSetpoint, flo
     this->_ctrlOutput = controllerOutput;
     this->_valveStatus = valveStatus;
     this->_dt = dt;
-    this->_pressureKalmanFilter = new SimpleKalmanFilter(0.1f, 10.0f, powf(4 * _dt, 2));
+    this->_pressureKalmanFilter = new SimpleKalmanFilter(0.1f, 10.0f, powf(2 * _dt, 2));
     this->_previousPressure = *sensorOutput;
 }
 
@@ -45,21 +43,28 @@ void PressureController::initSetpointFilter(float val) {
     _setpointFilterInitialized = true;
 }
 
-void PressureController::filterSensor() {
+void PressureController::filterSensor(float sampleTime) {
+    if (sampleTime <= 0.0f)
+        sampleTime = _dt;
+    _pressureKalmanFilter->setProcessNoise(powf(2 * sampleTime, 2));
     // Use Kalman filter for pressure (as originally intended)
     float newFiltered = this->_pressureKalmanFilter->updateEstimate(*_rawPressure);
 
     // Calculate pressure derivative using the filtered pressure
-    float pressureDerivative = (newFiltered - _lastFilteredPressure) / _dt;
-    applyLowPassFilter(&_filteredPressureDerivative, pressureDerivative, _filterEstimatorFrequency, _dt);
+    float pressureDerivative = _pressureInitialized ? (newFiltered - _lastFilteredPressure) / sampleTime : 0.0f;
+    _pressureInitialized = true;
+    applyLowPassFilter(&_filteredPressureDerivative, pressureDerivative, _filterEstimatorFrequency, sampleTime);
 
     _lastFilteredPressure = newFiltered;
     _filteredPressureSensor = newFiltered;
 }
 
-void PressureController::update(ControlMode mode) {
+void PressureController::update(ControlMode mode, bool freshPressure, float sampleTime, float elapsed) {
+    if (elapsed > 0.0f)
+        _dt = elapsed;
     filterSetpoint(*_rawPressureSetpoint);
-    filterSensor();
+    if (freshPressure)
+        filterSensor(sampleTime);
 
     if ((mode == ControlMode::FLOW || mode == ControlMode::PRESSURE) && *_rawPressureSetpoint > 0.0f &&
         *_rawFlowSetpoint > 0.0f) {
@@ -78,8 +83,11 @@ void PressureController::update(ControlMode mode) {
 }
 
 float PressureController::pumpFlowModel(float alpha) const {
-    const float availableFlow = getAvailableFlow();
-    return availableFlow * alpha / 100.0f;
+    // Positive-displacement model: net = duty * Q_geo - slip (affine in duty).
+    // With slip = 0 this reduces to the previous proportional model.
+    const float duty = alpha / 100.0f;
+    const float slip = getSlip();
+    return std::max(0.0f, duty * getGeometricFlow() - slip);
 }
 
 float PressureController::getAvailableFlow() const {
@@ -92,12 +100,28 @@ float PressureController::getAvailableFlow() const {
     return Q;
 }
 
+float PressureController::getSlip() const {
+    const float P = _filteredPressureSensor;
+    const float P2 = P * P;
+    const float P3 = P2 * P;
+    const float slip =
+        _pumpSlipCoefficients[0] * P3 + _pumpSlipCoefficients[1] * P2 + _pumpSlipCoefficients[2] * P + _pumpSlipCoefficients[3];
+    return std::max(0.0f, slip); // leakage is never negative
+}
+
+// Full-drive curve is the duty=1 slice (Q_geo - slip), so Q_geo = full-drive + slip.
+float PressureController::getGeometricFlow() const { return getAvailableFlow() + getSlip(); }
+
 float PressureController::getPumpDutyCycleForFlowRate() const {
-    const float availableFlow = getAvailableFlow();
-    if (availableFlow <= 0.0f) {
+    if (*_rawFlowSetpoint <= 0.0f) {
         return 0.0f;
     }
-    float duty = (*_rawFlowSetpoint / availableFlow) * 100.0f;
+    const float geometricFlow = getGeometricFlow();
+    if (geometricFlow <= 0.0f) {
+        return 0.0f;
+    }
+    // Feedforward duty to hit the target flow, accounting for slip (incl. Q_t = 0 hold duty).
+    float duty = ((*_rawFlowSetpoint + getSlip()) / geometricFlow) * 100.0f;
     return std::clamp(duty, 0.0f, 100.0f);
 }
 
@@ -116,6 +140,19 @@ void PressureController::setPumpFlowPolyCoeffs(float a, float b, float c, float 
     _pumpFlowCoefficients[3] = d;
 }
 
+void PressureController::setPumpSlipPolyCoeffs(float a, float b, float c, float d) {
+    _pumpSlipCoefficients[0] = a;
+    _pumpSlipCoefficients[1] = b;
+    _pumpSlipCoefficients[2] = c;
+    _pumpSlipCoefficients[3] = d;
+}
+
+void PressureController::setGains(float commutationGain, float convergenceGain, float integralGain) {
+    _commutationGain = commutationGain;
+    _convergenceGain = convergenceGain;
+    _integralGain = integralGain;
+}
+
 void PressureController::tare() {
     _coffeeOutput = 0.0f;
     _pumpVolume = 0.0f;
@@ -125,6 +162,13 @@ void PressureController::tare() {
     _puckState[2] = false;
     _puckCounter = 0;
     _pumpFlowRate = 0.0f;
+    // IIR-filtered accumulators: unreset, these carry a shot's end-of-brew
+    // depressurization transient into the next shot's puck-conductance-
+    // derivative arming signature, suppressing arming — GH #839.
+    _filteredPressureDerivative = 0.0f;
+    _waterThroughPuckFlowRate = 0.0f;
+    _lastPuckConductance = 0.0f;
+    _puckConductance = 0.0f;
     _puckConductanceDerivative = 0.0f;
     _coffeeFlowRate = 0.0f;
     _puckResistance = INFINITY;
@@ -247,17 +291,22 @@ float PressureController::getPumpDutyCycleForPressure() {
     }
     float denominator = fmaxf(1.0f - pressureRatio, 0.0001f); // Clamp to minimum 0.0001
     float Ki = _integralGain / denominator;
-    _errorIntegral += error * _dt;
+    // Integrate only inside the boundary layer so headspace fill can't wind up an overshoot the pump can't undo
+    const bool integrating = fabsf(error) < epsilon;
+    if (integrating)
+        _errorIntegral += error * _dt;
     float iterm = Ki * _errorIntegral;
 
-    float Qa = getAvailableFlow();
+    // Plant-gain inversion: Qa is the duty->flow slope (d Q_in / d duty), which is the
+    // geometric flow Q_geo under the affine model. Reduces to the full-drive curve when slip = 0.
+    float Qa = getGeometricFlow();
     Qa = fmaxf(Qa, 1e-3f);
     float Ceq = _systemCompliance;
     float K = _commutationGain / denominator * Qa / Ceq;
     _pumpDutyCycle = Ceq / Qa * (-_convergenceGain * error - K * sat_s) - iterm;
 
-    // Anti-windup
-    if ((sign(error) == -sign(_pumpDutyCycle)) && (fabs(_pumpDutyCycle) > 1.0f)) {
+    // Anti-windup against the actuator limits [0, 1]
+    if (integrating && ((_pumpDutyCycle > 1.0f && error < 0.0f) || (_pumpDutyCycle < 0.0f && error > 0.0f))) {
         _errorIntegral -= error * _dt;
         iterm = Ki * _errorIntegral;
     }

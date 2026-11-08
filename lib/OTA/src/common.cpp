@@ -1,5 +1,4 @@
 #include <HTTPClient.h>
-#include <HTTPUpdate.h>
 #include <WiFiClientSecure.h>
 
 #include "common.h"
@@ -81,28 +80,8 @@ String get_updated_version_via_txt_file(WiFiClientSecure &wifi_client, String &_
     return version;
 }
 
-void print_update_result(Updater updater, HTTPUpdateResult result, const char *TAG) {
-    switch (result) {
-    case HTTP_UPDATE_FAILED:
-        ESP_LOGI(TAG, "HTTP_UPDATE_FAILED Error (%d): %s\n", updater.getLastError(), updater.getLastErrorString().c_str());
-        break;
-    case HTTP_UPDATE_NO_UPDATES:
-        ESP_LOGI(TAG, "HTTP_UPDATE_NO_UPDATES\n");
-        break;
-    case HTTP_UPDATE_OK:
-        ESP_LOGI(TAG, "HTTP_UPDATE_OK\n");
-        break;
-    }
-}
-
 bool update_required(semver_t _new_version, semver_t _current_version) {
     ESP_LOGI("update_required", "Comparing versions %s > %s", render_to_string(_new_version).c_str(),
              render_to_string(_current_version).c_str());
     return _new_version > _current_version;
 }
-
-void update_started() { ESP_LOGI("update_started", "HTTP update process started\n"); }
-
-void update_finished() { ESP_LOGI("update_finished", "HTTP update process finished\n"); }
-
-void update_error(int err) { ESP_LOGI("update_error", "HTTP update fatal error code %d\n", err); }

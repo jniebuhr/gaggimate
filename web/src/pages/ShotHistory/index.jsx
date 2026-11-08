@@ -22,6 +22,7 @@ Chart.register(Legend);
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
 import { useCallback, useEffect, useRef, useState, useContext, useMemo } from 'preact/hooks';
 import { computed } from '@preact/signals';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { Spinner } from '../../components/Spinner.jsx';
 import HistoryCard from './HistoryCard.jsx';
 import { parseBinaryShot } from './parseBinaryShot.js';
@@ -34,6 +35,7 @@ import { faFilter } from '@fortawesome/free-solid-svg-icons/faFilter';
 const connected = computed(() => machine.value.connected);
 
 export function ShotHistory() {
+  const { t } = useLingui();
   const apiService = useContext(ApiServiceContext);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -145,9 +147,6 @@ export function ShotHistory() {
       let comparison = 0;
 
       switch (sortBy) {
-        case 'date':
-          comparison = a.timestamp - b.timestamp;
-          break;
         case 'rating':
           comparison = (a.rating || 0) - (b.rating || 0);
           break;
@@ -160,8 +159,20 @@ export function ShotHistory() {
         case 'volume':
           comparison = (a.volume || 0) - (b.volume || 0);
           break;
+        case 'id':
+          comparison = parseInt(a.id) - parseInt(b.id);
+          break;
+        case 'date':
         default:
-          comparison = a.timestamp - b.timestamp;
+          if (a.timestamp >= 10000 && b.timestamp >= 10000) {
+            comparison = a.timestamp - b.timestamp;
+          } else if (a.timestamp >= 10000) {
+            comparison = 1;
+          } else if (b.timestamp >= 10000) {
+            comparison = -1;
+          } else {
+            comparison = parseInt(a.id) - parseInt(b.id);
+          }
       }
 
       return sortOrder === 'desc' ? -comparison : comparison;
@@ -178,6 +189,8 @@ export function ShotHistory() {
     return { paginatedHistory, totalPages, totalFilteredItems };
   }, [history, searchTerm, filterBy, sortBy, sortOrder, currentPage]);
 
+  const historyCount = history.length;
+
   if (loading) {
     return (
       <div className='flex w-full flex-row items-center justify-center py-16'>
@@ -190,10 +203,12 @@ export function ShotHistory() {
     <>
       <div className='mb-6'>
         <div className='mb-4 flex flex-row items-center gap-2'>
-          <h2 className='flex-grow text-2xl font-bold sm:text-3xl'>Shot History</h2>
+          <h2 className='flex-grow text-2xl font-bold sm:text-3xl'>
+            <Trans>Shot History</Trans>
+          </h2>
           <span className='text-base-content/70 text-sm'>
-            {totalFilteredItems} of {history.length} shots{' '}
-            {totalPages > 1 && `(Page ${currentPage} of ${totalPages})`}
+            {t`${totalFilteredItems} of ${historyCount} shots`}{' '}
+            {totalPages > 1 && t`(Page ${currentPage} of ${totalPages})`}
           </span>
         </div>
 
@@ -207,7 +222,7 @@ export function ShotHistory() {
             />
             <input
               type='text'
-              placeholder='Search...'
+              placeholder={t`Search...`}
               value={searchTerm}
               onChange={e => {
                 setSearchTerm(e.target.value);
@@ -230,16 +245,18 @@ export function ShotHistory() {
               }}
               className='select select-bordered text-sm'
             >
-              <option value='date-desc'>Newest First</option>
-              <option value='date-asc'>Oldest First</option>
-              <option value='rating-desc'>Highest Rated</option>
-              <option value='rating-asc'>Lowest Rated</option>
-              <option value='profile-asc'>Profile A-Z</option>
-              <option value='profile-desc'>Profile Z-A</option>
-              <option value='duration-desc'>Longest Duration</option>
-              <option value='duration-asc'>Shortest Duration</option>
-              <option value='volume-desc'>Highest Volume</option>
-              <option value='volume-asc'>Lowest Volume</option>
+              <option value='date-desc'>{t`Newest First`}</option>
+              <option value='date-asc'>{t`Oldest First`}</option>
+              <option value='rating-desc'>{t`Highest Rated`}</option>
+              <option value='rating-asc'>{t`Lowest Rated`}</option>
+              <option value='profile-asc'>{t`Profile A-Z`}</option>
+              <option value='profile-desc'>{t`Profile Z-A`}</option>
+              <option value='duration-desc'>{t`Longest Duration`}</option>
+              <option value='duration-asc'>{t`Shortest Duration`}</option>
+              <option value='volume-desc'>{t`Highest Volume`}</option>
+              <option value='volume-asc'>{t`Lowest Volume`}</option>
+              <option value='id-desc'>{t`Highest ID First`}</option>
+              <option value='id-asc'>{t`Lowest ID first`}</option>
             </select>
           </div>
 
@@ -254,9 +271,9 @@ export function ShotHistory() {
               }}
               className='select select-bordered text-sm'
             >
-              <option value='all'>All Shots</option>
-              <option value='rated'>Rated Only</option>
-              <option value='unrated'>Unrated Only</option>
+              <option value='all'>{t`All Shots`}</option>
+              <option value='rated'>{t`Rated Only`}</option>
+              <option value='unrated'>{t`Unrated Only`}</option>
             </select>
           </div>
         </div>
@@ -306,9 +323,13 @@ export function ShotHistory() {
         {totalFilteredItems === 0 && !loading && (
           <div className='flex flex-row items-center justify-center py-20 lg:col-span-12'>
             {history.length === 0 ? (
-              <span>No shots available</span>
+              <span>
+                <Trans>No shots available</Trans>
+              </span>
             ) : (
-              <span>No shots match your search and filter criteria</span>
+              <span>
+                <Trans>No shots match your search and filter criteria</Trans>
+              </span>
             )}
           </div>
         )}
@@ -322,7 +343,7 @@ export function ShotHistory() {
             disabled={currentPage === 1}
             onClick={() => setCurrentPage(currentPage - 1)}
           >
-            Previous
+            <Trans>Previous</Trans>
           </button>
 
           <div className='flex items-center gap-1'>
@@ -356,7 +377,7 @@ export function ShotHistory() {
             disabled={currentPage === totalPages}
             onClick={() => setCurrentPage(currentPage + 1)}
           >
-            Next
+            <Trans>Next</Trans>
           </button>
         </div>
       )}

@@ -1,5 +1,16 @@
 import { useLocation, useRoute } from 'preact-iso';
 import { useCallback, useEffect, useState, useContext } from 'preact/hooks';
+import {
+  CategoryScale,
+  Chart,
+  Filler,
+  Legend,
+  LinearScale,
+  LineController,
+  LineElement,
+  PointElement,
+  TimeScale,
+} from 'chart.js';
 import { ProfileTypeSelection } from './ProfileTypeSelection.jsx';
 import { StandardProfileForm } from './StandardProfileForm.jsx';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
@@ -8,11 +19,24 @@ import { Spinner } from '../../components/Spinner.jsx';
 import { ExtendedProfileForm } from './ExtendedProfileForm.jsx';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
+import { Trans, useLingui } from '@lingui/react/macro';
+
+Chart.register(
+  LineController,
+  TimeScale,
+  LinearScale,
+  CategoryScale,
+  PointElement,
+  LineElement,
+  Filler,
+  Legend,
+);
 
 const connected = computed(() => machine.value.connected);
 const pressureAvailable = computed(() => machine.value.capabilities.pressure);
 
 export function ProfileEdit() {
+  const { t } = useLingui();
   const apiService = useContext(ApiServiceContext);
   const location = useLocation();
   const [loading, setLoading] = useState(true);
@@ -76,7 +100,10 @@ export function ProfileEdit() {
         setLoading(false);
       } else if (connected.value) {
         const response = await apiService.request({ tp: 'req:profiles:load', id: params.id });
-        setData(response.profile);
+        setData({
+          ...response.profile,
+          phases: Array.isArray(response.profile?.phases) ? response.profile.phases : [],
+        });
         setLoading(false);
       }
     }
@@ -85,6 +112,7 @@ export function ProfileEdit() {
   const onSave = useCallback(
     async data => {
       setSaving(true);
+      console.log(data);
       const response = await apiService.request({ tp: 'req:profiles:save', profile: data });
       setData(response.profile);
       setSaving(false);
@@ -99,6 +127,8 @@ export function ProfileEdit() {
     });
   }, [data, setData]);
 
+  const label = data?.label;
+
   if (loading) {
     return (
       <div className='flex w-full flex-row items-center justify-center py-16'>
@@ -111,16 +141,16 @@ export function ProfileEdit() {
     <>
       <div className='mb-4 flex flex-row items-center gap-2'>
         <h2 className='flex-grow text-2xl font-bold sm:text-3xl'>
-          {params.id === 'new' ? 'Create Profile' : `Edit ${data.label}`}
+          {params.id === 'new' ? t`Create Profile` : t`Edit ${label}`}
         </h2>
         {data?.type === 'standard' && pressureAvailable.value && (
           <button
             onClick={() => onConvert()}
             className='btn'
-            title='Convert to Pro'
-            aria-label='Convert to Pro'
+            title={t`Convert to Pro`}
+            aria-label={t`Convert to Pro`}
           >
-            Convert to Pro
+            <Trans>Convert to Pro</Trans>
           </button>
         )}
       </div>

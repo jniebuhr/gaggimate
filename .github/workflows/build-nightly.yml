@@ -7,7 +7,10 @@ permissions:
   contents: write
 name: Build Nightly
 jobs:
+  ota-testbench:
+    uses: ./.github/workflows/ota-testbench.yml
   build:
+    needs: ota-testbench
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
@@ -39,9 +42,13 @@ jobs:
           mkdir -p upload/headless
           mkdir -p upload/controller
           git tag -d nightly
-          git describe --tags --dirty > out/version.txt
+          git tag -d db
+          git describe --tags --dirty --match "v*" > out/version.txt
       - name: Build Web
-        run: ./scripts/build_spiffs.sh
+        run: ./scripts/build_webui.sh
+      - name: Package app web bundle
+        # Live update for the native app (web/src/app/updates.js), attached to the same release as the firmware.
+        run: BUNDLE_VERSION="$(cat out/version.txt)" web/scripts/package-app-bundle.sh out "nightly"
       - name: Build controller
         run: |
           export PLATFORMIO_BUILD_FLAGS="'-DNIGHTLY_BUILD'"
@@ -63,10 +70,10 @@ jobs:
       - name: Build display FS
         run: |
           pio run -t buildfs -e display
-          cp .pio/build/display/spiffs.bin upload/display/filesystem.bin
-          cp .pio/build/display/spiffs.bin upload/headless/filesystem.bin
-          cp .pio/build/display/spiffs.bin out/display-filesystem.bin
-          cp .pio/build/display/spiffs.bin out/display-headless-filesystem.bin
+          cp .pio/build/display/littlefs.bin upload/display/filesystem.bin
+          cp .pio/build/display/littlefs.bin upload/headless/filesystem.bin
+          cp .pio/build/display/littlefs.bin out/display-filesystem.bin
+          cp .pio/build/display/littlefs.bin out/display-headless-filesystem.bin
       - name: Build display
         run: |
           export PLATFORMIO_BUILD_FLAGS="'-DNIGHTLY_BUILD'"
@@ -118,20 +125,57 @@ jobs:
       pages: write
       pull-requests: write
     steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with:
+          fetch-tags: true
+          fetch-depth: 0
       - name: Download Firmware Files
         uses: actions/download-artifact@v4
         with:
           name: gaggimate-firmware
           path: release
+      - name: Generate changelog
+        id: changelog
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="$(cat release/version.txt)"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          PREVIOUS="$(gh api "repos/${GITHUB_REPOSITORY}/releases/latest" --jq .tag_name || true)"
+          {
+            echo "Nightly build **${VERSION}**, use the nightly channel in the UI to download this firmware."
+            echo
+          } > notes.md
+          if [ -z "${PREVIOUS}" ]; then
+            exit 0
+          fi
+          # Same generator the stable release uses; the nightly tag still points at the previous build, so name the new one.
+          if gh api --method POST "repos/${GITHUB_REPOSITORY}/releases/generate-notes" \
+              -f tag_name="${VERSION}" -f target_commitish="${GITHUB_SHA}" -f previous_tag_name="${PREVIOUS}" \
+              --jq .body > generated.md; then
+            sed "s#/compare/${PREVIOUS}\.\.\.${VERSION}#/compare/${PREVIOUS}...nightly#" generated.md >> notes.md
+          else
+            echo "Changelog generation failed, see the commit history since ${PREVIOUS}." >> notes.md
+          fi
+          # The generator only lists merged pull requests; add what was pushed to master directly.
+          COMMITS="$(git log "${PREVIOUS}..${GITHUB_SHA}" --no-merges --format='* %s (%h)' | grep -vE '\(#[0-9]+\) \([0-9a-f]+\)$' || true)"
+          if [ -n "${COMMITS}" ]; then
+            {
+              echo
+              echo "## Commits without a pull request"
+              echo "${COMMITS}"
+            } >> notes.md
+          fi
       - name: Update Nightly Release
         uses: andelf/nightly-release@c5ed4bdb7c1da04a4fa1e40bc5e67306f682563b
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: nightly
-          name: 'Nightly Release $$'
+          name: 'Nightly Release ${{ steps.changelog.outputs.version }} ($$)'
           prerelease: true
-          body: 'Latest nightly release, use the nightly channel in the UI to download this firmware.'
+          body_path: notes.md
           files: |
             release/*
       - name: Deploy to GitHub Pages subdirectory

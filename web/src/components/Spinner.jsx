@@ -1,4 +1,7 @@
+import { useLingui } from '@lingui/react/macro';
+
 export function Spinner({ size = 8 }) {
+  const { t } = useLingui();
   const sizeMap = {
     4: 'loading-xs',
     8: 'loading-md',
@@ -10,7 +13,7 @@ export function Spinner({ size = 8 }) {
     <span
       className={`loading loading-spinner ${sizeMap[size] || 'loading-md'}`}
       role='status'
-      aria-label='Loading'
+      aria-label={t`Loading`}
     />
   );
 }

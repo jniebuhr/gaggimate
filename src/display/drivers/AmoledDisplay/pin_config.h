@@ -81,6 +81,33 @@ constexpr AmoledHwConfig WAVESHARE_S3_AMOLED_HW_CONFIG{
     .mirror_touch = true,
 };
 
+constexpr AmoledHwConfig WAVESHARE_S3_TOUCH_AMOLED_1_43_HW_CONFIG{
+    .lcd_sdio0 = 11,
+    .lcd_sdio1 = 12,
+    .lcd_sdio2 = 13,
+    .lcd_sdio3 = 14,
+    .lcd_sclk = 10,
+    .lcd_cs = 9,
+    .lcd_rst = 21,
+    .lcd_width = 466,
+    .lcd_height = 466,
+    .lcd_gram_offset_x = 6,
+    .lcd_gram_offset_y = 6,
+    .lcd_en = -1,
+    .i2c_sda = 47,
+    .i2c_scl = 48,
+    .tp_int = -1,
+    .tp_rst = -1,
+    .battery_voltage_adc_data = -1,
+    .sd_cs = 38,
+    .sd_mosi = 39,
+    .sd_miso = 40,
+    .sd_sclk = 41,
+    .pcf8563_int = -1,
+    .rotation_175 = 0,
+    .mirror_touch = false,
+};
+
 #define CST92XX_DEVICE_ADDRESS 0x5A
 #define FT3168_DEVICE_ADDRESS 0x38
 #define PCF8563_DEVICE_ADDRESS 0x51

@@ -28,6 +28,7 @@ const FIELD_BITS = {
   EV: 10, // estimated weight
   PR: 11, // puck resistance
   SI: 12, // system info (v2+)
+  WP: 13, // cumulative water pumped
   // Phase number moved to header transitions in v5+
 };
 
@@ -61,18 +62,28 @@ const FIELD_DEFS = {
       bluetoothScaleConnected: !!(val & 0x0004),
       volumetricAvailable: !!(val & 0x0008),
       extendedRecording: !!(val & 0x0010),
+      processIsBrew: !!(val & 0x0020),
+      targetIsVolumetric: !!(val & 0x0040),
+      phaseHasVolumetric: !!(val & 0x0080),
+      activeScaleConnected: !!(val & 0x0100),
     }),
   },
+  [FIELD_BITS.WP]: { name: 'wp', type: 'uint16', scale: WEIGHT_SCALE },
   // Phase number field removed in v5+, moved to header transitions
 };
 
 function decodeCString(bytes) {
-  let out = '';
+  // Bytes are a null-terminated UTF-8 C string. Decode as UTF-8 — appending
+  // String.fromCharCode(byte) treats each byte as a Latin-1 code point, which
+  // mangles multibyte characters (e.g. "é" 0xC3 0xA9 -> "Ã©").
+  let end = bytes.length;
   for (let i = 0; i < bytes.length; i++) {
-    if (bytes[i] === 0) break;
-    out += String.fromCharCode(bytes[i]);
+    if (bytes[i] === 0) {
+      end = i;
+      break;
+    }
   }
-  return out;
+  return new TextDecoder('utf-8').decode(bytes.subarray(0, end));
 }
 
 function countSetBits(n) {
@@ -84,6 +95,21 @@ function countSetBits(n) {
   return count;
 }
 
+// Phase exit reason codes (must match PhaseExitReason in shot_log_format.h / profile.h).
+// 0 (unknown) is also what legacy files carry in the formerly-reserved byte.
+export const PHASE_EXIT_REASON_LABELS = {
+  0: 'Unknown',
+  1: 'Volumetric target',
+  2: 'Pressure target',
+  3: 'Flow target',
+  4: 'Pumped target',
+  5: 'Duration',
+  6: 'Safety timeout',
+  7: 'Aborted',
+  8: 'Hold released',
+  9: 'Ratio target',
+};
+
 // Parse phase transitions from v5+ headers
 function parsePhaseTransitions(view, transitionCount) {
   const transitions = [];
@@ -94,7 +120,9 @@ function parsePhaseTransitions(view, transitionCount) {
 
     const sampleIndex = view.getUint16(offset, true);
     const phaseNumber = view.getUint8(offset + 2);
-    // Skip reserved byte at offset + 3
+    // Byte at offset + 3 was reserved through v5; repurposed as the phase exit reason.
+    // Legacy files wrote 0 here, which maps to "Unknown".
+    const transitionReason = view.getUint8(offset + 3);
     const phaseNameBytes = new Uint8Array(view.buffer, view.byteOffset + offset + 4, 25);
     const phaseName = decodeCString(phaseNameBytes);
 
@@ -102,6 +130,8 @@ function parsePhaseTransitions(view, transitionCount) {
       sampleIndex,
       phaseNumber,
       phaseName,
+      transitionReason,
+      transitionReasonLabel: PHASE_EXIT_REASON_LABELS[transitionReason] ?? 'Unknown',
     });
   }
 
@@ -157,14 +187,24 @@ export function parseBinaryShot(arrayBuffer, id) {
 
   // Parse phase transitions for v5+
   let phaseTransitions = [];
+  let finalExitReason = 0;
+  let brewDelay = 0;
   if (version >= 5) {
     const transitionCount = view.getUint8(110 + 12 * 29); // After 12 PhaseTransitions
     phaseTransitions = parsePhaseTransitions(view, transitionCount);
+    // finalExitReason follows phaseTransitionCount; was reserved padding before, so legacy files read 0.
+    finalExitReason = view.getUint8(110 + 12 * 29 + 1);
+    // brewDelayMs (ms) follows finalExitReason; legacy files read 0 (was reserved padding).
+    brewDelay = view.getUint16(110 + 12 * 29 + 2, true);
   }
 
-  // Calculate expected sample size from fieldsMask
+  // The original hardware-scale v6 used 26-byte records with 16-bit ticks.
+  // Upstream v6 uses 28-byte records with elapsed milliseconds. The recorded
+  // size distinguishes them; v8 adds active-scale flags to upstream's v7 layout.
+  const legacyScaleV6 = version === 6 && deviceSampleSize === 26 && fieldsMask === 0x1fff;
+  const elapsedTimestamp = version >= 6 && !legacyScaleV6;
   const fieldCount = countSetBits(fieldsMask);
-  const expectedSampleSize = fieldCount * 2; // Each field is 16 bits = 2 bytes
+  const expectedSampleSize = fieldCount * 2 + (elapsedTimestamp ? 2 : 0);
 
   if (deviceSampleSize !== expectedSampleSize) {
     throw new Error(
@@ -210,20 +250,25 @@ export function parseBinaryShot(arrayBuffer, id) {
     const base = headerSize + i * sampleSize;
     const sample = {};
 
-    // Parse each field dynamically
+    // Parse each field dynamically. The first field grew from 2 to 4 bytes in
+    // v6; all remaining fields retain their existing order and width.
+    let offset = base;
     for (let fieldIdx = 0; fieldIdx < fieldLayout.length; fieldIdx++) {
       const field = fieldLayout[fieldIdx];
-      const offset = base + fieldIdx * 2; // Each field is 2 bytes
 
       let rawValue;
-      if (field.type === 'int16') {
+      if (elapsedTimestamp && field.bitPos === FIELD_BITS.T) {
+        rawValue = view.getUint32(offset, true);
+      } else if (field.type === 'int16') {
         rawValue = view.getInt16(offset, true);
       } else {
         rawValue = view.getUint16(offset, true);
       }
 
       let finalValue;
-      if (field.transform) {
+      if (elapsedTimestamp && field.bitPos === FIELD_BITS.T) {
+        finalValue = rawValue;
+      } else if (field.transform) {
         finalValue = field.transform(rawValue, sampleInterval);
       } else if (field.scale) {
         finalValue = rawValue / field.scale;
@@ -232,6 +277,7 @@ export function parseBinaryShot(arrayBuffer, id) {
       }
 
       sample[field.name] = finalValue;
+      offset += elapsedTimestamp && field.bitPos === FIELD_BITS.T ? 4 : 2;
     }
 
     // For v5+ files, reconstruct phase information from transitions
@@ -252,6 +298,12 @@ export function parseBinaryShot(arrayBuffer, id) {
       sample.phaseNumber = currentPhase;
       sample.phaseDisplayNumber = currentPhase + 1; // 1-based for display
       sample.phaseName = phaseName;
+    }
+
+    // Upstream histories have no source-neutral scale bit. Only the old scale
+    // v6 and the new scale v8 record it; do not interpret an absent bit as loss.
+    if (sample.systemInfo && !legacyScaleV6 && version < 8) {
+      sample.systemInfo.activeScaleConnected = sample.systemInfo.bluetoothScaleConnected;
     }
 
     samples.push(sample);
@@ -283,5 +335,8 @@ export function parseBinaryShot(arrayBuffer, id) {
     trailingBytes,
     samplesExpected: sampleCountHeader,
     phaseTransitions, // v5+ phase transition data
+    finalExitReason, // v5+ reason the shot ended (last phase exit or manual abort)
+    finalExitReasonLabel: PHASE_EXIT_REASON_LABELS[finalExitReason] ?? 'Unknown',
+    brewDelay, // v5+ predictive brew delay (ms) the shot ran with
   };
 }

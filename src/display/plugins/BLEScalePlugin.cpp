@@ -7,6 +7,7 @@
 #include <scales/bookoo.h>
 #include <scales/decent.h>
 #include <scales/difluid.h>
+#include <scales/dot.h>
 #include <scales/eclair.h>
 #include <scales/eureka.h>
 #include <scales/felicitaScale.h>
@@ -25,23 +26,28 @@ BLEScalePlugin BLEScales;
 
 BLEScalePlugin::BLEScalePlugin() = default;
 
-BLEScalePlugin::~BLEScalePlugin() {
-    // Disable active flag first to stop processing
-    active = false;
+BLEScalePlugin::~BLEScalePlugin() noexcept {
+    try {
+        // Disable active flag first to stop processing
+        active = false;
 
-    // Give any running callbacks time to complete
-    delay(100);
+        // Give any running callbacks time to complete
+        delay(100);
 
-    // Ensure proper cleanup
-    disconnect();
+        // Ensure proper cleanup
+        disconnect();
 
-    if (scanner != nullptr) {
-        // Stop scanning first
-        scanner->stopAsyncScan();
-        // Give it time to actually stop
-        delay(50);
-        delete scanner;
-        scanner = nullptr;
+        if (scanner != nullptr) {
+            // Stop scanning first
+            scanner->stopAsyncScan();
+            // Give it time to actually stop
+            delay(50);
+            delete scanner;
+            scanner = nullptr;
+        }
+    } catch (...) {
+        // Swallow: destructors must not propagate exceptions.
+        // NimBLE + Arduino delay() calls don't throw in practice; belt-and-braces.
     }
 }
 
@@ -52,6 +58,7 @@ void BLEScalePlugin::setup(Controller *controller, PluginManager *manager) {
     }
 
     this->controller = controller;
+    this->pluginManager = manager;
     this->pluginRegistry = RemoteScalesPluginRegistry::getInstance();
 
     // Apply scale plugins with error checking
@@ -66,6 +73,7 @@ void BLEScalePlugin::setup(Controller *controller, PluginManager *manager) {
     VariaScalesPlugin::apply();
     WeighMyBrewScalePlugin::apply();
     myscalePlugin::apply();
+    TimemoreDotScalesPlugin::apply();
 
     // Initialize scanner with error handling
     this->scanner = new (std::nothrow) RemoteScalesScanner();
@@ -84,32 +92,65 @@ void BLEScalePlugin::setup(Controller *controller, PluginManager *manager) {
     manager->on("controller:bluetooth:disconnect", [this](Event const &) {
         ESP_LOGW("BLEScalePlugin", "Controller disconnected, stopping BLE scan");
         active = false;
-        disconnect();
-        scanner->stopAsyncScan();
     });
     manager->on("controller:brew:prestart", [this](Event const &) { onProcessStart(); });
+    manager->on("controller:brew:end", [this](Event const &) {
+        if (scale != nullptr && scale->isConnected() && scale->hasTimerControl()) {
+            scale->stopTimer();
+        }
+    });
     manager->on("controller:grind:start", [this](Event const &) { onProcessStart(); });
     manager->on("controller:mode:change", [this](Event const &event) {
         if (event.getInt("value") != MODE_STANDBY) {
             ESP_LOGI("BLEScalePlugin", "Resuming scanning");
             scan();
             active = true;
+            shutdownPending = false;
         } else {
+            shutdownPending = true;
             active = false;
-            disconnect();
-            if (scanner != nullptr) {
-                scanner->stopAsyncScan();
-            }
-            ESP_LOGI("BLEScalePlugin", "Stopping scanning, disconnecting");
         }
     });
 }
 
 void BLEScalePlugin::loop() {
+    if (forgetRequested.exchange(false) && controller != nullptr) {
+        ESP_LOGI("BLEScalePlugin", "Forgetting saved scale");
+        controller->getSettings().setSavedScale("");
+        controller->getSettings().setSavedScaleName("");
+        doConnect = false;
+        disconnect();
+        if (active) {
+            scan();
+        }
+    }
     if (doConnect && scale == nullptr) {
         establishConnection();
     }
+    if (!active) {
+        if (scale != nullptr) {
+            // Entering standby powers the scale off too; a no-op for drivers without shutdown support.
+            if (shutdownPending && scale->isConnected()) {
+                scale->shutdown();
+                delay(100);
+            }
+            disconnect();
+        }
+        shutdownPending = false;
+        if (scanner->isScanRunning()) {
+            scanner->stopAsyncScan();
+        }
+    }
     const unsigned long now = millis();
+    if (scanRequested.exchange(false)) {
+        // No running scan (scale connected, scanner missing) closes the window right away.
+        const bool scanning = scanner != nullptr && scanner->isScanRunning();
+        scanWindowOpen = true;
+        scanDeadline = now + (scanning ? SCAN_WINDOW_MS : 0);
+    }
+    if (scanWindowOpen && static_cast<long>(now - scanDeadline) >= 0) {
+        emitScanComplete();
+    }
     if (now - lastUpdate > UPDATE_INTERVAL_MS) {
         lastUpdate = now;
         update();
@@ -124,43 +165,72 @@ void BLEScalePlugin::update() {
         return;
     }
 
-    // Don't update volumetric override if scale access might fail
     bool hasConnectedScale = false;
     if (scale != nullptr) {
         // Check if scale pointer is valid before accessing
         hasConnectedScale = scale->isConnected();
     }
 
-    if (controller->isVolumetricAvailable())
-        controller->setVolumetricOverride(hasConnectedScale);
-
     if (!active)
         return;
 
     if (scale != nullptr) {
-        // Call scale update with error checking
-        scale->update();
         if (!hasConnectedScale) {
-            reconnectionTries++;
-            if (reconnectionTries > RECONNECTION_TRIES) {
-                ESP_LOGW("BLEScalePlugin", "Max reconnection attempts reached, disconnecting");
-                disconnect();
-                if (scanner != nullptr) {
-                    scanner->initializeAsyncScan();
+            // Drivers reconnect inside update() with a blocking connect(); drop the scale and let the scan find it again
+            // (GM-215).
+            ESP_LOGW("BLEScalePlugin", "Scale connection lost, resuming scan");
+            if (pluginManager != nullptr) {
+                Event event;
+                event.id = "scale:disconnect";
+                event.setString("address", String(scale->getDeviceAddress().c_str()));
+                event.setString("name", String(scale->getDeviceName().c_str()));
+                pluginManager->trigger(event);
+            }
+            disconnect();
+            if (scanner != nullptr) {
+                scanner->initializeAsyncScan();
+            }
+            return;
+        }
+        scale->update();
+        // Poll slow-changing metadata (battery, unit). Flow rate is
+        // emitted inline with each weight measurement, not polled here.
+        pollScaleMetadata();
+    } else if (!doConnect && scanner != nullptr) {
+        if (controller->getSettings().getSavedScale() != "") {
+            auto discoveredScales = scanner->getDiscoveredScales();
+            for (const auto &d : discoveredScales) {
+                if (d.getAddress().toString() == controller->getSettings().getSavedScale().c_str()) {
+                    ESP_LOGI("BLEScalePlugin", "Connecting to last known scale");
+                    connect(d.getAddress().toString());
+                    return;
                 }
             }
         }
-    } else if (controller->getSettings().getSavedScale() != "" && scanner != nullptr) {
-        // Protected scanner access with null checks
-        auto discoveredScales = scanner->getDiscoveredScales();
-        for (const auto &d : discoveredScales) {
-            if (d.getAddress().toString() == controller->getSettings().getSavedScale().c_str()) {
-                ESP_LOGI("BLEScalePlugin", "Connecting to last known scale");
-                connect(d.getAddress().toString());
-                break;
-            }
-        }
+        maintainScan(millis());
     }
+}
+
+// Keeps the scale scan alive and bounded while no scale is connected.
+void BLEScalePlugin::maintainScan(unsigned long now) {
+    if (!scanner->isScanRunning()) {
+        scanRunningSince = 0;
+        scanner->initializeAsyncScan();
+        return;
+    }
+    if (scanRunningSince == 0) {
+        scanRunningSince = now;
+        return;
+    }
+    // The NimBLE scan is shared: a client connect (EBUSY) or a host reset stops it behind the scanner's back.
+    if (!NimBLEDevice::getScan()->isScanning()) {
+        ESP_LOGW("BLEScalePlugin", "Scale scan stopped externally, restarting");
+    } else if (scanWindowOpen || now - scanRunningSince < SCAN_REFRESH_MS) {
+        return;
+    }
+    // stop() + clearResults() frees NimBLE's pending results, which otherwise grow for the whole session.
+    scanner->restartAsyncScan();
+    scanRunningSince = now;
 }
 
 void BLEScalePlugin::connect(const std::string &uuid) {
@@ -175,10 +245,14 @@ void BLEScalePlugin::connect(const std::string &uuid) {
 
     doConnect = true;
     this->uuid = uuid;
+    if (controller->getSettings().getSavedScale() != uuid.c_str()) {
+        controller->getSettings().setSavedScaleName("");
+    }
     controller->getSettings().setSavedScale(uuid.data());
 }
 
-void BLEScalePlugin::scan() const {
+void BLEScalePlugin::scan() {
+    scanRequested = true;
     if (scale != nullptr && scale->isConnected()) {
         return;
     }
@@ -187,6 +261,28 @@ void BLEScalePlugin::scan() const {
         return;
     }
     scanner->initializeAsyncScan();
+}
+
+void BLEScalePlugin::forget() { forgetRequested = true; }
+
+void BLEScalePlugin::emitScanComplete() {
+    scanWindowOpen = false;
+    if (pluginManager == nullptr) {
+        return;
+    }
+    const int count = scanner != nullptr ? static_cast<int>(scanner->getDiscoveredScales().size()) : 0;
+    pluginManager->trigger("scale:scan:complete", "count", count);
+}
+
+void BLEScalePlugin::emitConnectError(const std::string &address, const char *reason) {
+    if (pluginManager == nullptr) {
+        return;
+    }
+    Event event;
+    event.id = "scale:connect:error";
+    event.setString("address", String(address.c_str()));
+    event.setString("reason", String(reason));
+    pluginManager->trigger(event);
 }
 
 void BLEScalePlugin::disconnect() {
@@ -202,7 +298,10 @@ void BLEScalePlugin::disconnect() {
         scale = nullptr;
         uuid = "";
         doConnect = false;
-        reconnectionTries = 0;
+        // Reset metadata caches so we re-emit change events when a new scale
+        // connects (possibly a different model with different capabilities).
+        lastBatteryLevel = REMOTE_SCALES_BATTERY_UNKNOWN;
+        lastWeightUnit = ScaleWeightUnit::UNKNOWN;
     }
 }
 
@@ -219,9 +318,27 @@ void BLEScalePlugin::onProcessStart() const {
     }
 }
 
+void BLEScalePlugin::pollScaleMetadata() {
+    if (scale == nullptr || !scale->isConnected() || pluginManager == nullptr) {
+        return;
+    }
+    auto *pm = pluginManager;
+
+    // Battery % -- fire event only on change so consumers can subscribe without
+    // being hammered at 1 Hz with duplicate values.
+    if (scale->hasBatteryLevel()) {
+        const uint8_t pct = scale->getBatteryLevel();
+        if (pct != lastBatteryLevel && pct != REMOTE_SCALES_BATTERY_UNKNOWN) {
+            lastBatteryLevel = pct;
+            pm->trigger("scale:battery:change", "value", static_cast<int>(pct));
+        }
+    }
+}
+
 void BLEScalePlugin::tare() const { onProcessStart(); }
 
 void BLEScalePlugin::establishConnection() {
+    doConnect = false;
     if (uuid.empty()) {
         ESP_LOGE("BLEScalePlugin", "Cannot establish connection with empty UUID");
         return;
@@ -233,6 +350,10 @@ void BLEScalePlugin::establishConnection() {
         return;
     }
 
+    // Connecting aborts the scan, so end the UI's scan window now instead of at its deadline.
+    if (scanWindowOpen) {
+        emitScanComplete();
+    }
     scanner->stopAsyncScan();
 
     auto discoveredScales = scanner->getDiscoveredScales();
@@ -241,17 +362,18 @@ void BLEScalePlugin::establishConnection() {
     for (const auto &d : discoveredScales) {
         if (d.getAddress().toString() == uuid) {
             deviceFound = true;
-            reconnectionTries = 0;
 
             auto factory = RemoteScalesFactory::getInstance();
             if (factory == nullptr) {
                 ESP_LOGE("BLEScalePlugin", "RemoteScalesFactory instance is null");
+                emitConnectError(uuid, "unsupported");
                 return;
             }
 
             scale = factory->create(d);
             if (!scale) {
                 ESP_LOGE("BLEScalePlugin", "Connection to device %s failed", d.getName().c_str());
+                emitConnectError(uuid, "unsupported");
                 return;
             }
 
@@ -276,9 +398,22 @@ void BLEScalePlugin::establishConnection() {
             bool connectResult = scale->connect();
             if (!connectResult) {
                 ESP_LOGW("BLEScalePlugin", "Failed to connect to scale, retrying scan");
+                emitConnectError(uuid, "connect_failed");
                 disconnect();
                 if (scanner != nullptr) {
                     scanner->initializeAsyncScan();
+                }
+            } else {
+                const String name = scale->getDeviceName().c_str();
+                if (controller->getSettings().getSavedScaleName() != name) {
+                    controller->getSettings().setSavedScaleName(name);
+                }
+                if (pluginManager != nullptr) {
+                    Event event;
+                    event.id = "scale:connect:success";
+                    event.setString("address", String(uuid.c_str()));
+                    event.setString("name", name);
+                    pluginManager->trigger(event);
                 }
             }
             break;
@@ -287,13 +422,14 @@ void BLEScalePlugin::establishConnection() {
 
     if (!deviceFound) {
         ESP_LOGW("BLEScalePlugin", "Device %s not found in discovered scales", uuid.c_str());
+        emitConnectError(uuid, "not_found");
         if (scanner != nullptr) {
             scanner->initializeAsyncScan();
         }
     }
 }
 
-void BLEScalePlugin::onMeasurement(float value) const {
+void BLEScalePlugin::onMeasurement(float value) {
     // Rate limiting to prevent callback flooding
     unsigned long now = millis();
     if (now - lastMeasurementTime < MIN_MEASUREMENT_INTERVAL_MS) {
@@ -319,6 +455,15 @@ void BLEScalePlugin::onMeasurement(float value) const {
 
     // Safe to call controller method
     controller->onVolumetricMeasurement(value, VolumetricMeasurementSource::BLUETOOTH);
+
+    // If the scale driver also provides native flow rate (e.g. Bookoo), emit
+    // it on the same tick so consumers get it at the scale's native cadence
+    // (~10 Hz) without having to poll. Controller.onVolumetricMeasurement
+    // updates lastBluetoothMeasurement timestamps as a side effect; we reuse
+    // a lighter path here since flow is not gating shot state.
+    if (scale != nullptr && scale->hasFlowRate() && pluginManager != nullptr) {
+        pluginManager->trigger("controller:volumetric-measurement:scale-flow:change", "value", scale->getFlowRate());
+    }
 }
 
 std::vector<DiscoveredDevice> BLEScalePlugin::getDiscoveredScales() const {

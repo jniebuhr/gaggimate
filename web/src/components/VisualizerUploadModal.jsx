@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye } from '@fortawesome/free-solid-svg-icons/faEye';
 import { faEyeSlash } from '@fortawesome/free-solid-svg-icons/faEyeSlash';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons/faSpinner';
+import { Trans, useLingui } from '@lingui/react/macro';
 
 export default function VisualizerUploadModal({
   isOpen,
@@ -11,6 +12,7 @@ export default function VisualizerUploadModal({
   isUploading = false,
   shotInfo,
 }) {
+  const { t } = useLingui();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -19,7 +21,7 @@ export default function VisualizerUploadModal({
   const handleSubmit = async e => {
     e.preventDefault();
     if (!username.trim() || !password.trim()) {
-      alert('Please enter both username and password');
+      alert(t`Please enter both username and password`);
       return;
     }
 
@@ -79,11 +81,14 @@ export default function VisualizerUploadModal({
       <div className='max-h-[90vh] w-full max-w-md overflow-y-auto rounded-lg bg-white shadow-xl dark:bg-gray-800'>
         <div className='p-6'>
           <div className='mb-4 flex items-center justify-between'>
-            <h3 className='text-lg font-semibold'>Upload to Visualizer.coffee</h3>
+            <h3 className='text-lg font-semibold'>
+              <Trans>Upload to Visualizer.coffee</Trans>
+            </h3>
             {!isUploading && (
               <button
                 onClick={handleClose}
                 className='text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                aria-label={t`Close`}
               >
                 ✕
               </button>
@@ -93,17 +98,29 @@ export default function VisualizerUploadModal({
           {shotInfo && (
             <div className='mb-4 rounded-md bg-gray-100 p-3 dark:bg-gray-700'>
               <p className='text-sm text-gray-600 dark:text-gray-300'>
-                <strong>Shot:</strong> {shotInfo.profile}
+                <strong>
+                  <Trans>Shot:</Trans>
+                </strong>{' '}
+                {shotInfo.profile}
               </p>
               <p className='text-sm text-gray-600 dark:text-gray-300'>
-                <strong>Date:</strong> {new Date(shotInfo.timestamp * 1000).toLocaleString()}
+                <strong>
+                  <Trans>Date:</Trans>
+                </strong>{' '}
+                {new Date(shotInfo.timestamp * 1000).toLocaleString()}
               </p>
               <p className='text-sm text-gray-600 dark:text-gray-300'>
-                <strong>Duration:</strong> {(shotInfo.duration / 1000).toFixed(1)}s
+                <strong>
+                  <Trans>Duration:</Trans>
+                </strong>{' '}
+                {(shotInfo.duration / 1000).toFixed(1)}s
               </p>
               {shotInfo.volume > 0 && (
                 <p className='text-sm text-gray-600 dark:text-gray-300'>
-                  <strong>Yield:</strong> {shotInfo.volume}g
+                  <strong>
+                    <Trans>Yield:</Trans>
+                  </strong>{' '}
+                  {shotInfo.volume}g
                 </p>
               )}
             </div>
@@ -112,7 +129,7 @@ export default function VisualizerUploadModal({
           <form onSubmit={handleSubmit} className='space-y-4' name='visualizer-login' method='post'>
             <div>
               <label htmlFor='username' className='mb-1 block text-sm font-medium'>
-                Visualizer.coffee Username
+                <Trans>Visualizer.coffee Username</Trans>
               </label>
               <input
                 id='username'
@@ -122,7 +139,7 @@ export default function VisualizerUploadModal({
                 onChange={e => setUsername(e.target.value)}
                 disabled={isUploading}
                 className='w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-white'
-                placeholder='Enter your username'
+                placeholder={t`Enter your username`}
                 autoComplete='username'
                 required
               />
@@ -130,7 +147,7 @@ export default function VisualizerUploadModal({
 
             <div>
               <label htmlFor='password' className='mb-1 block text-sm font-medium'>
-                Password
+                <Trans>Password</Trans>
               </label>
               <div className='relative'>
                 <input
@@ -141,7 +158,7 @@ export default function VisualizerUploadModal({
                   onChange={e => setPassword(e.target.value)}
                   disabled={isUploading}
                   className='w-full rounded-md border border-gray-300 px-3 py-2 pr-10 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-white'
-                  placeholder='Enter your password'
+                  placeholder={t`Enter your password`}
                   autoComplete='current-password'
                   required
                 />
@@ -150,6 +167,7 @@ export default function VisualizerUploadModal({
                   onClick={() => setShowPassword(!showPassword)}
                   disabled={isUploading}
                   className='absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 disabled:opacity-50'
+                  aria-label={showPassword ? t`Hide password` : t`Show password`}
                 >
                   <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
                 </button>
@@ -166,7 +184,7 @@ export default function VisualizerUploadModal({
                 className='h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50'
               />
               <label htmlFor='remember' className='ml-2 text-sm text-gray-600 dark:text-gray-300'>
-                Remember credentials
+                <Trans>Remember credentials</Trans>
               </label>
             </div>
 
@@ -177,7 +195,7 @@ export default function VisualizerUploadModal({
                 disabled={isUploading}
                 className='rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300 disabled:opacity-50 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500'
               >
-                Cancel
+                <Trans>Cancel</Trans>
               </button>
               <button
                 type='submit'
@@ -185,15 +203,17 @@ export default function VisualizerUploadModal({
                 className='flex items-center space-x-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50'
               >
                 {isUploading && <FontAwesomeIcon icon={faSpinner} spin />}
-                <span>{isUploading ? 'Uploading...' : 'Upload Shot'}</span>
+                <span>{isUploading ? t`Uploading...` : t`Upload Shot`}</span>
               </button>
             </div>
           </form>
 
           <div className='mt-4 text-xs text-gray-500 dark:text-gray-400'>
             <p>
-              Your credentials are only used for this upload and will be stored locally only if you
-              choose to remember your username.
+              <Trans>
+                Your credentials are only used for this upload and will be stored locally only if
+                you choose to remember your username.
+              </Trans>
             </p>
           </div>
         </div>

@@ -7,7 +7,7 @@
 
 class SimplePID {
   public:
-    SimplePID(float *controlerOutput = nullptr, float *sensorOutput = nullptr, float *setpointTargetPtr = nullptr);
+    explicit SimplePID(float *controlerOutput = nullptr, float *sensorOutput = nullptr, float *setpointTargetPtr = nullptr);
     bool update();
     void setControllerPIDGains(float Kp, float Ki, float Kd, float FF);
     void resetFeedbackController();

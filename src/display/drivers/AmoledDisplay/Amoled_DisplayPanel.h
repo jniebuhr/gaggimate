@@ -50,7 +50,7 @@ enum Amoled_Display_Panel_Wakeup_Method {
 class Amoled_DisplayPanel : public Display {
 
   public:
-    Amoled_DisplayPanel(AmoledHwConfig hwConfig);
+    explicit Amoled_DisplayPanel(const AmoledHwConfig &hwConfig);
 
     ~Amoled_DisplayPanel();
 
@@ -86,9 +86,9 @@ class Amoled_DisplayPanel : public Display {
 
     uint16_t getBattVoltage(void);
 
-    void pushColors(uint16_t x, uint16_t y, uint16_t width, uint16_t hight, uint16_t *data);
+    void pushColors(uint16_t x, uint16_t y, uint16_t width, uint16_t hight, uint16_t *data) override;
 
-    bool supportsDirectMode() { return true; }
+    bool supportsDirectMode() override { return true; }
 
     void setRotation(uint8_t rotation);
 

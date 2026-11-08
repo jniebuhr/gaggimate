@@ -1,5 +1,7 @@
 // Trend bucketing is intentionally done in the frontend so StatisticsService can stay
 // focused on per-shot outputs. Buckets use local/browser time for user-facing charts.
+import { t } from '@lingui/core/macro';
+
 function normalizeTimestampMs(timestamp) {
   const value = Number(timestamp);
   if (!Number.isFinite(value)) return null;
@@ -163,7 +165,7 @@ export function aggregateTrendsByGranularity(trends, metricKey, granularity) {
   return points;
 }
 
-function formatDateLocal(ms, options) {
+export function formatDateLocal(ms, options) {
   if (!Number.isFinite(ms)) return '';
   try {
     return new Date(ms).toLocaleDateString([], options);
@@ -227,7 +229,7 @@ export function formatTrendBucketTooltipTitle(pointMeta, granularity) {
           year: 'numeric',
         })
       : '';
-    return endText ? `Week: ${startText} - ${endText}` : `Week: ${startText}`;
+    return endText ? t`Week: ${startText} - ${endText}` : t`Week: ${startText}`;
   }
 
   if (granularity === 'month') {
