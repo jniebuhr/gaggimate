@@ -62,9 +62,10 @@ export function useDashboardState() {
   const tof = caps?.tof || false;
   const emptyTankDistance = settings?.emptyTankDistance || 0;
   const fullTankDistance = settings?.fullTankDistance || 0;
-  const albaCalibrated = emptyTankDistance > 0 && fullTankDistance > 0;
+  const albaCalibrated = emptyTankDistance > fullTankDistance && fullTankDistance > 0;
+  const albaWaterLevelAvailable = !!s.albaWaterLevelAvailable;
   const waterLevelPercent =
-    tof && albaCalibrated
+    albaWaterLevelAvailable && albaCalibrated && Number.isFinite(s.tofDistance) && s.tofDistance > 0
       ? Math.max(
           0,
           Math.min(
@@ -77,8 +78,17 @@ export function useDashboardState() {
   // ── handlers ─────────────────────────────────────────────
   const send = tp => apiService.send({ tp });
 
+  const toggleSteam = () => {
+    if (systemReady && caps.dualBoiler && mode !== 0 && s.steamControlsAvailable !== false)
+      send('req:steam:toggle');
+  };
+
   const changeMode = newMode => {
     if (!systemReady) return; // locked in standby until the controller is ready
+    if (caps.dualBoiler && newMode === 2) {
+      toggleSteam();
+      return;
+    }
     apiService.send({ tp: 'req:change-mode', mode: newMode });
   };
 
@@ -127,6 +137,11 @@ export function useDashboardState() {
   return {
     // raw status
     smartDose: s.smartDose,
+    albaWaterLevelAvailable,
+    hasTankLevel: !!s.hasTankLevel,
+    tankLevelOK: s.tankLevelOK ?? null,
+    hasSteamLevel: !!s.hasSteamLevel,
+    steamBoilerLow: s.steamBoilerLow ?? null,
     mode,
     systemReady,
     systemMessage,
@@ -134,6 +149,8 @@ export function useDashboardState() {
     targetTemperature: s.targetTemperature,
     currentSteamTemperature: s.currentSteamTemperature,
     targetSteamTemperature: s.targetSteamTemperature,
+    steamActive: !!s.steamActive,
+    steamControlsAvailable: s.steamControlsAvailable !== false,
     currentPressure: s.currentPressure,
     targetPressure: s.targetPressure,
     currentFlow: s.currentFlow,
@@ -178,6 +195,7 @@ export function useDashboardState() {
     isFlushing,
     // handlers
     changeMode,
+    toggleSteam,
     activate,
     deactivate,
     clear,

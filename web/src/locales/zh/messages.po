@@ -355,6 +355,10 @@ msgstr "外观"
 msgid "Apply Preset"
 msgstr ""
 
+#: src/pages/SetupWizard/MachineStep.jsx
+msgid "Applying and waiting for controller…"
+msgstr ""
+
 #: src/pages/ShotAnalyzer/components/library/LibraryPanel.jsx
 msgid "Are you sure you want to delete \"{itemName}\"?"
 msgstr "确定要删除“{itemName}”吗？"

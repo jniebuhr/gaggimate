@@ -2,6 +2,7 @@
 #define ADS_ADC_H
 
 #include "AdcSchedule.h"
+#include "SharedI2CBus.h"
 #include <ADS1X15.h>
 #include <Arduino.h>
 #include <array>
@@ -18,7 +19,7 @@ using AdcRates = std::array<uint16_t, 4>;
 
 class ADSAdc {
   public:
-    ADSAdc(uint8_t sda_pin, uint8_t scl_pin, AdcRates rates = {500, 0, 0, 0});
+    ADSAdc(uint8_t sda_pin, uint8_t scl_pin, AdcRates rates = {500, 0, 0, 0}, SemaphoreHandle_t sharedBusMutex = nullptr);
     ~ADSAdc() = default;
 
     void setup();
@@ -30,6 +31,7 @@ class ADSAdc {
     bool consumeAverage(uint8_t channel, float &average, uint16_t &count, int &minimum, int &maximum);
 
   private:
+    SemaphoreHandle_t _sharedBusMutex;
     uint8_t _sda_pin;
     uint8_t _scl_pin;
     AdcRates _rates;

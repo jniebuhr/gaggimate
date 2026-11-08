@@ -6,6 +6,17 @@ import {
   isProfileFieldLocked,
 } from '../utils/machineProfiles.js';
 
+const LIGHT_FIELDS = [
+  'systemLedFunction',
+  'baristaLedFunction',
+  'systemLedBrightness',
+  'baristaLedBrightness',
+  'systemLedMinBrightness',
+  'baristaLedMinBrightness',
+  'systemLedCycleTimeMs',
+  'baristaLedCycleTimeMs',
+];
+
 const RESISTANCE_FIELDS = [
   'ntcBrewNominalResistance',
   'ntcBrewSeriesResistance',
@@ -80,7 +91,14 @@ export function MachineProfileFields({ formData, setFields, hardwareOnly = false
   const hardware = fields.filter(([key, field]) => inHardwareSection(key, field));
   const ordinary = fields.filter(([key, field]) => !inHardwareSection(key, field));
   const toggles = hardware.filter(([, field]) => field.type === 'boolean');
-  const advanced = hardware.filter(([, field]) => field.type !== 'boolean');
+  const defaults = hardware.filter(([key]) => key === 'defaultSteamMode');
+  const lights = hardware.filter(
+    ([key]) => key === 'systemLedFunction' || key === 'baristaLedFunction',
+  );
+  const advanced = hardware.filter(
+    ([key, field]) =>
+      field.type !== 'boolean' && !LIGHT_FIELDS.includes(key) && key !== 'defaultSteamMode',
+  );
 
   const renderField = ([key, field]) => {
     const supported = profileSupported(key, caps, !!formData.machineHardwareConfiguration);
@@ -121,7 +139,10 @@ export function MachineProfileFields({ formData, setFields, hardwareOnly = false
             disabled={disabled}
             onChange={event => setFields({ [key]: Number(event.currentTarget.value) })}
           >
-            {Object.entries(field.options).map(([value, label]) => (
+            {(field.values
+              ? field.values.map(value => [value, field.options[value]])
+              : Object.entries(field.options)
+            ).map(([value, label]) => (
               <option key={value} value={value}>
                 {label}
               </option>
@@ -174,6 +195,89 @@ export function MachineProfileFields({ formData, setFields, hardwareOnly = false
             </p>
           )}
           <div className='flex flex-col gap-2'>{toggles.map(renderField)}</div>
+          <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+            {lights.map(([key, field]) => {
+              const brightnessKey = key.replace('Function', 'Brightness');
+              const brightness = formData[brightnessKey] ?? 255;
+              const minimumKey = key.replace('Function', 'MinBrightness');
+              const cycleKey = key.replace('Function', 'CycleTimeMs');
+              const minimum = Math.min(formData[minimumKey] ?? 0, brightness);
+              const animated = [1, 2, 5, 6].includes(Number(formData[key]));
+              return (
+                <div key={key} className='space-y-2'>
+                  {renderField([key, field])}
+                  <label className='form-control block pt-2'>
+                    <span className='label'>
+                      <Trans>Max brightness</Trans> ({Math.round((brightness * 100) / 255)}%)
+                    </span>
+                    <input
+                      type='range'
+                      className='range range-primary w-full'
+                      min={0}
+                      max={255}
+                      step={1}
+                      value={brightness}
+                      disabled={
+                        Number(formData[key]) === 0 || isProfileFieldLocked(formData, brightnessKey)
+                      }
+                      onInput={event => {
+                        const value = Number(event.currentTarget.value);
+                        setFields({
+                          [brightnessKey]: value,
+                          [minimumKey]: Math.min(minimum, value),
+                        });
+                      }}
+                    />
+                  </label>
+                  {animated && (
+                    <>
+                      <label className='form-control block pt-2'>
+                        <span className='label'>
+                          <Trans>Min brightness</Trans> ({Math.round((minimum * 100) / 255)}%)
+                        </span>
+                        <input
+                          type='range'
+                          className='range range-primary w-full'
+                          min={0}
+                          max={255}
+                          step={1}
+                          value={minimum}
+                          disabled={isProfileFieldLocked(formData, minimumKey)}
+                          onInput={event =>
+                            setFields({
+                              [minimumKey]: Math.min(Number(event.currentTarget.value), brightness),
+                            })
+                          }
+                        />
+                      </label>
+                      <label className='form-control block pt-2'>
+                        <span className='label'>
+                          <Trans>Cycle time (seconds)</Trans>
+                        </span>
+                        <input
+                          type='number'
+                          className='input input-bordered w-full'
+                          min={0.5}
+                          max={10}
+                          step={0.1}
+                          value={(formData[cycleKey] ?? 3000) / 1000}
+                          disabled={isProfileFieldLocked(formData, cycleKey)}
+                          onChange={event =>
+                            setFields({
+                              [cycleKey]: Math.round(Number(event.currentTarget.value) * 1000),
+                            })
+                          }
+                        />
+                      </label>
+                    </>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          {defaults.length > 0 && (
+            <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>{defaults.map(renderField)}</div>
+          )}
           <details className='border-base-content/10 border-t pt-3'>
             <summary className='cursor-pointer font-medium'>
               <Trans>Advanced hardware settings</Trans>

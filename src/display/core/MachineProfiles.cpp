@@ -36,7 +36,8 @@ bool validateFieldValue(JsonVariantConst v, JsonObjectConst field, const char *k
         while (*p) {
             char *end = nullptr;
             const double n = strtod(p, &end);
-            if (end == p || !std::isfinite(n) || std::fabs(n) > 1000000 || (!strcmp(key, "pid") && n < 0))
+            if (end == p || !std::isfinite(n) || std::fabs(n) > 1000000 ||
+                ((!strcmp(key, "pid") || !strcmp(key, "steamPid")) && n < 0))
                 return false;
             while (*end == ' ')
                 ++end;
@@ -150,6 +151,12 @@ bool validateMachineProfile(JsonVariantConst value, String &error) {
         if (field.isNull() || !validateFieldValue(entry.value(), field, entry.key().c_str()))
             return fail(error, String("Invalid machine setting: ") + entry.key().c_str());
     }
+    for (const char *prefix : {"system", "barista"}) {
+        const auto minimum = value["settings"][String(prefix) + "LedMinBrightness"];
+        const int maximum = value["settings"][String(prefix) + "LedBrightness"] | 255;
+        if (!minimum.isNull() && minimum.as<int>() > maximum)
+            return fail(error, "LED minimum brightness exceeds maximum");
+    }
     return true;
 }
 
@@ -157,6 +164,21 @@ bool validateMachineProfileRequest(AsyncWebServerRequest *request, const SystemI
     JsonDocument schema;
     if (deserializeJson(schema, MACHINE_PROFILE_FIELDS))
         return fail(error, "Could not read machine profile schema");
+    for (auto entry : schema.as<JsonObject>()) {
+        if (!entry.value()["hardware"].as<bool>() || !request->hasArg(entry.key().c_str()))
+            continue;
+        const String raw = request->arg(entry.key().c_str());
+        JsonDocument value;
+        const char *type = entry.value()["type"] | "";
+        if (!strcmp(type, "boolean")) {
+            if (raw != "0" && raw != "1")
+                return fail(error, "Invalid hardware boolean");
+            value.set(raw == "1");
+        } else if (deserializeJson(value, raw))
+            return fail(error, "Invalid hardware number");
+        if (!validateFieldValue(value.as<JsonVariantConst>(), entry.value(), entry.key().c_str()))
+            return fail(error, String("Invalid hardware setting: ") + entry.key().c_str());
+    }
     // Recognized hardware fields must never be silently ignored by an older implementation.
     if (!hardware)
         for (auto entry : schema.as<JsonObject>())

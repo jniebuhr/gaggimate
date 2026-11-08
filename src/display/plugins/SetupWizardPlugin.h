@@ -29,6 +29,7 @@ class SetupWizardPlugin : public Plugin {
     void finish(bool passed, const char *reason);
     void publish(const char *state, const char *reason = nullptr);
     float heaterTemp() const;
+    float heaterTarget() const;
     void startScan();
     void publishScan(bool success);
 

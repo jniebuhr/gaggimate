@@ -316,6 +316,20 @@ void WebUIPlugin::handleOTAStart(JsonDocument &request) {
 }
 
 // Booleans are only touched when present, so a partial POST keeps the rest (GM-214).
+static void writeMachineHardware(JsonObject object, const gm::MachineHardwareSettings &value) {
+    object["ntcBrewNominalResistance"] = value.ntc_brew_nominal_resistance;
+    object["ntcBrewSeriesResistance"] = value.ntc_brew_series_resistance;
+    object["ntcBrewSupplyVoltage"] = value.ntc_brew_supply_voltage;
+    object["ntcBrewBeta"] = value.ntc_brew_beta;
+    object["ntcSteamNominalResistance"] = value.ntc_steam_nominal_resistance;
+    object["ntcSteamSeriesResistance"] = value.ntc_steam_series_resistance;
+    object["ntcSteamSupplyVoltage"] = value.ntc_steam_supply_voltage;
+    object["ntcSteamBeta"] = value.ntc_steam_beta;
+    object["tankLevelEnabled"] = value.tank_level_enabled;
+    object["steamLevelEnabled"] = value.steam_level_enabled;
+    object["steamLevelDebounceChecks"] = value.steam_level_debounce_checks;
+}
+
 static bool parseBoolArg(const String &value) {
     return !(value.isEmpty() || value == "0" || value.equalsIgnoreCase("false") || value.equalsIgnoreCase("off"));
 }
@@ -369,6 +383,7 @@ void WebUIPlugin::handleMachineProfiles(AsyncWebServerRequest *request) {
 }
 
 void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
+    const uint32_t previousHardwareHash = machineHardwareHash(controller->getSettings().getMachineHardware());
     if (request->method() == HTTP_POST) {
         if (request->hasArg("setupStep")) {
             const String step = request->arg("setupStep");
@@ -379,7 +394,10 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
             }
         }
         String profileError;
-        if (!validateMachineProfileRequest(request, controller->getSystemInfo(), false, profileError)) {
+        if (!validateMachineProfileRequest(request, controller->getSystemInfo(),
+                                           controller->getSystemInfo().capabilities.dualBoiler &&
+                                               !controller->getSystemInfo().protocolMismatch,
+                                           profileError)) {
             JsonDocument failure;
             failure["error"] = profileError;
             String body;
@@ -387,15 +405,32 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
             request->send(400, "application/json", body);
             return;
         }
+        bool hardwareRequest = false;
+        JsonDocument currentHardware;
+        writeMachineHardware(currentHardware.to<JsonObject>(), controller->getSettings().getMachineHardware());
+        for (auto field : currentHardware.as<JsonObject>()) {
+            if (!request->hasArg(field.key().c_str()))
+                continue;
+            const String raw = request->arg(field.key().c_str());
+            hardwareRequest |= field.value().is<bool>() ? parseBoolArg(raw) != field.value().as<bool>()
+                                                        : std::fabs(raw.toFloat() - field.value().as<float>()) > 0.000001f;
+        }
+        const auto &currentSettings = controller->getSettings();
+        const bool refillRequest =
+            (request->hasArg("steamRefillMode") &&
+             request->arg("steamRefillMode").toInt() != currentSettings.getSteamRefillMode()) ||
+            (request->hasArg("steamRefillPostClearSeconds") &&
+             request->arg("steamRefillPostClearSeconds").toInt() != currentSettings.getSteamRefillPostClearSeconds());
         const bool profileChanged =
             request->hasArg("machineProfileSelection") &&
             request->arg("machineProfileSelection") != controller->getSettings().getMachineProfileSelection();
-        if (profileChanged && (controller->isActive() || controller->isUpdating() || controller->isAutotuning())) {
+        if ((profileChanged || hardwareRequest || refillRequest) &&
+            (controller->isActive() || controller->isUpdating() || controller->isAutotuning())) {
             request->send(409, "application/json",
                           "{\"error\":\"Stop the current process before applying a machine configuration\"}");
             return;
         }
-        if (profileChanged)
+        if (profileChanged || hardwareRequest || refillRequest)
             controller->activateStandby();
         bool saved = false;
         controller->getSettings().batchUpdate([request, &saved, &profileError](Settings *settings) {
@@ -404,6 +439,50 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 profileError = "Could not create machine profile reference; previous selection retained";
                 return;
             }
+            if (request->hasArg("ntcBrewNominalResistance"))
+                settings->setNtcBrewNominalResistance(request->arg("ntcBrewNominalResistance").toFloat());
+            if (request->hasArg("ntcBrewSeriesResistance"))
+                settings->setNtcBrewSeriesResistance(request->arg("ntcBrewSeriesResistance").toFloat());
+            if (request->hasArg("ntcBrewSupplyVoltage"))
+                settings->setNtcBrewSupplyVoltage(request->arg("ntcBrewSupplyVoltage").toFloat());
+            if (request->hasArg("ntcBrewBeta"))
+                settings->setNtcBrewBeta(request->arg("ntcBrewBeta").toFloat());
+            if (request->hasArg("ntcSteamNominalResistance"))
+                settings->setNtcSteamNominalResistance(request->arg("ntcSteamNominalResistance").toFloat());
+            if (request->hasArg("ntcSteamSeriesResistance"))
+                settings->setNtcSteamSeriesResistance(request->arg("ntcSteamSeriesResistance").toFloat());
+            if (request->hasArg("ntcSteamSupplyVoltage"))
+                settings->setNtcSteamSupplyVoltage(request->arg("ntcSteamSupplyVoltage").toFloat());
+            if (request->hasArg("ntcSteamBeta"))
+                settings->setNtcSteamBeta(request->arg("ntcSteamBeta").toFloat());
+            if (request->hasArg("tankLevelEnabled"))
+                settings->setTankLevelEnabled(request->arg("tankLevelEnabled") == "1");
+            if (request->hasArg("steamLevelEnabled"))
+                settings->setSteamLevelEnabled(request->arg("steamLevelEnabled") == "1");
+            if (request->hasArg("systemLedFunction"))
+                settings->setSystemLedFunction(request->arg("systemLedFunction").toInt());
+            if (request->hasArg("baristaLedFunction"))
+                settings->setBaristaLedFunction(request->arg("baristaLedFunction").toInt());
+            if (request->hasArg("systemLedBrightness"))
+                settings->setSystemLedBrightness(request->arg("systemLedBrightness").toInt());
+            if (request->hasArg("systemLedMinBrightness"))
+                settings->setSystemLedMinBrightness(request->arg("systemLedMinBrightness").toInt());
+            if (request->hasArg("systemLedCycleTimeMs"))
+                settings->setSystemLedCycleTimeMs(request->arg("systemLedCycleTimeMs").toInt());
+            if (request->hasArg("baristaLedBrightness"))
+                settings->setBaristaLedBrightness(request->arg("baristaLedBrightness").toInt());
+            if (request->hasArg("baristaLedMinBrightness"))
+                settings->setBaristaLedMinBrightness(request->arg("baristaLedMinBrightness").toInt());
+            if (request->hasArg("baristaLedCycleTimeMs"))
+                settings->setBaristaLedCycleTimeMs(request->arg("baristaLedCycleTimeMs").toInt());
+            if (request->hasArg("steamRefillMode"))
+                settings->setSteamRefillMode(request->arg("steamRefillMode").toInt());
+            if (request->hasArg("steamRefillPostClearSeconds"))
+                settings->setSteamRefillPostClearSeconds(request->arg("steamRefillPostClearSeconds").toInt());
+            if (request->hasArg("steamLevelDebounceChecks"))
+                settings->setSteamLevelDebounceChecks(request->arg("steamLevelDebounceChecks").toInt());
+            if (request->hasArg("defaultSteamMode"))
+                settings->setDefaultSteamMode(request->arg("defaultSteamMode").toInt());
             if (request->hasArg("startupMode"))
                 settings->setStartupMode(request->arg("startupMode") == "brew" ? MODE_BREW : MODE_STANDBY);
             if (request->hasArg("startupProfile"))
@@ -448,6 +527,8 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setHeaterCoordinationEnabled(parseBoolArg(request->arg("heaterCoordinationEnabled")));
             if (request->hasArg("heaterHandoverMs"))
                 settings->setHeaterHandoverMs(request->arg("heaterHandoverMs").toInt());
+            if (request->hasArg("steamPid"))
+                settings->setSteamPid(request->arg("steamPid"));
             if (request->hasArg("pid"))
                 settings->setPid(request->arg("pid"));
             if (request->hasArg("pumpModelCoeffs"))
@@ -566,6 +647,8 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setThemeMode(request->arg("themeMode").toInt());
             if (request->hasArg("statusDisplayMode"))
                 settings->setStatusDisplayMode(request->arg("statusDisplayMode").toInt());
+            if (request->hasArg("albaRefillInterlock"))
+                settings->setAlbaRefillInterlock(request->arg("albaRefillInterlock") == "1");
             if (request->hasArg("sunriseIdle"))
                 settings->setSunriseIdle(request->arg("sunriseIdle"));
             if (request->hasArg("sunriseActive"))
@@ -654,6 +737,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
         pluginManager->trigger("settings:changed");
         controller->setTargetTemp(controller->getTargetTemp());
         controller->setPressureScale();
+        controller->setMachineHardware();
         controller->setScaleFactors();
         controller->setHeaterSettings();
         controller->setPumpModelCoeffs();
@@ -662,16 +746,40 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     JsonDocument doc(&psramAllocator);
     Settings const &settings = controller->getSettings();
     doc["controllerError"] = controller->getError();
+    doc["machineHardwareConfiguration"] = controller->getSystemInfo().capabilities.dualBoiler;
+    doc["machineHardwareReady"] = controller->isMachineHardwareReady();
+    if (request->method() == HTTP_POST)
+        doc["machineHardwareApplyPending"] =
+            previousHardwareHash != machineHardwareHash(settings.getMachineHardware()) && !controller->isMachineHardwareReady();
+    doc["machineHardwareError"] = controller->isMachineHardwareError();
+    if (controller->getSystemInfo().capabilities.dualBoiler)
+        doc["defaultSteamMode"] = settings.getDefaultSteamMode();
+
+    doc["systemLedFunction"] = settings.getSystemLedFunction();
+    doc["baristaLedFunction"] = settings.getBaristaLedFunction();
+    doc["systemLedBrightness"] = settings.getSystemLedBrightness();
+    doc["systemLedMinBrightness"] = settings.getSystemLedMinBrightness();
+    doc["systemLedCycleTimeMs"] = settings.getSystemLedCycleTimeMs();
+    doc["baristaLedBrightness"] = settings.getBaristaLedBrightness();
+    doc["baristaLedMinBrightness"] = settings.getBaristaLedMinBrightness();
+    doc["baristaLedCycleTimeMs"] = settings.getBaristaLedCycleTimeMs();
+    doc["steamControlsAvailable"] = controller->isSteamControlsAvailable();
+    doc["steamRefillMode"] = settings.getSteamRefillMode();
+    doc["steamRefillPostClearSeconds"] = settings.getSteamRefillPostClearSeconds();
+    if (controller->getSystemInfo().capabilities.dualBoiler)
+        writeMachineHardware(doc.as<JsonObject>(), settings.getMachineHardware());
     doc["startupMode"] = settings.getStartupMode() == MODE_BREW ? "brew" : "standby";
     doc["startupProfile"] = settings.getStartupProfile();
     doc["targetSteamTemp"] = settings.getTargetSteamTemp();
     doc["targetWaterTemp"] = settings.getTargetWaterTemp();
-    if (!addMachineProfileSettings(doc, settings, controller->getSystemInfo(), false)) {
+    if (!addMachineProfileSettings(doc, settings, controller->getSystemInfo(),
+                                   controller->getSystemInfo().capabilities.dualBoiler &&
+                                       !controller->getSystemInfo().protocolMismatch)) {
         request->send(500, "application/json", "{\"error\":\"Could not read machine profile settings\"}");
         return;
     }
-    doc["setupStep"] = settings.getSetupStep();
     doc["setupDone"] = settings.isSetupDone();
+    doc["setupStep"] = settings.getSetupStep();
     doc["homekit"] = settings.isHomekit();
     doc["homeAssistant"] = settings.isHomeAssistant();
     doc["haUser"] = settings.getHomeAssistantUser();
@@ -682,6 +790,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["heaterCoordinationEnabled"] = settings.isHeaterCoordinationEnabled();
     doc["heaterHandoverMs"] = settings.getHeaterHandoverMs();
     doc["pid"] = settings.getPid();
+    doc["steamPid"] = settings.getSteamPid();
     doc["pumpModelCoeffs"] = settings.getPumpModelCoeffs();
     doc["pumpSlipCoeffs"] = settings.getPumpSlipCoeffs();
     doc["wifiSsid"] = settings.getWifiSsid();
@@ -748,6 +857,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["steamPumpCutoff"] = settings.getSteamPumpCutoff();
     doc["themeMode"] = settings.getThemeMode();
     doc["statusDisplayMode"] = settings.getStatusDisplayMode();
+    doc["albaRefillInterlock"] = settings.getAlbaRefillInterlock();
     doc["sunriseIdle"] = settings.getSunriseIdle();
     doc["sunriseActive"] = settings.getSunriseActive();
     doc["sunriseFinished"] = settings.getSunriseFinished();

@@ -14,12 +14,18 @@ float NtcThermistor::read() { return isErrorState() ? 0.0f : temperature; }
 
 bool NtcThermistor::isErrorState() { return temperature <= 0 || _fault || millis() - _lastFreshMs >= _staleTimeoutMs; }
 
+void NtcThermistor::fail(const char *reason) {
+    if (_fault)
+        return;
+    _fault = true;
+    ESP_LOGE(LOG_TAG, "NTC channel %u fault: %s (last temperature=%.2f)", _channel, reason, temperature);
+    error_callback();
+}
+
 void NtcThermistor::setup() {
     if (_timing.updateIntervalMs < 20 || _timing.updateIntervalMs > 1000 || !std::isfinite(_timing.smoothingTimeConstantMs) ||
         _timing.smoothingTimeConstantMs < 0) {
-        ESP_LOGE(LOG_TAG, "Invalid NTC timing configuration");
-        _fault = true;
-        error_callback();
+        fail("invalid timing configuration");
         return;
     }
     _lastFreshMs = millis();
@@ -29,23 +35,22 @@ void NtcThermistor::setup() {
 }
 
 void NtcThermistor::loop() {
+    if (_fault)
+        return; // Latched until restart; report the original cause only once.
     const uint32_t now = millis();
     float reading = 0.0f;
     uint16_t count = 0;
     int minimum = 0, maximum = 0;
     if (!_adc->consumeAverage(_channel, reading, count, minimum, maximum)) {
         if (now - _lastFreshMs >= _staleTimeoutMs) {
-            _fault = true;
-            error_callback();
+            fail("ADC samples stopped");
         }
         return;
     }
     const uint32_t elapsedMs = now - _lastFreshMs;
     _lastFreshMs = now;
-    if (_fault || temperature > MAX_SAFE_TEMP) {
-        _fault = true;
-        ESP_LOGE(LOG_TAG, "NTCThermistor failure! Temperature: %.2f", temperature);
-        error_callback();
+    if (temperature > MAX_SAFE_TEMP) {
+        fail("maximum safe temperature exceeded");
         return;
     }
     float Va = reading * ADC_STEP;
@@ -60,9 +65,8 @@ void NtcThermistor::loop() {
         ESP_LOGE(LOG_TAG, "Temperature reported below 0°C: %.2f\n", temp);
     }
 
-    _fault = _faultWindow.update(invalid, elapsedMs);
-    if (_fault) {
-        error_callback();
+    if (_faultWindow.update(invalid, elapsedMs)) {
+        fail("invalid ADC or temperature readings persisted");
         return;
     }
 
@@ -74,8 +78,7 @@ void NtcThermistor::loop() {
     _filterInitialized = true;
     _lastFilterMs = now;
     if (temperature > MAX_SAFE_TEMP) {
-        _fault = true;
-        error_callback();
+        fail("maximum safe temperature exceeded");
         return;
     }
     ESP_LOGD(LOG_TAG, "Updated temperature: %2f", temperature);
