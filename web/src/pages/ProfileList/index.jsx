@@ -978,7 +978,7 @@ export function ProfileList() {
             tp: favorite ? 'req:profiles:favorite' : 'req:profiles:unfavorite',
             id,
           });
-          if (response?.error) apply(!favorite);
+          apply(response?.error ? !favorite : favorite);
         } catch {
           apply(!favorite);
         }
