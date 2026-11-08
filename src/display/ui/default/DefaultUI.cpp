@@ -739,7 +739,9 @@ void DefaultUI::updateState() {
     dualBoiler = controller->getSystemInfo().capabilities.dualBoiler ? 1 : 0;
 
     uiFlags.brew_adjustments(brewScreenState == BrewScreenState::Settings);
-    uiFlags.active(controller->isActive());
+    uiFlags.active(dualBoiler && currentScreen == SCREEN_ID_STEAM_SCREEN   ? controller->isSteamHeaterActive()
+                   : dualBoiler && currentScreen == SCREEN_ID_WATER_SCREEN ? controller->isWaterValveActive()
+                                                                           : controller->isActive());
     uiFlags.grind_active(controller->isGrindActive());
     uiFlags.grind_volumetric(controller->isVolumetricAvailable() && settings.isVolumetricTarget());
     uiFlags.heating_flash(heatingFlash);

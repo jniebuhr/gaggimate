@@ -1,5 +1,8 @@
 // Shared between the settings page and the setup wizard.
 export const CHECKBOX_KEYS = [
+  'tankLevelEnabled',
+  'steamLevelEnabled',
+  'albaRefillInterlock',
   'homekit',
   'boilerFillActive',
   'smartGrindActive',

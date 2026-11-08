@@ -168,6 +168,8 @@ void SetupWizardPlugin::loop() {
     if (abortRequested.exchange(false)) {
         *phase = Phase::DONE;
         controller->activateStandby();
+        if (test == Test::HEATER)
+            controller->setBrewHeaterTestActive(false);
         publish("aborted");
         test = Test::NONE;
         return;
@@ -180,10 +182,13 @@ void SetupWizardPlugin::loop() {
 }
 
 float SetupWizardPlugin::heaterTemp() const {
-    // Dual boilers keep the brew boiler at brew temp in steam mode; the steam boiler is the one driven to full power
+    return controller->getCurrentTemp(); // Test the brew boiler on every board.
+}
+
+float SetupWizardPlugin::heaterTarget() const {
     if (controller->getSystemInfo().capabilities.dualBoiler)
-        return controller->getCurrentSteamTemp();
-    return controller->getCurrentTemp();
+        return controller->getProfileManager()->getSelectedProfile().temperature;
+    return static_cast<float>(controller->getSettings().getTargetSteamTemp());
 }
 
 void SetupWizardPlugin::startHeaterTest() {
@@ -194,11 +199,15 @@ void SetupWizardPlugin::startHeaterTest() {
         finish(false, "sensor");
         return;
     }
-    if (startTemp > static_cast<float>(controller->getSettings().getTargetSteamTemp()) - HEATER_HOT_MARGIN) {
+    if (startTemp > heaterTarget() - HEATER_HOT_MARGIN) {
         finish(true, "alreadyHot");
         return;
     }
-    controller->setMode(MODE_STEAM); // highest setpoint, so the element runs at full power
+    const bool dualBoiler = controller->getSystemInfo().capabilities.dualBoiler;
+    // A dual boiler heats its brew boiler in brew mode. Suppress steam heat even
+    // when independent steam control is disabled or the enabled state is remembered.
+    controller->setBrewHeaterTestActive(dualBoiler);
+    controller->setMode(dualBoiler ? MODE_BREW : MODE_STEAM);
     *phase = Phase::HEATING;
     phaseStarted = millis();
     publish("running");
@@ -214,8 +223,9 @@ void SetupWizardPlugin::loopHeater(unsigned long now) {
         return;
     }
     if (*phase == Phase::HEATING) {
-        const bool nearSteam = temp > static_cast<float>(controller->getSettings().getTargetSteamTemp()) - HEATER_ABORT_MARGIN;
-        if (now - phaseStarted >= HEATER_TEST_MS || nearSteam || controller->getMode() != MODE_STEAM) {
+        const bool nearTarget = temp > heaterTarget() - HEATER_ABORT_MARGIN;
+        const int testMode = controller->getSystemInfo().capabilities.dualBoiler ? MODE_BREW : MODE_STEAM;
+        if (now - phaseStarted >= HEATER_TEST_MS || nearTarget || controller->getMode() != testMode) {
             controller->activateStandby();
             *phase = Phase::SETTLING;
             phaseStarted = now;
@@ -292,6 +302,8 @@ void SetupWizardPlugin::loopPressure(unsigned long now) {
 }
 
 void SetupWizardPlugin::finish(bool passed, const char *reason) {
+    if (test == Test::HEATER)
+        controller->setBrewHeaterTestActive(false);
     *phase = Phase::DONE;
     publish(passed ? "passed" : "failed", reason);
     test = Test::NONE;

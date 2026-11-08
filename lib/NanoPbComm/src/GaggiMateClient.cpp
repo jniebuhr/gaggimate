@@ -76,7 +76,7 @@ gm::Payload GaggiMateClient::buildRelayControl(uint8_t index, bool open) {
 }
 
 gm::Payload GaggiMateClient::buildHeaterSettings(float kp, float ki, float kd, float kf, bool heaterCoordinationEnabled,
-                                                 uint32_t handoverMs) {
+                                                 uint32_t handoverMs, float steamKp, float steamKi, float steamKd) {
     gm::Payload p = gaggimate_Payload_init_zero;
     p.which_content = gaggimate_Payload_heater_tag;
     p.content.heater.kp = kp;
@@ -85,6 +85,9 @@ gm::Payload GaggiMateClient::buildHeaterSettings(float kp, float ki, float kd, f
     p.content.heater.kf = kf;
     p.content.heater.heater_coordination_enabled = heaterCoordinationEnabled;
     p.content.heater.handover_ms = handoverMs;
+    p.content.heater.steam_kp = steamKp;
+    p.content.heater.steam_ki = steamKi;
+    p.content.heater.steam_kd = steamKd;
     return p;
 }
 
@@ -117,6 +120,13 @@ gm::Payload GaggiMateClient::buildAutotune(uint32_t testTime, uint32_t samples, 
     return p;
 }
 
+void GaggiMateClient::sendMachineHardware(const gm::MachineHardwareSettings &settings) {
+    gm::Payload p = gaggimate_Payload_init_zero;
+    p.which_content = gaggimate_Payload_machine_hardware_tag;
+    p.content.machine_hardware = settings;
+    _endpoint.send(p);
+}
+
 gm::Payload GaggiMateClient::buildPressureScale(float scale) {
     gm::Payload p = gaggimate_Payload_init_zero;
     p.which_content = gaggimate_Payload_pressure_scale_tag;
@@ -142,6 +152,9 @@ gm::Payload GaggiMateClient::buildLedControl(const LedChannelCommand *channels, 
     for (size_t i = 0; i < count; i++) {
         p.content.led.channels[i].channel = channels[i].channel;
         p.content.led.channels[i].brightness = channels[i].brightness;
+        p.content.led.channels[i].effect = static_cast<uint32_t>(channels[i].effect);
+        p.content.led.channels[i].min_brightness = channels[i].minBrightness;
+        p.content.led.channels[i].cycle_time_ms = channels[i].cycleTimeMs;
     }
     return p;
 }
@@ -159,8 +172,8 @@ void GaggiMateClient::sendPumpControl(uint8_t index, PumpControlMode mode, float
 void GaggiMateClient::sendRelayControl(uint8_t index, bool open) { _endpoint.send(buildRelayControl(index, open)); }
 
 void GaggiMateClient::sendHeaterSettings(float kp, float ki, float kd, float kf, bool heaterCoordinationEnabled,
-                                         uint32_t handoverMs) {
-    _endpoint.send(buildHeaterSettings(kp, ki, kd, kf, heaterCoordinationEnabled, handoverMs));
+                                         uint32_t handoverMs, float steamKp, float steamKi, float steamKd) {
+    _endpoint.send(buildHeaterSettings(kp, ki, kd, kf, heaterCoordinationEnabled, handoverMs, steamKp, steamKi, steamKd));
 }
 
 void GaggiMateClient::sendPumpSettings(float a, float b, float c, float d, float commutationGain, float convergenceGain,
@@ -195,7 +208,16 @@ void GaggiMateClient::registerHandlers() {
                           p.content.system_info.capabilities.dual_boiler, addonList);
         }
     });
+    _endpoint.on(gaggimate_Payload_machine_hardware_status_tag, [this](const gm::Payload &p) {
+        if (_machineHardwareCb)
+            _machineHardwareCb(p.content.machine_hardware_status.hash, p.content.machine_hardware_status.ready,
+                               p.content.machine_hardware_status.error);
+    });
     _endpoint.on(gaggimate_Payload_sensor_tag, [this](const gm::Payload &p) {
+        if (_tankLevelCb)
+            _tankLevelCb(p.content.sensor.has_tank_level, p.content.sensor.tank_level_ok);
+        if (p.content.sensor.has_steam_boiler_low && _steamLevelCb)
+            _steamLevelCb(p.content.sensor.steam_boiler_low);
         if (!_sensorCb)
             return;
         // The display tracks a single boiler today; read boiler 0 if present.

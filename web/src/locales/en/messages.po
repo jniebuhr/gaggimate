@@ -347,6 +347,10 @@ msgstr "Appearance"
 msgid "Apply Preset"
 msgstr "Apply Preset"
 
+#: src/pages/SetupWizard/MachineStep.jsx
+msgid "Applying and waiting for controller…"
+msgstr "Applying and waiting for controller…"
+
 #: src/pages/ShotAnalyzer/components/library/LibraryPanel.jsx
 msgid "Are you sure you want to delete \"{itemName}\"?"
 msgstr "Are you sure you want to delete \"{itemName}\"?"
@@ -605,6 +609,10 @@ msgstr "Boiler Refill Plugin"
 #: src/pages/SetupWizard/MachineStep.jsx
 #~ msgid "Boiler refill recommended"
 #~ msgstr "Boiler refill recommended"
+
+#: src/components/MachineProfileFields.jsx
+msgid "Brightness"
+msgstr "Brightness"
 
 #: src/app/machineStatus.js
 #: src/pages/Home/utils.js
@@ -6403,6 +6411,7 @@ msgstr "Settings differ from this profile. Reload to restore profile defaults."
 msgid "Restore profile defaults"
 msgstr "Restore profile defaults"
 
+
 #: src/pages/SetupWizard/MachineStep.jsx
 msgid "Replace these machine settings?"
 msgstr "Replace these machine settings?"
@@ -6431,6 +6440,18 @@ msgstr "Open Settings → Machine to configure your machine before use."
 msgid "Thank you for installing GaggiMate!"
 msgstr "Thank you for installing GaggiMate!"
 
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Use Alba reservoir level to interlock steam refill"
+msgstr "Use Alba reservoir level to interlock steam refill"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "The physical reservoir sensor takes priority."
+msgstr "The physical reservoir sensor takes priority."
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Block steam boiler refill when Alba reports a low reservoir level or its reading is unavailable. Leave off if no reservoir distance sensor is installed."
+msgstr "Block steam boiler refill when Alba reports a low reservoir level or its reading is unavailable. Leave off if no reservoir distance sensor is installed."
+
 #: src/utils/machineProfiles.js
 msgid "Settings saved. Temperature fault detected. Check that both brew and steam NTC sensors are connected and correctly configured. Restart the controller and retry Apply Preset."
 msgstr "Settings saved. Temperature fault detected. Check that both brew and steam NTC sensors are connected and correctly configured. Restart the controller and retry Apply Preset."
@@ -6439,6 +6460,65 @@ msgstr "Settings saved. Temperature fault detected. Check that both brew and ste
 msgid "Settings saved. Temperature fault detected. Check the temperature sensor and its connection. Restart the controller and retry Apply Preset."
 msgstr "Settings saved. Temperature fault detected. Check the temperature sensor and its connection. Restart the controller and retry Apply Preset."
 
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Brew PID Values"
+msgstr ""
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Steam PID Values"
+msgstr ""
+
 #: src/components/MachineProfileControl.jsx
 msgid "-- Incompatible --"
 msgstr ""
+
+#: src/pages/Settings/tabs/HeaterCoordinationSection.jsx
+msgid "Power the heaters one at a time instead of in parallel, brew boiler first."
+msgstr ""
+
+#: src/pages/Settings/tabs/HeaterCoordinationSection.jsx
+msgid "For 120 V machines, heater coordination should generally remain enabled. Running the brew and steam heaters simultaneously can overload the circuit, blow a fuse or trip a breaker, and create a fire hazard. Only disable it if the machine and supply circuit are rated to power both heaters together."
+msgstr ""
+
+#: src/pages/Home/cards/MachineLevelsCard.jsx
+#: src/utils/metricDefinitions.js
+msgid "Low"
+msgstr "Low"
+
+#: src/pages/Home/cards/MachineLevelsCard.jsx
+#: src/utils/metricDefinitions.js
+msgid "OK"
+msgstr "OK"
+
+#: src/utils/panelDefinitions.js
+msgid "Smart Dosing"
+msgstr "Smart Dosing"
+
+#: src/pages/Home/cards/MachineLevelsCard.jsx
+msgid "Steam Boiler"
+msgstr "Steam Boiler"
+
+#: src/utils/metricDefinitions.js
+msgid "Steam Boiler Level"
+msgstr "Steam Boiler Level"
+
+#: src/pages/Home/cards/MachineLevelsCard.jsx
+#: src/utils/panelDefinitions.js
+msgid "Water Levels"
+msgstr "Water Levels"
+
+#: src/utils/metricDefinitions.js
+msgid "Water Tank Level"
+msgstr "Water Tank Level"
+
+#: src/components/MachineProfileFields.jsx
+msgid "Max brightness"
+msgstr "Max brightness"
+
+#: src/components/MachineProfileFields.jsx
+msgid "Min brightness"
+msgstr "Min brightness"
+
+#: src/components/MachineProfileFields.jsx
+msgid "Cycle time (seconds)"
+msgstr "Cycle time (seconds)"

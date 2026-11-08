@@ -49,6 +49,7 @@ class DefaultUI {
     // Interface methods
     void changeScreen(ScreensEnum screen);
     void onWelcomeContinue();
+    ScreensEnum getCurrentScreen() const { return currentScreen; }
 
     void changeBrewScreenMode(BrewScreenState state);
     void onProfileSwitch();

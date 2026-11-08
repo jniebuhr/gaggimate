@@ -23,7 +23,16 @@ export function isProfileFieldLocked(formData, key) {
   const profile = parseProfileSelection(formData.machineProfileSelection);
   if (
     !profile ||
-    ['targetWaterTemp', 'rememberSteamState', 'independentSteamControl'].includes(key)
+    [
+      'targetWaterTemp',
+      'defaultSteamMode',
+      'systemLedBrightness',
+      'baristaLedBrightness',
+      'systemLedMinBrightness',
+      'baristaLedMinBrightness',
+      'systemLedCycleTimeMs',
+      'baristaLedCycleTimeMs',
+    ].includes(key)
   )
     return false;
   if (key === 'targetSteamTemp') {
@@ -116,7 +125,7 @@ export function normalizeProfile(input) {
             !p.trim() ||
             !Number.isFinite(Number(p)) ||
             Math.abs(Number(p)) > 1e6 ||
-            (key === 'pid' && Number(p) < 0),
+            ((key === 'pid' || key === 'steamPid') && Number(p) < 0),
         )
       )
         throw new Error(`Invalid coefficients: ${key}`);
@@ -130,6 +139,12 @@ export function normalizeProfile(input) {
     )
       throw new Error(`Invalid value: ${key}`);
     settings[key] = value;
+  }
+  for (const prefix of ['system', 'barista']) {
+    const minimum = settings[`${prefix}LedMinBrightness`];
+    const maximum = settings[`${prefix}LedBrightness`] ?? 255;
+    if (minimum !== undefined && minimum > maximum)
+      throw new Error('LED minimum brightness exceeds maximum.');
   }
   if (
     input.plugins &&
@@ -264,6 +279,32 @@ export async function confirmProfileApply(formData, confirmChanges) {
   if (confirmChanges) return confirmChanges(changed);
   return window.confirm(
     `Replace these machine settings?\n${changed.map(([key, value]) => `${fields[key].label}: ${String(value)}`).join('\n')}`,
+  );
+}
+
+export async function waitForMachineHardware() {
+  const deadline = Date.now() + 45000;
+  let temperatureFault = '';
+  while (Date.now() < deadline) {
+    let data;
+    try {
+      data = await requestSettings({}, Math.min(5000, deadline - Date.now()));
+    } catch {
+      // A controller restart or a stale HTTP connection can briefly interrupt
+      // polling. Retry reads within the deadline; never automatically retry saves.
+    }
+    if (data?.machineHardwareError)
+      throw new Error('Controller could not save the hardware configuration.');
+    if (data) temperatureFault = machineTemperatureFault(data);
+    // A configuration-triggered controller restart may clear the fault, so keep polling.
+    if (data && data.machineHardwareReady !== false && !temperatureFault) return data;
+    await new Promise(resolve =>
+      setTimeout(resolve, Math.max(0, Math.min(750, deadline - Date.now()))),
+    );
+  }
+  if (temperatureFault) throw new Error(temperatureFault);
+  throw new Error(
+    'Settings were saved, but the controller has not confirmed the configuration. Keep the machine in standby and reload to check its status.',
   );
 }
 

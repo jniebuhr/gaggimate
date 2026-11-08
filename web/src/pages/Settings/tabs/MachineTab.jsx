@@ -187,7 +187,7 @@ export function MachineTab({ formData, onChange, setField, profiles = [] }) {
             <fieldset disabled={!!formData.machineProfileSelection} className='mt-4 space-y-4'>
               <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
                 <InputGroupField
-                  label={t`PID Values`}
+                  label={machine.value.capabilities.dualBoiler ? t`Brew PID Values` : t`PID Values`}
                   htmlFor='pid'
                   unit={
                     <>
@@ -206,6 +206,27 @@ export function MachineTab({ formData, onChange, setField, profiles = [] }) {
                     onChange={onChange('pid')}
                   />
                 </InputGroupField>
+                {machine.value.capabilities.dualBoiler && (
+                  <InputGroupField
+                    label={t`Steam PID Values`}
+                    htmlFor='steamPid'
+                    unit={
+                      <>
+                        K<sub>p</sub>, K<sub>i</sub>, K<sub>d</sub>
+                      </>
+                    }
+                    noMargin
+                  >
+                    <input
+                      id='steamPid'
+                      name='steamPid'
+                      type='text'
+                      className='grow'
+                      value={formData.steamPid ?? ''}
+                      onChange={onChange('steamPid')}
+                    />
+                  </InputGroupField>
+                )}
                 <InputGroupField
                   label={t`Thermal Feedforward Gain`}
                   htmlFor='kf'
@@ -638,6 +659,37 @@ export function MachineTab({ formData, onChange, setField, profiles = [] }) {
       {/* Alba Settings */}
       {ledControl.value && (
         <Section title={t`Alba Settings`} className='h-full'>
+          {machine.value.capabilities.dualBoiler && (
+            <div className='mb-4 space-y-2'>
+              <label
+                htmlFor='albaRefillInterlock'
+                className='label cursor-pointer justify-start gap-3'
+              >
+                <input
+                  id='albaRefillInterlock'
+                  name='albaRefillInterlock'
+                  type='checkbox'
+                  className='toggle toggle-primary'
+                  checked={!!formData.albaRefillInterlock}
+                  disabled={!!formData.tankLevelEnabled}
+                  onChange={onChange('albaRefillInterlock')}
+                />
+                <span>
+                  <Trans>Use Alba reservoir level to interlock steam refill</Trans>
+                </span>
+              </label>
+              <p className='text-sm opacity-70'>
+                {formData.tankLevelEnabled ? (
+                  <Trans>The physical reservoir sensor takes priority.</Trans>
+                ) : (
+                  <Trans>
+                    Block steam boiler refill when Alba reports a low reservoir level or its reading
+                    is unavailable. Leave off if no reservoir distance sensor is installed.
+                  </Trans>
+                )}
+              </p>
+            </div>
+          )}
           <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
             <TankDistanceField
               id='emptyTankDistance'

@@ -3,13 +3,13 @@ import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
 import { faMinus } from '@fortawesome/free-solid-svg-icons/faMinus';
 import { MachineProfileControl } from '../../components/MachineProfileControl.jsx';
 import {
-  machineTemperatureFault,
   currentProfileValues,
   machineBoardName,
   parseProfileSelection,
   profileToForm,
   profileProblems,
   confirmProfileApply,
+  waitForMachineHardware,
   PROFILE_FIELDS,
 } from '../../utils/machineProfiles.js';
 import { useEffect, useState } from 'preact/hooks';
@@ -101,13 +101,12 @@ export function MachineStep({ onSaved, onDirty, onConfigure }) {
         formData.machineProfileCapabilities || {},
         !!formData.machineHardwareConfiguration,
       );
-      const saved = await postSettings({
+      await postSettings({
         ...values,
         machineProfileSelection: appliedData.machineProfileSelection || '',
       });
-      const temperatureFault = machineTemperatureFault(saved);
-      if (temperatureFault) throw new Error(temperatureFault);
       setFormData(appliedData);
+      updateSettingsCache(await waitForMachineHardware());
       setApplied(true);
       onSaved?.(profile);
     } catch (err) {
@@ -189,7 +188,12 @@ export function MachineStep({ onSaved, onDirty, onConfigure }) {
           disabled={loading || saving || !!confirmation || !profile || problems.length > 0}
           onClick={() => apply()}
         >
-          {saving && <Spinner size={4} />}
+          {saving && (
+            <>
+              <Spinner size={4} />
+              <Trans>Applying and waiting for controller…</Trans>
+            </>
+          )}
           {!saving && <Trans>Apply Preset</Trans>}
         </button>
       </div>

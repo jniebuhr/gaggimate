@@ -25,12 +25,16 @@ export function HeaterCoordinationSection({ formData, onChange }) {
         </span>
       </label>
       <p className='mb-4 text-sm opacity-70'>
-        <Trans>
-          Power the heaters one at a time instead of in parallel, brew boiler first. Only needed
-          when the circuit cannot carry both heaters at once (e.g. 120 V); 230 V supplies can run
-          both.
-        </Trans>
+        <Trans>Power the heaters one at a time instead of in parallel, brew boiler first.</Trans>
       </p>
+      <div className='alert alert-warning text-sm' role='note'>
+        <Trans>
+          For 120 V machines, heater coordination should generally remain enabled. Running the brew
+          and steam heaters simultaneously can overload the circuit, blow a fuse or trip a breaker,
+          and create a fire hazard. Only disable it if the machine and supply circuit are rated to
+          power both heaters together.
+        </Trans>
+      </div>
     </section>
   );
 }

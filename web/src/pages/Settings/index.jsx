@@ -1,5 +1,5 @@
+import { confirmProfileApply, waitForMachineHardware } from '../../utils/machineProfiles.js';
 import { requestSettings } from '../../utils/settingsRequest.js';
-import { confirmProfileApply } from '../../utils/machineProfiles.js';
 import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
 import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
 import { faEllipsisVertical } from '@fortawesome/free-solid-svg-icons/faEllipsisVertical';
@@ -72,6 +72,11 @@ const READ_ONLY_KEYS = [
   'deviceIp',
   'setupDone',
   'apMode',
+  'setupStep',
+  'machineHardwareApplyPending',
+  'machineHardwareReady',
+  'machineHardwareError',
+  'steamControlsAvailable',
   'machineProfileBoard',
   'machineProfileCapabilities',
   'machineHardwareConfiguration',
@@ -362,10 +367,11 @@ export function Settings() {
 
       try {
         if (!(await confirmProfileApply(formData))) return;
-        const data = await requestSettings({
+        let data = await requestSettings({
           method: 'POST',
           body: formDataToSubmit,
         });
+        if (!restart && data.machineHardwareApplyPending) data = await waitForMachineHardware();
 
         const splitPid = data.pid ? splitPidString(data.pid) : null;
         const buttonFields = data.buttonBehavior ? splitButtons(data.buttonBehavior) : {};

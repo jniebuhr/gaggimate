@@ -1,4 +1,10 @@
 {
+  "steamPid": {
+    "label": "Steam PID gains",
+    "type": "csv",
+    "lengths": [3],
+    "capability": "dualBoiler"
+  },
   "pid": {
     "label": "PID and feedforward gains",
     "type": "csv",
@@ -165,12 +171,93 @@
     "hardware": true,
     "restart": true
   },
-  "systemLedEnabled": {
+  "systemLedFunction": {
     "label": "System LED",
-    "type": "boolean",
+    "type": "integer",
     "capability": "dualBoiler",
     "hardware": true,
-    "restart": true
+    "restart": false,
+    "values": [0, 1, 5, 2, 6, 3, 4],
+    "options": {
+      "0": "Off",
+      "1": "Steam heating (breathe) / ready",
+      "2": "Brew heating (breathe) / ready",
+      "3": "Out of standby",
+      "4": "While brewing",
+      "5": "Steam heating (flash) / ready",
+      "6": "Brew heating (flash) / ready"
+    }
+  },
+  "systemLedBrightness": {
+    "label": "Max brightness",
+    "type": "integer",
+    "min": 0,
+    "max": 255,
+    "capability": "dualBoiler",
+    "hardware": true,
+    "restart": false
+  },
+  "systemLedMinBrightness": {
+    "label": "Min brightness",
+    "type": "integer",
+    "min": 0,
+    "max": 255,
+    "capability": "dualBoiler",
+    "hardware": true,
+    "restart": false
+  },
+  "systemLedCycleTimeMs": {
+    "label": "Cycle time (ms)",
+    "type": "integer",
+    "min": 500,
+    "max": 10000,
+    "capability": "dualBoiler",
+    "hardware": true,
+    "restart": false
+  },
+  "baristaLedFunction": {
+    "label": "Barista Light",
+    "type": "integer",
+    "capability": "dualBoiler",
+    "hardware": true,
+    "restart": false,
+    "values": [0, 1, 5, 2, 6, 3, 4],
+    "options": {
+      "0": "Off",
+      "1": "Steam heating (breathe) / ready",
+      "2": "Brew heating (breathe) / ready",
+      "3": "Out of standby",
+      "4": "While brewing",
+      "5": "Steam heating (flash) / ready",
+      "6": "Brew heating (flash) / ready"
+    }
+  },
+  "baristaLedBrightness": {
+    "label": "Max brightness",
+    "type": "integer",
+    "min": 0,
+    "max": 255,
+    "capability": "dualBoiler",
+    "hardware": true,
+    "restart": false
+  },
+  "baristaLedMinBrightness": {
+    "label": "Min brightness",
+    "type": "integer",
+    "min": 0,
+    "max": 255,
+    "capability": "dualBoiler",
+    "hardware": true,
+    "restart": false
+  },
+  "baristaLedCycleTimeMs": {
+    "label": "Cycle time (ms)",
+    "type": "integer",
+    "min": 500,
+    "max": 10000,
+    "capability": "dualBoiler",
+    "hardware": true,
+    "restart": false
   },
   "steamRefillMode": {
     "label": "Steam refill arrangement",
@@ -203,19 +290,19 @@
     "hardware": true,
     "restart": true
   },
-  "rememberSteamState": {
-    "label": "Remember steam enabled state",
-    "type": "boolean",
+  "defaultSteamMode": {
+    "label": "Default Steam Mode Behaviour",
+    "type": "integer",
+    "min": 0,
+    "max": 2,
     "capability": "dualBoiler",
     "hardware": true,
-    "restart": false
-  },
-  "independentSteamControl": {
-    "label": "Independent steam heater toggle",
-    "type": "boolean",
-    "capability": "dualBoiler",
-    "hardware": true,
-    "restart": false
+    "restart": false,
+    "options": {
+      "0": "Off",
+      "1": "On",
+      "2": "Last"
+    }
   },
   "momentaryButtons": {
     "label": "Momentary buttons",

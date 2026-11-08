@@ -226,6 +226,16 @@ void action_on_grind_toggle(lv_event_t *e) {
 };
 
 void action_on_simple_process_toggle(lv_event_t *e) {
+    if (controller.getSystemInfo().capabilities.dualBoiler && controller.getUI()->getCurrentScreen() == SCREEN_ID_STEAM_SCREEN) {
+        controller.toggleSteamHeater();
+        controller.getUI()->markDirty();
+        return;
+    }
+    if (controller.getSystemInfo().capabilities.dualBoiler && controller.getUI()->getCurrentScreen() == SCREEN_ID_WATER_SCREEN) {
+        controller.toggleWaterValve();
+        controller.getUI()->markDirty();
+        return;
+    }
     if (controller.getMode() != MODE_STEAM) {
         controller.isActive() ? controller.deactivate() : controller.activate();
         controller.getUI()->markDirty();

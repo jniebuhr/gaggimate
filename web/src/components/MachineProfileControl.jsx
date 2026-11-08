@@ -141,6 +141,7 @@ export function MachineProfileControl({
   const modified = selected && problems.length === 0 && !updated && changedKeys.size > 0;
   const formatValue = (key, value) => {
     if (typeof value === 'boolean') return value ? t`Enabled` : t`Disabled`;
+    if (PROFILE_FIELDS[key]?.options?.[value]) return PROFILE_FIELDS[key].options[value];
     if (key.endsWith('Resistance')) return `${value / 1000} kΩ`;
     if (PROFILE_FIELDS[key]?.label.includes('(°C)')) return `${value} °C`;
     return String(value);

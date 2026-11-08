@@ -2,6 +2,8 @@
 #define GAGGIMATECONTROLLER_H
 #include "ControllerConfig.h"
 #include "GaggiMateServer.h"
+#include <atomic>
+#include <freertos/queue.h>
 #include <peripherals/DigitalInput.h>
 #include <peripherals/DistanceSensor.h>
 #include <peripherals/FlowSensor.h>
@@ -13,6 +15,7 @@
 #include <peripherals/PressureSensor.h>
 #include <peripherals/Pump.h>
 #include <peripherals/SimpleRelay.h>
+#include <peripherals/PwmLight.h>
 #include <peripherals/addons/GearpumpAddon.h>
 #include <vector>
 
@@ -32,8 +35,12 @@ class GaggiMateController {
     void registerBoardConfig(ControllerConfig config);
 
   private:
+    void clearRetainedOutputDemands();
     void detectBoard();
     void detectAddon();
+    void loadMachineHardware();
+    void storeMachineHardware(const gm::MachineHardwareSettings &settings);
+    void updateDualBoilerOutputs(unsigned long now);
     void handlePing();
     void handlePingTimeout(void);
     void thermalRunawayShutdown(void);
@@ -57,15 +64,28 @@ class GaggiMateController {
     SimpleRelay *alt = nullptr;
     SimpleRelay *refill = nullptr;
     SimpleRelay *aux = nullptr;
-    SimpleRelay *lights = nullptr;
+    PwmLight *lights = nullptr;
+    PwmLight *baristaLight = nullptr;
     DigitalInput *brewBtn = nullptr;
     DigitalInput *steamBtn = nullptr;
     DigitalInput *waterBtn = nullptr;
     DigitalInput *waterSense = nullptr;
     DigitalInput *tankLevel = nullptr;
+    std::atomic<bool> steamLevelLow{true};
+    std::atomic<bool> steamLevelKnown{false};
+    std::atomic<bool> tankLevelOK{false};
+    std::atomic<float> steamRequestedSetpoint{0.0f};
+    unsigned long lastSensorSend = 0;
     PressureSensor *pressureSensor = nullptr;
     LedController *ledController = nullptr;
     DistanceSensor *distanceSensor = nullptr;
+    QueueHandle_t hardwareRequests = nullptr;
+    std::atomic<bool> controllerErrorPending{false};
+    std::atomic<bool> hardwareSessionReady{false};
+    bool hardwareConfigurationError = false;
+    bool hardwareConfigurationStored = false;
+    bool hardwareConfigurationAccepted = false;
+    gm::MachineHardwareSettings machineHardware = gaggimate_MachineHardwareSettings_init_zero;
     ADSAdc *adc = nullptr;
     FlowSensor *flowSensor = nullptr;
     HardwareScale *hardwareScale = nullptr;

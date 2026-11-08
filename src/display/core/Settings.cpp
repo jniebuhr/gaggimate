@@ -108,10 +108,30 @@ Settings::Settings() {
     for (auto *property : registry) {
         property->load(preferences);
     }
+    // Copy the saved brew gains once when upgrading to separate steam tuning.
+    if (steamPid.get().isEmpty()) {
+        const String brewPid = pid.get();
+        const int firstSeparator = brewPid.indexOf(',');
+        const int secondSeparator = brewPid.indexOf(',', firstSeparator + 1);
+        const int feedforwardSeparator = brewPid.indexOf(',', secondSeparator + 1);
+        steamPid.set(feedforwardSeparator >= 0 ? brewPid.substring(0, feedforwardSeparator) : brewPid);
+    }
     // Migrate an older full snapshot without reapplying any machine values.
     if (!setMachineProfileSelection(machineProfileSelection.get()))
         ESP_LOGW("MachineProfile", "Could not convert saved profile reference; keeping the existing selection");
 
+    if (preferences.isKey("pss") && preferences.getType("pss") == PT_U8) {
+        preferredScaleSource.initDefault("");
+        preferredScaleSource.set("auto");
+        if (!preferences.isKey("sst"))
+            persistentSteamState.set(preferences.getBool("pss", false));
+    }
+    if (!preferences.isKey("steam_mode")) {
+        const bool independent = preferences.getBool("steam_ind", false);
+        const bool remember = preferences.getBool("rss", false);
+        defaultSteamMode.set(independent ? (remember ? 2 : 0) : 1);
+        defaultSteamMode.persist();
+    }
     // Legacy migrations: derive defaults for keys that were never persisted
     if (!preferences.isKey("sg_m")) {
         smartGrindMode.initDefault(smartGrindToggle.get() ? 1 : 0);
@@ -190,6 +210,8 @@ void Settings::setStartupMode(const int startup_mode) { startupMode.set(startup_
 void Settings::setStandbyTimeout(int standby_timeout) { standbyTimeout.set(standby_timeout); }
 
 void Settings::setPid(const String &pid) { this->pid.set(pid); }
+
+void Settings::setSteamPid(const String &pid) { steamPid.set(pid); }
 
 void Settings::setHeaterCoordinationEnabled(bool enabled) { heaterCoordinationEnabled.set(enabled); }
 
@@ -434,4 +456,33 @@ bool Settings::doSave() {
         settings->doSave();
         vTaskDelay(5000 / portTICK_PERIOD_MS);
     }
+}
+
+void Settings::setPersistentSteamState(bool enabled) {
+    persistentSteamState.set(enabled);
+    save(true);
+}
+
+gm::MachineHardwareSettings Settings::getMachineHardware() const {
+    auto value = defaultMachineHardware();
+    if (ntcBrewNominalResistance.get() > 0)
+        value.ntc_brew_nominal_resistance = ntcBrewNominalResistance.get();
+    if (ntcBrewSeriesResistance.get() > 0)
+        value.ntc_brew_series_resistance = ntcBrewSeriesResistance.get();
+    if (ntcBrewSupplyVoltage.get() > 0)
+        value.ntc_brew_supply_voltage = ntcBrewSupplyVoltage.get();
+    if (ntcBrewBeta.get() > 0)
+        value.ntc_brew_beta = ntcBrewBeta.get();
+    if (ntcSteamNominalResistance.get() > 0)
+        value.ntc_steam_nominal_resistance = ntcSteamNominalResistance.get();
+    if (ntcSteamSeriesResistance.get() > 0)
+        value.ntc_steam_series_resistance = ntcSteamSeriesResistance.get();
+    if (ntcSteamSupplyVoltage.get() > 0)
+        value.ntc_steam_supply_voltage = ntcSteamSupplyVoltage.get();
+    if (ntcSteamBeta.get() > 0)
+        value.ntc_steam_beta = ntcSteamBeta.get();
+    value.tank_level_enabled = tankLevelEnabled.get();
+    value.steam_level_enabled = steamLevelEnabled.get();
+    value.steam_level_debounce_checks = steamLevelDebounceChecks.get();
+    return value;
 }

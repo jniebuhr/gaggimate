@@ -2,6 +2,7 @@ import { ModeCard } from '../pages/Home/cards/ModeCard.jsx';
 import { ProfileCard } from '../pages/Home/cards/ProfileCard.jsx';
 import { FavoriteProfilesCard } from '../pages/Home/cards/FavoriteProfilesCard.jsx';
 import { MetricsPanelWrapper } from '../pages/Home/cards/MetricsPanelWrapper.jsx';
+import { MachineLevelsCard } from '../pages/Home/cards/MachineLevelsCard.jsx';
 import { WaterLevelCard } from '../pages/Home/cards/WaterLevelCard.jsx';
 import { ActionCard } from '../pages/Home/cards/ActionCard.jsx';
 import { msg } from '@lingui/core/macro';
@@ -91,11 +92,24 @@ export const PANEL_DEFINITIONS = [
     props: ds => ({ ds }),
   },
   {
+    id: 'machinelevels',
+    labelMsg: msg`Water Levels`,
+    required: false,
+    available: ds => !!ds.hasTankLevel || !!ds.hasSteamLevel,
+    component: MachineLevelsCard,
+    props: ds => ({
+      hasTankLevel: ds.hasTankLevel,
+      tankLevelOK: ds.tankLevelOK,
+      hasSteamLevel: ds.hasSteamLevel,
+      steamBoilerLow: ds.steamBoilerLow,
+    }),
+  },
+  {
     id: 'watertank',
     labelMsg: msg`Water Tank`,
     required: false,
-    available: ds => ds.waterLevelPercent !== null,
-    availableInSettings: status => !!status.tofDistance,
+    available: ds => ds.albaWaterLevelAvailable && ds.waterLevelPercent !== null,
+    availableInSettings: status => !!status.albaWaterLevelAvailable,
     component: WaterLevelCard,
     props: ds => ({
       waterLevelPercent: ds.waterLevelPercent,
