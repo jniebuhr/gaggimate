@@ -816,29 +816,34 @@ void Controller::autotune(int testTime, int samples, int heaterWattage) {
     pluginManager->trigger("controller:autotune:start");
 }
 
-void Controller::startProcess(Process *process) {
+bool Controller::startProcess(Process *process) {
     std::unique_ptr<Process> owned(process);
     if (!isMachineHardwareReady()) {
-        return;
+        return false;
     }
     std::vector<const char *> events;
+    bool started = false;
     {
         std::lock_guard<std::recursive_mutex> guard(processMutex);
-        startProcessLocked(std::move(owned), events);
+        started = startProcessLocked(std::move(owned), events);
     }
+    if (!started)
+        return false;
     updateControl(); // queue the pump/valve command now instead of on the next logic cycle
     dispatchEvents(events);
+    return true;
 }
 
-void Controller::startProcessLocked(std::unique_ptr<Process> process, std::vector<const char *> &events) {
+bool Controller::startProcessLocked(std::unique_ptr<Process> process, std::vector<const char *> &events) {
     if (isActiveLocked() || !isReady()) {
-        return;
+        return false;
     }
     processCompleted = false;
     this->currentProcess = std::move(process);
     applyConnectionPriority(); // shot started -> tight BLE interval
     events.push_back("controller:process:start");
     updateLastAction();
+    return true;
 }
 
 void Controller::dispatchEvents(const std::vector<const char *> &events) {
