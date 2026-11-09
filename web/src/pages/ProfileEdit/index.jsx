@@ -35,7 +35,6 @@ const pressureAvailable = computed(() => machine.value.capabilities.pressure);
 
 export function ProfileEdit() {
   const { t } = useLingui();
-  const isConnected = connected.value;
   const apiService = useContext(ApiServiceContext);
   const location = useLocation();
   const [loading, setLoading] = useState(true);
@@ -97,7 +96,7 @@ export function ProfileEdit() {
           ],
         });
         setLoading(false);
-      } else if (isConnected) {
+      } else if (connected.value) {
         const response = await apiService.request({ tp: 'req:profiles:load', id: params.id });
         setData({
           ...response.profile,
@@ -107,7 +106,7 @@ export function ProfileEdit() {
       }
     }
     fetchData();
-  }, [params.id, setData, isConnected, apiService]);
+  }, [params.id, setData, connected.value, apiService]);
   const onSave = useCallback(
     async data => {
       setSaving(true);
@@ -117,7 +116,7 @@ export function ProfileEdit() {
       setSaving(false);
       location.route('/profiles');
     },
-    [apiService, location],
+    [apiService, params.id, location],
   );
   const onConvert = useCallback(() => {
     setData({

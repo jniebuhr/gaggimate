@@ -1,5 +1,5 @@
 // Custom hooks for StatisticsView state management: metadata, filters, compare, detail section, and bulk selection
-import { useState, useEffect, useRef, useMemo, useCallback } from 'preact/hooks';
+import { useState, useEffect, useRef, useMemo } from 'preact/hooks';
 import { libraryService } from '../../../ShotAnalyzer/services/LibraryService';
 import {
   cleanName,
@@ -244,26 +244,18 @@ export function useStatisticsSelectionModel({
   dateToLocal,
   dateBasisMode,
 }) {
-  const matchesPinnedShotMeta = useCallback(
-    shotMeta =>
-      matchesPinnedShotMetaWithPins(shotMeta, {
-        shotKeyToCanonicalProfile,
-        pinnedShotsByProfile,
-        pinnedProfiles,
-      }),
-    [shotKeyToCanonicalProfile, pinnedShotsByProfile, pinnedProfiles],
-  );
+  const matchesPinnedShotMeta = shotMeta =>
+    matchesPinnedShotMetaWithPins(shotMeta, {
+      shotKeyToCanonicalProfile,
+      pinnedShotsByProfile,
+      pinnedProfiles,
+    });
 
-  const getProfilePinDisabledReason = useCallback(
-    profileName => getProfilePinDisabledReasonText(profileName, pinnedProfiles),
-    [pinnedProfiles],
-  );
+  const getProfilePinDisabledReason = profileName =>
+    getProfilePinDisabledReasonText(profileName, pinnedProfiles);
 
-  const getShotPinDisabledReason = useCallback(
-    shotMeta =>
-      getShotPinDisabledReasonText(shotMeta, shotKeyToCanonicalProfile, pinnedShotsByProfile),
-    [shotKeyToCanonicalProfile, pinnedShotsByProfile],
-  );
+  const getShotPinDisabledReason = shotMeta =>
+    getShotPinDisabledReasonText(shotMeta, shotKeyToCanonicalProfile, pinnedShotsByProfile);
 
   const dateBasisWarningState = useMemo(
     () => buildDateBasisWarningState(rawShotCandidates),
@@ -784,13 +776,10 @@ export function useStatisticsResultViewState({
     : 0;
   const builtProfileCount = useMemo(
     () => getBuiltProfileCount(entriesRef),
-    // entriesRef.current changes with each run, so result/runRequest invalidate the memo.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [entriesRef, result, runRequest],
   );
   const builtDateRange = useMemo(
     () => getBuiltDateRange(entriesRef, runRequest?.dateBasisMode || 'auto'),
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- see builtProfileCount
     [entriesRef, result, runRequest],
   );
   const shouldShowEmptyStatisticsState =

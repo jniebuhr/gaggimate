@@ -34,7 +34,7 @@ export default function ShotNotesCard({ shot, onNotesUpdate, onNotesLoaded }) {
     return '';
   }, []);
 
-  // Load notes on mount and again after the shot changes (see the reset below)
+  // Load notes ONLY on component mount
   useEffect(() => {
     if (initialLoaded) return; // Prevent reloading
 
@@ -114,7 +114,7 @@ export default function ShotNotesCard({ shot, onNotesUpdate, onNotesLoaded }) {
     };
 
     loadNotes();
-  }, [apiService, calculateRatio, initialLoaded, onNotesLoaded, shot.id, shot.volume]);
+  }, []); // No dependencies - only run once
 
   // Reset if shot changes
   useEffect(() => {

@@ -36,7 +36,6 @@ const connected = computed(() => machine.value.connected);
 
 export function ShotHistory() {
   const { t } = useLingui();
-  const isConnected = connected.value;
   const apiService = useContext(ApiServiceContext);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -98,11 +97,11 @@ export function ShotHistory() {
     }
   };
   useEffect(() => {
-    if (isConnected) {
+    if (connected.value) {
       loadHistory();
     }
     return () => loadHistoryAbortRef.current?.abort();
-  }, [isConnected]);
+  }, [connected.value]);
 
   const onDelete = useCallback(
     async id => {
