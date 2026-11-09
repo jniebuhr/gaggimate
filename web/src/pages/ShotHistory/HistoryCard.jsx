@@ -140,6 +140,9 @@ export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) 
     <Card sm={12} className='[&>.card-body]:p-2'>
       <div className='flex flex-col gap-2'>
         <div className='flex flex-row items-start gap-2'>
+          <div className='min-w-0 flex-grow'>
+            <div className='flex flex-row items-start gap-2'>
+              <div className='flex-shrink'>
           <button
             className='border-base-content/20 text-base-content/60 hover:text-base-content hover:bg-base-content/10 hover:border-base-content/40 cursor-pointer rounded-md border p-2 transition-all duration-200'
             onClick={() => {
@@ -151,7 +154,7 @@ export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) 
           >
             <FontAwesomeIcon icon={expanded ? faMinus : faPlus} className='h-3 w-3' />
           </button>
-
+              </div>
           <div className='min-w-0 flex-grow'>
             {/* Header Row */}
             <div className='mb-1 flex flex-row items-start justify-between gap-3'>
@@ -269,15 +272,14 @@ export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) 
               ) : (
                 <div className='text-base-content/50 flex items-center gap-1'>
                   <FontAwesomeIcon icon={faStar} className='h-4 w-4' />
-                  <span>
-                    <Trans>Not rated</Trans>
-                  </span>
+                  <Trans>Not rated</Trans>
                 </div>
               )}
+                </div>
+              </div>
             </div>
-
             {expanded && (
-              <div className='border-base-content/20 mt-4 border-t pt-4'>
+              <div className='border-base-content/20 mt-4 border-t px-4 pt-4'>
                 {!shot.loaded && (
                   <div className='flex items-center justify-center py-8'>
                     <span className='text-base-content/70 text-sm'>
