@@ -86,6 +86,9 @@ class DefaultUI {
     void setupState();
 
     void handleScreenChange();
+    void updateOledScreensaver(unsigned long now);
+    void moveScreensaverBranding();
+    void stopOledScreensaver();
 
     // Animate the dial meters' tick length (short on profile/menu/info and chart-mode status, long elsewhere).
     void animateGaugeTicks(bool fromShort, bool toShort);
@@ -243,6 +246,21 @@ class DefaultUI {
 
     // Standby brightness control
     unsigned long standbyEnterTime = 0;
+
+    struct StarfieldStar {
+        float x = 0.0f;
+        float y = 0.0f;
+        float z = 0.0f;
+        lv_obj_t *object = nullptr;
+    };
+    static constexpr size_t STARFIELD_STAR_COUNT = 64;
+    StarfieldStar starfieldStars[STARFIELD_STAR_COUNT];
+    bool starfieldActive = false;
+    unsigned long lastStarfieldUpdate = 0;
+    lv_color_t standbyBackgroundColor = lv_color_black();
+    lv_obj_t *screensaverWordmark = nullptr;
+    lv_obj_t *screensaverOnWakeup = nullptr;
+    unsigned long screensaverLogoCycleStarted = 0;
 
     xTaskHandle taskHandle;
     static void loopTask(void *arg);

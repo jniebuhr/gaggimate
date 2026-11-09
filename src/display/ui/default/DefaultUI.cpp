@@ -1,6 +1,7 @@
 #include "DefaultUI.h"
 
 #include <WiFi.h>
+#include <display/config.h>
 #include <display/core/Controller.h>
 #include <display/core/ProfileImage.h>
 #include <display/core/process/BrewProcess.h>
@@ -26,6 +27,35 @@
 static EffectManager effect_mgr;
 
 static constexpr uint32_t STARTUP_FADE_MS = 1000; // standby fade-in duration on power-up
+static constexpr unsigned long STARFIELD_FRAME_MS = 33;
+static constexpr float STARFIELD_SPEED = 0.003f;
+static constexpr unsigned long SCREENSAVER_LOGO_FADE_MS = 2500;
+static constexpr unsigned long SCREENSAVER_LOGO_HOLD_MS = 3000;
+static constexpr unsigned long SCREENSAVER_LOGO_CYCLE_MS = SCREENSAVER_LOGO_FADE_MS * 2 + SCREENSAVER_LOGO_HOLD_MS;
+static constexpr int SCREENSAVER_LOGO_WIDTH = 170;
+static constexpr int SCREENSAVER_LOGO_HEIGHT = 23;
+
+static float randomStarCoordinate() { return random(-2500, 2501) / 1000.0f; }
+
+static const lv_img_dsc_t *screensaverWordmarkImage() {
+    static uint8_t pixels[SCREENSAVER_LOGO_WIDTH * SCREENSAVER_LOGO_HEIGHT];
+    static lv_img_dsc_t image{};
+    if (image.data == nullptr) {
+        for (int y = 0; y < SCREENSAVER_LOGO_HEIGHT; y++) {
+            const int sourceY = y * img_logo.header.h / SCREENSAVER_LOGO_HEIGHT;
+            for (int x = 0; x < SCREENSAVER_LOGO_WIDTH; x++) {
+                const int sourceX = x * img_logo.header.w / SCREENSAVER_LOGO_WIDTH;
+                pixels[y * SCREENSAVER_LOGO_WIDTH + x] = img_logo.data[sourceY * img_logo.header.w + sourceX];
+            }
+        }
+        image.header.cf = LV_IMG_CF_ALPHA_8BIT;
+        image.header.w = SCREENSAVER_LOGO_WIDTH;
+        image.header.h = SCREENSAVER_LOGO_HEIGHT;
+        image.data_size = sizeof(pixels);
+        image.data = pixels;
+    }
+    return &image;
+}
 
 static constexpr int32_t GAUGE_TICK_LONG = 25;      // meter tick length on most screens
 static constexpr int32_t GAUGE_TICK_SHORT = 10;     // shortened tick length on profile / new-menu screens
@@ -409,7 +439,157 @@ void DefaultUI::loop() {
     }
 
     ui_tick();
+    updateOledScreensaver(now);
     lv_task_handler();
+}
+
+void DefaultUI::updateOledScreensaver(unsigned long now) {
+    if (!controller->hasOledPanel() || mode != MODE_STANDBY || currentScreen != SCREEN_ID_STANDBY_SCREEN ||
+        standbyEnterTime == 0 || objects.standby_screen == nullptr) {
+        stopOledScreensaver();
+        return;
+    }
+
+    const unsigned long standbyTime = now - standbyEnterTime;
+    if (standbyTime < OLED_SCREENSAVER_TIMEOUT_MS) {
+        stopOledScreensaver();
+        return;
+    }
+
+    lv_obj_add_flag(objects.touch_icon, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(objects.time, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(objects.standby_icons, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(objects.status, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(objects.obj3, LV_OBJ_FLAG_HIDDEN);
+
+    const int centerX = lv_disp_get_hor_res(lv_disp_get_default()) / 2;
+    const int centerY = lv_disp_get_ver_res(lv_disp_get_default()) / 2;
+
+    if (!starfieldActive) {
+        starfieldActive = true;
+        lastStarfieldUpdate = now - STARFIELD_FRAME_MS;
+        standbyBackgroundColor = lv_obj_get_style_bg_color(objects.standby_screen, LV_PART_MAIN);
+        lv_obj_set_style_bg_color(objects.standby_screen, lv_color_black(), LV_PART_MAIN);
+
+        for (StarfieldStar &star : starfieldStars) {
+            star.x = randomStarCoordinate();
+            star.y = randomStarCoordinate();
+            star.z = random(10, 101) / 10.0f;
+            star.object = lv_obj_create(objects.standby_screen);
+            lv_obj_remove_style_all(star.object);
+            lv_obj_set_style_bg_color(star.object, lv_color_white(), LV_PART_MAIN);
+            lv_obj_set_style_bg_opa(star.object, LV_OPA_COVER, LV_PART_MAIN);
+            lv_obj_clear_flag(star.object, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE);
+        }
+
+        screensaverWordmark = lv_img_create(objects.standby_screen);
+        lv_img_set_src(screensaverWordmark, screensaverWordmarkImage());
+        lv_obj_set_style_img_recolor(screensaverWordmark, lv_color_white(), LV_PART_MAIN);
+        lv_obj_set_style_img_recolor_opa(screensaverWordmark, LV_OPA_COVER, LV_PART_MAIN);
+        lv_obj_set_style_img_opa(screensaverWordmark, LV_OPA_TRANSP, LV_PART_MAIN);
+        lv_obj_clear_flag(screensaverWordmark, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE);
+
+        screensaverOnWakeup = lv_img_create(objects.standby_screen);
+        lv_img_set_src(screensaverOnWakeup, &img_tap_48x48);
+        lv_obj_set_style_img_recolor(screensaverOnWakeup, lv_color_white(), LV_PART_MAIN);
+        lv_obj_set_style_img_recolor_opa(screensaverOnWakeup, LV_OPA_COVER, LV_PART_MAIN);
+        lv_obj_set_style_img_opa(screensaverOnWakeup, LV_OPA_TRANSP, LV_PART_MAIN);
+        lv_obj_clear_flag(screensaverOnWakeup, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE);
+        screensaverLogoCycleStarted = now;
+        moveScreensaverBranding();
+    }
+
+    const unsigned long elapsed = now - lastStarfieldUpdate;
+    if (elapsed < STARFIELD_FRAME_MS)
+        return;
+    lastStarfieldUpdate = now;
+
+    for (StarfieldStar &star : starfieldStars) {
+        star.z -= elapsed * STARFIELD_SPEED;
+        if (star.z < 0.5f) {
+            star.x = randomStarCoordinate();
+            star.y = randomStarCoordinate();
+            star.z = 10.0f;
+        }
+
+        int x = centerX + static_cast<int>(star.x * centerX / star.z);
+        int y = centerY + static_cast<int>(star.y * centerY / star.z);
+
+        if (x < 0 || x >= centerX * 2 || y < 0 || y >= centerY * 2) {
+            star.x = randomStarCoordinate();
+            star.y = randomStarCoordinate();
+            star.z = 10.0f;
+            x = centerX + static_cast<int>(star.x * centerX / star.z);
+            y = centerY + static_cast<int>(star.y * centerY / star.z);
+        }
+
+        const int size = star.z < 2.0f ? 3 : star.z < 5.0f ? 2 : 1;
+        const lv_opa_t brightness = static_cast<lv_opa_t>(255 - static_cast<int>(star.z * 15));
+        lv_obj_set_pos(star.object, x, y);
+        lv_obj_set_size(star.object, size, size);
+        lv_obj_set_style_bg_opa(star.object, brightness, LV_PART_MAIN);
+    }
+
+    unsigned long logoTime = now - screensaverLogoCycleStarted;
+    if (logoTime >= SCREENSAVER_LOGO_CYCLE_MS) {
+        logoTime %= SCREENSAVER_LOGO_CYCLE_MS;
+        screensaverLogoCycleStarted = now - logoTime;
+        moveScreensaverBranding();
+    }
+    lv_opa_t logoOpacity = LV_OPA_COVER;
+    if (logoTime < SCREENSAVER_LOGO_FADE_MS) {
+        logoOpacity = static_cast<lv_opa_t>(logoTime * LV_OPA_COVER / SCREENSAVER_LOGO_FADE_MS);
+    } else if (logoTime >= SCREENSAVER_LOGO_FADE_MS + SCREENSAVER_LOGO_HOLD_MS) {
+        const unsigned long fadeOutTime = SCREENSAVER_LOGO_CYCLE_MS - logoTime;
+        logoOpacity = static_cast<lv_opa_t>(fadeOutTime * LV_OPA_COVER / SCREENSAVER_LOGO_FADE_MS);
+    }
+    lv_obj_set_style_img_opa(screensaverWordmark, logoOpacity, LV_PART_MAIN);
+    lv_obj_set_style_img_opa(screensaverOnWakeup, logoOpacity, LV_PART_MAIN);
+}
+
+void DefaultUI::moveScreensaverBranding() {
+    const int centerX = lv_disp_get_hor_res(lv_disp_get_default()) / 2;
+    const int centerY = lv_disp_get_ver_res(lv_disp_get_default()) / 2;
+    const int radius = centerX - 110;
+    int x;
+    int y;
+    do {
+        x = random(50, centerX * 2 - 50);
+        y = random(50, centerY * 2 - 50);
+    } while ((x - centerX) * (x - centerX) + (y - centerY) * (y - centerY) > radius * radius);
+    lv_obj_set_pos(screensaverOnWakeup, x - 24, y - 40);
+    lv_obj_set_pos(screensaverWordmark, x - SCREENSAVER_LOGO_WIDTH / 2, y + 14);
+}
+
+void DefaultUI::stopOledScreensaver() {
+    if (!starfieldActive && screensaverWordmark == nullptr && screensaverOnWakeup == nullptr)
+        return;
+
+    for (StarfieldStar &star : starfieldStars) {
+        if (star.object != nullptr) {
+            lv_obj_del(star.object);
+            star.object = nullptr;
+        }
+    }
+    if (screensaverWordmark != nullptr) {
+        lv_obj_del(screensaverWordmark);
+        screensaverWordmark = nullptr;
+    }
+    if (screensaverOnWakeup != nullptr) {
+        lv_obj_del(screensaverOnWakeup);
+        screensaverOnWakeup = nullptr;
+    }
+    starfieldActive = false;
+
+    if (objects.standby_screen != nullptr) {
+        lv_obj_set_style_bg_color(objects.standby_screen, standbyBackgroundColor, LV_PART_MAIN);
+        if (objects.obj3 != nullptr)
+            lv_obj_clear_flag(objects.obj3, LV_OBJ_FLAG_HIDDEN);
+        if (objects.standby_icons != nullptr)
+            lv_obj_clear_flag(objects.standby_icons, LV_OBJ_FLAG_HIDDEN);
+        tick_screen_standby_screen();
+        lv_obj_invalidate(objects.standby_screen);
+    }
 }
 
 void DefaultUI::loopProfiles() {
@@ -622,15 +802,22 @@ void DefaultUI::setupState() {
 
 void DefaultUI::handleScreenChange() {
     if (currentScreen != targetScreen) {
+        if (currentScreen == SCREEN_ID_STANDBY_SCREEN)
+            stopOledScreensaver();
         if (currentScreen == SCREEN_ID_BREW_SCREEN)
             brewConfirmVisible = false; // leaving the brew screen dismisses the confirm overlay
         if (targetScreen == SCREEN_ID_STANDBY_SCREEN) {
+            // The standby screen is retained by EEZ. Ensure no screensaver children or
+            // direct-mode framebuffer pixels survive from its previous activation.
+            stopOledScreensaver();
             standbyEnterTime = ::millis();
         } else if (currentScreen == SCREEN_ID_STANDBY_SCREEN) {
             const ::Settings &settings = controller->getSettings();
             setBrightness(settings.getMainBrightness());
         }
         eez_flow_set_screen(targetScreen, LV_SCR_LOAD_ANIM_NONE, 0, 0);
+        if (targetScreen == SCREEN_ID_STANDBY_SCREEN && objects.standby_screen != nullptr)
+            lv_obj_invalidate(objects.standby_screen);
         // Dial widgets are created lazily by EEZ, so apply the current choice after
         // the new screen's pair of indicators exists.
         applyGaugeSetpointStyle(gaugeSetpointsInside);
@@ -1351,7 +1538,12 @@ String DefaultUI::getErrorMessage() { return controller->getSystemStateMessage()
 void DefaultUI::applyTheme() {
     const ::Settings &settings = controller->getSettings();
     int newThemeMode = settings.getThemeMode();
-#ifndef GAGGIMATE_SIM // Amoled-specific black theme override is device-only
+#ifdef GAGGIMATE_SIM_AMOLED
+    // Match the automatic true-black theme used by the physical AMOLED driver.
+    if (newThemeMode == 0) {
+        newThemeMode = THEME_ID_AMOLED_DARK;
+    }
+#elif !defined(GAGGIMATE_SIM)
     if (newThemeMode == 0 && panelDriver == AmoledDisplayDriver::getInstance()) {
         newThemeMode = THEME_ID_AMOLED_DARK;
     }
