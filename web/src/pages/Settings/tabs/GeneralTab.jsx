@@ -125,7 +125,7 @@ export function GeneralTab({
   const { t } = useLingui();
   const flushDuration = Math.min(20, Math.round(Number(formData.flushDuration ?? 5) / 5) * 5);
   return (
-    <div className='space-y-4 sm:space-y-6 lg:grid lg:grid-cols-2 lg:gap-4'>
+    <div className='space-y-4 sm:space-y-6 lg:columns-2 lg:gap-4 lg:space-y-0 lg:[&>*]:mb-4 lg:[&>*]:break-inside-avoid'>
       {/* User Preferences */}
       <Section title={t`User Preferences`} className='h-full'>
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>

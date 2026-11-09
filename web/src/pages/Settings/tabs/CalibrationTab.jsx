@@ -49,7 +49,7 @@ export function CalibrationTab({ formData, onChange, setField }) {
   }, [apiService]);
 
   return (
-    <div className='space-y-4 sm:space-y-6 lg:grid lg:grid-cols-2 lg:gap-4'>
+    <div className='space-y-4 sm:space-y-6 lg:columns-2 lg:gap-4 lg:space-y-0 lg:[&>*]:mb-4 lg:[&>*]:break-inside-avoid'>
       {/* PID Autotune Section */}
       <Section title={t`PID Autotune`} className='h-full'>
         {autotuneActive && (
