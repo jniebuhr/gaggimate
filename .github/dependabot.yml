@@ -10,12 +10,17 @@ updates:
     # Packages that have to move together share a group, otherwise their separate PRs fail on peer dependencies.
     # A package lands in the first group that matches it.
     groups:
-      lingui:
-        patterns: ['@lingui/*']
-      vite:
-        patterns: ['vite', '@preact/preset-vite']
-      tailwind:
-        patterns: ['tailwindcss', '@tailwindcss/*', 'daisyui', 'prettier-plugin-tailwindcss']
+      # One group: @lingui/vite-plugin and @tailwindcss/vite pin their own family to an exact version
+      # and also peer-depend on vite, so a vite major only resolves when all three move together.
+      build-tooling:
+        patterns:
+          - 'vite'
+          - '@preact/preset-vite'
+          - '@lingui/*'
+          - 'tailwindcss'
+          - '@tailwindcss/*'
+          - 'daisyui'
+          - 'prettier-plugin-tailwindcss'
       capacitor:
         patterns: ['@capacitor/*', '@capgo/*']
       fontawesome:
