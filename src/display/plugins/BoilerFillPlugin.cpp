@@ -61,24 +61,32 @@ void BoilerFillPlugin::setup(Controller *controller, PluginManager *pluginManage
     });
 }
 
+bool BoilerFillPlugin::steamFillEligible() const {
+    if (controller == nullptr)
+        return false;
+    const int mode = controller->getMode();
+    if (mode == MODE_STEAM || mode == MODE_STANDBY)
+        return false;
+    if (!controller->isReady() || controller->isActive())
+        return false;
+    return controller->getCurrentTemp() < kSteamWaitTempC;
+}
+
 void BoilerFillPlugin::loop() {
     if (controller == nullptr)
         return;
 
     if (startupFillPending && controller->isReady() && !controller->isActive()) {
-        if (startFillProcess(true))
+        // Check before start — once the process is active, steam is no longer eligible.
+        const bool clearSteam = steamFillPending && steamFillEligible();
+        if (startFillProcess(true)) {
             startupFillPending = false;
+            if (clearSteam)
+                steamFillPending = false;
+        }
     }
 
-    if (!steamFillPending)
-        return;
-
-    const int mode = controller->getMode();
-    if (mode == MODE_STEAM || mode == MODE_STANDBY)
-        return;
-    if (!controller->isReady() || controller->isActive())
-        return;
-    if (controller->getCurrentTemp() >= kSteamWaitTempC)
+    if (!steamFillPending || !steamFillEligible())
         return;
 
     if (startFillProcess(false))

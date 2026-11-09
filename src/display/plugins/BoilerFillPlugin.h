@@ -13,6 +13,7 @@ class BoilerFillPlugin : public Plugin {
   private:
     bool usePressureFill() const;
     bool startFillProcess(bool startup);
+    bool steamFillEligible() const;
 
     Controller *controller = nullptr;
     bool startupFillPending = false;
