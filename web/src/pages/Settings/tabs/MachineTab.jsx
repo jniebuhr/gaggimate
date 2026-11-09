@@ -125,7 +125,7 @@ export function MachineTab({ formData, onChange, setField }) {
   const extLedPct = ((formData.sunriseExtBrightness / 255) * 100).toFixed(0);
 
   return (
-    <div className='space-y-4 sm:space-y-6 lg:grid lg:grid-cols-2 lg:gap-4'>
+    <div className='space-y-4 sm:space-y-6 lg:columns-2 lg:gap-4 lg:space-y-0 lg:[&>*]:mb-4 lg:[&>*]:break-inside-avoid'>
       {/* Machine Hardware Settings */}
       <Section title={t`Machine Settings`} className='h-full'>
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>

@@ -337,7 +337,7 @@ export function SystemTab() {
   }
 
   return (
-    <div className='space-y-4 sm:space-y-6 lg:grid lg:grid-cols-2 lg:gap-4'>
+    <div className='space-y-4 sm:space-y-6 lg:columns-2 lg:gap-4 lg:space-y-0 lg:[&>*]:mb-4 lg:[&>*]:break-inside-avoid'>
       {/* Firmware updates channel */}
       <Section title={t`System Version & Updates`} className='h-full'>
         <form ref={formRef} onSubmit={onSubmit} className='space-y-4'>
