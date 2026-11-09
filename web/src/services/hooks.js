@@ -50,14 +50,14 @@ effect(() => {
 const scheduleRetry = apiService => {
   clearTimeout(retryTimer);
   retryTimer = setTimeout(() => {
-    if (connected.value && !profilesLoaded.value) loadProfiles(apiService);
+    if (connected.value && !profilesLoaded.value) void loadProfiles(apiService);
   }, retryDelay);
   retryDelay = Math.min(retryDelay * 2, RETRY_MAX_MS);
 };
 
 /** @param {import('./ApiService.js').default} apiService */
 const loadProfiles = apiService => {
-  if (profilesInflight) return profilesInflight;
+  if (profilesInflight !== null) return profilesInflight;
   clearTimeout(retryTimer);
   const generation = profilesGeneration;
   const request = apiService
@@ -95,14 +95,14 @@ const useProfileList = () => {
   const apiService = useApiService();
 
   const invalidate = useCallback(async () => {
-    if (profilesInflight) await profilesInflight;
+    if (profilesInflight !== null) await profilesInflight;
     profilesLoaded.value = false;
     await loadProfiles(apiService);
   }, [apiService]);
 
   useSignalEffect(() => {
     if (connected.value && !profilesLoaded.value) {
-      loadProfiles(apiService);
+      void loadProfiles(apiService);
     }
   });
 
