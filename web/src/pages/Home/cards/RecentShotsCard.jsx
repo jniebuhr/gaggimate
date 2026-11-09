@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMagnifyingGlassChart } from '@fortawesome/free-solid-svg-icons/faMagnifyingGlassChart';
 import { parseBinaryIndex, indexToShotList } from '../../ShotHistory/parseBinaryIndex.js';
 import { ApiServiceContext } from '../../../services/ApiService.js';
-import { cleanName } from '../../ShotAnalyzer/utils/analyzerUtils.js';
+import { cleanName } from '../../ShotAnalyzer/utils/formatting.js';
 import {
   shotMetricSlotsSignal,
   clock24hSignal,
