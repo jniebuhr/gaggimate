@@ -589,7 +589,7 @@ export function ExtendedPhase({ phase, index, onChange, pressureAvailable }) {
         </div>
       </div>
       {targets.map((target, idx) => (
-        <Fragment key={idx}>
+        <Fragment key={`${target.type}-${target.operator || 'gte'}`}>
           {idx !== 0 && (
             <div className='divider'>
               <Trans context='stop condition separator'>OR</Trans>
