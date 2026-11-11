@@ -286,9 +286,11 @@ void WebSocketHandler::handleWebSocketData(AsyncWebSocket *server, AsyncWebSocke
                     client->text(toWsBuffer(resp));
                 } else if (msgType == "req:flush:start") {
                     handleFlushStart(client->id(), doc);
+                } else if (msgType == "req:steam:toggle") {
+                    controller->toggleSteamHeater();
                 } else if (msgType == "req:scale:tare") {
+                    controller->getClientController()->tareHardwareScale();
                     pluginManager->trigger("webui:scale:tare");
-                    controller->getClientController()->tare();
                 } else if (msgType == "req:flush:stop") {
                     handleFlushStop(client->id(), doc);
                 } else if (auto it = pluginRequestHandlers.find(msgType); it != pluginRequestHandlers.end()) {
@@ -407,6 +409,8 @@ void WebSocketHandler::publishState(unsigned long now) {
     doc["p"] = profile.label;
     doc["puid"] = profile.id;
     const auto &caps = controller->getSystemInfo().capabilities;
+    doc["sa"] = controller->isSteamHeaterActive();
+    doc["sca"] = controller->isSteamControlsAvailable();
     doc["cp"] = caps.pressure;
     doc["cd"] = caps.dimming;
     doc["gp"] = caps.hasAddon(7);
@@ -414,7 +418,19 @@ void WebSocketHandler::publishState(unsigned long now) {
     doc["scaleSource"] = controller->getActiveScaleSourceName();
     doc["led"] = caps.ledControl;
     doc["tofc"] = caps.tof;
+    // Legacy TOF capability also covers binary tank switches; only Alba provides a percentage.
+    doc["awl"] = caps.ledControl && caps.tof && !(caps.dualBoiler && controller->getSettings().getTankLevelEnabled());
     doc["sd"] = controller->isSDCard();
+    doc["htl"] = controller->hasTankLevel();
+    if (controller->hasTankLevelReading())
+        doc["tlo"] = controller->isTankLevelOK();
+    else
+        doc["tlo"] = nullptr;
+    doc["hsl"] = controller->hasSteamLevel();
+    if (controller->hasSteamLevelReading())
+        doc["sbl"] = controller->isSteamBoilerLow();
+    else
+        doc["sbl"] = nullptr;
     doc["tw"] = profile.getTotalVolume(); // total target weight for the process
     doc["bta"] = controller->isVolumetricAvailable() ? 1 : 0;
     doc["bt"] = controller->isVolumetricAvailable() && profile.isVolumetric() ? 1 : 0;

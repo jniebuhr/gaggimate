@@ -2,6 +2,8 @@
 # SCons cannot see. Declare it explicitly, and drop a blob object that is older than the .bin as a safety net
 # (SCons decides by content signature, so merely touching the .S does not rebuild it).
 import os
+import subprocess
+import sys
 
 Import("env")
 
@@ -14,3 +16,5 @@ env.Depends(BLOB_OBJ, WEB_UI_BIN)
 if os.path.exists(BLOB_OBJ) and os.path.exists(WEB_UI_BIN) and os.path.getmtime(WEB_UI_BIN) > os.path.getmtime(BLOB_OBJ):
     os.remove(BLOB_OBJ)
     print("sim_webui_dep: web_ui.bin changed, re-embedding the WebUI blob")
+
+subprocess.check_call([sys.executable, env.subst("$PROJECT_DIR/scripts/generate_machine_profile_schema.py")])

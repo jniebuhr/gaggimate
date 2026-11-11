@@ -19,8 +19,13 @@ static constexpr const char *INFO_CHAR_UUID = "f8d7203b-e00c-48e2-83ba-37ff49cdb
 static constexpr const char *LEGACY_ERROR_CHAR_UUID = "d6676ec7-820c-41de-820d-95620749003b";
 
 // Protocol 8 replaces PidSettings with HeaterSettings; controllers keep heaters off until they receive it.
+// Protocol 12 adds independent system/barista lighting configuration.
+// Protocol 13 adds effects to LED channel snapshots and the two onboard outputs.
+// Protocol 16 gives hardware-scale tare its own command; Tare resets pump volume only.
+// LED functions are display-side; hardware configuration version 7 removes them.
+// LED instructions include animation minimum brightness and cycle time.
 // Update controller and display together.
-static constexpr uint32_t PROTOCOL_VERSION = 8;
+static constexpr uint32_t PROTOCOL_VERSION = 16;
 
 // Outbound priorities (higher wins in the queue).
 enum Priority : uint8_t {

@@ -166,6 +166,10 @@ function MaintenanceSection({
           <Trans>Download Support Data</Trans>
         </button>
 
+        <a href='/setup' className='btn btn-outline btn-sm'>
+          <Trans>Run Setup Wizard</Trans>
+        </a>
+
         <button
           type='button'
           className='btn btn-outline btn-sm'

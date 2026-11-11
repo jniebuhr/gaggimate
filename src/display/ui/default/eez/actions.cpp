@@ -64,6 +64,7 @@ void action_on_volumetric_hold(lv_event_t *e) {
     SmartDose.onTare(true);
     SmartDose.onTare(false);
     controller.getClientController()->tare();
+    controller.getClientController()->tareHardwareScale();
     BLEScales.tare();
 };
 
@@ -230,6 +231,16 @@ void action_on_grind_toggle(lv_event_t *e) {
 };
 
 void action_on_simple_process_toggle(lv_event_t *e) {
+    if (controller.getSystemInfo().capabilities.dualBoiler && controller.getUI()->getCurrentScreen() == SCREEN_ID_STEAM_SCREEN) {
+        controller.toggleSteamHeater();
+        controller.getUI()->markDirty();
+        return;
+    }
+    if (controller.getSystemInfo().capabilities.dualBoiler && controller.getUI()->getCurrentScreen() == SCREEN_ID_WATER_SCREEN) {
+        controller.toggleWaterValve();
+        controller.getUI()->markDirty();
+        return;
+    }
     if (controller.getMode() != MODE_STEAM) {
         controller.isActive() ? controller.deactivate() : controller.activate();
         controller.getUI()->markDirty();
@@ -243,6 +254,8 @@ void action_on_previous_profile(lv_event_t *e) { controller.getUI()->onPreviousP
 void action_on_next_profile(lv_event_t *e) { controller.getUI()->onNextProfile(); };
 
 void action_on_profile_detail_toggle(lv_event_t *e) { controller.getUI()->onProfileDetailToggle(); }
+
+void action_on_welcome_continue(lv_event_t *e) { controller.getUI()->onWelcomeContinue(); }
 
 void action_on_brew_cancel(lv_event_t *e) {
     controller.deactivate();

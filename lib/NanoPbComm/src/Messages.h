@@ -11,6 +11,7 @@ namespace gm {
 using Frame = gaggimate_Frame;
 using Payload = gaggimate_Payload;
 
+using MachineHardwareSettings = gaggimate_MachineHardwareSettings;
 using Ping = gaggimate_Ping;
 using BoilerControl = gaggimate_BoilerControl;
 using PumpControl = gaggimate_PumpControl;
@@ -20,6 +21,7 @@ using PumpSettings = gaggimate_PumpSettings;
 using AutotuneRequest = gaggimate_AutotuneRequest;
 using PressureScale = gaggimate_PressureScale;
 using Tare = gaggimate_Tare;
+using HardwareScaleTare = gaggimate_HardwareScaleTare;
 using ScaleFactors = gaggimate_ScaleFactors;
 using LedChannel = gaggimate_LedChannel;
 using LedControl = gaggimate_LedControl;

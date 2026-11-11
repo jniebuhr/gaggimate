@@ -35,6 +35,7 @@ message Payload {
     reserved 6; // retired PidSettings (merged into HeaterSettings)
     oneof content {
         // Commands: display -> controller
+        MachineHardwareSettings machine_hardware = 17;
         Ping ping = 1;
         BoilerControl boiler = 2;
         PumpControl pump = 3;
@@ -43,11 +44,13 @@ message Payload {
         AutotuneRequest autotune = 8;
         PressureScale pressure_scale = 9;
         Tare tare = 10;
+        HardwareScaleTare hardware_scale_tare = 31;
         LedControl led = 11;
         ScaleFactors scale_factors = 12;
         HeaterSettings heater = 13;
 
         // Responses: controller -> display
+        MachineHardwareStatus machine_hardware_status = 30;
         SystemInfo system_info = 20;
         SensorData sensor = 21;
         ButtonState button = 22;
@@ -110,6 +113,38 @@ message HeaterSettings {
     float kf = 4;                         // combined thermal feedforward gain
     bool heater_coordination_enabled = 5; // dual boiler: power heaters one at a time instead of in parallel, brew first
     uint32 handover_ms = 6;               // dual boiler: dead time between heaters when coordinated (clamped 20..5000)
+    float steam_kp = 7;
+    float steam_ki = 8;
+    float steam_kd = 9;
+}
+
+message MachineHardwareSettings {
+    float ntc_brew_nominal_resistance = 1;
+    float ntc_brew_series_resistance = 2;
+    float ntc_brew_supply_voltage = 3;
+    float ntc_brew_beta = 4;
+    float ntc_steam_nominal_resistance = 5;
+    float ntc_steam_series_resistance = 6;
+    float ntc_steam_supply_voltage = 7;
+    float ntc_steam_beta = 8;
+    bool tank_level_enabled = 9;
+    bool steam_level_enabled = 10;
+    reserved 11;
+    reserved 12;
+    reserved 13, 14;
+    uint32 steam_level_debounce_checks = 15;
+    uint32 version = 16;
+    reserved 17, 18;
+    bool restart_if_required = 19;
+    reserved 20;
+    reserved 21;
+    reserved 22;
+}
+
+message MachineHardwareStatus {
+    uint32 hash = 1;
+    bool ready = 2;
+    bool error = 3;
 }
 
 message PumpSettings {
@@ -144,7 +179,10 @@ message PressureScale {
     float scale = 1;
 }
 
+// Reset pump-derived volume counters only.
 message Tare {}
+
+message HardwareScaleTare {}
 
 message ScaleFactors {
     float scale_factor1 = 1;
@@ -158,6 +196,9 @@ message ScaleFactors {
 message LedChannel {
     uint32 channel = 1;    // PCA9634 output index (0..7)
     uint32 brightness = 2; // 0..255
+    uint32 effect = 3; // Onboard channels: 0 off, 1 flashing, 2 breathing, 3 on; Alba ignores this.
+    uint32 min_brightness = 4; // onboard animation floor (0..brightness)
+    uint32 cycle_time_ms = 5;  // onboard full animation cycle (500..10000 ms)
 }
 
 // Drive one or more LED channels in a single atomic update. Carrying every
@@ -210,6 +251,10 @@ message SensorData {
     float puck_resistance = 4;
     float pump_power = 5;   // pump power 0..100 %
     float water_pumped = 7; // cumulative water pumped in ml
+    bool has_tank_level = 8;
+    bool tank_level_ok = 9;
+    reserved 10 to 16;
+    optional bool steam_boiler_low = 17; // Present once the enabled level sensor has a debounced reading.
 }
 
 message ButtonState {
