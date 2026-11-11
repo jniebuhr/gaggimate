@@ -1,5 +1,4 @@
 import { machine } from '../services/ApiService.js';
-import { useEffect, useRef, useState } from 'preact/hooks';
 import { Chart } from 'chart.js';
 import { ChartComponent } from './Chart.jsx';
 import { t } from '@lingui/core/macro';
@@ -268,7 +267,7 @@ function getChartData(data) {
   return {
     type: 'line',
     data: {
-      datasets: datasets,
+      datasets,
     },
     options: {
       responsive: true,
@@ -285,7 +284,7 @@ function getChartData(data) {
             font: {
               size: window.innerWidth < 640 ? 10 : 12,
             },
-            generateLabels: function (chart) {
+            generateLabels(chart) {
               const original = Chart.defaults.plugins.legend.labels.generateLabels;
               const labels = original.call(this, chart);
 
@@ -381,29 +380,27 @@ function getChartData(data) {
             source: 'auto',
             autoSkip: true,
             autoSkipPadding: 0,
-            callback: (value, index, ticks) => {
+            callback: value => {
               if (isBrewActive) {
                 // For brewing: show relative time from chart end in a clean format
                 const chartEnd = end.getTime();
                 const diffSeconds = Math.ceil((chartEnd - value) / 1000);
                 if (diffSeconds < 60) {
                   return `${diffSeconds}s`;
-                } else {
-                  const minutes = Math.floor(diffSeconds / 60);
-                  const seconds = diffSeconds % 60;
-                  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
                 }
-              } else {
-                // For normal view: show time ago from chart end
-                const chartEnd = end.getTime();
-                const diff = Math.ceil((chartEnd - value) / 1000);
-                return `-${diff}s`;
+                const minutes = Math.floor(diffSeconds / 60);
+                const seconds = diffSeconds % 60;
+                return `${minutes}:${seconds.toString().padStart(2, '0')}`;
               }
+              // For normal view: show time ago from chart end
+              const chartEnd = end.getTime();
+              const diff = Math.ceil((chartEnd - value) / 1000);
+              return `-${diff}s`;
             },
             font: {
               size: window.innerWidth < 640 ? 10 : 12,
             },
-            maxTicksLimit: maxTicksLimit,
+            maxTicksLimit,
           },
         },
       },

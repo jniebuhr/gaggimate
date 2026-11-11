@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'preact/hooks';
 import { Trans } from '@lingui/react/macro';
-import { GmLogoIcon } from '../pages/ShotAnalyzer/components/SourceMarker.jsx';
+import { GmLogoIcon } from '../components/GmLogoIcon.jsx';
 import { activeMachine, showMachineSetup } from './machines.js';
 
 const SLOW_CONNECT_MS = 8000;

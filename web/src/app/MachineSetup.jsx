@@ -13,7 +13,7 @@ import { useMachinePeeks } from './machineConnections.js';
 import { FirmwareWarning } from './FirmwareWarning.jsx';
 import { Notice } from './Notice.jsx';
 import { formatMachineStatus } from './machineStatus.js';
-import { GmLogoIcon } from '../pages/ShotAnalyzer/components/SourceMarker.jsx';
+import { GmLogoIcon } from '../components/GmLogoIcon.jsx';
 import {
   activeMachineId,
   addMachine,

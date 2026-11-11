@@ -350,6 +350,7 @@ void WebSocketHandler::handleProfileRequest(uint32_t clientId, JsonDocument &req
             if (request["minimal"].as<bool>()) {
                 p["id"] = profile.id;
                 p["label"] = profile.label;
+                p["utility"] = profile.utility;
             } else {
                 writeProfile(p, profile);
             }

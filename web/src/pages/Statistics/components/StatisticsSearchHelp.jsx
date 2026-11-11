@@ -10,8 +10,6 @@ import {
 import './StatisticsSearchHelp.css';
 import { Trans, useLingui } from '@lingui/react/macro';
 
-/* global globalThis */
-
 const STATISTICS_SEARCH_HELP_PANEL_CLASS = `dropdown-content mt-2 w-[min(92vw,34rem)] p-3 ${STATISTICS_DROPDOWN_PANEL_SURFACE_CLASS}`;
 const STATISTICS_SEARCH_HELP_FLOATING_ATTR = 'data-statistics-toolbar-floating-panel';
 
