@@ -1,6 +1,7 @@
 import { useState } from 'preact/hooks';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { Spinner } from '../../components/Spinner.jsx';
+import { Markdown } from '../../components/Markdown.jsx';
 
 const API = 'https://api.github.com/repos/jniebuhr/gaggimate';
 
@@ -58,7 +59,9 @@ function CommitList({ commits }) {
             {body ? (
               <details className='bg-base-200 rounded-lg p-3'>
                 <summary className='cursor-pointer'>{head}</summary>
-                <pre className='mt-2 text-sm whitespace-pre-wrap'>{body}</pre>
+                <div className='mt-2'>
+                  <Markdown text={body} />
+                </div>
               </details>
             ) : (
               <div className='bg-base-200 rounded-lg p-3'>{head}</div>
@@ -129,7 +132,7 @@ export function PatchNotes({ channel, installedVersion, latestVersion }) {
       {current && view === 'stable' && (
         <div className='max-h-96 overflow-y-auto'>
           <h4 className='mb-2 font-semibold'>{current.release.name || current.release.tag_name}</h4>
-          <pre className='text-sm whitespace-pre-wrap'>{current.release.body}</pre>
+          <Markdown text={current.release.body} />
         </div>
       )}
 
