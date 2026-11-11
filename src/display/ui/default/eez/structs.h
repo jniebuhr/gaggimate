@@ -52,6 +52,7 @@ enum SystemStatusFlowStructureFields {
     FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_NETWORK = 15,
     FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_IP = 16,
     FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_AP_ACTIVE = 17,
+    FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_DUAL_BOILER = 18,
     FLOW_STRUCTURE_SYSTEM_STATUS_NUM_FIELDS
 };
 
@@ -92,6 +93,7 @@ enum UIFlagsFlowStructureFields {
     FLOW_STRUCTURE_UI_FLAGS_FIELD_BREW_CONFIRM_VISIBLE = 8,
     FLOW_STRUCTURE_UI_FLAGS_FIELD_CHART_MODE = 9,
     FLOW_STRUCTURE_UI_FLAGS_FIELD_PROFILE_DETAILS_VISIBLE = 10,
+    FLOW_STRUCTURE_UI_FLAGS_FIELD_STEAM_ACTIVE = 11,
     FLOW_STRUCTURE_UI_FLAGS_NUM_FIELDS
 };
 
@@ -235,6 +237,11 @@ struct SystemStatusValue {
     bool ap_active() { return value.getArray()->values[FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_AP_ACTIVE].getBoolean(); }
     void ap_active(bool ap_active) {
         value.getArray()->values[FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_AP_ACTIVE] = BooleanValue(ap_active);
+    }
+
+    bool dual_boiler() { return value.getArray()->values[FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_DUAL_BOILER].getBoolean(); }
+    void dual_boiler(bool dual_boiler) {
+        value.getArray()->values[FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_DUAL_BOILER] = BooleanValue(dual_boiler);
     }
 };
 
@@ -404,6 +411,11 @@ struct UIFlagsValue {
     }
     void profile_details_visible(bool profile_details_visible) {
         value.getArray()->values[FLOW_STRUCTURE_UI_FLAGS_FIELD_PROFILE_DETAILS_VISIBLE] = BooleanValue(profile_details_visible);
+    }
+
+    bool steam_active() { return value.getArray()->values[FLOW_STRUCTURE_UI_FLAGS_FIELD_STEAM_ACTIVE].getBoolean(); }
+    void steam_active(bool steam_active) {
+        value.getArray()->values[FLOW_STRUCTURE_UI_FLAGS_FIELD_STEAM_ACTIVE] = BooleanValue(steam_active);
     }
 };
 

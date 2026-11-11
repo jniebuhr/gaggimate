@@ -299,6 +299,11 @@
             "objID": "175904d9-09e9-4eff-dc5f-bc2b97abe4c8",
             "name": "ap_active",
             "type": "boolean"
+          },
+          {
+            "objID": "3bdd4a8c-288c-4106-bfb3-181aae9869f1",
+            "name": "dual_boiler",
+            "type": "boolean"
           }
         ]
       },
@@ -456,6 +461,11 @@
           {
             "objID": "47af586d-f3bf-4447-894c-9c5be39bec2b",
             "name": "profile_details_visible",
+            "type": "boolean"
+          },
+          {
+            "objID": "10df7570-ea2c-45ae-8a2a-6073f094ce9a",
+            "name": "steam_active",
             "type": "boolean"
           }
         ]
@@ -6364,7 +6374,8 @@
                   "heightUnit": "px",
                   "children": [],
                   "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_ON_FOCUS|SCROLL_WITH_ARROW|SNAPPABLE",
-                  "hiddenFlagType": "literal",
+                  "hiddenFlag": "system.dual_boiler",
+                  "hiddenFlagType": "expression",
                   "clickableFlag": true,
                   "clickableFlagType": "literal",
                   "flagScrollbarMode": "",
@@ -7295,7 +7306,7 @@
                       },
                       "group": "",
                       "groupIndex": 0,
-                      "text": "String.format(\"%.0f\", boiler.target_temperature) + \"°C\"",
+                      "text": "system.dual_boiler && !ui_flags.steam_active ? \"Off\" : String.format(\"%.0f\", boiler.target_temperature) + \"°C\"",
                       "textType": "expression",
                       "longMode": "WRAP",
                       "recolor": false,
@@ -7343,7 +7354,8 @@
                       "scrollSnapX": "none",
                       "scrollSnapY": "none",
                       "checkedStateType": "literal",
-                      "disabledStateType": "literal",
+                      "disabledState": "system.dual_boiler && !ui_flags.steam_active",
+                      "disabledStateType": "expression",
                       "states": "",
                       "useStyle": "",
                       "localStyles": {
@@ -7403,7 +7415,8 @@
                       "scrollSnapX": "none",
                       "scrollSnapY": "none",
                       "checkedStateType": "literal",
-                      "disabledStateType": "literal",
+                      "disabledState": "system.dual_boiler && !ui_flags.steam_active",
+                      "disabledStateType": "expression",
                       "states": "",
                       "useStyle": "",
                       "localStyles": {
@@ -7464,21 +7477,32 @@
                     "childStyles": []
                   },
                   "timeline": [],
-                  "eventHandlers": [],
+                  "eventHandlers": [
+                    {
+                      "objID": "db00bb77-11ae-46df-d549-cfe1921416c0",
+                      "eventName": "CLICKED",
+                      "handlerType": "action",
+                      "action": "onSimpleProcessToggle",
+                      "userData": 0
+                    }
+                  ],
+                  "identifier": "steamToggle",
                   "leftUnit": "px",
                   "topUnit": "px",
                   "widthUnit": "content",
                   "heightUnit": "content",
                   "children": [],
                   "widgetFlags": "ADV_HITTEST|CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLLABLE|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_WITH_ARROW|SNAPPABLE",
-                  "hiddenFlag": "!ui_flags.active",
+                  "hiddenFlag": "!ui_flags.active && !system.dual_boiler",
                   "hiddenFlagType": "expression",
+                  "clickableFlag": true,
                   "clickableFlagType": "literal",
                   "flagScrollbarMode": "",
                   "flagScrollDirection": "",
                   "scrollSnapX": "",
                   "scrollSnapY": "",
-                  "checkedStateType": "literal",
+                  "checkedState": "ui_flags.steam_active",
+                  "checkedStateType": "expression",
                   "disabledStateType": "literal",
                   "states": "",
                   "localStyles": {
@@ -7489,6 +7513,10 @@
                           "img_recolor": "NiceWhite",
                           "img_recolor_opa": 255,
                           "align": "CENTER"
+                        },
+                        "CHECKED": {
+                          "img_recolor": "Temperature",
+                          "img_recolor_opa": 255
                         }
                       }
                     }

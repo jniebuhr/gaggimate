@@ -1001,12 +1001,14 @@ void Controller::raiseSteamTemp() {
     float temp = getTargetSteamTemp();
     temp = constrain(temp + 1.0f, MIN_TEMP, MAX_TEMP);
     settings.setTargetSteamTemp(static_cast<int>(temp));
+    pluginManager->trigger("boiler:targetSteamTemperature:change", "value", temp);
 }
 
 void Controller::lowerSteamTemp() {
     float temp = getTargetSteamTemp();
     temp = constrain(temp - 1.0f, MIN_TEMP, MAX_TEMP);
     settings.setTargetSteamTemp(static_cast<int>(temp));
+    pluginManager->trigger("boiler:targetSteamTemperature:change", "value", temp);
 }
 
 void Controller::raiseBrewTarget() {
