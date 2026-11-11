@@ -49,7 +49,7 @@
     "chart.js": "^4.4.8",
     "chartjs-adapter-dayjs-4": "^1.0.4",
     "chartjs-plugin-annotation": "^3.1.0",
-    "daisyui": "^5.5.20",
+    "daisyui": "^5.7.50",
     "dayjs": "^1.11.13",
     "idb": "^8.0.3",
     "preact": "^10.22.1",
@@ -72,8 +72,8 @@
     "eslint": "^9.39.5",
     "eslint-config-preact": "^2.0.0",
     "prettier": "^3.6.2",
-    "prettier-plugin-tailwindcss": "^0.6.14",
-    "tailwindcss": "^4.1.11",
+    "prettier-plugin-tailwindcss": "^0.8.1",
+    "tailwindcss": "^4.3.5",
     "vite": "^8.3.8"
   }
 }
