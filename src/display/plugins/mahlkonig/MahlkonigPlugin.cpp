@@ -338,7 +338,8 @@ void MahlkonigPlugin::selectRecipeProfile(const String &profileId) {
         return;
     }
     ESP_LOGI(TAG, "Selecting profile %s for grinder recipe", profileId.c_str());
-    profileManager->selectProfile(profileId);
+    if (!profileManager->selectProfile(profileId))
+        ESP_LOGW(TAG, "Could not select profile %s for grinder recipe, keeping the selected profile", profileId.c_str());
 }
 
 String MahlkonigPlugin::recipeProfile(int recipe) const {

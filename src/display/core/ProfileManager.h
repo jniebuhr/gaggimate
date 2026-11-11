@@ -30,7 +30,7 @@ class ProfileManager {
     std::vector<String> listProfileImages();
     // Reads and validates a profile image; returns its RGB565 pixels in PSRAM (caller frees) or nullptr.
     uint8_t *loadProfileImage(const String &uuid);
-    void selectProfile(const String &uuid);
+    bool selectProfile(const String &uuid);
     Profile &getSelectedProfile();
     bool loadSelectedProfile(Profile &outProfile);
     std::vector<String> getFavoritedProfiles(bool validate = false);
@@ -48,6 +48,7 @@ class ProfileManager {
     String profilePath(const String &uuid) const;
     void migrate(const std::vector<String> &existingProfiles);
     void ensureSystemProfiles();
+    String findReplacementProfile(const String &excludeId);
 };
 
 #endif // PROFILEMANAGER_H
