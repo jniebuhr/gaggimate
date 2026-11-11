@@ -252,6 +252,10 @@ void DefaultUI::init() {
     pluginManager->on("controller:process:start", triggerRender);
     pluginManager->on("controller:mode:change", [this](Event const &event) {
         mode = event.getInt("value");
+        // Reset this immediately, before the deferred screen change. Otherwise
+        // an expired timestamp from the previous standby session can briefly
+        // reactivate the starfield while another screen is still visible.
+        standbyEnterTime = mode == MODE_STANDBY ? ::millis() : 0;
         switch (mode) {
         case MODE_STANDBY:
             changeScreen(SCREEN_ID_STANDBY_SCREEN);
@@ -439,18 +443,25 @@ void DefaultUI::loop() {
     }
 
     ui_tick();
-    updateOledScreensaver(now);
+    updateOledScreensaver();
     lv_task_handler();
 }
 
-void DefaultUI::updateOledScreensaver(unsigned long now) {
-    if (!controller->hasOledPanel() || mode != MODE_STANDBY || currentScreen != SCREEN_ID_STANDBY_SCREEN ||
-        standbyEnterTime == 0 || objects.standby_screen == nullptr) {
+void DefaultUI::updateOledScreensaver() {
+    // Read the start time before sampling the clock. handleScreenChange() can
+    // reset the start time after loop() sampled its `now`; subtracting that
+    // older value would underflow and look like a very long standby period.
+    const unsigned long standbyStartedAt = standbyEnterTime;
+    const unsigned long now = ::millis();
+    const bool standbyScreenVisible = objects.standby_screen != nullptr &&
+                                      eez_flow_get_current_screen() == SCREEN_ID_STANDBY_SCREEN &&
+                                      lv_scr_act() == objects.standby_screen;
+    if (!controller->hasOledPanel() || mode != MODE_STANDBY || !standbyScreenVisible || standbyStartedAt == 0) {
         stopOledScreensaver();
         return;
     }
 
-    const unsigned long standbyTime = now - standbyEnterTime;
+    const unsigned long standbyTime = now - standbyStartedAt;
     if (standbyTime < OLED_SCREENSAVER_TIMEOUT_MS) {
         stopOledScreensaver();
         return;

@@ -86,7 +86,7 @@ class DefaultUI {
     void setupState();
 
     void handleScreenChange();
-    void updateOledScreensaver(unsigned long now);
+    void updateOledScreensaver();
     void moveScreensaverBranding();
     void stopOledScreensaver();
 
