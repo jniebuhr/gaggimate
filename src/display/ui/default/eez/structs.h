@@ -52,6 +52,7 @@ enum SystemStatusFlowStructureFields {
     FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_NETWORK = 15,
     FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_IP = 16,
     FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_AP_ACTIVE = 17,
+    FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_DUAL_BOILER_AVAILABLE = 18,
     FLOW_STRUCTURE_SYSTEM_STATUS_NUM_FIELDS
 };
 
@@ -233,6 +234,13 @@ struct SystemStatusValue {
     bool ap_active() { return value.getArray()->values[FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_AP_ACTIVE].getBoolean(); }
     void ap_active(bool ap_active) {
         value.getArray()->values[FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_AP_ACTIVE] = BooleanValue(ap_active);
+    }
+
+    bool dual_boiler_available() {
+        return value.getArray()->values[FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_DUAL_BOILER_AVAILABLE].getBoolean();
+    }
+    void dual_boiler_available(bool dual_boiler_available) {
+        value.getArray()->values[FLOW_STRUCTURE_SYSTEM_STATUS_FIELD_DUAL_BOILER_AVAILABLE] = BooleanValue(dual_boiler_available);
     }
 };
 

@@ -817,6 +817,27 @@ void DefaultUI::updateSystemStatus() {
         systemStatus.error_label(errorLabel.c_str());
     systemStatus.volumetric_available(controller->isVolumetricAvailable());
     const auto dosing = SmartDose.getUIState();
+    systemStatus.dual_boiler_available(controller->getSystemInfo().capabilities.dualBoiler);
+    eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_BREW_TEMPERATURE, FloatValue(controller->getCurrentTemp()));
+    eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_STEAM_TEMPERATURE, FloatValue(controller->getCurrentSteamTemp()));
+    eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_STEAM_ENABLED,
+                                 BooleanValue(dualBoiler && controller->isSteamHeaterActive()));
+    const float brewTarget = controller->getTargetTemp();
+    const char *brewStatus;
+    if (!controller->getClientController()->isConnected() || controller->getSystemInfo().protocolMismatch ||
+        (controller->isErrorState() && controller->getError() == ERROR_CODE_TIMEOUT)) {
+        brewStatus = "!COMMS LOSS!";
+    } else if (!controller->isTankLevelOK()) {
+        brewStatus = "!WATER LEVEL LOW!";
+    } else if (controller->getWarnings().isTemperatureStable()) {
+        brewStatus = "Ready to Brew";
+    } else if (brewTarget > 0 && controller->getCurrentTemp() > brewTarget + std::fmax(2.0f, brewTarget * 0.02f)) {
+        brewStatus = "Cooling Down";
+    } else {
+        brewStatus = "Heating Up";
+    }
+    if (stringChanged(eez::flow::getGlobalVariable(FLOW_GLOBAL_VARIABLE_BREW_STATUS).getString(), brewStatus))
+        eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_BREW_STATUS, StringValue(brewStatus));
     systemStatus.bluetooth_scales((currentScreen == SCREEN_ID_BREW_SCREEN && dosing.state != 0) ||
                                   controller->isScaleSourceHealthy(controller->getEffectiveScaleSource()));
     systemStatus.controller_version(controller->getSystemInfo().version.c_str());
@@ -912,7 +933,7 @@ void DefaultUI::updateBoiler() {
     const ::Settings &settings = controller->getSettings();
     bool showSteamTemp = dualBoiler && currentScreen == SCREEN_ID_STEAM_SCREEN;
     boiler.current_temperature(showSteamTemp ? controller->getCurrentSteamTemp() : controller->getCurrentTemp());
-    boiler.target_temperature(showSteamTemp ? controller->getTargetSteamTemp() : controller->getTargetTemp());
+    boiler.target_temperature(showSteamTemp ? settings.getTargetSteamTemp() : controller->getTargetTemp());
     boiler.current_pressure(pressure);
     boiler.target_pressure(controller->getTargetPressure());
     boiler.max_temperature(160.0f);

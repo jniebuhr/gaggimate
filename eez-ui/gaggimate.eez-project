@@ -203,6 +203,35 @@
         "type": "integer",
         "defaultValue": "0",
         "persistent": false
+      },
+      {
+        "objID": "a593b331-15f7-48b2-f0ee-a0b9bdfba3f6",
+        "name": "steam_temperature",
+        "type": "float",
+        "defaultValue": "0",
+        "persistent": false
+      },
+      {
+        "objID": "fdf38b60-b791-4d3c-b459-bfbfc58a8bb2",
+        "name": "steam_enabled",
+        "type": "boolean",
+        "defaultValue": "false",
+        "persistent": false
+      },
+      {
+        "objID": "f2f390d7-659c-404b-dda8-b0677de742b3",
+        "name": "brew_status",
+        "type": "string",
+        "size": null,
+        "defaultValue": "\"\"",
+        "persistent": false
+      },
+      {
+        "objID": "a324acc1-2bf5-4b4e-ad06-307e2b116f54",
+        "name": "brew_temperature",
+        "type": "float",
+        "defaultValue": "0",
+        "persistent": false
       }
     ],
     "structures": [
@@ -298,6 +327,11 @@
           {
             "objID": "175904d9-09e9-4eff-dc5f-bc2b97abe4c8",
             "name": "ap_active",
+            "type": "boolean"
+          },
+          {
+            "objID": "30007ea9-0abf-4eb8-93d3-4d195535f345",
+            "name": "dual_boiler_available",
             "type": "boolean"
           }
         ]
@@ -1697,7 +1731,7 @@
               "left": 0,
               "top": 0,
               "width": 360,
-              "height": 360,
+              "height": 340,
               "customInputs": [],
               "customOutputs": [],
               "style": {
@@ -1714,60 +1748,6 @@
               "widthUnit": "px",
               "heightUnit": "px",
               "children": [
-                {
-                  "objID": "37eda4b7-3756-4dc8-844c-c7ba628fcd25",
-                  "type": "LVGLLabelWidget",
-                  "left": 0,
-                  "top": -140,
-                  "width": 64,
-                  "height": 27,
-                  "customInputs": [],
-                  "customOutputs": [],
-                  "style": {
-                    "objID": "6be66f55-0e93-4c03-b265-fc2d90270971",
-                    "useStyle": "default",
-                    "conditionalStyles": [],
-                    "childStyles": []
-                  },
-                  "hiddenInEditor": false,
-                  "timeline": [],
-                  "eventHandlers": [],
-                  "leftUnit": "px",
-                  "topUnit": "px",
-                  "widthUnit": "content",
-                  "heightUnit": "content",
-                  "children": [],
-                  "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLLABLE|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_WITH_ARROW|SNAPPABLE",
-                  "hiddenFlagType": "literal",
-                  "clickableFlagType": "literal",
-                  "flagScrollbarMode": "",
-                  "flagScrollDirection": "",
-                  "scrollSnapX": "",
-                  "scrollSnapY": "",
-                  "checkedStateType": "literal",
-                  "disabledStateType": "literal",
-                  "states": "",
-                  "localStyles": {
-                    "objID": "4019e3b5-4839-4a80-95b2-3946f2580f78",
-                    "definition": {
-                      "MAIN": {
-                        "DEFAULT": {
-                          "align": "CENTER",
-                          "text_font": "MONTSERRAT_24",
-                          "text_color": "NiceWhite"
-                        }
-                      }
-                    }
-                  },
-                  "group": "",
-                  "groupIndex": 0,
-                  "text": "ui_flags.brew_adjustments ? \"Adjust Profile\": \"Brew\"",
-                  "textType": "expression",
-                  "longMode": "WRAP",
-                  "recolor": false,
-                  "previewValue": "Brew",
-                  "useStaticText": true
-                },
                 {
                   "objID": "c0bcd8e4-b818-447c-afc8-45185da4aed0",
                   "type": "LVGLImgbuttonWidget",
@@ -3912,6 +3892,60 @@
                     "objID": "9601988b-5f7d-4d99-b418-d65bcf2eda7c",
                     "values": {}
                   }
+                },
+                {
+                  "objID": "94e0535b-a624-4049-8ff1-7514437f67b2",
+                  "type": "LVGLLabelWidget",
+                  "left": 0,
+                  "top": -140,
+                  "width": 64,
+                  "height": 27,
+                  "customInputs": [],
+                  "customOutputs": [],
+                  "style": {
+                    "objID": "c9ec186b-eeb3-4e83-82ac-3ebf7faee1a8",
+                    "useStyle": "default",
+                    "conditionalStyles": [],
+                    "childStyles": []
+                  },
+                  "hiddenInEditor": false,
+                  "timeline": [],
+                  "eventHandlers": [],
+                  "leftUnit": "px",
+                  "topUnit": "px",
+                  "widthUnit": "content",
+                  "heightUnit": "content",
+                  "children": [],
+                  "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLLABLE|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_WITH_ARROW|SNAPPABLE",
+                  "hiddenFlagType": "literal",
+                  "clickableFlagType": "literal",
+                  "flagScrollbarMode": "",
+                  "flagScrollDirection": "",
+                  "scrollSnapX": "",
+                  "scrollSnapY": "",
+                  "checkedStateType": "literal",
+                  "disabledStateType": "literal",
+                  "states": "",
+                  "localStyles": {
+                    "objID": "75d75ddf-23d4-4b40-a5e9-2e9a85a6a962",
+                    "definition": {
+                      "MAIN": {
+                        "DEFAULT": {
+                          "align": "CENTER",
+                          "text_font": "MONTSERRAT_24",
+                          "text_color": "NiceWhite"
+                        }
+                      }
+                    }
+                  },
+                  "group": "",
+                  "groupIndex": 0,
+                  "text": "brew_status",
+                  "textType": "expression",
+                  "longMode": "WRAP",
+                  "recolor": false,
+                  "previewValue": "Brew",
+                  "useStaticText": true
                 }
               ],
               "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLLABLE|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_WITH_ARROW|SNAPPABLE",
@@ -4377,7 +4411,7 @@
                   "left": 0,
                   "top": 0,
                   "width": 360,
-                  "height": 360,
+                  "height": 340,
                   "customInputs": [],
                   "customOutputs": [],
                   "style": {
@@ -6336,6 +6370,7 @@
                     "conditionalStyles": [],
                     "childStyles": []
                   },
+                  "hiddenInEditor": false,
                   "timeline": [],
                   "eventHandlers": [
                     {
@@ -6353,7 +6388,8 @@
                   "heightUnit": "px",
                   "children": [],
                   "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_ON_FOCUS|SCROLL_WITH_ARROW|SNAPPABLE",
-                  "hiddenFlagType": "literal",
+                  "hiddenFlag": "system.dual_boiler_available",
+                  "hiddenFlagType": "expression",
                   "clickableFlag": true,
                   "clickableFlagType": "literal",
                   "flagScrollbarMode": "",
@@ -7453,21 +7489,31 @@
                     "childStyles": []
                   },
                   "timeline": [],
-                  "eventHandlers": [],
+                  "eventHandlers": [
+                    {
+                      "objID": "aee6a4d7-da18-4c6c-f27f-7b9ae90a4241",
+                      "eventName": "CLICKED",
+                      "handlerType": "action",
+                      "action": "onSimpleProcessToggle",
+                      "userData": 0
+                    }
+                  ],
                   "leftUnit": "px",
                   "topUnit": "px",
                   "widthUnit": "content",
                   "heightUnit": "content",
                   "children": [],
                   "widgetFlags": "ADV_HITTEST|CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLLABLE|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_WITH_ARROW|SNAPPABLE",
-                  "hiddenFlag": "!ui_flags.active",
+                  "hiddenFlag": "!system.dual_boiler_available && !ui_flags.active",
                   "hiddenFlagType": "expression",
-                  "clickableFlagType": "literal",
+                  "clickableFlag": "system.dual_boiler_available",
+                  "clickableFlagType": "expression",
                   "flagScrollbarMode": "",
                   "flagScrollDirection": "",
                   "scrollSnapX": "",
                   "scrollSnapY": "",
-                  "checkedStateType": "literal",
+                  "checkedState": "steam_enabled",
+                  "checkedStateType": "expression",
                   "disabledStateType": "literal",
                   "states": "",
                   "localStyles": {
@@ -7478,6 +7524,10 @@
                           "img_recolor": "NiceWhite",
                           "img_recolor_opa": 255,
                           "align": "CENTER"
+                        },
+                        "CHECKED": {
+                          "img_recolor": "red",
+                          "img_recolor_opa": 255
                         }
                       }
                     }
@@ -15566,7 +15616,7 @@
           },
           "group": "",
           "groupIndex": 0,
-          "text": "String.format(\"%.f\", boiler.current_temperature) + \" °C\"",
+          "text": "String.format(\"%.f\", system.dual_boiler_available ? brew_temperature : boiler.current_temperature) + \" °C\"",
           "textType": "expression",
           "longMode": "WRAP",
           "recolor": false,
@@ -15622,11 +15672,71 @@
           },
           "group": "",
           "groupIndex": 0,
-          "text": "String.format(\"%.f\", boiler.current_temperature) + \" °C\"",
+          "text": "String.format(\"%.f\", system.dual_boiler_available ? brew_temperature : boiler.current_temperature) + \" °C\"",
           "textType": "expression",
           "longMode": "WRAP",
           "recolor": false,
           "previewValue": "100 °C",
+          "useStaticText": true
+        },
+        {
+          "objID": "08402eaf-dd5e-4a37-969c-c407753dcd64",
+          "type": "LVGLLabelWidget",
+          "left": -50,
+          "top": -178,
+          "width": 64,
+          "height": 27,
+          "customInputs": [],
+          "customOutputs": [],
+          "style": {
+            "objID": "7034d189-7cc0-4874-dd2d-6d08dd338122",
+            "useStyle": "default",
+            "conditionalStyles": [],
+            "childStyles": []
+          },
+          "hiddenInEditor": false,
+          "timeline": [],
+          "eventHandlers": [],
+          "identifier": "tempText2",
+          "leftUnit": "px",
+          "topUnit": "px",
+          "widthUnit": "content",
+          "heightUnit": "content",
+          "children": [],
+          "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLLABLE|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_WITH_ARROW|SNAPPABLE",
+          "hiddenFlag": "!system.dual_boiler_available || minimal",
+          "hiddenFlagType": "expression",
+          "clickableFlagType": "literal",
+          "flagScrollbarMode": "",
+          "flagScrollDirection": "",
+          "scrollSnapX": "",
+          "scrollSnapY": "",
+          "checkedStateType": "literal",
+          "disabledState": "steam_enabled",
+          "disabledStateType": "expression",
+          "states": "",
+          "localStyles": {
+            "objID": "cd8a8ffe-3eb0-4606-a3f5-bbddc897e9bd",
+            "definition": {
+              "MAIN": {
+                "DEFAULT": {
+                  "align": "CENTER",
+                  "text_font": "MONTSERRAT_24",
+                  "text_color": "NiceWhite"
+                },
+                "DISABLED": {
+                  "text_color": "#d02b2b"
+                }
+              }
+            }
+          },
+          "group": "",
+          "groupIndex": 0,
+          "text": "String.format(\"%.f\", steam_temperature) + \" °C\"",
+          "textType": "expression",
+          "longMode": "WRAP",
+          "recolor": false,
+          "previewValue": "80 °C",
           "useStaticText": true
         }
       ],
