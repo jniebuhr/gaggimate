@@ -14,6 +14,7 @@
 #endif
 #include <cmath>
 #include <display/main.h>
+#include <display/plugins/SmartDosePlugin.h>
 #include <display/ui/utils/effects.h>
 #include <esp32-hal-psram.h>
 #include <utility>
@@ -380,7 +381,10 @@ void DefaultUI::loop() {
         updateBoiler();
         updateBrewProcess();
         updateShotChart();
-        currentWeight = FloatValue(activeWeight);
+        const auto dosing = SmartDose.getUIState();
+        eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_SET_DOSE_STATE, IntegerValue(dosing.state));
+        eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_SET_DOSE_AVAILABLE, BooleanValue(dosing.available));
+        currentWeight = FloatValue(currentScreen == SCREEN_ID_BREW_SCREEN && dosing.state != 0 ? dosing.weight : activeWeight);
         eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_SCALE_WEIGHT_CURRENT, currentWeight);
 
         char timeBuf[12];
@@ -409,6 +413,22 @@ void DefaultUI::loop() {
     }
 
     ui_tick();
+    // EEZ owns visibility. Pulse only the selected Automagic icon while not ready.
+    // Restore every other icon so a state change cannot leave it dimmed.
+    static uint32_t lastDoseBlinkUpdate = 0;
+    if (currentScreen == SCREEN_ID_BREW_SCREEN && millis() - lastDoseBlinkUpdate >= 100u) {
+        lastDoseBlinkUpdate = millis();
+        const auto dosing = SmartDose.getUIState();
+        lv_obj_t *const icons[] = {objects.smart_dose_cup, objects.smart_dose_manual, objects.smart_dose_portafilter};
+        for (int i = 0; i < 3; ++i) {
+            lv_obj_t *icon = icons[i];
+            if (icon == nullptr)
+                continue;
+            const lv_opa_t opacity = dosing.state == i + 1 && dosing.blinking && (millis() / 400u) % 2u ? 64 : LV_OPA_COVER;
+            if (lv_obj_get_style_img_opa(icon, LV_PART_MAIN) != opacity)
+                lv_obj_set_style_img_opa(icon, opacity, LV_PART_MAIN | LV_STATE_DEFAULT);
+        }
+    }
     lv_task_handler();
 }
 
@@ -565,6 +585,8 @@ void DefaultUI::setupPanel() {
 }
 
 void DefaultUI::setupState() {
+    eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_SET_DOSE_STATE, IntegerValue(0));
+    eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_SET_DOSE_AVAILABLE, BooleanValue(false));
     eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_SCALE_WEIGHT_CURRENT, currentWeight);
     eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_GRIND_WEIGHT_TARGET, grindWeightTarget);
     eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_GRIND_TIME_TARGET, grindTimeTarget);
@@ -775,7 +797,9 @@ void DefaultUI::updateSystemStatus() {
     if (stringChanged(systemStatus.error_label(), errorLabel.c_str()))
         systemStatus.error_label(errorLabel.c_str());
     systemStatus.volumetric_available(controller->isVolumetricAvailable());
-    systemStatus.bluetooth_scales(controller->isScaleSourceHealthy(controller->getEffectiveScaleSource()));
+    const auto dosing = SmartDose.getUIState();
+    systemStatus.bluetooth_scales((currentScreen == SCREEN_ID_BREW_SCREEN && dosing.state != 0) ||
+                                  controller->isScaleSourceHealthy(controller->getEffectiveScaleSource()));
     systemStatus.controller_version(controller->getSystemInfo().version.c_str());
     systemStatus.display_version(BUILD_GIT_VERSION);
     systemStatus.update_available(updateAvailable);

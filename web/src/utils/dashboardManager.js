@@ -103,8 +103,9 @@ export const setMetricOrder = ids => {
 // ── Panel order ────────────────────────────────────────────────────────────
 
 const DASHBOARD_PANELS_KEY = 'dashboardPanels';
+const DOSE_PANEL_INITIALIZED_KEY = 'smartDosePanelInitialized';
 
-const DEFAULT_PANEL_ORDER = ['mode', 'profile', 'metrics', 'watertank', 'action'];
+const DEFAULT_PANEL_ORDER = ['mode', 'profile', 'metrics', 'dose', 'watertank', 'action'];
 
 export const getPanelOrder = () => {
   if (!globalThis.window?.localStorage) {
@@ -112,7 +113,17 @@ export const getPanelOrder = () => {
   }
   try {
     const stored = localStorage.getItem(DASHBOARD_PANELS_KEY);
-    return stored ? JSON.parse(stored) : [...DEFAULT_PANEL_ORDER];
+    const ids = stored ? JSON.parse(stored) : [...DEFAULT_PANEL_ORDER];
+    // Add the new panel once to existing layouts; later explicit removal is respected.
+    if (!localStorage.getItem(DOSE_PANEL_INITIALIZED_KEY)) {
+      if (!ids.includes('dose')) {
+        const actionIndex = ids.indexOf('action');
+        ids.splice(actionIndex < 0 ? ids.length : actionIndex, 0, 'dose');
+      }
+      if (stored) localStorage.setItem(DASHBOARD_PANELS_KEY, JSON.stringify(ids));
+      localStorage.setItem(DOSE_PANEL_INITIALIZED_KEY, 'true');
+    }
+    return ids;
   } catch {
     return [...DEFAULT_PANEL_ORDER];
   }
@@ -473,7 +484,7 @@ const DASHBOARD_PRESETS = {
       isMobileViewport()
         ? ['pressure', 'flow', 'temp', 'steamtemp', 'weight']
         : ['pressure', 'flow', 'temp', 'steamtemp', 'weight', 'pumppower', 'heaterpower'],
-    panelOrder: ['mode', 'profile', 'favorites', 'metrics', 'watertank', 'action'],
+    panelOrder: ['mode', 'profile', 'favorites', 'metrics', 'dose', 'watertank', 'action'],
     stickyTop: false,
     stickyBottom: true,
     showRecentShots: true,

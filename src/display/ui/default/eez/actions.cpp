@@ -1,9 +1,11 @@
 #include "actions.h"
 #include "screens.h"
 #include "ui.h"
+#include "vars.h"
 #include <Arduino.h>
 #include <display/main.h>
 #include <display/plugins/BLEScalePlugin.h>
+#include <display/plugins/SmartDosePlugin.h>
 
 void action_on_wakeup(lv_event_t *e) {
     if (!controller.getClientController()->isConnected() || controller.getSystemInfo().protocolMismatch ||
@@ -59,6 +61,8 @@ void action_on_flush(lv_event_t *e) {
 };
 
 void action_on_volumetric_hold(lv_event_t *e) {
+    SmartDose.onTare(true);
+    SmartDose.onTare(false);
     controller.getClientController()->tare();
     BLEScales.tare();
 };
@@ -351,3 +355,5 @@ void action_on_warning_ignore(lv_event_t *e) {
     controller.getUI()->setBrewConfirmVisible(false);
     controller.activate(true);
 }
+
+void action_on_set_dose(lv_event_t *) { SmartDose.setDose(); }

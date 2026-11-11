@@ -1,3 +1,4 @@
+import SmartDoseSettings from './SmartDoseSettings.jsx';
 import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import homekitImage from '../../assets/homekit.png';
@@ -81,6 +82,11 @@ function MahlkonigRecipeProfiles({ formData, onChange }) {
 export function PluginCard({
   formData,
   onChange,
+  onSmartDoseSaved,
+  onSmartDoseSaving,
+  onSettingSaved,
+  onSaving,
+  settingsDisabled,
   autowakeupSchedules,
   addAutoWakeupSchedule,
   removeAutoWakeupSchedule,
@@ -108,6 +114,12 @@ export function PluginCard({
   ];
   return (
     <div className='space-y-4'>
+      <SmartDoseSettings
+        formData={formData}
+        onSaved={onSmartDoseSaved || onSettingSaved}
+        onSaving={onSmartDoseSaving || onSaving}
+        disabled={settingsDisabled}
+      />
       <div className='bg-base-200 rounded-lg p-4'>
         <div className='flex items-center justify-between'>
           <span className='text-xl font-medium'>

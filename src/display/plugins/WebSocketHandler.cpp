@@ -287,6 +287,7 @@ void WebSocketHandler::handleWebSocketData(AsyncWebSocket *server, AsyncWebSocke
                 } else if (msgType == "req:flush:start") {
                     handleFlushStart(client->id(), doc);
                 } else if (msgType == "req:scale:tare") {
+                    pluginManager->trigger("webui:scale:tare");
                     controller->getClientController()->tare();
                 } else if (msgType == "req:flush:stop") {
                     handleFlushStop(client->id(), doc);
@@ -476,6 +477,8 @@ void WebSocketHandler::publishTelemetry() {
     const bool bleConnected = BLEScales.isConnected();
     statusDoc["bw"] = bleConnected ? this->currentBluetoothWeight : 0; // current bluetooth weight
     statusDoc["cw"] = this->currentActiveWeight;
+    for (auto &provider : statusProviders)
+        provider(statusDoc);
     // Explicit null/zero so merging clients drop a finished process instead of keeping the last one.
     statusDoc["process"] = nullptr;
     statusDoc["pkr"] = 0;
