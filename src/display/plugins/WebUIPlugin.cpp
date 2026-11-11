@@ -383,6 +383,9 @@ void WebUIPlugin::handleMachineProfiles(AsyncWebServerRequest *request) {
 
 void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     const uint32_t previousHardwareHash = machineHardwareHash(controller->getSettings().getMachineHardware());
+    // Dual-boiler fields are only exposed when the POST validator will accept them back.
+    const bool hardwareSupported =
+        controller->getSystemInfo().capabilities.dualBoiler && !controller->getSystemInfo().protocolMismatch;
     if (request->method() == HTTP_POST) {
         if (request->hasArg("setupStep")) {
             const String step = request->arg("setupStep");
@@ -393,10 +396,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
             }
         }
         String profileError;
-        if (!validateMachineProfileRequest(request, controller->getSystemInfo(),
-                                           controller->getSystemInfo().capabilities.dualBoiler &&
-                                               !controller->getSystemInfo().protocolMismatch,
-                                           profileError)) {
+        if (!validateMachineProfileRequest(request, controller->getSystemInfo(), hardwareSupported, profileError)) {
             JsonDocument failure;
             failure["error"] = profileError;
             String body;
@@ -745,35 +745,32 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     JsonDocument doc(&psramAllocator);
     Settings const &settings = controller->getSettings();
     doc["controllerError"] = controller->getError();
-    doc["machineHardwareConfiguration"] = controller->getSystemInfo().capabilities.dualBoiler;
+    doc["machineHardwareConfiguration"] = hardwareSupported;
     doc["machineHardwareReady"] = controller->isMachineHardwareReady();
     if (request->method() == HTTP_POST)
         doc["machineHardwareApplyPending"] =
             previousHardwareHash != machineHardwareHash(settings.getMachineHardware()) && !controller->isMachineHardwareReady();
     doc["machineHardwareError"] = controller->isMachineHardwareError();
-    if (controller->getSystemInfo().capabilities.dualBoiler)
-        doc["defaultSteamMode"] = settings.getDefaultSteamMode();
-
-    doc["systemLedFunction"] = settings.getSystemLedFunction();
-    doc["baristaLedFunction"] = settings.getBaristaLedFunction();
-    doc["systemLedBrightness"] = settings.getSystemLedBrightness();
-    doc["systemLedMinBrightness"] = settings.getSystemLedMinBrightness();
-    doc["systemLedCycleTimeMs"] = settings.getSystemLedCycleTimeMs();
-    doc["baristaLedBrightness"] = settings.getBaristaLedBrightness();
-    doc["baristaLedMinBrightness"] = settings.getBaristaLedMinBrightness();
-    doc["baristaLedCycleTimeMs"] = settings.getBaristaLedCycleTimeMs();
     doc["steamControlsAvailable"] = controller->isSteamControlsAvailable();
-    doc["steamRefillMode"] = settings.getSteamRefillMode();
-    doc["steamRefillPostClearSeconds"] = settings.getSteamRefillPostClearSeconds();
-    if (controller->getSystemInfo().capabilities.dualBoiler)
+    if (hardwareSupported) {
+        doc["defaultSteamMode"] = settings.getDefaultSteamMode();
+        doc["systemLedFunction"] = settings.getSystemLedFunction();
+        doc["baristaLedFunction"] = settings.getBaristaLedFunction();
+        doc["systemLedBrightness"] = settings.getSystemLedBrightness();
+        doc["systemLedMinBrightness"] = settings.getSystemLedMinBrightness();
+        doc["systemLedCycleTimeMs"] = settings.getSystemLedCycleTimeMs();
+        doc["baristaLedBrightness"] = settings.getBaristaLedBrightness();
+        doc["baristaLedMinBrightness"] = settings.getBaristaLedMinBrightness();
+        doc["baristaLedCycleTimeMs"] = settings.getBaristaLedCycleTimeMs();
+        doc["steamRefillMode"] = settings.getSteamRefillMode();
+        doc["steamRefillPostClearSeconds"] = settings.getSteamRefillPostClearSeconds();
         writeMachineHardware(doc.as<JsonObject>(), settings.getMachineHardware());
+    }
     doc["startupMode"] = settings.getStartupMode() == MODE_BREW ? "brew" : "standby";
     doc["startupProfile"] = settings.getStartupProfile();
     doc["targetSteamTemp"] = settings.getTargetSteamTemp();
     doc["targetWaterTemp"] = settings.getTargetWaterTemp();
-    if (!addMachineProfileSettings(doc, settings, controller->getSystemInfo(),
-                                   controller->getSystemInfo().capabilities.dualBoiler &&
-                                       !controller->getSystemInfo().protocolMismatch)) {
+    if (!addMachineProfileSettings(doc, settings, controller->getSystemInfo(), hardwareSupported)) {
         request->send(500, "application/json", "{\"error\":\"Could not read machine profile settings\"}");
         return;
     }
