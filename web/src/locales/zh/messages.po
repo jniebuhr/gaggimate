@@ -9,7 +9,7 @@ msgstr ""
 
 #: src/components/MachineProfileControl.jsx
 msgid "-- Incompatible --"
-msgstr ""
+msgstr "-- 不兼容 --"
 
 #: src/pages/Statistics/components/StatisticsSearchHelp.jsx
 msgid "(exact)"
@@ -149,11 +149,11 @@ msgstr "达到任一间隔时将显示清洁提醒；将间隔设为 0 可关闭
 
 #: src/pages/SetupWizard/index.jsx
 msgid "A few brew profiles come pre-installed for use after configuring your machine:"
-msgstr ""
+msgstr "配置好咖啡机后，即可使用以下几条预装的冲煮曲线："
 
 #: src/pages/SetupWizard/index.jsx
 msgid "A few profiles come pre-installed so you can start right away, from a classic 9 bar shot to lever-style pressure curves:"
-msgstr ""
+msgstr "已预装几条曲线，让你立即开始使用，从经典的 9 bar 萃取到拉杆式压力曲线："
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "A given alpha behaves faster in time at 80 SPS because it is applied more often. Tune the two alpha values independently for your installed sample rate. Changing sample rate resets both values to 0.80 at 10 SPS or 0.40 at 80 SPS as sensible starting points."
@@ -260,15 +260,15 @@ msgstr "高级"
 
 #: src/components/MachineProfileFields.jsx
 msgid "Advanced hardware settings"
-msgstr ""
+msgstr "高级硬件设置"
 
 #: src/pages/SetupWizard/index.jsx
 msgid "After the restart, reconnect to your Wi-Fi network and open Settings → Machine to configure your machine before use."
-msgstr ""
+msgstr "重启后，请重新连接到你的 Wi-Fi 网络，并在使用前打开“设置 → 咖啡机”配置你的咖啡机。"
 
 #: src/pages/SetupWizard/MachineStep.jsx
 msgid "Alba add-on"
-msgstr ""
+msgstr "Alba 扩展"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Alba Settings"
@@ -353,11 +353,11 @@ msgstr "外观"
 
 #: src/pages/SetupWizard/MachineStep.jsx
 msgid "Apply Preset"
-msgstr ""
+msgstr "应用预设"
 
 #: src/pages/SetupWizard/MachineStep.jsx
 msgid "Applying and waiting for controller…"
-msgstr ""
+msgstr "正在应用并等待控制器…"
 
 #: src/pages/ShotAnalyzer/components/library/LibraryPanel.jsx
 msgid "Are you sure you want to delete \"{itemName}\"?"
@@ -418,7 +418,7 @@ msgstr "自动整定进行中"
 
 #: src/pages/SetupWizard/MachineStep.jsx
 msgid "Available"
-msgstr ""
+msgstr "可用"
 
 #: src/pages/Statistics/components/PhaseStatistics.jsx
 msgid "Average target value and deviation"
@@ -592,7 +592,7 @@ msgstr "BLDC 泵设置"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Block steam boiler refill when Alba reports a low reservoir level or its reading is unavailable. Leave off if no reservoir distance sensor is installed."
-msgstr ""
+msgstr "当 Alba 报告储水箱水位低或读数不可用时，阻止蒸汽锅炉补水。如果未安装储水箱距离传感器，请保持关闭。"
 
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "Bluetooth Devices"
@@ -656,7 +656,7 @@ msgstr "冲煮阶段配置"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Brew PID Values"
-msgstr ""
+msgstr "冲煮 PID 参数"
 
 #: src/components/OverviewChart.jsx
 msgid "Brew Progress - {windowSeconds}s View"
@@ -699,7 +699,7 @@ msgstr "生成并显示萃取图表"
 
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "Building pressure…"
-msgstr ""
+msgstr "正在建立压力…"
 
 #: src/pages/ProfileList/index.jsx
 msgid "Built-in profile, can be edited but not deleted"
@@ -774,7 +774,7 @@ msgstr "此环境不支持画布导出。"
 
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "Caution: pressurized hot water"
-msgstr ""
+msgstr "注意：高压热水"
 
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/Settings/tabs/MachineTab.jsx
@@ -792,7 +792,7 @@ msgstr "图表优先"
 
 #: src/pages/SetupWizard/index.jsx
 msgid "Check the connection to your machine and try again."
-msgstr ""
+msgstr "请检查与咖啡机的连接，然后重试。"
 
 #: src/app/ConnectionGate.jsx
 msgid "Choose another machine"
@@ -952,7 +952,7 @@ msgstr "对比萃取"
 
 #: src/components/MachineProfileControl.jsx
 msgid "Configuration Preset"
-msgstr ""
+msgstr "配置预设"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Configure acquisition and filtering, then tare and calibrate each load cell."
@@ -1155,15 +1155,15 @@ msgstr "当前为定量模式"
 #: src/components/MachineProfileControl.jsx
 #: src/components/MachineProfileFields.jsx
 msgid "Custom"
-msgstr ""
+msgstr "自定义"
 
 #: src/components/MachineProfileControl.jsx
 msgid "Custom machine"
-msgstr ""
+msgstr "自定义咖啡机"
 
 #: src/components/MachineProfileFields.jsx
 msgid "Custom resistance (kΩ)"
-msgstr ""
+msgstr "自定义电阻 (kΩ)"
 
 #: src/components/Navigation.jsx
 msgid "Customize"
@@ -1171,7 +1171,7 @@ msgstr "自定义"
 
 #: src/components/MachineProfileFields.jsx
 msgid "Cycle time (seconds)"
-msgstr ""
+msgstr "周期时间（秒）"
 
 #: src/pages/Statistics/components/ActivityHeatmap.jsx
 msgid "Daily average: <0>{dailyAvg} shots</0>"
@@ -1316,7 +1316,7 @@ msgstr "删除失败：{message}"
 
 #: src/components/MachineProfileControl.jsx
 msgid "Delete imported profile"
-msgstr ""
+msgstr "删除导入的配置"
 
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
 msgid "Delete phase {phaseNumber}"
@@ -1336,7 +1336,7 @@ msgstr "删除萃取记录"
 
 #: src/components/MachineProfileControl.jsx
 msgid "Delete this imported profile?"
-msgstr ""
+msgstr "删除此导入的配置？"
 
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
 msgid "Delete this phase"
@@ -1372,7 +1372,7 @@ msgstr "取消选择 {itemName}"
 
 #: src/pages/SetupWizard/MachineStep.jsx
 msgid "Detected board"
-msgstr ""
+msgstr "检测到的主板"
 
 #: src/components/Navigation.jsx
 #: src/pages/Settings/index.jsx
@@ -1390,7 +1390,7 @@ msgstr "关闭对比模式"
 
 #: src/components/MachineProfileControl.jsx
 msgid "Disabled"
-msgstr ""
+msgstr "已禁用"
 
 #: src/components/PumpFlowCalibration/Footer.jsx
 #: src/pages/Settings/index.jsx
@@ -1494,12 +1494,12 @@ msgstr "将萃取或曲线 JSON 拖放到此处"
 
 #: src/pages/SetupWizard/MachineStep.jsx
 msgid "Dual boiler"
-msgstr ""
+msgstr "双锅炉"
 
 #: src/components/MachineProfileFields.jsx
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Dual Boiler Hardware"
-msgstr ""
+msgstr "双锅炉硬件"
 
 #: src/pages/ProfileList/index.jsx
 msgid "Duplicate"
@@ -1637,7 +1637,7 @@ msgstr "启用待机显示"
 
 #: src/components/MachineProfileControl.jsx
 msgid "Enabled"
-msgstr ""
+msgstr "已启用"
 
 #: src/pages/DashboardSettings/index.jsx
 msgid "Enables compact mode for this panel"
@@ -1816,7 +1816,7 @@ msgstr "导出曲线"
 
 #: src/components/MachineProfileControl.jsx
 msgid "Export saved configuration"
-msgstr ""
+msgstr "导出已保存的配置"
 
 #: src/pages/Settings/index.jsx
 msgid "Export settings"
@@ -1883,7 +1883,7 @@ msgstr "文件导出失败。"
 
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "Fill the water tank and close the steam knob."
-msgstr ""
+msgstr "请加满水箱并关闭蒸汽旋钮。"
 
 #: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 msgid "Filter library source"
@@ -1896,7 +1896,7 @@ msgstr "完成"
 
 #: src/pages/SetupWizard/index.jsx
 msgid "Finish and restart"
-msgstr ""
+msgstr "完成并重启"
 
 #: src/pages/Home/cards/ProfileCard.jsx
 #: src/pages/Settings/tabs/SystemTab.jsx
@@ -1990,7 +1990,7 @@ msgstr "冲洗水"
 
 #: src/pages/Settings/tabs/HeaterCoordinationSection.jsx
 msgid "For 120 V machines, heater coordination should generally remain enabled. Running the brew and steam heaters simultaneously can overload the circuit, blow a fuse or trip a breaker, and create a fire hazard. Only disable it if the machine and supply circuit are rated to power both heaters together."
-msgstr ""
+msgstr "对于 120 V 咖啡机，通常应保持启用加热协调。同时运行冲煮和蒸汽加热器可能会使电路过载、烧断保险丝或使断路器跳闸，并引发火灾隐患。仅当咖啡机和供电电路的额定值足以同时为两个加热器供电时，才可禁用此功能。"
 
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "Forget"
@@ -2034,7 +2034,7 @@ msgstr "GaggiMate (GM)"
 
 #: src/pages/SetupWizard/PluginsStep.jsx
 msgid "GaggiMate can connect to your smart home, grinder and more. Enable what you need now; you can always change this later in the settings."
-msgstr ""
+msgstr "GaggiMate 可以连接你的智能家居、磨豆机等。现在启用你需要的功能，之后也可以随时在设置中更改。"
 
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "GaggiMate didn't accept the request. Check the connection and try again."
@@ -2046,7 +2046,7 @@ msgstr "GaggiMate 导出"
 
 #: src/pages/SetupWizard/index.jsx
 msgid "GaggiMate is joining {ssid}"
-msgstr ""
+msgstr "GaggiMate 正在加入 {ssid}"
 
 #: src/pages/Settings/PluginCard.jsx
 msgid "GaggiMate is not affiliated with, endorsed by or supported by Mahlkönig or its parent company, the Hemro Group. Mahlkönig, E64 WS, Grind-by-Sync and Xenia are trademarks of their respective owners."
@@ -2054,7 +2054,7 @@ msgstr "GaggiMate 与 Mahlkönig 或其母公司 Hemro Group 无关联，也未�
 
 #: src/pages/SetupWizard/WifiStep.jsx
 msgid "GaggiMate is running its own Wi-Fi network. Pick your home network so you can reach GaggiMate from any device. It connects when it restarts at the end of the setup."
-msgstr ""
+msgstr "GaggiMate 当前运行着自己的 Wi-Fi 网络。请选择你的家庭网络，以便从任意设备访问 GaggiMate。设置结束重启时，它会连接到该网络。"
 
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "GaggiMate reconnects automatically once the scale is switched on and in range."
@@ -2062,7 +2062,7 @@ msgstr "秤开机并处于范围内后，GaggiMate 会自动重新连接。"
 
 #: src/pages/SetupWizard/index.jsx
 msgid "GaggiMate restarts when you finish so it can connect to {joinSsid}. Plugins you enabled start with it."
-msgstr ""
+msgstr "完成后 GaggiMate 将重启，以便连接到 {joinSsid}。你启用的插件会随之启动。"
 
 #: src/app/MachineSetup.jsx
 msgid "gaggimate.local or 192.168.1.20"
@@ -2070,7 +2070,7 @@ msgstr "gaggimate.local 或 192.168.1.20"
 
 #: src/pages/SetupWizard/MachineStep.jsx
 msgid "Gear pump add-on"
-msgstr ""
+msgstr "齿轮泵扩展"
 
 #: src/pages/Settings/index.jsx
 msgid "General"
@@ -2094,7 +2094,7 @@ msgstr "返回首页"
 
 #: src/pages/SetupWizard/WifiStep.jsx
 msgid "Good"
-msgstr ""
+msgstr "良好"
 
 #: src/pages/ProfileEdit/ProfileMainInformation.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
@@ -2153,11 +2153,11 @@ msgstr "硬件秤"
 
 #: src/pages/SetupWizard/MachineStep.jsx
 msgid "Hardware scales"
-msgstr ""
+msgstr "硬件秤"
 
 #: src/pages/Settings/tabs/HeaterCoordinationSection.jsx
 msgid "Heater coordination"
-msgstr ""
+msgstr "加热协调"
 
 #: src/pages/Settings/tabs/HeaterCoordinationSection.jsx
 msgid "Heater Coordination"
@@ -2177,15 +2177,15 @@ msgstr "加热器功率，单位为瓦（例如 Gaggia Classic：1360 W，Rancil
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Heating & Pump Settings"
-msgstr ""
+msgstr "加热与泵设置"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Heating Parameters"
-msgstr ""
+msgstr "加热参数"
 
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "Heating test"
-msgstr ""
+msgstr "加热测试"
 
 #: src/components/SettingsFormField.jsx
 msgid "Hidden / Available"
@@ -2193,7 +2193,7 @@ msgstr "隐藏 / 可用"
 
 #: src/pages/SetupWizard/WifiStep.jsx
 msgid "Hide"
-msgstr ""
+msgstr "隐藏"
 
 #: src/pages/ShotAnalyzer/components/shotChart/controls/compareControls.jsx
 msgid "Hide compare annotations"
@@ -2275,7 +2275,7 @@ msgstr "HX711 采样率"
 
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "I have read this and the machine is ready"
-msgstr ""
+msgstr "我已阅读以上内容，咖啡机已准备就绪"
 
 #: src/pages/Statistics/components/toolbar/subcomponents.jsx
 msgid "ID: {shotId}"
@@ -2291,7 +2291,7 @@ msgstr "空闲滤波 Alpha"
 
 #: src/pages/SetupWizard/index.jsx
 msgid "If it can't connect, GaggiMate opens its own network again so you can correct the password in the settings."
-msgstr ""
+msgstr "如果无法连接，GaggiMate 会重新开启自己的网络，以便你在设置中更正密码。"
 
 #: src/utils/warnings.js
 msgctxt "warning level"
@@ -2322,7 +2322,7 @@ msgstr "导入萃取文件或从库中选择一个开始分析。"
 
 #: src/components/MachineProfileControl.jsx
 msgid "Import configuration"
-msgstr ""
+msgstr "导入配置"
 
 #: src/pages/ShotAnalyzer/components/library/libraryImport.js
 msgid "Import failed. Please check the file format."
@@ -2471,7 +2471,7 @@ msgstr "长度（短）"
 
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "Let's make sure everything is wired up correctly. Make sure the water tank is filled before you start."
-msgstr ""
+msgstr "让我们确认所有接线都正确无误。开始前请确保水箱已加满。"
 
 #: src/pages/Settings/PluginCard.jsx
 msgid "Lets an E64 WS start shots with its knob and dial in its grind from the shot time and weight. A grind selects the profile mapped to its recipe, and the grinder's target weight overrides that profile's weight target. Save and restart to apply."
@@ -2549,7 +2549,7 @@ msgstr "正在加载候选项"
 
 #: src/pages/SetupWizard/PluginsStep.jsx
 msgid "Loading plugin settings…"
-msgstr ""
+msgstr "正在加载插件设置…"
 
 #: src/pages/ProfileList/index.jsx
 msgid "Loading profiles"
@@ -2582,7 +2582,7 @@ msgstr "正在查找咖啡机… 如果你的咖啡机没有出现，请通过�
 #: src/pages/Home/cards/MachineLevelsCard.jsx
 #: src/utils/metricDefinitions.js
 msgid "Low"
-msgstr ""
+msgstr "低"
 
 #: src/pages/ShotHistory/index.jsx
 msgid "Lowest ID first"
@@ -2608,7 +2608,7 @@ msgstr "一"
 
 #: src/pages/SetupWizard/index.jsx
 msgid "Machine"
-msgstr ""
+msgstr "咖啡机"
 
 #: src/pages/Settings/index.jsx
 msgctxt "settings tab"
@@ -2621,15 +2621,15 @@ msgstr "供磨豆机使用的咖啡机地址"
 
 #: src/components/MachineProfileControl.jsx
 msgid "Machine configuration"
-msgstr ""
+msgstr "咖啡机配置"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Machine Configuration"
-msgstr ""
+msgstr "咖啡机配置"
 
 #: src/pages/SetupWizard/index.jsx
 msgid "Machine configuration required"
-msgstr ""
+msgstr "需要配置咖啡机"
 
 #: src/app/notifications.js
 msgid "Machine error"
@@ -2645,7 +2645,7 @@ msgstr "咖啡机已就绪，唤醒即可使用"
 
 #: src/pages/SetupWizard/MachineStep.jsx
 msgid "Machine not listed? Continue setup and configure it later."
-msgstr ""
+msgstr "没有找到你的咖啡机？请继续设置，稍后再进行配置。"
 
 #: src/app/appSettings.js
 msgid "Machine preheated"
@@ -2653,7 +2653,7 @@ msgstr "咖啡机已预热"
 
 #: src/pages/SetupWizard/MachineStep.jsx
 msgid "Machine settings saved"
-msgstr ""
+msgstr "咖啡机设置已保存"
 
 #: src/app/AppSettings.jsx
 #: src/app/MachineSwitcher.jsx
@@ -2682,7 +2682,7 @@ msgstr "维护与支持"
 
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "Make sure the drip tray is in place."
-msgstr ""
+msgstr "请确保接水盘已就位。"
 
 #: src/pages/Settings/tabs/SystemTab.jsx
 msgid "Make sure to backup your profiles from the profiles screen before updating the display."
@@ -2714,7 +2714,7 @@ msgstr "最大"
 
 #: src/components/MachineProfileFields.jsx
 msgid "Max brightness"
-msgstr ""
+msgstr "最大亮度"
 
 #: src/pages/DashboardSettings/index.jsx
 msgid "Max Pressure"
@@ -2810,7 +2810,7 @@ msgstr "最小"
 
 #: src/components/MachineProfileFields.jsx
 msgid "Min brightness"
-msgstr ""
+msgstr "最小亮度"
 
 #: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
 #: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
@@ -2928,7 +2928,7 @@ msgstr "新预设名称："
 
 #: src/components/MachineProfileControl.jsx
 msgid "Name for the exported configuration"
-msgstr ""
+msgstr "导出配置的名称"
 
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
@@ -2941,11 +2941,11 @@ msgstr "网络错误：无法连接到 visualizer.coffee"
 
 #: src/pages/SetupWizard/WifiStep.jsx
 msgid "Network name (SSID)"
-msgstr ""
+msgstr "网络名称 (SSID)"
 
 #: src/pages/SetupWizard/WifiStep.jsx
 msgid "Networks nearby"
-msgstr ""
+msgstr "附近的网络"
 
 #: src/pages/Settings/tabs/CleaningSection.jsx
 msgid "Never"
@@ -3044,11 +3044,11 @@ msgstr "无前一阶段"
 
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "No pressure sensor was detected."
-msgstr ""
+msgstr "未检测到压力传感器。"
 
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "No pressure was measured. Check that the water tank is full, prime the pump and check the pressure sensor wiring."
-msgstr ""
+msgstr "未测得压力。请检查水箱是否已加满，为泵注水排气，并检查压力传感器接线。"
 
 #: src/pages/ShotAnalyzer/components/library/libraryDisplay.js
 msgid "No Profile Loaded"
@@ -3120,7 +3120,7 @@ msgstr "未连接 Wi-Fi"
 
 #: src/pages/SetupWizard/MachineStep.jsx
 msgid "Not detected"
-msgstr ""
+msgstr "未检测到"
 
 #: src/utils/pumpFlowCalibration.js
 msgid "Not enough samples for tp={targetPressure} bar (Measure phase). Was the valve closed enough to reach {targetPressure} bar?"
@@ -3169,7 +3169,7 @@ msgstr "关闭"
 #: src/pages/Home/cards/MachineLevelsCard.jsx
 #: src/utils/metricDefinitions.js
 msgid "OK"
-msgstr ""
+msgstr "正常"
 
 #: src/app/FirmwareWarning.jsx
 msgid "Old firmware"
@@ -3236,7 +3236,7 @@ msgstr "打开曲线列表操作菜单"
 
 #: src/pages/SetupWizard/index.jsx
 msgid "Open Settings → Machine to configure your machine before use."
-msgstr ""
+msgstr "使用前请打开“设置 → 咖啡机”配置你的咖啡机。"
 
 #: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
 msgid "Open shot actions menu"
@@ -3277,7 +3277,7 @@ msgstr "或每"
 
 #: src/pages/SetupWizard/WifiStep.jsx
 msgid "Other network…"
-msgstr ""
+msgstr "其他网络…"
 
 #: src/pages/DashboardSettings/index.jsx
 msgid "Pack to top"
@@ -3322,12 +3322,12 @@ msgstr "峰值压力"
 #. placeholder {1}: Number(status.residualPressure).toFixed(1)
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "Peak pressure: {0} bar, after release: {1} bar"
-msgstr ""
+msgstr "峰值压力：{0} bar，泄压后：{1} bar"
 
 #. placeholder {0}: Number(status.maxPressure).toFixed(1)
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "Peak: {0} bar"
-msgstr ""
+msgstr "峰值：{0} bar"
 
 #: src/pages/ShotAnalyzer/components/shotChart/controls/compareControls.jsx
 msgid "Per Shot"
@@ -3454,7 +3454,7 @@ msgstr "播放统计"
 
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "Please confirm the safety notice first."
-msgstr ""
+msgstr "请先确认安全提示。"
 
 #: src/pages/Settings/tabs/CalibrationTab.jsx
 msgid "Please ensure the boiler temperature is below 50°C before starting the autotune process."
@@ -3490,7 +3490,7 @@ msgstr "功率"
 
 #: src/pages/Settings/tabs/HeaterCoordinationSection.jsx
 msgid "Power the heaters one at a time instead of in parallel, brew boiler first."
-msgstr ""
+msgstr "依次为加热器供电而不是同时供电，冲煮锅炉优先。"
 
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
@@ -3583,11 +3583,11 @@ msgstr "压力低于"
 
 #: src/pages/SetupWizard/MachineStep.jsx
 msgid "Pressure control"
-msgstr ""
+msgstr "压力控制"
 
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "Pressure did not drop after opening the 3-way valve. Check the valve and its wiring."
-msgstr ""
+msgstr "打开三通阀后压力未下降。请检查阀门及其接线。"
 
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
@@ -3604,7 +3604,7 @@ msgstr "压力偏移"
 
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "Pressure peaked above 12.5 bar. That works, but you may want to adjust the OPV to around 10–11 bar."
-msgstr ""
+msgstr "峰值压力超过 12.5 bar。这可以正常工作，但你可能需要将 OPV 调整到约 10–11 bar。"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Pressure polynomial (a,b,c,d) for vane-/gear-pump internal leakage. Leave at 0,0,0,0 if uncalibrated."
@@ -3616,7 +3616,7 @@ msgstr "压力传感器量程"
 
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "Pressure stayed below 10 bar. Prime the pump and check for leaks and the OPV setting."
-msgstr ""
+msgstr "压力始终低于 10 bar。请为泵注水排气，并检查是否漏水以及 OPV 设置。"
 
 #: src/pages/ShotAnalyzer/utils/formatting.js
 msgid "Pressure Stop"
@@ -3632,7 +3632,7 @@ msgstr "压力目标"
 
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "Pressure test"
-msgstr ""
+msgstr "压力测试"
 
 #: src/pages/ProfileEdit/ExtendedProfileForm.jsx
 #: src/pages/ShotHistory/index.jsx
@@ -3706,7 +3706,7 @@ msgstr "{label} 的曲线详情"
 
 #: src/components/MachineProfileControl.jsx
 msgid "Profile has been updated - please reload."
-msgstr ""
+msgstr "配置已更新 - 请重新加载。"
 
 #: src/pages/ShotAnalyzer/services/LibraryService.js
 msgid "Profile ID missing for export"
@@ -3722,7 +3722,7 @@ msgstr "曲线信息"
 
 #: src/components/MachineProfileControl.jsx
 msgid "Profile is too large."
-msgstr ""
+msgstr "配置过大。"
 
 #: src/pages/ShotAnalyzer/services/IndexedDBService.js
 msgid "Profile label is required for browser storage"
@@ -3758,7 +3758,7 @@ msgstr "曲线类型：{typeText}"
 
 #: src/components/MachineProfileControl.jsx
 msgid "Profile values"
-msgstr ""
+msgstr "配置参数"
 
 #: src/pages/ShotHistory/index.jsx
 msgid "Profile Z-A"
@@ -3870,7 +3870,7 @@ msgstr "泵关闭"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Pump Parameters"
-msgstr ""
+msgstr "泵参数"
 
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
@@ -4044,7 +4044,7 @@ msgstr "相对时间：<0>h</0>（现在），<1>h-7d</1>（7 天前）"
 
 #: src/components/MachineProfileControl.jsx
 msgid "Reload updated profile"
-msgstr ""
+msgstr "重新加载已更新的配置"
 
 #: src/components/VisualizerUploadModal.jsx
 msgid "Remember credentials"
@@ -4081,7 +4081,7 @@ msgstr "移除目标"
 
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "Remove the portafilter and place a cup under the group head: hot water comes out of the group head when the valve opens. Keep your hands clear."
-msgstr ""
+msgstr "请取下手柄并在冲煮头下方放一个杯子：阀门打开时，热水会从冲煮头流出。请让双手远离。"
 
 #: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
 msgid "Removing calibration profile..."
@@ -4105,11 +4105,11 @@ msgstr "更换图片"
 
 #: src/pages/SetupWizard/MachineStep.jsx
 msgid "Replace these machine settings?"
-msgstr ""
+msgstr "替换这些咖啡机设置？"
 
 #: src/components/MachineProfileControl.jsx
 msgid "Replace this imported profile?"
-msgstr ""
+msgstr "替换此导入的配置？"
 
 #: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
 msgid "Replay chart"
@@ -4160,11 +4160,11 @@ msgstr "回放录制失败。"
 
 #: src/components/MachineProfileFields.jsx
 msgid "Requires controller restart."
-msgstr ""
+msgstr "需要重启控制器。"
 
 #: src/components/MachineProfileFields.jsx
 msgid "Requires hardware configuration support."
-msgstr ""
+msgstr "需要硬件配置支持。"
 
 #: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
 msgid "Reset columns to system defaults?"
@@ -4176,11 +4176,11 @@ msgstr "恢复默认"
 
 #: src/pages/SetupWizard/index.jsx
 msgid "Restart"
-msgstr ""
+msgstr "重启"
 
 #: src/components/MachineProfileControl.jsx
 msgid "Restore profile defaults"
-msgstr ""
+msgstr "恢复配置默认值"
 
 #: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
 msgid "Restoring previous profile..."
@@ -4215,11 +4215,11 @@ msgstr "规则之间用 <0>;</0> 分隔。可视化筛选与 DSL 以 AND 组合�
 
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "Run again"
-msgstr ""
+msgstr "再次运行"
 
 #: src/pages/Settings/tabs/SystemTab.jsx
 msgid "Run Setup Wizard"
-msgstr ""
+msgstr "运行设置向导"
 
 #: src/components/PumpFlowCalibration/Footer.jsx
 msgid "Running shot..."
@@ -4357,7 +4357,7 @@ msgstr "正在保存校准曲线..."
 #: src/pages/SetupWizard/index.jsx
 #: src/pages/SetupWizard/MachineStep.jsx
 msgid "Saving failed"
-msgstr ""
+msgstr "保存失败"
 
 #: src/pages/ProfileEdit/ExtendedProfileForm.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
@@ -4410,11 +4410,11 @@ msgstr "扫描附近的蓝牙秤并将其连接到 GaggiMate。"
 
 #: src/pages/SetupWizard/WifiStep.jsx
 msgid "Scanning failed."
-msgstr ""
+msgstr "扫描失败。"
 
 #: src/pages/SetupWizard/WifiStep.jsx
 msgid "Scanning only works while GaggiMate runs its own Wi-Fi network."
-msgstr ""
+msgstr "仅当 GaggiMate 运行自己的 Wi-Fi 网络时才能扫描。"
 
 #: src/pages/Settings/tabs/SystemTab.jsx
 msgid "Scanning shot history files..."
@@ -4446,11 +4446,11 @@ msgstr "搜索{labelLower}..."
 
 #: src/pages/SetupWizard/WifiStep.jsx
 msgid "Search again"
-msgstr ""
+msgstr "重新搜索"
 
 #: src/pages/SetupWizard/WifiStep.jsx
 msgid "Search failed"
-msgstr ""
+msgstr "搜索失败"
 
 #: src/pages/Statistics/components/StatisticsSearchHelp.jsx
 msgid "Search help"
@@ -4475,7 +4475,7 @@ msgstr "搜索中"
 
 #: src/pages/SetupWizard/WifiStep.jsx
 msgid "Searching for networks…"
-msgstr ""
+msgstr "正在搜索网络…"
 
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
@@ -4493,7 +4493,7 @@ msgstr "选择 {label} 曲线"
 
 #: src/components/MachineProfileControl.jsx
 msgid "Select a configuration preset"
-msgstr ""
+msgstr "选择配置预设"
 
 #: src/pages/ProfileList/index.jsx
 msgid "Select a JSON file containing profile data to import"
@@ -4538,7 +4538,7 @@ msgstr "选择冲煮阶段类型"
 
 #: src/pages/SetupWizard/MachineStep.jsx
 msgid "Select your machine and apply recommended defaults."
-msgstr ""
+msgstr "选择你的咖啡机并应用推荐的默认值。"
 
 #: src/pages/Statistics/components/StatisticsMultiSelectDropdown.jsx
 msgid "Select..."
@@ -4546,7 +4546,7 @@ msgstr "选择..."
 
 #: src/components/MachineProfileControl.jsx
 msgid "Selecting a profile prefills the values. Save to apply. Choose Custom to edit machine values."
-msgstr ""
+msgstr "选择配置会预填参数，保存后生效。选择“自定义”可编辑咖啡机参数。"
 
 #: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
 msgid "Selecting calibration profile..."
@@ -4587,7 +4587,7 @@ msgstr "设置"
 
 #: src/components/MachineProfileControl.jsx
 msgid "Settings differ from this profile. Reload to restore profile defaults."
-msgstr ""
+msgstr "设置与此配置不一致。重新加载以恢复配置默认值。"
 
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Settings for this phone, like the theme and notifications, are in <0>App Settings</0>. The dashboard layout is in the dashboard's customize view."
@@ -4599,11 +4599,11 @@ msgstr "设置尚未加载。"
 
 #: src/utils/machineProfiles.js
 msgid "Settings saved. Temperature fault detected. Check that both brew and steam NTC sensors are connected and correctly configured. Restart the controller and retry Apply Preset."
-msgstr ""
+msgstr "设置已保存。检测到温度故障。请检查冲煮和蒸汽 NTC 传感器是否均已连接并正确配置。重启控制器后重新尝试“应用预设”。"
 
 #: src/utils/machineProfiles.js
 msgid "Settings saved. Temperature fault detected. Check the temperature sensor and its connection. Restart the controller and retry Apply Preset."
-msgstr ""
+msgstr "设置已保存。检测到温度故障。请检查温度传感器及其连接。重启控制器后重新尝试“应用预设”。"
 
 #: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
 msgid "Share"
@@ -4764,7 +4764,7 @@ msgstr "萃取次数：{shotCount}"
 
 #: src/pages/SetupWizard/WifiStep.jsx
 msgid "Show"
-msgstr ""
+msgstr "显示"
 
 #: src/pages/Statistics/components/StatisticsMultiSelectDropdown.jsx
 msgid "Show all {labelLower}"
@@ -4843,7 +4843,7 @@ msgstr "简单曲线"
 
 #: src/pages/SetupWizard/MachineStep.jsx
 msgid "Single boiler"
-msgstr ""
+msgstr "单锅炉"
 
 #: src/pages/DashboardSettings/index.jsx
 msgid "Single Card"
@@ -4855,15 +4855,15 @@ msgstr "单品、拼配..."
 
 #: src/pages/SetupWizard/index.jsx
 msgid "Skip"
-msgstr ""
+msgstr "跳过"
 
 #: src/pages/SetupWizard/index.jsx
 msgid "Skip setup"
-msgstr ""
+msgstr "跳过设置"
 
 #: src/pages/SetupWizard/WifiStep.jsx
 msgid "Skip this to keep using the GaggiMate network. You can add your Wi-Fi later in the settings."
-msgstr ""
+msgstr "跳过此步骤将继续使用 GaggiMate 网络。你可以稍后在设置中添加 Wi-Fi。"
 
 #: src/components/PumpFlowCalibration/api.js
 msgid "slog not ready, waiting for flush... ({attempt})"
@@ -4883,7 +4883,7 @@ msgstr "采样过慢"
 
 #: src/utils/panelDefinitions.js
 msgid "Smart Dosing"
-msgstr ""
+msgstr "智能定量"
 
 #: src/pages/Settings/PluginCard.jsx
 msgid "Smart Grind Plugin"
@@ -4981,7 +4981,7 @@ msgstr "仍要开始冲煮？"
 
 #: src/pages/SetupWizard/index.jsx
 msgid "Start brewing"
-msgstr ""
+msgstr "开始冲煮"
 
 #: src/components/PumpFlowCalibration/Footer.jsx
 msgid "Start calibration"
@@ -4997,7 +4997,7 @@ msgstr "从上一个设定值开始"
 
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "Start heating test"
-msgstr ""
+msgstr "开始加热测试"
 
 #: src/pages/ShotAnalyzer/components/EmptyState.jsx
 msgid "Start or end compare mode."
@@ -5005,7 +5005,7 @@ msgstr "开始或结束对比模式。"
 
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "Start pressure test"
-msgstr ""
+msgstr "开始压力测试"
 
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 msgid "Start Ramp from"
@@ -5063,7 +5063,7 @@ msgstr "蒸汽"
 
 #: src/pages/Home/cards/MachineLevelsCard.jsx
 msgid "Steam Boiler"
-msgstr ""
+msgstr "蒸汽锅炉"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Steam Boiler (Coming Soon)"
@@ -5071,7 +5071,7 @@ msgstr "蒸汽锅炉（即将推出）"
 
 #: src/utils/metricDefinitions.js
 msgid "Steam Boiler Level"
-msgstr ""
+msgstr "蒸汽锅炉水位"
 
 #: src/pages/Settings/tabs/PhysicalButtonsSection.jsx
 msgid "Steam button"
@@ -5091,7 +5091,7 @@ msgstr "蒸汽模式未关闭"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Steam PID Values"
-msgstr ""
+msgstr "蒸汽 PID 参数"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Steam Pump Assist"
@@ -5119,7 +5119,7 @@ msgstr "仍处于蒸汽模式"
 
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "Stop"
-msgstr ""
+msgstr "停止"
 
 #: src/pages/ShotAnalyzer/components/shotChart/tooltip/StaticTooltipContent.jsx
 msgctxt "shot stop"
@@ -5168,7 +5168,7 @@ msgstr "将导入的外部萃取和曲线保存在此设备的此浏览器中。
 
 #: src/pages/SetupWizard/WifiStep.jsx
 msgid "Strong"
-msgstr ""
+msgstr "强"
 
 #: src/pages/Settings/PluginCard.jsx
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
@@ -5440,7 +5440,7 @@ msgstr "温度偏移 (°C)"
 #. placeholder {1}: targetRise.toFixed(1)
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "Temperature rise: {0} of {1} °C"
-msgstr ""
+msgstr "温度上升：{0} / {1} °C"
 
 #: src/pages/ShotAnalyzer/components/EmptyState.jsx
 msgid "Temporary View (VIEW)"
@@ -5452,35 +5452,35 @@ msgstr "测试时长（秒）"
 
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "Test failed"
-msgstr ""
+msgstr "测试失败"
 
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "Test not started"
-msgstr ""
+msgstr "测试未开始"
 
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "Test passed"
-msgstr ""
+msgstr "测试通过"
 
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "Test stopped"
-msgstr ""
+msgstr "测试已停止"
 
 #: src/pages/SetupWizard/index.jsx
 msgid "Testing"
-msgstr ""
+msgstr "测试"
 
 #: src/pages/SetupWizard/index.jsx
 msgid "Thank you for installing GaggiMate!"
-msgstr ""
+msgstr "感谢你安装 GaggiMate！"
 
 #: src/pages/SetupWizard/index.jsx
 msgid "Thank you for installing GaggiMate! Your machine is ready for its first shot."
-msgstr ""
+msgstr "感谢你安装 GaggiMate！你的咖啡机已准备好进行首次萃取。"
 
 #: src/utils/machineProfiles.js
 msgid "The {profileName} profile is not supported by your current board or firmware."
-msgstr ""
+msgstr "你当前的主板或固件不支持 {profileName} 配置。"
 
 #: src/app/MachineSetup.jsx
 msgid "The app forgets {host}. Nothing changes on the machine, and you can add it again any time."
@@ -5488,7 +5488,7 @@ msgstr "应用将忘记 {host}。咖啡机上不会有任何更改，你可以�
 
 #: src/components/MachineProfileControl.jsx
 msgid "The applied profile is unavailable. Your saved machine settings are unchanged."
-msgstr ""
+msgstr "已应用的配置不可用。你已保存的咖啡机设置保持不变。"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "The BLDC pump addon was detected in your system. You can change the pump control characteristics using the values below."
@@ -5496,7 +5496,7 @@ msgstr "系统中检测到 BLDC 泵附加组件。你可以使用以下数值更
 
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "The boiler is already hot, so the heater works."
-msgstr ""
+msgstr "锅炉已经是热的，说明加热器工作正常。"
 
 #: src/app/appSettings.js
 msgid "The boiler reached brew temperature."
@@ -5516,7 +5516,7 @@ msgstr "已配置或推算的秤延迟异常偏高。在依赖预测重量停止
 
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "The controller is not connected yet."
-msgstr ""
+msgstr "控制器尚未连接。"
 
 #: src/app/notifications.js
 msgid "The controller reported an error."
@@ -5540,7 +5540,7 @@ msgstr "磨豆机通过此地址访问 GaggiMate，因此两者需处于同一�
 
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "The heater runs at full power for up to 10 seconds and stops as soon as the boiler temperature has risen by a few degrees."
-msgstr ""
+msgstr "加热器将以全功率运行最多 10 秒，锅炉温度上升几度后会立即停止。"
 
 #: src/app/appSettings.js
 msgid "The machine has been in steam mode for 5 minutes."
@@ -5548,23 +5548,23 @@ msgstr "咖啡机已处于蒸汽模式 5 分钟。"
 
 #: src/pages/SetupWizard/WifiStep.jsx
 msgid "The machine is busy, try again in a moment."
-msgstr ""
+msgstr "咖啡机正忙，请稍后重试。"
 
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "The machine is busy. Stop the running process and try again."
-msgstr ""
+msgstr "咖啡机正忙。请停止正在运行的过程后重试。"
 
 #: src/pages/SetupWizard/index.jsx
 msgid "The machine restarts and connects to your network. Connect this device to {ssid} as well, then open <0>http://{host}</0> or scan the QR code on the machine's display."
-msgstr ""
+msgstr "咖啡机将重启并连接到你的网络。请将此设备也连接到 {ssid}，然后打开 <0>http://{host}</0> 或扫描咖啡机屏幕上的二维码。"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "The physical reservoir sensor takes priority."
-msgstr ""
+msgstr "实体储水箱传感器优先。"
 
 #: src/pages/SetupWizard/index.jsx
 msgid "The plugins you enabled start the next time the machine is switched on."
-msgstr ""
+msgstr "你启用的插件将在下次开启咖啡机时启动。"
 
 #: src/pages/Settings/PluginCard.jsx
 msgid "The profile's dose is saved to the shot history."
@@ -5572,7 +5572,7 @@ msgstr "曲线的粉量会保存到萃取历史中。"
 
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "The pump runs with the 3-way valve closed until pressure stops rising. Then the pump stops and the valve opens, which should release the pressure to about 0 bar."
-msgstr ""
+msgstr "泵将在三通阀关闭的状态下运行，直到压力不再上升。随后泵停止、阀门打开，压力应释放至约 0 bar。"
 
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "The scale was found, but the Bluetooth connection failed. Try again or restart the scale."
@@ -5584,15 +5584,15 @@ msgstr "未找到秤。请确认秤已开机并在附近，然后重新扫描。
 
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "The temperature did not rise. Check the heater wiring, the SSR and the thermal fuses."
-msgstr ""
+msgstr "温度未上升。请检查加热器接线、SSR 和温度保险丝。"
 
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "The temperature sensor returned an invalid reading. Check the thermocouple and its wiring."
-msgstr ""
+msgstr "温度传感器返回了无效读数。请检查热电偶及其接线。"
 
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "The test was stopped before it finished."
-msgstr ""
+msgstr "测试在完成前被停止。"
 
 #: src/pages/Settings/tabs/SystemTab.jsx
 msgid "The update could not be completed and the device kept its current firmware. Check the network connection and start the update again."
@@ -5633,7 +5633,7 @@ msgstr "此功能可控制 Tasmota 插座，在达到目标后关闭磨豆机。
 
 #: src/utils/machineProfiles.js
 msgid "This profile includes settings outside machine configuration. Remove them from the profile before importing it."
-msgstr ""
+msgstr "此配置包含咖啡机配置以外的设置。请先将其从配置中移除，然后再导入。"
 
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "This scale model couldn't be set up."
@@ -5967,11 +5967,11 @@ msgstr "使用 24 小时制"
 
 #: src/components/MachineProfileControl.jsx
 msgid "Use a different ID for a customized built-in profile."
-msgstr ""
+msgstr "自定义内置配置时请使用不同的 ID。"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Use Alba reservoir level to interlock steam refill"
-msgstr ""
+msgstr "使用 Alba 储水箱水位联锁蒸汽补水"
 
 #: src/pages/Statistics/components/toolbar/helpers.js
 msgid "Use shot timestamp only"
@@ -6039,7 +6039,7 @@ msgstr "阀门打开"
 
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "Valve open, releasing pressure…"
-msgstr ""
+msgstr "阀门打开，正在泄压…"
 
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
@@ -6124,15 +6124,15 @@ msgstr "三"
 
 #: src/components/MachineProfileControl.jsx
 msgid "Wait for the controller to confirm the applied configuration before exporting."
-msgstr ""
+msgstr "请等待控制器确认已应用的配置后再导出。"
 
 #: src/pages/SetupWizard/MachineStep.jsx
 msgid "Waiting for controller configuration…"
-msgstr ""
+msgstr "正在等待控制器配置…"
 
 #: src/utils/machineProfiles.js
 msgid "Waiting for your controller to identify its board. Please keep the machine connected."
-msgstr ""
+msgstr "正在等待控制器识别其主板。请保持咖啡机连接。"
 
 #: src/utils/warnings.js
 msgctxt "warning level"
@@ -6185,7 +6185,7 @@ msgstr "水位"
 #: src/pages/Home/cards/MachineLevelsCard.jsx
 #: src/utils/panelDefinitions.js
 msgid "Water Levels"
-msgstr ""
+msgstr "水位"
 
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 msgid "Water pumped"
@@ -6203,7 +6203,7 @@ msgstr "水箱"
 
 #: src/utils/metricDefinitions.js
 msgid "Water Tank Level"
-msgstr ""
+msgstr "水箱水位"
 
 #: src/utils/warnings.js
 msgid "Water tank low"
@@ -6211,7 +6211,7 @@ msgstr "水箱水位低"
 
 #: src/pages/SetupWizard/WifiStep.jsx
 msgid "Weak"
-msgstr ""
+msgstr "弱"
 
 #: src/pages/Statistics/components/toolbar/constants.js
 msgctxt "shot source: browser storage"
@@ -6304,7 +6304,7 @@ msgstr "重量停止"
 
 #: src/pages/SetupWizard/index.jsx
 msgid "Welcome to GaggiMate"
-msgstr ""
+msgstr "欢迎使用 GaggiMate"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "What percentage to run the pump at during steaming"
@@ -6320,7 +6320,7 @@ msgstr "GaggiMate 在后台运行时会持续监控你的咖啡机，并显示�
 
 #: src/pages/SetupWizard/index.jsx
 msgid "Wi-Fi"
-msgstr ""
+msgstr "Wi-Fi"
 
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Wi-Fi Password"
@@ -6328,7 +6328,7 @@ msgstr "Wi-Fi 密码"
 
 #: src/pages/SetupWizard/WifiStep.jsx
 msgid "Wi-Fi passwords have at least {WPA_MIN_PASSWORD} characters."
-msgstr ""
+msgstr "Wi-Fi 密码至少为 {WPA_MIN_PASSWORD} 个字符。"
 
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Wi-Fi SSID"
@@ -6354,15 +6354,15 @@ msgstr "出液量："
 
 #: src/pages/SetupWizard/index.jsx
 msgid "You can run this wizard again any time from Settings → System."
-msgstr ""
+msgstr "你可以随时在“设置 → 系统”中再次运行此向导。"
 
 #: src/utils/machineProfiles.js
 msgid "Your {currentBoard} board is not compatible with the {profileName} dual boiler machine. You will need a GaggiMate Max board."
-msgstr ""
+msgstr "你的 {currentBoard} 主板与 {profileName} 双锅炉咖啡机不兼容。你需要 GaggiMate Max 主板。"
 
 #: src/utils/machineProfiles.js
 msgid "Your {currentBoard} board is not compatible with the {profileName} single boiler machine. You will need a GaggiMate Pro/Standard board."
-msgstr ""
+msgstr "你的 {currentBoard} 主板与 {profileName} 单锅炉咖啡机不兼容。你需要 GaggiMate Pro/Standard 主板。"
 
 #: src/components/VisualizerUploadModal.jsx
 msgid "Your credentials are only used for this upload and will be stored locally only if you choose to remember your username."
