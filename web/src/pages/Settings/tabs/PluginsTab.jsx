@@ -5,6 +5,9 @@ import Section from '../../../components/Card.jsx';
 export function PluginsTab({
   formData,
   onChange,
+  onSmartDoseSaved,
+  onSmartDoseSaving,
+  settingsDisabled,
   autowakeupSchedules,
   addAutoWakeupSchedule,
   removeAutoWakeupSchedule,
@@ -15,6 +18,9 @@ export function PluginsTab({
   return (
     <Section title={t`Plugins`}>
       <PluginCard
+        onSmartDoseSaved={onSmartDoseSaved}
+        onSmartDoseSaving={onSmartDoseSaving}
+        settingsDisabled={settingsDisabled}
         formData={formData}
         onChange={onChange}
         autowakeupSchedules={autowakeupSchedules}

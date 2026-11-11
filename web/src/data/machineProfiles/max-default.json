@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "id": "max-default",
+  "name": "Profitec Move - 120V",
+  "revision": 5,
+  "requires": {
+    "dualBoiler": true,
+    "pressure": true
+  },
+  "settings": {
+    "ntcBrewNominalResistance": 50000,
+    "ntcBrewSeriesResistance": 10000,
+    "ntcBrewSupplyVoltage": 4.096,
+    "ntcBrewBeta": 3988,
+    "ntcSteamNominalResistance": 50000,
+    "ntcSteamSeriesResistance": 10000,
+    "ntcSteamSupplyVoltage": 4.096,
+    "ntcSteamBeta": 3988,
+    "tankLevelEnabled": false,
+    "steamLevelEnabled": true,
+    "steamRefillMode": 1,
+    "steamRefillPostClearSeconds": 3,
+    "steamLevelDebounceChecks": 25,
+    "defaultSteamMode": 1,
+    "heaterCoordinationEnabled": true,
+    "targetSteamTemp": 130,
+    "momentaryButtons": false,
+    "temperatureOffset": 5,
+    "steamPid": "58.397,1.027,249.055",
+    "systemLedFunction": 1,
+    "baristaLedFunction": 3,
+    "systemLedBrightness": 255,
+    "baristaLedBrightness": 255,
+    "systemLedMinBrightness": 0,
+    "systemLedCycleTimeMs": 3000,
+    "baristaLedMinBrightness": 0,
+    "baristaLedCycleTimeMs": 3000
+  },
+  "locks": {
+    "targetSteamTemp": true
+  }
+}

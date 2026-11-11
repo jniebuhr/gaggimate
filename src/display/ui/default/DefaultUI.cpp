@@ -14,6 +14,7 @@
 #endif
 #include <cmath>
 #include <display/main.h>
+#include <display/plugins/SmartDosePlugin.h>
 #include <display/ui/utils/effects.h>
 #include <esp32-hal-psram.h>
 #include <utility>
@@ -25,7 +26,7 @@
 
 static EffectManager effect_mgr;
 
-static constexpr uint32_t STARTUP_FADE_MS = 1000; // standby fade-in duration on power-up
+static constexpr uint32_t STARTUP_FADE_MS = 1000; // start screen fade-in duration on power-up
 
 static constexpr int32_t GAUGE_TICK_LONG = 25;      // meter tick length on most screens
 static constexpr int32_t GAUGE_TICK_SHORT = 10;     // shortened tick length on profile / new-menu screens
@@ -222,25 +223,12 @@ void DefaultUI::init() {
     pluginManager->on("controller:process:start", triggerRender);
     pluginManager->on("controller:mode:change", [this](Event const &event) {
         mode = event.getInt("value");
-        switch (mode) {
-        case MODE_STANDBY:
-            changeScreen(SCREEN_ID_STANDBY_SCREEN);
-            break;
-        case MODE_BREW:
-            changeScreen(SCREEN_ID_BREW_SCREEN);
-            break;
-        case MODE_GRIND:
-            changeScreen(SCREEN_ID_GRIND_SCREEN);
-            break;
-        case MODE_STEAM:
-            changeScreen(SCREEN_ID_STEAM_SCREEN);
-            break;
-        case MODE_WATER:
-            changeScreen(SCREEN_ID_WATER_SCREEN);
-            break;
-        default:
-            break;
-        };
+        if (mode >= MODE_STANDBY && mode <= MODE_GRIND)
+            changeScreen(screenForMode(mode));
+    });
+    pluginManager->on("settings:changed", [this](Event const &) {
+        if (welcomeActive && controller->getSettings().isSetupDone())
+            onWelcomeContinue();
     });
     pluginManager->on("controller:brew:start", [this](Event const &event) { changeScreen(SCREEN_ID_STATUS_SCREEN); });
     pluginManager->on("controller:brew:clear", [this](Event const &event) {
@@ -380,7 +368,10 @@ void DefaultUI::loop() {
         updateBoiler();
         updateBrewProcess();
         updateShotChart();
-        currentWeight = FloatValue(activeWeight);
+        const auto dosing = SmartDose.getUIState();
+        eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_SET_DOSE_STATE, IntegerValue(dosing.state));
+        eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_SET_DOSE_AVAILABLE, BooleanValue(dosing.available));
+        currentWeight = FloatValue(currentScreen == SCREEN_ID_BREW_SCREEN && dosing.state != 0 ? dosing.weight : activeWeight);
         eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_SCALE_WEIGHT_CURRENT, currentWeight);
 
         char timeBuf[12];
@@ -409,6 +400,22 @@ void DefaultUI::loop() {
     }
 
     ui_tick();
+    // EEZ owns visibility. Pulse only the selected Automagic icon while not ready.
+    // Restore every other icon so a state change cannot leave it dimmed.
+    static uint32_t lastDoseBlinkUpdate = 0;
+    if (currentScreen == SCREEN_ID_BREW_SCREEN && millis() - lastDoseBlinkUpdate >= 100u) {
+        lastDoseBlinkUpdate = millis();
+        const auto dosing = SmartDose.getUIState();
+        lv_obj_t *const icons[] = {objects.smart_dose_cup, objects.smart_dose_manual, objects.smart_dose_portafilter};
+        for (int i = 0; i < 3; ++i) {
+            lv_obj_t *icon = icons[i];
+            if (icon == nullptr)
+                continue;
+            const lv_opa_t opacity = dosing.state == i + 1 && dosing.blinking && (millis() / 400u) % 2u ? 64 : LV_OPA_COVER;
+            if (lv_obj_get_style_img_opa(icon, LV_PART_MAIN) != opacity)
+                lv_obj_set_style_img_opa(icon, opacity, LV_PART_MAIN | LV_STATE_DEFAULT);
+        }
+    }
     lv_task_handler();
 }
 
@@ -425,20 +432,28 @@ void DefaultUI::loopProfiles() {
         }
         std::vector<Profile> profiles;
         std::vector<bool> hasImage;
+        std::vector<String> validIds;
         profiles.reserve(ids.size());
         hasImage.reserve(ids.size());
+        validIds.reserve(ids.size());
         const std::vector<String> imageIds = controller->isSDCard() ? profileManager->listProfileImages() : std::vector<String>{};
         for (const auto &profileId : ids) {
             Profile profile{};
-            profileManager->loadProfile(profileId, profile);
+            if (!profileManager->loadProfile(profileId, profile)) {
+                ESP_LOGW("DefaultUI", "Skipping unreadable profile %s", profileId.c_str());
+                continue;
+            }
             profiles.emplace_back(std::move(profile));
+            validIds.emplace_back(profileId);
             hasImage.push_back(std::find(imageIds.begin(), imageIds.end(), profileId) != imageIds.end());
         }
         {
             std::lock_guard<std::mutex> guard(profilesMutex);
-            favoritedProfileIds = std::move(ids);
+            favoritedProfileIds = std::move(validIds);
             favoritedProfiles = std::move(profiles);
             favoritedHasImage = std::move(hasImage);
+            const int count = static_cast<int>(favoritedProfileIds.size());
+            currentProfileIdx = count == 0 ? 0 : std::min(currentProfileIdx, count - 1);
             profilesGeneration++;
         }
         profileLoaded = 1;
@@ -472,8 +487,28 @@ void DefaultUI::loadRequestedImage() {
     rerender = true;
 }
 
+ScreensEnum DefaultUI::screenForMode(int mode) {
+    switch (mode) {
+    case MODE_BREW:
+        return SCREEN_ID_BREW_SCREEN;
+    case MODE_GRIND:
+        return SCREEN_ID_GRIND_SCREEN;
+    case MODE_STEAM:
+        return SCREEN_ID_STEAM_SCREEN;
+    case MODE_WATER:
+        return SCREEN_ID_WATER_SCREEN;
+    default:
+        return SCREEN_ID_STANDBY_SCREEN;
+    }
+}
+
+void DefaultUI::onWelcomeContinue() {
+    welcomeActive = false;
+    changeScreen(screenForMode(mode));
+}
+
 void DefaultUI::changeScreen(ScreensEnum screen) {
-    targetScreen = screen;
+    targetScreen = welcomeActive ? SCREEN_ID_WELCOME_SCREEN : screen;
     brewScreenState = BrewScreenState::Brew;
     rerender = true;
     // Reset some submenus
@@ -520,8 +555,9 @@ void DefaultUI::onProfileSelect() {
             id = favoritedProfileIds[currentProfileIdx];
         }
     }
-    if (!id.isEmpty()) {
-        profileManager->selectProfile(id);
+    if (id.isEmpty() || !profileManager->selectProfile(id)) {
+        reloadProfiles();
+        return;
     }
     profileDirty = false;
     changeScreen(SCREEN_ID_BREW_SCREEN);
@@ -538,14 +574,20 @@ void DefaultUI::setupPanel() {
     applyGaugeSetpointStyle(gaugeSetpointsInside);
     setupState();
     applyTheme();
+    // First run boots straight into the welcome screen; it stays until the setup wizard finishes or is skipped
+    welcomeActive = !controller->getSettings().isSetupDone();
+    if (welcomeActive) {
+        eez_flow_set_screen(SCREEN_ID_WELCOME_SCREEN, LV_SCR_LOAD_ANIM_NONE, 0, 0);
+        currentScreen = targetScreen = SCREEN_ID_WELCOME_SCREEN;
+    }
     ui_tick();
 
-    lv_obj_t *standby = lv_scr_act();
+    lv_obj_t *startScreen = lv_scr_act();
     lv_obj_t *black = lv_obj_create(nullptr);
     lv_obj_set_style_bg_color(black, lv_color_black(), LV_PART_MAIN);
     lv_obj_set_style_bg_opa(black, LV_OPA_COVER, LV_PART_MAIN);
     lv_scr_load(black);
-    lv_scr_load_anim(standby, LV_SCR_LOAD_ANIM_FADE_ON, STARTUP_FADE_MS, 0, true);
+    lv_scr_load_anim(startScreen, LV_SCR_LOAD_ANIM_FADE_ON, STARTUP_FADE_MS, 0, true);
 
     lv_task_handler();
 
@@ -556,6 +598,8 @@ void DefaultUI::setupPanel() {
 }
 
 void DefaultUI::setupState() {
+    eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_SET_DOSE_STATE, IntegerValue(0));
+    eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_SET_DOSE_AVAILABLE, BooleanValue(false));
     eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_SCALE_WEIGHT_CURRENT, currentWeight);
     eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_GRIND_WEIGHT_TARGET, grindWeightTarget);
     eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_GRIND_TIME_TARGET, grindTimeTarget);
@@ -575,35 +619,9 @@ void DefaultUI::setupState() {
     updateBrewProcess();
 
     effect_mgr.use_effect([this]() { return currentScreen == SCREEN_ID_INFO_SCREEN; },
-                          [=]() {
-                              String content = "";
-                              if (apActive) {
-                                  // WIFI: QR syntax — escape \ ; , : " in the password per the spec.
-                                  const String pw = controller->getSettings().getWifiApPassword();
-                                  String escaped;
-                                  escaped.reserve(pw.length() + 4);
-                                  for (size_t i = 0; i < pw.length(); i++) {
-                                      const char c = pw.charAt(i);
-                                      if (c == '\\' || c == ';' || c == ',' || c == ':' || c == '"') {
-                                          escaped += '\\';
-                                      }
-                                      escaped += c;
-                                  }
-                                  if (escaped.isEmpty()) {
-                                      content = "WIFI:S:GaggiMate;;;;";
-                                  } else {
-                                      content = "WIFI:S:GaggiMate;T:WPA;P:" + escaped + ";;";
-                                  }
-                              } else if (wifiConnected) {
-                                  content = "http://" + WiFi.localIP().toString() + "/";
-                              }
-                              if (content == "") {
-                                  return;
-                              }
-                              const char *data = content.c_str();
-                              lv_qrcode_update(objects.qrcode, data, strlen(data));
-                          },
-                          &wifiConnected, &apActive);
+                          [this]() { updateAccessQrCode(objects.qrcode); }, &wifiConnected, &apActive);
+    effect_mgr.use_effect([this]() { return currentScreen == SCREEN_ID_WELCOME_SCREEN; },
+                          [this]() { updateAccessQrCode(objects.qrcode_welcome); }, &wifiConnected, &apActive);
     effect_mgr.use_effect([this]() { return currentScreen == SCREEN_ID_MENU_SCREEN_NEW; },
                           [this]() {
                               int radius = 135;
@@ -620,7 +638,41 @@ void DefaultUI::setupState() {
                           &grindAvailable);
 }
 
+// AP mode: join-network QR (the captive portal opens the web UI); on Wi-Fi: the device URL.
+void DefaultUI::updateAccessQrCode(lv_obj_t *qrcode) {
+    String content = "";
+    if (apActive) {
+        // WIFI: QR syntax — escape \ ; , : " in the password per the spec.
+        const String pw = controller->getSettings().getWifiApPassword();
+        String escaped;
+        escaped.reserve(pw.length() + 4);
+        for (size_t i = 0; i < pw.length(); i++) {
+            const char c = pw.charAt(i);
+            if (c == '\\' || c == ';' || c == ',' || c == ':' || c == '"') {
+                escaped += '\\';
+            }
+            escaped += c;
+        }
+        if (escaped.isEmpty()) {
+            content = "WIFI:S:GaggiMate;;;;";
+        } else {
+            content = "WIFI:S:GaggiMate;T:WPA;P:" + escaped + ";;";
+        }
+    } else if (wifiConnected) {
+        content = "http://" + WiFi.localIP().toString() + "/";
+    }
+    if (content == "" || qrcode == nullptr) {
+        return;
+    }
+    lv_qrcode_update(qrcode, content.c_str(), content.length());
+}
+
 void DefaultUI::handleScreenChange() {
+    // Wait for an animated screen load (the startup fade) to finish. Interrupting it makes LVGL 8
+    // finish the load early and, with auto-delete set, delete the screen being loaded instead of
+    // the previous one, then load the deleted screen (crash on a mode change right after boot).
+    if (lv_disp_get_default()->scr_to_load != nullptr)
+        return;
     if (currentScreen != targetScreen) {
         if (currentScreen == SCREEN_ID_BREW_SCREEN)
             brewConfirmVisible = false; // leaving the brew screen dismisses the confirm overlay
@@ -712,11 +764,14 @@ void DefaultUI::updateState() {
     targetTemp = static_cast<int>(controller->getTargetTemp());
     pressureAvailable = controller->getSystemInfo().capabilities.pressure ? 1 : 0;
     wifiConnected = WiFi.status() == WL_CONNECTED;
-    grindAvailable = settings.isSmartGrindActive() || settings.getAltRelayFunction() == ALT_RELAY_GRIND;
+    grindAvailable = settings.isSmartGrindActive() ||
+                     (!controller->getSystemInfo().capabilities.dualBoiler && settings.getAltRelayFunction() == ALT_RELAY_GRIND);
     dualBoiler = controller->getSystemInfo().capabilities.dualBoiler ? 1 : 0;
 
     uiFlags.brew_adjustments(brewScreenState == BrewScreenState::Settings);
-    uiFlags.active(controller->isActive());
+    uiFlags.active(dualBoiler && currentScreen == SCREEN_ID_STEAM_SCREEN   ? controller->isSteamHeaterActive()
+                   : dualBoiler && currentScreen == SCREEN_ID_WATER_SCREEN ? controller->isWaterValveActive()
+                                                                           : controller->isActive());
     uiFlags.grind_active(controller->isGrindActive());
     uiFlags.grind_volumetric(controller->isVolumetricAvailable() && settings.isVolumetricTarget());
     uiFlags.heating_flash(heatingFlash);
@@ -761,7 +816,9 @@ void DefaultUI::updateSystemStatus() {
     if (stringChanged(systemStatus.error_label(), errorLabel.c_str()))
         systemStatus.error_label(errorLabel.c_str());
     systemStatus.volumetric_available(controller->isVolumetricAvailable());
-    systemStatus.bluetooth_scales(controller->isScaleSourceHealthy(controller->getEffectiveScaleSource()));
+    const auto dosing = SmartDose.getUIState();
+    systemStatus.bluetooth_scales((currentScreen == SCREEN_ID_BREW_SCREEN && dosing.state != 0) ||
+                                  controller->isScaleSourceHealthy(controller->getEffectiveScaleSource()));
     systemStatus.controller_version(controller->getSystemInfo().version.c_str());
     systemStatus.display_version(BUILD_GIT_VERSION);
     systemStatus.update_available(updateAvailable);
@@ -839,8 +896,8 @@ void DefaultUI::updateProfileInfo() {
         selectedHasImage = !favoritedProfileIds.empty() && favoritedProfileIds[0] == selected.id && favoritedHasImage[0];
         if (!favoritedProfiles.empty() && currentProfileIdx >= 0 &&
             currentProfileIdx < static_cast<int>(favoritedProfiles.size())) {
-            populateProfileInfo(previewProfileInfo, favoritedProfiles[currentProfileIdx], currentProfileIdx == 0,
-                                favoritedHasImage[currentProfileIdx]);
+            populateProfileInfo(previewProfileInfo, favoritedProfiles[currentProfileIdx],
+                                favoritedProfileIds[currentProfileIdx] == selected.id, favoritedHasImage[currentProfileIdx]);
             populated = true;
         }
     }

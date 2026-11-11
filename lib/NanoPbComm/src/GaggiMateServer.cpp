@@ -188,6 +188,10 @@ void GaggiMateServer::registerHandlers() {
         if (_autotuneCb)
             _autotuneCb(p.content.autotune.test_time, p.content.autotune.samples, p.content.autotune.heater_wattage);
     });
+    _endpoint.on(gaggimate_Payload_machine_hardware_tag, [this](const gm::Payload &p) {
+        if (_machineHardwareCb)
+            _machineHardwareCb(p.content.machine_hardware);
+    });
     _endpoint.on(gaggimate_Payload_pressure_scale_tag, [this](const gm::Payload &p) {
         if (_pressureScaleCb)
             _pressureScaleCb(p.content.pressure_scale.scale);
@@ -210,8 +214,24 @@ void GaggiMateServer::registerHandlers() {
         if (!_ledCb)
             return;
         // One message carries every changed channel; apply them in order.
-        for (pb_size_t i = 0; i < p.content.led.channels_count; i++)
-            _ledCb(static_cast<uint8_t>(p.content.led.channels[i].channel),
-                   static_cast<uint8_t>(p.content.led.channels[i].brightness));
+        for (pb_size_t i = 0; i < p.content.led.channels_count; i++) {
+            const auto &led = p.content.led.channels[i];
+            if (led.channel > BARISTA_LED_CHANNEL || led.effect > 3)
+                continue;
+            if (led.channel >= SYSTEM_LED_CHANNEL &&
+                (led.min_brightness > led.brightness || led.cycle_time_ms < MIN_LED_CYCLE_MS ||
+                 led.cycle_time_ms > MAX_LED_CYCLE_MS))
+                continue;
+            _ledCb(led.channel, led.brightness, static_cast<LedEffect>(led.effect), led.min_brightness, led.cycle_time_ms);
+        }
     });
+}
+
+void GaggiMateServer::sendMachineHardwareStatus(uint32_t hash, bool ready, bool error) {
+    gm::Payload p = gaggimate_Payload_init_zero;
+    p.which_content = gaggimate_Payload_machine_hardware_status_tag;
+    p.content.machine_hardware_status.hash = hash;
+    p.content.machine_hardware_status.ready = ready;
+    p.content.machine_hardware_status.error = error;
+    _endpoint.send(p);
 }

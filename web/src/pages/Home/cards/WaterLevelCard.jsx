@@ -2,7 +2,9 @@ import PropTypes from 'prop-types';
 import { Trans } from '@lingui/react/macro';
 
 export function WaterLevelCard({ waterLevelPercent, inCard = false }) {
-  const pct = Math.round(waterLevelPercent);
+  // null: the Alba is attached but its tank distances are missing or invalid.
+  const calibrated = waterLevelPercent !== null && waterLevelPercent !== undefined;
+  const pct = calibrated ? Math.round(waterLevelPercent) : 0;
 
   return (
     <div
@@ -14,7 +16,9 @@ export function WaterLevelCard({ waterLevelPercent, inCard = false }) {
         <div className='text-base-content/50 text-[0.6rem] font-semibold tracking-wider uppercase'>
           <Trans>Water Tank</Trans>
         </div>
-        <div className='text-info text-xs font-bold tabular-nums'>{pct}%</div>
+        <div className='text-info text-xs font-bold tabular-nums'>
+          {calibrated ? `${pct}%` : '—'}
+        </div>
       </div>
       <div className='bg-base-content/10 h-2 w-full overflow-hidden rounded-full'>
         <div
@@ -22,11 +26,16 @@ export function WaterLevelCard({ waterLevelPercent, inCard = false }) {
           style={{ width: `${pct}%` }}
         />
       </div>
+      {!calibrated && (
+        <div className='text-base-content/50 text-[0.65rem] leading-tight'>
+          <Trans>Set the tank distances in Settings → Machine to see the level.</Trans>
+        </div>
+      )}
     </div>
   );
 }
 
 WaterLevelCard.propTypes = {
-  waterLevelPercent: PropTypes.number.isRequired,
+  waterLevelPercent: PropTypes.number,
   inCard: PropTypes.bool,
 };

@@ -26,6 +26,7 @@ class NtcThermistor : public TemperatureSensor {
     void loop();
 
   private:
+    void fail(const char *reason);
     ADSAdc *_adc;
     uint8_t _channel;
     xTaskHandle taskHandle;

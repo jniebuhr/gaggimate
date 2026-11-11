@@ -48,6 +48,8 @@ class DefaultUI {
 
     // Interface methods
     void changeScreen(ScreensEnum screen);
+    void onWelcomeContinue();
+    ScreensEnum getCurrentScreen() const { return currentScreen; }
 
     void changeBrewScreenMode(BrewScreenState state);
     void onProfileSwitch();
@@ -70,6 +72,7 @@ class DefaultUI {
         brewConfirmVisible = visible;
         rerender = true;
     }
+    bool isBrewConfirmVisible() const { return brewConfirmVisible; }
 
     void markDirty() { rerender = true; }
     void markProfileDirty() { profileDirty = true; }
@@ -86,6 +89,8 @@ class DefaultUI {
     void setupState();
 
     void handleScreenChange();
+    void updateAccessQrCode(lv_obj_t *qrcode);
+    static ScreensEnum screenForMode(int mode);
 
     // Animate the dial meters' tick length (short on profile/menu/info and chart-mode status, long elsewhere).
     void animateGaugeTicks(bool fromShort, bool toShort);
@@ -192,6 +197,7 @@ class DefaultUI {
     int waitingForController = false;
     int dualBoiler = false;
     int initialized = false;
+    bool welcomeActive = false; // first-run welcome screen, shown until setup is done or skipped
     int grindAvailable = false;
 
     // Seasonal flags

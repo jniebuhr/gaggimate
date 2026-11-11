@@ -9,10 +9,11 @@ import { usePumpFlowCalibration } from './usePumpFlowCalibration.js';
 
 const connected = computed(() => machine.value.connected);
 
-export default function PumpFlowCalibration({ isOpen, onClose, currentCoeffs, onApplied }) {
-  const { phase, logs, results, saving, saved, busy, start, apply, reset } = usePumpFlowCalibration(
-    { currentCoeffs, onApplied },
-  );
+export default function PumpFlowCalibration({ currentCoeffs, onApplied }) {
+  const { phase, logs, results, saving, saved, start, apply, reset } = usePumpFlowCalibration({
+    currentCoeffs,
+    onApplied,
+  });
 
   return (
     <div className='p-4'>

@@ -232,7 +232,7 @@ function getChartData(shot) {
             font: {
               size: window.innerWidth < 640 ? 10 : 12,
             },
-            generateLabels: function (chart) {
+            generateLabels(chart) {
               const original = Chart.defaults.plugins.legend.labels.generateLabels;
               const labels = original.call(this, chart);
 

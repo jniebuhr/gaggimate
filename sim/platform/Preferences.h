@@ -1,11 +1,15 @@
-// Host shim for Arduino Preferences (NVS): an in-memory key/value store per
-// namespace, persisted to sim_data/nvs/<namespace>.json (load/save in the .cpp).
+// Host shim for Arduino Preferences (NVS): one in-memory key/value store per namespace, shared by
+// every instance like the real NVS, persisted to sim_data/nvs/<namespace>.json (load/save in the .cpp).
 #pragma once
 
 #include "WString.h"
 #include <cstdint>
+#include <cstring>
 #include <map>
 #include <string>
+
+// Every value is stored as text, so getType() reports PT_STR and blob readers take their string path.
+typedef enum { PT_I8, PT_U8, PT_I16, PT_U16, PT_I32, PT_U32, PT_I64, PT_U64, PT_STR, PT_BLOB, PT_INVALID } PreferenceType;
 
 class Preferences {
   public:
@@ -15,12 +19,12 @@ class Preferences {
     size_t putString(const char *key, const String &value) { return setRaw(key, value.c_str()); }
     size_t putString(const char *key, const char *value) { return setRaw(key, value ? value : ""); }
     String getString(const char *key, const String &def = String()) {
-        auto it = _kv.find(key);
-        return it == _kv.end() ? def : String(it->second.c_str());
+        auto it = kv().find(key);
+        return it == kv().end() ? def : String(it->second.c_str());
     }
     size_t getString(const char *key, char *value, size_t maxLen) {
-        auto it = _kv.find(key);
-        if (it == _kv.end() || maxLen == 0)
+        auto it = kv().find(key);
+        if (it == kv().end() || maxLen == 0)
             return 0;
         size_t n = it->second.copy(value, maxLen - 1);
         value[n] = '\0';
@@ -29,50 +33,65 @@ class Preferences {
 
     size_t putInt(const char *key, int32_t value) { return setRaw(key, std::to_string(value)); }
     int32_t getInt(const char *key, int32_t def = 0) {
-        auto it = _kv.find(key);
-        return it == _kv.end() ? def : (int32_t)strtol(it->second.c_str(), nullptr, 10);
+        auto it = kv().find(key);
+        return it == kv().end() ? def : (int32_t)strtol(it->second.c_str(), nullptr, 10);
     }
     size_t putUInt(const char *key, uint32_t value) { return setRaw(key, std::to_string(value)); }
     uint32_t getUInt(const char *key, uint32_t def = 0) {
-        auto it = _kv.find(key);
-        return it == _kv.end() ? def : (uint32_t)strtoul(it->second.c_str(), nullptr, 10);
+        auto it = kv().find(key);
+        return it == kv().end() ? def : (uint32_t)strtoul(it->second.c_str(), nullptr, 10);
     }
     size_t putULong(const char *key, unsigned long value) { return setRaw(key, std::to_string(value)); }
     unsigned long getULong(const char *key, unsigned long def = 0) {
-        auto it = _kv.find(key);
-        return it == _kv.end() ? def : strtoul(it->second.c_str(), nullptr, 10);
+        auto it = kv().find(key);
+        return it == kv().end() ? def : strtoul(it->second.c_str(), nullptr, 10);
     }
 
     size_t putBool(const char *key, bool value) { return setRaw(key, value ? "1" : "0"); }
     bool getBool(const char *key, bool def = false) {
-        auto it = _kv.find(key);
-        return it == _kv.end() ? def : it->second == "1";
+        auto it = kv().find(key);
+        return it == kv().end() ? def : it->second == "1";
     }
 
     size_t putFloat(const char *key, float value) { return setRaw(key, std::to_string(value)); }
     float getFloat(const char *key, float def = 0.0f) {
-        auto it = _kv.find(key);
-        return it == _kv.end() ? def : strtof(it->second.c_str(), nullptr);
+        auto it = kv().find(key);
+        return it == kv().end() ? def : strtof(it->second.c_str(), nullptr);
     }
 
     size_t putDouble(const char *key, double value) { return setRaw(key, std::to_string(value)); }
     double getDouble(const char *key, double def = 0.0) {
-        auto it = _kv.find(key);
-        return it == _kv.end() ? def : strtod(it->second.c_str(), nullptr);
+        auto it = kv().find(key);
+        return it == kv().end() ? def : strtod(it->second.c_str(), nullptr);
     }
 
-    bool isKey(const char *key) { return _kv.count(key) > 0; }
+    PreferenceType getType(const char *key) { return kv().count(key) ? PT_STR : PT_INVALID; }
+    size_t getBytesLength(const char *key) {
+        auto it = kv().find(key);
+        return it == kv().end() ? 0 : it->second.size() + 1;
+    }
+    size_t getBytes(const char *key, void *buf, size_t maxLen) {
+        auto it = kv().find(key);
+        if (it == kv().end() || maxLen < it->second.size() + 1)
+            return 0;
+        memcpy(buf, it->second.c_str(), it->second.size() + 1);
+        return it->second.size() + 1;
+    }
+
+    size_t freeEntries() { return 1000; } // the JSON store has no entry limit
+
+    bool isKey(const char *key) { return kv().count(key) > 0; }
     bool remove(const char *key) {
-        if (_ro || !_kv.count(key))
+        if (_ro || !kv().count(key))
             return false;
-        _kv.erase(key);
+        kv().erase(key);
         save();
         return true;
     }
     bool clear() {
         if (_ro)
             return false;
-        _kv.clear();
+        kv().clear();
         save();
         return true;
     }
@@ -81,14 +100,15 @@ class Preferences {
     size_t setRaw(const char *key, const std::string &value) {
         if (_ro)
             return 0;
-        _kv[key] = value;
+        kv()[key] = value;
         save();
         return value.size();
     }
     void load();
     void save();
 
-    std::map<std::string, std::string> _kv;
+    std::map<std::string, std::string> &kv() { return *_kv; }
+    std::map<std::string, std::string> *_kv = nullptr;
     std::string _ns;
     bool _ro = false;
 };

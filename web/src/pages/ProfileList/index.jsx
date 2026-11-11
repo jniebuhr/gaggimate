@@ -1,7 +1,7 @@
 import Sortable, { MultiDrag } from 'sortablejs';
 try {
   Sortable?.mount(new MultiDrag());
-} catch (error) {
+} catch {
   // to avoid error when vite is reloading the page in dev mode
 }
 
@@ -220,7 +220,11 @@ function ProfileCard({
                   <input
                     checked={data.selected}
                     type='checkbox'
-                    onClick={() => onSelect(data.id)}
+                    onClick={e => {
+                      // Keep the box driven by data.selected: the browser must not toggle it itself
+                      e.preventDefault();
+                      onSelect(data.id, data.selected);
+                    }}
                     className='checkbox checkbox-success checkbox-sm'
                     aria-label={t`Select ${label} profile`}
                   />
@@ -678,7 +682,7 @@ export function ProfileList() {
         if (!orderedIds) return;
         try {
           await apiService.request({ tp: 'req:profiles:reorder', order: orderedIds });
-        } catch (e) {
+        } catch {
           // optional: log or surface error
         }
       }, 300);
@@ -862,7 +866,6 @@ export function ProfileList() {
     };
   }, [loading, searchTerm, onDragStart, onDragChange, onDragEnd]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const onDelete = useCallback(
     async id => {
       setLoading(true);
@@ -872,15 +875,23 @@ export function ProfileList() {
     [apiService, setLoading, invalidateProfiles],
   );
 
-  // The status broadcast carries the new selection into the cached list
+  // onSelect will exit early if the requested id is the same as the pending id
+  // or if there is no pending selection and the requested id is already selected
+  const pendingSelectionRef = useRef(null);
   const onSelect = useCallback(
-    async id => {
-      await apiService.request({ tp: 'req:profiles:select', id });
+    async (id, alreadySelected) => {
+      if (pendingSelectionRef.current === id) return;
+      if (alreadySelected && pendingSelectionRef.current === null) return;
+      pendingSelectionRef.current = id;
+      try {
+        await apiService.request({ tp: 'req:profiles:select', id });
+      } finally {
+        if (pendingSelectionRef.current === id) pendingSelectionRef.current = null;
+      }
     },
     [apiService],
   );
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const onFavorite = useCallback(
     async id => {
       setLoading(true);
@@ -890,7 +901,6 @@ export function ProfileList() {
     [apiService, setLoading, invalidateProfiles],
   );
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const onUnfavorite = useCallback(
     async id => {
       setLoading(true);
@@ -900,7 +910,6 @@ export function ProfileList() {
     [apiService, setLoading, invalidateProfiles],
   );
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const onDuplicate = useCallback(
     async id => {
       setLoading(true);

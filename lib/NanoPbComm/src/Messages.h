@@ -11,6 +11,7 @@ namespace gm {
 using Frame = gaggimate_Frame;
 using Payload = gaggimate_Payload;
 
+using MachineHardwareSettings = gaggimate_MachineHardwareSettings;
 using Ping = gaggimate_Ping;
 using BoilerControl = gaggimate_BoilerControl;
 using PumpControl = gaggimate_PumpControl;
