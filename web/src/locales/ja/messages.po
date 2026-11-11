@@ -1561,6 +1561,10 @@ msgid "Enter a name for this profile"
 msgstr "このプロファイルの名前を入力"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Enter a whole number of millimeters, 0 or more."
+msgstr "ミリメートル単位の整数（0以上）を入力してください。"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Enter the bar rating of the pressure sensor being used"
 msgstr "使用している圧力センサーの定格（bar）を入力してください"
 
@@ -2667,6 +2671,10 @@ msgstr "複数比較"
 #: src/pages/DashboardSettings/index.jsx
 msgid "Multiple Cards"
 msgstr "複数カード"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Must be larger than the distance to the fill line."
+msgstr "満水ラインまでの距離より大きい値にしてください。"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Must match the physical RATE-jumper configuration on the HX711 board. This setting does not switch the RATE pin."
@@ -4159,6 +4167,10 @@ msgstr "サーバーエラー - API がこのデータ形式またはアカウ�
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
 msgid "Set rating to {value} of 5"
 msgstr "評価を 5 段階中 {value} に設定"
+
+#: src/pages/Home/cards/WaterLevelCard.jsx
+msgid "Set the tank distances in Settings → Machine to see the level."
+msgstr "水位を表示するには、設定 → マシン でタンクの距離を設定してください。"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Set to 0 to disable feedforward control."

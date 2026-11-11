@@ -104,8 +104,7 @@ export const PANEL_DEFINITIONS = [
     id: 'watertank',
     labelMsg: msg`Water Tank`,
     required: false,
-    available: ds => ds.waterLevelPercent !== null,
-    availableInSettings: status => !!status.tofDistance,
+    available: ds => !!ds.ledControl,
     component: WaterLevelCard,
     props: ds => ({
       waterLevelPercent: ds.waterLevelPercent,

@@ -82,8 +82,14 @@ export function DashboardSettings() {
     }
   };
 
+  // Home passes its dashboard state to available(); mirror the fields those checks read from here.
+  const availability = {
+    ...machine.value.status,
+    ledControl: machine.value.capabilities.ledControl,
+  };
+
   const hiddenMetrics = METRIC_DEFINITIONS.filter(
-    m => !m.required && !metricOrder.includes(m.id) && m.available(machine.value.status),
+    m => !m.required && !metricOrder.includes(m.id) && m.available(availability),
   );
 
   const hiddenPanels = [
@@ -91,7 +97,7 @@ export function DashboardSettings() {
       if (def.required) return false;
       if (panelOrder.includes(def.id)) return false;
       const availFn = def.availableInSettings ?? def.available;
-      return availFn(machine.value.status);
+      return availFn(availability);
     }),
     ...(panelOrder.includes(SPACER_ID) ? [] : [SPACER_DEFINITION]),
   ];

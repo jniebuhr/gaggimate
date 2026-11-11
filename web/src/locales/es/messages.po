@@ -1561,6 +1561,10 @@ msgid "Enter a name for this profile"
 msgstr "Introduce un nombre para este perfil"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Enter a whole number of millimeters, 0 or more."
+msgstr "Introduce un número entero de milímetros, 0 o más."
+
+#: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Enter the bar rating of the pressure sensor being used"
 msgstr "Introduce el rango en bar del sensor de presión utilizado"
 
@@ -2667,6 +2671,10 @@ msgstr "Comparación múltiple"
 #: src/pages/DashboardSettings/index.jsx
 msgid "Multiple Cards"
 msgstr "Varias tarjetas"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Must be larger than the distance to the fill line."
+msgstr "Debe ser mayor que la distancia hasta la línea de llenado."
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Must match the physical RATE-jumper configuration on the HX711 board. This setting does not switch the RATE pin."
@@ -4159,6 +4167,10 @@ msgstr "Error del servidor: puede que la API no admita este formato de datos o t
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
 msgid "Set rating to {value} of 5"
 msgstr "Valorar con {value} de 5"
+
+#: src/pages/Home/cards/WaterLevelCard.jsx
+msgid "Set the tank distances in Settings → Machine to see the level."
+msgstr "Define las distancias del depósito en Ajustes → Máquina para ver el nivel."
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Set to 0 to disable feedforward control."

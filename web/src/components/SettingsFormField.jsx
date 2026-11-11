@@ -10,6 +10,7 @@ export function SettingsFormField({
   label,
   htmlFor,
   helpText,
+  error,
   children,
   className = '',
   noMargin = false,
@@ -21,6 +22,11 @@ export function SettingsFormField({
       </label>
       {children}
       {helpText && <div className='mt-1 text-xs opacity-70'>{helpText}</div>}
+      {error && (
+        <div id={`${htmlFor}-error`} role='alert' className='text-error mt-1 text-xs'>
+          {error}
+        </div>
+      )}
     </div>
   );
 }
