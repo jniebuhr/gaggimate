@@ -594,6 +594,10 @@ msgstr "Amaro"
 msgid "BLDC Pump Settings"
 msgstr "Impostazioni pompa BLDC"
 
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Block steam boiler refill when Alba reports a low reservoir level or its reading is unavailable. Leave off if no reservoir distance sensor is installed."
+msgstr ""
+
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "Bluetooth Devices"
 msgstr "Dispositivi Bluetooth"
@@ -653,6 +657,10 @@ msgstr "Fasi di erogazione"
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
 msgid "Brew phases configuration"
 msgstr "Configurazione delle fasi di erogazione"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Brew PID Values"
+msgstr ""
 
 #: src/components/OverviewChart.jsx
 msgid "Brew Progress - {windowSeconds}s View"
@@ -1164,6 +1172,10 @@ msgstr ""
 #: src/components/Navigation.jsx
 msgid "Customize"
 msgstr "Personalizza"
+
+#: src/components/MachineProfileFields.jsx
+msgid "Cycle time (seconds)"
+msgstr ""
 
 #: src/pages/Statistics/components/ActivityHeatmap.jsx
 msgid "Daily average: <0>{dailyAvg} shots</0>"
@@ -1976,6 +1988,10 @@ msgstr "Flush consigliato"
 msgid "Flush water"
 msgstr "Acqua di flush"
 
+#: src/pages/Settings/tabs/HeaterCoordinationSection.jsx
+msgid "For 120 V machines, heater coordination should generally remain enabled. Running the brew and steam heaters simultaneously can overload the circuit, blow a fuse or trip a breaker, and create a fire hazard. Only disable it if the machine and supply circuit are rated to power both heaters together."
+msgstr ""
+
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "Forget"
 msgstr "Dimentica"
@@ -2563,6 +2579,11 @@ msgstr "Serie più lunga:"
 msgid "Looking for machines… If yours doesn't show up, add it by its address."
 msgstr "Ricerca macchine in corso… Se la tua non compare, aggiungila tramite il suo indirizzo."
 
+#: src/pages/Home/cards/MachineLevelsCard.jsx
+#: src/utils/metricDefinitions.js
+msgid "Low"
+msgstr ""
+
 #: src/pages/ShotHistory/index.jsx
 msgid "Lowest ID first"
 msgstr "Prima ID più basso"
@@ -2691,6 +2712,10 @@ msgstr "Segna come completato"
 msgid "Max"
 msgstr "Max"
 
+#: src/components/MachineProfileFields.jsx
+msgid "Max brightness"
+msgstr ""
+
 #: src/pages/DashboardSettings/index.jsx
 msgid "Max Pressure"
 msgstr "Pressione max"
@@ -2782,6 +2807,10 @@ msgstr "millisecondi"
 #: src/pages/Statistics/components/PhaseStatistics.jsx
 msgid "Min"
 msgstr "Min"
+
+#: src/components/MachineProfileFields.jsx
+msgid "Min brightness"
+msgstr ""
 
 #: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
 #: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
@@ -3133,6 +3162,11 @@ msgctxt "pump mode"
 msgid "Off"
 msgstr "Spenta"
 
+#: src/pages/Home/cards/MachineLevelsCard.jsx
+#: src/utils/metricDefinitions.js
+msgid "OK"
+msgstr ""
+
 #: src/app/FirmwareWarning.jsx
 msgid "Old firmware"
 msgstr "Firmware obsoleto"
@@ -3451,8 +3485,8 @@ msgid "Power"
 msgstr "Potenza"
 
 #: src/pages/Settings/tabs/HeaterCoordinationSection.jsx
-msgid "Power the heaters one at a time instead of in parallel, brew boiler first. Only needed when the circuit cannot carry both heaters at once (e.g. 120 V); 230 V supplies can run both."
-msgstr "Alimenta le resistenze una alla volta invece che in parallelo, prima la caldaia caffè. Serve solo quando il circuito non regge entrambe le resistenze insieme (es. 120 V); con 230 V possono funzionare entrambe."
+msgid "Power the heaters one at a time instead of in parallel, brew boiler first."
+msgstr ""
 
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
@@ -5015,9 +5049,17 @@ msgctxt "machine mode"
 msgid "Steam"
 msgstr "Vapore"
 
+#: src/pages/Home/cards/MachineLevelsCard.jsx
+msgid "Steam Boiler"
+msgstr ""
+
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Steam Boiler (Coming Soon)"
 msgstr "Caldaia vapore (in arrivo)"
+
+#: src/utils/metricDefinitions.js
+msgid "Steam Boiler Level"
+msgstr ""
 
 #: src/pages/Settings/tabs/PhysicalButtonsSection.jsx
 msgid "Steam button"
@@ -5034,6 +5076,10 @@ msgstr "Il vapore è attivo da 5 minuti."
 #: src/app/appSettings.js
 msgid "Steam mode left on"
 msgstr "Modalità vapore lasciata attiva"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Steam PID Values"
+msgstr ""
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Steam Pump Assist"
@@ -5500,6 +5546,10 @@ msgstr ""
 msgid "The machine restarts and connects to your network. Connect this device to {ssid} as well, then open <0>http://{host}</0> or scan the QR code on the machine's display."
 msgstr ""
 
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "The physical reservoir sensor takes priority."
+msgstr ""
+
 #: src/pages/SetupWizard/index.jsx
 msgid "The plugins you enabled start the next time the machine is switched on."
 msgstr ""
@@ -5733,11 +5783,13 @@ msgstr "Rimuovi dai preferiti"
 msgid "unknown"
 msgstr "sconosciuto"
 
+#: src/pages/Home/cards/MachineLevelsCard.jsx
 #: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
 #: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
 #: src/pages/ShotAnalyzer/utils/formatting.js
 #: src/pages/ShotAnalyzer/utils/profiles.js
 #: src/pages/Statistics/components/PhaseStatistics.jsx
+#: src/utils/metricDefinitions.js
 msgid "Unknown"
 msgstr "Sconosciuto"
 
@@ -5903,6 +5955,10 @@ msgstr "Usa formato 24h"
 
 #: src/components/MachineProfileControl.jsx
 msgid "Use a different ID for a customized built-in profile."
+msgstr ""
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Use Alba reservoir level to interlock steam refill"
 msgstr ""
 
 #: src/pages/Statistics/components/toolbar/helpers.js
@@ -6114,6 +6170,11 @@ msgstr "Acqua prelevata"
 msgid "Water Level"
 msgstr "Livello dell'acqua"
 
+#: src/pages/Home/cards/MachineLevelsCard.jsx
+#: src/utils/panelDefinitions.js
+msgid "Water Levels"
+msgstr ""
+
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 msgid "Water pumped"
 msgstr "Acqua pompata"
@@ -6122,10 +6183,15 @@ msgstr "Acqua pompata"
 msgid "Water pumped in phase"
 msgstr "Acqua pompata nella fase"
 
+#: src/pages/Home/cards/MachineLevelsCard.jsx
 #: src/pages/Home/cards/WaterLevelCard.jsx
 #: src/utils/panelDefinitions.js
 msgid "Water Tank"
 msgstr "Serbatoio dell'acqua"
+
+#: src/utils/metricDefinitions.js
+msgid "Water Tank Level"
+msgstr ""
 
 #: src/utils/warnings.js
 msgid "Water tank low"
