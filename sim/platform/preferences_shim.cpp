@@ -6,17 +6,25 @@
 
 static std::string nsPath(const std::string &ns) { return "sim_data/nvs/" + ns + ".json"; }
 
+// One store per namespace, shared by all Preferences instances (and the nvs.h shim), loaded once.
+static std::map<std::string, std::map<std::string, std::string>> &stores() {
+    static std::map<std::string, std::map<std::string, std::string>> all;
+    return all;
+}
+
 bool Preferences::begin(const char *name, bool readOnly) {
     _ns = name ? name : "default";
     _ro = readOnly;
-    _kv.clear();
-    load();
+    const bool fresh = stores().count(_ns) == 0;
+    _kv = &stores()[_ns];
+    if (fresh)
+        load();
     return true;
 }
 
 void Preferences::end() {
-    save();
-    _kv.clear();
+    if (_kv && !_ro)
+        save();
     _ns.clear();
 }
 
@@ -33,9 +41,9 @@ void Preferences::load() {
 
     JsonDocument doc;
     if (deserializeJson(doc, buf.c_str()) == DeserializationError::Ok) {
-        for (JsonPair kv : doc.as<JsonObject>()) {
-            const char *v = kv.value().as<const char *>();
-            _kv[kv.key().c_str()] = v ? v : "";
+        for (JsonPair entry : doc.as<JsonObject>()) {
+            const char *v = entry.value().as<const char *>();
+            kv()[entry.key().c_str()] = v ? v : "";
         }
     }
 }
@@ -44,8 +52,8 @@ void Preferences::save() {
     ::mkdir("sim_data", 0755);
     ::mkdir("sim_data/nvs", 0755);
     JsonDocument doc;
-    for (auto &kv : _kv)
-        doc[kv.first.c_str()] = kv.second.c_str();
+    for (auto &entry : *_kv)
+        doc[entry.first.c_str()] = entry.second.c_str();
     String out;
     serializeJson(doc, out);
     FILE *fp = fopen(nsPath(_ns).c_str(), "wb");
