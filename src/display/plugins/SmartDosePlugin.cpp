@@ -3,6 +3,8 @@
 #include <display/core/Controller.h>
 #include <display/core/Event.h>
 #include <display/plugins/BLEScalePlugin.h>
+#include <display/plugins/WebSocketHandler.h>
+#include <display/util/PsramAllocator.h>
 
 using namespace smartdose;
 SmartDosePlugin SmartDose;
@@ -35,6 +37,28 @@ void SmartDosePlugin::setup(Controller *c, PluginManager *pm) {
            [this](Event const &e) { measurement(e.getFloat("value"), false); });
     pm->on("controller:volumetric-measurement:hardware:change",
            [this](Event const &e) { measurement(e.getFloat("value"), true); });
+    pm->on("webui:ws:register", [this](Event const &e) { registerWsHandlers(e.getPointer<WebSocketHandler>("ws")); });
+    pm->on("webui:scale:tare", [this](Event const &) { onTare(true); });
+}
+void SmartDosePlugin::registerWsHandlers(WebSocketHandler *ws) {
+    if (ws == nullptr)
+        return;
+    auto handle = [this, ws](const char *type, std::function<bool(JsonDocument &)> action) {
+        ws->registerRequestHandler(String("req:") + type, [this, ws, type, action](uint32_t clientId, JsonDocument &request) {
+            JsonDocument resp(&psramAllocator);
+            resp["rid"] = request["rid"];
+            resp["tp"] = String("res:") + type;
+            resp["ok"] = action(request);
+            status(resp["smartDose"].to<JsonObject>());
+            ws->sendJson(clientId, resp);
+        });
+    };
+    handle("smart-dose:set", [this](JsonDocument &) { return setDose(); });
+    handle("smart-dose:adjust", [this](JsonDocument &request) {
+        return request["direction"].is<int>() && adjustDose(request["direction"].as<int>());
+    });
+    handle("smart-dose:calibrate", [this](JsonDocument &request) { return calibrate(request["accessory"] | "cup"); });
+    ws->registerStatusProvider([this](JsonDocument &doc) { status(doc["smartDose"].to<JsonObject>()); });
 }
 bool SmartDosePlugin::healthy(bool hardware) const {
     return hardware ? controller->isHardwareScaleHealthy() : controller->isBluetoothScaleHealthy();

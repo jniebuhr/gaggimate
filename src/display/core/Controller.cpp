@@ -118,7 +118,9 @@ void Controller::setup() {
 #ifndef GAGGIMATE_SIM
     pluginManager->registerPlugin(&BLEScales);
 #endif
-    pluginManager->registerPlugin(&SmartDose);
+    if (settings.isSmartDoseActive()) {
+        pluginManager->registerPlugin(&SmartDose);
+    }
     pluginManager->registerPlugin(new LedControlPlugin());
     pluginManager->registerPlugin(new AutoWakeupPlugin());
     pluginManager->registerPlugin(new CleaningSchedulePlugin());

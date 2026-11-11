@@ -4,6 +4,8 @@
 #include <display/core/Plugin.h>
 #include <mutex>
 
+class WebSocketHandler;
+
 class SmartDosePlugin : public Plugin {
   public:
     void setup(Controller *controller, PluginManager *pm) override;
@@ -23,6 +25,7 @@ class SmartDosePlugin : public Plugin {
     DoseUIState getUIState();
 
   private:
+    void registerWsHandlers(WebSocketHandler *ws);
     void measurement(float weight, bool hardware);
     void sync();
     void apply(const smartdose::Action &action);

@@ -7,7 +7,6 @@
 #include <display/models/profile.h>
 #include <display/plugins/BLEScalePlugin.h>
 #include <display/plugins/ShotHistoryPlugin.h>
-#include <display/plugins/SmartDosePlugin.h>
 #include <display/util/PsramStlAllocator.h>
 #include <display/util/PsramWsBuffer.h>
 #include <display/util/mathutils.h>
@@ -287,20 +286,8 @@ void WebSocketHandler::handleWebSocketData(AsyncWebSocket *server, AsyncWebSocke
                     client->text(toWsBuffer(resp));
                 } else if (msgType == "req:flush:start") {
                     handleFlushStart(client->id(), doc);
-                } else if (msgType == "req:smart-dose:set" || msgType == "req:smart-dose:calibrate" ||
-                           msgType == "req:smart-dose:adjust") {
-                    JsonDocument resp(&psramAllocator);
-                    resp["rid"] = doc["rid"];
-                    resp["tp"] = String("res:") + msgType.substring(4);
-                    const String accessory = doc["accessory"] | "cup";
-                    resp["ok"] = msgType == "req:smart-dose:set" ? SmartDose.setDose()
-                                 : msgType == "req:smart-dose:adjust"
-                                     ? (doc["direction"].is<int>() && SmartDose.adjustDose(doc["direction"].as<int>()))
-                                     : SmartDose.calibrate(accessory);
-                    SmartDose.status(resp["smartDose"].to<JsonObject>());
-                    client->text(toWsBuffer(resp));
                 } else if (msgType == "req:scale:tare") {
-                    SmartDose.onTare(true);
+                    pluginManager->trigger("webui:scale:tare");
                     controller->getClientController()->tare();
                 } else if (msgType == "req:flush:stop") {
                     handleFlushStop(client->id(), doc);
@@ -490,7 +477,8 @@ void WebSocketHandler::publishTelemetry() {
     const bool bleConnected = BLEScales.isConnected();
     statusDoc["bw"] = bleConnected ? this->currentBluetoothWeight : 0; // current bluetooth weight
     statusDoc["cw"] = this->currentActiveWeight;
-    SmartDose.status(statusDoc["smartDose"].to<JsonObject>());
+    for (auto &provider : statusProviders)
+        provider(statusDoc);
     // Explicit null/zero so merging clients drop a finished process instead of keeping the last one.
     statusDoc["process"] = nullptr;
     statusDoc["pkr"] = 0;

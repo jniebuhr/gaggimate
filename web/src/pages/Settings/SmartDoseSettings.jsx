@@ -47,7 +47,7 @@ export default function SmartDoseSettings({ formData, onSaved, onSaving, disable
       onSaved(key, settings[key], settings);
       if (key === 'dosingCupEnabled' || key === 'portafilterEnabled')
         changeExpansion(key === 'dosingCupEnabled' ? 'cup' : 'portafilter', value);
-      setMessage('Saved automatically.');
+      setMessage(key === 'smartDoseActive' ? 'Saved. Restart to apply.' : 'Saved automatically.');
     } catch {
       setMessage('Could not save. Check the connection and try again.');
     } finally {
