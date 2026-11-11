@@ -1,5 +1,4 @@
 #include "WebSocketHandler.h"
-#include <display/plugins/SmartDosePlugin.h>
 #include <algorithm>
 #include <display/core/Controller.h>
 #include <display/core/ProfileManager.h>
@@ -8,6 +7,7 @@
 #include <display/models/profile.h>
 #include <display/plugins/BLEScalePlugin.h>
 #include <display/plugins/ShotHistoryPlugin.h>
+#include <display/plugins/SmartDosePlugin.h>
 #include <display/util/PsramStlAllocator.h>
 #include <display/util/PsramWsBuffer.h>
 #include <display/util/mathutils.h>
@@ -293,10 +293,10 @@ void WebSocketHandler::handleWebSocketData(AsyncWebSocket *server, AsyncWebSocke
                     resp["rid"] = doc["rid"];
                     resp["tp"] = String("res:") + msgType.substring(4);
                     const String accessory = doc["accessory"] | "cup";
-                    resp["ok"] = msgType == "req:smart-dose:set" ? SmartDose.setDose() :
-                                 msgType == "req:smart-dose:adjust" ?
-                                     (doc["direction"].is<int>() && SmartDose.adjustDose(doc["direction"].as<int>())) :
-                                     SmartDose.calibrate(accessory);
+                    resp["ok"] = msgType == "req:smart-dose:set" ? SmartDose.setDose()
+                                 : msgType == "req:smart-dose:adjust"
+                                     ? (doc["direction"].is<int>() && SmartDose.adjustDose(doc["direction"].as<int>()))
+                                     : SmartDose.calibrate(accessory);
                     SmartDose.status(resp["smartDose"].to<JsonObject>());
                     client->text(toWsBuffer(resp));
                 } else if (msgType == "req:scale:tare") {

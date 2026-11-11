@@ -122,26 +122,36 @@ class Settings {
     void setDosingCupEnabled(bool value) { dosingCupEnabled.set(value); }
     void setPortafilterEnabled(bool value) { portafilterEnabled.set(value); }
     void setPortafilterScale(const String &value) {
-        if (value == "bluetooth" || value == "hardware") portafilterScale.set(value);
+        if (value == "bluetooth" || value == "hardware")
+            portafilterScale.set(value);
     }
-    void setPortafilterWeight(float value) { if (value >= 0 && value <= 2000) portafilterWeight.set(value); }
+    void setPortafilterWeight(float value) {
+        if (value >= 0 && value <= 2000)
+            portafilterWeight.set(value);
+    }
     void setSmartDoseMode(const String &value) {
-        if (value == "" || value == "cup" || value == "automatic" || value == "portafilter") smartDoseMode.set(value);
+        if (value == "" || value == "cup" || value == "automatic" || value == "portafilter")
+            smartDoseMode.set(value);
     }
     bool isSmartDoseActive() const { return smartDoseActive.get(); }
     bool isSmartDoseAutomagic() const { return smartDoseAutomagic.get(); }
     String getSmartDoseScale() const { return smartDoseScale.get(); }
     String getManualDoseScale() const { return manualDoseScale.get(); }
     void setManualDoseScale(const String &value) {
-        if (value == "bluetooth" || value == "hardware") manualDoseScale.set(value);
+        if (value == "bluetooth" || value == "hardware")
+            manualDoseScale.set(value);
     }
     float getDosingCupWeight() const { return dosingCupWeight.get(); }
     void setSmartDoseActive(bool value) { smartDoseActive.set(value); }
     void setSmartDoseAutomagic(bool value) { smartDoseAutomagic.set(value); }
     void setSmartDoseScale(const String &value) {
-        if (value == "bluetooth" || value == "hardware") smartDoseScale.set(value);
+        if (value == "bluetooth" || value == "hardware")
+            smartDoseScale.set(value);
     }
-    void setDosingCupWeight(float value) { if (value >= 0.0f && value <= 2000.0f) dosingCupWeight.set(value); }
+    void setDosingCupWeight(float value) {
+        if (value >= 0.0f && value <= 2000.0f)
+            dosingCupWeight.set(value);
+    }
     bool isSmartGrindActive() const { return smartGrindActive.get(); }
     bool isMahlkonigActive() const { return mahlkonigActive.get(); }
     String getMahlkonigRecipeProfiles() const { return mahlkonigRecipeProfiles.get(); }

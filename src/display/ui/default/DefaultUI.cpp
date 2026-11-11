@@ -422,7 +422,8 @@ void DefaultUI::loop() {
         lv_obj_t *const icons[] = {objects.smart_dose_cup, objects.smart_dose_manual, objects.smart_dose_portafilter};
         for (int i = 0; i < 3; ++i) {
             lv_obj_t *icon = icons[i];
-            if (icon == nullptr) continue;
+            if (icon == nullptr)
+                continue;
             const lv_opa_t opacity = dosing.state == i + 1 && dosing.blinking && (millis() / 400u) % 2u ? 64 : LV_OPA_COVER;
             if (lv_obj_get_style_img_opa(icon, LV_PART_MAIN) != opacity)
                 lv_obj_set_style_img_opa(icon, opacity, LV_PART_MAIN | LV_STATE_DEFAULT);

@@ -1,11 +1,11 @@
-#include <display/plugins/SmartDosePlugin.h>
 #include "actions.h"
-#include "vars.h"
 #include "screens.h"
 #include "ui.h"
+#include "vars.h"
 #include <Arduino.h>
 #include <display/main.h>
 #include <display/plugins/BLEScalePlugin.h>
+#include <display/plugins/SmartDosePlugin.h>
 
 void action_on_wakeup(lv_event_t *e) {
     if (!controller.getClientController()->isConnected() || controller.getSystemInfo().protocolMismatch ||

@@ -1,8 +1,8 @@
 #pragma once
-#include <display/core/Plugin.h>
-#include <ArduinoJson.h>
-#include <mutex>
 #include "SmartDoseCoordinator.h"
+#include <ArduinoJson.h>
+#include <display/core/Plugin.h>
+#include <mutex>
 
 class SmartDosePlugin : public Plugin {
   public:
@@ -21,6 +21,7 @@ class SmartDosePlugin : public Plugin {
         float weight = 0;
     };
     DoseUIState getUIState();
+
   private:
     void measurement(float weight, bool hardware);
     void sync();
