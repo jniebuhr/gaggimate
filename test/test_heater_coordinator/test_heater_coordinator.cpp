@@ -73,7 +73,7 @@ static void assertExclusiveWithHandover(const Heater &brew, const Heater &steam,
 }
 
 void setUp() { fakeNow = T0; }
-void tearDown() {}
+void tearDown() { /* setUp resets the fake clock */ }
 
 // --- Coordination disabled ---------------------------------------------------------------------------------------
 

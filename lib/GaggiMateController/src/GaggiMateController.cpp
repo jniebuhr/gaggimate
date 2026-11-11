@@ -7,6 +7,7 @@
 #include <peripherals/DimmedPump.h>
 #include <peripherals/SimplePump.h>
 
+#include <memory>
 #include <peripherals/NtcThermistor.h>
 #include <utility>
 
@@ -22,9 +23,6 @@ GaggiMateController::GaggiMateController(String version) : _version(std::move(ve
     configs.push_back(GM_PRO_REV_11);
     configs.push_back(GM_MAX_REV10);
 }
-
-char albaSwTxBuffer[128];
-char albaSwRxBuffer[128];
 
 bool GaggiMateController::isSteamSwitchOn() const {
     pinMode(_config.steamButtonPin, INPUT_PULLUP);
@@ -45,40 +43,40 @@ void GaggiMateController::setup() {
     detectAddon();
 
     if (!_config.capabilites.dualBoiler) {
-        brewTemperature = new Max31855Thermocouple(
+        brewTemperature = std::make_unique<Max31855Thermocouple>(
             _config.maxCsPin, _config.maxMisoPin, _config.maxSckPin, [this](float temperature) { /* noop */ },
             [this]() { thermalRunawayShutdown(); });
     }
     if (_config.capabilites.pressure || _config.capabilites.dualBoiler) {
-        adc = new ADSAdc(_config.pressureSda, _config.pressureScl, _config.adcRates,
-                         gearpumpAddon ? gearpumpAddon->sharedBusMutex() : nullptr);
-        pressureSensor = new PressureSensor(this->adc, _config.pressureControlRate);
+        adc = std::make_unique<ADSAdc>(_config.pressureSda, _config.pressureScl, _config.adcRates,
+                                       gearpumpAddon ? gearpumpAddon->sharedBusMutex() : nullptr);
+        pressureSensor = std::make_unique<PressureSensor>(this->adc.get(), _config.pressureControlRate);
         if (_config.capabilites.dualBoiler) {
-            this->brewTemperature = new NtcThermistor(
-                this->adc, 2, [this]() { thermalRunawayShutdown(); }, machineHardware.ntc_brew_nominal_resistance,
+            this->brewTemperature = std::make_unique<NtcThermistor>(
+                this->adc.get(), 2, [this]() { thermalRunawayShutdown(); }, machineHardware.ntc_brew_nominal_resistance,
                 machineHardware.ntc_brew_series_resistance, machineHardware.ntc_brew_supply_voltage,
                 machineHardware.ntc_brew_beta, _config.ntcTiming[2]);
-            this->steamTemperature = new NtcThermistor(
-                this->adc, 3, [this]() { thermalRunawayShutdown(); }, machineHardware.ntc_steam_nominal_resistance,
+            this->steamTemperature = std::make_unique<NtcThermistor>(
+                this->adc.get(), 3, [this]() { thermalRunawayShutdown(); }, machineHardware.ntc_steam_nominal_resistance,
                 machineHardware.ntc_steam_series_resistance, machineHardware.ntc_steam_supply_voltage,
                 machineHardware.ntc_steam_beta, _config.ntcTiming[3]);
         }
     }
-    heater = new Heater(
-        this->brewTemperature, _config.heaterPin, [this]() { thermalRunawayShutdown(); },
+    heater = std::make_unique<Heater>(
+        this->brewTemperature.get(), _config.heaterPin, [this]() { thermalRunawayShutdown(); },
         [this](float Kp, float Ki, float Kd, float Kf) { _comms.sendAutotuneResult(Kp, Ki, Kd, Kf); },
         [this]() { _comms.sendError(ERROR_CODE_AUTOTUNE_TIMEOUT); });
     if (_config.capabilites.dualBoiler) {
-        heater2 = new Heater(
-            this->steamTemperature, _config.altPin, [this]() { thermalRunawayShutdown(); },
+        heater2 = std::make_unique<Heater>(
+            this->steamTemperature.get(), _config.altPin, [this]() { thermalRunawayShutdown(); },
             [this](float Kp, float Ki, float Kd, float Kf) { _comms.sendAutotuneResult(Kp, Ki, Kd, Kf); },
             [this]() { _comms.sendError(ERROR_CODE_AUTOTUNE_TIMEOUT); });
         heater2->setHeatingCheckTime(60000);
-        heaterCoordinator = new HeaterCoordinator(heater, heater2);
-        refill = new SimpleRelay(_config.refillPin, _config.valveOn);
-        aux = new SimpleRelay(_config.auxPin, _config.valveOn);
+        heaterCoordinator = std::make_unique<HeaterCoordinator>(heater.get(), heater2.get());
+        refill = std::make_unique<SimpleRelay>(_config.refillPin, _config.valveOn);
+        aux = std::make_unique<SimpleRelay>(_config.auxPin, _config.valveOn);
         if (machineHardware.steam_level_enabled && _config.waterSensePin != 0)
-            waterSense = new DigitalInput(
+            waterSense = std::make_unique<DigitalInput>(
                 _config.waterSensePin,
                 [this](const bool state) {
                     steamLevelLow = state;
@@ -90,57 +88,62 @@ void GaggiMateController::setup() {
                 machineHardware.steam_level_debounce_checks, 1);
         if (_config.capabilites.dualBoiler) {
             if (machineHardware.tank_level_enabled && _config.tankLevelPin != 0)
-                tankLevel = new DigitalInput(_config.tankLevelPin, [this](bool full) { tankLevelOK = full; });
+                tankLevel = std::make_unique<DigitalInput>(_config.tankLevelPin, [this](bool full) { tankLevelOK = full; });
         }
         if (_config.ledPin != 0)
-            lights = new PwmLight(_config.ledPin, 0);
+            lights = std::make_unique<PwmLight>(_config.ledPin, 0);
         if (_config.baristaLedPin != 0)
-            baristaLight = new PwmLight(_config.baristaLedPin, 1);
+            baristaLight = std::make_unique<PwmLight>(_config.baristaLedPin, 1);
     } else {
-        alt = new SimpleRelay(_config.altPin, _config.altOn);
+        alt = std::make_unique<SimpleRelay>(_config.altPin, _config.altOn);
     }
-    valve = new SimpleRelay(_config.valvePin, _config.valveOn);
+    valve = std::make_unique<SimpleRelay>(_config.valvePin, _config.valveOn);
     if (_config.capabilites.dimming) {
-        pump = new DimmedPump(_config.pumpPin, _config.pumpSensePin, pressureSensor, _config.pressureControlRate);
+        pump = std::make_unique<DimmedPump>(_config.pumpPin, _config.pumpSensePin, pressureSensor.get(),
+                                            _config.pressureControlRate);
     } else {
-        pump = new SimplePump(_config.pumpPin, _config.pumpOn, _config.capabilites.ssrPump ? 1000.0f : 5000.0f);
+        pump = std::make_unique<SimplePump>(_config.pumpPin, _config.pumpOn, _config.capabilites.ssrPump ? 1000.0f : 5000.0f);
     }
-    brewBtn = new DigitalInput(_config.brewButtonPin, [this](const bool state) { _comms.sendButtonState(0, state); });
-    steamBtn = new DigitalInput(_config.steamButtonPin, [this](const bool state) { _comms.sendButtonState(1, state); });
+    brewBtn =
+        std::make_unique<DigitalInput>(_config.brewButtonPin, [this](const bool state) { _comms.sendButtonState(0, state); });
+    steamBtn =
+        std::make_unique<DigitalInput>(_config.steamButtonPin, [this](const bool state) { _comms.sendButtonState(1, state); });
     if (_config.waterButtonPin != 0) {
-        waterBtn = new DigitalInput(_config.waterButtonPin, [this](const bool state) { _comms.sendButtonState(2, state); });
+        waterBtn = std::make_unique<DigitalInput>(_config.waterButtonPin,
+                                                  [this](const bool state) { _comms.sendButtonState(2, state); });
     }
-    this->hardwareScale = new HardwareScale(
+    this->hardwareScale = std::make_unique<HardwareScale>(
         _config.scaleDat0Pin, _config.scaleDat1Pin, _config.scaleClkPin,
         [this](float weight, float cell1Weight, float cell2Weight, bool cell1Valid, bool cell2Valid) {
             if (_comms.isConnected()) {
                 _comms.sendScaleMeasurement(weight, cell1Weight, cell2Weight, cell1Valid, cell2Valid);
             }
         },
-        [](float, float) {});
+        [](float, float) { /* scale config changes are not forwarded */ });
 
     // 4-Pin peripheral port
     if (_config.sunriseSdaPin != 0 && _config.sunriseSclPin != 0) {
-        albaComms = new SoftWire(_config.sunriseSdaPin, _config.sunriseSclPin);
-        albaComms->setTxBuffer(albaSwTxBuffer, sizeof(albaSwTxBuffer));
-        albaComms->setRxBuffer(albaSwRxBuffer, sizeof(albaSwRxBuffer));
+        albaComms = std::make_unique<SoftWire>(_config.sunriseSdaPin, _config.sunriseSclPin);
+        albaComms->setTxBuffer(albaSwTxBuffer.data(), albaSwTxBuffer.size());
+        albaComms->setRxBuffer(albaSwRxBuffer.data(), albaSwRxBuffer.size());
         albaComms->setTimeout_ms(200);
         albaComms->setDelay_us(20);
         albaComms->begin();
-        albaBus = new SoftWireBus(albaComms);
-        this->ledController = new LedController(albaBus);
+        albaBus = std::make_unique<SoftWireBus>(albaComms.get());
+        this->ledController = std::make_unique<LedController>(albaBus.get());
         if (this->ledController->isAvailable()) {
             _config.capabilites.ledControls = true;
             // A configured Max tank switch owns tank reporting. Alba lighting
             // still works, but never starts a competing distance stream.
             if (tankLevel == nullptr) {
-                distanceSensor = new DistanceSensor(albaBus, [this](int distance) { _comms.sendTofMeasurement(distance); });
+                distanceSensor = std::make_unique<DistanceSensor>(albaBus.get(),
+                                                                  [this](int distance) { _comms.sendTofMeasurement(distance); });
                 _config.capabilites.tof = true;
             }
         }
     }
     if (!_config.capabilites.dualBoiler && !_config.capabilites.tof && _config.tankLevelPin > 0) {
-        tankLevel = new DigitalInput(
+        tankLevel = std::make_unique<DigitalInput>(
             _config.tankLevelPin,
             [this](const bool full) {
                 tankLevelOK = full;
@@ -185,7 +188,7 @@ void GaggiMateController::setup() {
 
     if (this->gearpumpAddon != nullptr) {
         this->gearpumpAddon->setup(this->pump->getPumpPowerPtr());
-        auto dimmedPump = static_cast<DimmedPump *>(pump);
+        auto dimmedPump = static_cast<DimmedPump *>(pump.get());
         dimmedPump->setBinaryMode(true);
     }
     if (_config.capabilites.pressure || _config.capabilites.dualBoiler) {
@@ -231,7 +234,7 @@ void GaggiMateController::setup() {
     }
     // Set up thermal feedforward for main heater if pressure/dimming capability exists
     if (heater && _config.capabilites.dimming && _config.capabilites.pressure) {
-        auto dimmedPump = static_cast<DimmedPump *>(pump);
+        auto dimmedPump = static_cast<DimmedPump *>(pump.get());
         float *pumpFlowPtr = dimmedPump->getPumpFlowPtr();
         int *valveStatusPtr = dimmedPump->getValveStatusPtr();
 
@@ -250,7 +253,7 @@ void GaggiMateController::setup() {
         }
         if (_config.capabilites.dualBoiler && !hardwareSessionReady)
             return;
-        Heater *target = index == 0 ? this->heater : this->heater2;
+        Heater *target = index == 0 ? this->heater.get() : this->heater2.get();
         handlePing();
         if (errorState != ERROR_CODE_NONE) {
             return;
@@ -283,7 +286,7 @@ void GaggiMateController::setup() {
         if (!_config.capabilites.dimming) {
             return;
         }
-        auto dimmedPump = static_cast<DimmedPump *>(pump);
+        auto dimmedPump = static_cast<DimmedPump *>(pump.get());
         if (mode == PumpControlMode::Pressure) {
             dimmedPump->setPressureTarget(pressure, flow);
         } else { // PumpControlMode::Flow
@@ -321,7 +324,7 @@ void GaggiMateController::setup() {
         }
         this->valve->set(open);
         if (_config.capabilites.dimming) {
-            static_cast<DimmedPump *>(pump)->setValveState(open);
+            static_cast<DimmedPump *>(pump.get())->setValveState(open);
         }
     });
     _comms.onMachineHardware(
@@ -339,7 +342,7 @@ void GaggiMateController::setup() {
     });
     _comms.onPumpSettings([this](gm::PumpSettings settings) {
         if (_config.capabilites.dimming) {
-            auto dimmedPump = static_cast<DimmedPump *>(pump);
+            auto dimmedPump = static_cast<DimmedPump *>(pump.get());
             // Check if this is a flow measurement call (a and b are flow measurements, c and d are nan)
             if (isnan(settings.c) && isnan(settings.d)) {
                 dimmedPump->setPumpFlowCoeff(settings.a, settings.b); // a = oneBarFlow, b = nineBarFlow
@@ -384,7 +387,7 @@ void GaggiMateController::setup() {
         if (!_config.capabilites.dimming) {
             return;
         }
-        auto dimmedPump = static_cast<DimmedPump *>(pump);
+        auto dimmedPump = static_cast<DimmedPump *>(pump.get());
         dimmedPump->tare();
     });
     _comms.onScaleFactors(
@@ -515,7 +518,8 @@ void GaggiMateController::detectAddon() {
             ESP_LOGI(LOG_TAG, "Found an extension at address 0x%X", addr);
             if (addr == 0x26) {
                 ESP_LOGI(LOG_TAG, "Identified addon as Gearpump Addon");
-                gearpumpAddon = new GearpumpAddon(addr, _config.ext3Pin, _config.ext2Pin, _config.ext1Pin, bus, sharedAdcBus);
+                gearpumpAddon =
+                    std::make_unique<GearpumpAddon>(addr, _config.ext3Pin, _config.ext2Pin, _config.ext1Pin, bus, sharedAdcBus);
             }
         }
     }
@@ -599,7 +603,7 @@ void GaggiMateController::sendSensorData() {
     if (_config.capabilites.pressure) {
         pressure = pressureSensor->getPressure();
         if (_config.capabilites.dimming) {
-            auto dimmedPump = static_cast<DimmedPump *>(pump);
+            auto dimmedPump = static_cast<DimmedPump *>(pump.get());
             puckFlow = dimmedPump->getPuckFlow();
             pumpFlow = dimmedPump->getPumpFlow();
             puckResistance = dimmedPump->getPuckResistance();
@@ -714,7 +718,7 @@ void GaggiMateController::handleSerialCommand(char c) {
         ESP_LOGI("Controller", "║");
         ESP_LOGI("Controller", "╠═ Readings");
         if (_config.capabilites.pressure) {
-            auto dimmedPump = static_cast<DimmedPump *>(pump);
+            auto dimmedPump = static_cast<DimmedPump *>(pump.get());
             ESP_LOGI("Controller", "║  ├─ Pressure: %.2f", pressureSensor->getPressure());
             ESP_LOGI("Controller", "║  ├─ Flow: %.2f", dimmedPump->getPumpFlow());
             ESP_LOGI("Controller", "║  ├─ Pump Power: %.2f", dimmedPump->getPowerTarget());
@@ -732,7 +736,7 @@ void GaggiMateController::handleSerialCommand(char c) {
             ESP_LOGI("Controller", "║  ├─ Steam Temperature: %d", heater2->getSetpoint());
         }
         if (_config.capabilites.pressure) {
-            auto dimmedPump = static_cast<DimmedPump *>(pump);
+            auto dimmedPump = static_cast<DimmedPump *>(pump.get());
             ESP_LOGI("Controller", "║  ├─ Pressure: %.2f", dimmedPump->getPressureTarget());
             ESP_LOGI("Controller", "║  ├─ Flow: %.2f", dimmedPump->getFlowTarget());
             ESP_LOGI("Controller", "║  ├─ Pump Power: %.2f", dimmedPump->getPowerTarget());

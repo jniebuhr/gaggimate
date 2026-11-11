@@ -95,7 +95,7 @@ class GaggiMateServer {
 
   private:
     BleServerTransport _transport;
-    Endpoint _endpoint;
+    Endpoint _endpoint{_transport};
     gm::SystemInfo _systemInfo = gaggimate_SystemInfo_init_zero;
     // The BLE subscribe callback can run before the client has finished
     // installing its notification handler. The first received ping is the

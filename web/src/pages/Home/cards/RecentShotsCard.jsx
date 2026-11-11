@@ -195,7 +195,7 @@ export function RecentShotsCard() {
   // a "change" and trigger a redundant fetch alongside the mount-time fetch
   // already performed by the useEffect below.
   useSignalEffect(() => {
-    void recentShotCountSignal.value;
+    recentShotCountSignal.value; // subscribe to count changes
     if (countMountedRef.current) {
       setRefreshKey(k => k + 1);
     } else {

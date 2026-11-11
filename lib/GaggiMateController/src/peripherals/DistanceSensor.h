@@ -4,6 +4,7 @@
 #include "SoftWireBus.h"
 #include <Arduino.h>
 #include <VL35L0X/VL53L0X.h>
+#include <memory>
 
 using distance_callback_t = std::function<void(int)>;
 
@@ -21,7 +22,7 @@ class DistanceSensor {
     void recover();
 
     SoftWireBus *bus;
-    VL53L0X *tof;
+    std::unique_ptr<VL53L0X> tof;
     xTaskHandle taskHandle;
     distance_callback_t _callback;
     int measurements = 0;

@@ -18,7 +18,9 @@ class ShotHistoryPlugin : public Plugin {
     ShotHistoryPlugin() = default;
 
     void setup(Controller *controller, PluginManager *pluginManager) override;
-    void loop() override {};
+    void loop() override {
+        // event-driven, nothing to poll
+    }
 
     void record();
 

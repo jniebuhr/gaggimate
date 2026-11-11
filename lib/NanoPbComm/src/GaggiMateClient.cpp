@@ -1,7 +1,7 @@
 #include "GaggiMateClient.h"
 #include <esp_log.h>
 
-GaggiMateClient::GaggiMateClient() : _endpoint(_transport) {}
+GaggiMateClient::GaggiMateClient() = default;
 
 void GaggiMateClient::init(const String &deviceName) {
     registerHandlers();

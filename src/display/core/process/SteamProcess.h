@@ -34,7 +34,9 @@ class SteamProcess : public Process {
 
     int getType() override { return MODE_STEAM; }
 
-    void updateVolume(double volume) override {};
+    void updateVolume(double volume) override {
+        // volume is not tracked for this process
+    }
 };
 
 #endif // STEAMPROCESS_H

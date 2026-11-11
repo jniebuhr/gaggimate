@@ -8,7 +8,9 @@ struct Event;
 class BoilerFillPlugin : public Plugin {
   public:
     void setup(Controller *controller, PluginManager *pluginManager) override;
-    void loop() override {};
+    void loop() override {
+        // event-driven, nothing to poll
+    }
 
   private:
     Controller *controller = nullptr;

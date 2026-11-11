@@ -2,16 +2,14 @@
 #include "GearpumpSharedIO.h"
 #include <algorithm>
 #include <cmath>
+#include <memory>
 #include <peripherals/ADSAdc.h>
 
 static constexpr uint8_t DAC_ADDRESS = 0x60;
 static constexpr uint32_t VERIFY_INTERVAL_MS = 1000;
 static constexpr uint8_t VERIFY_ATTEMPTS = 3;
 
-static GearpumpSharedIO *io = nullptr;
-
-static char swTxBuffer[128];
-static char swRxBuffer[128];
+static std::unique_ptr<GearpumpSharedIO> io;
 
 // The MCP4725 never stretches the clock, so the driven SCL state replaces an expander read per edge.
 static uint8_t read_scl(const SoftWire *i2c) { return io->released(0) ? HIGH : LOW; }
@@ -36,7 +34,7 @@ GearpumpAddon::GearpumpAddon(uint8_t addr, uint8_t sda, uint8_t scl, uint8_t int
 
 void GearpumpAddon::setup(float *power) {
     _power = power;
-    io = new GearpumpSharedIO(_bus, _addr, _busMutex);
+    io = std::make_unique<GearpumpSharedIO>(_bus, _addr, _busMutex);
     const bool expanderReady = io->prepare();
     if (!expanderReady)
         ESP_LOGE(LOG_TAG, "Could not initialize the XL9555");
@@ -44,8 +42,8 @@ void GearpumpAddon::setup(float *power) {
         ESP_LOGI(LOG_TAG, "%s I2C bus: SDA=%u SCL=%u at %lu Hz", _sharedWithAdc ? "Sharing ADC" : "Own", _sda, _scl,
                  static_cast<unsigned long>(ADC_I2C_CLOCK_HZ));
     i2c = new SoftWire(0, 0);
-    i2c->setTxBuffer(swTxBuffer, sizeof(swTxBuffer));
-    i2c->setRxBuffer(swRxBuffer, sizeof(swRxBuffer));
+    i2c->setTxBuffer(swTxBuffer.data(), swTxBuffer.size());
+    i2c->setRxBuffer(swRxBuffer.data(), swRxBuffer.size());
     i2c->setReadScl(read_scl);
     i2c->setReadSda(read_sda);
     i2c->setSetSclHigh(scl_high);

@@ -132,8 +132,7 @@ void SmartDosePlugin::measurement(float value, bool hardware) {
     if (skipDisabled())
         return;
     // All entry points use process -> plugin; the first serialized valid event wins.
-    std::lock_guard<std::recursive_mutex> processLock(controller->getProcessLock());
-    std::lock_guard<std::recursive_mutex> lock(mutex);
+    std::scoped_lock lock(controller->getProcessLock(), mutex);
     auto &live = liveReadings[hardware];
     live.weight = value;
     live.last = millis();
@@ -146,8 +145,7 @@ void SmartDosePlugin::measurement(float value, bool hardware) {
 void SmartDosePlugin::loop() {
     if (skipDisabled())
         return;
-    std::lock_guard<std::recursive_mutex> processLock(controller->getProcessLock());
-    std::lock_guard<std::recursive_mutex> lock(mutex);
+    std::scoped_lock lock(controller->getProcessLock(), mutex);
     sync();
     if (tarePending && coordinator.owner == Accessory::CUP && coordinator.phase == smartdose::Phase::TARING) {
         tarePending = false;
@@ -162,8 +160,7 @@ void SmartDosePlugin::loop() {
 bool SmartDosePlugin::setDose() {
     if (skipDisabled())
         return false;
-    std::lock_guard<std::recursive_mutex> processLock(controller->getProcessLock());
-    std::lock_guard<std::recursive_mutex> lock(mutex);
+    std::scoped_lock lock(controller->getProcessLock(), mutex);
     sync();
     if (!available())
         return false;
@@ -176,8 +173,7 @@ bool SmartDosePlugin::setDose() {
 bool SmartDosePlugin::adjustDose(int direction) {
     if (!controller || (direction != -1 && direction != 1))
         return false;
-    std::lock_guard<std::recursive_mutex> processLock(controller->getProcessLock());
-    std::lock_guard<std::recursive_mutex> lock(mutex);
+    std::scoped_lock lock(controller->getProcessLock(), mutex);
     sync();
     if (!canAdjustDose())
         return false;
@@ -193,8 +189,7 @@ bool SmartDosePlugin::adjustDose(int direction) {
 bool SmartDosePlugin::calibrate(const String &accessory) {
     if (skipDisabled() || (accessory != "cup" && accessory != "portafilter"))
         return false;
-    std::lock_guard<std::recursive_mutex> processLock(controller->getProcessLock());
-    std::lock_guard<std::recursive_mutex> lock(mutex);
+    std::scoped_lock lock(controller->getProcessLock(), mutex);
     sync();
     const auto requested = accessory == "cup" ? Accessory::CUP : Accessory::PORTAFILTER;
     // The user tares the empty scale and places the accessory before saving.
@@ -217,16 +212,14 @@ bool SmartDosePlugin::calibrate(const String &accessory) {
 void SmartDosePlugin::cancelCycle() {
     if (!controller)
         return;
-    std::lock_guard<std::recursive_mutex> processLock(controller->getProcessLock());
-    std::lock_guard<std::recursive_mutex> lock(mutex);
+    std::scoped_lock lock(controller->getProcessLock(), mutex);
     tarePending = false;
     coordinator.cancel();
 }
 void SmartDosePlugin::onTare(bool hardware) {
     if (!controller)
         return;
-    std::lock_guard<std::recursive_mutex> processLock(controller->getProcessLock());
-    std::lock_guard<std::recursive_mutex> lock(mutex);
+    std::scoped_lock lock(controller->getProcessLock(), mutex);
     if (coordinator.owner == Accessory::NONE || coordinator.ownerHardware == hardware)
         cancelCycle();
     // An explicit tare changes this scale's coordinate system. Non-owner tares
@@ -244,8 +237,7 @@ void SmartDosePlugin::status(JsonObject out) {
         out["adjustable"] = false;
         return;
     }
-    std::lock_guard<std::recursive_mutex> processLock(controller->getProcessLock());
-    std::lock_guard<std::recursive_mutex> lock(mutex);
+    std::scoped_lock lock(controller->getProcessLock(), mutex);
     sync();
     const auto &config = coordinator.config;
     const auto &r = coordinator.readings[selectedHardware()];
@@ -310,8 +302,7 @@ SmartDosePlugin::DoseUIState SmartDosePlugin::getUIState() {
     DoseUIState result;
     if (skipDisabled())
         return result;
-    std::lock_guard<std::recursive_mutex> processLock(controller->getProcessLock());
-    std::lock_guard<std::recursive_mutex> lock(mutex);
+    std::scoped_lock lock(controller->getProcessLock(), mutex);
     sync();
     if (!canAdjustDose())
         return result;

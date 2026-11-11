@@ -8,7 +8,7 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 
-static const char *TAG = "EspHttpTransport";
+static constexpr const char *TAG = "EspHttpTransport";
 
 // Arduino replaces the IDF bundle with its own copy; attach only works after the bundle was set.
 extern const uint8_t x509_crt_imported_bundle_bin_start[] asm("_binary_x509_crt_bundle_start");

@@ -20,7 +20,7 @@ constexpr uint16_t DEFAULT_HARDWARE_SCALE_SAMPLE_RATE_SPS = 10;
 constexpr float DEFAULT_HARDWARE_SCALE_IDLE_ALPHA = 0.80f;
 constexpr float DEFAULT_HARDWARE_SCALE_ACTIVE_ALPHA = 0.80f;
 
-#define PREFERENCES_KEY "controller"
+constexpr char PREFERENCES_KEY[] = "controller";
 
 // Per-warning severity: hidden, shown as a warning, or shown as an error that needs confirmation before brewing.
 enum WarningLevel { WARNING_LEVEL_IGNORE = 0, WARNING_LEVEL_WARN = 1, WARNING_LEVEL_ERROR = 2 };
@@ -43,6 +43,12 @@ struct AutoWakeupSchedule {
             days[i] = true;
         }
     }
+
+    AutoWakeupSchedule(const AutoWakeupSchedule &) = default;
+    AutoWakeupSchedule(AutoWakeupSchedule &&) noexcept = default;
+    AutoWakeupSchedule &operator=(const AutoWakeupSchedule &) = default;
+    AutoWakeupSchedule &operator=(AutoWakeupSchedule &&) noexcept = default;
+    ~AutoWakeupSchedule() = default;
 
     [[nodiscard]] bool isDayEnabled(const int dayOfWeek) const {
         // dayOfWeek: 1=Monday, 2=Tuesday, ..., 7=Sunday

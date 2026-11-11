@@ -213,10 +213,10 @@ void DefaultUI::init() {
             rerender = true;
         }
     });
-    pluginManager->on("controller:targetVolume:change", [=](Event const &event) { rerender = true; });
-    pluginManager->on("controller:targetDuration:change", [=](Event const &event) { rerender = true; });
-    pluginManager->on("controller:grindDuration:change", [=](Event const &event) { rerender = true; });
-    pluginManager->on("controller:grindVolume:change", [=](Event const &event) { rerender = true; });
+    pluginManager->on("controller:targetVolume:change", [this](Event const &event) { rerender = true; });
+    pluginManager->on("controller:targetDuration:change", [this](Event const &event) { rerender = true; });
+    pluginManager->on("controller:grindDuration:change", [this](Event const &event) { rerender = true; });
+    pluginManager->on("controller:grindVolume:change", [this](Event const &event) { rerender = true; });
     pluginManager->on("controller:grind:end", triggerRender);
     pluginManager->on("controller:grind:start", triggerRender);
     pluginManager->on("controller:process:end", triggerRender);
@@ -1034,7 +1034,9 @@ void DefaultUI::updateBrewProcess() {
     brewProcess.is_complete(process->isComplete());
 }
 
-void DefaultUI::updateMenuScreen() {}
+void DefaultUI::updateMenuScreen() {
+    // menu screen has no dynamic content to refresh
+}
 
 void DefaultUI::setupShotChart() {
     shotChart = objects.shot_chart;

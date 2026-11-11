@@ -5,7 +5,7 @@
 
 #include <Arduino.h>
 
-#define TAG "ble_ota_dfu"
+static constexpr const char *BLE_OTA_DFU_TAG = "ble_ota_dfu";
 
 // Initialize the queue
 #define initialize_queue(queue, T, initial_value, size)                        \
@@ -18,10 +18,10 @@ void _initialize_queue(QueueHandle_t *queue, const char *queue_name,
                        size_t size, const T *initial_value = nullptr) {
   *queue = xQueueCreate(size, sizeof(T));
 
-  ESP_LOGI(TAG, "Creating the queue \"%s\"", queue_name);
+  ESP_LOGI(BLE_OTA_DFU_TAG, "Creating the queue \"%s\"", queue_name);
   // Init start update queue
   if (*queue == NULL || *queue == nullptr) {
-    ESP_LOGE(TAG, "Error creating the queue \"%s\"", queue_name);
+    ESP_LOGE(BLE_OTA_DFU_TAG, "Error creating the queue \"%s\"", queue_name);
   }
 
   if (initial_value == nullptr || initial_value == NULL) {
@@ -29,7 +29,7 @@ void _initialize_queue(QueueHandle_t *queue, const char *queue_name,
   }
 
   if (!xQueueSend(*queue, initial_value, portMAX_DELAY)) {
-    ESP_LOGE(TAG, "Error initializing the queue \"%s\"", queue_name);
+    ESP_LOGE(BLE_OTA_DFU_TAG, "Error initializing the queue \"%s\"", queue_name);
   }
 }
 

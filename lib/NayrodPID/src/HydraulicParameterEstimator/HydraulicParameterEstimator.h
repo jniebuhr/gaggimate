@@ -6,7 +6,7 @@
 
 class HydraulicParameterEstimator {
   public:
-    HydraulicParameterEstimator(float dt_ = 0.03f);
+    explicit HydraulicParameterEstimator(float dt_ = 0.03f);
 
     bool update(float Q_in, float P_raw);
     void reset();

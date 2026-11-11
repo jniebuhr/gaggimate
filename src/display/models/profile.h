@@ -67,6 +67,13 @@ struct Phase {
     PumpAdvanced pumpAdvanced;
     std::vector<Target> targets;
 
+    Phase() = default;
+    Phase(const Phase &) = default;
+    Phase(Phase &&) noexcept = default;
+    Phase &operator=(const Phase &) = default;
+    Phase &operator=(Phase &&) noexcept = default;
+    ~Phase() = default;
+
     bool hasRatioTarget() const {
         for (const auto &target : targets) {
             if (target.type == TargetType::TARGET_TYPE_RATIO && target.value > 0.0f) {
@@ -192,6 +199,13 @@ struct Profile {
     bool favorite = false;
     bool selected = false;
     std::vector<Phase> phases;
+
+    Profile() = default;
+    Profile(const Profile &) = default;
+    Profile(Profile &&) noexcept = default;
+    Profile &operator=(const Profile &) = default;
+    Profile &operator=(Profile &&) noexcept = default;
+    ~Profile() = default;
 
     bool isVolumetric() const {
         for (const auto &phase : phases) {

@@ -1,6 +1,7 @@
 
 #include <Arduino.h>
 
+#include <cstring>
 #include <sstream>
 #include <vector>
 
@@ -34,11 +35,7 @@ semver_t from_string(const string &version) {
     if (split_at != string::npos) {
         patch = atoi(numbers.at(2).substr(0, split_at).c_str());
         auto prerelease = numbers.at(2).substr(split_at + 1);
-        prerelease_ptr = (char *)malloc(prerelease.length() + 1);
-        if (prerelease_ptr != nullptr) {
-            prerelease.copy(prerelease_ptr, prerelease.length());
-            prerelease_ptr[prerelease.length()] = '\0';
-        }
+        prerelease_ptr = strdup(prerelease.c_str()); // freed by semver_free
     } else {
         patch = atoi(numbers.at(2).c_str());
     }

@@ -5,6 +5,7 @@
 #include <Arduino.h>
 #include <SoftWire.h>
 #include <Wire.h>
+#include <array>
 #include <freertos/semphr.h>
 
 // Drives the addon's MCP4725 through bit-banged I2C on XL9555 pins; the XL9555 bus is shared with the ADC on Max boards.
@@ -37,6 +38,8 @@ class GearpumpAddon {
 
     float *_power = nullptr;
     float _maxPower = 1.0f;
+    std::array<char, 128> swTxBuffer{};
+    std::array<char, 128> swRxBuffer{};
     SoftWire *i2c = nullptr;
 
     const char *LOG_TAG = "GearpumpAddon";

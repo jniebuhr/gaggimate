@@ -12,6 +12,7 @@ export function acquireConnection(machine) {
     const state = createMachineState();
     const api = new ApiService({ socketUrl: `ws://${machine.host}/ws`, state });
     if (suspended) api.close();
+    else api.connect();
     entry = { api, refs: 0 };
     connections.set(machine.host, entry);
   }

@@ -45,6 +45,7 @@ class Transport {
             _connCb(connected);
     }
 
+  private:
     DataCallback _dataCb = nullptr;
     ConnectionCallback _connCb = nullptr;
 };

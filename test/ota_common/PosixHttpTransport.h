@@ -27,7 +27,7 @@ struct CaseInsensitiveLess {
 class PosixHttpTransport : public HttpTransport {
   public:
     explicit PosixHttpTransport(int timeoutMs = 1000) : _timeoutMs(timeoutMs) {}
-    ~PosixHttpTransport() override { end(); }
+    ~PosixHttpTransport() override { PosixHttpTransport::end(); }
 
     bool begin(const std::string &url) override {
         end();

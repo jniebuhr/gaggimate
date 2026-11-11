@@ -26,8 +26,6 @@ export default class ApiService {
     this.socketUrl = socketUrl;
     this.state = state;
     this.closed = false;
-    console.log('Established websocket connection');
-    this.connect();
   }
 
   // Disconnects without scheduling reconnects until reopen().

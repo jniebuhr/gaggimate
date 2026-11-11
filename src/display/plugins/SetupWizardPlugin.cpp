@@ -42,14 +42,18 @@ class PressureTestProcess : public Process {
     bool isRelayActive() override { return *phase == Phase::RELEASING; }
     bool isAltRelayActive() override { return false; }
     float getPumpValue() override { return *phase == Phase::BUILDING ? 100.0f : 0.0f; }
-    void progress() override {}
+    void progress() override {
+        // phase is driven by the wizard, nothing to advance here
+    }
     bool isActive() override {
         const Phase p = *phase;
         return (p == Phase::BUILDING || p == Phase::RELEASING) && millis() - started < PRESSURE_SAFETY_MS;
     }
     bool isComplete() override { return !isActive(); }
     int getType() override { return MODE_WATER; }
-    void updateVolume(double) override {}
+    void updateVolume(double) override {
+        // volume is not tracked for the pressure test
+    }
 
   private:
     std::shared_ptr<std::atomic<Phase>> phase;
@@ -359,6 +363,13 @@ void SetupWizardPlugin::publishScan(bool success) {
         int32_t rssi;
         bool secure;
         int32_t channel;
+
+        Network() = default;
+        Network(const Network &) = default;
+        Network(Network &&) noexcept = default;
+        Network &operator=(const Network &) = default;
+        Network &operator=(Network &&) noexcept = default;
+        ~Network() = default;
     };
     std::vector<Network> networks;
     const int16_t count = success ? WiFi.scanComplete() : 0;

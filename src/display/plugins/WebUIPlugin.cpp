@@ -272,7 +272,7 @@ void WebUIPlugin::start() {
     server.begin();
     ESP_LOGI("WebUIPlugin", "Started webserver");
     if (apMode) {
-        dnsServer = new DNSServer();
+        dnsServer = std::make_unique<DNSServer>();
         dnsServer->setTTL(3600);
         dnsServer->start(53, "*", WIFI_AP_IP);
         ESP_LOGI("WebUIPlugin", "Started catchall DNS for captive portal");
@@ -288,8 +288,7 @@ void WebUIPlugin::stop() {
     server.end();
     if (dnsServer != nullptr) {
         dnsServer->stop();
-        delete dnsServer;
-        dnsServer = nullptr;
+        dnsServer.reset();
     }
     serverRunning = false;
     ESP_LOGI("WebUIPlugin", "WebUIPlugin stopped (wifi disconnected)");
@@ -1147,8 +1146,8 @@ void WebUIPlugin::handleCoreDumpDownload(AsyncWebServerRequest *request) {
 
     // Find the coredump partition
     const esp_partition_t *coredump_partition =
-        esp_partition_find_first(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_DATA_COREDUMP, NULL);
-    if (coredump_partition == NULL) {
+        esp_partition_find_first(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_DATA_COREDUMP, nullptr);
+    if (coredump_partition == nullptr) {
         request->send(500, "text/plain", "Core dump partition not found");
         return;
     }

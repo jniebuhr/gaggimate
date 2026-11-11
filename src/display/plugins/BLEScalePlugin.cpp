@@ -42,8 +42,7 @@ BLEScalePlugin::~BLEScalePlugin() noexcept {
             scanner->stopAsyncScan();
             // Give it time to actually stop
             delay(50);
-            delete scanner;
-            scanner = nullptr;
+            scanner.reset();
         }
     } catch (...) {
         // Swallow: destructors must not propagate exceptions.
@@ -76,7 +75,7 @@ void BLEScalePlugin::setup(Controller *controller, PluginManager *manager) {
     TimemoreDotScalesPlugin::apply();
 
     // Initialize scanner with error handling
-    this->scanner = new (std::nothrow) RemoteScalesScanner();
+    this->scanner.reset(new (std::nothrow) RemoteScalesScanner());
     if (this->scanner == nullptr) {
         ESP_LOGE("BLEScalePlugin", "Failed to create RemoteScalesScanner - out of memory");
         return;

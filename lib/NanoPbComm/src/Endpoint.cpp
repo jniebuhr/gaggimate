@@ -4,7 +4,7 @@
 #include <pb_decode.h>
 #include <pb_encode.h>
 
-static const char *ENDPOINT_TAG = "Endpoint";
+static constexpr const char *ENDPOINT_TAG = "Endpoint";
 
 Endpoint::Endpoint(Transport &transport) : _transport(transport) {
     _mutex = xSemaphoreCreateRecursiveMutex();

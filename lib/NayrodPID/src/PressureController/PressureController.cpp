@@ -21,7 +21,7 @@ PressureController::PressureController(float dt, float *rawPressureSetpoint, flo
     this->_ctrlOutput = controllerOutput;
     this->_valveStatus = valveStatus;
     this->_dt = dt;
-    this->_pressureKalmanFilter = new SimpleKalmanFilter(0.1f, 10.0f, powf(2 * _dt, 2));
+    this->_pressureKalmanFilter = std::make_unique<SimpleKalmanFilter>(0.1f, 10.0f, powf(2 * _dt, 2));
     this->_previousPressure = *sensorOutput;
 }
 

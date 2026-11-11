@@ -10,7 +10,7 @@ class DownloadEnv {
     virtual ~DownloadEnv() = default;
     virtual void delayMs(uint32_t ms) = 0;
     // Called after every chunk handed to the sink; flash writes stall the other core, so the firmware yields a tick.
-    virtual void yieldAfterChunk() {}
+    virtual void yieldAfterChunk() { /* hosts without flash stalls need no yield */ }
     // Blocks until the station link is up or maxWaitMs passed; true when the link is up.
     virtual bool waitForNetwork(uint32_t maxWaitMs) = 0;
     // The buffer is the source of flash writes, so the firmware must hand out internal DRAM.

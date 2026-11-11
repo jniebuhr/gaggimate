@@ -683,7 +683,7 @@ void Controller::loopLogic() {
         if (currentProcess != nullptr) {
             updateLastAction();
             if (currentProcess->getType() == MODE_BREW) {
-                auto brewProcess = static_cast<BrewProcess *>(currentProcess);
+                auto brewProcess = static_cast<BrewProcess *>(currentProcess.get());
                 brewProcess->updatePressure(pressure);
                 brewProcess->updateFlow(currentPumpFlow);
                 brewProcess->updateWaterPumped(currentWaterPumped);
@@ -702,12 +702,12 @@ void Controller::loopLogic() {
         if (lastProcess != nullptr && lastProcess->isComplete() && !processCompleted && settings.isDelayAdjust()) {
             processCompleted = true;
             if (lastProcess->getType() == MODE_BREW) {
-                if (auto *brewProcess = static_cast<BrewProcess *>(lastProcess);
+                if (auto *brewProcess = static_cast<BrewProcess *>(lastProcess.get());
                     brewProcess->target == ProcessTarget::VOLUMETRIC) {
                     newBrewDelay = brewProcess->getNewDelayTime();
                 }
             } else if (lastProcess->getType() == MODE_GRIND) {
-                if (auto *grindProcess = static_cast<GrindProcess *>(lastProcess);
+                if (auto *grindProcess = static_cast<GrindProcess *>(lastProcess.get());
                     grindProcess->target == ProcessTarget::VOLUMETRIC) {
                     newGrindDelay = grindProcess->getNewDelayTime();
                 }
@@ -817,26 +817,25 @@ void Controller::autotune(int testTime, int samples, int heaterWattage) {
 }
 
 void Controller::startProcess(Process *process) {
+    std::unique_ptr<Process> owned(process);
     if (!isMachineHardwareReady()) {
-        delete process;
         return;
     }
     std::vector<const char *> events;
     {
         std::lock_guard<std::recursive_mutex> guard(processMutex);
-        startProcessLocked(process, events);
+        startProcessLocked(std::move(owned), events);
     }
     updateControl(); // queue the pump/valve command now instead of on the next logic cycle
     dispatchEvents(events);
 }
 
-void Controller::startProcessLocked(Process *process, std::vector<const char *> &events) {
+void Controller::startProcessLocked(std::unique_ptr<Process> process, std::vector<const char *> &events) {
     if (isActiveLocked() || !isReady()) {
-        delete process;
         return;
     }
     processCompleted = false;
-    this->currentProcess = process;
+    this->currentProcess = std::move(process);
     applyConnectionPriority(); // shot started -> tight BLE interval
     events.push_back("controller:process:start");
     updateLastAction();
@@ -868,7 +867,7 @@ float Controller::getTargetTemp() const {
     case MODE_BREW:
     case MODE_GRIND: {
         std::lock_guard<std::recursive_mutex> guard(processMutex);
-        Process *proc = currentProcess;
+        Process *proc = currentProcess.get();
         if (proc != nullptr && proc->isActive() && proc->getType() == MODE_BREW) {
             auto brewProcess = static_cast<BrewProcess *>(proc);
             return brewProcess->getTemperature();
@@ -1071,7 +1070,7 @@ void Controller::updateControl() {
     // can delete the process mid-computation (GM-147). comms sends are queued
     // (pumped from comms.loop()), so no cross-task blocking happens under the lock.
     std::lock_guard<std::recursive_mutex> guard(processMutex);
-    Process *proc = currentProcess;
+    Process *proc = currentProcess.get();
     bool active = isActiveLocked();
 
     float targetTemp = getTargetTemp();
@@ -1280,7 +1279,7 @@ void Controller::afterDeactivate() {
     {
         std::lock_guard<std::recursive_mutex> guard(processMutex);
         shot = lastProcess != nullptr && lastProcess->getType() == MODE_BREW &&
-               !static_cast<BrewProcess *>(lastProcess)->isUtility();
+               !static_cast<BrewProcess *>(lastProcess.get())->isUtility();
     }
     if (!shot)
         comms.tare(); // shots tare on history:shot:recorded, once their final weight is written
@@ -1292,12 +1291,10 @@ void Controller::deactivateLocked(std::vector<const char *> &events) {
     if (currentProcess == nullptr) {
         return;
     }
-    delete lastProcess;
-    lastProcess = currentProcess;
-    currentProcess = nullptr;
+    lastProcess = std::move(currentProcess);
     bool utility = false;
     if (lastProcess->getType() == MODE_BREW) {
-        utility = static_cast<BrewProcess *>(lastProcess)->isUtility();
+        utility = static_cast<BrewProcess *>(lastProcess.get())->isUtility();
         if (!utility)
             flushPending = true; // a shot leaves grounds behind, a flush does not
         events.push_back("controller:brew:end");
@@ -1324,8 +1321,7 @@ void Controller::clearLocked(std::vector<const char *> &events) {
     if (lastProcess != nullptr && lastProcess->getType() == MODE_BREW) {
         events.push_back("controller:brew:clear");
     }
-    delete lastProcess;
-    lastProcess = nullptr;
+    lastProcess.reset();
     currentVolumetricSource = VolumetricMeasurementSource::INACTIVE;
 #ifdef NIGHTLY_BUILD
     latestFlowEstimation = 0.0;
@@ -1638,17 +1634,16 @@ void Controller::onFlush() {
     Profile profile = FLUSH_PROFILE;
     profile.temperature = profileManager->getSelectedProfile().temperature;
     profile.phases[0].duration = duration > 0 ? duration : FLUSH_HOLD_MAX_DURATION_S; // 0 = hold, capped
-    auto *flush = new BrewProcess(profile, ProcessTarget::TIME, settings.getBrewDelay());
+    auto flush = std::make_unique<BrewProcess>(profile, ProcessTarget::TIME, settings.getBrewDelay());
     flush->holdPhase = duration == 0; // pump phase ends on onFlushRelease(), the drain phase still runs
     std::vector<const char *> events;
     {
         std::lock_guard<std::recursive_mutex> guard(processMutex);
         if (isActiveLocked()) {
-            delete flush;
             return;
         }
         clearLocked(events);
-        startProcessLocked(flush, events);
+        startProcessLocked(std::move(flush), events);
         flushPending = false;
         events.push_back("controller:brew:start");
     }
@@ -1660,7 +1655,7 @@ void Controller::onFlush() {
 void Controller::onFlushRelease() {
     std::lock_guard<std::recursive_mutex> guard(processMutex);
     if (currentProcess != nullptr && currentProcess->getType() == MODE_BREW) {
-        static_cast<BrewProcess *>(currentProcess)->release();
+        static_cast<BrewProcess *>(currentProcess.get())->release();
     }
 }
 

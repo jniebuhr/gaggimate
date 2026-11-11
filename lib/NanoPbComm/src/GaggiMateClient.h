@@ -134,7 +134,7 @@ class GaggiMateClient {
 
   private:
     BleClientTransport _transport;
-    Endpoint _endpoint;
+    Endpoint _endpoint{_transport};
 
     // Sole runner of the endpoint's send pump; woken by sends/ACKs, otherwise ticks at the idle interval.
     TaskHandle_t _pumpTaskHandle = nullptr;

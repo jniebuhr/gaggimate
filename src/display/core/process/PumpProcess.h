@@ -30,7 +30,9 @@ class PumpProcess : public Process {
 
     int getType() override { return MODE_WATER; }
 
-    void updateVolume(double volume) override {};
+    void updateVolume(double volume) override {
+        // volume is not tracked for this process
+    }
 };
 
 #endif // PUMPPROCESS_H

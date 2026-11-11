@@ -3,7 +3,7 @@
 #include <cstring>
 #include <esp_log.h>
 
-GaggiMateServer::GaggiMateServer() : _endpoint(_transport) {}
+GaggiMateServer::GaggiMateServer() = default;
 
 void GaggiMateServer::init(const String &deviceName, const String &hardware, const String &version,
                            const gm::DeviceCapabilities &capabilities, bool pairingWindow) {

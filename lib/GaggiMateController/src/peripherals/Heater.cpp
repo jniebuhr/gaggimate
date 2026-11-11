@@ -9,8 +9,8 @@ Heater::Heater(TemperatureSensor *sensor, uint8_t heaterPin, const heater_error_
     : sensor(sensor), heaterPin(heaterPin), taskHandle(nullptr), error_callback(error_callback), pid_callback(pid_callback),
       autotune_fail_callback(autotune_fail_callback) {
 
-    simplePid = new SimplePID(&output, &temperature, &setpoint);
-    autotuner = new Autotune();
+    simplePid = std::make_unique<SimplePID>(&output, &temperature, &setpoint);
+    autotuner = std::make_unique<Autotune>();
 }
 
 void Heater::setup() {

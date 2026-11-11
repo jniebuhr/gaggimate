@@ -13,7 +13,7 @@ class EspHttpTransport : public HttpTransport {
     static constexpr int DEFAULT_TIMEOUT_MS = 15000;
 
     explicit EspHttpTransport(int timeoutMs = DEFAULT_TIMEOUT_MS) : _timeoutMs(timeoutMs) {}
-    ~EspHttpTransport() override { end(); }
+    ~EspHttpTransport() override { EspHttpTransport::end(); }
 
     bool begin(const std::string &url) override;
     void setHeader(const char *key, const char *value) override;

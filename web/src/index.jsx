@@ -167,6 +167,7 @@ export function App() {
 async function boot() {
   if (isApp) await initApp();
   apiService = new ApiService();
+  apiService.connect();
   // Must be called before render
   initializeTheme();
   await activateLocale();
