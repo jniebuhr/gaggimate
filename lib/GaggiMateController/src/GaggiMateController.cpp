@@ -278,12 +278,7 @@ void GaggiMateController::setup() {
             return;
         }
         if (mode == PumpControlMode::Power) {
-            this->pump->setPower(power);
-            if (power == 0.0f) {
-                if (gearpumpAddon != nullptr) {
-                    gearpumpAddon->stop();
-                }
-            }
+            this->pump->setPower(power); // the gear pump task applies a new power, including 0, within 30 ms
             return;
         }
         if (!_config.capabilites.dimming) {

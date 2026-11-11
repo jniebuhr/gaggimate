@@ -3,28 +3,29 @@
 #include <ExtensionIOXL9555.hpp>
 #include <algorithm>
 #include <cmath>
+#include <peripherals/ADSAdc.h>
 
 #define MCP_VOLTAGE 5.0f
 
 static ExtensionIOXL9555 extension;
 static GearpumpSharedIO *sharedIO = nullptr;
 
-char swTxBuffer[128];
-char swRxBuffer[128];
+static char swTxBuffer[128];
+static char swRxBuffer[128];
 
-uint8_t read_scl(const SoftWire *i2c) {
+static uint8_t read_scl(const SoftWire *i2c) {
     uint8_t value = sharedIO ? sharedIO->readPin(0) : extension.digitalRead(ExtensionIOXL9555::IO0);
     ESP_LOGV("MCP4725", "Read SCL: %d", value);
     return value;
 }
 
-uint8_t read_sda(const SoftWire *i2c) {
+static uint8_t read_sda(const SoftWire *i2c) {
     uint8_t value = sharedIO ? sharedIO->readPin(1) : extension.digitalRead(ExtensionIOXL9555::IO1);
     ESP_LOGV("MCP4725", "Read SDA: %d", value);
     return value;
 }
 
-void scl_high(const SoftWire *i2c) {
+static void scl_high(const SoftWire *i2c) {
     if (sharedIO) {
         sharedIO->setPin(0, true);
         return;
@@ -33,7 +34,7 @@ void scl_high(const SoftWire *i2c) {
     ESP_LOGV("MCP4725", "Release SCL");
 }
 
-void sda_high(const SoftWire *i2c) {
+static void sda_high(const SoftWire *i2c) {
     if (sharedIO) {
         sharedIO->setPin(1, true);
         return;
@@ -42,7 +43,7 @@ void sda_high(const SoftWire *i2c) {
     ESP_LOGV("MCP4725", "Release SDA");
 }
 
-void scl_low(const SoftWire *i2c) {
+static void scl_low(const SoftWire *i2c) {
     if (sharedIO) {
         sharedIO->setPin(0, false);
         return;
@@ -52,7 +53,7 @@ void scl_low(const SoftWire *i2c) {
     ESP_LOGV("MCP4725", "Write SCL: %d", 0);
 }
 
-void sda_low(const SoftWire *i2c) {
+static void sda_low(const SoftWire *i2c) {
     if (sharedIO) {
         sharedIO->setPin(1, false);
         return;
@@ -72,13 +73,15 @@ GearpumpAddon::GearpumpAddon(uint8_t addr, uint8_t sda, uint8_t scl, uint8_t int
 
 void GearpumpAddon::setup(float *power) {
     _power = power;
+    bool expanderReady = true;
     if (_sharedBus) {
         sharedIO = new GearpumpSharedIO(*_sharedBus, _addr, _sharedBusMutex);
-        if (!sharedIO->prepare()) {
+        expanderReady = sharedIO->prepare();
+        if (!expanderReady)
             ESP_LOGE(LOG_TAG, "Could not initialize shared-bus XL9555");
-            return;
-        }
-        ESP_LOGI(LOG_TAG, "Sharing ADC I2C bus: SDA=%u SCL=%u at 400kHz", _sda, _scl);
+        else
+            ESP_LOGI(LOG_TAG, "Sharing ADC I2C bus: SDA=%u SCL=%u at %lu Hz", _sda, _scl,
+                     static_cast<unsigned long>(ADC_I2C_CLOCK_HZ));
     } else {
         if (!extension.init(Wire, _sda, _scl, _addr)) {
             ESP_LOGE(LOG_TAG, "Failed to initialize extension I2C bus");
@@ -101,9 +104,11 @@ void GearpumpAddon::setup(float *power) {
     i2c->begin();
     delay(500);
     if (_sharedBus) {
-        if (!setupSharedDac()) {
-            ESP_LOGE(LOG_TAG, "Shared-bus DAC startup failed; pump output task not started");
-            return;
+        // Until the DAC answers it keeps its EEPROM power-on state (output 0, 1k pull-down); the task retries.
+        _sharedReady = expanderReady && setupSharedDac();
+        if (!_sharedReady) {
+            ESP_LOGE(LOG_TAG, "Shared-bus DAC startup failed; retrying at most once per second");
+            _lastRetry = millis();
         }
     } else {
         mcp = new MCP4725(0x60, i2c);
@@ -184,13 +189,19 @@ void GearpumpAddon::loop() {
     if (_sharedBus) {
         if (_power == nullptr)
             return;
-        if (_sharedFault) {
+        if (_sharedFault || !_sharedReady) {
             if (millis() - _lastRetry < 1000)
                 return;
             _lastRetry = millis();
             if (!sharedIO->prepare())
                 return;
             i2c->stop(false);
+            if (!_sharedReady) {
+                if (!setupSharedDac())
+                    return;
+                _sharedReady = true;
+                ESP_LOGI(LOG_TAG, "Shared-bus DAC started after retry");
+            }
         }
         const float power = *_power;
         const float fraction = power / 100.0f * _maxPower;
@@ -213,13 +224,10 @@ void GearpumpAddon::loop() {
         return;
     }
     if (_power != nullptr) {
-        _currentPower = *_power;
-        float voltage = MCP_VOLTAGE * (_currentPower / 100.0f * _maxPower);
+        const float voltage = MCP_VOLTAGE * (*_power / 100.0f * _maxPower);
         mcp->setVoltage(voltage);
     }
 }
-
-void GearpumpAddon::stop() { _currentPower = 0.0f; }
 
 void GearpumpAddon::setMaxPower(float maxPower) { _maxPower = maxPower; }
 

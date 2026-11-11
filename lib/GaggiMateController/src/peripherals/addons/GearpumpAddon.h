@@ -13,7 +13,6 @@ class GearpumpAddon {
     void setup(float *power);
     SemaphoreHandle_t sharedBusMutex() const { return _sharedBusMutex; }
     void loop();
-    void stop();
     void setMaxPower(float maxPower);
 
   private:
@@ -21,6 +20,7 @@ class GearpumpAddon {
     SemaphoreHandle_t _sharedBusMutex = nullptr;
     uint32_t _lastRetry = 0;
     bool _sharedFault = false;
+    bool _sharedReady = false; // shared-bus DAC initialized; the task retries until it is
     uint16_t _lastDacValue = UINT16_MAX;
     bool setupSharedDac();
     bool readSharedDac(uint8_t *state);
@@ -31,15 +31,14 @@ class GearpumpAddon {
     uint8_t _interrupt;
 
     float *_power = nullptr;
-    float _currentPower = 0.0f;
     float _maxPower = 1.0f;
-    SoftWire *i2c;
-    MCP4725 *mcp;
+    SoftWire *i2c = nullptr;
+    MCP4725 *mcp = nullptr;
 
     const char *LOG_TAG = "GearpumpAddon";
     void ensureSafePowerOnState();
     static void loopTask(void *arg);
-    xTaskHandle taskHandle;
+    xTaskHandle taskHandle = nullptr;
 };
 
 #endif // GEARPUMPADDON_H
