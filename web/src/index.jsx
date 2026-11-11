@@ -7,6 +7,7 @@ import { hasConnected, initApp, onAppRendered } from './app/index.js';
 import { ConnectionGate } from './app/ConnectionGate.jsx';
 import { activeMachine, showMachineSetup } from './app/machines.js';
 import { MachineSetup } from './app/MachineSetup.jsx';
+import { checkSetup, setupNeeded } from './pages/SetupWizard/setupState.js';
 
 if (import.meta.env.DEV) {
   // Dev-only Preact warnings; stripped from production builds.
@@ -20,7 +21,6 @@ import lazy from 'preact-iso/lazy';
 
 import ApiService, { ApiServiceContext } from './services/ApiService.js';
 import { Navigation } from './components/Navigation.jsx';
-import { Spinner } from './components/Spinner.jsx';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBars } from '@fortawesome/free-solid-svg-icons/faBars';
 
@@ -41,6 +41,7 @@ const StatisticsPage = lazy(() =>
 const AppSettings = /* @__PURE__ */ lazy(() =>
   import('./app/AppSettings.jsx').then(m => m.AppSettings),
 );
+const SetupWizard = lazy(() => import('./pages/SetupWizard/index.jsx').then(m => m.SetupWizard));
 const DashboardSettings = lazy(() =>
   import('./pages/DashboardSettings/index.jsx').then(m => m.DashboardSettings),
 );
@@ -71,14 +72,6 @@ const RedirectTo = to =>
     return null;
   };
 
-function RouteFallback() {
-  return (
-    <div className='flex w-full flex-row items-center justify-center py-16'>
-      <Spinner size={8} />
-    </div>
-  );
-}
-
 export function App() {
   const [navCollapsed, setNavCollapsed] = useState(readInitialDesktopNavCollapsed);
 
@@ -99,6 +92,11 @@ export function App() {
     return () => window.removeEventListener('open-mobile-nav', handleOpenNav);
   }, []);
 
+  const machineKey = activeMachine.value?.id;
+  useEffect(() => {
+    checkSetup({ fresh: isApp });
+  }, [machineKey]);
+
   if (isApp && !activeMachine.value) return <MachineSetup mandatory />;
   if (isApp && !hasConnected.value) {
     return showMachineSetup.value ? <MachineSetup /> : <ConnectionGate />;
@@ -118,28 +116,33 @@ export function App() {
               <div className='grid min-h-0 flex-1 grid-cols-1'>
                 <div className='min-h-0'>
                   <ErrorBoundary>
-                    <Router>
-                      <Route path='/' component={Home} />
-                      <Route path='/dashboard-settings' component={DashboardSettings} />
-                      <Route path='/profiles' component={ProfileList} />
-                      <Route path='/profiles/:id' component={ProfileEdit} />
-                      <Route path='/settings/:tab?' component={Settings} />
-                      {isApp && <Route path='/app-settings' component={AppSettings} />}
-                      {/* Legacy routes now live in settings tabs */}
-                      <Route path='/ota' component={RedirectTo('/settings/system')} />
-                      <Route path='/scales' component={RedirectTo('/settings/bluetooth')} />
-                      <Route path='/pidtune' component={RedirectTo('/settings/calibration')} />
-                      <Route path='/history' component={ShotHistory} />
-                      <Route path='/analyzer' component={ShotAnalyzer} />
-                      <Route path='/statistics' component={StatisticsPage} />
-                      <Route
-                        path='/statistics/:sourceAlias/:profileName'
-                        component={StatisticsPage}
-                      />
-                      <Route path='/analyzer/:source/:id' component={ShotAnalyzer} />{' '}
-                      {/*deep-link route (sorce & ID)*/}
-                      <Route default component={NotFound} />
-                    </Router>
+                    {setupNeeded.value ? (
+                      <SetupWizard />
+                    ) : (
+                      <Router>
+                        <Route path='/' component={Home} />
+                        <Route path='/setup' component={SetupWizard} />
+                        <Route path='/dashboard-settings' component={DashboardSettings} />
+                        <Route path='/profiles' component={ProfileList} />
+                        <Route path='/profiles/:id' component={ProfileEdit} />
+                        <Route path='/settings/:tab?' component={Settings} />
+                        {isApp && <Route path='/app-settings' component={AppSettings} />}
+                        {/* Legacy routes now live in settings tabs */}
+                        <Route path='/ota' component={RedirectTo('/settings/system')} />
+                        <Route path='/scales' component={RedirectTo('/settings/bluetooth')} />
+                        <Route path='/pidtune' component={RedirectTo('/settings/calibration')} />
+                        <Route path='/history' component={ShotHistory} />
+                        <Route path='/analyzer' component={ShotAnalyzer} />
+                        <Route path='/statistics' component={StatisticsPage} />
+                        <Route
+                          path='/statistics/:sourceAlias/:profileName'
+                          component={StatisticsPage}
+                        />
+                        <Route path='/analyzer/:source/:id' component={ShotAnalyzer} />{' '}
+                        {/*deep-link route (sorce & ID)*/}
+                        <Route default component={NotFound} />
+                      </Router>
+                    )}
                   </ErrorBoundary>
                 </div>
               </div>
@@ -164,6 +167,7 @@ export function App() {
 async function boot() {
   if (isApp) await initApp();
   apiService = new ApiService();
+  apiService.connect();
   // Must be called before render
   initializeTheme();
   await activateLocale();

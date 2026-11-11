@@ -28,6 +28,8 @@ import hashlib
 import os
 import sys
 
+BLOB_NAME = "web_ui.bin"
+
 # Logical extension (after stripping a trailing .gz) -> Content-Type.
 CONTENT_TYPES = {
     ".html": "text/html",
@@ -81,7 +83,7 @@ def write_artifacts(out_dir, entries, blob, blob_path):
     """entries: list of dicts {path, offset, length, content_type, gzip}."""
     os.makedirs(out_dir, exist_ok=True)
 
-    with open(os.path.join(out_dir, "web_ui.bin"), "wb") as f:
+    with open(os.path.join(out_dir, BLOB_NAME), "wb") as f:
         f.write(blob)
 
     # Assembly stub: pull the blob into memory-mapped flash rodata. The absolute
@@ -174,12 +176,12 @@ def pack(src_dir, out_dir):
     # and the (possibly empty) blob are always well-formed.
     if not blob:
         blob.append(0)
-    write_artifacts(out_dir, entries, bytes(blob), os.path.join(out_dir, "web_ui.bin"))
+    write_artifacts(out_dir, entries, bytes(blob), os.path.join(out_dir, BLOB_NAME))
     return entries
 
 
 def stub(out_dir):
-    write_artifacts(out_dir, [], b"\0", os.path.join(out_dir, "web_ui.bin"))
+    write_artifacts(out_dir, [], b"\0", os.path.join(out_dir, BLOB_NAME))
 
 
 def main(argv):

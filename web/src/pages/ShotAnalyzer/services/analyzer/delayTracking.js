@@ -1,8 +1,6 @@
 import { t } from '@lingui/core/macro';
 import { isWeightType } from './exitReasons.js';
 
-/* global globalThis */
-
 export const LAST_PHASE_UNDERSHOOT_MIN_G = 2;
 export const LAST_PHASE_UNDERSHOOT_MAX_G = 6;
 export const LAST_PHASE_OVERSHOOT_MAX_G = 4;

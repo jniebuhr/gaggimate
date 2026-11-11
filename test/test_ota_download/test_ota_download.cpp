@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -137,7 +138,7 @@ class FakeTransport : public HttpTransport {
         }
         return "";
     }
-    void end() override {}
+    void end() override { /* fake holds no connection */ }
 
   private:
     AttemptLog &current() { return attempts.back(); }
@@ -164,8 +165,12 @@ struct FakeEnv : public DownloadEnv {
         networkWaits++;
         return true;
     }
-    uint8_t *allocBuffer(size_t size) override { return failAlloc ? nullptr : static_cast<uint8_t *>(malloc(size)); }
-    void freeBuffer(uint8_t *buffer) override { free(buffer); }
+    std::unique_ptr<uint8_t[]> buffer;
+    uint8_t *allocBuffer(size_t size) override {
+        buffer = failAlloc ? nullptr : std::make_unique<uint8_t[]>(size);
+        return buffer.get();
+    }
+    void freeBuffer(uint8_t *) override { buffer.reset(); }
 };
 
 struct MemorySink {
@@ -230,8 +235,8 @@ struct Rig {
     }
 };
 
-void setUp() {}
-void tearDown() {}
+void setUp() { /* no shared fixture state */ }
+void tearDown() { /* no shared fixture state */ }
 
 void test_clean_download_single_attempt() {
     Rig rig;

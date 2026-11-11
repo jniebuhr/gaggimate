@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "id": "delonghi-ecp",
+  "name": "DeLonghi ECP",
+  "revision": 1,
+  "requires": {
+    "dualBoiler": false
+  },
+  "settings": {
+    "pid": "32,0.05,42,0.46",
+    "temperatureOffset": 15
+  }
+}

@@ -52,8 +52,8 @@ static ButtonHandler::Config momentary(bool combo = false) {
     return cfg;
 }
 
-void setUp() {}
-void tearDown() {}
+void setUp() { /* no shared fixture state */ }
+void tearDown() { /* no shared fixture state */ }
 
 // --- latching switches ------------------------------------------------------
 

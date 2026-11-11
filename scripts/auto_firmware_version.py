@@ -1,5 +1,7 @@
 import subprocess
 import datetime
+import os
+import tempfile
 
 Import("env")
 
@@ -17,12 +19,22 @@ def get_time_specifier_build_flag():
     print ("Build date: " + build_timestamp)
     return build_flag
 
-with open('src/version.h', 'w') as f:
-    f.write(
-        '#pragma once\n' +
-        '#ifndef GIT_VERSION_H\n' +
-        '#define GIT_VERSION_H\n' +
-        get_firmware_specifier_build_flag() + '\n' +
-        get_time_specifier_build_flag() + '\n'
-        '#endif\n'
-    )
+content = (
+    '#pragma once\n' +
+    '#ifndef GIT_VERSION_H\n' +
+    '#define GIT_VERSION_H\n' +
+    get_firmware_specifier_build_flag() + '\n' +
+    get_time_specifier_build_flag() + '\n'
+    '#endif\n'
+)
+
+# Write to a unique temp file and swap it in atomically, so a build running in
+# parallel in the same workspace never reads a truncated version.h.
+fd, tmp_path = tempfile.mkstemp(dir='src', prefix='version.h.', suffix='.tmp')
+try:
+    with os.fdopen(fd, 'w') as f:
+        f.write(content)
+    os.replace(tmp_path, 'src/version.h')
+except BaseException:
+    os.unlink(tmp_path)
+    raise

@@ -19,6 +19,7 @@ UART_TX_CHAR_UUID = "fe590003-54ae-4a28-9f74-dfccb248601d"
 
 PART = 19000
 MTU = 250
+PROGRESS_PREFIX = 'Upload progress:'
 
 ble_ota_dfu_end = False
 
@@ -41,7 +42,7 @@ async def start_ota(ble_address: str, filename: str):
         match data[0]:
             case 0xAA:
                 print("Starting transfer, mode:", data[1])
-                print_progress_bar(0, total, prefix='Upload progress:',
+                print_progress_bar(0, total, prefix=PROGRESS_PREFIX,
                                    suffix='Complete', length=50)
 
                 match data[1]:
@@ -52,7 +53,7 @@ async def start_ota(ble_address: str, filename: str):
                         for index in range(file_parts):
                             await send_part(index, file_content, client)
                             print_progress_bar(index + 1, total,
-                                               prefix='Upload progress:',
+                                               prefix=PROGRESS_PREFIX,
                                                suffix='Complete', length=50)
 
             case 0xF1:  # Send next part and update progress bar
@@ -61,7 +62,7 @@ async def start_ota(ble_address: str, filename: str):
                 # print("Next part:", next_part_to_send, "\n")
                 await send_part(next_part_to_send, file_content, client)
                 print_progress_bar(next_part_to_send + 1, total,
-                                   prefix='Upload progress:',
+                                   prefix=PROGRESS_PREFIX,
                                    suffix='Complete', length=50)
 
             case 0xF2:  # Install firmware

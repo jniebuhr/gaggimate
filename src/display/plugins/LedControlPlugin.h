@@ -1,9 +1,11 @@
 #ifndef LEDCONTROLPLUGIN_H
 #define LEDCONTROLPLUGIN_H
+#include "LightBehaviour.h"
 #include <Arduino.h>
+#include <GaggiMateComm.h>
+#include <array>
+#include <atomic>
 #include <display/core/Plugin.h>
-
-constexpr unsigned long UPDATE_INTERVAL = 500;
 
 class LedControlPlugin : public Plugin {
   public:
@@ -12,20 +14,12 @@ class LedControlPlugin : public Plugin {
 
   private:
     void updateControl();
-    void sendControl(String hexColor, uint8_t ext);
-    void sendControl(uint8_t r, uint8_t g, uint8_t b, uint8_t w, uint8_t ext);
-
     unsigned long lastUpdate = 0;
-    bool initialized = false;
-    bool forceSend = false; // re-send the LED snapshot even if unchanged
-
-    uint8_t last_r = -1;
-    uint8_t last_g = -1;
-    uint8_t last_b = -1;
-    uint8_t last_w = -1;
-    uint8_t last_ext = -1;
-
+    std::atomic<bool> forceSend{true};
+    std::array<LedChannelCommand, 10> lastChannels{};
+    size_t lastCount = 0;
+    LightBehaviour systemLight;
+    LightBehaviour baristaLight;
     Controller *controller = nullptr;
 };
-
 #endif // LEDCONTROLPLUGIN_H

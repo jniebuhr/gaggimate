@@ -1,4 +1,4 @@
-import { msg } from '@lingui/core/macro';
+import { msg, t } from '@lingui/core/macro';
 import { withTranslatedLabel } from './translatedLabel.js';
 
 /**
@@ -64,7 +64,27 @@ export const METRIC_DEFINITIONS = [
     getTarget: ds => (ds.targetSteamTemperature ?? 0).toFixed(0),
     unit: '°C',
     adjustable: () => false,
-    disabled: ds => (ds.isBrewing && ds.isActive) || ds.mode === 0,
+    onClick: ds => ds.toggleSteam,
+    active: ds => ds.mode !== 0 && !!ds.steamActive,
+    hint: ds =>
+      ds.mode === 0
+        ? 'Off in standby'
+        : ds.steamActive
+          ? 'Steam on'
+          : ds.steamControlsAvailable === false
+            ? 'Steam off'
+            : 'Tap to turn on',
+    ariaLabel: ds =>
+      ds.mode === 0
+        ? 'Steam off in standby'
+        : ds.steamControlsAvailable === false
+          ? ds.steamActive
+            ? 'Steam on'
+            : 'Steam off'
+          : ds.steamActive
+            ? 'Turn steam off'
+            : 'Turn steam on',
+    disabled: ds => ds.mode === 0 || !ds.systemReady || ds.steamControlsAvailable === false,
   },
   {
     id: 'pumppower',
@@ -120,11 +140,29 @@ export const METRIC_DEFINITIONS = [
     adjustable: () => false,
   },
   {
+    id: 'steamboilerlevel',
+    labelMsg: msg`Steam Boiler Level`,
+    required: false,
+    available: ds => !!ds.hasSteamLevel,
+    getValue: ds => (ds.steamBoilerLow == null ? t`Unknown` : ds.steamBoilerLow ? t`Low` : t`OK`),
+    active: ds => ds.steamBoilerLow === true,
+    adjustable: () => false,
+  },
+  {
+    id: 'watertanklevel',
+    labelMsg: msg`Water Tank Level`,
+    required: false,
+    available: ds => !!ds.hasTankLevel,
+    getValue: ds => (ds.tankLevelOK == null ? t`Unknown` : ds.tankLevelOK ? t`OK` : t`Low`),
+    active: ds => ds.tankLevelOK === false,
+    adjustable: () => false,
+  },
+  {
     id: 'waterlevel',
     labelMsg: msg`Water Level`,
     required: false,
-    available: ds => !!ds.tofDistance,
-    getValue: ds => (ds.waterLevelPercent !== null ? `${Math.round(ds.waterLevelPercent)}%` : '—'),
+    available: ds => !!ds.albaWaterLevelAvailable,
+    getValue: ds => (ds.waterLevelPercent != null ? `${Math.round(ds.waterLevelPercent)}%` : '—'),
     getTarget: () => null,
     unit: '%',
     adjustable: () => false,

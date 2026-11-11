@@ -4,7 +4,7 @@
 #include <cstdio>
 #include <utility>
 
-static const char *TAG = "ResumableDownloader";
+static constexpr const char *TAG = "ResumableDownloader";
 
 ResumableDownloader::ResumableDownloader(HttpTransport &transport, DownloadEnv &env, std::string url, DownloadSink sink,
                                          download_progress_t progress, DownloadPolicy policy)

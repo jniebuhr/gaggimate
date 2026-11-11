@@ -30,16 +30,34 @@ function MetricCell({
   onDecrease,
   onIncrease,
   adjustable,
+  onClick,
+  active = false,
+  hint = null,
+  ariaLabel,
   disabled = false,
   inCard = false,
   compact = false,
 }) {
   const showAdj = adjustable && !compact;
+  const Wrapper = onClick ? 'button' : 'div';
+  const wrapperProps = onClick
+    ? {
+        type: 'button',
+        onClick,
+        disabled,
+        'aria-label': ariaLabel || label,
+        'aria-pressed': active,
+      }
+    : {};
+
   return (
-    <div
-      className={`flex flex-col items-center justify-between rounded-xl ${compact ? 'gap-0.5 p-1' : 'gap-1 p-2'} ${inCard ? 'bg-base-200/60' : 'card bg-base-100'}`}
+    <Wrapper
+      {...wrapperProps}
+      className={`flex w-full flex-col items-center justify-between rounded-xl text-center ${compact ? 'gap-0.5 p-1' : 'gap-1 p-2'} ${active ? 'border-error/30 bg-error/10 border' : inCard ? 'bg-base-200/60' : 'card bg-base-100'} ${onClick ? 'enabled:hover:bg-base-200/90 focus-visible:outline-primary transition-colors focus-visible:outline-2 enabled:cursor-pointer' : ''}`}
     >
-      <div className='text-base-content/50 text-[0.6rem] font-semibold tracking-wider uppercase'>
+      <div
+        className={`${active ? 'text-error' : 'text-base-content/50'} text-[0.6rem] font-semibold tracking-wider uppercase`}
+      >
         {label}
       </div>
       <div className='flex w-full items-center justify-between'>
@@ -47,7 +65,9 @@ function MetricCell({
           <AdjBtn icon={faMinus} onClick={onDecrease} visible={showAdj} disabled={disabled} />
         )}
         <div className='flex-1 text-center tabular-nums'>
-          <span className='text-base-content text-sm font-bold'>{current}</span>
+          <span className={`${active ? 'text-error' : 'text-base-content'} text-sm font-bold`}>
+            {current}
+          </span>
           {target != null && (
             <>
               <span className='text-base-content/30 mx-0.5 text-xs'>/</span>
@@ -62,7 +82,12 @@ function MetricCell({
           <AdjBtn icon={faPlus} onClick={onIncrease} visible={showAdj} disabled={disabled} />
         )}
       </div>
-    </div>
+      {hint && (
+        <div className={`${active ? 'text-error/80' : 'text-base-content/45'} text-[0.62rem]`}>
+          {hint}
+        </div>
+      )}
+    </Wrapper>
   );
 }
 
@@ -77,6 +102,10 @@ function MetricCellItem({ m, inCard, compact }) {
       disabled={m.disabled}
       onDecrease={m.onDecrease}
       onIncrease={m.onIncrease}
+      onClick={m.onClick}
+      active={m.active}
+      hint={m.hint}
+      ariaLabel={m.ariaLabel}
       inCard={inCard}
       compact={compact}
     />
@@ -153,6 +182,10 @@ MetricsGrid.propTypes = {
       disabled: PropTypes.bool,
       onDecrease: PropTypes.func,
       onIncrease: PropTypes.func,
+      onClick: PropTypes.func,
+      active: PropTypes.bool,
+      hint: PropTypes.string,
+      ariaLabel: PropTypes.string,
     }),
   ).isRequired,
   inCard: PropTypes.bool,

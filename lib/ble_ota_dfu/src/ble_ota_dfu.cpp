@@ -6,7 +6,7 @@
 
 bool BLEOverTheAirDeviceFirmwareUpdate::begin_update() {
     if (finishing) {
-        ESP_LOGW(TAG, "Previous update is still being finalized");
+        ESP_LOGW(BLE_OTA_DFU_TAG, "Previous update is still being finalized");
         return false;
     }
     if (ota_handle != 0) {
@@ -26,14 +26,14 @@ bool BLEOverTheAirDeviceFirmwareUpdate::begin_update() {
     esp_err_t err = esp_ota_begin(ota_partition, OTA_WITH_SEQUENTIAL_WRITES, &ota_handle);
     if (err != ESP_OK) {
         ota_handle = 0;
-        ESP_LOGE(TAG, "esp_ota_begin failed: %s", esp_err_to_name(err));
+        ESP_LOGE(BLE_OTA_DFU_TAG, "esp_ota_begin failed: %s", esp_err_to_name(err));
         abort_update("esp_ota_begin failed");
         return false;
     }
     received_file_size = 0;
     next_part = 0;
     OTA_DFU_BLE->setUpdating(true);
-    ESP_LOGI(TAG, "Receiving %u bytes in %u parts into %s", expected_file_size, parts, ota_partition->label);
+    ESP_LOGI(BLE_OTA_DFU_TAG, "Receiving %u bytes in %u parts into %s", expected_file_size, parts, ota_partition->label);
     return true;
 }
 
@@ -43,24 +43,24 @@ bool BLEOverTheAirDeviceFirmwareUpdate::write_part(uint16_t length, uint16_t par
         return false;
     }
     if (part != next_part || length > UPDATER_SIZE || received_file_size + length > expected_file_size) {
-        ESP_LOGE(TAG, "Unexpected part %u (want %u), length %u", part, next_part, length);
+        ESP_LOGE(BLE_OTA_DFU_TAG, "Unexpected part %u (want %u), length %u", part, next_part, length);
         abort_update("Unexpected part");
         return false;
     }
     esp_err_t err = esp_ota_write(ota_handle, updater, length);
     if (err != ESP_OK) {
-        ESP_LOGE(TAG, "esp_ota_write failed: %s", esp_err_to_name(err));
+        ESP_LOGE(BLE_OTA_DFU_TAG, "esp_ota_write failed: %s", esp_err_to_name(err));
         abort_update("esp_ota_write failed");
         return false;
     }
     received_file_size += length;
     next_part++;
-    ESP_LOGI(TAG, "Upload progress: %u/%u", next_part, parts);
+    ESP_LOGI(BLE_OTA_DFU_TAG, "Upload progress: %u/%u", next_part, parts);
     return true;
 }
 
 void BLEOverTheAirDeviceFirmwareUpdate::abort_update(const char *reason) {
-    ESP_LOGE(TAG, "Update aborted: %s", reason);
+    ESP_LOGE(BLE_OTA_DFU_TAG, "Update aborted: %s", reason);
     if (ota_handle != 0) {
         esp_ota_abort(ota_handle);
         ota_handle = 0;
@@ -83,13 +83,13 @@ void BLEOverTheAirDeviceFirmwareUpdate::task_finish_update(void *parameters) {
     if (err == ESP_OK)
         err = esp_ota_set_boot_partition(self->ota_partition);
     if (err != ESP_OK) {
-        ESP_LOGE(TAG, "Finalizing the update failed: %s", esp_err_to_name(err));
+        ESP_LOGE(BLE_OTA_DFU_TAG, "Finalizing the update failed: %s", esp_err_to_name(err));
         self->abort_update("Image verification failed");
         self->finishing = false;
         vTaskDelete(nullptr);
         return;
     }
-    ESP_LOGI(TAG, "Update installed to %s, rebooting", self->ota_partition->label);
+    ESP_LOGI(BLE_OTA_DFU_TAG, "Update installed to %s, rebooting", self->ota_partition->label);
     self->notify_progress(0xF2, self->parts);
     vTaskDelay(pdMS_TO_TICKS(OTA_RESTART_DELAY_MS));
     esp_restart();
@@ -133,7 +133,7 @@ void BLEOverTheAirDeviceFirmwareUpdate::onWrite(BLECharacteristic *pCharacterist
             // Fast-mode senders ignore this, but displays without fast mode wait for it.
             notify_progress(0xF1, next_part);
         } else if (received_file_size != expected_file_size) {
-            ESP_LOGE(TAG, "Size mismatch: expected %u, received %u", expected_file_size, received_file_size);
+            ESP_LOGE(BLE_OTA_DFU_TAG, "Size mismatch: expected %u, received %u", expected_file_size, received_file_size);
             abort_update("Size mismatch");
         } else {
             finishing = true;
@@ -158,7 +158,7 @@ void BLEOverTheAirDeviceFirmwareUpdate::onWrite(BLECharacteristic *pCharacterist
             break;
         expected_file_size = (static_cast<uint32_t>(pData[1]) << 24) | (static_cast<uint32_t>(pData[2]) << 16) |
                              (static_cast<uint32_t>(pData[3]) << 8) | pData[4];
-        ESP_LOGI(TAG, "Expecting %u bytes", expected_file_size);
+        ESP_LOGI(BLE_OTA_DFU_TAG, "Expecting %u bytes", expected_file_size);
         break;
 
     // Part count and packet size
@@ -171,7 +171,7 @@ void BLEOverTheAirDeviceFirmwareUpdate::onWrite(BLECharacteristic *pCharacterist
         break;
 
     default:
-        ESP_LOGW(TAG, "Unknown command: %02X", pData[0]);
+        ESP_LOGW(BLE_OTA_DFU_TAG, "Unknown command: %02X", pData[0]);
         break;
     }
 }

@@ -17,6 +17,8 @@ import sys
 
 Import("env")  # noqa: F821 -- provided by PlatformIO/SCons
 
+subprocess.check_call([sys.executable, os.path.join(env["PROJECT_DIR"], "scripts", "generate_machine_profile_schema.py")])
+
 project_dir = env["PROJECT_DIR"]  # noqa: F821
 out_dir = os.path.join(project_dir, "src", "display", "webassets")
 manifest = os.path.join(out_dir, "web_ui_manifest.h")

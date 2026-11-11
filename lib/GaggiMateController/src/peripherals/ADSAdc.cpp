@@ -1,10 +1,11 @@
 #include "ADSAdc.h"
 #include "Wire.h"
 
-ADSAdc::ADSAdc(uint8_t sda_pin, uint8_t scl_pin, AdcRates rates)
-    : _sda_pin(sda_pin), _scl_pin(scl_pin), _rates(rates), taskHandle(nullptr) {}
+ADSAdc::ADSAdc(uint8_t sda_pin, uint8_t scl_pin, AdcRates rates, SemaphoreHandle_t sharedBusMutex)
+    : _sharedBusMutex(sharedBusMutex), _sda_pin(sda_pin), _scl_pin(scl_pin), _rates(rates), taskHandle(nullptr) {}
 
 void ADSAdc::setup() {
+    SharedI2CBusGuard guard(_sharedBusMutex);
     uint32_t total = 0;
     for (auto rate : _rates)
         total += rate;
@@ -47,41 +48,45 @@ void ADSAdc::loop() {
     int reading = 0;
     const uint8_t completedChannel = _currentChannel;
     bool delivered = false;
-    if (_pending) {
-        ads->getError();
-        const bool ready = ads->isReady();
-        if (ads->getError() != ADS1X15_OK) {
-            ++_errors;
-        } else if (!ready && esp_timer_get_time() - _conversionStarted < 10000) {
-            esp_timer_start_once(_timer, 100);
-            return;
-        } else if (ready) {
-            reading = ads->getValue();
-            delivered = ads->getError() == ADS1X15_OK;
-            if (!delivered)
+    int64_t now;
+    {
+        SharedI2CBusGuard guard(_sharedBusMutex);
+        if (_pending) {
+            ads->getError();
+            const bool ready = ads->isReady();
+            if (ads->getError() != ADS1X15_OK) {
                 ++_errors;
-        } else {
-            ++_errors;
+            } else if (!ready && esp_timer_get_time() - _conversionStarted < 10000) {
+                esp_timer_start_once(_timer, 100);
+                return;
+            } else if (ready) {
+                reading = ads->getValue();
+                delivered = ads->getError() == ADS1X15_OK;
+                if (!delivered)
+                    ++_errors;
+            } else {
+                ++_errors;
+            }
+            _pending = false;
         }
-        _pending = false;
-    }
 
-    // Absolute deadlines preserve average rates; overdue work never creates
-    // an unbounded catch-up burst.
-    _currentChannel = _schedule.next();
-    const int64_t now = esp_timer_get_time();
-    if (_schedule.deadline(_currentChannel) > now) {
-        esp_timer_start_once(_timer, _schedule.deadline(_currentChannel) - now);
-    } else {
-        if (_schedule.advance(_currentChannel, now))
-            ++_late;
-        ads->getError();
-        ads->requestADC(_currentChannel);
-        _pending = ads->getError() == ADS1X15_OK;
-        if (!_pending)
-            ++_errors;
-        _conversionStarted = esp_timer_get_time();
-        esp_timer_start_once(_timer, ADC_CONVERSION_WAIT_US);
+        // Absolute deadlines preserve average rates; overdue work never creates
+        // an unbounded catch-up burst.
+        _currentChannel = _schedule.next();
+        now = esp_timer_get_time();
+        if (_schedule.deadline(_currentChannel) > now) {
+            esp_timer_start_once(_timer, _schedule.deadline(_currentChannel) - now);
+        } else {
+            if (_schedule.advance(_currentChannel, now))
+                ++_late;
+            ads->getError();
+            ads->requestADC(_currentChannel);
+            _pending = ads->getError() == ADS1X15_OK;
+            if (!_pending)
+                ++_errors;
+            _conversionStarted = esp_timer_get_time();
+            esp_timer_start_once(_timer, ADC_CONVERSION_WAIT_US);
+        }
     }
     // Start the next conversion before delivering the previous sample.
     if (delivered) {

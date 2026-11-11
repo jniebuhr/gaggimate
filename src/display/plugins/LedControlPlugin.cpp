@@ -1,74 +1,81 @@
 #include "LedControlPlugin.h"
+#include <algorithm>
 #include <display/core/Controller.h>
 #include <display/core/Event.h>
 #include <display/util/ColorConversion.h>
 
 void LedControlPlugin::setup(Controller *controller, PluginManager *pluginManager) {
     this->controller = controller;
-    pluginManager->on("controller:ready", [this](Event const) { initialized = true; });
-    // pluginManager->on("controller:state:resend", [this](Event const &) { forceSend = true; });
+    pluginManager->on("controller:bluetooth:connect", [this](Event const &) { forceSend = true; });
+    pluginManager->on("controller:bluetooth:disconnect", [this](Event const &) { forceSend = true; });
+    pluginManager->on("controller:state:resend", [this](Event const &) { forceSend = true; });
 }
 
 void LedControlPlugin::loop() {
-    if (!initialized) {
+    if (!controller->getClientController()->isConnected() || controller->getSystemInfo().protocolMismatch)
         return;
-    }
-    if (lastUpdate + UPDATE_INTERVAL < millis()) {
-        lastUpdate = millis();
+    const auto now = millis();
+    if (forceSend || now - lastUpdate >= 100) {
+        lastUpdate = now;
         updateControl();
     }
 }
 
 void LedControlPlugin::updateControl() {
-    Settings settings = this->controller->getSettings();
-    int mode = this->controller->getMode();
-    if (mode == MODE_STANDBY) {
-        sendControl(0, 0, 0, 0, 0);
-        return;
+    const Settings &settings = controller->getSettings();
+    const auto &caps = controller->getSystemInfo().capabilities;
+    const int mode = controller->getMode();
+    const bool awake = mode != MODE_STANDBY;
+    const bool brewing = awake && mode == MODE_BREW && controller->isActive();
+    std::array<LedChannelCommand, 10> channels{};
+    size_t count = 0;
+    if (caps.ledControl) {
+        String color = settings.getSunriseIdle();
+        if (brewing) {
+            color = settings.getSunriseActive();
+        } else {
+            bool lastWasBrew;
+            {
+                std::lock_guard<std::recursive_mutex> guard(controller->getProcessLock());
+                Process *last = controller->getLastProcess();
+                lastWasBrew = last != nullptr && last->getType() == MODE_BREW;
+            }
+            if (lastWasBrew && mode == MODE_BREW)
+                color = settings.getSunriseFinished();
+            else if (controller->isLowWaterLevel() || controller->isErrorState())
+                color = settings.getSunriseError();
+        }
+        const auto rgbw = awake ? ColorConversion::fromHex(color) : ColorConversion::Rgbw{};
+        const uint8_t ext = 255 - (awake ? settings.getSunriseExtBrightness() : 0);
+        channels[count++] = {0, rgbw.r};
+        channels[count++] = {1, rgbw.g};
+        channels[count++] = {2, rgbw.b};
+        channels[count++] = {3, rgbw.w};
+        for (uint8_t i = 4; i < 8; ++i)
+            channels[count++] = {i, ext};
     }
-    if (this->controller->isActive() && mode == MODE_BREW) {
-        sendControl(settings.getSunriseActive(), settings.getSunriseExtBrightness());
-        return;
+    if (caps.dualBoiler) {
+        const bool brewProcessActive = awake && controller->isBrewActive();
+        auto addLight = [&](uint8_t channel, LightBehaviour &state, int function, uint8_t brightness, uint8_t minimum,
+                            uint16_t cycleTimeMs) {
+            const bool brew = function == 2 || function == 6;
+            const float target = brew ? controller->getTargetTemp() : controller->getTargetSteamTemp();
+            const float temperature = brew ? controller->getCurrentTemp() : controller->getCurrentSteamTemp();
+            const bool stable = brew && controller->getWarnings().isTemperatureStable();
+            channels[count++] = {channel, function == 0 ? uint8_t{0} : brightness,
+                                 state.update(function, temperature, target, stable, awake, brewProcessActive),
+                                 function == 0 ? uint8_t{0} : minimum, cycleTimeMs};
+        };
+        addLight(SYSTEM_LED_CHANNEL, systemLight, settings.getSystemLedFunction(), settings.getSystemLedBrightness(),
+                 settings.getSystemLedMinBrightness(), settings.getSystemLedCycleTimeMs());
+        addLight(BARISTA_LED_CHANNEL, baristaLight, settings.getBaristaLedFunction(), settings.getBaristaLedBrightness(),
+                 settings.getBaristaLedMinBrightness(), settings.getBaristaLedCycleTimeMs());
     }
-    bool lastWasBrew;
-    {
-        // Deref under the process lock — other tasks delete the process at any time (GM-147).
-        std::lock_guard<std::recursive_mutex> guard(controller->getProcessLock());
-        Process *last = controller->getLastProcess();
-        lastWasBrew = last != nullptr && last->getType() == MODE_BREW;
-    }
-    if (lastWasBrew && mode == MODE_BREW) {
-        sendControl(settings.getSunriseFinished(), settings.getSunriseExtBrightness());
+    const bool force = forceSend.exchange(false);
+    if (count == 0 ||
+        (!force && count == lastCount && std::equal(channels.begin(), channels.begin() + count, lastChannels.begin())))
         return;
-    }
-    if (this->controller->isLowWaterLevel() || this->controller->isErrorState()) {
-        sendControl(settings.getSunriseError(), settings.getSunriseExtBrightness());
-        return;
-    }
-    sendControl(settings.getSunriseIdle(), settings.getSunriseExtBrightness());
-}
-
-void LedControlPlugin::sendControl(String hexColor, uint8_t ext) {
-    ColorConversion::Rgbw duty = ColorConversion::fromHex(hexColor);
-    sendControl(duty.r, duty.g, duty.b, duty.w, ext);
-}
-
-void LedControlPlugin::sendControl(uint8_t r, uint8_t g, uint8_t b, uint8_t w, uint8_t ext) {
-    if (!forceSend && r == last_r && g == last_g && b == last_b && w == last_w && ext == last_ext)
-        return;
-    forceSend = false;
-
-    // Send every channel as one snapshot. A single message keeps the outbound
-    // coalescing queue from collapsing per-channel updates down to one channel.
-    const uint8_t extInv = 255 - ext;
-    const LedChannelCommand channels[] = {
-        {0, r}, {1, g}, {2, b}, {3, w}, {4, extInv}, {5, extInv}, {6, extInv}, {7, extInv},
-    };
-    this->controller->getClientController()->sendLedControl(channels, sizeof(channels) / sizeof(channels[0]));
-
-    last_r = r;
-    last_g = g;
-    last_b = b;
-    last_w = w;
-    last_ext = ext;
+    controller->getClientController()->sendLedControl(channels.data(), count);
+    lastChannels = channels;
+    lastCount = count;
 }

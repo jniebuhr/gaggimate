@@ -16,6 +16,11 @@ struct EventDataEntry {
     void *pointerValue = nullptr;
 
     EventDataEntry() = default;
+    EventDataEntry(const EventDataEntry &) = default;
+    EventDataEntry(EventDataEntry &&) noexcept = default;
+    EventDataEntry &operator=(const EventDataEntry &) = default;
+    EventDataEntry &operator=(EventDataEntry &&) noexcept = default;
+    ~EventDataEntry() = default;
 
     EventDataEntry(const String &k, int value) : key(k), type(EventDataType::EVENT_TYPE_INT), intValue(value) {}
 

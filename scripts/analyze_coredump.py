@@ -176,7 +176,7 @@ def analyze_with_gdb(gdb_path, firmware_elf, coredump_elf):
         # Clean up command file
         try:
             os.unlink(cmd_file_path)
-        except:
+        except OSError:
             pass
 
 def print_crash_summary(coredump_file):
@@ -310,7 +310,7 @@ def main():
         # Clean up temporary file
         try:
             os.unlink(coredump_elf)
-        except:
+        except OSError:
             pass
 
 if __name__ == "__main__":

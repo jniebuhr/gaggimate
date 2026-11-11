@@ -174,13 +174,14 @@ int semver_parse_version(const char *str, semver_t *ver) {
     size_t len;
     int index;
     int value;
-    char *slice;
-    char *next;
+    const char *slice;
+    const char *next;
     char *endptr;
-    slice = (char *)str;
+    slice = str;
     index = 0;
 
-    while (slice != NULL && index++ < 4) {
+    while (slice != NULL && index < 4) {
+        index++;
         next = strchr(slice, DELIMITER[0]);
         if (next == NULL)
             len = strlen(slice);

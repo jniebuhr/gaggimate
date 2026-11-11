@@ -11,6 +11,7 @@
 #include <display/core/ProfileManager.h>
 #include <display/core/WarningManager.h>
 #include <display/core/process/Process.h>
+#include <memory>
 #include <mutex>
 #include <vector>
 #ifndef GAGGIMATE_HEADLESS
@@ -49,6 +50,12 @@ class Controller {
     void setTargetTemp(float temperature);
     void setPressureScale();
     void setScaleFactors();
+    void setMachineHardware();
+    bool isMachineHardwareReady() const {
+        return !systemInfo.capabilities.dualBoiler ||
+               (hardwareSessionReady && appliedHardwareHash == machineHardwareHash(settings.getMachineHardware()));
+    }
+    bool isMachineHardwareError() const { return hardwareConfigurationError; }
     void setPumpModelCoeffs();
     void setHeaterSettings();
     void setTargetGrindDuration(int duration);
@@ -86,8 +93,8 @@ class Controller {
     void startProcess(Process *process);
     // Dereferencing the returned pointers requires holding getProcessLock() — the
     // logic task and control entry points delete them at any time (GM-147).
-    Process *getProcess() const { return currentProcess; }
-    Process *getLastProcess() const { return lastProcess; }
+    Process *getProcess() const { return currentProcess.get(); }
+    Process *getLastProcess() const { return lastProcess.get(); }
     std::recursive_mutex &getProcessLock() const { return processMutex; }
     Settings &getSettings() { return settings; }
     ProfileManager *getProfileManager() { return profileManager; }
@@ -104,6 +111,12 @@ class Controller {
     void updateLastAction();
     void raiseTemp();
     void lowerTemp();
+    void toggleSteamHeater();
+    void setBrewHeaterTestActive(bool active) { brewHeaterTestActive = active; }
+    void toggleWaterValve();
+    bool isWaterValveActive() const { return waterValveActive; }
+    bool isSteamControlsAvailable() const { return systemInfo.capabilities.dualBoiler; }
+    bool isSteamHeaterActive() const { return systemInfo.capabilities.dualBoiler ? steamHeaterActive : mode != MODE_STANDBY; }
     void raiseSteamTemp();
     void lowerSteamTemp();
     void raiseBrewTarget();
@@ -140,6 +153,8 @@ class Controller {
     void onFlush();
     void onFlushRelease(); // ends a hold-to-flush; no-op otherwise
     int getWaterLevel() const {
+        if (tankLevelPresent)
+            return tankLevelOK ? 100 : 0;
         float reversedLevel = static_cast<float>(settings.getEmptyTankDistance()) -
                               static_cast<float>(std::min(settings.getEmptyTankDistance(), tofDistance));
         float range = static_cast<float>(settings.getEmptyTankDistance() - settings.getFullTankDistance());
@@ -149,6 +164,26 @@ class Controller {
 
     void onVolumetricDelete();
     bool isLowWaterLevel() const { return getWaterLevel() < 20; };
+    bool isTankLevelOK() const {
+        if (tankLevelPresent)
+            return tankLevelOK;
+        return !usesAlbaTankLevel() || (hasTankLevelReading() && !isLowWaterLevel());
+    }
+    bool isSteamRefillTankLevelOK() const {
+        if (tankLevelPresent)
+            return tankLevelOK;
+        return !settings.getAlbaRefillInterlock() || isTankLevelOK();
+    }
+    bool hasTankLevel() const { return tankLevelPresent || usesAlbaTankLevel(); }
+    bool hasTankLevelReading() const {
+        if (tankLevelPresent)
+            return tankLevelKnown.load();
+        return usesAlbaTankLevel() && tofLevelKnown.load() &&
+               uint32_t(millis() - lastTofReading.load()) < ALBA_TANK_READING_TIMEOUT_MS;
+    }
+    bool hasSteamLevel() const { return systemInfo.capabilities.dualBoiler && settings.getSteamLevelEnabled(); }
+    bool hasSteamLevelReading() const { return steamLevelKnown.load(); }
+    bool isSteamBoilerLow() const { return steamBoilerLow; }
     bool isSteamSwitchOn() const { return steamSwitchOn; }
     bool isFlushPending() const { return flushPending; }
     WarningManager &getWarnings() { return warnings; }
@@ -183,7 +218,7 @@ class Controller {
     // collect the event ids to fire; the public wrappers dispatch them after unlocking
     // so plugin handlers never run under the lock (avoids lock-order inversions).
     bool isActiveLocked() const { return currentProcess != nullptr && currentProcess->isActive(); }
-    void startProcessLocked(Process *process, std::vector<const char *> &events);
+    void startProcessLocked(std::unique_ptr<Process> process, std::vector<const char *> &events);
     void deactivateLocked(std::vector<const char *> &events);
     void afterDeactivate();
     // Relax the BLE interval only once the stop command has been acknowledged (see afterDeactivate()).
@@ -246,6 +281,9 @@ class Controller {
     BoilerCommand lastBoiler{};
     BoilerCommand lastBoiler2{};
     PumpCommand lastPump{};
+    // Reused under processMutex; sendBatch copies the payloads into its queue.
+    // Keep this large protobuf batch off the UI task's limited stack.
+    gm::Payload controlBatch[8];
     RelayCommand lastRelay{};
     RelayCommand lastRefill{};
     RelayCommand lastWater{};
@@ -263,8 +301,8 @@ class Controller {
     // Guards currentProcess/lastProcess lifecycle across tasks (UI, AsyncTCP, BLE
     // callbacks, logic task). Recursive: locked composites call locked primitives.
     mutable std::recursive_mutex processMutex;
-    Process *currentProcess = nullptr;
-    Process *lastProcess = nullptr;
+    std::unique_ptr<Process> currentProcess;
+    std::unique_ptr<Process> lastProcess;
 
     unsigned long grindActiveUntil = 0;
     unsigned long lastPing = 0;
@@ -289,13 +327,33 @@ class Controller {
     static const unsigned long CONFIG_RESEND_WINDOW_MS = 8000;
     static const unsigned long CONFIG_RESEND_INTERVAL_MS = 1000;
     bool processCompleted = false;
+    std::atomic<uint32_t> appliedHardwareHash{0};
+    std::atomic<bool> hardwareSessionReady{false};
+    std::atomic<bool> hardwareConfigurationError{false};
+    std::atomic<bool> brewHeaterTestActive{false};
+    bool steamHeaterActive = false;
     bool steamReady = false;
     bool steamSwitchOn = false;
     bool flushPending = false; // no flush since entering brew mode, waking up, or the last shot
     bool waterValveActive = false;
     bool waterButtonPressed = false;
     bool sdcard = false;
+    void onSteamLevelRead(bool low);
     bool steamBoilerLow = false;
+    bool usesAlbaTankLevel() const {
+        return systemInfo.capabilities.dualBoiler && !settings.getTankLevelEnabled() && systemInfo.capabilities.tof;
+    }
+    // Alba reports a filtered distance every five seconds; tolerate two missed
+    // reports before preventing refill on a stale reading.
+    static constexpr uint32_t ALBA_TANK_READING_TIMEOUT_MS = 15000;
+    std::atomic<bool> tofLevelKnown{false};
+    std::atomic<uint32_t> lastTofReading{0};
+    std::atomic<bool> tankLevelKnown{false};
+    std::atomic<bool> steamLevelKnown{false};
+    bool tankLevelPresent = false;
+    bool tankLevelOK = true;
+    unsigned long steamRefillClearedAt = 0;
+    bool steamRefillPostClear = false;
     int error = 0;
 
     // Bluetooth scale connection monitoring

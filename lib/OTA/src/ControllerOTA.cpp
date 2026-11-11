@@ -86,14 +86,14 @@ bool ControllerOTA::downloadFile(const String &release_url) {
         return false;
     }
     DownloadSink sink;
-    sink.write = [&](const uint8_t *data, size_t len) {
+    sink.write = [&file](const uint8_t *data, size_t len) {
         if (file.position() == 0 && data[0] != ESP_IMAGE_HEADER_MAGIC) {
             ESP_LOGE("ControllerOTA", "Magic header does not start with 0xE9");
             return false;
         }
         return file.write(data, len) == len;
     };
-    sink.restart = [&]() {
+    sink.restart = [&file]() {
         file.close();
         file = LittleFS.open(CONTROLLER_FIRMWARE_PATH, FILE_WRITE, true);
         return static_cast<bool>(file);

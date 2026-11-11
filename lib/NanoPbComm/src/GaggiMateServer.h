@@ -20,11 +20,13 @@ class GaggiMateServer {
     using HeaterSettingsCallback = std::function<void(const gm::HeaterSettings &settings)>;
     using PumpSettingsCallback = std::function<void(gm::PumpSettings settings)>;
     using AutotuneCallback = std::function<void(uint32_t testTime, uint32_t samples, uint32_t heaterWattage)>;
+    using MachineHardwareCallback = std::function<void(const gm::MachineHardwareSettings &settings)>;
     using PressureScaleCallback = std::function<void(float scale)>;
     using TareCallback = std::function<void()>;
     using ScaleFactorsCallback = std::function<void(float scaleFactor1, float scaleFactor2, uint16_t sampleRateSps,
                                                     float idleFilterAlpha, float activeFilterAlpha)>;
-    using LedCallback = std::function<void(uint8_t channel, uint8_t brightness)>;
+    using LedCallback =
+        std::function<void(uint8_t channel, uint8_t brightness, LedEffect effect, uint8_t minBrightness, uint16_t cycleTimeMs)>;
 
     GaggiMateServer();
 
@@ -83,14 +85,17 @@ class GaggiMateServer {
     void onHeaterSettings(HeaterSettingsCallback cb) { _heaterSettingsCb = std::move(cb); }
     void onPumpSettings(PumpSettingsCallback cb) { _pumpSettingsCb = std::move(cb); }
     void onAutotune(AutotuneCallback cb) { _autotuneCb = std::move(cb); }
+    void sendMachineHardwareStatus(uint32_t hash, bool ready, bool error);
+    void onMachineHardware(MachineHardwareCallback cb) { _machineHardwareCb = std::move(cb); }
     void onPressureScale(PressureScaleCallback cb) { _pressureScaleCb = std::move(cb); }
     void onTare(TareCallback cb) { _tareCb = std::move(cb); }
+    void onHardwareScaleTare(TareCallback cb) { _hardwareScaleTareCb = std::move(cb); }
     void onScaleFactors(ScaleFactorsCallback cb) { _scaleFactorsCb = std::move(cb); }
     void onLedControl(LedCallback cb) { _ledCb = std::move(cb); }
 
   private:
     BleServerTransport _transport;
-    Endpoint _endpoint;
+    Endpoint _endpoint{_transport};
     gm::SystemInfo _systemInfo = gaggimate_SystemInfo_init_zero;
     // The BLE subscribe callback can run before the client has finished
     // installing its notification handler. The first received ping is the
@@ -105,8 +110,10 @@ class GaggiMateServer {
     HeaterSettingsCallback _heaterSettingsCb;
     PumpSettingsCallback _pumpSettingsCb;
     AutotuneCallback _autotuneCb;
+    MachineHardwareCallback _machineHardwareCb;
     PressureScaleCallback _pressureScaleCb;
     TareCallback _tareCb;
+    TareCallback _hardwareScaleTareCb;
     ScaleFactorsCallback _scaleFactorsCb;
     LedCallback _ledCb;
 

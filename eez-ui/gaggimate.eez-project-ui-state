@@ -1,12 +1,13 @@
 {
   "navigation": {
-    "selectedUserPageObject": "[gaggimate.eez-project]:/userPages/2",
+    "selectedUserPageObject": "[gaggimate.eez-project]:/userPages/4",
     "selectedUserWidgetObject": "[gaggimate.eez-project]:/userWidgets/1",
     "selectedActionObject": "[gaggimate.eez-project]:/actions/39",
     "selectedGlobalVariableObject": "[gaggimate.eez-project]:/variables/globalVariables/9",
-    "selectedStructureObject": "[gaggimate.eez-project]:/variables/structures/1",
+    "selectedStructureObject": "[gaggimate.eez-project]:/variables/structures/3",
     "selectedThemeObject": "[gaggimate.eez-project]:/themes/0",
     "selectedThemeColorObject": "[gaggimate.eez-project]:/colors/1",
+    "selectedFontObject": "[gaggimate.eez-project]:/fonts/0",
     "selectedBitmapObject": "[gaggimate.eez-project]:/bitmaps/9",
     "subnavigationSelectedItems": {
       "variables-tab/sub-navigation/selected-item": "Structs"
@@ -197,16 +198,17 @@
               "type": "tabset",
               "id": "EDITORS",
               "weight": 46.47304077762655,
+              "selected": 2,
               "enableDeleteWhenEmpty": false,
               "enableClose": false,
               "children": [
                 {
                   "type": "tab",
                   "id": "#cc90c56e-b38e-4ab9-956f-1fb808b5b9e6",
-                  "name": "StatusScreen",
+                  "name": "MenuScreenNew",
                   "component": "editor",
                   "config": {
-                    "objectPath": "[gaggimate.eez-project]:/userPages/2",
+                    "objectPath": "[gaggimate.eez-project]:/userPages/3",
                     "permanent": false
                   },
                   "icon": "svg:page"
@@ -1218,10 +1220,10 @@
           "1": {
             "0": {},
             "2": {
-              "0": {}
+              "0": {},
+              "$selected": true
             },
-            "4": {},
-            "$selected": true
+            "4": {}
           },
           "2": {
             "1": {},
@@ -1258,7 +1260,6 @@
         "0": {
           "0": {},
           "1": {
-            "0": {},
             "1": {
               "5": {}
             }
@@ -1324,7 +1325,7 @@
           "x": -213.60000000000002,
           "y": -235.17001953125
         },
-        "scale": 0.8
+        "scale": 0.9
       },
       "timeline": {
         "isEditorActive": false,
@@ -1338,7 +1339,9 @@
           "0": {},
           "1": {
             "0": {},
-            "2": {},
+            "2": {
+              "$selected": true
+            },
             "4": {}
           },
           "2": {
@@ -2312,7 +2315,7 @@
   "logsPanelFilter": "all",
   "selectedStylePropertyName": "",
   "lvglPart": "MAIN",
-  "lvglState": "DEFAULT",
+  "lvglState": "CHECKED",
   "lvglExpandedPropertiesGroup": [
     "POSITION AND SIZE",
     "IMAGE",
@@ -2331,5 +2334,5 @@
   "globalFlowZoom": true,
   "flowZoom": 0.9,
   "implementationLanguage": "C++",
-  "openDialogDefaultPath": "/Users/jniebuhr/Downloads/soup.jpg"
+  "openDialogDefaultPath": "/Users/jniebuhr/SquareLine/examples/Smartwatch/assets/fonts/Montserrat-Medium.ttf"
 }

@@ -20,7 +20,8 @@ enum ScreensEnum {
     SCREEN_ID_GRIND_SCREEN = 7,
     SCREEN_ID_INFO_SCREEN = 8,
     SCREEN_ID_NEW_PROFILE_SCREEN = 9,
-    _SCREEN_ID_LAST = 9
+    SCREEN_ID_WELCOME_SCREEN = 10,
+    _SCREEN_ID_LAST = 10
 };
 
 typedef struct _objects_t {
@@ -33,6 +34,7 @@ typedef struct _objects_t {
     lv_obj_t *grind_screen;
     lv_obj_t *info_screen;
     lv_obj_t *new_profile_screen;
+    lv_obj_t *welcome_screen;
     lv_obj_t *brew_dials;
     lv_obj_t *brew_dials__temp_gauge;
     lv_obj_t *brew_dials__temp_gauge_full;
@@ -153,6 +155,9 @@ typedef struct _objects_t {
     lv_obj_t *bluetooth_scale_icon;
     lv_obj_t *flow_prediction_icon;
     lv_obj_t *weight_label;
+    lv_obj_t *smart_dose_cup;
+    lv_obj_t *smart_dose_portafilter;
+    lv_obj_t *smart_dose_manual;
     lv_obj_t *profile_info;
     lv_obj_t *obj6;
     lv_obj_t *profile_select_button;
@@ -229,7 +234,7 @@ typedef struct _objects_t {
     lv_obj_t *target_temp2;
     lv_obj_t *steam_down_temp_button;
     lv_obj_t *steam_up_temp_button;
-    lv_obj_t *obj16;
+    lv_obj_t *steam_toggle;
     lv_obj_t *main_label6;
     lv_obj_t *water_down_temp_button;
     lv_obj_t *target_temp3;
@@ -239,8 +244,8 @@ typedef struct _objects_t {
     lv_obj_t *main_label4;
     lv_obj_t *grind_start_button;
     lv_obj_t *mode_switch1;
+    lv_obj_t *obj16;
     lv_obj_t *obj17;
-    lv_obj_t *obj18;
     lv_obj_t *target_weight;
     lv_obj_t *target_duration3_1;
     lv_obj_t *target_symbol_1;
@@ -251,42 +256,43 @@ typedef struct _objects_t {
     lv_obj_t *target_symbol;
     lv_obj_t *grind_down_duration_button;
     lv_obj_t *grind_up_duration_button;
-    lv_obj_t *obj19;
+    lv_obj_t *obj18;
     lv_obj_t *standby_icons_1;
     lv_obj_t *wifi_icon_1;
     lv_obj_t *bluetooth_icon_1;
     lv_obj_t *update_icon_1;
+    lv_obj_t *obj19;
     lv_obj_t *obj20;
     lv_obj_t *obj21;
     lv_obj_t *obj22;
-    lv_obj_t *obj23;
     lv_obj_t *qrcode;
-    lv_obj_t *obj24;
+    lv_obj_t *obj23;
     lv_obj_t *info_menu_icon;
     lv_obj_t *single_view;
-    lv_obj_t *obj25;
+    lv_obj_t *obj24;
     lv_obj_t *profile_details;
     lv_obj_t *simple_preview;
+    lv_obj_t *obj25;
     lv_obj_t *obj26;
     lv_obj_t *obj27;
     lv_obj_t *obj28;
     lv_obj_t *obj29;
     lv_obj_t *obj30;
     lv_obj_t *obj31;
-    lv_obj_t *obj32;
     lv_obj_t *chart_preview;
     lv_obj_t *profile_temp_time_1;
+    lv_obj_t *obj32;
     lv_obj_t *obj33;
     lv_obj_t *obj34;
     lv_obj_t *obj35;
     lv_obj_t *obj36;
-    lv_obj_t *obj37;
     lv_obj_t *profile_chart;
-    lv_obj_t *obj38;
+    lv_obj_t *obj37;
     lv_obj_t *image_preview;
     lv_obj_t *profile_preview;
-    lv_obj_t *obj39;
+    lv_obj_t *obj38;
     lv_obj_t *list_view;
+    lv_obj_t *obj39;
     lv_obj_t *obj40;
     lv_obj_t *obj41;
     lv_obj_t *obj42;
@@ -313,10 +319,19 @@ typedef struct _objects_t {
     lv_obj_t *obj63;
     lv_obj_t *obj64;
     lv_obj_t *obj65;
-    lv_obj_t *obj66;
     lv_obj_t *select_profile_1;
     lv_obj_t *previous_profile_1;
     lv_obj_t *next_profile_1;
+    lv_obj_t *obj66;
+    lv_obj_t *obj67;
+    lv_obj_t *touch_icon_1;
+    lv_obj_t *standby_icons_2;
+    lv_obj_t *wifi_icon_2;
+    lv_obj_t *bluetooth_icon_2;
+    lv_obj_t *update_icon_2;
+    lv_obj_t *status_1;
+    lv_obj_t *qrcode_welcome;
+    lv_obj_t *obj68;
 } objects_t;
 
 extern objects_t objects;
@@ -412,6 +427,10 @@ void tick_screen_info_screen();
 void create_screen_new_profile_screen();
 void delete_screen_new_profile_screen();
 void tick_screen_new_profile_screen();
+
+void create_screen_welcome_screen();
+void delete_screen_welcome_screen();
+void tick_screen_welcome_screen();
 
 void create_user_widget_dials(lv_obj_t *parent_obj, void *flowState, int startWidgetIndex, user_widget_dials_state_t *state);
 void tick_user_widget_dials(void *flowState, int startWidgetIndex, user_widget_dials_state_t *state);

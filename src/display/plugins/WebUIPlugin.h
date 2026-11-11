@@ -4,6 +4,7 @@
 #define ELEGANTOTA_USE_ASYNC_WEBSERVER 1
 
 #include <DNSServer.h>
+#include <memory>
 
 #include "GitHubOTA.h"
 #include <ArduinoJson.h>
@@ -19,14 +20,15 @@ const String LOCAL_URL = "http://4.4.4.1/";
 const String RELEASE_URL = "https://github.com/jniebuhr/gaggimate/releases/";
 // Headless builds must pull their own release assets; the screen firmware would not boot on them.
 #ifdef GAGGIMATE_HEADLESS
-#define OTA_DISPLAY_FIRMWARE "display-headless-firmware.bin"
-#define OTA_DISPLAY_FILESYSTEM "display-headless-filesystem.bin"
+constexpr char OTA_DISPLAY_FIRMWARE[] = "display-headless-firmware.bin";
+constexpr char OTA_DISPLAY_FILESYSTEM[] = "display-headless-filesystem.bin";
 #else
-#define OTA_DISPLAY_FIRMWARE "display-firmware.bin"
-#define OTA_DISPLAY_FILESYSTEM "display-filesystem.bin"
+constexpr char OTA_DISPLAY_FIRMWARE[] = "display-firmware.bin";
+constexpr char OTA_DISPLAY_FILESYSTEM[] = "display-filesystem.bin";
 #endif
 
 class ProfileManager;
+class MachineProfileStore;
 
 class WebUIPlugin : public Plugin {
   public:
@@ -47,6 +49,7 @@ class WebUIPlugin : public Plugin {
     // Serves the web UI from the firmware-embedded, memory-mapped flash blob
     // (catch-all for any path not claimed by an explicit route). [GM-106]
     void serveWebAsset(AsyncWebServerRequest *request);
+    void handleMachineProfiles(AsyncWebServerRequest *request);
     void handleSettings(AsyncWebServerRequest *request) const;
     void handleBLEScaleList(AsyncWebServerRequest *request);
     void handleBLEScaleScan(AsyncWebServerRequest *request);
@@ -68,8 +71,9 @@ class WebUIPlugin : public Plugin {
     WebSocketHandler wsHandler;
     Controller *controller = nullptr;
     PluginManager *pluginManager = nullptr;
-    DNSServer *dnsServer = nullptr;
+    std::unique_ptr<DNSServer> dnsServer;
     ProfileManager *profileManager = nullptr;
+    MachineProfileStore *machineProfiles = nullptr;
 
     long lastUpdateCheck = 0;
     long lastDns = 0;

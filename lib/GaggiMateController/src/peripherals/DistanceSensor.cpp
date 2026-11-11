@@ -11,7 +11,7 @@ static constexpr unsigned long RECOVERY_BACKOFF_MIN_MS = 5000;
 static constexpr unsigned long RECOVERY_BACKOFF_MAX_MS = 60000;
 
 DistanceSensor::DistanceSensor(SoftWireBus *bus, distance_callback_t callback) : bus(bus), _callback(callback) {
-    this->tof = new VL53L0X(bus->wire());
+    this->tof = std::make_unique<VL53L0X>(bus->wire());
 }
 
 void DistanceSensor::setup() {

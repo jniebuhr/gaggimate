@@ -8,6 +8,7 @@
 #include <chrono>
 #include <cstdio>
 #include <cstdlib>
+#include <memory>
 #include <string>
 #include <thread>
 #include <vector>
@@ -34,8 +35,12 @@ struct TestEnv : public DownloadEnv {
         std::this_thread::sleep_for(std::chrono::milliseconds(ms / 100));
     }
     bool waitForNetwork(uint32_t) override { return true; }
-    uint8_t *allocBuffer(size_t size) override { return static_cast<uint8_t *>(malloc(size)); }
-    void freeBuffer(uint8_t *buffer) override { free(buffer); }
+    std::unique_ptr<uint8_t[]> buffer;
+    uint8_t *allocBuffer(size_t size) override {
+        buffer = std::make_unique<uint8_t[]>(size);
+        return buffer.get();
+    }
+    void freeBuffer(uint8_t *) override { buffer.reset(); }
 };
 
 // Plain GET helper for control endpoints and reference checks; no chaos on those routes.
@@ -136,8 +141,8 @@ static std::string releaseUrl(const std::string &name) { return baseUrl() + "/re
         TEST_IGNORE_MESSAGE("OTA_CHAOS_URL not set, skipping socket tests");                                                     \
     }
 
-void setUp() {}
-void tearDown() {}
+void setUp() { /* no shared fixture state */ }
+void tearDown() { /* no shared fixture state */ }
 
 void test_clean_downloads_take_one_attempt() {
     REQUIRE_SERVER();

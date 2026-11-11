@@ -5,11 +5,10 @@
 #include <algorithm>
 #include <cmath>
 
-#define HX711_GAIN 128
-#define MAX_SCALE_GRAMS 2000.0f
-#define MAX_STARTUP_WAIT_MS 1200
-
 namespace {
+constexpr int HX711_GAIN = 128;
+constexpr float MAX_SCALE_GRAMS = 2000.0f;
+constexpr unsigned long MAX_STARTUP_WAIT_MS = 1200;
 constexpr float MIN_ABS_SCALE_FACTOR = 1.0f;
 constexpr float TARE_MAX_SPREAD_GRAMS = 0.50f;
 constexpr uint8_t TARE_MAX_ATTEMPTS = 2;

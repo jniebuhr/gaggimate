@@ -99,7 +99,7 @@ class BLEScalePlugin : public Plugin {
     Controller *controller = nullptr;
     PluginManager *pluginManager = nullptr;
     RemoteScalesPluginRegistry *pluginRegistry = nullptr;
-    RemoteScalesScanner *scanner = nullptr;
+    std::unique_ptr<RemoteScalesScanner> scanner;
     std::unique_ptr<RemoteScales> scale = nullptr;
 };
 

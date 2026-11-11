@@ -2,6 +2,10 @@
 #define GAGGIMATECONTROLLER_H
 #include "ControllerConfig.h"
 #include "GaggiMateServer.h"
+#include <array>
+#include <atomic>
+#include <freertos/queue.h>
+#include <memory>
 #include <peripherals/DigitalInput.h>
 #include <peripherals/DistanceSensor.h>
 #include <peripherals/FlowSensor.h>
@@ -12,6 +16,7 @@
 #include <peripherals/Max31855Thermocouple.h>
 #include <peripherals/PressureSensor.h>
 #include <peripherals/Pump.h>
+#include <peripherals/PwmLight.h>
 #include <peripherals/SimpleRelay.h>
 #include <peripherals/addons/GearpumpAddon.h>
 #include <vector>
@@ -32,8 +37,12 @@ class GaggiMateController {
     void registerBoardConfig(ControllerConfig config);
 
   private:
+    void clearRetainedOutputDemands();
     void detectBoard();
     void detectAddon();
+    void loadMachineHardware();
+    void storeMachineHardware(const gm::MachineHardwareSettings &settings);
+    void updateDualBoilerOutputs(unsigned long now);
     void handlePing();
     void handlePingTimeout(void);
     void thermalRunawayShutdown(void);
@@ -47,33 +56,48 @@ class GaggiMateController {
     ControllerConfig _config = ControllerConfig{};
     GaggiMateServer _comms;
 
-    TemperatureSensor *brewTemperature = nullptr;
-    TemperatureSensor *steamTemperature = nullptr;
-    Heater *heater = nullptr;
-    Heater *heater2 = nullptr;
-    HeaterCoordinator *heaterCoordinator = nullptr;
-    Pump *pump = nullptr;
-    SimpleRelay *valve = nullptr;
-    SimpleRelay *alt = nullptr;
-    SimpleRelay *refill = nullptr;
-    SimpleRelay *aux = nullptr;
-    SimpleRelay *lights = nullptr;
-    DigitalInput *brewBtn = nullptr;
-    DigitalInput *steamBtn = nullptr;
-    DigitalInput *waterBtn = nullptr;
-    DigitalInput *waterSense = nullptr;
-    DigitalInput *tankLevel = nullptr;
-    PressureSensor *pressureSensor = nullptr;
-    LedController *ledController = nullptr;
-    DistanceSensor *distanceSensor = nullptr;
-    ADSAdc *adc = nullptr;
-    FlowSensor *flowSensor = nullptr;
-    HardwareScale *hardwareScale = nullptr;
+    std::unique_ptr<TemperatureSensor> brewTemperature;
+    std::unique_ptr<TemperatureSensor> steamTemperature;
+    std::unique_ptr<Heater> heater;
+    std::unique_ptr<Heater> heater2;
+    std::unique_ptr<HeaterCoordinator> heaterCoordinator;
+    std::unique_ptr<Pump> pump;
+    std::unique_ptr<SimpleRelay> valve;
+    std::unique_ptr<SimpleRelay> alt;
+    std::unique_ptr<SimpleRelay> refill;
+    std::unique_ptr<SimpleRelay> aux;
+    std::unique_ptr<PwmLight> lights;
+    std::unique_ptr<PwmLight> baristaLight;
+    std::unique_ptr<DigitalInput> brewBtn;
+    std::unique_ptr<DigitalInput> steamBtn;
+    std::unique_ptr<DigitalInput> waterBtn;
+    std::unique_ptr<DigitalInput> waterSense;
+    std::unique_ptr<DigitalInput> tankLevel;
+    std::atomic<bool> steamLevelLow{true};
+    std::atomic<bool> steamLevelKnown{false};
+    std::atomic<bool> tankLevelOK{false};
+    std::atomic<float> steamRequestedSetpoint{0.0f};
+    unsigned long lastSensorSend = 0;
+    std::unique_ptr<PressureSensor> pressureSensor;
+    std::unique_ptr<LedController> ledController;
+    std::unique_ptr<DistanceSensor> distanceSensor;
+    QueueHandle_t hardwareRequests = nullptr;
+    std::atomic<bool> controllerErrorPending{false};
+    std::atomic<bool> hardwareSessionReady{false};
+    bool hardwareConfigurationError = false;
+    bool hardwareConfigurationStored = false;
+    bool hardwareConfigurationAccepted = false;
+    gm::MachineHardwareSettings machineHardware = gaggimate_MachineHardwareSettings_init_zero;
+    std::unique_ptr<ADSAdc> adc;
+    std::unique_ptr<FlowSensor> flowSensor;
+    std::unique_ptr<HardwareScale> hardwareScale;
 
-    GearpumpAddon *gearpumpAddon = nullptr;
+    std::unique_ptr<GearpumpAddon> gearpumpAddon;
 
-    SoftWire *albaComms = nullptr;
-    SoftWireBus *albaBus = nullptr;
+    std::array<char, 128> albaSwTxBuffer{};
+    std::array<char, 128> albaSwRxBuffer{};
+    std::unique_ptr<SoftWire> albaComms;
+    std::unique_ptr<SoftWireBus> albaBus;
 
     std::vector<ControllerConfig> configs;
 

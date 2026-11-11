@@ -1,6 +1,6 @@
 #include "LedController.h"
 
-LedController::LedController(SoftWireBus *bus) : bus(bus) { this->pca9634 = new PCA9634(0x00, bus->wire()); }
+LedController::LedController(SoftWireBus *bus) : bus(bus) { this->pca9634 = std::make_unique<PCA9634>(0x00, bus->wire()); }
 
 void LedController::setup() {
     this->initialize();

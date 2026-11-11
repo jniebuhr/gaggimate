@@ -2,8 +2,8 @@
 #include <initializer_list>
 #include <display/models/shot_log_format.h>
 
-void setUp() {}
-void tearDown() {}
+void setUp() { /* no shared fixture state */ }
+void tearDown() { /* no shared fixture state */ }
 
 void test_legacy_and_current_layouts() {
     ShotLogHeader h{};

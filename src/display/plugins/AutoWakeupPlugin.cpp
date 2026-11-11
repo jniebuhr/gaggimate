@@ -4,7 +4,7 @@
 
 const String LOG_TAG = F("AutoWakeupPlugin");
 
-AutoWakeupPlugin::AutoWakeupPlugin() {}
+AutoWakeupPlugin::AutoWakeupPlugin() = default;
 
 void AutoWakeupPlugin::setup(Controller *controller, PluginManager *pluginManager) {
     this->controller = controller;

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'preact/hooks';
+import { useRef } from 'preact/hooks';
 import { Chart } from 'chart.js';
 import { ChartComponent } from './Chart';
 import { t } from '@lingui/core/macro';
@@ -163,7 +163,7 @@ function makeChartData(
             font: {
               size: window.innerWidth < 640 ? 10 : 12,
             },
-            generateLabels: function (chart) {
+            generateLabels(chart) {
               const original = Chart.defaults.plugins.legend.labels.generateLabels;
               const labels = original.call(this, chart);
 
@@ -199,7 +199,7 @@ function makeChartData(
           title: {},
           ticks: {
             source: 'auto',
-            callback: (value, index, ticks) => {
+            callback: value => {
               return `${value?.toFixed()}s`;
             },
             font: {
@@ -354,13 +354,6 @@ function buildPhaseRanges(phases) {
     start += duration;
   }
   return ranges;
-}
-
-function getPhaseIndexForX(phaseRanges, xValue) {
-  for (let i = 0; i < phaseRanges.length; i++) {
-    if (xValue <= phaseRanges[i].end) return i;
-  }
-  return -1;
 }
 
 export function ExtendedProfileChart({

@@ -3,13 +3,13 @@
 #include "../core/Plugin.h"
 #include "HomeSpan.h"
 
-#define HOMESPAN_PORT 8080
-#define DEVICE_NAME "GaggiMate"
+constexpr int HOMESPAN_PORT = 8080;
+constexpr char DEVICE_NAME[] = "GaggiMate";
 
 typedef std::function<void()> change_callback_t;
 class HomekitAccessory : public Service::Thermostat {
   public:
-    HomekitAccessory(change_callback_t callback);
+    explicit HomekitAccessory(change_callback_t callback);
     boolean getState() const;
     void setState(bool active) const;
     boolean update() override;

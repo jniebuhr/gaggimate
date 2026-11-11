@@ -12,23 +12,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v7
         with:
           fetch-tags: true
           fetch-depth: 0
           submodules: 'recursive'
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: |
             ~/.cache/pip
             ~/.platformio/.cache
           key: ${{ runner.os }}-pio
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.11'
       - name: Install PlatformIO Core
         run: pip install --upgrade platformio
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: 'npm'
@@ -108,7 +108,7 @@ jobs:
           firmware_dir: 'upload/headless'
           firmware_files: 'bootloader.bin,partitions.bin,firmware.bin,filesystem.bin'
       - name: Archive Firmware Files
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: gaggimate-firmware
           path: "out/*"
@@ -120,12 +120,12 @@ jobs:
       contents: write
     steps:
       - name: Download Firmware Files
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: gaggimate-firmware
           path: release
       - name: Release Firmware
-        uses: ncipollo/release-action@bcfe5470707e8832e12347755757cec0eb3c22af
+        uses: ncipollo/release-action@339a81892b84b4eeb0f6e744e4574d79d0d9b8dd
         if: startsWith(github.ref, 'refs/tags/')
         with:
           artifacts: release/*.bin,release/app-web.zip,release/app-web.json
