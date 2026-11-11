@@ -63,6 +63,10 @@ const CHECKBOX_KEYS = [
   'homekit',
   'boilerFillActive',
   'smartGrindActive',
+  'smartDoseActive',
+  'smartDoseAutomagic',
+  'dosingCupEnabled',
+  'portafilterEnabled',
   'mahlkonigActive',
   'homeAssistant',
   'momentaryButtons',
@@ -261,6 +265,7 @@ export function Settings() {
 
   const { profiles } = useProfileList();
   const [submitting, setSubmitting] = useState(false);
+  const [smartDoseSaving, setSmartDoseSaving] = useState(false);
   const [formData, setFormData] = useState({});
   const [currentTheme, setCurrentTheme] = useState('light');
   const [showWifiPassword, setShowWifiPassword] = useState(false);
@@ -357,6 +362,11 @@ export function Settings() {
     setFormData(prev => ({ ...prev, [key]: value }));
   }, []);
 
+  const onSmartDoseSaved = useCallback((key, value, settings) => {
+    updateSettingsCache(settings);
+    setFormData(prev => ({ ...prev, [key]: value }));
+  }, []);
+
   const addAutoWakeupSchedule = () => {
     setAutoWakeupSchedules([
       ...autowakeupSchedules,
@@ -389,6 +399,7 @@ export function Settings() {
   const onSubmit = useCallback(
     async (e, restart = false) => {
       if (e) e.preventDefault();
+      if (smartDoseSaving || submitting) return;
       setSubmitting(true);
       const form = formRef.current;
       const formDataToSubmit = buildSubmitFormData(formData, autowakeupSchedules, restart);
@@ -420,7 +431,7 @@ export function Settings() {
         setSubmitting(false);
       }
     },
-    [formData, autowakeupSchedules],
+    [formData, autowakeupSchedules, smartDoseSaving, submitting],
   );
 
   const onExport = useCallback(() => {
@@ -638,6 +649,9 @@ export function Settings() {
             <PluginsTabSkeleton />
           ) : (
             <LazyPluginsTab
+              onSmartDoseSaved={onSmartDoseSaved}
+              onSmartDoseSaving={setSmartDoseSaving}
+              settingsDisabled={submitting}
               formData={formData}
               onChange={onChange}
               autowakeupSchedules={autowakeupSchedules}
@@ -649,7 +663,10 @@ export function Settings() {
           ))}
 
         {isFormTab && (
-          <StickyFormFooter submitting={submitting} onRestart={e => onSubmit(e, true)} />
+          <StickyFormFooter
+            submitting={submitting || smartDoseSaving}
+            onRestart={e => onSubmit(e, true)}
+          />
         )}
       </form>
 

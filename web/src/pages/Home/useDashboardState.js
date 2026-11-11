@@ -125,6 +125,7 @@ export function useDashboardState() {
 
   return {
     // raw status
+    smartDose: s.smartDose,
     mode,
     systemReady,
     systemMessage,

@@ -1,4 +1,6 @@
+#include <display/plugins/SmartDosePlugin.h>
 #include "actions.h"
+#include "vars.h"
 #include "screens.h"
 #include "ui.h"
 #include <Arduino.h>
@@ -59,6 +61,8 @@ void action_on_flush(lv_event_t *e) {
 };
 
 void action_on_volumetric_hold(lv_event_t *e) {
+    SmartDose.onTare(true);
+    SmartDose.onTare(false);
     controller.getClientController()->tare();
     BLEScales.tare();
 };
@@ -351,3 +355,5 @@ void action_on_warning_ignore(lv_event_t *e) {
     controller.getUI()->setBrewConfirmVisible(false);
     controller.activate(true);
 }
+
+void action_on_set_dose(lv_event_t *) { SmartDose.setDose(); }

@@ -178,6 +178,9 @@ typedef struct _objects_t {
     lv_obj_t *save_button;
     lv_obj_t *accept_button;
     lv_obj_t *save_as_new_button;
+    lv_obj_t *smart_dose_manual;
+    lv_obj_t *smart_dose_cup;
+    lv_obj_t *smart_dose_portafilter;
     lv_obj_t *confirm_dialog;
     lv_obj_t *obj10;
     lv_obj_t *obj11;

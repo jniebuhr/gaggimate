@@ -114,6 +114,34 @@ class Settings {
     bool isBoilerFillActive() const { return boilerFillActive.get(); }
     int getStartupFillTime() const { return startupFillTime.get(); }
     int getSteamFillTime() const { return steamFillTime.get(); }
+    bool isDosingCupEnabled() const { return dosingCupEnabled.get(); }
+    bool isPortafilterEnabled() const { return portafilterEnabled.get(); }
+    String getPortafilterScale() const { return portafilterScale.get(); }
+    float getPortafilterWeight() const { return portafilterWeight.get(); }
+    String getSmartDoseMode() const { return smartDoseMode.get(); }
+    void setDosingCupEnabled(bool value) { dosingCupEnabled.set(value); }
+    void setPortafilterEnabled(bool value) { portafilterEnabled.set(value); }
+    void setPortafilterScale(const String &value) {
+        if (value == "bluetooth" || value == "hardware") portafilterScale.set(value);
+    }
+    void setPortafilterWeight(float value) { if (value >= 0 && value <= 2000) portafilterWeight.set(value); }
+    void setSmartDoseMode(const String &value) {
+        if (value == "" || value == "cup" || value == "automatic" || value == "portafilter") smartDoseMode.set(value);
+    }
+    bool isSmartDoseActive() const { return smartDoseActive.get(); }
+    bool isSmartDoseAutomagic() const { return smartDoseAutomagic.get(); }
+    String getSmartDoseScale() const { return smartDoseScale.get(); }
+    String getManualDoseScale() const { return manualDoseScale.get(); }
+    void setManualDoseScale(const String &value) {
+        if (value == "bluetooth" || value == "hardware") manualDoseScale.set(value);
+    }
+    float getDosingCupWeight() const { return dosingCupWeight.get(); }
+    void setSmartDoseActive(bool value) { smartDoseActive.set(value); }
+    void setSmartDoseAutomagic(bool value) { smartDoseAutomagic.set(value); }
+    void setSmartDoseScale(const String &value) {
+        if (value == "bluetooth" || value == "hardware") smartDoseScale.set(value);
+    }
+    void setDosingCupWeight(float value) { if (value >= 0.0f && value <= 2000.0f) dosingCupWeight.set(value); }
     bool isSmartGrindActive() const { return smartGrindActive.get(); }
     bool isMahlkonigActive() const { return mahlkonigActive.get(); }
     String getMahlkonigRecipeProfiles() const { return mahlkonigRecipeProfiles.get(); }
@@ -338,6 +366,17 @@ class Settings {
     Property<bool> boilerFillActive{registry, "bf_a", false};
     Property<int> startupFillTime{registry, "bf_su", 5000};
     Property<int> steamFillTime{registry, "bf_st", 5000};
+    Property<bool> dosingCupEnabled{registry, "sd_cup_on", true};
+    Property<bool> portafilterEnabled{registry, "sd_pf_on", true};
+    Property<String> portafilterScale{registry, "sd_pf_scale", "bluetooth"};
+    Property<float> portafilterWeight{registry, "sd_pf", 0.0f};
+    // Empty means system default; an explicit preference survives temporary ineligibility.
+    Property<String> smartDoseMode{registry, "sd_mode", ""};
+    Property<bool> smartDoseActive{registry, "sd_a", false};
+    Property<bool> smartDoseAutomagic{registry, "sd_auto", false};
+    Property<String> smartDoseScale{registry, "sd_scale", "bluetooth"};
+    Property<String> manualDoseScale{registry, "sd_manual", "bluetooth"};
+    Property<float> dosingCupWeight{registry, "sd_cup", 0.0f};
     Property<bool> smartGrindActive{registry, "sg_a", false};
     Property<bool> smartGrindToggle{registry, "sg_t", false}; // legacy, seeds the smartGrindMode default
     Property<int> smartGrindMode{registry, "sg_m", 0};
