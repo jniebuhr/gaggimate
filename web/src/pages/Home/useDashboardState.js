@@ -5,6 +5,7 @@ import { useQuery } from 'preact-fetching';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
 import { MODES } from './utils.js';
 import { t } from '@lingui/core/macro';
+import { computeWaterLevel } from '../../utils/waterLevel.js';
 
 const status = computed(() => machine.value.status);
 const capabilities = computed(() => machine.value.capabilities);
@@ -58,22 +59,16 @@ export function useDashboardState() {
   });
 
   // ── water level (Alba) ────────────────────────────────────
+  // The tank card follows an Alba with its percentage sensor; null means "attached but not calibrated".
   const ledControl = caps?.ledControl || false;
-  const tof = caps?.tof || false;
-  const emptyTankDistance = settings?.emptyTankDistance || 0;
-  const fullTankDistance = settings?.fullTankDistance || 0;
-  const albaCalibrated = emptyTankDistance > fullTankDistance && fullTankDistance > 0;
   const albaWaterLevelAvailable = !!s.albaWaterLevelAvailable;
-  const waterLevelPercent =
-    albaWaterLevelAvailable && albaCalibrated && Number.isFinite(s.tofDistance) && s.tofDistance > 0
-      ? Math.max(
-          0,
-          Math.min(
-            100,
-            ((emptyTankDistance - s.tofDistance) / (emptyTankDistance - fullTankDistance)) * 100,
-          ),
-        )
-      : null;
+  const waterLevelPercent = albaWaterLevelAvailable
+    ? computeWaterLevel({
+        empty: settings?.emptyTankDistance,
+        full: settings?.fullTankDistance,
+        distance: s.tofDistance,
+      })
+    : null;
 
   // ── handlers ─────────────────────────────────────────────
   const send = tp => apiService.send({ tp });
@@ -183,14 +178,10 @@ export function useDashboardState() {
     visibleModes,
     // water level
     ledControl,
-    tof,
-    albaCalibrated,
     waterLevelPercent,
     // settings
     isSmartGrindEnabled,
     altRelayFunction,
-    emptyTankDistance,
-    fullTankDistance,
     // action state
     isFlushing,
     // handlers

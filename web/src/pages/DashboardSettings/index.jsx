@@ -82,9 +82,15 @@ export function DashboardSettings() {
     }
   };
 
-  const availableMetrics = METRIC_DEFINITIONS.filter(m => m.available(machine.value.status));
+  // Home passes its dashboard state to available(); mirror the fields those checks read from here.
+  const availability = {
+    ...machine.value.status,
+    ledControl: machine.value.capabilities.ledControl,
+  };
+
+  const availableMetrics = METRIC_DEFINITIONS.filter(m => m.available(availability));
   const availablePanels = PANEL_DEFINITIONS.filter(def =>
-    (def.availableInSettings ?? def.available)(machine.value.status),
+    (def.availableInSettings ?? def.available)(availability),
   );
   const hiddenMetrics = availableMetrics.filter(m => !m.required && !metricOrder.includes(m.id));
   const hiddenPanels = [
