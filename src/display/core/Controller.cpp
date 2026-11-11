@@ -1147,6 +1147,10 @@ void Controller::activate(bool ignoreWarnings) {
     // previously its Start action ran against a half-initialized BLE session.
     if (isActive() || !loaded || !comms.isConnected() || !isReady())
         return;
+    if (mode == MODE_BREW && profileManager->getSelectedProfile().phases.empty()) {
+        ESP_LOGW(LOG_TAG, "Brew requested but profile id %s has no phases", profileManager->getSelectedProfile().id.c_str());
+        return;
+    }
     // An error-level warning turns the start into a confirmation request; the UIs answer with activate(true).
     if (mode == MODE_BREW && !ignoreWarnings && warnings.hasError()) {
         pluginManager->trigger("controller:brew:confirm");
@@ -1781,8 +1785,7 @@ void Controller::handleProfileButton(bool pressed, const String &id) {
         return;
     }
     std::vector<String> profileIds = profileManager->listProfiles();
-    if (std::find(profileIds.begin(), profileIds.end(), id) != profileIds.end()) {
-        profileManager->selectProfile(id);
+    if (std::find(profileIds.begin(), profileIds.end(), id) != profileIds.end() && profileManager->selectProfile(id)) {
         activate();
     }
 }

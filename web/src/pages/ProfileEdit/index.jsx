@@ -14,6 +14,7 @@ import {
 import { ProfileTypeSelection } from './ProfileTypeSelection.jsx';
 import { StandardProfileForm } from './StandardProfileForm.jsx';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
+import { useProfileList } from '../../services/hooks.js';
 import { computed } from '@preact/signals';
 import { Spinner } from '../../components/Spinner.jsx';
 import { ExtendedProfileForm } from './ExtendedProfileForm.jsx';
@@ -36,6 +37,7 @@ const pressureAvailable = computed(() => machine.value.capabilities.pressure);
 export function ProfileEdit() {
   const { t } = useLingui();
   const apiService = useContext(ApiServiceContext);
+  const { invalidate: invalidateProfiles } = useProfileList();
   const location = useLocation();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -112,11 +114,17 @@ export function ProfileEdit() {
       setSaving(true);
       console.log(data);
       const response = await apiService.request({ tp: 'req:profiles:save', profile: data });
+      if (response?.error) {
+        // Rejected by the machine: keep the form as the user left it and stay on the page
+        setSaving(false);
+        return;
+      }
       setData(response.profile);
+      await invalidateProfiles();
       setSaving(false);
       location.route('/profiles');
     },
-    [apiService, params.id, location],
+    [apiService, params.id, location, invalidateProfiles],
   );
   const onConvert = useCallback(() => {
     setData({

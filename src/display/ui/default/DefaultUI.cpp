@@ -444,20 +444,28 @@ void DefaultUI::loopProfiles() {
         }
         std::vector<Profile> profiles;
         std::vector<bool> hasImage;
+        std::vector<String> validIds;
         profiles.reserve(ids.size());
         hasImage.reserve(ids.size());
+        validIds.reserve(ids.size());
         const std::vector<String> imageIds = controller->isSDCard() ? profileManager->listProfileImages() : std::vector<String>{};
         for (const auto &profileId : ids) {
             Profile profile{};
-            profileManager->loadProfile(profileId, profile);
+            if (!profileManager->loadProfile(profileId, profile)) {
+                ESP_LOGW("DefaultUI", "Skipping unreadable profile %s", profileId.c_str());
+                continue;
+            }
             profiles.emplace_back(std::move(profile));
+            validIds.emplace_back(profileId);
             hasImage.push_back(std::find(imageIds.begin(), imageIds.end(), profileId) != imageIds.end());
         }
         {
             std::lock_guard<std::mutex> guard(profilesMutex);
-            favoritedProfileIds = std::move(ids);
+            favoritedProfileIds = std::move(validIds);
             favoritedProfiles = std::move(profiles);
             favoritedHasImage = std::move(hasImage);
+            const int count = static_cast<int>(favoritedProfileIds.size());
+            currentProfileIdx = count == 0 ? 0 : std::min(currentProfileIdx, count - 1);
             profilesGeneration++;
         }
         profileLoaded = 1;
@@ -539,8 +547,9 @@ void DefaultUI::onProfileSelect() {
             id = favoritedProfileIds[currentProfileIdx];
         }
     }
-    if (!id.isEmpty()) {
-        profileManager->selectProfile(id);
+    if (id.isEmpty() || !profileManager->selectProfile(id)) {
+        reloadProfiles();
+        return;
     }
     profileDirty = false;
     changeScreen(SCREEN_ID_BREW_SCREEN);
@@ -867,8 +876,8 @@ void DefaultUI::updateProfileInfo() {
         selectedHasImage = !favoritedProfileIds.empty() && favoritedProfileIds[0] == selected.id && favoritedHasImage[0];
         if (!favoritedProfiles.empty() && currentProfileIdx >= 0 &&
             currentProfileIdx < static_cast<int>(favoritedProfiles.size())) {
-            populateProfileInfo(previewProfileInfo, favoritedProfiles[currentProfileIdx], currentProfileIdx == 0,
-                                favoritedHasImage[currentProfileIdx]);
+            populateProfileInfo(previewProfileInfo, favoritedProfiles[currentProfileIdx],
+                                favoritedProfileIds[currentProfileIdx] == selected.id, favoritedHasImage[currentProfileIdx]);
             populated = true;
         }
     }

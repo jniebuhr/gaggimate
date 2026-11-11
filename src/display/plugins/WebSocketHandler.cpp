@@ -367,8 +367,9 @@ void WebSocketHandler::handleProfileRequest(uint32_t clientId, JsonDocument &req
     } else if (type == "req:profiles:save") {
         auto obj = request["profile"].as<JsonObject>();
         Profile profile;
-        parseProfile(obj, profile);
-        if (!profileManager->saveProfile(profile)) {
+        if (!parseProfile(obj, profile)) {
+            response["error"] = F("Invalid profile");
+        } else if (!profileManager->saveProfile(profile)) {
             response["error"] = F("Save failed");
         }
         auto respObj = response["profile"].to<JsonObject>();
@@ -380,7 +381,9 @@ void WebSocketHandler::handleProfileRequest(uint32_t clientId, JsonDocument &req
         }
     } else if (type == "req:profiles:select") {
         auto id = request["id"].as<String>();
-        profileManager->selectProfile(id);
+        if (!profileManager->selectProfile(id)) {
+            response["error"] = F("Profile not found");
+        }
     } else if (type == "req:profiles:favorite") {
         auto id = request["id"].as<String>();
         if (!profileManager->addFavoritedProfile(id)) {

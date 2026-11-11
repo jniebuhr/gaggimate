@@ -220,7 +220,11 @@ function ProfileCard({
                   <input
                     checked={data.selected}
                     type='checkbox'
-                    onClick={() => onSelect(data.id)}
+                    onClick={e => {
+                      // Keep the box driven by data.selected: the browser must not toggle it itself
+                      e.preventDefault();
+                      onSelect(data.id, data.selected);
+                    }}
                     className='checkbox checkbox-success checkbox-sm'
                     aria-label={t`Select ${label} profile`}
                   />
@@ -871,10 +875,19 @@ export function ProfileList() {
     [apiService, setLoading, invalidateProfiles],
   );
 
-  // The status broadcast carries the new selection into the cached list
+  // onSelect will exit early if the requested id is the same as the pending id
+  // or if there is no pending selection and the requested id is already selected
+  const pendingSelectionRef = useRef(null);
   const onSelect = useCallback(
-    async id => {
-      await apiService.request({ tp: 'req:profiles:select', id });
+    async (id, alreadySelected) => {
+      if (pendingSelectionRef.current === id) return;
+      if (alreadySelected && pendingSelectionRef.current === null) return;
+      pendingSelectionRef.current = id;
+      try {
+        await apiService.request({ tp: 'req:profiles:select', id });
+      } finally {
+        if (pendingSelectionRef.current === id) pendingSelectionRef.current = null;
+      }
     },
     [apiService],
   );
