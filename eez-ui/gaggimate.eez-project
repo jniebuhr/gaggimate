@@ -1854,7 +1854,7 @@
                       "type": "LVGLPanelWidget",
                       "left": 0,
                       "top": 0,
-                      "width": 160,
+                      "width": 180,
                       "height": 50,
                       "customInputs": [],
                       "customOutputs": [],
@@ -2060,6 +2060,213 @@
                           "recolor": false,
                           "previewValue": "12.4g",
                           "useStaticText": true
+                        },
+                        {
+                          "objID": "cd914115-606f-4be0-b3f7-c55e9f7e6a28",
+                          "type": "LVGLImageWidget",
+                          "left": 0,
+                          "top": 0,
+                          "width": 40,
+                          "height": 40,
+                          "customInputs": [],
+                          "customOutputs": [],
+                          "style": {
+                            "objID": "b6efed9f-c482-47fb-f2bb-581e7af901fe",
+                            "useStyle": "default",
+                            "conditionalStyles": [],
+                            "childStyles": []
+                          },
+                          "hiddenInEditor": true,
+                          "timeline": [],
+                          "eventHandlers": [
+                            {
+                              "objID": "1ab7daf2-3d9f-4c3e-b801-1af6617904f7",
+                              "eventName": "CLICKED",
+                              "handlerType": "action",
+                              "action": "onSetDose",
+                              "userData": 0
+                            }
+                          ],
+                          "identifier": "smartDoseCup",
+                          "leftUnit": "px",
+                          "topUnit": "px",
+                          "widthUnit": "content",
+                          "heightUnit": "content",
+                          "children": [],
+                          "widgetFlags": "ADV_HITTEST|CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLLABLE|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_WITH_ARROW|SNAPPABLE",
+                          "hiddenFlag": "set_dose_state != 1",
+                          "hiddenFlagType": "expression",
+                          "clickableFlag": true,
+                          "clickableFlagType": "literal",
+                          "flagScrollbarMode": "",
+                          "flagScrollDirection": "",
+                          "scrollSnapX": "",
+                          "scrollSnapY": "",
+                          "checkedStateType": "literal",
+                          "disabledState": "!set_dose_available",
+                          "disabledStateType": "expression",
+                          "states": "",
+                          "localStyles": {
+                            "objID": "4a5c316b-1014-4e6e-9723-2d6cddb5d032",
+                            "definition": {
+                              "MAIN": {
+                                "DEFAULT": {
+                                  "img_recolor": "NiceWhite",
+                                  "img_recolor_opa": 255,
+                                  "width": 40,
+                                  "height": 40
+                                }
+                              }
+                            }
+                          },
+                          "group": "",
+                          "groupIndex": 0,
+                          "image": "dosing_cup_40x40",
+                          "setPivot": false,
+                          "pivotX": 0,
+                          "pivotY": 0,
+                          "zoom": 256,
+                          "angle": 0,
+                          "innerAlign": "CENTER",
+                          "sizeMode": "REAL"
+                        },
+                        {
+                          "objID": "c3a8d768-67a6-4224-baee-9e51ce9bdeb3",
+                          "type": "LVGLImageWidget",
+                          "left": 0,
+                          "top": 0,
+                          "width": 40,
+                          "height": 40,
+                          "customInputs": [],
+                          "customOutputs": [],
+                          "style": {
+                            "objID": "ba2d0605-110c-4989-beb8-302dfe4aae64",
+                            "useStyle": "default",
+                            "conditionalStyles": [],
+                            "childStyles": []
+                          },
+                          "hiddenInEditor": true,
+                          "timeline": [],
+                          "eventHandlers": [
+                            {
+                              "objID": "d5517f17-5d26-4b82-f6d9-d0fcf56c2143",
+                              "eventName": "CLICKED",
+                              "handlerType": "action",
+                              "action": "onSetDose",
+                              "userData": 0
+                            }
+                          ],
+                          "identifier": "smartDosePortafilter",
+                          "leftUnit": "px",
+                          "topUnit": "px",
+                          "widthUnit": "content",
+                          "heightUnit": "content",
+                          "children": [],
+                          "widgetFlags": "ADV_HITTEST|CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLLABLE|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_WITH_ARROW|SNAPPABLE",
+                          "hiddenFlag": "set_dose_state != 3",
+                          "hiddenFlagType": "expression",
+                          "clickableFlag": true,
+                          "clickableFlagType": "literal",
+                          "flagScrollbarMode": "",
+                          "flagScrollDirection": "",
+                          "scrollSnapX": "",
+                          "scrollSnapY": "",
+                          "checkedStateType": "literal",
+                          "disabledState": "!set_dose_available",
+                          "disabledStateType": "expression",
+                          "states": "",
+                          "localStyles": {
+                            "objID": "1380e35c-1d33-4a30-9006-50bf804c13c6",
+                            "definition": {
+                              "MAIN": {
+                                "DEFAULT": {
+                                  "img_recolor": "NiceWhite",
+                                  "img_recolor_opa": 255,
+                                  "width": 40,
+                                  "height": 40
+                                }
+                              }
+                            }
+                          },
+                          "group": "",
+                          "groupIndex": 0,
+                          "image": "portafilter_40x40",
+                          "setPivot": false,
+                          "pivotX": 0,
+                          "pivotY": 0,
+                          "zoom": 256,
+                          "angle": 0,
+                          "innerAlign": "CENTER",
+                          "sizeMode": "REAL"
+                        },
+                        {
+                          "objID": "c78387a4-1e9e-4922-8f76-17223c2fa112",
+                          "type": "LVGLImageWidget",
+                          "left": 0,
+                          "top": 0,
+                          "width": 40,
+                          "height": 40,
+                          "customInputs": [],
+                          "customOutputs": [],
+                          "style": {
+                            "objID": "829e08d8-abab-4a4e-999a-35822c9786d8",
+                            "useStyle": "default",
+                            "conditionalStyles": [],
+                            "childStyles": []
+                          },
+                          "hiddenInEditor": false,
+                          "timeline": [],
+                          "eventHandlers": [
+                            {
+                              "objID": "e7668c78-f0fe-4d23-e6ed-8bdd42696102",
+                              "eventName": "CLICKED",
+                              "handlerType": "action",
+                              "action": "onSetDose",
+                              "userData": 0
+                            }
+                          ],
+                          "identifier": "smartDoseManual",
+                          "leftUnit": "px",
+                          "topUnit": "px",
+                          "widthUnit": "content",
+                          "heightUnit": "content",
+                          "children": [],
+                          "widgetFlags": "ADV_HITTEST|CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLLABLE|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_WITH_ARROW|SNAPPABLE",
+                          "hiddenFlag": "set_dose_state != 2",
+                          "hiddenFlagType": "expression",
+                          "clickableFlag": true,
+                          "clickableFlagType": "literal",
+                          "flagScrollbarMode": "",
+                          "flagScrollDirection": "",
+                          "scrollSnapX": "",
+                          "scrollSnapY": "",
+                          "checkedStateType": "literal",
+                          "disabledState": "",
+                          "disabledStateType": "literal",
+                          "states": "",
+                          "localStyles": {
+                            "objID": "5e04b2d7-3312-4146-9d89-c7178cf8159a",
+                            "definition": {
+                              "MAIN": {
+                                "DEFAULT": {
+                                  "img_recolor": "NiceWhite",
+                                  "img_recolor_opa": 255,
+                                  "width": 40,
+                                  "height": 40
+                                }
+                              }
+                            }
+                          },
+                          "group": "",
+                          "groupIndex": 0,
+                          "image": "coffee_beans_three_40x40",
+                          "setPivot": false,
+                          "pivotX": 0,
+                          "pivotY": 0,
+                          "zoom": 256,
+                          "angle": 0,
+                          "innerAlign": "CENTER",
+                          "sizeMode": "REAL"
                         }
                       ],
                       "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
@@ -3723,213 +3930,6 @@
               },
               "group": "",
               "groupIndex": 0
-            },
-            {
-              "objID": "c78387a4-1e9e-4922-8f76-17223c2fa112",
-              "type": "LVGLImageWidget",
-              "left": 310,
-              "top": 138,
-              "width": 40,
-              "height": 40,
-              "customInputs": [],
-              "customOutputs": [],
-              "style": {
-                "objID": "829e08d8-abab-4a4e-999a-35822c9786d8",
-                "useStyle": "default",
-                "conditionalStyles": [],
-                "childStyles": []
-              },
-              "hiddenInEditor": false,
-              "timeline": [],
-              "eventHandlers": [
-                {
-                  "objID": "e7668c78-f0fe-4d23-e6ed-8bdd42696102",
-                  "eventName": "CLICKED",
-                  "handlerType": "action",
-                  "action": "onSetDose",
-                  "userData": 0
-                }
-              ],
-              "identifier": "smartDoseManual",
-              "leftUnit": "px",
-              "topUnit": "px",
-              "widthUnit": "content",
-              "heightUnit": "content",
-              "children": [],
-              "widgetFlags": "ADV_HITTEST|CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLLABLE|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_WITH_ARROW|SNAPPABLE",
-              "hiddenFlag": "set_dose_state != 2",
-              "hiddenFlagType": "expression",
-              "clickableFlag": true,
-              "clickableFlagType": "literal",
-              "flagScrollbarMode": "",
-              "flagScrollDirection": "",
-              "scrollSnapX": "",
-              "scrollSnapY": "",
-              "checkedStateType": "literal",
-              "disabledState": "",
-              "disabledStateType": "literal",
-              "states": "",
-              "localStyles": {
-                "objID": "5e04b2d7-3312-4146-9d89-c7178cf8159a",
-                "definition": {
-                  "MAIN": {
-                    "DEFAULT": {
-                      "img_recolor": "NiceWhite",
-                      "img_recolor_opa": 255,
-                      "width": 40,
-                      "height": 40
-                    }
-                  }
-                }
-              },
-              "group": "",
-              "groupIndex": 0,
-              "image": "coffee_beans_three_40x40",
-              "setPivot": false,
-              "pivotX": 0,
-              "pivotY": 0,
-              "zoom": 256,
-              "angle": 0,
-              "innerAlign": "CENTER",
-              "sizeMode": "REAL"
-            },
-            {
-              "objID": "cd914115-606f-4be0-b3f7-c55e9f7e6a28",
-              "type": "LVGLImageWidget",
-              "left": 310,
-              "top": 138,
-              "width": 40,
-              "height": 40,
-              "customInputs": [],
-              "customOutputs": [],
-              "style": {
-                "objID": "b6efed9f-c482-47fb-f2bb-581e7af901fe",
-                "useStyle": "default",
-                "conditionalStyles": [],
-                "childStyles": []
-              },
-              "hiddenInEditor": true,
-              "timeline": [],
-              "eventHandlers": [
-                {
-                  "objID": "1ab7daf2-3d9f-4c3e-b801-1af6617904f7",
-                  "eventName": "CLICKED",
-                  "handlerType": "action",
-                  "action": "onSetDose",
-                  "userData": 0
-                }
-              ],
-              "identifier": "smartDoseCup",
-              "leftUnit": "px",
-              "topUnit": "px",
-              "widthUnit": "content",
-              "heightUnit": "content",
-              "children": [],
-              "widgetFlags": "ADV_HITTEST|CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLLABLE|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_WITH_ARROW|SNAPPABLE",
-              "hiddenFlag": "set_dose_state != 1",
-              "hiddenFlagType": "expression",
-              "clickableFlag": true,
-              "clickableFlagType": "literal",
-              "flagScrollbarMode": "",
-              "flagScrollDirection": "",
-              "scrollSnapX": "",
-              "scrollSnapY": "",
-              "checkedStateType": "literal",
-              "disabledState": "!set_dose_available",
-              "disabledStateType": "expression",
-              "states": "",
-              "localStyles": {
-                "objID": "4a5c316b-1014-4e6e-9723-2d6cddb5d032",
-                "definition": {
-                  "MAIN": {
-                    "DEFAULT": {
-                      "img_recolor": "NiceWhite",
-                      "img_recolor_opa": 255,
-                      "width": 40,
-                      "height": 40
-                    }
-                  }
-                }
-              },
-              "group": "",
-              "groupIndex": 0,
-              "image": "dosing_cup_40x40",
-              "setPivot": false,
-              "pivotX": 0,
-              "pivotY": 0,
-              "zoom": 256,
-              "angle": 0,
-              "innerAlign": "CENTER",
-              "sizeMode": "REAL"
-            },
-            {
-              "objID": "c3a8d768-67a6-4224-baee-9e51ce9bdeb3",
-              "type": "LVGLImageWidget",
-              "left": 310,
-              "top": 138,
-              "width": 40,
-              "height": 40,
-              "customInputs": [],
-              "customOutputs": [],
-              "style": {
-                "objID": "ba2d0605-110c-4989-beb8-302dfe4aae64",
-                "useStyle": "default",
-                "conditionalStyles": [],
-                "childStyles": []
-              },
-              "hiddenInEditor": true,
-              "timeline": [],
-              "eventHandlers": [
-                {
-                  "objID": "d5517f17-5d26-4b82-f6d9-d0fcf56c2143",
-                  "eventName": "CLICKED",
-                  "handlerType": "action",
-                  "action": "onSetDose",
-                  "userData": 0
-                }
-              ],
-              "identifier": "smartDosePortafilter",
-              "leftUnit": "px",
-              "topUnit": "px",
-              "widthUnit": "content",
-              "heightUnit": "content",
-              "children": [],
-              "widgetFlags": "ADV_HITTEST|CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLLABLE|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_WITH_ARROW|SNAPPABLE",
-              "hiddenFlag": "set_dose_state != 3",
-              "hiddenFlagType": "expression",
-              "clickableFlag": true,
-              "clickableFlagType": "literal",
-              "flagScrollbarMode": "",
-              "flagScrollDirection": "",
-              "scrollSnapX": "",
-              "scrollSnapY": "",
-              "checkedStateType": "literal",
-              "disabledState": "!set_dose_available",
-              "disabledStateType": "expression",
-              "states": "",
-              "localStyles": {
-                "objID": "1380e35c-1d33-4a30-9006-50bf804c13c6",
-                "definition": {
-                  "MAIN": {
-                    "DEFAULT": {
-                      "img_recolor": "NiceWhite",
-                      "img_recolor_opa": 255,
-                      "width": 40,
-                      "height": 40
-                    }
-                  }
-                }
-              },
-              "group": "",
-              "groupIndex": 0,
-              "image": "portafilter_40x40",
-              "setPivot": false,
-              "pivotX": 0,
-              "pivotY": 0,
-              "zoom": 256,
-              "angle": 0,
-              "innerAlign": "CENTER",
-              "sizeMode": "REAL"
             },
             {
               "objID": "94128aa0-8ca8-4cd3-e36f-2ba5b02a0bb9",
