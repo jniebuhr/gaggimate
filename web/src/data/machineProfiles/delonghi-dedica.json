@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "id": "delonghi-dedica",
+  "name": "DeLonghi Dedica",
+  "revision": 1,
+  "requires": {
+    "dualBoiler": false
+  },
+  "settings": {
+    "pid": "10,0.006,140,0.55",
+    "temperatureOffset": 10
+  }
+}

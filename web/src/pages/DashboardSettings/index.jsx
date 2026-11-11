@@ -88,17 +88,13 @@ export function DashboardSettings() {
     ledControl: machine.value.capabilities.ledControl,
   };
 
-  const hiddenMetrics = METRIC_DEFINITIONS.filter(
-    m => !m.required && !metricOrder.includes(m.id) && m.available(availability),
+  const availableMetrics = METRIC_DEFINITIONS.filter(m => m.available(availability));
+  const availablePanels = PANEL_DEFINITIONS.filter(def =>
+    (def.availableInSettings ?? def.available)(availability),
   );
-
+  const hiddenMetrics = availableMetrics.filter(m => !m.required && !metricOrder.includes(m.id));
   const hiddenPanels = [
-    ...PANEL_DEFINITIONS.filter(def => {
-      if (def.required) return false;
-      if (panelOrder.includes(def.id)) return false;
-      const availFn = def.availableInSettings ?? def.available;
-      return availFn(availability);
-    }),
+    ...availablePanels.filter(def => !def.required && !panelOrder.includes(def.id)),
     ...(panelOrder.includes(SPACER_ID) ? [] : [SPACER_DEFINITION]),
   ];
 
@@ -267,7 +263,7 @@ export function DashboardSettings() {
           </SettingsFormField>
           <SortableConfigurator
             order={panelOrder}
-            definitions={[...PANEL_DEFINITIONS, SPACER_DEFINITION]}
+            definitions={[...availablePanels, SPACER_DEFINITION]}
             hidden={hiddenPanels}
             onOrderChange={ids => {
               setPanelOrderState(ids);
@@ -380,7 +376,7 @@ export function DashboardSettings() {
           </SettingsFormField>
           <SortableConfigurator
             order={metricOrder}
-            definitions={METRIC_DEFINITIONS}
+            definitions={availableMetrics}
             hidden={hiddenMetrics}
             onOrderChange={ids => {
               setMetricOrderState(ids);

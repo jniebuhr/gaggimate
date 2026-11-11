@@ -18,7 +18,10 @@ int main(int argc, char **argv) {
     // Optional: `--screenshot <path> [delayMs]` renders for a bit, saves a BMP, exits.
     const char *shotPath = nullptr;
     unsigned long shotDelayMs = 4000;
+    bool apMode = false; // `--ap`: no Wi-Fi credentials, so setupWifi() falls back to the access point
     for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "--ap") == 0)
+            apMode = true;
         if (strcmp(argv[i], "--screenshot") == 0 && i + 1 < argc) {
             shotPath = argv[++i];
             if (i + 1 < argc)
@@ -33,10 +36,15 @@ int main(int argc, char **argv) {
     // WiFi shim's begin() reports WL_CONNECTED. This makes the standby screen show
     // the clock and Wi-Fi icon (and avoids captive-portal AP mode). Seed only once.
     Settings &settings = controller.getSettings();
-    if (settings.getWifiSsid().isEmpty())
-        settings.setWifiSsid("GaggiMate-Sim");
-    if (settings.getWifiPassword().isEmpty())
-        settings.setWifiPassword("simulator");
+    if (apMode) {
+        settings.setWifiSsid(""); // also drops credentials saved by an earlier run; the next normal run re-seeds
+        settings.setWifiPassword("");
+    } else {
+        if (settings.getWifiSsid().isEmpty())
+            settings.setWifiSsid("GaggiMate-Sim");
+        if (settings.getWifiPassword().isEmpty())
+            settings.setWifiPassword("simulator");
+    }
 
     SdlDriver *drv = SdlDriver::getInstance();
     DefaultUI *ui = controller.getUI();

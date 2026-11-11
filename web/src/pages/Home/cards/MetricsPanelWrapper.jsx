@@ -25,6 +25,10 @@ export function MetricsPanelWrapper({ ds, inCard = false, compact = false }) {
       disabled: m.disabled ? m.disabled(ds) : false,
       onDecrease: m.onDecrease ? m.onDecrease(ds) : undefined,
       onIncrease: m.onIncrease ? m.onIncrease(ds) : undefined,
+      onClick: m.onClick ? m.onClick(ds) : undefined,
+      active: m.active ? m.active(ds) : false,
+      hint: m.hint ? m.hint(ds) : null,
+      ariaLabel: m.ariaLabel ? m.ariaLabel(ds) : undefined,
     }));
 
   return <MetricsGrid metrics={visibleMetrics} inCard={inCard} compact={compact} />;

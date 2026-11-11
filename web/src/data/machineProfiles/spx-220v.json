@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "spx-220v",
+  "name": "Rancilio Silvia Pro X - 220V",
+  "revision": 4,
+  "requires": {
+    "dualBoiler": true,
+    "pressure": true
+  },
+  "settings": {
+    "ntcBrewNominalResistance": 10000,
+    "ntcBrewSeriesResistance": 1000,
+    "ntcBrewSupplyVoltage": 4.096,
+    "ntcBrewBeta": 3950,
+    "ntcSteamNominalResistance": 10000,
+    "ntcSteamSeriesResistance": 1000,
+    "ntcSteamSupplyVoltage": 4.096,
+    "ntcSteamBeta": 3950,
+    "tankLevelEnabled": true,
+    "steamLevelEnabled": true,
+    "steamRefillMode": 2,
+    "steamRefillPostClearSeconds": 10,
+    "steamLevelDebounceChecks": 25,
+    "defaultSteamMode": 0,
+    "heaterCoordinationEnabled": false,
+    "targetSteamTemp": 130,
+    "momentaryButtons": true,
+    "pressureScaling": 16,
+    "temperatureOffset": 7,
+    "steamPid": "58.397,1.027,249.055",
+    "systemLedFunction": 1,
+    "baristaLedFunction": 3,
+    "systemLedBrightness": 255,
+    "baristaLedBrightness": 255,
+    "systemLedMinBrightness": 0,
+    "systemLedCycleTimeMs": 3000,
+    "baristaLedMinBrightness": 0,
+    "baristaLedCycleTimeMs": 3000
+  },
+  "locks": {
+    "targetSteamTemp": true
+  }
+}

@@ -1,3 +1,4 @@
+import { grindAvailable } from '../../utils/grind.js';
 import { computed } from '@preact/signals';
 import { useContext, useEffect, useState } from 'preact/hooks';
 import { useQuery } from 'preact-fetching';
@@ -46,7 +47,7 @@ export function useDashboardState() {
 
   const isSmartGrindEnabled = settings?.smartGrindActive || false;
   const altRelayFunction = settings?.altRelayFunction ?? 1;
-  const isGrindAvailable = isSmartGrindEnabled || altRelayFunction === 1;
+  const isGrindAvailable = grindAvailable(settings, caps);
   const showGrindTab = isGrindAvailable || isGrinding;
   // Dual boilers steam and dispense water from brew mode; keep a hidden tab while it is the current mode.
   const steamWaterAvailable = !caps?.dualBoiler;
@@ -58,9 +59,10 @@ export function useDashboardState() {
   });
 
   // ── water level (Alba) ────────────────────────────────────
-  // The tank card follows the Alba hardware only; null means "attached but not calibrated".
+  // The tank card follows an Alba with its percentage sensor; null means "attached but not calibrated".
   const ledControl = caps?.ledControl || false;
-  const waterLevelPercent = ledControl
+  const albaWaterLevelAvailable = !!s.albaWaterLevelAvailable;
+  const waterLevelPercent = albaWaterLevelAvailable
     ? computeWaterLevel({
         empty: settings?.emptyTankDistance,
         full: settings?.fullTankDistance,
@@ -71,8 +73,17 @@ export function useDashboardState() {
   // ── handlers ─────────────────────────────────────────────
   const send = tp => apiService.send({ tp });
 
+  const toggleSteam = () => {
+    if (systemReady && caps.dualBoiler && mode !== 0 && s.steamControlsAvailable !== false)
+      send('req:steam:toggle');
+  };
+
   const changeMode = newMode => {
     if (!systemReady) return; // locked in standby until the controller is ready
+    if (caps.dualBoiler && newMode === 2) {
+      toggleSteam();
+      return;
+    }
     apiService.send({ tp: 'req:change-mode', mode: newMode });
   };
 
@@ -121,6 +132,11 @@ export function useDashboardState() {
   return {
     // raw status
     smartDose: s.smartDose,
+    albaWaterLevelAvailable,
+    hasTankLevel: !!s.hasTankLevel,
+    tankLevelOK: s.tankLevelOK ?? null,
+    hasSteamLevel: !!s.hasSteamLevel,
+    steamBoilerLow: s.steamBoilerLow ?? null,
     mode,
     systemReady,
     systemMessage,
@@ -128,6 +144,8 @@ export function useDashboardState() {
     targetTemperature: s.targetTemperature,
     currentSteamTemperature: s.currentSteamTemperature,
     targetSteamTemperature: s.targetSteamTemperature,
+    steamActive: !!s.steamActive,
+    steamControlsAvailable: s.steamControlsAvailable !== false,
     currentPressure: s.currentPressure,
     targetPressure: s.targetPressure,
     currentFlow: s.currentFlow,
@@ -168,6 +186,7 @@ export function useDashboardState() {
     isFlushing,
     // handlers
     changeMode,
+    toggleSteam,
     activate,
     deactivate,
     clear,
