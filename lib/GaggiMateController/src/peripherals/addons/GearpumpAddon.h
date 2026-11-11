@@ -22,6 +22,9 @@ class GearpumpAddon {
     bool _sharedFault = false;
     bool _sharedReady = false; // shared-bus DAC initialized; the task retries until it is
     uint16_t _lastDacValue = UINT16_MAX;
+    uint32_t _lastVerify = 0;
+    uint8_t _verifyFailures = 0;
+    bool verifySharedDac(uint16_t expected);
     bool setupSharedDac();
     bool readSharedDac(uint8_t *state);
     bool writeSharedDac(const uint8_t *bytes, size_t size);

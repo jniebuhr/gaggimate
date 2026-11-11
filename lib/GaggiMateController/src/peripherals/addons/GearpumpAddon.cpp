@@ -7,6 +7,9 @@
 
 #define MCP_VOLTAGE 5.0f
 
+static constexpr uint32_t SHARED_VERIFY_INTERVAL_MS = 1000;
+static constexpr uint8_t SHARED_VERIFY_ATTEMPTS = 3;
+
 static ExtensionIOXL9555 extension;
 static GearpumpSharedIO *sharedIO = nullptr;
 
@@ -14,7 +17,8 @@ static char swTxBuffer[128];
 static char swRxBuffer[128];
 
 static uint8_t read_scl(const SoftWire *i2c) {
-    uint8_t value = sharedIO ? sharedIO->readPin(0) : extension.digitalRead(ExtensionIOXL9555::IO0);
+    // The MCP4725 never stretches the clock; on the shared bus the driven state saves an expander read per edge.
+    uint8_t value = sharedIO ? (sharedIO->released(0) ? HIGH : LOW) : extension.digitalRead(ExtensionIOXL9555::IO0);
     ESP_LOGV("MCP4725", "Read SCL: %d", value);
     return value;
 }
@@ -100,7 +104,7 @@ void GearpumpAddon::setup(float *power) {
     i2c->setSetSclLow(scl_low);
     i2c->setSetSdaLow(sda_low);
     i2c->setTimeout_ms(200);
-    i2c->setDelay_us(20);
+    i2c->setDelay_us(_sharedBus ? 0 : 20); // each shared-bus edge is an expander write, far slower than the DAC needs
     i2c->begin();
     delay(500);
     if (_sharedBus) {
@@ -151,6 +155,25 @@ bool GearpumpAddon::readSharedDac(uint8_t *state) {
     for (unsigned i = 0; i < 5; ++i)
         state[i] = i2c->read();
     return true;
+}
+
+bool GearpumpAddon::verifySharedDac(uint16_t expected) {
+    _lastVerify = millis();
+    uint8_t state[5];
+    const bool ok = readSharedDac(state) && ((uint16_t(state[1]) << 4 | state[2] >> 4) == expected) &&
+                    ((state[0] >> 1) & 3) == MCP4725_PDMODE_NORMAL;
+    if (ok) {
+        _verifyFailures = 0;
+        return true;
+    }
+    _lastDacValue = UINT16_MAX; // rewrite on the next loop
+    if (++_verifyFailures >= SHARED_VERIFY_ATTEMPTS) {
+        if (!_sharedFault)
+            ESP_LOGE(LOG_TAG, "Shared-bus DAC read-back does not match; retrying at most once per second");
+        _sharedFault = true;
+        _lastRetry = millis();
+    }
+    return false;
 }
 
 bool GearpumpAddon::setupSharedDac() {
@@ -207,10 +230,14 @@ void GearpumpAddon::loop() {
         const float fraction = power / 100.0f * _maxPower;
         const uint16_t value =
             std::isfinite(fraction) ? uint16_t(std::round(std::max(0.0f, std::min(1.0f, fraction)) * MCP4725_MAXVALUE)) : 0;
-        if (!_sharedFault && value == _lastDacValue)
+        if (!_sharedFault && value == _lastDacValue) {
+            if (millis() - _lastVerify >= SHARED_VERIFY_INTERVAL_MS)
+                verifySharedDac(value);
             return;
+        }
+        // Fast write, normal mode. A burst cannot see the DAC's ACKs, so the result is confirmed by reading it back.
         const uint8_t bytes[] = {uint8_t(value >> 8), uint8_t(value)};
-        if (!writeSharedDac(bytes, sizeof(bytes))) {
+        if (!sharedIO->burstWrite(0x60, bytes, sizeof(bytes))) {
             if (!_sharedFault)
                 ESP_LOGE(LOG_TAG, "Shared-bus DAC write failed; retrying at most once per second");
             _sharedFault = true;
@@ -221,6 +248,8 @@ void GearpumpAddon::loop() {
             ESP_LOGI(LOG_TAG, "Shared-bus DAC communication recovered");
         _sharedFault = false;
         _lastDacValue = value;
+        if (value == 0)
+            verifySharedDac(0); // a pump stop is always confirmed
         return;
     }
     if (_power != nullptr) {
