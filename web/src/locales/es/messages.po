@@ -2787,6 +2787,7 @@ msgid "No phases"
 msgstr "Sin fases"
 
 #: src/pages/ProfileEdit/ExtendedProfileForm.jsx
+#: src/pages/ProfileEdit/StandardProfileForm.jsx
 msgid "No phases yet. Add a phase to configure brewing."
 msgstr "Aún no hay fases. Añade una fase para configurar la extracción."
 

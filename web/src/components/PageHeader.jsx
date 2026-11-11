@@ -1,6 +1,3 @@
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBars } from '@fortawesome/free-solid-svg-icons/faBars';
-
 export default function PageHeader({ title, actions, tabs, className = '', noStack = false }) {
   const flexClasses = noStack
     ? 'flex flex-row items-center justify-between gap-4'

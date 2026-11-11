@@ -15,7 +15,6 @@ export function ActionCard({
   isFinished,
   isBrewing,
   isGrinding,
-  isGrindAvailable,
   isFlushing,
   activate,
   deactivate,

@@ -23,6 +23,7 @@ function DeepDiveLogoMark() {
     <div
       className='mx-auto h-24 w-24 opacity-20 [&>svg]:h-full [&>svg]:w-full'
       style={{ color: 'var(--color-base-content)' }}
+      // eslint-disable-next-line react/no-danger -- bundled SVG asset, not user input
       dangerouslySetInnerHTML={{ __html: deepDiveLogoMarkup }}
       aria-hidden='true'
     />
@@ -71,7 +72,7 @@ export function EmptyState({ loading }) {
           </div>
 
           {/* Divider - Subtle */}
-          <div className='bg-base-content/5 h-px w-full'></div>
+          <div className='bg-base-content/5 h-px w-full' />
 
           {/* VIEW Section */}
           <div className='flex items-start gap-4'>
@@ -93,7 +94,7 @@ export function EmptyState({ loading }) {
           </div>
 
           {/* Divider - Subtle */}
-          <div className='bg-base-content/5 h-px w-full'></div>
+          <div className='bg-base-content/5 h-px w-full' />
 
           {/* WEB Section */}
           <div className='flex items-start gap-4'>
@@ -138,7 +139,7 @@ export function EmptyState({ loading }) {
             </span>
           </div>
 
-          <div className='bg-base-content/5 h-px w-full'></div>
+          <div className='bg-base-content/5 h-px w-full' />
 
           <div className='grid gap-2 text-xs leading-relaxed sm:grid-cols-3'>
             <div className='text-base-content'>

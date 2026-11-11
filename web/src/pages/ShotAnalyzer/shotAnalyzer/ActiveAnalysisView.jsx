@@ -1,7 +1,5 @@
 /** Renders the responsive chart, details, and analysis-table composition. */
 
-/* global globalThis */
-
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { msg } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react/macro';

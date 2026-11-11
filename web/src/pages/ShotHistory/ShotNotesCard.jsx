@@ -130,7 +130,7 @@ export default function ShotNotesCard({ shot, onNotesUpdate, onNotesLoaded }) {
       await apiService.request({
         tp: 'req:history:notes:save',
         id: shot.id,
-        notes: notes,
+        notes,
       });
       setIsEditing(false);
       if (onNotesUpdate) {
@@ -199,7 +199,7 @@ export default function ShotNotesCard({ shot, onNotesUpdate, onNotesLoaded }) {
     return (
       <div className='mt-6 border-t pt-6'>
         <div className='flex items-center justify-center py-8'>
-          <span className='loading loading-spinner loading-md'></span>
+          <span className='loading loading-spinner loading-md' />
         </div>
       </div>
     );
