@@ -4869,6 +4869,10 @@ msgstr "Ranura {slotNumber}"
 msgid "SLOW SAMPLING"
 msgstr "MUESTREO LENTO"
 
+#: src/utils/panelDefinitions.js
+msgid "Smart Dosing"
+msgstr ""
+
 #: src/pages/Settings/PluginCard.jsx
 msgid "Smart Grind Plugin"
 msgstr "Plugin Smart Grind"

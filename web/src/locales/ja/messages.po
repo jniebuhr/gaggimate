@@ -4869,6 +4869,10 @@ msgstr "スロット {slotNumber}"
 msgid "SLOW SAMPLING"
 msgstr "低速サンプリング"
 
+#: src/utils/panelDefinitions.js
+msgid "Smart Dosing"
+msgstr ""
+
 #: src/pages/Settings/PluginCard.jsx
 msgid "Smart Grind Plugin"
 msgstr "スマートグラインドプラグイン"

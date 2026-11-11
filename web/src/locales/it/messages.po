@@ -4873,6 +4873,10 @@ msgstr "Slot {slotNumber}"
 msgid "SLOW SAMPLING"
 msgstr "CAMPIONAMENTO LENTO"
 
+#: src/utils/panelDefinitions.js
+msgid "Smart Dosing"
+msgstr ""
+
 #: src/pages/Settings/PluginCard.jsx
 msgid "Smart Grind Plugin"
 msgstr "Plugin Smart Grind"

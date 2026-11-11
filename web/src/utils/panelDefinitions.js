@@ -94,7 +94,7 @@ export const PANEL_DEFINITIONS = [
   },
   {
     id: 'dose',
-    label: 'Smart Dosing',
+    labelMsg: msg`Smart Dosing`,
     required: false,
     available: ds => !!ds.smartDose?.enabled,
     availableInSettings: status => !!status.smartDose?.enabled,
