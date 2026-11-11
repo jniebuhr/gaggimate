@@ -978,13 +978,19 @@ export function ProfileList() {
             tp: favorite ? 'req:profiles:favorite' : 'req:profiles:unfavorite',
             id,
           });
-          apply(response?.error ? !favorite : favorite);
+          if (response?.error) {
+            await invalidateProfiles();
+            return;
+          }
+          apply(favorite);
         } catch {
-          apply(!favorite);
+          // A thrown request has an unknown outcome (the machine may have applied it), so resync
+          // from the machine instead of guessing a rollback.
+          await invalidateProfiles();
         }
       });
     },
-    [apiService, setProfiles, withPending],
+    [apiService, setProfiles, invalidateProfiles, withPending],
   );
 
   // The machine assigns the new id and may favorite the copy on its own, so the list is reloaded
