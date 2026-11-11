@@ -1,11 +1,11 @@
 import { useEffect, useId, useRef } from 'preact/hooks';
+import { useLingui } from '@lingui/react/macro';
 
 export default function ConfirmDeleteModal({
   title,
   description,
   confirmLabel,
-  busyLabel = 'Deleting…',
-  progressLabel = 'Deleting shot',
+  busyLabel,
   descriptionClassName = 'mb-4 text-sm text-gray-600 dark:text-gray-300',
   busy = false,
   progress = null,
@@ -14,6 +14,7 @@ export default function ConfirmDeleteModal({
   onConfirm,
   onCancelBusy,
 }) {
+  const { t } = useLingui();
   const titleId = useId();
   const cancelRef = useRef(null);
 
@@ -54,7 +55,7 @@ export default function ConfirmDeleteModal({
               <button
                 onClick={onClose}
                 className='text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
-                aria-label='Close'
+                aria-label={t`Close`}
               >
                 ✕
               </button>
@@ -65,8 +66,8 @@ export default function ConfirmDeleteModal({
             <div className='mb-4 text-center'>
               <div className='mb-2 text-sm font-semibold opacity-70'>
                 {progress.total > 0
-                  ? `${progressLabel} ${progress.current} of ${progress.total}...`
-                  : 'Preparing deletion...'}
+                  ? t`Deleting shot ${progress.current} of ${progress.total}...`
+                  : t`Preparing deletion...`}
               </div>
               {progress.total > 0 ? (
                 <progress
@@ -86,7 +87,7 @@ export default function ConfirmDeleteModal({
                 onClick={onCancelBusy}
                 className='rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500'
               >
-                Cancel deletion
+                {t`Cancel deletion`}
               </button>
             ) : (
               <>
@@ -97,7 +98,7 @@ export default function ConfirmDeleteModal({
                   disabled={busy}
                   className='rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300 disabled:opacity-50 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500'
                 >
-                  Cancel
+                  {t`Cancel`}
                 </button>
                 <button
                   type='button'
@@ -105,7 +106,7 @@ export default function ConfirmDeleteModal({
                   disabled={busy}
                   className='rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50'
                 >
-                  {busy ? busyLabel : confirmLabel}
+                  {busy ? (busyLabel ?? t`Deleting…`) : confirmLabel}
                 </button>
               </>
             )}

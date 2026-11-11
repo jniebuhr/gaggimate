@@ -215,7 +215,7 @@ export function ShotHistory() {
       const resp = await apiService.request({ tp: 'req:history:delete-all' });
       setShowDeleteAllModal(false);
       if (resp?.error) {
-        alert(`Could not delete history: ${resp.error}`);
+        alert(t`Could not delete history: ${resp.error}`);
       } else {
         setSearchTerm('');
         setCurrentPage(1);
@@ -225,11 +225,11 @@ export function ShotHistory() {
     } catch (error) {
       setShowDeleteAllModal(false);
       console.error('Failed to delete shot history:', error);
-      alert('Could not delete history. Please try again.');
+      alert(t`Could not delete history. Please try again.`);
     } finally {
       setDeletingAll(false);
     }
-  }, [apiService]);
+  }, [apiService, t]);
 
   const onNotesChanged = useCallback(async () => {
     // Reload the index to get updated ratings
@@ -305,7 +305,7 @@ export function ShotHistory() {
     setExportProgress({ current: 0, total: 0 });
     if (cancelled) return;
     if (exported.length === 0) {
-      alert('Could not export any shots. Please try again.');
+      alert(t`Could not export any shots. Please try again.`);
       return;
     }
     const day = new Date().toISOString().slice(0, 10);
@@ -314,9 +314,9 @@ export function ShotHistory() {
       `shot-history-export-${day}.json`,
     );
     if (failed > 0) {
-      alert(`Exported ${exported.length} of ${targets.length} shots (${failed} failed).`);
+      alert(t`Exported ${exported.length} of ${targets.length} shots (${failed} failed).`);
     }
-  }, [filteredHistory, exporting, deletingAll, deletingFiltered, loadFullShotForExport]);
+  }, [filteredHistory, exporting, deletingAll, deletingFiltered, loadFullShotForExport, t]);
 
   const onDeleteFiltered = useCallback(async () => {
     const targets = [...filteredHistory];
@@ -353,9 +353,9 @@ export function ShotHistory() {
     if (cancelled) return;
     if (failedIds.length > 0) {
       const done = targets.length - failedIds.length;
-      alert(`Deleted ${done} of ${targets.length} shots. Failed: ${failedIds.join(', ')}`);
+      alert(t`Deleted ${done} of ${targets.length} shots. Failed: ${failedIds.join(', ')}`);
     }
-  }, [filteredHistory, deletingFiltered, deletingAll, exporting, apiService]);
+  }, [filteredHistory, deletingFiltered, deletingAll, exporting, apiService, t]);
 
   if (loading) {
     return (
@@ -376,32 +376,32 @@ export function ShotHistory() {
             {t`${totalFilteredItems} of ${historyCount} shots`}{' '}
             {totalPages > 1 && t`(Page ${currentPage} of ${totalPages})`}
           </span>
-          <Tooltip content='Export filtered shots'>
+          <Tooltip content={t`Export filtered shots`}>
             <button
               onClick={onExportFiltered}
               disabled={totalFilteredItems === 0 || busy}
               className='text-base-content/50 hover:text-info hover:bg-info/10 cursor-pointer rounded-md p-2 transition-colors disabled:cursor-not-allowed disabled:opacity-40'
-              aria-label='Export filtered shots'
+              aria-label={t`Export filtered shots`}
             >
               <FontAwesomeIcon icon={faFileExport} className='h-4 w-4' />
             </button>
           </Tooltip>
-          <Tooltip content={`Delete filtered shots (${totalFilteredItems})`}>
+          <Tooltip content={t`Delete filtered shots (${totalFilteredItems})`}>
             <button
               onClick={() => setShowDeleteFilteredModal(true)}
               disabled={totalFilteredItems === 0 || busy}
               className='text-base-content/50 hover:text-error hover:bg-error/10 cursor-pointer rounded-md p-2 transition-colors disabled:cursor-not-allowed disabled:opacity-40'
-              aria-label='Delete filtered shots'
+              aria-label={t`Delete filtered shots`}
             >
               <FontAwesomeIcon icon={faFilterCircleXmark} className='h-4 w-4' />
             </button>
           </Tooltip>
-          <Tooltip content='Delete all'>
+          <Tooltip content={t`Delete all`}>
             <button
               onClick={() => setShowDeleteAllModal(true)}
               disabled={history.length === 0 || busy}
               className='text-base-content/50 hover:text-error hover:bg-error/10 cursor-pointer rounded-md p-2 transition-colors disabled:cursor-not-allowed disabled:opacity-40'
-              aria-label='Delete all shots'
+              aria-label={t`Delete all shots`}
             >
               <FontAwesomeIcon icon={faTrashCan} className='h-4 w-4' />
             </button>
@@ -479,8 +479,8 @@ export function ShotHistory() {
         <div className='border-base-content/10 bg-base-100 mb-4 rounded-lg border p-4 text-center'>
           <div className='mb-2 text-sm font-semibold opacity-70'>
             {exportProgress.total > 0
-              ? `Exporting shot ${exportProgress.current} of ${exportProgress.total}...`
-              : 'Preparing export...'}
+              ? t`Exporting shot ${exportProgress.current} of ${exportProgress.total}...`
+              : t`Preparing export...`}
           </div>
           {exportProgress.total > 0 ? (
             <progress
@@ -493,7 +493,7 @@ export function ShotHistory() {
           )}
           <div className='mt-3'>
             <button className='btn btn-sm btn-outline' onClick={cancelBulk}>
-              Cancel
+              <Trans>Cancel</Trans>
             </button>
           </div>
         </div>
@@ -604,10 +604,9 @@ export function ShotHistory() {
 
       {showDeleteAllModal && (
         <ConfirmDeleteModal
-          title='Delete all shots?'
-          description={`This will permanently delete all ${history.length} shots from the device. This cannot be undone.`}
-          confirmLabel='Delete all'
-          busyLabel='Deleting…'
+          title={t`Delete all shots?`}
+          description={t`This will permanently delete all ${history.length} shots from the device. This cannot be undone.`}
+          confirmLabel={t`Delete all`}
           descriptionClassName='mb-6 text-sm text-gray-600 dark:text-gray-300'
           busy={deletingAll}
           onClose={() => setShowDeleteAllModal(false)}
@@ -617,9 +616,9 @@ export function ShotHistory() {
 
       {showDeleteFilteredModal && (
         <ConfirmDeleteModal
-          title='Delete filtered shots?'
-          description={`This will permanently delete the ${totalFilteredItems} shots matching your current search and filters (across all pages). This cannot be undone.`}
-          confirmLabel={`Delete ${totalFilteredItems} shots`}
+          title={t`Delete filtered shots?`}
+          description={t`This will permanently delete the ${totalFilteredItems} shots matching your current search and filters (across all pages). This cannot be undone.`}
+          confirmLabel={t`Delete ${totalFilteredItems} shots`}
           busy={deletingFiltered}
           progress={deleteFilteredProgress}
           onClose={() => setShowDeleteFilteredModal(false)}

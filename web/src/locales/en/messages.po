@@ -748,9 +748,15 @@ msgstr "Can't reach {name}"
 #: src/components/VisualizerUploadModal.jsx
 #: src/pages/SetupWizard/MachineStep.jsx
 #: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+#: src/pages/ShotHistory/ConfirmDeleteModal.jsx
+#: src/pages/ShotHistory/index.jsx
 #: src/pages/ShotHistory/ShotNotesCard.jsx
 msgid "Cancel"
 msgstr "Cancel"
+
+#: src/pages/ShotHistory/ConfirmDeleteModal.jsx
+msgid "Cancel deletion"
+msgstr "Cancel deletion"
 
 #: src/app/MachineSetup.jsx
 msgid "Cancel renaming"
@@ -838,6 +844,7 @@ msgstr "Click to open the library. Use Import below or drop files here to import
 #: src/app/MachineSetup.jsx
 #: src/components/VisualizerUploadModal.jsx
 #: src/pages/Home/BrewConfirmModal.jsx
+#: src/pages/ShotHistory/ConfirmDeleteModal.jsx
 msgid "Close"
 msgstr "Close"
 
@@ -1065,6 +1072,19 @@ msgstr "Convert to Pro"
 #: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
 msgid "Could not delete calibration profile: {message}"
 msgstr "Could not delete calibration profile: {message}"
+
+#. placeholder {0}: resp.error
+#: src/pages/ShotHistory/index.jsx
+msgid "Could not delete history: {0}"
+msgstr "Could not delete history: {0}"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Could not delete history. Please try again."
+msgstr "Could not delete history. Please try again."
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Could not export any shots. Please try again."
+msgstr "Could not export any shots. Please try again."
 
 #: src/pages/Settings/index.jsx
 msgid "Could not import {importName}: {importMessage}"
@@ -1302,6 +1322,14 @@ msgstr "Delete"
 msgid "Delete {label} profile"
 msgstr "Delete {label} profile"
 
+#: src/pages/ShotHistory/index.jsx
+msgid "Delete {totalFilteredItems} shots"
+msgstr "Delete {totalFilteredItems} shots"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Delete all"
+msgstr "Delete all"
+
 #: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 msgid "Delete All"
 msgstr "Delete All"
@@ -1310,9 +1338,29 @@ msgstr "Delete All"
 msgid "Delete all profiles"
 msgstr "Delete all profiles"
 
+#: src/pages/ShotHistory/index.jsx
+msgid "Delete all shots"
+msgstr "Delete all shots"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Delete all shots?"
+msgstr "Delete all shots?"
+
 #: src/pages/ShotAnalyzer/components/library/LibraryPanel.jsx
 msgid "Delete failed: {message}"
 msgstr "Delete failed: {message}"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Delete filtered shots"
+msgstr "Delete filtered shots"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Delete filtered shots ({totalFilteredItems})"
+msgstr "Delete filtered shots ({totalFilteredItems})"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Delete filtered shots?"
+msgstr "Delete filtered shots?"
 
 #: src/components/MachineProfileControl.jsx
 msgid "Delete imported profile"
@@ -1350,9 +1398,25 @@ msgstr "Delete this preset?"
 msgid "Delete this schedule"
 msgstr "Delete this schedule"
 
+#. placeholder {0}: targets.length
+#. placeholder {1}: failedIds.join(', ')
+#: src/pages/ShotHistory/index.jsx
+msgid "Deleted {done} of {0} shots. Failed: {1}"
+msgstr "Deleted {done} of {0} shots. Failed: {1}"
+
 #: src/pages/Settings/PluginCard.jsx
 msgid "Deleted profile"
 msgstr "Deleted profile"
+
+#. placeholder {0}: progress.current
+#. placeholder {1}: progress.total
+#: src/pages/ShotHistory/ConfirmDeleteModal.jsx
+msgid "Deleting shot {0} of {1}..."
+msgstr "Deleting shot {0} of {1}..."
+
+#: src/pages/ShotHistory/ConfirmDeleteModal.jsx
+msgid "Deleting…"
+msgstr "Deleting…"
 
 #: src/pages/Settings/tabs/CleaningSection.jsx
 msgid "Descaling"
@@ -1810,6 +1874,10 @@ msgstr "Export failed: {message}"
 msgid "Export File"
 msgstr "Export File"
 
+#: src/pages/ShotHistory/index.jsx
+msgid "Export filtered shots"
+msgstr "Export filtered shots"
+
 #: src/pages/ProfileList/index.jsx
 msgid "Export profile"
 msgstr "Export profile"
@@ -1829,6 +1897,18 @@ msgstr "Export Settings"
 #: src/pages/ShotHistory/HistoryCard.jsx
 msgid "Export shot data"
 msgstr "Export shot data"
+
+#. placeholder {0}: exported.length
+#. placeholder {1}: targets.length
+#: src/pages/ShotHistory/index.jsx
+msgid "Exported {0} of {1} shots ({failed} failed)."
+msgstr "Exported {0} of {1} shots ({failed} failed)."
+
+#. placeholder {0}: exportProgress.current
+#. placeholder {1}: exportProgress.total
+#: src/pages/ShotHistory/index.jsx
+msgid "Exporting shot {0} of {1}..."
+msgstr "Exporting shot {0} of {1}..."
 
 #: src/pages/ShotAnalyzer/utils/columns.js
 msgid "Extended Record"
@@ -3521,6 +3601,14 @@ msgstr "Preheating..."
 #: src/pages/Home/utils.js
 msgid "Preinfusion"
 msgstr "Preinfusion"
+
+#: src/pages/ShotHistory/ConfirmDeleteModal.jsx
+msgid "Preparing deletion..."
+msgstr "Preparing deletion..."
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Preparing export..."
+msgstr "Preparing export..."
 
 #: src/pages/ShotAnalyzer/components/shotChart/constants.js
 msgid "Preparing MP4 export..."
@@ -5646,6 +5734,15 @@ msgstr "This profile includes settings outside machine configuration. Remove the
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "This scale model couldn't be set up."
 msgstr "This scale model couldn't be set up."
+
+#. placeholder {0}: history.length
+#: src/pages/ShotHistory/index.jsx
+msgid "This will permanently delete all {0} shots from the device. This cannot be undone."
+msgstr "This will permanently delete all {0} shots from the device. This cannot be undone."
+
+#: src/pages/ShotHistory/index.jsx
+msgid "This will permanently delete the {totalFilteredItems} shots matching your current search and filters (across all pages). This cannot be undone."
+msgstr "This will permanently delete the {totalFilteredItems} shots matching your current search and filters (across all pages). This cannot be undone."
 
 #: src/pages/Settings/PluginCard.jsx
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
