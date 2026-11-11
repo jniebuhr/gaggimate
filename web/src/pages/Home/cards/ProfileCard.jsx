@@ -180,7 +180,7 @@ export function ProfileCard({
         setProfileData(res.profile);
         setProfileLoading(false);
       })
-      .catch(e => {
+      .catch(() => {
         if (cancelled) return;
         setProfileData(null);
         setProfileLoading(false);
@@ -188,7 +188,7 @@ export function ProfileCard({
     return () => {
       cancelled = true;
     };
-  }, [selectedProfileId, apiService]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [selectedProfileId, apiService]);
 
   const showProgress = (isBrewing || isGrinding) && (isActive || isFinished);
 

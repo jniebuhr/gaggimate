@@ -20,7 +20,6 @@ import lazy from 'preact-iso/lazy';
 
 import ApiService, { ApiServiceContext } from './services/ApiService.js';
 import { Navigation } from './components/Navigation.jsx';
-import { Spinner } from './components/Spinner.jsx';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBars } from '@fortawesome/free-solid-svg-icons/faBars';
 
@@ -70,14 +69,6 @@ const RedirectTo = to =>
     }, [loc]);
     return null;
   };
-
-function RouteFallback() {
-  return (
-    <div className='flex w-full flex-row items-center justify-center py-16'>
-      <Spinner size={8} />
-    </div>
-  );
-}
 
 export function App() {
   const [navCollapsed, setNavCollapsed] = useState(readInitialDesktopNavCollapsed);
