@@ -14,8 +14,8 @@
 #include <peripherals/Max31855Thermocouple.h>
 #include <peripherals/PressureSensor.h>
 #include <peripherals/Pump.h>
-#include <peripherals/SimpleRelay.h>
 #include <peripherals/PwmLight.h>
+#include <peripherals/SimpleRelay.h>
 #include <peripherals/addons/GearpumpAddon.h>
 #include <vector>
 

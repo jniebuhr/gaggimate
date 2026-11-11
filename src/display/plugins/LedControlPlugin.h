@@ -1,11 +1,11 @@
 #ifndef LEDCONTROLPLUGIN_H
 #define LEDCONTROLPLUGIN_H
+#include "LightBehaviour.h"
 #include <Arduino.h>
 #include <GaggiMateComm.h>
 #include <array>
 #include <atomic>
 #include <display/core/Plugin.h>
-#include "LightBehaviour.h"
 
 class LedControlPlugin : public Plugin {
   public:

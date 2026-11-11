@@ -1,8 +1,8 @@
 #ifndef GAGGIMATE_COMM_H
 #define GAGGIMATE_COMM_H
 
-#include <cstdint>
 #include "LedEffect.h"
+#include <cstdint>
 
 // Public protocol vocabulary shared by GaggiMateClient and GaggiMateServer; firmware never sees the nanopb structs.
 
@@ -52,8 +52,8 @@ struct LedChannelCommand {
     uint8_t minBrightness = 0;
     uint16_t cycleTimeMs = 0; // Alba ignores animation fields.
     bool operator==(const LedChannelCommand &o) const {
-        return channel == o.channel && brightness == o.brightness && effect == o.effect &&
-               minBrightness == o.minBrightness && cycleTimeMs == o.cycleTimeMs;
+        return channel == o.channel && brightness == o.brightness && effect == o.effect && minBrightness == o.minBrightness &&
+               cycleTimeMs == o.cycleTimeMs;
     }
     bool operator!=(const LedChannelCommand &o) const { return !(*this == o); }
 };

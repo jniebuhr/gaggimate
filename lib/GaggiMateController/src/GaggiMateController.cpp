@@ -55,15 +55,13 @@ void GaggiMateController::setup() {
         pressureSensor = new PressureSensor(this->adc, _config.pressureControlRate);
         if (_config.capabilites.dualBoiler) {
             this->brewTemperature = new NtcThermistor(
-                this->adc, 2,
-                [this]() { thermalRunawayShutdown(); },
-                machineHardware.ntc_brew_nominal_resistance, machineHardware.ntc_brew_series_resistance,
-                machineHardware.ntc_brew_supply_voltage, machineHardware.ntc_brew_beta, _config.ntcTiming[2]);
+                this->adc, 2, [this]() { thermalRunawayShutdown(); }, machineHardware.ntc_brew_nominal_resistance,
+                machineHardware.ntc_brew_series_resistance, machineHardware.ntc_brew_supply_voltage,
+                machineHardware.ntc_brew_beta, _config.ntcTiming[2]);
             this->steamTemperature = new NtcThermistor(
-                this->adc, 3,
-                [this]() { thermalRunawayShutdown(); },
-                machineHardware.ntc_steam_nominal_resistance, machineHardware.ntc_steam_series_resistance,
-                machineHardware.ntc_steam_supply_voltage, machineHardware.ntc_steam_beta, _config.ntcTiming[3]);
+                this->adc, 3, [this]() { thermalRunawayShutdown(); }, machineHardware.ntc_steam_nominal_resistance,
+                machineHardware.ntc_steam_series_resistance, machineHardware.ntc_steam_supply_voltage,
+                machineHardware.ntc_steam_beta, _config.ntcTiming[3]);
         }
     }
     heater = new Heater(
@@ -91,9 +89,7 @@ void GaggiMateController::setup() {
                 machineHardware.steam_level_debounce_checks, 1);
         if (_config.capabilites.dualBoiler) {
             if (machineHardware.tank_level_enabled && _config.tankLevelPin != 0)
-                tankLevel = new DigitalInput(_config.tankLevelPin, [this](bool full) {
-                    tankLevelOK = full;
-                });
+                tankLevel = new DigitalInput(_config.tankLevelPin, [this](bool full) { tankLevelOK = full; });
         }
         if (_config.ledPin != 0)
             lights = new PwmLight(_config.ledPin, 0);
@@ -196,14 +192,15 @@ void GaggiMateController::setup() {
         this->adc->setup();
         _comms.onPressureScale([this](float scale) { this->pressureSensor->setScale(scale); });
     }
-    _comms.onLedControl([this](uint8_t channel, uint8_t brightness, LedEffect effect, uint8_t minBrightness, uint16_t cycleTimeMs) {
-        if (channel == SYSTEM_LED_CHANNEL && lights)
-            lights->set(effect, brightness, minBrightness, cycleTimeMs);
-        else if (channel == BARISTA_LED_CHANNEL && baristaLight)
-            baristaLight->set(effect, brightness, minBrightness, cycleTimeMs);
-        else if (channel < SYSTEM_LED_CHANNEL && ledController)
-            ledController->setChannel(channel, brightness);
-    });
+    _comms.onLedControl(
+        [this](uint8_t channel, uint8_t brightness, LedEffect effect, uint8_t minBrightness, uint16_t cycleTimeMs) {
+            if (channel == SYSTEM_LED_CHANNEL && lights)
+                lights->set(effect, brightness, minBrightness, cycleTimeMs);
+            else if (channel == BARISTA_LED_CHANNEL && baristaLight)
+                baristaLight->set(effect, brightness, minBrightness, cycleTimeMs);
+            else if (channel < SYSTEM_LED_CHANNEL && ledController)
+                ledController->setChannel(channel, brightness);
+        });
     brewTemperature->setup();
     heater->setup();
     valve->setup();
@@ -528,9 +525,7 @@ void GaggiMateController::handlePing() {
     ESP_LOGV(LOG_TAG, "Ping received, system is alive");
 }
 
-void GaggiMateController::clearRetainedOutputDemands() {
-    steamRequestedSetpoint = 0.0f;
-}
+void GaggiMateController::clearRetainedOutputDemands() { steamRequestedSetpoint = 0.0f; }
 
 void GaggiMateController::handlePingTimeout() {
     clearRetainedOutputDemands();

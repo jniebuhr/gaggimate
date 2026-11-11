@@ -6,12 +6,8 @@
 
 void LedControlPlugin::setup(Controller *controller, PluginManager *pluginManager) {
     this->controller = controller;
-    pluginManager->on("controller:bluetooth:connect", [this](Event const &) {
-        forceSend = true;
-    });
-    pluginManager->on("controller:bluetooth:disconnect", [this](Event const &) {
-        forceSend = true;
-    });
+    pluginManager->on("controller:bluetooth:connect", [this](Event const &) { forceSend = true; });
+    pluginManager->on("controller:bluetooth:disconnect", [this](Event const &) { forceSend = true; });
     pluginManager->on("controller:state:resend", [this](Event const &) { forceSend = true; });
 }
 
@@ -60,7 +56,8 @@ void LedControlPlugin::updateControl() {
     }
     if (caps.dualBoiler) {
         const bool brewProcessActive = awake && controller->isBrewActive();
-        auto addLight = [&](uint8_t channel, LightBehaviour &state, int function, uint8_t brightness, uint8_t minimum, uint16_t cycleTimeMs) {
+        auto addLight = [&](uint8_t channel, LightBehaviour &state, int function, uint8_t brightness, uint8_t minimum,
+                            uint16_t cycleTimeMs) {
             const bool brew = function == 2 || function == 6;
             const float target = brew ? controller->getTargetTemp() : controller->getTargetSteamTemp();
             const float temperature = brew ? controller->getCurrentTemp() : controller->getCurrentSteamTemp();
@@ -75,8 +72,8 @@ void LedControlPlugin::updateControl() {
                  settings.getBaristaLedMinBrightness(), settings.getBaristaLedCycleTimeMs());
     }
     const bool force = forceSend.exchange(false);
-    if (count == 0 || (!force && count == lastCount &&
-                       std::equal(channels.begin(), channels.begin() + count, lastChannels.begin())))
+    if (count == 0 ||
+        (!force && count == lastCount && std::equal(channels.begin(), channels.begin() + count, lastChannels.begin())))
         return;
     controller->getClientController()->sendLedControl(channels.data(), count);
     lastChannels = channels;
