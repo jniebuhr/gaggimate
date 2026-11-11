@@ -375,10 +375,12 @@ void GaggiMateController::setup() {
         }
         this->heater->autotune(static_cast<int>(testTimeSec), static_cast<int>(windowSize), static_cast<int>(heaterWattage));
     });
-    _comms.onTare([this]() {
+    _comms.onHardwareScaleTare([this]() {
         if (hardwareScale != nullptr && hardwareScale->isAvailable()) {
             hardwareScale->tare();
         }
+    });
+    _comms.onTare([this]() {
         if (!_config.capabilites.dimming) {
             return;
         }

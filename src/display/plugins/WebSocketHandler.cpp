@@ -289,6 +289,7 @@ void WebSocketHandler::handleWebSocketData(AsyncWebSocket *server, AsyncWebSocke
                 } else if (msgType == "req:steam:toggle") {
                     controller->toggleSteamHeater();
                 } else if (msgType == "req:scale:tare") {
+                    controller->getClientController()->tareHardwareScale();
                     pluginManager->trigger("webui:scale:tare");
                     controller->getClientController()->tare();
                 } else if (msgType == "req:flush:stop") {
