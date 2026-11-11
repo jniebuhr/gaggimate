@@ -5507,8 +5507,8 @@ msgid "The boiler will heat at full power until its temperature inflection is de
 msgstr "锅炉将以全功率加热，直到检测到温度拐点，然后由 SIMC 整定规则推导出 PID 增益。根据咖啡机不同，通常需要 1–3 分钟。"
 
 #: src/pages/Settings/tabs/GeneralTab.jsx
-msgid "The chart is shown for Pro profiles only"
-msgstr "仅 Pro 曲线显示图表"
+msgid "The chart is not shown for utility profiles"
+msgstr "工具曲线不显示图表"
 
 #: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
 msgid "The configured or inferred scale delay is unusually high. Review the scale-delay setting before relying on predictive weight stops."

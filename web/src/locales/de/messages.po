@@ -5507,8 +5507,8 @@ msgid "The boiler will heat at full power until its temperature inflection is de
 msgstr "Der Boiler heizt mit voller Leistung, bis sein Temperatur-Wendepunkt erkannt wird; anschließend leitet die SIMC-Regel die PID-Verstärkungen ab. Dauert je nach Maschine meist 1–3 Minuten."
 
 #: src/pages/Settings/tabs/GeneralTab.jsx
-msgid "The chart is shown for Pro profiles only"
-msgstr "Das Diagramm wird nur für Pro-Profile angezeigt"
+msgid "The chart is not shown for utility profiles"
+msgstr "Das Diagramm wird für Hilfsprofile nicht angezeigt"
 
 #: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
 msgid "The configured or inferred scale delay is unusually high. Review the scale-delay setting before relying on predictive weight stops."

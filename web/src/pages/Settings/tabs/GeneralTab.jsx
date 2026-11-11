@@ -275,7 +275,7 @@ export function GeneralTab({
             <SettingsFormField
               label={t`Brew Status Display`}
               htmlFor='statusDisplayMode'
-              helpText={t`The chart is shown for Pro profiles only`}
+              helpText={t`The chart is not shown for utility profiles`}
               noMargin
             >
               <select

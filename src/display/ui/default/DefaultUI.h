@@ -105,7 +105,7 @@ class DefaultUI {
     void positionMenuIcon(lv_obj_t *obj, int angle, int radius);
 
     void updateState();
-    bool isProShot();
+    bool isChartShot();
     void updateSystemStatus();
     void updateWarnings();
     void updateProfileInfo();
@@ -146,6 +146,9 @@ class DefaultUI {
     float shotTempMax = 0.0f;
     unsigned long lastShotSample = 0;
     unsigned long shotChartStarted = 0;
+    float shotMaxPressure = 0.0f; // brew-end stats shown in the chart legend
+    float shotFlowSum = 0.0f;
+    uint16_t shotFlowSamples = 0;
 
     // Profile preview: SD card image and pro profile chart on the new profile screen
     void updateProfilePreview();

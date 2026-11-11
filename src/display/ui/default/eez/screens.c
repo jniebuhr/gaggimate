@@ -3026,7 +3026,7 @@ void create_screen_status_screen() {
                                     lv_obj_set_pos(obj, 0, 0);
                                     lv_obj_set_size(obj, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
                                     lv_obj_clear_flag(obj, LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_WITH_ARROW);
-                                    lv_obj_set_style_text_font(obj, &lv_font_montserrat_16, LV_PART_MAIN | LV_STATE_DEFAULT);
+                                    lv_obj_set_style_text_font(obj, &ui_font_montserrat_symbol, LV_PART_MAIN | LV_STATE_DEFAULT);
                                     lv_obj_set_style_text_color(
                                         obj, lv_color_hex(theme_colors[eez_flow_get_selected_theme_index()][6]),
                                         LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -3039,7 +3039,7 @@ void create_screen_status_screen() {
                                     lv_obj_set_pos(obj, 0, 0);
                                     lv_obj_set_size(obj, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
                                     lv_obj_clear_flag(obj, LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_WITH_ARROW);
-                                    lv_obj_set_style_text_font(obj, &lv_font_montserrat_16, LV_PART_MAIN | LV_STATE_DEFAULT);
+                                    lv_obj_set_style_text_font(obj, &ui_font_montserrat_symbol, LV_PART_MAIN | LV_STATE_DEFAULT);
                                     lv_obj_set_style_text_color(
                                         obj, lv_color_hex(theme_colors[eez_flow_get_selected_theme_index()][7]),
                                         LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -3052,7 +3052,7 @@ void create_screen_status_screen() {
                                     lv_obj_set_pos(obj, 0, 0);
                                     lv_obj_set_size(obj, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
                                     lv_obj_clear_flag(obj, LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_WITH_ARROW);
-                                    lv_obj_set_style_text_font(obj, &lv_font_montserrat_16, LV_PART_MAIN | LV_STATE_DEFAULT);
+                                    lv_obj_set_style_text_font(obj, &ui_font_montserrat_symbol, LV_PART_MAIN | LV_STATE_DEFAULT);
                                     lv_obj_set_style_text_color(
                                         obj, lv_color_hex(theme_colors[eez_flow_get_selected_theme_index()][2]),
                                         LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -3065,7 +3065,7 @@ void create_screen_status_screen() {
                                     lv_obj_set_pos(obj, 0, 0);
                                     lv_obj_set_size(obj, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
                                     lv_obj_clear_flag(obj, LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_WITH_ARROW);
-                                    lv_obj_set_style_text_font(obj, &lv_font_montserrat_16, LV_PART_MAIN | LV_STATE_DEFAULT);
+                                    lv_obj_set_style_text_font(obj, &ui_font_montserrat_symbol, LV_PART_MAIN | LV_STATE_DEFAULT);
                                     lv_obj_set_style_text_color(
                                         obj, lv_color_hex(theme_colors[eez_flow_get_selected_theme_index()][8]),
                                         LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -3451,24 +3451,24 @@ void tick_screen_status_screen() {
         }
     }
     {
-        bool new_val = evalBooleanProperty(flowState, 25, 3, "Failed to evaluate Hidden flag");
-        bool cur_val = lv_obj_has_flag(objects.chart_legend, LV_OBJ_FLAG_HIDDEN);
-        if (new_val != cur_val) {
-            tick_value_change_obj = objects.chart_legend;
-            if (new_val) {
-                lv_obj_add_flag(objects.chart_legend, LV_OBJ_FLAG_HIDDEN);
-            } else {
-                lv_obj_clear_flag(objects.chart_legend, LV_OBJ_FLAG_HIDDEN);
-            }
-            tick_value_change_obj = NULL;
-        }
-    }
-    {
-        const char *new_val = evalTextProperty(flowState, 26, 3, "Failed to evaluate Text in Label widget");
+        const char *new_val = evalTextProperty(flowState, 26, 4, "Failed to evaluate Text in Label widget");
         const char *cur_val = lv_label_get_text(objects.chart_legend_temp);
         if (strcmp(new_val, cur_val) != 0) {
             tick_value_change_obj = objects.chart_legend_temp;
             lv_label_set_text(objects.chart_legend_temp, new_val);
+            tick_value_change_obj = NULL;
+        }
+    }
+    {
+        bool new_val = evalBooleanProperty(flowState, 26, 3, "Failed to evaluate Hidden flag");
+        bool cur_val = lv_obj_has_flag(objects.chart_legend_temp, LV_OBJ_FLAG_HIDDEN);
+        if (new_val != cur_val) {
+            tick_value_change_obj = objects.chart_legend_temp;
+            if (new_val) {
+                lv_obj_add_flag(objects.chart_legend_temp, LV_OBJ_FLAG_HIDDEN);
+            } else {
+                lv_obj_clear_flag(objects.chart_legend_temp, LV_OBJ_FLAG_HIDDEN);
+            }
             tick_value_change_obj = NULL;
         }
     }
@@ -7724,6 +7724,7 @@ extern void remove_style(lv_obj_t *obj, int32_t styleIndex);
 //
 
 ext_font_desc_t fonts[] = {
+    {"montserrat-symbol", &ui_font_montserrat_symbol},
 #if LV_FONT_MONTSERRAT_8
     {"MONTSERRAT_8", &lv_font_montserrat_8},
 #endif

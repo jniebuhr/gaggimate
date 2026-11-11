@@ -4,6 +4,7 @@
     "eez-flow.cpp",
     "eez-flow.h",
     "fonts.h",
+    "fonts/ui_font_montserrat_symbol.c",
     "images.c",
     "images.h",
     "images/ui_image_angle_down_40x40.c",

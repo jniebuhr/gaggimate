@@ -5507,8 +5507,8 @@ msgid "The boiler will heat at full power until its temperature inflection is de
 msgstr "The boiler will heat at full power until its temperature inflection is detected, then the SIMC tuning rule derives PID gains. Typically 1–3 minutes depending on machine."
 
 #: src/pages/Settings/tabs/GeneralTab.jsx
-msgid "The chart is shown for Pro profiles only"
-msgstr "The chart is shown for Pro profiles only"
+msgid "The chart is not shown for utility profiles"
+msgstr "The chart is not shown for utility profiles"
 
 #: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
 msgid "The configured or inferred scale delay is unusually high. Review the scale-delay setting before relying on predictive weight stops."

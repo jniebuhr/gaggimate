@@ -114,6 +114,8 @@ enum BrewProcessFlowStructureFields {
     FLOW_STRUCTURE_BREW_PROCESS_FIELD_IS_COMPLETE = 15,
     FLOW_STRUCTURE_BREW_PROCESS_FIELD_CURRENT_VOLUME = 16,
     FLOW_STRUCTURE_BREW_PROCESS_FIELD_CURRENT_FLOW = 17,
+    FLOW_STRUCTURE_BREW_PROCESS_FIELD_SHOT_MAX_PRESSURE = 18,
+    FLOW_STRUCTURE_BREW_PROCESS_FIELD_SHOT_AVG_FLOW = 19,
     FLOW_STRUCTURE_BREW_PROCESS_NUM_FIELDS
 };
 
@@ -524,6 +526,16 @@ struct BrewProcessValue {
     float current_flow() { return value.getArray()->values[FLOW_STRUCTURE_BREW_PROCESS_FIELD_CURRENT_FLOW].getFloat(); }
     void current_flow(float current_flow) {
         value.getArray()->values[FLOW_STRUCTURE_BREW_PROCESS_FIELD_CURRENT_FLOW] = FloatValue(current_flow);
+    }
+
+    float shot_max_pressure() { return value.getArray()->values[FLOW_STRUCTURE_BREW_PROCESS_FIELD_SHOT_MAX_PRESSURE].getFloat(); }
+    void shot_max_pressure(float shot_max_pressure) {
+        value.getArray()->values[FLOW_STRUCTURE_BREW_PROCESS_FIELD_SHOT_MAX_PRESSURE] = FloatValue(shot_max_pressure);
+    }
+
+    float shot_avg_flow() { return value.getArray()->values[FLOW_STRUCTURE_BREW_PROCESS_FIELD_SHOT_AVG_FLOW].getFloat(); }
+    void shot_avg_flow(float shot_avg_flow) {
+        value.getArray()->values[FLOW_STRUCTURE_BREW_PROCESS_FIELD_SHOT_AVG_FLOW] = FloatValue(shot_avg_flow);
     }
 };
 

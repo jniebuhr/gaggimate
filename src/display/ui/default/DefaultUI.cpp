@@ -779,7 +779,7 @@ void DefaultUI::updateState() {
     uiFlags.has_prev_profile(currentProfileIdx > 0);
     uiFlags.brew_confirm_visible(brewConfirmVisible);
     uiFlags.profile_details_visible(profileDetailsVisible);
-    const bool chartMode = settings.getStatusDisplayMode() == STATUS_DISPLAY_CHART && pressureAvailable && isProShot();
+    const bool chartMode = settings.getStatusDisplayMode() == STATUS_DISPLAY_CHART && pressureAvailable && isChartShot();
     uiFlags.chart_mode(chartMode);
     if (chartMode != tickChartMode) {
         // Re-animate the ring when the mode flips while the status screen is open.
@@ -793,8 +793,8 @@ void DefaultUI::updateState() {
     }
 }
 
-// The chart needs pressure data, so it only applies to Pro profiles; prefer the running brew's profile.
-bool DefaultUI::isProShot() {
+// Pro hardware shows the chart for every brew except utility profiles; prefer the running brew's profile.
+bool DefaultUI::isChartShot() {
     if (!initialized)
         return false;
     std::lock_guard<std::recursive_mutex> guard(controller->getProcessLock());
@@ -802,8 +802,8 @@ bool DefaultUI::isProShot() {
     if (process == nullptr)
         process = controller->getLastProcess();
     if (process != nullptr && process->getType() == MODE_BREW)
-        return static_cast<BrewProcess *>(process)->profile.type == "pro";
-    return profileManager->getSelectedProfile().type == "pro";
+        return !static_cast<BrewProcess *>(process)->profile.utility;
+    return !profileManager->getSelectedProfile().utility;
 }
 
 void DefaultUI::updateSystemStatus() {
@@ -1032,6 +1032,8 @@ void DefaultUI::updateBrewProcess() {
     }
 
     brewProcess.is_complete(process->isComplete());
+    brewProcess.shot_max_pressure(shotMaxPressure);
+    brewProcess.shot_avg_flow(shotFlowSamples > 0 ? shotFlowSum / shotFlowSamples : 0.0f);
 }
 
 void DefaultUI::updateMenuScreen() {
@@ -1100,6 +1102,9 @@ void DefaultUI::updateShotChart() {
         shotChartLive = true;
         lv_anim_del(this, shotChartZoomAnimCb);
         shotChartZoom = 0.0f;
+        shotMaxPressure = 0.0f;
+        shotFlowSum = 0.0f;
+        shotFlowSamples = 0;
         resetShotChart(bp->getTemperature(), volumetric ? static_cast<float>(bp->getBrewVolume()) : 0.0f);
         shotPhaseIndex = bp->phaseIndex;
     }
@@ -1125,6 +1130,9 @@ void DefaultUI::addShotChartSample(float weight) {
     const float targetFlow = controller->getTargetFlow();
     shotFlowRange = growShotRange(shotFlowRange, LV_MAX(LV_MAX(pressure, flow), LV_MAX(targetPressure, targetFlow)), 2.0f);
     shotWeightRange = growShotRange(shotWeightRange, weight, 10.0f);
+    shotMaxPressure = LV_MAX(shotMaxPressure, pressure);
+    shotFlowSum += flow;
+    shotFlowSamples++;
 
     // Oldest sample is overwritten once the 2 min history is full.
     if (shotHistoryCount == SHOT_HISTORY_POINTS) {

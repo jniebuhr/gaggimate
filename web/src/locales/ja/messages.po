@@ -5507,8 +5507,8 @@ msgid "The boiler will heat at full power until its temperature inflection is de
 msgstr "ボイラーは温度の変曲点が検出されるまで全出力で加熱し、その後 SIMC チューニング則で PID ゲインを算出します。マシンにより通常 1～3 分かかります。"
 
 #: src/pages/Settings/tabs/GeneralTab.jsx
-msgid "The chart is shown for Pro profiles only"
-msgstr "チャートは Pro プロファイルでのみ表示されます"
+msgid "The chart is not shown for utility profiles"
+msgstr "ユーティリティプロファイルではチャートは表示されません"
 
 #: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
 msgid "The configured or inferred scale delay is unusually high. Review the scale-delay setting before relying on predictive weight stops."

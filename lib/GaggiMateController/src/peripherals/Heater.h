@@ -1,9 +1,9 @@
 #ifndef HEATER_H
 #define HEATER_H
 #include "Autotune/Autotune.h"
+#include "HeatingCheck.h"
 #include "Max31855Thermocouple.h"
 #include "TemperatureSensor.h"
-#include "HeatingCheck.h"
 #include <SimplePID/SimplePID.h>
 #include <atomic>
 #include <freertos/FreeRTOS.h>

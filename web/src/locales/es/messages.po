@@ -5507,8 +5507,8 @@ msgid "The boiler will heat at full power until its temperature inflection is de
 msgstr "La caldera calentará a máxima potencia hasta detectar el punto de inflexión de su temperatura; después, la regla de ajuste SIMC calcula las ganancias PID. Suele tardar de 1 a 3 minutos según la máquina."
 
 #: src/pages/Settings/tabs/GeneralTab.jsx
-msgid "The chart is shown for Pro profiles only"
-msgstr "La gráfica solo se muestra para perfiles Pro"
+msgid "The chart is not shown for utility profiles"
+msgstr "El gráfico no se muestra en los perfiles de utilidades"
 
 #: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
 msgid "The configured or inferred scale delay is unusually high. Review the scale-delay setting before relying on predictive weight stops."
