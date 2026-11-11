@@ -1665,6 +1665,14 @@ void Controller::handleBrewButton(bool pressed) {
         break;
     case MODE_BREW:
         if (!isActive()) {
+#ifndef GAGGIMATE_HEADLESS
+            // Match the warning screen's Ignore action: a second momentary brew
+            // switch activation confirms the brew with activate(true).
+            if (settings.isMomentaryButtons() && ui != nullptr && ui->isBrewConfirmVisible()) {
+                activate(true);
+                break;
+            }
+#endif
             activate();
         } else if (settings.isMomentaryButtons()) { // second press stops the shot
             deactivate();
