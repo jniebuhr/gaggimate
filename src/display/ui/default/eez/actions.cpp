@@ -64,6 +64,7 @@ void action_on_volumetric_hold(lv_event_t *e) {
     SmartDose.onTare(true);
     SmartDose.onTare(false);
     controller.getClientController()->tare();
+    controller.getClientController()->tareHardwareScale();
     BLEScales.tare();
 };
 

@@ -200,6 +200,10 @@ void GaggiMateServer::registerHandlers() {
         if (_tareCb)
             _tareCb();
     });
+    _endpoint.on(gaggimate_Payload_hardware_scale_tare_tag, [this](const gm::Payload &) {
+        if (_hardwareScaleTareCb)
+            _hardwareScaleTareCb();
+    });
     _endpoint.on(gaggimate_Payload_scale_factors_tag, [this](const gm::Payload &p) {
         if (_scaleFactorsCb)
             _scaleFactorsCb(p.content.scale_factors.scale_factor1, p.content.scale_factors.scale_factor2,
