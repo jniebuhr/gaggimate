@@ -21,6 +21,7 @@
  Modified May 2015 by Michael C. Miller - ESP31B progmem support
  */
 
+#include <cstdarg>
 #include "Arduino.h"
 #include <math.h>
 #include <stdio.h>
