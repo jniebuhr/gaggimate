@@ -140,15 +140,15 @@ export function PatchNotes({ channel, installedVersion, latestVersion }) {
         <div className='max-h-96 space-y-4 overflow-y-auto'>
           <section>
             <h4 className='mb-2 font-semibold'>
-              <Trans>Installed, not in stable ({current.stableTag})</Trans>
-            </h4>
-            <CommitList commits={current.local} />
-          </section>
-          <section>
-            <h4 className='mb-2 font-semibold'>
               <Trans>Included in the next update</Trans>
             </h4>
             <CommitList commits={current.pending} />
+          </section>
+          <section>
+            <h4 className='mb-2 font-semibold'>
+              <Trans>Installed, not in stable ({current.stableTag})</Trans>
+            </h4>
+            <CommitList commits={current.local} />
           </section>
         </div>
       )}
