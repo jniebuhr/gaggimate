@@ -621,6 +621,11 @@ void DefaultUI::setupState() {
 }
 
 void DefaultUI::handleScreenChange() {
+    // Wait for an animated screen load (the startup fade) to finish. Interrupting it makes LVGL 8
+    // finish the load early and, with auto-delete set, delete the screen being loaded instead of
+    // the previous one, then load the deleted screen (crash on a mode change right after boot).
+    if (lv_disp_get_default()->scr_to_load != nullptr)
+        return;
     if (currentScreen != targetScreen) {
         if (currentScreen == SCREEN_ID_BREW_SCREEN)
             brewConfirmVisible = false; // leaving the brew screen dismisses the confirm overlay
