@@ -219,6 +219,7 @@ export default class ApiService {
     map('gt', 'grindTarget', v => v || 0);
     map('gact', 'grindActive', v => v || false);
     map('cw', 'currentWeight', v => v || 0);
+    map('smartDose', 'smartDose');
     map('bc', 'bluetoothConnected', v => v || false);
     map('scaleSource', 'activeScaleSource', v => v || 'inactive');
     map('sbat', 'scaleBattery', v => v ?? null);

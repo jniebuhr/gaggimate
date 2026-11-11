@@ -1,5 +1,3 @@
-/* global globalThis */
-
 import { t } from '@lingui/core/macro';
 import { INITIAL_VISIBILITY, MAIN_CHART_HEIGHT_DEFAULT } from '../constants';
 import { buildShotChartModel } from '../buildShotChartModel';

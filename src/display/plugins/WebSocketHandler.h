@@ -6,6 +6,7 @@
 #include <display/util/PsramAllocator.h>
 #include <functional>
 #include <map>
+#include <vector>
 
 constexpr size_t STATUS_PERIOD = 500;
 constexpr size_t STATE_RESEND_PERIOD = 10000; // full slow-state resend even without changes
@@ -20,6 +21,7 @@ class WebSocketHandler {
   public:
     using RequestHandler = std::function<void(JsonDocument &request)>;
     using ClientRequestHandler = std::function<void(uint32_t clientId, JsonDocument &request)>;
+    using StatusProvider = std::function<void(JsonDocument &status)>;
 
     WebSocketHandler();
     void setup(Controller *controller, PluginManager *pluginManager);
@@ -36,6 +38,9 @@ class WebSocketHandler {
     void registerRequestHandler(const String &type, ClientRequestHandler handler) {
         pluginRequestHandlers[type] = std::move(handler);
     }
+
+    // Plugin hook: adds fields to every evt:status telemetry frame; runs on the loop task.
+    void registerStatusProvider(StatusProvider provider) { statusProviders.push_back(std::move(provider)); }
 
     // OTA is driven by WebUIPlugin; the two OTA requests are routed back to it.
     void onOtaSettings(RequestHandler handler) { otaSettingsHandler = std::move(handler); }
@@ -61,6 +66,7 @@ class WebSocketHandler {
     RequestHandler otaSettingsHandler;
     RequestHandler otaStartHandler;
     std::map<String, ClientRequestHandler> pluginRequestHandlers;
+    std::vector<StatusProvider> statusProviders;
     std::function<bool()> updateAvailableProvider; // OTA state for the `up` status field
 
     long lastStatus = 0;

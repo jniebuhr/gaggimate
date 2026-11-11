@@ -143,6 +143,9 @@ static const char *object_names[] = {"standby_screen",
                                      "bluetooth_scale_icon",
                                      "flow_prediction_icon",
                                      "weight_label",
+                                     "smart_dose_cup",
+                                     "smart_dose_portafilter",
+                                     "smart_dose_manual",
                                      "profile_info",
                                      "obj6",
                                      "profile_select_button",
@@ -376,6 +379,39 @@ static void event_handler_cb_brew_screen_mode_switch(lv_event_t *e) {
     if (event == LV_EVENT_LONG_PRESSED) {
         e->user_data = (void *)0;
         action_on_volumetric_hold(e);
+    }
+}
+
+static void event_handler_cb_brew_screen_smart_dose_cup(lv_event_t *e) {
+    lv_event_code_t event = lv_event_get_code(e);
+    void *flowState = lv_event_get_user_data(e);
+    (void)flowState;
+
+    if (event == LV_EVENT_CLICKED) {
+        e->user_data = (void *)0;
+        action_on_set_dose(e);
+    }
+}
+
+static void event_handler_cb_brew_screen_smart_dose_portafilter(lv_event_t *e) {
+    lv_event_code_t event = lv_event_get_code(e);
+    void *flowState = lv_event_get_user_data(e);
+    (void)flowState;
+
+    if (event == LV_EVENT_CLICKED) {
+        e->user_data = (void *)0;
+        action_on_set_dose(e);
+    }
+}
+
+static void event_handler_cb_brew_screen_smart_dose_manual(lv_event_t *e) {
+    lv_event_code_t event = lv_event_get_code(e);
+    void *flowState = lv_event_get_user_data(e);
+    (void)flowState;
+
+    if (event == LV_EVENT_CLICKED) {
+        e->user_data = (void *)0;
+        action_on_set_dose(e);
     }
 }
 
@@ -1532,7 +1568,7 @@ void create_screen_brew_screen() {
                             lv_obj_t *obj = lv_obj_create(parent_obj);
                             objects.mode_switch = obj;
                             lv_obj_set_pos(obj, 0, 0);
-                            lv_obj_set_size(obj, 160, 50);
+                            lv_obj_set_size(obj, 180, 50);
                             lv_obj_add_event_cb(obj, event_handler_cb_brew_screen_mode_switch, LV_EVENT_ALL, flowState);
                             lv_obj_clear_flag(obj, LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_CHAIN_HOR |
                                                        LV_OBJ_FLAG_SCROLL_CHAIN_VER | LV_OBJ_FLAG_SCROLL_ELASTIC |
@@ -1589,6 +1625,60 @@ void create_screen_brew_screen() {
                                     lv_obj_set_style_text_font(obj, &lv_font_montserrat_24, LV_PART_MAIN | LV_STATE_DEFAULT);
                                     lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
                                     lv_label_set_text(obj, "");
+                                }
+                                {
+                                    // smartDoseCup
+                                    lv_obj_t *obj = lv_img_create(parent_obj);
+                                    objects.smart_dose_cup = obj;
+                                    lv_obj_set_pos(obj, 0, 0);
+                                    lv_obj_set_size(obj, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+                                    lv_img_set_src(obj, &img_dosing_cup_40x40);
+                                    lv_img_set_size_mode(obj, LV_IMG_SIZE_MODE_REAL);
+                                    lv_obj_add_event_cb(obj, event_handler_cb_brew_screen_smart_dose_cup, LV_EVENT_ALL,
+                                                        flowState);
+                                    lv_obj_add_flag(obj, LV_OBJ_FLAG_CLICKABLE);
+                                    lv_obj_set_style_img_recolor(
+                                        obj, lv_color_hex(theme_colors[eez_flow_get_selected_theme_index()][0]),
+                                        LV_PART_MAIN | LV_STATE_DEFAULT);
+                                    lv_obj_set_style_img_recolor_opa(obj, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+                                    lv_obj_set_style_width(obj, 40, LV_PART_MAIN | LV_STATE_DEFAULT);
+                                    lv_obj_set_style_height(obj, 40, LV_PART_MAIN | LV_STATE_DEFAULT);
+                                }
+                                {
+                                    // smartDosePortafilter
+                                    lv_obj_t *obj = lv_img_create(parent_obj);
+                                    objects.smart_dose_portafilter = obj;
+                                    lv_obj_set_pos(obj, 0, 0);
+                                    lv_obj_set_size(obj, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+                                    lv_img_set_src(obj, &img_portafilter_40x40);
+                                    lv_img_set_size_mode(obj, LV_IMG_SIZE_MODE_REAL);
+                                    lv_obj_add_event_cb(obj, event_handler_cb_brew_screen_smart_dose_portafilter, LV_EVENT_ALL,
+                                                        flowState);
+                                    lv_obj_add_flag(obj, LV_OBJ_FLAG_CLICKABLE);
+                                    lv_obj_set_style_img_recolor(
+                                        obj, lv_color_hex(theme_colors[eez_flow_get_selected_theme_index()][0]),
+                                        LV_PART_MAIN | LV_STATE_DEFAULT);
+                                    lv_obj_set_style_img_recolor_opa(obj, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+                                    lv_obj_set_style_width(obj, 40, LV_PART_MAIN | LV_STATE_DEFAULT);
+                                    lv_obj_set_style_height(obj, 40, LV_PART_MAIN | LV_STATE_DEFAULT);
+                                }
+                                {
+                                    // smartDoseManual
+                                    lv_obj_t *obj = lv_img_create(parent_obj);
+                                    objects.smart_dose_manual = obj;
+                                    lv_obj_set_pos(obj, 0, 0);
+                                    lv_obj_set_size(obj, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+                                    lv_img_set_src(obj, &img_coffee_beans_three_40x40);
+                                    lv_img_set_size_mode(obj, LV_IMG_SIZE_MODE_REAL);
+                                    lv_obj_add_event_cb(obj, event_handler_cb_brew_screen_smart_dose_manual, LV_EVENT_ALL,
+                                                        flowState);
+                                    lv_obj_add_flag(obj, LV_OBJ_FLAG_CLICKABLE);
+                                    lv_obj_set_style_img_recolor(
+                                        obj, lv_color_hex(theme_colors[eez_flow_get_selected_theme_index()][0]),
+                                        LV_PART_MAIN | LV_STATE_DEFAULT);
+                                    lv_obj_set_style_img_recolor_opa(obj, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+                                    lv_obj_set_style_width(obj, 40, LV_PART_MAIN | LV_STATE_DEFAULT);
+                                    lv_obj_set_style_height(obj, 40, LV_PART_MAIN | LV_STATE_DEFAULT);
                                 }
                             }
                         }
@@ -2053,7 +2143,7 @@ void create_screen_brew_screen() {
                     lv_obj_set_style_pad_bottom(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
                     lv_obj_set_style_bg_opa(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
                     lv_obj_set_style_border_width(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-                    create_user_widget_warnings(obj, getFlowState(flowState, 37), 21);
+                    create_user_widget_warnings(obj, getFlowState(flowState, 40), 21);
                     lv_obj_set_style_align(obj, LV_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
                 }
             }
@@ -2144,6 +2234,9 @@ void delete_screen_brew_screen() {
     objects.bluetooth_scale_icon = 0;
     objects.flow_prediction_icon = 0;
     objects.weight_label = 0;
+    objects.smart_dose_cup = 0;
+    objects.smart_dose_portafilter = 0;
+    objects.smart_dose_manual = 0;
     objects.profile_info = 0;
     objects.obj6 = 0;
     objects.profile_select_button = 0;
@@ -2269,6 +2362,71 @@ void tick_screen_brew_screen() {
     }
     {
         bool new_val = evalBooleanProperty(flowState, 10, 3, "Failed to evaluate Hidden flag");
+        bool cur_val = lv_obj_has_flag(objects.smart_dose_cup, LV_OBJ_FLAG_HIDDEN);
+        if (new_val != cur_val) {
+            tick_value_change_obj = objects.smart_dose_cup;
+            if (new_val) {
+                lv_obj_add_flag(objects.smart_dose_cup, LV_OBJ_FLAG_HIDDEN);
+            } else {
+                lv_obj_clear_flag(objects.smart_dose_cup, LV_OBJ_FLAG_HIDDEN);
+            }
+            tick_value_change_obj = NULL;
+        }
+    }
+    {
+        bool new_val = evalBooleanProperty(flowState, 10, 4, "Failed to evaluate Disabled state");
+        bool cur_val = lv_obj_has_state(objects.smart_dose_cup, LV_STATE_DISABLED);
+        if (new_val != cur_val) {
+            tick_value_change_obj = objects.smart_dose_cup;
+            if (new_val) {
+                lv_obj_add_state(objects.smart_dose_cup, LV_STATE_DISABLED);
+            } else {
+                lv_obj_clear_state(objects.smart_dose_cup, LV_STATE_DISABLED);
+            }
+            tick_value_change_obj = NULL;
+        }
+    }
+    {
+        bool new_val = evalBooleanProperty(flowState, 11, 3, "Failed to evaluate Hidden flag");
+        bool cur_val = lv_obj_has_flag(objects.smart_dose_portafilter, LV_OBJ_FLAG_HIDDEN);
+        if (new_val != cur_val) {
+            tick_value_change_obj = objects.smart_dose_portafilter;
+            if (new_val) {
+                lv_obj_add_flag(objects.smart_dose_portafilter, LV_OBJ_FLAG_HIDDEN);
+            } else {
+                lv_obj_clear_flag(objects.smart_dose_portafilter, LV_OBJ_FLAG_HIDDEN);
+            }
+            tick_value_change_obj = NULL;
+        }
+    }
+    {
+        bool new_val = evalBooleanProperty(flowState, 11, 4, "Failed to evaluate Disabled state");
+        bool cur_val = lv_obj_has_state(objects.smart_dose_portafilter, LV_STATE_DISABLED);
+        if (new_val != cur_val) {
+            tick_value_change_obj = objects.smart_dose_portafilter;
+            if (new_val) {
+                lv_obj_add_state(objects.smart_dose_portafilter, LV_STATE_DISABLED);
+            } else {
+                lv_obj_clear_state(objects.smart_dose_portafilter, LV_STATE_DISABLED);
+            }
+            tick_value_change_obj = NULL;
+        }
+    }
+    {
+        bool new_val = evalBooleanProperty(flowState, 12, 3, "Failed to evaluate Hidden flag");
+        bool cur_val = lv_obj_has_flag(objects.smart_dose_manual, LV_OBJ_FLAG_HIDDEN);
+        if (new_val != cur_val) {
+            tick_value_change_obj = objects.smart_dose_manual;
+            if (new_val) {
+                lv_obj_add_flag(objects.smart_dose_manual, LV_OBJ_FLAG_HIDDEN);
+            } else {
+                lv_obj_clear_flag(objects.smart_dose_manual, LV_OBJ_FLAG_HIDDEN);
+            }
+            tick_value_change_obj = NULL;
+        }
+    }
+    {
+        bool new_val = evalBooleanProperty(flowState, 13, 3, "Failed to evaluate Hidden flag");
         bool cur_val = lv_obj_has_flag(objects.profile_info, LV_OBJ_FLAG_HIDDEN);
         if (new_val != cur_val) {
             tick_value_change_obj = objects.profile_info;
@@ -2281,7 +2439,7 @@ void tick_screen_brew_screen() {
         }
     }
     {
-        const char *new_val = evalTextProperty(flowState, 14, 3, "Failed to evaluate Text in Label widget");
+        const char *new_val = evalTextProperty(flowState, 17, 3, "Failed to evaluate Text in Label widget");
         const char *cur_val = lv_label_get_text(objects.profile_name);
         if (strcmp(new_val, cur_val) != 0) {
             tick_value_change_obj = objects.profile_name;
@@ -2290,7 +2448,7 @@ void tick_screen_brew_screen() {
         }
     }
     {
-        bool new_val = evalBooleanProperty(flowState, 16, 3, "Failed to evaluate Hidden flag");
+        bool new_val = evalBooleanProperty(flowState, 19, 3, "Failed to evaluate Hidden flag");
         bool cur_val = lv_obj_has_flag(objects.adjustments, LV_OBJ_FLAG_HIDDEN);
         if (new_val != cur_val) {
             tick_value_change_obj = objects.adjustments;
@@ -2303,7 +2461,7 @@ void tick_screen_brew_screen() {
         }
     }
     {
-        const char *new_val = evalTextProperty(flowState, 18, 3, "Failed to evaluate Text in Label widget");
+        const char *new_val = evalTextProperty(flowState, 21, 3, "Failed to evaluate Text in Label widget");
         const char *cur_val = lv_label_get_text(objects.target_temp);
         if (strcmp(new_val, cur_val) != 0) {
             tick_value_change_obj = objects.target_temp;
@@ -2312,7 +2470,7 @@ void tick_screen_brew_screen() {
         }
     }
     {
-        bool new_val = evalBooleanProperty(flowState, 22, 3, "Failed to evaluate Hidden flag");
+        bool new_val = evalBooleanProperty(flowState, 25, 3, "Failed to evaluate Hidden flag");
         bool cur_val = lv_obj_has_flag(objects.brew_target_time_container, LV_OBJ_FLAG_HIDDEN);
         if (new_val != cur_val) {
             tick_value_change_obj = objects.brew_target_time_container;
@@ -2325,7 +2483,7 @@ void tick_screen_brew_screen() {
         }
     }
     {
-        const char *new_val = evalTextProperty(flowState, 23, 3, "Failed to evaluate Text in Label widget");
+        const char *new_val = evalTextProperty(flowState, 26, 3, "Failed to evaluate Text in Label widget");
         const char *cur_val = lv_label_get_text(objects.target_duration);
         if (strcmp(new_val, cur_val) != 0) {
             tick_value_change_obj = objects.target_duration;
@@ -2334,7 +2492,7 @@ void tick_screen_brew_screen() {
         }
     }
     {
-        bool new_val = evalBooleanProperty(flowState, 27, 3, "Failed to evaluate Hidden flag");
+        bool new_val = evalBooleanProperty(flowState, 30, 3, "Failed to evaluate Hidden flag");
         bool cur_val = lv_obj_has_flag(objects.brew_target_weight_container, LV_OBJ_FLAG_HIDDEN);
         if (new_val != cur_val) {
             tick_value_change_obj = objects.brew_target_weight_container;
@@ -2347,7 +2505,7 @@ void tick_screen_brew_screen() {
         }
     }
     {
-        const char *new_val = evalTextProperty(flowState, 28, 3, "Failed to evaluate Text in Label widget");
+        const char *new_val = evalTextProperty(flowState, 31, 3, "Failed to evaluate Text in Label widget");
         const char *cur_val = lv_label_get_text(objects.target_weight_1);
         if (strcmp(new_val, cur_val) != 0) {
             tick_value_change_obj = objects.target_weight_1;
@@ -2356,7 +2514,7 @@ void tick_screen_brew_screen() {
         }
     }
     {
-        bool new_val = evalBooleanProperty(flowState, 33, 3, "Failed to evaluate Hidden flag");
+        bool new_val = evalBooleanProperty(flowState, 36, 3, "Failed to evaluate Hidden flag");
         bool cur_val = lv_obj_has_flag(objects.obj12, LV_OBJ_FLAG_HIDDEN);
         if (new_val != cur_val) {
             tick_value_change_obj = objects.obj12;
@@ -2369,7 +2527,7 @@ void tick_screen_brew_screen() {
         }
     }
     {
-        bool new_val = evalBooleanProperty(flowState, 34, 3, "Failed to evaluate Disabled state");
+        bool new_val = evalBooleanProperty(flowState, 37, 3, "Failed to evaluate Disabled state");
         bool cur_val = lv_obj_has_state(objects.save_button, LV_STATE_DISABLED);
         if (new_val != cur_val) {
             tick_value_change_obj = objects.save_button;
@@ -2382,7 +2540,7 @@ void tick_screen_brew_screen() {
         }
     }
     {
-        bool new_val = evalBooleanProperty(flowState, 36, 3, "Failed to evaluate Disabled state");
+        bool new_val = evalBooleanProperty(flowState, 39, 3, "Failed to evaluate Disabled state");
         bool cur_val = lv_obj_has_state(objects.save_as_new_button, LV_STATE_DISABLED);
         if (new_val != cur_val) {
             tick_value_change_obj = objects.save_as_new_button;
@@ -2394,9 +2552,9 @@ void tick_screen_brew_screen() {
             tick_value_change_obj = NULL;
         }
     }
-    tick_user_widget_warnings(getFlowState(flowState, 37), 21);
+    tick_user_widget_warnings(getFlowState(flowState, 40), 21);
     {
-        bool new_val = evalBooleanProperty(flowState, 38, 3, "Failed to evaluate Hidden flag");
+        bool new_val = evalBooleanProperty(flowState, 41, 3, "Failed to evaluate Hidden flag");
         bool cur_val = lv_obj_has_flag(objects.confirm_dialog, LV_OBJ_FLAG_HIDDEN);
         if (new_val != cur_val) {
             tick_value_change_obj = objects.confirm_dialog;
@@ -2409,7 +2567,7 @@ void tick_screen_brew_screen() {
         }
     }
     {
-        const char *new_val = evalTextProperty(flowState, 40, 3, "Failed to evaluate Text in Label widget");
+        const char *new_val = evalTextProperty(flowState, 43, 3, "Failed to evaluate Text in Label widget");
         const char *cur_val = lv_label_get_text(objects.obj11);
         if (strcmp(new_val, cur_val) != 0) {
             tick_value_change_obj = objects.obj11;
@@ -7398,6 +7556,15 @@ void change_color_theme(uint32_t theme_index) {
         if (objects.weight_label)
             lv_obj_set_style_text_color(objects.weight_label, lv_color_hex(theme_colors[theme_index][0]),
                                         LV_PART_MAIN | LV_STATE_DEFAULT);
+        if (objects.smart_dose_cup)
+            lv_obj_set_style_img_recolor(objects.smart_dose_cup, lv_color_hex(theme_colors[theme_index][0]),
+                                         LV_PART_MAIN | LV_STATE_DEFAULT);
+        if (objects.smart_dose_portafilter)
+            lv_obj_set_style_img_recolor(objects.smart_dose_portafilter, lv_color_hex(theme_colors[theme_index][0]),
+                                         LV_PART_MAIN | LV_STATE_DEFAULT);
+        if (objects.smart_dose_manual)
+            lv_obj_set_style_img_recolor(objects.smart_dose_manual, lv_color_hex(theme_colors[theme_index][0]),
+                                         LV_PART_MAIN | LV_STATE_DEFAULT);
         if (objects.obj6)
             lv_obj_set_style_text_color(objects.obj6, lv_color_hex(theme_colors[theme_index][0]),
                                         LV_PART_MAIN | LV_STATE_DEFAULT);

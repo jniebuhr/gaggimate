@@ -1,3 +1,4 @@
+import SmartDoseControl from '../components/SmartDoseControl.jsx';
 import { ModeCard } from '../pages/Home/cards/ModeCard.jsx';
 import { ProfileCard } from '../pages/Home/cards/ProfileCard.jsx';
 import { FavoriteProfilesCard } from '../pages/Home/cards/FavoriteProfilesCard.jsx';
@@ -89,6 +90,15 @@ export const PANEL_DEFINITIONS = [
     available: () => true,
     component: MetricsPanelWrapper,
     props: ds => ({ ds }),
+  },
+  {
+    id: 'dose',
+    label: 'Smart Dosing',
+    required: false,
+    available: ds => !!ds.smartDose?.enabled,
+    availableInSettings: status => !!status.smartDose?.enabled,
+    component: SmartDoseControl,
+    props: ds => ({ dose: ds.smartDose }),
   },
   {
     id: 'watertank',

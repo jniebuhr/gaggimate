@@ -8,7 +8,7 @@ export function parseProfile(input) {
       profiles = [profiles];
     }
     return profiles;
-  } catch (ignored) {
+  } catch {
     const result = TclConverter.toGaggiMate(input);
     if (result.ok) {
       return [result.json];

@@ -20,6 +20,7 @@
 #include <display/plugins/CleaningSchedulePlugin.h>
 #include <display/plugins/LedControlPlugin.h>
 #include <display/plugins/ShotHistoryPlugin.h>
+#include <display/plugins/SmartDosePlugin.h>
 #include <display/plugins/SmartGrindPlugin.h>
 #include <display/plugins/WebUIPlugin.h>
 #include <display/plugins/mahlkonig/MahlkonigPlugin.h>
@@ -117,6 +118,9 @@ void Controller::setup() {
 #ifndef GAGGIMATE_SIM
     pluginManager->registerPlugin(&BLEScales);
 #endif
+    if (settings.isSmartDoseActive()) {
+        pluginManager->registerPlugin(&SmartDose);
+    }
     pluginManager->registerPlugin(new LedControlPlugin());
     pluginManager->registerPlugin(new AutoWakeupPlugin());
     pluginManager->registerPlugin(new CleaningSchedulePlugin());
@@ -496,7 +500,8 @@ void Controller::setupWifi() {
                          info.wifi_sta_authmode_change.new_mode);
             },
             WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_AUTHMODE_CHANGE);
-
+        WiFi.setScanMethod(WIFI_ALL_CHANNEL_SCAN);
+        WiFi.setSortMethod(WIFI_CONNECT_AP_BY_SIGNAL);
         WiFi.begin(settings.getWifiSsid(), settings.getWifiPassword());
         WiFi.setTxPower(WIFI_POWER_19_5dBm);
         for (int attempts = 0; attempts < WIFI_CONNECT_ATTEMPTS; attempts++) {
@@ -1144,6 +1149,10 @@ void Controller::activate(bool ignoreWarnings) {
     // previously its Start action ran against a half-initialized BLE session.
     if (isActive() || !loaded || !comms.isConnected() || !isReady())
         return;
+    if (mode == MODE_BREW && profileManager->getSelectedProfile().phases.empty()) {
+        ESP_LOGW(LOG_TAG, "Brew requested but profile id %s has no phases", profileManager->getSelectedProfile().id.c_str());
+        return;
+    }
     // An error-level warning turns the start into a confirmation request; the UIs answer with activate(true).
     if (mode == MODE_BREW && !ignoreWarnings && warnings.hasError()) {
         pluginManager->trigger("controller:brew:confirm");
@@ -1664,6 +1673,14 @@ void Controller::handleBrewButton(bool pressed) {
         break;
     case MODE_BREW:
         if (!isActive()) {
+#ifndef GAGGIMATE_HEADLESS
+            // Match the warning screen's Ignore action: a second momentary brew
+            // switch activation confirms the brew with activate(true).
+            if (settings.isMomentaryButtons() && ui != nullptr && ui->isBrewConfirmVisible()) {
+                activate(true);
+                break;
+            }
+#endif
             activate();
         } else if (settings.isMomentaryButtons()) { // second press stops the shot
             deactivate();
@@ -1770,8 +1787,7 @@ void Controller::handleProfileButton(bool pressed, const String &id) {
         return;
     }
     std::vector<String> profileIds = profileManager->listProfiles();
-    if (std::find(profileIds.begin(), profileIds.end(), id) != profileIds.end()) {
-        profileManager->selectProfile(id);
+    if (std::find(profileIds.begin(), profileIds.end(), id) != profileIds.end() && profileManager->selectProfile(id)) {
         activate();
     }
 }

@@ -189,6 +189,20 @@
         "defaultValue": "{}",
         "persistent": false,
         "native": false
+      },
+      {
+        "objID": "1c370b9a-39d8-45a3-b456-228135f94f36",
+        "name": "set_dose_available",
+        "type": "boolean",
+        "defaultValue": "false",
+        "persistent": false
+      },
+      {
+        "objID": "0d18a1a5-a4a3-4daf-93a7-1a2bb744ea84",
+        "name": "set_dose_state",
+        "type": "integer",
+        "defaultValue": "0",
+        "persistent": false
       }
     ],
     "structures": [
@@ -1026,6 +1040,16 @@
       "userProperties": [],
       "name": "onProfileDetailToggle",
       "implementationType": "native"
+    },
+    {
+      "objID": "376e4297-e4ab-43ca-e4bc-9116b64332b6",
+      "components": [],
+      "connectionLines": [],
+      "localVariables": [],
+      "componentGroups": [],
+      "userProperties": [],
+      "name": "onSetDose",
+      "implementationType": "native"
     }
   ],
   "userPages": [
@@ -1830,7 +1854,7 @@
                       "type": "LVGLPanelWidget",
                       "left": 0,
                       "top": 0,
-                      "width": 160,
+                      "width": 180,
                       "height": 50,
                       "customInputs": [],
                       "customOutputs": [],
@@ -2036,6 +2060,213 @@
                           "recolor": false,
                           "previewValue": "12.4g",
                           "useStaticText": true
+                        },
+                        {
+                          "objID": "cd914115-606f-4be0-b3f7-c55e9f7e6a28",
+                          "type": "LVGLImageWidget",
+                          "left": 0,
+                          "top": 0,
+                          "width": 40,
+                          "height": 40,
+                          "customInputs": [],
+                          "customOutputs": [],
+                          "style": {
+                            "objID": "b6efed9f-c482-47fb-f2bb-581e7af901fe",
+                            "useStyle": "default",
+                            "conditionalStyles": [],
+                            "childStyles": []
+                          },
+                          "hiddenInEditor": true,
+                          "timeline": [],
+                          "eventHandlers": [
+                            {
+                              "objID": "1ab7daf2-3d9f-4c3e-b801-1af6617904f7",
+                              "eventName": "CLICKED",
+                              "handlerType": "action",
+                              "action": "onSetDose",
+                              "userData": 0
+                            }
+                          ],
+                          "identifier": "smartDoseCup",
+                          "leftUnit": "px",
+                          "topUnit": "px",
+                          "widthUnit": "content",
+                          "heightUnit": "content",
+                          "children": [],
+                          "widgetFlags": "ADV_HITTEST|CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLLABLE|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_WITH_ARROW|SNAPPABLE",
+                          "hiddenFlag": "set_dose_state != 1",
+                          "hiddenFlagType": "expression",
+                          "clickableFlag": true,
+                          "clickableFlagType": "literal",
+                          "flagScrollbarMode": "",
+                          "flagScrollDirection": "",
+                          "scrollSnapX": "",
+                          "scrollSnapY": "",
+                          "checkedStateType": "literal",
+                          "disabledState": "!set_dose_available",
+                          "disabledStateType": "expression",
+                          "states": "",
+                          "localStyles": {
+                            "objID": "4a5c316b-1014-4e6e-9723-2d6cddb5d032",
+                            "definition": {
+                              "MAIN": {
+                                "DEFAULT": {
+                                  "img_recolor": "NiceWhite",
+                                  "img_recolor_opa": 255,
+                                  "width": 40,
+                                  "height": 40
+                                }
+                              }
+                            }
+                          },
+                          "group": "",
+                          "groupIndex": 0,
+                          "image": "dosing_cup_40x40",
+                          "setPivot": false,
+                          "pivotX": 0,
+                          "pivotY": 0,
+                          "zoom": 256,
+                          "angle": 0,
+                          "innerAlign": "CENTER",
+                          "sizeMode": "REAL"
+                        },
+                        {
+                          "objID": "c3a8d768-67a6-4224-baee-9e51ce9bdeb3",
+                          "type": "LVGLImageWidget",
+                          "left": 0,
+                          "top": 0,
+                          "width": 40,
+                          "height": 40,
+                          "customInputs": [],
+                          "customOutputs": [],
+                          "style": {
+                            "objID": "ba2d0605-110c-4989-beb8-302dfe4aae64",
+                            "useStyle": "default",
+                            "conditionalStyles": [],
+                            "childStyles": []
+                          },
+                          "hiddenInEditor": true,
+                          "timeline": [],
+                          "eventHandlers": [
+                            {
+                              "objID": "d5517f17-5d26-4b82-f6d9-d0fcf56c2143",
+                              "eventName": "CLICKED",
+                              "handlerType": "action",
+                              "action": "onSetDose",
+                              "userData": 0
+                            }
+                          ],
+                          "identifier": "smartDosePortafilter",
+                          "leftUnit": "px",
+                          "topUnit": "px",
+                          "widthUnit": "content",
+                          "heightUnit": "content",
+                          "children": [],
+                          "widgetFlags": "ADV_HITTEST|CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLLABLE|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_WITH_ARROW|SNAPPABLE",
+                          "hiddenFlag": "set_dose_state != 3",
+                          "hiddenFlagType": "expression",
+                          "clickableFlag": true,
+                          "clickableFlagType": "literal",
+                          "flagScrollbarMode": "",
+                          "flagScrollDirection": "",
+                          "scrollSnapX": "",
+                          "scrollSnapY": "",
+                          "checkedStateType": "literal",
+                          "disabledState": "!set_dose_available",
+                          "disabledStateType": "expression",
+                          "states": "",
+                          "localStyles": {
+                            "objID": "1380e35c-1d33-4a30-9006-50bf804c13c6",
+                            "definition": {
+                              "MAIN": {
+                                "DEFAULT": {
+                                  "img_recolor": "NiceWhite",
+                                  "img_recolor_opa": 255,
+                                  "width": 40,
+                                  "height": 40
+                                }
+                              }
+                            }
+                          },
+                          "group": "",
+                          "groupIndex": 0,
+                          "image": "portafilter_40x40",
+                          "setPivot": false,
+                          "pivotX": 0,
+                          "pivotY": 0,
+                          "zoom": 256,
+                          "angle": 0,
+                          "innerAlign": "CENTER",
+                          "sizeMode": "REAL"
+                        },
+                        {
+                          "objID": "c78387a4-1e9e-4922-8f76-17223c2fa112",
+                          "type": "LVGLImageWidget",
+                          "left": 0,
+                          "top": 0,
+                          "width": 40,
+                          "height": 40,
+                          "customInputs": [],
+                          "customOutputs": [],
+                          "style": {
+                            "objID": "829e08d8-abab-4a4e-999a-35822c9786d8",
+                            "useStyle": "default",
+                            "conditionalStyles": [],
+                            "childStyles": []
+                          },
+                          "hiddenInEditor": false,
+                          "timeline": [],
+                          "eventHandlers": [
+                            {
+                              "objID": "e7668c78-f0fe-4d23-e6ed-8bdd42696102",
+                              "eventName": "CLICKED",
+                              "handlerType": "action",
+                              "action": "onSetDose",
+                              "userData": 0
+                            }
+                          ],
+                          "identifier": "smartDoseManual",
+                          "leftUnit": "px",
+                          "topUnit": "px",
+                          "widthUnit": "content",
+                          "heightUnit": "content",
+                          "children": [],
+                          "widgetFlags": "ADV_HITTEST|CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLLABLE|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_WITH_ARROW|SNAPPABLE",
+                          "hiddenFlag": "set_dose_state != 2",
+                          "hiddenFlagType": "expression",
+                          "clickableFlag": true,
+                          "clickableFlagType": "literal",
+                          "flagScrollbarMode": "",
+                          "flagScrollDirection": "",
+                          "scrollSnapX": "",
+                          "scrollSnapY": "",
+                          "checkedStateType": "literal",
+                          "disabledState": "",
+                          "disabledStateType": "literal",
+                          "states": "",
+                          "localStyles": {
+                            "objID": "5e04b2d7-3312-4146-9d89-c7178cf8159a",
+                            "definition": {
+                              "MAIN": {
+                                "DEFAULT": {
+                                  "img_recolor": "NiceWhite",
+                                  "img_recolor_opa": 255,
+                                  "width": 40,
+                                  "height": 40
+                                }
+                              }
+                            }
+                          },
+                          "group": "",
+                          "groupIndex": 0,
+                          "image": "coffee_beans_three_40x40",
+                          "setPivot": false,
+                          "pivotX": 0,
+                          "pivotY": 0,
+                          "zoom": 256,
+                          "angle": 0,
+                          "innerAlign": "CENTER",
+                          "sizeMode": "REAL"
                         }
                       ],
                       "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
@@ -15727,6 +15958,33 @@
       "name": "broom",
       "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAACXBIWXMAAAxNAAAMTQHSzq1OAAAAGXRFWHRTb2Z0d2FyZQB3d3cuaW5rc2NhcGUub3Jnm+48GgAAAUlJREFUOI29079LHEEYxvHPJeeRRItYXW4hplXSBEMasbNKH7v8EynyB9hpJTbC1XangRxiUiSxELVMlUNSWijEQsQmBH+cxc7Cuu7tLnjkgZdhhnm+PO/wDkPWwyEwnmARr7B3X9hjfEc/1PN6RWML84jwC11chHUu3PmKoyqwEfxMpejjGLup/beQtlBvsYw6muhloEntYLQI9Bo/UoaNkDLC7xzgm0GgWWziOsdUBP2cB+sOaCdd66H9LPQvHqRhLyrAkuq4+6b/sunGwmFiukI7JFktgCZJc4e5LZ6rDqbDWYT9kqQRZvKArdA6PMJHnFdsf6AaWMBJxnjm9vdK14ciICxlDIeYQg2nOcCXZcAa1sLlL3gmHomVHNhWGSxRA+8C/Kl4qLOwP5ioCkw0joMcWA+Tg0y1EmgT78VvdYltfBKP2P/RDU5wk9wt+kSvAAAAAElFTkSuQmCC",
       "bpp": 4,
+      "alwaysBuild": false,
+      "lvglBinaryOutputFormat": 3,
+      "lvglDither": false
+    },
+    {
+      "objID": "c82e636e-bcb9-4976-a2ff-309ff202e16a",
+      "name": "dosing_cup_40x40",
+      "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDQwIDQwIiBmaWxsPSJub25lIj4KICA8dGl0bGU+RXNwcmVzc28gZG9zaW5nIGN1cDwvdGl0bGU+CiAgPHBhdGggZD0iTTUgMTEuNUM1IDcuOSAxMS43IDUgMjAgNXMxNSAyLjkgMTUgNi41LTYuNyA2LjUtMTUgNi41UzUgMTUuMSA1IDExLjVaIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMi44Ii8+CiAgPGVsbGlwc2UgY3g9IjIwIiBjeT0iMTEuNSIgcng9IjEwLjgiIHJ5PSIzLjQiIGZpbGw9IiMwMDAiLz4KICA8cGF0aCBkPSJNNS41IDE0LjUgOS4yIDMxYy43IDMgNS4yIDQuNSAxMC44IDQuNXMxMC4xLTEuNSAxMC44LTQuNWwzLjctMTYuNWMtMy4yIDMuMS04LjcgNS4xLTE0LjUgNS4xUzguNyAxNy42IDUuNSAxNC41WiIgZmlsbD0iIzAwMCIvPgogIDxwYXRoIGQ9Ik04IDIzLjNjNi45IDMuNSAxNy4xIDMuNSAyNCAwIiBzdHJva2U9IiNmZmYiIHN0cm9rZS13aWR0aD0iMS42IiBvcGFjaXR5PSIwIi8+Cjwvc3ZnPgo=",
+      "bpp": 44,
+      "alwaysBuild": false,
+      "lvglBinaryOutputFormat": 3,
+      "lvglDither": false
+    },
+    {
+      "objID": "40481e44-2ced-4493-b861-0eedd02d457b",
+      "name": "portafilter_40x40",
+      "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDQwIDQwIj4KICA8ZyBmaWxsPSIjMDAwMDAwIj4KICAgIDxwYXRoIGQ9Ik0zIDEyaDE3djNIM3oiLz4KICAgIDxwYXRoIGQ9Ik01IDE1aDEzbC0xLjUgOEg2LjV6Ii8+CiAgICA8cGF0aCBkPSJNMTAgMjNoNGwtMSA1aC0yeiIvPgogICAgPHBhdGggZD0iTTE4IDE2aDR2NWgtNHoiLz4KICAgIDxwYXRoIGQ9Ik0yMSAxNi41aDE0YTMgMyAwIDAgMSAwIDZIMjF6Ii8+CiAgICA8cGF0aCBkPSJNMiAxNGgzdjNIMnpNMTggMTRoM3YzaC0zeiIvPgogIDwvZz4KPC9zdmc+Cg==",
+      "bpp": 4,
+      "alwaysBuild": false,
+      "lvglBinaryOutputFormat": 3,
+      "lvglDither": false
+    },
+    {
+      "objID": "98f6ce99-76fd-4d98-f632-555bfd301cf0",
+      "name": "coffee_beans_three_40x40",
+      "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDQwIDQwIj4KICA8cGF0aCBmaWxsPSIjMDAwIiBkPSJNIDE2LjMzNyA0LjY3NyBMIDE1LjgxNiA0LjUxMSBMIDE0Ljk1OCA0LjQ3OCBMIDEzLjY3IDQuNzEgTCAxMS45NTQgNS40MDYgTCAxMC45MTIgNi4wMzYgTCA5LjUzMyA3LjA5OCBMIDcuODc3IDguNzIzIEwgNi41NTkgMTAuMzE1IEwgNS4xMTkgMTIuNTA0IEwgNC41MzYgMTMuNTY2IEwgMy44MzEgMTUuMDkxIEwgMy40MzMgMTYuMTUzIEwgMi45NDMgMTcuODQ0IEwgMi42MzYgMTkuODY3IEwgMi42OTcgMjEuNDkzIEwgMy4wNjUgMjMuMTE4IEwgMy41NTYgMjQuMjQ1IEwgMy44NjIgMjQuNzEgTCA0LjMyMiAyNS4xNzQgTCA0LjcyIDI1LjI3NCBMIDUuNTc5IDI0Ljc0MyBMIDYuNDM3IDIzLjg0NyBMIDcuMjM0IDIyLjY4NyBMIDcuNjMyIDIxLjk1NyBMIDggMjEuMDYxIEwgOS4xMDMgMTcuMTE0IEwgOS43MTYgMTUuNTg5IEwgMTAuNTQ0IDE0LjIyOSBMIDExLjM0MSAxMy4zNjcgTCAxMi44NzQgMTEuOTczIEwgMTMuNTc5IDExLjIxMSBMIDE0LjQzNyAxMC4wMTcgTCAxNS41NCA3LjkyNyBMIDE2LjQyOSA1LjkzNyBMIDE2LjU1MiA1LjQ3MyBMIDE2LjU1MiA0Ljk3NSBaIi8+CiAgPHBhdGggZmlsbD0iIzAwMCIgZD0iTSAxOC40ODMgNS44MzcgTCAxOC4wNTQgNS42MDUgTCAxNy44MzkgNS42MzggTCAxNy42NTUgNS44MDQgTCAxNy4yODcgNy41NjIgTCAxNy4wMTEgOC40MjUgTCAxNi4zNjggOS44MTggTCAxNS41NCAxMS4wNzggTCAxNC4xOTIgMTIuNTcgTCAxMi4zODMgMTQuMTI5IEwgMTEuODYyIDE0LjY5MyBMIDExLjM0MSAxNS40MjMgTCAxMC44ODEgMTYuMzE4IEwgMTAuNDgzIDE3LjQxMyBMIDkuNDQxIDIxLjIyNyBMIDguODg5IDIyLjU1NCBMIDguMDkyIDIzLjgxNCBMIDcuMjk1IDI0LjY3NyBMIDUuNDg3IDI2LjEzNiBMIDUuNDU2IDI2LjM2OCBMIDUuOTE2IDI2Ljc5OSBMIDYuNTU5IDI3LjA5OCBMIDcuNjMyIDI3LjMzIEwgOC43OTcgMjcuMzMgTCA5LjUzMyAyNy4xNjQgTCA5Ljc0NyAyNi44OTkgTCA5LjgwOCAyNi4wMDMgTCA5Ljk2MiAyNS4yNzQgTCAxMC42MDUgMjMuNTgyIEwgMTEuMzEgMjIuNTIxIEwgMTIuMTM4IDIxLjY1OCBMIDEzLjIxMSAyMC44NjIgTCAxNS4wOCAxOS45IEwgMTYuNzA1IDE5LjMzNyBMIDE3LjgwOCAxOS4wNzEgTCAxOC45NDMgMTguOTA1IEwgMTkuMjQ5IDE4LjY0IEwgMjAuMTk5IDE2Ljc4MyBMIDIwLjc4MiAxNS4yNTcgTCAyMS4xMTkgMTMuNjMyIEwgMjEuMTggMTEuODA4IEwgMjAuOTA0IDkuOTE3IEwgMjAuNTA2IDguNjI0IEwgMjAuMDE1IDcuNTk1IEwgMTkuNTg2IDYuOTMyIEwgMTguOTczIDYuMjM1IFoiLz4KICA8cGF0aCBmaWxsPSIjMDAwIiBkPSJNIDM1Ljk4NSAxMS4wNDUgTCAzNS40MDIgMTAuNTE0IEwgMzQuNDgzIDEwLjA1IEwgMzMuNDQxIDkuNzg0IEwgMzIuMjE1IDkuNzE4IEwgMzEuMTcyIDkuODUxIEwgMjkuNzkzIDEwLjIxNiBMIDI4LjU5OCAxMC42NDcgTCAyNy4yMTggMTEuMjc3IEwgMjUuODA4IDEyLjA3MyBMIDI0LjUyMSAxMi45NjggTCAyMi44MDUgMTQuNTI3IEwgMjEuOTQ2IDE1LjUyMiBMIDIxLjE4IDE2LjY1IEwgMjAuNDQ0IDE4LjEwOSBMIDIwLjI5MSAxOC41NzQgTCAyMC4zMjIgMTguNzA2IEwgMjAuNTA2IDE4Ljg3MiBMIDIxLjg4NSAxOC45MzkgTCAyMy4yMzQgMTkuMTcxIEwgMjQuNjQ0IDE5LjU2OSBMIDI1Ljk5MiAyMC4xMzMgTCAyNi4yOTkgMjAuMTMzIEwgMjcuMTI2IDE5LjYwMiBMIDI3Ljg2MiAxOC45NzIgTCAyOC44MTIgMTcuOTQ0IEwgMzEuMDggMTQuOTkyIEwgMzEuOTM5IDE0LjA5NiBMIDMyLjg4OSAxMy4yNjcgTCAzMy44MzkgMTIuNTcgTCAzNS44NjIgMTEuNDQzIEwgMzUuOTg1IDExLjMxIFoiLz4KICA8cGF0aCBmaWxsPSIjMDAwIiBkPSJNIDM2Ljk2NiAxMi4zMDUgTCAzNi4zODMgMTIuNDA1IEwgMzUuNjE3IDEyLjgwMyBMIDM0LjExNSAxMy45MyBMIDMyLjU1MiAxNS42MjIgTCAzMC43NzQgMTguMDc2IEwgMjkuODI0IDE5LjE3MSBMIDI4LjU5OCAyMC4xOTkgTCAyNy4zMSAyMC45MjkgTCAyNy4zMSAyMS4wNjEgTCAyOC4yOTEgMjEuNjkyIEwgMjkuMjQxIDIyLjQ1NCBMIDMwLjI4NCAyMy41NDkgTCAzMS4wMTkgMjQuNTQ0IEwgMzEuNjYzIDI1Ljc3MSBMIDMxLjgxNiAyNS45MzcgTCAzMi4wOTIgMjUuOTM3IEwgMzMuMzQ5IDI1LjEwOCBMIDM0LjIwNyAyNC4zNDUgTCAzNS4wOTYgMjMuNDE2IEwgMzYuMDE1IDIyLjI1NSBMIDM2Ljc1MSAyMS4xMjggTCAzNy42NCAxOS4yMDQgTCAzNy45MTYgMTguMzA4IEwgMzguMSAxNy4zNDcgTCAzOC4xNjEgMTUuNTg5IEwgMzguMDA4IDE0LjUyNyBMIDM3LjczMiAxMy41OTkgTCAzNy4zMzMgMTIuNzAzIFoiLz4KICA8cGF0aCBmaWxsPSIjMDAwIiBkPSJNIDEyLjA3NyAyMy41NDkgTCAxMi4wNzcgMjMuNzE1IEwgMTIuMjMgMjMuODgxIEwgMTQuNTU5IDIzLjk4IEwgMTUuNDc5IDI0LjE0NiBMIDE2LjcwNSAyNC41MTEgTCAxOC42NjcgMjUuNDM5IEwgMjEuMjExIDI3LjE5NyBMIDIyLjI4NCAyNy43OTQgTCAyNC4wMzEgMjguNDI1IEwgMjYuOTQzIDI5LjEyMSBMIDI4LjQ3NSAyOS42MTkgTCAyOS42NCAzMC4yODIgTCAzMC44MzUgMzEuMzc2IEwgMzEuMTExIDMxLjM0MyBMIDMxLjM1NiAzMC45MTIgTCAzMS41NzEgMjkuODg0IEwgMzEuNTQgMjguNDI1IEwgMzEuMTQyIDI2Ljg5OSBMIDMwLjM0NSAyNS4zMDcgTCAyOS41NzkgMjQuMjc5IEwgMjguODQzIDIzLjQ4MyBMIDI3Ljk1NCAyMi42ODcgTCAyNi4zOTEgMjEuNjI1IEwgMjQuNjEzIDIwLjc5NiBMIDIyLjc3NCAyMC4yMzIgTCAyMC42NTkgMTkuODM0IEwgMTguODIgMTkuODAxIEwgMTcuNTAyIDIwIEwgMTUuNzI0IDIwLjU2NCBMIDE0LjEzIDIxLjQyNiBMIDEzLjExOSAyMi4yMjIgTCAxMi40NzUgMjIuOTE5IFoiLz4KICA8cGF0aCBmaWxsPSIjMDAwIiBkPSJNIDEwLjg1MSAyNS45MDQgTCAxMC42OTcgMjcuMjk3IEwgMTAuOTEyIDI4LjY5IEwgMTEuNTI1IDMwLjM0OCBMIDEyLjM1MiAzMS43NDEgTCAxMy42NCAzMy4yNjcgTCAxNC44OTcgMzQuMzI4IEwgMTYuMzM3IDM1LjIyNCBMIDE4LjA4NCAzNS45NTQgTCAxOS43MzkgMzYuMzUyIEwgMjEuMDU3IDM2LjQ4NCBMIDIyLjQ2NyAzNi40ODQgTCAyMy41NzEgMzYuMzg1IEwgMjUuNzE2IDM1Ljk1NCBMIDI3LjQwMiAzNS4zMjMgTCAyOC42MjggMzQuNjI3IEwgMjkuMjQxIDM0LjEyOSBMIDI5Ljc2MiAzMy41NjYgTCAzMC4zMTQgMzIuNjcgTCAzMC4xOTIgMzIuMjcyIEwgMjkuNDI1IDMxLjUwOSBMIDI4LjUwNiAzMS4wMTIgTCAyNi45MTIgMzAuNTQ3IEwgMjMuMjk1IDI5Ljk1IEwgMjIuMDM4IDI5LjU1MiBMIDIwLjUzNiAyOC43ODkgTCAxNy43NDcgMjYuODY2IEwgMTYuNjQ0IDI2LjI2OSBMIDE0LjgzNSAyNS41MzkgTCAxMy4zMDMgMjUuMTQxIEwgMTIuMjkxIDI1LjAwOCBMIDExLjQ5NCAyNS4wMDggTCAxMS4xMjYgMjUuMjQgWiIvPgo8L3N2Zz4K",
+      "bpp": 32,
       "alwaysBuild": false,
       "lvglBinaryOutputFormat": 3,
       "lvglDither": false

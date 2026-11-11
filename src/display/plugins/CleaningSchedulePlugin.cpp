@@ -90,7 +90,10 @@ bool CleaningSchedulePlugin::startCleaning(const char *profileId) {
     if (controller->isActive())
         return false;
     ESP_LOGI("CleaningSchedulePlugin", "Starting cleaning profile %s", profileId);
-    controller->getProfileManager()->selectProfile(profileId);
+    if (!controller->getProfileManager()->selectProfile(profileId)) {
+        ESP_LOGW("CleaningSchedulePlugin", "Cleaning profile %s could not be selected", profileId);
+        return false;
+    }
     controller->setMode(MODE_BREW);
     controller->activate();
     return true;

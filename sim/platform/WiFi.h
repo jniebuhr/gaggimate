@@ -35,6 +35,16 @@ typedef enum {
 } WiFiEvent_t;
 typedef WiFiEvent_t arduino_event_id_t;
 
+typedef enum {
+    WIFI_FAST_SCAN = 0,
+    WIFI_ALL_CHANNEL_SCAN,
+} wifi_scan_method_t;
+
+typedef enum {
+    WIFI_CONNECT_AP_BY_SIGNAL = 0,
+    WIFI_CONNECT_AP_BY_SECURITY,
+} wifi_sort_method_t;
+
 // Subset of the ESP-IDF event-info union accessed by the firmware.
 struct sim_ip4 {
     uint32_t addr;
@@ -93,6 +103,8 @@ class WiFiClass {
         return true;
     }
     bool begin(const String &ssid, const String &pass) { return begin(ssid.c_str(), pass.c_str()); }
+    void setScanMethod(wifi_scan_method_t) {}
+    void setSortMethod(wifi_sort_method_t) {}
     void setTxPower(wifi_power_t) {}
     wl_status_t status() { return _status; }
     IPAddress localIP() { return _ip; }

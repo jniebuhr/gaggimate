@@ -90,6 +90,11 @@ export function StandardProfileForm(props) {
                 />
               </div>
             ))}
+            {phases.length === 0 && (
+              <p className='text-base-content/60 text-sm'>
+                <Trans>No phases yet. Add a phase to configure brewing.</Trans>
+              </p>
+            )}
             <div className='flex flex-row justify-center pt-4'>
               <button
                 type='button'
@@ -115,7 +120,7 @@ export function StandardProfileForm(props) {
           <button
             type='submit'
             className='btn btn-primary gap-2'
-            disabled={saving}
+            disabled={saving || phases.length === 0}
             aria-label={saving ? t`Saving profile...` : t`Save profile`}
           >
             <span>
@@ -151,7 +156,7 @@ function Phase({ phase, index, onChange, onRemove, pressureAvailable }) {
       targets: [
         {
           type: 'volumetric',
-          value: value,
+          value,
         },
       ],
     });
