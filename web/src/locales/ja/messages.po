@@ -1070,6 +1070,10 @@ msgstr "キャリブレーションプロファイルを削除できませんで
 msgid "Could not import {importName}: {importMessage}"
 msgstr "{importName} をインポートできませんでした: {importMessage}"
 
+#: src/pages/Settings/PatchNotes.jsx
+msgid "Could not load patchnotes"
+msgstr ""
+
 #: src/pages/ProfileEdit/ProfileImageUpload.jsx
 msgid "Could not read this image."
 msgstr "この画像を読み込めませんでした。"
@@ -2356,6 +2360,10 @@ msgstr "ショットまたはプロファイルをインポート中"
 msgid "Include legend"
 msgstr "凡例を含める"
 
+#: src/pages/Settings/PatchNotes.jsx
+msgid "Included in the next update"
+msgstr ""
+
 #: src/pages/ShotHistory/HistoryCard.jsx
 msgid "INCOMPLETE"
 msgstr "未完了"
@@ -2363,6 +2371,11 @@ msgstr "未完了"
 #: src/pages/Home/utils.js
 msgid "Infusion"
 msgstr "インフュージョン"
+
+#. placeholder {0}: current.stableTag
+#: src/pages/Settings/PatchNotes.jsx
+msgid "Installed, not in stable ({0})"
+msgstr ""
 
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 msgctxt "ramp style"
@@ -2460,6 +2473,10 @@ msgstr "先週"
 #: src/pages/Settings/tabs/CleaningSection.jsx
 msgid "Last: {lastTime} · {shotsSince, plural, one {# shot since} other {# shots since}}"
 msgstr "前回: {lastTime} · {shotsSince, plural, other {以降 # ショット}}"
+
+#: src/pages/Settings/PatchNotes.jsx
+msgid "Latest stable patchnotes"
+msgstr ""
 
 #: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 msgid "Length (Long)"
@@ -2983,9 +3000,17 @@ msgstr "Nightly"
 msgid "Nightly gets new features first, built from the same code as the nightly firmware."
 msgstr "Nightly では新機能をいち早く利用できます。Nightly ファームウェアと同じコードからビルドされています。"
 
+#: src/pages/Settings/PatchNotes.jsx
+msgid "Nightly patchnotes"
+msgstr ""
+
 #: src/app/machines.js
 msgid "no answer (timed out)"
 msgstr "応答なし（タイムアウト）"
+
+#: src/pages/Settings/PatchNotes.jsx
+msgid "No commits."
+msgstr ""
 
 #: src/pages/Statistics/components/statisticsView/helpers.js
 #: src/pages/Statistics/components/toolbar/helpers.js

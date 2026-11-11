@@ -1074,6 +1074,10 @@ msgstr "Impossibile eliminare il profilo di calibrazione: {message}"
 msgid "Could not import {importName}: {importMessage}"
 msgstr "Impossibile importare {importName}: {importMessage}"
 
+#: src/pages/Settings/PatchNotes.jsx
+msgid "Could not load patchnotes"
+msgstr ""
+
 #: src/pages/ProfileEdit/ProfileImageUpload.jsx
 msgid "Could not read this image."
 msgstr "Impossibile leggere questa immagine."
@@ -2360,6 +2364,10 @@ msgstr "Importazione estrazione o profilo"
 msgid "Include legend"
 msgstr "Includi legenda"
 
+#: src/pages/Settings/PatchNotes.jsx
+msgid "Included in the next update"
+msgstr ""
+
 #: src/pages/ShotHistory/HistoryCard.jsx
 msgid "INCOMPLETE"
 msgstr "INCOMPLETO"
@@ -2367,6 +2375,11 @@ msgstr "INCOMPLETO"
 #: src/pages/Home/utils.js
 msgid "Infusion"
 msgstr "Infusione"
+
+#. placeholder {0}: current.stableTag
+#: src/pages/Settings/PatchNotes.jsx
+msgid "Installed, not in stable ({0})"
+msgstr ""
 
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 msgctxt "ramp style"
@@ -2464,6 +2477,10 @@ msgstr "Settimana scorsa"
 #: src/pages/Settings/tabs/CleaningSection.jsx
 msgid "Last: {lastTime} · {shotsSince, plural, one {# shot since} other {# shots since}}"
 msgstr "Ultima: {lastTime} · {shotsSince, plural, one {# estrazione fatta } other {# estrazioni fatte }}"
+
+#: src/pages/Settings/PatchNotes.jsx
+msgid "Latest stable patchnotes"
+msgstr ""
 
 #: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 msgid "Length (Long)"
@@ -2987,9 +3004,17 @@ msgstr "Nightly"
 msgid "Nightly gets new features first, built from the same code as the nightly firmware."
 msgstr "Nightly riceve per prima le nuove funzioni, compilata dallo stesso codice del firmware nightly."
 
+#: src/pages/Settings/PatchNotes.jsx
+msgid "Nightly patchnotes"
+msgstr ""
+
 #: src/app/machines.js
 msgid "no answer (timed out)"
 msgstr "nessuna risposta (timeout)"
+
+#: src/pages/Settings/PatchNotes.jsx
+msgid "No commits."
+msgstr ""
 
 #: src/pages/Statistics/components/statisticsView/helpers.js
 #: src/pages/Statistics/components/toolbar/helpers.js

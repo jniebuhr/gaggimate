@@ -1070,6 +1070,10 @@ msgstr "无法删除校准曲线：{message}"
 msgid "Could not import {importName}: {importMessage}"
 msgstr "无法导入 {importName}：{importMessage}"
 
+#: src/pages/Settings/PatchNotes.jsx
+msgid "Could not load patchnotes"
+msgstr ""
+
 #: src/pages/ProfileEdit/ProfileImageUpload.jsx
 msgid "Could not read this image."
 msgstr "无法读取此图片。"
@@ -2356,6 +2360,10 @@ msgstr "正在导入萃取或曲线"
 msgid "Include legend"
 msgstr "包含图例"
 
+#: src/pages/Settings/PatchNotes.jsx
+msgid "Included in the next update"
+msgstr ""
+
 #: src/pages/ShotHistory/HistoryCard.jsx
 msgid "INCOMPLETE"
 msgstr "未完成"
@@ -2363,6 +2371,11 @@ msgstr "未完成"
 #: src/pages/Home/utils.js
 msgid "Infusion"
 msgstr "浸润"
+
+#. placeholder {0}: current.stableTag
+#: src/pages/Settings/PatchNotes.jsx
+msgid "Installed, not in stable ({0})"
+msgstr ""
 
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 msgctxt "ramp style"
@@ -2460,6 +2473,10 @@ msgstr "上周"
 #: src/pages/Settings/tabs/CleaningSection.jsx
 msgid "Last: {lastTime} · {shotsSince, plural, one {# shot since} other {# shots since}}"
 msgstr "上次：{lastTime} · {shotsSince, plural, other {此后 # 次萃取}}"
+
+#: src/pages/Settings/PatchNotes.jsx
+msgid "Latest stable patchnotes"
+msgstr ""
 
 #: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 msgid "Length (Long)"
@@ -2983,9 +3000,17 @@ msgstr "每夜版"
 msgid "Nightly gets new features first, built from the same code as the nightly firmware."
 msgstr "每夜版会最先获得新功能，与每夜版固件使用相同的代码构建。"
 
+#: src/pages/Settings/PatchNotes.jsx
+msgid "Nightly patchnotes"
+msgstr ""
+
 #: src/app/machines.js
 msgid "no answer (timed out)"
 msgstr "无应答（超时）"
+
+#: src/pages/Settings/PatchNotes.jsx
+msgid "No commits."
+msgstr ""
 
 #: src/pages/Statistics/components/statisticsView/helpers.js
 #: src/pages/Statistics/components/toolbar/helpers.js

@@ -8,6 +8,7 @@ import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
 import { faCaretRight } from '@fortawesome/free-solid-svg-icons/faCaretRight';
 import { Spinner } from '../../../components/Spinner.jsx';
 import Section from '../../../components/Card.jsx';
+import { PatchNotes } from '../PatchNotes.jsx';
 
 const imageUrlToBase64 = async blob => {
   return new Promise((onSuccess, onError) => {
@@ -446,6 +447,13 @@ export function SystemTab() {
             >
               <Trans>Update both</Trans>
             </button>
+          </div>
+          <div className='md:col-span-2'>
+            <PatchNotes
+              channel={formData.channel}
+              installedVersion={formData.displayVersion}
+              latestVersion={formData.latestVersion}
+            />
           </div>
         </div>
 

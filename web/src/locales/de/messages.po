@@ -1070,6 +1070,10 @@ msgstr "Kalibrierprofil konnte nicht gelöscht werden: {message}"
 msgid "Could not import {importName}: {importMessage}"
 msgstr "{importName} konnte nicht importiert werden: {importMessage}"
 
+#: src/pages/Settings/PatchNotes.jsx
+msgid "Could not load patchnotes"
+msgstr "Patchnotes konnten nicht geladen werden"
+
 #: src/pages/ProfileEdit/ProfileImageUpload.jsx
 msgid "Could not read this image."
 msgstr "Dieses Bild konnte nicht gelesen werden."
@@ -2356,6 +2360,10 @@ msgstr "Shot oder Profil wird importiert"
 msgid "Include legend"
 msgstr "Legende einschließen"
 
+#: src/pages/Settings/PatchNotes.jsx
+msgid "Included in the next update"
+msgstr "Im nächsten Update enthalten"
+
 #: src/pages/ShotHistory/HistoryCard.jsx
 msgid "INCOMPLETE"
 msgstr "UNVOLLSTÄNDIG"
@@ -2363,6 +2371,11 @@ msgstr "UNVOLLSTÄNDIG"
 #: src/pages/Home/utils.js
 msgid "Infusion"
 msgstr "Infusion"
+
+#. placeholder {0}: current.stableTag
+#: src/pages/Settings/PatchNotes.jsx
+msgid "Installed, not in stable ({0})"
+msgstr "Installiert, nicht in Stable ({0})"
 
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 msgctxt "ramp style"
@@ -2460,6 +2473,10 @@ msgstr "Letzte Woche"
 #: src/pages/Settings/tabs/CleaningSection.jsx
 msgid "Last: {lastTime} · {shotsSince, plural, one {# shot since} other {# shots since}}"
 msgstr "Zuletzt: {lastTime} · {shotsSince, plural, one {# Shot seitdem} other {# Shots seitdem}}"
+
+#: src/pages/Settings/PatchNotes.jsx
+msgid "Latest stable patchnotes"
+msgstr "Neueste Stable-Patchnotes"
 
 #: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 msgid "Length (Long)"
@@ -2983,9 +3000,17 @@ msgstr "Nightly"
 msgid "Nightly gets new features first, built from the same code as the nightly firmware."
 msgstr "Nightly erhält neue Funktionen zuerst und wird aus demselben Code wie die Nightly-Firmware erstellt."
 
+#: src/pages/Settings/PatchNotes.jsx
+msgid "Nightly patchnotes"
+msgstr "Nightly-Patchnotes"
+
 #: src/app/machines.js
 msgid "no answer (timed out)"
 msgstr "keine Antwort (Zeitüberschreitung)"
+
+#: src/pages/Settings/PatchNotes.jsx
+msgid "No commits."
+msgstr "Keine Commits."
 
 #: src/pages/Statistics/components/statisticsView/helpers.js
 #: src/pages/Statistics/components/toolbar/helpers.js

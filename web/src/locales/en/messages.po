@@ -1070,6 +1070,10 @@ msgstr "Could not delete calibration profile: {message}"
 msgid "Could not import {importName}: {importMessage}"
 msgstr "Could not import {importName}: {importMessage}"
 
+#: src/pages/Settings/PatchNotes.jsx
+msgid "Could not load patchnotes"
+msgstr "Could not load patchnotes"
+
 #: src/pages/ProfileEdit/ProfileImageUpload.jsx
 msgid "Could not read this image."
 msgstr "Could not read this image."
@@ -2356,6 +2360,10 @@ msgstr "Importing shot or profile"
 msgid "Include legend"
 msgstr "Include legend"
 
+#: src/pages/Settings/PatchNotes.jsx
+msgid "Included in the next update"
+msgstr "Included in the next update"
+
 #: src/pages/ShotHistory/HistoryCard.jsx
 msgid "INCOMPLETE"
 msgstr "INCOMPLETE"
@@ -2363,6 +2371,11 @@ msgstr "INCOMPLETE"
 #: src/pages/Home/utils.js
 msgid "Infusion"
 msgstr "Infusion"
+
+#. placeholder {0}: current.stableTag
+#: src/pages/Settings/PatchNotes.jsx
+msgid "Installed, not in stable ({0})"
+msgstr "Installed, not in stable ({0})"
 
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 msgctxt "ramp style"
@@ -2460,6 +2473,10 @@ msgstr "Last week"
 #: src/pages/Settings/tabs/CleaningSection.jsx
 msgid "Last: {lastTime} · {shotsSince, plural, one {# shot since} other {# shots since}}"
 msgstr "Last: {lastTime} · {shotsSince, plural, one {# shot since} other {# shots since}}"
+
+#: src/pages/Settings/PatchNotes.jsx
+msgid "Latest stable patchnotes"
+msgstr "Latest stable patchnotes"
 
 #: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 msgid "Length (Long)"
@@ -2983,9 +3000,17 @@ msgstr "Nightly"
 msgid "Nightly gets new features first, built from the same code as the nightly firmware."
 msgstr "Nightly gets new features first, built from the same code as the nightly firmware."
 
+#: src/pages/Settings/PatchNotes.jsx
+msgid "Nightly patchnotes"
+msgstr "Nightly patchnotes"
+
 #: src/app/machines.js
 msgid "no answer (timed out)"
 msgstr "no answer (timed out)"
+
+#: src/pages/Settings/PatchNotes.jsx
+msgid "No commits."
+msgstr "No commits."
 
 #: src/pages/Statistics/components/statisticsView/helpers.js
 #: src/pages/Statistics/components/toolbar/helpers.js
