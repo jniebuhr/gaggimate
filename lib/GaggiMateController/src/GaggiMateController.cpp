@@ -514,8 +514,7 @@ void GaggiMateController::detectAddon() {
             ESP_LOGI(LOG_TAG, "Found an extension at address 0x%X", addr);
             if (addr == 0x26) {
                 ESP_LOGI(LOG_TAG, "Identified addon as Gearpump Addon");
-                gearpumpAddon =
-                    new GearpumpAddon(addr, _config.ext3Pin, _config.ext2Pin, _config.ext1Pin, sharedAdcBus ? &bus : nullptr);
+                gearpumpAddon = new GearpumpAddon(addr, _config.ext3Pin, _config.ext2Pin, _config.ext1Pin, bus, sharedAdcBus);
             }
         }
     }

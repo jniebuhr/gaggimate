@@ -4,7 +4,7 @@
 
 // XL9555 port 0 drives the DAC's local, bit-banged bus (IO0=SCL, IO1=SDA).
 // Cache the output/config registers so each edge needs at most one I2C write.
-// Other devices may use the main bus between edges; only this task owns IO0/1.
+// On Max boards the ADC may use the main bus between edges; only this task owns IO0/1.
 class GearpumpSharedIO {
   public:
     GearpumpSharedIO(TwoWire &wire, uint8_t address, SemaphoreHandle_t mutex) : wire(wire), address(address), mutex(mutex) {}
