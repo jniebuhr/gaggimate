@@ -3,11 +3,17 @@
 
 #include "Endpoint.h"
 #include "GaggiMateComm.h"
+#include "LinkSelector.h"
 #include "ble/BleClientTransport.h"
+#include "ble/BleOtaSender.h"
+#include "uart/UartOtaSender.h"
+#include "uart/UartTransport.h"
 #include <Arduino.h>
 #include <functional>
+#include <memory>
 
-// Display-side protocol facade: owns transport + Endpoint, exposes semantic sends and typed response callbacks.
+// Display-side protocol facade: owns the links + Endpoint, exposes semantic sends and typed response callbacks.
+// BLE and (if wired) UART search in parallel; UART takes the session whenever it is up, BLE is the fallback.
 // Connecting is async: capability-dependent setup belongs in onSystemInfo, pushed by the controller after connect.
 class GaggiMateClient {
   public:
@@ -33,17 +39,26 @@ class GaggiMateClient {
 
     GaggiMateClient();
 
+    // Adds a wired link on `port`; call before init(). The display driver knows which pins reach the controller.
+    void enableUart(uint8_t rxPin, uint8_t txPin, HardwareSerial &port = Serial1, uint32_t baud = gm_uart::DEFAULT_BAUD);
     void init(const String &deviceName);
     void loop();
 
-    // Connection lifecycle (driven from the display's main loop).
-    bool isReadyForConnection() const { return _transport.isReadyForConnection(); }
-    bool connectToServer() { return _transport.connectToServer(); }
+    // BLE connection lifecycle (driven from the display's main loop); the UART link comes up by itself.
+    bool isReadyForConnection();
+    bool connectToServer() { return _ble.connectToServer(); }
     bool isConnected() const { return _endpoint.isConnected(); }
-    void disconnect() { _transport.disconnect(); }
+    void disconnect();
+
+    // Link currently carrying the session; None while searching.
+    LinkType getLinkType() const { return _link.activeType(); }
+    // BLE signal strength in dBm; 0 without a BLE link.
+    int getRssi() const;
+    // Firmware transfer for the active link; BLE while searching, which also covers OTA-only legacy controllers.
+    OtaSender *getOtaSender();
 
     // Forget the paired controller so the display can pair to a different one.
-    void clearBonds() { _transport.clearBonds(); }
+    void clearBonds() { _ble.clearBonds(); }
 
     // EWMA-smoothed send->ACK round-trip (ms); hasLatency() is false until the first ACK of a link.
     uint32_t getLatencyMs() const { return _endpoint.latencyMs(); }
@@ -55,10 +70,7 @@ class GaggiMateClient {
     bool isIdle() { return _endpoint.isIdle(); }
 
     // Tight connection interval while active; relaxed when idle to give the shared radio back to Wi-Fi.
-    void setLowLatency(bool active) { _transport.setLowLatency(active); }
-
-    // Native NimBLE client handle for ControllerOTA / status RSSI (OTA uses its own BLE service).
-    NimBLEClient *getClient() const { return _transport.getNativeClient(); }
+    void setLowLatency(bool active) { _ble.setLowLatency(active); }
 
     // Build a payload without sending (compose your own batch, then send()).
     gm::Payload buildPing();
@@ -133,10 +145,23 @@ class GaggiMateClient {
     void onError(ErrorCallback cb) { _errorCb = std::move(cb); }
 
   private:
-    BleClientTransport _transport;
-    Endpoint _endpoint{_transport};
+    BleClientTransport _ble;
+    BleOtaSender _bleOta{_ble};
+    // Allocated only on boards with a wired link; the frame buffers are a few KB of internal RAM.
+    std::unique_ptr<UartTransport> _uart;
+    std::unique_ptr<UartOtaSender> _uartOta;
+    HardwareSerial *_uartPort = nullptr;
+    uint8_t _uartRxPin = 0;
+    uint8_t _uartTxPin = 0;
+    uint32_t _uartBaud = gm_uart::DEFAULT_BAUD;
+    // A controller found over BLE gets this long to show up on the wire before we connect by radio.
+    static constexpr unsigned long UART_HEAD_START_MS = 500;
+    unsigned long _bleReadySince = 0;
+    LinkSelector _link;
+    Endpoint _endpoint{_link};
 
-    // Sole runner of the endpoint's send pump; woken by sends/ACKs, otherwise ticks at the idle interval.
+    // Sole runner of the UART RX drain and the endpoint's send pump; woken by sends/ACKs/UART RX, else ticks at the idle
+    // interval.
     TaskHandle_t _pumpTaskHandle = nullptr;
     static void pumpTask(void *arg);
     static constexpr uint32_t PUMP_TASK_STACK = 4096;
@@ -158,6 +183,7 @@ class GaggiMateClient {
     ErrorCallback _errorCb;
 
     void registerHandlers();
+    void onLinkSelected(LinkType active);
 };
 
 #endif // GAGGIMATE_CLIENT_H

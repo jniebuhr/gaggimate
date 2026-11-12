@@ -25,7 +25,27 @@ void BleClientTransport::init(const String &deviceName) {
     scan();
 }
 
+void BleClientTransport::setSearchEnabled(bool enabled) {
+    if (_searchEnabled == enabled)
+        return;
+    _searchEnabled = enabled;
+    ESP_LOGI(LOG_TAG, "Controller search %s", enabled ? "resumed" : "paused");
+    if (_client == nullptr || _scanner == nullptr)
+        return;
+    if (enabled) {
+        if (!_client->isConnected())
+            scan();
+        return;
+    }
+    _readyForConnection = false;
+    _haveServerAddress = false;
+    if (_scanner->isScanning())
+        _scanner->stop();
+}
+
 void BleClientTransport::scan() {
+    if (!_searchEnabled)
+        return;
     _readyForConnection = false;
     _scanner->clearDuplicateCache();
     _scanner->setAdvertisedDeviceCallbacks(this, true);
@@ -40,14 +60,14 @@ void BleClientTransport::scan() {
 void BleClientTransport::maintain() {
     if (_client == nullptr || _scanner == nullptr)
         return; // init() failed to create the client/scanner
-    if (!_readyForConnection && !_client->isConnected() && !_scanner->isScanning()) {
+    if (_searchEnabled && !_readyForConnection && !_client->isConnected() && !_scanner->isScanning()) {
         ESP_LOGI(LOG_TAG, "Scan stalled, restarting");
         scan();
     }
 }
 
 bool BleClientTransport::connectToServer() {
-    if (!_haveServerAddress)
+    if (!_haveServerAddress || !_searchEnabled)
         return false;
 
     ESP_LOGI(LOG_TAG, "Connecting to advertised device");
@@ -98,6 +118,13 @@ bool BleClientTransport::connectToServer() {
 
     _writeChar = service->getCharacteristic(NimBLEUUID(gm_proto::RX_CHAR_UUID));
     _notifyChar = service->getCharacteristic(NimBLEUUID(gm_proto::TX_CHAR_UUID));
+    // A link that dropped mid-discovery also yields no characteristics; that is not an old controller.
+    if (!_client->isConnected()) {
+        ESP_LOGW(LOG_TAG, "Link dropped during discovery, waiting for rescan");
+        _writeChar = nullptr;
+        _notifyChar = nullptr;
+        return false;
+    }
     if (_writeChar == nullptr || _notifyChar == nullptr) {
         // Missing comms chars -> old/incompatible firmware; keep the link up so the separate OTA service stays reachable.
         ESP_LOGW(LOG_TAG, "Comms characteristics missing -- incompatible controller firmware (OTA only)");
@@ -131,6 +158,13 @@ bool BleClientTransport::connectToServer() {
         ESP_LOGW(LOG_TAG, "Link dropped during setup, waiting for rescan");
         _writeChar = nullptr;
         _notifyChar = nullptr;
+        return false;
+    }
+
+    // Another link won the race while we were connecting; hand the radio back.
+    if (!_searchEnabled) {
+        ESP_LOGI(LOG_TAG, "Search paused during setup, dropping the BLE link");
+        _client->disconnect();
         return false;
     }
 
@@ -269,6 +303,8 @@ bool BleClientTransport::isEncrypted() const {
 }
 
 void BleClientTransport::onResult(NimBLEAdvertisedDevice *advertisedDevice) {
+    if (!_searchEnabled)
+        return;
     if (_havePairedPeer) {
         // Our controller advertises directed PDUs, which carry no payload -- match on address alone.
         if (advertisedDevice->getAddress() != _pairedPeer)

@@ -7,7 +7,6 @@
 #include "GaggiMateComm.h"
 #include "MachineHardwareSettings.h"
 #include "MockController.h"
-#include "NimBLEClient.h"
 #include <Arduino.h>
 #include <cstdint>
 #include <functional>
@@ -48,6 +47,8 @@ struct Payload {
 };
 } // namespace gm
 
+class OtaSender;
+
 class GaggiMateClient {
   public:
     using ConnectionCallback = std::function<void(bool connected)>;
@@ -71,6 +72,7 @@ class GaggiMateClient {
 
     GaggiMateClient();
 
+    void enableUart(uint8_t, uint8_t) {} // the mocked link has no wire
     void init(const String &deviceName);
     void loop();
 
@@ -85,7 +87,9 @@ class GaggiMateClient {
     uint32_t getRetransmits() const { return 0; }
     bool isIdle() const { return true; }
     void setLowLatency(bool) {}
-    NimBLEClient *getClient() const { return const_cast<NimBLEClient *>(&_nativeClient); }
+    LinkType getLinkType() const { return _connected ? LinkType::Ble : LinkType::None; }
+    int getRssi() const { return _connected ? -50 : 0; }
+    OtaSender *getOtaSender() { return nullptr; }
 
     // build*: compose a command without sending.
     gm::Payload buildPing();
@@ -150,7 +154,6 @@ class GaggiMateClient {
 
   private:
     MockController _mock;
-    NimBLEClient _nativeClient;
 
     bool _initialized = false;
     bool _connected = false;
