@@ -21,7 +21,15 @@ import { ExtendedProfileChart } from '../../components/ExtendedProfileChart.jsx'
 import { useConfirmAction } from '../../hooks/useConfirmAction.js';
 import { ProfileAddCard } from './ProfileAddCard.jsx';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
-import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'preact/hooks';
+import {
+  useCallback,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'preact/hooks';
 import { Spinner } from '../../components/Spinner.jsx';
 import Card from '../../components/Card.jsx';
 import { parseProfile } from './utils.js';
@@ -191,7 +199,7 @@ function ProfileCard({
     setMenuOpen(v => !v);
   }, []);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!menuOpen) return;
     // Position now (DOM is mounted because the conditional render put the div
     // in the tree this tick) and then re-position on resize/scroll.
@@ -325,6 +333,7 @@ function ProfileCard({
                       ref={popoverRef}
                       role='menu'
                       className='bg-base-100 rounded-box z-50 w-56 p-2 shadow'
+                      style={{ position: 'fixed', top: 0, left: 0 }}
                       onKeyDown={e => {
                         if (e.key === 'Escape') closeMenu();
                       }}
