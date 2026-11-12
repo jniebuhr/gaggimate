@@ -103,10 +103,6 @@ msgstr "{pending} wird installiert, wenn du die App das nächste Mal verlässt"
 msgid "{recentShotCount, plural, one {# shot} other {# shots}}"
 msgstr "{recentShotCount, plural, one {# Shot} other {# Shots}}"
 
-#: src/pages/Settings/tabs/SystemTab.jsx
-msgid "{rssi}dB (Roundtrip: {lat} ms, Resends: {rtx})"
-msgstr "{rssi}dB (Roundtrip: {lat} ms, Wiederholungen: {rtx})"
-
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "{scaleName} disconnected"
 msgstr "{scaleName} getrennt"
@@ -598,6 +594,10 @@ msgstr "Blockiert die Nachfüllung des Dampfboilers, wenn Alba einen niedrigen F
 msgid "Bluetooth Devices"
 msgstr "Bluetooth-Geräte"
 
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Bluetooth, {rssi}dB (Roundtrip: {lat} ms, Resends: {rtx})"
+msgstr "Bluetooth, {rssi}dB (Roundtrip: {lat} ms, Wiederholungen: {rtx})"
+
 #: src/app/notifications.js
 msgid "Boiler at {temperature} °C"
 msgstr "Boiler bei {temperature} °C"
@@ -1034,13 +1034,13 @@ msgstr "Verbinde…"
 msgid "Control Column Style"
 msgstr "Stil der Bedienspalte"
 
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Controller Connection"
+msgstr "Controller-Verbindung"
+
 #: src/app/appSettings.js
 msgid "Controller errors and error-level warnings."
 msgstr "Controller-Fehler und Warnungen der Fehlerstufe."
-
-#: src/pages/Settings/tabs/SystemTab.jsx
-msgid "Controller Signal Strength"
-msgstr "Signalstärke des Controllers"
 
 #: src/pages/Settings/tabs/SystemTab.jsx
 msgid "Controller Version"
@@ -3109,6 +3109,10 @@ msgstr "Keine"
 msgctxt "relay function"
 msgid "None"
 msgstr "Keine"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Not connected"
+msgstr "Nicht verbunden"
 
 #: src/components/PumpFlowCalibration/Footer.jsx
 msgid "Not connected to the machine"
@@ -5786,6 +5790,10 @@ msgstr "Beim Ziel ausschalten"
 #: src/pages/Settings/PluginCard.jsx
 msgid "Turn on at start, off at target"
 msgstr "Beim Start ein-, beim Ziel ausschalten"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "UART (Roundtrip: {lat} ms, Resends: {rtx})"
+msgstr "UART (Roundtrip: {lat} ms, Wiederholungen: {rtx})"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Unavailable / uncalibrated"

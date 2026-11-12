@@ -45,6 +45,7 @@ class GaggiMateController {
     void updateDualBoilerOutputs(unsigned long now);
     void handlePing();
     void handlePingTimeout(void);
+    void stopOutputs();
     void thermalRunawayShutdown(void);
     void startPidAutotune(void);
     void stopPidAutotune(void);

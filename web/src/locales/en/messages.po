@@ -103,10 +103,6 @@ msgstr "{pending} installs the next time you leave the app"
 msgid "{recentShotCount, plural, one {# shot} other {# shots}}"
 msgstr "{recentShotCount, plural, one {# shot} other {# shots}}"
 
-#: src/pages/Settings/tabs/SystemTab.jsx
-msgid "{rssi}dB (Roundtrip: {lat} ms, Resends: {rtx})"
-msgstr "{rssi}dB (Roundtrip: {lat} ms, Resends: {rtx})"
-
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "{scaleName} disconnected"
 msgstr "{scaleName} disconnected"
@@ -598,6 +594,10 @@ msgstr "Block steam boiler refill when Alba reports a low reservoir level or its
 msgid "Bluetooth Devices"
 msgstr "Bluetooth Devices"
 
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Bluetooth, {rssi}dB (Roundtrip: {lat} ms, Resends: {rtx})"
+msgstr "Bluetooth, {rssi}dB (Roundtrip: {lat} ms, Resends: {rtx})"
+
 #: src/app/notifications.js
 msgid "Boiler at {temperature} °C"
 msgstr "Boiler at {temperature} °C"
@@ -1034,13 +1034,13 @@ msgstr "Connecting…"
 msgid "Control Column Style"
 msgstr "Control Column Style"
 
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Controller Connection"
+msgstr "Controller Connection"
+
 #: src/app/appSettings.js
 msgid "Controller errors and error-level warnings."
 msgstr "Controller errors and error-level warnings."
-
-#: src/pages/Settings/tabs/SystemTab.jsx
-msgid "Controller Signal Strength"
-msgstr "Controller Signal Strength"
 
 #: src/pages/Settings/tabs/SystemTab.jsx
 msgid "Controller Version"
@@ -3109,6 +3109,10 @@ msgstr "None"
 msgctxt "relay function"
 msgid "None"
 msgstr "None"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Not connected"
+msgstr "Not connected"
 
 #: src/components/PumpFlowCalibration/Footer.jsx
 msgid "Not connected to the machine"
@@ -5786,6 +5790,10 @@ msgstr "Turn off at target"
 #: src/pages/Settings/PluginCard.jsx
 msgid "Turn on at start, off at target"
 msgstr "Turn on at start, off at target"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "UART (Roundtrip: {lat} ms, Resends: {rtx})"
+msgstr "UART (Roundtrip: {lat} ms, Resends: {rtx})"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Unavailable / uncalibrated"

@@ -132,6 +132,19 @@ components:
         cd:
           type: boolean
           description: Indicates dimming capability
+        lnk:
+          type: string
+          enum: [ble, uart, none]
+          description: Link carrying the controller session; none while the display is still searching
+        rssi:
+          type: integer
+          description: Controller BLE signal strength in dBm, 0 unless lnk is ble
+        lat:
+          type: integer
+          description: Smoothed controller round trip in ms, -1 until measured
+        rtx:
+          type: integer
+          description: Controller frames resent since boot
       required: [tp]
     WarningState:
       type: object

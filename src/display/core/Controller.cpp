@@ -36,15 +36,15 @@
 #include <display/plugins/mDNSPlugin.h>
 #endif
 #include <display/util/PsramAllocator.h>
-#ifndef GAGGIMATE_HEADLESS
-#ifdef GAGGIMATE_SIM
+#if defined(GAGGIMATE_HEADLESS)
+#include <display/drivers/HeadlessDriver.h>
+#elif defined(GAGGIMATE_SIM)
 #include <SdlDriver.h> // desktop SDL panel stands in for the hardware drivers
 #else
 #include <Preferences.h>
 #include <display/drivers/AmoledDisplayDriver.h>
 #include <display/drivers/LilyGoDriver.h>
 #include <display/drivers/WaveshareDriver.h>
-#endif
 #endif
 
 const String LOG_TAG = F("Controller");
@@ -68,21 +68,19 @@ void Controller::setup() {
         Serial.println(F("An Error has occurred while mounting LittleFS"));
     }
 
-#ifndef GAGGIMATE_HEADLESS
     setupPanel();
-#endif
 
     pluginManager = new PluginManager();
     warnings.setup(this);
 #ifndef GAGGIMATE_HEADLESS
     ui = new DefaultUI(this, driver, pluginManager);
+#endif
     if (driver->supportsSDCard() && driver->installSDCard()) {
         sdcard = true;
         ESP_LOGI(LOG_TAG, "SD Card detected and mounted");
         ESP_LOGI(LOG_TAG, "Used: %lluMB, Capacity: %lluMB", SD_MMC.usedBytes() / 1024 / 1024, SD_MMC.cardSize() / 1024 / 1024);
         seedSDCard();
     }
-#endif
     FS *fs = &LittleFS;
     if (sdcard) {
         fs = &SD_MMC;
@@ -168,9 +166,10 @@ void Controller::connect() {
     initialized = true;
 }
 
-#ifndef GAGGIMATE_HEADLESS
+#if !defined(GAGGIMATE_HEADLESS) && !defined(GAGGIMATE_SIM)
 // NVS values for the cached panel detection result (GM-140) — only append, never renumber
 enum PanelModel : uint8_t { PANEL_UNKNOWN = 0, PANEL_LILYGO = 1, PANEL_AMOLED = 2, PANEL_WAVESHARE = 3 };
+#endif
 
 // Hidden, so an interrupted copy still counts as an empty card and is retried on next boot.
 static constexpr const char *SD_SEED_MARKER = "/.gm-seeding";
@@ -196,7 +195,10 @@ void Controller::seedSDCard() {
 }
 
 void Controller::setupPanel() {
-#ifdef GAGGIMATE_SIM
+#if defined(GAGGIMATE_HEADLESS)
+    driver = HeadlessDriver::getInstance(); // no panel, only the board's SD slot and controller UART
+    driver->init();
+#elif defined(GAGGIMATE_SIM)
     driver = SdlDriver::getInstance(); // desktop SDL panel
     driver->init();
 #else
@@ -250,7 +252,6 @@ void Controller::setupPanel() {
     panelPrefs.end();
 #endif
 }
-#endif
 
 // Parse a comma-separated float string ("a,b,c,d") into `out`. Missing fields
 // are left at `def` -- used so pump-model coeffs can carry NaN to signal
@@ -274,6 +275,11 @@ static void parseFloatCsv(const String &csv, float *out, size_t count, float def
 }
 
 void Controller::setupBluetooth() {
+    // Boards plugged onto the controller PCB also offer a wired link; whichever link connects first is used.
+    if (driver->supportsUART()) {
+        const UartConf uart = driver->getUARTConf();
+        comms.enableUart(uart.rxPin, uart.txPin);
+    }
     comms.init("GPBLC");
     comms.onSendFailed([this]() { requestStateResend(); });
     comms.onConnectionChanged([this](bool connected) {
@@ -285,6 +291,7 @@ void Controller::setupBluetooth() {
         controlStateSent = false;
         settleResendAt = 0;
         if (connected) {
+            waitingForController = false;
             applyConnectionPriority(true);
             requestStateResend();
         } else if (initialized) {
@@ -299,7 +306,8 @@ void Controller::setupBluetooth() {
     });
     comms.onIncompatibleController([this](const String &info) { onIncompatibleController(info); });
     pluginManager->on("ota:update:start", [this](Event const &event) {
-        if (event.getString("component") != "display") {
+        // A wired controller link needs no radio time, so the download keeps its Wi-Fi share.
+        if (event.getString("component") != "display" && comms.getLinkType() != LinkType::Uart) {
             connLowLatency = true;
             comms.setLowLatency(true);
             esp_coex_preference_set(ESP_COEX_PREFER_BT);
@@ -852,7 +860,8 @@ void Controller::applyConnectionPriority(bool force) {
     if (force || lowLatency != connLowLatency) {
         connLowLatency = lowLatency;
         comms.setLowLatency(lowLatency);
-        esp_coex_preference_set(lowLatency ? ESP_COEX_PREFER_BT : ESP_COEX_PREFER_WIFI);
+        const bool radioLink = comms.getLinkType() != LinkType::Uart;
+        esp_coex_preference_set(lowLatency && radioLink ? ESP_COEX_PREFER_BT : ESP_COEX_PREFER_WIFI);
     }
 }
 

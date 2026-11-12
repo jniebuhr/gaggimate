@@ -103,10 +103,6 @@ msgstr "{pending} は次回アプリを離れたときにインストールさ�
 msgid "{recentShotCount, plural, one {# shot} other {# shots}}"
 msgstr "{recentShotCount, plural, other {# ショット}}"
 
-#: src/pages/Settings/tabs/SystemTab.jsx
-msgid "{rssi}dB (Roundtrip: {lat} ms, Resends: {rtx})"
-msgstr "{rssi}dB（往復: {lat} ms、再送: {rtx}）"
-
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "{scaleName} disconnected"
 msgstr "{scaleName} の接続が切れました"
@@ -598,6 +594,10 @@ msgstr "Alba が水タンクの残量低下を報告した場合、またはそ�
 msgid "Bluetooth Devices"
 msgstr "Bluetooth デバイス"
 
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Bluetooth, {rssi}dB (Roundtrip: {lat} ms, Resends: {rtx})"
+msgstr "Bluetooth、{rssi}dB（往復: {lat} ms、再送: {rtx}）"
+
 #: src/app/notifications.js
 msgid "Boiler at {temperature} °C"
 msgstr "ボイラー {temperature} °C"
@@ -1034,13 +1034,13 @@ msgstr "接続中…"
 msgid "Control Column Style"
 msgstr "コントロール列のスタイル"
 
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Controller Connection"
+msgstr "コントローラーの接続"
+
 #: src/app/appSettings.js
 msgid "Controller errors and error-level warnings."
 msgstr "コントローラーのエラーとエラーレベルの警告。"
-
-#: src/pages/Settings/tabs/SystemTab.jsx
-msgid "Controller Signal Strength"
-msgstr "コントローラーの信号強度"
 
 #: src/pages/Settings/tabs/SystemTab.jsx
 msgid "Controller Version"
@@ -3109,6 +3109,10 @@ msgstr "なし"
 msgctxt "relay function"
 msgid "None"
 msgstr "なし"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Not connected"
+msgstr "未接続"
 
 #: src/components/PumpFlowCalibration/Footer.jsx
 msgid "Not connected to the machine"
@@ -5786,6 +5790,10 @@ msgstr "目標でオフ"
 #: src/pages/Settings/PluginCard.jsx
 msgid "Turn on at start, off at target"
 msgstr "開始時にオン、目標でオフ"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "UART (Roundtrip: {lat} ms, Resends: {rtx})"
+msgstr "UART（往復: {lat} ms、再送: {rtx}）"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Unavailable / uncalibrated"
