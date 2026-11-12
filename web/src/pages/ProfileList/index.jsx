@@ -126,6 +126,8 @@ function ProfileCard({
   const typeClass = data.type === 'pro' ? 'badge badge-primary' : 'badge badge-neutral';
   const favoriteToggleDisabled = data.favorite ? unfavoriteDisabled : favoriteDisabled;
   const favoriteToggleClass = favoriteToggleDisabled ? 'opacity-50 cursor-not-allowed' : '';
+  const deleteDisabled = data.selected;
+  const deleteClass = deleteDisabled ? 'opacity-50 cursor-not-allowed' : '';
 
   const onFavoriteToggle = useCallback(() => {
     if (!favoriteToggleDisabled) onSetFavorite(data.id, !data.favorite);
@@ -421,8 +423,8 @@ function ProfileCard({
                                   closeMenu();
                                 });
                               }}
-                              disabled={busy}
-                              className={`justify-start ${confirmDelete ? 'bg-error text-error-content rounded font-semibold' : 'text-error'}`}
+                              disabled={deleteDisabled || busy}
+                              className={`justify-start ${deleteClass} ${confirmDelete ? 'bg-error text-error-content rounded font-semibold' : 'text-error'}`}
                               aria-label={
                                 confirmDelete
                                   ? t`Confirm deletion of ${label} profile`
@@ -508,13 +510,21 @@ function ProfileCard({
                     </button>
                   </Tooltip>
                   {!isSystem && (
-                    <Tooltip content={confirmDelete ? t`Click to confirm` : t`Delete profile`}>
+                    <Tooltip
+                      content={
+                        deleteDisabled
+                          ? t`The selected profile can't be deleted`
+                          : confirmDelete
+                            ? t`Click to confirm`
+                            : t`Delete profile`
+                      }
+                    >
                       <button
                         onClick={() => {
                           confirmOrDelete(() => onDelete(data.id));
                         }}
-                        disabled={busy}
-                        className={`btn btn-sm btn-ghost ${confirmDelete ? 'bg-error text-error-content' : 'text-error'}`}
+                        disabled={deleteDisabled || busy}
+                        className={`btn btn-sm btn-ghost ${deleteClass} ${confirmDelete ? 'bg-error text-error-content' : 'text-error'}`}
                         aria-label={
                           confirmDelete
                             ? t`Confirm deletion of ${label} profile`
