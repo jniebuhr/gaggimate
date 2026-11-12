@@ -1,9 +1,9 @@
 // Implementation of the host FS shim + the LittleFS/SPIFFS/SD_MMC instances.
-#include <cstdlib>
 #include "FS.h"
 #include "LittleFS.h"
 #include "SD_MMC.h"
 #include "SPIFFS.h"
+#include <cstdlib>
 
 #include <cstring>
 #include <sys/stat.h>

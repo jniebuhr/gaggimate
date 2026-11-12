@@ -115,16 +115,30 @@ void SdlDriver::pumpAndRender() {
                 s_mousePressed = false;
             break;
         case SDL_KEYDOWN:
-        case SDL_KEYUP: // keys 1/2 act as the brew/steam inputs of the controller board
+        case SDL_KEYUP:                                       // keys 1/2 act as the brew/steam inputs of the controller board
             if (e.type == SDL_KEYDOWN && e.key.repeat == 0) { // simulated Bluetooth scale (see SdlDriver.h)
                 switch (e.key.keysym.sym) {
-                case SDLK_0: g_simScaleTarget = -1.0f; g_simScaleOffset = 0.0f; break;
-                case SDLK_t: g_simScaleOffset = g_simScaleTarget > 0.0f ? g_simScaleTarget : 0.0f; break;
-                case SDLK_3: g_simScaleTarget = 0.0f; break;
-                case SDLK_4: g_simScaleTarget = SIM_CUP_WEIGHT; break;
-                case SDLK_5: g_simScaleTarget = SIM_CUP_WEIGHT + 18.0f; break;
-                case SDLK_6: g_simScaleTarget = SIM_CUP_WEIGHT + 20.5f; break;
-                default: break;
+                case SDLK_0:
+                    g_simScaleTarget = -1.0f;
+                    g_simScaleOffset = 0.0f;
+                    break;
+                case SDLK_t:
+                    g_simScaleOffset = g_simScaleTarget > 0.0f ? g_simScaleTarget : 0.0f;
+                    break;
+                case SDLK_3:
+                    g_simScaleTarget = 0.0f;
+                    break;
+                case SDLK_4:
+                    g_simScaleTarget = SIM_CUP_WEIGHT;
+                    break;
+                case SDLK_5:
+                    g_simScaleTarget = SIM_CUP_WEIGHT + 18.0f;
+                    break;
+                case SDLK_6:
+                    g_simScaleTarget = SIM_CUP_WEIGHT + 20.5f;
+                    break;
+                default:
+                    break;
                 }
             }
             if (e.key.repeat == 0 && (e.key.keysym.sym == SDLK_1 || e.key.keysym.sym == SDLK_2))
