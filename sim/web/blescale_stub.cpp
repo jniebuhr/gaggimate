@@ -17,9 +17,15 @@ void BLEScalePlugin::forget() {}
 void BLEScalePlugin::disconnect() {}
 void BLEScalePlugin::onMeasurement(float) {}
 std::vector<DiscoveredDevice> BLEScalePlugin::getDiscoveredScales() const { return {}; }
-void BLEScalePlugin::tare() const {}
+// The simulated Bluetooth scale (sim/driver/SdlDriver.h) zeroes on the firmware's tare requests.
+extern float g_simScaleTarget;
+extern float g_simScaleOffset;
+void BLEScalePlugin::tare() const {
+    if (g_simScaleTarget >= 0.0f)
+        g_simScaleOffset = g_simScaleTarget;
+}
 void BLEScalePlugin::update() {}
-void BLEScalePlugin::onProcessStart() const {}
+void BLEScalePlugin::onProcessStart() const { tare(); }
 void BLEScalePlugin::pollScaleMetadata() {}
 void BLEScalePlugin::establishConnection() {}
 void BLEScalePlugin::emitScanComplete() {}

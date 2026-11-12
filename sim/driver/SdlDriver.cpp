@@ -1,12 +1,16 @@
 #include "SdlDriver.h"
 
 #include <SDL.h>
+#include <SD_MMC.h>
 #include <cstdlib>
 #include <display/main.h>
 #include <lvgl.h>
 #include <vector>
 
 SdlDriver *SdlDriver::instance = nullptr;
+float g_simScaleTarget = -1.0f;
+float g_simScaleOffset = 0.0f;
+static constexpr float SIM_CUP_WEIGHT = 62.4f; // g, empty dosing cup
 
 // The LilyGo T-RGB panel the default UI targets is 480x480.
 static constexpr int DISP_W = 480;
@@ -112,6 +116,17 @@ void SdlDriver::pumpAndRender() {
             break;
         case SDL_KEYDOWN:
         case SDL_KEYUP: // keys 1/2 act as the brew/steam inputs of the controller board
+            if (e.type == SDL_KEYDOWN && e.key.repeat == 0) { // simulated Bluetooth scale (see SdlDriver.h)
+                switch (e.key.keysym.sym) {
+                case SDLK_0: g_simScaleTarget = -1.0f; g_simScaleOffset = 0.0f; break;
+                case SDLK_t: g_simScaleOffset = g_simScaleTarget > 0.0f ? g_simScaleTarget : 0.0f; break;
+                case SDLK_3: g_simScaleTarget = 0.0f; break;
+                case SDLK_4: g_simScaleTarget = SIM_CUP_WEIGHT; break;
+                case SDLK_5: g_simScaleTarget = SIM_CUP_WEIGHT + 18.0f; break;
+                case SDLK_6: g_simScaleTarget = SIM_CUP_WEIGHT + 20.5f; break;
+                default: break;
+                }
+            }
             if (e.key.repeat == 0 && (e.key.keysym.sym == SDLK_1 || e.key.keysym.sym == SDLK_2))
                 controller.getClientController()->simulateButton(e.key.keysym.sym == SDLK_1 ? 0 : 1, e.type == SDL_KEYDOWN);
             break;
@@ -125,6 +140,8 @@ void SdlDriver::pumpAndRender() {
     SDL_RenderCopy(s_renderer, s_mask, nullptr, nullptr); // round off the corners
     SDL_RenderPresent(s_renderer);
 }
+
+bool SdlDriver::installSDCard() { return SD_MMC.begin("/sdcard", true, false); }
 
 bool SdlDriver::shouldQuit() const { return s_quit; }
 

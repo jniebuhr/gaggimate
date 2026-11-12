@@ -5,6 +5,7 @@
 #include "ESPAsyncWebServer.h"
 #include "SdlDriver.h"
 #include <Arduino.h>
+#include <cmath>
 #include <cstdlib>
 #include <cstring>
 #include <display/core/Controller.h>
@@ -79,6 +80,21 @@ int main(int argc, char **argv) {
             if (millis() - lastSave >= 2000) {
                 lastSave = millis();
                 controller.getSettings().save(true);
+            }
+        }
+
+        // Simulated Bluetooth scale: feed the weight chosen with keys 0/3/4/5/6 into the controller like a
+        // real scale would, settling over a few readings.
+        {
+            static unsigned long lastScale = 0;
+            static float scaleWeight = 0.0f;
+            if (g_simScaleTarget >= 0.0f && millis() - lastScale >= 100) {
+                lastScale = millis();
+                const float net = g_simScaleTarget - g_simScaleOffset; // what the scale displays after its last tare
+                scaleWeight += (net - scaleWeight) * 0.35f;
+                if (fabsf(net - scaleWeight) < 0.05f)
+                    scaleWeight = net;
+                controller.onVolumetricMeasurement(scaleWeight, VolumetricMeasurementSource::BLUETOOTH);
             }
         }
 

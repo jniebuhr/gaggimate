@@ -223,6 +223,8 @@ static void writeResponse(int fd, AsyncWebServerResponse *resp) {
     head += "Content-Length: " + std::to_string(bodyLen) + "\r\n";
     for (auto &h : resp->_headers)
         head += std::string(h.first.c_str()) + ": " + std::string(h.second.c_str()) + "\r\n";
+    // The companion app (web/, `vite --mode app`) is served from another origin; let it talk to the simulator.
+    head += "Access-Control-Allow-Origin: *\r\n";
     head += "Connection: close\r\n\r\n";
     sendAll(fd, head.data(), head.size());
     if (bodyLen)
@@ -499,6 +501,14 @@ bool AsyncWebServer::handleHttp(Conn &c) {
     if (q != std::string::npos) {
         path = target.substr(0, q);
         query = target.substr(q + 1);
+    }
+
+    if (method == "OPTIONS") { // CORS preflight from the companion app
+        const std::string head = "HTTP/1.1 204 No Content\r\nAccess-Control-Allow-Origin: *\r\n"
+                                 "Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS\r\n"
+                                 "Access-Control-Allow-Headers: *\r\nContent-Length: 0\r\nConnection: close\r\n\r\n";
+        sendAll(c.fd, head.data(), head.size());
+        return true;
     }
 
     AsyncWebServerRequest req(c.fd, this);

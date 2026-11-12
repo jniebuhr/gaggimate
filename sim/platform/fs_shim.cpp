@@ -1,4 +1,5 @@
 // Implementation of the host FS shim + the LittleFS/SPIFFS/SD_MMC instances.
+#include <cstdlib>
 #include "FS.h"
 #include "LittleFS.h"
 #include "SD_MMC.h"
@@ -138,6 +139,16 @@ bool LittleFSFS::begin(bool, const char *, uint8_t, const char *) {
     _root = "sim_data/littlefs";
     ::mkdir("sim_data", 0755);
     ::mkdir(_root.c_str(), 0755);
+    return true;
+}
+
+bool SDMMCFS::begin(const char *, bool, bool, int, uint8_t) {
+    if (!getenv("GAGGIMATE_SIM_SD")) // opt-in: by default the simulator behaves like a panel without a card
+        return false;
+    _root = "sim_data/sdcard";
+    ::mkdir("sim_data", 0755);
+    ::mkdir(_root.c_str(), 0755);
+    _mounted = true;
     return true;
 }
 

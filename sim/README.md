@@ -53,6 +53,10 @@ IDE (CLion/VSCode) it shows up under the `display-sim` environment as the
   # convert to PNG on macOS: sips -s format png shot.bmp --out shot.png
   ```
 
+- **SD card**: start with `GAGGIMATE_SIM_SD=1` to mount a simulated card backed by `sim_data/sdcard`
+  (profile images, history on SD). Without it the sim behaves like a panel without a card.
+- **Bluetooth scale**: keys `3` (empty scale), `4` (empty dosing cup, 62.4 g), `5` / `6` (cup with 18.0 g / 20.5 g),
+  `t` (tare) and `0` (scale off) drive a simulated scale, so weight-based features and Smart Dose can be tried.
 - **AP mode**: `--ap` clears the Wi-Fi credentials, so the display falls back to
   its access point like a fresh device (setup wizard Wi-Fi step). The next run
   without it seeds the sim network again.
