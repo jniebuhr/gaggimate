@@ -60,7 +60,7 @@ export default function TabBar({ tabs, activeTab, onTabChange, basePath, classNa
 
   return (
     <div className={`relative w-full ${className}`}>
-      <div ref={scrollRef} className='scrollbar-none w-full overflow-x-auto'>
+      <div ref={scrollRef} className='w-full scrollbar-none overflow-x-auto'>
         <div role='tablist' className='tabs tabs-border min-w-full flex-nowrap px-1'>
           {tabs.map(tab => {
             const isActive = tab.id === activeTab;

@@ -239,7 +239,7 @@ export function LibrarySection({
       </div>
 
       <div
-        className='scrollbar-thin relative h-96 overflow-y-auto px-2 lg:h-auto lg:min-h-0 lg:flex-1'
+        className='relative h-96 scrollbar-thin overflow-y-auto px-2 lg:h-auto lg:min-h-0 lg:flex-1'
         style={{ scrollbarGutter: 'stable' }}
       >
         {isLoading && (
