@@ -5586,6 +5586,10 @@ msgstr "La bilancia è stata trovata, ma la connessione Bluetooth non è riuscit
 msgid "The scale wasn't found. Make sure it's switched on and nearby, then scan again."
 msgstr "La bilancia non è stata trovata. Assicurati che sia accesa e vicina, poi ripeti la scansione."
 
+#: src/pages/ProfileList/index.jsx
+msgid "The selected profile can't be deleted"
+msgstr "Il profilo selezionato non può essere eliminato"
+
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "The temperature did not rise. Check the heater wiring, the SSR and the thermal fuses."
 msgstr "La temperatura non è salita. Controlla il cablaggio della resistenza, l'SSR e i fusibili termici."

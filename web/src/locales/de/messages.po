@@ -5582,6 +5582,10 @@ msgstr "Die Waage wurde gefunden, aber die Bluetooth-Verbindung ist fehlgeschlag
 msgid "The scale wasn't found. Make sure it's switched on and nearby, then scan again."
 msgstr "Die Waage wurde nicht gefunden. Stelle sicher, dass sie eingeschaltet und in der Nähe ist, und suche dann erneut."
 
+#: src/pages/ProfileList/index.jsx
+msgid "The selected profile can't be deleted"
+msgstr "Das ausgewählte Profil kann nicht gelöscht werden"
+
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "The temperature did not rise. Check the heater wiring, the SSR and the thermal fuses."
 msgstr "Die Temperatur ist nicht gestiegen. Prüfe die Verkabelung der Heizung, das SSR und die Thermosicherungen."

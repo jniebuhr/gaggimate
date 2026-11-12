@@ -5582,6 +5582,10 @@ msgstr "The scale was found, but the Bluetooth connection failed. Try again or r
 msgid "The scale wasn't found. Make sure it's switched on and nearby, then scan again."
 msgstr "The scale wasn't found. Make sure it's switched on and nearby, then scan again."
 
+#: src/pages/ProfileList/index.jsx
+msgid "The selected profile can't be deleted"
+msgstr "The selected profile can't be deleted"
+
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "The temperature did not rise. Check the heater wiring, the SSR and the thermal fuses."
 msgstr "The temperature did not rise. Check the heater wiring, the SSR and the thermal fuses."

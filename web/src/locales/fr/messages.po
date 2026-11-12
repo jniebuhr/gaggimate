@@ -5582,6 +5582,10 @@ msgstr "La balance a été trouvée, mais la connexion Bluetooth a échoué. Ré
 msgid "The scale wasn't found. Make sure it's switched on and nearby, then scan again."
 msgstr "La balance est introuvable. Vérifiez qu'elle est allumée et à proximité, puis relancez la recherche."
 
+#: src/pages/ProfileList/index.jsx
+msgid "The selected profile can't be deleted"
+msgstr "Le profil sélectionné ne peut pas être supprimé"
+
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "The temperature did not rise. Check the heater wiring, the SSR and the thermal fuses."
 msgstr "La température n'a pas augmenté. Vérifiez le câblage de la résistance, le SSR et les fusibles thermiques."

@@ -5582,6 +5582,10 @@ msgstr "已找到秤，但蓝牙连接失败。请重试或重启秤。"
 msgid "The scale wasn't found. Make sure it's switched on and nearby, then scan again."
 msgstr "未找到秤。请确认秤已开机并在附近，然后重新扫描。"
 
+#: src/pages/ProfileList/index.jsx
+msgid "The selected profile can't be deleted"
+msgstr "无法删除当前选中的曲线"
+
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "The temperature did not rise. Check the heater wiring, the SSR and the thermal fuses."
 msgstr "温度未上升。请检查加热器接线、SSR 和温度保险丝。"
