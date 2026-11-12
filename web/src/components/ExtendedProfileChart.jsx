@@ -381,7 +381,7 @@ export function ExtendedProfileChart({
 
   return (
     <ChartComponent
-      className='min-h-0 max-w-full flex-shrink flex-grow'
+      className='min-h-0 max-w-full shrink grow'
       chartClassName={`${className}${onPhaseClick ? ' cursor-pointer' : ''}`}
       data={config}
       style={style}

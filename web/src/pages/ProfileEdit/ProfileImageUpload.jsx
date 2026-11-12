@@ -80,7 +80,7 @@ export function ProfileImageUpload({ profileId }) {
   if (!hasSdCard) return null;
 
   return (
-    <div className='form-control'>
+    <div>
       <label htmlFor='profile-image' className='mb-2 block text-sm font-medium'>
         <Trans>Image</Trans>
       </label>
@@ -90,7 +90,7 @@ export function ProfileImageUpload({ profileId }) {
         </p>
       ) : (
         <div className='flex flex-row items-start gap-4'>
-          <div className='bg-base-200 flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded'>
+          <div className='bg-base-200 flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-sm'>
             {preview ? (
               <img src={preview} alt={t`Profile image`} className='h-full w-full object-cover' />
             ) : (

@@ -3,7 +3,7 @@ import Section from '../Card.jsx';
 // Helper component for an input group skeleton
 function InputSkeleton() {
   return (
-    <div className='form-control space-y-2'>
+    <div className='space-y-2'>
       <div className='skeleton h-4 w-28 rounded-md opacity-60' />
       <div className='skeleton border-base-content/10 h-12 w-full rounded-md border' />
     </div>
@@ -119,8 +119,8 @@ export function BluetoothTabSkeleton() {
               <div className='flex items-center gap-3'>
                 <div className='skeleton h-8 w-8 shrink-0 rounded-full opacity-50' />
                 <div className='space-y-2'>
-                  <div className='skeleton h-4 w-28 rounded opacity-80' />
-                  <div className='skeleton h-3 w-40 rounded opacity-40' />
+                  <div className='skeleton h-4 w-28 rounded-sm opacity-80' />
+                  <div className='skeleton h-3 w-40 rounded-sm opacity-40' />
                 </div>
               </div>
               <div className='skeleton h-8 w-20 rounded-md opacity-60' />
@@ -137,15 +137,15 @@ export function SystemTabSkeleton() {
     <div className='space-y-4 sm:space-y-6'>
       <div className='grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2'>
         <Section title={<div className='skeleton h-6 w-24 rounded-md opacity-70' />}>
-          <div className='skeleton mb-4 h-4 w-5/6 rounded opacity-40' />
+          <div className='skeleton mb-4 h-4 w-5/6 rounded-sm opacity-40' />
           <div className='skeleton border-base-content/20 flex h-32 w-full flex-col items-center justify-center gap-2 rounded-lg border border-dashed'>
             <div className='skeleton h-8 w-8 rounded-full opacity-40' />
-            <div className='skeleton h-4 w-36 rounded opacity-50' />
+            <div className='skeleton h-4 w-36 rounded-sm opacity-50' />
           </div>
         </Section>
 
         <Section title={<div className='skeleton h-6 w-32 rounded-md opacity-70' />}>
-          <div className='skeleton mb-6 h-4 w-5/6 rounded opacity-40' />
+          <div className='skeleton mb-6 h-4 w-5/6 rounded-sm opacity-40' />
           <div className='space-y-3'>
             <div className='skeleton h-11 w-full rounded-lg opacity-80' />
             <div className='skeleton h-11 w-full rounded-lg opacity-85' />

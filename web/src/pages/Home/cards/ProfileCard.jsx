@@ -26,7 +26,7 @@ function ProgressCard({ processInfo, isBrewing, isGrinding, selectedProfile }) {
       </div>
       <div className='flex items-baseline justify-between'>
         <div className='flex flex-col gap-0.5'>
-          <span className='bg-primary/20 text-primary rounded px-1.5 py-0.5 text-[0.6rem] font-semibold tracking-wider uppercase'>
+          <span className='bg-primary/20 text-primary rounded-sm px-1.5 py-0.5 text-[0.6rem] font-semibold tracking-wider uppercase'>
             {phase}
           </span>
           <span className='text-base-content text-2xl font-bold tabular-nums'>

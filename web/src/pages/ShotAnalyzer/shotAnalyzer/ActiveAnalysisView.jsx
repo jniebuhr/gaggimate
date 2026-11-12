@@ -244,7 +244,7 @@ export function ActiveAnalysisView({
   );
 
   return (
-    <div ref={analysisSectionRef} className='analyzer-mobile-scroll-target animate-fade-in mt-8'>
+    <div ref={analysisSectionRef} className='analyzer-mobile-scroll-target mt-8'>
       {showMobileSubpage ? (
         <div ref={mobileSubpageRef} className='analyzer-mobile-scroll-target space-y-3 lg:hidden'>
           <MobileAnalyzerSubpageHeader

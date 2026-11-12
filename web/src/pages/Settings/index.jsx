@@ -662,9 +662,7 @@ export function Settings() {
         )}
       </form>
 
-      {tab === 'calibration' && (
-        <LazyCalibrationTab formData={formData} onChange={onChange} setField={setField} />
-      )}
+      {tab === 'calibration' && <LazyCalibrationTab formData={formData} setField={setField} />}
       {tab === 'bluetooth' && (isLoading ? <BluetoothTabSkeleton /> : <LazyBluetoothTab />)}
       {tab === 'system' && (isLoading ? <SystemTabSkeleton /> : <LazySystemTab />)}
     </PageLayout>

@@ -233,9 +233,9 @@ function ProfileCard({
         aria-labelledby={`profile-${data.id}-title`}
         aria-busy={Boolean(pending)}
       >
-        <div className='flex flex-grow flex-col overflow-hidden'>
+        <div className='flex grow flex-col overflow-hidden'>
           <div className='mx-2 flex flex-row items-center gap-2 align-middle'>
-            <div className='flex min-w-0 flex-grow flex-row items-center gap-4'>
+            <div className='flex min-w-0 grow flex-row items-center gap-4'>
               {/* CheckBox */}
               <div className='flex size-5 items-center justify-center'>
                 {visiblePending === 'select' ? (
@@ -324,7 +324,7 @@ function ProfileCard({
                       id={`profile-${data.id}-menu`}
                       ref={popoverRef}
                       role='menu'
-                      className='bg-base-100 rounded-box z-50 w-56 p-2 shadow'
+                      className='bg-base-100 rounded-box z-50 w-56 p-2 shadow-sm'
                       onKeyDown={e => {
                         if (e.key === 'Escape') closeMenu();
                       }}
@@ -422,7 +422,7 @@ function ProfileCard({
                                 });
                               }}
                               disabled={busy}
-                              className={`justify-start ${confirmDelete ? 'bg-error text-error-content rounded font-semibold' : 'text-error'}`}
+                              className={`justify-start ${confirmDelete ? 'bg-error text-error-content rounded-sm font-semibold' : 'text-error'}`}
                               aria-label={
                                 confirmDelete
                                   ? t`Confirm deletion of ${label} profile`
@@ -572,7 +572,7 @@ function ProfileCard({
                   <button
                     onClick={handleMoveTop}
                     disabled={isFirst || busy}
-                    className='drag-to-top btn btn-sm btn-ghost'
+                    className='btn btn-sm btn-ghost'
                     aria-label={t`Move ${label} to top`}
                     aria-disabled={isFirst}
                   >
@@ -593,7 +593,7 @@ function ProfileCard({
                   <button
                     onClick={handleMoveBottom}
                     disabled={isLast || busy}
-                    className='drag-to-bottom btn btn-sm btn-ghost'
+                    className='btn btn-sm btn-ghost'
                     aria-label={t`Move ${label} to bottom`}
                     aria-disabled={isLast}
                   >
@@ -601,7 +601,7 @@ function ProfileCard({
                   </button>
                 </Tooltip>
               </div>
-              <div className='flex-grow overflow-x-auto'>
+              <div className='grow overflow-x-auto'>
                 {data.type === 'pro' ? (
                   <ExtendedProfileChart data={{ ...data, phases }} className='max-h-36' />
                 ) : (
@@ -1082,7 +1082,7 @@ export function ProfileList() {
   return (
     <>
       <div className='mb-4 flex flex-row items-center gap-2'>
-        <h1 className='flex-grow text-2xl font-bold sm:text-3xl'>
+        <h1 className='grow text-2xl font-bold sm:text-3xl'>
           <Trans>Profiles</Trans>
         </h1>
       </div>
@@ -1104,7 +1104,7 @@ export function ProfileList() {
             />
           </label>
         </div>
-        <div className='flex flex-grow items-center justify-end gap-2'>
+        <div className='flex grow items-center justify-end gap-2'>
           <Tooltip content={t`Export all profiles`}>
             <button
               id='export-profiles'
