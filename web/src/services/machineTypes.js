@@ -31,6 +31,49 @@
  */
 
 /**
+ * One scale reading in a SmartDoseStatus; weights are only sent while connected.
+ * @typedef {object} SmartDoseMeasurement
+ * @property {'hardware' | 'bluetooth'} source
+ * @property {boolean} connected
+ * @property {number} calibration Tare weight of the accessory.
+ * @property {boolean} manual Scale used for manual dosing.
+ * @property {number} [gross]
+ * @property {number} [raw]
+ * @property {number} [weight]
+ */
+
+/**
+ * SmartDose state from SmartDosePlugin::status. When disabled only the boolean
+ * flags are sent, all false.
+ * @typedef {object} SmartDoseStatus
+ * @property {boolean} enabled
+ * @property {boolean} connected
+ * @property {boolean} available
+ * @property {boolean} blinking
+ * @property {boolean} adjustable
+ * @property {number} [weight] Dose weight.
+ * @property {number} [gross] Weight above the tare baseline.
+ * @property {number} [doseIn] Dose of the selected profile.
+ * @property {number} [cupWeight]
+ * @property {number} [portafilterWeight]
+ * @property {'hardware' | 'bluetooth'} [source]
+ * @property {'manual' | 'portafilter' | 'cup'} [accessory]
+ * @property {'hardware' | 'bluetooth'} [manualSource]
+ * @property {'cup' | 'portafilter' | 'none'} [owner]
+ * @property {'taring' | 'filling' | 'removing' | 'ready' | 'idle'} [phase]
+ * @property {string} [mode] Effective mode: cup, portafilter or automatic.
+ * @property {string} [modePreference] Mode from settings.
+ * @property {boolean} [automaticAvailable]
+ * @property {boolean} [cupConfigured]
+ * @property {boolean} [portafilterConfigured]
+ * @property {boolean} [automagic]
+ * @property {SmartDoseMeasurement} [manual]
+ * @property {SmartDoseMeasurement} [cup] Only when the cup is configured.
+ * @property {SmartDoseMeasurement} [portafilter] Only when the portafilter is configured.
+ * @property {boolean} [stable] Reading is stable and the dose valid.
+ */
+
+/**
  * One evt:status frame as sent by the firmware. Frames are partial: telemetry
  * keys arrive every tick, state keys only when they change (see ApiService._onStatus).
  * @typedef {object} StatusFrame
@@ -39,6 +82,8 @@
  * @property {number} [tt] Target temperature.
  * @property {number} [cst] Current steam temperature.
  * @property {number} [tst] Target steam temperature.
+ * @property {boolean} [sa] Steam heater active.
+ * @property {boolean} [sca] Steam controls available.
  * @property {number} [pr] Current pressure.
  * @property {number} [pt] Target pressure.
  * @property {number} [fl] Current pump flow.
@@ -52,6 +97,11 @@
  * @property {number} [wp] Water pumped.
  * @property {number} [wl] Water level in percent.
  * @property {number} [tof] ToF distance.
+ * @property {boolean} [awl] Alba water level available.
+ * @property {boolean} [htl] Tank level sensor present.
+ * @property {boolean | null} [tlo] Tank level OK, null without a sensor.
+ * @property {boolean} [hsl] Steam boiler level sensor present.
+ * @property {boolean | null} [sbl] Steam boiler low, null without a sensor.
  * @property {number} [rssi] Controller link RSSI.
  * @property {number} [lat] Controller round-trip latency in ms, -1 until measured.
  * @property {number} [rtx] Controller frames retransmitted since boot.
@@ -70,6 +120,7 @@
  * @property {boolean} [bc] Bluetooth scale connected.
  * @property {number | null} [sbat] Scale battery, null when unknown.
  * @property {string} [scaleSource] Active scale source name.
+ * @property {SmartDoseStatus} [smartDose]
  * @property {boolean} [up] Firmware update available.
  * @property {WarningStateFrame[]} [warn]
  * @property {{ s?: string, m?: string, c?: number }} [sys] System state key, message and error code.
@@ -97,6 +148,8 @@
  * @property {number} targetTemperature
  * @property {number} currentSteamTemperature
  * @property {number} targetSteamTemperature
+ * @property {boolean} [steamActive]
+ * @property {boolean} [steamControlsAvailable]
  * @property {number} [currentPressure]
  * @property {number} [targetPressure]
  * @property {number} currentFlow
@@ -114,6 +167,12 @@
  * @property {number} grindTarget
  * @property {boolean} grindActive
  * @property {number} [currentWeight]
+ * @property {SmartDoseStatus} [smartDose]
+ * @property {boolean} [albaWaterLevelAvailable]
+ * @property {boolean} [hasTankLevel]
+ * @property {boolean | null} [tankLevelOK]
+ * @property {boolean} [hasSteamLevel]
+ * @property {boolean | null} [steamBoilerLow]
  * @property {boolean} [bluetoothConnected]
  * @property {string} [activeScaleSource]
  * @property {number | null} [scaleBattery]
