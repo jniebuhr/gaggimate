@@ -9,6 +9,8 @@
 
 // BLE peripheral (server) transport for the controller: RX write / TX notify chars (one datagram each) + OTA DFU service.
 // Pairing: bonds one display on first boot, then directed-advertises to it only until clearBonds(); comms require encryption.
+// A display using LE privacy (rotating private addresses) gets undirected adverts instead, filtered by the whitelist
+// via its IRK.
 // A boot-time pairing window (steam switch held at power-on) re-opens advertising so a replacement display can take over.
 class BleServerTransport : public Transport, public NimBLEServerCallbacks, public NimBLECharacteristicCallbacks {
   public:
@@ -36,9 +38,13 @@ class BleServerTransport : public Transport, public NimBLEServerCallbacks, publi
     bool _connected = false;
     bool _whitelistOnly = false;
     bool _pairingWindow = false;
+    // Bonded on this link but the bond (and the peer's identity address) is not stored yet; see tryAdoptPeer().
+    bool _adoptPending = false;
     // The single display this PCB is paired to (NVS-persisted); the bond store and whitelist are pruned to match.
     NimBLEAddress _pairedPeer{};
     bool _havePairedPeer = false;
+    // The paired display uses LE privacy (rotating resolvable private addresses): its bond carries an IRK.
+    bool _peerUsesPrivacy = false;
     uint16_t _connHandle = BLE_HS_CONN_HANDLE_NONE;
     NimBLEServer *_server = nullptr;
     NimBLEAdvertising *_advertising = nullptr;
@@ -52,10 +58,12 @@ class BleServerTransport : public Transport, public NimBLEServerCallbacks, publi
     void enableWhitelist();
     void applyAdvertisingData();
     void startAdv(); // directed at the paired display, or open when unpaired
+    void tryAdoptPeer(uint16_t connHandle);
     void adoptPeer(const NimBLEAddress &address);
     void closePairingWindow();
     void pruneForeignBonds(const NimBLEAddress &keep);
     void loadPairedPeer();
+    static bool bondHasIrk(const NimBLEAddress &address);
     void savePairedPeer(const NimBLEAddress &address);
 
     void onConnect(NimBLEServer *server) override;
