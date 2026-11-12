@@ -71,7 +71,6 @@ void GaggiMateController::setup() {
             this->steamTemperature.get(), _config.altPin, [this]() { thermalRunawayShutdown(); },
             [this](float Kp, float Ki, float Kd, float Kf) { _comms.sendAutotuneResult(Kp, Ki, Kd, Kf); },
             [this]() { _comms.sendError(ERROR_CODE_AUTOTUNE_TIMEOUT); });
-        heater2->setHeatingCheckTime(60000);
         heaterCoordinator = std::make_unique<HeaterCoordinator>(heater.get(), heater2.get());
         refill = std::make_unique<SimpleRelay>(_config.refillPin, _config.valveOn);
         aux = std::make_unique<SimpleRelay>(_config.auxPin, _config.valveOn);
@@ -206,7 +205,6 @@ void GaggiMateController::setup() {
                 ledController->setChannel(channel, brightness);
         });
     brewTemperature->setup();
-    heater->setHeatingCheckPump(pump->getPumpPowerPtr());
     heater->setup();
     valve->setup();
     pump->setup();

@@ -27,10 +27,6 @@ class Heater {
     Heater(TemperatureSensor *sensor, uint8_t heaterPin, const heater_error_callback_t &error_callback,
            const pid_result_callback_t &pid_callback, const heater_autotune_fail_callback_t &autotune_fail_callback = nullptr);
     void setup();
-    // Configure before setup(): high-duty observation time to gain at least 2 degrees.
-    void setHeatingCheckTime(uint32_t ms) { heatingCheck.setHeatingTime(ms); }
-    // Attach only to the brew heater: water flow invalidates a no-rise observation.
-    void setHeatingCheckPump(float *power) { heatingCheckPumpPower = power; }
     void loop();
 
     void setSetpoint(float setpoint);
@@ -49,7 +45,6 @@ class Heater {
     void setFeedforwardScale(float combinedKff); // Set combined Kff value (output units per watt)
 
   private:
-    bool checkHeating();
     void setupPid();
     void setupAutotune(int testTimeSec, int windowSize, int heaterWattage);
     void loopPid();
@@ -70,14 +65,6 @@ class Heater {
     pid_result_callback_t pid_callback;
     heater_autotune_fail_callback_t autotune_fail_callback;
     HeaterCoordinator *coordinator = nullptr;
-
-    HeatingCheck heatingCheck;
-    float *heatingCheckPumpPower = nullptr;
-    std::atomic<bool> heatingFault{false};
-    portMUX_TYPE outputMux = portMUX_INITIALIZER_UNLOCKED;
-    uint32_t outputAccountedAt = 0;
-    uint32_t totalOnMs = 0;
-    bool outputOn = false;
 
     float temperature = 0.0f;
     float output = 0.0f;
