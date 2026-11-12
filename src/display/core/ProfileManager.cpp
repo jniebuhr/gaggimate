@@ -123,7 +123,7 @@ void ProfileManager::migrate(const std::vector<String> &existingProfiles) {
     Profile profile{};
     profile.id = generateShortID();
     profile.label = "Default";
-    profile.description = "Default profile";
+    profile.description = "Automatically created default profile - runs the machine as before";
     profile.temperature = 93;
     profile.type = "standard";
     Phase brewPhase{};

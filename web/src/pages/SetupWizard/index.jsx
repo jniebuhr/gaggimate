@@ -1,10 +1,12 @@
 import { useState } from 'preact/hooks';
 import { useLocation } from 'preact-iso';
 import { Trans, useLingui } from '@lingui/react/macro';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCircleCheck } from '@fortawesome/free-solid-svg-icons/faCircleCheck';
 import Card from '../../components/Card.jsx';
 import { Spinner } from '../../components/Spinner.jsx';
 import { getCachedSettings } from '../../services/ApiService.js';
-import { useProfileList } from '../../services/hooks.js';
+import { useApiService, useProfileList } from '../../services/hooks.js';
 import { serializeAutoWakeupSchedules } from '../Settings/settingsForm.js';
 import { InfoNote } from './InfoNote.jsx';
 import { MachineStep } from './MachineStep.jsx';
@@ -21,8 +23,13 @@ import {
 
 function FinishStep({ joinSsid, pluginsPending, configureLater }) {
   const { t } = useLingui();
+  const apiService = useApiService();
   const { profiles } = useProfileList();
-  const featured = profiles.filter(p => !p.utility).slice(0, 4);
+  const featured = profiles.filter(p => !p.utility).slice(0, 6);
+  // The machine broadcasts the new selection, which moves the highlight
+  const selectProfile = id => {
+    apiService.request({ tp: 'req:profiles:select', id }).catch(() => {});
+  };
   return (
     <div className='space-y-4'>
       {joinSsid && (
@@ -60,16 +67,37 @@ function FinishStep({ joinSsid, pluginsPending, configureLater }) {
         )}
       </p>
       {featured.length > 0 && (
-        <ul className='grid grid-cols-1 gap-2 sm:grid-cols-2'>
+        <div className='flex flex-col gap-2' role='radiogroup' aria-label={t`Selected profile`}>
           {featured.map(profile => (
-            <li key={profile.id} className='bg-base-200 rounded-lg p-3'>
-              <div className='font-medium'>{profile.label}</div>
-              {profile.description && (
-                <div className='text-sm opacity-70'>{profile.description}</div>
+            <button
+              key={profile.id}
+              type='button'
+              role='radio'
+              aria-checked={!!profile.selected}
+              className={`flex w-full items-center gap-3 rounded-lg border p-3 text-left transition-colors cursor-pointer ${
+                profile.selected
+                  ? 'bg-primary/10 border-primary'
+                  : 'bg-base-200 hover:bg-base-300 border-transparent'
+              }`}
+              onClick={() => selectProfile(profile.id)}
+            >
+              <span className='min-w-0 flex-1'>
+                <span className='block font-medium'>{profile.label}</span>
+                {profile.description && (
+                  <span className='block text-sm opacity-70'>{profile.description}</span>
+                )}
+              </span>
+              {profile.selected && (
+                <FontAwesomeIcon icon={faCircleCheck} className='text-primary shrink-0 text-lg' />
               )}
-            </li>
+            </button>
           ))}
-        </ul>
+        </div>
+      )}
+      {featured.length > 0 && (
+        <p className='text-sm opacity-70'>
+          <Trans>Tap a profile to select it.</Trans>
+        </p>
       )}
       <p className='text-sm opacity-70'>
         <Trans>You can run this wizard again any time from Settings → System.</Trans>

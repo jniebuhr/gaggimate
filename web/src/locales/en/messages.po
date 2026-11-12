@@ -4544,6 +4544,10 @@ msgstr "Select your machine and apply recommended defaults."
 msgid "Select..."
 msgstr "Select..."
 
+#: src/pages/SetupWizard/index.jsx
+msgid "Selected profile"
+msgstr "Selected profile"
+
 #: src/components/MachineProfileControl.jsx
 msgid "Selecting a profile prefills the values. Save to apply. Choose Custom to edit machine values."
 msgstr "Selecting a profile prefills the values. Save to apply. Choose Custom to edit machine values."
@@ -5266,6 +5270,10 @@ msgstr "T"
 msgctxt "Tuesday, one letter"
 msgid "T"
 msgstr "T"
+
+#: src/pages/SetupWizard/index.jsx
+msgid "Tap a profile to select it."
+msgstr "Tap a profile to select it."
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Tare"

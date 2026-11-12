@@ -4544,6 +4544,10 @@ msgstr "选择你的咖啡机并应用推荐的默认值。"
 msgid "Select..."
 msgstr "选择..."
 
+#: src/pages/SetupWizard/index.jsx
+msgid "Selected profile"
+msgstr "已选曲线"
+
 #: src/components/MachineProfileControl.jsx
 msgid "Selecting a profile prefills the values. Save to apply. Choose Custom to edit machine values."
 msgstr "选择配置会预填参数，保存后生效。选择“自定义”可编辑咖啡机参数。"
@@ -5266,6 +5270,10 @@ msgstr "四"
 msgctxt "Tuesday, one letter"
 msgid "T"
 msgstr "二"
+
+#: src/pages/SetupWizard/index.jsx
+msgid "Tap a profile to select it."
+msgstr "点按曲线即可选择。"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Tare"
