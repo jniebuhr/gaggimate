@@ -2084,6 +2084,10 @@ msgstr "Enjuagar con agua"
 msgid "For 120 V machines, heater coordination should generally remain enabled. Running the brew and steam heaters simultaneously can overload the circuit, blow a fuse or trip a breaker, and create a fire hazard. Only disable it if the machine and supply circuit are rated to power both heaters together."
 msgstr "En máquinas de 120 V, la coordinación de resistencias debería permanecer activada por lo general. Hacer funcionar a la vez las resistencias de extracción y de vapor puede sobrecargar el circuito, fundir un fusible o hacer saltar un interruptor automático, y crear riesgo de incendio. Desactívala solo si la máquina y el circuito de alimentación están preparados para alimentar ambas resistencias a la vez."
 
+#: src/pages/SetupWizard/index.jsx
+msgid "For further information on how to use and configure GaggiMate please consult our documentation and guides!"
+msgstr "¡Para más información sobre cómo usar y configurar GaggiMate, consulta nuestra documentación y nuestras guías!"
+
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "Forget"
 msgstr "Olvidar"
@@ -2119,6 +2123,10 @@ msgstr "Desde"
 msgctxt "panel view"
 msgid "Full"
 msgstr "Completa"
+
+#: src/pages/SetupWizard/index.jsx
+msgid "Further Resources"
+msgstr "Más recursos"
 
 #: src/pages/ShotAnalyzer/components/EmptyState.jsx
 msgid "GaggiMate (GM)"
@@ -3803,6 +3811,10 @@ msgstr "Perfil A-Z"
 #: src/pages/DashboardSettings/index.jsx
 msgid "Profile Chart Height"
 msgstr "Altura de la gráfica del perfil"
+
+#: src/pages/SetupWizard/index.jsx
+msgid "Profile Creation"
+msgstr "Creación de perfiles"
 
 #: src/pages/ProfileList/index.jsx
 msgid "Profile details for {label}"
@@ -5857,6 +5869,10 @@ msgstr "Peso total"
 #: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTable.jsx
 msgid "Totals"
 msgstr "Totales"
+
+#: src/pages/SetupWizard/index.jsx
+msgid "Touch Screen Guide"
+msgstr "Guía de la pantalla táctil"
 
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 msgid "Transition duration in {rampUnit}"

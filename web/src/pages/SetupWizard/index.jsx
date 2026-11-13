@@ -74,7 +74,7 @@ function FinishStep({ joinSsid, pluginsPending, configureLater }) {
               type='button'
               role='radio'
               aria-checked={!!profile.selected}
-              className={`flex w-full items-center gap-3 rounded-lg border p-3 text-left transition-colors cursor-pointer ${
+              className={`flex w-full cursor-pointer items-center gap-3 rounded-lg border p-3 text-left transition-colors ${
                 profile.selected
                   ? 'bg-primary/10 border-primary'
                   : 'bg-base-200 hover:bg-base-300 border-transparent'
@@ -99,6 +99,33 @@ function FinishStep({ joinSsid, pluginsPending, configureLater }) {
           <Trans>Tap a profile to select it.</Trans>
         </p>
       )}
+      <p className='text-lg'>
+        <Trans>Further Resources</Trans>
+      </p>
+      <p>
+        <Trans>
+          For further information on how to use and configure GaggiMate please consult our
+          documentation and guides!
+        </Trans>
+      </p>
+      <p className='flex flex-row gap-2'>
+        <a
+          className='btn'
+          href='https://docs.gaggimate.eu/docs/usage-touchscreen/'
+          target='_blank'
+          rel='noreferrer'
+        >
+          <Trans>Touch Screen Guide</Trans>
+        </a>
+        <a
+          className='btn'
+          href='https://docs.gaggimate.eu/docs/profiles/'
+          target='_blank'
+          rel='noreferrer'
+        >
+          <Trans>Profile Creation</Trans>
+        </a>
+      </p>
       <p className='text-sm opacity-70'>
         <Trans>You can run this wizard again any time from Settings → System.</Trans>
       </p>

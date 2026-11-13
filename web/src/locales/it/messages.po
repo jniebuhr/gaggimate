@@ -2088,6 +2088,10 @@ msgstr "Acqua di flush"
 msgid "For 120 V machines, heater coordination should generally remain enabled. Running the brew and steam heaters simultaneously can overload the circuit, blow a fuse or trip a breaker, and create a fire hazard. Only disable it if the machine and supply circuit are rated to power both heaters together."
 msgstr "Per le macchine a 120 V il coordinamento delle resistenze dovrebbe in genere restare attivo. Far funzionare contemporaneamente le resistenze di erogazione e vapore può sovraccaricare il circuito, bruciare un fusibile o far scattare un interruttore e creare un rischio di incendio. Disattivalo solo se la macchina e il circuito di alimentazione sono dimensionati per alimentare entrambe le resistenze insieme."
 
+#: src/pages/SetupWizard/index.jsx
+msgid "For further information on how to use and configure GaggiMate please consult our documentation and guides!"
+msgstr "Per maggiori informazioni su come usare e configurare GaggiMate, consulta la nostra documentazione e le nostre guide!"
+
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "Forget"
 msgstr "Dimentica"
@@ -2123,6 +2127,10 @@ msgstr "Da"
 msgctxt "panel view"
 msgid "Full"
 msgstr "Completa"
+
+#: src/pages/SetupWizard/index.jsx
+msgid "Further Resources"
+msgstr "Altre risorse"
 
 #: src/pages/ShotAnalyzer/components/EmptyState.jsx
 msgid "GaggiMate (GM)"
@@ -3807,6 +3815,10 @@ msgstr "Profilo A-Z"
 #: src/pages/DashboardSettings/index.jsx
 msgid "Profile Chart Height"
 msgstr "Altezza grafico profilo"
+
+#: src/pages/SetupWizard/index.jsx
+msgid "Profile Creation"
+msgstr "Creazione dei profili"
 
 #: src/pages/ProfileList/index.jsx
 msgid "Profile details for {label}"
@@ -5861,6 +5873,10 @@ msgstr "Peso totale"
 #: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTable.jsx
 msgid "Totals"
 msgstr "Totali"
+
+#: src/pages/SetupWizard/index.jsx
+msgid "Touch Screen Guide"
+msgstr "Guida al touchscreen"
 
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 msgid "Transition duration in {rampUnit}"

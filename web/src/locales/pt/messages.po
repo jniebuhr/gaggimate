@@ -2084,6 +2084,10 @@ msgstr "Enxaguar com água"
 msgid "For 120 V machines, heater coordination should generally remain enabled. Running the brew and steam heaters simultaneously can overload the circuit, blow a fuse or trip a breaker, and create a fire hazard. Only disable it if the machine and supply circuit are rated to power both heaters together."
 msgstr "Em máquinas de 120 V, a coordenação dos aquecedores geralmente deve permanecer ativada. Ligar os aquecedores de extração e de vapor ao mesmo tempo pode sobrecarregar o circuito, queimar um fusível ou desarmar um disjuntor, além de criar risco de incêndio. Desative-a somente se a máquina e o circuito de alimentação forem dimensionados para alimentar os dois aquecedores juntos."
 
+#: src/pages/SetupWizard/index.jsx
+msgid "For further information on how to use and configure GaggiMate please consult our documentation and guides!"
+msgstr "Para mais informações sobre como usar e configurar o GaggiMate, consulte nossa documentação e nossos guias!"
+
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "Forget"
 msgstr "Esquecer"
@@ -2119,6 +2123,10 @@ msgstr "De"
 msgctxt "panel view"
 msgid "Full"
 msgstr "Completo"
+
+#: src/pages/SetupWizard/index.jsx
+msgid "Further Resources"
+msgstr "Mais recursos"
 
 #: src/pages/ShotAnalyzer/components/EmptyState.jsx
 msgid "GaggiMate (GM)"
@@ -3803,6 +3811,10 @@ msgstr "Perfil A-Z"
 #: src/pages/DashboardSettings/index.jsx
 msgid "Profile Chart Height"
 msgstr "Altura do gráfico do perfil"
+
+#: src/pages/SetupWizard/index.jsx
+msgid "Profile Creation"
+msgstr "Criação de perfis"
 
 #: src/pages/ProfileList/index.jsx
 msgid "Profile details for {label}"
@@ -5857,6 +5869,10 @@ msgstr "Peso total"
 #: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTable.jsx
 msgid "Totals"
 msgstr "Totais"
+
+#: src/pages/SetupWizard/index.jsx
+msgid "Touch Screen Guide"
+msgstr "Guia da tela touch"
 
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 msgid "Transition duration in {rampUnit}"

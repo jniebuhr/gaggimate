@@ -2084,6 +2084,10 @@ msgstr "Rincer"
 msgid "For 120 V machines, heater coordination should generally remain enabled. Running the brew and steam heaters simultaneously can overload the circuit, blow a fuse or trip a breaker, and create a fire hazard. Only disable it if the machine and supply circuit are rated to power both heaters together."
 msgstr "Sur les machines 120 V, la coordination des chauffes doit généralement rester activée. Faire fonctionner simultanément les résistances d'extraction et de vapeur peut surcharger le circuit, faire griller un fusible ou déclencher un disjoncteur, et créer un risque d'incendie. Ne la désactivez que si la machine et le circuit d'alimentation sont dimensionnés pour alimenter les deux résistances en même temps."
 
+#: src/pages/SetupWizard/index.jsx
+msgid "For further information on how to use and configure GaggiMate please consult our documentation and guides!"
+msgstr "Pour en savoir plus sur l'utilisation et la configuration de GaggiMate, consultez notre documentation et nos guides !"
+
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "Forget"
 msgstr "Oublier"
@@ -2119,6 +2123,10 @@ msgstr "Du"
 msgctxt "panel view"
 msgid "Full"
 msgstr "Complet"
+
+#: src/pages/SetupWizard/index.jsx
+msgid "Further Resources"
+msgstr "Ressources supplémentaires"
 
 #: src/pages/ShotAnalyzer/components/EmptyState.jsx
 msgid "GaggiMate (GM)"
@@ -3803,6 +3811,10 @@ msgstr "Profil A-Z"
 #: src/pages/DashboardSettings/index.jsx
 msgid "Profile Chart Height"
 msgstr "Hauteur du graphique de profil"
+
+#: src/pages/SetupWizard/index.jsx
+msgid "Profile Creation"
+msgstr "Création de profils"
 
 #: src/pages/ProfileList/index.jsx
 msgid "Profile details for {label}"
@@ -5857,6 +5869,10 @@ msgstr "Poids total"
 #: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTable.jsx
 msgid "Totals"
 msgstr "Totaux"
+
+#: src/pages/SetupWizard/index.jsx
+msgid "Touch Screen Guide"
+msgstr "Guide de l'écran tactile"
 
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 msgid "Transition duration in {rampUnit}"

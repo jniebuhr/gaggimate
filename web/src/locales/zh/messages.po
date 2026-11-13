@@ -2084,6 +2084,10 @@ msgstr "冲洗水"
 msgid "For 120 V machines, heater coordination should generally remain enabled. Running the brew and steam heaters simultaneously can overload the circuit, blow a fuse or trip a breaker, and create a fire hazard. Only disable it if the machine and supply circuit are rated to power both heaters together."
 msgstr "对于 120 V 咖啡机，通常应保持启用加热协调。同时运行冲煮和蒸汽加热器可能会使电路过载、烧断保险丝或使断路器跳闸，并引发火灾隐患。仅当咖啡机和供电电路的额定值足以同时为两个加热器供电时，才可禁用此功能。"
 
+#: src/pages/SetupWizard/index.jsx
+msgid "For further information on how to use and configure GaggiMate please consult our documentation and guides!"
+msgstr "有关如何使用和配置 GaggiMate 的更多信息，请查阅我们的文档和指南！"
+
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "Forget"
 msgstr "忘记"
@@ -2119,6 +2123,10 @@ msgstr "从"
 msgctxt "panel view"
 msgid "Full"
 msgstr "完整"
+
+#: src/pages/SetupWizard/index.jsx
+msgid "Further Resources"
+msgstr "更多资源"
 
 #: src/pages/ShotAnalyzer/components/EmptyState.jsx
 msgid "GaggiMate (GM)"
@@ -3803,6 +3811,10 @@ msgstr "曲线 A-Z"
 #: src/pages/DashboardSettings/index.jsx
 msgid "Profile Chart Height"
 msgstr "曲线图表高度"
+
+#: src/pages/SetupWizard/index.jsx
+msgid "Profile Creation"
+msgstr "创建曲线"
 
 #: src/pages/ProfileList/index.jsx
 msgid "Profile details for {label}"
@@ -5857,6 +5869,10 @@ msgstr "总重量"
 #: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTable.jsx
 msgid "Totals"
 msgstr "合计"
+
+#: src/pages/SetupWizard/index.jsx
+msgid "Touch Screen Guide"
+msgstr "触摸屏指南"
 
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 msgid "Transition duration in {rampUnit}"

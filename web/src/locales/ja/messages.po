@@ -2084,6 +2084,10 @@ msgstr "フラッシュ水量"
 msgid "For 120 V machines, heater coordination should generally remain enabled. Running the brew and steam heaters simultaneously can overload the circuit, blow a fuse or trip a breaker, and create a fire hazard. Only disable it if the machine and supply circuit are rated to power both heaters together."
 msgstr "120 V のマシンでは、通常ヒーター協調を有効のままにしてください。抽出ヒーターとスチームヒーターを同時に動作させると回路が過負荷になり、ヒューズが切れたりブレーカーが落ちたりして、火災の危険があります。マシンと電源回路が両方のヒーターを同時に動作させる定格を満たしている場合にのみ無効にしてください。"
 
+#: src/pages/SetupWizard/index.jsx
+msgid "For further information on how to use and configure GaggiMate please consult our documentation and guides!"
+msgstr "GaggiMate の使い方や設定方法について詳しくは、ドキュメントとガイドをご覧ください！"
+
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "Forget"
 msgstr "削除"
@@ -2119,6 +2123,10 @@ msgstr "開始"
 msgctxt "panel view"
 msgid "Full"
 msgstr "フル"
+
+#: src/pages/SetupWizard/index.jsx
+msgid "Further Resources"
+msgstr "その他のリソース"
 
 #: src/pages/ShotAnalyzer/components/EmptyState.jsx
 msgid "GaggiMate (GM)"
@@ -3803,6 +3811,10 @@ msgstr "プロファイル A-Z"
 #: src/pages/DashboardSettings/index.jsx
 msgid "Profile Chart Height"
 msgstr "プロファイルチャートの高さ"
+
+#: src/pages/SetupWizard/index.jsx
+msgid "Profile Creation"
+msgstr "プロファイルの作成"
 
 #: src/pages/ProfileList/index.jsx
 msgid "Profile details for {label}"
@@ -5857,6 +5869,10 @@ msgstr "合計重量"
 #: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTable.jsx
 msgid "Totals"
 msgstr "合計"
+
+#: src/pages/SetupWizard/index.jsx
+msgid "Touch Screen Guide"
+msgstr "タッチスクリーンガイド"
 
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 msgid "Transition duration in {rampUnit}"
