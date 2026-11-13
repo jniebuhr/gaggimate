@@ -52,7 +52,7 @@ class GaggiMateController {
     void sendSensorData(void);
     void sendTankLevel();
     void handleSerialCommand(char c);
-    bool isSteamSwitchOn() const;
+    bool isBondingSwitchOn() const;
 
     ControllerConfig _config = ControllerConfig{};
     GaggiMateServer _comms;

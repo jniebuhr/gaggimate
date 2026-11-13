@@ -24,10 +24,11 @@ GaggiMateController::GaggiMateController(String version) : _version(std::move(ve
     configs.push_back(GM_MAX_REV10);
 }
 
-bool GaggiMateController::isSteamSwitchOn() const {
-    pinMode(_config.steamButtonPin, INPUT_PULLUP);
+bool GaggiMateController::isBondingSwitchOn() const {
+    uint8_t pin = _config.waterButtonPin > 0 ? _config.waterButtonPin : _config.steamButtonPin;
+    pinMode(pin, INPUT_PULLUP);
     for (int i = 0; i < 5; i++) { // active low; require a steady reading so a bouncing contact never opens the window
-        if (digitalRead(_config.steamButtonPin) != LOW)
+        if (digitalRead(pin) != LOW)
             return false;
         delay(10);
     }
@@ -182,7 +183,7 @@ void GaggiMateController::setup() {
     // Flash writes stall the control loops, so a UART update starts from all outputs off.
     _comms.onUpdateStart([this]() { stopOutputs(); });
     // Steam switch held at power-on opens the BLE pairing window; read it here since steamBtn->setup() runs later.
-    _comms.init("GPBLS", _config.name.c_str(), _version, capabilities, isSteamSwitchOn());
+    _comms.init("GPBLS", _config.name.c_str(), _version, capabilities, isBondingSwitchOn());
 
     if (_config.capabilites.ledControls) {
         ledController->setup();
