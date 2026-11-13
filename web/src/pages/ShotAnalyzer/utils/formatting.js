@@ -41,12 +41,12 @@ export function getDisplayStopReasonParts(reason = '') {
     return { skipNotice: '', stopReason: '' };
   }
 
-  if (displayReason === 'Phase skipped') {
+  if (['Phase skipped', 'Phase skipped (no preceding phase)', 'Phase not recorded', 'Phase not recorded (no preceding phase)'].includes(displayReason)) {
     return { skipNotice: t`Phase skipped`, stopReason: '' };
   }
 
-  if (displayReason === 'Phase skipped (no preceding phase)') {
-    return { skipNotice: t`Phase skipped`, stopReason: t`No preceding phase` };
+  if (displayReason === 'Phase not reached') {
+    return { skipNotice: t`Phase not reached`, stopReason: '' };
   }
 
   if (hasSkippedSuffix) {
@@ -85,7 +85,8 @@ export const formatDuration = samples => {
 export const getShotDisplayName = shot => {
   if (!shot) return t`Unknown`;
   if (shot.source === 'gaggimate') {
-    return `#${shot.id || shot.name || t`Unknown`}`;
+    const displayId = shot.id || shot.name || t`Unknown`;
+    return `#${displayId}`;
   }
   return cleanName(shot.name || shot.storageKey || shot.id || t`Unknown`);
 };

@@ -101,7 +101,7 @@ function getAnalysisHeaderBaseLabel(col) {
 
 export function getAnalysisHeaderLabel(col) {
   const suffixByType = {
-    se: ` ${t({ message: 'S/E', context: 'column type, short for start/end' })}`,
+    se: ` ${t({ message: 'Start/End', context: 'column type' })}`,
     mm: ` ${t({ message: 'Min/Max', context: 'column type' })}`,
     avg: ` ${t({ message: 'Avg ∅', context: 'column type' })}`,
   };

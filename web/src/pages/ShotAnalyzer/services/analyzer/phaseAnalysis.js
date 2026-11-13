@@ -1,3 +1,4 @@
+import { getProfilePhaseDisplayName } from './profilePhases.js';
 /** Analyzes executed phases, including target exits, delay inference, and final-phase fallbacks. */
 
 import { t } from '@lingui/core/macro';
@@ -69,12 +70,6 @@ function getPhaseSysAnomalies(samples, sysInfo) {
   }
 
   return sysAnomalies;
-}
-
-function findProfilePhase(profileData, rawName) {
-  if (!profileData?.phases) return null;
-  const cleanName = rawName ? rawName.trim().toLowerCase() : '';
-  return profileData.phases.find(p => p.name.trim().toLowerCase() === cleanName) || null;
 }
 
 function getNextPhaseSamples({ phaseNum, phases, sortedPhaseKeys }) {
@@ -576,6 +571,7 @@ export function analyzeExecutedPhase({
   lastPhaseKey,
   phaseNameMap,
   phaseNum,
+  profilePhaseIndex,
   phases,
   profileData,
   pumpedWaterSource,
@@ -600,7 +596,7 @@ export function analyzeExecutedPhase({
   const weightSamples = getFinalWeightSamples(samples);
   const weightEndSample = getFinalWeightSample(samples) || getPhaseEndSample(samples);
   const rawName = phaseNameMap[phaseNum];
-  const displayName = rawName || t`Phase ${phaseNum}`;
+  const displayName = getProfilePhaseDisplayName(profileData, profilePhaseIndex, rawName || t`Phase ${phaseNum}`);
   const sysInfo = getPhaseEndSample(samples).systemInfo || {};
   const sysAnomalies = getPhaseSysAnomalies(samples, sysInfo);
   const bluetoothScaleConnection = getBluetoothScaleConnectionState(
@@ -611,7 +607,7 @@ export function analyzeExecutedPhase({
   const nextScaleConnectionBroken = scaleConnectionBrokenPermanently || scaleLostInThisPhase;
   const delayTracker = createPhaseDelayTracker(isLastPhase);
   const exitState = createExitState();
-  const profilePhase = findProfilePhase(profileData, rawName);
+  const profilePhase = profilePhaseIndex == null ? null : profileData.phases[profilePhaseIndex];
   const normalizedRecordedExitReasonCode = normalizePhaseExitReasonCode(recordedExitReasonCode);
   const hasRecordedExitReason = applyRecordedExitReason(
     exitState,
@@ -654,6 +650,7 @@ export function analyzeExecutedPhase({
   return {
     phase: {
       number: phaseNum,
+      profilePhaseIndex,
       name: rawName,
       displayName,
       start: pStart,

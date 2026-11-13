@@ -10,6 +10,7 @@
  * - Temp shots: In-memory only, no persistence
  */
 
+import { mergeAnalyzerNotes } from './analyzerNotesMerge';
 import { indexedDBService } from './IndexedDBService';
 
 const DEFAULT_NOTES = {
@@ -38,6 +39,7 @@ class NotesService {
   apiService = null;
   _tempCache = new Map();
   _subscribers = new Map();
+  _analyzerSaveQueues = new Map();
 
   setApiService(apiService) {
     this.apiService = apiService;
@@ -71,7 +73,7 @@ class NotesService {
     };
   }
 
-  publishNotesUpdate(shotId, source, notes, originId = null) {
+  publishNotesUpdate(shotId, source, notes, originId = null, persistedNotes = null) {
     const channelKey = this.getChannelKey(shotId, source);
     const subscribers = this._subscribers.get(channelKey);
     if (!subscribers || subscribers.size === 0) return;
@@ -79,11 +81,60 @@ class NotesService {
     const nextNotes = { ...notes, id: String(shotId || notes?.id || '') };
     subscribers.forEach(callback => {
       try {
-        callback(nextNotes, { originId });
+        callback(nextNotes, { originId, persistedNotes });
       } catch (error) {
         console.error('Failed to publish notes update:', error);
       }
     });
+  }
+
+  // Unlike the legacy loader, a failed verification must never look like empty notes.
+  async loadAnalyzerMachineNotes(shotId) {
+    if (!this.apiService) throw new Error('ApiService not available');
+    const response = await this.apiService.request({ tp: 'req:history:notes:get', id: shotId });
+    const value = typeof response.notes === 'string' ? JSON.parse(response.notes) : response.notes;
+    if (value !== null && (!value || typeof value !== 'object' || Array.isArray(value))) {
+      throw new Error('Invalid notes response');
+    }
+    return { ...this.getDefaults(shotId), ...value, id: String(shotId) };
+  }
+
+  saveAnalyzerMachineNotes(shotId, draft, session) {
+    const key = this.getChannelKey(shotId, 'gaggimate');
+    const previous = this._analyzerSaveQueues.get(key) || Promise.resolve();
+    const baseline = session.pendingDraft || session.baseline;
+    session.pendingDraft = draft;
+    const task = previous
+      .catch(() => {})
+      .then(async () => {
+        await session.ready;
+        if (session.blocked) return null;
+        if (!session.baseline) throw new Error('Notes have not been loaded');
+        const latest = await this.loadAnalyzerMachineNotes(shotId);
+        let merged;
+        try {
+          merged = mergeAnalyzerNotes(baseline || session.baseline, draft, latest);
+        } catch (error) {
+          session.blocked = true;
+          throw error;
+        }
+        if (JSON.stringify(merged) !== JSON.stringify(latest)) {
+          await this.saveNotes(shotId, 'gaggimate', merged);
+        }
+        session.baseline = merged;
+        return merged;
+      })
+      .catch(error => {
+        session.blocked = true;
+        throw error;
+      });
+    this._analyzerSaveQueues.set(key, task);
+    const clear = () => {
+      if (session.pendingDraft === draft) session.pendingDraft = null;
+      if (this._analyzerSaveQueues.get(key) === task) this._analyzerSaveQueues.delete(key);
+    };
+    task.then(clear, clear);
+    return task;
   }
 
   async loadGaggiMateNotes(shotId, defaults) {

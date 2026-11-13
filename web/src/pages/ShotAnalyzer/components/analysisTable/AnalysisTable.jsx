@@ -48,7 +48,7 @@ export function AnalysisTable({
 
   const tableContainerRef = useRef(null);
   const visibleColumns = columnConfig.filter(col => activeColumns.has(col.id));
-  const compareTableColumnCount = visibleColumns.length + 2;
+  const compareTableColumnCount = visibleColumns.length + 3;
   const maxComparePhaseCount = getMaxComparePhaseCount(compareMode, compareEntries);
   const hasProfilePhaseStops = hasAnalysisProfilePhaseStops(results);
 
@@ -205,7 +205,10 @@ export function AnalysisTable({
                               phase={phase}
                               phaseIndex={phaseIndex}
                               results={entry.results}
-                            />
+                            section='phase' />
+                          </td>
+                          <td className={`analysis-table-stop-reason border-l px-2 py-2 text-right whitespace-nowrap ${subtleDividerClass}`}>
+                            <ComparePhaseLabel phase={phase} phaseIndex={phaseIndex} results={entry.results} section='reason' />
                           </td>
                           {visibleColumns.map(col => (
                             <td
@@ -260,6 +263,7 @@ export function AnalysisTable({
                     >
                       <Trans>Total</Trans>
                     </td>
+                    <td />
                     {visibleColumns.map(col => (
                       <td
                         key={`${entry.key}-total-${col.id}`}
@@ -301,7 +305,10 @@ export function AnalysisTable({
                         {idx + 1}
                       </td>
                       <td className={`px-2 py-2 text-left whitespace-nowrap ${strongDividerClass}`}>
-                        <ComparePhaseLabel phase={phase} phaseIndex={idx} results={results} />
+                        <ComparePhaseLabel phase={phase} phaseIndex={idx} results={results} section='phase' />
+                      </td>
+                      <td className={`analysis-table-stop-reason border-l px-2 py-2 text-right whitespace-nowrap ${subtleDividerClass}`}>
+                        <ComparePhaseLabel phase={phase} phaseIndex={idx} results={results} section='reason' />
                       </td>
                       {visibleColumns.map(col => (
                         <td
@@ -323,6 +330,7 @@ export function AnalysisTable({
                     >
                       <Trans>Total</Trans>
                     </td>
+                    <td />
                     {visibleColumns.map(col => (
                       <td
                         key={col.id}
@@ -342,13 +350,7 @@ export function AnalysisTable({
         <div className='bg-base-100 border-base-content/10 flex rounded-b-lg border-t py-2 text-xs sm:justify-end'>
           <div className='text-base-content grid w-full grid-cols-3 gap-x-3 gap-y-1 select-none sm:ml-auto sm:flex sm:w-auto sm:items-center sm:gap-4'>
             <span className={`leading-tight whitespace-normal ${tableLegendTextClass}`}>
-              Avg Average (time weighted)
-            </span>
-            <span className={`leading-tight whitespace-normal ${tableLegendTextClass}`}>
-              S/E Start/End
-            </span>
-            <span className={`leading-tight whitespace-normal ${tableLegendTextClass}`}>
-              Range Min/Max
+              Avg = Average (time weighted)
             </span>
           </div>
         </div>

@@ -46,12 +46,10 @@ export function AnalysisTableToolbarActions({ onScrollTable, onScrollToBound }) 
 
 export function AnalysisTableHeader({
   compareMode,
-  hasProfilePhaseStops,
   visibleColumns,
   subtleDividerClass,
   strongDividerClass,
   tableHeaderTextClass,
-  tableHeaderSubtextClass,
 }) {
   return (
     <thead>
@@ -76,11 +74,9 @@ export function AnalysisTableHeader({
           <div className='leading-none'>
             <Trans context='table column'>Phase</Trans>
           </div>
-          {hasProfilePhaseStops && (
-            <div className={`mt-0.5 ${tableHeaderSubtextClass}`} style={{ fontSize: '0.85em' }}>
-              <Trans>Stop reason</Trans>
-            </div>
-          )}
+        </th>
+        <th className={`min-w-[120px] border-l px-2 py-2 text-right whitespace-nowrap ${subtleDividerClass} ${tableHeaderTextClass}`}>
+          <Trans>Stop reason</Trans>
         </th>
         {visibleColumns.map(col => {
           const columnVisual = getAnalyzerColumnVisual(col);

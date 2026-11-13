@@ -1,9 +1,19 @@
 import { t } from '@lingui/core/macro';
-import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'preact/hooks';
+import { mergeAnalyzerNotes, rebaseAnalyzerNotes } from '../services/analyzerNotesMerge';
 import { notesService } from '../services/NotesService';
 import { cleanName, detectDoseFromProfileName, getShotStorageKey } from '../utils/analyzerUtils';
 
 let notesStateOriginCounter = 0;
+
+function reportSaveError(error) {
+  console.error('Failed to save Analyzer notes:', error);
+  alert(
+    error.notesConflict
+      ? t`Notes changed elsewhere. Your changes were not saved. Reopen the shot to load the latest notes.`
+      : t`Notes could not be loaded or saved safely. Your changes were not saved. Reopen the shot to try again.`,
+  );
+}
 
 export function getShotNotesKey(shot) {
   return String(getShotStorageKey(shot) || '');
@@ -79,7 +89,22 @@ export function useShotNotesState({ currentShot, isSelectionPending = false } = 
   const [notes, setNotes] = useState(notesService.getDefaults(null));
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
-  const notesRef = useRef(notes);
+  const notesKey = currentShot ? getShotNotesKey(currentShot) : '';
+  const source = currentShot?.source;
+  const shotRef = useRef(currentShot);
+  shotRef.current = currentShot;
+  const session = useMemo(
+    () => ({
+      key: notesKey,
+      source,
+      shot: shotRef.current,
+      notes: notesService.getDefaults(notesKey),
+      baseline: null,
+      blocked: false,
+      active: true,
+    }),
+    [notesKey, source],
+  );
   const localUpdateVersionRef = useRef(0);
   const originIdRef = useRef(null);
   const saveTimerRef = useRef(null);
@@ -88,10 +113,6 @@ export function useShotNotesState({ currentShot, isSelectionPending = false } = 
     notesStateOriginCounter += 1;
     originIdRef.current = `shot-notes-state-${notesStateOriginCounter}`;
   }
-
-  useEffect(() => {
-    notesRef.current = notes;
-  }, [notes]);
 
   const publishNotes = useCallback(
     notesToPublish => {
@@ -106,7 +127,35 @@ export function useShotNotesState({ currentShot, isSelectionPending = false } = 
     [currentShot],
   );
 
+  const saveNotes = useCallback(
+    async (notesToSave = session.notes) => {
+      if (!session.shot) return;
+      const { key: notesKey, source } = session;
+      if (session.active) setSaving(true);
+      try {
+        if (source === 'gaggimate') {
+          const submitted = { ...notesToSave };
+          const saved = await notesService.saveAnalyzerMachineNotes(notesKey, submitted, session);
+          if (!saved) return;
+          const updated = rebaseAnalyzerNotes(submitted, session.notes, saved);
+          session.notes = updated;
+          if (session.active) setNotes(updated);
+          notesService.publishNotesUpdate(notesKey, source, updated, originIdRef.current, saved);
+        } else {
+          await notesService.saveNotes(notesKey, source, notesToSave);
+        }
+      } catch (error) {
+        reportSaveError(error);
+      } finally {
+        if (session.active) setSaving(false);
+      }
+    },
+    [session],
+  );
+
   useEffect(() => {
+    const currentShot = session.shot;
+    const source = session.source;
     if (!currentShot) {
       setLoading(false);
       setNotes(notesService.getDefaults(null));
@@ -114,6 +163,7 @@ export function useShotNotesState({ currentShot, isSelectionPending = false } = 
     }
 
     let cancelled = false;
+    session.active = true;
     const notesKey = getShotNotesKey(currentShot);
     const loadStartedAtVersion = localUpdateVersionRef.current;
     const inlineNotes =
@@ -126,34 +176,55 @@ export function useShotNotesState({ currentShot, isSelectionPending = false } = 
       (nextNotes, meta = {}) => {
         if (meta.originId === originIdRef.current) return;
         localUpdateVersionRef.current += 1;
-        notesRef.current = nextNotes;
-        setNotes(nextNotes);
+        const updated = meta.persistedNotes
+          ? rebaseAnalyzerNotes(session.baseline || nextNotes, session.notes, meta.persistedNotes)
+          : nextNotes;
+        if (meta.persistedNotes) session.baseline = meta.persistedNotes;
+        session.notes = updated;
+        setNotes(updated);
       },
     );
 
     setLoading(true);
+    setSaving(false);
     if (inlineNotes) {
-      notesRef.current = inlineNotes;
+      session.notes = inlineNotes;
       setNotes(inlineNotes);
     }
 
-    notesService
-      .loadNotes(notesKey, currentShot.source)
+    const initialNotes = session.notes;
+    const loadedNotes =
+      source === 'gaggimate'
+        ? notesService.loadAnalyzerMachineNotes(notesKey)
+        : notesService.loadNotes(notesKey, source);
+    session.ready = loadedNotes
       .then(loaded => {
         if (cancelled) return;
-        if (localUpdateVersionRef.current !== loadStartedAtVersion) return;
-        const persistedNotes = inlineNotes ? { ...loaded, ...inlineNotes, id: notesKey } : loaded;
+        if (source !== 'gaggimate' && localUpdateVersionRef.current !== loadStartedAtVersion)
+          return;
+        session.baseline = loaded;
+        let persistedNotes = loaded;
+        if (source === 'gaggimate') {
+          persistedNotes = mergeAnalyzerNotes(initialNotes, session.notes, loaded);
+        } else if (inlineNotes) {
+          persistedNotes = { ...loaded, ...inlineNotes, id: notesKey };
+        }
         const { nextNotes, autoSave } = hydrateLoadedShotNotes({
           loaded: persistedNotes,
           currentShot,
         });
 
-        notesRef.current = nextNotes;
+        session.notes = nextNotes;
         setNotes(nextNotes);
 
         if (autoSave && currentShot.source !== 'temp') {
-          notesService.saveNotes(notesKey, currentShot.source, nextNotes);
+          void saveNotes(nextNotes);
         }
+      })
+      .catch(error => {
+        if (cancelled) return;
+        session.blocked = true;
+        reportSaveError(error);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -161,42 +232,20 @@ export function useShotNotesState({ currentShot, isSelectionPending = false } = 
 
     return () => {
       cancelled = true;
+      session.active = false;
       unsubscribeNotes();
     };
-  }, [
-    currentShot,
-    currentShot?.id,
-    currentShot?.name,
-    currentShot?.source,
-    currentShot?.storageKey,
-  ]);
+  }, [session, saveNotes]);
 
   const handleInputChange = useCallback(
     (field, value) => {
-      setNotes(prev => {
-        const updated = updateNotesValue(prev, field, value);
-        localUpdateVersionRef.current += 1;
-        notesRef.current = updated;
-        publishNotes(updated);
-        return updated;
-      });
+      const updated = updateNotesValue(session.notes, field, value);
+      localUpdateVersionRef.current += 1;
+      session.notes = updated;
+      setNotes(updated);
+      publishNotes(updated);
     },
-    [publishNotes],
-  );
-
-  const saveNotes = useCallback(
-    async (notesToSave = notesRef.current) => {
-      if (!currentShot) return;
-      setSaving(true);
-      try {
-        await notesService.saveNotes(getShotNotesKey(currentShot), currentShot.source, notesToSave);
-      } catch (error) {
-        console.error('Failed to save notes:', error);
-      } finally {
-        setSaving(false);
-      }
-    },
-    [currentShot],
+    [publishNotes, session],
   );
 
   const clearSaveTimer = useCallback(() => {
@@ -208,14 +257,14 @@ export function useShotNotesState({ currentShot, isSelectionPending = false } = 
 
   const flushSave = useCallback(() => {
     clearSaveTimer();
-    saveNotes();
+    void saveNotes();
   }, [clearSaveTimer, saveNotes]);
 
   const scheduleSave = useCallback(() => {
     clearSaveTimer();
     saveTimerRef.current = setTimeout(() => {
       saveTimerRef.current = null;
-      saveNotes();
+      void saveNotes();
     }, 650);
   }, [clearSaveTimer, saveNotes]);
 
@@ -236,14 +285,14 @@ export function useShotNotesState({ currentShot, isSelectionPending = false } = 
 
   const updateAndSave = useCallback(
     async (field, value) => {
-      const updated = updateNotesValue(notesRef.current, field, value);
+      const updated = updateNotesValue(session.notes, field, value);
       localUpdateVersionRef.current += 1;
-      notesRef.current = updated;
+      session.notes = updated;
       setNotes(updated);
       publishNotes(updated);
       await saveNotes(updated);
     },
-    [publishNotes, saveNotes],
+    [publishNotes, saveNotes, session],
   );
 
   useEffect(() => {

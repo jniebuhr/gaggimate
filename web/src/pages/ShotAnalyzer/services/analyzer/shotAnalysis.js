@@ -1,3 +1,4 @@
+import { resolveProfilePhaseIndices } from './profilePhases.js';
 /** Orchestrates full-shot aggregation while delegating phase-level decisions. */
 
 import { t } from '@lingui/core/macro';
@@ -24,7 +25,7 @@ import {
   normalizePhaseExitReasonCode,
 } from './exitReasons.js';
 
-const CONFIGURED_SCALE_DELAY_WARNING_THRESHOLD_MS = 1200;
+const CONFIGURED_SCALE_DELAY_WARNING_THRESHOLD_MS = 1400;
 
 function buildPhaseNameMap(phaseTransitions = []) {
   const transitions = Array.isArray(phaseTransitions) ? phaseTransitions : [];
@@ -63,7 +64,8 @@ function applySkippedPhaseSystemStats(analyzedPhases, brewModeLabel, configuredS
   analyzedPhases.forEach(phase => {
     if (!phase.skipped) return;
     phase.stats.sys_brew_mode = brewModeLabel;
-    phase.stats.sys_recorded_stop_reason = t`Not recorded`;
+    phase.stats.sys_recorded_stop_reason = phase.exit?.code
+      ? getPhaseExitReasonLabel(phase.exit.code) : t`Not recorded`;
     phase.stats.sys_scale_delay = configuredScaleDelayMs;
   });
 }
@@ -156,6 +158,11 @@ export function calculateShotMetrics(shotData, rawProfileData, settings) {
 
   const sortedPhaseKeys = Object.keys(phases).sort((a, b) => a - b);
   const lastPhaseKey = sortedPhaseKeys.at(-1);
+  const profilePhaseIndices = resolveProfilePhaseIndices(
+    sortedPhaseKeys,
+    new Map(Object.entries(phaseNameMap).map(([number, name]) => [Number(number), name])),
+    profileData,
+  );
   const recordedExitReasonByPhase = buildRecordedExitReasonByPhase(shotData);
 
   // --- 2. BREW MODE DETECTION ---
@@ -170,7 +177,10 @@ export function calculateShotMetrics(shotData, rawProfileData, settings) {
   const { hasSlowSampleInterval, maxSampleIntervalMs } = getSlowSampleIntervalSummary(gSamples);
 
   // --- 3. GLOBAL TOTALS ---
-  const gDuration = (gSamples.at(-1).t - gSamples[0].t) / 1000;
+  // The first extended sample marks the start of post-stop recording.
+  const brewEndSample =
+    gSamples.find(sample => sample.systemInfo?.extendedRecording) || gSamples.at(-1);
+  const gDuration = (brewEndSample.t - gSamples[0].t) / 1000;
   const gWater = calculatePumpedWater(gSamples, gSamples.length - 1, null, pumpedWaterSource);
   const gWeightSamples = getFinalWeightSamples(gSamples);
   const gWeight = (getFinalWeightSample(gSamples) || gSamples.at(-1)).v;
@@ -191,6 +201,7 @@ export function calculateShotMetrics(shotData, rawProfileData, settings) {
       lastPhaseKey,
       phaseNameMap,
       phaseNum,
+      profilePhaseIndex: profilePhaseIndices.get(phaseNum) ?? null,
       phases,
       profileData,
       pumpedWaterSource,
@@ -212,7 +223,7 @@ export function calculateShotMetrics(shotData, rawProfileData, settings) {
   );
 
   // --- 4b. DETECT SKIPPED PHASES (phases defined in profile but absent from shot) ---
-  mergeSkippedProfilePhases({ analyzedPhases, phases, profileData });
+  mergeSkippedProfilePhases({ analyzedPhases, phases, profileData, finalExitReasonCode, recordedExitReasonByPhase });
   applySkippedPhaseSystemStats(analyzedPhases, brewModeLabel, configuredScaleDelayMs);
 
   // Calculate distinct Average Delays

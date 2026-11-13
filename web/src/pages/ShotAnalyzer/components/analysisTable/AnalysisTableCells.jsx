@@ -1,50 +1,58 @@
+import './AnalysisTableLabels.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { t } from '@lingui/core/macro';
 import { Trans } from '@lingui/react/macro';
-import { faExclamationTriangle, faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationTriangle, faCheck, faTimes, faScaleBalanced, faClock, faStop } from '@fortawesome/free-solid-svg-icons';
 import { getDisplayStopReasonParts, utilityColors } from '../../utils/analyzerUtils';
-import { isSafetyExitReason, isWeightType } from '../../services/analyzer/exitReasons.js';
+import { PHASE_EXIT_REASON, isSafetyExitReason, isWeightType } from '../../services/analyzer/exitReasons.js';
 
-export function ComparePhaseLabel({ phase, results }) {
+export function ComparePhaseLabel({ phase, results, section = 'all' }) {
   if (!phase) {
     return <div className='text-base-content/45 leading-tight font-medium'>-</div>;
   }
 
   const { skipNotice, stopReason } = getDisplayStopReasonParts(phase.exit?.reason);
   const safetyStop = isSafetyExitReason(phase.exit?.code);
+  const brewModeIcon = results?.isBrewByWeight ? faScaleBalanced : faClock;
+  const completionIcon = [PHASE_EXIT_REASON.ABORTED, PHASE_EXIT_REASON.SAFETY, PHASE_EXIT_REASON.HOLD_RELEASED]
+    .includes(results?.finalExitReasonCode ?? phase.exit?.code)
+    ? faStop
+    : brewModeIcon;
 
   return (
     <>
-      <div className='text-base-content/90 mb-0.5 leading-none font-medium'>
-        {phase.displayName}
-      </div>
-      {skipNotice ? (
+      {section !== 'reason' && (
+        <div className='text-base-content/90 mb-0.5 leading-none font-medium'>
+          {phase.displayName}
+        </div>
+      )}
+      {section !== 'reason' && skipNotice ? (
         <div
-          className='text-base-content/55 leading-tight font-medium'
+          className='analysis-table-label analysis-table-label--skipped text-base-content/90 leading-tight font-medium'
           style={{ fontSize: '0.8em' }}
         >
           {skipNotice}
         </div>
       ) : null}
-      {stopReason ? (
+      {section !== 'phase' && stopReason ? (
         <div
-          className='font-normal'
+          className='analysis-table-label analysis-table-label--neutral analysis-table-label--reason text-base-content/90 font-normal'
           style={{
             fontSize: '0.85em',
-            color: safetyStop ? utilityColors.warningOrange : utilityColors.stopRed,
+            '--analysis-stop-label-color': safetyStop ? utilityColors.warningOrange : 'var(--analyzer-stop-label)',
           }}
         >
           {stopReason}
         </div>
       ) : null}
-      {phase.isFinalExecuted && (
+      {section !== 'reason' && phase.isFinalExecuted && (
         <div
-          className='text-base-content/55 leading-tight font-medium'
+          className='analysis-table-label analysis-table-label--neutral analysis-table-label--completion text-base-content/90 leading-tight font-medium'
           style={{
             fontSize: '0.8em',
-            color: results?.completionTone === 'warning' ? utilityColors.warningOrange : undefined,
           }}
         >
+          <FontAwesomeIcon icon={completionIcon} aria-hidden='true' />
           {results?.completionLabel || results?.brewModeLabel}
         </div>
       )}
@@ -129,7 +137,7 @@ function getMetricCellValue(stats, metricKey, partKey) {
 
   return parts.length === 1
     ? formatPart(parts[0])
-    : `${formatPart(parts[0])}/${formatPart(parts[1])}`;
+    : `${formatPart(parts[0])} / ${formatPart(parts[1])}`;
 }
 
 function resolveCellValue({ data, stats, col, isSkipped = false }) {
@@ -215,7 +223,7 @@ function TargetDeltaDisplay({ targetVal, unit, subTextSize }) {
       style={subTextSize}
       className='text-base-content/55 mt-0.5 leading-tight font-medium tracking-normal whitespace-nowrap italic'
     >
-      Target {targetVal} {unit}
+      Target {formatCellNumber(targetVal)} {unit}
     </div>
   );
 }
@@ -266,7 +274,7 @@ function replaceCellValueWithCalc({ mainValue, calcEntry, col }) {
     (col.type === 'se' || col.type === 'mm')
   ) {
     const parts = mainValue.split('/');
-    return `${parts.slice(0, -1).join('/')}/${calcValue}`;
+    return [...parts.slice(0, -1).map(part => part.trim()), calcValue].join(' / ');
   }
 
   return calcValue;
@@ -365,15 +373,15 @@ function renderMetricCellValue({
 }) {
   const isStopValue = mainValueIsCalculated ? calcIsStopReason : isHit && !calcIsStopReason;
   let style = {};
-  if (warning) {
+  if (isStopValue) {
+    style = { '--analysis-stop-label-color': warning ? utilityColors.warningOrange : 'var(--analyzer-stop-label)' };
+  } else if (warning) {
     style = { color: utilityColors.warningOrange };
-  } else if (isStopValue) {
-    style = { color: utilityColors.stopRed };
   }
 
   return (
     <span
-      className={isStopValue ? 'font-normal' : 'text-base-content/90 font-medium'}
+      className={isStopValue ? 'analysis-table-label analysis-table-label--neutral analysis-table-label--reason text-base-content/90 font-normal' : 'text-base-content/90 font-medium'}
       style={style}
     >
       {mainValue} {unit}
