@@ -5594,6 +5594,10 @@ msgstr "スケールは見つかりましたが、Bluetooth 接続に失敗し�
 msgid "The scale wasn't found. Make sure it's switched on and nearby, then scan again."
 msgstr "スケールが見つかりませんでした。電源が入っていて近くにあることを確認してから、もう一度スキャンしてください。"
 
+#: src/pages/ProfileList/index.jsx
+msgid "The selected profile can't be deleted"
+msgstr "選択中のプロファイルは削除できません"
+
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "The temperature did not rise. Check the heater wiring, the SSR and the thermal fuses."
 msgstr "温度が上昇しませんでした。ヒーターの配線、SSR、温度ヒューズを確認してください。"

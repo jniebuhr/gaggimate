@@ -5594,6 +5594,10 @@ msgstr "Se encontró la báscula, pero falló la conexión Bluetooth. Inténtalo
 msgid "The scale wasn't found. Make sure it's switched on and nearby, then scan again."
 msgstr "No se encontró la báscula. Asegúrate de que esté encendida y cerca, y vuelve a buscar."
 
+#: src/pages/ProfileList/index.jsx
+msgid "The selected profile can't be deleted"
+msgstr "El perfil seleccionado no se puede eliminar"
+
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "The temperature did not rise. Check the heater wiring, the SSR and the thermal fuses."
 msgstr "La temperatura no subió. Revisa el cableado de la resistencia, el SSR y los fusibles térmicos."
