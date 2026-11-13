@@ -1830,6 +1830,10 @@ msgstr "Exporteinstellungen"
 msgid "Export shot data"
 msgstr "Shot-Daten exportieren"
 
+#: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTableCells.jsx
+msgid "Extended:"
+msgstr "Erweitert:"
+
 #: src/pages/ShotAnalyzer/utils/columns.js
 msgid "Extended Record"
 msgstr "Erweiterte Aufzeichnung"
@@ -3756,6 +3760,10 @@ msgstr "Profilstatistik"
 msgid "Profile type: {typeText}"
 msgstr "Profiltyp: {typeText}"
 
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgid "Profile updated"
+msgstr "Profil aktualisiert"
+
 #: src/components/MachineProfileControl.jsx
 msgid "Profile values"
 msgstr "Profilwerte"
@@ -5569,6 +5577,10 @@ msgstr "Die aktivierten Plugins starten, wenn die Maschine das nächste Mal eing
 #: src/pages/Settings/PluginCard.jsx
 msgid "The profile's dose is saved to the shot history."
 msgstr "Die Dosis des Profils wird im Shot-Verlauf gespeichert."
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgid "The profile was probably updated since this shot was recorded. You can select the matching profile manually in the profile picker. Tip: For larger profile changes, duplicate the profile and add a version number to its name."
+msgstr "Das Profil wurde wahrscheinlich seit der Aufzeichnung dieses Shots aktualisiert. Du kannst das passende Profil manuell in der Profilauswahl wählen. Tipp: Dupliziere das Profil bei größeren Änderungen und ergänze eine Versionsnummer im Namen."
 
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "The pump runs with the 3-way valve closed until pressure stops rising. Then the pump stops and the valve opens, which should release the pressure to about 0 bar."

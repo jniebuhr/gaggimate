@@ -536,7 +536,7 @@ function analyzePhaseTargets({
   }
 }
 
-function getPhaseStats(samples, weightSamples, sysInfo, sysAnomalies, analyzerSystemInfo) {
+export function getPhaseStats(samples, weightSamples, sysInfo, sysAnomalies, analyzerSystemInfo) {
   return {
     p: getMetricStats(samples, 'cp'),
     tp: getMetricStats(samples, 'tp'),

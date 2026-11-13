@@ -1830,6 +1830,10 @@ msgstr "导出设置"
 msgid "Export shot data"
 msgstr "导出萃取数据"
 
+#: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTableCells.jsx
+msgid "Extended:"
+msgstr "含延长记录："
+
 #: src/pages/ShotAnalyzer/utils/columns.js
 msgid "Extended Record"
 msgstr "含扩展记录"
@@ -3756,6 +3760,10 @@ msgstr "曲线统计"
 msgid "Profile type: {typeText}"
 msgstr "曲线类型：{typeText}"
 
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgid "Profile updated"
+msgstr "配置已更新"
+
 #: src/components/MachineProfileControl.jsx
 msgid "Profile values"
 msgstr "配置参数"
@@ -5569,6 +5577,10 @@ msgstr "你启用的插件将在下次开启咖啡机时启动。"
 #: src/pages/Settings/PluginCard.jsx
 msgid "The profile's dose is saved to the shot history."
 msgstr "曲线的粉量会保存到萃取历史中。"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgid "The profile was probably updated since this shot was recorded. You can select the matching profile manually in the profile picker. Tip: For larger profile changes, duplicate the profile and add a version number to its name."
+msgstr "此配置可能在这次萃取记录后已被更新。你可以在配置选择器中手动选择匹配的配置。提示：如需大幅修改配置，请先复制配置，并在名称中添加版本号。"
 
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "The pump runs with the 3-way valve closed until pressure stops rising. Then the pump stops and the valve opens, which should release the pressure to about 0 bar."

@@ -12,10 +12,10 @@ import {
   StatusBadge,
 } from './AnalysisTableChrome';
 import { CellContent, ComparePhaseLabel } from './AnalysisTableCells';
+import { getAnalysisTableResults } from './analysisTablePhases';
 import {
   buildAnalysisWarningBadges,
   getCompareRowStyle,
-  getMaxComparePhaseCount,
   hasAnalysisProfilePhaseStops,
 } from './analysisTableModel';
 import {
@@ -49,7 +49,18 @@ export function AnalysisTable({
   const tableContainerRef = useRef(null);
   const visibleColumns = columnConfig.filter(col => activeColumns.has(col.id));
   const compareTableColumnCount = visibleColumns.length + 3;
-  const maxComparePhaseCount = getMaxComparePhaseCount(compareMode, compareEntries);
+  const tableResults = getAnalysisTableResults(results);
+  const tablePhases = tableResults?.phases || [];
+  const compareTableEntries = compareMode
+    ? compareEntries.map(entry => ({
+        ...entry,
+        tableResults: getAnalysisTableResults(entry.results),
+      }))
+    : [];
+  const maxComparePhaseCount = Math.max(
+    ...compareTableEntries.map(entry => entry.tableResults?.phases?.length || 0),
+    0,
+  );
   const hasProfilePhaseStops = hasAnalysisProfilePhaseStops(results);
 
   const scrollTable = amount => scrollAnalysisTable(tableContainerRef, amount);
@@ -69,7 +80,10 @@ export function AnalysisTable({
   const primaryTableTextClass = 'text-base-content/90 font-medium';
   const tableSubtextClass = 'text-base-content/55 leading-tight font-medium';
   const tableLegendTextClass = 'text-base-content/75 text-xs font-normal tracking-normal';
-  const analysisWarningBadges = buildAnalysisWarningBadges(results);
+  const analysisWarningBadges = buildAnalysisWarningBadges(
+    results,
+    compareMode ? compareEntries : [],
+  );
   return (
     <div className='flex w-full flex-col'>
       {/* Inject CSS to hide Webkit Scrollbars */}
@@ -162,8 +176,8 @@ export function AnalysisTable({
                         {getPhaseHeading(phaseIndex + 1)}
                       </td>
                     </tr>
-                    {compareEntries.map((entry, compareIndex) => {
-                      const phase = entry?.results?.phases?.[phaseIndex] || null;
+                    {compareTableEntries.map((entry, compareIndex) => {
+                      const phase = entry.tableResults?.phases?.[phaseIndex] || null;
 
                       return (
                         <tr
@@ -204,7 +218,7 @@ export function AnalysisTable({
                             <ComparePhaseLabel
                               phase={phase}
                               phaseIndex={phaseIndex}
-                              results={entry.results}
+                              results={entry.tableResults}
                               section='phase'
                             />
                           </td>
@@ -214,7 +228,7 @@ export function AnalysisTable({
                             <ComparePhaseLabel
                               phase={phase}
                               phaseIndex={phaseIndex}
-                              results={entry.results}
+                              results={entry.tableResults}
                               section='reason'
                             />
                           </td>
@@ -223,7 +237,7 @@ export function AnalysisTable({
                               key={`${entry.key}-${phaseIndex}-${col.id}`}
                               className={`border-l px-3 py-2 text-right whitespace-nowrap tabular-nums ${subtleDividerClass}`}
                             >
-                              <CellContent phase={phase} col={col} results={entry.results} />
+                              <CellContent phase={phase} col={col} results={entry.tableResults} />
                             </td>
                           ))}
                         </tr>
@@ -240,7 +254,7 @@ export function AnalysisTable({
                     <Trans>Totals</Trans>
                   </td>
                 </tr>
-                {compareEntries.map((entry, compareIndex) => (
+                {compareTableEntries.map((entry, compareIndex) => (
                   <tr
                     key={`${entry.key}-total`}
                     className='analysis-table-compare-row border-base-content/5 group border-b align-top transition-colors'
@@ -280,7 +294,7 @@ export function AnalysisTable({
                         <CellContent
                           phase={null}
                           col={col}
-                          results={entry.results}
+                          results={entry.tableResults}
                           isTotal={true}
                         />
                       </td>
@@ -291,7 +305,7 @@ export function AnalysisTable({
             ) : (
               <>
                 <tbody>
-                  {results.phases.map((phase, idx) => (
+                  {tablePhases.map((phase, idx) => (
                     <tr
                       key={
                         phase.key ||
@@ -316,7 +330,7 @@ export function AnalysisTable({
                         <ComparePhaseLabel
                           phase={phase}
                           phaseIndex={idx}
-                          results={results}
+                          results={tableResults}
                           section='phase'
                         />
                       </td>
@@ -326,7 +340,7 @@ export function AnalysisTable({
                         <ComparePhaseLabel
                           phase={phase}
                           phaseIndex={idx}
-                          results={results}
+                          results={tableResults}
                           section='reason'
                         />
                       </td>
@@ -335,7 +349,7 @@ export function AnalysisTable({
                           key={col.id}
                           className={`border-l px-3 py-2 text-right whitespace-nowrap tabular-nums ${subtleDividerClass}`}
                         >
-                          <CellContent phase={phase} col={col} results={results} />
+                          <CellContent phase={phase} col={col} results={tableResults} />
                         </td>
                       ))}
                     </tr>
@@ -356,7 +370,7 @@ export function AnalysisTable({
                         key={col.id}
                         className={`border-l px-3 py-2 text-right tabular-nums ${subtleDividerClass} ${primaryTableTextClass}`}
                       >
-                        <CellContent phase={null} col={col} results={results} isTotal={true} />
+                        <CellContent phase={null} col={col} results={tableResults} isTotal={true} />
                       </td>
                     ))}
                   </tr>

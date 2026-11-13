@@ -272,6 +272,7 @@ function getTargetDisplay({ phase, col, unit, subTextSize }) {
 }
 
 function getTargetCalcEntry(phase, col) {
+  if (phase?.useRecordedWeight && col.id === 'weight') return null;
   if (!col.targetType || !phase?.targetCalcValues) return null;
   return col.id === 'weight'
     ? phase.targetCalcValues.volumetric ||
@@ -334,15 +335,46 @@ function getWeightWarnings({ phase, isWeightCol, subTextSize }) {
   return warnings;
 }
 
-function renderTotalCellContent({ isBoolean, booleanContent, mainValue, unit, warning = false }) {
+function getExtendedTotalCellValue(results, col) {
+  if (
+    !results?.extendedTotal ||
+    (!DIRECT_CELL_FIELDS[col.id] && !/^([a-z]+)_(se|mm|avg)$/.test(col.id))
+  )
+    return null;
+  const { mainValue, unit } = resolveCellValue({
+    data: results.extendedTotal,
+    stats: results.extendedTotal,
+    col,
+  });
+  return `${mainValue} ${unit}`;
+}
+
+function renderTotalCellContent({
+  isBoolean,
+  booleanContent,
+  mainValue,
+  unit,
+  warning = false,
+  extendedValue,
+}) {
   if (isBoolean) return <div className='flex justify-end'>{booleanContent}</div>;
   return (
-    <span
-      className='text-base-content/90 font-medium'
-      style={warning ? { color: utilityColors.warningOrange } : undefined}
-    >
-      {mainValue} {unit}
-    </span>
+    <div className='flex flex-col items-end'>
+      <span
+        className='text-base-content/90 font-medium'
+        style={warning ? { color: utilityColors.warningOrange } : undefined}
+      >
+        {mainValue} {unit}
+      </span>
+      {extendedValue && (
+        <div
+          style={{ fontSize: '0.85em' }}
+          className='text-base-content/55 mt-0.5 leading-tight font-medium tracking-normal whitespace-nowrap italic'
+        >
+          <Trans>Extended:</Trans> {extendedValue}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -436,6 +468,7 @@ export function CellContent({ phase, col, results, isTotal = false }) {
       mainValue,
       unit,
       warning: safetyStopReason,
+      extendedValue: getExtendedTotalCellValue(results, col),
     });
   }
 

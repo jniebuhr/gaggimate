@@ -1830,6 +1830,10 @@ msgstr "設定をエクスポート"
 msgid "Export shot data"
 msgstr "ショットデータをエクスポート"
 
+#: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTableCells.jsx
+msgid "Extended:"
+msgstr "延長込み:"
+
 #: src/pages/ShotAnalyzer/utils/columns.js
 msgid "Extended Record"
 msgstr "拡張記録"
@@ -3756,6 +3760,10 @@ msgstr "プロファイル統計"
 msgid "Profile type: {typeText}"
 msgstr "プロファイルの種類: {typeText}"
 
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgid "Profile updated"
+msgstr "プロファイル更新"
+
 #: src/components/MachineProfileControl.jsx
 msgid "Profile values"
 msgstr "プロファイルの値"
@@ -5569,6 +5577,10 @@ msgstr "有効にしたプラグインは、次回マシンの電源を入れた
 #: src/pages/Settings/PluginCard.jsx
 msgid "The profile's dose is saved to the shot history."
 msgstr "プロファイルのドーズがショット履歴に保存されます。"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgid "The profile was probably updated since this shot was recorded. You can select the matching profile manually in the profile picker. Tip: For larger profile changes, duplicate the profile and add a version number to its name."
+msgstr "このショットの記録後にプロファイルが更新された可能性があります。プロファイル選択で、対応するプロファイルを手動で選べます。ヒント：大きな変更を加える場合は、プロファイルを複製し、名前にバージョン番号を追加してください。"
 
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "The pump runs with the 3-way valve closed until pressure stops rising. Then the pump stops and the valve opens, which should release the pressure to about 0 bar."
