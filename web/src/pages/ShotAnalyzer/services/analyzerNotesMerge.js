@@ -1,9 +1,34 @@
+// Ratio is derived: edits to input and output on different clients must agree.
+function updateRatioAfterDoseChange(notes, previous) {
+  if (notes.doseIn !== previous.doseIn || notes.doseOut !== previous.doseOut) {
+    const doseIn = Number.parseFloat(notes.doseIn);
+    const doseOut = Number.parseFloat(notes.doseOut);
+    notes.ratio = doseIn > 0 && doseOut > 0 ? (doseOut / doseIn).toFixed(2) : '';
+  }
+  return notes;
+}
+
 // Three-way merge for Analyzer autosaves only. Empty strings are intentional edits.
-export function mergeAnalyzerNotes(baseline, draft, latest) {
+export function mergeAnalyzerNotes(
+  baseline,
+  draft,
+  latest,
+  fields = null,
+  autoFillFields = new Set(),
+) {
   const merged = { ...latest };
-  const doseChanged = draft.doseIn !== baseline.doseIn || draft.doseOut !== baseline.doseOut;
+  const doseChanged = ['doseIn', 'doseOut'].some(
+    field => (!fields || fields.has(field)) && draft[field] !== baseline[field],
+  );
   for (const field of Object.keys(draft)) {
-    if (field === 'id' || (field === 'ratio' && doseChanged)) continue;
+    if (field === 'id' || (fields && !fields.has(field)) || (field === 'ratio' && doseChanged))
+      continue;
+    // Automatic defaults must never replace a value added by another client.
+    if (
+      autoFillFields.has(field) &&
+      JSON.stringify(latest[field]) !== JSON.stringify(baseline[field])
+    )
+      continue;
     if (JSON.stringify(draft[field]) === JSON.stringify(baseline[field])) continue;
     if (
       JSON.stringify(latest[field]) !== JSON.stringify(baseline[field]) &&
@@ -15,13 +40,7 @@ export function mergeAnalyzerNotes(baseline, draft, latest) {
     }
     merged[field] = draft[field];
   }
-  // Ratio is derived: edits to input and output on different clients must agree.
-  if (merged.doseIn !== latest.doseIn || merged.doseOut !== latest.doseOut) {
-    const doseIn = Number.parseFloat(merged.doseIn);
-    const doseOut = Number.parseFloat(merged.doseOut);
-    merged.ratio = doseIn > 0 && doseOut > 0 ? (doseOut / doseIn).toFixed(2) : '';
-  }
-  return merged;
+  return updateRatioAfterDoseChange(merged, latest);
 }
 
 // Keep edits made while a save was in flight on top of its merged result.

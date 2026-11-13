@@ -2,9 +2,20 @@ import './AnalysisTableLabels.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { t } from '@lingui/core/macro';
 import { Trans } from '@lingui/react/macro';
-import { faExclamationTriangle, faCheck, faTimes, faScaleBalanced, faClock, faStop } from '@fortawesome/free-solid-svg-icons';
+import {
+  faExclamationTriangle,
+  faCheck,
+  faTimes,
+  faScaleBalanced,
+  faClock,
+  faStop,
+} from '@fortawesome/free-solid-svg-icons';
 import { getDisplayStopReasonParts, utilityColors } from '../../utils/analyzerUtils';
-import { PHASE_EXIT_REASON, isSafetyExitReason, isWeightType } from '../../services/analyzer/exitReasons.js';
+import {
+  PHASE_EXIT_REASON,
+  isSafetyExitReason,
+  isWeightType,
+} from '../../services/analyzer/exitReasons.js';
 
 export function ComparePhaseLabel({ phase, results, section = 'all' }) {
   if (!phase) {
@@ -14,8 +25,11 @@ export function ComparePhaseLabel({ phase, results, section = 'all' }) {
   const { skipNotice, stopReason } = getDisplayStopReasonParts(phase.exit?.reason);
   const safetyStop = isSafetyExitReason(phase.exit?.code);
   const brewModeIcon = results?.isBrewByWeight ? faScaleBalanced : faClock;
-  const completionIcon = [PHASE_EXIT_REASON.ABORTED, PHASE_EXIT_REASON.SAFETY, PHASE_EXIT_REASON.HOLD_RELEASED]
-    .includes(results?.finalExitReasonCode ?? phase.exit?.code)
+  const completionIcon = [
+    PHASE_EXIT_REASON.ABORTED,
+    PHASE_EXIT_REASON.SAFETY,
+    PHASE_EXIT_REASON.HOLD_RELEASED,
+  ].includes(results?.finalExitReasonCode ?? phase.exit?.code)
     ? faStop
     : brewModeIcon;
 
@@ -39,7 +53,9 @@ export function ComparePhaseLabel({ phase, results, section = 'all' }) {
           className='analysis-table-label analysis-table-label--neutral analysis-table-label--reason text-base-content/90 font-normal'
           style={{
             fontSize: '0.85em',
-            '--analysis-stop-label-color': safetyStop ? utilityColors.warningOrange : 'var(--analyzer-stop-label)',
+            '--analysis-stop-label-color': safetyStop
+              ? utilityColors.warningOrange
+              : 'var(--analyzer-stop-label)',
           }}
         >
           {stopReason}
@@ -374,14 +390,22 @@ function renderMetricCellValue({
   const isStopValue = mainValueIsCalculated ? calcIsStopReason : isHit && !calcIsStopReason;
   let style = {};
   if (isStopValue) {
-    style = { '--analysis-stop-label-color': warning ? utilityColors.warningOrange : 'var(--analyzer-stop-label)' };
+    style = {
+      '--analysis-stop-label-color': warning
+        ? utilityColors.warningOrange
+        : 'var(--analyzer-stop-label)',
+    };
   } else if (warning) {
     style = { color: utilityColors.warningOrange };
   }
 
   return (
     <span
-      className={isStopValue ? 'analysis-table-label analysis-table-label--neutral analysis-table-label--reason text-base-content/90 font-normal' : 'text-base-content/90 font-medium'}
+      className={
+        isStopValue
+          ? 'analysis-table-label analysis-table-label--neutral analysis-table-label--reason text-base-content/90 font-normal'
+          : 'text-base-content/90 font-medium'
+      }
       style={style}
     >
       {mainValue} {unit}

@@ -6391,3 +6391,15 @@ msgstr "Il telefono deve essere sulla stessa rete Wi-Fi della macchina."
 #: src/pages/ShotAnalyzer/components/EmptyState.jsx
 msgid "Your saved shots and profiles directly from the GaggiMate internal storage."
 msgstr "Gli shot e i profili salvati, direttamente dalla memoria interna di GaggiMate."
+
+#: src/pages/ShotAnalyzer/components/useShotNotesState.js
+msgid "Notes for shot #{shotId} changed elsewhere. Autosave was stopped to protect those changes. Reopen that shot before editing again."
+msgstr "Le note dello shot #{shotId} sono state modificate altrove. Il salvataggio automatico è stato interrotto per proteggere queste modifiche. Riapri lo shot prima di modificarlo di nuovo."
+
+#: src/pages/ShotAnalyzer/components/useShotNotesState.js
+msgid "Notes for shot #{shotId} could not be loaded. Nothing was overwritten. Check the connection and reopen that shot."
+msgstr "Non è stato possibile caricare le note dello shot #{shotId}. Non è stato sovrascritto nulla. Controlla la connessione e riapri lo shot."
+
+#: src/pages/ShotAnalyzer/components/useShotNotesState.js
+msgid "Notes for shot #{shotId} could not be saved. Check the connection and reopen that shot before editing again."
+msgstr "Non è stato possibile salvare le note dello shot #{shotId}. Controlla la connessione e riapri lo shot prima di modificarlo di nuovo."

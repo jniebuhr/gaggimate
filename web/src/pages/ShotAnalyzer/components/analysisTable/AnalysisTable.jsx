@@ -205,10 +205,18 @@ export function AnalysisTable({
                               phase={phase}
                               phaseIndex={phaseIndex}
                               results={entry.results}
-                            section='phase' />
+                              section='phase'
+                            />
                           </td>
-                          <td className={`analysis-table-stop-reason border-l px-2 py-2 text-right whitespace-nowrap ${subtleDividerClass}`}>
-                            <ComparePhaseLabel phase={phase} phaseIndex={phaseIndex} results={entry.results} section='reason' />
+                          <td
+                            className={`analysis-table-stop-reason border-l px-2 py-2 text-right whitespace-nowrap ${subtleDividerClass}`}
+                          >
+                            <ComparePhaseLabel
+                              phase={phase}
+                              phaseIndex={phaseIndex}
+                              results={entry.results}
+                              section='reason'
+                            />
                           </td>
                           {visibleColumns.map(col => (
                             <td
@@ -305,10 +313,22 @@ export function AnalysisTable({
                         {idx + 1}
                       </td>
                       <td className={`px-2 py-2 text-left whitespace-nowrap ${strongDividerClass}`}>
-                        <ComparePhaseLabel phase={phase} phaseIndex={idx} results={results} section='phase' />
+                        <ComparePhaseLabel
+                          phase={phase}
+                          phaseIndex={idx}
+                          results={results}
+                          section='phase'
+                        />
                       </td>
-                      <td className={`analysis-table-stop-reason border-l px-2 py-2 text-right whitespace-nowrap ${subtleDividerClass}`}>
-                        <ComparePhaseLabel phase={phase} phaseIndex={idx} results={results} section='reason' />
+                      <td
+                        className={`analysis-table-stop-reason border-l px-2 py-2 text-right whitespace-nowrap ${subtleDividerClass}`}
+                      >
+                        <ComparePhaseLabel
+                          phase={phase}
+                          phaseIndex={idx}
+                          results={results}
+                          section='reason'
+                        />
                       </td>
                       {visibleColumns.map(col => (
                         <td

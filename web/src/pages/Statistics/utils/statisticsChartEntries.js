@@ -4,10 +4,11 @@ export const STATISTICS_CHART_SHOT_LIMIT = 100;
 
 export function getLatestStatisticsChartEntries(entries) {
   return entries
-    .filter(entry =>
-      entry.shotData?.brewKind !== 'manual' &&
-      entry.analysis?.brewKind !== 'manual' &&
-      entry.meta?.brewKind !== 'manual',
+    .filter(
+      entry =>
+        entry.shotData?.brewKind !== 'manual' &&
+        entry.analysis?.brewKind !== 'manual' &&
+        entry.meta?.brewKind !== 'manual',
     )
     .map(entry => ({
       entry,

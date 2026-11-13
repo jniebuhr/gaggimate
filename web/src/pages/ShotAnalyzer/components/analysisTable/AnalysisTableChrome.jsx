@@ -75,7 +75,9 @@ export function AnalysisTableHeader({
             <Trans context='table column'>Phase</Trans>
           </div>
         </th>
-        <th className={`min-w-[120px] border-l px-2 py-2 text-right whitespace-nowrap ${subtleDividerClass} ${tableHeaderTextClass}`}>
+        <th
+          className={`min-w-[120px] border-l px-2 py-2 text-right whitespace-nowrap ${subtleDividerClass} ${tableHeaderTextClass}`}
+        >
           <Trans>Stop reason</Trans>
         </th>
         {visibleColumns.map(col => {

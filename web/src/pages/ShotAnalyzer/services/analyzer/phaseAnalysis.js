@@ -596,7 +596,11 @@ export function analyzeExecutedPhase({
   const weightSamples = getFinalWeightSamples(samples);
   const weightEndSample = getFinalWeightSample(samples) || getPhaseEndSample(samples);
   const rawName = phaseNameMap[phaseNum];
-  const displayName = getProfilePhaseDisplayName(profileData, profilePhaseIndex, rawName || t`Phase ${phaseNum}`);
+  const displayName = getProfilePhaseDisplayName(
+    profileData,
+    profilePhaseIndex,
+    rawName || t`Phase ${phaseNum}`,
+  );
   const sysInfo = getPhaseEndSample(samples).systemInfo || {};
   const sysAnomalies = getPhaseSysAnomalies(samples, sysInfo);
   const bluetoothScaleConnection = getBluetoothScaleConnectionState(

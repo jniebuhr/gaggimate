@@ -6387,3 +6387,15 @@ msgstr "スマートフォンをマシンと同じ Wi-Fi ネットワークに�
 #: src/pages/ShotAnalyzer/components/EmptyState.jsx
 msgid "Your saved shots and profiles directly from the GaggiMate internal storage."
 msgstr "GaggiMate の内部ストレージに保存されたショットとプロファイルを直接表示します。"
+
+#: src/pages/ShotAnalyzer/components/useShotNotesState.js
+msgid "Notes for shot #{shotId} changed elsewhere. Autosave was stopped to protect those changes. Reopen that shot before editing again."
+msgstr "ショット #{shotId} のメモが別の場所で変更されました。その変更を保護するため、自動保存を停止しました。編集を続ける前に、このショットを開き直してください。"
+
+#: src/pages/ShotAnalyzer/components/useShotNotesState.js
+msgid "Notes for shot #{shotId} could not be loaded. Nothing was overwritten. Check the connection and reopen that shot."
+msgstr "ショット #{shotId} のメモを読み込めませんでした。データは上書きされていません。接続を確認し、このショットを開き直してください。"
+
+#: src/pages/ShotAnalyzer/components/useShotNotesState.js
+msgid "Notes for shot #{shotId} could not be saved. Check the connection and reopen that shot before editing again."
+msgstr "ショット #{shotId} のメモを保存できませんでした。接続を確認し、編集を続ける前にこのショットを開き直してください。"

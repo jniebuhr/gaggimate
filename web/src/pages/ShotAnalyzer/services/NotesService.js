@@ -104,6 +104,8 @@ class NotesService {
     const previous = this._analyzerSaveQueues.get(key) || Promise.resolve();
     const baseline = session.pendingDraft || session.baseline;
     session.pendingDraft = draft;
+    const fields = session.dirtyFields ? new Set(session.dirtyFields) : null;
+    const autoFillFields = new Set(session.autoFillFields);
     const task = previous
       .catch(() => {})
       .then(async () => {
@@ -113,7 +115,13 @@ class NotesService {
         const latest = await this.loadAnalyzerMachineNotes(shotId);
         let merged;
         try {
-          merged = mergeAnalyzerNotes(baseline || session.baseline, draft, latest);
+          merged = mergeAnalyzerNotes(
+            baseline || session.baseline,
+            draft,
+            latest,
+            fields,
+            autoFillFields,
+          );
         } catch (error) {
           session.blocked = true;
           throw error;

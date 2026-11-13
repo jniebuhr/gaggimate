@@ -6,13 +6,38 @@ import { cleanName, detectDoseFromProfileName, getShotStorageKey } from '../util
 
 let notesStateOriginCounter = 0;
 
-function reportSaveError(error) {
+function reportSaveError(error, session) {
   console.error('Failed to save Analyzer notes:', error);
-  alert(
-    error.notesConflict
-      ? t`Notes changed elsewhere. Your changes were not saved. Reopen the shot to load the latest notes.`
-      : t`Notes could not be loaded or saved safely. Your changes were not saved. Reopen the shot to try again.`,
-  );
+  if (session.errorReported) return;
+  session.errorReported = true;
+  const shotId = session.key;
+  let message;
+  if (error.notesConflict) {
+    message = t`Notes for shot #${shotId} changed elsewhere. Autosave was stopped to protect those changes. Reopen that shot before editing again.`;
+  } else if (!session.baseline) {
+    message = t`Notes for shot #${shotId} could not be loaded. Nothing was overwritten. Check the connection and reopen that shot.`;
+  } else {
+    message = t`Notes for shot #${shotId} could not be saved. Check the connection and reopen that shot before editing again.`;
+  }
+  alert(message);
+}
+
+function trackNotesEdits(session, updated) {
+  for (const field of Object.keys(updated)) {
+    if (field !== 'id' && updated[field] !== session.notes[field]) {
+      session.dirtyFields.add(field);
+      session.autoFillFields.delete(field);
+    }
+  }
+}
+
+function clearSavedNotesEdits(session, submitted) {
+  for (const field of Object.keys(submitted)) {
+    if (session.notes[field] === submitted[field]) {
+      session.dirtyFields.delete(field);
+      session.autoFillFields.delete(field);
+    }
+  }
 }
 
 export function getShotNotesKey(shot) {
@@ -101,6 +126,9 @@ export function useShotNotesState({ currentShot, isSelectionPending = false } = 
       notes: notesService.getDefaults(notesKey),
       baseline: null,
       blocked: false,
+      dirtyFields: new Set(),
+      autoFillFields: new Set(),
+      errorReported: false,
       active: true,
     }),
     [notesKey, source],
@@ -130,6 +158,8 @@ export function useShotNotesState({ currentShot, isSelectionPending = false } = 
   const saveNotes = useCallback(
     async (notesToSave = session.notes) => {
       if (!session.shot) return;
+      if (session.source === 'gaggimate' && (session.blocked || session.dirtyFields.size === 0))
+        return;
       const { key: notesKey, source } = session;
       if (session.active) setSaving(true);
       try {
@@ -137,6 +167,7 @@ export function useShotNotesState({ currentShot, isSelectionPending = false } = 
           const submitted = { ...notesToSave };
           const saved = await notesService.saveAnalyzerMachineNotes(notesKey, submitted, session);
           if (!saved) return;
+          clearSavedNotesEdits(session, submitted);
           const updated = rebaseAnalyzerNotes(submitted, session.notes, saved);
           session.notes = updated;
           if (session.active) setNotes(updated);
@@ -145,7 +176,7 @@ export function useShotNotesState({ currentShot, isSelectionPending = false } = 
           await notesService.saveNotes(notesKey, source, notesToSave);
         }
       } catch (error) {
-        reportSaveError(error);
+        reportSaveError(error, session);
       } finally {
         if (session.active) setSaving(false);
       }
@@ -205,7 +236,12 @@ export function useShotNotesState({ currentShot, isSelectionPending = false } = 
         session.baseline = loaded;
         let persistedNotes = loaded;
         if (source === 'gaggimate') {
-          persistedNotes = mergeAnalyzerNotes(initialNotes, session.notes, loaded);
+          persistedNotes = mergeAnalyzerNotes(
+            initialNotes,
+            session.notes,
+            loaded,
+            session.dirtyFields,
+          );
         } else if (inlineNotes) {
           persistedNotes = { ...loaded, ...inlineNotes, id: notesKey };
         }
@@ -214,6 +250,14 @@ export function useShotNotesState({ currentShot, isSelectionPending = false } = 
           currentShot,
         });
 
+        if (autoSave && source === 'gaggimate') {
+          for (const field of Object.keys(nextNotes)) {
+            if (nextNotes[field] !== persistedNotes[field] && !session.dirtyFields.has(field)) {
+              session.dirtyFields.add(field);
+              session.autoFillFields.add(field);
+            }
+          }
+        }
         session.notes = nextNotes;
         setNotes(nextNotes);
 
@@ -224,7 +268,7 @@ export function useShotNotesState({ currentShot, isSelectionPending = false } = 
       .catch(error => {
         if (cancelled) return;
         session.blocked = true;
-        reportSaveError(error);
+        reportSaveError(error, session);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -240,6 +284,7 @@ export function useShotNotesState({ currentShot, isSelectionPending = false } = 
   const handleInputChange = useCallback(
     (field, value) => {
       const updated = updateNotesValue(session.notes, field, value);
+      trackNotesEdits(session, updated);
       localUpdateVersionRef.current += 1;
       session.notes = updated;
       setNotes(updated);
@@ -280,12 +325,13 @@ export function useShotNotesState({ currentShot, isSelectionPending = false } = 
     () => () => {
       if (saveTimerRef.current) flushSave();
     },
-    [currentShot, flushSave],
+    [session, flushSave],
   );
 
   const updateAndSave = useCallback(
     async (field, value) => {
       const updated = updateNotesValue(session.notes, field, value);
+      trackNotesEdits(session, updated);
       localUpdateVersionRef.current += 1;
       session.notes = updated;
       setNotes(updated);

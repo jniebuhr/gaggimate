@@ -41,7 +41,14 @@ export function getDisplayStopReasonParts(reason = '') {
     return { skipNotice: '', stopReason: '' };
   }
 
-  if (['Phase skipped', 'Phase skipped (no preceding phase)', 'Phase not recorded', 'Phase not recorded (no preceding phase)'].includes(displayReason)) {
+  if (
+    [
+      'Phase skipped',
+      'Phase skipped (no preceding phase)',
+      'Phase not recorded',
+      'Phase not recorded (no preceding phase)',
+    ].includes(displayReason)
+  ) {
     return { skipNotice: t`Phase skipped`, stopReason: '' };
   }
 

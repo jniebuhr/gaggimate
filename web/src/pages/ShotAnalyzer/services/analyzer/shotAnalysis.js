@@ -65,7 +65,8 @@ function applySkippedPhaseSystemStats(analyzedPhases, brewModeLabel, configuredS
     if (!phase.skipped) return;
     phase.stats.sys_brew_mode = brewModeLabel;
     phase.stats.sys_recorded_stop_reason = phase.exit?.code
-      ? getPhaseExitReasonLabel(phase.exit.code) : t`Not recorded`;
+      ? getPhaseExitReasonLabel(phase.exit.code)
+      : t`Not recorded`;
     phase.stats.sys_scale_delay = configuredScaleDelayMs;
   });
 }
@@ -223,7 +224,13 @@ export function calculateShotMetrics(shotData, rawProfileData, settings) {
   );
 
   // --- 4b. DETECT SKIPPED PHASES (phases defined in profile but absent from shot) ---
-  mergeSkippedProfilePhases({ analyzedPhases, phases, profileData, finalExitReasonCode, recordedExitReasonByPhase });
+  mergeSkippedProfilePhases({
+    analyzedPhases,
+    phases,
+    profileData,
+    finalExitReasonCode,
+    recordedExitReasonByPhase,
+  });
   applySkippedPhaseSystemStats(analyzedPhases, brewModeLabel, configuredScaleDelayMs);
 
   // Calculate distinct Average Delays
