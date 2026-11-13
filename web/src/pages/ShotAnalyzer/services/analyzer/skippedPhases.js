@@ -254,11 +254,11 @@ export function mergeSkippedProfilePhases({
   });
 
   // Legacy numbering may overlap synthetic profile indices; chart keys stay unique.
-  const usedNumbers = new Set(executedPhases.map(phase => phase.number));
+  const usedNumbers = new Set(executedPhases.map(phase => String(phase.number)));
   for (const phase of orderedPhases) {
     if (!phase.skipped) continue;
-    if (usedNumbers.has(phase.number)) phase.number = -(phase.profilePhaseIndex + 1);
-    usedNumbers.add(phase.number);
+    if (usedNumbers.has(String(phase.number))) phase.number = -(phase.profilePhaseIndex + 1);
+    usedNumbers.add(String(phase.number));
   }
   analyzedPhases.length = 0;
   analyzedPhases.push(...orderedPhases);
