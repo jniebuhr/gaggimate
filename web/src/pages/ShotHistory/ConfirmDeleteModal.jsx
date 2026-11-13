@@ -36,10 +36,8 @@ export default function ConfirmDeleteModal({
   }, [busy, onClose]);
 
   return (
-    <div className='bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black p-4'>
-      {/* Native <dialog> opened via the open attribute: the overlay div keeps
-          the visual backdrop and the reset classes undo the UA border/padding,
-          so the layout is unchanged while assistive tech gets real semantics. */}
+    <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4'>
+      {/* Native dialog for semantics; the overlay div is the backdrop and the classes reset UA styling */}
       <dialog
         open
         aria-modal='true'

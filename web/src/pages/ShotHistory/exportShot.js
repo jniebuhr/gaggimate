@@ -3,8 +3,7 @@ export function round2(v) {
   return Math.round((v + Number.EPSILON) * 100) / 100;
 }
 
-// Shapes a shot for JSON export; shared by the per-shot card and the bulk
-// export so both produce identical payloads.
+// Shapes a shot for JSON export; shared by the per-shot card and the bulk export
 export function toExportShot(shot, notes = shot.notes ?? null) {
   const exportData = { ...shot, notes };
   if (Array.isArray(exportData.samples)) {

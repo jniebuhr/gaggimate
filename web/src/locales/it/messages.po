@@ -79,6 +79,10 @@ msgstr "{diffWeeks, plural, one {# settimana fa} other {# settimane fa}}"
 msgid "{diffYears, plural, one {# year ago} other {# years ago}}"
 msgstr "{diffYears, plural, one {# anno fa} other {# anni fa}}"
 
+#: src/pages/ShotHistory/index.jsx
+msgid "{historyCount, plural, one {This will permanently delete the only shot on the device. This cannot be undone.} other {This will permanently delete all # shots from the device. This cannot be undone.}}"
+msgstr "{historyCount, plural, one {L’unica estrazione presente sul dispositivo verrà eliminata definitivamente. L’operazione non può essere annullata.} other {Tutte le # estrazioni verranno eliminate definitivamente dal dispositivo. L’operazione non può essere annullata.}}"
+
 #: src/app/ConnectionGate.jsx
 msgid "{host} isn't answering. Make sure the machine is on and your phone is on the same Wi-Fi network."
 msgstr "{host} non risponde. Assicurati che la macchina sia accesa e che il telefono sia sulla stessa rete Wi-Fi."
@@ -114,6 +118,14 @@ msgstr "{rssi}dB (Andata e ritorno: {lat} ms, Ritrasmissioni: {rtx})"
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "{scaleName} disconnected"
 msgstr "{scaleName} disconnessa"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "{totalFilteredItems, plural, one {Delete # shot} other {Delete # shots}}"
+msgstr "{totalFilteredItems, plural, one {Elimina # estrazione} other {Elimina # estrazioni}}"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "{totalFilteredItems, plural, one {This will permanently delete the # shot matching your current search and filters. This cannot be undone.} other {This will permanently delete the # shots matching your current search and filters (across all pages). This cannot be undone.}}"
+msgstr "{totalFilteredItems, plural, one {L’estrazione che corrisponde alla ricerca e ai filtri attuali verrà eliminata definitivamente. L’operazione non può essere annullata.} other {Le # estrazioni che corrispondono alla ricerca e ai filtri attuali verranno eliminate definitivamente (in tutte le pagine). L’operazione non può essere annullata.}}"
 
 #: src/pages/ShotHistory/index.jsx
 msgid "{totalFilteredItems} of {historyCount} shots"
@@ -760,7 +772,7 @@ msgstr "Annulla"
 
 #: src/pages/ShotHistory/ConfirmDeleteModal.jsx
 msgid "Cancel deletion"
-msgstr ""
+msgstr "Annulla eliminazione"
 
 #: src/app/MachineSetup.jsx
 msgid "Cancel renaming"
@@ -1080,15 +1092,19 @@ msgstr "Impossibile eliminare il profilo di calibrazione: {message}"
 #. placeholder {0}: resp.error
 #: src/pages/ShotHistory/index.jsx
 msgid "Could not delete history: {0}"
-msgstr ""
+msgstr "Impossibile eliminare la cronologia: {0}"
 
 #: src/pages/ShotHistory/index.jsx
 msgid "Could not delete history. Please try again."
-msgstr ""
+msgstr "Impossibile eliminare la cronologia. Riprova."
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Could not delete shot {id}. Please try again."
+msgstr "Impossibile eliminare l’estrazione {id}. Riprova."
 
 #: src/pages/ShotHistory/index.jsx
 msgid "Could not export any shots. Please try again."
-msgstr ""
+msgstr "Impossibile esportare le estrazioni. Riprova."
 
 #: src/pages/Settings/index.jsx
 msgid "Could not import {importName}: {importMessage}"
@@ -1327,12 +1343,8 @@ msgid "Delete {label} profile"
 msgstr "Elimina profilo {label}"
 
 #: src/pages/ShotHistory/index.jsx
-msgid "Delete {totalFilteredItems} shots"
-msgstr ""
-
-#: src/pages/ShotHistory/index.jsx
 msgid "Delete all"
-msgstr ""
+msgstr "Elimina tutto"
 
 #: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 msgid "Delete All"
@@ -1344,11 +1356,11 @@ msgstr "Elimina tutti i profili"
 
 #: src/pages/ShotHistory/index.jsx
 msgid "Delete all shots"
-msgstr ""
+msgstr "Elimina tutte le estrazioni"
 
 #: src/pages/ShotHistory/index.jsx
 msgid "Delete all shots?"
-msgstr ""
+msgstr "Eliminare tutte le estrazioni?"
 
 #: src/pages/ShotAnalyzer/components/library/LibraryPanel.jsx
 msgid "Delete failed: {message}"
@@ -1356,15 +1368,15 @@ msgstr "Eliminazione non riuscita: {message}"
 
 #: src/pages/ShotHistory/index.jsx
 msgid "Delete filtered shots"
-msgstr ""
+msgstr "Elimina le estrazioni filtrate"
 
 #: src/pages/ShotHistory/index.jsx
 msgid "Delete filtered shots ({totalFilteredItems})"
-msgstr ""
+msgstr "Elimina le estrazioni filtrate ({totalFilteredItems})"
 
 #: src/pages/ShotHistory/index.jsx
 msgid "Delete filtered shots?"
-msgstr ""
+msgstr "Eliminare le estrazioni filtrate?"
 
 #: src/components/MachineProfileControl.jsx
 msgid "Delete imported profile"
@@ -1406,7 +1418,7 @@ msgstr "Elimina questa programmazione"
 #. placeholder {1}: failedIds.join(', ')
 #: src/pages/ShotHistory/index.jsx
 msgid "Deleted {done} of {0} shots. Failed: {1}"
-msgstr ""
+msgstr "Eliminate {done} estrazioni su {0}. Non riuscite: {1}"
 
 #: src/pages/Settings/PluginCard.jsx
 msgid "Deleted profile"
@@ -1416,11 +1428,11 @@ msgstr "Profilo eliminato"
 #. placeholder {1}: progress.total
 #: src/pages/ShotHistory/ConfirmDeleteModal.jsx
 msgid "Deleting shot {0} of {1}..."
-msgstr ""
+msgstr "Eliminazione dell’estrazione {0} di {1}..."
 
 #: src/pages/ShotHistory/ConfirmDeleteModal.jsx
 msgid "Deleting…"
-msgstr ""
+msgstr "Eliminazione…"
 
 #: src/pages/Settings/tabs/CleaningSection.jsx
 msgid "Descaling"
@@ -1880,7 +1892,7 @@ msgstr "Esporta file"
 
 #: src/pages/ShotHistory/index.jsx
 msgid "Export filtered shots"
-msgstr ""
+msgstr "Esporta le estrazioni filtrate"
 
 #: src/pages/ProfileList/index.jsx
 msgid "Export profile"
@@ -1906,13 +1918,13 @@ msgstr "Esporta dati estrazione"
 #. placeholder {1}: targets.length
 #: src/pages/ShotHistory/index.jsx
 msgid "Exported {0} of {1} shots ({failed} failed)."
-msgstr ""
+msgstr "Esportate {0} estrazioni su {1} ({failed} non riuscite)."
 
 #. placeholder {0}: exportProgress.current
 #. placeholder {1}: exportProgress.total
 #: src/pages/ShotHistory/index.jsx
 msgid "Exporting shot {0} of {1}..."
-msgstr ""
+msgstr "Esportazione dell’estrazione {0} di {1}..."
 
 #: src/pages/ShotAnalyzer/utils/columns.js
 msgid "Extended Record"
@@ -3608,11 +3620,11 @@ msgstr "Preinfusione"
 
 #: src/pages/ShotHistory/ConfirmDeleteModal.jsx
 msgid "Preparing deletion..."
-msgstr ""
+msgstr "Preparazione dell’eliminazione..."
 
 #: src/pages/ShotHistory/index.jsx
 msgid "Preparing export..."
-msgstr ""
+msgstr "Preparazione dell’esportazione..."
 
 #: src/pages/ShotAnalyzer/components/shotChart/constants.js
 msgid "Preparing MP4 export..."
@@ -5738,15 +5750,6 @@ msgstr "Questo profilo contiene impostazioni non relative alla configurazione de
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "This scale model couldn't be set up."
 msgstr "Non è stato possibile configurare questo modello di bilancia."
-
-#. placeholder {0}: history.length
-#: src/pages/ShotHistory/index.jsx
-msgid "This will permanently delete all {0} shots from the device. This cannot be undone."
-msgstr ""
-
-#: src/pages/ShotHistory/index.jsx
-msgid "This will permanently delete the {totalFilteredItems} shots matching your current search and filters (across all pages). This cannot be undone."
-msgstr ""
 
 #: src/pages/Settings/PluginCard.jsx
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx

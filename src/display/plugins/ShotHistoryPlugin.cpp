@@ -603,9 +603,9 @@ void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &respo
         while (paddedId.length() < 6) {
             paddedId = "0" + paddedId;
         }
-        if (!fs->remove("/h/" + paddedId + ".slog")) {
-            // Report the failure so the bulk delete loop can surface the id
-            // instead of counting a shot that is still on disk as deleted.
+        // A log that is already gone still clears its index entry, or the shot could never be removed
+        const String slogPath = "/h/" + paddedId + ".slog";
+        if (fs->exists(slogPath) && !fs->remove(slogPath)) {
             response["error"] = "Delete failed";
         } else {
             fs->remove(notesPath(id.toInt()));
@@ -617,16 +617,10 @@ void ShotHistoryPlugin::handleRequest(JsonDocument &request, JsonDocument &respo
             response["msg"] = "Ok";
         }
     } else if (type == "req:history:delete-all") {
-        if (recording || extendedRecording || isFileOpen) {
-            response["error"] = "Recording in progress";
+        if (const char *error = startAsyncDeleteAll()) {
+            response["error"] = error;
         } else {
-            size_t deleted = 0;
-            if (deleteAllHistory(deleted)) {
-                response["msg"] = "Ok";
-                response["deleted"] = deleted;
-            } else {
-                response["error"] = "Delete failed";
-            }
+            response["msg"] = "Delete started";
         }
     } else if (type == "req:history:notes:get") {
         auto id = request["id"].as<String>();
@@ -892,50 +886,91 @@ void ShotHistoryPlugin::markIndexDeleted(uint32_t shotId) {
 }
 
 bool ShotHistoryPlugin::deleteAllHistory(size_t &deleted) {
-    // Collect first, delete after: mutating a LittleFS/SD directory while
-    // iterating it can skip entries (see cleanupHistory for the same pattern).
-    std::vector<String> shotFiles;
-    File directory = fs->open("/h");
-    if (directory && directory.isDirectory()) {
-        File file = directory.openNextFile();
-        while (file) {
-            auto name = String(file.name());
-            file.close();
-            // file.name() yields a bare name on some filesystems and a full
-            // path on others — normalize before matching.
-            String path = name.startsWith("/") ? name : "/h/" + name;
-            if (path.endsWith(".slog") || path.endsWith(".json")) {
-                shotFiles.push_back(path);
-            }
-            file = directory.openNextFile();
-        }
-        directory.close();
-    }
-    bool ok = true;
     deleted = 0;
+    File directory = fs->open("/h");
+    if (!directory || !directory.isDirectory()) {
+        ESP_LOGE("ShotHistoryPlugin", "Failed to open the history directory");
+        return false;
+    }
+    // Collect first: removing entries while iterating a directory can skip files
+    std::vector<String> shotFiles;
+    File file = directory.openNextFile();
+    while (file) {
+        auto name = String(file.name());
+        file.close();
+        // file.name() is a bare name on some filesystems and a full path on others
+        String path = name.startsWith("/") ? name : "/h/" + name;
+        if (path.endsWith(".slog") || path.endsWith(".json")) {
+            shotFiles.push_back(path);
+        }
+        file = directory.openNextFile();
+    }
+    directory.close();
+
+    // Reset the index first so a shot finishing meanwhile lands in the new one; the id counter stays monotonic
+    if ((fs->exists("/h/index.bin") && !fs->remove("/h/index.bin")) || !ensureIndexExists()) {
+        ESP_LOGE("ShotHistoryPlugin", "Failed to reset the history index, nothing deleted");
+        return false;
+    }
+
+    size_t failed = 0;
     for (const String &path : shotFiles) {
         if (fs->remove(path)) {
             deleted++;
         } else {
-            ok = false;
+            failed++;
+        }
+        // Let equal-priority tasks (shot recorder, main loop) run during a long delete
+        if ((deleted + failed) % 16 == 0) {
+            vTaskDelay(1);
         }
     }
-    // Drop the index (and any stale recent-shots cache) so deleted entries
-    // can't resurface, then recreate an empty one keyed at the current
-    // history counter. The counter itself is kept monotonic so ids are never
-    // reused by later shots.
-    fs->remove("/h/index.bin");
-    fs->remove("/h/recent.bin");
-    if (!ensureIndexExists()) {
-        ok = false;
-    }
 
-    if (ok) {
-        ESP_LOGI("ShotHistoryPlugin", "Deleted all shot history (%u files)", deleted);
-    } else {
-        ESP_LOGE("ShotHistoryPlugin", "Failed to delete all shot history (%u files removed)", deleted);
+    if (failed > 0) {
+        ESP_LOGE("ShotHistoryPlugin", "Failed to remove %zu history files (%zu removed)", failed, deleted);
+        // Re-index what is left so the surviving shots stay visible
+        rebuildIndex();
+        return false;
     }
-    return ok;
+    ESP_LOGI("ShotHistoryPlugin", "Deleted all shot history (%zu files)", deleted);
+    return true;
+}
+
+const char *ShotHistoryPlugin::startAsyncDeleteAll() {
+    if (recording || extendedRecording || isFileOpen) {
+        return "Recording in progress";
+    }
+    if (rebuildInProgress) {
+        return "Rebuild in progress";
+    }
+    if (deleteAllInProgress.exchange(true)) {
+        return "Delete in progress";
+    }
+    // Own task: unlinking hundreds of files would overrun the task watchdog on the AsyncTCP task
+    BaseType_t created = xTaskCreatePinnedToCore(
+        [](void *param) {
+            static_cast<ShotHistoryPlugin *>(param)->runDeleteAll();
+            vTaskDelete(NULL);
+        },
+        "ShotHistoryDelete", configMINIMAL_STACK_SIZE * 8, this, 1, NULL, 0);
+    if (created != pdPASS) {
+        deleteAllInProgress = false;
+        return "Delete failed";
+    }
+    return nullptr;
+}
+
+void ShotHistoryPlugin::runDeleteAll() {
+    size_t deleted = 0;
+    const bool ok = deleteAllHistory(deleted);
+    if (pluginManager) {
+        Event doneEvent;
+        doneEvent.id = "evt:history-delete-all";
+        doneEvent.setString("status", ok ? "completed" : "error");
+        doneEvent.setInt("deleted", static_cast<int>(deleted));
+        pluginManager->trigger(doneEvent);
+    }
+    deleteAllInProgress = false;
 }
 
 size_t ShotHistoryPlugin::readRecentEntries(ShotIndexEntry *outEntries, size_t maxCount) {
@@ -969,6 +1004,19 @@ size_t ShotHistoryPlugin::readRecentEntries(ShotIndexEntry *outEntries, size_t m
 }
 
 void ShotHistoryPlugin::startAsyncRebuild() {
+    if (deleteAllInProgress) {
+        ESP_LOGW("ShotHistoryPlugin", "Delete-all in progress, ignoring rebuild request");
+        // The request was already acked, so end the client's progress view
+        if (pluginManager) {
+            Event errorEvent;
+            errorEvent.id = "evt:history-rebuild-progress";
+            errorEvent.setInt("total", 0);
+            errorEvent.setInt("current", 0);
+            errorEvent.setString("status", "error");
+            pluginManager->trigger(errorEvent);
+        }
+        return;
+    }
     if (!rebuildInProgress) {
         rebuildInProgress = true; // Set immediately to prevent multiple rebuilds
         ESP_LOGI("ShotHistoryPlugin", "Starting immediate async rebuild task");

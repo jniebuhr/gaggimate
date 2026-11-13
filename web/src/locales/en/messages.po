@@ -75,6 +75,10 @@ msgstr "{diffWeeks, plural, one {# week ago} other {# weeks ago}}"
 msgid "{diffYears, plural, one {# year ago} other {# years ago}}"
 msgstr "{diffYears, plural, one {# year ago} other {# years ago}}"
 
+#: src/pages/ShotHistory/index.jsx
+msgid "{historyCount, plural, one {This will permanently delete the only shot on the device. This cannot be undone.} other {This will permanently delete all # shots from the device. This cannot be undone.}}"
+msgstr "{historyCount, plural, one {This will permanently delete the only shot on the device. This cannot be undone.} other {This will permanently delete all # shots from the device. This cannot be undone.}}"
+
 #: src/app/ConnectionGate.jsx
 msgid "{host} isn't answering. Make sure the machine is on and your phone is on the same Wi-Fi network."
 msgstr "{host} isn't answering. Make sure the machine is on and your phone is on the same Wi-Fi network."
@@ -110,6 +114,14 @@ msgstr "{rssi}dB (Roundtrip: {lat} ms, Resends: {rtx})"
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "{scaleName} disconnected"
 msgstr "{scaleName} disconnected"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "{totalFilteredItems, plural, one {Delete # shot} other {Delete # shots}}"
+msgstr "{totalFilteredItems, plural, one {Delete # shot} other {Delete # shots}}"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "{totalFilteredItems, plural, one {This will permanently delete the # shot matching your current search and filters. This cannot be undone.} other {This will permanently delete the # shots matching your current search and filters (across all pages). This cannot be undone.}}"
+msgstr "{totalFilteredItems, plural, one {This will permanently delete the # shot matching your current search and filters. This cannot be undone.} other {This will permanently delete the # shots matching your current search and filters (across all pages). This cannot be undone.}}"
 
 #: src/pages/ShotHistory/index.jsx
 msgid "{totalFilteredItems} of {historyCount} shots"
@@ -1083,6 +1095,10 @@ msgid "Could not delete history. Please try again."
 msgstr "Could not delete history. Please try again."
 
 #: src/pages/ShotHistory/index.jsx
+msgid "Could not delete shot {id}. Please try again."
+msgstr "Could not delete shot {id}. Please try again."
+
+#: src/pages/ShotHistory/index.jsx
 msgid "Could not export any shots. Please try again."
 msgstr "Could not export any shots. Please try again."
 
@@ -1321,10 +1337,6 @@ msgstr "Delete"
 #: src/pages/ProfileList/index.jsx
 msgid "Delete {label} profile"
 msgstr "Delete {label} profile"
-
-#: src/pages/ShotHistory/index.jsx
-msgid "Delete {totalFilteredItems} shots"
-msgstr "Delete {totalFilteredItems} shots"
 
 #: src/pages/ShotHistory/index.jsx
 msgid "Delete all"
@@ -5734,15 +5746,6 @@ msgstr "This profile includes settings outside machine configuration. Remove the
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "This scale model couldn't be set up."
 msgstr "This scale model couldn't be set up."
-
-#. placeholder {0}: history.length
-#: src/pages/ShotHistory/index.jsx
-msgid "This will permanently delete all {0} shots from the device. This cannot be undone."
-msgstr "This will permanently delete all {0} shots from the device. This cannot be undone."
-
-#: src/pages/ShotHistory/index.jsx
-msgid "This will permanently delete the {totalFilteredItems} shots matching your current search and filters (across all pages). This cannot be undone."
-msgstr "This will permanently delete the {totalFilteredItems} shots matching your current search and filters (across all pages). This cannot be undone."
 
 #: src/pages/Settings/PluginCard.jsx
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx

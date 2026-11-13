@@ -35,9 +35,7 @@ export default function HistoryCard({ shot, onDelete, onLoad, onNotesChanged }) 
 
   const onExport = useCallback(() => {
     if (!shot.loaded) return; // Only export loaded data
-    // downloadJson never rejects (share/download failures are logged inside
-    // utils/download.js); void marks the floating promise as intentionally
-    // ignored so the export click stays fire-and-forget.
+    // Fire-and-forget: downloadJson logs its own failures and never rejects
     void downloadJson(toExportShot(shot, shotNotes), `shot-${shot.id}.json`);
   }, [shot, shotNotes]);
 

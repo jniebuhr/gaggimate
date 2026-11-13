@@ -23,6 +23,7 @@ import { ApiServiceContext, machine } from '../../services/ApiService.js';
 import { useCallback, useEffect, useRef, useState, useContext, useMemo } from 'preact/hooks';
 import { computed } from '@preact/signals';
 import { Trans, useLingui } from '@lingui/react/macro';
+import { plural } from '@lingui/core/macro';
 import { Spinner } from '../../components/Spinner.jsx';
 import HistoryCard from './HistoryCard.jsx';
 import { parseBinaryShot } from './parseBinaryShot.js';
@@ -40,6 +41,9 @@ import { toExportShot } from './exportShot.js';
 import ConfirmDeleteModal from './ConfirmDeleteModal.jsx';
 
 const connected = computed(() => machine.value.connected);
+
+// Delete-all runs on its own firmware task; give up waiting for its completion event after this long
+const DELETE_ALL_TIMEOUT_MS = 5 * 60 * 1000;
 
 export function ShotHistory() {
   const { t } = useLingui();
@@ -60,10 +64,15 @@ export function ShotHistory() {
   const [showDeleteFilteredModal, setShowDeleteFilteredModal] = useState(false);
   const itemsPerPage = 10;
   const loadHistoryAbortRef = useRef(null);
-  // Cooperative cancel flag for the sequential bulk loops below (export / delete
-  // filtered). The ESP32 can't handle parallel requests, so both run one shot at
-  // a time and check this flag between iterations.
+  // Cancel flag the sequential bulk loops (export, delete filtered) check between shots
   const bulkCancelRef = useRef(false);
+  // Stop a running bulk loop when the page is left
+  useEffect(
+    () => () => {
+      bulkCancelRef.current = true;
+    },
+    [],
+  );
   const loadHistory = async () => {
     // Abort any in-flight fetch to prevent request pileup on the ESP32.
     loadHistoryAbortRef.current?.abort();
@@ -121,9 +130,7 @@ export function ShotHistory() {
     return () => loadHistoryAbortRef.current?.abort();
   }, [connected.value]);
 
-  // Filtered and sorted history with pagination. `filteredHistory` is the full
-  // sorted match list (all pages) — used by the bulk export / delete-filtered
-  // actions so they respect the current search + filters.
+  // Filtered and sorted history with pagination; filteredHistory is the full match list the bulk actions use
   const { paginatedHistory, filteredHistory, totalPages, totalFilteredItems } = useMemo(() => {
     let filtered = history;
 
@@ -202,31 +209,54 @@ export function ShotHistory() {
   const onDelete = useCallback(
     async id => {
       setLoading(true);
-      await apiService.request({ tp: 'req:history:delete', id });
-      // Reload the index after deletion
+      try {
+        const resp = await apiService.request({ tp: 'req:history:delete', id });
+        if (resp?.error) throw new Error(resp.error);
+      } catch (error) {
+        console.error('Failed to delete shot:', error);
+        alert(t`Could not delete shot ${id}. Please try again.`);
+      }
+      // Reload the index whatever happened so the list matches the device
       await loadHistory();
     },
-    [apiService],
+    [apiService, t],
   );
 
   const onDeleteAll = useCallback(async () => {
     setDeletingAll(true);
+    let listenerId;
+    let timeoutId;
+    // Listen before sending: a small history can finish before the ack arrives
+    const finished = new Promise((resolve, reject) => {
+      listenerId = apiService.on('evt:history-delete-all', resolve);
+      timeoutId = setTimeout(
+        () => reject(new Error('Delete all timed out')),
+        DELETE_ALL_TIMEOUT_MS,
+      );
+    });
+    finished.catch(() => {});
     try {
       const resp = await apiService.request({ tp: 'req:history:delete-all' });
-      setShowDeleteAllModal(false);
       if (resp?.error) {
         alert(t`Could not delete history: ${resp.error}`);
+      } else if (resp?.msg !== 'Delete started') {
+        // Firmware without the async delete-all answers with neither msg nor error
+        throw new Error('Delete all is not supported by this firmware');
       } else {
+        const result = await finished;
+        if (result.status !== 'completed') throw new Error('Delete all failed on the device');
         setSearchTerm('');
         setCurrentPage(1);
-        // Reload the index after deletion
-        await loadHistory();
       }
     } catch (error) {
-      setShowDeleteAllModal(false);
       console.error('Failed to delete shot history:', error);
       alert(t`Could not delete history. Please try again.`);
     } finally {
+      clearTimeout(timeoutId);
+      apiService.off('evt:history-delete-all', listenerId);
+      setShowDeleteAllModal(false);
+      // Reload on failure too: a failed run may still have removed shots
+      await loadHistory();
       setDeletingAll(false);
     }
   }, [apiService, t]);
@@ -236,9 +266,7 @@ export function ShotHistory() {
     await loadHistory();
   }, []);
 
-  // Loads one full shot (samples + notes) for export. Reuses already-loaded
-  // state to avoid refetching expanded cards. Returns null on failure so a
-  // single bad file doesn't abort the whole export.
+  // Loads one full shot (samples + notes) for export; null on failure so one bad file doesn't abort the run
   const loadFullShotForExport = useCallback(
     async meta => {
       try {
@@ -291,7 +319,6 @@ export function ShotHistory() {
     const exported = [];
     let failed = 0;
     // Sequential on purpose: parallel fetches pile up requests on the ESP32
-    // (see loadHistory). Progress mirrors the StatisticsView pattern.
     for (let i = 0; i < targets.length; i++) {
       if (bulkCancelRef.current) break;
       const shot = await loadFullShotForExport(targets[i]);
@@ -325,8 +352,7 @@ export function ShotHistory() {
     setDeletingFiltered(true);
     setDeleteFilteredProgress({ current: 0, total: targets.length });
     const failedIds = [];
-    // Sequential req:history:delete loop — no firmware changes needed and the
-    // existing per-shot endpoint already updates the index.
+    // One short request per shot keeps each slice on the device's web task small and cancellable
     for (let i = 0; i < targets.length; i++) {
       if (bulkCancelRef.current) break;
       try {
@@ -342,8 +368,7 @@ export function ShotHistory() {
     setShowDeleteFilteredModal(false);
     setDeletingFiltered(false);
     setDeleteFilteredProgress({ current: 0, total: 0 });
-    // Keep the search term when the run was cancelled or some shots failed, so
-    // the remaining matches (and any failures) stay visible.
+    // Keep the search term after a cancel or failures so the remaining matches stay visible
     const completed = !cancelled && failedIds.length === 0;
     if (completed) {
       setSearchTerm('');
@@ -388,7 +413,12 @@ export function ShotHistory() {
           </Tooltip>
           <Tooltip content={t`Delete filtered shots (${totalFilteredItems})`}>
             <button
-              onClick={() => setShowDeleteFilteredModal(true)}
+              onClick={() =>
+                // Nothing filtered out: use the single delete-all request instead of one per shot
+                totalFilteredItems === historyCount
+                  ? setShowDeleteAllModal(true)
+                  : setShowDeleteFilteredModal(true)
+              }
               disabled={totalFilteredItems === 0 || busy}
               className='text-base-content/50 hover:text-error hover:bg-error/10 cursor-pointer rounded-md p-2 transition-colors disabled:cursor-not-allowed disabled:opacity-40'
               aria-label={t`Delete filtered shots`}
@@ -605,7 +635,11 @@ export function ShotHistory() {
       {showDeleteAllModal && (
         <ConfirmDeleteModal
           title={t`Delete all shots?`}
-          description={t`This will permanently delete all ${history.length} shots from the device. This cannot be undone.`}
+          description={plural(historyCount, {
+            one: 'This will permanently delete the only shot on the device. This cannot be undone.',
+            other:
+              'This will permanently delete all # shots from the device. This cannot be undone.',
+          })}
           confirmLabel={t`Delete all`}
           descriptionClassName='mb-6 text-sm text-gray-600 dark:text-gray-300'
           busy={deletingAll}
@@ -617,8 +651,15 @@ export function ShotHistory() {
       {showDeleteFilteredModal && (
         <ConfirmDeleteModal
           title={t`Delete filtered shots?`}
-          description={t`This will permanently delete the ${totalFilteredItems} shots matching your current search and filters (across all pages). This cannot be undone.`}
-          confirmLabel={t`Delete ${totalFilteredItems} shots`}
+          description={plural(totalFilteredItems, {
+            one: 'This will permanently delete the # shot matching your current search and filters. This cannot be undone.',
+            other:
+              'This will permanently delete the # shots matching your current search and filters (across all pages). This cannot be undone.',
+          })}
+          confirmLabel={plural(totalFilteredItems, {
+            one: 'Delete # shot',
+            other: 'Delete # shots',
+          })}
           busy={deletingFiltered}
           progress={deleteFilteredProgress}
           onClose={() => setShowDeleteFilteredModal(false)}

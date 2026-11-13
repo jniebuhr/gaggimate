@@ -3,6 +3,7 @@
 
 #include <ArduinoJson.h>
 #include <LittleFS.h>
+#include <atomic>
 #include <display/core/Plugin.h>
 #include <display/core/utils.h>
 #include <display/models/shot_log_format.h>
@@ -30,12 +31,13 @@ class ShotHistoryPlugin : public Plugin {
     bool appendToIndex(const ShotIndexEntry &entry);
     void updateIndexMetadata(uint32_t shotId, uint8_t rating, uint16_t volume);
     void markIndexDeleted(uint32_t shotId);
-    // Deletes every shot log (.slog) and notes file (.json) under /h on the
-    // history filesystem (SD card if present, LittleFS otherwise) and recreates
-    // an empty index. Writes the number of files removed to `deleted`. Returns
-    // false if any removal or the index recreation failed. Must not run while
-    // a recording is open (see handleRequest guard).
+    // Removes every shot log and notes file under /h and resets the index; false when anything could not be removed
     bool deleteAllHistory(size_t &deleted);
+    // Runs deleteAllHistory on its own task and reports via evt:history-delete-all; returns an error text when refused
+    const char *startAsyncDeleteAll();
+    // Body of the delete-all task; the simulator spawns no tasks and pumps it from its main loop
+    void runDeleteAll();
+    bool isDeleteAllInProgress() const { return deleteAllInProgress; }
     void rebuildIndex();
     void startAsyncRebuild();
     bool ensureIndexExists();
@@ -113,6 +115,7 @@ class ShotHistoryPlugin : public Plugin {
 
     // Async rebuild state
     bool rebuildInProgress = false;
+    std::atomic<bool> deleteAllInProgress{false};
 
     xTaskHandle taskHandle;
     void flushBuffer();

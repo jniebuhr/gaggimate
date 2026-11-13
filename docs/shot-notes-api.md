@@ -88,8 +88,8 @@ index rating, and a non-empty `doseOut` overrides the recorded volume.
 ```
 
 Removes the shot log and its notes and marks the index entry deleted. Response `msg` is `"Ok"`.
-If the log file cannot be removed, the response carries `"error": "Delete failed"` and the
-index entry is left untouched.
+A log that is already missing still clears the index entry. If an existing log file cannot be
+removed, the response carries `"error": "Delete failed"` and the index entry is left untouched.
 
 ### Delete all shots
 
@@ -98,17 +98,31 @@ index entry is left untouched.
 ```
 
 ```json
-{ "tp": "res:history:delete-all", "rid": "4", "msg": "Ok", "deleted": 12 }
+{ "tp": "res:history:delete-all", "rid": "4", "msg": "Delete started" }
+```
+
+```json
+{ "tp": "evt:history-delete-all", "status": "completed", "deleted": 12 }
 ```
 
 Removes every shot log (`.slog`) and notes file (`.json`) under `/h` on the history
-filesystem (SD card if present, LittleFS otherwise) and recreates an empty `index.bin`.
-`deleted` is the number of files removed. Like all `req:history:*` requests it is refused
-with `"Update in progress"` while a firmware update is running, and while a shot is being
-recorded it answers `"Recording in progress"` instead — retry once the brew (including the
-scale-settling window) has finished. The shot id counter is kept monotonic, so later shots
-never reuse ids of deleted ones. If any removal or the index recreation fails, the
-response carries `"error": "Delete failed"` instead (with no `msg`/`deleted`).
+filesystem (SD card if present, LittleFS otherwise) and resets `index.bin` to an empty index.
+The work runs on its own task, so the request is answered immediately and the outcome arrives
+as an `evt:history-delete-all` event: `status` is `"completed"` or `"error"`, and `deleted` is
+the number of files removed. The shot id counter is kept monotonic, so later shots never reuse
+ids of deleted ones.
+
+The request is refused with an `error` instead of `msg` in these cases:
+
+- `"Update in progress"` while a firmware update is running, like all `req:history:*` requests.
+- `"Recording in progress"` while a shot is being recorded; retry once the brew (including the
+  scale-settling window) has finished.
+- `"Rebuild in progress"` or `"Delete in progress"` while an index rebuild or another delete-all
+  is running.
+
+On `"error"` status nothing was deleted if the history directory or the index could not be
+reset. If only some files could not be removed, the index is rebuilt from the shots that
+remain, so reload it afterwards in either case.
 
 ### Rebuild the index
 

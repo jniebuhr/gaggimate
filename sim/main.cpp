@@ -72,6 +72,11 @@ int main(int argc, char **argv) {
         }
         gm_web_pump(); // service the embedded WebUI HTTP/WS server
 
+        // Delete-all runs on its own task on the device (a no-op in the sim), so run it here
+        if (ShotHistory.isDeleteAllInProgress()) {
+            ShotHistory.runDeleteAll();
+        }
+
         // Settings persistence normally runs in a deferred save task (a no-op in the
         // sim), so flush dirty settings to NVS periodically. save(true) is a cheap
         // no-op when nothing changed.

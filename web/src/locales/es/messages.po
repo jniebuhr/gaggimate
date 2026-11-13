@@ -75,6 +75,10 @@ msgstr "{diffWeeks, plural, one {hace # semana} other {hace # semanas}}"
 msgid "{diffYears, plural, one {# year ago} other {# years ago}}"
 msgstr "{diffYears, plural, one {hace # año} other {hace # años}}"
 
+#: src/pages/ShotHistory/index.jsx
+msgid "{historyCount, plural, one {This will permanently delete the only shot on the device. This cannot be undone.} other {This will permanently delete all # shots from the device. This cannot be undone.}}"
+msgstr "{historyCount, plural, one {Esto eliminará permanentemente la única extracción del dispositivo. Esta acción no se puede deshacer.} other {Esto eliminará permanentemente todas las # extracciones del dispositivo. Esta acción no se puede deshacer.}}"
+
 #: src/app/ConnectionGate.jsx
 msgid "{host} isn't answering. Make sure the machine is on and your phone is on the same Wi-Fi network."
 msgstr "{host} no responde. Asegúrate de que la máquina esté encendida y de que tu teléfono esté en la misma red Wi-Fi."
@@ -110,6 +114,14 @@ msgstr "{rssi}dB (Ida y vuelta: {lat} ms, Reenvíos: {rtx})"
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "{scaleName} disconnected"
 msgstr "{scaleName} desconectada"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "{totalFilteredItems, plural, one {Delete # shot} other {Delete # shots}}"
+msgstr "{totalFilteredItems, plural, one {Eliminar # extracción} other {Eliminar # extracciones}}"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "{totalFilteredItems, plural, one {This will permanently delete the # shot matching your current search and filters. This cannot be undone.} other {This will permanently delete the # shots matching your current search and filters (across all pages). This cannot be undone.}}"
+msgstr "{totalFilteredItems, plural, one {Esto eliminará permanentemente la extracción que coincide con la búsqueda y los filtros actuales. Esta acción no se puede deshacer.} other {Esto eliminará permanentemente las # extracciones que coinciden con la búsqueda y los filtros actuales (en todas las páginas). Esta acción no se puede deshacer.}}"
 
 #: src/pages/ShotHistory/index.jsx
 msgid "{totalFilteredItems} of {historyCount} shots"
@@ -1083,6 +1095,10 @@ msgid "Could not delete history. Please try again."
 msgstr "No se pudo eliminar el historial. Inténtalo de nuevo."
 
 #: src/pages/ShotHistory/index.jsx
+msgid "Could not delete shot {id}. Please try again."
+msgstr "No se pudo eliminar la extracción {id}. Inténtalo de nuevo."
+
+#: src/pages/ShotHistory/index.jsx
 msgid "Could not export any shots. Please try again."
 msgstr "No se pudo exportar ninguna extracción. Inténtalo de nuevo."
 
@@ -1321,10 +1337,6 @@ msgstr "Eliminar"
 #: src/pages/ProfileList/index.jsx
 msgid "Delete {label} profile"
 msgstr "Eliminar perfil {label}"
-
-#: src/pages/ShotHistory/index.jsx
-msgid "Delete {totalFilteredItems} shots"
-msgstr "Eliminar {totalFilteredItems} extracciones"
 
 #: src/pages/ShotHistory/index.jsx
 msgid "Delete all"
@@ -5734,15 +5746,6 @@ msgstr "Este perfil incluye ajustes ajenos a la configuración de la máquina. E
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "This scale model couldn't be set up."
 msgstr "No se pudo configurar este modelo de báscula."
-
-#. placeholder {0}: history.length
-#: src/pages/ShotHistory/index.jsx
-msgid "This will permanently delete all {0} shots from the device. This cannot be undone."
-msgstr "Esto eliminará permanentemente todas las {0} extracciones del dispositivo. Esta acción no se puede deshacer."
-
-#: src/pages/ShotHistory/index.jsx
-msgid "This will permanently delete the {totalFilteredItems} shots matching your current search and filters (across all pages). This cannot be undone."
-msgstr "Esto eliminará permanentemente las {totalFilteredItems} extracciones que coinciden con la búsqueda y los filtros actuales (en todas las páginas). Esta acción no se puede deshacer."
 
 #: src/pages/Settings/PluginCard.jsx
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
