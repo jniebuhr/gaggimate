@@ -107,6 +107,15 @@ void WebSocketHandler::setup(Controller *_controller, PluginManager *_pluginMana
         broadcastJson(doc);
     });
 
+    // Forward the outcome of an async delete-all to WebSocket clients
+    pluginManager->on("evt:history-delete-all", [this](Event const &event) {
+        JsonDocument doc(&psramAllocator);
+        doc["tp"] = "evt:history-delete-all";
+        doc["status"] = event.getString("status");
+        doc["deleted"] = event.getInt("deleted");
+        broadcastJson(doc);
+    });
+
     // Forward "shot saved to history" events to WebSocket clients, so the
     // dashboard can refetch the recent-shots buffer at the right time.
     pluginManager->on("evt:history-shot-saved", [this](Event const &event) {
