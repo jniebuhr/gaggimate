@@ -75,6 +75,10 @@ msgstr "{diffWeeks, plural, other {# 周前}}"
 msgid "{diffYears, plural, one {# year ago} other {# years ago}}"
 msgstr "{diffYears, plural, other {# 年前}}"
 
+#: src/pages/ShotHistory/index.jsx
+msgid "{historyCount, plural, one {This will permanently delete the only shot on the device. This cannot be undone.} other {This will permanently delete all # shots from the device. This cannot be undone.}}"
+msgstr "{historyCount, plural, other {将永久删除设备上的全部 # 条萃取记录。此操作无法撤销。}}"
+
 #: src/app/ConnectionGate.jsx
 msgid "{host} isn't answering. Make sure the machine is on and your phone is on the same Wi-Fi network."
 msgstr "{host} 没有响应。请确认咖啡机已开机，并且手机与咖啡机处于同一 Wi-Fi 网络。"
@@ -103,13 +107,17 @@ msgstr "{pending} 将在你下次离开应用时安装"
 msgid "{recentShotCount, plural, one {# shot} other {# shots}}"
 msgstr "{recentShotCount, plural, other {# 次萃取}}"
 
-#: src/pages/Settings/tabs/SystemTab.jsx
-msgid "{rssi}dB (Roundtrip: {lat} ms, Resends: {rtx})"
-msgstr "{rssi}dB（往返：{lat} ms，重发：{rtx}）"
-
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "{scaleName} disconnected"
 msgstr "{scaleName} 已断开"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "{totalFilteredItems, plural, one {Delete # shot} other {Delete # shots}}"
+msgstr "{totalFilteredItems, plural, other {删除 # 条萃取记录}}"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "{totalFilteredItems, plural, one {This will permanently delete the # shot matching your current search and filters. This cannot be undone.} other {This will permanently delete the # shots matching your current search and filters (across all pages). This cannot be undone.}}"
+msgstr "{totalFilteredItems, plural, other {将永久删除符合当前搜索和筛选条件的 # 条萃取记录(包括所有页面)。此操作无法撤销。}}"
 
 #: src/pages/ShotHistory/index.jsx
 msgid "{totalFilteredItems} of {historyCount} shots"
@@ -598,6 +606,10 @@ msgstr "当 Alba 报告储水箱水位低或读数不可用时，阻止蒸汽锅
 msgid "Bluetooth Devices"
 msgstr "蓝牙设备"
 
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Bluetooth, {rssi}dB (Roundtrip: {lat} ms, Resends: {rtx})"
+msgstr "蓝牙，{rssi}dB（往返：{lat} ms，重发：{rtx}）"
+
 #: src/app/notifications.js
 msgid "Boiler at {temperature} °C"
 msgstr "锅炉温度 {temperature} °C"
@@ -748,9 +760,15 @@ msgstr "无法连接 {name}"
 #: src/components/VisualizerUploadModal.jsx
 #: src/pages/SetupWizard/MachineStep.jsx
 #: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+#: src/pages/ShotHistory/ConfirmDeleteModal.jsx
+#: src/pages/ShotHistory/index.jsx
 #: src/pages/ShotHistory/ShotNotesCard.jsx
 msgid "Cancel"
 msgstr "取消"
+
+#: src/pages/ShotHistory/ConfirmDeleteModal.jsx
+msgid "Cancel deletion"
+msgstr "取消删除"
 
 #: src/app/MachineSetup.jsx
 msgid "Cancel renaming"
@@ -838,6 +856,7 @@ msgstr "点击打开库。使用下方的导入或将文件拖放到此处进行
 #: src/app/MachineSetup.jsx
 #: src/components/VisualizerUploadModal.jsx
 #: src/pages/Home/BrewConfirmModal.jsx
+#: src/pages/ShotHistory/ConfirmDeleteModal.jsx
 msgid "Close"
 msgstr "关闭"
 
@@ -1034,13 +1053,13 @@ msgstr "连接中…"
 msgid "Control Column Style"
 msgstr "控制列样式"
 
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Controller Connection"
+msgstr "控制器连接"
+
 #: src/app/appSettings.js
 msgid "Controller errors and error-level warnings."
 msgstr "控制器错误和错误级警告。"
-
-#: src/pages/Settings/tabs/SystemTab.jsx
-msgid "Controller Signal Strength"
-msgstr "控制器信号强度"
 
 #: src/pages/Settings/tabs/SystemTab.jsx
 msgid "Controller Version"
@@ -1065,6 +1084,23 @@ msgstr "转换为 Pro"
 #: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
 msgid "Could not delete calibration profile: {message}"
 msgstr "无法删除校准曲线：{message}"
+
+#. placeholder {0}: resp.error
+#: src/pages/ShotHistory/index.jsx
+msgid "Could not delete history: {0}"
+msgstr "无法删除历史记录:{0}"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Could not delete history. Please try again."
+msgstr "无法删除历史记录,请重试。"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Could not delete shot {id}. Please try again."
+msgstr "无法删除萃取记录 {id},请重试。"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Could not export any shots. Please try again."
+msgstr "未能导出任何萃取记录,请重试。"
 
 #: src/pages/Settings/index.jsx
 msgid "Could not import {importName}: {importMessage}"
@@ -1302,6 +1338,10 @@ msgstr "删除"
 msgid "Delete {label} profile"
 msgstr "删除 {label} 曲线"
 
+#: src/pages/ShotHistory/index.jsx
+msgid "Delete all"
+msgstr "全部删除"
+
 #: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 msgid "Delete All"
 msgstr "全部删除"
@@ -1310,9 +1350,29 @@ msgstr "全部删除"
 msgid "Delete all profiles"
 msgstr "删除所有曲线"
 
+#: src/pages/ShotHistory/index.jsx
+msgid "Delete all shots"
+msgstr "删除全部萃取记录"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Delete all shots?"
+msgstr "删除全部萃取记录?"
+
 #: src/pages/ShotAnalyzer/components/library/LibraryPanel.jsx
 msgid "Delete failed: {message}"
 msgstr "删除失败：{message}"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Delete filtered shots"
+msgstr "删除筛选出的萃取记录"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Delete filtered shots ({totalFilteredItems})"
+msgstr "删除筛选出的萃取记录({totalFilteredItems})"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Delete filtered shots?"
+msgstr "删除筛选出的萃取记录?"
 
 #: src/components/MachineProfileControl.jsx
 msgid "Delete imported profile"
@@ -1350,9 +1410,25 @@ msgstr "删除此预设？"
 msgid "Delete this schedule"
 msgstr "删除此计划"
 
+#. placeholder {0}: targets.length
+#. placeholder {1}: failedIds.join(', ')
+#: src/pages/ShotHistory/index.jsx
+msgid "Deleted {done} of {0} shots. Failed: {1}"
+msgstr "已删除 {done} / {0} 条萃取记录。失败:{1}"
+
 #: src/pages/Settings/PluginCard.jsx
 msgid "Deleted profile"
 msgstr "已删除的曲线"
+
+#. placeholder {0}: progress.current
+#. placeholder {1}: progress.total
+#: src/pages/ShotHistory/ConfirmDeleteModal.jsx
+msgid "Deleting shot {0} of {1}..."
+msgstr "正在删除萃取记录 {0} / {1}..."
+
+#: src/pages/ShotHistory/ConfirmDeleteModal.jsx
+msgid "Deleting…"
+msgstr "正在删除…"
 
 #: src/pages/Settings/tabs/CleaningSection.jsx
 msgid "Descaling"
@@ -1810,6 +1886,10 @@ msgstr "导出失败：{message}"
 msgid "Export File"
 msgstr "导出文件"
 
+#: src/pages/ShotHistory/index.jsx
+msgid "Export filtered shots"
+msgstr "导出筛选出的萃取记录"
+
 #: src/pages/ProfileList/index.jsx
 msgid "Export profile"
 msgstr "导出曲线"
@@ -1833,6 +1913,18 @@ msgstr "导出萃取数据"
 #: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTableCells.jsx
 msgid "Extended:"
 msgstr "含延长记录："
+
+#. placeholder {0}: exported.length
+#. placeholder {1}: targets.length
+#: src/pages/ShotHistory/index.jsx
+msgid "Exported {0} of {1} shots ({failed} failed)."
+msgstr "已导出 {0} / {1} 条萃取记录({failed} 条失败)。"
+
+#. placeholder {0}: exportProgress.current
+#. placeholder {1}: exportProgress.total
+#: src/pages/ShotHistory/index.jsx
+msgid "Exporting shot {0} of {1}..."
+msgstr "正在导出萃取记录 {0} / {1}..."
 
 #: src/pages/ShotAnalyzer/utils/columns.js
 msgid "Extended Record"
@@ -1996,6 +2088,10 @@ msgstr "冲洗水"
 msgid "For 120 V machines, heater coordination should generally remain enabled. Running the brew and steam heaters simultaneously can overload the circuit, blow a fuse or trip a breaker, and create a fire hazard. Only disable it if the machine and supply circuit are rated to power both heaters together."
 msgstr "对于 120 V 咖啡机，通常应保持启用加热协调。同时运行冲煮和蒸汽加热器可能会使电路过载、烧断保险丝或使断路器跳闸，并引发火灾隐患。仅当咖啡机和供电电路的额定值足以同时为两个加热器供电时，才可禁用此功能。"
 
+#: src/pages/SetupWizard/index.jsx
+msgid "For further information on how to use and configure GaggiMate please consult our documentation and guides!"
+msgstr "有关如何使用和配置 GaggiMate 的更多信息，请查阅我们的文档和指南！"
+
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "Forget"
 msgstr "忘记"
@@ -2031,6 +2127,10 @@ msgstr "从"
 msgctxt "panel view"
 msgid "Full"
 msgstr "完整"
+
+#: src/pages/SetupWizard/index.jsx
+msgid "Further Resources"
+msgstr "更多资源"
 
 #: src/pages/ShotAnalyzer/components/EmptyState.jsx
 msgid "GaggiMate (GM)"
@@ -3114,6 +3214,10 @@ msgctxt "relay function"
 msgid "None"
 msgstr "无"
 
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Not connected"
+msgstr "未连接"
+
 #: src/components/PumpFlowCalibration/Footer.jsx
 msgid "Not connected to the machine"
 msgstr "未连接到咖啡机"
@@ -3526,6 +3630,14 @@ msgstr "预热中..."
 msgid "Preinfusion"
 msgstr "预浸泡"
 
+#: src/pages/ShotHistory/ConfirmDeleteModal.jsx
+msgid "Preparing deletion..."
+msgstr "正在准备删除..."
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Preparing export..."
+msgstr "正在准备导出..."
+
 #: src/pages/ShotAnalyzer/components/shotChart/constants.js
 msgid "Preparing MP4 export..."
 msgstr "正在准备 MP4 导出..."
@@ -3703,6 +3815,10 @@ msgstr "曲线 A-Z"
 #: src/pages/DashboardSettings/index.jsx
 msgid "Profile Chart Height"
 msgstr "曲线图表高度"
+
+#: src/pages/SetupWizard/index.jsx
+msgid "Profile Creation"
+msgstr "创建曲线"
 
 #: src/pages/ProfileList/index.jsx
 msgid "Profile details for {label}"
@@ -4552,6 +4668,10 @@ msgstr "选择你的咖啡机并应用推荐的默认值。"
 msgid "Select..."
 msgstr "选择..."
 
+#: src/pages/SetupWizard/index.jsx
+msgid "Selected profile"
+msgstr "已选曲线"
+
 #: src/components/MachineProfileControl.jsx
 msgid "Selecting a profile prefills the values. Save to apply. Choose Custom to edit machine values."
 msgstr "选择配置会预填参数，保存后生效。选择“自定义”可编辑咖啡机参数。"
@@ -5275,6 +5395,10 @@ msgctxt "Tuesday, one letter"
 msgid "T"
 msgstr "二"
 
+#: src/pages/SetupWizard/index.jsx
+msgid "Tap a profile to select it."
+msgstr "点按曲线即可选择。"
+
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Tare"
 msgstr "去皮"
@@ -5594,6 +5718,10 @@ msgstr "已找到秤，但蓝牙连接失败。请重试或重启秤。"
 msgid "The scale wasn't found. Make sure it's switched on and nearby, then scan again."
 msgstr "未找到秤。请确认秤已开机并在附近，然后重新扫描。"
 
+#: src/pages/ProfileList/index.jsx
+msgid "The selected profile can't be deleted"
+msgstr "无法删除当前选中的曲线"
+
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "The temperature did not rise. Check the heater wiring, the SSR and the thermal fuses."
 msgstr "温度未上升。请检查加热器接线、SSR 和温度保险丝。"
@@ -5754,6 +5882,10 @@ msgstr "总重量"
 msgid "Totals"
 msgstr "合计"
 
+#: src/pages/SetupWizard/index.jsx
+msgid "Touch Screen Guide"
+msgstr "触摸屏指南"
+
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 msgid "Transition duration in {rampUnit}"
 msgstr "过渡时长（{rampUnit}）"
@@ -5790,6 +5922,10 @@ msgstr "在目标处关闭"
 #: src/pages/Settings/PluginCard.jsx
 msgid "Turn on at start, off at target"
 msgstr "开始时开启，目标处关闭"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "UART (Roundtrip: {lat} ms, Resends: {rtx})"
+msgstr "UART（往返：{lat} ms，重发：{rtx}）"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Unavailable / uncalibrated"

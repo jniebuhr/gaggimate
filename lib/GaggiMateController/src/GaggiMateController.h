@@ -45,13 +45,14 @@ class GaggiMateController {
     void updateDualBoilerOutputs(unsigned long now);
     void handlePing();
     void handlePingTimeout(void);
+    void stopOutputs();
     void thermalRunawayShutdown(void);
     void startPidAutotune(void);
     void stopPidAutotune(void);
     void sendSensorData(void);
     void sendTankLevel();
     void handleSerialCommand(char c);
-    bool isSteamSwitchOn() const;
+    bool isBondingSwitchOn() const;
 
     ControllerConfig _config = ControllerConfig{};
     GaggiMateServer _comms;

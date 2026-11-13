@@ -75,6 +75,10 @@ msgstr "{diffWeeks, plural, one {vor # Woche} other {vor # Wochen}}"
 msgid "{diffYears, plural, one {# year ago} other {# years ago}}"
 msgstr "{diffYears, plural, one {vor # Jahr} other {vor # Jahren}}"
 
+#: src/pages/ShotHistory/index.jsx
+msgid "{historyCount, plural, one {This will permanently delete the only shot on the device. This cannot be undone.} other {This will permanently delete all # shots from the device. This cannot be undone.}}"
+msgstr "{historyCount, plural, one {Der einzige Shot auf dem Gerät wird dauerhaft gelöscht. Dies kann nicht rückgängig gemacht werden.} other {Alle # Shots werden dauerhaft vom Gerät gelöscht. Dies kann nicht rückgängig gemacht werden.}}"
+
 #: src/app/ConnectionGate.jsx
 msgid "{host} isn't answering. Make sure the machine is on and your phone is on the same Wi-Fi network."
 msgstr "{host} antwortet nicht. Stelle sicher, dass die Maschine eingeschaltet ist und dein Smartphone im selben Wi-Fi-Netzwerk ist."
@@ -103,13 +107,17 @@ msgstr "{pending} wird installiert, wenn du die App das nächste Mal verlässt"
 msgid "{recentShotCount, plural, one {# shot} other {# shots}}"
 msgstr "{recentShotCount, plural, one {# Shot} other {# Shots}}"
 
-#: src/pages/Settings/tabs/SystemTab.jsx
-msgid "{rssi}dB (Roundtrip: {lat} ms, Resends: {rtx})"
-msgstr "{rssi}dB (Roundtrip: {lat} ms, Wiederholungen: {rtx})"
-
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "{scaleName} disconnected"
 msgstr "{scaleName} getrennt"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "{totalFilteredItems, plural, one {Delete # shot} other {Delete # shots}}"
+msgstr "{totalFilteredItems, plural, one {# Shot löschen} other {# Shots löschen}}"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "{totalFilteredItems, plural, one {This will permanently delete the # shot matching your current search and filters. This cannot be undone.} other {This will permanently delete the # shots matching your current search and filters (across all pages). This cannot be undone.}}"
+msgstr "{totalFilteredItems, plural, one {Der # Shot, der zur aktuellen Suche und den Filtern passt, wird dauerhaft gelöscht. Dies kann nicht rückgängig gemacht werden.} other {Die # Shots, die zur aktuellen Suche und den Filtern passen, werden dauerhaft gelöscht (über alle Seiten hinweg). Dies kann nicht rückgängig gemacht werden.}}"
 
 #: src/pages/ShotHistory/index.jsx
 msgid "{totalFilteredItems} of {historyCount} shots"
@@ -598,6 +606,10 @@ msgstr "Blockiert die Nachfüllung des Dampfboilers, wenn Alba einen niedrigen F
 msgid "Bluetooth Devices"
 msgstr "Bluetooth-Geräte"
 
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Bluetooth, {rssi}dB (Roundtrip: {lat} ms, Resends: {rtx})"
+msgstr "Bluetooth, {rssi}dB (Roundtrip: {lat} ms, Wiederholungen: {rtx})"
+
 #: src/app/notifications.js
 msgid "Boiler at {temperature} °C"
 msgstr "Boiler bei {temperature} °C"
@@ -748,9 +760,15 @@ msgstr "{name} nicht erreichbar"
 #: src/components/VisualizerUploadModal.jsx
 #: src/pages/SetupWizard/MachineStep.jsx
 #: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+#: src/pages/ShotHistory/ConfirmDeleteModal.jsx
+#: src/pages/ShotHistory/index.jsx
 #: src/pages/ShotHistory/ShotNotesCard.jsx
 msgid "Cancel"
 msgstr "Abbrechen"
+
+#: src/pages/ShotHistory/ConfirmDeleteModal.jsx
+msgid "Cancel deletion"
+msgstr "Löschen abbrechen"
 
 #: src/app/MachineSetup.jsx
 msgid "Cancel renaming"
@@ -838,6 +856,7 @@ msgstr "Klicken, um die Bibliothek zu öffnen. Nutze unten Importieren oder lege
 #: src/app/MachineSetup.jsx
 #: src/components/VisualizerUploadModal.jsx
 #: src/pages/Home/BrewConfirmModal.jsx
+#: src/pages/ShotHistory/ConfirmDeleteModal.jsx
 msgid "Close"
 msgstr "Schließen"
 
@@ -1034,13 +1053,13 @@ msgstr "Verbinde…"
 msgid "Control Column Style"
 msgstr "Stil der Bedienspalte"
 
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Controller Connection"
+msgstr "Controller-Verbindung"
+
 #: src/app/appSettings.js
 msgid "Controller errors and error-level warnings."
 msgstr "Controller-Fehler und Warnungen der Fehlerstufe."
-
-#: src/pages/Settings/tabs/SystemTab.jsx
-msgid "Controller Signal Strength"
-msgstr "Signalstärke des Controllers"
 
 #: src/pages/Settings/tabs/SystemTab.jsx
 msgid "Controller Version"
@@ -1065,6 +1084,23 @@ msgstr "In Pro umwandeln"
 #: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
 msgid "Could not delete calibration profile: {message}"
 msgstr "Kalibrierprofil konnte nicht gelöscht werden: {message}"
+
+#. placeholder {0}: resp.error
+#: src/pages/ShotHistory/index.jsx
+msgid "Could not delete history: {0}"
+msgstr "Verlauf konnte nicht gelöscht werden: {0}"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Could not delete history. Please try again."
+msgstr "Verlauf konnte nicht gelöscht werden. Bitte erneut versuchen."
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Could not delete shot {id}. Please try again."
+msgstr "Shot {id} konnte nicht gelöscht werden. Bitte erneut versuchen."
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Could not export any shots. Please try again."
+msgstr "Es konnten keine Shots exportiert werden. Bitte erneut versuchen."
 
 #: src/pages/Settings/index.jsx
 msgid "Could not import {importName}: {importMessage}"
@@ -1302,6 +1338,10 @@ msgstr "Löschen"
 msgid "Delete {label} profile"
 msgstr "Profil {label} löschen"
 
+#: src/pages/ShotHistory/index.jsx
+msgid "Delete all"
+msgstr "Alle löschen"
+
 #: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 msgid "Delete All"
 msgstr "Alle löschen"
@@ -1310,9 +1350,29 @@ msgstr "Alle löschen"
 msgid "Delete all profiles"
 msgstr "Alle Profile löschen"
 
+#: src/pages/ShotHistory/index.jsx
+msgid "Delete all shots"
+msgstr "Alle Shots löschen"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Delete all shots?"
+msgstr "Alle Shots löschen?"
+
 #: src/pages/ShotAnalyzer/components/library/LibraryPanel.jsx
 msgid "Delete failed: {message}"
 msgstr "Löschen fehlgeschlagen: {message}"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Delete filtered shots"
+msgstr "Gefilterte Shots löschen"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Delete filtered shots ({totalFilteredItems})"
+msgstr "Gefilterte Shots löschen ({totalFilteredItems})"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Delete filtered shots?"
+msgstr "Gefilterte Shots löschen?"
 
 #: src/components/MachineProfileControl.jsx
 msgid "Delete imported profile"
@@ -1350,9 +1410,25 @@ msgstr "Diese Voreinstellung löschen?"
 msgid "Delete this schedule"
 msgstr "Diesen Zeitplan löschen"
 
+#. placeholder {0}: targets.length
+#. placeholder {1}: failedIds.join(', ')
+#: src/pages/ShotHistory/index.jsx
+msgid "Deleted {done} of {0} shots. Failed: {1}"
+msgstr "{done} von {0} Shots gelöscht. Fehlgeschlagen: {1}"
+
 #: src/pages/Settings/PluginCard.jsx
 msgid "Deleted profile"
 msgstr "Profil gelöscht"
+
+#. placeholder {0}: progress.current
+#. placeholder {1}: progress.total
+#: src/pages/ShotHistory/ConfirmDeleteModal.jsx
+msgid "Deleting shot {0} of {1}..."
+msgstr "Lösche Shot {0} von {1}..."
+
+#: src/pages/ShotHistory/ConfirmDeleteModal.jsx
+msgid "Deleting…"
+msgstr "Wird gelöscht…"
 
 #: src/pages/Settings/tabs/CleaningSection.jsx
 msgid "Descaling"
@@ -1810,6 +1886,10 @@ msgstr "Export fehlgeschlagen: {message}"
 msgid "Export File"
 msgstr "Datei exportieren"
 
+#: src/pages/ShotHistory/index.jsx
+msgid "Export filtered shots"
+msgstr "Gefilterte Shots exportieren"
+
 #: src/pages/ProfileList/index.jsx
 msgid "Export profile"
 msgstr "Profil exportieren"
@@ -1833,6 +1913,18 @@ msgstr "Shot-Daten exportieren"
 #: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTableCells.jsx
 msgid "Extended:"
 msgstr "Erweitert:"
+
+#. placeholder {0}: exported.length
+#. placeholder {1}: targets.length
+#: src/pages/ShotHistory/index.jsx
+msgid "Exported {0} of {1} shots ({failed} failed)."
+msgstr "{0} von {1} Shots exportiert ({failed} fehlgeschlagen)."
+
+#. placeholder {0}: exportProgress.current
+#. placeholder {1}: exportProgress.total
+#: src/pages/ShotHistory/index.jsx
+msgid "Exporting shot {0} of {1}..."
+msgstr "Exportiere Shot {0} von {1}..."
 
 #: src/pages/ShotAnalyzer/utils/columns.js
 msgid "Extended Record"
@@ -1996,6 +2088,10 @@ msgstr "Wasser spülen"
 msgid "For 120 V machines, heater coordination should generally remain enabled. Running the brew and steam heaters simultaneously can overload the circuit, blow a fuse or trip a breaker, and create a fire hazard. Only disable it if the machine and supply circuit are rated to power both heaters together."
 msgstr "Bei 120-V-Maschinen sollte die Heizungskoordination in der Regel aktiviert bleiben. Wenn Bezugs- und Dampfheizung gleichzeitig laufen, kann der Stromkreis überlastet werden, eine Sicherung durchbrennen oder ein Schutzschalter auslösen, und es besteht Brandgefahr. Deaktiviere sie nur, wenn Maschine und Stromkreis dafür ausgelegt sind, beide Heizungen gleichzeitig zu versorgen."
 
+#: src/pages/SetupWizard/index.jsx
+msgid "For further information on how to use and configure GaggiMate please consult our documentation and guides!"
+msgstr "Für weitere Informationen zur Bedienung besuche bitte unsere Dokumentation!"
+
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "Forget"
 msgstr "Vergessen"
@@ -2031,6 +2127,10 @@ msgstr "Von"
 msgctxt "panel view"
 msgid "Full"
 msgstr "Voll"
+
+#: src/pages/SetupWizard/index.jsx
+msgid "Further Resources"
+msgstr "Hilfe & Guides"
 
 #: src/pages/ShotAnalyzer/components/EmptyState.jsx
 msgid "GaggiMate (GM)"
@@ -3114,6 +3214,10 @@ msgctxt "relay function"
 msgid "None"
 msgstr "Keine"
 
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Not connected"
+msgstr "Nicht verbunden"
+
 #: src/components/PumpFlowCalibration/Footer.jsx
 msgid "Not connected to the machine"
 msgstr "Nicht mit der Maschine verbunden"
@@ -3526,6 +3630,14 @@ msgstr "Heizt vor..."
 msgid "Preinfusion"
 msgstr "Präinfusion"
 
+#: src/pages/ShotHistory/ConfirmDeleteModal.jsx
+msgid "Preparing deletion..."
+msgstr "Löschen wird vorbereitet..."
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Preparing export..."
+msgstr "Export wird vorbereitet..."
+
 #: src/pages/ShotAnalyzer/components/shotChart/constants.js
 msgid "Preparing MP4 export..."
 msgstr "MP4-Export wird vorbereitet..."
@@ -3703,6 +3815,10 @@ msgstr "Profil A–Z"
 #: src/pages/DashboardSettings/index.jsx
 msgid "Profile Chart Height"
 msgstr "Höhe des Profildiagramms"
+
+#: src/pages/SetupWizard/index.jsx
+msgid "Profile Creation"
+msgstr "Profil-Erstellung"
 
 #: src/pages/ProfileList/index.jsx
 msgid "Profile details for {label}"
@@ -4552,6 +4668,10 @@ msgstr "Wähle deine Maschine und übernimm die empfohlenen Standardwerte."
 msgid "Select..."
 msgstr "Auswählen..."
 
+#: src/pages/SetupWizard/index.jsx
+msgid "Selected profile"
+msgstr "Ausgewähltes Profil"
+
 #: src/components/MachineProfileControl.jsx
 msgid "Selecting a profile prefills the values. Save to apply. Choose Custom to edit machine values."
 msgstr "Die Auswahl eines Profils füllt die Werte vor. Speichere, um sie zu übernehmen. Wähle Benutzerdefiniert, um Maschinenwerte zu bearbeiten."
@@ -5275,6 +5395,10 @@ msgctxt "Tuesday, one letter"
 msgid "T"
 msgstr "D"
 
+#: src/pages/SetupWizard/index.jsx
+msgid "Tap a profile to select it."
+msgstr "Tippe auf ein Profil, um es auszuwählen."
+
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Tare"
 msgstr "Tarieren"
@@ -5594,6 +5718,10 @@ msgstr "Die Waage wurde gefunden, aber die Bluetooth-Verbindung ist fehlgeschlag
 msgid "The scale wasn't found. Make sure it's switched on and nearby, then scan again."
 msgstr "Die Waage wurde nicht gefunden. Stelle sicher, dass sie eingeschaltet und in der Nähe ist, und suche dann erneut."
 
+#: src/pages/ProfileList/index.jsx
+msgid "The selected profile can't be deleted"
+msgstr "Das ausgewählte Profil kann nicht gelöscht werden"
+
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "The temperature did not rise. Check the heater wiring, the SSR and the thermal fuses."
 msgstr "Die Temperatur ist nicht gestiegen. Prüfe die Verkabelung der Heizung, das SSR und die Thermosicherungen."
@@ -5754,6 +5882,10 @@ msgstr "Gesamtgewicht"
 msgid "Totals"
 msgstr "Summen"
 
+#: src/pages/SetupWizard/index.jsx
+msgid "Touch Screen Guide"
+msgstr "Touch Screen Bedienung"
+
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 msgid "Transition duration in {rampUnit}"
 msgstr "Übergangsdauer in {rampUnit}"
@@ -5790,6 +5922,10 @@ msgstr "Beim Ziel ausschalten"
 #: src/pages/Settings/PluginCard.jsx
 msgid "Turn on at start, off at target"
 msgstr "Beim Start ein-, beim Ziel ausschalten"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "UART (Roundtrip: {lat} ms, Resends: {rtx})"
+msgstr "UART (Roundtrip: {lat} ms, Wiederholungen: {rtx})"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Unavailable / uncalibrated"

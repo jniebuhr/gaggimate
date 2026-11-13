@@ -11,11 +11,11 @@
 #include <display/core/ProfileManager.h>
 #include <display/core/WarningManager.h>
 #include <display/core/process/Process.h>
+#include <display/drivers/Driver.h>
 #include <memory>
 #include <mutex>
 #include <vector>
 #ifndef GAGGIMATE_HEADLESS
-#include <display/drivers/Driver.h>
 #include <display/ui/default/DefaultUI.h>
 #endif
 
@@ -195,10 +195,8 @@ class Controller {
 
   private:
     // Initialization methods
-#ifndef GAGGIMATE_HEADLESS
     void setupPanel();
     void seedSDCard();
-#endif
     void setupBluetooth();
     void onSystemInfo(const char *hardware, const char *version, uint32_t protocolVersion, bool dimming, bool pressure,
                       bool ledControl, bool tof, bool dualBoiler, std::vector<uint32_t> addons);
@@ -245,9 +243,9 @@ class Controller {
     void handleProfileUpdate();
 
     // Private Attributes
+    Driver *driver = nullptr;
 #ifndef GAGGIMATE_HEADLESS
     DefaultUI *ui = nullptr;
-    Driver *driver = nullptr;
     bool gaugeSetpointsInside = false;
 #endif
     GaggiMateClient comms;

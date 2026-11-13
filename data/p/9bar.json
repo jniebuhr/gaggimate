@@ -2,7 +2,7 @@
   "id": "9bar",
   "label": "9 Bar Espresso",
   "type": "standard",
-  "description": "",
+  "description": "A classic 9 bar extraction with a 1:2 ratio",
   "temperature": 93,
   "phases": [
     {

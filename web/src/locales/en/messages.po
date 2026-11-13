@@ -75,6 +75,10 @@ msgstr "{diffWeeks, plural, one {# week ago} other {# weeks ago}}"
 msgid "{diffYears, plural, one {# year ago} other {# years ago}}"
 msgstr "{diffYears, plural, one {# year ago} other {# years ago}}"
 
+#: src/pages/ShotHistory/index.jsx
+msgid "{historyCount, plural, one {This will permanently delete the only shot on the device. This cannot be undone.} other {This will permanently delete all # shots from the device. This cannot be undone.}}"
+msgstr "{historyCount, plural, one {This will permanently delete the only shot on the device. This cannot be undone.} other {This will permanently delete all # shots from the device. This cannot be undone.}}"
+
 #: src/app/ConnectionGate.jsx
 msgid "{host} isn't answering. Make sure the machine is on and your phone is on the same Wi-Fi network."
 msgstr "{host} isn't answering. Make sure the machine is on and your phone is on the same Wi-Fi network."
@@ -103,13 +107,17 @@ msgstr "{pending} installs the next time you leave the app"
 msgid "{recentShotCount, plural, one {# shot} other {# shots}}"
 msgstr "{recentShotCount, plural, one {# shot} other {# shots}}"
 
-#: src/pages/Settings/tabs/SystemTab.jsx
-msgid "{rssi}dB (Roundtrip: {lat} ms, Resends: {rtx})"
-msgstr "{rssi}dB (Roundtrip: {lat} ms, Resends: {rtx})"
-
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "{scaleName} disconnected"
 msgstr "{scaleName} disconnected"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "{totalFilteredItems, plural, one {Delete # shot} other {Delete # shots}}"
+msgstr "{totalFilteredItems, plural, one {Delete # shot} other {Delete # shots}}"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "{totalFilteredItems, plural, one {This will permanently delete the # shot matching your current search and filters. This cannot be undone.} other {This will permanently delete the # shots matching your current search and filters (across all pages). This cannot be undone.}}"
+msgstr "{totalFilteredItems, plural, one {This will permanently delete the # shot matching your current search and filters. This cannot be undone.} other {This will permanently delete the # shots matching your current search and filters (across all pages). This cannot be undone.}}"
 
 #: src/pages/ShotHistory/index.jsx
 msgid "{totalFilteredItems} of {historyCount} shots"
@@ -598,6 +606,10 @@ msgstr "Block steam boiler refill when Alba reports a low reservoir level or its
 msgid "Bluetooth Devices"
 msgstr "Bluetooth Devices"
 
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Bluetooth, {rssi}dB (Roundtrip: {lat} ms, Resends: {rtx})"
+msgstr "Bluetooth, {rssi}dB (Roundtrip: {lat} ms, Resends: {rtx})"
+
 #: src/app/notifications.js
 msgid "Boiler at {temperature} °C"
 msgstr "Boiler at {temperature} °C"
@@ -748,9 +760,15 @@ msgstr "Can't reach {name}"
 #: src/components/VisualizerUploadModal.jsx
 #: src/pages/SetupWizard/MachineStep.jsx
 #: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+#: src/pages/ShotHistory/ConfirmDeleteModal.jsx
+#: src/pages/ShotHistory/index.jsx
 #: src/pages/ShotHistory/ShotNotesCard.jsx
 msgid "Cancel"
 msgstr "Cancel"
+
+#: src/pages/ShotHistory/ConfirmDeleteModal.jsx
+msgid "Cancel deletion"
+msgstr "Cancel deletion"
 
 #: src/app/MachineSetup.jsx
 msgid "Cancel renaming"
@@ -838,6 +856,7 @@ msgstr "Click to open the library. Use Import below or drop files here to import
 #: src/app/MachineSetup.jsx
 #: src/components/VisualizerUploadModal.jsx
 #: src/pages/Home/BrewConfirmModal.jsx
+#: src/pages/ShotHistory/ConfirmDeleteModal.jsx
 msgid "Close"
 msgstr "Close"
 
@@ -1034,13 +1053,13 @@ msgstr "Connecting…"
 msgid "Control Column Style"
 msgstr "Control Column Style"
 
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Controller Connection"
+msgstr "Controller Connection"
+
 #: src/app/appSettings.js
 msgid "Controller errors and error-level warnings."
 msgstr "Controller errors and error-level warnings."
-
-#: src/pages/Settings/tabs/SystemTab.jsx
-msgid "Controller Signal Strength"
-msgstr "Controller Signal Strength"
 
 #: src/pages/Settings/tabs/SystemTab.jsx
 msgid "Controller Version"
@@ -1065,6 +1084,23 @@ msgstr "Convert to Pro"
 #: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
 msgid "Could not delete calibration profile: {message}"
 msgstr "Could not delete calibration profile: {message}"
+
+#. placeholder {0}: resp.error
+#: src/pages/ShotHistory/index.jsx
+msgid "Could not delete history: {0}"
+msgstr "Could not delete history: {0}"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Could not delete history. Please try again."
+msgstr "Could not delete history. Please try again."
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Could not delete shot {id}. Please try again."
+msgstr "Could not delete shot {id}. Please try again."
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Could not export any shots. Please try again."
+msgstr "Could not export any shots. Please try again."
 
 #: src/pages/Settings/index.jsx
 msgid "Could not import {importName}: {importMessage}"
@@ -1302,6 +1338,10 @@ msgstr "Delete"
 msgid "Delete {label} profile"
 msgstr "Delete {label} profile"
 
+#: src/pages/ShotHistory/index.jsx
+msgid "Delete all"
+msgstr "Delete all"
+
 #: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 msgid "Delete All"
 msgstr "Delete All"
@@ -1310,9 +1350,29 @@ msgstr "Delete All"
 msgid "Delete all profiles"
 msgstr "Delete all profiles"
 
+#: src/pages/ShotHistory/index.jsx
+msgid "Delete all shots"
+msgstr "Delete all shots"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Delete all shots?"
+msgstr "Delete all shots?"
+
 #: src/pages/ShotAnalyzer/components/library/LibraryPanel.jsx
 msgid "Delete failed: {message}"
 msgstr "Delete failed: {message}"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Delete filtered shots"
+msgstr "Delete filtered shots"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Delete filtered shots ({totalFilteredItems})"
+msgstr "Delete filtered shots ({totalFilteredItems})"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Delete filtered shots?"
+msgstr "Delete filtered shots?"
 
 #: src/components/MachineProfileControl.jsx
 msgid "Delete imported profile"
@@ -1350,9 +1410,25 @@ msgstr "Delete this preset?"
 msgid "Delete this schedule"
 msgstr "Delete this schedule"
 
+#. placeholder {0}: targets.length
+#. placeholder {1}: failedIds.join(', ')
+#: src/pages/ShotHistory/index.jsx
+msgid "Deleted {done} of {0} shots. Failed: {1}"
+msgstr "Deleted {done} of {0} shots. Failed: {1}"
+
 #: src/pages/Settings/PluginCard.jsx
 msgid "Deleted profile"
 msgstr "Deleted profile"
+
+#. placeholder {0}: progress.current
+#. placeholder {1}: progress.total
+#: src/pages/ShotHistory/ConfirmDeleteModal.jsx
+msgid "Deleting shot {0} of {1}..."
+msgstr "Deleting shot {0} of {1}..."
+
+#: src/pages/ShotHistory/ConfirmDeleteModal.jsx
+msgid "Deleting…"
+msgstr "Deleting…"
 
 #: src/pages/Settings/tabs/CleaningSection.jsx
 msgid "Descaling"
@@ -1810,6 +1886,10 @@ msgstr "Export failed: {message}"
 msgid "Export File"
 msgstr "Export File"
 
+#: src/pages/ShotHistory/index.jsx
+msgid "Export filtered shots"
+msgstr "Export filtered shots"
+
 #: src/pages/ProfileList/index.jsx
 msgid "Export profile"
 msgstr "Export profile"
@@ -1833,6 +1913,18 @@ msgstr "Export shot data"
 #: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTableCells.jsx
 msgid "Extended:"
 msgstr "Extended:"
+
+#. placeholder {0}: exported.length
+#. placeholder {1}: targets.length
+#: src/pages/ShotHistory/index.jsx
+msgid "Exported {0} of {1} shots ({failed} failed)."
+msgstr "Exported {0} of {1} shots ({failed} failed)."
+
+#. placeholder {0}: exportProgress.current
+#. placeholder {1}: exportProgress.total
+#: src/pages/ShotHistory/index.jsx
+msgid "Exporting shot {0} of {1}..."
+msgstr "Exporting shot {0} of {1}..."
 
 #: src/pages/ShotAnalyzer/utils/columns.js
 msgid "Extended Record"
@@ -1996,6 +2088,10 @@ msgstr "Flush water"
 msgid "For 120 V machines, heater coordination should generally remain enabled. Running the brew and steam heaters simultaneously can overload the circuit, blow a fuse or trip a breaker, and create a fire hazard. Only disable it if the machine and supply circuit are rated to power both heaters together."
 msgstr "For 120 V machines, heater coordination should generally remain enabled. Running the brew and steam heaters simultaneously can overload the circuit, blow a fuse or trip a breaker, and create a fire hazard. Only disable it if the machine and supply circuit are rated to power both heaters together."
 
+#: src/pages/SetupWizard/index.jsx
+msgid "For further information on how to use and configure GaggiMate please consult our documentation and guides!"
+msgstr "For further information on how to use and configure GaggiMate please consult our documentation and guides!"
+
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "Forget"
 msgstr "Forget"
@@ -2031,6 +2127,10 @@ msgstr "From"
 msgctxt "panel view"
 msgid "Full"
 msgstr "Full"
+
+#: src/pages/SetupWizard/index.jsx
+msgid "Further Resources"
+msgstr "Further Resources"
 
 #: src/pages/ShotAnalyzer/components/EmptyState.jsx
 msgid "GaggiMate (GM)"
@@ -3114,6 +3214,10 @@ msgctxt "relay function"
 msgid "None"
 msgstr "None"
 
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Not connected"
+msgstr "Not connected"
+
 #: src/components/PumpFlowCalibration/Footer.jsx
 msgid "Not connected to the machine"
 msgstr "Not connected to the machine"
@@ -3526,6 +3630,14 @@ msgstr "Preheating..."
 msgid "Preinfusion"
 msgstr "Preinfusion"
 
+#: src/pages/ShotHistory/ConfirmDeleteModal.jsx
+msgid "Preparing deletion..."
+msgstr "Preparing deletion..."
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Preparing export..."
+msgstr "Preparing export..."
+
 #: src/pages/ShotAnalyzer/components/shotChart/constants.js
 msgid "Preparing MP4 export..."
 msgstr "Preparing MP4 export..."
@@ -3703,6 +3815,10 @@ msgstr "Profile A-Z"
 #: src/pages/DashboardSettings/index.jsx
 msgid "Profile Chart Height"
 msgstr "Profile Chart Height"
+
+#: src/pages/SetupWizard/index.jsx
+msgid "Profile Creation"
+msgstr "Profile Creation"
 
 #: src/pages/ProfileList/index.jsx
 msgid "Profile details for {label}"
@@ -4552,6 +4668,10 @@ msgstr "Select your machine and apply recommended defaults."
 msgid "Select..."
 msgstr "Select..."
 
+#: src/pages/SetupWizard/index.jsx
+msgid "Selected profile"
+msgstr "Selected profile"
+
 #: src/components/MachineProfileControl.jsx
 msgid "Selecting a profile prefills the values. Save to apply. Choose Custom to edit machine values."
 msgstr "Selecting a profile prefills the values. Save to apply. Choose Custom to edit machine values."
@@ -5275,6 +5395,10 @@ msgctxt "Tuesday, one letter"
 msgid "T"
 msgstr "T"
 
+#: src/pages/SetupWizard/index.jsx
+msgid "Tap a profile to select it."
+msgstr "Tap a profile to select it."
+
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Tare"
 msgstr "Tare"
@@ -5594,6 +5718,10 @@ msgstr "The scale was found, but the Bluetooth connection failed. Try again or r
 msgid "The scale wasn't found. Make sure it's switched on and nearby, then scan again."
 msgstr "The scale wasn't found. Make sure it's switched on and nearby, then scan again."
 
+#: src/pages/ProfileList/index.jsx
+msgid "The selected profile can't be deleted"
+msgstr "The selected profile can't be deleted"
+
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "The temperature did not rise. Check the heater wiring, the SSR and the thermal fuses."
 msgstr "The temperature did not rise. Check the heater wiring, the SSR and the thermal fuses."
@@ -5754,6 +5882,10 @@ msgstr "Total Weight"
 msgid "Totals"
 msgstr "Totals"
 
+#: src/pages/SetupWizard/index.jsx
+msgid "Touch Screen Guide"
+msgstr "Touch Screen Guide"
+
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 msgid "Transition duration in {rampUnit}"
 msgstr "Transition duration in {rampUnit}"
@@ -5790,6 +5922,10 @@ msgstr "Turn off at target"
 #: src/pages/Settings/PluginCard.jsx
 msgid "Turn on at start, off at target"
 msgstr "Turn on at start, off at target"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "UART (Roundtrip: {lat} ms, Resends: {rtx})"
+msgstr "UART (Roundtrip: {lat} ms, Resends: {rtx})"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Unavailable / uncalibrated"

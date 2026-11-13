@@ -12,7 +12,6 @@
   "frameworks": "arduino",
   "platforms": ["esp32"],
   "dependencies": {
-    "ble_ota_dfu": "file://lib/ble_ota_dfu",
     "NanoPbComm": "file://lib/NanoPbComm",
     "nanopb/Nanopb": "^0.4.9",
     "overrides": "file://lib/overrides",

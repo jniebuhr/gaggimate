@@ -24,10 +24,11 @@ GaggiMateController::GaggiMateController(String version) : _version(std::move(ve
     configs.push_back(GM_MAX_REV10);
 }
 
-bool GaggiMateController::isSteamSwitchOn() const {
-    pinMode(_config.steamButtonPin, INPUT_PULLUP);
+bool GaggiMateController::isBondingSwitchOn() const {
+    uint8_t pin = _config.waterButtonPin > 0 ? _config.waterButtonPin : _config.steamButtonPin;
+    pinMode(pin, INPUT_PULLUP);
     for (int i = 0; i < 5; i++) { // active low; require a steady reading so a bouncing contact never opens the window
-        if (digitalRead(_config.steamButtonPin) != LOW)
+        if (digitalRead(pin) != LOW)
             return false;
         delay(10);
     }
@@ -39,6 +40,8 @@ void GaggiMateController::setup() {
     hardwareRequests = xQueueCreate(1, sizeof(gm::MachineHardwareSettings));
     configASSERT(hardwareRequests);
     detectBoard();
+    // Display UART TX lands here; release the pin early where it doubles as the boot console output.
+    pinMode(_config.ext4Pin, INPUT);
     loadMachineHardware();
     detectAddon();
 
@@ -175,8 +178,12 @@ void GaggiMateController::setup() {
         addAddon(ADDON_HW_SCALE);
     }
 
+    // A display plugged onto the board talks over the ext header: ext4 = our RX, ext5 = our TX.
+    _comms.enableUart(_config.ext4Pin, _config.ext5Pin);
+    // Flash writes stall the control loops, so a UART update starts from all outputs off.
+    _comms.onUpdateStart([this]() { stopOutputs(); });
     // Steam switch held at power-on opens the BLE pairing window; read it here since steamBtn->setup() runs later.
-    _comms.init("GPBLS", _config.name.c_str(), _version, capabilities, isSteamSwitchOn());
+    _comms.init("GPBLS", _config.name.c_str(), _version, capabilities, isBondingSwitchOn());
 
     if (_config.capabilites.ledControls) {
         ledController->setup();
@@ -253,7 +260,7 @@ void GaggiMateController::setup() {
             return;
         Heater *target = index == 0 ? this->heater.get() : this->heater2.get();
         handlePing();
-        if (errorState != ERROR_CODE_NONE) {
+        if (errorState != ERROR_CODE_NONE || _comms.isUartUpdating()) {
             return;
         }
         if (mode == BoilerControlMode::Temperature) {
@@ -274,7 +281,7 @@ void GaggiMateController::setup() {
             return;
         }
         handlePing();
-        if (errorState != ERROR_CODE_NONE) {
+        if (errorState != ERROR_CODE_NONE || _comms.isUartUpdating()) {
             return;
         }
         if (mode == PumpControlMode::Power) {
@@ -295,7 +302,7 @@ void GaggiMateController::setup() {
     // index 2 = steam refill, index 3 = steam-pressure hot-water valve.
     _comms.onRelayControl([this](uint8_t index, bool open) {
         handlePing();
-        if (errorState != ERROR_CODE_NONE) {
+        if (errorState != ERROR_CODE_NONE || _comms.isUartUpdating()) {
             return;
         }
         if (_config.capabilites.dualBoiler) {
@@ -371,7 +378,7 @@ void GaggiMateController::setup() {
         if (_config.capabilites.dualBoiler && !hardwareSessionReady)
             return;
         handlePing();
-        if (errorState != ERROR_CODE_NONE) { // don't re-engage the heater while faulted
+        if (errorState != ERROR_CODE_NONE || _comms.isUartUpdating()) { // don't re-engage the heater while faulted
             return;
         }
         this->heater->autotune(static_cast<int>(testTimeSec), static_cast<int>(windowSize), static_cast<int>(heaterWattage));
@@ -533,9 +540,8 @@ void GaggiMateController::handlePing() {
 
 void GaggiMateController::clearRetainedOutputDemands() { steamRequestedSetpoint = 0.0f; }
 
-void GaggiMateController::handlePingTimeout() {
+void GaggiMateController::stopOutputs() {
     clearRetainedOutputDemands();
-    // Turn off the heater and pump as a safety measure
     this->heater->stop();
     this->pump->setPower(0);
     this->valve->set(false);
@@ -548,6 +554,11 @@ void GaggiMateController::handlePingTimeout() {
     } else {
         this->alt->set(false);
     }
+}
+
+void GaggiMateController::handlePingTimeout() {
+    // Turn off the heater and pump as a safety measure
+    stopOutputs();
     // A communication timeout must not turn a latched thermal fault into a recoverable error.
     if (errorState != ERROR_CODE_NONE && errorState != ERROR_CODE_TIMEOUT)
         return;

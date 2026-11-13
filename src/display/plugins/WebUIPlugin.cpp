@@ -80,11 +80,11 @@ void WebUIPlugin::setup(Controller *_controller, PluginManager *_pluginManager) 
 void WebUIPlugin::loop() {
     if (updating) {
         // Pass which component is being flashed: a controller update streams the
-        // firmware over BLE (wants a low-latency link), a display update is over
-        // Wi-Fi (wants BLE to stay out of the radio's way). "" = both.
+        // firmware over the controller link (BLE wants low latency), a display update
+        // is over Wi-Fi (wants BLE to stay out of the radio's way). "" = both.
         pluginManager->trigger("ota:update:start", "component", updateComponent);
         ota->update(updateComponent != "display", updateComponent != "controller",
-                    controller->getClientController()->getClient());
+                    controller->getClientController()->getOtaSender());
         pluginManager->trigger("ota:update:end");
         updating = false;
     }

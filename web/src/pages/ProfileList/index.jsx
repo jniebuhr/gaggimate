@@ -21,7 +21,15 @@ import { ExtendedProfileChart } from '../../components/ExtendedProfileChart.jsx'
 import { useConfirmAction } from '../../hooks/useConfirmAction.js';
 import { ProfileAddCard } from './ProfileAddCard.jsx';
 import { ApiServiceContext, machine } from '../../services/ApiService.js';
-import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'preact/hooks';
+import {
+  useCallback,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'preact/hooks';
 import { Spinner } from '../../components/Spinner.jsx';
 import Card from '../../components/Card.jsx';
 import { parseProfile } from './utils.js';
@@ -126,6 +134,8 @@ function ProfileCard({
   const typeClass = data.type === 'pro' ? 'badge badge-primary' : 'badge badge-neutral';
   const favoriteToggleDisabled = data.favorite ? unfavoriteDisabled : favoriteDisabled;
   const favoriteToggleClass = favoriteToggleDisabled ? 'opacity-50 cursor-not-allowed' : '';
+  const deleteDisabled = data.selected;
+  const deleteClass = deleteDisabled ? 'opacity-50 cursor-not-allowed' : '';
 
   const onFavoriteToggle = useCallback(() => {
     if (!favoriteToggleDisabled) onSetFavorite(data.id, !data.favorite);
@@ -191,7 +201,7 @@ function ProfileCard({
     setMenuOpen(v => !v);
   }, []);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!menuOpen) return;
     // Position now (DOM is mounted because the conditional render put the div
     // in the tree this tick) and then re-position on resize/scroll.
@@ -325,6 +335,7 @@ function ProfileCard({
                       ref={popoverRef}
                       role='menu'
                       className='bg-base-100 rounded-box z-50 w-56 p-2 shadow'
+                      style={{ position: 'fixed', top: 0, left: 0 }}
                       onKeyDown={e => {
                         if (e.key === 'Escape') closeMenu();
                       }}
@@ -421,8 +432,8 @@ function ProfileCard({
                                   closeMenu();
                                 });
                               }}
-                              disabled={busy}
-                              className={`justify-start ${confirmDelete ? 'bg-error text-error-content rounded font-semibold' : 'text-error'}`}
+                              disabled={deleteDisabled || busy}
+                              className={`justify-start ${deleteClass} ${confirmDelete ? 'bg-error text-error-content rounded font-semibold' : 'text-error'}`}
                               aria-label={
                                 confirmDelete
                                   ? t`Confirm deletion of ${label} profile`
@@ -508,13 +519,21 @@ function ProfileCard({
                     </button>
                   </Tooltip>
                   {!isSystem && (
-                    <Tooltip content={confirmDelete ? t`Click to confirm` : t`Delete profile`}>
+                    <Tooltip
+                      content={
+                        deleteDisabled
+                          ? t`The selected profile can't be deleted`
+                          : confirmDelete
+                            ? t`Click to confirm`
+                            : t`Delete profile`
+                      }
+                    >
                       <button
                         onClick={() => {
                           confirmOrDelete(() => onDelete(data.id));
                         }}
-                        disabled={busy}
-                        className={`btn btn-sm btn-ghost ${confirmDelete ? 'bg-error text-error-content' : 'text-error'}`}
+                        disabled={deleteDisabled || busy}
+                        className={`btn btn-sm btn-ghost ${deleteClass} ${confirmDelete ? 'bg-error text-error-content' : 'text-error'}`}
                         aria-label={
                           confirmDelete
                             ? t`Confirm deletion of ${label} profile`
