@@ -1910,6 +1910,10 @@ msgstr "設定をエクスポート"
 msgid "Export shot data"
 msgstr "ショットデータをエクスポート"
 
+#: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTableCells.jsx
+msgid "Extended:"
+msgstr "延長込み:"
+
 #. placeholder {0}: exported.length
 #. placeholder {1}: targets.length
 #: src/pages/ShotHistory/index.jsx
@@ -3876,6 +3880,10 @@ msgstr "プロファイル統計"
 msgid "Profile type: {typeText}"
 msgstr "プロファイルの種類: {typeText}"
 
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgid "Profile updated"
+msgstr "プロファイル更新"
+
 #: src/components/MachineProfileControl.jsx
 msgid "Profile values"
 msgstr "プロファイルの値"
@@ -5698,6 +5706,10 @@ msgstr "有効にしたプラグインは、次回マシンの電源を入れた
 msgid "The profile's dose is saved to the shot history."
 msgstr "プロファイルのドーズがショット履歴に保存されます。"
 
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgid "The profile was probably updated since this shot was recorded. You can select the matching profile manually in the profile picker. Tip: For larger profile changes, duplicate the profile and add a version number to its name."
+msgstr "このショットの記録後にプロファイルが更新された可能性があります。プロファイル選択で、対応するプロファイルを手動で選べます。ヒント：大きな変更を加える場合は、プロファイルを複製し、名前にバージョン番号を追加してください。"
+
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "The pump runs with the 3-way valve closed until pressure stops rising. Then the pump stops and the valve opens, which should release the pressure to about 0 bar."
 msgstr "三方弁を閉じた状態で、圧力が上がらなくなるまでポンプを動作させます。その後ポンプが停止してバルブが開き、圧力が約 0 bar まで解放されるはずです。"
@@ -6539,3 +6551,15 @@ msgstr "スマートフォンをマシンと同じ Wi-Fi ネットワークに�
 #: src/pages/ShotAnalyzer/components/EmptyState.jsx
 msgid "Your saved shots and profiles directly from the GaggiMate internal storage."
 msgstr "GaggiMate の内部ストレージに保存されたショットとプロファイルを直接表示します。"
+
+#: src/pages/ShotAnalyzer/components/useShotNotesState.js
+msgid "Notes for shot #{shotId} changed elsewhere. Autosave was stopped to protect those changes. Reopen that shot before editing again."
+msgstr "ショット #{shotId} のメモが別の場所で変更されました。その変更を保護するため、自動保存を停止しました。編集を続ける前に、このショットを開き直してください。"
+
+#: src/pages/ShotAnalyzer/components/useShotNotesState.js
+msgid "Notes for shot #{shotId} could not be loaded. Nothing was overwritten. Check the connection and reopen that shot."
+msgstr "ショット #{shotId} のメモを読み込めませんでした。データは上書きされていません。接続を確認し、このショットを開き直してください。"
+
+#: src/pages/ShotAnalyzer/components/useShotNotesState.js
+msgid "Notes for shot #{shotId} could not be saved. Check the connection and reopen that shot before editing again."
+msgstr "ショット #{shotId} のメモを保存できませんでした。接続を確認し、編集を続ける前にこのショットを開き直してください。"

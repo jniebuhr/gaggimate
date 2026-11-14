@@ -1,0 +1,55 @@
+.analysis-table-label {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  max-width: 100%;
+  padding: 0.1em 0.5em;
+  border: 1px solid transparent;
+  border-radius: 9999px;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+div.analysis-table-label {
+  display: flex;
+}
+
+.analysis-table-label--neutral {
+  margin-top: 0.15em;
+  background: color-mix(in srgb, var(--color-base-content) 8%, transparent);
+  border-color: color-mix(in srgb, var(--color-base-content) 12%, transparent);
+}
+
+.analysis-table-label--stop {
+  margin-top: 0.15em;
+  color: var(--color-white, #fff);
+  background: var(--analysis-stop-label-color, var(--analyzer-stop-label));
+}
+
+.analysis-table-label--reason {
+  gap: 0.4em;
+}
+
+.analysis-table-label--reason::before {
+  content: '';
+  flex: 0 0 0.4em;
+  width: 0.4em;
+  height: 0.4em;
+  border-radius: 50%;
+  background: var(--analysis-stop-label-color, var(--analyzer-stop-label));
+}
+
+.analysis-table-label--skipped {
+  margin-top: 0.15em;
+  background: transparent;
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--color-base-content) 35%, transparent);
+}
+
+.analysis-table-label--completion {
+  gap: 0.4em;
+}
+
+.analysis-table-stop-reason > .analysis-table-label {
+  margin-left: auto;
+}
