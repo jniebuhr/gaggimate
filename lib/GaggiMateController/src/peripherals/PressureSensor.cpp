@@ -1,13 +1,15 @@
 #include "PressureSensor.h"
 #include "Wire.h"
 
+// Raw ADC counts outside these limits are invalid (see PRESSURE_FAULT_VOLTAGE_LOW/HIGH).
+constexpr int ADC_FAULT_LOW = static_cast<int>(PRESSURE_FAULT_VOLTAGE_LOW / ADC_STEP);
+constexpr int ADC_FAULT_HIGH = static_cast<int>(PRESSURE_FAULT_VOLTAGE_HIGH / ADC_STEP);
+
 PressureSensor::PressureSensor(ADSAdc *adc, PressureControlRate controlRate, float pressure_scale, float voltage_floor,
                                float voltage_ceil, uint8_t channel)
     : _sampleTime(pressureControlPeriodS(controlRate)), _pressure_scale(pressure_scale), _adc(adc), _channel(channel),
       _filter(_sampleTime, PRESSURE_KF_MEASUREMENT_NOISE, PRESSURE_KF_ACCEL_NOISE, PRESSURE_KF_RATE_LEAK) {
     _adc_floor = static_cast<int16_t>(voltage_floor / ADC_STEP);
-    _adc_fault_low = static_cast<int16_t>(PRESSURE_FAULT_VOLTAGE_LOW / ADC_STEP);
-    _adc_fault_high = static_cast<int16_t>(PRESSURE_FAULT_VOLTAGE_HIGH / ADC_STEP);
     _pressure_adc_range = (voltage_ceil - voltage_floor) / ADC_STEP;
     _pressure_step = pressure_scale / _pressure_adc_range;
 }
@@ -22,7 +24,7 @@ void PressureSensor::setup() {
 }
 
 void PressureSensor::onReading(int reading) {
-    if (reading > _adc_fault_low && reading < _adc_fault_high)
+    if (reading > ADC_FAULT_LOW && reading < ADC_FAULT_HIGH)
         _lastValidMs = millis();
     const float voltage = static_cast<float>(reading) * ADC_STEP;
     reading = reading - _adc_floor;
@@ -58,39 +60,6 @@ bool PressureSensor::consumeAverage() {
     _filter.setRateLeak(powf(PRESSURE_KF_RATE_LEAK, dt / 0.030f));
     _pressure = std::clamp(_filter.updateEstimate(_averagedPressure), 0.0f, _pressure_scale);
     return true;
-}
-
-void PressureSensor::trackPumpRun(float pumpPower, bool fresh) {
-    if (pumpPower < PRESSURE_STUCK_PUMP_POWER) {
-        // Judge a finished run: the unclamped voltage mean must have moved while the pump ran.
-        if (_pumpRunning && _blocks >= 2 && millis() - _pumpRunStartMs >= PRESSURE_STUCK_MIN_RUN_MS && !_stuck &&
-            _swingMax - _swingMin < PRESSURE_STUCK_MIN_SWING_V) {
-            _stuck = true;
-            ESP_LOGW(LOG_TAG, "Pressure reading did not respond to the pump (%.3f V swing)", _swingMax - _swingMin);
-        }
-        _pumpRunning = false;
-        return;
-    }
-    if (!_pumpRunning) {
-        _pumpRunning = true;
-        _pumpRunStartMs = millis();
-        _blockSum = 0.0f;
-        _blockCount = 0;
-        _blocks = 0;
-    }
-    if (!fresh)
-        return;
-    _blockSum += _averagedVoltage;
-    if (++_blockCount < PRESSURE_STUCK_BLOCK_SAMPLES)
-        return;
-    const float mean = _blockSum / _blockCount;
-    _swingMin = _blocks ? std::min(_swingMin, mean) : mean;
-    _swingMax = _blocks ? std::max(_swingMax, mean) : mean;
-    ++_blocks;
-    _blockSum = 0.0f;
-    _blockCount = 0;
-    if (_stuck && _swingMax - _swingMin >= PRESSURE_STUCK_MIN_SWING_V)
-        _stuck = false; // the sensor responds again
 }
 
 void PressureSensor::setScale(float pressure_scale) {

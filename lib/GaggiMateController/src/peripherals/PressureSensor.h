@@ -2,6 +2,7 @@
 #define PRESSURESENSOR_H
 
 #include "ADSAdc.h"
+#include "PressureStuckDetector.h"
 #include "PressureTiming.h"
 #include "TwoStateKalmanFilter/TwoStateKalmanFilter.h"
 #include <Arduino.h>
@@ -16,13 +17,6 @@ constexpr int SENSOR_READ_INTERVAL_MS = 100;
 constexpr float PRESSURE_FAULT_VOLTAGE_LOW = 0.35f;
 constexpr float PRESSURE_FAULT_VOLTAGE_HIGH = 4.75f;
 constexpr uint32_t PRESSURE_FAULT_TIMEOUT_MS = 1000; // no valid sample for this long reports a fault
-// An unplugged signal or ground wire leaves the input at a steady in-range voltage, so also check that the reading
-// responds to the pump. Measured on a flush without portafilter: a live sensor's mean moved by >= 0.055 V, a
-// disconnected input's by <= 0.001 V.
-constexpr float PRESSURE_STUCK_MIN_SWING_V = 0.015f;
-constexpr float PRESSURE_STUCK_PUMP_POWER = 80.0f; // only judge runs where the pump surely moves water
-constexpr uint32_t PRESSURE_STUCK_MIN_RUN_MS = 3000;
-constexpr uint16_t PRESSURE_STUCK_BLOCK_SAMPLES = 25; // control-cycle averages per mean (~0.5 s), smooths ADC noise
 
 class PressureSensor {
   public:
@@ -38,9 +32,9 @@ class PressureSensor {
     float getPressure() const { return _pressure; };
     float getRawPressure() const { return _raw_pressure; };
     void setScale(float pressure_scale);
-    bool isFaulty() const { return _stuck || millis() - _lastValidMs >= PRESSURE_FAULT_TIMEOUT_MS; }
+    bool isFaulty() const { return _stuckDetector.isStuck() || millis() - _lastValidMs >= PRESSURE_FAULT_TIMEOUT_MS; }
     // Called every control cycle with the applied pump power; flags a reading that stays flat while the pump runs.
-    void trackPumpRun(float pumpPower, bool fresh);
+    void trackPumpRun(float pumpPower, bool fresh) { _stuckDetector.update(pumpPower, fresh, _averagedVoltage); }
 
   private:
     float _pressure = 0.0f;
@@ -55,24 +49,13 @@ class PressureSensor {
     float _pressure_scale;
     float _pressure_step;
     int16_t _adc_floor;
-    int16_t _adc_fault_low;
-    int16_t _adc_fault_high;
     std::atomic<uint32_t> _lastValidMs{0};
     float _voltageSum = 0.0f;
     float _averagedVoltage = 0.0f;
-    bool _pumpRunning = false;
-    uint32_t _pumpRunStartMs = 0;
-    float _blockSum = 0.0f;
-    uint16_t _blockCount = 0;
-    uint16_t _blocks = 0;
-    float _swingMin = 0.0f;
-    float _swingMax = 0.0f;
-    std::atomic<bool> _stuck{false};
+    PressureStuckDetector _stuckDetector;
     ADSAdc *_adc = nullptr;
     uint8_t _channel;
     TwoStateKalmanFilter _filter;
-
-    const char *LOG_TAG = "PressureSensor";
 };
 
 #endif // PRESSURESENSOR_H
