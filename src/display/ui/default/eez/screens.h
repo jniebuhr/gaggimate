@@ -324,7 +324,7 @@ typedef struct _objects_t {
     lv_obj_t *next_profile_1;
     lv_obj_t *obj66;
     lv_obj_t *obj67;
-    lv_obj_t *touch_icon_1;
+    lv_obj_t *welcome_icon;
     lv_obj_t *standby_icons_2;
     lv_obj_t *wifi_icon_2;
     lv_obj_t *bluetooth_icon_2;

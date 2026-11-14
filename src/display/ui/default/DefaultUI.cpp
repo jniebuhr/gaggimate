@@ -793,7 +793,7 @@ void DefaultUI::updateState() {
     uiFlags.profile_details_visible(profileDetailsVisible);
     const bool chartMode = settings.getStatusDisplayMode() == STATUS_DISPLAY_CHART && pressureAvailable && isChartShot();
     uiFlags.chart_mode(chartMode);
-    uiFlags.steam_active(controller->isSteamHeaterActive());
+    uiFlags.steam_active(dualBoiler && controller->isSteamHeaterActive());
     if (chartMode != tickChartMode) {
         // Re-animate the ring when the mode flips while the status screen is open.
         if (currentScreen == SCREEN_ID_STATUS_SCREEN && currentScreen == targetScreen)

@@ -1,10 +1,10 @@
 {
   "navigation": {
-    "selectedUserPageObject": "[gaggimate.eez-project]:/userPages/4",
+    "selectedUserPageObject": "[gaggimate.eez-project]:/userPages/9",
     "selectedUserWidgetObject": "[gaggimate.eez-project]:/userWidgets/1",
     "selectedActionObject": "[gaggimate.eez-project]:/actions/39",
     "selectedGlobalVariableObject": "[gaggimate.eez-project]:/variables/globalVariables/9",
-    "selectedStructureObject": "[gaggimate.eez-project]:/variables/structures/3",
+    "selectedStructureObject": "[gaggimate.eez-project]:/variables/structures/0",
     "selectedThemeObject": "[gaggimate.eez-project]:/themes/0",
     "selectedThemeColorObject": "[gaggimate.eez-project]:/colors/1",
     "selectedFontObject": "[gaggimate.eez-project]:/fonts/0",
@@ -80,7 +80,7 @@
           {
             "type": "border",
             "selected": 1,
-            "size": 154.5,
+            "size": 107.5,
             "location": "bottom",
             "children": [
               {
@@ -164,7 +164,7 @@
                 {
                   "type": "tabset",
                   "id": "#1772268a-caef-47ce-b38c-4534effa318c",
-                  "weight": 0.9050702414277769,
+                  "weight": 0.581488866150374,
                   "children": [
                     {
                       "type": "tab",
@@ -179,7 +179,7 @@
                 {
                   "type": "tabset",
                   "id": "#68ba0d96-0a7c-461d-96e1-5a9b9f9aca40",
-                  "weight": 0.5917766963181618,
+                  "weight": 0.9153580715955648,
                   "enableClose": false,
                   "children": [
                     {
@@ -198,17 +198,16 @@
               "type": "tabset",
               "id": "EDITORS",
               "weight": 46.47304077762655,
-              "selected": 2,
               "enableDeleteWhenEmpty": false,
               "enableClose": false,
               "children": [
                 {
                   "type": "tab",
                   "id": "#cc90c56e-b38e-4ab9-956f-1fb808b5b9e6",
-                  "name": "MenuScreenNew",
+                  "name": "WelcomeScreen",
                   "component": "editor",
                   "config": {
-                    "objectPath": "[gaggimate.eez-project]:/userPages/3",
+                    "objectPath": "[gaggimate.eez-project]:/userPages/9",
                     "permanent": false
                   },
                   "icon": "svg:page"
@@ -280,8 +279,7 @@
                   },
                   "icon": "svg:page"
                 }
-              ],
-              "active": true
+              ]
             },
             {
               "type": "row",
@@ -301,7 +299,8 @@
                       "enableClose": false,
                       "icon": "svg:properties"
                     }
-                  ]
+                  ],
+                  "active": true
                 },
                 {
                   "type": "tabset",
@@ -1339,9 +1338,7 @@
           "0": {},
           "1": {
             "0": {},
-            "2": {
-              "$selected": true
-            },
+            "2": {},
             "4": {}
           },
           "2": {
@@ -2088,15 +2085,9 @@
       "selectionFront": {},
       "selectionBack": {
         "0": {
-          "1": {
-            "1": {
-              "1": {
-                "0": {
-                  "1": {}
-                }
-              }
-            },
-            "2": {}
+          "1": {},
+          "2": {
+            "$selected": true
           }
         }
       },
