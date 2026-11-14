@@ -132,6 +132,9 @@ components:
         cd:
           type: boolean
           description: Indicates dimming capability
+        hl:
+          type: boolean
+          description: True on headless display firmware (no screen); the web UI hides display settings
         lnk:
           type: string
           enum: [ble, uart, none]

@@ -2255,6 +2255,10 @@ msgstr "Balança de hardware"
 msgid "Hardware scales"
 msgstr "Balanças de hardware"
 
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Headless Version"
+msgstr "Versão do Headless"
+
 #: src/pages/Settings/tabs/HeaterCoordinationSection.jsx
 msgid "Heater coordination"
 msgstr "Coordenação dos aquecedores"
@@ -6039,6 +6043,10 @@ msgstr "Atualizar display"
 msgid "Update failed"
 msgstr "Falha na atualização"
 
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Update Headless"
+msgstr "Atualizar Headless"
+
 #: src/app/AppSettings.jsx
 msgid "Updates"
 msgstr "Atualizações"
@@ -6054,6 +6062,14 @@ msgstr "Atualizando sistema de arquivos do display"
 #: src/pages/Settings/tabs/SystemTab.jsx
 msgid "Updating Display firmware"
 msgstr "Atualizando firmware do display"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Updating Headless filesystem"
+msgstr "Atualizando sistema de arquivos do Headless"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Updating Headless firmware"
+msgstr "Atualizando firmware do Headless"
 
 #: src/pages/Statistics/components/toolbar/constants.js
 msgctxt "date basis"

@@ -2255,6 +2255,10 @@ msgstr "ハードウェアスケール"
 msgid "Hardware scales"
 msgstr "ハードウェアスケール"
 
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Headless Version"
+msgstr "Headless のバージョン"
+
 #: src/pages/Settings/tabs/HeaterCoordinationSection.jsx
 msgid "Heater coordination"
 msgstr "ヒーター協調"
@@ -6039,6 +6043,10 @@ msgstr "ディスプレイを更新"
 msgid "Update failed"
 msgstr "アップデートに失敗しました"
 
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Update Headless"
+msgstr "Headless を更新"
+
 #: src/app/AppSettings.jsx
 msgid "Updates"
 msgstr "アップデート"
@@ -6054,6 +6062,14 @@ msgstr "ディスプレイのファイルシステムを更新中"
 #: src/pages/Settings/tabs/SystemTab.jsx
 msgid "Updating Display firmware"
 msgstr "ディスプレイのファームウェアを更新中"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Updating Headless filesystem"
+msgstr "Headless のファイルシステムを更新中"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Updating Headless firmware"
+msgstr "Headless のファームウェアを更新中"
 
 #: src/pages/Statistics/components/toolbar/constants.js
 msgctxt "date basis"

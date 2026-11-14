@@ -2255,6 +2255,10 @@ msgstr "Hardware Scale"
 msgid "Hardware scales"
 msgstr "Hardware scales"
 
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Headless Version"
+msgstr "Headless Version"
+
 #: src/pages/Settings/tabs/HeaterCoordinationSection.jsx
 msgid "Heater coordination"
 msgstr "Heater coordination"
@@ -6039,6 +6043,10 @@ msgstr "Update Display"
 msgid "Update failed"
 msgstr "Update failed"
 
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Update Headless"
+msgstr "Update Headless"
+
 #: src/app/AppSettings.jsx
 msgid "Updates"
 msgstr "Updates"
@@ -6054,6 +6062,14 @@ msgstr "Updating Display filesystem"
 #: src/pages/Settings/tabs/SystemTab.jsx
 msgid "Updating Display firmware"
 msgstr "Updating Display firmware"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Updating Headless filesystem"
+msgstr "Updating Headless filesystem"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Updating Headless firmware"
+msgstr "Updating Headless firmware"
 
 #: src/pages/Statistics/components/toolbar/constants.js
 msgctxt "date basis"

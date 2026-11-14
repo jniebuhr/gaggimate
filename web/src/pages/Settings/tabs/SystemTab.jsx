@@ -38,16 +38,16 @@ const getLinkStatusClass = (link, rssi) => {
   return link === 'ble' ? getRssiStatusClass(rssi) : 'status-success';
 };
 
-function OtaProgressView({ phase, progress }) {
+function OtaProgressView({ phase, progress, headless }) {
   const { t } = useLingui();
   const finished = phase === 4;
   const failed = phase === 5;
   const getOtaPhaseText = p => {
     switch (p) {
       case 1:
-        return t`Updating Display firmware`;
+        return headless ? t`Updating Headless firmware` : t`Updating Display firmware`;
       case 2:
-        return t`Updating Display filesystem`;
+        return headless ? t`Updating Headless filesystem` : t`Updating Display filesystem`;
       case 3:
         return t`Updating controller firmware`;
       case 5:
@@ -242,6 +242,7 @@ export function SystemTab() {
   const controllerLink = machine.value.status.controllerLink ?? 'ble';
   const lat = machine.value.status.lat;
   const rtx = machine.value.status.rtx;
+  const headless = !!machine.value.capabilities.headless;
 
   const downloadSupportData = useCallback(async () => {
     try {
@@ -341,7 +342,7 @@ export function SystemTab() {
   }, [apiService]);
 
   if (phase > 0) {
-    return <OtaProgressView phase={phase} progress={progress} />;
+    return <OtaProgressView phase={phase} progress={progress} headless={headless} />;
   }
 
   if (isLoading) {
@@ -430,7 +431,7 @@ export function SystemTab() {
 
           <div className='flex flex-col space-y-2'>
             <span className='text-base-content/70 text-sm font-medium'>
-              <Trans>Display Version</Trans>
+              {headless ? <Trans>Headless Version</Trans> : <Trans>Display Version</Trans>}
             </span>
             <div className='flex flex-wrap items-center gap-2'>
               <span className='text-base-content font-semibold break-all'>
@@ -449,7 +450,7 @@ export function SystemTab() {
               disabled={!formData.displayUpdateAvailable || submitting}
               onClick={() => onUpdate('display')}
             >
-              <Trans>Update Display</Trans>
+              {headless ? <Trans>Update Headless</Trans> : <Trans>Update Display</Trans>}
             </button>
           </div>
           <div className='flex flex-col space-y-2 md:col-span-2'>

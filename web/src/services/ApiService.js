@@ -254,6 +254,7 @@ export default class ApiService {
     if (has('db')) capabilities.dualBoiler = message.db;
     if (has('hs')) capabilities.hardwareScale = !!message.hs;
     if (has('sd')) capabilities.sdCard = !!message.sd;
+    if (has('hl')) capabilities.headless = !!message.hl;
 
     // Only telemetry frames extend the chart history; state-only frames would duplicate points.
     let history = this.state.value.history;
@@ -336,6 +337,7 @@ export const createMachineState = () =>
       dualBoiler: false,
       hardwareScale: false,
       sdCard: false,
+      headless: false,
     },
     // BLE scale lifecycle from evt:scale:* (GM-257).
     scale: {

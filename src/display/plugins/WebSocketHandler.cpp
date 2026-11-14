@@ -430,6 +430,11 @@ void WebSocketHandler::publishState(unsigned long now) {
     // Legacy TOF capability also covers binary tank switches; only Alba provides a percentage.
     doc["awl"] = caps.ledControl && caps.tof && !(caps.dualBoiler && controller->getSettings().getTankLevelEnabled());
     doc["sd"] = controller->isSDCard();
+#ifdef GAGGIMATE_HEADLESS
+    doc["hl"] = true; // no screen: the web UI hides display settings
+#else
+    doc["hl"] = false;
+#endif
     doc["htl"] = controller->hasTankLevel();
     if (controller->hasTankLevelReading())
         doc["tlo"] = controller->isTankLevelOK();

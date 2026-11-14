@@ -19,6 +19,7 @@ import {
 } from '../../../components/SettingsFormField.jsx';
 
 const pressureAvailable = computed(() => machine.value.capabilities.pressure);
+const headless = computed(() => !!machine.value.capabilities.headless);
 
 const FLUSH_DURATION_STEPS = [0, 5, 10, 15, 20];
 
@@ -243,105 +244,107 @@ export function GeneralTab({
         </div>
       </Section>
 
-      {/* Display Settings */}
-      <Section title={t`Display Settings`} className='h-full'>
-        <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-          <SettingsFormField label={t`Main Brightness (1-16)`} htmlFor='mainBrightness' noMargin>
-            <input
-              id='mainBrightness'
-              name='mainBrightness'
-              type='number'
-              className='input input-bordered w-full'
-              placeholder='16'
-              min='1'
-              max='16'
-              value={formData.mainBrightness}
-              onChange={onChange('mainBrightness')}
-            />
-          </SettingsFormField>
-          <SettingsFormField label={t`Display Theme`} htmlFor='themeMode' noMargin>
-            <select
-              id='themeMode'
-              name='themeMode'
-              className='select select-bordered w-full'
-              value={formData.themeMode}
-              onChange={onChange('themeMode')}
-            >
-              <option value={0}>{t`Dark Theme`}</option>
-              <option value={1}>{t`Light Theme`}</option>
-            </select>
-          </SettingsFormField>
-          {pressureAvailable.value && (
-            <SettingsFormField
-              label={t`Brew Status Display`}
-              htmlFor='statusDisplayMode'
-              helpText={t`The chart is not shown for utility profiles`}
-              noMargin
-            >
-              <select
-                id='statusDisplayMode'
-                name='statusDisplayMode'
-                className='select select-bordered w-full'
-                value={formData.statusDisplayMode ?? 0}
-                onChange={onChange('statusDisplayMode')}
-              >
-                <option value={0}>{t`Progress Bar`}</option>
-                <option value={1}>{t`Shot Chart`}</option>
-              </select>
-            </SettingsFormField>
-          )}
-        </div>
-
-        {/* Standby Display */}
-        <div className='border-base-content/5 mt-6 border-t pt-6'>
-          <div className='mb-4'>
-            <ToggleField
-              label={t`Enable standby display`}
-              htmlFor='standbyDisplayEnabled'
-              checked={!!formData.standbyDisplayEnabled}
-              onChange={onChange('standbyDisplayEnabled')}
-            />
-          </div>
+      {/* Display Settings — a headless board has no screen to configure */}
+      {!headless.value && (
+        <Section title={t`Display Settings`} className='h-full'>
           <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-            <SettingsFormField
-              label={t`Standby Brightness (0-16)`}
-              htmlFor='standbyBrightness'
-              helpText={t`When the toggle is off, brightness will be set to 0`}
-              noMargin
-            >
+            <SettingsFormField label={t`Main Brightness (1-16)`} htmlFor='mainBrightness' noMargin>
               <input
-                id='standbyBrightness'
-                name='standbyBrightness'
+                id='mainBrightness'
+                name='mainBrightness'
                 type='number'
                 className='input input-bordered w-full'
-                placeholder='8'
-                min='0'
+                placeholder='16'
+                min='1'
                 max='16'
-                disabled={!formData.standbyDisplayEnabled}
-                value={formData.standbyDisplayEnabled ? formData.standbyBrightness : 0}
-                onChange={onChange('standbyBrightness')}
+                value={formData.mainBrightness}
+                onChange={onChange('mainBrightness')}
               />
             </SettingsFormField>
-            <InputGroupField
-              label={t`Standby Brightness Timeout`}
-              htmlFor='standbyBrightnessTimeout'
-              unit='s'
-              unitAriaLabel={t`seconds`}
-              noMargin
-            >
-              <input
-                id='standbyBrightnessTimeout'
-                name='standbyBrightnessTimeout'
-                type='number'
-                min='1'
-                placeholder='60'
-                value={formData.standbyBrightnessTimeout}
-                onChange={onChange('standbyBrightnessTimeout')}
-              />
-            </InputGroupField>
+            <SettingsFormField label={t`Display Theme`} htmlFor='themeMode' noMargin>
+              <select
+                id='themeMode'
+                name='themeMode'
+                className='select select-bordered w-full'
+                value={formData.themeMode}
+                onChange={onChange('themeMode')}
+              >
+                <option value={0}>{t`Dark Theme`}</option>
+                <option value={1}>{t`Light Theme`}</option>
+              </select>
+            </SettingsFormField>
+            {pressureAvailable.value && (
+              <SettingsFormField
+                label={t`Brew Status Display`}
+                htmlFor='statusDisplayMode'
+                helpText={t`The chart is not shown for utility profiles`}
+                noMargin
+              >
+                <select
+                  id='statusDisplayMode'
+                  name='statusDisplayMode'
+                  className='select select-bordered w-full'
+                  value={formData.statusDisplayMode ?? 0}
+                  onChange={onChange('statusDisplayMode')}
+                >
+                  <option value={0}>{t`Progress Bar`}</option>
+                  <option value={1}>{t`Shot Chart`}</option>
+                </select>
+              </SettingsFormField>
+            )}
           </div>
-        </div>
-      </Section>
+
+          {/* Standby Display */}
+          <div className='border-base-content/5 mt-6 border-t pt-6'>
+            <div className='mb-4'>
+              <ToggleField
+                label={t`Enable standby display`}
+                htmlFor='standbyDisplayEnabled'
+                checked={!!formData.standbyDisplayEnabled}
+                onChange={onChange('standbyDisplayEnabled')}
+              />
+            </div>
+            <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+              <SettingsFormField
+                label={t`Standby Brightness (0-16)`}
+                htmlFor='standbyBrightness'
+                helpText={t`When the toggle is off, brightness will be set to 0`}
+                noMargin
+              >
+                <input
+                  id='standbyBrightness'
+                  name='standbyBrightness'
+                  type='number'
+                  className='input input-bordered w-full'
+                  placeholder='8'
+                  min='0'
+                  max='16'
+                  disabled={!formData.standbyDisplayEnabled}
+                  value={formData.standbyDisplayEnabled ? formData.standbyBrightness : 0}
+                  onChange={onChange('standbyBrightness')}
+                />
+              </SettingsFormField>
+              <InputGroupField
+                label={t`Standby Brightness Timeout`}
+                htmlFor='standbyBrightnessTimeout'
+                unit='s'
+                unitAriaLabel={t`seconds`}
+                noMargin
+              >
+                <input
+                  id='standbyBrightnessTimeout'
+                  name='standbyBrightnessTimeout'
+                  type='number'
+                  min='1'
+                  placeholder='60'
+                  value={formData.standbyBrightnessTimeout}
+                  onChange={onChange('standbyBrightnessTimeout')}
+                />
+              </InputGroupField>
+            </div>
+          </div>
+        </Section>
+      )}
 
       {/* Web Settings — in the app these live in App Settings and the dashboard customizer */}
       {isApp && (

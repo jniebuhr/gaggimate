@@ -2255,6 +2255,10 @@ msgstr "硬件秤"
 msgid "Hardware scales"
 msgstr "硬件秤"
 
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Headless Version"
+msgstr "Headless 版本"
+
 #: src/pages/Settings/tabs/HeaterCoordinationSection.jsx
 msgid "Heater coordination"
 msgstr "加热协调"
@@ -6039,6 +6043,10 @@ msgstr "更新显示屏"
 msgid "Update failed"
 msgstr "更新失败"
 
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Update Headless"
+msgstr "更新 Headless"
+
 #: src/app/AppSettings.jsx
 msgid "Updates"
 msgstr "更新"
@@ -6054,6 +6062,14 @@ msgstr "正在更新显示屏文件系统"
 #: src/pages/Settings/tabs/SystemTab.jsx
 msgid "Updating Display firmware"
 msgstr "正在更新显示屏固件"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Updating Headless filesystem"
+msgstr "正在更新 Headless 文件系统"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Updating Headless firmware"
+msgstr "正在更新 Headless 固件"
 
 #: src/pages/Statistics/components/toolbar/constants.js
 msgctxt "date basis"
