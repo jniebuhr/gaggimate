@@ -78,7 +78,7 @@ class Controller {
     bool isSDCard() const { return sdcard; }
     virtual float getTargetPressure() const { return targetPressure; }
     virtual float getTargetFlow() const { return targetFlow; }
-    virtual float getCurrentPressure() const { return pressure; }
+    virtual float getCurrentPressure() const { return pressure.load(std::memory_order_relaxed); }
     virtual float getCurrentPuckFlow() const { return currentPuckFlow; }
     virtual float getCurrentPumpFlow() const { return currentPumpFlow; }
     virtual float getCurrentPumpPower() const { return currentPumpPower; }
@@ -90,7 +90,8 @@ class Controller {
     bool isTaskHealthy() const { return is_task_healthy(eTaskGetState(logicTaskHandle)); }
 
     void autotune(int testTime, int samples, int heaterWattage);
-    void startProcess(Process *process);
+    // Returns false (and deletes process) when the controller is busy or not ready.
+    bool startProcess(Process *process);
     // Dereferencing the returned pointers requires holding getProcessLock() — the
     // logic task and control entry points delete them at any time (GM-147).
     Process *getProcess() const { return currentProcess.get(); }
@@ -216,7 +217,7 @@ class Controller {
     // collect the event ids to fire; the public wrappers dispatch them after unlocking
     // so plugin handlers never run under the lock (avoids lock-order inversions).
     bool isActiveLocked() const { return currentProcess != nullptr && currentProcess->isActive(); }
-    void startProcessLocked(std::unique_ptr<Process> process, std::vector<const char *> &events);
+    bool startProcessLocked(std::unique_ptr<Process> process, std::vector<const char *> &events);
     void deactivateLocked(std::vector<const char *> &events);
     void afterDeactivate();
     // Relax the BLE interval only once the stop command has been acknowledged (see afterDeactivate()).
@@ -259,7 +260,7 @@ class Controller {
     int mode = MODE_BREW;
     float currentTemp = 0.0f;
     float currentSteamTemp = 0.0f;
-    float pressure = 0.0f;
+    std::atomic<float> pressure{0.0f};
     float targetPressure = 0.0f;
     float currentPuckFlow = 0.0f;
     float currentPumpFlow = 0.0f;
