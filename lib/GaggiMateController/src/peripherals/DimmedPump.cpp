@@ -80,8 +80,10 @@ void DimmedPump::updatePower(bool freshPressure, float sampleTime, float elapsed
     if (_binaryMode) {
         int binaryPower = (_controllerPower > 0 || _ctrlPressure > 0 || _ctrlFlow > 0) ? 100 : 0;
         _psm.set(binaryPower);
+        _pressureSensor->trackPumpRun(binaryPower, freshPressure);
     } else {
         _psm.set(static_cast<int>(_power));
+        _pressureSensor->trackPumpRun(_power, freshPressure);
     }
 }
 

@@ -255,7 +255,7 @@ message SensorData {
     bool tank_level_ok = 9;
     reserved 10 to 16;
     optional bool steam_boiler_low = 17; // Present once the enabled level sensor has a debounced reading.
-    optional bool pressure_sensor_fault = 18; // Present on boards with a pressure sensor; true while its readings are out of range.
+    optional bool pressure_sensor_fault = 18; // Present on boards with a pressure sensor; true while it reads out of range or ignores the pump.
 }
 
 message ButtonState {
