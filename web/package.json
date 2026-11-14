@@ -59,7 +59,7 @@
     "sortablejs": "^1.15.7"
   },
   "devDependencies": {
-    "@babel/core": "^7.29.7",
+    "@babel/core": "^8.1.0",
     "@capacitor/assets": "^3.0.5",
     "@capacitor/cli": "^8.5.2",
     "@lingui/babel-plugin-lingui-macro": "^6.12.0",
