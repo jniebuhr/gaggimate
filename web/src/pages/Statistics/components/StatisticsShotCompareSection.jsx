@@ -14,24 +14,29 @@ export function StatisticsShotCompareSection({
   if (!Array.isArray(compareEntries) || compareEntries.length === 0) return null;
 
   const content = (
-    <CompareShotCharts
-      compareEntries={compareEntries}
-      compareTargetDisplayMode={compareTargetDisplayMode}
-      onCompareTargetDisplayModeChange={onCompareTargetDisplayModeChange}
-      showPhaseAnnotations={false}
-      showStopAnnotations={false}
-      showBrewModeAnnotation={false}
-      showCompareAnnotationToggle={false}
-      enableDualMainChartAnnotations={false}
-      showMainChartTitle={false}
-      detailChartTitleVariant='legend'
-      enableHoverInfo={true}
-      compareTooltipMode='compareTitleOnly'
-      showCompareShotLegend={false}
-      shotStylePreset='statistics'
-      showWeightInMainChart={false}
-      showWeightFlowInMainChart={false}
-    />
+    <>
+      <p className='text-base-content/60 px-2 text-xs'>
+        <Trans>Showing up to 100 latest shots. Refine with filters.</Trans>
+      </p>
+      <CompareShotCharts
+        compareEntries={compareEntries}
+        compareTargetDisplayMode={compareTargetDisplayMode}
+        onCompareTargetDisplayModeChange={onCompareTargetDisplayModeChange}
+        showPhaseAnnotations={false}
+        showStopAnnotations={false}
+        showBrewModeAnnotation={false}
+        showCompareAnnotationToggle={false}
+        enableDualMainChartAnnotations={false}
+        showMainChartTitle={false}
+        detailChartTitleVariant='legend'
+        enableHoverInfo={true}
+        compareTooltipMode='compareTitleOnly'
+        showCompareShotLegend={false}
+        shotStylePreset='statistics'
+        showWeightInMainChart={false}
+        showWeightFlowInMainChart={false}
+      />
+    </>
   );
 
   if (embedded) {

@@ -1910,6 +1910,10 @@ msgstr "Exporter les réglages"
 msgid "Export shot data"
 msgstr "Exporter les données du shot"
 
+#: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTableCells.jsx
+msgid "Extended:"
+msgstr "Étendu :"
+
 #. placeholder {0}: exported.length
 #. placeholder {1}: targets.length
 #: src/pages/ShotHistory/index.jsx
@@ -3872,6 +3876,10 @@ msgstr "Stats du profil"
 msgid "Profile type: {typeText}"
 msgstr "Type de profil : {typeText}"
 
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgid "Profile updated"
+msgstr "Profil mis à jour"
+
 #: src/components/MachineProfileControl.jsx
 msgid "Profile values"
 msgstr "Valeurs du profil"
@@ -5694,6 +5702,10 @@ msgstr "Les plugins que vous avez activés démarreront à la prochaine mise sou
 msgid "The profile's dose is saved to the shot history."
 msgstr "La dose du profil est enregistrée dans l'historique des shots."
 
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgid "The profile was probably updated since this shot was recorded. You can select the matching profile manually in the profile picker. Tip: For larger profile changes, duplicate the profile and add a version number to its name."
+msgstr "Le profil a probablement été mis à jour depuis l’enregistrement de cette extraction. Tu peux sélectionner manuellement le profil correspondant dans le sélecteur de profils. Conseil : pour les modifications importantes, duplique le profil et ajoute un numéro de version à son nom."
+
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "The pump runs with the 3-way valve closed until pressure stops rising. Then the pump stops and the valve opens, which should release the pressure to about 0 bar."
 msgstr "La pompe tourne avec l'électrovanne 3 voies fermée jusqu'à ce que la pression cesse de monter. La pompe s'arrête alors et la vanne s'ouvre, ce qui devrait faire retomber la pression à environ 0 bar."
@@ -6523,3 +6535,15 @@ msgstr "Votre téléphone doit être sur le même réseau Wi-Fi que la machine."
 #: src/pages/ShotAnalyzer/components/EmptyState.jsx
 msgid "Your saved shots and profiles directly from the GaggiMate internal storage."
 msgstr "Vos shots et profils enregistrés, directement depuis le stockage interne de GaggiMate."
+
+#: src/pages/ShotAnalyzer/components/useShotNotesState.js
+msgid "Notes for shot #{shotId} changed elsewhere. Autosave was stopped to protect those changes. Reopen that shot before editing again."
+msgstr "Les notes du shot #{shotId} ont été modifiées ailleurs. L'enregistrement automatique a été interrompu pour préserver ces modifications. Rouvrez ce shot avant de reprendre les modifications."
+
+#: src/pages/ShotAnalyzer/components/useShotNotesState.js
+msgid "Notes for shot #{shotId} could not be loaded. Nothing was overwritten. Check the connection and reopen that shot."
+msgstr "Les notes du shot #{shotId} n'ont pas pu être chargées. Aucune donnée n'a été écrasée. Vérifiez la connexion et rouvrez ce shot."
+
+#: src/pages/ShotAnalyzer/components/useShotNotesState.js
+msgid "Notes for shot #{shotId} could not be saved. Check the connection and reopen that shot before editing again."
+msgstr "Les notes du shot #{shotId} n'ont pas pu être enregistrées. Vérifiez la connexion et rouvrez ce shot avant de reprendre les modifications."
