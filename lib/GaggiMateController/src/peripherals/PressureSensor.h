@@ -5,12 +5,17 @@
 #include "PressureTiming.h"
 #include "TwoStateKalmanFilter/TwoStateKalmanFilter.h"
 #include <Arduino.h>
+#include <atomic>
 
 // The telemetry filter consumes one pressure average per control interval.
 constexpr float PRESSURE_KF_MEASUREMENT_NOISE = 0.01f; // R, (0.1 bar)^2 incl. pump ripple
 constexpr float PRESSURE_KF_ACCEL_NOISE = 0.5f;        // Q scale; raise to track faster, lower to smooth more
 constexpr float PRESSURE_KF_RATE_LEAK = 0.95f;         // damps overshoot and low-frequency wave amplification
 constexpr int SENSOR_READ_INTERVAL_MS = 100;
+// A 0.5-4.5 V sensor never drives its output this close to the rails; such readings mean a loose or shorted wire.
+constexpr float PRESSURE_FAULT_VOLTAGE_LOW = 0.25f;
+constexpr float PRESSURE_FAULT_VOLTAGE_HIGH = 4.75f;
+constexpr uint32_t PRESSURE_FAULT_TIMEOUT_MS = 1000; // no valid sample for this long reports a fault
 
 class PressureSensor {
   public:
@@ -26,6 +31,7 @@ class PressureSensor {
     float getPressure() const { return _pressure; };
     float getRawPressure() const { return _raw_pressure; };
     void setScale(float pressure_scale);
+    bool isFaulty() const { return millis() - _lastValidMs >= PRESSURE_FAULT_TIMEOUT_MS; }
 
   private:
     float _pressure = 0.0f;
@@ -40,6 +46,9 @@ class PressureSensor {
     float _pressure_scale;
     float _pressure_step;
     int16_t _adc_floor;
+    int16_t _adc_fault_low;
+    int16_t _adc_fault_high;
+    std::atomic<uint32_t> _lastValidMs{0};
     ADSAdc *_adc = nullptr;
     uint8_t _channel;
     TwoStateKalmanFilter _filter;

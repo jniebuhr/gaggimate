@@ -53,6 +53,7 @@ extern const lv_img_dsc_t img_broom;
 extern const lv_img_dsc_t img_dosing_cup_40x40;
 extern const lv_img_dsc_t img_portafilter_40x40;
 extern const lv_img_dsc_t img_coffee_beans_three_40x40;
+extern const lv_img_dsc_t img_tachometer_fast_20x20;
 
 #ifndef EXT_IMG_DESC_T
 #define EXT_IMG_DESC_T
@@ -62,7 +63,7 @@ typedef struct _ext_img_desc_t {
 } ext_img_desc_t;
 #endif
 
-extern const ext_img_desc_t images[46];
+extern const ext_img_desc_t images[47];
 
 #ifdef __cplusplus
 }

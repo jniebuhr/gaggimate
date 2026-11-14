@@ -3733,6 +3733,10 @@ msgstr "La pressione ha superato i 12,5 bar. Funziona, ma potresti voler regolar
 msgid "Pressure polynomial (a,b,c,d) for vane-/gear-pump internal leakage. Leave at 0,0,0,0 if uncalibrated."
 msgstr "Polinomio di pressione (a,b,c,d) per le perdite interne della pompa a palette/ingranaggi. Lascia 0,0,0,0 se non calibrato."
 
+#: src/utils/warnings.js
+msgid "Pressure sensor error"
+msgstr "Errore del sensore di pressione"
+
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Pressure Sensor Rating"
 msgstr "Portata del sensore di pressione"

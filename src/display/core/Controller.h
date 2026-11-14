@@ -184,6 +184,7 @@ class Controller {
     bool hasSteamLevel() const { return systemInfo.capabilities.dualBoiler && settings.getSteamLevelEnabled(); }
     bool hasSteamLevelReading() const { return steamLevelKnown.load(); }
     bool isSteamBoilerLow() const { return steamBoilerLow; }
+    bool isPressureSensorFault() const { return pressureSensorFault; }
     bool isSteamSwitchOn() const { return steamSwitchOn; }
     bool isFlushPending() const { return flushPending; }
     WarningManager &getWarnings() { return warnings; }
@@ -348,6 +349,7 @@ class Controller {
     std::atomic<uint32_t> lastTofReading{0};
     std::atomic<bool> tankLevelKnown{false};
     std::atomic<bool> steamLevelKnown{false};
+    std::atomic<bool> pressureSensorFault{false};
     bool tankLevelPresent = false;
     bool tankLevelOK = true;
     unsigned long steamRefillClearedAt = 0;

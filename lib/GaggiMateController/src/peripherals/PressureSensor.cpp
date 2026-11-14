@@ -6,11 +6,14 @@ PressureSensor::PressureSensor(ADSAdc *adc, PressureControlRate controlRate, flo
     : _sampleTime(pressureControlPeriodS(controlRate)), _pressure_scale(pressure_scale), _adc(adc), _channel(channel),
       _filter(_sampleTime, PRESSURE_KF_MEASUREMENT_NOISE, PRESSURE_KF_ACCEL_NOISE, PRESSURE_KF_RATE_LEAK) {
     _adc_floor = static_cast<int16_t>(voltage_floor / ADC_STEP);
+    _adc_fault_low = static_cast<int16_t>(PRESSURE_FAULT_VOLTAGE_LOW / ADC_STEP);
+    _adc_fault_high = static_cast<int16_t>(PRESSURE_FAULT_VOLTAGE_HIGH / ADC_STEP);
     _pressure_adc_range = (voltage_ceil - voltage_floor) / ADC_STEP;
     _pressure_step = pressure_scale / _pressure_adc_range;
 }
 
 void PressureSensor::setup() {
+    _lastValidMs = millis(); // give the ADC time to deliver its first samples
     _adc->registerCallback([this](uint8_t channel, int reading) {
         if (channel == _channel) {
             onReading(reading);
@@ -19,6 +22,8 @@ void PressureSensor::setup() {
 }
 
 void PressureSensor::onReading(int reading) {
+    if (reading > _adc_fault_low && reading < _adc_fault_high)
+        _lastValidMs = millis();
     reading = reading - _adc_floor;
     const float pressure = static_cast<float>(reading) * _pressure_step;
     portENTER_CRITICAL(&_mux);

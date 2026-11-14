@@ -3730,6 +3730,10 @@ msgstr "Pressure peaked above 12.5 bar. That works, but you may want to adjust t
 msgid "Pressure polynomial (a,b,c,d) for vane-/gear-pump internal leakage. Leave at 0,0,0,0 if uncalibrated."
 msgstr "Pressure polynomial (a,b,c,d) for vane-/gear-pump internal leakage. Leave at 0,0,0,0 if uncalibrated."
 
+#: src/utils/warnings.js
+msgid "Pressure sensor error"
+msgstr "Pressure sensor error"
+
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Pressure Sensor Rating"
 msgstr "Pressure Sensor Rating"
