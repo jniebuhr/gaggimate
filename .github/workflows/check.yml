@@ -19,6 +19,8 @@ jobs:
           python-version: '3.11'
       - name: Install PlatformIO Core
         run: pip install --upgrade platformio
+      - name: Test pressure/flow transfer and puck estimator
+        run: platformio test -e native -f test_pressure_flow_transfer -f test_puckflow_latch
       - name: Run static code analysis for display
         continue-on-error: true
         run: platformio check -e display --fail-on-defect=medium -f "-<*>" -f "+<src/display/>" -f "-<src/display/ui>"
