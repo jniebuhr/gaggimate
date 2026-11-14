@@ -80,11 +80,11 @@ void DimmedPump::updatePower(bool freshPressure, float sampleTime, float elapsed
     if (_binaryMode) {
         int binaryPower = (_controllerPower > 0 || _ctrlPressure > 0 || _ctrlFlow > 0) ? 100 : 0;
         _psm.set(binaryPower);
-        _pressureSensor->trackPumpRun(binaryPower, freshPressure);
     } else {
         _psm.set(static_cast<int>(_power));
-        _pressureSensor->trackPumpRun(_power, freshPressure);
     }
+    // In binary mode the PSM only switches a gear pump on; its speed still follows _power.
+    _pressureSensor->trackPumpRun(_power, freshPressure);
 }
 
 void DimmedPump::setFlowTarget(float targetFlow, float pressureLimit) {
