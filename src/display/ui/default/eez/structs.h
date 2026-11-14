@@ -136,7 +136,9 @@ enum WarningsFlowStructureFields {
     FLOW_STRUCTURE_WARNINGS_FIELD_TEMPERATURE_ERROR = 11,
     FLOW_STRUCTURE_WARNINGS_FIELD_CLEAN_ERROR = 12,
     FLOW_STRUCTURE_WARNINGS_FIELD_CLEAN_WARN = 13,
-    FLOW_STRUCTURE_WARNINGS_FIELD_LABELS = 14,
+    FLOW_STRUCTURE_WARNINGS_FIELD_PRESSURE_SENSOR_WARN = 14,
+    FLOW_STRUCTURE_WARNINGS_FIELD_PRESSURE_SENSOR_ERROR = 15,
+    FLOW_STRUCTURE_WARNINGS_FIELD_LABELS = 16,
     FLOW_STRUCTURE_WARNINGS_NUM_FIELDS
 };
 
@@ -635,6 +637,20 @@ struct WarningsValue {
     bool cleanWarn() { return value.getArray()->values[FLOW_STRUCTURE_WARNINGS_FIELD_CLEAN_WARN].getBoolean(); }
     void cleanWarn(bool cleanWarn) {
         value.getArray()->values[FLOW_STRUCTURE_WARNINGS_FIELD_CLEAN_WARN] = BooleanValue(cleanWarn);
+    }
+
+    bool pressureSensorWarn() {
+        return value.getArray()->values[FLOW_STRUCTURE_WARNINGS_FIELD_PRESSURE_SENSOR_WARN].getBoolean();
+    }
+    void pressureSensorWarn(bool pressureSensorWarn) {
+        value.getArray()->values[FLOW_STRUCTURE_WARNINGS_FIELD_PRESSURE_SENSOR_WARN] = BooleanValue(pressureSensorWarn);
+    }
+
+    bool pressureSensorError() {
+        return value.getArray()->values[FLOW_STRUCTURE_WARNINGS_FIELD_PRESSURE_SENSOR_ERROR].getBoolean();
+    }
+    void pressureSensorError(bool pressureSensorError) {
+        value.getArray()->values[FLOW_STRUCTURE_WARNINGS_FIELD_PRESSURE_SENSOR_ERROR] = BooleanValue(pressureSensorError);
     }
 
     const char *labels() { return value.getArray()->values[FLOW_STRUCTURE_WARNINGS_FIELD_LABELS].getString(); }

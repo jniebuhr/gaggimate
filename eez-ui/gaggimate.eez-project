@@ -651,6 +651,16 @@
             "type": "boolean"
           },
           {
+            "objID": "0b8828ea-4d11-41f7-f92b-e4f030292e7c",
+            "name": "pressureSensorWarn",
+            "type": "boolean"
+          },
+          {
+            "objID": "93ddd128-df71-44c6-df01-4e79347b7f0a",
+            "name": "pressureSensorError",
+            "type": "boolean"
+          },
+          {
             "objID": "65ed0ceb-2ebc-48c2-ccd1-842e75fd36f1",
             "name": "labels",
             "type": "string"
@@ -16159,6 +16169,70 @@
               "value": 0,
               "valueType": "literal",
               "previewValue": 0
+            },
+            {
+              "objID": "ca7b76ba-f602-414e-a927-909ffe2bc461",
+              "type": "LVGLImageWidget",
+              "left": 0,
+              "top": 0,
+              "width": 20,
+              "height": 20,
+              "customInputs": [],
+              "customOutputs": [],
+              "style": {
+                "objID": "f039f097-036c-42aa-c72d-da1e88a10712",
+                "useStyle": "default",
+                "conditionalStyles": [],
+                "childStyles": []
+              },
+              "timeline": [],
+              "eventHandlers": [],
+              "identifier": "pressureSensorFault",
+              "leftUnit": "px",
+              "topUnit": "px",
+              "widthUnit": "content",
+              "heightUnit": "content",
+              "children": [],
+              "widgetFlags": "ADV_HITTEST|CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLLABLE|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_WITH_ARROW|SNAPPABLE",
+              "hiddenFlag": "!warnings.pressureSensorWarn && !warnings.pressureSensorError",
+              "hiddenFlagType": "expression",
+              "clickableFlagType": "literal",
+              "flagScrollbarMode": "",
+              "flagScrollDirection": "",
+              "scrollSnapX": "",
+              "scrollSnapY": "",
+              "checkedState": "warnings.pressureSensorError",
+              "checkedStateType": "expression",
+              "disabledStateType": "literal",
+              "states": "",
+              "localStyles": {
+                "objID": "1a34bf58-c06c-4f48-d27e-a83920874091",
+                "definition": {
+                  "MAIN": {
+                    "DEFAULT": {
+                      "img_recolor": "Warning",
+                      "img_recolor_opa": 255
+                    },
+                    "CHECKED": {
+                      "img_recolor": "Temperature",
+                      "img_recolor_opa": 255
+                    }
+                  }
+                }
+              },
+              "group": "",
+              "groupIndex": 0,
+              "image": "tachometer-fast-20x20",
+              "setPivot": false,
+              "pivotX": 0,
+              "pivotY": 0,
+              "zoom": 256,
+              "angle": 0,
+              "innerAlign": "CENTER",
+              "sizeMode": "VIRTUAL",
+              "value": 0,
+              "valueType": "literal",
+              "previewValue": 0
             }
           ],
           "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_WITH_ARROW|SNAPPABLE",
@@ -16718,6 +16792,15 @@
       "name": "coffee_beans_three_40x40",
       "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDQwIDQwIj4KICA8cGF0aCBmaWxsPSIjMDAwIiBkPSJNIDE2LjMzNyA0LjY3NyBMIDE1LjgxNiA0LjUxMSBMIDE0Ljk1OCA0LjQ3OCBMIDEzLjY3IDQuNzEgTCAxMS45NTQgNS40MDYgTCAxMC45MTIgNi4wMzYgTCA5LjUzMyA3LjA5OCBMIDcuODc3IDguNzIzIEwgNi41NTkgMTAuMzE1IEwgNS4xMTkgMTIuNTA0IEwgNC41MzYgMTMuNTY2IEwgMy44MzEgMTUuMDkxIEwgMy40MzMgMTYuMTUzIEwgMi45NDMgMTcuODQ0IEwgMi42MzYgMTkuODY3IEwgMi42OTcgMjEuNDkzIEwgMy4wNjUgMjMuMTE4IEwgMy41NTYgMjQuMjQ1IEwgMy44NjIgMjQuNzEgTCA0LjMyMiAyNS4xNzQgTCA0LjcyIDI1LjI3NCBMIDUuNTc5IDI0Ljc0MyBMIDYuNDM3IDIzLjg0NyBMIDcuMjM0IDIyLjY4NyBMIDcuNjMyIDIxLjk1NyBMIDggMjEuMDYxIEwgOS4xMDMgMTcuMTE0IEwgOS43MTYgMTUuNTg5IEwgMTAuNTQ0IDE0LjIyOSBMIDExLjM0MSAxMy4zNjcgTCAxMi44NzQgMTEuOTczIEwgMTMuNTc5IDExLjIxMSBMIDE0LjQzNyAxMC4wMTcgTCAxNS41NCA3LjkyNyBMIDE2LjQyOSA1LjkzNyBMIDE2LjU1MiA1LjQ3MyBMIDE2LjU1MiA0Ljk3NSBaIi8+CiAgPHBhdGggZmlsbD0iIzAwMCIgZD0iTSAxOC40ODMgNS44MzcgTCAxOC4wNTQgNS42MDUgTCAxNy44MzkgNS42MzggTCAxNy42NTUgNS44MDQgTCAxNy4yODcgNy41NjIgTCAxNy4wMTEgOC40MjUgTCAxNi4zNjggOS44MTggTCAxNS41NCAxMS4wNzggTCAxNC4xOTIgMTIuNTcgTCAxMi4zODMgMTQuMTI5IEwgMTEuODYyIDE0LjY5MyBMIDExLjM0MSAxNS40MjMgTCAxMC44ODEgMTYuMzE4IEwgMTAuNDgzIDE3LjQxMyBMIDkuNDQxIDIxLjIyNyBMIDguODg5IDIyLjU1NCBMIDguMDkyIDIzLjgxNCBMIDcuMjk1IDI0LjY3NyBMIDUuNDg3IDI2LjEzNiBMIDUuNDU2IDI2LjM2OCBMIDUuOTE2IDI2Ljc5OSBMIDYuNTU5IDI3LjA5OCBMIDcuNjMyIDI3LjMzIEwgOC43OTcgMjcuMzMgTCA5LjUzMyAyNy4xNjQgTCA5Ljc0NyAyNi44OTkgTCA5LjgwOCAyNi4wMDMgTCA5Ljk2MiAyNS4yNzQgTCAxMC42MDUgMjMuNTgyIEwgMTEuMzEgMjIuNTIxIEwgMTIuMTM4IDIxLjY1OCBMIDEzLjIxMSAyMC44NjIgTCAxNS4wOCAxOS45IEwgMTYuNzA1IDE5LjMzNyBMIDE3LjgwOCAxOS4wNzEgTCAxOC45NDMgMTguOTA1IEwgMTkuMjQ5IDE4LjY0IEwgMjAuMTk5IDE2Ljc4MyBMIDIwLjc4MiAxNS4yNTcgTCAyMS4xMTkgMTMuNjMyIEwgMjEuMTggMTEuODA4IEwgMjAuOTA0IDkuOTE3IEwgMjAuNTA2IDguNjI0IEwgMjAuMDE1IDcuNTk1IEwgMTkuNTg2IDYuOTMyIEwgMTguOTczIDYuMjM1IFoiLz4KICA8cGF0aCBmaWxsPSIjMDAwIiBkPSJNIDM1Ljk4NSAxMS4wNDUgTCAzNS40MDIgMTAuNTE0IEwgMzQuNDgzIDEwLjA1IEwgMzMuNDQxIDkuNzg0IEwgMzIuMjE1IDkuNzE4IEwgMzEuMTcyIDkuODUxIEwgMjkuNzkzIDEwLjIxNiBMIDI4LjU5OCAxMC42NDcgTCAyNy4yMTggMTEuMjc3IEwgMjUuODA4IDEyLjA3MyBMIDI0LjUyMSAxMi45NjggTCAyMi44MDUgMTQuNTI3IEwgMjEuOTQ2IDE1LjUyMiBMIDIxLjE4IDE2LjY1IEwgMjAuNDQ0IDE4LjEwOSBMIDIwLjI5MSAxOC41NzQgTCAyMC4zMjIgMTguNzA2IEwgMjAuNTA2IDE4Ljg3MiBMIDIxLjg4NSAxOC45MzkgTCAyMy4yMzQgMTkuMTcxIEwgMjQuNjQ0IDE5LjU2OSBMIDI1Ljk5MiAyMC4xMzMgTCAyNi4yOTkgMjAuMTMzIEwgMjcuMTI2IDE5LjYwMiBMIDI3Ljg2MiAxOC45NzIgTCAyOC44MTIgMTcuOTQ0IEwgMzEuMDggMTQuOTkyIEwgMzEuOTM5IDE0LjA5NiBMIDMyLjg4OSAxMy4yNjcgTCAzMy44MzkgMTIuNTcgTCAzNS44NjIgMTEuNDQzIEwgMzUuOTg1IDExLjMxIFoiLz4KICA8cGF0aCBmaWxsPSIjMDAwIiBkPSJNIDM2Ljk2NiAxMi4zMDUgTCAzNi4zODMgMTIuNDA1IEwgMzUuNjE3IDEyLjgwMyBMIDM0LjExNSAxMy45MyBMIDMyLjU1MiAxNS42MjIgTCAzMC43NzQgMTguMDc2IEwgMjkuODI0IDE5LjE3MSBMIDI4LjU5OCAyMC4xOTkgTCAyNy4zMSAyMC45MjkgTCAyNy4zMSAyMS4wNjEgTCAyOC4yOTEgMjEuNjkyIEwgMjkuMjQxIDIyLjQ1NCBMIDMwLjI4NCAyMy41NDkgTCAzMS4wMTkgMjQuNTQ0IEwgMzEuNjYzIDI1Ljc3MSBMIDMxLjgxNiAyNS45MzcgTCAzMi4wOTIgMjUuOTM3IEwgMzMuMzQ5IDI1LjEwOCBMIDM0LjIwNyAyNC4zNDUgTCAzNS4wOTYgMjMuNDE2IEwgMzYuMDE1IDIyLjI1NSBMIDM2Ljc1MSAyMS4xMjggTCAzNy42NCAxOS4yMDQgTCAzNy45MTYgMTguMzA4IEwgMzguMSAxNy4zNDcgTCAzOC4xNjEgMTUuNTg5IEwgMzguMDA4IDE0LjUyNyBMIDM3LjczMiAxMy41OTkgTCAzNy4zMzMgMTIuNzAzIFoiLz4KICA8cGF0aCBmaWxsPSIjMDAwIiBkPSJNIDEyLjA3NyAyMy41NDkgTCAxMi4wNzcgMjMuNzE1IEwgMTIuMjMgMjMuODgxIEwgMTQuNTU5IDIzLjk4IEwgMTUuNDc5IDI0LjE0NiBMIDE2LjcwNSAyNC41MTEgTCAxOC42NjcgMjUuNDM5IEwgMjEuMjExIDI3LjE5NyBMIDIyLjI4NCAyNy43OTQgTCAyNC4wMzEgMjguNDI1IEwgMjYuOTQzIDI5LjEyMSBMIDI4LjQ3NSAyOS42MTkgTCAyOS42NCAzMC4yODIgTCAzMC44MzUgMzEuMzc2IEwgMzEuMTExIDMxLjM0MyBMIDMxLjM1NiAzMC45MTIgTCAzMS41NzEgMjkuODg0IEwgMzEuNTQgMjguNDI1IEwgMzEuMTQyIDI2Ljg5OSBMIDMwLjM0NSAyNS4zMDcgTCAyOS41NzkgMjQuMjc5IEwgMjguODQzIDIzLjQ4MyBMIDI3Ljk1NCAyMi42ODcgTCAyNi4zOTEgMjEuNjI1IEwgMjQuNjEzIDIwLjc5NiBMIDIyLjc3NCAyMC4yMzIgTCAyMC42NTkgMTkuODM0IEwgMTguODIgMTkuODAxIEwgMTcuNTAyIDIwIEwgMTUuNzI0IDIwLjU2NCBMIDE0LjEzIDIxLjQyNiBMIDEzLjExOSAyMi4yMjIgTCAxMi40NzUgMjIuOTE5IFoiLz4KICA8cGF0aCBmaWxsPSIjMDAwIiBkPSJNIDEwLjg1MSAyNS45MDQgTCAxMC42OTcgMjcuMjk3IEwgMTAuOTEyIDI4LjY5IEwgMTEuNTI1IDMwLjM0OCBMIDEyLjM1MiAzMS43NDEgTCAxMy42NCAzMy4yNjcgTCAxNC44OTcgMzQuMzI4IEwgMTYuMzM3IDM1LjIyNCBMIDE4LjA4NCAzNS45NTQgTCAxOS43MzkgMzYuMzUyIEwgMjEuMDU3IDM2LjQ4NCBMIDIyLjQ2NyAzNi40ODQgTCAyMy41NzEgMzYuMzg1IEwgMjUuNzE2IDM1Ljk1NCBMIDI3LjQwMiAzNS4zMjMgTCAyOC42MjggMzQuNjI3IEwgMjkuMjQxIDM0LjEyOSBMIDI5Ljc2MiAzMy41NjYgTCAzMC4zMTQgMzIuNjcgTCAzMC4xOTIgMzIuMjcyIEwgMjkuNDI1IDMxLjUwOSBMIDI4LjUwNiAzMS4wMTIgTCAyNi45MTIgMzAuNTQ3IEwgMjMuMjk1IDI5Ljk1IEwgMjIuMDM4IDI5LjU1MiBMIDIwLjUzNiAyOC43ODkgTCAxNy43NDcgMjYuODY2IEwgMTYuNjQ0IDI2LjI2OSBMIDE0LjgzNSAyNS41MzkgTCAxMy4zMDMgMjUuMTQxIEwgMTIuMjkxIDI1LjAwOCBMIDExLjQ5NCAyNS4wMDggTCAxMS4xMjYgMjUuMjQgWiIvPgo8L3N2Zz4K",
       "bpp": 32,
+      "alwaysBuild": false,
+      "lvglBinaryOutputFormat": 3,
+      "lvglDither": false
+    },
+    {
+      "objID": "c49398a4-512d-4bee-8d8a-a1be88b8cd1e",
+      "name": "tachometer-fast-20x20",
+      "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAACXBIWXMAAACTAAAAkwEr+6uQAAAAGXRFWHRTb2Z0d2FyZQB3d3cuaW5rc2NhcGUub3Jnm+48GgAAAdlJREFUOI2V1b1rlTEYBfBf6sVKqULRdhBd/IDi4CKKglUQO4n4F6gILi7qJE5uQkXs4uDk4KqTYBHEyY/OtqAgLkJbFb+Qtlis2sfh5vbG2/f2aiDkzZNzTnLyJHlTRFitpJQG0Ju7nyNidlVCRKyo2IZRvEUU9RcmcAPbK7ktQt24jp8tQlV1ESNYW2qkhuWU0gaM4WBhYDLH3qCGLRjGgQLzFMciYm7ZMtbgcTH7awxXWcr4fdl6A/+AvLgMuFwMPkdfO7FCdB0eFrxzDbd9mM3BKQx0ENqPXfm7N29H4Bt64Hwxy+kOYhewhO/oz7ETBf+UYtlfUVtF7GIWC3zA+mL/3+f4GMzkzv02QpvxqBD7hN0tmLt5bLqG/pz+adXlkvpRgS84GhGTLZip3PZ3YSF3utsIfiy+RyNiogLTk9v5Gl6pZ25nG8FreKeeiHttMIO5nYFbmldpU6fzV7HHG/Eja9ykfuobaR/5B4Gulv5IwT/SCI4XqxzKFl5mC1sL8qB6Yl5gR8YuZu6z8urt1Xxh5jBfzHqoEDxexGc1b9gC9vz1fOEsfheEJVxpsZdwVfNMRuacXPF8QUrpsHx9cDsixqtSmlIawpkseCciniyPdfoF/G/5AynM2D8sgrPnAAAAAElFTkSuQmCC",
+      "bpp": 4,
       "alwaysBuild": false,
       "lvglBinaryOutputFormat": 3,
       "lvglDither": false

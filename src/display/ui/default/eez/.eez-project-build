@@ -46,6 +46,7 @@
     "images/ui_image_refresh_20x20.c",
     "images/ui_image_settings_40x40.c",
     "images/ui_image_settings_80x80.c",
+    "images/ui_image_tachometer_fast_20x20.c",
     "images/ui_image_tachometer_fast_40x40.c",
     "images/ui_image_tap_48x48.c",
     "images/ui_image_thermometer_half_40x40.c",

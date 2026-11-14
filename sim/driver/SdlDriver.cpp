@@ -137,6 +137,12 @@ void SdlDriver::pumpAndRender() {
                 case SDLK_6:
                     g_simScaleTarget = SIM_CUP_WEIGHT + 20.5f;
                     break;
+                case SDLK_p: { // toggle a pressure sensor fault, as if its wire were unplugged
+                    static bool pressureSensorFault = false;
+                    pressureSensorFault = !pressureSensorFault;
+                    controller.getClientController()->simulatePressureSensorFault(pressureSensorFault);
+                    break;
+                }
                 default:
                     break;
                 }

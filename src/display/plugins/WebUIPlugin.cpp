@@ -612,6 +612,8 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setWarnBackflush(request->arg("warnBackflush").toInt());
             if (request->hasArg("warnDescaling"))
                 settings->setWarnDescaling(request->arg("warnDescaling").toInt());
+            if (request->hasArg("warnPressureSensor"))
+                settings->setWarnPressureSensor(request->arg("warnPressureSensor").toInt());
             if (request->hasArg("backflushIntervalDays"))
                 settings->setBackflushIntervalDays(request->arg("backflushIntervalDays").toInt());
             if (request->hasArg("backflushIntervalShots"))
@@ -832,6 +834,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["warnTemperature"] = settings.getWarnTemperature();
     doc["warnBackflush"] = settings.getWarnBackflush();
     doc["warnDescaling"] = settings.getWarnDescaling();
+    doc["warnPressureSensor"] = settings.getWarnPressureSensor();
     doc["backflushIntervalDays"] = settings.getBackflushIntervalDays();
     doc["backflushIntervalShots"] = settings.getBackflushIntervalShots();
     doc["descalingIntervalWeeks"] = settings.getDescalingIntervalWeeks();

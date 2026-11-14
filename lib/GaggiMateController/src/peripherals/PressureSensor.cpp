@@ -1,6 +1,10 @@
 #include "PressureSensor.h"
 #include "Wire.h"
 
+// Raw ADC counts outside these limits are invalid (see PRESSURE_FAULT_VOLTAGE_LOW/HIGH).
+constexpr int ADC_FAULT_LOW = static_cast<int>(PRESSURE_FAULT_VOLTAGE_LOW / ADC_STEP);
+constexpr int ADC_FAULT_HIGH = static_cast<int>(PRESSURE_FAULT_VOLTAGE_HIGH / ADC_STEP);
+
 PressureSensor::PressureSensor(ADSAdc *adc, PressureControlRate controlRate, float pressure_scale, float voltage_floor,
                                float voltage_ceil, uint8_t channel)
     : _sampleTime(pressureControlPeriodS(controlRate)), _pressure_scale(pressure_scale), _adc(adc), _channel(channel),
@@ -11,6 +15,7 @@ PressureSensor::PressureSensor(ADSAdc *adc, PressureControlRate controlRate, flo
 }
 
 void PressureSensor::setup() {
+    _lastValidMs = millis(); // give the ADC time to deliver its first samples
     _adc->registerCallback([this](uint8_t channel, int reading) {
         if (channel == _channel) {
             onReading(reading);
@@ -19,11 +24,15 @@ void PressureSensor::setup() {
 }
 
 void PressureSensor::onReading(int reading) {
+    if (reading > ADC_FAULT_LOW && reading < ADC_FAULT_HIGH)
+        _lastValidMs = millis();
+    const float voltage = static_cast<float>(reading) * ADC_STEP;
     reading = reading - _adc_floor;
     const float pressure = static_cast<float>(reading) * _pressure_step;
     portENTER_CRITICAL(&_mux);
     _raw_pressure = std::clamp(pressure, 0.0f, _pressure_scale);
     _sum += _raw_pressure;
+    _voltageSum += voltage;
     ++_count;
     portEXIT_CRITICAL(&_mux);
 }
@@ -31,8 +40,10 @@ void PressureSensor::onReading(int reading) {
 bool PressureSensor::consumeAverage() {
     portENTER_CRITICAL(&_mux);
     const float sum = _sum;
+    const float voltageSum = _voltageSum;
     const uint32_t count = _count;
     _sum = 0;
+    _voltageSum = 0;
     _count = 0;
     portEXIT_CRITICAL(&_mux);
     if (!count)
@@ -42,6 +53,7 @@ bool PressureSensor::consumeAverage() {
         _sampleTime = (now - _lastWindowUs) / 1000000.0f;
     _lastWindowUs = now;
     _averagedPressure = sum / count;
+    _averagedVoltage = voltageSum / count;
     const float dt = std::clamp(_sampleTime, 0.0005f, 0.1f);
     _filter.setSampleTime(dt);
     // Preserve the supplied patch's time-scaled rate leakage.

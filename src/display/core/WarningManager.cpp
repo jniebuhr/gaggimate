@@ -10,10 +10,15 @@ struct WarningInfo {
 };
 // Order must match WarningType; keys are shared with the web UI.
 const WarningInfo WARNING_INFO[WARNING_TYPE_COUNT] = {
-    {"water", "Water tank low"},           {"flush", "Flush recommended"},
-    {"switch", "Steam switch is on"},      {"scaleConnected", "Scale not connected"},
-    {"scaleBattery", "Scale battery low"}, {"temperature", "Temperature not stable"},
-    {"backflush", "Backflush due"},        {"descaling", "Descaling due"},
+    {"water", "Water tank low"},
+    {"flush", "Flush recommended"},
+    {"switch", "Steam switch is on"},
+    {"scaleConnected", "Scale not connected"},
+    {"scaleBattery", "Scale battery low"},
+    {"temperature", "Temperature not stable"},
+    {"backflush", "Backflush due"},
+    {"descaling", "Descaling due"},
+    {"pressureSensor", "Pressure sensor error"},
 };
 } // namespace
 
@@ -74,6 +79,7 @@ void WarningManager::evaluate() {
     const String selectedProfile = settings.getSelectedProfile();
     active[WARNING_BACKFLUSH] = selectedProfile != BACKFLUSH_PROFILE_ID && CleaningSchedulePlugin::isBackflushDue(settings);
     active[WARNING_DESCALING] = selectedProfile != DESCALING_PROFILE_ID && CleaningSchedulePlugin::isDescalingDue(settings);
+    active[WARNING_PRESSURE_SENSOR] = controller->isPressureSensorFault();
 
     level[WARNING_WATER] = settings.getWarnWaterLevel();
     level[WARNING_FLUSH] = settings.getWarnFlush();
@@ -83,6 +89,7 @@ void WarningManager::evaluate() {
     level[WARNING_TEMPERATURE] = settings.getWarnTemperature();
     level[WARNING_BACKFLUSH] = settings.getWarnBackflush();
     level[WARNING_DESCALING] = settings.getWarnDescaling();
+    level[WARNING_PRESSURE_SENSOR] = settings.getWarnPressureSensor();
 }
 
 bool WarningManager::isWarn(WarningType type) const { return active[type] && level[type] == WARNING_LEVEL_WARN; }

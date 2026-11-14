@@ -55,6 +55,7 @@ convert "tap.svg" 48
 convert "settings.svg" 40
 convert "settings.svg" 80
 convert "tachometer-fast.svg" 40
+convert "tachometer-fast.svg" 20
 convert "disk.svg" 30
 convert "floppy-disks.svg" 30
 convert "meter-droplet.svg" 40
