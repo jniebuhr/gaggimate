@@ -105,6 +105,7 @@
  * @property {number} [rssi] Controller link RSSI.
  * @property {number} [lat] Controller round-trip latency in ms, -1 until measured.
  * @property {number} [rtx] Controller frames retransmitted since boot.
+ * @property {'uart' | 'ble' | 'none'} [lnk] Controller link type.
  * @property {ProcessProgress | null} [process]
  * @property {number} [m] Mode.
  * @property {string} [p] Selected profile label.
@@ -132,6 +133,7 @@
  * @property {boolean} [db] Capability: dual boiler.
  * @property {boolean} [hs] Capability: hardware scale.
  * @property {boolean} [sd] SD card present.
+ * @property {boolean} [hl] Headless: no display attached.
  */
 
 /**
@@ -180,6 +182,7 @@
  * @property {number} [rssi]
  * @property {number} [lat]
  * @property {number} [rtx]
+ * @property {'uart' | 'ble' | 'none'} [controllerLink]
  * @property {number} [tofDistance]
  * @property {number} [currentPumpPower]
  * @property {number} [currentBoilerPower]
@@ -203,6 +206,7 @@
  * @property {boolean} dualBoiler
  * @property {boolean} hardwareScale
  * @property {boolean} sdCard
+ * @property {boolean} headless
  * @property {boolean} [ledControl]
  * @property {boolean} [tof]
  * @property {boolean} [gearpumpAddon]
