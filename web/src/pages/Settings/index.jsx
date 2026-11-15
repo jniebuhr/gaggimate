@@ -95,6 +95,9 @@ const FORM_ONLY_KEYS = [
   'dashboardLayout',
 ];
 
+// Owned by the Bluetooth pairing flow; only a settings import may write them (GM-288).
+const IMPORT_ONLY_KEYS = ['savedScale', 'savedScaleName'];
+
 const DEFAULT_SCALE_FACTOR_1 = -2500.0;
 const DEFAULT_SCALE_FACTOR_2 = 2500.0;
 const DEFAULT_HARDWARE_SCALE_SAMPLE_RATE_SPS = 10;
@@ -186,11 +189,12 @@ function normalizeImportedSettings(data, knownKeys) {
   return { fields, schedules, ignored, count };
 }
 
-function buildSubmitFormData(formData, autowakeupSchedules, restart) {
+function buildSubmitFormData(formData, autowakeupSchedules, restart, importedKeys) {
   const formDataToSubmit = new FormData();
 
   for (const [key, value] of Object.entries(formData)) {
     if (value === undefined || value === null || READ_ONLY_KEYS.includes(key)) continue;
+    if (IMPORT_ONLY_KEYS.includes(key) && !importedKeys.has(key)) continue;
 
     if (CHECKBOX_KEYS.includes(key)) {
       // Always explicit: the firmware leaves absent booleans untouched (GM-214).
@@ -247,6 +251,7 @@ export function Settings() {
   ]);
 
   const [importNotice, setImportNotice] = useState(null);
+  const [importedKeys, setImportedKeys] = useState(() => new Set());
 
   const [fetchedSettings, setFetchedSettings] = useState(() => getCachedSettings());
   const [isLoading, setIsLoading] = useState(!fetchedSettings);
@@ -387,7 +392,12 @@ export function Settings() {
       }
       if (smartDoseSaving || submitting) return;
       setSubmitting(true);
-      const formDataToSubmit = buildSubmitFormData(formData, autowakeupSchedules, restart);
+      const formDataToSubmit = buildSubmitFormData(
+        formData,
+        autowakeupSchedules,
+        restart,
+        importedKeys,
+      );
 
       try {
         if (!(await confirmProfileApply(formData))) return;
@@ -411,6 +421,7 @@ export function Settings() {
         updateSettingsCache(data);
         setFormData(updatedData);
         setImportNotice(null);
+        setImportedKeys(new Set());
       } catch (error) {
         console.error('Failed to save settings:', error);
         window.alert(error.message);
@@ -418,7 +429,16 @@ export function Settings() {
         setSubmitting(false);
       }
     },
-    [formData, autowakeupSchedules, tab, route, isLoading, smartDoseSaving, submitting],
+    [
+      formData,
+      autowakeupSchedules,
+      importedKeys,
+      tab,
+      route,
+      isLoading,
+      smartDoseSaving,
+      submitting,
+    ],
   );
 
   const onExport = useCallback(() => {
@@ -446,6 +466,7 @@ export function Settings() {
       if (!count) throw new Error(t`The file contains no known settings.`);
 
       setFormData(prev => ({ ...prev, ...fields }));
+      setImportedKeys(prev => new Set([...prev, ...Object.keys(fields)]));
       if (schedules) setAutoWakeupSchedules(schedules);
       if (fields.clock24hFormat !== undefined) setClock24h(fields.clock24hFormat);
       if (fields.dashboardLayout !== undefined) setDashboardLayout(fields.dashboardLayout);
@@ -464,6 +485,7 @@ export function Settings() {
     setAutoWakeupSchedules(parseAutoWakeupSchedules(current?.autowakeupSchedules));
     setClock24h(!!current?.clock24hFormat);
     setImportNotice(null);
+    setImportedKeys(new Set());
   }, [fetchedSettings]);
 
   const settingsTabs = [
