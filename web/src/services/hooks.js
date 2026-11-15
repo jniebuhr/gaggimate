@@ -14,12 +14,22 @@ const profilesLoaded = signal(false);
 const profilesLoading = signal(true);
 let profilesInflight = null;
 
+// Overlay copies are reused so a profile keeps its identity across recomputes (GM-292)
+const selectionOverlays = new WeakMap();
+const withSelected = (profile, selected) => {
+  const cached = selectionOverlays.get(profile);
+  if (cached?.selected === selected) return cached;
+  const copy = { ...profile, selected };
+  selectionOverlays.set(profile, copy);
+  return copy;
+};
+
 // Overlay the broadcast selection
 const profilesWithSelection = computed(() => {
   const id = selectedProfileId.value;
   if (!id) return profiles.value;
   return profiles.value.map(p =>
-    !!p.selected === (p.id === id) ? p : { ...p, selected: p.id === id },
+    !!p.selected === (p.id === id) ? p : withSelected(p, p.id === id),
   );
 });
 

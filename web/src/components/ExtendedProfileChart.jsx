@@ -1,7 +1,8 @@
-import { useRef } from 'preact/hooks';
+import { useMemo, useRef } from 'preact/hooks';
 import { Chart } from 'chart.js';
 import { ChartComponent } from './Chart';
 import { t } from '@lingui/core/macro';
+import { useLingui } from '@lingui/react/macro';
 
 const POINT_INTERVAL = 0.1; // s
 
@@ -364,20 +365,32 @@ export function ExtendedProfileChart({
   showPhaseLabels = true,
   style,
 }) {
-  const isDarkMode = () =>
-    window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-  const phases = Array.isArray(data?.phases) ? data.phases : [];
-  const phaseRanges = buildPhaseRanges(phases);
-  const phaseRangesRef = useRef(phaseRanges);
-  phaseRangesRef.current = phaseRanges;
-  const config = makeChartData(
-    data,
+  const { i18n } = useLingui();
+  const onPhaseClickRef = useRef(onPhaseClick);
+  onPhaseClickRef.current = onPhaseClick;
+  // Content key of everything the config is built from; callers pass fresh objects on every render
+  const configKey = JSON.stringify({
+    phases: Array.isArray(data?.phases) ? data.phases : [],
     selectedPhase,
-    phaseRanges,
-    onPhaseClick,
-    isDarkMode(),
+    clickable: !!onPhaseClick,
     showPhaseLabels,
-  );
+    darkMode: !!window.matchMedia?.('(prefers-color-scheme: dark)').matches,
+    labelsFit: window.innerWidth >= 520,
+    smallScreen: window.innerWidth < 640,
+    locale: i18n.locale,
+  });
+  // A new config object makes ChartComponent run a full chart.update(), so rebuild only when the key changes (GM-292)
+  const config = useMemo(() => {
+    const key = JSON.parse(configKey);
+    return makeChartData(
+      { phases: key.phases },
+      key.selectedPhase,
+      buildPhaseRanges(key.phases),
+      key.clickable ? index => onPhaseClickRef.current?.(index) : null,
+      key.darkMode,
+      key.showPhaseLabels,
+    );
+  }, [configKey]);
 
   return (
     <ChartComponent

@@ -30,6 +30,7 @@ import {
   useRef,
   useState,
 } from 'preact/hooks';
+import { memo } from 'preact/compat';
 import { Spinner } from '../../components/Spinner.jsx';
 import Card from '../../components/Card.jsx';
 import { parseProfile } from './utils.js';
@@ -700,6 +701,9 @@ function SimpleStep(props) {
   );
 }
 
+// Cards whose props did not change skip rendering, e.g. on another card's select or favorite (GM-292)
+const MemoProfileCard = memo(ProfileCard);
+
 // Profile images only exist with an SD card; without one the export carries no "image" field.
 async function withExportedImage(profile) {
   const copy = { ...profile };
@@ -1012,12 +1016,16 @@ export function ProfileList() {
     [apiService, setProfiles, invalidateProfiles, withPending],
   );
 
+  // Read through a ref so onDuplicate keeps its identity when the list changes
+  const profilesRef = useRef(profiles);
+  profilesRef.current = profiles;
+
   // The machine assigns the new id and may favorite the copy on its own, so the list is reloaded
   // quietly (no page spinner) once the copy is saved, while the source card shows a spinner.
   const onDuplicate = useCallback(
     id =>
       withPending(id, 'duplicate', async () => {
-        const original = profiles.find(p => p.id === id);
+        const original = profilesRef.current.find(p => p.id === id);
         if (original) {
           const copy = { ...original };
           delete copy.id;
@@ -1032,7 +1040,7 @@ export function ProfileList() {
         }
         await invalidateProfiles();
       }),
-    [apiService, profiles, invalidateProfiles, withPending],
+    [apiService, invalidateProfiles, withPending],
   );
 
   const onExport = useCallback(async () => {
@@ -1191,7 +1199,7 @@ export function ProfileList() {
         {profilesToShow
           .filter(p => (activeTab === 'utility' ? p.utility : !p.utility))
           .map((data, idx, filtered) => (
-            <ProfileCard
+            <MemoProfileCard
               key={data.id}
               data={data}
               onDelete={onDelete}
