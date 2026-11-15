@@ -315,7 +315,7 @@ static const char *object_names[] = {"standby_screen",
                                      "next_profile_1",
                                      "obj66",
                                      "obj67",
-                                     "touch_icon_1",
+                                     "welcome_icon",
                                      "standby_icons_2",
                                      "wifi_icon_2",
                                      "bluetooth_icon_2",
@@ -1076,18 +1076,7 @@ static void event_handler_cb_new_profile_screen_next_profile_1(lv_event_t *e) {
     }
 }
 
-static void event_handler_cb_welcome_screen_welcome_screen(lv_event_t *e) {
-    lv_event_code_t event = lv_event_get_code(e);
-    void *flowState = lv_event_get_user_data(e);
-    (void)flowState;
-
-    if (event == LV_EVENT_CLICKED) {
-        e->user_data = (void *)0;
-        action_on_wakeup(e);
-    }
-}
-
-static void event_handler_cb_welcome_screen_touch_icon_1(lv_event_t *e) {
+static void event_handler_cb_welcome_screen_welcome_icon(lv_event_t *e) {
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
@@ -3866,6 +3855,19 @@ void tick_screen_menu_screen_new() {
                 lv_obj_add_flag(objects.btn_grind_1, LV_OBJ_FLAG_HIDDEN);
             } else {
                 lv_obj_clear_flag(objects.btn_grind_1, LV_OBJ_FLAG_HIDDEN);
+            }
+            tick_value_change_obj = NULL;
+        }
+    }
+    {
+        bool new_val = evalBooleanProperty(flowState, 8, 3, "Failed to evaluate Hidden flag");
+        bool cur_val = lv_obj_has_flag(objects.status_icons, LV_OBJ_FLAG_HIDDEN);
+        if (new_val != cur_val) {
+            tick_value_change_obj = objects.status_icons;
+            if (new_val) {
+                lv_obj_add_flag(objects.status_icons, LV_OBJ_FLAG_HIDDEN);
+            } else {
+                lv_obj_clear_flag(objects.status_icons, LV_OBJ_FLAG_HIDDEN);
             }
             tick_value_change_obj = NULL;
         }
@@ -6701,7 +6703,6 @@ void create_screen_welcome_screen() {
     objects.welcome_screen = obj;
     lv_obj_set_pos(obj, 0, 0);
     lv_obj_set_size(obj, 480, 480);
-    lv_obj_add_event_cb(obj, event_handler_cb_welcome_screen_welcome_screen, LV_EVENT_ALL, flowState);
     lv_obj_clear_flag(obj, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_style_bg_color(obj, lv_color_hex(theme_colors[eez_flow_get_selected_theme_index()][1]),
                               LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -6733,14 +6734,15 @@ void create_screen_welcome_screen() {
             lv_obj_set_style_align(obj, LV_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
         }
         {
-            // touchIcon_1
+            // welcomeIcon
             lv_obj_t *obj = lv_img_create(parent_obj);
-            objects.touch_icon_1 = obj;
+            objects.welcome_icon = obj;
             lv_obj_set_pos(obj, 0, 210);
             lv_obj_set_size(obj, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
             lv_img_set_src(obj, &img_angle_right_40x40);
             lv_img_set_zoom(obj, 255);
-            lv_obj_add_event_cb(obj, event_handler_cb_welcome_screen_touch_icon_1, LV_EVENT_ALL, flowState);
+            lv_obj_add_event_cb(obj, event_handler_cb_welcome_screen_welcome_icon, LV_EVENT_ALL, flowState);
+            lv_obj_add_flag(obj, LV_OBJ_FLAG_CLICKABLE);
             lv_obj_set_style_img_recolor(obj, lv_color_hex(theme_colors[eez_flow_get_selected_theme_index()][0]),
                                          LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_img_recolor_opa(obj, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -6857,7 +6859,7 @@ void delete_screen_welcome_screen() {
     objects.welcome_screen = 0;
     objects.obj66 = 0;
     objects.obj67 = 0;
-    objects.touch_icon_1 = 0;
+    objects.welcome_icon = 0;
     objects.standby_icons_2 = 0;
     objects.wifi_icon_2 = 0;
     objects.bluetooth_icon_2 = 0;
@@ -6872,14 +6874,27 @@ void tick_screen_welcome_screen() {
     void *flowState = getFlowState(0, 9);
     (void)flowState;
     {
-        bool new_val = evalBooleanProperty(flowState, 3, 3, "Failed to evaluate Hidden flag");
-        bool cur_val = lv_obj_has_flag(objects.touch_icon_1, LV_OBJ_FLAG_HIDDEN);
+        bool new_val = evalBooleanProperty(flowState, 0, 3, "Failed to evaluate Hidden flag");
+        bool cur_val = lv_obj_has_flag(objects.obj66, LV_OBJ_FLAG_HIDDEN);
         if (new_val != cur_val) {
-            tick_value_change_obj = objects.touch_icon_1;
+            tick_value_change_obj = objects.obj66;
             if (new_val) {
-                lv_obj_add_flag(objects.touch_icon_1, LV_OBJ_FLAG_HIDDEN);
+                lv_obj_add_flag(objects.obj66, LV_OBJ_FLAG_HIDDEN);
             } else {
-                lv_obj_clear_flag(objects.touch_icon_1, LV_OBJ_FLAG_HIDDEN);
+                lv_obj_clear_flag(objects.obj66, LV_OBJ_FLAG_HIDDEN);
+            }
+            tick_value_change_obj = NULL;
+        }
+    }
+    {
+        bool new_val = evalBooleanProperty(flowState, 3, 3, "Failed to evaluate Hidden flag");
+        bool cur_val = lv_obj_has_flag(objects.welcome_icon, LV_OBJ_FLAG_HIDDEN);
+        if (new_val != cur_val) {
+            tick_value_change_obj = objects.welcome_icon;
+            if (new_val) {
+                lv_obj_add_flag(objects.welcome_icon, LV_OBJ_FLAG_HIDDEN);
+            } else {
+                lv_obj_clear_flag(objects.welcome_icon, LV_OBJ_FLAG_HIDDEN);
             }
             tick_value_change_obj = NULL;
         }
@@ -6954,6 +6969,19 @@ void tick_screen_welcome_screen() {
                 lv_obj_add_flag(objects.qrcode_welcome, LV_OBJ_FLAG_HIDDEN);
             } else {
                 lv_obj_clear_flag(objects.qrcode_welcome, LV_OBJ_FLAG_HIDDEN);
+            }
+            tick_value_change_obj = NULL;
+        }
+    }
+    {
+        bool new_val = evalBooleanProperty(flowState, 10, 3, "Failed to evaluate Hidden flag");
+        bool cur_val = lv_obj_has_flag(objects.obj68, LV_OBJ_FLAG_HIDDEN);
+        if (new_val != cur_val) {
+            tick_value_change_obj = objects.obj68;
+            if (new_val) {
+                lv_obj_add_flag(objects.obj68, LV_OBJ_FLAG_HIDDEN);
+            } else {
+                lv_obj_clear_flag(objects.obj68, LV_OBJ_FLAG_HIDDEN);
             }
             tick_value_change_obj = NULL;
         }
@@ -9040,8 +9068,8 @@ void change_color_theme(uint32_t theme_index) {
         if (objects.obj67)
             lv_obj_set_style_img_recolor(objects.obj67, lv_color_hex(theme_colors[theme_index][0]),
                                          LV_PART_MAIN | LV_STATE_DEFAULT);
-        if (objects.touch_icon_1)
-            lv_obj_set_style_img_recolor(objects.touch_icon_1, lv_color_hex(theme_colors[theme_index][0]),
+        if (objects.welcome_icon)
+            lv_obj_set_style_img_recolor(objects.welcome_icon, lv_color_hex(theme_colors[theme_index][0]),
                                          LV_PART_MAIN | LV_STATE_DEFAULT);
         if (objects.wifi_icon_2)
             lv_obj_set_style_border_color(objects.wifi_icon_2, lv_color_hex(theme_colors[theme_index][1]),
