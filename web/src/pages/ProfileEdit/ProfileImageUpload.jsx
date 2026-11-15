@@ -1,6 +1,7 @@
 import { computed } from '@preact/signals';
-import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
-import { machine } from '../../services/ApiService.js';
+import { useCallback, useContext, useEffect, useRef, useState } from 'preact/hooks';
+import { ApiServiceContext, machine } from '../../services/ApiService.js';
+import { drawProfileCover } from '../../utils/profileCover.js';
 import {
   ACCEPTED_IMAGE_TYPES,
   canvasToDeviceImage,
@@ -17,6 +18,7 @@ const sdCard = computed(() => !!machine.value.capabilities.sdCard);
 
 export function ProfileImageUpload({ profileId }) {
   const { t } = useLingui();
+  const apiService = useContext(ApiServiceContext);
   const [preview, setPreview] = useState(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -63,6 +65,23 @@ export function ProfileImageUpload({ profileId }) {
     },
     [profileId, t],
   );
+
+  // Draws from the profile as the machine stores it, so equal profiles get equal pictures.
+  const onGenerate = useCallback(async () => {
+    setBusy(true);
+    setError('');
+    try {
+      const response = await apiService.request({ tp: 'req:profiles:load', id: profileId });
+      if (!response?.profile) throw new Error(t`Could not load the saved profile.`);
+      const canvas = await drawProfileCover(response.profile);
+      await uploadProfileImage(profileId, canvasToDeviceImage(canvas));
+      setPreview(canvas.toDataURL());
+    } catch (err) {
+      setError(err.message || t`Could not generate an image.`);
+    } finally {
+      setBusy(false);
+    }
+  }, [apiService, profileId, t]);
 
   const onRemove = useCallback(async () => {
     setBusy(true);
@@ -117,6 +136,9 @@ export function ProfileImageUpload({ profileId }) {
               >
                 {preview ? t`Replace image` : t`Upload image`}
               </button>
+              <button type='button' className='btn btn-sm' disabled={busy} onClick={onGenerate}>
+                <Trans>Generate</Trans>
+              </button>
               {preview && (
                 <button
                   type='button'
@@ -133,6 +155,9 @@ export function ProfileImageUpload({ profileId }) {
                 PNG, JPEG, WebP or BMP. GIFs are not supported. The image is cropped to a square and
                 scaled to 300×300 pixels for the display.
               </Trans>
+            </p>
+            <p className='text-xs opacity-70'>
+              <Trans>Generate draws a picture from the saved profile.</Trans>
             </p>
             {error && <p className='text-error text-xs'>{error}</p>}
           </div>

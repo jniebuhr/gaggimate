@@ -63,6 +63,11 @@ msgstr "{0, plural, one {# profilo} other {# profili}}"
 msgid "{0, plural, one {# shot} other {# shots}}"
 msgstr "{0, plural, one {# estrazione} other {# estrazioni}}"
 
+#. placeholder {0}: formatStopReason(target.type)
+#: src/pages/ShotAnalyzer/services/analyzer/skippedPhases.js
+msgid "{0} (skipped)"
+msgstr "{0} (saltata)"
+
 #: src/pages/Statistics/components/toolbar/helpers.js
 msgid "{candidateCount, plural, one {# candidate} other {# candidates}}"
 msgstr "{candidateCount, plural, one {# candidato} other {# candidati}}"
@@ -1106,9 +1111,17 @@ msgstr "Impossibile eliminare l’estrazione {id}. Riprova."
 msgid "Could not export any shots. Please try again."
 msgstr "Impossibile esportare le estrazioni. Riprova."
 
+#: src/pages/ProfileEdit/ProfileImageUpload.jsx
+msgid "Could not generate an image."
+msgstr "Impossibile generare un'immagine."
+
 #: src/pages/Settings/index.jsx
 msgid "Could not import {importName}: {importMessage}"
 msgstr "Impossibile importare {importName}: {importMessage}"
+
+#: src/pages/ProfileEdit/ProfileImageUpload.jsx
+msgid "Could not load the saved profile."
+msgstr "Impossibile caricare il profilo salvato."
 
 #: src/pages/ProfileEdit/ProfileImageUpload.jsx
 msgid "Could not read this image."
@@ -1914,9 +1927,6 @@ msgstr "Esporta impostazioni"
 msgid "Export shot data"
 msgstr "Esporta dati estrazione"
 
-#: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTableCells.jsx
-msgid "Extended:"
-msgstr "Esteso:"
 #. placeholder {0}: exported.length
 #. placeholder {1}: targets.length
 #: src/pages/ShotHistory/index.jsx
@@ -1929,9 +1939,14 @@ msgstr "Esportate {0} estrazioni su {1} ({failed} non riuscite)."
 msgid "Exporting shot {0} of {1}..."
 msgstr "Esportazione dell’estrazione {0} di {1}..."
 
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTablePhases.js
 #: src/pages/ShotAnalyzer/utils/columns.js
 msgid "Extended Record"
 msgstr "Registrazione estesa"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTableCells.jsx
+msgid "Extended:"
+msgstr "Esteso:"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "External LED ({extLedPct}%)"
@@ -2186,6 +2201,14 @@ msgstr "Generale"
 #: src/pages/DashboardSettings/index.jsx
 msgid "General Settings"
 msgstr "Impostazioni generali"
+
+#: src/pages/ProfileEdit/ProfileImageUpload.jsx
+msgid "Generate"
+msgstr "Genera"
+
+#: src/pages/ProfileEdit/ProfileImageUpload.jsx
+msgid "Generate draws a picture from the saved profile."
+msgstr "«Genera» crea un'immagine dal profilo salvato."
 
 #: src/pages/ProfileEdit/ProfileImageUpload.jsx
 msgid "GIF images are not supported. Please use PNG, JPEG, WebP or BMP."
@@ -3153,10 +3176,6 @@ msgstr "Ancora nessuna fase. Aggiungi una fase per configurare l'erogazione."
 msgid "No pinned items found."
 msgstr "Nessun elemento fissato trovato."
 
-#: src/pages/ShotAnalyzer/utils/formatting.js
-msgid "No preceding phase"
-msgstr "Nessuna fase precedente"
-
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "No pressure sensor was detected."
 msgstr "Nessun sensore di pressione rilevato."
@@ -3266,6 +3285,18 @@ msgstr "Non registrato"
 #: src/pages/ShotHistory/ShotNotesCard.jsx
 msgid "Notes"
 msgstr "Note"
+
+#: src/pages/ShotAnalyzer/components/useShotNotesState.js
+msgid "Notes for shot #{shotId} changed elsewhere. Autosave was stopped to protect those changes. Reopen that shot before editing again."
+msgstr "Le note dello shot #{shotId} sono state modificate altrove. Il salvataggio automatico è stato interrotto per proteggere queste modifiche. Riapri lo shot prima di modificarlo di nuovo."
+
+#: src/pages/ShotAnalyzer/components/useShotNotesState.js
+msgid "Notes for shot #{shotId} could not be loaded. Nothing was overwritten. Check the connection and reopen that shot."
+msgstr "Non è stato possibile caricare le note dello shot #{shotId}. Non è stato sovrascritto nulla. Controlla la connessione e riapri lo shot."
+
+#: src/pages/ShotAnalyzer/components/useShotNotesState.js
+msgid "Notes for shot #{shotId} could not be saved. Check the connection and reopen that shot before editing again."
+msgstr "Non è stato possibile salvare le note dello shot #{shotId}. Controlla la connessione e riapri lo shot prima di modificarlo di nuovo."
 
 #: src/app/AppSettings.jsx
 msgid "Notifications"
@@ -3508,6 +3539,10 @@ msgstr "Nome fase"
 #: src/pages/ProfileEdit/ExtendedProfileForm.jsx
 msgid "Phase navigation"
 msgstr "Navigazione fasi"
+
+#: src/pages/ShotAnalyzer/utils/formatting.js
+msgid "Phase not reached"
+msgstr "Fase non raggiunta"
 
 #: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
 msgid "PHASE REVIEW ADVISED"
@@ -4370,11 +4405,6 @@ msgctxt "Sunday, one letter"
 msgid "S"
 msgstr "D"
 
-#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
-msgctxt "column type, short for start/end"
-msgid "S/E"
-msgstr "I/F"
-
 #: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
 msgid "Safety timeout"
 msgstr "Timeout di sicurezza"
@@ -4954,6 +4984,10 @@ msgstr "Mostra shot recenti"
 msgid "Show the control column panels as separate cards, or group them into a single unified card."
 msgstr "Mostra i pannelli della colonna di controllo come schede separate o raggruppali in un'unica scheda."
 
+#: src/pages/Statistics/components/StatisticsShotCompareSection.jsx
+msgid "Showing up to 100 latest shots. Refine with filters."
+msgstr "Vengono mostrate fino a 100 estrazioni più recenti. Affina con i filtri."
+
 #: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
 msgid "Shown when the scale briefly loses connection during the brew. In this case, weight is ignored for stop detection for that brew, even if the scale reconnects later."
 msgstr "Mostrato quando la bilancia perde brevemente la connessione durante l'erogazione. In questo caso il peso viene ignorato per il rilevamento dell'arresto di quell'erogazione, anche se la bilancia si riconnette in seguito."
@@ -5154,6 +5188,7 @@ msgstr "Inizia rampa da"
 msgid "Start Volumetric"
 msgstr "Avvia volumetrico"
 
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
 #: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
 msgctxt "column type"
 msgid "Start/End"
@@ -5709,13 +5744,13 @@ msgstr "Il sensore fisico del serbatoio ha la priorità."
 msgid "The plugins you enabled start the next time the machine is switched on."
 msgstr "I plugin che hai attivato si avviano alla prossima accensione della macchina."
 
-#: src/pages/Settings/PluginCard.jsx
-msgid "The profile's dose is saved to the shot history."
-msgstr "La dose del profilo viene salvata nella cronologia shot."
-
 #: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
 msgid "The profile was probably updated since this shot was recorded. You can select the matching profile manually in the profile picker. Tip: For larger profile changes, duplicate the profile and add a version number to its name."
 msgstr "Il profilo è stato probabilmente aggiornato dopo la registrazione di questo shot. Puoi scegliere manualmente il profilo corretto nel selettore dei profili. Suggerimento: per modifiche importanti, duplica il profilo e aggiungi un numero di versione al nome."
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "The profile's dose is saved to the shot history."
+msgstr "La dose del profilo viene salvata nella cronologia shot."
 
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "The pump runs with the 3-way valve closed until pressure stops rising. Then the pump stops and the valve opens, which should release the pressure to about 0 bar."
@@ -6558,15 +6593,3 @@ msgstr "Il telefono deve essere sulla stessa rete Wi-Fi della macchina."
 #: src/pages/ShotAnalyzer/components/EmptyState.jsx
 msgid "Your saved shots and profiles directly from the GaggiMate internal storage."
 msgstr "Gli shot e i profili salvati, direttamente dalla memoria interna di GaggiMate."
-
-#: src/pages/ShotAnalyzer/components/useShotNotesState.js
-msgid "Notes for shot #{shotId} changed elsewhere. Autosave was stopped to protect those changes. Reopen that shot before editing again."
-msgstr "Le note dello shot #{shotId} sono state modificate altrove. Il salvataggio automatico è stato interrotto per proteggere queste modifiche. Riapri lo shot prima di modificarlo di nuovo."
-
-#: src/pages/ShotAnalyzer/components/useShotNotesState.js
-msgid "Notes for shot #{shotId} could not be loaded. Nothing was overwritten. Check the connection and reopen that shot."
-msgstr "Non è stato possibile caricare le note dello shot #{shotId}. Non è stato sovrascritto nulla. Controlla la connessione e riapri lo shot."
-
-#: src/pages/ShotAnalyzer/components/useShotNotesState.js
-msgid "Notes for shot #{shotId} could not be saved. Check the connection and reopen that shot before editing again."
-msgstr "Non è stato possibile salvare le note dello shot #{shotId}. Controlla la connessione e riapri lo shot prima di modificarlo di nuovo."

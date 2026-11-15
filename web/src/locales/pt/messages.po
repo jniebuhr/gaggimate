@@ -1,3 +1,11 @@
+# Notes for translators
+#
+# This catalog is Brazilian Portuguese, written to also read naturally in European Portuguese.
+# - Follow Brazilian spelling and the terms already used here (for example "salvar", "extração").
+# - Where a neutral choice exists, prefer it: impersonal phrasing ("É possível ...") over "você".
+# - Prefer words common to both variants over ones used in only one.
+# - Keep placeholders such as {0} or {shotId} exactly as they are.
+#
 msgid ""
 msgstr ""
 "POT-Creation-Date: 2026-11-13 15:04+0100\n"
@@ -58,6 +66,11 @@ msgstr "{0, plural, one {# perfil} other {# perfis}}"
 #: src/pages/Statistics/components/toolbar/helpers.js
 msgid "{0, plural, one {# shot} other {# shots}}"
 msgstr "{0, plural, one {# extração} other {# extrações}}"
+
+#. placeholder {0}: formatStopReason(target.type)
+#: src/pages/ShotAnalyzer/services/analyzer/skippedPhases.js
+msgid "{0} (skipped)"
+msgstr "{0} (ignorada)"
 
 #: src/pages/Statistics/components/toolbar/helpers.js
 msgid "{candidateCount, plural, one {# candidate} other {# candidates}}"
@@ -1102,9 +1115,17 @@ msgstr "Não foi possível excluir a extração {id}. Tente novamente."
 msgid "Could not export any shots. Please try again."
 msgstr "Não foi possível exportar nenhuma extração. Tente novamente."
 
+#: src/pages/ProfileEdit/ProfileImageUpload.jsx
+msgid "Could not generate an image."
+msgstr "Não foi possível gerar uma imagem."
+
 #: src/pages/Settings/index.jsx
 msgid "Could not import {importName}: {importMessage}"
 msgstr "Não foi possível importar {importName}: {importMessage}"
+
+#: src/pages/ProfileEdit/ProfileImageUpload.jsx
+msgid "Could not load the saved profile."
+msgstr "Não foi possível carregar o perfil salvo."
 
 #: src/pages/ProfileEdit/ProfileImageUpload.jsx
 msgid "Could not read this image."
@@ -1922,9 +1943,14 @@ msgstr "{0} de {1} extrações exportadas ({failed} com falha)."
 msgid "Exporting shot {0} of {1}..."
 msgstr "Exportando extração {0} de {1}..."
 
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTablePhases.js
 #: src/pages/ShotAnalyzer/utils/columns.js
 msgid "Extended Record"
 msgstr "Registro estendido"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTableCells.jsx
+msgid "Extended:"
+msgstr "Estendido:"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "External LED ({extLedPct}%)"
@@ -2179,6 +2205,14 @@ msgstr "Geral"
 #: src/pages/DashboardSettings/index.jsx
 msgid "General Settings"
 msgstr "Configurações gerais"
+
+#: src/pages/ProfileEdit/ProfileImageUpload.jsx
+msgid "Generate"
+msgstr "Gerar"
+
+#: src/pages/ProfileEdit/ProfileImageUpload.jsx
+msgid "Generate draws a picture from the saved profile."
+msgstr "“Gerar” cria uma imagem a partir do perfil salvo."
 
 #: src/pages/ProfileEdit/ProfileImageUpload.jsx
 msgid "GIF images are not supported. Please use PNG, JPEG, WebP or BMP."
@@ -3146,10 +3180,6 @@ msgstr "Ainda não há fases. Adicione uma fase para configurar a extração."
 msgid "No pinned items found."
 msgstr "Nenhum item fixado encontrado."
 
-#: src/pages/ShotAnalyzer/utils/formatting.js
-msgid "No preceding phase"
-msgstr "Nenhuma fase anterior"
-
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "No pressure sensor was detected."
 msgstr "Nenhum sensor de pressão foi detectado."
@@ -3259,6 +3289,18 @@ msgstr "Não registrado"
 #: src/pages/ShotHistory/ShotNotesCard.jsx
 msgid "Notes"
 msgstr "Notas"
+
+#: src/pages/ShotAnalyzer/components/useShotNotesState.js
+msgid "Notes for shot #{shotId} changed elsewhere. Autosave was stopped to protect those changes. Reopen that shot before editing again."
+msgstr "As notas da extração #{shotId} foram alteradas em outro lugar. O salvamento automático foi interrompido para proteger essas alterações. Reabra essa extração antes de editar novamente."
+
+#: src/pages/ShotAnalyzer/components/useShotNotesState.js
+msgid "Notes for shot #{shotId} could not be loaded. Nothing was overwritten. Check the connection and reopen that shot."
+msgstr "Não foi possível carregar as notas da extração #{shotId}. Nada foi sobrescrito. Verifique a conexão e reabra essa extração."
+
+#: src/pages/ShotAnalyzer/components/useShotNotesState.js
+msgid "Notes for shot #{shotId} could not be saved. Check the connection and reopen that shot before editing again."
+msgstr "Não foi possível salvar as notas da extração #{shotId}. Verifique a conexão e reabra essa extração antes de editar novamente."
 
 #: src/app/AppSettings.jsx
 msgid "Notifications"
@@ -3501,6 +3543,10 @@ msgstr "Nome da fase"
 #: src/pages/ProfileEdit/ExtendedProfileForm.jsx
 msgid "Phase navigation"
 msgstr "Navegação entre fases"
+
+#: src/pages/ShotAnalyzer/utils/formatting.js
+msgid "Phase not reached"
+msgstr "Fase não alcançada"
 
 #: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
 msgid "PHASE REVIEW ADVISED"
@@ -3879,6 +3925,10 @@ msgstr "Estatísticas do perfil"
 #: src/pages/ProfileList/index.jsx
 msgid "Profile type: {typeText}"
 msgstr "Tipo de perfil: {typeText}"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgid "Profile updated"
+msgstr "Perfil atualizado"
 
 #: src/components/MachineProfileControl.jsx
 msgid "Profile values"
@@ -4358,11 +4408,6 @@ msgstr "S"
 msgctxt "Sunday, one letter"
 msgid "S"
 msgstr "D"
-
-#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
-msgctxt "column type, short for start/end"
-msgid "S/E"
-msgstr "I/F"
 
 #: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
 msgid "Safety timeout"
@@ -4943,6 +4988,10 @@ msgstr "Mostrar extrações recentes"
 msgid "Show the control column panels as separate cards, or group them into a single unified card."
 msgstr "Mostra os painéis da coluna de controle como cartões separados ou os agrupa em um único cartão."
 
+#: src/pages/Statistics/components/StatisticsShotCompareSection.jsx
+msgid "Showing up to 100 latest shots. Refine with filters."
+msgstr "Até 100 extrações mais recentes. Refine com os filtros."
+
 #: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
 msgid "Shown when the scale briefly loses connection during the brew. In this case, weight is ignored for stop detection for that brew, even if the scale reconnects later."
 msgstr "Exibido quando a balança perde a conexão por um instante durante a extração. Nesse caso, o peso é ignorado na detecção de parada dessa extração, mesmo que a balança se reconecte depois."
@@ -5143,6 +5192,7 @@ msgstr "Iniciar rampa a partir de"
 msgid "Start Volumetric"
 msgstr "Iniciar volumétrico"
 
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
 #: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
 msgctxt "column type"
 msgid "Start/End"
@@ -5697,6 +5747,10 @@ msgstr "O sensor físico do reservatório tem prioridade."
 #: src/pages/SetupWizard/index.jsx
 msgid "The plugins you enabled start the next time the machine is switched on."
 msgstr "Os plugins que você ativou iniciam na próxima vez que a máquina for ligada."
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgid "The profile was probably updated since this shot was recorded. You can select the matching profile manually in the profile picker. Tip: For larger profile changes, duplicate the profile and add a version number to its name."
+msgstr "O perfil provavelmente foi atualizado desde que esta extração foi gravada. É possível selecionar manualmente o perfil correspondente no seletor de perfil. Dica: para alterações maiores, duplique o perfil e adicione um número de versão ao nome."
 
 #: src/pages/Settings/PluginCard.jsx
 msgid "The profile's dose is saved to the shot history."

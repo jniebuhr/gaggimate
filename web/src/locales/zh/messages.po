@@ -59,6 +59,11 @@ msgstr "{0, plural, other {# 条曲线}}"
 msgid "{0, plural, one {# shot} other {# shots}}"
 msgstr "{0, plural, other {# 次萃取}}"
 
+#. placeholder {0}: formatStopReason(target.type)
+#: src/pages/ShotAnalyzer/services/analyzer/skippedPhases.js
+msgid "{0} (skipped)"
+msgstr "{0}(已跳过)"
+
 #: src/pages/Statistics/components/toolbar/helpers.js
 msgid "{candidateCount, plural, one {# candidate} other {# candidates}}"
 msgstr "{candidateCount, plural, other {# 个候选}}"
@@ -1102,9 +1107,17 @@ msgstr "无法删除萃取记录 {id},请重试。"
 msgid "Could not export any shots. Please try again."
 msgstr "未能导出任何萃取记录,请重试。"
 
+#: src/pages/ProfileEdit/ProfileImageUpload.jsx
+msgid "Could not generate an image."
+msgstr "无法生成图片。"
+
 #: src/pages/Settings/index.jsx
 msgid "Could not import {importName}: {importMessage}"
 msgstr "无法导入 {importName}：{importMessage}"
+
+#: src/pages/ProfileEdit/ProfileImageUpload.jsx
+msgid "Could not load the saved profile."
+msgstr "无法加载已保存的曲线。"
 
 #: src/pages/ProfileEdit/ProfileImageUpload.jsx
 msgid "Could not read this image."
@@ -1910,10 +1923,6 @@ msgstr "导出设置"
 msgid "Export shot data"
 msgstr "导出萃取数据"
 
-#: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTableCells.jsx
-msgid "Extended:"
-msgstr "含延长记录："
-
 #. placeholder {0}: exported.length
 #. placeholder {1}: targets.length
 #: src/pages/ShotHistory/index.jsx
@@ -1926,9 +1935,14 @@ msgstr "已导出 {0} / {1} 条萃取记录({failed} 条失败)。"
 msgid "Exporting shot {0} of {1}..."
 msgstr "正在导出萃取记录 {0} / {1}..."
 
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTablePhases.js
 #: src/pages/ShotAnalyzer/utils/columns.js
 msgid "Extended Record"
 msgstr "含扩展记录"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTableCells.jsx
+msgid "Extended:"
+msgstr "含延长记录："
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "External LED ({extLedPct}%)"
@@ -2183,6 +2197,14 @@ msgstr "常规"
 #: src/pages/DashboardSettings/index.jsx
 msgid "General Settings"
 msgstr "常规设置"
+
+#: src/pages/ProfileEdit/ProfileImageUpload.jsx
+msgid "Generate"
+msgstr "生成"
+
+#: src/pages/ProfileEdit/ProfileImageUpload.jsx
+msgid "Generate draws a picture from the saved profile."
+msgstr "“生成”会根据已保存的曲线绘制图片。"
 
 #: src/pages/ProfileEdit/ProfileImageUpload.jsx
 msgid "GIF images are not supported. Please use PNG, JPEG, WebP or BMP."
@@ -3150,10 +3172,6 @@ msgstr "暂无阶段。添加一个阶段以配置冲煮。"
 msgid "No pinned items found."
 msgstr "未找到固定的项目。"
 
-#: src/pages/ShotAnalyzer/utils/formatting.js
-msgid "No preceding phase"
-msgstr "无前一阶段"
-
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "No pressure sensor was detected."
 msgstr "未检测到压力传感器。"
@@ -3263,6 +3281,18 @@ msgstr "未记录"
 #: src/pages/ShotHistory/ShotNotesCard.jsx
 msgid "Notes"
 msgstr "备注"
+
+#: src/pages/ShotAnalyzer/components/useShotNotesState.js
+msgid "Notes for shot #{shotId} changed elsewhere. Autosave was stopped to protect those changes. Reopen that shot before editing again."
+msgstr "萃取 #{shotId} 的备注已在其他地方修改。为保护这些更改，已停止自动保存。请重新打开该萃取后再继续编辑。"
+
+#: src/pages/ShotAnalyzer/components/useShotNotesState.js
+msgid "Notes for shot #{shotId} could not be loaded. Nothing was overwritten. Check the connection and reopen that shot."
+msgstr "无法加载萃取 #{shotId} 的备注。未覆盖任何数据。请检查连接并重新打开该萃取。"
+
+#: src/pages/ShotAnalyzer/components/useShotNotesState.js
+msgid "Notes for shot #{shotId} could not be saved. Check the connection and reopen that shot before editing again."
+msgstr "无法保存萃取 #{shotId} 的备注。请检查连接，重新打开该萃取后再继续编辑。"
 
 #: src/app/AppSettings.jsx
 msgid "Notifications"
@@ -3505,6 +3535,10 @@ msgstr "阶段名称"
 #: src/pages/ProfileEdit/ExtendedProfileForm.jsx
 msgid "Phase navigation"
 msgstr "阶段导航"
+
+#: src/pages/ShotAnalyzer/utils/formatting.js
+msgid "Phase not reached"
+msgstr "未到达该阶段"
 
 #: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
 msgid "PHASE REVIEW ADVISED"
@@ -4367,11 +4401,6 @@ msgctxt "Sunday, one letter"
 msgid "S"
 msgstr "日"
 
-#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
-msgctxt "column type, short for start/end"
-msgid "S/E"
-msgstr "始/终"
-
 #: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
 msgid "Safety timeout"
 msgstr "安全超时"
@@ -4951,6 +4980,10 @@ msgstr "显示最近萃取"
 msgid "Show the control column panels as separate cards, or group them into a single unified card."
 msgstr "将控制列面板显示为独立卡片，或合并为一张统一卡片。"
 
+#: src/pages/Statistics/components/StatisticsShotCompareSection.jsx
+msgid "Showing up to 100 latest shots. Refine with filters."
+msgstr "最多显示最近 100 条萃取记录。可使用筛选条件缩小范围。"
+
 #: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
 msgid "Shown when the scale briefly loses connection during the brew. In this case, weight is ignored for stop detection for that brew, even if the scale reconnects later."
 msgstr "冲煮过程中秤短暂断开连接时显示。此时，即使秤之后重新连接，本次冲煮的停止检测也会忽略重量。"
@@ -5151,6 +5184,7 @@ msgstr "渐变起点"
 msgid "Start Volumetric"
 msgstr "开始定量"
 
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
 #: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
 msgctxt "column type"
 msgid "Start/End"
@@ -5706,13 +5740,13 @@ msgstr "实体储水箱传感器优先。"
 msgid "The plugins you enabled start the next time the machine is switched on."
 msgstr "你启用的插件将在下次开启咖啡机时启动。"
 
-#: src/pages/Settings/PluginCard.jsx
-msgid "The profile's dose is saved to the shot history."
-msgstr "曲线的粉量会保存到萃取历史中。"
-
 #: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
 msgid "The profile was probably updated since this shot was recorded. You can select the matching profile manually in the profile picker. Tip: For larger profile changes, duplicate the profile and add a version number to its name."
 msgstr "此配置可能在这次萃取记录后已被更新。你可以在配置选择器中手动选择匹配的配置。提示：如需大幅修改配置，请先复制配置，并在名称中添加版本号。"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "The profile's dose is saved to the shot history."
+msgstr "曲线的粉量会保存到萃取历史中。"
 
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "The pump runs with the 3-way valve closed until pressure stops rising. Then the pump stops and the valve opens, which should release the pressure to about 0 bar."
@@ -6555,15 +6589,3 @@ msgstr "手机需要与咖啡机处于同一 Wi-Fi 网络。"
 #: src/pages/ShotAnalyzer/components/EmptyState.jsx
 msgid "Your saved shots and profiles directly from the GaggiMate internal storage."
 msgstr "直接来自 GaggiMate 内部存储的已保存萃取和曲线。"
-
-#: src/pages/ShotAnalyzer/components/useShotNotesState.js
-msgid "Notes for shot #{shotId} changed elsewhere. Autosave was stopped to protect those changes. Reopen that shot before editing again."
-msgstr "萃取 #{shotId} 的备注已在其他地方修改。为保护这些更改，已停止自动保存。请重新打开该萃取后再继续编辑。"
-
-#: src/pages/ShotAnalyzer/components/useShotNotesState.js
-msgid "Notes for shot #{shotId} could not be loaded. Nothing was overwritten. Check the connection and reopen that shot."
-msgstr "无法加载萃取 #{shotId} 的备注。未覆盖任何数据。请检查连接并重新打开该萃取。"
-
-#: src/pages/ShotAnalyzer/components/useShotNotesState.js
-msgid "Notes for shot #{shotId} could not be saved. Check the connection and reopen that shot before editing again."
-msgstr "无法保存萃取 #{shotId} 的备注。请检查连接，重新打开该萃取后再继续编辑。"

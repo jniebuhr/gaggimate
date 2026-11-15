@@ -59,6 +59,11 @@ msgstr "{0, plural, other {# プロファイル}}"
 msgid "{0, plural, one {# shot} other {# shots}}"
 msgstr "{0, plural, other {# ショット}}"
 
+#. placeholder {0}: formatStopReason(target.type)
+#: src/pages/ShotAnalyzer/services/analyzer/skippedPhases.js
+msgid "{0} (skipped)"
+msgstr "{0}(スキップ)"
+
 #: src/pages/Statistics/components/toolbar/helpers.js
 msgid "{candidateCount, plural, one {# candidate} other {# candidates}}"
 msgstr "{candidateCount, plural, other {# 件の候補}}"
@@ -1102,9 +1107,17 @@ msgstr "ショット {id} を削除できませんでした。もう一度お試
 msgid "Could not export any shots. Please try again."
 msgstr "ショットをエクスポートできませんでした。もう一度お試しください。"
 
+#: src/pages/ProfileEdit/ProfileImageUpload.jsx
+msgid "Could not generate an image."
+msgstr "画像を生成できませんでした。"
+
 #: src/pages/Settings/index.jsx
 msgid "Could not import {importName}: {importMessage}"
 msgstr "{importName} をインポートできませんでした: {importMessage}"
+
+#: src/pages/ProfileEdit/ProfileImageUpload.jsx
+msgid "Could not load the saved profile."
+msgstr "保存済みのプロファイルを読み込めませんでした。"
 
 #: src/pages/ProfileEdit/ProfileImageUpload.jsx
 msgid "Could not read this image."
@@ -1910,10 +1923,6 @@ msgstr "設定をエクスポート"
 msgid "Export shot data"
 msgstr "ショットデータをエクスポート"
 
-#: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTableCells.jsx
-msgid "Extended:"
-msgstr "延長込み:"
-
 #. placeholder {0}: exported.length
 #. placeholder {1}: targets.length
 #: src/pages/ShotHistory/index.jsx
@@ -1926,9 +1935,14 @@ msgstr "{1} 件中 {0} 件のショットをエクスポートしました(失�
 msgid "Exporting shot {0} of {1}..."
 msgstr "ショットをエクスポート中 ({0}/{1})..."
 
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTablePhases.js
 #: src/pages/ShotAnalyzer/utils/columns.js
 msgid "Extended Record"
 msgstr "拡張記録"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTableCells.jsx
+msgid "Extended:"
+msgstr "延長込み:"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "External LED ({extLedPct}%)"
@@ -2183,6 +2197,14 @@ msgstr "一般"
 #: src/pages/DashboardSettings/index.jsx
 msgid "General Settings"
 msgstr "一般設定"
+
+#: src/pages/ProfileEdit/ProfileImageUpload.jsx
+msgid "Generate"
+msgstr "生成"
+
+#: src/pages/ProfileEdit/ProfileImageUpload.jsx
+msgid "Generate draws a picture from the saved profile."
+msgstr "「生成」は保存済みのプロファイルから画像を作成します。"
 
 #: src/pages/ProfileEdit/ProfileImageUpload.jsx
 msgid "GIF images are not supported. Please use PNG, JPEG, WebP or BMP."
@@ -3150,10 +3172,6 @@ msgstr "まだフェーズがありません。フェーズを追加して抽出
 msgid "No pinned items found."
 msgstr "固定された項目が見つかりません。"
 
-#: src/pages/ShotAnalyzer/utils/formatting.js
-msgid "No preceding phase"
-msgstr "前のフェーズなし"
-
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "No pressure sensor was detected."
 msgstr "圧力センサーが検出されませんでした。"
@@ -3263,6 +3281,18 @@ msgstr "記録なし"
 #: src/pages/ShotHistory/ShotNotesCard.jsx
 msgid "Notes"
 msgstr "メモ"
+
+#: src/pages/ShotAnalyzer/components/useShotNotesState.js
+msgid "Notes for shot #{shotId} changed elsewhere. Autosave was stopped to protect those changes. Reopen that shot before editing again."
+msgstr "ショット #{shotId} のメモが別の場所で変更されました。その変更を保護するため、自動保存を停止しました。編集を続ける前に、このショットを開き直してください。"
+
+#: src/pages/ShotAnalyzer/components/useShotNotesState.js
+msgid "Notes for shot #{shotId} could not be loaded. Nothing was overwritten. Check the connection and reopen that shot."
+msgstr "ショット #{shotId} のメモを読み込めませんでした。データは上書きされていません。接続を確認し、このショットを開き直してください。"
+
+#: src/pages/ShotAnalyzer/components/useShotNotesState.js
+msgid "Notes for shot #{shotId} could not be saved. Check the connection and reopen that shot before editing again."
+msgstr "ショット #{shotId} のメモを保存できませんでした。接続を確認し、編集を続ける前にこのショットを開き直してください。"
 
 #: src/app/AppSettings.jsx
 msgid "Notifications"
@@ -3505,6 +3535,10 @@ msgstr "フェーズ名"
 #: src/pages/ProfileEdit/ExtendedProfileForm.jsx
 msgid "Phase navigation"
 msgstr "フェーズのナビゲーション"
+
+#: src/pages/ShotAnalyzer/utils/formatting.js
+msgid "Phase not reached"
+msgstr "フェーズに到達しませんでした"
 
 #: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
 msgid "PHASE REVIEW ADVISED"
@@ -4367,11 +4401,6 @@ msgctxt "Sunday, one letter"
 msgid "S"
 msgstr "日"
 
-#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
-msgctxt "column type, short for start/end"
-msgid "S/E"
-msgstr "開/終"
-
 #: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
 msgid "Safety timeout"
 msgstr "安全タイムアウト"
@@ -4951,6 +4980,10 @@ msgstr "最近のショットを表示"
 msgid "Show the control column panels as separate cards, or group them into a single unified card."
 msgstr "コントロール列のパネルを個別のカードとして表示するか、1 つのカードにまとめて表示します。"
 
+#: src/pages/Statistics/components/StatisticsShotCompareSection.jsx
+msgid "Showing up to 100 latest shots. Refine with filters."
+msgstr "最新のショットを最大100件表示しています。フィルターで絞り込めます。"
+
 #: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
 msgid "Shown when the scale briefly loses connection during the brew. In this case, weight is ignored for stop detection for that brew, even if the scale reconnects later."
 msgstr "抽出中にスケールの接続が一時的に途切れたときに表示されます。この場合、後でスケールが再接続しても、その抽出では停止判定に重量が使われません。"
@@ -5151,6 +5184,7 @@ msgstr "ランプの開始値"
 msgid "Start Volumetric"
 msgstr "容量制御を開始"
 
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
 #: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
 msgctxt "column type"
 msgid "Start/End"
@@ -5706,13 +5740,13 @@ msgstr "物理的な水タンクセンサーが優先されます。"
 msgid "The plugins you enabled start the next time the machine is switched on."
 msgstr "有効にしたプラグインは、次回マシンの電源を入れたときに起動します。"
 
-#: src/pages/Settings/PluginCard.jsx
-msgid "The profile's dose is saved to the shot history."
-msgstr "プロファイルのドーズがショット履歴に保存されます。"
-
 #: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
 msgid "The profile was probably updated since this shot was recorded. You can select the matching profile manually in the profile picker. Tip: For larger profile changes, duplicate the profile and add a version number to its name."
 msgstr "このショットの記録後にプロファイルが更新された可能性があります。プロファイル選択で、対応するプロファイルを手動で選べます。ヒント：大きな変更を加える場合は、プロファイルを複製し、名前にバージョン番号を追加してください。"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "The profile's dose is saved to the shot history."
+msgstr "プロファイルのドーズがショット履歴に保存されます。"
 
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "The pump runs with the 3-way valve closed until pressure stops rising. Then the pump stops and the valve opens, which should release the pressure to about 0 bar."
@@ -6555,15 +6589,3 @@ msgstr "スマートフォンをマシンと同じ Wi-Fi ネットワークに�
 #: src/pages/ShotAnalyzer/components/EmptyState.jsx
 msgid "Your saved shots and profiles directly from the GaggiMate internal storage."
 msgstr "GaggiMate の内部ストレージに保存されたショットとプロファイルを直接表示します。"
-
-#: src/pages/ShotAnalyzer/components/useShotNotesState.js
-msgid "Notes for shot #{shotId} changed elsewhere. Autosave was stopped to protect those changes. Reopen that shot before editing again."
-msgstr "ショット #{shotId} のメモが別の場所で変更されました。その変更を保護するため、自動保存を停止しました。編集を続ける前に、このショットを開き直してください。"
-
-#: src/pages/ShotAnalyzer/components/useShotNotesState.js
-msgid "Notes for shot #{shotId} could not be loaded. Nothing was overwritten. Check the connection and reopen that shot."
-msgstr "ショット #{shotId} のメモを読み込めませんでした。データは上書きされていません。接続を確認し、このショットを開き直してください。"
-
-#: src/pages/ShotAnalyzer/components/useShotNotesState.js
-msgid "Notes for shot #{shotId} could not be saved. Check the connection and reopen that shot before editing again."
-msgstr "ショット #{shotId} のメモを保存できませんでした。接続を確認し、編集を続ける前にこのショットを開き直してください。"
