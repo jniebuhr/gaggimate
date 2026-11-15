@@ -36,6 +36,11 @@ msgstr "（目标 {waterTarget}ml，{waterDelta}ml）"
 msgid "{0, plural, one {(# entry)} other {(# entries)}}"
 msgstr "{0, plural, other {（# 条）}}"
 
+#. placeholder {0}: commits.length
+#: src/pages/Settings/PatchNotes.jsx
+msgid "{0, plural, one {# commit} other {# commits}}"
+msgstr ""
+
 #. placeholder {0}: data.stats.currentStreak
 #. placeholder {0}: data.stats.longestStreak
 #: src/pages/Statistics/components/ActivityHeatmap.jsx
@@ -309,6 +314,10 @@ msgstr "所有可用面板均已显示。"
 #: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
 msgid "All Metrics"
 msgstr "全部指标"
+
+#: src/pages/Settings/PatchNotes.jsx
+msgid "All nightly changes"
+msgstr ""
 
 #: src/pages/ShotHistory/index.jsx
 msgid "All Shots"
@@ -838,6 +847,7 @@ msgstr "点击打开库。使用下方的导入或将文件拖放到此处进行
 #: src/app/MachineSetup.jsx
 #: src/components/VisualizerUploadModal.jsx
 #: src/pages/Home/BrewConfirmModal.jsx
+#: src/pages/Settings/PatchNotes.jsx
 msgid "Close"
 msgstr "关闭"
 
@@ -1373,6 +1383,10 @@ msgstr "描述"
 #: src/pages/Statistics/components/StatisticsMultiSelectDropdown.jsx
 msgid "Deselect {itemName}"
 msgstr "取消选择 {itemName}"
+
+#: src/pages/Settings/PatchNotes.jsx
+msgid "Details"
+msgstr ""
 
 #: src/pages/SetupWizard/MachineStep.jsx
 msgid "Detected board"
@@ -2360,10 +2374,6 @@ msgstr "正在导入萃取或曲线"
 msgid "Include legend"
 msgstr "包含图例"
 
-#: src/pages/Settings/PatchNotes.jsx
-msgid "Included in the next update"
-msgstr ""
-
 #: src/pages/ShotHistory/HistoryCard.jsx
 msgid "INCOMPLETE"
 msgstr "未完成"
@@ -2371,11 +2381,6 @@ msgstr "未完成"
 #: src/pages/Home/utils.js
 msgid "Infusion"
 msgstr "浸润"
-
-#. placeholder {0}: current.stableTag
-#: src/pages/Settings/PatchNotes.jsx
-msgid "Installed, not in stable ({0})"
-msgstr ""
 
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 msgctxt "ramp style"
@@ -3008,10 +3013,6 @@ msgstr ""
 msgid "no answer (timed out)"
 msgstr "无应答（超时）"
 
-#: src/pages/Settings/PatchNotes.jsx
-msgid "No commits."
-msgstr ""
-
 #: src/pages/Statistics/components/statisticsView/helpers.js
 #: src/pages/Statistics/components/toolbar/helpers.js
 msgid "No date"
@@ -3037,6 +3038,10 @@ msgstr "未找到项目。"
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 msgid "No more types available"
 msgstr "没有更多可用类型"
+
+#: src/pages/Settings/PatchNotes.jsx
+msgid "No new commits since the installed version"
+msgstr ""
 
 #: src/pages/ShotHistory/ShotNotesCard.jsx
 msgid "No notes added"
@@ -4866,6 +4871,10 @@ msgstr "简单曲线"
 msgid "Simple Profile"
 msgstr "简单曲线"
 
+#: src/pages/Settings/PatchNotes.jsx
+msgid "Since the last update"
+msgstr ""
+
 #: src/pages/SetupWizard/MachineStep.jsx
 msgid "Single boiler"
 msgstr "单锅炉"
@@ -6096,6 +6105,10 @@ msgstr "查看"
 msgctxt "import mode badge"
 msgid "VIEW"
 msgstr "查看"
+
+#: src/pages/Settings/PatchNotes.jsx
+msgid "View on GitHub"
+msgstr ""
 
 #: src/pages/ProfileList/index.jsx
 msgid "View statistics for {label} profile"

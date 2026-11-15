@@ -36,6 +36,11 @@ msgstr "(Ziel {waterTarget}ml, {waterDelta}ml)"
 msgid "{0, plural, one {(# entry)} other {(# entries)}}"
 msgstr "{0, plural, one {(# Eintrag)} other {(# Einträge)}}"
 
+#. placeholder {0}: commits.length
+#: src/pages/Settings/PatchNotes.jsx
+msgid "{0, plural, one {# commit} other {# commits}}"
+msgstr "{0, plural, one {# Commit} other {# Commits}}"
+
 #. placeholder {0}: data.stats.currentStreak
 #. placeholder {0}: data.stats.longestStreak
 #: src/pages/Statistics/components/ActivityHeatmap.jsx
@@ -309,6 +314,10 @@ msgstr "Alle verfügbaren Panels sind sichtbar."
 #: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
 msgid "All Metrics"
 msgstr "Alle Metriken"
+
+#: src/pages/Settings/PatchNotes.jsx
+msgid "All nightly changes"
+msgstr "Alle Nightly-Änderungen"
 
 #: src/pages/ShotHistory/index.jsx
 msgid "All Shots"
@@ -838,6 +847,7 @@ msgstr "Klicken, um die Bibliothek zu öffnen. Nutze unten Importieren oder lege
 #: src/app/MachineSetup.jsx
 #: src/components/VisualizerUploadModal.jsx
 #: src/pages/Home/BrewConfirmModal.jsx
+#: src/pages/Settings/PatchNotes.jsx
 msgid "Close"
 msgstr "Schließen"
 
@@ -1373,6 +1383,10 @@ msgstr "Beschreibung"
 #: src/pages/Statistics/components/StatisticsMultiSelectDropdown.jsx
 msgid "Deselect {itemName}"
 msgstr "{itemName} abwählen"
+
+#: src/pages/Settings/PatchNotes.jsx
+msgid "Details"
+msgstr "Details"
 
 #: src/pages/SetupWizard/MachineStep.jsx
 msgid "Detected board"
@@ -2360,10 +2374,6 @@ msgstr "Shot oder Profil wird importiert"
 msgid "Include legend"
 msgstr "Legende einschließen"
 
-#: src/pages/Settings/PatchNotes.jsx
-msgid "Included in the next update"
-msgstr "Im nächsten Update enthalten"
-
 #: src/pages/ShotHistory/HistoryCard.jsx
 msgid "INCOMPLETE"
 msgstr "UNVOLLSTÄNDIG"
@@ -2371,11 +2381,6 @@ msgstr "UNVOLLSTÄNDIG"
 #: src/pages/Home/utils.js
 msgid "Infusion"
 msgstr "Infusion"
-
-#. placeholder {0}: current.stableTag
-#: src/pages/Settings/PatchNotes.jsx
-msgid "Installed, not in stable ({0})"
-msgstr "Installiert, nicht in Stable ({0})"
 
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 msgctxt "ramp style"
@@ -3008,10 +3013,6 @@ msgstr "Nightly-Patchnotes"
 msgid "no answer (timed out)"
 msgstr "keine Antwort (Zeitüberschreitung)"
 
-#: src/pages/Settings/PatchNotes.jsx
-msgid "No commits."
-msgstr "Keine Commits."
-
 #: src/pages/Statistics/components/statisticsView/helpers.js
 #: src/pages/Statistics/components/toolbar/helpers.js
 msgid "No date"
@@ -3037,6 +3038,10 @@ msgstr "Keine Einträge gefunden."
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 msgid "No more types available"
 msgstr "Keine weiteren Typen verfügbar"
+
+#: src/pages/Settings/PatchNotes.jsx
+msgid "No new commits since the installed version"
+msgstr "Keine neuen Commits seit der installierten Version"
 
 #: src/pages/ShotHistory/ShotNotesCard.jsx
 msgid "No notes added"
@@ -4866,6 +4871,10 @@ msgstr "Einfaches Profil"
 msgid "Simple Profile"
 msgstr "Einfaches Profil"
 
+#: src/pages/Settings/PatchNotes.jsx
+msgid "Since the last update"
+msgstr "Seit dem letzten Update"
+
 #: src/pages/SetupWizard/MachineStep.jsx
 msgid "Single boiler"
 msgstr "Einkreiser"
@@ -6096,6 +6105,10 @@ msgstr "Ansehen"
 msgctxt "import mode badge"
 msgid "VIEW"
 msgstr "VIEW"
+
+#: src/pages/Settings/PatchNotes.jsx
+msgid "View on GitHub"
+msgstr "Auf GitHub ansehen"
 
 #: src/pages/ProfileList/index.jsx
 msgid "View statistics for {label} profile"
