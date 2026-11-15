@@ -30,6 +30,7 @@ class SmartDosePlugin : public Plugin {
     void sync();
     void apply(const smartdose::Action &action);
     bool canAdjustDose() const;
+    bool canCalibrate() const;
     bool skipDisabled();
     bool healthy(bool hardware) const;
     bool selectedHardware() const;
@@ -39,13 +40,8 @@ class SmartDosePlugin : public Plugin {
     Controller *controller = nullptr;
     std::recursive_mutex mutex;
     smartdose::Coordinator coordinator;
-    // Presentation only: the coordinator intentionally ignores non-owner samples.
-    struct LiveReading {
-        float weight = 0;
-        uint32_t last = 0;
-        bool present = false;
-    };
-    LiveReading liveReadings[2];
+    // Live/stable readings for presentation and calibration, independent of cycle ownership.
+    smartdose::Reading liveReadings[2];
     bool tarePending = false;
     String profileId;
 };

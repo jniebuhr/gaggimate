@@ -68,6 +68,11 @@ bool SmartDosePlugin::canAdjustDose() const {
            !controller->isActive() && !controller->isUpdating() && !controller->isAutotuning() &&
            !controller->getProfileManager()->getSelectedProfile().utility;
 }
+bool SmartDosePlugin::canCalibrate() const {
+    return controller && controller->getSettings().isSmartDoseActive() && controller->getMode() == MODE_BREW &&
+           !controller->isActive() && !controller->isUpdating() && !controller->isAutotuning() &&
+           !controller->getSettings().isSmartDoseAutomagic();
+}
 bool SmartDosePlugin::skipDisabled() {
     if (!controller)
         return true;
@@ -134,9 +139,10 @@ void SmartDosePlugin::measurement(float value, bool hardware) {
     // All entry points use process -> plugin; the first serialized valid event wins.
     std::scoped_lock lock(controller->getProcessLock(), mutex);
     auto &live = liveReadings[hardware];
-    live.weight = value;
-    live.last = millis();
-    live.present = std::isfinite(value);
+    if (std::isfinite(value))
+        live.update(value, millis());
+    else
+        live = Reading{};
     sync();
     if (!canAdjustDose() || !healthy(hardware))
         return;
@@ -151,7 +157,7 @@ void SmartDosePlugin::loop() {
         tarePending = false;
         coordinator.tareIssued = true;
         if (coordinator.ownerHardware)
-            controller->getClientController()->tare();
+            controller->getClientController()->tareHardwareScale();
         else
             BLEScales.tare();
     } else
@@ -194,11 +200,11 @@ bool SmartDosePlugin::calibrate(const String &accessory) {
     const auto requested = accessory == "cup" ? Accessory::CUP : Accessory::PORTAFILTER;
     // The user tares the empty scale and places the accessory before saving.
     // Automagic must be off so it cannot tare the object during measurement.
-    if (coordinator.config.automatic)
+    if (!canCalibrate())
         return false;
     const bool hardware = requested == Accessory::CUP ? coordinator.config.cupHardware : coordinator.config.pfHardware;
-    const auto &r = coordinator.readings[hardware];
-    if (!canAdjustDose() || !healthy(hardware) || !r.stable(millis()) || r.weight <= 0 || r.weight > 2000)
+    const auto &r = liveReadings[hardware];
+    if (!healthy(hardware) || !r.stable(millis()) || r.weight <= 0 || r.weight > 2000)
         return false;
     auto &settings = controller->getSettings();
     if (requested == Accessory::CUP)
@@ -225,7 +231,7 @@ void SmartDosePlugin::onTare(bool hardware) {
     // An explicit tare changes this scale's coordinate system. Non-owner tares
     // must not cancel or alter the active owner's cycle.
     coordinator.readings[hardware] = Reading{};
-    liveReadings[hardware] = LiveReading{};
+    liveReadings[hardware] = Reading{};
 }
 void SmartDosePlugin::status(JsonObject out) {
     out.clear();
@@ -245,7 +251,7 @@ void SmartDosePlugin::status(JsonObject out) {
     out["enabled"] = true;
     out["connected"] = ready;
     out["weight"] = ready ? doseWeight() : 0;
-    out["gross"] = ready ? r.weight - r.baseline : 0;
+    out["gross"] = ready ? r.weight - (portafilterSelected() ? r.baseline : 0) : 0;
     out["doseIn"] = controller->getProfileManager()->getSelectedProfile().dose;
     out["adjustable"] = canAdjustDose();
     out["available"] = available();
@@ -278,7 +284,8 @@ void SmartDosePlugin::status(JsonObject out) {
     auto writeMeasurement = [&](const char *key, bool hardware, bool portafilter) {
         const auto &live = liveReadings[hardware];
         const bool connected = live.present && healthy(hardware) && now - live.last < READING_STALE_MS;
-        const float gross = live.weight - coordinator.readings[hardware].baseline;
+        const bool activePortafilter = portafilterSelected() && coordinator.ownerHardware == hardware;
+        const float gross = live.weight - (activePortafilter ? coordinator.readings[hardware].baseline : 0);
         auto measurement = out[key].to<JsonObject>();
         measurement["source"] = hardware ? "hardware" : "bluetooth";
         measurement["connected"] = connected;
