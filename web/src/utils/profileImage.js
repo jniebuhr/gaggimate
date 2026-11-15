@@ -80,7 +80,8 @@ export async function uploadProfileImage(id, buffer) {
   const response = await fetch(imageUrl(id), {
     method: 'POST',
     headers: { 'Content-Type': 'application/octet-stream' },
-    body: buffer,
+    // A File, because the app's native HTTP bridge carries binary only for File bodies.
+    body: new File([buffer], 'image.bin', { type: 'application/octet-stream' }),
   });
   if (!response.ok) throw new Error((await response.text()) || t`Upload failed`);
 }
