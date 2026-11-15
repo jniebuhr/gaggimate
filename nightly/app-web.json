@@ -1,6 +1,6 @@
 {
-  "version": "v1.9.0-197-gd241b39b",
+  "version": "v1.9.0-198-g1c1c3aba",
   "url": "https://github.com/jniebuhr/gaggimate/releases/download/nightly/app-web.zip",
-  "checksum": "8cfceceda9b5c47a8442d871c8db09deb88bd05778ee6d2bec07ad08d25c1878",
+  "checksum": "bd8f6f7540b79f22601d32e1e2201ee578311f20876063d3b8c7203254340f8d",
   "minAppVersion": "1.0.0"
 }
