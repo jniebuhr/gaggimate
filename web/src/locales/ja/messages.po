@@ -2479,10 +2479,6 @@ msgstr "先週"
 msgid "Last: {lastTime} · {shotsSince, plural, one {# shot since} other {# shots since}}"
 msgstr "前回: {lastTime} · {shotsSince, plural, other {以降 # ショット}}"
 
-#: src/pages/Settings/PatchNotes.jsx
-msgid "Latest stable patchnotes"
-msgstr ""
-
 #: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 msgid "Length (Long)"
 msgstr "長さ（長い順）"
@@ -3005,10 +3001,6 @@ msgstr "Nightly"
 msgid "Nightly gets new features first, built from the same code as the nightly firmware."
 msgstr "Nightly では新機能をいち早く利用できます。Nightly ファームウェアと同じコードからビルドされています。"
 
-#: src/pages/Settings/PatchNotes.jsx
-msgid "Nightly patchnotes"
-msgstr ""
-
 #: src/app/machines.js
 msgid "no answer (timed out)"
 msgstr "応答なし（タイムアウト）"
@@ -3333,6 +3325,10 @@ msgstr "パスワード"
 #: src/pages/SetupWizard/WifiStep.jsx
 msgid "Password"
 msgstr "パスワード"
+
+#: src/pages/Settings/PatchNotes.jsx
+msgid "Patchnotes"
+msgstr ""
 
 #: src/pages/Home/utils.js
 msgctxt "process action"
@@ -4953,6 +4949,7 @@ msgid "Space evenly"
 msgstr "均等に配置"
 
 #: src/app/AppSettings.jsx
+#: src/pages/Settings/PatchNotes.jsx
 #: src/pages/Settings/tabs/SystemTab.jsx
 msgctxt "update channel"
 msgid "Stable"

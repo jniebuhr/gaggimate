@@ -2479,10 +2479,6 @@ msgstr "Letzte Woche"
 msgid "Last: {lastTime} · {shotsSince, plural, one {# shot since} other {# shots since}}"
 msgstr "Zuletzt: {lastTime} · {shotsSince, plural, one {# Shot seitdem} other {# Shots seitdem}}"
 
-#: src/pages/Settings/PatchNotes.jsx
-msgid "Latest stable patchnotes"
-msgstr "Neueste Stable-Patchnotes"
-
 #: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 msgid "Length (Long)"
 msgstr "Länge (lang)"
@@ -3005,10 +3001,6 @@ msgstr "Nightly"
 msgid "Nightly gets new features first, built from the same code as the nightly firmware."
 msgstr "Nightly erhält neue Funktionen zuerst und wird aus demselben Code wie die Nightly-Firmware erstellt."
 
-#: src/pages/Settings/PatchNotes.jsx
-msgid "Nightly patchnotes"
-msgstr "Nightly-Patchnotes"
-
 #: src/app/machines.js
 msgid "no answer (timed out)"
 msgstr "keine Antwort (Zeitüberschreitung)"
@@ -3333,6 +3325,10 @@ msgstr "Passwort"
 #: src/pages/SetupWizard/WifiStep.jsx
 msgid "Password"
 msgstr "Passwort"
+
+#: src/pages/Settings/PatchNotes.jsx
+msgid "Patchnotes"
+msgstr "Patchnotes"
 
 #: src/pages/Home/utils.js
 msgctxt "process action"
@@ -4953,6 +4949,7 @@ msgid "Space evenly"
 msgstr "Gleichmäßig verteilen"
 
 #: src/app/AppSettings.jsx
+#: src/pages/Settings/PatchNotes.jsx
 #: src/pages/Settings/tabs/SystemTab.jsx
 msgctxt "update channel"
 msgid "Stable"

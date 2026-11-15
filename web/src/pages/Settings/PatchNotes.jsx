@@ -10,13 +10,19 @@ import TabBar from '../../components/TabBar.jsx';
 
 const API = 'https://api.github.com/repos/jniebuhr/gaggimate';
 
-// `git describe` strings look like v1.8.0-12-gabc1234[-dirty]; a plain tag has no -g part.
-const refOf = version => version?.match(/-g([0-9a-f]+)/)?.[1] ?? version?.replace(/-dirty$/, '');
+// `git describe` strings look like v1.8.0-12-gabc1234[-dirty]; a plain tag has no -g part. The device
+// reports the latest version without its leading v (1.9.0), but the GitHub tag is v1.9.0.
+const refOf = version => {
+  const v = version?.replace(/-dirty$/, '');
+  return v?.match(/-g([0-9a-f]+)$/)?.[1] ?? (/^\d/.test(v ?? '') ? `v${v}` : v);
+};
 
 async function gh(path) {
   const res = await fetch(`${API}/${path}`, { headers: { Accept: 'application/vnd.github+json' } });
   if (!res.ok)
-    throw new Error(res.status === 403 ? 'GitHub rate limit reached' : `HTTP ${res.status}`);
+    throw new Error(
+      res.status === 403 ? 'GitHub rate limit reached' : `HTTP ${res.status} (${path})`,
+    );
   return res.json();
 }
 
@@ -157,12 +163,13 @@ function PatchNotesModal({ title, onClose, children }) {
 
 export function PatchNotes({ channel, installedVersion, latestVersion }) {
   const { t } = useLingui();
-  const [dialog, setDialog] = useState(null); // 'stable' | 'nightly'
-  const [tab, setTab] = useState('pending'); // nightly dialog: 'pending' | 'nightly'
+  const [isOpen, setOpen] = useState(false);
+  const [tab, setTab] = useState('pending'); // nightly only: 'pending' | 'nightly' | 'stable'
   const [data, setData] = useState({});
   const [errors, setErrors] = useState({});
 
-  const key = dialog === 'nightly' ? tab : dialog;
+  const nightly = channel === 'nightly';
+  const key = isOpen && (nightly ? tab : 'stable');
   // The versions are part of the key: "Save channel and refresh" delivers a new latestVersion later.
   const cacheKey = key === 'pending' ? `pending:${installedVersion}:${latestVersion}` : key;
 
@@ -182,11 +189,11 @@ export function PatchNotes({ channel, installedVersion, latestVersion }) {
       });
   }, [key, cacheKey, data, errors, installedVersion, latestVersion]);
 
-  const close = () => setDialog(null);
-  const open = which => {
+  const close = () => setOpen(false);
+  const open = () => {
     setTab('pending');
     setErrors({}); // reopening retries a failed load
-    setDialog(which);
+    setOpen(true);
   };
 
   const current = cacheKey && data[cacheKey];
@@ -204,43 +211,26 @@ export function PatchNotes({ channel, installedVersion, latestVersion }) {
 
   return (
     <>
-      <div className='flex flex-wrap gap-2'>
-        <button
-          type='button'
-          className='btn btn-outline btn-sm flex-auto'
-          onClick={() => open('stable')}
-        >
-          <Trans>Latest stable patchnotes</Trans>
-        </button>
-        {channel === 'nightly' && (
-          <button
-            type='button'
-            className='btn btn-outline btn-sm flex-auto'
-            onClick={() => open('nightly')}
-          >
-            <Trans>Nightly patchnotes</Trans>
-          </button>
-        )}
-      </div>
+      <button type='button' className='link link-primary self-start text-sm' onClick={open}>
+        <Trans>Patchnotes</Trans>
+      </button>
 
-      {dialog && (
-        <PatchNotesModal
-          title={dialog === 'stable' ? t`Latest stable patchnotes` : t`Nightly patchnotes`}
-          onClose={close}
-        >
-          {dialog === 'nightly' && (
+      {isOpen && (
+        <PatchNotesModal title={t`Patchnotes`} onClose={close}>
+          {nightly && (
             <TabBar
               tabs={[
                 { id: 'pending', label: t`Since the last update` },
                 { id: 'nightly', label: t`All nightly changes` },
+                { id: 'stable', label: t({ message: 'Stable', context: 'update channel' }) },
               ]}
               activeTab={tab}
               onTabChange={setTab}
             />
           )}
           <div
-            id={dialog === 'nightly' ? `panel-${tab}` : undefined}
-            role={dialog === 'nightly' ? 'tabpanel' : undefined}
+            id={nightly ? `panel-${tab}` : undefined}
+            role={nightly ? 'tabpanel' : undefined}
             className='min-h-0 flex-1 overflow-y-auto'
           >
             {content}

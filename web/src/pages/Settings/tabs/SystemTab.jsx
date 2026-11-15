@@ -401,14 +401,6 @@ export function SystemTab() {
                 </>
               )}
             </div>
-            <button
-              type='button'
-              className='btn btn-secondary btn-sm'
-              disabled={!formData.controllerUpdateAvailable || submitting}
-              onClick={() => onUpdate('controller')}
-            >
-              <Trans>Update Controller</Trans>
-            </button>
           </div>
 
           <div className='flex flex-col space-y-2'>
@@ -426,15 +418,31 @@ export function SystemTab() {
                 </>
               )}
             </div>
-            <button
-              type='button'
-              className='btn btn-secondary btn-sm'
-              disabled={!formData.displayUpdateAvailable || submitting}
-              onClick={() => onUpdate('display')}
-            >
-              <Trans>Update Display</Trans>
-            </button>
           </div>
+          {/* Own grid row, so the update buttons below stay on one line */}
+          <div className='flex md:col-span-2'>
+            <PatchNotes
+              channel={formData.channel}
+              installedVersion={formData.displayVersion}
+              latestVersion={formData.latestVersion}
+            />
+          </div>
+          <button
+            type='button'
+            className='btn btn-secondary btn-sm'
+            disabled={!formData.controllerUpdateAvailable || submitting}
+            onClick={() => onUpdate('controller')}
+          >
+            <Trans>Update Controller</Trans>
+          </button>
+          <button
+            type='button'
+            className='btn btn-secondary btn-sm'
+            disabled={!formData.displayUpdateAvailable || submitting}
+            onClick={() => onUpdate('display')}
+          >
+            <Trans>Update Display</Trans>
+          </button>
           <div className='flex flex-col space-y-2 md:col-span-2'>
             <button
               type='button'
@@ -447,13 +455,6 @@ export function SystemTab() {
             >
               <Trans>Update both</Trans>
             </button>
-          </div>
-          <div className='md:col-span-2'>
-            <PatchNotes
-              channel={formData.channel}
-              installedVersion={formData.displayVersion}
-              latestVersion={formData.latestVersion}
-            />
           </div>
         </div>
 
