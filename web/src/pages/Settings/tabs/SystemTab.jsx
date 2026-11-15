@@ -423,7 +423,12 @@ export function SystemTab() {
           <div className='flex md:col-span-2'>
             <PatchNotes
               channel={formData.channel}
-              installedVersion={formData.displayVersion}
+              // shortcut: when both are behind, the display wins even if the controller is older; both share one build.
+              installedVersion={
+                formData.displayUpdateAvailable || !formData.controllerUpdateAvailable
+                  ? formData.displayVersion
+                  : formData.controllerVersion
+              }
               latestVersion={formData.latestVersion}
             />
           </div>

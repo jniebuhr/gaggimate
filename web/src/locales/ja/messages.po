@@ -36,11 +36,6 @@ msgstr "（目標 {waterTarget}ml、{waterDelta}ml）"
 msgid "{0, plural, one {(# entry)} other {(# entries)}}"
 msgstr "{0, plural, other {（# 件）}}"
 
-#. placeholder {0}: commits.length
-#: src/pages/Settings/PatchNotes.jsx
-msgid "{0, plural, one {# commit} other {# commits}}"
-msgstr ""
-
 #. placeholder {0}: data.stats.currentStreak
 #. placeholder {0}: data.stats.longestStreak
 #: src/pages/Statistics/components/ActivityHeatmap.jsx
@@ -115,6 +110,10 @@ msgstr "{rssi}dB（往復: {lat} ms、再送: {rtx}）"
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "{scaleName} disconnected"
 msgstr "{scaleName} の接続が切れました"
+
+#: src/pages/Settings/PatchNotes.jsx
+msgid "{total, plural, one {# commit} other {# commits}}"
+msgstr "{total, plural, other {# 件のコミット}}"
 
 #: src/pages/ShotHistory/index.jsx
 msgid "{totalFilteredItems} of {historyCount} shots"
@@ -317,7 +316,7 @@ msgstr "すべてのメトリクス"
 
 #: src/pages/Settings/PatchNotes.jsx
 msgid "All nightly changes"
-msgstr ""
+msgstr "Nightly のすべての変更"
 
 #: src/pages/ShotHistory/index.jsx
 msgid "All Shots"
@@ -1082,7 +1081,7 @@ msgstr "{importName} をインポートできませんでした: {importMessage}
 
 #: src/pages/Settings/PatchNotes.jsx
 msgid "Could not load release notes"
-msgstr ""
+msgstr "リリースノートを読み込めませんでした"
 
 #: src/pages/ProfileEdit/ProfileImageUpload.jsx
 msgid "Could not read this image."
@@ -1386,7 +1385,7 @@ msgstr "{itemName} の選択を解除"
 
 #: src/pages/Settings/PatchNotes.jsx
 msgid "Details"
-msgstr ""
+msgstr "詳細"
 
 #: src/pages/SetupWizard/MachineStep.jsx
 msgid "Detected board"
@@ -3033,7 +3032,7 @@ msgstr "追加できる種類はもうありません"
 
 #: src/pages/Settings/PatchNotes.jsx
 msgid "No new commits since the installed version"
-msgstr ""
+msgstr "インストール済みのバージョン以降、新しいコミットはありません"
 
 #: src/pages/ShotHistory/ShotNotesCard.jsx
 msgid "No notes added"
@@ -4066,7 +4065,7 @@ msgstr "相対時間: <0>h</0>（現在）、<1>h-7d</1>（7 日前）"
 
 #: src/pages/Settings/PatchNotes.jsx
 msgid "Release notes"
-msgstr ""
+msgstr "リリースノート"
 
 #: src/components/MachineProfileControl.jsx
 msgid "Reload updated profile"
@@ -4841,6 +4840,11 @@ msgstr "最近のショットを表示"
 msgid "Show the control column panels as separate cards, or group them into a single unified card."
 msgstr "コントロール列のパネルを個別のカードとして表示するか、1 つのカードにまとめて表示します。"
 
+#. placeholder {0}: commits.length
+#: src/pages/Settings/PatchNotes.jsx
+msgid "showing the newest {0}"
+msgstr "最新の {0} 件を表示"
+
 #: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
 msgid "Shown when the scale briefly loses connection during the brew. In this case, weight is ignored for stop detection for that brew, even if the scale reconnects later."
 msgstr "抽出中にスケールの接続が一時的に途切れたときに表示されます。この場合、後でスケールが再接続しても、その抽出では停止判定に重量が使われません。"
@@ -4869,7 +4873,7 @@ msgstr "シンプルプロファイル"
 
 #: src/pages/Settings/PatchNotes.jsx
 msgid "Since the last update"
-msgstr ""
+msgstr "前回のアップデート以降"
 
 #: src/pages/SetupWizard/MachineStep.jsx
 msgid "Single boiler"
@@ -5561,6 +5565,10 @@ msgstr "ファイルに既知の設定が含まれていません。"
 msgid "The file does not contain a settings object."
 msgstr "ファイルに設定オブジェクトが含まれていません。"
 
+#: src/pages/Settings/PatchNotes.jsx
+msgid "The firmware version is not known yet"
+msgstr "ファームウェアのバージョンはまだ不明です"
+
 #: src/pages/Home/BrewConfirmModal.jsx
 msgid "The following warnings are currently active:"
 msgstr "現在有効な警告:"
@@ -6105,7 +6113,7 @@ msgstr "VIEW"
 
 #: src/pages/Settings/PatchNotes.jsx
 msgid "View on GitHub"
-msgstr ""
+msgstr "GitHub で見る"
 
 #: src/pages/ProfileList/index.jsx
 msgid "View statistics for {label} profile"

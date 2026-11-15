@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'preact/hooks';
+import { useCallback, useEffect, useState } from 'preact/hooks';
 import { createPortal } from 'preact/compat';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { plural } from '@lingui/core/macro';
+import { plural, t } from '@lingui/core/macro';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faXmark } from '@fortawesome/free-solid-svg-icons/faXmark';
 import { Spinner } from '../../components/Spinner.jsx';
@@ -18,7 +18,10 @@ const refOf = version => {
 };
 
 async function gh(path) {
-  const res = await fetch(`${API}/${path}`, { headers: { Accept: 'application/vnd.github+json' } });
+  const res = await fetch(`${API}/${path}`, {
+    headers: { Accept: 'application/vnd.github+json' },
+    signal: AbortSignal.timeout(20000), // a stalled request would otherwise keep the spinner forever
+  });
   if (!res.ok)
     throw new Error(
       res.status === 403 ? 'GitHub rate limit reached' : `HTTP ${res.status} (${path})`,
@@ -26,12 +29,16 @@ async function gh(path) {
   return res.json();
 }
 
-// shortcut: compare returns at most 250 commits, enough for a nightly span; page it if that ever stops being true.
+// Unpaged, compare returns the newest 250 commits and total_commits; paging would not help, since
+// page 1 always carries up to 300 file patches (MBs) and an older range belongs in the release tabs.
 async function commitsSinceInstalled(installed, latest) {
   const base = refOf(installed);
   const head = refOf(latest);
-  if (!head || head === base) return [];
-  return (await gh(`compare/${base}...${head}`)).commits.reverse();
+  // An empty latestVersion means the device's update check failed or hasn't run yet, not "up to date".
+  if (!base || !head) throw new Error(t`The firmware version is not known yet`);
+  if (head === base) return { commits: [], total: 0 };
+  const res = await gh(`compare/${base}...${head}`);
+  return { commits: res.commits.reverse(), total: res.total_commits };
 }
 
 // feat(update)!: Subject -> { type: 'feat', scope: 'update', subject: 'Subject' }
@@ -78,7 +85,7 @@ function CommitCard({ commit: c }) {
   );
 }
 
-function CommitList({ commits, from, to }) {
+function CommitList({ commits, total, from, to }) {
   if (!commits.length) {
     return (
       <p className='text-base-content/70 text-sm'>
@@ -93,7 +100,15 @@ function CommitList({ commits, from, to }) {
           {plainVersion(from)} → {plainVersion(to)}
         </span>
         <span aria-hidden='true'>·</span>
-        <span>{plural(commits.length, { one: '# commit', other: '# commits' })}</span>
+        <span>{plural(total, { one: '# commit', other: '# commits' })}</span>
+        {total > commits.length && (
+          <>
+            <span aria-hidden='true'>·</span>
+            <span>
+              <Trans>showing the newest {commits.length}</Trans>
+            </span>
+          </>
+        )}
       </p>
       <ul className='space-y-2'>
         {commits.map(c => (
@@ -189,7 +204,8 @@ export function PatchNotes({ channel, installedVersion, latestVersion }) {
       });
   }, [key, cacheKey, data, errors, installedVersion, latestVersion]);
 
-  const close = () => setOpen(false);
+  // Stable identity, so the modal's Escape listener isn't re-bound on every status tick re-render.
+  const close = useCallback(() => setOpen(false), []);
   const open = () => {
     setTab('pending');
     setErrors({}); // reopening retries a failed load
@@ -204,7 +220,7 @@ export function PatchNotes({ channel, installedVersion, latestVersion }) {
   ) : !current ? (
     <Spinner />
   ) : key === 'pending' ? (
-    <CommitList commits={current} from={installedVersion} to={latestVersion} />
+    <CommitList {...current} from={installedVersion} to={latestVersion} />
   ) : (
     <Release release={current} />
   );

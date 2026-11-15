@@ -36,11 +36,6 @@ msgstr "(cible {waterTarget} ml, {waterDelta} ml)"
 msgid "{0, plural, one {(# entry)} other {(# entries)}}"
 msgstr "{0, plural, one {(# entrée)} other {(# entrées)}}"
 
-#. placeholder {0}: commits.length
-#: src/pages/Settings/PatchNotes.jsx
-msgid "{0, plural, one {# commit} other {# commits}}"
-msgstr ""
-
 #. placeholder {0}: data.stats.currentStreak
 #. placeholder {0}: data.stats.longestStreak
 #: src/pages/Statistics/components/ActivityHeatmap.jsx
@@ -115,6 +110,10 @@ msgstr "{rssi} dB (aller-retour : {lat} ms, renvois : {rtx})"
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "{scaleName} disconnected"
 msgstr "{scaleName} déconnectée"
+
+#: src/pages/Settings/PatchNotes.jsx
+msgid "{total, plural, one {# commit} other {# commits}}"
+msgstr "{total, plural, one {# commit} other {# commits}}"
 
 #: src/pages/ShotHistory/index.jsx
 msgid "{totalFilteredItems} of {historyCount} shots"
@@ -317,7 +316,7 @@ msgstr "Toutes les métriques"
 
 #: src/pages/Settings/PatchNotes.jsx
 msgid "All nightly changes"
-msgstr ""
+msgstr "Toutes les modifications Nightly"
 
 #: src/pages/ShotHistory/index.jsx
 msgid "All Shots"
@@ -1082,7 +1081,7 @@ msgstr "Impossible d'importer {importName} : {importMessage}"
 
 #: src/pages/Settings/PatchNotes.jsx
 msgid "Could not load release notes"
-msgstr ""
+msgstr "Impossible de charger les notes de version"
 
 #: src/pages/ProfileEdit/ProfileImageUpload.jsx
 msgid "Could not read this image."
@@ -1386,7 +1385,7 @@ msgstr "Désélectionner {itemName}"
 
 #: src/pages/Settings/PatchNotes.jsx
 msgid "Details"
-msgstr ""
+msgstr "Détails"
 
 #: src/pages/SetupWizard/MachineStep.jsx
 msgid "Detected board"
@@ -3033,7 +3032,7 @@ msgstr "Plus aucun type disponible"
 
 #: src/pages/Settings/PatchNotes.jsx
 msgid "No new commits since the installed version"
-msgstr ""
+msgstr "Aucun nouveau commit depuis la version installée"
 
 #: src/pages/ShotHistory/ShotNotesCard.jsx
 msgid "No notes added"
@@ -4066,7 +4065,7 @@ msgstr "Temps relatif : <0>h</0> (maintenant), <1>h-7d</1> (il y a 7 jours)"
 
 #: src/pages/Settings/PatchNotes.jsx
 msgid "Release notes"
-msgstr ""
+msgstr "Notes de version"
 
 #: src/components/MachineProfileControl.jsx
 msgid "Reload updated profile"
@@ -4841,6 +4840,11 @@ msgstr "Afficher les shots récents"
 msgid "Show the control column panels as separate cards, or group them into a single unified card."
 msgstr "Afficher les panneaux de la colonne de contrôle sous forme de cartes séparées ou les regrouper dans une seule carte."
 
+#. placeholder {0}: commits.length
+#: src/pages/Settings/PatchNotes.jsx
+msgid "showing the newest {0}"
+msgstr "affichage des {0} plus récents"
+
 #: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
 msgid "Shown when the scale briefly loses connection during the brew. In this case, weight is ignored for stop detection for that brew, even if the scale reconnects later."
 msgstr "Affiché lorsque la balance perd brièvement la connexion pendant l'extraction. Dans ce cas, le poids est ignoré pour la détection d'arrêt de cette extraction, même si la balance se reconnecte ensuite."
@@ -4869,7 +4873,7 @@ msgstr "Profil simple"
 
 #: src/pages/Settings/PatchNotes.jsx
 msgid "Since the last update"
-msgstr ""
+msgstr "Depuis la dernière mise à jour"
 
 #: src/pages/SetupWizard/MachineStep.jsx
 msgid "Single boiler"
@@ -5561,6 +5565,10 @@ msgstr "Le fichier ne contient aucun réglage connu."
 msgid "The file does not contain a settings object."
 msgstr "Le fichier ne contient pas d'objet de réglages."
 
+#: src/pages/Settings/PatchNotes.jsx
+msgid "The firmware version is not known yet"
+msgstr "La version du firmware n'est pas encore connue"
+
 #: src/pages/Home/BrewConfirmModal.jsx
 msgid "The following warnings are currently active:"
 msgstr "Les avertissements suivants sont actuellement actifs :"
@@ -6105,7 +6113,7 @@ msgstr "VOIR"
 
 #: src/pages/Settings/PatchNotes.jsx
 msgid "View on GitHub"
-msgstr ""
+msgstr "Voir sur GitHub"
 
 #: src/pages/ProfileList/index.jsx
 msgid "View statistics for {label} profile"

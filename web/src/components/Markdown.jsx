@@ -3,8 +3,11 @@
 // HTML strings, so untrusted text can never inject markup. shortcut: no tables, nested lists, or
 // numbered lists; swap in markdown-to-jsx if release notes ever need them.
 
+import { memo } from 'preact/compat';
+
+// Bare URLs don't end in sentence punctuation; a mention isn't part of an email (a@b.com) or npm scope (@a/b).
 const INLINE =
-  /\*\*(.+?)\*\*|`([^`]+)`|\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)|(https?:\/\/[^\s)<]+)|@([\w-]+)/g;
+  /\*\*(.+?)\*\*|`([^`]+)`|\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)|(https?:\/\/[^\s)<]*[^\s)<.,;:!?])|(?<![\w.])@([\w-]+)(?![\w/-])/g;
 
 const linkClass = 'link link-primary break-all';
 
@@ -35,7 +38,7 @@ function inline(text) {
   return out;
 }
 
-export function Markdown({ text }) {
+function MarkdownView({ text }) {
   const blocks = [];
   let list = null;
   let para = null;
@@ -55,6 +58,9 @@ export function Markdown({ text }) {
       list.items.push(item[1]);
     } else if (!line.trim()) {
       flush();
+    } else if (list && /^\s/.test(line)) {
+      // An indented line continues a wrapped bullet (commit bodies wrap at ~72 columns).
+      list.items[list.items.length - 1] += ` ${line.trim()}`;
     } else {
       list = null;
       if (!para) blocks.push((para = { type: 'p', lines: [] }));
@@ -64,21 +70,27 @@ export function Markdown({ text }) {
 
   return (
     <div className='space-y-2 text-sm'>
-      {blocks.map(b =>
+      {blocks.map((b, n) =>
         b.type === 'h' ? (
-          <h5 className={b.level <= 2 ? 'mt-3 text-base font-semibold' : 'mt-2 font-semibold'}>
+          <h5
+            key={n}
+            className={b.level <= 2 ? 'mt-3 text-base font-semibold' : 'mt-2 font-semibold'}
+          >
             {inline(b.text)}
           </h5>
         ) : b.type === 'ul' ? (
-          <ul className='list-disc space-y-1 pl-5'>
-            {b.items.map(i => (
-              <li>{inline(i)}</li>
+          <ul key={n} className='list-disc space-y-1 pl-5'>
+            {b.items.map((i, k) => (
+              <li key={k}>{inline(i)}</li>
             ))}
           </ul>
         ) : (
-          <p>{inline(b.lines.join(' '))}</p>
+          <p key={n}>{inline(b.lines.join(' '))}</p>
         ),
       )}
     </div>
   );
 }
+
+// Memoized: the settings page re-renders on every machine status tick, and release bodies are long.
+export const Markdown = memo(MarkdownView);
