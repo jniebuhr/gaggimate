@@ -314,6 +314,7 @@ function buildPhaseMap(entries) {
   for (const { analysis } of entries) {
     if (!analysis.phases) continue;
     for (const phase of analysis.phases) {
+      if (phase.notReached) continue;
       const phaseNumber = phase.number + 1;
       const name = phase.displayName || phase.name || t`Phase ${phaseNumber}`;
       if (!phaseMap.has(name)) {

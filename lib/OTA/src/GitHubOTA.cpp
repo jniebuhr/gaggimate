@@ -90,7 +90,7 @@ void GitHubOTA::setPhase(uint8_t newPhase) {
     _phase_callback(newPhase);
 }
 
-void GitHubOTA::update(bool controller, bool display, NimBLEClient *client) {
+void GitHubOTA::update(bool controller, bool display, OtaSender *controllerLink) {
     const char *TAG = "update";
     OtaWatchdogRelax watchdogRelax;
 
@@ -106,7 +106,7 @@ void GitHubOTA::update(bool controller, bool display, NimBLEClient *client) {
     if (controller && update_required(_latest_version, _controller_version)) {
         ESP_LOGI(TAG, "Controller update is required, running firmware update.");
         setPhase(PHASE_CONTROLLER_FW);
-        if (!_controller_ota.update(client, _latest_url + _controller_firmware_name)) {
+        if (!_controller_ota.update(controllerLink, _latest_url + _controller_firmware_name)) {
             ESP_LOGE(TAG, "Controller update failed");
             setPhase(PHASE_FAILED);
             return;

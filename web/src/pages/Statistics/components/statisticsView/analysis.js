@@ -1,3 +1,4 @@
+import { getLatestStatisticsChartEntries } from '../../utils/statisticsChartEntries';
 // Shot analysis engine: metrics computation, compare entry building, profile/date-range extraction
 import {
   cleanName,
@@ -10,6 +11,7 @@ import {
 } from '../../../ShotAnalyzer/services/AnalyzerService';
 import { libraryService } from '../../../ShotAnalyzer/services/LibraryService';
 import { DEFAULT_SETTINGS } from './constants';
+import { resolveShotEffectiveTimestampMs } from '../../utils/statisticsSearchDsl';
 import {
   getShotSelectionKey,
   getStatisticsCompareFallbackKey,
@@ -197,7 +199,9 @@ export async function runStatisticsAnalysis({ isCurrentRun, onProgress, runReque
 export function buildStatisticsCompareEntries(result, runRequest, entriesRef) {
   if (!result) return [];
 
-  const cachedEntries = Array.isArray(entriesRef.current) ? entriesRef.current : [];
+  const cachedEntries = getLatestStatisticsChartEntries(
+    Array.isArray(entriesRef.current) ? entriesRef.current : [],
+  );
   const entryBySelectionKey = new Map(
     cachedEntries.map(entry => [entry?.meta?.selectionKey, entry]),
   );
@@ -210,6 +214,7 @@ export function buildStatisticsCompareEntries(result, runRequest, entriesRef) {
   const preferredShotOrder = orderedShotKeys.length > 0 ? orderedShotKeys : fallbackShotKeys;
 
   const orderedCompareEntries = preferredShotOrder
+    .filter(selectionKey => entryBySelectionKey.has(selectionKey))
     .map((selectionKey, index) =>
       buildStatisticsCompareEntry(entryBySelectionKey.get(selectionKey), {
         key: selectionKey,
@@ -280,16 +285,4 @@ export function getBuiltDateRange(entriesRef, dateBasisMode) {
     startMs: timestamps[0],
     endMs: timestamps[timestamps.length - 1],
   };
-}
-
-function resolveShotEffectiveTimestampMs(shotMeta, dateBasisMode) {
-  if (dateBasisMode === 'shot' || dateBasisMode === 'auto') {
-    const ts = shotMeta?.timestamp || shotMeta?.shotDate || 0;
-    if (Number.isFinite(ts) && ts > 0) return Number(ts);
-  }
-  if (dateBasisMode === 'upload' || dateBasisMode === 'auto') {
-    const ts = shotMeta?.uploadedAt || 0;
-    if (Number.isFinite(ts) && ts > 0) return Number(ts);
-  }
-  return null;
 }

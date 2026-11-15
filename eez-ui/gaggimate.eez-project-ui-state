@@ -1,10 +1,10 @@
 {
   "navigation": {
-    "selectedUserPageObject": "[gaggimate.eez-project]:/userPages/2",
+    "selectedUserPageObject": "[gaggimate.eez-project]:/userPages/8",
     "selectedUserWidgetObject": "[gaggimate.eez-project]:/userWidgets/1",
     "selectedActionObject": "[gaggimate.eez-project]:/actions/39",
     "selectedGlobalVariableObject": "[gaggimate.eez-project]:/variables/globalVariables/9",
-    "selectedStructureObject": "[gaggimate.eez-project]:/variables/structures/4",
+    "selectedStructureObject": "[gaggimate.eez-project]:/variables/structures/1",
     "selectedThemeObject": "[gaggimate.eez-project]:/themes/0",
     "selectedThemeColorObject": "[gaggimate.eez-project]:/colors/1",
     "selectedFontObject": "[gaggimate.eez-project]:/fonts/0",
@@ -31,7 +31,7 @@
           },
           {
             "type": "border",
-            "selected": 1,
+            "selected": 3,
             "size": 255.5,
             "location": "right",
             "children": [
@@ -80,7 +80,7 @@
           {
             "type": "border",
             "selected": 1,
-            "size": 154.5,
+            "size": 107.5,
             "location": "bottom",
             "children": [
               {
@@ -164,7 +164,7 @@
                 {
                   "type": "tabset",
                   "id": "#1772268a-caef-47ce-b38c-4534effa318c",
-                  "weight": 0.9050702414277769,
+                  "weight": 0.581488866150374,
                   "children": [
                     {
                       "type": "tab",
@@ -179,7 +179,7 @@
                 {
                   "type": "tabset",
                   "id": "#68ba0d96-0a7c-461d-96e1-5a9b9f9aca40",
-                  "weight": 0.5917766963181618,
+                  "weight": 0.9153580715955648,
                   "enableClose": false,
                   "children": [
                     {
@@ -204,10 +204,10 @@
                 {
                   "type": "tab",
                   "id": "#cc90c56e-b38e-4ab9-956f-1fb808b5b9e6",
-                  "name": "StatusScreen",
+                  "name": "NewProfileScreen",
                   "component": "editor",
                   "config": {
-                    "objectPath": "[gaggimate.eez-project]:/userPages/2",
+                    "objectPath": "[gaggimate.eez-project]:/userPages/8",
                     "permanent": false
                   },
                   "icon": "svg:page"
@@ -1324,7 +1324,7 @@
           "x": -213.60000000000002,
           "y": -235.17001953125
         },
-        "scale": 0.8
+        "scale": 0.9
       },
       "timeline": {
         "isEditorActive": false,
@@ -2012,9 +2012,7 @@
       "selectionFront": {},
       "selectionBack": {
         "0": {
-          "0": {
-            "$selected": true
-          },
+          "0": {},
           "1": {
             "1": {
               "1": {
@@ -2085,15 +2083,9 @@
       "selectionFront": {},
       "selectionBack": {
         "0": {
-          "1": {
-            "1": {
-              "1": {
-                "0": {
-                  "1": {}
-                }
-              }
-            },
-            "2": {}
+          "1": {},
+          "2": {
+            "$selected": true
           }
         }
       },
@@ -2312,7 +2304,7 @@
   "logsPanelFilter": "all",
   "selectedStylePropertyName": "",
   "lvglPart": "MAIN",
-  "lvglState": "DEFAULT",
+  "lvglState": "CHECKED",
   "lvglExpandedPropertiesGroup": [
     "POSITION AND SIZE",
     "IMAGE",

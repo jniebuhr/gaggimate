@@ -6,8 +6,10 @@ const NEUTRAL_STATUS_BADGE_CLASS = 'bg-base-content/10 text-base-content/80 bord
 const WARNING_BADGE_HIGH_SCALE_LABEL = msg`HIGH SCALE DELAY`;
 const WARNING_BADGE_SCALE_LOST_LABEL = msg`SCALE LOST`;
 const WARNING_BADGE_SLOW_SAMPLING_LABEL = msg`SLOW SAMPLING`;
+const WARNING_BADGE_PROFILE_UPDATED_LABEL = msg`Profile updated`;
 
 const WARNING_HELP_COPY = {
+  profileUpdated: msg`The profile was probably updated since this shot was recorded. You can select the matching profile manually in the profile picker. Tip: For larger profile changes, duplicate the profile and add a version number to its name.`,
   delayReview: msg`Review the stop reason for this phase. The algorithm was only able to identify it after several intermediate calculations.`,
   highScaleDelay: msg`The configured or inferred scale delay is unusually high. Review the scale-delay setting before relying on predictive weight stops.`,
   scaleLost: msg`Shown when the scale briefly loses connection during the brew. In this case, weight is ignored for stop detection for that brew, even if the scale reconnects later.`,
@@ -19,7 +21,18 @@ function getDelayReviewLabel(results) {
   return phaseNumber ? t`REVIEW PHASE ${phaseNumber}` : t`PHASE REVIEW ADVISED`;
 }
 
-export function buildAnalysisWarningBadges(results) {
+function hasProfilePhaseMismatch(results) {
+  return Boolean(
+    results?.phases?.some(
+      phase =>
+        !phase.skipped &&
+        Number.isInteger(phase.profilePhaseIndex) &&
+        Number(phase.number) !== phase.profilePhaseIndex,
+    ),
+  );
+}
+
+export function buildAnalysisWarningBadges(results, compareEntries = []) {
   const badges = [];
 
   if (results?.hasSlowSampleInterval) {
@@ -77,6 +90,18 @@ export function buildAnalysisWarningBadges(results) {
     });
   }
 
+  if (
+    hasProfilePhaseMismatch(results) ||
+    compareEntries.some(entry => hasProfilePhaseMismatch(entry.results))
+  ) {
+    badges.push({
+      key: 'profile-updated',
+      label: i18n._(WARNING_BADGE_PROFILE_UPDATED_LABEL),
+      colorClass: NEUTRAL_STATUS_BADGE_CLASS,
+      details: i18n._(WARNING_HELP_COPY.profileUpdated),
+    });
+  }
+
   return badges;
 }
 
@@ -101,7 +126,7 @@ function getAnalysisHeaderBaseLabel(col) {
 
 export function getAnalysisHeaderLabel(col) {
   const suffixByType = {
-    se: ` ${t({ message: 'S/E', context: 'column type, short for start/end' })}`,
+    se: ` ${t({ message: 'Start/End', context: 'column type' })}`,
     mm: ` ${t({ message: 'Min/Max', context: 'column type' })}`,
     avg: ` ${t({ message: 'Avg ∅', context: 'column type' })}`,
   };

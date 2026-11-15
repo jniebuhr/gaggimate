@@ -4,8 +4,8 @@
 #include "../Protocol.h"
 #include "../Transport.h"
 #include "BleConstants.h"
+#include "BleOtaReceiver.h"
 #include <NimBLEDevice.h>
-#include <ble_ota_dfu.hpp>
 
 // BLE peripheral (server) transport for the controller: RX write / TX notify chars (one datagram each) + OTA DFU service.
 // Pairing: bonds one display on first boot, then directed-advertises to it only until clearBonds(); comms require encryption.
@@ -17,6 +17,8 @@ class BleServerTransport : public Transport, public NimBLEServerCallbacks, publi
     // pairingWindow: advertise openly until a display bonds; a new one replaces the paired peer, the old one closes it.
     void init(const String &deviceName, bool pairingWindow = false);
     void startAdvertising();
+    // Off = stop advertising and accept no display; used while another link carries the session.
+    void setAdvertisingEnabled(bool enabled);
 
     // Publish system info on the legacy read-only INFO characteristic for pre-framing external readers.
     void setInfo(const String &info);
@@ -24,7 +26,7 @@ class BleServerTransport : public Transport, public NimBLEServerCallbacks, publi
     bool send(const uint8_t *data, size_t length) override;
     bool isConnected() const override;
     size_t maxDatagram() const override { return BLE_MAX_DATAGRAM; }
-    bool isUpdating() const { return _otaDfu.isUpdating(); };
+    bool isUpdating() const { return _ota.isUpdating(); };
 
     // Link-layer disconnect for the ping watchdog: LL_TERMINATE_IND propagates even when GATT writes silently drop.
     void disconnect();
@@ -36,6 +38,7 @@ class BleServerTransport : public Transport, public NimBLEServerCallbacks, publi
     bool _connected = false;
     bool _whitelistOnly = false;
     bool _pairingWindow = false;
+    volatile bool _advEnabled = true;
     // The single display this PCB is paired to (NVS-persisted); the bond store and whitelist are pruned to match.
     NimBLEAddress _pairedPeer{};
     bool _havePairedPeer = false;
@@ -47,7 +50,7 @@ class BleServerTransport : public Transport, public NimBLEServerCallbacks, publi
     NimBLECharacteristic *_infoChar = nullptr; // legacy read-only system info
     String _info;
     String _deviceName;
-    BLE_OTA_DFU _otaDfu;
+    BleOtaReceiver _ota;
 
     void enableWhitelist();
     void applyAdvertisingData();

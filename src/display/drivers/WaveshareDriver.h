@@ -10,6 +10,8 @@ class WaveshareDriver : public Driver {
     void setBrightness(int brightness) override { panel.setBrightness(brightness); };
     bool supportsSDCard() override;
     bool installSDCard() override;
+    bool supportsUART() override { return true; }
+    UartConf getUARTConf() override { return {UART_TX_PIN, UART_RX_PIN}; }
 
     static WaveshareDriver *getInstance() {
         if (instance == nullptr) {
@@ -21,6 +23,9 @@ class WaveshareDriver : public Driver {
   private:
     static WaveshareDriver *instance;
     WavesharePanel panel;
+
+    static constexpr uint8_t UART_TX_PIN = 43;
+    static constexpr uint8_t UART_RX_PIN = 44;
 
     WaveshareDriver() {};
 };

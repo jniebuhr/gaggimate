@@ -29,7 +29,7 @@ class GitHubOTA {
     void checkForUpdates();
     bool isUpdateAvailable(bool controller = false) const;
     String getCurrentVersion() const;
-    void update(bool controller = true, bool display = true, NimBLEClient *client = nullptr);
+    void update(bool controller = true, bool display = true, OtaSender *controllerLink = nullptr);
     void setReleaseUrl(const String &release_url);
     void setControllerVersion(const String &controller_version);
 

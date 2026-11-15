@@ -76,7 +76,7 @@ export function createPhaseDelayTracker(isLastPhase) {
   };
 
   const setPhaseDelayReviewHint = (delayMs, reason) => {
-    if (delayMs == null || !Number.isFinite(delayMs) || delayMs < 1000) return;
+    if (delayMs == null || !Number.isFinite(delayMs) || delayMs < 1200) return;
     const roundedDelay = Math.round(delayMs);
     state.delayReviewHint = true;
     state.delayReviewReason = reason || 'manual-check';

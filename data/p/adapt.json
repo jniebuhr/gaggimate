@@ -1,171 +1,200 @@
 {
   "id": "adapt",
-  "label": "Adaptive v2",
   "type": "pro",
-  "description": "Light to Medium - Fine - 25-40s - 1:2-2.5",
-  "temperature": 93,
+  "label": "Adaptive v3",
   "phases": [
     {
       "name": "Prefill",
+      "pump": {
+        "flow": 8,
+        "target": "flow",
+        "pressure": 0
+      },
       "phase": "preinfusion",
       "valve": 1,
-      "duration": 5,
-      "temperature": 93,
-      "transition": {
-        "type": "ease-out",
-        "duration": 2,
-        "adaptive": true
-      },
-      "pump": {
-        "target": "flow",
-        "pressure": 0,
-        "flow": 8
-      },
       "targets": [
         {
           "type": "pumped",
-          "operator": "gte",
-          "value": 100
+          "value": 100,
+          "operator": "gte"
+        },
+        {
+          "type": "volumetric",
+          "value": 36,
+          "operator": "gte"
         }
-      ]
+      ],
+      "duration": 5,
+      "transition": {
+        "type": "instant",
+        "target": "time",
+        "adaptive": false,
+        "duration": 0
+      },
+      "temperature": 93
     },
     {
       "name": "Fill",
+      "pump": {
+        "flow": 8,
+        "target": "flow",
+        "pressure": 0
+      },
       "phase": "preinfusion",
       "valve": 1,
-      "duration": 12,
-      "temperature": 93,
-      "transition": {
-        "type": "instant",
-        "duration": 0,
-        "adaptive": true
-      },
-      "pump": {
-        "target": "flow",
-        "pressure": 0,
-        "flow": 8
-      },
       "targets": [
         {
           "type": "pumped",
-          "operator": "gte",
-          "value": 100
+          "value": 100,
+          "operator": "gte"
         },
         {
           "type": "pressure",
-          "operator": "gte",
-          "value": 3
+          "value": 3,
+          "operator": "gte"
+        },
+        {
+          "type": "volumetric",
+          "value": 36,
+          "operator": "gte"
         }
-      ]
+      ],
+      "duration": 12,
+      "transition": {
+        "type": "instant",
+        "target": "time",
+        "adaptive": false,
+        "duration": 0
+      },
+      "temperature": 93
     },
     {
       "name": "Compressing",
+      "pump": {
+        "flow": 6.8,
+        "target": "pressure",
+        "pressure": 3
+      },
       "phase": "preinfusion",
       "valve": 1,
-      "duration": 12,
-      "temperature": 88,
-      "transition": {
-        "type": "ease-out",
-        "duration": 2,
-        "adaptive": true
-      },
-      "pump": {
-        "target": "pressure",
-        "pressure": 3,
-        "flow": 0
-      },
       "targets": [
         {
           "type": "pumped",
-          "operator": "gte",
-          "value": 100
+          "value": 100,
+          "operator": "gte"
         },
         {
           "type": "flow",
-          "operator": "lte",
-          "value": 3
+          "value": 3,
+          "operator": "lte"
+        },
+        {
+          "type": "volumetric",
+          "value": 36,
+          "operator": "gte"
         }
-      ]
+      ],
+      "duration": 12,
+      "transition": {
+        "type": "instant",
+        "target": "time",
+        "adaptive": false,
+        "duration": 0
+      },
+      "temperature": 88
     },
     {
       "name": "Dripping",
-      "phase": "preinfusion",
-      "valve": 1,
-      "duration": 6,
-      "temperature": 88,
-      "transition": {
-        "type": "ease-out",
-        "duration": 2,
-        "adaptive": true
-      },
       "pump": {
+        "flow": 6.8,
         "target": "pressure",
-        "pressure": 0.1,
-        "flow": 0
-      }
+        "pressure": 0.1
+      },
+      "phase": "brew",
+      "valve": 1,
+      "targets": [
+        {
+          "type": "volumetric",
+          "value": 36,
+          "operator": "gte"
+        }
+      ],
+      "duration": 6,
+      "transition": {
+        "type": "instant",
+        "target": "time",
+        "adaptive": false,
+        "duration": 0
+      },
+      "temperature": 88
     },
     {
       "name": "Pressurize",
+      "pump": {
+        "flow": 3.5,
+        "target": "pressure",
+        "pressure": 11
+      },
       "phase": "brew",
       "valve": 1,
-      "duration": 6,
-      "temperature": 88,
-      "transition": {
-        "type": "linear",
-        "duration": 6,
-        "adaptive": true
-      },
-      "pump": {
-        "target": "pressure",
-        "pressure": 11,
-        "flow": 3.5
-      },
       "targets": [
         {
           "type": "pumped",
-          "operator": "gte",
-          "value": 100
+          "value": 100,
+          "operator": "gte"
         },
         {
           "type": "pressure",
-          "operator": "gte",
-          "value": 8.8
+          "value": 7.7,
+          "operator": "gte"
         },
         {
           "type": "volumetric",
-          "operator": "gte",
-          "value": 38
+          "value": 36,
+          "operator": "gte"
         }
-      ]
+      ],
+      "duration": 6,
+      "transition": {
+        "type": "linear",
+        "target": "time",
+        "adaptive": false,
+        "duration": 6
+      },
+      "temperature": 88
     },
     {
       "name": "Extraction",
+      "pump": {
+        "flow": 3.5,
+        "target": "flow",
+        "pressure": 8.6
+      },
       "phase": "brew",
       "valve": 1,
-      "duration": 60,
-      "temperature": 88,
-      "transition": {
-        "type": "instant",
-        "duration": 0,
-        "adaptive": true
-      },
-      "pump": {
-        "target": "flow",
-        "pressure": 9.5,
-        "flow": -1
-      },
       "targets": [
         {
           "type": "pumped",
-          "operator": "gte",
-          "value": 100
+          "value": 100,
+          "operator": "gte"
         },
         {
           "type": "volumetric",
-          "operator": "gte",
-          "value": 38
+          "value": 36,
+          "operator": "gte"
         }
-      ]
+      ],
+      "duration": 60,
+      "transition": {
+        "type": "linear",
+        "target": "time",
+        "adaptive": true,
+        "duration": 60
+      },
+      "temperature": 88
     }
-  ]
+  ],
+  "utility": false,
+  "description": "Light to Medium - Fine - 25-40s - 1:2-2.5 | Best practice espresso extraction ideal for most beans",
+  "temperature": 93
 }

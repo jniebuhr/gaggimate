@@ -78,7 +78,7 @@ void WavesharePanel::initExtension() {
 
 bool WavesharePanel::installSD() {
     initExtension();
-    Mode_EXIO(EXIO_PIN4, TCA9554_OUTPUT_REG);
+    Mode_EXIO(EXIO_PIN4, 1); // input, matches the pre-fix behaviour the SD card relies on
     Set_EXIO(EXIO_PIN4, High);
 
     SD_MMC.setPins(WS_BOARD_SDMMC_SCK, WS_BOARD_SDMMC_CMD, WS_BOARD_SDMMC_DAT);
@@ -109,7 +109,7 @@ bool WavesharePanel::installSD() {
 void WavesharePanel::uninstallSD() {
     SD_MMC.end();
     Set_EXIO(EXIO_PIN4, Low);
-    Mode_EXIO(EXIO_PIN4, TCA9554_INPUT_REG);
+    Mode_EXIO(EXIO_PIN4, 1); // input (release the pin)
 }
 
 void WavesharePanel::setBrightness(uint8_t value) {
@@ -964,7 +964,8 @@ static int TouchDrvDigitalRead(uint32_t gpio) {
 
 static void TouchDrvPinMode(uint32_t gpio, uint8_t mode) {
     if (gpio == 0) {
-        Mode_EXIO(EXIO_PIN2, mode);
+        // TCA9554 modes are 0 = output, 1 = input, not Arduino pin modes
+        Mode_EXIO(EXIO_PIN2, mode == OUTPUT ? 0 : 1);
     } else {
         pinMode(gpio, mode);
     }

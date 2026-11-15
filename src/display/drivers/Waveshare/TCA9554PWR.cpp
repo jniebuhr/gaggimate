@@ -32,7 +32,7 @@ void Mode_EXIO(uint8_t Pin, uint8_t State) // Set the mode of the TCA9554PWR Pin
                                            // mode). State: 0= Output mode 1= input mode
 {
     uint8_t bitsStatus = I2C_Read_EXIO(TCA9554_CONFIG_REG);
-    uint8_t Data = (0x01 << (Pin - 1)) | bitsStatus;
+    uint8_t Data = State ? (bitsStatus | (0x01 << (Pin - 1))) : (bitsStatus & ~(0x01 << (Pin - 1)));
     uint8_t result = I2C_Write_EXIO(TCA9554_CONFIG_REG, Data);
     if (result != 0) {
         printf("I/O Configuration Failure !!!\r\n");

@@ -19,6 +19,13 @@ enum class BoilerControlMode : uint8_t {
     Pressure = 1,    // setpoint is a target pressure in bar
 };
 
+// Physical link carrying the controller session.
+enum class LinkType : uint8_t {
+    None = 0,
+    Ble = 1,
+    Uart = 2,
+};
+
 // Per-component commands: drive several components atomically in one frame, comparable so callers send only deltas.
 struct BoilerCommand {
     uint8_t index = 0;

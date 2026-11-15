@@ -82,7 +82,7 @@ export const CHART_COLOR_FALLBACKS = {
   weight: '#8B5CF6',
   weightFlow: '#6d28d9',
   phaseLine: 'rgba(107, 114, 128, 0.5)',
-  stopLabel: 'rgba(220, 38, 38, 0.85)',
+  stopLabel: '#b54747',
   warning: '#f59e0b',
 };
 

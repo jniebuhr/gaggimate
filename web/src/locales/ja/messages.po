@@ -59,6 +59,11 @@ msgstr "{0, plural, other {# プロファイル}}"
 msgid "{0, plural, one {# shot} other {# shots}}"
 msgstr "{0, plural, other {# ショット}}"
 
+#. placeholder {0}: formatStopReason(target.type)
+#: src/pages/ShotAnalyzer/services/analyzer/skippedPhases.js
+msgid "{0} (skipped)"
+msgstr "{0}(スキップ)"
+
 #: src/pages/Statistics/components/toolbar/helpers.js
 msgid "{candidateCount, plural, one {# candidate} other {# candidates}}"
 msgstr "{candidateCount, plural, other {# 件の候補}}"
@@ -74,6 +79,10 @@ msgstr "{diffWeeks, plural, other {# 週間前}}"
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
 msgid "{diffYears, plural, one {# year ago} other {# years ago}}"
 msgstr "{diffYears, plural, other {# 年前}}"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "{historyCount, plural, one {This will permanently delete the only shot on the device. This cannot be undone.} other {This will permanently delete all # shots from the device. This cannot be undone.}}"
+msgstr "{historyCount, plural, other {デバイス上のショット # 件をすべて完全に削除します。この操作は元に戻せません。}}"
 
 #: src/app/ConnectionGate.jsx
 msgid "{host} isn't answering. Make sure the machine is on and your phone is on the same Wi-Fi network."
@@ -103,10 +112,6 @@ msgstr "{pending} は次回アプリを離れたときにインストールさ�
 msgid "{recentShotCount, plural, one {# shot} other {# shots}}"
 msgstr "{recentShotCount, plural, other {# ショット}}"
 
-#: src/pages/Settings/tabs/SystemTab.jsx
-msgid "{rssi}dB (Roundtrip: {lat} ms, Resends: {rtx})"
-msgstr "{rssi}dB（往復: {lat} ms、再送: {rtx}）"
-
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "{scaleName} disconnected"
 msgstr "{scaleName} の接続が切れました"
@@ -114,6 +119,14 @@ msgstr "{scaleName} の接続が切れました"
 #: src/pages/Settings/PatchNotes.jsx
 msgid "{total, plural, one {# commit} other {# commits}}"
 msgstr "{total, plural, other {# 件のコミット}}"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "{totalFilteredItems, plural, one {Delete # shot} other {Delete # shots}}"
+msgstr "{totalFilteredItems, plural, other {# 件のショットを削除}}"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "{totalFilteredItems, plural, one {This will permanently delete the # shot matching your current search and filters. This cannot be undone.} other {This will permanently delete the # shots matching your current search and filters (across all pages). This cannot be undone.}}"
+msgstr "{totalFilteredItems, plural, other {現在の検索とフィルターに一致するショット # 件を完全に削除します(すべてのページが対象)。この操作は元に戻せません。}}"
 
 #: src/pages/ShotHistory/index.jsx
 msgid "{totalFilteredItems} of {historyCount} shots"
@@ -606,6 +619,10 @@ msgstr "Alba が水タンクの残量低下を報告した場合、またはそ�
 msgid "Bluetooth Devices"
 msgstr "Bluetooth デバイス"
 
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Bluetooth, {rssi}dB (Roundtrip: {lat} ms, Resends: {rtx})"
+msgstr "Bluetooth、{rssi}dB（往復: {lat} ms、再送: {rtx}）"
+
 #: src/app/notifications.js
 msgid "Boiler at {temperature} °C"
 msgstr "ボイラー {temperature} °C"
@@ -756,9 +773,15 @@ msgstr "{name} に接続できません"
 #: src/components/VisualizerUploadModal.jsx
 #: src/pages/SetupWizard/MachineStep.jsx
 #: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
+#: src/pages/ShotHistory/ConfirmDeleteModal.jsx
+#: src/pages/ShotHistory/index.jsx
 #: src/pages/ShotHistory/ShotNotesCard.jsx
 msgid "Cancel"
 msgstr "キャンセル"
+
+#: src/pages/ShotHistory/ConfirmDeleteModal.jsx
+msgid "Cancel deletion"
+msgstr "削除を中止"
 
 #: src/app/MachineSetup.jsx
 msgid "Cancel renaming"
@@ -847,6 +870,7 @@ msgstr "クリックしてライブラリを開きます。下のインポート
 #: src/components/VisualizerUploadModal.jsx
 #: src/pages/Home/BrewConfirmModal.jsx
 #: src/pages/Settings/PatchNotes.jsx
+#: src/pages/ShotHistory/ConfirmDeleteModal.jsx
 msgid "Close"
 msgstr "閉じる"
 
@@ -1043,13 +1067,13 @@ msgstr "接続中…"
 msgid "Control Column Style"
 msgstr "コントロール列のスタイル"
 
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Controller Connection"
+msgstr "コントローラーの接続"
+
 #: src/app/appSettings.js
 msgid "Controller errors and error-level warnings."
 msgstr "コントローラーのエラーとエラーレベルの警告。"
-
-#: src/pages/Settings/tabs/SystemTab.jsx
-msgid "Controller Signal Strength"
-msgstr "コントローラーの信号強度"
 
 #: src/pages/Settings/tabs/SystemTab.jsx
 msgid "Controller Version"
@@ -1075,6 +1099,27 @@ msgstr "Pro に変換"
 msgid "Could not delete calibration profile: {message}"
 msgstr "キャリブレーションプロファイルを削除できませんでした: {message}"
 
+#. placeholder {0}: resp.error
+#: src/pages/ShotHistory/index.jsx
+msgid "Could not delete history: {0}"
+msgstr "履歴を削除できませんでした: {0}"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Could not delete history. Please try again."
+msgstr "履歴を削除できませんでした。もう一度お試しください。"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Could not delete shot {id}. Please try again."
+msgstr "ショット {id} を削除できませんでした。もう一度お試しください。"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Could not export any shots. Please try again."
+msgstr "ショットをエクスポートできませんでした。もう一度お試しください。"
+
+#: src/pages/ProfileEdit/ProfileImageUpload.jsx
+msgid "Could not generate an image."
+msgstr "画像を生成できませんでした。"
+
 #: src/pages/Settings/index.jsx
 msgid "Could not import {importName}: {importMessage}"
 msgstr "{importName} をインポートできませんでした: {importMessage}"
@@ -1082,6 +1127,10 @@ msgstr "{importName} をインポートできませんでした: {importMessage}
 #: src/pages/Settings/PatchNotes.jsx
 msgid "Could not load release notes"
 msgstr "リリースノートを読み込めませんでした"
+
+#: src/pages/ProfileEdit/ProfileImageUpload.jsx
+msgid "Could not load the saved profile."
+msgstr "保存済みのプロファイルを読み込めませんでした。"
 
 #: src/pages/ProfileEdit/ProfileImageUpload.jsx
 msgid "Could not read this image."
@@ -1315,6 +1364,10 @@ msgstr "削除"
 msgid "Delete {label} profile"
 msgstr "{label} プロファイルを削除"
 
+#: src/pages/ShotHistory/index.jsx
+msgid "Delete all"
+msgstr "すべて削除"
+
 #: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 msgid "Delete All"
 msgstr "すべて削除"
@@ -1323,9 +1376,29 @@ msgstr "すべて削除"
 msgid "Delete all profiles"
 msgstr "すべてのプロファイルを削除"
 
+#: src/pages/ShotHistory/index.jsx
+msgid "Delete all shots"
+msgstr "すべてのショットを削除"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Delete all shots?"
+msgstr "すべてのショットを削除しますか?"
+
 #: src/pages/ShotAnalyzer/components/library/LibraryPanel.jsx
 msgid "Delete failed: {message}"
 msgstr "削除に失敗しました: {message}"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Delete filtered shots"
+msgstr "絞り込んだショットを削除"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Delete filtered shots ({totalFilteredItems})"
+msgstr "絞り込んだショットを削除 ({totalFilteredItems})"
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Delete filtered shots?"
+msgstr "絞り込んだショットを削除しますか?"
 
 #: src/components/MachineProfileControl.jsx
 msgid "Delete imported profile"
@@ -1363,9 +1436,25 @@ msgstr "このプリセットを削除しますか？"
 msgid "Delete this schedule"
 msgstr "このスケジュールを削除"
 
+#. placeholder {0}: targets.length
+#. placeholder {1}: failedIds.join(', ')
+#: src/pages/ShotHistory/index.jsx
+msgid "Deleted {done} of {0} shots. Failed: {1}"
+msgstr "{0} 件中 {done} 件のショットを削除しました。失敗: {1}"
+
 #: src/pages/Settings/PluginCard.jsx
 msgid "Deleted profile"
 msgstr "プロファイルを削除しました"
+
+#. placeholder {0}: progress.current
+#. placeholder {1}: progress.total
+#: src/pages/ShotHistory/ConfirmDeleteModal.jsx
+msgid "Deleting shot {0} of {1}..."
+msgstr "ショットを削除中 ({0}/{1})..."
+
+#: src/pages/ShotHistory/ConfirmDeleteModal.jsx
+msgid "Deleting…"
+msgstr "削除中…"
 
 #: src/pages/Settings/tabs/CleaningSection.jsx
 msgid "Descaling"
@@ -1827,6 +1916,10 @@ msgstr "エクスポートに失敗しました: {message}"
 msgid "Export File"
 msgstr "ファイルをエクスポート"
 
+#: src/pages/ShotHistory/index.jsx
+msgid "Export filtered shots"
+msgstr "絞り込んだショットをエクスポート"
+
 #: src/pages/ProfileList/index.jsx
 msgid "Export profile"
 msgstr "プロファイルをエクスポート"
@@ -1847,9 +1940,26 @@ msgstr "設定をエクスポート"
 msgid "Export shot data"
 msgstr "ショットデータをエクスポート"
 
+#. placeholder {0}: exported.length
+#. placeholder {1}: targets.length
+#: src/pages/ShotHistory/index.jsx
+msgid "Exported {0} of {1} shots ({failed} failed)."
+msgstr "{1} 件中 {0} 件のショットをエクスポートしました(失敗 {failed} 件)。"
+
+#. placeholder {0}: exportProgress.current
+#. placeholder {1}: exportProgress.total
+#: src/pages/ShotHistory/index.jsx
+msgid "Exporting shot {0} of {1}..."
+msgstr "ショットをエクスポート中 ({0}/{1})..."
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTablePhases.js
 #: src/pages/ShotAnalyzer/utils/columns.js
 msgid "Extended Record"
 msgstr "拡張記録"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTableCells.jsx
+msgid "Extended:"
+msgstr "延長込み:"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "External LED ({extLedPct}%)"
@@ -2009,6 +2119,10 @@ msgstr "フラッシュ水量"
 msgid "For 120 V machines, heater coordination should generally remain enabled. Running the brew and steam heaters simultaneously can overload the circuit, blow a fuse or trip a breaker, and create a fire hazard. Only disable it if the machine and supply circuit are rated to power both heaters together."
 msgstr "120 V のマシンでは、通常ヒーター協調を有効のままにしてください。抽出ヒーターとスチームヒーターを同時に動作させると回路が過負荷になり、ヒューズが切れたりブレーカーが落ちたりして、火災の危険があります。マシンと電源回路が両方のヒーターを同時に動作させる定格を満たしている場合にのみ無効にしてください。"
 
+#: src/pages/SetupWizard/index.jsx
+msgid "For further information on how to use and configure GaggiMate please consult our documentation and guides!"
+msgstr "GaggiMate の使い方や設定方法について詳しくは、ドキュメントとガイドをご覧ください！"
+
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "Forget"
 msgstr "削除"
@@ -2044,6 +2158,10 @@ msgstr "開始"
 msgctxt "panel view"
 msgid "Full"
 msgstr "フル"
+
+#: src/pages/SetupWizard/index.jsx
+msgid "Further Resources"
+msgstr "その他のリソース"
 
 #: src/pages/ShotAnalyzer/components/EmptyState.jsx
 msgid "GaggiMate (GM)"
@@ -2096,6 +2214,14 @@ msgstr "一般"
 #: src/pages/DashboardSettings/index.jsx
 msgid "General Settings"
 msgstr "一般設定"
+
+#: src/pages/ProfileEdit/ProfileImageUpload.jsx
+msgid "Generate"
+msgstr "生成"
+
+#: src/pages/ProfileEdit/ProfileImageUpload.jsx
+msgid "Generate draws a picture from the saved profile."
+msgstr "「生成」は保存済みのプロファイルから画像を作成します。"
 
 #: src/pages/ProfileEdit/ProfileImageUpload.jsx
 msgid "GIF images are not supported. Please use PNG, JPEG, WebP or BMP."
@@ -2172,6 +2298,10 @@ msgstr "ハードウェアスケール"
 msgid "Hardware scales"
 msgstr "ハードウェアスケール"
 
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Headless Version"
+msgstr "Headless のバージョン"
+
 #: src/pages/Settings/tabs/HeaterCoordinationSection.jsx
 msgid "Heater coordination"
 msgstr "ヒーター協調"
@@ -2179,6 +2309,10 @@ msgstr "ヒーター協調"
 #: src/pages/Settings/tabs/HeaterCoordinationSection.jsx
 msgid "Heater Coordination"
 msgstr "ヒーター協調"
+
+#: src/pages/SetupWizard/TestStep.jsx
+msgid "Heater off, waiting for the temperature to rise…"
+msgstr "ヒーター停止中、温度の上昇を待っています…"
 
 #: src/utils/metricDefinitions.js
 msgid "Heater Power"
@@ -3059,10 +3193,6 @@ msgstr "まだフェーズがありません。フェーズを追加して抽出
 msgid "No pinned items found."
 msgstr "固定された項目が見つかりません。"
 
-#: src/pages/ShotAnalyzer/utils/formatting.js
-msgid "No preceding phase"
-msgstr "前のフェーズなし"
-
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "No pressure sensor was detected."
 msgstr "圧力センサーが検出されませんでした。"
@@ -3131,6 +3261,10 @@ msgctxt "relay function"
 msgid "None"
 msgstr "なし"
 
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Not connected"
+msgstr "未接続"
+
 #: src/components/PumpFlowCalibration/Footer.jsx
 msgid "Not connected to the machine"
 msgstr "マシンに接続されていません"
@@ -3168,6 +3302,18 @@ msgstr "記録なし"
 #: src/pages/ShotHistory/ShotNotesCard.jsx
 msgid "Notes"
 msgstr "メモ"
+
+#: src/pages/ShotAnalyzer/components/useShotNotesState.js
+msgid "Notes for shot #{shotId} changed elsewhere. Autosave was stopped to protect those changes. Reopen that shot before editing again."
+msgstr "ショット #{shotId} のメモが別の場所で変更されました。その変更を保護するため、自動保存を停止しました。編集を続ける前に、このショットを開き直してください。"
+
+#: src/pages/ShotAnalyzer/components/useShotNotesState.js
+msgid "Notes for shot #{shotId} could not be loaded. Nothing was overwritten. Check the connection and reopen that shot."
+msgstr "ショット #{shotId} のメモを読み込めませんでした。データは上書きされていません。接続を確認し、このショットを開き直してください。"
+
+#: src/pages/ShotAnalyzer/components/useShotNotesState.js
+msgid "Notes for shot #{shotId} could not be saved. Check the connection and reopen that shot before editing again."
+msgstr "ショット #{shotId} のメモを保存できませんでした。接続を確認し、編集を続ける前にこのショットを開き直してください。"
 
 #: src/app/AppSettings.jsx
 msgid "Notifications"
@@ -3411,6 +3557,10 @@ msgstr "フェーズ名"
 msgid "Phase navigation"
 msgstr "フェーズのナビゲーション"
 
+#: src/pages/ShotAnalyzer/utils/formatting.js
+msgid "Phase not reached"
+msgstr "フェーズに到達しませんでした"
+
 #: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
 msgid "PHASE REVIEW ADVISED"
 msgstr "フェーズの確認を推奨"
@@ -3542,6 +3692,14 @@ msgstr "予熱中..."
 #: src/pages/Home/utils.js
 msgid "Preinfusion"
 msgstr "プレインフュージョン"
+
+#: src/pages/ShotHistory/ConfirmDeleteModal.jsx
+msgid "Preparing deletion..."
+msgstr "削除を準備中..."
+
+#: src/pages/ShotHistory/index.jsx
+msgid "Preparing export..."
+msgstr "エクスポートを準備中..."
 
 #: src/pages/ShotAnalyzer/components/shotChart/constants.js
 msgid "Preparing MP4 export..."
@@ -3721,6 +3879,10 @@ msgstr "プロファイル A-Z"
 msgid "Profile Chart Height"
 msgstr "プロファイルチャートの高さ"
 
+#: src/pages/SetupWizard/index.jsx
+msgid "Profile Creation"
+msgstr "プロファイルの作成"
+
 #: src/pages/ProfileList/index.jsx
 msgid "Profile details for {label}"
 msgstr "{label} のプロファイル詳細"
@@ -3776,6 +3938,10 @@ msgstr "プロファイル統計"
 #: src/pages/ProfileList/index.jsx
 msgid "Profile type: {typeText}"
 msgstr "プロファイルの種類: {typeText}"
+
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgid "Profile updated"
+msgstr "プロファイル更新"
 
 #: src/components/MachineProfileControl.jsx
 msgid "Profile values"
@@ -4260,11 +4426,6 @@ msgctxt "Sunday, one letter"
 msgid "S"
 msgstr "日"
 
-#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
-msgctxt "column type, short for start/end"
-msgid "S/E"
-msgstr "開/終"
-
 #: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
 msgid "Safety timeout"
 msgstr "安全タイムアウト"
@@ -4569,6 +4730,10 @@ msgstr "マシンを選択して推奨のデフォルト値を適用します。
 msgid "Select..."
 msgstr "選択..."
 
+#: src/pages/SetupWizard/index.jsx
+msgid "Selected profile"
+msgstr "選択中のプロファイル"
+
 #: src/components/MachineProfileControl.jsx
 msgid "Selecting a profile prefills the values. Save to apply. Choose Custom to edit machine values."
 msgstr "プロファイルを選択すると値が入力されます。保存すると適用されます。マシンの値を編集するにはカスタムを選択してください。"
@@ -4845,6 +5010,10 @@ msgstr "コントロール列のパネルを個別のカードとして表示す
 msgid "showing the newest {0}"
 msgstr "最新の {0} 件を表示"
 
+#: src/pages/Statistics/components/StatisticsShotCompareSection.jsx
+msgid "Showing up to 100 latest shots. Refine with filters."
+msgstr "最新のショットを最大100件表示しています。フィルターで絞り込めます。"
+
 #: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
 msgid "Shown when the scale briefly loses connection during the brew. In this case, weight is ignored for stop detection for that brew, even if the scale reconnects later."
 msgstr "抽出中にスケールの接続が一時的に途切れたときに表示されます。この場合、後でスケールが再接続しても、その抽出では停止判定に重量が使われません。"
@@ -5050,6 +5219,7 @@ msgstr "ランプの開始値"
 msgid "Start Volumetric"
 msgstr "容量制御を開始"
 
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
 #: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
 msgctxt "column type"
 msgid "Start/End"
@@ -5301,6 +5471,10 @@ msgstr "木"
 msgctxt "Tuesday, one letter"
 msgid "T"
 msgstr "火"
+
+#: src/pages/SetupWizard/index.jsx
+msgid "Tap a profile to select it."
+msgstr "プロファイルをタップすると選択できます。"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Tare"
@@ -5578,8 +5752,8 @@ msgid "The grinder reaches GaggiMate at this address, so both need to share a ne
 msgstr "グラインダーはこのアドレスで GaggiMate に接続するため、両方が同じネットワーク上にある必要があり（E64 WS は 2.4 GHz のみ対応）、アドレスが変わってはいけません。ルーターで GaggiMate 用にアドレスを予約してください。"
 
 #: src/pages/SetupWizard/TestStep.jsx
-msgid "The heater runs at full power for up to 10 seconds and stops as soon as the boiler temperature has risen by a few degrees."
-msgstr "ヒーターを最大出力で最長 10 秒間動作させ、ボイラーの温度が数度上昇した時点で停止します。"
+msgid "The heater runs at full power for up to 10 seconds. The test passes as soon as the boiler temperature has risen by a few degrees, which can take up to 30 more seconds on a larger boiler."
+msgstr "ヒーターを最大出力で最長 10 秒間動作させます。ボイラーの温度が数度上昇した時点でテストは合格です。大きなボイラーでは、さらに最長 30 秒かかる場合があります。"
 
 #: src/app/appSettings.js
 msgid "The machine has been in steam mode for 5 minutes."
@@ -5605,6 +5779,10 @@ msgstr "物理的な水タンクセンサーが優先されます。"
 msgid "The plugins you enabled start the next time the machine is switched on."
 msgstr "有効にしたプラグインは、次回マシンの電源を入れたときに起動します。"
 
+#: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
+msgid "The profile was probably updated since this shot was recorded. You can select the matching profile manually in the profile picker. Tip: For larger profile changes, duplicate the profile and add a version number to its name."
+msgstr "このショットの記録後にプロファイルが更新された可能性があります。プロファイル選択で、対応するプロファイルを手動で選べます。ヒント：大きな変更を加える場合は、プロファイルを複製し、名前にバージョン番号を追加してください。"
+
 #: src/pages/Settings/PluginCard.jsx
 msgid "The profile's dose is saved to the shot history."
 msgstr "プロファイルのドーズがショット履歴に保存されます。"
@@ -5620,6 +5798,10 @@ msgstr "スケールは見つかりましたが、Bluetooth 接続に失敗し�
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "The scale wasn't found. Make sure it's switched on and nearby, then scan again."
 msgstr "スケールが見つかりませんでした。電源が入っていて近くにあることを確認してから、もう一度スキャンしてください。"
+
+#: src/pages/ProfileList/index.jsx
+msgid "The selected profile can't be deleted"
+msgstr "選択中のプロファイルは削除できません"
 
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "The temperature did not rise. Check the heater wiring, the SSR and the thermal fuses."
@@ -5781,6 +5963,10 @@ msgstr "合計重量"
 msgid "Totals"
 msgstr "合計"
 
+#: src/pages/SetupWizard/index.jsx
+msgid "Touch Screen Guide"
+msgstr "タッチスクリーンガイド"
+
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 msgid "Transition duration in {rampUnit}"
 msgstr "遷移時間（{rampUnit}）"
@@ -5817,6 +6003,10 @@ msgstr "目標でオフ"
 #: src/pages/Settings/PluginCard.jsx
 msgid "Turn on at start, off at target"
 msgstr "開始時にオン、目標でオフ"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "UART (Roundtrip: {lat} ms, Resends: {rtx})"
+msgstr "UART（往復: {lat} ms、再送: {rtx}）"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Unavailable / uncalibrated"
@@ -5942,6 +6132,10 @@ msgstr "ディスプレイを更新"
 msgid "Update failed"
 msgstr "アップデートに失敗しました"
 
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Update Headless"
+msgstr "Headless を更新"
+
 #: src/app/AppSettings.jsx
 msgid "Updates"
 msgstr "アップデート"
@@ -5957,6 +6151,14 @@ msgstr "ディスプレイのファイルシステムを更新中"
 #: src/pages/Settings/tabs/SystemTab.jsx
 msgid "Updating Display firmware"
 msgstr "ディスプレイのファームウェアを更新中"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Updating Headless filesystem"
+msgstr "Headless のファイルシステムを更新中"
+
+#: src/pages/Settings/tabs/SystemTab.jsx
+msgid "Updating Headless firmware"
+msgstr "Headless のファームウェアを更新中"
 
 #: src/pages/Statistics/components/toolbar/constants.js
 msgctxt "date basis"

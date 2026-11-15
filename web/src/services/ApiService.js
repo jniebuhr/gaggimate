@@ -19,7 +19,6 @@ export default class ApiService {
   maxReconnectDelay = 30000; // Maximum delay of 30 seconds
   baseReconnectDelay = 1000; // Start with 1 second delay
   reconnectTimeout = null;
-  isConnecting = false;
 
   // socketUrl/state let extra instances watch other machines without touching the dashboard's state.
   constructor({ socketUrl = null, state = machine } = {}) {
@@ -32,7 +31,8 @@ export default class ApiService {
   close() {
     this.closed = true;
     clearTimeout(this.reconnectTimeout);
-    this.socket?.close();
+    this._dropSocket();
+    this._markDisconnected();
   }
 
   reopen() {
@@ -42,31 +42,36 @@ export default class ApiService {
   }
 
   async connect() {
-    if (this.isConnecting) return;
-    this.isConnecting = true;
-
+    clearTimeout(this.reconnectTimeout);
+    this.reconnectTimeout = null;
     try {
-      if (this.socket) {
-        this.socket.close();
-      }
+      this._dropSocket();
 
       const wsProtocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
       const socketUrl =
         this.socketUrl ?? (isApp ? machineSocketUrl() : `${wsProtocol}${window.location.host}/ws`);
       // In the app there's nothing to connect to until a machine has been set up.
       if (!socketUrl) return;
-      this.socket = new WebSocket(socketUrl);
+      const socket = new WebSocket(socketUrl);
+      this.socket = socket;
 
-      this.socket.addEventListener('message', this._onMessage.bind(this));
-      this.socket.addEventListener('close', this._onClose.bind(this));
-      this.socket.addEventListener('error', this._onError.bind(this));
-      this.socket.addEventListener('open', this._onOpen.bind(this));
+      // Late events from a replaced socket (e.g. a close queued while iOS suspended the app) must not touch state.
+      const current = handler => event => socket === this.socket && handler.call(this, event);
+      socket.addEventListener('message', current(this._onMessage));
+      socket.addEventListener('close', current(this._onClose));
+      socket.addEventListener('error', current(this._onError));
+      socket.addEventListener('open', current(this._onOpen));
     } catch (error) {
       console.error('WebSocket connection error:', error);
       this._scheduleReconnect();
-    } finally {
-      this.isConnecting = false;
     }
+  }
+
+  // Detaches before closing so the old socket's close event counts as stale.
+  _dropSocket() {
+    const socket = this.socket;
+    this.socket = null;
+    socket?.close();
   }
 
   _onOpen() {
@@ -80,13 +85,17 @@ export default class ApiService {
 
   _onClose() {
     console.log('WebSocket connection closed');
+    this._markDisconnected();
+    this._scheduleReconnect();
+  }
+
+  _markDisconnected() {
     this.state.value = {
       ...this.state.value,
       connected: false,
       // scan:complete can't arrive on a dead socket, so don't leave the spinner latched.
-      scale: { ...machine.value.scale, scanning: false },
+      scale: { ...this.state.value.scale, scanning: false },
     };
-    this._scheduleReconnect();
   }
 
   _onError(error) {
@@ -230,6 +239,7 @@ export default class ApiService {
     map('sbat', 'scaleBattery', v => v ?? null);
     map('process', 'process', v => v || null);
     map('rssi', 'rssi', v => v || 0);
+    map('lnk', 'controllerLink', v => v || 'none');
     map('lat', 'lat', v => v || 0);
     map('rtx', 'rtx', v => v || 0);
     map('tof', 'tofDistance', v => v || 0);
@@ -253,6 +263,7 @@ export default class ApiService {
     if (has('db')) capabilities.dualBoiler = message.db;
     if (has('hs')) capabilities.hardwareScale = !!message.hs;
     if (has('sd')) capabilities.sdCard = !!message.sd;
+    if (has('hl')) capabilities.headless = !!message.hl;
 
     // Only telemetry frames extend the chart history; state-only frames would duplicate points.
     let history = this.state.value.history;
@@ -335,6 +346,7 @@ export const createMachineState = () =>
       dualBoiler: false,
       hardwareScale: false,
       sdCard: false,
+      headless: false,
     },
     // BLE scale lifecycle from evt:scale:* (GM-257).
     scale: {

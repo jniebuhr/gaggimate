@@ -213,6 +213,13 @@ void DefaultUI::init() {
             rerender = true;
         }
     });
+    pluginManager->on("boiler:targetSteamTemperature:change", [=](Event const &event) {
+        int newTemp = static_cast<int>(event.getFloat("value"));
+        if (newTemp != targetSteamTemp) {
+            targetTemp = newTemp;
+            rerender = true;
+        }
+    });
     pluginManager->on("controller:targetVolume:change", [this](Event const &event) { rerender = true; });
     pluginManager->on("controller:targetDuration:change", [this](Event const &event) { rerender = true; });
     pluginManager->on("controller:grindDuration:change", [this](Event const &event) { rerender = true; });
@@ -221,6 +228,8 @@ void DefaultUI::init() {
     pluginManager->on("controller:grind:start", triggerRender);
     pluginManager->on("controller:process:end", triggerRender);
     pluginManager->on("controller:process:start", triggerRender);
+    pluginManager->on("boiler:steamHeater:activate", triggerRender);
+    pluginManager->on("boiler:steamHeater:deactivate", triggerRender);
     pluginManager->on("controller:mode:change", [this](Event const &event) {
         mode = event.getInt("value");
         if (mode >= MODE_STANDBY && mode <= MODE_GRIND)
@@ -625,10 +634,13 @@ void DefaultUI::setupState() {
     effect_mgr.use_effect([this]() { return currentScreen == SCREEN_ID_MENU_SCREEN_NEW; },
                           [this]() {
                               int radius = 135;
-                              int count = grindAvailable ? 4 : 3;
-                              int step = 360 / (grindAvailable ? 4 : 3);
-                              int iconOffset = grindAvailable ? 1 : 0;
-                              int rotationOffset = count == 4 ? 45 : 0;
+                              int count = 4;
+                              if (!grindAvailable)
+                                  count--;
+                              if (dualBoiler)
+                                  count--;
+                              int step = 360 / count;
+                              int rotationOffset = count == 4 ? 45 : count == 2 ? 90 : 0;
                               positionMenuIcon(objects.btn_brew_1, step * 0 - rotationOffset, radius);
                               positionMenuIcon(objects.btn_steam_1, step * 1 - rotationOffset, radius);
                               positionMenuIcon(objects.btn_water_1, step * 2 - rotationOffset, radius);
@@ -781,6 +793,7 @@ void DefaultUI::updateState() {
     uiFlags.profile_details_visible(profileDetailsVisible);
     const bool chartMode = settings.getStatusDisplayMode() == STATUS_DISPLAY_CHART && pressureAvailable && isChartShot();
     uiFlags.chart_mode(chartMode);
+    uiFlags.steam_active(dualBoiler && controller->isSteamHeaterActive());
     if (chartMode != tickChartMode) {
         // Re-animate the ring when the mode flips while the status screen is open.
         if (currentScreen == SCREEN_ID_STATUS_SCREEN && currentScreen == targetScreen)
@@ -826,6 +839,7 @@ void DefaultUI::updateSystemStatus() {
     systemStatus.pressure_available(pressureAvailable);
     systemStatus.grind_available(grindAvailable);
     systemStatus.mode(mode);
+    systemStatus.dual_boiler(dualBoiler);
     const String ip = apActive ? String("4.4.4.1") : WiFi.localIP().toString();
     if (stringChanged(systemStatus.ip(), ip.c_str()))
         systemStatus.ip(ip.c_str());
@@ -866,7 +880,7 @@ void DefaultUI::updateWarnings() {
         warnings.labels(labels.c_str());
 }
 
-static void populateProfileInfo(ProfileInfoValue &info, const Profile &profile, bool isCurrent, bool hasImage) {
+static void populateProfileInfo(ProfileInfoValue &info, const Profile &profile, bool isCurrent, bool hasImage, bool imageLoaded) {
     char timeBuf[12];
     formatDuration(static_cast<unsigned long>(profile.getTotalDuration() * 1000.0f), timeBuf, sizeof(timeBuf));
     if (stringChanged(info.name(), profile.label.c_str()))
@@ -881,6 +895,7 @@ static void populateProfileInfo(ProfileInfoValue &info, const Profile &profile, 
     info.target_weight(profile.getTotalVolume());
     info.is_pro(profile.type == "pro");
     info.has_image(hasImage);
+    info.image_loaded(imageLoaded);
 }
 
 void DefaultUI::updateProfileInfo() {
@@ -888,6 +903,7 @@ void DefaultUI::updateProfileInfo() {
         return;
     }
     const Profile &selected = profileManager->getSelectedProfile();
+    const auto imageLoaded = [this](const String &id) { return imageShown != nullptr && imageShownId == id; };
     bool populated = false;
     bool selectedHasImage = false;
     {
@@ -897,14 +913,15 @@ void DefaultUI::updateProfileInfo() {
         if (!favoritedProfiles.empty() && currentProfileIdx >= 0 &&
             currentProfileIdx < static_cast<int>(favoritedProfiles.size())) {
             populateProfileInfo(previewProfileInfo, favoritedProfiles[currentProfileIdx],
-                                favoritedProfileIds[currentProfileIdx] == selected.id, favoritedHasImage[currentProfileIdx]);
+                                favoritedProfileIds[currentProfileIdx] == selected.id, favoritedHasImage[currentProfileIdx],
+                                imageLoaded(favoritedProfileIds[currentProfileIdx]));
             populated = true;
         }
     }
-    populateProfileInfo(selectedProfileInfo, selected, true, selectedHasImage);
+    populateProfileInfo(selectedProfileInfo, selected, true, selectedHasImage, imageLoaded(selected.id));
     selectedProfileInfo.dirty(profileDirty);
     if (!populated) {
-        populateProfileInfo(previewProfileInfo, selected, true, selectedHasImage);
+        populateProfileInfo(previewProfileInfo, selected, true, selectedHasImage, imageLoaded(selected.id));
     }
 }
 
@@ -1301,6 +1318,8 @@ void DefaultUI::updateProfilePreview() {
         imageShown = nullptr;
         imageShownId = "";
     }
+    // EEZ hides the image widget until its pixels are in place; a sourceless image would draw LVGL's "No data".
+    previewProfileInfo.image_loaded(imageShown != nullptr && imageShownId == id);
 
     lv_obj_t *chart = objects.profile_chart;
     if (!isPro || chart == nullptr)

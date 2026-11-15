@@ -22,6 +22,9 @@ class BleClientTransport : public Transport, public NimBLEAdvertisedDeviceCallba
     // Forget the paired controller so the display can pair to a different one.
     void clearBonds();
 
+    // Off = no scanning and no new connection; used while another link carries the session.
+    void setSearchEnabled(bool enabled);
+
     bool send(const uint8_t *data, size_t length) override;
     bool isConnected() const override;
     size_t maxDatagram() const override { return BLE_MAX_DATAGRAM; }
@@ -29,7 +32,7 @@ class BleClientTransport : public Transport, public NimBLEAdvertisedDeviceCallba
     // Tight ~7.5-10ms conn interval while a shot runs, relaxed ~30-50ms when idle to leave airtime for Wi-Fi.
     void setLowLatency(bool active);
 
-    // Native client handle, needed by ControllerOTA (OTA uses its own service).
+    // Native client handle, needed by BleOtaSender (OTA uses its own service) and the status RSSI.
     NimBLEClient *getNativeClient() const { return _client; }
 
     // Fired on old firmware missing the comms chars; link kept for OTA, arg is the legacy INFO characteristic (JSON).
@@ -49,6 +52,7 @@ class BleClientTransport : public Transport, public NimBLEAdvertisedDeviceCallba
     bool _readyForConnection = false;
     bool _lowLatency = false;
     bool _incompatible = false;
+    volatile bool _searchEnabled = true;
     std::function<void(const String &info)> _onIncompatible = nullptr;
 
     void applyConnParams();

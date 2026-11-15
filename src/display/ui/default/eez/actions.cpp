@@ -336,6 +336,8 @@ void action_on_screen_load(lv_event_t *e) {
     applyClickArea(objects.accept_button, 20);
     applyClickArea(objects.save_as_new_button, 20);
     applyClickArea(objects.save_button, 20);
+    applyClickArea(objects.steam_toggle, 25);
+    applyClickArea(objects.welcome_icon, 25);
 }
 
 static bool isProfileScreen() {

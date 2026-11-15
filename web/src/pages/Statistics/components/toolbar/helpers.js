@@ -6,6 +6,7 @@ import {
   COMPACT_SEGMENT_BUTTON_BASE_CLASS,
 } from './constants';
 import { plural, t } from '@lingui/core/macro';
+import { formatTimestamp } from '../../../ShotAnalyzer/utils/analyzerUtils';
 
 export function getPrimaryDropdownToneClasses() {
   return 'bg-primary text-primary-content hover:bg-primary/92';
@@ -135,8 +136,8 @@ export function formatProfileCountLabel(value) {
 }
 
 export function formatCollapsedDateRangeText(startValue, endValue) {
-  const fromText = formatToolbarDateTimeDisplay(startValue) || t`No dates`;
-  const toText = formatToolbarDateTimeDisplay(endValue) || '';
+  const fromText = formatTimestamp(startValue) || t`No dates`;
+  const toText = formatTimestamp(endValue);
   return toText ? `${fromText} - ${toText}` : fromText;
 }
 

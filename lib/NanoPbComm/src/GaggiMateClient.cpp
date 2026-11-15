@@ -3,42 +3,116 @@
 
 GaggiMateClient::GaggiMateClient() = default;
 
+void GaggiMateClient::enableUart(uint8_t rxPin, uint8_t txPin, HardwareSerial &port, uint32_t baud) {
+    if (_uart)
+        return;
+    _uartPort = &port;
+    _uartRxPin = rxPin;
+    _uartTxPin = txPin;
+    _uartBaud = baud;
+    _uart = std::make_unique<UartTransport>(port);
+    _uartOta = std::make_unique<UartOtaSender>(*_uart);
+}
+
 void GaggiMateClient::init(const String &deviceName) {
     registerHandlers();
     _endpoint.onConnection([this](bool connected) {
         if (_connCb)
             _connCb(connected);
     });
-    _transport.onIncompatible([this](const String &info) {
+    _ble.onIncompatible([this](const String &info) {
         if (_incompatibleCb)
             _incompatibleCb(info);
     });
+    _link.add(LinkType::Ble, _ble);
+    if (_uart) {
+        _link.add(LinkType::Uart, *_uart);
+        _link.setPreferred(LinkType::Uart);
+    }
+    _link.onSelect([this](LinkType active) { onLinkSelected(active); });
+    _link.onReject([this](LinkType) { _ble.disconnect(); }); // only BLE can lose, UART preempts
     _endpoint.begin();
-    _transport.init(deviceName);
+    _ble.init(deviceName);
 
-    // One task owns the send pump, so BLE writes and retransmits never depend on the caller's thread or the main loop.
+    if (_uart) {
+        _uartOta->begin();
+        _uartPort->setRxBufferSize(gm_uart::RX_BUFFER_SIZE);
+        _uartPort->setTxBufferSize(gm_uart::TX_BUFFER_SIZE);
+        _uartPort->begin(_uartBaud, SERIAL_8N1, _uartRxPin, _uartTxPin);
+        _uart->begin();
+        ESP_LOGI("GaggiMateClient", "Controller link on UART rx=%u tx=%u @ %u baud", _uartRxPin, _uartTxPin,
+                 static_cast<unsigned>(_uartBaud));
+    }
+
+    // One task owns UART RX + the send pump, so reads, writes and retransmits never depend on the main loop.
     if (xTaskCreatePinnedToCore(pumpTask, "GaggiMateClient", PUMP_TASK_STACK, this, PUMP_TASK_PRIORITY, &_pumpTaskHandle, 0) ==
         pdPASS) {
         _endpoint.setPumpTask(_pumpTaskHandle);
+        if (_uart) {
+            TaskHandle_t task = _pumpTaskHandle;
+            _uartPort->onReceive([task]() { xTaskNotifyGive(task); });
+        }
     } else {
         _pumpTaskHandle = nullptr;
         ESP_LOGE("GaggiMateClient", "Failed to create pump task; pumping from loop() instead");
     }
 }
 
+// The wire keeps listening while BLE carries the session; once it is up, the radio link goes away and stops searching.
+void GaggiMateClient::onLinkSelected(LinkType active) {
+    _ble.setSearchEnabled(active != LinkType::Uart);
+    if (active == LinkType::Uart)
+        _ble.disconnect();
+}
+
+bool GaggiMateClient::isReadyForConnection() {
+    if (!_ble.isReadyForConnection()) {
+        _bleReadySince = 0;
+        return false;
+    }
+    if (!_uart)
+        return true;
+    if (_bleReadySince == 0)
+        _bleReadySince = millis() | 1;
+    return millis() - _bleReadySince >= UART_HEAD_START_MS;
+}
+
+void GaggiMateClient::disconnect() {
+    if (_link.activeType() == LinkType::Uart)
+        _uart->disconnect();
+    else
+        _ble.disconnect();
+}
+
+int GaggiMateClient::getRssi() const {
+    NimBLEClient *client = _ble.getNativeClient();
+    return client != nullptr && client->isConnected() ? client->getRssi() : 0;
+}
+
+OtaSender *GaggiMateClient::getOtaSender() {
+    if (_link.activeType() == LinkType::Uart)
+        return _uartOta.get();
+    return &_bleOta;
+}
+
 void GaggiMateClient::pumpTask(void *arg) {
     auto *self = static_cast<GaggiMateClient *>(arg);
     for (;;) {
+        if (self->_uart)
+            self->_uart->loop();
         self->_endpoint.loop();
-        // Woken at once by a send or an ACK; the timeout only paces the retransmit check while idle.
+        // Woken at once by a send, an ACK or UART RX; the timeout paces keepalives and the retransmit check while idle.
         ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(PUMP_IDLE_INTERVAL_MS));
     }
 }
 
 void GaggiMateClient::loop() {
-    _transport.maintain();
-    if (_pumpTaskHandle == nullptr)
+    _ble.maintain();
+    if (_pumpTaskHandle == nullptr) {
+        if (_uart)
+            _uart->loop();
         _endpoint.loop();
+    }
 }
 
 gm::Payload GaggiMateClient::buildPing() {

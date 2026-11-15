@@ -107,6 +107,15 @@ void WebSocketHandler::setup(Controller *_controller, PluginManager *_pluginMana
         broadcastJson(doc);
     });
 
+    // Forward the outcome of an async delete-all to WebSocket clients
+    pluginManager->on("evt:history-delete-all", [this](Event const &event) {
+        JsonDocument doc(&psramAllocator);
+        doc["tp"] = "evt:history-delete-all";
+        doc["status"] = event.getString("status");
+        doc["deleted"] = event.getInt("deleted");
+        broadcastJson(doc);
+    });
+
     // Forward "shot saved to history" events to WebSocket clients, so the
     // dashboard can refetch the recent-shots buffer at the right time.
     pluginManager->on("evt:history-shot-saved", [this](Event const &event) {
@@ -421,6 +430,11 @@ void WebSocketHandler::publishState(unsigned long now) {
     // Legacy TOF capability also covers binary tank switches; only Alba provides a percentage.
     doc["awl"] = caps.ledControl && caps.tof && !(caps.dualBoiler && controller->getSettings().getTankLevelEnabled());
     doc["sd"] = controller->isSDCard();
+#ifdef GAGGIMATE_HEADLESS
+    doc["hl"] = true; // no screen: the web UI hides display settings
+#else
+    doc["hl"] = false;
+#endif
     doc["htl"] = controller->hasTankLevel();
     if (controller->hasTankLevelReading())
         doc["tlo"] = controller->isTankLevelOK();
@@ -479,13 +493,13 @@ void WebSocketHandler::publishTelemetry() {
     statusDoc["pt"] = controller->getTargetPressure();
     statusDoc["wl"] = controller->getWaterLevel();
     statusDoc["tof"] = controller->getTofDistance();
-    statusDoc["rssi"] = 0;
     statusDoc["lat"] = -1; // BLE round-trip latency (ms); -1 = not yet measured
     statusDoc["pw"] = controller->getCurrentPumpPower();
     statusDoc["hp"] = round_to(controller->getCurrentHeaterPower(), 3);
-    if (controller->getClientController()->getClient()->isConnected()) {
-        statusDoc["rssi"] = controller->getClientController()->getClient()->getRssi();
-    }
+    // Link carrying the controller session; rssi only means something on BLE.
+    const LinkType link = controller->getClientController()->getLinkType();
+    statusDoc["lnk"] = link == LinkType::Uart ? "uart" : link == LinkType::Ble ? "ble" : "none";
+    statusDoc["rssi"] = controller->getClientController()->getRssi();
     if (controller->getClientController()->hasLatency()) {
         statusDoc["lat"] = controller->getClientController()->getLatencyMs();
     }

@@ -5,6 +5,17 @@
 
 GaggiMateServer::GaggiMateServer() = default;
 
+void GaggiMateServer::enableUart(uint8_t rxPin, uint8_t txPin, HardwareSerial &port, uint32_t baud) {
+    if (_uart)
+        return;
+    _uartPort = &port;
+    _uartRxPin = rxPin;
+    _uartTxPin = txPin;
+    _uartBaud = baud;
+    _uart = std::make_unique<UartTransport>(port);
+    _uartOta = std::make_unique<UartOtaReceiver>(*_uart);
+}
+
 void GaggiMateServer::init(const String &deviceName, const String &hardware, const String &version,
                            const gm::DeviceCapabilities &capabilities, bool pairingWindow) {
     setSystemInfo(hardware, version, capabilities);
@@ -16,21 +27,63 @@ void GaggiMateServer::init(const String &deviceName, const String &hardware, con
         if (_connCb)
             _connCb(connected);
     });
+    _link.add(LinkType::Ble, _ble);
+    if (_uart) {
+        _link.add(LinkType::Uart, *_uart);
+        _link.setPreferred(LinkType::Uart);
+    }
+    _link.onSelect([this](LinkType active) { onLinkSelected(active); });
+    _link.onReject([this](LinkType) { _ble.disconnect(); }); // only BLE can lose, UART preempts
     _endpoint.begin();
-    _transport.init(deviceName, pairingWindow);
+    _ble.init(deviceName, pairingWindow);
+
+    if (_uart) {
+        _uartOta->onStart([this]() {
+            if (_updateStartCb)
+                _updateStartCb();
+        });
+        _uartOta->begin();
+        _uartPort->setRxBufferSize(gm_uart::RX_BUFFER_SIZE);
+        _uartPort->setTxBufferSize(gm_uart::TX_BUFFER_SIZE);
+        _uartPort->begin(_uartBaud, SERIAL_8N1, _uartRxPin, _uartTxPin);
+        _uart->begin();
+        ESP_LOGI("GaggiMateServer", "Display link on UART rx=%u tx=%u @ %u baud", _uartRxPin, _uartTxPin,
+                 static_cast<unsigned>(_uartBaud));
+    }
 
     if (xTaskCreatePinnedToCore(pumpTask, "GaggiMateServer", 4096, this, 1, &_taskHandle, 0) != pdPASS) {
         _taskHandle = nullptr;
-        ESP_LOGE("GaggiMateServer", "Failed to create pump task; ACK/retransmit will not run");
+        ESP_LOGE("GaggiMateServer", "Failed to create pump task; comms will not run");
+        return;
     }
+    if (_uart) {
+        TaskHandle_t task = _taskHandle;
+        _uartPort->onReceive([task]() { xTaskNotifyGive(task); });
+    }
+}
+
+// The wire keeps listening while BLE carries the session; once it is up, the radio link goes away and stops advertising.
+void GaggiMateServer::onLinkSelected(LinkType active) {
+    _ble.setAdvertisingEnabled(active != LinkType::Uart);
+    if (active == LinkType::Uart)
+        _ble.disconnect();
+}
+
+void GaggiMateServer::disconnect() {
+    if (_link.activeType() == LinkType::Uart)
+        _uart->disconnect();
+    else
+        _ble.disconnect();
 }
 
 void GaggiMateServer::pumpTask(void *arg) {
     auto *self = static_cast<GaggiMateServer *>(arg);
-    TickType_t lastWake = xTaskGetTickCount();
     for (;;) {
+        if (self->_uart)
+            self->_uart->loop();
         self->_endpoint.loop();
-        xTaskDelayUntil(&lastWake, pdMS_TO_TICKS(15));
+        // Woken early by UART RX; the timeout paces keepalives and the retransmit check.
+        ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(15));
     }
 }
 
@@ -49,7 +102,7 @@ void GaggiMateServer::setSystemInfo(const String &hardware, const String &versio
              hardware.c_str(), version.c_str(), static_cast<unsigned>(gm_proto::PROTOCOL_VERSION),
              capabilities.pressure ? "true" : "false", capabilities.dimming ? "true" : "false",
              capabilities.led_control ? "true" : "false", capabilities.tof ? "true" : "false");
-    _transport.setInfo(json);
+    _ble.setInfo(json);
 }
 
 void GaggiMateServer::pushSystemInfo() {
@@ -151,10 +204,7 @@ void GaggiMateServer::sendError(int code) { _endpoint.send(buildError(code)); }
 
 void GaggiMateServer::registerHandlers() {
     _endpoint.on(gaggimate_Payload_ping_tag, [this](const gm::Payload &) {
-        // A SystemInfo notification sent synchronously from the BLE subscribe
-        // callback can beat the client's notification handler. Once a ping has
-        // crossed the framed protocol, the link is fully established; resend
-        // SystemInfo once so reliable delivery starts from a usable session.
+        // The connect-time SystemInfo can beat the display's receive path; a ping proves the link, so resend it once.
         if (!_sentSystemInfoAfterHandshake) {
             _sentSystemInfoAfterHandshake = true;
             pushSystemInfo();

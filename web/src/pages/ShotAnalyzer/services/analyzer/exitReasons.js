@@ -102,13 +102,15 @@ export function buildRecordedExitReasonByPhase(shotData) {
   const reasonByPhase = new Map();
   const transitions = Array.isArray(shotData?.phaseTransitions) ? shotData.phaseTransitions : [];
 
-  // A transition stores why the phase immediately before it ended.
-  for (let index = 1; index < transitions.length; index += 1) {
-    const endedPhaseNumber = transitions[index - 1]?.phaseNumber;
-    if (endedPhaseNumber == null) continue;
+  // The reason belongs to the preceding profile index, even if that phase
+  // had no samples. It must not be shifted onto the last recorded phase.
+  for (const transition of transitions) {
+    const phaseNumber = Number(transition?.phaseNumber);
+    if (transition?.phaseNumber == null || !Number.isInteger(phaseNumber) || phaseNumber <= 0)
+      continue;
     reasonByPhase.set(
-      String(endedPhaseNumber),
-      normalizePhaseExitReasonCode(transitions[index]?.transitionReason),
+      String(phaseNumber - 1),
+      normalizePhaseExitReasonCode(transition.transitionReason),
     );
   }
 

@@ -4,6 +4,7 @@
 #include "remote_scales.h"
 #include "remote_scales_plugin_registry.h"
 #include <atomic>
+#include <memory>
 
 void on_ble_measurement(float value);
 

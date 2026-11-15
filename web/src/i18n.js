@@ -7,6 +7,7 @@ export const LOCALES = [
   { code: 'it', label: 'Italiano' },
   { code: 'fr', label: 'Français' },
   { code: 'es', label: 'Español' },
+  { code: 'pt', label: 'Português' },
   { code: 'ja', label: '日本語' },
   { code: 'zh', label: '中文' },
 ];

@@ -40,7 +40,7 @@ const BUILT_IN_PRESET_IDS = {
 const TABLE_TOOLBAR_TEXT_BUTTON_CLASS =
   'h-8 min-h-0 px-3 text-sm font-normal tracking-normal normal-case !text-base-content/75 hover:!text-primary';
 const TABLE_TOOLBAR_SELECT_CLASS =
-  'h-8 min-h-0 w-[7rem] max-w-[7rem] appearance-none border-0 bg-transparent px-3 pr-7 text-sm font-normal tracking-normal normal-case shadow-none outline-none !text-base-content/75 hover:!text-primary';
+  'h-8 min-h-0 min-w-0 w-[7rem] max-w-[7rem] truncate appearance-none border-0 bg-transparent px-3 pr-7 text-sm font-normal tracking-normal normal-case shadow-none outline-none !text-base-content/75 hover:!text-primary';
 const COLUMN_GROUP_HEADER_CLASS =
   'border-base-content/10 text-base-content col-span-2 mb-1.5 border-b pb-1 text-xs leading-tight font-medium tracking-normal normal-case';
 const COLUMN_OPTION_TEXT_CLASS = 'text-base-content/90 leading-tight font-medium tracking-normal';

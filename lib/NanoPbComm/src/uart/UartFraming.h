@@ -4,8 +4,15 @@
 #include <cstddef>
 #include <cstdint>
 
-// Host-testable COBS + CRC framing for the UART transport: COBS(datagram || crc16) || 0x00 (COBS body is zero-free).
+// Host-testable COBS + CRC framing for the UART transport: COBS(channel || datagram || crc16) || 0x00 (COBS body is
+// zero-free). A keepalive is COBS(flags || crc16), no channel byte.
 namespace gm_uart {
+
+// Line rate both ends open the port at; a ~1 KB OTA chunk takes ~22 ms on the wire.
+constexpr uint32_t DEFAULT_BAUD = 460800;
+// HardwareSerial buffers; RX has to absorb whatever arrives while the pump task is busy.
+constexpr size_t RX_BUFFER_SIZE = 4096;
+constexpr size_t TX_BUFFER_SIZE = 2048;
 
 // CRC-16/CCITT-FALSE (poly 0x1021, init 0xFFFF, no reflection, no final xor).
 inline uint16_t crc16(const uint8_t *data, size_t length) {
