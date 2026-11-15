@@ -6653,6 +6653,19 @@ void tick_screen_new_profile_screen() {
         }
     }
     {
+        bool new_val = evalBooleanProperty(flowState, 29, 3, "Failed to evaluate Hidden flag");
+        bool cur_val = lv_obj_has_flag(objects.profile_preview, LV_OBJ_FLAG_HIDDEN);
+        if (new_val != cur_val) {
+            tick_value_change_obj = objects.profile_preview;
+            if (new_val) {
+                lv_obj_add_flag(objects.profile_preview, LV_OBJ_FLAG_HIDDEN);
+            } else {
+                lv_obj_clear_flag(objects.profile_preview, LV_OBJ_FLAG_HIDDEN);
+            }
+            tick_value_change_obj = NULL;
+        }
+    }
+    {
         bool new_val = evalBooleanProperty(flowState, 77, 3, "Failed to evaluate Disabled state");
         bool cur_val = lv_obj_has_state(objects.previous_profile_1, LV_STATE_DISABLED);
         if (new_val != cur_val) {

@@ -365,6 +365,11 @@
             "objID": "9ce26704-9a96-4afb-cf02-970996bea095",
             "name": "has_image",
             "type": "boolean"
+          },
+          {
+            "objID": "fcbecc24-cdfa-437d-e1ff-e5038b972fd7",
+            "name": "image_loaded",
+            "type": "boolean"
           }
         ]
       },
@@ -11577,7 +11582,8 @@
                       "heightUnit": "px",
                       "children": [],
                       "widgetFlags": "ADV_HITTEST|CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLLABLE|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_WITH_ARROW|SNAPPABLE",
-                      "hiddenFlagType": "literal",
+                      "hiddenFlag": "!preview_profile.image_loaded",
+                      "hiddenFlagType": "expression",
                       "clickableFlagType": "literal",
                       "flagScrollbarMode": "",
                       "flagScrollDirection": "",

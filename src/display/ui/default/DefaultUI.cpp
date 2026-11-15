@@ -880,7 +880,7 @@ void DefaultUI::updateWarnings() {
         warnings.labels(labels.c_str());
 }
 
-static void populateProfileInfo(ProfileInfoValue &info, const Profile &profile, bool isCurrent, bool hasImage) {
+static void populateProfileInfo(ProfileInfoValue &info, const Profile &profile, bool isCurrent, bool hasImage, bool imageLoaded) {
     char timeBuf[12];
     formatDuration(static_cast<unsigned long>(profile.getTotalDuration() * 1000.0f), timeBuf, sizeof(timeBuf));
     if (stringChanged(info.name(), profile.label.c_str()))
@@ -895,6 +895,7 @@ static void populateProfileInfo(ProfileInfoValue &info, const Profile &profile, 
     info.target_weight(profile.getTotalVolume());
     info.is_pro(profile.type == "pro");
     info.has_image(hasImage);
+    info.image_loaded(imageLoaded);
 }
 
 void DefaultUI::updateProfileInfo() {
@@ -902,6 +903,7 @@ void DefaultUI::updateProfileInfo() {
         return;
     }
     const Profile &selected = profileManager->getSelectedProfile();
+    const auto imageLoaded = [this](const String &id) { return imageShown != nullptr && imageShownId == id; };
     bool populated = false;
     bool selectedHasImage = false;
     {
@@ -911,14 +913,15 @@ void DefaultUI::updateProfileInfo() {
         if (!favoritedProfiles.empty() && currentProfileIdx >= 0 &&
             currentProfileIdx < static_cast<int>(favoritedProfiles.size())) {
             populateProfileInfo(previewProfileInfo, favoritedProfiles[currentProfileIdx],
-                                favoritedProfileIds[currentProfileIdx] == selected.id, favoritedHasImage[currentProfileIdx]);
+                                favoritedProfileIds[currentProfileIdx] == selected.id, favoritedHasImage[currentProfileIdx],
+                                imageLoaded(favoritedProfileIds[currentProfileIdx]));
             populated = true;
         }
     }
-    populateProfileInfo(selectedProfileInfo, selected, true, selectedHasImage);
+    populateProfileInfo(selectedProfileInfo, selected, true, selectedHasImage, imageLoaded(selected.id));
     selectedProfileInfo.dirty(profileDirty);
     if (!populated) {
-        populateProfileInfo(previewProfileInfo, selected, true, selectedHasImage);
+        populateProfileInfo(previewProfileInfo, selected, true, selectedHasImage, imageLoaded(selected.id));
     }
 }
 
@@ -1315,6 +1318,8 @@ void DefaultUI::updateProfilePreview() {
         imageShown = nullptr;
         imageShownId = "";
     }
+    // EEZ hides the image widget until its pixels are in place; a sourceless image would draw LVGL's "No data".
+    previewProfileInfo.image_loaded(imageShown != nullptr && imageShownId == id);
 
     lv_obj_t *chart = objects.profile_chart;
     if (!isPro || chart == nullptr)

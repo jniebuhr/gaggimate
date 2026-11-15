@@ -68,6 +68,7 @@ enum ProfileInfoFlowStructureFields {
     FLOW_STRUCTURE_PROFILE_INFO_FIELD_DIRTY = 8,
     FLOW_STRUCTURE_PROFILE_INFO_FIELD_IS_PRO = 9,
     FLOW_STRUCTURE_PROFILE_INFO_FIELD_HAS_IMAGE = 10,
+    FLOW_STRUCTURE_PROFILE_INFO_FIELD_IMAGE_LOADED = 11,
     FLOW_STRUCTURE_PROFILE_INFO_NUM_FIELDS
 };
 
@@ -298,6 +299,11 @@ struct ProfileInfoValue {
     bool has_image() { return value.getArray()->values[FLOW_STRUCTURE_PROFILE_INFO_FIELD_HAS_IMAGE].getBoolean(); }
     void has_image(bool has_image) {
         value.getArray()->values[FLOW_STRUCTURE_PROFILE_INFO_FIELD_HAS_IMAGE] = BooleanValue(has_image);
+    }
+
+    bool image_loaded() { return value.getArray()->values[FLOW_STRUCTURE_PROFILE_INFO_FIELD_IMAGE_LOADED].getBoolean(); }
+    void image_loaded(bool image_loaded) {
+        value.getArray()->values[FLOW_STRUCTURE_PROFILE_INFO_FIELD_IMAGE_LOADED] = BooleanValue(image_loaded);
     }
 };
 
