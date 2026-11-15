@@ -325,6 +325,7 @@ class Settings {
     int getWarnTemperature() const { return warnTemperature.get(); }
     int getWarnBackflush() const { return warnBackflush.get(); }
     int getWarnDescaling() const { return warnDescaling.get(); }
+    int getWarnPressureSensor() const { return warnPressureSensor.get(); }
     int getBackflushIntervalDays() const { return backflushIntervalDays.get(); }   // 0 = off
     int getBackflushIntervalShots() const { return backflushIntervalShots.get(); } // 0 = off
     int getDescalingIntervalWeeks() const { return descalingIntervalWeeks.get(); } // 0 = off
@@ -433,6 +434,7 @@ class Settings {
     void setWarnTemperature(int level);
     void setWarnBackflush(int level);
     void setWarnDescaling(int level);
+    void setWarnPressureSensor(int level);
     void setBackflushIntervalDays(int days);
     void setBackflushIntervalShots(int shots);
     void setDescalingIntervalWeeks(int weeks);
@@ -607,6 +609,7 @@ class Settings {
     Property<int> warnTemperature{registry, "wl_temp", WARNING_LEVEL_WARN};
     Property<int> warnBackflush{registry, "wl_backflush", WARNING_LEVEL_WARN};
     Property<int> warnDescaling{registry, "wl_descale", WARNING_LEVEL_WARN};
+    Property<int> warnPressureSensor{registry, "wl_pressure", WARNING_LEVEL_ERROR};
 
     // Cleaning schedule
     Property<int> backflushIntervalDays{registry, "cl_bid", 14};

@@ -3730,6 +3730,10 @@ msgstr "峰值压力超过 12.5 bar。这可以正常工作，但你可能需要
 msgid "Pressure polynomial (a,b,c,d) for vane-/gear-pump internal leakage. Leave at 0,0,0,0 if uncalibrated."
 msgstr "叶片泵/齿轮泵内部泄漏的压力多项式 (a,b,c,d)。未校准时保持 0,0,0,0。"
 
+#: src/utils/warnings.js
+msgid "Pressure sensor error"
+msgstr "压力传感器错误"
+
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Pressure Sensor Rating"
 msgstr "压力传感器量程"

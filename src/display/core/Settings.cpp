@@ -304,6 +304,8 @@ void Settings::setWarnBackflush(int level) { warnBackflush.set(clampWarningLevel
 
 void Settings::setWarnDescaling(int level) { warnDescaling.set(clampWarningLevel(level)); }
 
+void Settings::setWarnPressureSensor(int level) { warnPressureSensor.set(clampWarningLevel(level)); }
+
 void Settings::setBackflushIntervalDays(int days) { backflushIntervalDays.set(std::max(0, days)); }
 
 void Settings::setBackflushIntervalShots(int shots) { backflushIntervalShots.set(std::max(0, shots)); }

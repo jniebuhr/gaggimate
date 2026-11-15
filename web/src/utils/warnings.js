@@ -5,6 +5,7 @@ import linkSlashAlt from '../assets/warnings/link-slash-alt.svg?raw';
 import batteryExclamation from '../assets/warnings/battery-exclamation-2.svg?raw';
 import highTemperatureAlert from '../assets/warnings/high-temperature-alert.svg?raw';
 import broom from '../assets/warnings/broom.svg?raw';
+import tachometerFast from '../assets/warnings/tachometer-fast.svg?raw';
 import { msg } from '@lingui/core/macro';
 import { withTranslatedLabel } from './translatedLabel.js';
 
@@ -66,6 +67,12 @@ export const WARNINGS = translated([
   },
   { key: 'backflush', labelMsg: msg`Backflush due`, settingKey: 'warnBackflush', icon: broom },
   { key: 'descaling', labelMsg: msg`Descaling due`, settingKey: 'warnDescaling', icon: broom },
+  {
+    key: 'pressureSensor',
+    labelMsg: msg`Pressure sensor error`,
+    settingKey: 'warnPressureSensor',
+    icon: tachometerFast,
+  },
 ]);
 
 export const warningByKey = key => WARNINGS.find(w => w.key === key);

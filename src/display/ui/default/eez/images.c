@@ -1,6 +1,6 @@
 #include "images.h"
 
-const ext_img_desc_t images[46] = {
+const ext_img_desc_t images[47] = {
     {"angle-down-40x40", &img_angle_down_40x40},
     {"angle-left-40x40", &img_angle_left_40x40},
     {"angle-right-40x40", &img_angle_right_40x40},
@@ -47,4 +47,5 @@ const ext_img_desc_t images[46] = {
     {"dosing_cup_40x40", &img_dosing_cup_40x40},
     {"portafilter_40x40", &img_portafilter_40x40},
     {"coffee_beans_three_40x40", &img_coffee_beans_three_40x40},
+    {"tachometer-fast-20x20", &img_tachometer_fast_20x20},
 };

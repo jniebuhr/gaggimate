@@ -65,6 +65,7 @@ class GaggiMateClient {
     using ScaleCallback =
         std::function<void(float weight, float cell1Weight, float cell2Weight, bool cell1Valid, bool cell2Valid)>;
     using SteamLevelCallback = std::function<void(bool low)>;
+    using PressureSensorFaultCallback = std::function<void(bool fault)>;
     using TankLevelCallback = std::function<void(bool present, bool full)>;
     using MachineHardwareCallback = std::function<void(uint32_t hash, bool ready, bool error)>;
     using TofCallback = std::function<void(uint32_t distance)>;
@@ -148,6 +149,12 @@ class GaggiMateClient {
     void onScaleMeasurement(ScaleCallback cb) { _scaleCb = std::move(cb); }
     void onTofMeasurement(TofCallback cb) { _tofCb = std::move(cb); }
     void onSteamLevel(SteamLevelCallback cb) { _steamLevelCb = std::move(cb); } // the single-boiler mock has no level sensors
+    void onPressureSensorFault(PressureSensorFaultCallback cb) { _pressureSensorFaultCb = std::move(cb); }
+    // Sim only: report the pressure sensor as out of range, as an unplugged sensor would.
+    void simulatePressureSensorFault(bool fault) {
+        if (_pressureSensorFaultCb)
+            _pressureSensorFaultCb(fault);
+    }
     void onTankLevel(TankLevelCallback cb) { _tankLevelCb = std::move(cb); }
     void onMachineHardware(MachineHardwareCallback cb) { _machineHardwareCb = std::move(cb); }
     void onError(ErrorCallback cb) { _errorCb = std::move(cb); }
@@ -171,6 +178,7 @@ class GaggiMateClient {
     ScaleCallback _scaleCb;
     TofCallback _tofCb;
     SteamLevelCallback _steamLevelCb;
+    PressureSensorFaultCallback _pressureSensorFaultCb;
     TankLevelCallback _tankLevelCb;
     MachineHardwareCallback _machineHardwareCb;
     ErrorCallback _errorCb;

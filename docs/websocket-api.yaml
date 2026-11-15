@@ -154,7 +154,7 @@ components:
       properties:
         k:
           type: string
-          enum: [water, flush, switch, scaleConnected, scaleBattery, temperature, backflush, descaling]
+          enum: [water, flush, switch, scaleConnected, scaleBattery, temperature, backflush, descaling, pressureSensor]
           description: Warning key
         l:
           type: integer

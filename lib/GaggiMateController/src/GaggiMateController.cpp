@@ -627,6 +627,8 @@ void GaggiMateController::sendSensorData() {
     p.content.sensor.has_tank_level = tankLevel != nullptr;
     p.content.sensor.has_steam_boiler_low = waterSense != nullptr && steamLevelKnown.load();
     p.content.sensor.steam_boiler_low = steamLevelLow.load();
+    p.content.sensor.has_pressure_sensor_fault = _config.capabilites.pressure;
+    p.content.sensor.pressure_sensor_fault = _config.capabilites.pressure && pressureSensor->isFaulty();
     p.content.sensor.tank_level_ok = tankLevelOK;
     p.content.sensor.boilers_count = _config.capabilites.dualBoiler ? 2 : 1; // boiler 0; schema allows more
     p.content.sensor.boilers[0].index = 0;

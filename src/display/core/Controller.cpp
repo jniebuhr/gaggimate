@@ -288,6 +288,7 @@ void Controller::setupBluetooth() {
         tankLevelKnown = false;
         tofLevelKnown = false;
         steamLevelKnown = false;
+        pressureSensorFault = false;
         controlStateSent = false;
         settleResendAt = 0;
         if (connected) {
@@ -347,6 +348,11 @@ void Controller::setupBluetooth() {
         tankLevelKnown = present;
     });
     comms.onSteamLevel([this](bool low) { onSteamLevelRead(low); });
+    comms.onPressureSensorFault([this](bool fault) {
+        if (fault && !pressureSensorFault)
+            ESP_LOGW(LOG_TAG, "Pressure sensor readings out of range, check the sensor wiring");
+        pressureSensorFault = fault;
+    });
     comms.onButtonState([this](uint8_t index, bool pressed) {
         if (index == 3) {
             onSteamLevelRead(pressed);

@@ -3730,6 +3730,10 @@ msgstr "Der Druck hat 12,5 bar überschritten. Das funktioniert, du solltest das
 msgid "Pressure polynomial (a,b,c,d) for vane-/gear-pump internal leakage. Leave at 0,0,0,0 if uncalibrated."
 msgstr "Druckpolynom (a,b,c,d) für die interne Leckage von Flügelzellen-/Zahnradpumpen. Bei fehlender Kalibrierung auf 0,0,0,0 lassen."
 
+#: src/utils/warnings.js
+msgid "Pressure sensor error"
+msgstr "Drucksensorfehler"
+
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Pressure Sensor Rating"
 msgstr "Nennwert des Drucksensors"

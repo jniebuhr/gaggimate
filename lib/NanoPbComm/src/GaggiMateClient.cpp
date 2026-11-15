@@ -299,6 +299,8 @@ void GaggiMateClient::registerHandlers() {
             _tankLevelCb(p.content.sensor.has_tank_level, p.content.sensor.tank_level_ok);
         if (p.content.sensor.has_steam_boiler_low && _steamLevelCb)
             _steamLevelCb(p.content.sensor.steam_boiler_low);
+        if (p.content.sensor.has_pressure_sensor_fault && _pressureSensorFaultCb)
+            _pressureSensorFaultCb(p.content.sensor.pressure_sensor_fault);
         if (!_sensorCb)
             return;
         // The display tracks a single boiler today; read boiler 0 if present.

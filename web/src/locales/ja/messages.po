@@ -3730,6 +3730,10 @@ msgstr "圧力のピークが 12.5 bar を超えました。動作はします�
 msgid "Pressure polynomial (a,b,c,d) for vane-/gear-pump internal leakage. Leave at 0,0,0,0 if uncalibrated."
 msgstr "ベーンポンプ/ギアポンプの内部リーク用の圧力多項式 (a,b,c,d)。未キャリブレーションの場合は 0,0,0,0 のままにしてください。"
 
+#: src/utils/warnings.js
+msgid "Pressure sensor error"
+msgstr "圧力センサーエラー"
+
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Pressure Sensor Rating"
 msgstr "圧力センサーの定格"
