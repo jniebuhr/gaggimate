@@ -104,8 +104,9 @@ function HeaterTest() {
       </div>
       <p className='text-sm opacity-70'>
         <Trans>
-          The heater runs at full power for up to 10 seconds and stops as soon as the boiler
-          temperature has risen by a few degrees.
+          The heater runs at full power for up to 10 seconds. The test passes as soon as the boiler
+          temperature has risen by a few degrees, which can take up to 30 more seconds on a larger
+          boiler.
         </Trans>
       </p>
       {running && (
@@ -118,6 +119,12 @@ function HeaterTest() {
           <div className='text-sm'>
             {t`Temperature rise: ${rise.toFixed(1)} of ${targetRise.toFixed(1)} °C`}
           </div>
+          {status.phase === 'settling' && (
+            <div className='flex items-center gap-2 text-sm opacity-70'>
+              <Spinner size={4} />
+              <Trans>Heater off, waiting for the temperature to rise…</Trans>
+            </div>
+          )}
         </div>
       )}
       <ResultAlert status={status} error={error} />

@@ -2271,6 +2271,10 @@ msgstr "ヒーター協調"
 msgid "Heater Coordination"
 msgstr "ヒーター協調"
 
+#: src/pages/SetupWizard/TestStep.jsx
+msgid "Heater off, waiting for the temperature to rise…"
+msgstr "ヒーター停止中、温度の上昇を待っています…"
+
 #: src/utils/metricDefinitions.js
 msgid "Heater Power"
 msgstr "ヒーター出力"
@@ -5675,8 +5679,8 @@ msgid "The grinder reaches GaggiMate at this address, so both need to share a ne
 msgstr "グラインダーはこのアドレスで GaggiMate に接続するため、両方が同じネットワーク上にある必要があり（E64 WS は 2.4 GHz のみ対応）、アドレスが変わってはいけません。ルーターで GaggiMate 用にアドレスを予約してください。"
 
 #: src/pages/SetupWizard/TestStep.jsx
-msgid "The heater runs at full power for up to 10 seconds and stops as soon as the boiler temperature has risen by a few degrees."
-msgstr "ヒーターを最大出力で最長 10 秒間動作させ、ボイラーの温度が数度上昇した時点で停止します。"
+msgid "The heater runs at full power for up to 10 seconds. The test passes as soon as the boiler temperature has risen by a few degrees, which can take up to 30 more seconds on a larger boiler."
+msgstr "ヒーターを最大出力で最長 10 秒間動作させます。ボイラーの温度が数度上昇した時点でテストは合格です。大きなボイラーでは、さらに最長 30 秒かかる場合があります。"
 
 #: src/app/appSettings.js
 msgid "The machine has been in steam mode for 5 minutes."

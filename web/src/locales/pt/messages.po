@@ -2267,6 +2267,10 @@ msgstr "Coordenação dos aquecedores"
 msgid "Heater Coordination"
 msgstr "Coordenação dos aquecedores"
 
+#: src/pages/SetupWizard/TestStep.jsx
+msgid "Heater off, waiting for the temperature to rise…"
+msgstr "Aquecedor desligado, aguardando a temperatura subir…"
+
 #: src/utils/metricDefinitions.js
 msgid "Heater Power"
 msgstr "Potência do aquecedor"
@@ -5667,8 +5671,8 @@ msgid "The grinder reaches GaggiMate at this address, so both need to share a ne
 msgstr "O moedor acessa o GaggiMate neste endereço, portanto os dois precisam estar na mesma rede (o E64 WS só funciona em 2,4 GHz) e o endereço não pode mudar: reserve-o para o GaggiMate no seu roteador."
 
 #: src/pages/SetupWizard/TestStep.jsx
-msgid "The heater runs at full power for up to 10 seconds and stops as soon as the boiler temperature has risen by a few degrees."
-msgstr "O aquecedor funciona em potência máxima por até 10 segundos e para assim que a temperatura da caldeira sobe alguns graus."
+msgid "The heater runs at full power for up to 10 seconds. The test passes as soon as the boiler temperature has risen by a few degrees, which can take up to 30 more seconds on a larger boiler."
+msgstr "O aquecedor funciona em potência máxima por até 10 segundos. O teste é aprovado assim que a temperatura da caldeira sobe alguns graus, o que pode levar até 30 segundos a mais em uma caldeira maior."
 
 #: src/app/appSettings.js
 msgid "The machine has been in steam mode for 5 minutes."

@@ -2271,6 +2271,10 @@ msgstr "Heizungskoordination"
 msgid "Heater Coordination"
 msgstr "Heizungskoordination"
 
+#: src/pages/SetupWizard/TestStep.jsx
+msgid "Heater off, waiting for the temperature to rise…"
+msgstr "Heizung aus, warte auf den Temperaturanstieg…"
+
 #: src/utils/metricDefinitions.js
 msgid "Heater Power"
 msgstr "Heizleistung"
@@ -5675,8 +5679,8 @@ msgid "The grinder reaches GaggiMate at this address, so both need to share a ne
 msgstr "Die Mühle erreicht GaggiMate unter dieser Adresse, daher müssen beide im selben Netzwerk sein (die E64 WS unterstützt nur 2,4 GHz) und die Adresse darf sich nicht ändern: Reserviere sie in deinem Router für GaggiMate."
 
 #: src/pages/SetupWizard/TestStep.jsx
-msgid "The heater runs at full power for up to 10 seconds and stops as soon as the boiler temperature has risen by a few degrees."
-msgstr "Die Heizung läuft bis zu 10 Sekunden mit voller Leistung und stoppt, sobald die Boilertemperatur um einige Grad gestiegen ist."
+msgid "The heater runs at full power for up to 10 seconds. The test passes as soon as the boiler temperature has risen by a few degrees, which can take up to 30 more seconds on a larger boiler."
+msgstr "Die Heizung läuft bis zu 10 Sekunden mit voller Leistung. Der Test ist bestanden, sobald die Boilertemperatur um einige Grad gestiegen ist. Bei einem größeren Boiler kann das bis zu 30 weitere Sekunden dauern."
 
 #: src/app/appSettings.js
 msgid "The machine has been in steam mode for 5 minutes."
