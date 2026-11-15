@@ -199,7 +199,7 @@ export function PatchNotes({ channel, installedVersion, latestVersion }) {
   const current = cacheKey && data[cacheKey];
   const content = errors[cacheKey] ? (
     <div className='alert alert-error text-sm'>
-      {t`Could not load patchnotes`}: {errors[cacheKey]}
+      {t`Could not load release notes`}: {errors[cacheKey]}
     </div>
   ) : !current ? (
     <Spinner />
@@ -212,11 +212,11 @@ export function PatchNotes({ channel, installedVersion, latestVersion }) {
   return (
     <>
       <button type='button' className='link link-primary self-start text-sm' onClick={open}>
-        <Trans>Patchnotes</Trans>
+        <Trans>Release notes</Trans>
       </button>
 
       {isOpen && (
-        <PatchNotesModal title={t`Patchnotes`} onClose={close}>
+        <PatchNotesModal title={t`Release notes`} onClose={close}>
           {nightly && (
             <TabBar
               tabs={[

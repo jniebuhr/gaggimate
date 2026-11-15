@@ -1085,7 +1085,7 @@ msgid "Could not import {importName}: {importMessage}"
 msgstr "Impossibile importare {importName}: {importMessage}"
 
 #: src/pages/Settings/PatchNotes.jsx
-msgid "Could not load patchnotes"
+msgid "Could not load release notes"
 msgstr ""
 
 #: src/pages/ProfileEdit/ProfileImageUpload.jsx
@@ -3330,10 +3330,6 @@ msgstr "password"
 msgid "Password"
 msgstr "Password"
 
-#: src/pages/Settings/PatchNotes.jsx
-msgid "Patchnotes"
-msgstr ""
-
 #: src/pages/Home/utils.js
 msgctxt "process action"
 msgid "Pause"
@@ -4071,6 +4067,10 @@ msgstr "Shot di riferimento"
 #: src/pages/Statistics/components/StatisticsSearchHelp.jsx
 msgid "Relative time: <0>h</0> (now), <1>h-7d</1> (7 days ago)"
 msgstr "Tempo relativo: <0>h</0> (adesso), <1>h-7d</1> (7 giorni fa)"
+
+#: src/pages/Settings/PatchNotes.jsx
+msgid "Release notes"
+msgstr ""
 
 #: src/components/MachineProfileControl.jsx
 msgid "Reload updated profile"

@@ -1081,7 +1081,7 @@ msgid "Could not import {importName}: {importMessage}"
 msgstr "无法导入 {importName}：{importMessage}"
 
 #: src/pages/Settings/PatchNotes.jsx
-msgid "Could not load patchnotes"
+msgid "Could not load release notes"
 msgstr ""
 
 #: src/pages/ProfileEdit/ProfileImageUpload.jsx
@@ -3326,10 +3326,6 @@ msgstr "密码"
 msgid "Password"
 msgstr "密码"
 
-#: src/pages/Settings/PatchNotes.jsx
-msgid "Patchnotes"
-msgstr ""
-
 #: src/pages/Home/utils.js
 msgctxt "process action"
 msgid "Pause"
@@ -4067,6 +4063,10 @@ msgstr "参考萃取"
 #: src/pages/Statistics/components/StatisticsSearchHelp.jsx
 msgid "Relative time: <0>h</0> (now), <1>h-7d</1> (7 days ago)"
 msgstr "相对时间：<0>h</0>（现在），<1>h-7d</1>（7 天前）"
+
+#: src/pages/Settings/PatchNotes.jsx
+msgid "Release notes"
+msgstr ""
 
 #: src/components/MachineProfileControl.jsx
 msgid "Reload updated profile"

@@ -1081,7 +1081,7 @@ msgid "Could not import {importName}: {importMessage}"
 msgstr "{importName} をインポートできませんでした: {importMessage}"
 
 #: src/pages/Settings/PatchNotes.jsx
-msgid "Could not load patchnotes"
+msgid "Could not load release notes"
 msgstr ""
 
 #: src/pages/ProfileEdit/ProfileImageUpload.jsx
@@ -3326,10 +3326,6 @@ msgstr "パスワード"
 msgid "Password"
 msgstr "パスワード"
 
-#: src/pages/Settings/PatchNotes.jsx
-msgid "Patchnotes"
-msgstr ""
-
 #: src/pages/Home/utils.js
 msgctxt "process action"
 msgid "Pause"
@@ -4067,6 +4063,10 @@ msgstr "基準ショット"
 #: src/pages/Statistics/components/StatisticsSearchHelp.jsx
 msgid "Relative time: <0>h</0> (now), <1>h-7d</1> (7 days ago)"
 msgstr "相対時間: <0>h</0>（現在）、<1>h-7d</1>（7 日前）"
+
+#: src/pages/Settings/PatchNotes.jsx
+msgid "Release notes"
+msgstr ""
 
 #: src/components/MachineProfileControl.jsx
 msgid "Reload updated profile"
