@@ -27,7 +27,7 @@ struct Config {
     bool cupReady() const { return cupEnabled && std::isfinite(cup) && cup > 0 && cup <= 2000; }
     bool pfReady() const { return pfEnabled && std::isfinite(pf) && pf > 0 && pf <= 2000; }
     bool autoReady() const {
-        return cupReady() && pfReady() && (cupHardware != pfHardware || (cup < pf && cup + 1.2f < pf + 5.0f - 0.2f));
+        return cupReady() && pfReady() && (cupHardware != pfHardware || cup + 1.2f < pf + 5.0f - 0.2f);
     }
     Mode mode() const {
         if (preference == Mode::AUTOMATIC && autoReady())

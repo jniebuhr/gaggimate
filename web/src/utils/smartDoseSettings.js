@@ -45,7 +45,7 @@ export function smartDoseModes(settings, hardwareSupported = true) {
   const automaticAvailable =
     cupConfigured &&
     portafilterConfigured &&
-    (cupHardware !== pfHardware || (cup < pf && cup + 1.2 < pf + 5 - 0.2));
+    (cupHardware !== pfHardware || cup + 1.2 < pf + 5 - 0.2);
   const allowed = {
     cup: cupConfigured,
     portafilter: portafilterConfigured,
