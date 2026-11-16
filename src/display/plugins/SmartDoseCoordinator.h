@@ -6,7 +6,7 @@
 // locks; actions are consumed once by the caller, never by a second scale callback.
 namespace smartdose {
 static constexpr float ZERO_TOLERANCE_G = 0.2f;
-static constexpr float CUP_WEIGHT_TOLERANCE_G = 1.0f;
+static constexpr float ACCESSORY_WEIGHT_TOLERANCE_G = 1.0f;
 static constexpr uint32_t STABILITY_MS = 500;
 static constexpr uint32_t REMOVAL_CONFIRM_MS = 300;
 static constexpr uint32_t TRANSITION_GRACE_MS = 1500;
@@ -27,7 +27,7 @@ struct Config {
     bool cupReady() const { return cupEnabled && std::isfinite(cup) && cup > 0 && cup <= 2000; }
     bool pfReady() const { return pfEnabled && std::isfinite(pf) && pf > 0 && pf <= 2000; }
     bool autoReady() const {
-        return cupReady() && pfReady() && (cupHardware != pfHardware || (cup < pf && cup + 1.2f < pf + 5.0f - 0.2f));
+        return cupReady() && pfReady() && (cupHardware != pfHardware || cup + 1.2f < pf + 5.0f - 0.2f);
     }
     Mode mode() const {
         if (preference == Mode::AUTOMATIC && autoReady())
@@ -49,7 +49,7 @@ inline bool validDose(float v) { return std::isfinite(v) && v >= 5 && v <= 40; }
 struct Reading {
     float weight = 0, anchor = 0, baseline = 0;
     uint32_t last = 0, stableSince = 0;
-    bool present = false, armed = false, cupArmed = false;
+    bool present = false, baselineReady = false;
     bool fresh(uint32_t now) const { return present && now - last < READING_STALE_MS; }
     bool stable(uint32_t now, uint32_t duration = STABILITY_MS) const { return fresh(now) && now - stableSince >= duration; }
     void update(float v, uint32_t now) {
@@ -85,13 +85,9 @@ class Coordinator {
         candidate = 0;
         tareIssued = false;
         transitionPending = false;
-        // Cached/ignored placements cannot claim ownership after release. A new cup
-        // cycle requires a fresh stable zero, then the calibrated cup weight.
-        for (auto &r : readings) {
-            r.armed = false;
-            r.cupArmed = false;
-            r.present = false;
-        }
+        // Require a fresh stable reference before another placement can claim ownership.
+        for (auto &r : readings)
+            r = Reading{};
     }
     void configure(const Config &next) {
         if (!(config == next)) {
@@ -110,13 +106,8 @@ class Coordinator {
             return;
         }
         for (int i = 0; i < 2; ++i) {
-            if (!healthy[i] || !readings[i].fresh(now)) {
-                readings[i].present = false;
-                readings[i].armed = false;
-                readings[i].cupArmed = false;
-                if (!healthy[i])
-                    readings[i].baseline = 0;
-            }
+            if (!healthy[i] || !readings[i].fresh(now))
+                readings[i] = Reading{};
         }
     }
     Action sample(float value, bool hardware, uint32_t now) {
@@ -134,79 +125,70 @@ class Coordinator {
         if (!r.fresh(now)) {
             if (owner != Accessory::NONE)
                 cancel();
-            r.armed = false;
-            r.cupArmed = false;
+            r = Reading{};
         }
         r.update(value, now);
         if (owner == Accessory::NONE) {
-            // Only a reported zero arms cup detection. A negative empty-scale
-            // tare offset from the previous cycle must never make zero look
-            // like a newly placed cup. Stable zero establishes the new baseline.
-            if (std::abs(value) <= ZERO_TOLERANCE_G && r.stable(now)) {
-                r.baseline = 0;
-                r.cupArmed = true;
-            }
-            if (std::abs(value - r.baseline) <= ZERO_TOLERANCE_G && r.stable(now))
-                r.armed = true;
-            if (!config.automatic || !r.stable(now))
+            if (!r.stable(now))
                 return action;
+            if (!r.baselineReady) {
+                r.baseline = value;
+                r.baselineReady = true;
+                return action;
+            }
             const auto mode = config.mode();
-            if ((mode == Mode::CUP || mode == Mode::AUTOMATIC) && config.cupHardware == hardware && r.cupArmed &&
-                std::abs(value - config.cup) <= CUP_WEIGHT_TOLERANCE_G && std::abs(value) > ZERO_TOLERANCE_G) {
-                owner = Accessory::CUP;
-                phase = Phase::TARING;
-                candidate = 0;
-                started = now;
-                tareIssued = false;
-                tareBaseline = r.baseline - value;
-                action.tare = true;
-                action.hardware = hardware;
-            } else if ((mode == Mode::PORTAFILTER || mode == Mode::AUTOMATIC) && config.pfHardware == hardware && r.armed &&
-                       validDose(value - r.baseline - config.pf)) {
-                owner = Accessory::PORTAFILTER;
-                phase = Phase::READY;
-                candidate = value - r.baseline - config.pf;
-            } else
+            const bool cup = config.automatic && config.cupHardware == hardware &&
+                             (mode == Mode::CUP || mode == Mode::AUTOMATIC);
+            const bool pf = config.automatic && config.pfHardware == hardware &&
+                            (mode == Mode::PORTAFILTER || mode == Mode::AUTOMATIC);
+            const float added = value - r.baseline;
+            if (cup && std::abs(added - config.cup) <= ACCESSORY_WEIGHT_TOLERANCE_G) {
+                // Placement is relative to the previous stable weight, including
+                // a negative offset left by the last cup tare.
+                return startCupTare(hardware, now, r.baseline, value);
+            } else if (pf && validDose(added - config.pf)) {
+                claim(Accessory::PORTAFILTER, hardware, Phase::READY);
+                candidate = added - config.pf;
+            } else if (pf && std::abs(added - config.pf) <= ACCESSORY_WEIGHT_TOLERANCE_G) {
+                // Keep the pre-placement reference if beans will be added to an
+                // empty PF, without showing a cycle until a valid dose is present.
                 return action;
-            ownerHardware = hardware;
-            for (auto &other : readings) {
-                other.armed = false;
-                other.cupArmed = false;
+            } else if (cup && validDose(r.baseline) && value < -ZERO_TOLERANCE_G) {
+                // The scale may have powered on with the cup already tared.
+                // Preserve the stable net dose while lifting crosses negative
+                // readings. Only the calibrated empty reading confirms removal.
+                const float dose = r.baseline;
+                const bool removed = std::abs(value + config.cup) <= ACCESSORY_WEIGHT_TOLERANCE_G;
+                claim(Accessory::CUP, hardware, removed ? Phase::REMOVING : Phase::READY);
+                candidate = dose;
+                r.baseline = -config.cup;
+                removalStarted = now;
+                transitionPending = !removed;
+                transitionStarted = now;
+            } else {
+                r.baseline = value;
             }
             return action;
         }
-        if (owner == Accessory::CUP) {
-            if (phase == Phase::TARING) {
-                if (tareIssued && std::abs(value) <= ZERO_TOLERANCE_G) {
-                    phase = Phase::FILLING;
-                    r.stableSince = now;
-                    // A cup tare shifts the empty physical scale to -cupWeight.
-                    // Retain that known baseline across cycles, including shared-scale PF weighing.
-                    r.baseline = tareBaseline;
-                } else if (now - started > 5000)
-                    cancel();
-                return action;
-            }
-            if (value < -std::fmax(2.0f, config.cup * .5f)) {
-                if (phase != Phase::REMOVING) {
-                    phase = Phase::REMOVING;
-                    removalStarted = now;
-                }
-                if (now - removalStarted >= REMOVAL_CONFIRM_MS) {
-                    action.capture = validDose(candidate);
-                    action.dose = candidate;
-                    cancel();
-                }
-                return action;
-            }
-            phase = Phase::FILLING;
-            if (validDose(value) && r.stable(now))
-                candidate = value;
-            else if (value > 40)
-                candidate = 0;
+        if (phase == Phase::TARING) {
+            if (tareIssued && std::abs(value) <= ZERO_TOLERANCE_G) {
+                phase = Phase::FILLING;
+                r.stableSince = now;
+                r.baseline = tareBaseline;
+            } else if (now - started > 5000)
+                cancel();
             return action;
         }
-        if (std::abs(value - r.baseline) <= ZERO_TOLERANCE_G) {
+
+        // A scale-side tare from -cup to zero can look like placement. If an
+        // empty cup is subsequently added, tare it before accepting any beans.
+        if (owner == Accessory::CUP && value > 40 && !validDose(candidate) && r.stable(now) &&
+            std::abs(value - config.cup) <= ACCESSORY_WEIGHT_TOLERANCE_G)
+            return startCupTare(hardware, now, 0, value);
+
+        // Both accessories return to their retained empty reference on removal.
+        const float tolerance = owner == Accessory::CUP ? ACCESSORY_WEIGHT_TOLERANCE_G : ZERO_TOLERANCE_G;
+        if (std::abs(value - r.baseline) <= tolerance) {
             transitionPending = false;
             if (phase != Phase::REMOVING) {
                 phase = Phase::REMOVING;
@@ -215,30 +197,60 @@ class Coordinator {
             if (now - removalStarted >= REMOVAL_CONFIRM_MS) {
                 action.capture = validDose(candidate);
                 action.dose = candidate;
+                action.hardware = hardware;
                 cancel();
             }
-        } else if (validDose(value - r.baseline - config.pf)) {
+            return action;
+        }
+
+        const float dose = owner == Accessory::CUP ? value : value - r.baseline - config.pf;
+        if (validDose(dose)) {
             transitionPending = false;
-            phase = Phase::READY;
+            phase = r.stable(now) ? Phase::READY : Phase::FILLING;
             if (r.stable(now))
-                candidate = value - r.baseline - config.pf;
-        } else {
-            // Lifting the portafilter traverses weights outside the dose range.
-            // Preserve the established stable dose briefly, but cancel sustained
-            // invalid readings. Empty confirmation starts only on reaching zero.
+                candidate = dose;
+        } else if (dose > 40 ||
+                   (dose >= -ZERO_TOLERANCE_G && r.stable(now) && (owner == Accessory::CUP || !validDose(candidate)))) {
+            // Empty/underfilled or overfilled accessories have no valid dose.
+            candidate = 0;
+            phase = Phase::FILLING;
+            transitionPending = false;
+        } else if (validDose(candidate)) {
+            // Preserve the last stable dose while lifting traverses other weights.
             phase = Phase::READY;
-            if (!validDose(candidate)) {
-                cancel();
-                return action;
-            }
             if (!transitionPending) {
                 transitionPending = true;
                 transitionStarted = now;
             }
             if (now - transitionStarted >= TRANSITION_GRACE_MS)
                 cancel();
+        } else {
+            phase = Phase::FILLING;
         }
         return action;
+    }
+
+  private:
+    Action startCupTare(bool hardware, uint32_t now, float baseline, float weight) {
+        claim(Accessory::CUP, hardware, Phase::TARING);
+        started = now;
+        tareBaseline = baseline - weight;
+        Action action;
+        action.tare = true;
+        action.hardware = hardware;
+        return action;
+    }
+
+    void claim(Accessory accessory, bool hardware, Phase next) {
+        owner = accessory;
+        ownerHardware = hardware;
+        phase = next;
+        candidate = 0;
+        tareIssued = false;
+        transitionPending = false;
+        // Ignored placements on the other scale must establish a new reference.
+        for (auto &r : readings)
+            r.baselineReady = false;
     }
 };
 } // namespace smartdose
