@@ -437,14 +437,6 @@ export function SystemTab() {
                 </>
               )}
             </div>
-            <button
-              type='button'
-              className='btn btn-secondary btn-sm'
-              disabled={!formData.displayUpdateAvailable || submitting}
-              onClick={() => onUpdate('display')}
-            >
-              {headless ? <Trans>Update Headless</Trans> : <Trans>Update Display</Trans>}
-            </button>
           </div>
           {/* Own grid row, so the update buttons below stay on one line */}
           <div className='flex md:col-span-2'>
@@ -473,7 +465,7 @@ export function SystemTab() {
             disabled={!formData.displayUpdateAvailable || submitting}
             onClick={() => onUpdate('display')}
           >
-            <Trans>Update Display</Trans>
+            {headless ? <Trans>Update Headless</Trans> : <Trans>Update Display</Trans>}
           </button>
           <div className='flex flex-col space-y-2 md:col-span-2'>
             <button
