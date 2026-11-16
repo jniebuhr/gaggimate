@@ -34,14 +34,7 @@ export {
   normalizeCompareTargetDisplayMode,
 } from './formatting';
 
-export {
-  saveToStorage,
-  loadFromStorage,
-  getSortedLibrary,
-  saveToLibrary,
-  deleteFromLibrary,
-  clearLibrary,
-} from './storage';
+export { saveToStorage, loadFromStorage } from './storage';
 
 export { getProfileDisplayLabel, detectDoseFromProfileName } from './profiles';
 

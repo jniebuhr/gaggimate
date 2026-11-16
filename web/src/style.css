@@ -257,16 +257,6 @@
   --app-glass-surface-filter: blur(14px) saturate(1.45);
   --app-glass-surface-highlight: inset 0 1px 0
     color-mix(in srgb, var(--color-base-100) 42%, transparent);
-  --analyzer-source-gm-badge-bg: color-mix(in srgb, var(--color-base-content) 10%, transparent);
-  --analyzer-source-gm-badge-border: color-mix(in srgb, var(--color-base-content) 15%, transparent);
-  --analyzer-source-gm-badge-text: var(--color-base-content);
-  --analyzer-source-web-badge-bg: color-mix(in srgb, var(--color-base-content) 10%, transparent);
-  --analyzer-source-web-badge-border: color-mix(
-    in srgb,
-    var(--color-base-content) 15%,
-    transparent
-  );
-  --analyzer-source-web-badge-text: #5b7aa7;
 }
 
 html[data-theme='dark'] {
@@ -337,7 +327,6 @@ html[data-theme='dark'] {
   --app-glass-surface-filter: blur(14px) saturate(1.45);
   --app-glass-surface-highlight: inset 0 1px 0
     color-mix(in srgb, var(--color-base-content) 10%, transparent);
-  --analyzer-source-web-badge-text: #94a3b8;
 }
 
 html[data-theme='nord'] {

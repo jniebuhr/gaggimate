@@ -9,8 +9,6 @@ import {
   ActionBarNavigationButtons,
   ActionBarStatisticsAction,
 } from './ActionBarButtons';
-import { ModeHintPortal, useAnalyzerActionBarModeHint } from './ActionBarModeHint';
-import { MobileStatusActionsMenu } from './MobileStatusActionsMenu';
 import {
   getAnalyzerActionBarDisplayState,
   getAnalyzerActionBarNavigationState,
@@ -32,26 +30,11 @@ export function AnalyzerActionBar({
   statisticsAvailable = true,
   onImport,
   isImporting = false,
-  importMode = 'temp',
-  onImportModeChange,
   isSelectionPending = false,
   isProfilePending = false,
-  showImportModeToggle = true,
   enableKeyboardNavigation = true,
 }) {
   const fileInputRef = useRef(null);
-  const {
-    modeButtonRef,
-    modeHint,
-    modeHintVariant,
-    modeHintPosition,
-    modeHintBadgeStyle,
-    handleModeToggle,
-  } = useAnalyzerActionBarModeHint({
-    importMode,
-    onImportModeChange,
-  });
-
   const { displayShot, hasDisplayShot } = getAnalyzerActionBarDisplayState({
     currentShot,
     selectedShot,
@@ -169,23 +152,10 @@ export function AnalyzerActionBar({
             onShowStats={onShowStats}
           />
 
-          <MobileStatusActionsMenu
-            buttonClasses={`${actionButtonClasses} px-2.5 sm:hidden`}
-            handleImportClick={handleImportClick}
-            handleModeToggle={handleModeToggle}
-            importMode={importMode}
-            isImporting={isImporting}
-            showImportModeToggle={showImportModeToggle}
-          />
-
           <ActionBarImportActions
             actionButtonClasses={actionButtonClasses}
             handleImportClick={handleImportClick}
-            handleModeToggle={handleModeToggle}
-            importMode={importMode}
             isImporting={isImporting}
-            modeButtonRef={modeButtonRef}
-            showImportModeToggle={showImportModeToggle}
           />
 
           <input
@@ -208,13 +178,6 @@ export function AnalyzerActionBar({
           </div>
         )}
       </div>
-
-      <ModeHintPortal
-        modeHint={modeHint}
-        modeHintBadgeStyle={modeHintBadgeStyle}
-        modeHintPosition={modeHintPosition}
-        modeHintVariant={modeHintVariant}
-      />
     </div>
   );
 }

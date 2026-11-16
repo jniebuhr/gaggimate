@@ -11,26 +11,21 @@ import {
 } from '../../../ShotAnalyzer/services/AnalyzerService';
 import { libraryService } from '../../../ShotAnalyzer/services/LibraryService';
 import { DEFAULT_SETTINGS } from './constants';
-import { resolveShotEffectiveTimestampMs } from '../../utils/statisticsSearchDsl';
+import { resolveShotTimestampMs } from '../../utils/statisticsSearchDsl';
 import {
   getShotSelectionKey,
   getStatisticsCompareFallbackKey,
   buildStatisticsCompareEntry,
 } from './helpers';
 
-export function buildProfileLookupMap(profileList, existingMap = null) {
+export function buildProfileLookupMap(profileList) {
   const profileMap = new Map();
   for (const profile of profileList) {
     const displayName = getProfileDisplayLabel(profile, '');
     const key = displayName.toLowerCase();
-    if (key && !existingMap?.has(key)) profileMap.set(key, profile);
+    if (key) profileMap.set(key, profile);
   }
   return profileMap;
-}
-
-export function getStatisticsShotId(shot) {
-  if (shot.source === 'gaggimate') return shot.id;
-  return shot.storageKey || shot.name || shot.id;
 }
 
 export function buildFullStatisticsShot({ loadedShot, shot, shotId }) {
@@ -43,30 +38,24 @@ export function buildFullStatisticsShot({ loadedShot, shot, shotId }) {
   };
 }
 
-export function resolveMatchedProfileEntry({ fallbackProfileMap, fullShot, profileMap }) {
+export function resolveMatchedProfileEntry({ fullShot, profileMap }) {
   const profileField = fullShot.profile || '';
   const profileKey = cleanName(profileField).toLowerCase();
   if (!profileKey) return null;
-  return profileMap.get(profileKey) || fallbackProfileMap.get(profileKey) || null;
-}
-
-export function getProfileLoadId(profileEntry) {
-  if (profileEntry.source === 'gaggimate') return profileEntry.profileId || profileEntry.id;
-  return profileEntry.label || profileEntry.name;
+  return profileMap.get(profileKey) || null;
 }
 
 export async function loadStatisticsMatchedProfile({ loadedProfileCache, matchedProfileEntry }) {
   if (!matchedProfileEntry) return null;
-  if (matchedProfileEntry.data) return matchedProfileEntry.data;
 
-  const profileId = getProfileLoadId(matchedProfileEntry);
+  const profileId = matchedProfileEntry.profileId || matchedProfileEntry.id;
   if (!profileId) return null;
 
-  const cacheKey = `${matchedProfileEntry.source}:${String(profileId || '')}`;
+  const cacheKey = String(profileId);
   if (!loadedProfileCache.has(cacheKey)) {
     loadedProfileCache.set(
       cacheKey,
-      libraryService.loadProfile(profileId, matchedProfileEntry.source).catch(() => null),
+      libraryService.loadProfile(profileId).catch(() => null),
     );
   }
   return loadedProfileCache.get(cacheKey);
@@ -89,20 +78,14 @@ export function getStatisticsAnalysisSettings(fullShot, matchedProfile) {
   return settings;
 }
 
-export async function analyzeStatisticsShot({
-  fallbackProfileMap,
-  loadedProfileCache,
-  profileMap,
-  shot,
-}) {
+export async function analyzeStatisticsShot({ loadedProfileCache, profileMap, shot }) {
   try {
-    const shotId = getStatisticsShotId(shot);
-    const loadedShot = await libraryService.loadShot(shotId, shot.source);
+    const shotId = shot.id;
+    const loadedShot = await libraryService.loadShot(shotId);
     const fullShot = buildFullStatisticsShot({ loadedShot, shot, shotId });
     if (!fullShot?.samples || fullShot.samples.length === 0) return null;
 
     const matchedProfileEntry = resolveMatchedProfileEntry({
-      fallbackProfileMap,
       fullShot,
       profileMap,
     });
@@ -122,7 +105,7 @@ export async function analyzeStatisticsShot({
         id: shotId,
         selectionKey: getShotSelectionKey(shot),
         displayName: getShotDisplayName(fullShot),
-        timestamp: shot.timestamp || shot.shotDate || shot.uploadedAt || 0,
+        timestamp: shot.timestamp || shot.shotDate || 0,
         profileName: cleanName(profileField) || '(Unknown)',
         source: shot.source,
       },
@@ -132,16 +115,10 @@ export async function analyzeStatisticsShot({
   }
 }
 
-export async function analyzeStatisticsShotBatch({
-  batch,
-  fallbackProfileMap,
-  loadedProfileCache,
-  profileMap,
-}) {
+export async function analyzeStatisticsShotBatch({ batch, loadedProfileCache, profileMap }) {
   return Promise.all(
     batch.map(shot =>
       analyzeStatisticsShot({
-        fallbackProfileMap,
         loadedProfileCache,
         profileMap,
         shot,
@@ -153,11 +130,7 @@ export async function analyzeStatisticsShotBatch({
 export function getStatisticsRunSources(runRequest) {
   const shotList = Array.isArray(runRequest.shots) ? runRequest.shots : [];
   const profileList = Array.isArray(runRequest.profiles) ? runRequest.profiles : [];
-  const fallbackProfileList = Array.isArray(runRequest.fallbackProfiles)
-    ? runRequest.fallbackProfiles
-    : [];
-
-  return { fallbackProfileList, profileList, shotList };
+  return { profileList, shotList };
 }
 
 function appendDefinedEntries(targetEntries, batchResults) {
@@ -167,9 +140,8 @@ function appendDefinedEntries(targetEntries, batchResults) {
 }
 
 export async function runStatisticsAnalysis({ isCurrentRun, onProgress, runRequest }) {
-  const { fallbackProfileList, profileList, shotList } = getStatisticsRunSources(runRequest);
+  const { profileList, shotList } = getStatisticsRunSources(runRequest);
   const profileMap = buildProfileLookupMap(profileList);
-  const fallbackProfileMap = buildProfileLookupMap(fallbackProfileList, profileMap);
   const loadedProfileCache = new Map();
   const total = shotList.length;
 
@@ -183,7 +155,6 @@ export async function runStatisticsAnalysis({ isCurrentRun, onProgress, runReque
     const batch = shotList.slice(i, i + 2);
     const batchResults = await analyzeStatisticsShotBatch({
       batch,
-      fallbackProfileMap,
       loadedProfileCache,
       profileMap,
     });
@@ -270,10 +241,10 @@ export function getBuiltProfileCount(entriesRef) {
   return profileNames.size;
 }
 
-export function getBuiltDateRange(entriesRef, dateBasisMode) {
+export function getBuiltDateRange(entriesRef) {
   const cachedEntries = Array.isArray(entriesRef.current) ? entriesRef.current : [];
   const timestamps = cachedEntries
-    .map(entry => resolveShotEffectiveTimestampMs(entry?.shotData || entry?.meta, dateBasisMode))
+    .map(entry => resolveShotTimestampMs(entry?.shotData || entry?.meta))
     .filter(value => Number.isFinite(value) && value > 0)
     .sort((a, b) => a - b);
 

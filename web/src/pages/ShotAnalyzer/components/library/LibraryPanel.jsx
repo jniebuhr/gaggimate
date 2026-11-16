@@ -4,20 +4,17 @@
  */
 
 import { t } from '@lingui/core/macro';
-import { ApiServiceContext } from '../../../../services/ApiService';
+import { ApiServiceContext, machine } from '../../../../services/ApiService';
 import { exportLibraryItems } from '../../services/LibraryExportService';
 import {
-  ANALYZER_DB_KEYS,
   cleanName,
   getPinnedProfiles,
   getPinnedShotsByProfile,
   getShotPinBucketKey,
-  saveToStorage,
   toggleProfilePin,
   toggleShotPin,
 } from '../../utils/analyzerUtils';
 import { LibraryPanelStatusSlots } from './AnalyzerPanelSlot';
-import { getStoredLibrarySourceFilter } from './libraryData';
 import {
   applyChangedProfilePins,
   applyChangedShotPins,
@@ -59,9 +56,10 @@ import {
   useLibrarySelectionTargetSync,
   useLibraryServiceApi,
 } from './useLibraryPanelState';
-import { useCallback, useContext, useEffect, useRef, useState } from 'preact/hooks';
+import { useCallback, useContext, useRef, useState } from 'preact/hooks';
 
 export function LibraryPanel({
+  initiallyOpen = false,
   currentShot,
   currentProfile,
   currentShotName = 'No Shot Loaded',
@@ -79,8 +77,6 @@ export function LibraryPanel({
   onShowStats,
   statsHref = '/statistics',
   secondaryStatsHref = '/statistics',
-  importMode = 'temp',
-  onImportModeChange,
   compareMode = false,
   compareHasSecondaryShot = false,
   compareSelectedCount = 0,
@@ -104,8 +100,7 @@ export function LibraryPanel({
   const barRef = useRef(null);
 
   // UI State
-  const [collapsed, setCollapsed] = useState(true);
-  const [loading, setLoading] = useState(false);
+  const [collapsed, setCollapsed] = useState(!initiallyOpen);
   const [importing, setImporting] = useState(false); // Specific state for import spinner
   const [librarySelectionTarget, setLibrarySelectionTarget] = useState('primaryShot');
   const { isStuck, isMobileViewport, barRect } = useLibraryPanelLayoutState({
@@ -153,12 +148,6 @@ export function LibraryPanel({
   const [navigationShots, setNavigationShots] = useState([]);
 
   // Filter & Sort State
-  const [shotsSourceFilter, setShotsSourceFilter] = useState(() =>
-    getStoredLibrarySourceFilter(ANALYZER_DB_KEYS.LIBRARY_SHOTS_SOURCE_FILTER),
-  );
-  const [profilesSourceFilter, setProfilesSourceFilter] = useState(() =>
-    getStoredLibrarySourceFilter(ANALYZER_DB_KEYS.LIBRARY_PROFILES_SOURCE_FILTER),
-  );
 
   const [shotsSearch, setShotsSearch] = useState('');
   const [shotsSort, setShotsSort] = useState({ key: 'shotDate', order: 'desc' });
@@ -177,24 +166,16 @@ export function LibraryPanel({
       try {
         sessionStorage.setItem(
           'statsInitialContext',
-          JSON.stringify(
-            createLibraryProfileStatsContext({
-              compareMode,
-              currentShot,
-              profileItem,
-              secondaryShot,
-              shotsSourceFilter,
-            }),
-          ),
+          JSON.stringify(createLibraryProfileStatsContext({ compareMode, profileItem })),
         );
       } catch {
         // Ignore session storage issues and keep navigation working.
       }
     },
-    [compareMode, currentShot, secondaryShot, shotsSourceFilter],
+    [compareMode],
   );
 
-  // Debounced search values to avoid re-fetching on every keystroke
+  // Debounced search values keep local filtering responsive
   const debouncedShotsSearch = useDebouncedLibraryValue(shotsSearch);
   const debouncedProfilesSearch = useDebouncedLibraryValue(profilesSearch);
   const normalizedCurrentShotProfileName = cleanName(
@@ -225,14 +206,6 @@ export function LibraryPanel({
     [pinnedShotsByProfile],
   );
 
-  useEffect(() => {
-    saveToStorage(ANALYZER_DB_KEYS.LIBRARY_SHOTS_SOURCE_FILTER, shotsSourceFilter);
-  }, [shotsSourceFilter]);
-
-  useEffect(() => {
-    saveToStorage(ANALYZER_DB_KEYS.LIBRARY_PROFILES_SOURCE_FILTER, profilesSourceFilter);
-  }, [profilesSourceFilter]);
-
   useLibraryServiceApi(apiService);
   useLibrarySelectionTargetSync({
     compareMode,
@@ -243,7 +216,8 @@ export function LibraryPanel({
   });
   useCloseLibraryOnOutsideClick({ collapsed, panelRef, setCollapsed });
 
-  const refreshLibraries = useLibraryRefresh({
+  const { refreshLibraries, shotsLoading, profilesLoading } = useLibraryRefresh({
+    connected: machine.value.connected,
     debouncedProfilesSearch,
     debouncedShotsSearch,
     normalizedCurrentProfileName,
@@ -252,15 +226,12 @@ export function LibraryPanel({
     pinnedShotsByProfile,
     profilesPinnedFirst,
     profilesSort,
-    profilesSourceFilter,
     selectionPromotionsEnabled,
-    setLoading,
     setNavigationShots,
     setProfiles,
     setShots,
     shotsPinnedFirst,
     shotsSort,
-    shotsSourceFilter,
   });
 
   // --- Action Handlers ---
@@ -312,7 +283,7 @@ export function LibraryPanel({
     if (!confirm(t`Are you sure you want to delete "${itemName}"?`)) return;
     try {
       await deleteLibraryItem(item);
-      refreshLibraries();
+      await refreshLibraries();
     } catch (e) {
       const message = e.message;
       alert(t`Delete failed: ${message}`);
@@ -322,7 +293,6 @@ export function LibraryPanel({
   const handleImport = useLibraryPanelImportHandler({
     currentShot,
     secondaryShot,
-    importMode,
     compareMode,
     onShotSelect,
     onProfileLoad,
@@ -446,7 +416,6 @@ export function LibraryPanel({
       onShowStats,
       primaryDisplayProfile,
       primaryDisplayProfileName,
-      primaryDisplayShot,
     }),
     statsHref,
     compareAvailable: shots.length > 0,
@@ -471,8 +440,6 @@ export function LibraryPanel({
     statisticsAvailable: Boolean(primaryDisplayProfile || primaryProfileMismatch),
     onImport: files => handleImport(files, { slot: 'primary', targetType: 'any' }),
     isImporting: importing,
-    importMode,
-    onImportModeChange,
     isSelectionPending: isPrimarySelectionPending,
     isProfilePending: isPrimaryProfileSearching,
   };
@@ -495,10 +462,8 @@ export function LibraryPanel({
       }),
     onShowStats: createSecondaryStatsHandler({
       onShowStats,
-      primaryDisplayShot,
       secondaryDisplayProfile,
       secondaryDisplayProfileName,
-      secondaryDisplayShot,
     }),
     statsHref: secondaryStatsHref,
     compareAvailable: false,
@@ -526,11 +491,8 @@ export function LibraryPanel({
         targetType: 'any',
       }),
     isImporting: importing,
-    importMode,
-    onImportModeChange,
     isSelectionPending: isCompareSelectionPending,
     isProfilePending: isCompareProfileSearching,
-    showImportModeToggle: false,
     showCompareButton: false,
     enableKeyboardNavigation: false,
   };
@@ -573,7 +535,7 @@ export function LibraryPanel({
             handleExport={handleExport}
             handleShotPinToggle={handleShotPinToggle}
             handleShotRowAction={handleShotRowAction}
-            loading={loading}
+            loading={shotsLoading}
             mobileActiveSection={mobileActiveSection}
             normalizedCurrentProfileName={normalizedCurrentProfileName}
             onCompareShotToggle={onCompareShotToggle}
@@ -584,12 +546,10 @@ export function LibraryPanel({
             setShotsPinnedFirst={setShotsPinnedFirst}
             setShotsSearch={setShotsSearch}
             setShotsSort={setShotsSort}
-            setShotsSourceFilter={setShotsSourceFilter}
             shots={shots}
             shotsPinnedFirst={shotsPinnedFirst}
             shotsSearch={shotsSearch}
             shotsSort={shotsSort}
-            shotsSourceFilter={shotsSourceFilter}
           />
 
           {/* PROFILES SECTION */}
@@ -602,7 +562,7 @@ export function LibraryPanel({
             handleLibraryProfileStatsOpen={handleLibraryProfileStatsOpen}
             handleProfilePinToggle={handleProfilePinToggle}
             handleProfileRowAction={handleProfileRowAction}
-            loading={loading}
+            loading={profilesLoading}
             mobileActiveSection={mobileActiveSection}
             normalizedCompareSecondaryProfileName={normalizedCompareSecondaryProfileName}
             pinnedProfiles={pinnedProfiles}
@@ -613,7 +573,6 @@ export function LibraryPanel({
             profilesPinnedFirst={profilesPinnedFirst}
             profilesSearch={profilesSearch}
             profilesSort={profilesSort}
-            profilesSourceFilter={profilesSourceFilter}
             refreshLibraries={refreshLibraries}
             secondaryDisplayProfile={secondaryDisplayProfile}
             secondaryDisplayProfileName={secondaryDisplayProfileName}
@@ -621,7 +580,6 @@ export function LibraryPanel({
             setProfilesPinnedFirst={setProfilesPinnedFirst}
             setProfilesSearch={setProfilesSearch}
             setProfilesSort={setProfilesSort}
-            setProfilesSourceFilter={setProfilesSourceFilter}
           />
         </LibraryDropdown>
       )}

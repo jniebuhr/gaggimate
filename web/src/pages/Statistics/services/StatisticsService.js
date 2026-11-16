@@ -3,7 +3,7 @@
  * Pure aggregation logic for multi-shot statistics.
  * No side effects, no state — just computation.
  *
- * Input: Array of { analysis, meta: { id, timestamp, profileName, source } }
+ * Input: Array of { analysis, meta: { id, timestamp, profileName } }
  * Output: StatisticsResult object
  */
 import { t } from '@lingui/core/macro';
@@ -76,8 +76,6 @@ function createSummaryAccumulator() {
     totalWeight: 0,
     earliest: Infinity,
     latest: -Infinity,
-    gmCount: 0,
-    browserCount: 0,
     tempAvgs: [],
     tempTargetDeviations: [],
   };
@@ -98,8 +96,6 @@ function addMetaSummaryValues(acc, meta) {
     acc.earliest = Math.min(acc.earliest, meta.timestamp);
     acc.latest = Math.max(acc.latest, meta.timestamp);
   }
-  if (meta.source === 'gaggimate') acc.gmCount += 1;
-  else acc.browserCount += 1;
 }
 
 function computeSummary(entries) {
@@ -128,7 +124,6 @@ function computeSummary(entries) {
       earliest: acc.earliest === Infinity ? null : acc.earliest,
       latest: acc.latest === -Infinity ? null : acc.latest,
     },
-    sourceBreakdown: { gaggimate: acc.gmCount, browser: acc.browserCount },
   };
 }
 
@@ -446,7 +441,6 @@ export function computeStatistics(entries) {
         avgTemp: 0,
         avgTempTargetDeviation: 0,
         dateRange: { earliest: null, latest: null },
-        sourceBreakdown: { gaggimate: 0, browser: 0 },
       },
       metrics: {},
       profileGroups: [],

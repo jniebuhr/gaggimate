@@ -29,8 +29,8 @@ function StatisticsSearchHelpContent() {
           <Trans>Fields</Trans>
         </p>
         <p>
-          <code>name</code>, <code>profile</code>, <code>id</code>, <code>source</code>,{' '}
-          <code>date</code>, <code>pinned</code>
+          <code>name</code>, <code>profile</code>, <code>id</code>, <code>date</code>,{' '}
+          <code>pinned</code>
         </p>
       </div>
       <div className='bg-base-200/60 rounded-lg p-2'>
@@ -47,7 +47,7 @@ function StatisticsSearchHelpContent() {
           <code>profile:3_0_25; date:&gt;h-7d;</code>
         </p>
         <p>
-          <code>pinned:true; source:gm;</code>
+          <code>pinned:true;</code>
         </p>
         <p>
           <code>date:&gt;=01.02.2026; date:&lt;=07.02.2026 23:59;</code>
@@ -70,12 +70,6 @@ function StatisticsSearchHelpContent() {
         </p>
         <p className='opacity-70'>
           <Trans>Local browser time is used.</Trans>
-        </p>
-        <p className='opacity-70'>
-          <Trans>
-            Date basis (<code>Shot / Auto / Upload</code>) appears only when missing shot timestamps
-            are detected.
-          </Trans>
         </p>
       </div>
     </div>

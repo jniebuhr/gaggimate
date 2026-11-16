@@ -6,7 +6,6 @@ import { faPlay } from '@fortawesome/free-solid-svg-icons/faPlay';
 import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import { faUndo } from '@fortawesome/free-solid-svg-icons/faUndo';
 // Render-only sub-components for StatisticsToolbar: dropdown trigger buttons, profile/shot menu items, and search help trigger
-import { SourceMarker } from '../../../ShotAnalyzer/components/SourceMarker';
 import { StatisticsSearchHelp } from '../StatisticsSearchHelp';
 import { StatisticsMultiSelectDropdown } from '../StatisticsMultiSelectDropdown';
 import {
@@ -14,67 +13,16 @@ import {
   STATISTICS_DROPDOWN_PANEL_SURFACE_STYLE,
 } from '../statisticsDropdownSurface';
 import {
-  SOURCE_OPTIONS,
   MODE_OPTIONS,
-  DATE_BASIS_OPTIONS,
   STATISTICS_TOP_ROW_CONTROL_HEIGHT_CLASS,
-  SEGMENT_GROUP_CLASS,
   WARNING_ORANGE_TEXT_STYLE,
   WARNING_ORANGE_TEXT_MUTED_STYLE,
 } from './constants';
-import { getMenuItemClasses, getSegmentButtonClasses, getDateBasisOptionTitle } from './helpers';
+import { getMenuItemClasses } from './helpers';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { i18n } from '../../../../i18n.js';
 
 const STATISTICS_DROPDOWN_PANEL_CLASSES = `dropdown-content mt-2 ${STATISTICS_DROPDOWN_PANEL_SURFACE_CLASS}`;
-
-function renderCompactSourceSummary(option) {
-  if (!option) return null;
-  if (option.value === 'both') {
-    return (
-      <span className='inline-flex items-center gap-0.5'>
-        <SourceMarker source='gaggimate' variant='compact' />
-        <SourceMarker source='browser' variant='compact' />
-      </span>
-    );
-  }
-
-  return <SourceMarker source={option.value} variant='compact' />;
-}
-
-function renderCombinedSourceSummary({ shotOption, profileOption }) {
-  return (
-    <span className='inline-flex min-w-0 items-center gap-1.5'>
-      <span className='inline-flex min-w-0 items-center gap-1.5'>
-        <span className='shrink-0'>{renderCompactSourceSummary(shotOption)}</span>
-        <span className='text-base-content/70 min-w-0 truncate text-[11px] font-semibold'>
-          <Trans>Shots</Trans>
-        </span>
-      </span>
-      <span className='text-base-content/35 shrink-0'>·</span>
-      <span className='inline-flex min-w-0 items-center gap-1.5'>
-        <span className='shrink-0'>{renderCompactSourceSummary(profileOption)}</span>
-        <span className='text-base-content/70 min-w-0 truncate text-[11px] font-semibold'>
-          <Trans>Profiles</Trans>
-        </span>
-      </span>
-    </span>
-  );
-}
-
-function renderSourceOptionContent(option) {
-  if (!option) return null;
-  if (option.value === 'both') {
-    return <span>{i18n._(option.label)}</span>;
-  }
-
-  return (
-    <span className='inline-flex items-center gap-2'>
-      <SourceMarker source={option.value} variant='compact' />
-      <span>{i18n._(option.label)}</span>
-    </span>
-  );
-}
 
 export function ToolbarBusyOverlay({ visible }) {
   if (!visible) return null;
@@ -244,84 +192,6 @@ export function SelectionDropdowns({
   }
 
   return null;
-}
-
-export function SourceSelectionDropdown({
-  sourceTriggerClasses,
-  currentShotSourceOption,
-  currentProfileSourceOption,
-  shotSource,
-  onShotSourceChange,
-  profileSource,
-  onProfileSourceChange,
-  isBusy,
-  toolbarControlClass,
-  busyDropdownClass,
-}) {
-  const { t } = useLingui();
-  const sourceGroups = [
-    {
-      key: 'shots',
-      label: t`Shots`,
-      value: shotSource,
-      onChange: onShotSourceChange,
-    },
-    {
-      key: 'profiles',
-      label: t`Profiles`,
-      value: profileSource,
-      onChange: onProfileSourceChange,
-    },
-  ];
-
-  return (
-    <details
-      className={`dropdown max-w-full ${toolbarControlClass} ${busyDropdownClass}`.trim()}
-      data-close-on-outside
-    >
-      <summary
-        className={sourceTriggerClasses}
-        aria-label={t`Select shot and profile sources`}
-        title={t`Select shot and profile sources`}
-      >
-        <span className='min-w-0 flex-1 truncate text-left'>
-          {renderCombinedSourceSummary({
-            shotOption: currentShotSourceOption,
-            profileOption: currentProfileSourceOption,
-          })}
-        </span>
-        <FontAwesomeIcon icon={faChevronDown} className='-ml-0.5 text-[10px] opacity-70' />
-      </summary>
-
-      <div
-        className={`${STATISTICS_DROPDOWN_PANEL_CLASSES} w-[min(92vw,18rem)] p-2`}
-        style={STATISTICS_DROPDOWN_PANEL_SURFACE_STYLE}
-      >
-        <div className='grid gap-2'>
-          {sourceGroups.map(group => (
-            <div key={group.key} className='grid gap-1.5'>
-              <div className='text-base-content/55 px-1 text-xs font-medium'>{group.label}</div>
-              <div className='grid grid-cols-3 gap-1'>
-                {SOURCE_OPTIONS.map(opt => (
-                  <button
-                    key={`${group.key}-${opt.value}`}
-                    type='button'
-                    className={`flex h-9 min-h-0 items-center justify-center rounded-lg px-2 text-xs font-medium transition-colors ${getMenuItemClasses({ tone: 'neutral', isActive: group.value === opt.value })}`}
-                    onClick={() => {
-                      group.onChange(opt.value);
-                    }}
-                    disabled={isBusy}
-                  >
-                    {renderSourceOptionContent(opt)}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </details>
-  );
 }
 
 export function DateRangeDropdown({
@@ -532,13 +402,6 @@ export function ExpandedToolbarControls({
   canExecute,
   runButtonClasses,
   setShowDslSelectionPreview,
-  sourceTriggerClasses,
-  currentShotSourceOption,
-  currentProfileSourceOption,
-  shotSource,
-  onShotSourceChange,
-  profileSource,
-  onProfileSourceChange,
   dateTriggerClasses,
   hasDateFilter,
   showDateRangeLabelInTrigger,
@@ -630,19 +493,6 @@ export function ExpandedToolbarControls({
       <div
         className={`relative z-10 flex w-full min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 pt-0.5 ${toolbarPassiveLayerClass}`.trim()}
       >
-        <SourceSelectionDropdown
-          sourceTriggerClasses={sourceTriggerClasses}
-          currentShotSourceOption={currentShotSourceOption}
-          currentProfileSourceOption={currentProfileSourceOption}
-          shotSource={shotSource}
-          onShotSourceChange={onShotSourceChange}
-          profileSource={profileSource}
-          onProfileSourceChange={onProfileSourceChange}
-          isBusy={isBusy}
-          toolbarControlClass={toolbarControlClass}
-          busyDropdownClass={busyDropdownClass}
-        />
-
         <DateRangeDropdown
           dateTriggerClasses={dateTriggerClasses}
           hasDateFilter={hasDateFilter}
@@ -670,60 +520,6 @@ export function ExpandedToolbarControls({
           activeCompactNeutralButtonClasses={activeCompactNeutralButtonClasses}
           toolbarControlClass={toolbarControlClass}
         />
-      </div>
-    </div>
-  );
-}
-
-export function DateBasisWarning({
-  visible,
-  dateBasisWarningMessage,
-  dateBasisMode,
-  onDateBasisModeChange,
-  isBusy,
-  toolbarPassiveLayerClass,
-  toolbarControlClass,
-}) {
-  const { t } = useLingui();
-  if (!visible) return null;
-
-  return (
-    <div
-      className={`flex w-full min-w-0 flex-wrap items-center gap-2 rounded-lg border px-2 py-2 ${toolbarPassiveLayerClass}`.trim()}
-      style={{
-        borderColor: 'color-mix(in srgb, var(--analyzer-warning-orange) 28%, transparent)',
-        background: 'color-mix(in srgb, var(--analyzer-warning-orange) 9%, transparent)',
-      }}
-    >
-      <div
-        className='min-w-[14rem] flex-1 text-[11px] leading-relaxed'
-        style={WARNING_ORANGE_TEXT_MUTED_STYLE}
-      >
-        <span className='font-semibold' style={WARNING_ORANGE_TEXT_STYLE}>
-          <Trans>Date Basis:</Trans>
-        </span>{' '}
-        <span className='text-base-content/80'>
-          {dateBasisWarningMessage ||
-            t`Some shots have no shot timestamp. Choose how date handling should treat them.`}
-        </span>
-      </div>
-      <div className={`${SEGMENT_GROUP_CLASS} ${toolbarControlClass}`.trim()}>
-        {DATE_BASIS_OPTIONS.map(opt => (
-          <button
-            key={opt.value}
-            type='button'
-            className={getSegmentButtonClasses({
-              isActive: dateBasisMode === opt.value,
-              activeTone: opt.value === 'auto' ? 'secondary' : 'neutral',
-              compact: true,
-            })}
-            onClick={() => onDateBasisModeChange(opt.value)}
-            disabled={isBusy}
-            title={getDateBasisOptionTitle(opt.value)}
-          >
-            {i18n._(opt.label)}
-          </button>
-        ))}
       </div>
     </div>
   );

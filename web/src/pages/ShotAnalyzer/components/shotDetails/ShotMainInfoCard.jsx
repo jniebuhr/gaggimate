@@ -3,9 +3,7 @@ import { msg, plural, t } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react/macro';
 import { i18n } from '../../../../i18n.js';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons/faCircleNotch';
-import { faEye } from '@fortawesome/free-solid-svg-icons/faEye';
 import { cleanName } from '../../utils/analyzerUtils';
-import { SourceMarker } from '../SourceMarker';
 import { getAnalyzerShotDisplayName, getShotDateTimeLabel } from '../useShotNotesState';
 import { ShotSummaryMetricsRow } from './ShotMetricCards';
 
@@ -135,11 +133,6 @@ export function ShotMainInfoCard({
           {loading ? (
             <FontAwesomeIcon icon={faCircleNotch} spin className='text-base-content/35 text-xs' />
           ) : null}
-          {entry?.shot?.source === 'temp' ? (
-            <FontAwesomeIcon icon={faEye} className='text-base-content/45 text-xs' />
-          ) : (
-            <SourceMarker source={entry?.shot?.source} variant='library' />
-          )}
         </div>
       </div>
 

@@ -3,19 +3,7 @@ import {
   getProfileDisplayLabel,
   isProfilePinned,
   isShotPinnedAnywhere,
-  loadFromStorage,
 } from '../../utils/analyzerUtils';
-
-export function getStoredLibrarySourceFilter(storageKey) {
-  const storedValue = loadFromStorage(storageKey, 'all');
-  return storedValue === 'gaggimate' || storedValue === 'browser' || storedValue === 'all'
-    ? storedValue
-    : 'all';
-}
-
-export function getLibraryRequestSource(sourceFilter) {
-  return sourceFilter === 'all' ? 'both' : sourceFilter;
-}
 
 function getLibraryShotSearchPriority(item, query) {
   const normalizedId = String(item?.id || '').toLowerCase();

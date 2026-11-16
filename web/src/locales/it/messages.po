@@ -305,16 +305,6 @@ msgctxt "statistics mode"
 msgid "All"
 msgstr "Tutti"
 
-#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
-msgctxt "library source filter"
-msgid "ALL"
-msgstr "ALL"
-
-#: src/pages/Statistics/components/toolbar/constants.js
-msgctxt "shot source: all sources"
-msgid "ALL"
-msgstr "ALL"
-
 #: src/pages/DashboardSettings/index.jsx
 msgid "All available metrics are visible."
 msgstr "Tutte le metriche disponibili sono visibili."
@@ -387,11 +377,6 @@ msgstr "A quanti bar deve fermarsi l'assistenza della pompa. In questo modo la p
 #: src/services/VisualizerService.js
 msgid "Authentication failed - please check your username and password"
 msgstr "Autenticazione non riuscita: controlla nome utente e password"
-
-#: src/pages/Statistics/components/toolbar/constants.js
-msgctxt "date basis"
-msgid "Auto"
-msgstr "Auto"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Auto (Bluetooth when connected)"
@@ -1275,14 +1260,6 @@ msgstr "Data (recenti)"
 msgid "Date (Old)"
 msgstr "Data (meno recenti)"
 
-#: src/pages/Statistics/components/StatisticsSearchHelp.jsx
-msgid "Date basis (<0>Shot / Auto / Upload</0>) appears only when missing shot timestamps are detected."
-msgstr "La base della data (<0>Shot / Auto / Upload</0>) compare solo quando vengono rilevati timestamp mancanti nell’estrazione."
-
-#: src/pages/Statistics/components/toolbar/subcomponents.jsx
-msgid "Date Basis:"
-msgstr "Base della data:"
-
 #: src/pages/Statistics/components/toolbar/helpers.js
 msgid "Date Range"
 msgstr "Intervallo di date"
@@ -1568,10 +1545,6 @@ msgstr "Download dell'esportazione..."
 #: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
 msgid "Downloading shot #{shotId}"
 msgstr "Download dell’estrazione #{shotId}"
-
-#: src/pages/ShotAnalyzer/components/EmptyState.jsx
-msgid "Drag and drop files onto the status bar or use the import icons in the shot and profile badges."
-msgstr "Trascina i file sulla barra di stato o usa le icone di importazione nei badge dell’estrazione e del profilo."
 
 #: src/pages/ProfileList/index.jsx
 msgid "Drag disabled on search result"
@@ -1999,10 +1972,6 @@ msgstr "Esportazione del file non riuscita."
 msgid "Fill the water tank and close the steam knob."
 msgstr "Riempi il serbatoio dell'acqua e chiudi la manopola del vapore."
 
-#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
-msgid "Filter library source"
-msgstr "Filtra sorgente libreria"
-
 #: src/pages/Home/utils.js
 msgctxt "process action"
 msgid "Finish"
@@ -2149,10 +2118,6 @@ msgstr "Completa"
 #: src/pages/SetupWizard/index.jsx
 msgid "Further Resources"
 msgstr "Altre risorse"
-
-#: src/pages/ShotAnalyzer/components/EmptyState.jsx
-msgid "GaggiMate (GM)"
-msgstr "GaggiMate (GM)"
 
 #: src/pages/SetupWizard/PluginsStep.jsx
 msgid "GaggiMate can connect to your smart home, grinder and more. Enable what you need now; you can always change this later in the settings."
@@ -2450,7 +2415,6 @@ msgid "Image"
 msgstr "Immagine"
 
 #: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/MobileStatusActionsMenu.jsx
 msgid "Import"
 msgstr "Importa"
 
@@ -2481,10 +2445,6 @@ msgstr "Importa impostazioni"
 #: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
 msgid "Import shot or profile"
 msgstr "Importa estrazione o profilo"
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/MobileStatusActionsMenu.jsx
-msgid "Importing"
-msgstr "Importazione"
 
 #: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
 msgid "Importing shot or profile"
@@ -2696,10 +2656,6 @@ msgstr "Caricamento profili"
 #: src/pages/ShotHistory/HistoryCard.jsx
 msgid "Loading shot data..."
 msgstr "Caricamento dati dell’estrazione…"
-
-#: src/pages/ShotAnalyzer/components/EmptyState.jsx
-msgid "Local Browser Storage (WEB)"
-msgstr "Archivio locale del browser (WEB)"
 
 #: src/pages/Statistics/components/StatisticsSearchHelp.jsx
 msgid "Local browser time is used."
@@ -2979,7 +2935,6 @@ msgctxt "time bucket"
 msgid "Month"
 msgstr "Mese"
 
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/MobileStatusActionsMenu.jsx
 #: src/pages/ShotAnalyzer/components/library/LibraryActionsMenu.jsx
 msgid "More actions"
 msgstr "Altre azioni"
@@ -3400,17 +3355,9 @@ msgstr "Apri il menu azioni delle estrazioni"
 msgid "Open statistics"
 msgstr "Apri statistiche"
 
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/MobileStatusActionsMenu.jsx
-msgid "Open status actions menu"
-msgstr "Apri il menu azioni dello stato"
-
 #: src/pages/Settings/PluginCard.jsx
 msgid "Open the Home app on your iOS device, select Add Accessory, and enter the setup code shown above."
 msgstr "Apri l'app Casa sul tuo dispositivo iOS, seleziona Aggiungi accessorio e inserisci il codice di configurazione mostrato sopra."
-
-#: src/pages/ShotAnalyzer/components/EmptyState.jsx
-msgid "Opens imported external shots and profiles temporarily without saving them to the browser library."
-msgstr "Apre temporaneamente shot e profili esterni importati senza salvarli nella libreria del browser."
 
 #: src/pages/ProfileEdit/ProfileMainInformation.jsx
 msgid "Optional description for this profile"
@@ -3847,12 +3794,8 @@ msgid "Profile"
 msgstr "Profilo"
 
 #: src/pages/ShotAnalyzer/services/LibraryService.js
-msgid "Profile {nameOrId} not found"
-msgstr "Profilo {nameOrId} non trovato"
-
-#: src/pages/ShotAnalyzer/services/LibraryService.js
-msgid "Profile {nameOrId} not found in browser storage"
-msgstr "Profilo {nameOrId} non trovato nell'archivio del browser"
+msgid "Profile {id} not found"
+msgstr "Profilo {id} non trovato"
 
 #: src/pages/ShotHistory/index.jsx
 msgid "Profile A-Z"
@@ -3889,10 +3832,6 @@ msgstr "Informazioni profilo"
 #: src/components/MachineProfileControl.jsx
 msgid "Profile is too large."
 msgstr "Il profilo è troppo grande."
-
-#: src/pages/ShotAnalyzer/services/IndexedDBService.js
-msgid "Profile label is required for browser storage"
-msgstr "L'etichetta del profilo è obbligatoria per l'archivio del browser"
 
 #: src/pages/ProfileList/index.jsx
 msgid "Profile list"
@@ -4433,16 +4372,6 @@ msgstr "Sabato"
 msgid "Save"
 msgstr "Salva"
 
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
-msgctxt "import mode"
-msgid "Save"
-msgstr "Salva"
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarModeHint.jsx
-msgctxt "import mode badge"
-msgid "SAVE"
-msgstr "SALVA"
-
 #: src/pages/Settings/StickyFormFooter.jsx
 msgid "Save & Restart"
 msgstr "Salva e riavvia"
@@ -4485,18 +4414,6 @@ msgstr "Salva impostazioni"
 msgid "Save the profile first to add an image."
 msgstr "Salva prima il profilo per aggiungere un'immagine."
 
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/MobileStatusActionsMenu.jsx
-msgid "Save to Browser"
-msgstr "Salva nel browser"
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
-msgid "Save to Browser. Click to switch imports to View temporarily."
-msgstr "Salva nel browser. Fai clic per passare temporaneamente le importazioni a Visualizza."
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarModeHint.jsx
-msgid "Save to Browser. Imported shots and profiles will now be saved to the browser library."
-msgstr "Salva nel browser. Shot e profili importati verranno ora salvati nella libreria del browser."
-
 #: src/components/PumpFlowCalibration/Footer.jsx
 msgid "Save to machine"
 msgstr "Salva sulla macchina"
@@ -4514,6 +4431,10 @@ msgstr "Salvata"
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "Saved scale"
 msgstr "Bilancia salvata"
+
+#: src/pages/ShotAnalyzer/components/EmptyState.jsx
+msgid "Saved shots and profiles"
+msgstr "Shot e profili salvati"
 
 #: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
 msgid "Saving calibration profile..."
@@ -4680,9 +4601,9 @@ msgstr "Seleziona tipo di profilo Pro"
 msgid "Select Profiles..."
 msgstr "Seleziona profili..."
 
-#: src/pages/Statistics/components/toolbar/subcomponents.jsx
-msgid "Select shot and profile sources"
-msgstr "Seleziona sorgenti di shot e profili"
+#: src/pages/ShotAnalyzer/components/EmptyState.jsx
+msgid "Select saved shots and profiles directly from your GaggiMate."
+msgstr "Seleziona shot e profili salvati direttamente dal tuo GaggiMate."
 
 #: src/pages/Statistics/components/toolbar/subcomponents.jsx
 msgid "Select Shots..."
@@ -4790,11 +4711,6 @@ msgstr "Durata più breve"
 msgid "shot"
 msgstr "shot"
 
-#: src/pages/Statistics/components/toolbar/constants.js
-msgctxt "date basis"
-msgid "Shot"
-msgstr "Shot"
-
 #: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
 msgctxt "export file type"
 msgid "Shot"
@@ -4804,10 +4720,6 @@ msgstr "Shot"
 msgctxt "table column"
 msgid "Shot"
 msgstr "Shot"
-
-#: src/pages/ShotAnalyzer/services/LibraryService.js
-msgid "Shot {idStr} not found in browser storage"
-msgstr "Shot {idStr} non trovato nell'archivio del browser"
 
 #: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTable.jsx
 #: src/pages/ShotAnalyzer/components/shotChart/compare/compareChartConfig.js
@@ -5066,22 +4978,6 @@ msgstr "Plugin Smart Grind"
 msgid "Snapshotting shot history..."
 msgstr "Snapshot della cronologia shot..."
 
-#: src/pages/Statistics/components/statisticsView/helpers.js
-msgid "Some shots have no shot timestamp. Choose how date handling should treat them (Shot = exclude missing, Auto = fallback to upload time, Upload = upload time only)."
-msgstr "Alcuni shot non hanno il timestamp dello shot. Scegli come gestire la data per questi shot (Shot = escludi i mancanti, Auto = usa l'ora di upload come ripiego, Upload = solo ora di upload)."
-
-#: src/pages/Statistics/components/statisticsView/helpers.js
-msgid "Some shots have no shot timestamp. Choose how date handling should treat them (Shot = exclude missing, Auto = fallback to upload time, Upload = upload time only). Some shots have no usable date at all and may still be excluded from date filtering."
-msgstr "Alcuni shot non hanno il timestamp dello shot. Scegli come gestire la data per questi shot (Shot = escludi i mancanti, Auto = usa l'ora di upload come ripiego, Upload = solo ora di upload). Alcuni shot non hanno alcuna data utilizzabile e potrebbero comunque essere esclusi dal filtro per data."
-
-#: src/pages/Statistics/components/toolbar/subcomponents.jsx
-msgid "Some shots have no shot timestamp. Choose how date handling should treat them."
-msgstr "Alcuni shot non hanno il timestamp dello shot. Scegli come gestire la data per questi shot."
-
-#: src/pages/Statistics/components/statisticsView/helpers.js
-msgid "Some shots have no usable shot timestamp. Date filtering may exclude them unless upload time is available."
-msgstr "Alcuni shot non hanno un timestamp utilizzabile. Il filtro per data potrebbe escluderli, a meno che non sia disponibile l'ora di upload."
-
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
 #: src/pages/ShotHistory/ShotNotesCard.jsx
 msgid "Sour"
@@ -5336,10 +5232,6 @@ msgstr "Memoria (scheda SD)"
 msgid "Storage & Memory"
 msgstr "Archiviazione e memoria"
 
-#: src/pages/ShotAnalyzer/components/EmptyState.jsx
-msgid "Stores imported external shots and profiles locally in this browser on this device. They are not automatically available in other browsers or on other devices."
-msgstr "Salva localmente in questo browser, su questo dispositivo, shot e profili esterni importati. Non sono disponibili automaticamente in altri browser o su altri dispositivi."
-
 #: src/pages/SetupWizard/WifiStep.jsx
 msgid "Strong"
 msgstr "Forte"
@@ -5369,14 +5261,6 @@ msgstr "Scorri"
 #: src/pages/ShotAnalyzer/components/EmptyState.jsx
 msgid "Switch between shots."
 msgstr "Passa da uno shot all'altro."
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
-msgid "Switch import mode to Save to Browser"
-msgstr "Passa la modalità di importazione a Salva nel browser"
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
-msgid "Switch import mode to View temporarily"
-msgstr "Passa la modalità di importazione a Visualizza temporaneamente"
 
 #: src/pages/DashboardSettings/index.jsx
 msgid "Switch to compact view"
@@ -5621,8 +5505,8 @@ msgid "Temperature rise: {0} of {1} °C"
 msgstr "Aumento di temperatura: {0} di {1} °C"
 
 #: src/pages/ShotAnalyzer/components/EmptyState.jsx
-msgid "Temporary View (VIEW)"
-msgstr "Visualizzazione temporanea (VIEW)"
+msgid "Temporary imports"
+msgstr "Importazioni temporanee"
 
 #: src/pages/Settings/tabs/CalibrationTab.jsx
 msgid "Test Duration (seconds)"
@@ -6125,11 +6009,6 @@ msgstr "Aggiornamento del filesystem Headless"
 msgid "Updating Headless firmware"
 msgstr "Aggiornamento del firmware Headless"
 
-#: src/pages/Statistics/components/toolbar/constants.js
-msgctxt "date basis"
-msgid "Upload"
-msgstr "Upload"
-
 #: src/utils/profileImage.js
 msgid "Upload failed"
 msgstr "Upload non riuscito"
@@ -6179,21 +6058,9 @@ msgstr "Usa un ID diverso per un profilo integrato personalizzato."
 msgid "Use Alba reservoir level to interlock steam refill"
 msgstr "Usa il livello del serbatoio Alba per bloccare il riempimento vapore"
 
-#: src/pages/Statistics/components/toolbar/helpers.js
-msgid "Use shot timestamp only"
-msgstr "Usa solo il timestamp dello shot"
-
-#: src/pages/Statistics/components/toolbar/helpers.js
-msgid "Use shot timestamp, fallback to upload time"
-msgstr "Usa il timestamp dello shot, in alternativa l'ora di upload"
-
 #: src/pages/ShotAnalyzer/components/EmptyState.jsx
-msgid "Use the status bar toggle to switch between <0>View temporarily</0> and <1>Save to Browser</1> before importing."
-msgstr "Usa l'interruttore nella barra di stato per passare tra <0>Visualizza temporaneamente</0> e <1>Salva nel browser</1> prima di importare."
-
-#: src/pages/Statistics/components/toolbar/helpers.js
-msgid "Use upload time only"
-msgstr "Usa solo l'ora di upload"
+msgid "Use Import or drop shot and profile JSON files onto the status bar. Imported data is available until you reload the page."
+msgstr "Usa Importa o trascina i file JSON di shot e profili sulla barra di stato. I dati importati restano disponibili fino al ricaricamento della pagina."
 
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Used for the GaggiMate hotspot when no Wi-Fi is configured (min. 8 characters)."
@@ -6268,16 +6135,6 @@ msgstr "Video (non supportato)"
 msgid "Video export is not supported in this browser."
 msgstr "L'esportazione video non è supportata in questo browser."
 
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
-msgctxt "import mode"
-msgid "View"
-msgstr "Visualizza"
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarModeHint.jsx
-msgctxt "import mode badge"
-msgid "VIEW"
-msgstr "VIEW"
-
 #: src/pages/ProfileList/index.jsx
 msgid "View statistics for {label} profile"
 msgstr "Visualizza statistiche del profilo {label}"
@@ -6285,18 +6142,6 @@ msgstr "Visualizza statistiche del profilo {label}"
 #: src/pages/ProfileList/index.jsx
 msgid "View statistics for this profile"
 msgstr "Visualizza statistiche di questo profilo"
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/MobileStatusActionsMenu.jsx
-msgid "View temporarily"
-msgstr "Visualizza temporaneamente"
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
-msgid "View temporarily. Click to switch imports to Save to Browser."
-msgstr "Visualizza temporaneamente. Fai clic per passare le importazioni a Salva nel browser."
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarModeHint.jsx
-msgid "View temporarily. Imported shots and profiles will now open temporarily in the analyzer."
-msgstr "Visualizza temporaneamente. Shot e profili importati verranno ora aperti temporaneamente nell'analizzatore."
 
 #: src/components/SettingsFormField.jsx
 msgid "Visible"
@@ -6418,11 +6263,6 @@ msgstr "Serbatoio dell'acqua quasi vuoto"
 #: src/pages/SetupWizard/WifiStep.jsx
 msgid "Weak"
 msgstr "Debole"
-
-#: src/pages/Statistics/components/toolbar/constants.js
-msgctxt "shot source: browser storage"
-msgid "WEB"
-msgstr "WEB"
 
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Web Settings"
@@ -6589,7 +6429,3 @@ msgstr "I nuovi valori PID sono stati salvati."
 #: src/app/MachineSetup.jsx
 msgid "Your phone needs to be on the same Wi-Fi network as the machine."
 msgstr "Il telefono deve essere sulla stessa rete Wi-Fi della macchina."
-
-#: src/pages/ShotAnalyzer/components/EmptyState.jsx
-msgid "Your saved shots and profiles directly from the GaggiMate internal storage."
-msgstr "Gli shot e i profili salvati, direttamente dalla memoria interna di GaggiMate."

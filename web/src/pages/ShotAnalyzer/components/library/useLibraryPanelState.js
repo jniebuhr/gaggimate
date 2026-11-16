@@ -1,11 +1,7 @@
 /** Owns asynchronous library loading, persisted filters, hotkeys, and sticky layout state. */
 
 import { libraryService } from '../../services/LibraryService';
-import {
-  buildPromotedLibraryItems,
-  buildShotNavigationItems,
-  getLibraryRequestSource,
-} from './libraryData';
+import { buildPromotedLibraryItems, buildShotNavigationItems } from './libraryData';
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 
 const STATUS_BAR_CARD_GAP = 12;
@@ -239,6 +235,7 @@ export function useAnalyzerStickyOffset(panelRef, barSlotHeight) {
 }
 
 export function useLibraryRefresh({
+  connected,
   debouncedProfilesSearch,
   debouncedShotsSearch,
   normalizedCurrentProfileName,
@@ -247,66 +244,84 @@ export function useLibraryRefresh({
   pinnedShotsByProfile,
   profilesPinnedFirst,
   profilesSort,
-  profilesSourceFilter,
   selectionPromotionsEnabled,
-  setLoading,
   setNavigationShots,
   setProfiles,
   setShots,
   shotsPinnedFirst,
   shotsSort,
-  shotsSourceFilter,
 }) {
   const refreshIdRef = useRef(0);
+  const [shotsData, setShotsData] = useState([]);
+  const [profilesData, setProfilesData] = useState([]);
+  const [shotsLoading, setShotsLoading] = useState(true);
+  const [profilesLoading, setProfilesLoading] = useState(true);
 
   const refreshLibraries = useCallback(async () => {
     const id = ++refreshIdRef.current;
-    setLoading(true);
+    setShotsLoading(true);
+    setProfilesLoading(true);
     try {
-      const [shotsData, profilesData] = await Promise.all([
-        libraryService.getAllShots(getLibraryRequestSource(shotsSourceFilter)),
-        libraryService.getAllProfiles(getLibraryRequestSource(profilesSourceFilter)),
+      await Promise.all([
+        libraryService.getAllShots().then(data => {
+          if (id !== refreshIdRef.current) return;
+          setShotsData(data);
+          setShotsLoading(false);
+        }),
+        libraryService.getAllProfiles().then(data => {
+          if (id !== refreshIdRef.current) return;
+          setProfilesData(data);
+          setProfilesLoading(false);
+        }),
       ]);
-
-      if (id !== refreshIdRef.current) return;
-      const { nextShots, nextProfiles } = buildPromotedLibraryItems({
-        shotsData,
-        profilesData,
-        shotSearch: debouncedShotsSearch,
-        profileSearch: debouncedProfilesSearch,
-        shotsSort,
-        profilesSort,
-        normalizedCurrentProfileName: selectionPromotionsEnabled
-          ? normalizedCurrentProfileName
-          : '',
-        normalizedCurrentShotProfileName: selectionPromotionsEnabled
-          ? normalizedCurrentShotProfileName
-          : '',
-        pinnedProfiles,
-        pinnedShotsByProfile,
-        shotsPinnedFirst,
-        profilesPinnedFirst,
-        selectionPromotionsEnabled,
-      });
-      const nextNavigationShots = buildShotNavigationItems({
-        shotsData,
-        shotsSort,
-        shotsPinnedFirst,
-        pinnedShotsByProfile,
-      });
-
-      setShots(nextShots);
-      setProfiles(nextProfiles);
-      setNavigationShots(nextNavigationShots);
     } catch (error) {
-      if (id !== refreshIdRef.current) return;
       console.error('Library refresh failed:', error);
     } finally {
       if (id === refreshIdRef.current) {
-        setLoading(false);
+        setShotsLoading(false);
+        setProfilesLoading(false);
       }
     }
+  }, []);
+
+  useEffect(() => {
+    void refreshLibraries();
+    return () => {
+      refreshIdRef.current += 1;
+    };
+  }, [connected, refreshLibraries]);
+
+  useEffect(() => {
+    const { nextShots, nextProfiles } = buildPromotedLibraryItems({
+      shotsData,
+      profilesData,
+      shotSearch: debouncedShotsSearch,
+      profileSearch: debouncedProfilesSearch,
+      shotsSort,
+      profilesSort,
+      normalizedCurrentProfileName: selectionPromotionsEnabled ? normalizedCurrentProfileName : '',
+      normalizedCurrentShotProfileName: selectionPromotionsEnabled
+        ? normalizedCurrentShotProfileName
+        : '',
+      pinnedProfiles,
+      pinnedShotsByProfile,
+      shotsPinnedFirst,
+      profilesPinnedFirst,
+      selectionPromotionsEnabled,
+    });
+    const nextNavigationShots = buildShotNavigationItems({
+      shotsData,
+      shotsSort,
+      shotsPinnedFirst,
+      pinnedShotsByProfile,
+    });
+
+    setShots(nextShots);
+    setProfiles(nextProfiles);
+    setNavigationShots(nextNavigationShots);
   }, [
+    shotsData,
+    profilesData,
     debouncedProfilesSearch,
     debouncedShotsSearch,
     normalizedCurrentProfileName,
@@ -315,20 +330,13 @@ export function useLibraryRefresh({
     pinnedShotsByProfile,
     profilesPinnedFirst,
     profilesSort,
-    profilesSourceFilter,
     selectionPromotionsEnabled,
-    setLoading,
     setNavigationShots,
     setProfiles,
     setShots,
     shotsPinnedFirst,
     shotsSort,
-    shotsSourceFilter,
   ]);
 
-  useEffect(() => {
-    refreshLibraries();
-  }, [refreshLibraries]);
-
-  return refreshLibraries;
+  return { refreshLibraries, shotsLoading, profilesLoading };
 }

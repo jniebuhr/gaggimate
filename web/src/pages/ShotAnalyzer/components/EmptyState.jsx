@@ -1,14 +1,10 @@
 /**
  * EmptyState.jsx
  * * Empty state component for Shot Analyzer.
- * Explains the dual-source system to users.
+ * Explains device selection and temporary imports.
  */
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Trans } from '@lingui/react/macro';
-import { faEye } from '@fortawesome/free-solid-svg-icons/faEye';
-import { analyzerUiColors } from '../utils/analyzerUtils.js';
 import { Spinner } from '../../../components/Spinner.jsx';
-import { SourceMarker } from './SourceMarker.jsx';
 import DeepDiveLogoRaw from '../assets/deepdive.svg?raw';
 
 const deepDiveLogoMarkup = DeepDiveLogoRaw.replace(
@@ -52,93 +48,29 @@ export function EmptyState({ loading }) {
             </p>
           </div>
 
-          {/* GM Section */}
-          <div className='flex items-start gap-4'>
-            <div className='flex h-8 w-10 flex-shrink-0 items-center justify-center'>
-              <SourceMarker source='gaggimate' variant='large' />
-            </div>
-
-            <div className='flex-1'>
-              {/* REMOVED HOVER EFFECT */}
-              <h3 className='text-base-content mb-1 text-sm font-bold'>
-                <Trans>GaggiMate (GM)</Trans>
-              </h3>
-              <p className='text-base-content text-xs leading-relaxed'>
-                <Trans>
-                  Your saved shots and profiles directly from the GaggiMate internal storage.
-                </Trans>
-              </p>
-            </div>
+          <div>
+            <h3 className='text-base-content mb-1 text-sm font-bold'>
+              <Trans>Saved shots and profiles</Trans>
+            </h3>
+            <p className='text-base-content text-xs leading-relaxed'>
+              <Trans>Select saved shots and profiles directly from your GaggiMate.</Trans>
+            </p>
           </div>
-
-          {/* Divider - Subtle */}
           <div className='bg-base-content/5 h-px w-full' />
-
-          {/* VIEW Section */}
-          <div className='flex items-start gap-4'>
-            <div className='text-base-content/45 flex h-8 w-10 flex-shrink-0 items-center justify-center'>
-              <FontAwesomeIcon icon={faEye} className='text-lg' />
-            </div>
-
-            <div className='flex-1'>
-              <h3 className='text-base-content mb-1 text-sm font-bold'>
-                <Trans>Temporary View (VIEW)</Trans>
-              </h3>
-              <p className='text-base-content text-xs leading-relaxed'>
-                <Trans>
-                  Opens imported external shots and profiles temporarily without saving them to the
-                  browser library.
-                </Trans>
-              </p>
-            </div>
-          </div>
-
-          {/* Divider - Subtle */}
-          <div className='bg-base-content/5 h-px w-full' />
-
-          {/* WEB Section */}
-          <div className='flex items-start gap-4'>
-            <div className='flex h-8 w-10 flex-shrink-0 items-center justify-center'>
-              <SourceMarker source='browser' variant='large' />
-            </div>
-
-            <div className='flex-1'>
-              {/* REMOVED HOVER EFFECT */}
-              <h3 className='text-base-content mb-1 text-sm font-bold'>
-                <Trans>Local Browser Storage (WEB)</Trans>
-              </h3>
-              <div className='text-base-content text-xs leading-relaxed'>
-                <Trans>
-                  Stores imported external shots and profiles locally in this browser on this
-                  device. They are not automatically available in other browsers or on other
-                  devices.
-                </Trans>
-              </div>
-            </div>
-          </div>
-
-          <div className='text-base-content text-xs leading-relaxed'>
-            <span className='block'>
+          <div>
+            <h3 className='text-base-content mb-1 text-sm font-bold'>
+              <Trans>Temporary imports</Trans>
+            </h3>
+            <p className='text-base-content text-xs leading-relaxed'>
               <Trans>
-                Drag and drop files onto the status bar or use the import icons in the shot and
-                profile badges.
+                Use Import or drop shot and profile JSON files onto the status bar. Imported data is
+                available until you reload the page.
               </Trans>
-            </span>
-            <span className='mt-1 block'>
-              <Trans>
-                Use the status bar toggle to switch between{' '}
-                <span className='text-base-content font-bold'>View temporarily</span> and{' '}
-                <span className='font-bold' style={{ color: analyzerUiColors.sourceBadgeWebText }}>
-                  Save to Browser
-                </span>{' '}
-                before importing.
-              </Trans>
-            </span>
-            <span className='mt-1 block'>
+            </p>
+            <p className='text-base-content mt-1 text-xs leading-relaxed'>
               <Trans>Bulk upload and download are supported.</Trans>
-            </span>
+            </p>
           </div>
-
           <div className='bg-base-content/5 h-px w-full' />
 
           <div className='grid gap-2 text-xs leading-relaxed sm:grid-cols-3'>

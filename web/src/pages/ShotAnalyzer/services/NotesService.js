@@ -1,17 +1,15 @@
 /**
  * NotesService.js
  *
- * Dual-persistence notes service for Shot Analyzer.
+ * Device and in-memory notes service for Shot Analyzer.
  * Notes JSON format is identical across all backends:
  *   { id, rating, beanType, doseIn, doseOut, ratio, grindSetting, balanceTaste, notes }
  *
  * - GaggiMate shots: Uses the same API as ShotHistory (req:history:notes:get/save)
- * - Browser shots: Dedicated 'notes' store in IndexedDB (same JSON format as API)
  * - Temp shots: In-memory only, no persistence
  */
 
 import { mergeAnalyzerNotes } from './analyzerNotesMerge';
-import { indexedDBService } from './IndexedDBService';
 
 const DEFAULT_NOTES = {
   rating: 0,
@@ -160,16 +158,6 @@ class NotesService {
     }
   }
 
-  async loadBrowserNotes(shotId, defaults) {
-    try {
-      const stored = await Promise.resolve(indexedDBService.getNotes(String(shotId)));
-      return stored ? { ...defaults, ...stored } : defaults;
-    } catch (e) {
-      console.error('Failed to load notes from IndexedDB:', e);
-      return defaults;
-    }
-  }
-
   loadTempNotes(shotId, defaults) {
     const cachedNotes = this._tempCache.get(String(shotId));
     return cachedNotes ? { ...defaults, ...cachedNotes } : defaults;
@@ -179,7 +167,6 @@ class NotesService {
     const defaults = this.getDefaults(shotId);
 
     if (source === 'gaggimate') return this.loadGaggiMateNotes(shotId, defaults);
-    if (source === 'browser') return this.loadBrowserNotes(shotId, defaults);
     return this.loadTempNotes(shotId, defaults);
   }
 
@@ -194,11 +181,6 @@ class NotesService {
         id: shotId,
         notes: notesWithId,
       });
-      return;
-    }
-
-    if (source === 'browser') {
-      await indexedDBService.saveNotes(notesWithId);
       return;
     }
 

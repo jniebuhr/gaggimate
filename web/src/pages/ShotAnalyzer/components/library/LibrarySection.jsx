@@ -6,7 +6,6 @@ import { LibraryRow } from './LibraryRow';
 import { LibraryActionsMenu } from './LibraryActionsMenu';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown';
 import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
 import { faThumbtack } from '@fortawesome/free-solid-svg-icons/faThumbtack';
 import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
@@ -16,87 +15,15 @@ import {
   getAnalyzerIconButtonClasses,
   getAnalyzerSurfaceTriggerClasses,
 } from '../analyzerControlStyles';
-import { SourceMarker } from '../SourceMarker';
 import './LibrarySection.css';
 
 function getLibraryItemKey(item, isShot) {
-  if (!item) return 'unknown-item';
-
-  if (isShot) {
-    if (item.source === 'gaggimate') return `gaggimate-shot:${String(item.id || '')}`;
-    return `browser-shot:${String(item.storageKey || item.name || item.id || '')}`;
-  }
-
-  if (item.source === 'gaggimate') {
-    return `gaggimate-profile:${String(
-      item.profileId ||
-        item.id ||
-        item.label ||
-        item.name ||
-        item.fileName ||
-        item.exportName ||
-        '',
-    )}`;
-  }
-
-  return `browser-profile:${String(
-    item.label || item.name || item.fileName || item.exportName || item.id || '',
-  )}`;
-}
-
-const SOURCE_FILTER_OPTIONS = [
-  { value: 'all', label: 'ALL' },
-  { value: 'gaggimate', label: 'GM' },
-  { value: 'browser', label: 'WEB' },
-];
-
-function closeParentDetails(target) {
-  const details = target.closest('details');
-  if (details) details.open = false;
-}
-
-function renderLibrarySourceOptionContent(value) {
-  if (value === 'gaggimate') {
-    return (
-      <span className='inline-flex items-center gap-1.5'>
-        <SourceMarker source='gaggimate' variant='compact' />
-        <span>GM</span>
-      </span>
-    );
-  }
-
-  if (value === 'browser') {
-    return (
-      <span className='inline-flex items-center gap-1.5'>
-        <SourceMarker source='browser' variant='compact' />
-        <span>WEB</span>
-      </span>
-    );
-  }
-
-  return (
-    <span>
-      <Trans context='library source filter'>ALL</Trans>
-    </span>
-  );
-}
-
-function renderLibrarySourceHeaderContent(value) {
-  if (value === 'gaggimate' || value === 'browser') {
-    return <SourceMarker source={value} variant='compact' />;
-  }
-
-  return (
-    <span className='inline-flex items-center gap-1'>
-      <SourceMarker source='gaggimate' variant='compact' />
-      <SourceMarker source='browser' variant='compact' />
-    </span>
-  );
+  return isShot ? getShotIdentityKey(item) : String(item.profileId || item.id);
 }
 
 function getLibraryColumnLayout(isShot, showCompareSelection) {
   return {
-    columnCount: (showCompareSelection ? 1 : 0) + 1 + 1 + 1 + (isShot ? 2 : 0) + 1,
+    columnCount: (showCompareSelection ? 1 : 0) + 1 + 1 + (isShot ? 2 : 0) + 1,
   };
 }
 
@@ -132,10 +59,8 @@ export function LibrarySection({
   searchValue,
   sortKey,
   sortOrder,
-  sourceFilter,
   onSearchChange,
   onSortChange,
-  onSourceFilterChange,
   onLoad,
   onExport,
   onDelete,
@@ -165,6 +90,8 @@ export function LibrarySection({
       <svg
         className={`ml-1 inline-block h-2.5 w-2.5 transition-all ${isActive && sortOrder === 'asc' ? 'rotate-180' : ''} ${isActive ? 'text-primary opacity-100' : 'opacity-20'}`}
         viewBox='0 0 10 10'
+        aria-hidden='true'
+        focusable='false'
       >
         <path d='M5 10L0 0L10 0L5 10Z' fill='currentColor' />
       </svg>
@@ -291,46 +218,6 @@ export function LibrarySection({
                   ) : (
                     <span className='library-row-grid__pin' aria-hidden='true' />
                   )}
-                  <details className='library-row-grid__source dropdown block h-full w-full'>
-                    <summary
-                      className={getAnalyzerSurfaceTriggerClasses({
-                        className:
-                          'flex h-full w-full cursor-pointer list-none items-center justify-center gap-1 px-1 py-2 text-xs font-medium outline-none [&::-webkit-details-marker]:hidden',
-                      })}
-                      aria-label={t`Filter library source`}
-                      title={t`Filter library source`}
-                    >
-                      {renderLibrarySourceHeaderContent(sourceFilter)}
-                      <FontAwesomeIcon
-                        icon={faChevronDown}
-                        className='library-source-filter-chevron text-[10px] opacity-60'
-                      />
-                    </summary>
-
-                    <div className='dropdown-content app-card-surface z-[65] mt-2 w-28 rounded-xl p-1.5'>
-                      <div className='grid gap-1'>
-                        {SOURCE_FILTER_OPTIONS.map(option => (
-                          <button
-                            key={option.value}
-                            type='button'
-                            className={getAnalyzerSurfaceTriggerClasses({
-                              className: `flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-[10px] font-bold ${
-                                sourceFilter === option.value
-                                  ? 'bg-base-content/6 text-base-content'
-                                  : 'text-base-content/70'
-                              }`,
-                            })}
-                            onClick={event => {
-                              onSourceFilterChange(option.value);
-                              closeParentDetails(event.currentTarget);
-                            }}
-                          >
-                            {renderLibrarySourceOptionContent(option.value)}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </details>
                   {isShot ? (
                     <button
                       type='button'

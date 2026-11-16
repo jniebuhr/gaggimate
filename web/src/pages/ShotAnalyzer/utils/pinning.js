@@ -19,9 +19,7 @@ export const getShotIdentityKey = shot => {
   const source = shot.source || 'temp';
   const storageKey = String(getShotStorageKey(shot) || '');
   if (source === 'gaggimate') return `gaggimate:${storageKey}`;
-  if (source === 'temp') return `temp:${storageKey}`;
-
-  return `browser:${storageKey}`;
+  return `temp:${storageKey}`;
 };
 
 export const getProfilePinKey = profile => {

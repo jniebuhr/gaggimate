@@ -118,12 +118,10 @@ export function LibraryShotsPanelSection({
   setShotsPinnedFirst,
   setShotsSearch,
   setShotsSort,
-  setShotsSourceFilter,
   shots,
   shotsPinnedFirst,
   shotsSearch,
   shotsSort,
-  shotsSourceFilter,
 }) {
   const handleExportAllShots = () => {
     if (shots.length === 0) return;
@@ -144,9 +142,9 @@ export function LibraryShotsPanelSection({
       confirm(t`WARNING: Do you really want to IRREVOCABLY delete all ${count} filtered shots?`)
     ) {
       for (const shot of shots) {
-        await libraryService.deleteShot(getShotStorageKey(shot), shot.source);
+        await libraryService.deleteShot(getShotStorageKey(shot)); // NOSONAR -- Keep controller mutations sequential.
       }
-      refreshLibraries();
+      await refreshLibraries();
     }
   };
 
@@ -161,10 +159,8 @@ export function LibraryShotsPanelSection({
         searchValue={shotsSearch}
         sortKey={shotsSort.key}
         sortOrder={shotsSort.order}
-        sourceFilter={shotsSourceFilter}
         onSearchChange={setShotsSearch}
         onSortChange={(key, order) => setShotsSort(getNextLibrarySortState(shotsSort, key, order))}
-        onSourceFilterChange={setShotsSourceFilter}
         onLoad={handleShotRowAction}
         onExport={item => handleExport(item, true)}
         onDelete={handleDelete}
@@ -227,7 +223,6 @@ export function LibraryProfilesPanelSection({
   profilesPinnedFirst,
   profilesSearch,
   profilesSort,
-  profilesSourceFilter,
   refreshLibraries,
   secondaryDisplayProfile,
   secondaryDisplayProfileName,
@@ -235,7 +230,6 @@ export function LibraryProfilesPanelSection({
   setProfilesPinnedFirst,
   setProfilesSearch,
   setProfilesSort,
-  setProfilesSourceFilter,
 }) {
   const handleExportAllProfiles = () => {
     if (profiles.length === 0) return;
@@ -256,9 +250,9 @@ export function LibraryProfilesPanelSection({
       confirm(t`WARNING: Do you really want to IRREVOCABLY delete all ${count} filtered profiles?`)
     ) {
       for (const profile of profiles) {
-        await libraryService.deleteProfile(getLibraryProfileDeleteKey(profile), profile.source);
+        await libraryService.deleteProfile(getLibraryProfileDeleteKey(profile)); // NOSONAR -- Keep controller mutations sequential.
       }
-      refreshLibraries();
+      await refreshLibraries();
     }
   };
 
@@ -273,12 +267,10 @@ export function LibraryProfilesPanelSection({
         searchValue={profilesSearch}
         sortKey={profilesSort.key}
         sortOrder={profilesSort.order}
-        sourceFilter={profilesSourceFilter}
         onSearchChange={setProfilesSearch}
         onSortChange={(key, order) =>
           setProfilesSort(getNextLibrarySortState(profilesSort, key, order))
         }
-        onSourceFilterChange={setProfilesSourceFilter}
         onLoad={handleProfileRowAction}
         onShowStats={handleLibraryProfileStatsOpen}
         onExport={item => handleExport(item, false)}

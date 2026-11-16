@@ -111,22 +111,13 @@ export function persistStatisticsInitialContext({
   context = {},
   currentProfile,
   currentProfileName,
-  currentShot,
 }) {
   const {
-    shotSource = currentShot?.source || 'both',
-    profileSource = currentProfile?.source || 'both',
-    profileName = currentProfileName,
+    profileName = currentProfile?.source === 'gaggimate' ? currentProfileName : '',
     preferredDetailSection = null,
   } = context;
-  const statsInitialContext = {
-    profileName,
-    shotSource,
-    profileSource,
-    source: profileSource,
-  };
-  if (preferredDetailSection) {
-    statsInitialContext.preferredDetailSection = preferredDetailSection;
-  }
-  sessionStorage.setItem('statsInitialContext', JSON.stringify(statsInitialContext));
+  sessionStorage.setItem(
+    'statsInitialContext',
+    JSON.stringify({ profileName, preferredDetailSection }),
+  );
 }

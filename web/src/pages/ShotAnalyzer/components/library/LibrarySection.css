@@ -44,14 +44,13 @@
   grid-template-columns:
     minmax(5.75rem, 8.25rem)
     1.25rem
-    2.75rem
     minmax(max-content, 7rem)
     minmax(0, 1fr)
     var(--library-shot-actions-width);
 }
 
 .shot-analyzer-page .library-row-grid--profile {
-  grid-template-columns: minmax(0, 1fr) 1.25rem 2.75rem var(--library-profile-actions-width);
+  grid-template-columns: minmax(0, 1fr) 1.25rem var(--library-profile-actions-width);
 }
 
 .shot-analyzer-page .library-row-grid__name,
@@ -67,12 +66,6 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-
-.shot-analyzer-page .library-row-grid__source {
-  justify-self: stretch;
-  padding-right: var(--library-row-trailing-gap);
-}
-
 .shot-analyzer-page .library-row-grid__pin {
   justify-self: center;
 }
@@ -81,16 +74,6 @@
   justify-self: end;
   width: 100%;
 }
-
-.shot-analyzer-page .library-row-grid--header .library-row-grid__source summary {
-  position: relative;
-}
-
-.shot-analyzer-page .library-row-grid--header .library-source-filter-chevron {
-  position: absolute;
-  right: -0.75rem;
-}
-
 .shot-analyzer-page .library-row-grid--shot .library-row-grid__date,
 .shot-analyzer-page .library-row-grid--shot .library-row-grid__profile {
   padding-right: var(--library-row-trailing-gap);
@@ -123,20 +106,6 @@
   -webkit-box-orient: vertical;
 }
 
-.shot-analyzer-page .library-row-grid--profile.library-row-grid--header {
-  grid-template-columns: minmax(0, 1fr) 1.25rem 2.75rem var(--library-profile-actions-width);
-}
-
-@container (max-width: 32rem) {
-  .shot-analyzer-page .library-row-grid--profile {
-    grid-template-columns: minmax(0, 1fr) 1.25rem 2.85rem var(--library-profile-actions-width);
-  }
-
-  .shot-analyzer-page .library-row-grid--profile.library-row-grid--header {
-    grid-template-columns: minmax(0, 1fr) 1.25rem 2.85rem var(--library-profile-actions-width);
-  }
-}
-
 @container (max-width: 26rem) {
   .shot-analyzer-page .library-row-grid--profile .library-row-grid__name-text {
     line-height: 1.2;
@@ -148,7 +117,6 @@
     grid-template-columns:
       minmax(5.75rem, 7.5rem)
       1.25rem
-      2.75rem
       minmax(max-content, 7rem)
       minmax(0, 1fr)
       var(--library-shot-actions-width);
@@ -157,14 +125,14 @@
 
 @media (max-width: 640px) {
   .shot-analyzer-page .library-row-grid--shot {
-    grid-template-columns: minmax(0, 1fr) 1.25rem 2.85rem var(--library-shot-actions-width);
+    grid-template-columns: minmax(0, 1fr) 1.25rem var(--library-shot-actions-width);
     grid-template-areas:
-      'name pin source actions'
-      'date pin source actions';
+      'name pin actions'
+      'date pin actions';
   }
 
   .shot-analyzer-page .library-row-grid--shot.library-row-grid--header {
-    grid-template-areas: 'name pin source actions';
+    grid-template-areas: 'name pin actions';
   }
 
   .shot-analyzer-page .library-row-grid--shot .library-row-grid__name {
@@ -175,12 +143,6 @@
   .shot-analyzer-page .library-row-grid--shot .library-row-grid__name-text {
     align-self: center;
   }
-
-  .shot-analyzer-page .library-row-grid--shot .library-row-grid__source {
-    grid-area: source;
-    align-self: center;
-  }
-
   .shot-analyzer-page .library-row-grid--shot .library-row-grid__date {
     grid-area: date;
   }

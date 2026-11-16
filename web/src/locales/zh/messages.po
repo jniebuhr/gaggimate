@@ -301,16 +301,6 @@ msgctxt "statistics mode"
 msgid "All"
 msgstr "全部"
 
-#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
-msgctxt "library source filter"
-msgid "ALL"
-msgstr "全部"
-
-#: src/pages/Statistics/components/toolbar/constants.js
-msgctxt "shot source: all sources"
-msgid "ALL"
-msgstr "全部"
-
 #: src/pages/DashboardSettings/index.jsx
 msgid "All available metrics are visible."
 msgstr "所有可用指标均已显示。"
@@ -383,11 +373,6 @@ msgstr "泵辅助在多少 bar 时停止。这样泵只会在蒸汽流出时运�
 #: src/services/VisualizerService.js
 msgid "Authentication failed - please check your username and password"
 msgstr "认证失败 - 请检查用户名和密码"
-
-#: src/pages/Statistics/components/toolbar/constants.js
-msgctxt "date basis"
-msgid "Auto"
-msgstr "自动"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Auto (Bluetooth when connected)"
@@ -1271,14 +1256,6 @@ msgstr "日期（最新）"
 msgid "Date (Old)"
 msgstr "日期（最早）"
 
-#: src/pages/Statistics/components/StatisticsSearchHelp.jsx
-msgid "Date basis (<0>Shot / Auto / Upload</0>) appears only when missing shot timestamps are detected."
-msgstr "仅在检测到缺失萃取时间戳时才显示日期依据（<0>萃取 / 自动 / 上传</0>）。"
-
-#: src/pages/Statistics/components/toolbar/subcomponents.jsx
-msgid "Date Basis:"
-msgstr "日期依据："
-
 #: src/pages/Statistics/components/toolbar/helpers.js
 msgid "Date Range"
 msgstr "日期范围"
@@ -1564,10 +1541,6 @@ msgstr "正在下载导出..."
 #: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
 msgid "Downloading shot #{shotId}"
 msgstr "正在下载萃取 #{shotId}"
-
-#: src/pages/ShotAnalyzer/components/EmptyState.jsx
-msgid "Drag and drop files onto the status bar or use the import icons in the shot and profile badges."
-msgstr "将文件拖放到状态栏，或使用萃取和曲线标签中的导入图标。"
 
 #: src/pages/ProfileList/index.jsx
 msgid "Drag disabled on search result"
@@ -1995,10 +1968,6 @@ msgstr "文件导出失败。"
 msgid "Fill the water tank and close the steam knob."
 msgstr "请加满水箱并关闭蒸汽旋钮。"
 
-#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
-msgid "Filter library source"
-msgstr "筛选库来源"
-
 #: src/pages/Home/utils.js
 msgctxt "process action"
 msgid "Finish"
@@ -2145,10 +2114,6 @@ msgstr "完整"
 #: src/pages/SetupWizard/index.jsx
 msgid "Further Resources"
 msgstr "更多资源"
-
-#: src/pages/ShotAnalyzer/components/EmptyState.jsx
-msgid "GaggiMate (GM)"
-msgstr "GaggiMate (GM)"
 
 #: src/pages/SetupWizard/PluginsStep.jsx
 msgid "GaggiMate can connect to your smart home, grinder and more. Enable what you need now; you can always change this later in the settings."
@@ -2446,7 +2411,6 @@ msgid "Image"
 msgstr "图片"
 
 #: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/MobileStatusActionsMenu.jsx
 msgid "Import"
 msgstr "导入"
 
@@ -2477,10 +2441,6 @@ msgstr "导入设置"
 #: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
 msgid "Import shot or profile"
 msgstr "导入萃取或曲线"
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/MobileStatusActionsMenu.jsx
-msgid "Importing"
-msgstr "导入中"
 
 #: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
 msgid "Importing shot or profile"
@@ -2692,10 +2652,6 @@ msgstr "正在加载曲线"
 #: src/pages/ShotHistory/HistoryCard.jsx
 msgid "Loading shot data..."
 msgstr "正在加载萃取数据..."
-
-#: src/pages/ShotAnalyzer/components/EmptyState.jsx
-msgid "Local Browser Storage (WEB)"
-msgstr "本地浏览器存储 (WEB)"
 
 #: src/pages/Statistics/components/StatisticsSearchHelp.jsx
 msgid "Local browser time is used."
@@ -2975,7 +2931,6 @@ msgctxt "time bucket"
 msgid "Month"
 msgstr "月"
 
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/MobileStatusActionsMenu.jsx
 #: src/pages/ShotAnalyzer/components/library/LibraryActionsMenu.jsx
 msgid "More actions"
 msgstr "更多操作"
@@ -3396,17 +3351,9 @@ msgstr "打开萃取列表操作菜单"
 msgid "Open statistics"
 msgstr "打开统计"
 
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/MobileStatusActionsMenu.jsx
-msgid "Open status actions menu"
-msgstr "打开状态操作菜单"
-
 #: src/pages/Settings/PluginCard.jsx
 msgid "Open the Home app on your iOS device, select Add Accessory, and enter the setup code shown above."
 msgstr "在 iOS 设备上打开“家庭”App，选择“添加配件”，然后输入上方显示的设置代码。"
-
-#: src/pages/ShotAnalyzer/components/EmptyState.jsx
-msgid "Opens imported external shots and profiles temporarily without saving them to the browser library."
-msgstr "临时打开导入的外部萃取和曲线，不保存到浏览器库中。"
 
 #: src/pages/ProfileEdit/ProfileMainInformation.jsx
 msgid "Optional description for this profile"
@@ -3843,12 +3790,8 @@ msgid "Profile"
 msgstr "曲线"
 
 #: src/pages/ShotAnalyzer/services/LibraryService.js
-msgid "Profile {nameOrId} not found"
-msgstr "未找到曲线 {nameOrId}"
-
-#: src/pages/ShotAnalyzer/services/LibraryService.js
-msgid "Profile {nameOrId} not found in browser storage"
-msgstr "浏览器存储中未找到曲线 {nameOrId}"
+msgid "Profile {id} not found"
+msgstr "未找到配置文件 {id}"
 
 #: src/pages/ShotHistory/index.jsx
 msgid "Profile A-Z"
@@ -3885,10 +3828,6 @@ msgstr "曲线信息"
 #: src/components/MachineProfileControl.jsx
 msgid "Profile is too large."
 msgstr "配置过大。"
-
-#: src/pages/ShotAnalyzer/services/IndexedDBService.js
-msgid "Profile label is required for browser storage"
-msgstr "浏览器存储需要曲线标签"
 
 #: src/pages/ProfileList/index.jsx
 msgid "Profile list"
@@ -4429,16 +4368,6 @@ msgstr "星期六"
 msgid "Save"
 msgstr "保存"
 
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
-msgctxt "import mode"
-msgid "Save"
-msgstr "保存"
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarModeHint.jsx
-msgctxt "import mode badge"
-msgid "SAVE"
-msgstr "保存"
-
 #: src/pages/Settings/StickyFormFooter.jsx
 msgid "Save & Restart"
 msgstr "保存并重启"
@@ -4481,18 +4410,6 @@ msgstr "保存设置"
 msgid "Save the profile first to add an image."
 msgstr "请先保存曲线再添加图片。"
 
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/MobileStatusActionsMenu.jsx
-msgid "Save to Browser"
-msgstr "保存到浏览器"
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
-msgid "Save to Browser. Click to switch imports to View temporarily."
-msgstr "保存到浏览器。点击可将导入切换为“临时查看”。"
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarModeHint.jsx
-msgid "Save to Browser. Imported shots and profiles will now be saved to the browser library."
-msgstr "保存到浏览器。导入的萃取和曲线将保存到浏览器库中。"
-
 #: src/components/PumpFlowCalibration/Footer.jsx
 msgid "Save to machine"
 msgstr "保存到咖啡机"
@@ -4510,6 +4427,10 @@ msgstr "已保存"
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "Saved scale"
 msgstr "已保存的秤"
+
+#: src/pages/ShotAnalyzer/components/EmptyState.jsx
+msgid "Saved shots and profiles"
+msgstr "已保存的萃取记录和配置文件"
 
 #: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
 msgid "Saving calibration profile..."
@@ -4676,9 +4597,9 @@ msgstr "选择 Pro 曲线类型"
 msgid "Select Profiles..."
 msgstr "选择曲线..."
 
-#: src/pages/Statistics/components/toolbar/subcomponents.jsx
-msgid "Select shot and profile sources"
-msgstr "选择萃取和曲线来源"
+#: src/pages/ShotAnalyzer/components/EmptyState.jsx
+msgid "Select saved shots and profiles directly from your GaggiMate."
+msgstr "直接从 GaggiMate 选择已保存的萃取记录和配置文件。"
 
 #: src/pages/Statistics/components/toolbar/subcomponents.jsx
 msgid "Select Shots..."
@@ -4786,11 +4707,6 @@ msgstr "时长最短"
 msgid "shot"
 msgstr "萃取"
 
-#: src/pages/Statistics/components/toolbar/constants.js
-msgctxt "date basis"
-msgid "Shot"
-msgstr "萃取"
-
 #: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
 msgctxt "export file type"
 msgid "Shot"
@@ -4800,10 +4716,6 @@ msgstr "萃取"
 msgctxt "table column"
 msgid "Shot"
 msgstr "萃取"
-
-#: src/pages/ShotAnalyzer/services/LibraryService.js
-msgid "Shot {idStr} not found in browser storage"
-msgstr "浏览器存储中未找到萃取 {idStr}"
 
 #: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTable.jsx
 #: src/pages/ShotAnalyzer/components/shotChart/compare/compareChartConfig.js
@@ -5062,22 +4974,6 @@ msgstr "智能研磨插件"
 msgid "Snapshotting shot history..."
 msgstr "正在生成萃取历史快照..."
 
-#: src/pages/Statistics/components/statisticsView/helpers.js
-msgid "Some shots have no shot timestamp. Choose how date handling should treat them (Shot = exclude missing, Auto = fallback to upload time, Upload = upload time only)."
-msgstr "部分萃取没有萃取时间戳。请选择日期处理方式（萃取 = 排除缺失项，自动 = 回退到上传时间，上传 = 仅使用上传时间）。"
-
-#: src/pages/Statistics/components/statisticsView/helpers.js
-msgid "Some shots have no shot timestamp. Choose how date handling should treat them (Shot = exclude missing, Auto = fallback to upload time, Upload = upload time only). Some shots have no usable date at all and may still be excluded from date filtering."
-msgstr "部分萃取没有萃取时间戳。请选择日期处理方式（萃取 = 排除缺失项，自动 = 回退到上传时间，上传 = 仅使用上传时间）。部分萃取完全没有可用日期，仍可能被日期筛选排除。"
-
-#: src/pages/Statistics/components/toolbar/subcomponents.jsx
-msgid "Some shots have no shot timestamp. Choose how date handling should treat them."
-msgstr "部分萃取没有萃取时间戳。请选择日期处理方式。"
-
-#: src/pages/Statistics/components/statisticsView/helpers.js
-msgid "Some shots have no usable shot timestamp. Date filtering may exclude them unless upload time is available."
-msgstr "部分萃取没有可用的萃取时间戳。除非有上传时间，否则日期筛选可能会将其排除。"
-
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
 #: src/pages/ShotHistory/ShotNotesCard.jsx
 msgid "Sour"
@@ -5332,10 +5228,6 @@ msgstr "存储 (SD 卡)"
 msgid "Storage & Memory"
 msgstr "存储与内存"
 
-#: src/pages/ShotAnalyzer/components/EmptyState.jsx
-msgid "Stores imported external shots and profiles locally in this browser on this device. They are not automatically available in other browsers or on other devices."
-msgstr "将导入的外部萃取和曲线保存在此设备的此浏览器中。它们不会自动出现在其他浏览器或其他设备上。"
-
 #: src/pages/SetupWizard/WifiStep.jsx
 msgid "Strong"
 msgstr "强"
@@ -5365,14 +5257,6 @@ msgstr "滑动"
 #: src/pages/ShotAnalyzer/components/EmptyState.jsx
 msgid "Switch between shots."
 msgstr "在萃取之间切换。"
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
-msgid "Switch import mode to Save to Browser"
-msgstr "将导入模式切换为保存到浏览器"
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
-msgid "Switch import mode to View temporarily"
-msgstr "将导入模式切换为临时查看"
 
 #: src/pages/DashboardSettings/index.jsx
 msgid "Switch to compact view"
@@ -5617,8 +5501,8 @@ msgid "Temperature rise: {0} of {1} °C"
 msgstr "温度上升：{0} / {1} °C"
 
 #: src/pages/ShotAnalyzer/components/EmptyState.jsx
-msgid "Temporary View (VIEW)"
-msgstr "临时查看 (VIEW)"
+msgid "Temporary imports"
+msgstr "临时导入"
 
 #: src/pages/Settings/tabs/CalibrationTab.jsx
 msgid "Test Duration (seconds)"
@@ -6121,11 +6005,6 @@ msgstr "正在更新 Headless 文件系统"
 msgid "Updating Headless firmware"
 msgstr "正在更新 Headless 固件"
 
-#: src/pages/Statistics/components/toolbar/constants.js
-msgctxt "date basis"
-msgid "Upload"
-msgstr "上传"
-
 #: src/utils/profileImage.js
 msgid "Upload failed"
 msgstr "上传失败"
@@ -6175,21 +6054,9 @@ msgstr "自定义内置配置时请使用不同的 ID。"
 msgid "Use Alba reservoir level to interlock steam refill"
 msgstr "使用 Alba 储水箱水位联锁蒸汽补水"
 
-#: src/pages/Statistics/components/toolbar/helpers.js
-msgid "Use shot timestamp only"
-msgstr "仅使用萃取时间戳"
-
-#: src/pages/Statistics/components/toolbar/helpers.js
-msgid "Use shot timestamp, fallback to upload time"
-msgstr "使用萃取时间戳，缺失时回退到上传时间"
-
 #: src/pages/ShotAnalyzer/components/EmptyState.jsx
-msgid "Use the status bar toggle to switch between <0>View temporarily</0> and <1>Save to Browser</1> before importing."
-msgstr "导入前，使用状态栏开关在 <0>临时查看</0> 和 <1>保存到浏览器</1> 之间切换。"
-
-#: src/pages/Statistics/components/toolbar/helpers.js
-msgid "Use upload time only"
-msgstr "仅使用上传时间"
+msgid "Use Import or drop shot and profile JSON files onto the status bar. Imported data is available until you reload the page."
+msgstr "使用导入按钮，或将萃取记录和配置文件的 JSON 文件拖放到状态栏上。导入的数据在重新加载页面前可用。"
 
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Used for the GaggiMate hotspot when no Wi-Fi is configured (min. 8 characters)."
@@ -6264,16 +6131,6 @@ msgstr "视频（不支持）"
 msgid "Video export is not supported in this browser."
 msgstr "此浏览器不支持视频导出。"
 
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
-msgctxt "import mode"
-msgid "View"
-msgstr "查看"
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarModeHint.jsx
-msgctxt "import mode badge"
-msgid "VIEW"
-msgstr "查看"
-
 #: src/pages/ProfileList/index.jsx
 msgid "View statistics for {label} profile"
 msgstr "查看 {label} 曲线的统计"
@@ -6281,18 +6138,6 @@ msgstr "查看 {label} 曲线的统计"
 #: src/pages/ProfileList/index.jsx
 msgid "View statistics for this profile"
 msgstr "查看此曲线的统计"
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/MobileStatusActionsMenu.jsx
-msgid "View temporarily"
-msgstr "临时查看"
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
-msgid "View temporarily. Click to switch imports to Save to Browser."
-msgstr "临时查看。点击可将导入切换为“保存到浏览器”。"
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarModeHint.jsx
-msgid "View temporarily. Imported shots and profiles will now open temporarily in the analyzer."
-msgstr "临时查看。导入的萃取和曲线将临时在分析器中打开。"
 
 #: src/components/SettingsFormField.jsx
 msgid "Visible"
@@ -6414,11 +6259,6 @@ msgstr "水箱水位低"
 #: src/pages/SetupWizard/WifiStep.jsx
 msgid "Weak"
 msgstr "弱"
-
-#: src/pages/Statistics/components/toolbar/constants.js
-msgctxt "shot source: browser storage"
-msgid "WEB"
-msgstr "WEB"
 
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Web Settings"
@@ -6585,7 +6425,3 @@ msgstr "新的 PID 参数已成功保存。"
 #: src/app/MachineSetup.jsx
 msgid "Your phone needs to be on the same Wi-Fi network as the machine."
 msgstr "手机需要与咖啡机处于同一 Wi-Fi 网络。"
-
-#: src/pages/ShotAnalyzer/components/EmptyState.jsx
-msgid "Your saved shots and profiles directly from the GaggiMate internal storage."
-msgstr "直接来自 GaggiMate 内部存储的已保存萃取和曲线。"

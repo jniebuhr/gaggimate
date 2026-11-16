@@ -10,9 +10,8 @@ import { faCircleNotch } from '@fortawesome/free-solid-svg-icons/faCircleNotch';
 import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
 import { faThumbtack } from '@fortawesome/free-solid-svg-icons/faThumbtack';
 import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
-import { cleanName, formatTimestamp, getProfileDisplayLabel } from '../../utils/analyzerUtils';
+import { formatTimestamp, getProfileDisplayLabel } from '../../utils/analyzerUtils';
 import { buildStatisticsProfileHref } from '../../../Statistics/utils/statisticsRoute';
-import { SourceMarker } from '../SourceMarker';
 import { getAnalyzerIconButtonClasses } from '../analyzerControlStyles';
 import { LibraryActionsMenu } from './LibraryActionsMenu';
 
@@ -23,8 +22,7 @@ const MATCH_ROW_CLASSES = 'bg-primary/7';
 
 function getLibraryDisplayName(item, itemName, isShot) {
   if (!isShot) return itemName.replace(/\.json$/i, '');
-  if (item.source === 'gaggimate') return `#${item.id || itemName}`;
-  return cleanName(item.name || item.storageKey || item.id || itemName);
+  return `#${item.id || itemName}`;
 }
 
 function getLibraryRowClasses({ isActive, isComparePending, isCompareHighlight, isMatch }) {
@@ -263,9 +261,6 @@ export function LibraryRow({
               displayName={displayName}
               isShot={isShot}
             />
-          </div>
-          <div className='library-row-grid__source flex justify-center'>
-            <SourceMarker source={item.source} variant='library' />
           </div>
           {isShot ? (
             <div className='library-row-grid__date min-w-0 leading-tight'>
