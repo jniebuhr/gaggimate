@@ -47,8 +47,8 @@ export default function TabBar({ tabs, activeTab, onTabChange, basePath, classNa
   };
 
   const handleTabClick = (tabId, event) => {
+    event.preventDefault(); // without basePath the href is '#', which would push a history entry
     if (basePath) {
-      event.preventDefault();
       location.route(`${basePath}/${tabId}`);
     } else if (onTabChange) {
       onTabChange(tabId);

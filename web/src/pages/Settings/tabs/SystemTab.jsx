@@ -8,6 +8,7 @@ import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
 import { faCaretRight } from '@fortawesome/free-solid-svg-icons/faCaretRight';
 import { Spinner } from '../../../components/Spinner.jsx';
 import Section from '../../../components/Card.jsx';
+import { PatchNotes } from '../PatchNotes.jsx';
 
 const imageUrlToBase64 = async blob => {
   return new Promise((onSuccess, onError) => {
@@ -419,14 +420,6 @@ export function SystemTab() {
                 </>
               )}
             </div>
-            <button
-              type='button'
-              className='btn btn-secondary btn-sm'
-              disabled={!formData.controllerUpdateAvailable || submitting}
-              onClick={() => onUpdate('controller')}
-            >
-              <Trans>Update Controller</Trans>
-            </button>
           </div>
 
           <div className='flex flex-col space-y-2'>
@@ -453,6 +446,35 @@ export function SystemTab() {
               {headless ? <Trans>Update Headless</Trans> : <Trans>Update Display</Trans>}
             </button>
           </div>
+          {/* Own grid row, so the update buttons below stay on one line */}
+          <div className='flex md:col-span-2'>
+            <PatchNotes
+              channel={formData.channel}
+              // shortcut: when both are behind, the display wins even if the controller is older; both share one build.
+              installedVersion={
+                formData.displayUpdateAvailable || !formData.controllerUpdateAvailable
+                  ? formData.displayVersion
+                  : formData.controllerVersion
+              }
+              latestVersion={formData.latestVersion}
+            />
+          </div>
+          <button
+            type='button'
+            className='btn btn-secondary btn-sm'
+            disabled={!formData.controllerUpdateAvailable || submitting}
+            onClick={() => onUpdate('controller')}
+          >
+            <Trans>Update Controller</Trans>
+          </button>
+          <button
+            type='button'
+            className='btn btn-secondary btn-sm'
+            disabled={!formData.displayUpdateAvailable || submitting}
+            onClick={() => onUpdate('display')}
+          >
+            <Trans>Update Display</Trans>
+          </button>
           <div className='flex flex-col space-y-2 md:col-span-2'>
             <button
               type='button'
