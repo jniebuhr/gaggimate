@@ -116,6 +116,10 @@ msgstr "{recentShotCount, plural, other {# 次萃取}}"
 msgid "{scaleName} disconnected"
 msgstr "{scaleName} 已断开"
 
+#: src/pages/Settings/PatchNotes.jsx
+msgid "{total, plural, one {# commit} other {# commits}}"
+msgstr "{total, plural, other {# 个提交}}"
+
 #: src/pages/ShotHistory/index.jsx
 msgid "{totalFilteredItems, plural, one {Delete # shot} other {Delete # shots}}"
 msgstr "{totalFilteredItems, plural, other {删除 # 条萃取记录}}"
@@ -312,6 +316,10 @@ msgstr "所有可用面板均已显示。"
 #: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
 msgid "All Metrics"
 msgstr "全部指标"
+
+#: src/pages/Settings/PatchNotes.jsx
+msgid "All nightly changes"
+msgstr "Nightly 的全部更改"
 
 #: src/pages/ShotHistory/index.jsx
 msgid "All Shots"
@@ -846,6 +854,7 @@ msgstr "点击打开库。使用下方的导入或将文件拖放到此处进行
 #: src/app/MachineSetup.jsx
 #: src/components/VisualizerUploadModal.jsx
 #: src/pages/Home/BrewConfirmModal.jsx
+#: src/pages/Settings/PatchNotes.jsx
 #: src/pages/ShotHistory/ConfirmDeleteModal.jsx
 msgid "Close"
 msgstr "关闭"
@@ -1099,6 +1108,10 @@ msgstr "无法生成图片。"
 #: src/pages/Settings/index.jsx
 msgid "Could not import {importName}: {importMessage}"
 msgstr "无法导入 {importName}：{importMessage}"
+
+#: src/pages/Settings/PatchNotes.jsx
+msgid "Could not load release notes"
+msgstr "无法加载发行说明"
 
 #: src/pages/ProfileEdit/ProfileImageUpload.jsx
 msgid "Could not load the saved profile."
@@ -1435,6 +1448,10 @@ msgstr "描述"
 #: src/pages/Statistics/components/StatisticsMultiSelectDropdown.jsx
 msgid "Deselect {itemName}"
 msgstr "取消选择 {itemName}"
+
+#: src/pages/Settings/PatchNotes.jsx
+msgid "Details"
+msgstr "详情"
 
 #: src/pages/SetupWizard/MachineStep.jsx
 msgid "Detected board"
@@ -3102,6 +3119,10 @@ msgstr "未找到项目。"
 msgid "No more types available"
 msgstr "没有更多可用类型"
 
+#: src/pages/Settings/PatchNotes.jsx
+msgid "No new commits since the installed version"
+msgstr "自已安装版本以来没有新的提交"
+
 #: src/pages/ShotHistory/ShotNotesCard.jsx
 msgid "No notes added"
 msgstr "未添加备注"
@@ -4147,6 +4168,10 @@ msgstr "参考萃取"
 msgid "Relative time: <0>h</0> (now), <1>h-7d</1> (7 days ago)"
 msgstr "相对时间：<0>h</0>（现在），<1>h-7d</1>（7 天前）"
 
+#: src/pages/Settings/PatchNotes.jsx
+msgid "Release notes"
+msgstr "发行说明"
+
 #: src/components/MachineProfileControl.jsx
 msgid "Reload updated profile"
 msgstr "重新加载已更新的配置"
@@ -4892,6 +4917,11 @@ msgstr "显示最近萃取"
 msgid "Show the control column panels as separate cards, or group them into a single unified card."
 msgstr "将控制列面板显示为独立卡片，或合并为一张统一卡片。"
 
+#. placeholder {0}: commits.length
+#: src/pages/Settings/PatchNotes.jsx
+msgid "showing the newest {0}"
+msgstr "显示最新的 {0} 个"
+
 #: src/pages/Statistics/components/StatisticsShotCompareSection.jsx
 msgid "Showing up to 100 latest shots. Refine with filters."
 msgstr "最多显示最近 100 条萃取记录。可使用筛选条件缩小范围。"
@@ -4921,6 +4951,10 @@ msgstr "简单曲线"
 #: src/pages/ProfileEdit/ProfileTypeSelection.jsx
 msgid "Simple Profile"
 msgstr "简单曲线"
+
+#: src/pages/Settings/PatchNotes.jsx
+msgid "Since the last update"
+msgstr "自上次更新以来"
 
 #: src/pages/SetupWizard/MachineStep.jsx
 msgid "Single boiler"
@@ -4984,6 +5018,7 @@ msgid "Space evenly"
 msgstr "均匀分布"
 
 #: src/app/AppSettings.jsx
+#: src/pages/Settings/PatchNotes.jsx
 #: src/pages/Settings/tabs/SystemTab.jsx
 msgctxt "update channel"
 msgid "Stable"
@@ -5588,6 +5623,10 @@ msgstr "文件中不包含已知设置。"
 msgid "The file does not contain a settings object."
 msgstr "文件中不包含设置对象。"
 
+#: src/pages/Settings/PatchNotes.jsx
+msgid "The firmware version is not known yet"
+msgstr "固件版本尚未确定"
+
 #: src/pages/Home/BrewConfirmModal.jsx
 msgid "The following warnings are currently active:"
 msgstr "当前有以下警告："
@@ -6130,6 +6169,10 @@ msgstr "视频（不支持）"
 #: src/pages/ShotAnalyzer/components/shotChart/single/useShotChartReplayExport.js
 msgid "Video export is not supported in this browser."
 msgstr "此浏览器不支持视频导出。"
+
+#: src/pages/Settings/PatchNotes.jsx
+msgid "View on GitHub"
+msgstr "在 GitHub 上查看"
 
 #: src/pages/ProfileList/index.jsx
 msgid "View statistics for {label} profile"

@@ -116,6 +116,10 @@ msgstr "{recentShotCount, plural, one {# extracción} other {# extracciones}}"
 msgid "{scaleName} disconnected"
 msgstr "{scaleName} desconectada"
 
+#: src/pages/Settings/PatchNotes.jsx
+msgid "{total, plural, one {# commit} other {# commits}}"
+msgstr "{total, plural, one {# commit} other {# commits}}"
+
 #: src/pages/ShotHistory/index.jsx
 msgid "{totalFilteredItems, plural, one {Delete # shot} other {Delete # shots}}"
 msgstr "{totalFilteredItems, plural, one {Eliminar # extracción} other {Eliminar # extracciones}}"
@@ -312,6 +316,10 @@ msgstr "Todos los paneles disponibles están visibles."
 #: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
 msgid "All Metrics"
 msgstr "Todas las métricas"
+
+#: src/pages/Settings/PatchNotes.jsx
+msgid "All nightly changes"
+msgstr "Todos los cambios de Nightly"
 
 #: src/pages/ShotHistory/index.jsx
 msgid "All Shots"
@@ -846,6 +854,7 @@ msgstr "Haz clic para abrir la biblioteca. Usa Importar abajo o suelta archivos 
 #: src/app/MachineSetup.jsx
 #: src/components/VisualizerUploadModal.jsx
 #: src/pages/Home/BrewConfirmModal.jsx
+#: src/pages/Settings/PatchNotes.jsx
 #: src/pages/ShotHistory/ConfirmDeleteModal.jsx
 msgid "Close"
 msgstr "Cerrar"
@@ -1099,6 +1108,10 @@ msgstr "No se pudo generar una imagen."
 #: src/pages/Settings/index.jsx
 msgid "Could not import {importName}: {importMessage}"
 msgstr "No se pudo importar {importName}: {importMessage}"
+
+#: src/pages/Settings/PatchNotes.jsx
+msgid "Could not load release notes"
+msgstr "No se pudieron cargar las notas de la versión"
 
 #: src/pages/ProfileEdit/ProfileImageUpload.jsx
 msgid "Could not load the saved profile."
@@ -1435,6 +1448,10 @@ msgstr "Descripción"
 #: src/pages/Statistics/components/StatisticsMultiSelectDropdown.jsx
 msgid "Deselect {itemName}"
 msgstr "Deseleccionar {itemName}"
+
+#: src/pages/Settings/PatchNotes.jsx
+msgid "Details"
+msgstr "Detalles"
 
 #: src/pages/SetupWizard/MachineStep.jsx
 msgid "Detected board"
@@ -3102,6 +3119,10 @@ msgstr "No se encontraron elementos."
 msgid "No more types available"
 msgstr "No hay más tipos disponibles"
 
+#: src/pages/Settings/PatchNotes.jsx
+msgid "No new commits since the installed version"
+msgstr "No hay commits nuevos desde la versión instalada"
+
 #: src/pages/ShotHistory/ShotNotesCard.jsx
 msgid "No notes added"
 msgstr "No se han añadido notas"
@@ -4147,6 +4168,10 @@ msgstr "Extracción de referencia"
 msgid "Relative time: <0>h</0> (now), <1>h-7d</1> (7 days ago)"
 msgstr "Tiempo relativo: <0>h</0> (ahora), <1>h-7d</1> (hace 7 días)"
 
+#: src/pages/Settings/PatchNotes.jsx
+msgid "Release notes"
+msgstr "Notas de la versión"
+
 #: src/components/MachineProfileControl.jsx
 msgid "Reload updated profile"
 msgstr "Recargar perfil actualizado"
@@ -4892,6 +4917,11 @@ msgstr "Mostrar extracciones recientes"
 msgid "Show the control column panels as separate cards, or group them into a single unified card."
 msgstr "Muestra los paneles de la columna de control como tarjetas separadas o agrúpalos en una sola tarjeta."
 
+#. placeholder {0}: commits.length
+#: src/pages/Settings/PatchNotes.jsx
+msgid "showing the newest {0}"
+msgstr "se muestran los {0} más recientes"
+
 #: src/pages/Statistics/components/StatisticsShotCompareSection.jsx
 msgid "Showing up to 100 latest shots. Refine with filters."
 msgstr "Se muestran hasta las 100 extracciones más recientes. Afina con los filtros."
@@ -4921,6 +4951,10 @@ msgstr "Perfil simple"
 #: src/pages/ProfileEdit/ProfileTypeSelection.jsx
 msgid "Simple Profile"
 msgstr "Perfil simple"
+
+#: src/pages/Settings/PatchNotes.jsx
+msgid "Since the last update"
+msgstr "Desde la última actualización"
 
 #: src/pages/SetupWizard/MachineStep.jsx
 msgid "Single boiler"
@@ -4984,6 +5018,7 @@ msgid "Space evenly"
 msgstr "Repartir uniformemente"
 
 #: src/app/AppSettings.jsx
+#: src/pages/Settings/PatchNotes.jsx
 #: src/pages/Settings/tabs/SystemTab.jsx
 msgctxt "update channel"
 msgid "Stable"
@@ -5588,6 +5623,10 @@ msgstr "El archivo no contiene ajustes conocidos."
 msgid "The file does not contain a settings object."
 msgstr "El archivo no contiene un objeto de ajustes."
 
+#: src/pages/Settings/PatchNotes.jsx
+msgid "The firmware version is not known yet"
+msgstr "La versión del firmware aún no se conoce"
+
 #: src/pages/Home/BrewConfirmModal.jsx
 msgid "The following warnings are currently active:"
 msgstr "Los siguientes avisos están activos:"
@@ -6130,6 +6169,10 @@ msgstr "Vídeo (no compatible)"
 #: src/pages/ShotAnalyzer/components/shotChart/single/useShotChartReplayExport.js
 msgid "Video export is not supported in this browser."
 msgstr "La exportación de vídeo no es compatible con este navegador."
+
+#: src/pages/Settings/PatchNotes.jsx
+msgid "View on GitHub"
+msgstr "Ver en GitHub"
 
 #: src/pages/ProfileList/index.jsx
 msgid "View statistics for {label} profile"
