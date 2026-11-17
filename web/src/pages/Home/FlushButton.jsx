@@ -20,11 +20,14 @@ export function FlushButton({ className, isFlushing, isHoldFlush, startFlush, st
     if (!isHoldFlush) startFlush();
   };
   const onPointerDown = e => {
-    if (!isHoldFlush) return;
+    // Only the contact that started the interaction can end it; further presses meanwhile are ignored.
+    if (!isHoldFlush || cleanup.current) return;
+    const { pointerId } = e;
     if (e.pointerType !== 'touch') {
       startFlush();
       // The release is caught on the window so it still arrives when the pointer left the button.
-      const end = () => {
+      const end = ev => {
+        if (ev.pointerId !== pointerId) return;
         cleanup.current?.();
         latest.current.stopFlush();
       };
@@ -41,36 +44,48 @@ export function FlushButton({ className, isFlushing, isHoldFlush, startFlush, st
     // before that, the browser's pointercancel (it took the gesture over for scrolling) aborts the start.
     // Once the flush runs, the hold lasts until the finger lifts: scrolling is blocked, and if the browser
     // scrolls anyway the touch events still report the release after the pointer events have stopped.
-    cleanup.current?.();
     const { clientX, clientY } = e;
     let started = false;
+    // The touch events carry their own ids; the matching touch is the one that starts where this pointer did.
+    let touchId;
     const timer = setTimeout(() => {
       started = true;
       latest.current.startFlush();
     }, TOUCH_HOLD_MS);
     const onMove = ev => {
-      if (started) return;
+      if (started || ev.pointerId !== pointerId) return;
       if (Math.hypot(ev.clientX - clientX, ev.clientY - clientY) > TOUCH_MOVE_PX) {
         cleanup.current?.();
       }
     };
-    const onUp = () => {
+    const onUp = ev => {
+      if (ev.pointerId !== pointerId) return;
       const wasStarted = started;
       cleanup.current?.();
       if (wasStarted) latest.current.stopFlush();
     };
-    const onCancel = () => {
-      if (!started) cleanup.current?.();
+    const onCancel = ev => {
+      if (ev.pointerId === pointerId && !started) cleanup.current?.();
+    };
+    const onTouchStart = ev => {
+      if (touchId !== undefined) return;
+      const touch = [...ev.changedTouches].find(
+        tc => Math.hypot(tc.clientX - clientX, tc.clientY - clientY) <= 1,
+      );
+      if (touch) touchId = touch.identifier;
     };
     const onTouchMove = ev => {
       if (started && ev.cancelable) ev.preventDefault();
     };
-    const onTouchEnd = () => {
+    const onTouchEnd = ev => {
       if (!started) return;
+      if (touchId !== undefined && ![...ev.changedTouches].some(tc => tc.identifier === touchId))
+        return;
       cleanup.current?.();
       latest.current.stopFlush();
     };
     window.addEventListener('pointermove', onMove);
+    window.addEventListener('touchstart', onTouchStart);
     window.addEventListener('pointerup', onUp);
     window.addEventListener('pointercancel', onCancel);
     window.addEventListener('touchmove', onTouchMove, { passive: false });
@@ -79,6 +94,7 @@ export function FlushButton({ className, isFlushing, isHoldFlush, startFlush, st
     cleanup.current = () => {
       clearTimeout(timer);
       window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('touchstart', onTouchStart);
       window.removeEventListener('pointerup', onUp);
       window.removeEventListener('pointercancel', onCancel);
       window.removeEventListener('touchmove', onTouchMove);
