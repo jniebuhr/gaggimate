@@ -4,7 +4,6 @@ import { libraryService } from '../../services/LibraryService';
 import {
   cleanName,
   getShotIdentityKey,
-  getShotStorageKey,
   isProfilePinned,
   isShotPinned,
 } from '../../utils/analyzerUtils';
@@ -114,7 +113,16 @@ export function LibraryShotsPanelSection({
   pinnedShotsByProfile,
   primaryDisplayProfile,
   primaryDisplayShot,
-  refreshLibraries,
+  onExportAll,
+  onDeleteAll,
+  onUpload,
+  inlineActions,
+  toolbarActions,
+  hasActiveFilters,
+  progress,
+  onCancel,
+  ratingFilter,
+  onRatingFilterChange,
   setShotsPinnedFirst,
   setShotsSearch,
   setShotsSort,
@@ -123,35 +131,22 @@ export function LibraryShotsPanelSection({
   shotsSearch,
   shotsSort,
 }) {
-  const handleExportAllShots = () => {
-    if (shots.length === 0) return;
-    const count = shots.length;
-    if (
-      confirm(
-        t`Do you really want to export all ${count} filtered shots? (Shots are downloaded individually, one after the other.)`,
-      )
-    ) {
-      for (let i = 0; i < shots.length; i++)
-        setTimeout(() => handleExport(shots[i], true), i * 300);
-    }
-  };
-
-  const handleDeleteAllShots = async () => {
-    const count = shots.length;
-    if (
-      confirm(t`WARNING: Do you really want to IRREVOCABLY delete all ${count} filtered shots?`)
-    ) {
-      for (const shot of shots) {
-        await libraryService.deleteShot(getShotStorageKey(shot)); // NOSONAR -- Keep controller mutations sequential.
-      }
-      await refreshLibraries();
-    }
-  };
-
   return (
-    <div className={getLibrarySectionVisibilityClass(mobileActiveSection, 'shots')}>
+    <div
+      className={
+        inlineActions ? 'mt-4' : getLibrarySectionVisibilityClass(mobileActiveSection, 'shots')
+      }
+    >
       <LibrarySection
         title={t`Shots`}
+        standalone={inlineActions}
+        onUpload={onUpload}
+        toolbarActions={toolbarActions}
+        hasActiveFilters={hasActiveFilters}
+        progress={progress}
+        onCancel={onCancel}
+        ratingFilter={ratingFilter}
+        onRatingFilterChange={onRatingFilterChange}
         items={shots}
         isShot={true}
         compareMode={compareMode}
@@ -178,8 +173,8 @@ export function LibraryShotsPanelSection({
         }
         onCompareToggle={onCompareShotToggle}
         isLoading={loading}
-        onExportAll={handleExportAllShots}
-        onDeleteAll={handleDeleteAllShots}
+        onExportAll={onExportAll}
+        onDeleteAll={onDeleteAll}
         getMatchStatus={item =>
           primaryDisplayProfile &&
           cleanName(item.profile || '').toLowerCase() === normalizedCurrentProfileName
@@ -205,6 +200,7 @@ export function LibraryShotsPanelSection({
 
 export function LibraryProfilesPanelSection({
   compareMode,
+  busy = false,
   desktopSectionHeight,
   getProfilePinDisabledReason,
   handleDelete,
@@ -232,6 +228,7 @@ export function LibraryProfilesPanelSection({
   setProfilesSort,
 }) {
   const handleExportAllProfiles = () => {
+    if (busy) return;
     if (profiles.length === 0) return;
     const count = profiles.length;
     if (
@@ -245,6 +242,7 @@ export function LibraryProfilesPanelSection({
   };
 
   const handleDeleteAllProfiles = async () => {
+    if (busy) return;
     const count = profiles.length;
     if (
       confirm(t`WARNING: Do you really want to IRREVOCABLY delete all ${count} filtered profiles?`)
@@ -260,6 +258,7 @@ export function LibraryProfilesPanelSection({
     <div className={getLibrarySectionVisibilityClass(mobileActiveSection, 'profiles')}>
       <LibrarySection
         title={t`Profiles`}
+        bulkBusy={busy}
         items={profiles}
         isShot={false}
         compareMode={compareMode}

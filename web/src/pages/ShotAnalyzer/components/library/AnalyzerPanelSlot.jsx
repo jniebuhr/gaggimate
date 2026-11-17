@@ -14,7 +14,12 @@ function hasFileDrag(event) {
   return false;
 }
 
-function AnalyzerPanelSlot({ statusBarProps, actionBarProps, showActionBar = true }) {
+export function AnalyzerPanelSlot({
+  statusBarProps,
+  actionBarProps,
+  showActionBar = true,
+  children,
+}) {
   const dragDepthRef = useRef(0);
   const dragResetTimerRef = useRef(null);
   const [isDragActive, setIsDragActive] = useState(false);
@@ -152,8 +157,12 @@ function AnalyzerPanelSlot({ statusBarProps, actionBarProps, showActionBar = tru
           </div>
         </div>
       ) : null}
-      <StatusBar {...statusBarProps} />
-      {showActionBar ? <AnalyzerActionBar {...actionBarProps} /> : null}
+      {children ?? (
+        <>
+          <StatusBar {...statusBarProps} />
+          {showActionBar ? <AnalyzerActionBar {...actionBarProps} /> : null}
+        </>
+      )}
     </section>
   );
 }

@@ -121,8 +121,8 @@ export function ActionBarImportActions({ actionButtonClasses, handleImportClick,
         className={`${actionButtonClasses} max-sm:px-1`}
         onClick={handleImportClick}
         disabled={isImporting}
-        title={t`Import shot or profile`}
-        aria-label={isImporting ? t`Importing shot or profile` : t`Import shot or profile`}
+        title={t`Open shot or profile`}
+        aria-label={isImporting ? t`Opening shot or profile` : t`Open shot or profile`}
       >
         <FontAwesomeIcon
           icon={isImporting ? faCircleNotch : faFileImport}
@@ -130,7 +130,7 @@ export function ActionBarImportActions({ actionButtonClasses, handleImportClick,
           className='text-sm'
         />
         <span className='hidden sm:inline'>
-          <Trans>Import</Trans>
+          <Trans>Open</Trans>
         </span>
       </button>
     </div>

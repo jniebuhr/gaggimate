@@ -44,9 +44,9 @@ function getGhostedBadgeClasses(baseClasses, isActive) {
 
 function getProfileBadgeTitle(isMismatch) {
   if (isMismatch) {
-    return t`Profile mismatch detected. Use Import below or drop files here to import.`;
+    return t`Profile mismatch detected. Use Open below or drop files here.`;
   }
-  return t`Click to open the library. Use Import below or drop files here to import.`;
+  return t`Click to open the library. Use Open below or drop files here.`;
 }
 
 function getCompareSlotBadgeClasses({ currentShot, ghosted }) {
@@ -241,6 +241,8 @@ function ShotTrailingControl({ currentShot, activeBadgeIconButtonClasses, onUnlo
       {currentShot ? (
         <button
           type='button'
+          aria-label={t`Unload shot`}
+          title={t`Unload shot`}
           onClick={event => {
             event.stopPropagation();
             onUnloadShot();
@@ -270,7 +272,7 @@ function ShotBadge({
     <div
       data-import-target='shot'
       className={shotBadgeClasses}
-      title={t`Click to open the library. Use Import below or drop files here to import.`}
+      title={t`Click to open the library. Use Open below or drop files here.`}
     >
       <BadgeExportControl
         available={Boolean(currentShot)}

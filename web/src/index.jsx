@@ -32,7 +32,6 @@ const NotFound = lazy(() => import('./pages/_404.jsx').then(m => m.NotFound));
 const Settings = lazy(() => import('./pages/Settings/index.jsx').then(m => m.Settings));
 const ProfileList = lazy(() => import('./pages/ProfileList/index.jsx').then(m => m.ProfileList));
 const ProfileEdit = lazy(() => import('./pages/ProfileEdit/index.jsx').then(m => m.ProfileEdit));
-const ShotHistory = lazy(() => import('./pages/ShotHistory/index.jsx').then(m => m.ShotHistory));
 const ShotAnalyzer = lazy(() => import('./pages/ShotAnalyzer/index.jsx').then(m => m.ShotAnalyzer));
 const StatisticsPage = lazy(() =>
   import('./pages/Statistics/index.jsx').then(m => m.StatisticsPage),
@@ -131,7 +130,7 @@ export function App() {
                         <Route path='/ota' component={RedirectTo('/settings/system')} />
                         <Route path='/scales' component={RedirectTo('/settings/bluetooth')} />
                         <Route path='/pidtune' component={RedirectTo('/settings/calibration')} />
-                        <Route path='/history' component={ShotHistory} />
+                        <Route path='/history' component={RedirectTo('/analyzer')} />
                         <Route path='/analyzer' component={ShotAnalyzer} />
                         <Route path='/statistics' component={StatisticsPage} />
                         <Route

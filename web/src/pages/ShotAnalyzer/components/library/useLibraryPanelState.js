@@ -6,7 +6,7 @@ import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 
 const STATUS_BAR_CARD_GAP = 12;
 
-export function useLibraryPanelLayoutState({ sentinelRef, barSlotRef, barRef }) {
+export function useLibraryPanelLayoutState({ sentinelRef, barSlotRef, barRef, active = true }) {
   const [isStuck, setIsStuck] = useState(false);
   const [isMobileViewport, setIsMobileViewport] = useState(() =>
     Boolean(globalThis.window?.matchMedia('(max-width: 1023px)').matches),
@@ -59,7 +59,7 @@ export function useLibraryPanelLayoutState({ sentinelRef, barSlotRef, barRef }) 
     updateRect();
     globalThis.window?.addEventListener('resize', updateRect);
     return () => globalThis.window?.removeEventListener('resize', updateRect);
-  }, [updateRect]);
+  }, [updateRect, active]);
 
   useEffect(() => {
     if (typeof ResizeObserver === 'undefined') return;
@@ -67,7 +67,7 @@ export function useLibraryPanelLayoutState({ sentinelRef, barSlotRef, barRef }) 
     if (barRef.current) resizeObserver.observe(barRef.current);
     if (barSlotRef.current) resizeObserver.observe(barSlotRef.current);
     return () => resizeObserver.disconnect();
-  }, [barRef, barSlotRef, updateRect]);
+  }, [barRef, barSlotRef, updateRect, active]);
 
   return {
     isStuck,
@@ -236,6 +236,7 @@ export function useAnalyzerStickyOffset(panelRef, barSlotHeight) {
 
 export function useLibraryRefresh({
   connected,
+  shotRatingFilter,
   debouncedProfilesSearch,
   debouncedShotsSearch,
   normalizedCurrentProfileName,
@@ -257,17 +258,24 @@ export function useLibraryRefresh({
   const [shotsLoading, setShotsLoading] = useState(true);
   const [profilesLoading, setProfilesLoading] = useState(true);
 
+  const shotRefreshIdRef = useRef(0);
+  const refreshShots = useCallback(async () => {
+    const id = ++shotRefreshIdRef.current;
+    setShotsLoading(true);
+    try {
+      const data = await libraryService.getAllShots();
+      if (id === shotRefreshIdRef.current) setShotsData(data);
+    } finally {
+      if (id === shotRefreshIdRef.current) setShotsLoading(false);
+    }
+  }, []);
+
   const refreshLibraries = useCallback(async () => {
     const id = ++refreshIdRef.current;
-    setShotsLoading(true);
     setProfilesLoading(true);
     try {
       await Promise.all([
-        libraryService.getAllShots().then(data => {
-          if (id !== refreshIdRef.current) return;
-          setShotsData(data);
-          setShotsLoading(false);
-        }),
+        refreshShots(),
         libraryService.getAllProfiles().then(data => {
           if (id !== refreshIdRef.current) return;
           setProfilesData(data);
@@ -278,16 +286,16 @@ export function useLibraryRefresh({
       console.error('Library refresh failed:', error);
     } finally {
       if (id === refreshIdRef.current) {
-        setShotsLoading(false);
         setProfilesLoading(false);
       }
     }
-  }, []);
+  }, [refreshShots]);
 
   useEffect(() => {
     void refreshLibraries();
     return () => {
       refreshIdRef.current += 1;
+      shotRefreshIdRef.current += 1;
     };
   }, [connected, refreshLibraries]);
 
@@ -296,6 +304,7 @@ export function useLibraryRefresh({
       shotsData,
       profilesData,
       shotSearch: debouncedShotsSearch,
+      shotRatingFilter,
       profileSearch: debouncedProfilesSearch,
       shotsSort,
       profilesSort,
@@ -324,6 +333,7 @@ export function useLibraryRefresh({
     profilesData,
     debouncedProfilesSearch,
     debouncedShotsSearch,
+    shotRatingFilter,
     normalizedCurrentProfileName,
     normalizedCurrentShotProfileName,
     pinnedProfiles,
@@ -338,5 +348,5 @@ export function useLibraryRefresh({
     shotsSort,
   ]);
 
-  return { refreshLibraries, shotsLoading, profilesLoading };
+  return { refreshLibraries, refreshShots, shotsLoading, profilesLoading };
 }

@@ -5,7 +5,7 @@
  * Notes JSON format is identical across all backends:
  *   { id, rating, beanType, doseIn, doseOut, ratio, grindSetting, balanceTaste, notes }
  *
- * - GaggiMate shots: Uses the same API as ShotHistory (req:history:notes:get/save)
+ * - GaggiMate shots: Uses the device history API (req:history:notes:get/save)
  * - Temp shots: In-memory only, no persistence
  */
 
@@ -155,6 +155,18 @@ class NotesService {
     } catch (e) {
       console.error('Failed to load notes from API:', e);
       return defaults;
+    }
+  }
+
+  // History exports preserve the saved payload, including absent notes as null.
+  async loadExportNotes(shotId) {
+    try {
+      const response = await this.apiService.request({ tp: 'req:history:notes:get', id: shotId });
+      const payload = response.notes;
+      if (!payload || Object.keys(payload).length === 0) return null;
+      return typeof payload === 'string' ? JSON.parse(payload) : payload;
+    } catch {
+      return null;
     }
   }
 

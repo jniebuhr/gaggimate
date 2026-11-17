@@ -2,10 +2,9 @@ import { useLocation } from 'preact-iso';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHome } from '@fortawesome/free-solid-svg-icons/faHome';
 import { faList } from '@fortawesome/free-solid-svg-icons/faList';
-import { faTimeline } from '@fortawesome/free-solid-svg-icons/faTimeline';
 import { faCog } from '@fortawesome/free-solid-svg-icons/faCog';
 import { faMobileScreen } from '@fortawesome/free-solid-svg-icons/faMobileScreen';
-import { faMagnifyingGlassChart } from '@fortawesome/free-solid-svg-icons/faMagnifyingGlassChart';
+import { faMugHot } from '@fortawesome/free-solid-svg-icons/faMugHot';
 import { faChartSimple } from '@fortawesome/free-solid-svg-icons/faChartSimple';
 import { faCircleChevronLeft } from '@fortawesome/free-solid-svg-icons/faCircleChevronLeft';
 import { faCircleChevronRight } from '@fortawesome/free-solid-svg-icons/faCircleChevronRight';
@@ -72,8 +71,7 @@ const NAVIGATION_SECTIONS = [
     showDivider: true,
     items: [
       { label: msg`Profiles`, link: '/profiles', icon: faList },
-      { label: msg`Shot History`, link: '/history', icon: faTimeline },
-      { label: msg`Shot Analyzer`, link: '/analyzer', icon: faMagnifyingGlassChart, isNew: false },
+      { label: msg`Brews`, link: '/analyzer', icon: faMugHot, isNew: false },
       { label: msg`Statistics`, link: '/statistics', icon: faChartSimple, isNew: false },
     ],
   },

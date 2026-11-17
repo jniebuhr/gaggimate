@@ -9,7 +9,10 @@ import { ProcessProfileChart } from '../../../components/ProcessProfileChart.jsx
 import { profileChartHeightSignal } from '../../../utils/dashboardManager.js';
 import { SkeletonBlock } from '../../../components/SkeletonBlock.jsx';
 import { fmtElapsed, fmtPhaseTarget, getPhaseLabel } from '../utils.js';
-import { parseBinaryIndex, indexToShotList } from '../../ShotHistory/parseBinaryIndex.js';
+import {
+  parseBinaryIndex,
+  indexToShotList,
+} from '../../../services/shotHistory/parseBinaryIndex.js';
 
 function ProgressCard({ processInfo, isBrewing, isGrinding, selectedProfile }) {
   const { t } = useLingui();

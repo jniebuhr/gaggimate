@@ -5,8 +5,9 @@
  */
 
 import { t } from '@lingui/core/macro';
-import { parseBinaryIndex, indexToShotList } from '../../ShotHistory/parseBinaryIndex';
-import { parseBinaryShot } from '../../ShotHistory/parseBinaryShot';
+import { parseBinaryIndex, indexToShotList } from '../../../services/shotHistory/parseBinaryIndex';
+import { parseBinaryShot } from '../../../services/shotHistory/parseBinaryShot';
+import { toExportShot } from '../../../services/shotHistory/exportShot';
 import { notesService } from './NotesService';
 import { getProfileDisplayLabel, getShotStorageKey } from '../utils/analyzerUtils';
 
@@ -21,32 +22,6 @@ const HISTORY_NOTES_DEFAULTS = {
   balanceTaste: 'balanced',
   notes: '',
 };
-
-function round2(v) {
-  if (v == null || Number.isNaN(v)) return v;
-  return Math.round((v + Number.EPSILON) * 100) / 100;
-}
-
-function normalizeShotSampleForHistoryExport(sample = {}) {
-  return {
-    t: sample.t,
-    tt: round2(sample.tt),
-    ct: round2(sample.ct),
-    tp: round2(sample.tp),
-    cp: round2(sample.cp),
-    fl: round2(sample.fl),
-    tf: round2(sample.tf),
-    pf: round2(sample.pf),
-    vf: round2(sample.vf),
-    v: round2(sample.v),
-    ev: round2(sample.ev),
-    pr: round2(sample.pr),
-    wp: round2(sample.wp),
-    systemInfo: sample.systemInfo,
-    phaseNumber: sample.phaseNumber,
-    phaseDisplayNumber: sample.phaseDisplayNumber,
-  };
-}
 
 function normalizeNotesForHistoryExport(notes, shotId) {
   const merged = {
@@ -70,35 +45,21 @@ function normalizeNotesForHistoryExport(notes, shotId) {
 
 function buildHistoryLikeShotExport(rawShot, listItem, notes) {
   const shotId = rawShot?.id ?? listItem?.id ?? listItem?.name ?? '';
-
-  const base = {
-    id: String(shotId),
-    profile: rawShot?.profile || listItem?.profile || '',
-    profileId: rawShot?.profileId || listItem?.profileId || '',
-    timestamp: rawShot?.timestamp,
-    duration: rawShot?.duration,
-    samples: Array.isArray(rawShot?.samples)
-      ? rawShot.samples.map(normalizeShotSampleForHistoryExport)
-      : [],
-    volume: listItem?.volume ?? rawShot?.volume ?? null,
-    rating: listItem?.rating ?? null,
-    incomplete: listItem?.incomplete ?? rawShot?.incomplete ?? false,
-    notes: normalizeNotesForHistoryExport(notes, shotId),
-    loaded: true,
-    data: null,
-  };
-
-  return {
-    ...base,
-    ...rawShot,
-    samples: base.samples,
-    volume: round2(base.volume),
-    rating: base.rating,
-    incomplete: base.incomplete,
-    notes: base.notes,
-    loaded: true,
-    data: null,
-  };
+  return toExportShot(
+    {
+      id: String(shotId),
+      profile: rawShot?.profile || listItem?.profile || '',
+      profileId: rawShot?.profileId || listItem?.profileId || '',
+      ...rawShot,
+      samples: Array.isArray(rawShot.samples) ? rawShot.samples : [],
+      volume: listItem?.volume ?? rawShot?.volume ?? null,
+      rating: listItem?.rating ?? null,
+      incomplete: listItem?.incomplete ?? rawShot?.incomplete ?? false,
+      loaded: true,
+      data: null,
+    },
+    normalizeNotesForHistoryExport(notes, shotId),
+  );
 }
 
 const PROFILE_EXPORT_METADATA_FIELDS = [
@@ -302,8 +263,21 @@ class LibraryService {
         const fullShot = await this.loadShot(loadId);
         delete fullShot.source;
 
-        const notes = await notesService.loadNotes(loadId, 'gaggimate');
-        exportData = buildHistoryLikeShotExport(fullShot, item, notes);
+        const notes = await notesService.loadExportNotes(loadId);
+        const metadata = { ...item };
+        ['source', 'name', 'exportName', 'storageKey', 'fileName'].forEach(key => {
+          delete metadata[key];
+        });
+        exportData = toExportShot(
+          {
+            ...metadata,
+            ...fullShot,
+            volume: item.volume ?? fullShot.volume,
+            rating: item.rating ?? fullShot.rating,
+            incomplete: item.incomplete ?? fullShot.incomplete,
+          },
+          notes,
+        );
       } else {
         // PROFILE EXPORT (GM):
         // Load fresh from controller using the hidden profileId
@@ -346,7 +320,8 @@ class LibraryService {
    */
   async deleteShot(id) {
     if (!this.apiService) throw new Error('ApiService not set');
-    await this.apiService.request({ tp: 'req:history:delete', id });
+    const response = await this.apiService.request({ tp: 'req:history:delete', id });
+    if (response?.error) throw new Error(response.error);
   }
 
   /**

@@ -3,18 +3,24 @@
  * Coordinates library state, selection, and the extracted presentation modules.
  */
 
+import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
+import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
+import { faUpload } from '@fortawesome/free-solid-svg-icons/faUpload';
 import { t } from '@lingui/core/macro';
 import { ApiServiceContext, machine } from '../../../../services/ApiService';
+import { notesService } from '../../services/NotesService';
+import { useShotListActions } from './useShotListActions';
+import { ShotVisualizerUpload } from './ShotVisualizerUpload';
 import { exportLibraryItems } from '../../services/LibraryExportService';
 import {
   cleanName,
   getPinnedProfiles,
-  getPinnedShotsByProfile,
   getShotPinBucketKey,
   toggleProfilePin,
   toggleShotPin,
 } from '../../utils/analyzerUtils';
-import { LibraryPanelStatusSlots } from './AnalyzerPanelSlot';
+import { AnalyzerActionBar } from '../AnalyzerActionBar';
+import { AnalyzerPanelSlot, LibraryPanelStatusSlots } from './AnalyzerPanelSlot';
 import {
   applyChangedProfilePins,
   applyChangedShotPins,
@@ -56,10 +62,13 @@ import {
   useLibrarySelectionTargetSync,
   useLibraryServiceApi,
 } from './useLibraryPanelState';
-import { useCallback, useContext, useRef, useState } from 'preact/hooks';
+import { useCallback, useContext, useEffect, useRef, useState } from 'preact/hooks';
 
 export function LibraryPanel({
-  initiallyOpen = false,
+  showShotList = false,
+  pinnedShotsByProfile,
+  setPinnedShotsByProfile,
+  onShotsDeleted,
   currentShot,
   currentProfile,
   currentShotName = 'No Shot Loaded',
@@ -100,13 +109,20 @@ export function LibraryPanel({
   const barRef = useRef(null);
 
   // UI State
-  const [collapsed, setCollapsed] = useState(!initiallyOpen);
+  const [collapsed, setCollapsed] = useState(true);
+  const inlineEntry = showShotList && collapsed;
+  const [uploadShot, setUploadShot] = useState(null);
+  const [shotsRatingFilter, setShotsRatingFilter] = useState('all');
+  useEffect(() => {
+    if (!currentShot) setCollapsed(true);
+  }, [currentShot]);
   const [importing, setImporting] = useState(false); // Specific state for import spinner
   const [librarySelectionTarget, setLibrarySelectionTarget] = useState('primaryShot');
   const { isStuck, isMobileViewport, barRect } = useLibraryPanelLayoutState({
     sentinelRef,
     barSlotRef,
     barRef,
+    active: !inlineEntry,
   });
   const {
     primaryDisplayShot,
@@ -156,7 +172,6 @@ export function LibraryPanel({
   const [profilesSort, setProfilesSort] = useState({ key: 'name', order: 'asc' });
   const [mobileActiveSection, setMobileActiveSection] = useState('shots');
   const [pinnedProfiles, setPinnedProfiles] = useState(() => getPinnedProfiles());
-  const [pinnedShotsByProfile, setPinnedShotsByProfile] = useState(() => getPinnedShotsByProfile());
   const [shotsPinnedFirst, setShotsPinnedFirst] = useState(false);
   const [profilesPinnedFirst, setProfilesPinnedFirst] = useState(false);
 
@@ -178,6 +193,7 @@ export function LibraryPanel({
   // Debounced search values keep local filtering responsive
   const debouncedShotsSearch = useDebouncedLibraryValue(shotsSearch);
   const debouncedProfilesSearch = useDebouncedLibraryValue(profilesSearch);
+  const shotProfileSearch = inlineEntry ? '' : debouncedProfilesSearch;
   const normalizedCurrentShotProfileName = cleanName(
     primaryDisplayShot?.profile || '',
   ).toLowerCase();
@@ -216,10 +232,11 @@ export function LibraryPanel({
   });
   useCloseLibraryOnOutsideClick({ collapsed, panelRef, setCollapsed });
 
-  const { refreshLibraries, shotsLoading, profilesLoading } = useLibraryRefresh({
+  const { refreshLibraries, refreshShots, shotsLoading, profilesLoading } = useLibraryRefresh({
     connected: machine.value.connected,
-    debouncedProfilesSearch,
+    debouncedProfilesSearch: shotProfileSearch,
     debouncedShotsSearch,
+    shotRatingFilter: shotsRatingFilter,
     normalizedCurrentProfileName,
     normalizedCurrentShotProfileName,
     pinnedProfiles,
@@ -233,6 +250,31 @@ export function LibraryPanel({
     shotsPinnedFirst,
     shotsSort,
   });
+
+  const { progress, busy, cancel, exportAllShots, deleteAllShots } = useShotListActions({
+    shots,
+    refreshShots,
+    onShotsDeleted,
+  });
+
+  useEffect(() => {
+    if (!apiService) return;
+    const id = apiService.on('evt:history-shot-saved', () => {
+      void refreshShots();
+    });
+    return () => apiService.off('evt:history-shot-saved', id);
+  }, [apiService, refreshShots]);
+
+  useEffect(() => {
+    const unsubscribe = [currentShot, secondaryShot]
+      .filter(shot => shot?.source === 'gaggimate')
+      .map(shot =>
+        notesService.subscribeNotes(shot.id, shot.source, (_notes, meta) => {
+          if (meta.persistedNotes) void refreshShots();
+        }),
+      );
+    return () => unsubscribe.forEach(stop => stop());
+  }, [currentShot, secondaryShot, refreshShots]);
 
   // --- Action Handlers ---
 
@@ -265,10 +307,16 @@ export function LibraryPanel({
       });
       applyChangedShotPins(toggleShotPin(item, resolvedBucketKey), setPinnedShotsByProfile);
     },
-    [getEffectiveShotPinBucketKey, getPinnedShotBucketKey, shotsPinnedFirst],
+    [
+      getEffectiveShotPinBucketKey,
+      getPinnedShotBucketKey,
+      shotsPinnedFirst,
+      setPinnedShotsByProfile,
+    ],
   );
 
   const handleExport = async (item, isShot) => {
+    if (busy) return;
     try {
       await exportLibraryItems([{ item, isShot }]);
     } catch (e) {
@@ -279,10 +327,17 @@ export function LibraryPanel({
   };
 
   const handleDelete = async item => {
+    if (busy) return;
     const itemName = item.name || item.id;
     if (!confirm(t`Are you sure you want to delete "${itemName}"?`)) return;
     try {
+      if (item.source === 'temp') {
+        onShotUnload?.();
+        return;
+      }
       await deleteLibraryItem(item);
+      if (item.source === 'gaggimate' && item.duration !== undefined)
+        onShotsDeleted?.([String(item.id)]);
       await refreshLibraries();
     } catch (e) {
       const message = e.message;
@@ -322,11 +377,14 @@ export function LibraryPanel({
       compareMode,
       handleSwapCompareSlots,
       intent: getShotRowActionIntent({
-        collapsed,
+        collapsed: collapsed && !showShotList,
         compareMode,
         currentShot,
         item,
-        librarySelectionTarget,
+        librarySelectionTarget:
+          inlineEntry && compareMode && primaryDisplayShot
+            ? 'secondaryShot'
+            : librarySelectionTarget,
         primaryDisplayShot,
         secondaryShot,
       }),
@@ -338,13 +396,24 @@ export function LibraryPanel({
   };
 
   const handleStatusBarCompareToggle = useCallback(() => {
+    if (showShotList && collapsed) {
+      onCompareModeToggle?.();
+      return;
+    }
     executeStatusBarCompareToggle({
       compareMode,
       onCompareModeToggle,
       openLibraryForTarget,
       primaryDisplayShot,
     });
-  }, [compareMode, onCompareModeToggle, openLibraryForTarget, primaryDisplayShot]);
+  }, [
+    showShotList,
+    collapsed,
+    compareMode,
+    onCompareModeToggle,
+    openLibraryForTarget,
+    primaryDisplayShot,
+  ]);
 
   useLibraryPanelHotkeys({
     collapsed,
@@ -396,7 +465,7 @@ export function LibraryPanel({
       barRect,
     });
 
-  useAnalyzerStickyOffset(panelRef, barSlotHeight);
+  useAnalyzerStickyOffset(panelRef, inlineEntry ? 0 : barSlotHeight);
 
   const primaryStatusBarProps = {
     currentShot: primaryDisplayShot,
@@ -427,6 +496,33 @@ export function LibraryPanel({
     canRetryProfileSearch: canRetryPrimaryProfileSearch,
   };
   const primaryActionBarProps = {
+    isMobileViewport,
+    entryMode: showShotList,
+    shotActions: primaryDisplayShot
+      ? [
+          {
+            label: t`Export`,
+            icon: faFileExport,
+            onSelect: () => handleExport(primaryDisplayShot, true),
+            disabled: busy || isPrimarySelectionPending,
+          },
+          {
+            label: t`Delete`,
+            icon: faTrashCan,
+            tone: 'error',
+            onSelect: () => handleDelete(primaryDisplayShot),
+            disabled: busy || isPrimarySelectionPending,
+          },
+          {
+            label: t`Upload to Visualizer.coffee`,
+            icon: faUpload,
+            onSelect: () => {
+              if (!busy) setUploadShot(primaryDisplayShot);
+            },
+            disabled: busy || isPrimarySelectionPending,
+          },
+        ]
+      : [],
     currentShot,
     selectedShot: primaryDisplayShot,
     shotList: collapsed ? navigationShots : shots,
@@ -438,7 +534,11 @@ export function LibraryPanel({
     onShowStats: primaryStatusBarProps.onShowStats,
     statsHref,
     statisticsAvailable: Boolean(primaryDisplayProfile || primaryProfileMismatch),
-    onImport: files => handleImport(files, { slot: 'primary', targetType: 'any' }),
+    onImport: files =>
+      handleImport(files, {
+        slot: showShotList && compareMode && currentShot ? 'secondary' : 'primary',
+        targetType: 'any',
+      }),
     isImporting: importing,
     isSelectionPending: isPrimarySelectionPending,
     isProfilePending: isPrimaryProfileSearching,
@@ -496,23 +596,74 @@ export function LibraryPanel({
     showCompareButton: false,
     enableKeyboardNavigation: false,
   };
+  const shotSection = (
+    <LibraryShotsPanelSection
+      compareMode={compareMode}
+      comparePendingKeys={comparePendingKeys}
+      compareSecondaryShotKey={compareSecondaryShotKey}
+      compareSelectedCount={compareSelectedCount}
+      compareSelectionKeys={compareSelectionKeys}
+      desktopSectionHeight={inlineEntry ? 'max(24rem, calc(100dvh - 5rem))' : desktopSectionHeight}
+      getEffectiveShotPinBucketKey={getEffectiveShotPinBucketKey}
+      getPinnedShotBucketKey={getPinnedShotBucketKey}
+      getShotPinDisabledReason={getShotPinDisabledReason}
+      handleDelete={handleDelete}
+      handleExport={handleExport}
+      handleShotPinToggle={handleShotPinToggle}
+      handleShotRowAction={handleShotRowAction}
+      loading={shotsLoading}
+      mobileActiveSection={mobileActiveSection}
+      normalizedCurrentProfileName={normalizedCurrentProfileName}
+      onCompareShotToggle={onCompareShotToggle}
+      pinnedShotsByProfile={pinnedShotsByProfile}
+      primaryDisplayProfile={primaryDisplayProfile}
+      primaryDisplayShot={primaryDisplayShot}
+      onExportAll={exportAllShots}
+      onDeleteAll={deleteAllShots}
+      onUpload={item => {
+        if (!busy) setUploadShot(item);
+      }}
+      inlineActions={inlineEntry}
+      hasActiveFilters={Boolean(
+        debouncedShotsSearch || shotProfileSearch || shotsRatingFilter !== 'all',
+      )}
+      toolbarActions={inlineEntry ? <AnalyzerActionBar {...primaryActionBarProps} /> : null}
+      progress={progress}
+      onCancel={cancel}
+      ratingFilter={shotsRatingFilter}
+      onRatingFilterChange={setShotsRatingFilter}
+      setShotsPinnedFirst={setShotsPinnedFirst}
+      setShotsSearch={setShotsSearch}
+      setShotsSort={setShotsSort}
+      shots={shots}
+      shotsPinnedFirst={shotsPinnedFirst}
+      shotsSearch={shotsSearch}
+      shotsSort={shotsSort}
+    />
+  );
   return (
     <div ref={panelRef} className='relative'>
       <div ref={sentinelRef} className='h-0 w-full' />
 
-      <div ref={barSlotRef} className='relative w-full' style={barSlotStyle}>
-        <div ref={barRef} style={barStyle}>
-          <LibraryPanelStatusSlots
-            collapsed={collapsed}
-            compareMode={compareMode}
-            primaryActionBarProps={primaryActionBarProps}
-            primaryStatusBarProps={primaryStatusBarProps}
-            secondaryActionBarProps={secondaryActionBarProps}
-            secondaryStatusBarProps={secondaryStatusBarProps}
-          />
+      {!inlineEntry && (
+        <div ref={barSlotRef} className='relative w-full' style={barSlotStyle}>
+          <div ref={barRef} style={barStyle}>
+            <LibraryPanelStatusSlots
+              collapsed={collapsed}
+              compareMode={compareMode}
+              primaryActionBarProps={primaryActionBarProps}
+              primaryStatusBarProps={primaryStatusBarProps}
+              secondaryActionBarProps={secondaryActionBarProps}
+              secondaryStatusBarProps={secondaryStatusBarProps}
+            />
+          </div>
         </div>
-      </div>
+      )}
 
+      {inlineEntry && (
+        <AnalyzerPanelSlot actionBarProps={primaryActionBarProps}>{shotSection}</AnalyzerPanelSlot>
+      )}
+      {uploadShot && <ShotVisualizerUpload shot={uploadShot} onClose={() => setUploadShot(null)} />}
       {!collapsed && (
         <LibraryDropdown
           dropdownStyle={dropdownStyle}
@@ -521,39 +672,11 @@ export function LibraryPanel({
           onMobileSectionChange={setMobileActiveSection}
         >
           {/* SHOTS SECTION */}
-          <LibraryShotsPanelSection
-            compareMode={compareMode}
-            comparePendingKeys={comparePendingKeys}
-            compareSecondaryShotKey={compareSecondaryShotKey}
-            compareSelectedCount={compareSelectedCount}
-            compareSelectionKeys={compareSelectionKeys}
-            desktopSectionHeight={desktopSectionHeight}
-            getEffectiveShotPinBucketKey={getEffectiveShotPinBucketKey}
-            getPinnedShotBucketKey={getPinnedShotBucketKey}
-            getShotPinDisabledReason={getShotPinDisabledReason}
-            handleDelete={handleDelete}
-            handleExport={handleExport}
-            handleShotPinToggle={handleShotPinToggle}
-            handleShotRowAction={handleShotRowAction}
-            loading={shotsLoading}
-            mobileActiveSection={mobileActiveSection}
-            normalizedCurrentProfileName={normalizedCurrentProfileName}
-            onCompareShotToggle={onCompareShotToggle}
-            pinnedShotsByProfile={pinnedShotsByProfile}
-            primaryDisplayProfile={primaryDisplayProfile}
-            primaryDisplayShot={primaryDisplayShot}
-            refreshLibraries={refreshLibraries}
-            setShotsPinnedFirst={setShotsPinnedFirst}
-            setShotsSearch={setShotsSearch}
-            setShotsSort={setShotsSort}
-            shots={shots}
-            shotsPinnedFirst={shotsPinnedFirst}
-            shotsSearch={shotsSearch}
-            shotsSort={shotsSort}
-          />
+          {shotSection}
 
           {/* PROFILES SECTION */}
           <LibraryProfilesPanelSection
+            busy={busy}
             compareMode={compareMode}
             desktopSectionHeight={desktopSectionHeight}
             getProfilePinDisabledReason={getProfilePinDisabledReason}
