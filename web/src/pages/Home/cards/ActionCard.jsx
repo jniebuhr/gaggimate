@@ -16,6 +16,7 @@ export function ActionCard({
   isBrewing,
   isGrinding,
   isFlushing,
+  isHoldFlush,
   activate,
   deactivate,
   clear,
@@ -118,6 +119,7 @@ export function ActionCard({
             <FlushButton
               className='btn btn-ghost btn-sm text-base-content/60 hover:text-base-content rounded-full text-sm'
               isFlushing={isFlushing}
+              isHoldFlush={isHoldFlush}
               startFlush={startFlush}
               stopFlush={stopFlush}
             />
@@ -136,6 +138,7 @@ ActionCard.propTypes = {
   isGrinding: PropTypes.bool.isRequired,
   isGrindAvailable: PropTypes.bool.isRequired,
   isFlushing: PropTypes.bool.isRequired,
+  isHoldFlush: PropTypes.bool,
   activate: PropTypes.func.isRequired,
   deactivate: PropTypes.func.isRequired,
   clear: PropTypes.func.isRequired,

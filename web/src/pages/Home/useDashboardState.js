@@ -184,6 +184,9 @@ export function useDashboardState() {
     altRelayFunction,
     // action state
     isFlushing,
+    // Unknown duration counts as hold
+    // Unknown duration counts as hold: a tap then can't start a flush nothing stops.
+    isHoldFlush: Number(settings?.flushDuration ?? 0) === 0,
     // handlers
     changeMode,
     toggleSteam,
