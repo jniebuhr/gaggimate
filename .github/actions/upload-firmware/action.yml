@@ -1,4 +1,8 @@
 name: 'Upload firmware release'
+description: >
+  Uploads the firmware files of one target to the update server. When RELEASE_SIGNING_KEY is set, the
+  upload carries a release manifest (channel, version, target and the SHA-256 of every file) signed with
+  the release signing key; devices and the update server verify that signature.
 inputs:
   channel:
     description: Release channel
@@ -37,34 +41,62 @@ runs:
   steps:
     - name: Upload firmware release
       shell: bash
+      env:
+        CHANNEL: ${{ inputs.channel }}
+        TARGET: ${{ inputs.target }}
+        VERSION: ${{ inputs.version }}
+        FIRMWARE_DIR: ${{ inputs.firmware_dir }}
+        FIRMWARE_FILES: ${{ inputs.firmware_files }}
       run: |
         set -euo pipefail
-        
-        FORM_ARGS=(
-          -F "channel=${{ inputs.channel }}"
-          -F "target=${{ inputs.target }}"
-        )
-        
-        version=${{ inputs.version }}
-        if [[ -z "${{ inputs.version }}" ]]; then
+
+        version="$VERSION"
+        if [[ -z "$version" ]]; then
           version=$(git describe --tags --dirty)
         fi
-        FORM_ARGS+=( -F "version=${version}" )
 
-        IFS=',' read -r -a FILENAMES <<< "${{ inputs.firmware_files }}"
+        # Every file that belongs to this target, in upload order.
+        FILES=()
+        IFS=',' read -r -a FILENAMES <<< "$FIRMWARE_FILES"
         for filename in "${FILENAMES[@]}"; do
           filename_trimmed="$(echo "$filename" | xargs)"
-          file_path="${{ inputs.firmware_dir }}/${filename_trimmed}"
+          file_path="${FIRMWARE_DIR}/${filename_trimmed}"
           if [[ ! -f "$file_path" ]]; then
             echo "Missing firmware file: $file_path" >&2
             exit 1
           fi
+          FILES+=( "$file_path" )
+        done
+        FILES+=( "docs/boot_app0.bin" )
+
+        FORM_ARGS=(
+          -F "channel=${CHANNEL}"
+          -F "target=${TARGET}"
+          -F "version=${version}"
+        )
+
+        # The manifest binds exactly these files to this channel, version and target. It is signed here,
+        # by the build that produced the files; the update server only stores and hands out the result.
+        if [[ -n "${RELEASE_SIGNING_KEY:-}" ]]; then
+          python3 -m pip install --quiet --disable-pip-version-check "cryptography>=46,<47"
+          sign_dir="$(mktemp -d)"
+          python3 scripts/sign_release.py sign \
+            --private-key-env RELEASE_SIGNING_KEY \
+            --channel "$CHANNEL" --version "$version" --target "$TARGET" \
+            --manifest-out "$sign_dir/manifest.json" --signature-out "$sign_dir/manifest.sig" \
+            "${FILES[@]}"
+          # "<file" sends the content byte for byte; the signature is over these exact bytes.
+          FORM_ARGS+=( -F "manifest=<$sign_dir/manifest.json" -F "signature=<$sign_dir/manifest.sig" )
+        else
+          echo "::warning title=Unsigned upload::RELEASE_SIGNING_KEY is not available to this job, so ${TARGET} ${version} is uploaded without a signed manifest."
+        fi
+
+        for file_path in "${FILES[@]}"; do
           FORM_ARGS+=( -F "files=@${file_path}" )
         done
-        FORM_ARGS+=( -F "files=@docs/boot_app0.bin" )
 
         UPLOAD_URL="${UPDATE_SERVER_HOST}/api/admin/releases/upload"
-        echo "Uploading ${{ inputs.target }} firmware for version ${version} to ${UPLOAD_URL}"
+        echo "Uploading ${TARGET} firmware for version ${version} to ${UPLOAD_URL}"
 
         curl --fail-with-body --show-error --silent \
           -H "X-API-KEY: ${UPDATE_SERVER_API_KEY}" \
