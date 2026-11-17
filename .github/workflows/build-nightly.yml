@@ -12,6 +12,9 @@ jobs:
   build:
     needs: ota-testbench
     runs-on: ubuntu-latest
+    # Holds RELEASE_SIGNING_KEY. The environment only admits master and v* tags, so no other branch or
+    # pull request can get at the key that devices trust.
+    environment: release-signing
     steps:
       - name: Checkout repo
         uses: actions/checkout@v7
@@ -63,6 +66,7 @@ jobs:
         env:
           UPDATE_SERVER_HOST: ${{ secrets.UPDATE_SERVER_HOST }}
           UPDATE_SERVER_API_KEY: ${{ secrets.UPDATE_SERVER_API_KEY }}
+          RELEASE_SIGNING_KEY: ${{ secrets.RELEASE_SIGNING_KEY }}
         with:
           channel: 'nightly'
           target: 'controller'
@@ -88,6 +92,7 @@ jobs:
         env:
           UPDATE_SERVER_HOST: ${{ secrets.UPDATE_SERVER_HOST }}
           UPDATE_SERVER_API_KEY: ${{ secrets.UPDATE_SERVER_API_KEY }}
+          RELEASE_SIGNING_KEY: ${{ secrets.RELEASE_SIGNING_KEY }}
         with:
           channel: 'nightly'
           target: 'display'
@@ -107,6 +112,7 @@ jobs:
         env:
           UPDATE_SERVER_HOST: ${{ secrets.UPDATE_SERVER_HOST }}
           UPDATE_SERVER_API_KEY: ${{ secrets.UPDATE_SERVER_API_KEY }}
+          RELEASE_SIGNING_KEY: ${{ secrets.RELEASE_SIGNING_KEY }}
         with:
           channel: 'nightly'
           target: 'headless'
