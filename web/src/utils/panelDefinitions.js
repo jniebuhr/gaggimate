@@ -139,6 +139,7 @@ export const PANEL_DEFINITIONS = [
       isGrinding: ds.isGrinding,
       isGrindAvailable: ds.isGrindAvailable,
       isFlushing: ds.isFlushing,
+      isHoldFlush: ds.isHoldFlush,
       activate: ds.activate,
       deactivate: ds.deactivate,
       clear: ds.clear,
