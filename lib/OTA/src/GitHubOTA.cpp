@@ -1,6 +1,7 @@
 #include "GitHubOTA.h"
 #include "EspHttpTransport.h"
 #include "ResumableDownloader.h"
+#include "ca_bundle.h"
 #include "common.h"
 #include "semver_extensions.h"
 #include <esp_ota_ops.h>
@@ -29,7 +30,7 @@ GitHubOTA::GitHubOTA(const String &display_version, const String &controller_ver
     _phase_callback = phase_callback;
     _progress_callback = progress_callback;
 
-    _wifi_client.setCACertBundle(x509_crt_imported_bundle_bin_start);
+    _wifi_client.setCACertBundle(gm_ca_bundle);
 }
 
 void GitHubOTA::init() {

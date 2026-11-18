@@ -16,8 +16,6 @@ constexpr uint8_t PHASE_FAILED = 5;
 using phase_callback_t = std::function<void(uint8_t phase)>;
 using progress_callback_t = std::function<void(uint8_t phase, int progress)>;
 
-extern const uint8_t x509_crt_imported_bundle_bin_start[] asm("_binary_x509_crt_bundle_start");
-
 class GitHubOTA {
   public:
     GitHubOTA(const String &display_version, const String &controller_version, const String &release_url,

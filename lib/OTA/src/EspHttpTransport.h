@@ -7,7 +7,7 @@
 #include <esp_http_client.h>
 #include <string>
 
-// HttpTransport on esp_http_client + esp-tls with the Arduino certificate bundle.
+// HttpTransport on esp_http_client + esp-tls with the roots from ca_bundle.h.
 class EspHttpTransport : public HttpTransport {
   public:
     static constexpr int DEFAULT_TIMEOUT_MS = 15000;
