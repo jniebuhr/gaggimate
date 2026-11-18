@@ -40,7 +40,7 @@ void GaggiMateController::setup() {
     hardwareRequests = xQueueCreate(1, sizeof(gm::MachineHardwareSettings));
     configASSERT(hardwareRequests);
     detectBoard();
-    // Display UART TX lands here; release the pin early where it doubles as the boot console output.
+    // Display UART TX lands here; keep the pin an input until the UART claims it.
     pinMode(_config.ext4Pin, INPUT);
     loadMachineHardware();
     detectAddon();
