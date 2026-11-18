@@ -291,8 +291,8 @@ const ControllerConfig GM_MAX_REV10 = {.name = "GaggiMate Max Rev 1.x",
                                        .ext1Pin = 2,
                                        .ext2Pin = 47,
                                        .ext3Pin = 48,
-                                       .ext4Pin = 43,
-                                       .ext5Pin = 44,
+                                       .ext4Pin = 44,
+                                       .ext5Pin = 43,
                                        .capabilites =
                                            {
                                                .dimming = true,
