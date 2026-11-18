@@ -1,5 +1,6 @@
 #ifdef ESP_PLATFORM
 #include "EspHttpTransport.h"
+#include "ca_bundle.h"
 #include "ota_log.h"
 #include <cstring>
 #include <esp_crt_bundle.h>
@@ -10,9 +11,6 @@
 
 static constexpr const char *TAG = "EspHttpTransport";
 
-// Arduino replaces the IDF bundle with its own copy; attach only works after the bundle was set.
-extern const uint8_t x509_crt_imported_bundle_bin_start[] asm("_binary_x509_crt_bundle_start");
-
 bool EspHttpTransport::begin(const std::string &url) {
     end();
     if (url.compare(0, 8, "https://") != 0) {
@@ -20,7 +18,7 @@ bool EspHttpTransport::begin(const std::string &url) {
         return false;
     }
     _url = url;
-    arduino_esp_crt_bundle_set(x509_crt_imported_bundle_bin_start);
+    arduino_esp_crt_bundle_set(gm_ca_bundle); // Arduino's attach only works after a bundle was set
     esp_http_client_config_t config = {};
     config.url = _url.c_str();
     config.event_handler = onEvent;
