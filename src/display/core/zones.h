@@ -206,7 +206,7 @@ static const zones_t zones[] PROGMEM = {
     {"America/Tijuana", "PST8PDT,M3.2.0,M11.1.0"},
     {"America/Toronto", "EST5EDT,M3.2.0,M11.1.0"},
     {"America/Tortola", "AST4"},
-    {"America/Vancouver", "PST8PDT,M3.2.0,M11.1.0"},
+    {"America/Vancouver", "MST7"},
     {"America/Whitehorse", "MST7"},
     {"America/Winnipeg", "CST6CDT,M3.2.0,M11.1.0"},
     {"America/Yakutat", "AKST9AKDT,M3.2.0,M11.1.0"},
