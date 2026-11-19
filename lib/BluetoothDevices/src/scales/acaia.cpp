@@ -1,5 +1,5 @@
 #include "acaia.h"
-#include "remote_scales_plugin_registry.h"
+#include "BluetoothDeviceRegistry.h"
 
 /**
  * Structure inside each packet.
@@ -55,18 +55,19 @@ const NimBLEUUID umbraWeightCharacteristicUUID("0000fe42-8e22-4541-9d4c-21edae82
 //-----------------------------------------------------------------------------------/
 //---------------------------        PUBLIC       -----------------------------------/
 //-----------------------------------------------------------------------------------/
-AcaiaScales::AcaiaScales(const DiscoveredDevice &device) : RemoteScales(device) {}
+AcaiaScales::AcaiaScales(const DiscoveredDevice &device) : BluetoothScale(device) {}
 
 bool AcaiaScales::connect() {
-    if (RemoteScales::clientIsConnected()) {
-        RemoteScales::log("Already connected\n");
+    if (BluetoothScale::clientIsConnected()) {
+        BluetoothScale::log("Already connected\n");
         return true;
     }
 
-    RemoteScales::log("Connecting to %s[%s]\n", RemoteScales::getDeviceName().c_str(), RemoteScales::getDeviceAddress().c_str());
-    bool result = RemoteScales::clientConnect();
+    BluetoothScale::log("Connecting to %s[%s]\n", BluetoothScale::getDeviceName().c_str(),
+                        BluetoothScale::getDeviceAddress().c_str());
+    bool result = BluetoothScale::clientConnect();
     if (!result) {
-        RemoteScales::clientCleanup();
+        BluetoothScale::clientCleanup();
         return false;
     }
 
@@ -74,18 +75,18 @@ bool AcaiaScales::connect() {
         return false;
     }
     subscribeToNotifications();
-    RemoteScales::setWeight(0.f);
+    BluetoothScale::setWeight(0.f);
     return true;
 }
 
-void AcaiaScales::disconnect() { RemoteScales::clientCleanup(); }
+void AcaiaScales::disconnect() { BluetoothScale::clientCleanup(); }
 
-bool AcaiaScales::isConnected() { return RemoteScales::clientIsConnected(); }
+bool AcaiaScales::isConnected() { return BluetoothScale::clientIsConnected(); }
 
 void AcaiaScales::update() {
     if (markedForReconnection) {
-        RemoteScales::log("Marked for disconnection. Will attempt to reconnect.\n");
-        RemoteScales::clientCleanup();
+        BluetoothScale::log("Marked for disconnection. Will attempt to reconnect.\n");
+        BluetoothScale::clientCleanup();
         connect();
         markedForReconnection = false;
     } else {
@@ -133,8 +134,8 @@ bool AcaiaScales::decodeAndHandleNotification() {
 
     auto checksumBytes = calculateChecksum(payload, payloadLength);
     if (checksumBytes.first != dataBuffer[messageLength - 2] || checksumBytes.second != dataBuffer[messageLength - 1]) {
-        RemoteScales::log("Checksum failed: calc[%02X  %02X] but actual[%02X %02X]. Discarding.\n", checksumBytes.first,
-                          checksumBytes.second, dataBuffer[messageLength - 2], dataBuffer[messageLength - 1]);
+        BluetoothScale::log("Checksum failed: calc[%02X  %02X] but actual[%02X %02X]. Discarding.\n", checksumBytes.first,
+                            checksumBytes.second, dataBuffer[messageLength - 2], dataBuffer[messageLength - 1]);
         dataBuffer.erase(dataBuffer.begin(), dataBuffer.begin() + messageLength);
         return false;
     }
@@ -146,18 +147,19 @@ bool AcaiaScales::decodeAndHandleNotification() {
     } else if (messageType == AcaiaMessageType::STATUS) {
         handleScaleStatusPayload(payload, payloadLength);
     } else if (messageType == AcaiaMessageType::INFO) {
-        RemoteScales::log("Got info message: %s\n", RemoteScales::byteArrayToHexString(dataBuffer.data(), messageLength).c_str());
+        BluetoothScale::log("Got info message: %s\n",
+                            BluetoothScale::byteArrayToHexString(dataBuffer.data(), messageLength).c_str());
 
         // For some reason, Acaia Pearl S sends this info message upon connection.
         // It can safely be ignored; otherwise, the scale will almost never successfully connect.
-        if (RemoteScales::getDeviceName().find("PEARLS") != 0) {
+        if (BluetoothScale::getDeviceName().find("PEARLS") != 0) {
             // This normally means that something went wrong with the establishing a connection so we disconnect.
             markedForReconnection = true;
         }
 
     } else {
-        RemoteScales::log("Unknown message type %02X: %s\n", messageType,
-                          RemoteScales::byteArrayToHexString(dataBuffer.data(), messageLength).c_str());
+        BluetoothScale::log("Unknown message type %02X: %s\n", messageType,
+                            BluetoothScale::byteArrayToHexString(dataBuffer.data(), messageLength).c_str());
     }
 
     // Remove processed data packet from the buffer.
@@ -168,51 +170,52 @@ bool AcaiaScales::decodeAndHandleNotification() {
 void AcaiaScales::handleScaleEventPayload(const uint8_t *payload, size_t length) {
     AcaiaEventType eventType = static_cast<AcaiaEventType>(payload[1]);
     if (eventType == AcaiaEventType::WEIGHT) {
-        RemoteScales::setWeight(decodeWeight(payload + 2));
+        BluetoothScale::setWeight(decodeWeight(payload + 2));
     } else if (eventType == AcaiaEventType::ACK) {
         // Ignore for now.
         // Example: 0B 00 E0 05 5C 17 00 00 01 02 29 48
-        // RemoteScales::log("ACK - %s\n", byteArrayToHexString(payload, length).c_str());
-        // RemoteScales::log("Heartbeat response (weight: %0.1f time: %0.1f)\n", weight, time);
-        // RemoteScales::setWeight(decodeWeight(payload + 4));
+        // BluetoothScale::log("ACK - %s\n", byteArrayToHexString(payload, length).c_str());
+        // BluetoothScale::log("Heartbeat response (weight: %0.1f time: %0.1f)\n", weight, time);
+        // BluetoothScale::setWeight(decodeWeight(payload + 4));
     } else if (eventType == AcaiaEventType::TIMER) {
         // Ignore for now
         // time = decodeTime(payload + 1);
-        // RemoteScales::log("TIMER - %s", byteArrayToHexString(payload, length).c_str());
-        // RemoteScales::log("Time:  %0.1f\n", time);
+        // BluetoothScale::log("TIMER - %s", byteArrayToHexString(payload, length).c_str());
+        // BluetoothScale::log("Time:  %0.1f\n", time);
     } else if (eventType == AcaiaEventType::KEY) {
         // Ignore for now
         // AcaiaEventKey eventKey = static_cast<AcaiaEventKey>(payload[1]);
         // if (eventKey == AcaiaEventKey::TARE) {
-        //   RemoteScales::setWeight(decodeWeight(payload + 2));
-        //   RemoteScales::log("TARE - %s", byteArrayToHexString(payload, length).c_str());
-        //   RemoteScales::log("Tare (weight:  %0.1f)\n", RemoteScales::getWeight());
+        //   BluetoothScale::setWeight(decodeWeight(payload + 2));
+        //   BluetoothScale::log("TARE - %s", byteArrayToHexString(payload, length).c_str());
+        //   BluetoothScale::log("Tare (weight:  %0.1f)\n", BluetoothScale::getWeight());
         // }
         // else if (eventKey == AcaiaEventKey::START) {
-        //   RemoteScales::setWeight(decodeWeight(payload + 2));
-        //   RemoteScales::log("START - %s", byteArrayToHexString(payload, length).c_str());
-        //   RemoteScales::log("Start (weight:  %0.1f)\n", RemoteScales::getWeight());
+        //   BluetoothScale::setWeight(decodeWeight(payload + 2));
+        //   BluetoothScale::log("START - %s", byteArrayToHexString(payload, length).c_str());
+        //   BluetoothScale::log("Start (weight:  %0.1f)\n", BluetoothScale::getWeight());
         // }
         // else if (eventKey == AcaiaEventKey::STOP) {
         //   time = decodeTime(payload + 2);
-        //   RemoteScales::setWeight(decodeWeight(payload + 6));
-        //   RemoteScales::log("STOP - %s", byteArrayToHexString(payload, length).c_str());
-        //   RemoteScales::log("Stop (weight:  %0.1f, time:  %0.1f)\n", RemoteScales::getWeight(), time);
+        //   BluetoothScale::setWeight(decodeWeight(payload + 6));
+        //   BluetoothScale::log("STOP - %s", byteArrayToHexString(payload, length).c_str());
+        //   BluetoothScale::log("Stop (weight:  %0.1f, time:  %0.1f)\n", BluetoothScale::getWeight(), time);
         // }
         // else if (eventKey == AcaiaEventKey::RESET) {
         //   time = decodeTime(payload + 2);
-        //   RemoteScales::setWeight(decodeWeight(payload + 6));
+        //   BluetoothScale::setWeight(decodeWeight(payload + 6));
         //   // 08 08 05 00 00 00 00 01 01 13 0E
         //   // 08 0A 05 03 00 00 00 01 01 18 0E
-        //   RemoteScales::log("RESET - %s", byteArrayToHexString(payload, length).c_str());
-        //   RemoteScales::log("Reset (weight:  %0.1f, time:  %0.1f)\n", RemoteScales::getWeight(), time);
+        //   BluetoothScale::log("RESET - %s", byteArrayToHexString(payload, length).c_str());
+        //   BluetoothScale::log("Reset (weight:  %0.1f, time:  %0.1f)\n", BluetoothScale::getWeight(), time);
         // }
         // else {
-        //   RemoteScales::log("Unknown key %02X(%d) - %s\n", eventKey, eventKey, byteArrayToHexString(payload, length).c_str());
+        //   BluetoothScale::log("Unknown key %02X(%d) - %s\n", eventKey, eventKey, byteArrayToHexString(payload,
+        //   length).c_str());
         // }
     } else {
-        RemoteScales::log("unknown event type %02x(%d): %s\n", eventType, eventType,
-                          RemoteScales::byteArrayToHexString(payload, length).c_str());
+        BluetoothScale::log("unknown event type %02x(%d): %s\n", eventType, eventType,
+                            BluetoothScale::byteArrayToHexString(payload, length).c_str());
     }
 }
 
@@ -258,7 +261,8 @@ float AcaiaScales::decodeWeight(const uint8_t *weightPayload) {
         value /= 10000.0f;
         break;
     default:
-        RemoteScales::log("Invalid scaling %02X - %s \n", scaling, RemoteScales::byteArrayToHexString(weightPayload, 6).c_str());
+        BluetoothScale::log("Invalid scaling %02X - %s \n", scaling,
+                            BluetoothScale::byteArrayToHexString(weightPayload, 6).c_str());
         return -1;
     }
 
@@ -274,16 +278,16 @@ float AcaiaScales::decodeTime(const uint8_t *timePayload) {
 }
 
 bool AcaiaScales::performConnectionHandshake() {
-    RemoteScales::log("Performing handshake\n");
+    BluetoothScale::log("Performing handshake\n");
 
-    if (RemoteScales::clientGetService(oldServiceUUID)) {
-        service = RemoteScales::clientGetService(oldServiceUUID);
-    } else if (RemoteScales::clientGetService(serviceUUID)) {
-        service = RemoteScales::clientGetService(serviceUUID);
-    } else if (RemoteScales::clientGetService(umbraServiceUUID)) {
-        service = RemoteScales::clientGetService(umbraServiceUUID);
+    if (BluetoothScale::clientGetService(oldServiceUUID)) {
+        service = BluetoothScale::clientGetService(oldServiceUUID);
+    } else if (BluetoothScale::clientGetService(serviceUUID)) {
+        service = BluetoothScale::clientGetService(serviceUUID);
+    } else if (BluetoothScale::clientGetService(umbraServiceUUID)) {
+        service = BluetoothScale::clientGetService(umbraServiceUUID);
     } else {
-        RemoteScales::log("No compatible service found\n");
+        BluetoothScale::log("No compatible service found\n");
         clientCleanup();
         return false;
     }
@@ -301,15 +305,15 @@ bool AcaiaScales::performConnectionHandshake() {
     }
 
     if (weightCharacteristic == nullptr || commandCharacteristic == nullptr) {
-        RemoteScales::log("Failed to find required characteristics\n");
+        BluetoothScale::log("Failed to find required characteristics\n");
         clientCleanup();
         return false;
     }
-    RemoteScales::log("Got weightCharacteristic and commandCharacteristic\n");
+    BluetoothScale::log("Got weightCharacteristic and commandCharacteristic\n");
 
     // Subscribe to notifications
     NimBLERemoteDescriptor *notifyDescriptor = weightCharacteristic->getDescriptor(NimBLEUUID((uint16_t)0x2902));
-    RemoteScales::log("Got notifyDescriptor\n");
+    BluetoothScale::log("Got notifyDescriptor\n");
     if (notifyDescriptor != nullptr) {
         uint8_t value[2] = {0x01, 0x00};
         notifyDescriptor->writeValue(value, 2, true);
@@ -320,9 +324,9 @@ bool AcaiaScales::performConnectionHandshake() {
 
     // Identify
     sendId();
-    RemoteScales::log("Send ID\n");
+    BluetoothScale::log("Send ID\n");
     sendNotificationRequest();
-    RemoteScales::log("Sent notification request\n");
+    BluetoothScale::log("Sent notification request\n");
     lastHeartbeat = millis();
     return true;
 }
@@ -367,19 +371,19 @@ void AcaiaScales::sendHeartbeat() {
 }
 
 void AcaiaScales::subscribeToNotifications() {
-    RemoteScales::log("subscribeToNotifications\n");
+    BluetoothScale::log("subscribeToNotifications\n");
 
     auto callback = [this](NimBLERemoteCharacteristic *characteristic, uint8_t *data, size_t length, bool isNotify) {
         notifyCallback(characteristic, data, length, isNotify);
     };
 
     if (weightCharacteristic->canNotify()) {
-        RemoteScales::log("Registering callback for weight characteristic\n");
+        BluetoothScale::log("Registering callback for weight characteristic\n");
         weightCharacteristic->subscribe(true, callback);
     }
 
     if (commandCharacteristic->canNotify()) {
-        RemoteScales::log("Registering callback for command characteristic\n");
+        BluetoothScale::log("Registering callback for command characteristic\n");
         commandCharacteristic->subscribe(true, callback);
     }
 }
@@ -437,4 +441,4 @@ static void cleanupJunkData(std::vector<uint8_t> &dataBuffer) {
     }
 }
 
-bool AcaiaScales::isUmbraModel() const { return RemoteScales::getDeviceName().find("UMBRA") != std::string::npos; }
+bool AcaiaScales::isUmbraModel() const { return BluetoothScale::getDeviceName().find("UMBRA") != std::string::npos; }

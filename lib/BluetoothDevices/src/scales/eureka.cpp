@@ -1,5 +1,5 @@
 #include "eureka.h"
-#include "remote_scales_plugin_registry.h"
+#include "BluetoothDeviceRegistry.h"
 
 const size_t RECEIVE_PROTOCOL_LENGTH = 11;
 
@@ -22,18 +22,19 @@ const uint8_t CMD_UNIT_ML = 0x02;
 //-----------------------------------------------------------------------------------/
 //---------------------------        PUBLIC       -----------------------------------/
 //-----------------------------------------------------------------------------------/
-EurekaScales::EurekaScales(const DiscoveredDevice &device) : RemoteScales(device) {}
+EurekaScales::EurekaScales(const DiscoveredDevice &device) : BluetoothScale(device) {}
 
 bool EurekaScales::connect() {
-    if (RemoteScales::clientIsConnected()) {
-        RemoteScales::log("Already connected\n");
+    if (BluetoothScale::clientIsConnected()) {
+        BluetoothScale::log("Already connected\n");
         return true;
     }
 
-    RemoteScales::log("Connecting to %s[%s]\n", RemoteScales::getDeviceName().c_str(), RemoteScales::getDeviceAddress().c_str());
-    bool result = RemoteScales::clientConnect();
+    BluetoothScale::log("Connecting to %s[%s]\n", BluetoothScale::getDeviceName().c_str(),
+                        BluetoothScale::getDeviceAddress().c_str());
+    bool result = BluetoothScale::clientConnect();
     if (!result) {
-        RemoteScales::clientCleanup();
+        BluetoothScale::clientCleanup();
         return false;
     }
 
@@ -41,30 +42,30 @@ bool EurekaScales::connect() {
         return false;
     }
     subscribeToNotifications();
-    RemoteScales::setWeight(0.f);
+    BluetoothScale::setWeight(0.f);
     return true;
 }
 
-void EurekaScales::disconnect() { RemoteScales::clientCleanup(); }
+void EurekaScales::disconnect() { BluetoothScale::clientCleanup(); }
 
-bool EurekaScales::isConnected() { return RemoteScales::clientIsConnected(); }
+bool EurekaScales::isConnected() { return BluetoothScale::clientIsConnected(); }
 
 void EurekaScales::update() {
     if (markedForReconnection) {
-        RemoteScales::log("Marked for disconnection. Will attempt to reconnect.\n");
-        RemoteScales::clientCleanup();
+        BluetoothScale::log("Marked for disconnection. Will attempt to reconnect.\n");
+        BluetoothScale::clientCleanup();
         connect();
         markedForReconnection = false;
     } else {
         sendHeartbeat();
-        RemoteScales::log("Heartbeat sent.\n");
+        BluetoothScale::log("Heartbeat sent.\n");
     }
 }
 
 bool EurekaScales::tare() {
     if (!isConnected())
         return false;
-    RemoteScales::log("Tare sent");
+    BluetoothScale::log("Tare sent");
     uint8_t payload[6] = {CMD_HEADER, CMD_BASE, CMD_TARE, CMD_TARE};
     sendMessage(payload, sizeof(payload));
 
@@ -101,7 +102,7 @@ bool EurekaScales::decodeAndHandleNotification() {
         weight = -weight;
     }
 
-    RemoteScales::setWeight(weight * 0.1f); // Convert to floating point
+    BluetoothScale::setWeight(weight * 0.1f); // Convert to floating point
 
     // Remove processed message from the buffer
     dataBuffer.erase(dataBuffer.begin(), dataBuffer.end());
@@ -111,11 +112,11 @@ bool EurekaScales::decodeAndHandleNotification() {
 }
 
 bool EurekaScales::performConnectionHandshake() {
-    RemoteScales::log("Performing handshake\n");
+    BluetoothScale::log("Performing handshake\n");
 
-    service = RemoteScales::clientGetService(serviceUUID);
+    service = BluetoothScale::clientGetService(serviceUUID);
     if (service != nullptr) {
-        RemoteScales::log("Got Service\n");
+        BluetoothScale::log("Got Service\n");
     } else {
         clientCleanup();
         return false;
@@ -127,7 +128,7 @@ bool EurekaScales::performConnectionHandshake() {
         clientCleanup();
         return false;
     }
-    RemoteScales::log("Got weightCharacteristic and commandCharacteristic\n");
+    BluetoothScale::log("Got weightCharacteristic and commandCharacteristic\n");
 
     return true;
 }
@@ -141,19 +142,19 @@ void EurekaScales::sendHeartbeat() {
 }
 
 void EurekaScales::subscribeToNotifications() {
-    RemoteScales::log("subscribeToNotifications\n");
+    BluetoothScale::log("subscribeToNotifications\n");
 
     auto callback = [this](NimBLERemoteCharacteristic *characteristic, uint8_t *data, size_t length, bool isNotify) {
         notifyCallback(characteristic, data, length, isNotify);
     };
 
     if (weightCharacteristic->canNotify()) {
-        RemoteScales::log("Registering callback for weight characteristic\n");
+        BluetoothScale::log("Registering callback for weight characteristic\n");
         weightCharacteristic->subscribe(true, callback);
     }
 
     if (commandCharacteristic->canNotify()) {
-        RemoteScales::log("Registering callback for command characteristic\n");
+        BluetoothScale::log("Registering callback for command characteristic\n");
         commandCharacteristic->subscribe(true, callback);
     }
 }

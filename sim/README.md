@@ -57,6 +57,10 @@ IDE (CLion/VSCode) it shows up under the `display-sim` environment as the
   (profile images, history on SD). Without it the sim behaves like a panel without a card.
 - **Bluetooth scale**: keys `3` (empty scale), `4` (empty dosing cup, 62.4 g), `5` / `6` (cup with 18.0 g / 20.5 g),
   `t` (tare) and `0` (scale off) drive a simulated scale, so weight-based features and Smart Dose can be tried.
+  `--scale` starts with the scale already switched on (no keyboard needed, e.g. headless with `SDL_VIDEODRIVER=dummy`).
+- **Bluetooth devices**: the Bluetooth settings tab lists a fake scale (only while the simulated scale is on) and a
+  fake Bookoo Motto 80 grinder. Both pair, reconnect and can be forgotten like real devices; the grinder takes the
+  selected profile's grinder settings and reports them back in the tab.
 - **AP mode**: `--ap` clears the Wi-Fi credentials, so the display falls back to
   its access point like a fresh device (setup wizard Wi-Fi step). The next run
   without it seeds the sim network again.
@@ -73,7 +77,7 @@ unchanged except for a few small `#ifndef GAGGIMATE_SIM` guards.
 | `sim/platform/` | Host shims for the Arduino/ESP32 APIs the firmware uses — Arduino core (vendored `String`/`Print`/`Stream`), FreeRTOS, `FS`/`LittleFS`/`SPIFFS`/`SD_MMC`, `Preferences` (NVS), `WiFi`, and the `esp_*` headers. `xTaskCreate*` is a no-op so the sim drives the firmware's loop methods cooperatively on the main thread. |
 | `sim/comms/` | Mock of the `GaggiMateClient` BLE facade + a `MockController` thermal/hydraulic model that reacts to the boiler/pump/relay commands the display sends and emits sensor telemetry (temperature, pressure, flow, scale weight). |
 | `sim/driver/` | `SdlDriver` — an SDL2 window wired into LVGL as the display + mouse-as-touch input, plus a screenshot helper. |
-| `sim/web/` | Host shim of `ESPAsyncWebServer`/`AsyncWebSocket`/`DNSServer` over a tiny non-blocking HTTP/1.1 + WebSocket server (pumped from the main loop, so handlers never race the firmware). OTA / BLE-scale endpoints are stubbed. |
+| `sim/web/` | Host shim of `ESPAsyncWebServer`/`AsyncWebSocket`/`DNSServer` over a tiny non-blocking HTTP/1.1 + WebSocket server (pumped from the main loop, so handlers never race the firmware). OTA endpoints are stubbed; Bluetooth devices are faked by `bluetooth_devices_stub.cpp`. |
 | `sim/main.cpp` | Entry point: builds the `Controller`, then runs one cooperative loop (controller + UI + web server + SDL) on the main thread. |
 
 The PlatformIO env is `[env:display-sim]` (`platform = native`) in `platformio.ini`.

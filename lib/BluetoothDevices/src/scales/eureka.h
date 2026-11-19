@@ -1,6 +1,6 @@
 #pragma once
-#include "remote_scales.h"
-#include "remote_scales_plugin_registry.h"
+#include "BluetoothDeviceRegistry.h"
+#include "BluetoothScale.h"
 #include <Arduino.h>
 #include <NimBLEDevice.h>
 #include <NimBLEScan.h>
@@ -8,7 +8,7 @@
 #include <memory>
 #include <vector>
 
-class EurekaScales : public RemoteScales {
+class EurekaScales : public BluetoothScale {
 
   public:
     EurekaScales(const DiscoveredDevice &device);
@@ -40,14 +40,7 @@ class EurekaScales : public RemoteScales {
 class EurekaScalesPlugin {
   public:
     static void apply() {
-        RemoteScalesPlugin plugin = RemoteScalesPlugin{
-            .id = "plugin-eureka",
-            .handles = [](const DiscoveredDevice &device) { return EurekaScalesPlugin::handles(device); },
-            .initialise = [](const DiscoveredDevice &device) -> std::unique_ptr<RemoteScales> {
-                return std::make_unique<EurekaScales>(device);
-            },
-        };
-        RemoteScalesPluginRegistry::getInstance()->registerPlugin(plugin);
+        BluetoothDeviceRegistry::getInstance()->registerDriver<EurekaScales>("plugin-eureka", &EurekaScalesPlugin::handles);
     }
 
   private:

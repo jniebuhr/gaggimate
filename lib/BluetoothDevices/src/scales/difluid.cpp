@@ -1,5 +1,5 @@
 #include "difluid.h"
-#include "remote_scales_plugin_registry.h"
+#include "BluetoothDeviceRegistry.h"
 
 /*
 Handle protocol according to the provided specification.
@@ -13,7 +13,7 @@ const NimBLEUUID weightCharacteristicUUID("AA01");
 //-----------------------------------------------------------------------------------/
 //---------------------------        PUBLIC       -----------------------------------/
 //-----------------------------------------------------------------------------------/
-DifluidScales::DifluidScales(const DiscoveredDevice &device) : RemoteScales(device) {}
+DifluidScales::DifluidScales(const DiscoveredDevice &device) : BluetoothScale(device) {}
 
 bool DifluidScales::connect() {
     if (isConnected()) {
@@ -70,7 +70,7 @@ int32_t DifluidScales::readInt32BE(const uint8_t *data) {
 
 void DifluidScales::notifyCallback(NimBLERemoteCharacteristic *pBLERemoteCharacteristic, uint8_t *pData, size_t length,
                                    bool isNotify) {
-    // Use the log function from RemoteScales
+    // Use the log function from BluetoothScale
     log("Notification received:\n");
     for (size_t i = 0; i < length; i++) {
         log("%02X ", pData[i]);

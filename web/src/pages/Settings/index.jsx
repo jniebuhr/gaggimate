@@ -96,7 +96,7 @@ const FORM_ONLY_KEYS = [
 ];
 
 // Owned by the Bluetooth pairing flow; only a settings import may write them (GM-288).
-const IMPORT_ONLY_KEYS = ['savedScale', 'savedScaleName'];
+const IMPORT_ONLY_KEYS = ['savedScale', 'savedScaleName', 'savedGrinder', 'savedGrinderName'];
 
 const DEFAULT_SCALE_FACTOR_1 = -2500.0;
 const DEFAULT_SCALE_FACTOR_2 = 2500.0;

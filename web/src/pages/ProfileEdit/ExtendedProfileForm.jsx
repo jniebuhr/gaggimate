@@ -81,6 +81,7 @@ export function ExtendedProfileForm(props) {
           onChangeTemperature={e => onFieldChange('temperature', e.target.value)}
           onChangeDose={e => onFieldChange('dose', e.target.value)}
           onChangeUtility={e => onFieldChange('utility', !!e.target.checked)}
+          onChangeGrinder={grinder => onFieldChange('grinder', grinder)}
         />
         <Card sm={10}>
           <ExtendedProfileChart

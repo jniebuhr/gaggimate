@@ -1,5 +1,5 @@
 #include "weighmybru.h"
-#include "remote_scales_plugin_registry.h"
+#include "BluetoothDeviceRegistry.h"
 
 /*
 Handle protocol for WeighMyBru scale
@@ -13,18 +13,19 @@ const NimBLEUUID commandCharacteristicUUID("6E400003-B5A3-F393-E0A9-E50E24DCCA9E
 //-----------------------------------------------------------------------------------/
 //---------------------------        PUBLIC       -----------------------------------/
 //-----------------------------------------------------------------------------------/
-WeighMyBrewScales::WeighMyBrewScales(const DiscoveredDevice &device) : RemoteScales(device) {}
+WeighMyBrewScales::WeighMyBrewScales(const DiscoveredDevice &device) : BluetoothScale(device) {}
 
 bool WeighMyBrewScales::connect() {
-    if (RemoteScales::clientIsConnected()) {
-        RemoteScales::log("Already connected\n");
+    if (BluetoothScale::clientIsConnected()) {
+        BluetoothScale::log("Already connected\n");
         return true;
     }
 
-    RemoteScales::log("Connecting to %s[%s]\n", RemoteScales::getDeviceName().c_str(), RemoteScales::getDeviceAddress().c_str());
-    bool result = RemoteScales::clientConnect();
+    BluetoothScale::log("Connecting to %s[%s]\n", BluetoothScale::getDeviceName().c_str(),
+                        BluetoothScale::getDeviceAddress().c_str());
+    bool result = BluetoothScale::clientConnect();
     if (!result) {
-        RemoteScales::clientCleanup();
+        BluetoothScale::clientCleanup();
         return false;
     }
 
@@ -32,30 +33,30 @@ bool WeighMyBrewScales::connect() {
         return false;
     }
     subscribeToNotifications();
-    RemoteScales::setWeight(0.f);
+    BluetoothScale::setWeight(0.f);
     return true;
 }
 
-void WeighMyBrewScales::disconnect() { RemoteScales::clientCleanup(); }
+void WeighMyBrewScales::disconnect() { BluetoothScale::clientCleanup(); }
 
-bool WeighMyBrewScales::isConnected() { return RemoteScales::clientIsConnected(); }
+bool WeighMyBrewScales::isConnected() { return BluetoothScale::clientIsConnected(); }
 
 void WeighMyBrewScales::update() {
     if (markedForReconnection) {
-        RemoteScales::log("Marked for disconnection. Will attempt to reconnect.\n");
-        RemoteScales::clientCleanup();
+        BluetoothScale::log("Marked for disconnection. Will attempt to reconnect.\n");
+        BluetoothScale::clientCleanup();
         connect();
         markedForReconnection = false;
     } else {
         sendHeartbeat();
-        RemoteScales::log("Heartbeat sent.\n");
+        BluetoothScale::log("Heartbeat sent.\n");
     }
 }
 
 bool WeighMyBrewScales::tare() {
     if (!isConnected())
         return false;
-    RemoteScales::log("Tare sent");
+    BluetoothScale::log("Tare sent");
     uint8_t payload[6] = {0x03, 0x0a, 0x01, 0x01, 0x00, 0x08};
     sendMessage(WeighMyBrewMessageType::SYSTEM, payload, sizeof(payload));
 
@@ -100,7 +101,7 @@ bool WeighMyBrewScales::decodeAndHandleNotification() {
         uint8_t dataSUM = dataBuffer[messageLength - 1];
 
         if (checksum != dataSUM) {
-            RemoteScales::log("Checksum failed: calc[%02X] but actual[%02X]. Discarding.\n", checksum, dataSUM);
+            BluetoothScale::log("Checksum failed: calc[%02X] but actual[%02X]. Discarding.\n", checksum, dataSUM);
             dataBuffer.erase(dataBuffer.begin(), dataBuffer.begin() + messageLength);
             return false;
         }
@@ -111,12 +112,12 @@ bool WeighMyBrewScales::decodeAndHandleNotification() {
             weight = -weight;
         }
 
-        RemoteScales::setWeight(weight * 0.01f); // Convert to floating point
+        BluetoothScale::setWeight(weight * 0.01f); // Convert to floating point
     } else if (productNumber == 0x03 && messageType == WeighMyBrewMessageType::SYSTEM) {
         WeighMyBrewScales::tare();
     } else {
-        RemoteScales::log("Unknown message type %02X: %s\n", messageType,
-                          RemoteScales::byteArrayToHexString(dataBuffer.data(), messageLength).c_str());
+        BluetoothScale::log("Unknown message type %02X: %s\n", messageType,
+                            BluetoothScale::byteArrayToHexString(dataBuffer.data(), messageLength).c_str());
     }
 
     // Remove processed message from the buffer
@@ -127,11 +128,11 @@ bool WeighMyBrewScales::decodeAndHandleNotification() {
 }
 
 bool WeighMyBrewScales::performConnectionHandshake() {
-    RemoteScales::log("Performing handshake\n");
+    BluetoothScale::log("Performing handshake\n");
 
-    service = RemoteScales::clientGetService(serviceUUID);
+    service = BluetoothScale::clientGetService(serviceUUID);
     if (service != nullptr) {
-        RemoteScales::log("Got Service\n");
+        BluetoothScale::log("Got Service\n");
     } else {
         clientCleanup();
         return false;
@@ -143,10 +144,10 @@ bool WeighMyBrewScales::performConnectionHandshake() {
         clientCleanup();
         return false;
     }
-    RemoteScales::log("Got weightCharacteristic and commandCharacteristic\n");
+    BluetoothScale::log("Got weightCharacteristic and commandCharacteristic\n");
 
     sendNotificationRequest();
-    RemoteScales::log("Sent notification request\n");
+    BluetoothScale::log("Sent notification request\n");
     lastHeartbeat = millis();
     return true;
 }
@@ -154,7 +155,7 @@ bool WeighMyBrewScales::performConnectionHandshake() {
 void WeighMyBrewScales::sendNotificationRequest() {
     uint8_t payload[] = {0, 0, 0, 0, 0, 0};
     sendEvent(payload, 6);
-    RemoteScales::log("Sent event.\n");
+    BluetoothScale::log("Sent event.\n");
 }
 
 void WeighMyBrewScales::sendEvent(const uint8_t *payload, size_t length) {
@@ -187,19 +188,19 @@ void WeighMyBrewScales::sendHeartbeat() {
 }
 
 void WeighMyBrewScales::subscribeToNotifications() {
-    RemoteScales::log("subscribeToNotifications\n");
+    BluetoothScale::log("subscribeToNotifications\n");
 
     auto callback = [this](NimBLERemoteCharacteristic *characteristic, uint8_t *data, size_t length, bool isNotify) {
         notifyCallback(characteristic, data, length, isNotify);
     };
 
     if (weightCharacteristic->canNotify()) {
-        RemoteScales::log("Registering callback for weight characteristic\n");
+        BluetoothScale::log("Registering callback for weight characteristic\n");
         weightCharacteristic->subscribe(true, callback);
     }
 
     if (commandCharacteristic->canNotify()) {
-        RemoteScales::log("Registering callback for command characteristic\n");
+        BluetoothScale::log("Registering callback for command characteristic\n");
         commandCharacteristic->subscribe(true, callback);
     }
 }

@@ -1,5 +1,5 @@
 #include "decent.h"
-#include "remote_scales_plugin_registry.h"
+#include "BluetoothDeviceRegistry.h"
 #include <iostream>
 
 using namespace std;
@@ -8,21 +8,22 @@ const NimBLEUUID serviceUUID("FFF0");
 const NimBLEUUID readCharacteristicUUID("FFF4");
 const NimBLEUUID writeCharacteristicUUID("36F5");
 
-DecentScales::DecentScales(const DiscoveredDevice &device) : RemoteScales(device) {}
+DecentScales::DecentScales(const DiscoveredDevice &device) : BluetoothScale(device) {}
 
 DecentScales::~DecentScales() {}
 
 bool DecentScales::connect() {
-    if (RemoteScales::clientIsConnected()) {
-        RemoteScales::log("Already connected\n");
+    if (BluetoothScale::clientIsConnected()) {
+        BluetoothScale::log("Already connected\n");
         return true;
     }
 
-    RemoteScales::log("Connecting to %s[%s]\n", RemoteScales::getDeviceName().c_str(), RemoteScales::getDeviceAddress().c_str());
+    BluetoothScale::log("Connecting to %s[%s]\n", BluetoothScale::getDeviceName().c_str(),
+                        BluetoothScale::getDeviceAddress().c_str());
 
-    bool result = RemoteScales::clientConnect();
+    bool result = BluetoothScale::clientConnect();
     if (!result) {
-        RemoteScales::clientCleanup();
+        BluetoothScale::clientCleanup();
         return false;
     }
 
@@ -37,7 +38,7 @@ bool DecentScales::connect() {
     // Turn on the OLED display after successful connection
     turnOnOLED();
 
-    RemoteScales::setWeight(0.f);
+    BluetoothScale::setWeight(0.f);
     return true;
 }
 
@@ -46,19 +47,19 @@ void DecentScales::disconnect() {
     if (isConnected()) {
         turnOffOLED();
     }
-    RemoteScales::clientCleanup();
+    BluetoothScale::clientCleanup();
 }
 
-bool DecentScales::isConnected() { return RemoteScales::clientIsConnected(); }
+bool DecentScales::isConnected() { return BluetoothScale::clientIsConnected(); }
 
 void DecentScales::update() {
     if (markedForReconnection) {
-        RemoteScales::log("Marked for disconnection. Will attempt to reconnect.\n");
-        RemoteScales::clientCleanup();
+        BluetoothScale::log("Marked for disconnection. Will attempt to reconnect.\n");
+        BluetoothScale::clientCleanup();
         if (connect()) {
             markedForReconnection = false;
         } else {
-            RemoteScales::log("Failed to reconnect\n");
+            BluetoothScale::log("Failed to reconnect\n");
             return;
         }
     } else {
@@ -78,7 +79,7 @@ void DecentScales::sendHeartbeat() {
     if (writeCharacteristic) {
         uint8_t payload[] = {0x03, 0x0A, 0x03, 0xFF, 0xFF, 0x00, 0x0A};
         writeCharacteristic->writeValue(payload, sizeof(payload), false);
-        RemoteScales::log("Heartbeat sent\n");
+        BluetoothScale::log("Heartbeat sent\n");
     }
 }
 
@@ -87,7 +88,7 @@ void DecentScales::turnOnOLED() {
         // 030A 01 01 00 01 08 - weight+timer LEDs on, grams, heartbeat maintained
         uint8_t payload[] = {0x03, 0x0A, 0x01, 0x01, 0x00, 0x01, 0x08};
         writeCharacteristic->writeValue(payload, sizeof(payload), false);
-        RemoteScales::log("OLED turned on\n");
+        BluetoothScale::log("OLED turned on\n");
     }
 }
 
@@ -96,7 +97,7 @@ void DecentScales::turnOffOLED() {
         // 030A 00 00 00 01 08 - weight+timer LEDs off, grams, heartbeat maintained
         uint8_t payload[] = {0x03, 0x0A, 0x00, 0x00, 0x00, 0x01, 0x08};
         writeCharacteristic->writeValue(payload, sizeof(payload), false);
-        RemoteScales::log("OLED turned off\n");
+        BluetoothScale::log("OLED turned off\n");
     }
 }
 
@@ -110,15 +111,15 @@ bool DecentScales::tare() {
 };
 
 bool DecentScales::performConnectionHandshake() {
-    RemoteScales::log("Performing handshake\n");
+    BluetoothScale::log("Performing handshake\n");
 
-    service = RemoteScales::clientGetService(serviceUUID);
+    service = BluetoothScale::clientGetService(serviceUUID);
     if (service != nullptr) {
     } else {
         clientCleanup();
         return false;
     }
-    RemoteScales::log("Got Service\n");
+    BluetoothScale::log("Got Service\n");
 
     readCharacteristic = service->getCharacteristic(readCharacteristicUUID);
     writeCharacteristic = service->getCharacteristic(writeCharacteristicUUID);
@@ -126,7 +127,7 @@ bool DecentScales::performConnectionHandshake() {
         clientCleanup();
         return false;
     }
-    RemoteScales::log("Got readCharacteristic and writeCharacteristic\n");
+    BluetoothScale::log("Got readCharacteristic and writeCharacteristic\n");
     return true;
 }
 
@@ -143,7 +144,7 @@ bool DecentScales::subscribeToNotifications() {
         clientCleanup();
         return false;
     }
-    RemoteScales::log("Registered for notify\n");
+    BluetoothScale::log("Registered for notify\n");
     return true;
 }
 
@@ -151,7 +152,7 @@ void DecentScales::readCallback(NimBLERemoteCharacteristic *pCharacteristic, uin
     if ((length == 7 || length == 10) && pData[0] == 0x03 && (pData[1] == 0xCA || pData[1] == 0xCE)) {
         handleWeightNotification(pData, length);
     } else {
-        RemoteScales::log("Wrong packet length\n");
+        BluetoothScale::log("Wrong packet length\n");
     }
 }
 
@@ -168,13 +169,13 @@ void DecentScales::handleWeightNotification(uint8_t *pData, size_t length) {
         }
 
         if (xorSum != xorByte) {
-            RemoteScales::log("Wrong checksum\n");
+            BluetoothScale::log("Wrong checksum\n");
             return;
         }
     }
 
-    RemoteScales::setWeight(weight100 / 10.f);
-    RemoteScales::log("Weight received\n");
+    BluetoothScale::setWeight(weight100 / 10.f);
+    BluetoothScale::log("Weight received\n");
 }
 
 bool DecentScales::verifyConnected() {

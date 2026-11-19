@@ -1,5 +1,5 @@
 #include "dot.h"
-#include "remote_scales_plugin_registry.h"
+#include "BluetoothDeviceRegistry.h"
 
 // Timemore Dot protocol.
 //
@@ -73,27 +73,28 @@ uint16_t crc16Modbus(const uint8_t *data, size_t length) {
 //-----------------------------------------------------------------------------------/
 //---------------------------        PUBLIC       -----------------------------------/
 //-----------------------------------------------------------------------------------/
-TimemoreDotScales::TimemoreDotScales(const DiscoveredDevice &device) : RemoteScales(device) {}
+TimemoreDotScales::TimemoreDotScales(const DiscoveredDevice &device) : BluetoothScale(device) {}
 
 bool TimemoreDotScales::connect() {
-    if (RemoteScales::clientIsConnected()) {
-        RemoteScales::log("Already connected\n");
+    if (BluetoothScale::clientIsConnected()) {
+        BluetoothScale::log("Already connected\n");
         return true;
     }
-    RemoteScales::log("Connecting to %s[%s]\n", RemoteScales::getDeviceName().c_str(), RemoteScales::getDeviceAddress().c_str());
+    BluetoothScale::log("Connecting to %s[%s]\n", BluetoothScale::getDeviceName().c_str(),
+                        BluetoothScale::getDeviceAddress().c_str());
 
     if (!openLink() || !secureLink() || !discoverCharacteristics() || !subscribe()) {
-        RemoteScales::clientCleanup();
+        BluetoothScale::clientCleanup();
         return false;
     }
     configure();
-    RemoteScales::setWeight(0.f);
+    BluetoothScale::setWeight(0.f);
     return true;
 }
 
-void TimemoreDotScales::disconnect() { RemoteScales::clientCleanup(); }
+void TimemoreDotScales::disconnect() { BluetoothScale::clientCleanup(); }
 
-bool TimemoreDotScales::isConnected() { return RemoteScales::clientIsConnected(); }
+bool TimemoreDotScales::isConnected() { return BluetoothScale::clientIsConnected(); }
 
 // The Dot needs no keep-alive and a lost link is left to the application to re-establish.
 void TimemoreDotScales::update() {}
@@ -115,10 +116,10 @@ void TimemoreDotScales::resetTimer() { sendCommand(CMD_TIMER, &TIMER_RESET, 1); 
 // After a previous session the Dot can keep its end of the old link open for a moment, so the first attempt may fail.
 bool TimemoreDotScales::openLink() {
     for (int attempt = 1; attempt <= CONNECT_ATTEMPTS; attempt++) {
-        if (RemoteScales::clientConnect())
+        if (BluetoothScale::clientConnect())
             return true;
-        RemoteScales::clientCleanup();
-        RemoteScales::log("Connect attempt %d of %d failed\n", attempt, CONNECT_ATTEMPTS);
+        BluetoothScale::clientCleanup();
+        BluetoothScale::log("Connect attempt %d of %d failed\n", attempt, CONNECT_ATTEMPTS);
         if (attempt < CONNECT_ATTEMPTS)
             delay(CONNECT_RETRY_DELAY_MS);
     }
@@ -126,26 +127,26 @@ bool TimemoreDotScales::openLink() {
 }
 
 bool TimemoreDotScales::secureLink() {
-    // RemoteScales keeps its client private, so look it up by the peer address.
-    NimBLEClient *nimbleClient = NimBLEDevice::getClientByPeerAddress(NimBLEAddress(RemoteScales::getDeviceAddress()));
+    // BluetoothScale keeps its client private, so look it up by the peer address.
+    NimBLEClient *nimbleClient = NimBLEDevice::getClientByPeerAddress(NimBLEAddress(BluetoothScale::getDeviceAddress()));
     NimBLEDevice::setSecurityAuth(true, false, true);
     if (nimbleClient == nullptr || !nimbleClient->secureConnection()) {
-        RemoteScales::log("Encrypting the link failed\n");
+        BluetoothScale::log("Encrypting the link failed\n");
         return false;
     }
     return true;
 }
 
 bool TimemoreDotScales::discoverCharacteristics() {
-    service = RemoteScales::clientGetService(SERVICE_UUID);
+    service = BluetoothScale::clientGetService(SERVICE_UUID);
     if (service == nullptr) {
-        RemoteScales::log("Service FFF0 not found\n");
+        BluetoothScale::log("Service FFF0 not found\n");
         return false;
     }
     weightCharacteristic = service->getCharacteristic(WEIGHT_UUID);
     commandCharacteristic = service->getCharacteristic(COMMAND_UUID);
     if (weightCharacteristic == nullptr || commandCharacteristic == nullptr) {
-        RemoteScales::log("Characteristics FFF1/FFF2 not found\n");
+        BluetoothScale::log("Characteristics FFF1/FFF2 not found\n");
         return false;
     }
     return true;
@@ -157,7 +158,7 @@ bool TimemoreDotScales::subscribe() {
     // Some stacks mis-report the property bits, so try notifications first and indications second instead of checking them.
     if (weightCharacteristic->subscribe(true, callback) || weightCharacteristic->subscribe(false, callback))
         return true;
-    RemoteScales::log("Subscribing to FFF1 failed\n");
+    BluetoothScale::log("Subscribing to FFF1 failed\n");
     return false;
 }
 
@@ -190,7 +191,7 @@ bool TimemoreDotScales::sendCommand(uint8_t type, const uint8_t *payload, size_t
     frame[crcOffset + 1] = static_cast<uint8_t>(crc);
 
     if (!commandCharacteristic->writeValue(frame, crcOffset + TRAILER_LENGTH, false)) {
-        RemoteScales::log("Writing command 0x%02X failed\n", type);
+        BluetoothScale::log("Writing command 0x%02X failed\n", type);
         return false;
     }
     return true;
@@ -226,7 +227,7 @@ bool TimemoreDotScales::consumeFrame() {
     const uint16_t received = static_cast<uint16_t>((rxBuffer[frameLength - 2] << 8) | rxBuffer[frameLength - 1]);
     if (expected != received && !crcMismatchLogged) {
         crcMismatchLogged = true;
-        RemoteScales::log("Inbound CRC differs (got %04X, computed %04X)\n", received, expected);
+        BluetoothScale::log("Inbound CRC differs (got %04X, computed %04X)\n", received, expected);
     }
 
     handleFrame(rxBuffer[2], rxBuffer[3], rxBuffer.data() + HEADER_LENGTH, payloadLength);
@@ -241,11 +242,11 @@ void TimemoreDotScales::handleFrame(uint8_t frameClass, uint8_t type, const uint
     if (type == REPORT_WEIGHT && length >= 8) {
         const uint32_t raw = (static_cast<uint32_t>(payload[0]) << 24) | (static_cast<uint32_t>(payload[1]) << 16) |
                              (static_cast<uint32_t>(payload[2]) << 8) | static_cast<uint32_t>(payload[3]);
-        RemoteScales::setWeight(static_cast<int32_t>(raw) / 10.0f);
+        BluetoothScale::setWeight(static_cast<int32_t>(raw) / 10.0f);
         // Unit is forced to gram on connect, so flow is in 0.1 g/s.
         const auto flow = static_cast<int16_t>((payload[4] << 8) | payload[5]);
-        RemoteScales::setFlowRate(flow / 10.0f);
+        BluetoothScale::setFlowRate(flow / 10.0f);
     } else if (type == REPORT_BATTERY && length >= 2) {
-        RemoteScales::setBatteryLevel(payload[1]);
+        BluetoothScale::setBatteryLevel(payload[1]);
     }
 }

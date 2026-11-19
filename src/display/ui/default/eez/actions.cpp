@@ -4,7 +4,7 @@
 #include "vars.h"
 #include <Arduino.h>
 #include <display/main.h>
-#include <display/plugins/BLEScalePlugin.h>
+#include <display/plugins/BluetoothDevicesPlugin.h>
 #include <display/plugins/SmartDosePlugin.h>
 
 void action_on_wakeup(lv_event_t *e) {
@@ -65,7 +65,7 @@ void action_on_volumetric_hold(lv_event_t *e) {
     SmartDose.onTare(false);
     controller.getClientController()->tare();
     controller.getClientController()->tareHardwareScale();
-    BLEScales.tare();
+    BLEDevices.tare();
 };
 
 void action_on_profile_select(lv_event_t *e) { controller.getUI()->onProfileSwitch(); };

@@ -504,7 +504,7 @@ components:
         required: [tp]
 
     ScaleScanCompleteEvent:
-      summary: The listening window (5 s) after POST /api/scales/scan closed, or a connect attempt aborted it. Sent immediately when no scan could run (a scale is already connected). Discovery itself keeps running in the background.
+      summary: The listening window (5 s) after POST /api/scales/scan closed, or a connect attempt aborted it. Sent immediately when no scan could run (a scale and a grinder are both connected). The evt:scale:* names predate device types and cover every Bluetooth device; "type" tells them apart. Discovery keeps running in the background only while a scale or a paired grinder is missing.
       payload:
         type: object
         properties:
@@ -513,17 +513,21 @@ components:
             enum: ['evt:scale:scan:complete']
           count:
             type: integer
-            description: Number of supported scales discovered so far.
+            description: Number of supported devices (scales and grinders) discovered so far.
         required: [tp, count]
 
     ScaleConnectErrorEvent:
-      summary: Connecting to a BLE scale failed, after a user connect or the saved-scale auto-connect.
+      summary: Connecting to a Bluetooth device (scale or grinder) failed, after a user connect or the saved-device auto-connect.
       payload:
         type: object
         properties:
           tp:
             type: string
             enum: ['evt:scale:connect:error']
+          type:
+            type: string
+            enum: ['scale', 'grinder']
+            description: Kind of Bluetooth device; absent on firmware without device types, where it is always a scale.
           address:
             type: string
           reason:
@@ -533,13 +537,17 @@ components:
         required: [tp, address, reason]
 
     ScaleConnectSuccessEvent:
-      summary: A BLE scale connected.
+      summary: A Bluetooth device (scale or grinder) connected. A grinder is sent the selected profile's grinder settings right after.
       payload:
         type: object
         properties:
           tp:
             type: string
             enum: ['evt:scale:connect:success']
+          type:
+            type: string
+            enum: ['scale', 'grinder']
+            description: Kind of Bluetooth device; absent on firmware without device types, where it is always a scale.
           address:
             type: string
           name:
@@ -548,13 +556,17 @@ components:
         required: [tp, address, name]
 
     ScaleDisconnectEvent:
-      summary: A connected BLE scale was lost while the machine is awake; the display rescans and reconnects automatically. Not sent for the intentional disconnect on standby.
+      summary: A connected Bluetooth device (scale or grinder) was lost while the machine is awake; the display rescans and reconnects automatically. Not sent for the intentional disconnect on standby.
       payload:
         type: object
         properties:
           tp:
             type: string
             enum: ['evt:scale:disconnect']
+          type:
+            type: string
+            enum: ['scale', 'grinder']
+            description: Kind of Bluetooth device; absent on firmware without device types, where it is always a scale.
           address:
             type: string
           name:

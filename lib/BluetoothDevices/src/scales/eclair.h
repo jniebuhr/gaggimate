@@ -1,6 +1,6 @@
 #pragma once
-#include "remote_scales.h"
-#include "remote_scales_plugin_registry.h"
+#include "BluetoothDeviceRegistry.h"
+#include "BluetoothScale.h"
 #include <Arduino.h>
 #include <NimBLEDevice.h>
 #include <memory>
@@ -16,7 +16,7 @@ enum class EclairMessageType : uint8_t {
     STOP_TIMER = 0x45
 };
 
-class EclairScales : public RemoteScales {
+class EclairScales : public BluetoothScale {
   public:
     EclairScales(const DiscoveredDevice &device);
 
@@ -49,14 +49,7 @@ class EclairScales : public RemoteScales {
 class EclairScalesPlugin {
   public:
     static void apply() {
-        RemoteScalesPlugin plugin = RemoteScalesPlugin{
-            .id = "plugin-eclair",
-            .handles = [](const DiscoveredDevice &device) { return EclairScalesPlugin::handles(device); },
-            .initialise = [](const DiscoveredDevice &device) -> std::unique_ptr<RemoteScales> {
-                return std::make_unique<EclairScales>(device);
-            },
-        };
-        RemoteScalesPluginRegistry::getInstance()->registerPlugin(plugin);
+        BluetoothDeviceRegistry::getInstance()->registerDriver<EclairScales>("plugin-eclair", &EclairScalesPlugin::handles);
     }
 
   private:

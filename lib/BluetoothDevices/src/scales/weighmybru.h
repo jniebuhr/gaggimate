@@ -1,6 +1,6 @@
 #pragma once
-#include "remote_scales.h"
-#include "remote_scales_plugin_registry.h"
+#include "BluetoothDeviceRegistry.h"
+#include "BluetoothScale.h"
 #include <Arduino.h>
 #include <NimBLEDevice.h>
 #include <NimBLEScan.h>
@@ -10,7 +10,7 @@
 
 enum class WeighMyBrewMessageType : uint8_t { SYSTEM = 0x0A, WEIGHT = 0x0B };
 
-class WeighMyBrewScales : public RemoteScales {
+class WeighMyBrewScales : public BluetoothScale {
 
   public:
     WeighMyBrewScales(const DiscoveredDevice &device);
@@ -49,14 +49,8 @@ class WeighMyBrewScales : public RemoteScales {
 class WeighMyBrewScalePlugin {
   public:
     static void apply() {
-        RemoteScalesPlugin plugin = RemoteScalesPlugin{
-            .id = "plugin-weighmybrew",
-            .handles = [](const DiscoveredDevice &device) { return WeighMyBrewScalePlugin::handles(device); },
-            .initialise = [](const DiscoveredDevice &device) -> std::unique_ptr<RemoteScales> {
-                return std::make_unique<WeighMyBrewScales>(device);
-            },
-        };
-        RemoteScalesPluginRegistry::getInstance()->registerPlugin(plugin);
+        BluetoothDeviceRegistry::getInstance()->registerDriver<WeighMyBrewScales>("plugin-weighmybrew",
+                                                                                  &WeighMyBrewScalePlugin::handles);
     }
 
   private:

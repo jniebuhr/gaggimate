@@ -1,6 +1,6 @@
 #pragma once
-#include "remote_scales.h"
-#include "remote_scales_plugin_registry.h"
+#include "BluetoothDeviceRegistry.h"
+#include "BluetoothScale.h"
 
 enum class VariaMessageType : uint8_t {
     SYSTEM = 0xFA,
@@ -13,7 +13,7 @@ enum class VariaMessageType : uint8_t {
     TIMER_RESET = 0x8a,
 };
 
-class VariaScales : public RemoteScales {
+class VariaScales : public BluetoothScale {
 
   public:
     VariaScales(const DiscoveredDevice &device);
@@ -43,14 +43,7 @@ class VariaScales : public RemoteScales {
 class VariaScalesPlugin {
   public:
     static void apply() {
-        RemoteScalesPlugin plugin = RemoteScalesPlugin{
-            .id = "plugin-varia",
-            .handles = [](const DiscoveredDevice &device) { return VariaScalesPlugin::handles(device); },
-            .initialise = [](const DiscoveredDevice &device) -> std::unique_ptr<RemoteScales> {
-                return std::make_unique<VariaScales>(device);
-            },
-        };
-        RemoteScalesPluginRegistry::getInstance()->registerPlugin(plugin);
+        BluetoothDeviceRegistry::getInstance()->registerDriver<VariaScales>("plugin-varia", &VariaScalesPlugin::handles);
     }
 
   private:

@@ -1,5 +1,5 @@
 #include "bookoo.h"
-#include "remote_scales_plugin_registry.h"
+#include "BluetoothDeviceRegistry.h"
 #include <array>
 #include <string>
 
@@ -17,18 +17,19 @@ const NimBLEUUID commandCharacteristicUUID("FF12");
 //-----------------------------------------------------------------------------------/
 //---------------------------        PUBLIC       -----------------------------------/
 //-----------------------------------------------------------------------------------/
-BookooScales::BookooScales(const DiscoveredDevice &device) : RemoteScales(device) {}
+BookooScales::BookooScales(const DiscoveredDevice &device) : BluetoothScale(device) {}
 
 bool BookooScales::connect() {
-    if (RemoteScales::clientIsConnected()) {
-        RemoteScales::log("Already connected\n");
+    if (BluetoothScale::clientIsConnected()) {
+        BluetoothScale::log("Already connected\n");
         return true;
     }
 
-    RemoteScales::log("Connecting to %s[%s]\n", RemoteScales::getDeviceName().c_str(), RemoteScales::getDeviceAddress().c_str());
-    bool result = RemoteScales::clientConnect();
+    BluetoothScale::log("Connecting to %s[%s]\n", BluetoothScale::getDeviceName().c_str(),
+                        BluetoothScale::getDeviceAddress().c_str());
+    bool result = BluetoothScale::clientConnect();
     if (!result) {
-        RemoteScales::clientCleanup();
+        BluetoothScale::clientCleanup();
         return false;
     }
 
@@ -36,7 +37,7 @@ bool BookooScales::connect() {
         return false;
     }
     subscribeToNotifications();
-    RemoteScales::setWeight(0.f);
+    BluetoothScale::setWeight(0.f);
 
     // Disable the scale-side flow-smoothing EMA so consumers see raw per-sample
     // flow in getFlowRate(). Firmware-side code (ShotHistoryPlugin,
@@ -48,14 +49,14 @@ bool BookooScales::connect() {
     return true;
 }
 
-void BookooScales::disconnect() { RemoteScales::clientCleanup(); }
+void BookooScales::disconnect() { BluetoothScale::clientCleanup(); }
 
-bool BookooScales::isConnected() { return RemoteScales::clientIsConnected(); }
+bool BookooScales::isConnected() { return BluetoothScale::clientIsConnected(); }
 
 void BookooScales::update() {
     if (markedForReconnection) {
-        RemoteScales::log("Marked for disconnection. Will attempt to reconnect.\n");
-        RemoteScales::clientCleanup();
+        BluetoothScale::log("Marked for disconnection. Will attempt to reconnect.\n");
+        BluetoothScale::clientCleanup();
         connect();
         markedForReconnection = false;
     } else {
@@ -66,7 +67,7 @@ void BookooScales::update() {
 bool BookooScales::tare() {
     if (!isConnected())
         return false;
-    RemoteScales::log("Tare+StartTimer sent (cmd 0x07)");
+    BluetoothScale::log("Tare+StartTimer sent (cmd 0x07)");
     // Use command 0x07 (Tare + Start Timer), officially recommended by Bookoo over
     // the plain 0x01 tare: it atomically resets the weight AND marks the scale as
     // "shot is in progress", which prevents the scale from auto-sleeping or drifting
@@ -88,7 +89,7 @@ bool BookooScales::tare() {
 void BookooScales::startTimer() {
     if (!isConnected())
         return;
-    RemoteScales::log("StartTimer sent (cmd 0x04)");
+    BluetoothScale::log("StartTimer sent (cmd 0x04)");
     std::array<uint8_t, 6> payload = {0x03, 0x0A, 0x04, 0x00, 0x00, 0x00};
     sendMessage(payload.data(), payload.size());
 }
@@ -96,7 +97,7 @@ void BookooScales::startTimer() {
 void BookooScales::stopTimer() {
     if (!isConnected())
         return;
-    RemoteScales::log("StopTimer sent (cmd 0x05)");
+    BluetoothScale::log("StopTimer sent (cmd 0x05)");
     std::array<uint8_t, 6> payload = {0x03, 0x0A, 0x05, 0x00, 0x00, 0x00};
     sendMessage(payload.data(), payload.size());
 }
@@ -104,7 +105,7 @@ void BookooScales::stopTimer() {
 void BookooScales::resetTimer() {
     if (!isConnected())
         return;
-    RemoteScales::log("ResetTimer sent (cmd 0x06)");
+    BluetoothScale::log("ResetTimer sent (cmd 0x06)");
     std::array<uint8_t, 6> payload = {0x03, 0x0A, 0x06, 0x00, 0x00, 0x00};
     sendMessage(payload.data(), payload.size());
 }
@@ -116,13 +117,13 @@ void BookooScales::shutdown() {
     // Themis Ultra shutdown command
     std::array<uint8_t, 6> payload = {0x03, 0x0A, 0x15, 0x00, 0x00, 0x00};
     sendMessage(payload.data(), payload.size());
-    RemoteScales::log("Shutdown requested (cmd 0x15)\n");
+    BluetoothScale::log("Shutdown requested (cmd 0x15)\n");
 }
 
 void BookooScales::disableScaleSmoothing() {
     if (!isConnected())
         return;
-    RemoteScales::log("Flow-smoothing OFF (cmd 0x08 0x00)\n");
+    BluetoothScale::log("Flow-smoothing OFF (cmd 0x08 0x00)\n");
     // Command 0x08 disables the scale's own EMA on its reported flow rate, so
     // getFlowRate() returns raw per-sample flow rather than scale-side filtered
     // output. Firmware consumers (ShotHistoryPlugin, VolumetricRateCalculator)
@@ -136,7 +137,7 @@ void BookooScales::disableScaleSmoothing() {
 //---------------------------       PRIVATE       -----------------------------------/
 //-----------------------------------------------------------------------------------/
 BookooScales::Model BookooScales::getModel() const {
-    const std::string deviceName(RemoteScales::getDeviceName().c_str());
+    const std::string deviceName(BluetoothScale::getDeviceName().c_str());
     // Matching is based the complete model name but we strip the space and
     // device-specific suffix. EX: "BOOKOO_SC_U 123456" -> "BOOKOO_SC_U"
     const std::string modelName = deviceName.substr(0, deviceName.find(' '));
@@ -180,8 +181,8 @@ void BookooScales::checkForAdvancedFeatures() {
         enabledOptions += option.name;
     }
 
-    RemoteScales::log("Configured for Bookoo advanced features; enabled: %s.\n",
-                      enabledOptions.empty() ? "none" : enabledOptions.c_str());
+    BluetoothScale::log("Configured for Bookoo advanced features; enabled: %s.\n",
+                        enabledOptions.empty() ? "none" : enabledOptions.c_str());
 }
 
 void BookooScales::notifyCallback(NimBLERemoteCharacteristic *pBLERemoteCharacteristic, uint8_t *pData, size_t length,
@@ -220,7 +221,7 @@ bool BookooScales::decodeAndHandleNotification() {
         uint8_t dataSUM = dataBuffer[messageLength - 1];
 
         if (checksum != dataSUM) {
-            RemoteScales::log("Checksum failed: calc[%02X] but actual[%02X]. Discarding.\n", checksum, dataSUM);
+            BluetoothScale::log("Checksum failed: calc[%02X] but actual[%02X]. Discarding.\n", checksum, dataSUM);
             dataBuffer.erase(dataBuffer.begin(), dataBuffer.begin() + messageLength);
             return false;
         }
@@ -247,18 +248,18 @@ bool BookooScales::decodeAndHandleNotification() {
         // Scale timer (bytes 2-4, 3 bytes big-endian unsigned, milliseconds).
         const uint32_t timerMs = (static_cast<uint32_t>(dataBuffer[2]) << 16) | (static_cast<uint32_t>(dataBuffer[3]) << 8) |
                                  static_cast<uint32_t>(dataBuffer[4]);
-        RemoteScales::setScaleTimerMs(timerMs);
+        BluetoothScale::setScaleTimerMs(timerMs);
 
         // Weight unit (byte 5).
         switch (dataBuffer[5]) {
         case 0x01:
-            RemoteScales::setWeightUnit(ScaleWeightUnit::OUNCE);
+            BluetoothScale::setWeightUnit(ScaleWeightUnit::OUNCE);
             break;
         case 0x02:
-            RemoteScales::setWeightUnit(ScaleWeightUnit::GRAM);
+            BluetoothScale::setWeightUnit(ScaleWeightUnit::GRAM);
             break;
         default:
-            RemoteScales::setWeightUnit(ScaleWeightUnit::UNKNOWN);
+            BluetoothScale::setWeightUnit(ScaleWeightUnit::UNKNOWN);
             break;
         }
 
@@ -268,28 +269,28 @@ bool BookooScales::decodeAndHandleNotification() {
         if (dataBuffer[6] == 0x2D) { // '-'
             rawWeight = -rawWeight;
         }
-        RemoteScales::setWeight(rawWeight * 0.01f);
+        BluetoothScale::setWeight(rawWeight * 0.01f);
 
         // Flow rate (sign byte 10 + value bytes 11-12, 0.01 g/s resolution).
         int32_t rawFlow = (static_cast<int32_t>(dataBuffer[11]) << 8) | static_cast<int32_t>(dataBuffer[12]);
         if (dataBuffer[10] == 0x2D) { // '-'
             rawFlow = -rawFlow;
         }
-        RemoteScales::setFlowRate(rawFlow * 0.01f);
+        BluetoothScale::setFlowRate(rawFlow * 0.01f);
 
         // Battery percentage (byte 13).
-        RemoteScales::setBatteryLevel(dataBuffer[13]);
+        BluetoothScale::setBatteryLevel(dataBuffer[13]);
 
         // Auto-mode stop condition (byte 18) -- only meaningful on Ultra scales
         // where hasAutoModeStopCondition() returns true. We still store it so an
         // Ultra-aware subclass (or a future firmware-side model check) can read it.
-        RemoteScales::setAutoModeStopCondition(dataBuffer[18]);
+        BluetoothScale::setAutoModeStopCondition(dataBuffer[18]);
     } else if (productNumber == 0x03 && messageType == BookooMessageType::SYSTEM) {
-        RemoteScales::log("Inbound SYSTEM message ignored: %s\n",
-                          RemoteScales::byteArrayToHexString(dataBuffer.data(), messageLength).c_str());
+        BluetoothScale::log("Inbound SYSTEM message ignored: %s\n",
+                            BluetoothScale::byteArrayToHexString(dataBuffer.data(), messageLength).c_str());
     } else {
-        RemoteScales::log("Unknown message type %02X: %s\n", static_cast<uint8_t>(messageType),
-                          RemoteScales::byteArrayToHexString(dataBuffer.data(), messageLength).c_str());
+        BluetoothScale::log("Unknown message type %02X: %s\n", static_cast<uint8_t>(messageType),
+                            BluetoothScale::byteArrayToHexString(dataBuffer.data(), messageLength).c_str());
     }
 
     // Remove processed message from the buffer
@@ -300,11 +301,11 @@ bool BookooScales::decodeAndHandleNotification() {
 }
 
 bool BookooScales::performConnectionHandshake() {
-    RemoteScales::log("Performing handshake\n");
+    BluetoothScale::log("Performing handshake\n");
 
-    service = RemoteScales::clientGetService(serviceUUID);
+    service = BluetoothScale::clientGetService(serviceUUID);
     if (service != nullptr) {
-        RemoteScales::log("Got Service\n");
+        BluetoothScale::log("Got Service\n");
     } else {
         clientCleanup();
         return false;
@@ -316,10 +317,10 @@ bool BookooScales::performConnectionHandshake() {
         clientCleanup();
         return false;
     }
-    RemoteScales::log("Got weightCharacteristic and commandCharacteristic\n");
+    BluetoothScale::log("Got weightCharacteristic and commandCharacteristic\n");
 
     sendNotificationRequest();
-    RemoteScales::log("Sent notification request\n");
+    BluetoothScale::log("Sent notification request\n");
     lastHeartbeat = millis();
     return true;
 }
@@ -327,7 +328,7 @@ bool BookooScales::performConnectionHandshake() {
 void BookooScales::sendNotificationRequest() {
     uint8_t payload[] = {0, 0, 0, 0, 0, 0};
     sendEvent(payload, 6);
-    RemoteScales::log("Sent event.\n");
+    BluetoothScale::log("Sent event.\n");
 }
 
 void BookooScales::sendEvent(const uint8_t *payload, size_t length) {
@@ -355,7 +356,7 @@ void BookooScales::sendHeartbeat() {
         std::array<uint8_t, 6> payloadKeepAlive = {0x03, 0x0A, 0x25, 0x00, 0x00, 0x00};
         sendMessage(payloadKeepAlive.data(), payloadKeepAlive.size());
         lastHeartbeat = now;
-        RemoteScales::log("Sent keepalive heartbeat\n");
+        BluetoothScale::log("Sent keepalive heartbeat\n");
         return;
     }
 
@@ -366,23 +367,23 @@ void BookooScales::sendHeartbeat() {
     sendMessage(payload2, 1);
     lastHeartbeat = now;
 
-    RemoteScales::log("Sent heartbeat\n");
+    BluetoothScale::log("Sent heartbeat\n");
 }
 
 void BookooScales::subscribeToNotifications() {
-    RemoteScales::log("subscribeToNotifications\n");
+    BluetoothScale::log("subscribeToNotifications\n");
 
     auto callback = [this](NimBLERemoteCharacteristic *characteristic, uint8_t *data, size_t length, bool isNotify) {
         notifyCallback(characteristic, data, length, isNotify);
     };
 
     if (weightCharacteristic->canNotify()) {
-        RemoteScales::log("Registering callback for weight characteristic\n");
+        BluetoothScale::log("Registering callback for weight characteristic\n");
         weightCharacteristic->subscribe(true, callback);
     }
 
     if (commandCharacteristic->canNotify()) {
-        RemoteScales::log("Registering callback for command characteristic\n");
+        BluetoothScale::log("Registering callback for command characteristic\n");
         commandCharacteristic->subscribe(true, callback);
     }
 }

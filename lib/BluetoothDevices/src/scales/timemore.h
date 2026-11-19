@@ -1,6 +1,6 @@
 #pragma once
-#include "remote_scales.h"
-#include "remote_scales_plugin_registry.h"
+#include "BluetoothDeviceRegistry.h"
+#include "BluetoothScale.h"
 #include <Arduino.h>
 #include <NimBLEDevice.h>
 #include <NimBLEScan.h>
@@ -13,7 +13,7 @@ enum class TimemoreMessageType : uint8_t {
     TARE = 0x01,
 };
 
-class TimemoreScales : public RemoteScales {
+class TimemoreScales : public BluetoothScale {
 
   public:
     TimemoreScales(const DiscoveredDevice &device);
@@ -47,14 +47,7 @@ class TimemoreScales : public RemoteScales {
 class TimemoreScalesPlugin {
   public:
     static void apply() {
-        RemoteScalesPlugin plugin = RemoteScalesPlugin{
-            .id = "plugin-timemore",
-            .handles = [](const DiscoveredDevice &device) { return TimemoreScalesPlugin::handles(device); },
-            .initialise = [](const DiscoveredDevice &device) -> std::unique_ptr<RemoteScales> {
-                return std::make_unique<TimemoreScales>(device);
-            },
-        };
-        RemoteScalesPluginRegistry::getInstance()->registerPlugin(plugin);
+        BluetoothDeviceRegistry::getInstance()->registerDriver<TimemoreScales>("plugin-timemore", &TimemoreScalesPlugin::handles);
     }
 
   private:

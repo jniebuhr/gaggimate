@@ -1,5 +1,5 @@
 #include "timemore.h"
-#include "remote_scales_plugin_registry.h"
+#include "BluetoothDeviceRegistry.h"
 
 enum class TimemoreEventType : uint8_t {
     WEIGHT = 0x10,
@@ -14,18 +14,19 @@ const NimBLEUUID commandCharacteristicUUID("553f4e49-bf21-4468-9c6c-0e4fb5b17697
 //-----------------------------------------------------------------------------------/
 //---------------------------        PUBLIC       -----------------------------------/
 //-----------------------------------------------------------------------------------/
-TimemoreScales::TimemoreScales(const DiscoveredDevice &device) : RemoteScales(device) {}
+TimemoreScales::TimemoreScales(const DiscoveredDevice &device) : BluetoothScale(device) {}
 
 bool TimemoreScales::connect() {
-    if (RemoteScales::clientIsConnected()) {
-        RemoteScales::log("Already connected\n");
+    if (BluetoothScale::clientIsConnected()) {
+        BluetoothScale::log("Already connected\n");
         return true;
     }
 
-    RemoteScales::log("Connecting to %s[%s]\n", RemoteScales::getDeviceName().c_str(), RemoteScales::getDeviceAddress().c_str());
-    bool result = RemoteScales::clientConnect();
+    BluetoothScale::log("Connecting to %s[%s]\n", BluetoothScale::getDeviceName().c_str(),
+                        BluetoothScale::getDeviceAddress().c_str());
+    bool result = BluetoothScale::clientConnect();
     if (!result) {
-        RemoteScales::clientCleanup();
+        BluetoothScale::clientCleanup();
         return false;
     }
 
@@ -33,18 +34,18 @@ bool TimemoreScales::connect() {
         return false;
     }
     subscribeToNotifications();
-    RemoteScales::setWeight(0.f);
+    BluetoothScale::setWeight(0.f);
     return true;
 }
 
-void TimemoreScales::disconnect() { RemoteScales::clientCleanup(); }
+void TimemoreScales::disconnect() { BluetoothScale::clientCleanup(); }
 
-bool TimemoreScales::isConnected() { return RemoteScales::clientIsConnected(); }
+bool TimemoreScales::isConnected() { return BluetoothScale::clientIsConnected(); }
 
 void TimemoreScales::update() {
     if (markedForReconnection) {
-        RemoteScales::log("Marked for disconnection. Will attempt to reconnect.\n");
-        RemoteScales::clientCleanup();
+        BluetoothScale::log("Marked for disconnection. Will attempt to reconnect.\n");
+        BluetoothScale::clientCleanup();
         connect();
         markedForReconnection = false;
     } else {
@@ -90,10 +91,10 @@ bool TimemoreScales::decodeAndHandleNotification() {
         // float_t dripperWeight = dataBuffer[1] | (dataBuffer[2] << 8) | (dataBuffer[3] << 16) | (dataBuffer[4] << 24);
         float_t scaleWeight = dataBuffer[5] | (dataBuffer[6] << 8) | (dataBuffer[7] << 16) | (dataBuffer[8] << 24);
 
-        RemoteScales::setWeight(scaleWeight / 10.0f); // Convert to floating point
+        BluetoothScale::setWeight(scaleWeight / 10.0f); // Convert to floating point
     } else {
-        RemoteScales::log("Unknown message type %02X: %s\n", messageType,
-                          RemoteScales::byteArrayToHexString(dataBuffer.data(), dataBuffer.size()).c_str());
+        BluetoothScale::log("Unknown message type %02X: %s\n", messageType,
+                            BluetoothScale::byteArrayToHexString(dataBuffer.data(), dataBuffer.size()).c_str());
     }
 
     // Remove processed message from the buffer
@@ -104,16 +105,16 @@ bool TimemoreScales::decodeAndHandleNotification() {
 }
 
 bool TimemoreScales::performConnectionHandshake() {
-    RemoteScales::log("Performing handshake\n");
+    BluetoothScale::log("Performing handshake\n");
 
-    service = RemoteScales::clientGetService(serviceUUID);
+    service = BluetoothScale::clientGetService(serviceUUID);
     if (service != nullptr) {
-        RemoteScales::log("Got Service\n");
+        BluetoothScale::log("Got Service\n");
     } else {
         clientCleanup();
         return false;
     }
-    RemoteScales::log("Got Service\n");
+    BluetoothScale::log("Got Service\n");
 
     weightCharacteristic = service->getCharacteristic(weightCharacteristicUUID);
     commandCharacteristic = service->getCharacteristic(commandCharacteristicUUID);
@@ -122,11 +123,11 @@ bool TimemoreScales::performConnectionHandshake() {
         clientCleanup();
         return false;
     }
-    RemoteScales::log("Got weightCharacteristic and commandCharacteristic\n");
+    BluetoothScale::log("Got weightCharacteristic and commandCharacteristic\n");
 
     // Subscribe
     NimBLERemoteDescriptor *notifyDescriptor = weightCharacteristic->getDescriptor(NimBLEUUID((uint16_t)0x2902));
-    RemoteScales::log("Got notifyDescriptor\n");
+    BluetoothScale::log("Got notifyDescriptor\n");
     if (notifyDescriptor != nullptr) {
         uint8_t value[2] = {0x01, 0x00};
         notifyDescriptor->writeValue(value, 2, true);
@@ -136,7 +137,7 @@ bool TimemoreScales::performConnectionHandshake() {
     }
 
     sendNotificationRequest();
-    RemoteScales::log("Sent notification request\n");
+    BluetoothScale::log("Sent notification request\n");
     lastHeartbeat = millis();
     return true;
 }
@@ -162,7 +163,7 @@ void TimemoreScales::sendHeartbeat() {
 }
 
 void TimemoreScales::subscribeToNotifications() {
-    RemoteScales::log("subscribeToNotifications\n");
+    BluetoothScale::log("subscribeToNotifications\n");
 
     auto callback = [this](NimBLERemoteCharacteristic *characteristic, uint8_t *data, size_t length, bool isNotify) {
         notifyCallback(characteristic, data, length, isNotify);

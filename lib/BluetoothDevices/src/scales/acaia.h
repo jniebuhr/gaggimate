@@ -1,6 +1,6 @@
 #pragma once
-#include "remote_scales.h"
-#include "remote_scales_plugin_registry.h"
+#include "BluetoothDeviceRegistry.h"
+#include "BluetoothScale.h"
 #include <Arduino.h>
 #include <NimBLEDevice.h>
 #include <NimBLEScan.h>
@@ -18,7 +18,7 @@ enum class AcaiaMessageType : uint8_t {
     EVENT = 0x0C,
 };
 
-class AcaiaScales : public RemoteScales {
+class AcaiaScales : public BluetoothScale {
 
   public:
     AcaiaScales(const DiscoveredDevice &device);
@@ -77,14 +77,7 @@ class ScaleStatus {
 class AcaiaScalesPlugin {
   public:
     static void apply() {
-        RemoteScalesPlugin plugin = RemoteScalesPlugin{
-            .id = "plugin-acaia",
-            .handles = [](const DiscoveredDevice &device) { return AcaiaScalesPlugin::handles(device); },
-            .initialise = [](const DiscoveredDevice &device) -> std::unique_ptr<RemoteScales> {
-                return std::make_unique<AcaiaScales>(device);
-            },
-        };
-        RemoteScalesPluginRegistry::getInstance()->registerPlugin(plugin);
+        BluetoothDeviceRegistry::getInstance()->registerDriver<AcaiaScales>("plugin-acaia", &AcaiaScalesPlugin::handles);
     }
 
   private:

@@ -1,5 +1,5 @@
 #include "eclair.h"
-#include "remote_scales_plugin_registry.h"
+#include "BluetoothDeviceRegistry.h"
 
 const NimBLEUUID ECLAIR_SERVICE_UUID("B905EAEA-2E63-0E04-7582-7913F10D8F81");
 const NimBLEUUID ECLAIR_DATA_CHAR_UUID("AD736C5F-BBC9-1F96-D304-CB5D5F41E160");
@@ -9,44 +9,45 @@ const NimBLEUUID ECLAIR_CONFIG_CHAR_UUID("4F9A45BA-8E1B-4E07-E157-0814D393B968")
 // ---------------------------------   PUBLIC   --------------------------------------
 // -----------------------------------------------------------------------------------
 
-EclairScales::EclairScales(const DiscoveredDevice &device) : RemoteScales(device) {}
+EclairScales::EclairScales(const DiscoveredDevice &device) : BluetoothScale(device) {}
 
 bool EclairScales::connect() {
-    if (RemoteScales::clientIsConnected()) {
-        RemoteScales::log("Already connected\n");
+    if (BluetoothScale::clientIsConnected()) {
+        BluetoothScale::log("Already connected\n");
         return true;
     }
 
-    RemoteScales::log("Connecting to %s [%s]\n", RemoteScales::getDeviceName().c_str(), RemoteScales::getDeviceAddress().c_str());
-    bool result = RemoteScales::clientConnect();
+    BluetoothScale::log("Connecting to %s [%s]\n", BluetoothScale::getDeviceName().c_str(),
+                        BluetoothScale::getDeviceAddress().c_str());
+    bool result = BluetoothScale::clientConnect();
     if (!result) {
-        RemoteScales::log("Failed to connect to client\n");
-        RemoteScales::clientCleanup();
+        BluetoothScale::log("Failed to connect to client\n");
+        BluetoothScale::clientCleanup();
         return false;
     }
 
     if (!performConnectionHandshake()) {
-        RemoteScales::log("Handshake failed\n");
+        BluetoothScale::log("Handshake failed\n");
         return false;
     }
 
     subscribeToNotifications();
-    RemoteScales::setWeight(0.f);
+    BluetoothScale::setWeight(0.f);
     lastHeartbeat = millis(); // Initialize the heartbeat timestamp
     return true;
 }
 
-void EclairScales::disconnect() { RemoteScales::clientCleanup(); }
+void EclairScales::disconnect() { BluetoothScale::clientCleanup(); }
 
-bool EclairScales::isConnected() { return RemoteScales::clientIsConnected(); }
+bool EclairScales::isConnected() { return BluetoothScale::clientIsConnected(); }
 
 void EclairScales::update() {
     // Check if the device is connected; if not, attempt to reconnect
     if (!isConnected()) {
-        RemoteScales::log("Device disconnected. Attempting to reconnect...\n");
+        BluetoothScale::log("Device disconnected. Attempting to reconnect...\n");
         if (connect()) {
             lastHeartbeat = millis(); // Reset the heartbeat timer after reconnecting
-            RemoteScales::log("Reconnected to Eclair scale successfully.");
+            BluetoothScale::log("Reconnected to Eclair scale successfully.");
         }
     } else {
         sendHeartbeat(); // Send the heartbeat signal if still connected
@@ -60,7 +61,7 @@ bool EclairScales::tare() {
     uint8_t checksum = calculateXOR(&tareCommand[1], 1); // Calculate checksum
     uint8_t message[3] = {tareCommand[0], tareCommand[1], checksum};
     configCharacteristic->writeValue(message, sizeof(message), true);
-    RemoteScales::log("Sent tare command\n");
+    BluetoothScale::log("Sent tare command\n");
     return true;
 }
 
@@ -69,24 +70,24 @@ bool EclairScales::tare() {
 // -----------------------------------------------------------------------------------
 
 bool EclairScales::performConnectionHandshake() {
-    RemoteScales::log("Performing handshake\n");
+    BluetoothScale::log("Performing handshake\n");
 
-    service = RemoteScales::clientGetService(ECLAIR_SERVICE_UUID);
+    service = BluetoothScale::clientGetService(ECLAIR_SERVICE_UUID);
     if (service == nullptr) {
-        RemoteScales::log("Failed to get Eclair service\n");
-        RemoteScales::clientCleanup();
+        BluetoothScale::log("Failed to get Eclair service\n");
+        BluetoothScale::clientCleanup();
         return false;
     }
 
     dataCharacteristic = service->getCharacteristic(ECLAIR_DATA_CHAR_UUID);
     configCharacteristic = service->getCharacteristic(ECLAIR_CONFIG_CHAR_UUID);
     if (dataCharacteristic == nullptr || configCharacteristic == nullptr) {
-        RemoteScales::log("Failed to get characteristics\n");
-        RemoteScales::clientCleanup();
+        BluetoothScale::log("Failed to get characteristics\n");
+        BluetoothScale::clientCleanup();
         return false;
     }
 
-    RemoteScales::log("Successfully obtained service and characteristics\n");
+    BluetoothScale::log("Successfully obtained service and characteristics\n");
     return true;
 }
 
@@ -98,14 +99,14 @@ void EclairScales::sendMessage(EclairMessageType msgType, const uint8_t *data, s
     uint8_t checksum = calculateXOR(bytes.get() + 1, dataLength); // Calculate checksum for the data part
     bytes[totalLength - 1] = checksum;                            // Add checksum byte
 
-    RemoteScales::log("Sending message: %s\n", RemoteScales::byteArrayToHexString(bytes.get(), totalLength).c_str());
+    BluetoothScale::log("Sending message: %s\n", BluetoothScale::byteArrayToHexString(bytes.get(), totalLength).c_str());
 
     configCharacteristic->writeValue(bytes.get(), totalLength, waitResponse);
 }
 
 void EclairScales::notifyCallback(NimBLERemoteCharacteristic *characteristic, uint8_t *data, size_t length, bool isNotify) {
-    RemoteScales::log("Received notification from characteristic %s: %s\n", characteristic->getUUID().toString().c_str(),
-                      RemoteScales::byteArrayToHexString(data, length).c_str());
+    BluetoothScale::log("Received notification from characteristic %s: %s\n", characteristic->getUUID().toString().c_str(),
+                        BluetoothScale::byteArrayToHexString(data, length).c_str());
 
     if (characteristic->getUUID() == ECLAIR_DATA_CHAR_UUID) {
         handleDataNotification(data, length);
@@ -116,7 +117,7 @@ void EclairScales::notifyCallback(NimBLERemoteCharacteristic *characteristic, ui
 
 void EclairScales::handleDataNotification(uint8_t *data, size_t length) {
     if (length < 10) { // Header (1 byte) + Data (8 bytes) + Checksum (1 byte)
-        RemoteScales::log("Data notification length too short\n");
+        BluetoothScale::log("Data notification length too short\n");
         return;
     }
 
@@ -125,8 +126,8 @@ void EclairScales::handleDataNotification(uint8_t *data, size_t length) {
     uint8_t calculatedChecksum = calculateXOR(&data[1], length - 2); // Exclude header and checksum byte
 
     if (calculatedChecksum != checksum) {
-        RemoteScales::log("Invalid checksum in data notification: calculated %02X, received %02X\n", calculatedChecksum,
-                          checksum);
+        BluetoothScale::log("Invalid checksum in data notification: calculated %02X, received %02X\n", calculatedChecksum,
+                            checksum);
         return;
     }
 
@@ -134,20 +135,20 @@ void EclairScales::handleDataNotification(uint8_t *data, size_t length) {
         int32_t rawWeight;
         memcpy(&rawWeight, &data[1], 4);    // Assuming little-endian
         float weight = rawWeight / 1000.0f; // Convert to grams
-        RemoteScales::setWeight(weight);
+        BluetoothScale::setWeight(weight);
     } else if (header == static_cast<uint8_t>(EclairMessageType::FLOW_RATE)) {
         int32_t rawFlow;
         memcpy(&rawFlow, &data[1], 4); // Little-endian, mg/s
-        RemoteScales::setFlowRate(rawFlow / 1000.0f);
+        BluetoothScale::setFlowRate(rawFlow / 1000.0f);
         flowSeen = true;
     } else {
-        RemoteScales::log("Unknown data notification header: %02X\n", header);
+        BluetoothScale::log("Unknown data notification header: %02X\n", header);
     }
 }
 
 void EclairScales::handleConfigNotification(uint8_t *data, size_t length) {
     if (length < 3) { // Header (1 byte) + Data (1 byte) + Checksum (1 byte)
-        RemoteScales::log("Config notification length too short\n");
+        BluetoothScale::log("Config notification length too short\n");
         return;
     }
 
@@ -157,18 +158,18 @@ void EclairScales::handleConfigNotification(uint8_t *data, size_t length) {
     uint8_t calculatedChecksum = calculateXOR(&data[1], length - 2); // Exclude header and checksum byte
 
     if (calculatedChecksum != checksum) {
-        RemoteScales::log("Invalid checksum in config notification: calculated %02X, received %02X\n", calculatedChecksum,
-                          checksum);
+        BluetoothScale::log("Invalid checksum in config notification: calculated %02X, received %02X\n", calculatedChecksum,
+                            checksum);
         return;
     }
 
     if (header == static_cast<uint8_t>(EclairMessageType::BATTERY_STATUS)) {
         battery = value;
-        RemoteScales::log("Battery status updated: %d%%\n", battery);
+        BluetoothScale::log("Battery status updated: %d%%\n", battery);
     } else if (header == static_cast<uint8_t>(EclairMessageType::TIMER_STATUS)) {
-        RemoteScales::log("Timer status updated: %d\n", value);
+        BluetoothScale::log("Timer status updated: %d\n", value);
     } else {
-        RemoteScales::log("Unknown config notification header: %02X\n", header);
+        BluetoothScale::log("Unknown config notification header: %02X\n", header);
     }
 }
 
@@ -181,24 +182,24 @@ uint8_t EclairScales::calculateXOR(const uint8_t *data, size_t length) {
 }
 
 void EclairScales::subscribeToNotifications() {
-    RemoteScales::log("Subscribing to notifications\n");
+    BluetoothScale::log("Subscribing to notifications\n");
 
     auto callback = [this](NimBLERemoteCharacteristic *characteristic, uint8_t *data, size_t length, bool isNotify) {
         notifyCallback(characteristic, data, length, isNotify);
     };
 
     if (dataCharacteristic->canNotify()) {
-        RemoteScales::log("Subscribing to data characteristic\n");
+        BluetoothScale::log("Subscribing to data characteristic\n");
         dataCharacteristic->subscribe(true, callback);
     } else {
-        RemoteScales::log("Data characteristic cannot notify\n");
+        BluetoothScale::log("Data characteristic cannot notify\n");
     }
 
     if (configCharacteristic->canNotify()) {
-        RemoteScales::log("Subscribing to config characteristic\n");
+        BluetoothScale::log("Subscribing to config characteristic\n");
         configCharacteristic->subscribe(true, callback);
     } else {
-        RemoteScales::log("Config characteristic cannot notify\n");
+        BluetoothScale::log("Config characteristic cannot notify\n");
     }
 }
 

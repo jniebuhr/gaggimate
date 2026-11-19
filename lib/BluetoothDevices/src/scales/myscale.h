@@ -1,9 +1,9 @@
 #pragma once
-#include "remote_scales.h"
-#include "remote_scales_plugin_registry.h"
+#include "BluetoothDeviceRegistry.h"
+#include "BluetoothScale.h"
 #include <NimBLEDevice.h>
 
-class myscale : public RemoteScales {
+class myscale : public BluetoothScale {
   public:
     myscale(const DiscoveredDevice &device);
 
@@ -38,11 +38,7 @@ class myscale : public RemoteScales {
 class myscalePlugin {
   public:
     static void apply() {
-        RemoteScalesPlugin plugin;
-        plugin.id = "plugin-myscale";
-        plugin.handles = &myscalePlugin::handles;
-        plugin.initialise = &myscalePlugin::initialise;
-        RemoteScalesPluginRegistry::getInstance()->registerPlugin(plugin);
+        BluetoothDeviceRegistry::getInstance()->registerDriver<myscale>("plugin-myscale", &myscalePlugin::handles);
     }
 
   private:
@@ -51,6 +47,4 @@ class myscalePlugin {
         return !deviceName.empty() &&
                (deviceName.find("blackcoffee") == 0 || deviceName.find("my_scale") == 0 || deviceName.find("MY_SCALE") == 0);
     }
-
-    static std::unique_ptr<RemoteScales> initialise(const DiscoveredDevice &device) { return std::make_unique<myscale>(device); }
 };

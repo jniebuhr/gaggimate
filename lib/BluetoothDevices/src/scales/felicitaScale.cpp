@@ -5,7 +5,7 @@
 const NimBLEUUID FelicitaScale::DATA_SERVICE_UUID("FFE0");
 const NimBLEUUID FelicitaScale::DATA_CHARACTERISTIC_UUID("FFE1");
 
-FelicitaScale::FelicitaScale(const DiscoveredDevice &device) : RemoteScales(device) {}
+FelicitaScale::FelicitaScale(const DiscoveredDevice &device) : BluetoothScale(device) {}
 
 bool FelicitaScale::connect() {
     if (isConnected()) {

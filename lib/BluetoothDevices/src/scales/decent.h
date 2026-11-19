@@ -1,9 +1,9 @@
 #pragma once
 
-#include "remote_scales.h"
-#include "remote_scales_plugin_registry.h"
+#include "BluetoothDeviceRegistry.h"
+#include "BluetoothScale.h"
 
-class DecentScales : public RemoteScales {
+class DecentScales : public BluetoothScale {
 
   public:
     DecentScales(const DiscoveredDevice &device);
@@ -38,14 +38,7 @@ class DecentScales : public RemoteScales {
 class DecentScalesPlugin {
   public:
     static void apply() {
-        RemoteScalesPlugin plugin = RemoteScalesPlugin{
-            .id = "plugin-decent",
-            .handles = [](const DiscoveredDevice &device) { return DecentScalesPlugin::handles(device); },
-            .initialise = [](const DiscoveredDevice &device) -> std::unique_ptr<RemoteScales> {
-                return std::make_unique<DecentScales>(device);
-            },
-        };
-        RemoteScalesPluginRegistry::getInstance()->registerPlugin(plugin);
+        BluetoothDeviceRegistry::getInstance()->registerDriver<DecentScales>("plugin-decent", &DecentScalesPlugin::handles);
     }
 
   private:

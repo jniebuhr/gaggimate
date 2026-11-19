@@ -1,9 +1,9 @@
 #pragma once
-#include "remote_scales.h"
-#include "remote_scales_plugin_registry.h"
+#include "BluetoothDeviceRegistry.h"
+#include "BluetoothScale.h"
 #include <NimBLEDevice.h>
 
-class DifluidScales : public RemoteScales {
+class DifluidScales : public BluetoothScale {
   public:
     DifluidScales(const DiscoveredDevice &device);
 
@@ -33,11 +33,7 @@ class DifluidScales : public RemoteScales {
 class DifluidScalesPlugin {
   public:
     static void apply() {
-        RemoteScalesPlugin plugin;
-        plugin.id = "plugin-difluid";
-        plugin.handles = &DifluidScalesPlugin::handles;
-        plugin.initialise = &DifluidScalesPlugin::initialise;
-        RemoteScalesPluginRegistry::getInstance()->registerPlugin(plugin);
+        BluetoothDeviceRegistry::getInstance()->registerDriver<DifluidScales>("plugin-difluid", &DifluidScalesPlugin::handles);
     }
 
   private:
@@ -48,9 +44,5 @@ class DifluidScalesPlugin {
             return false;
         }
         return deviceName.find("Microbalance") == 0 || deviceName.find("Mb") == 0;
-    }
-
-    static std::unique_ptr<RemoteScales> initialise(const DiscoveredDevice &device) {
-        return std::make_unique<DifluidScales>(device);
     }
 };

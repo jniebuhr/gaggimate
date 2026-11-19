@@ -1,6 +1,6 @@
 #pragma once
-#include "remote_scales.h"
-#include "remote_scales_plugin_registry.h"
+#include "BluetoothDeviceRegistry.h"
+#include "BluetoothScale.h"
 #include <Arduino.h>
 #include <NimBLEDevice.h>
 #include <algorithm>
@@ -9,7 +9,7 @@
 #include <vector>
 
 // Timemore Dot (single-sensor scale, GATT service FFF0).
-class TimemoreDotScales : public RemoteScales {
+class TimemoreDotScales : public BluetoothScale {
 
   public:
     explicit TimemoreDotScales(const DiscoveredDevice &device);
@@ -51,17 +51,10 @@ class TimemoreDotScales : public RemoteScales {
 class TimemoreDotScalesPlugin {
   public:
     static void apply() {
-        auto plugin = RemoteScalesPlugin{
-            .id = "plugin-timemore-dot",
-            .handles =
-                [](const DiscoveredDevice &device) {
-                    return TimemoreDotScalesPlugin::handles(device) || matchesBasic3Link(device.getName());
-                },
-            .initialise = [](const DiscoveredDevice &device) -> std::unique_ptr<RemoteScales> {
-                return std::make_unique<TimemoreDotScales>(device);
-            },
-        };
-        RemoteScalesPluginRegistry::getInstance()->registerPlugin(plugin);
+        BluetoothDeviceRegistry::getInstance()->registerDriver<TimemoreDotScales>(
+            "plugin-timemore-dot", [](const DiscoveredDevice &device) {
+                return TimemoreDotScalesPlugin::handles(device) || matchesBasic3Link(device.getName());
+            });
     }
 
     // Basic 3.0 Link advertises as "Basic3 Link" (confirmed on real hardware,

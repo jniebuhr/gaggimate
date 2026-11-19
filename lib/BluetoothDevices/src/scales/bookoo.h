@@ -1,6 +1,6 @@
 #pragma once
-#include "remote_scales.h"
-#include "remote_scales_plugin_registry.h"
+#include "BluetoothDeviceRegistry.h"
+#include "BluetoothScale.h"
 #include <Arduino.h>
 #include <NimBLEDevice.h>
 #include <NimBLEScan.h>
@@ -11,7 +11,7 @@
 
 enum class BookooMessageType : uint8_t { SYSTEM = 0x0A, WEIGHT = 0x0B };
 
-class BookooScales : public RemoteScales {
+class BookooScales : public BluetoothScale {
 
   public:
     BookooScales(const DiscoveredDevice &device);
@@ -101,14 +101,7 @@ class BookooScales : public RemoteScales {
 class BookooScalesPlugin {
   public:
     static void apply() {
-        RemoteScalesPlugin plugin = RemoteScalesPlugin{
-            .id = "plugin-bookoo",
-            .handles = [](const DiscoveredDevice &device) { return BookooScalesPlugin::handles(device); },
-            .initialise = [](const DiscoveredDevice &device) -> std::unique_ptr<RemoteScales> {
-                return std::make_unique<BookooScales>(device);
-            },
-        };
-        RemoteScalesPluginRegistry::getInstance()->registerPlugin(plugin);
+        BluetoothDeviceRegistry::getInstance()->registerDriver<BookooScales>("plugin-bookoo", &BookooScalesPlugin::handles);
     }
 
   private:

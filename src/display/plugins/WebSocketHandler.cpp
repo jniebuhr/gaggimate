@@ -5,7 +5,7 @@
 #include <display/core/process/BrewProcess.h>
 #include <display/core/process/GrindProcess.h>
 #include <display/models/profile.h>
-#include <display/plugins/BLEScalePlugin.h>
+#include <display/plugins/BluetoothDevicesPlugin.h>
 #include <display/plugins/ShotHistoryPlugin.h>
 #include <display/util/PsramStlAllocator.h>
 #include <display/util/PsramWsBuffer.h>
@@ -68,30 +68,33 @@ void WebSocketHandler::setup(Controller *_controller, PluginManager *_pluginMana
         broadcastJson(doc);
     });
 
-    // BLE scale lifecycle for the Bluetooth settings tab (GM-257).
-    pluginManager->on("scale:scan:complete", [this](Event const &event) {
+    // Bluetooth device lifecycle for the settings tab (GM-257); the wire names predate device types, "type" tells them apart.
+    pluginManager->on("bluetooth:scan:complete", [this](Event const &event) {
         JsonDocument doc(&psramAllocator);
         doc["tp"] = "evt:scale:scan:complete";
         doc["count"] = event.getInt("count");
         broadcastJson(doc);
     });
-    pluginManager->on("scale:connect:error", [this](Event const &event) {
+    pluginManager->on("bluetooth:connect:error", [this](Event const &event) {
         JsonDocument doc(&psramAllocator);
         doc["tp"] = "evt:scale:connect:error";
+        doc["type"] = event.getString("type");
         doc["address"] = event.getString("address");
         doc["reason"] = event.getString("reason");
         broadcastJson(doc);
     });
-    pluginManager->on("scale:connect:success", [this](Event const &event) {
+    pluginManager->on("bluetooth:connect:success", [this](Event const &event) {
         JsonDocument doc(&psramAllocator);
         doc["tp"] = "evt:scale:connect:success";
+        doc["type"] = event.getString("type");
         doc["address"] = event.getString("address");
         doc["name"] = event.getString("name");
         broadcastJson(doc);
     });
-    pluginManager->on("scale:disconnect", [this](Event const &event) {
+    pluginManager->on("bluetooth:disconnect", [this](Event const &event) {
         JsonDocument doc(&psramAllocator);
         doc["tp"] = "evt:scale:disconnect";
+        doc["type"] = event.getString("type");
         doc["address"] = event.getString("address");
         doc["name"] = event.getString("name");
         broadcastJson(doc);
@@ -459,11 +462,12 @@ void WebSocketHandler::publishState(unsigned long now) {
     sys["s"] = systemStateKey(controller->getSystemState());
     sys["m"] = controller->getSystemStateMessage();
     sys["c"] = controller->getError();
-    const bool bleConnected = BLEScales.isConnected();
+    const bool bleConnected = BLEDevices.isScaleConnected();
     doc["bc"] = bleConnected;
     // Scale battery: null when disconnected or the driver reports the UNKNOWN sentinel, so merging clients clear it.
-    if (bleConnected && BLEScales.hasBatteryLevel() && BLEScales.getBatteryLevel() != REMOTE_SCALES_BATTERY_UNKNOWN) {
-        doc["sbat"] = BLEScales.getBatteryLevel();
+    const uint8_t scaleBattery = BLEDevices.getBatteryLevel(BluetoothDeviceType::SCALE);
+    if (bleConnected && scaleBattery != BLUETOOTH_BATTERY_UNKNOWN) {
+        doc["sbat"] = scaleBattery;
     } else {
         doc["sbat"] = nullptr;
     }
@@ -504,7 +508,7 @@ void WebSocketHandler::publishTelemetry() {
         statusDoc["lat"] = controller->getClientController()->getLatencyMs();
     }
     statusDoc["rtx"] = controller->getClientController()->getRetransmits(); // comms frames resent since boot
-    const bool bleConnected = BLEScales.isConnected();
+    const bool bleConnected = BLEDevices.isScaleConnected();
     statusDoc["bw"] = bleConnected ? this->currentBluetoothWeight : 0; // current bluetooth weight
     statusDoc["cw"] = this->currentActiveWeight;
     for (auto &provider : statusProviders)

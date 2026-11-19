@@ -1,9 +1,9 @@
 #pragma once
-#include "remote_scales.h"
-#include "remote_scales_plugin_registry.h"
+#include "BluetoothDeviceRegistry.h"
+#include "BluetoothScale.h"
 #include <NimBLEDevice.h>
 
-class FelicitaScale : public RemoteScales {
+class FelicitaScale : public BluetoothScale {
   public:
     FelicitaScale(const DiscoveredDevice &device);
 
@@ -39,20 +39,12 @@ class FelicitaScale : public RemoteScales {
 class FelicitaScalePlugin {
   public:
     static void apply() {
-        RemoteScalesPlugin plugin;
-        plugin.id = "plugin-felicita";
-        plugin.handles = &FelicitaScalePlugin::handles;
-        plugin.initialise = &FelicitaScalePlugin::initialise;
-        RemoteScalesPluginRegistry::getInstance()->registerPlugin(plugin);
+        BluetoothDeviceRegistry::getInstance()->registerDriver<FelicitaScale>("plugin-felicita", &FelicitaScalePlugin::handles);
     }
 
   private:
     static bool handles(const DiscoveredDevice &device) {
         const std::string &deviceName = device.getName();
         return !deviceName.empty() && (deviceName.find("FELICITA") == 0);
-    }
-
-    static std::unique_ptr<RemoteScales> initialise(const DiscoveredDevice &device) {
-        return std::make_unique<FelicitaScale>(device);
     }
 };

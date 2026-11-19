@@ -1,5 +1,5 @@
 #include "varia.h"
-#include "remote_scales_plugin_registry.h"
+#include "BluetoothDeviceRegistry.h"
 
 const NimBLEUUID serviceUUID("FFF0");
 const NimBLEUUID weightCharacteristicUUID("FFF1");
@@ -9,7 +9,7 @@ const NimBLEUUID commandCharacteristicUUID("FFF2");
 //---------------------------        PUBLIC       -----------------------------------/
 //-----------------------------------------------------------------------------------/
 
-VariaScales::VariaScales(const DiscoveredDevice &device) : RemoteScales(device) {}
+VariaScales::VariaScales(const DiscoveredDevice &device) : BluetoothScale(device) {}
 
 bool VariaScales::connect() {
     if (clientIsConnected()) {

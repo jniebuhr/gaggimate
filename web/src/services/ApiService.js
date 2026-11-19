@@ -289,11 +289,16 @@ export default class ApiService {
         });
         break;
       case 'evt:scale:connect:success':
-        updateScaleState({ connectError: null, disconnected: null });
+        updateScaleState({ connectError: null, disconnected: null, connectedAt: now });
         break;
       case 'evt:scale:disconnect':
         updateScaleState({
-          disconnected: { address: message.address, name: message.name, at: now },
+          disconnected: {
+            address: message.address,
+            name: message.name,
+            type: message.type || 'scale',
+            at: now,
+          },
         });
         break;
     }
@@ -348,11 +353,12 @@ export const createMachineState = () =>
       sdCard: false,
       headless: false,
     },
-    // BLE scale lifecycle from evt:scale:* (GM-257).
+    // Bluetooth device lifecycle (scales and grinders) from evt:scale:* (GM-257).
     scale: {
       scanning: false,
       connectError: null,
       disconnected: null,
+      connectedAt: null,
     },
     history: [],
   });
