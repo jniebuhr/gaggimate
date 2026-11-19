@@ -1,0 +1,19 @@
+{
+  "name": "BluetoothDevices",
+  "version": "2.0.0",
+  "description": "Drivers for Bluetooth LE coffee devices (scales, grinders) behind one device interface with a sub-interface per device type.",
+  "keywords": "GaggiMate, BLE, scale, grinder",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jniebuhr/gaggimate"
+  },
+  "frameworks": "arduino",
+  "platforms": ["espressif32"],
+  "dependencies": {
+    "h2zero/NimBLE-Arduino": "^1.4.0"
+  },
+  "build": {
+    "flags": ["-I src"]
+  }
+}
