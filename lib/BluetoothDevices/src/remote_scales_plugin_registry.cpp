@@ -3,34 +3,33 @@
 // ---------------------------------------------------------------------------------------
 // ------------------------   RemoteScalesPluginRegistry    -------------------------------
 // ---------------------------------------------------------------------------------------
-RemoteScalesPluginRegistry* RemoteScalesPluginRegistry::instance = nullptr;
+RemoteScalesPluginRegistry *RemoteScalesPluginRegistry::instance = nullptr;
 
 void RemoteScalesPluginRegistry::registerPlugin(RemoteScalesPlugin plugin) {
-  // Check if a plugin with the same ID already exists
-  for (const auto& existingPlugin : plugins) {
-    if (existingPlugin.id == plugin.id) {
-      return;
+    // Check if a plugin with the same ID already exists
+    for (const auto &existingPlugin : plugins) {
+        if (existingPlugin.id == plugin.id) {
+            return;
+        }
     }
-  }
 
-  plugins.push_back(plugin);
+    plugins.push_back(plugin);
 }
 
-bool RemoteScalesPluginRegistry::containsPluginForDevice(const DiscoveredDevice& device) {
-  for (const auto& plugin : plugins) {
-    if (plugin.handles(device)) {
-      return true;
+bool RemoteScalesPluginRegistry::containsPluginForDevice(const DiscoveredDevice &device) {
+    for (const auto &plugin : plugins) {
+        if (plugin.handles(device)) {
+            return true;
+        }
     }
-  }
-  return false;
+    return false;
 }
 
-std::unique_ptr<RemoteScales> RemoteScalesPluginRegistry::initialiseRemoteScales(const DiscoveredDevice& device) {
-  for (const auto& plugin : plugins) {
-    if (plugin.handles(device)) {
-      return plugin.initialise(device);
+std::unique_ptr<RemoteScales> RemoteScalesPluginRegistry::initialiseRemoteScales(const DiscoveredDevice &device) {
+    for (const auto &plugin : plugins) {
+        if (plugin.handles(device)) {
+            return plugin.initialise(device);
+        }
     }
-  }
-  return nullptr;
+    return nullptr;
 }
-

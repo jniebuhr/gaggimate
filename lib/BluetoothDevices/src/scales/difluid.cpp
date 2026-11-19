@@ -13,7 +13,7 @@ const NimBLEUUID weightCharacteristicUUID("AA01");
 //-----------------------------------------------------------------------------------/
 //---------------------------        PUBLIC       -----------------------------------/
 //-----------------------------------------------------------------------------------/
-DifluidScales::DifluidScales(const DiscoveredDevice& device) : RemoteScales(device) {}
+DifluidScales::DifluidScales(const DiscoveredDevice &device) : RemoteScales(device) {}
 
 bool DifluidScales::connect() {
     if (isConnected()) {
@@ -34,13 +34,9 @@ bool DifluidScales::connect() {
     return true;
 }
 
-void DifluidScales::disconnect() {
-    clientCleanup();
-}
+void DifluidScales::disconnect() { clientCleanup(); }
 
-bool DifluidScales::isConnected() {
-    return clientIsConnected();
-}
+bool DifluidScales::isConnected() { return clientIsConnected(); }
 
 void DifluidScales::update() {
     if (markedForReconnection) {
@@ -55,7 +51,8 @@ void DifluidScales::update() {
 
 // Tare function
 bool DifluidScales::tare() {
-    if (!isConnected()) return false;
+    if (!isConnected())
+        return false;
     log("Tare command sent.\n");
     uint8_t tareCommand[] = {0xDF, 0xDF, 0x03, 0x02, 0x01, 0x01, 0x00};
     tareCommand[6] = calculateChecksum(tareCommand, sizeof(tareCommand));
@@ -67,21 +64,12 @@ bool DifluidScales::tare() {
 //---------------------------       PRIVATE       -----------------------------------/
 //-----------------------------------------------------------------------------------/
 
-int32_t DifluidScales::readInt32BE(const uint8_t* data) {
-    return (int32_t)(
-        ((uint32_t)data[0] << 24) |
-        ((uint32_t)data[1] << 16) |
-        ((uint32_t)data[2] << 8) |
-        (uint32_t)data[3]
-    );
+int32_t DifluidScales::readInt32BE(const uint8_t *data) {
+    return (int32_t)(((uint32_t)data[0] << 24) | ((uint32_t)data[1] << 16) | ((uint32_t)data[2] << 8) | (uint32_t)data[3]);
 }
 
-void DifluidScales::notifyCallback(
-    NimBLERemoteCharacteristic* pBLERemoteCharacteristic,
-    uint8_t* pData,
-    size_t length,
-    bool isNotify
-) {
+void DifluidScales::notifyCallback(NimBLERemoteCharacteristic *pBLERemoteCharacteristic, uint8_t *pData, size_t length,
+                                   bool isNotify) {
     // Use the log function from RemoteScales
     log("Notification received:\n");
     for (size_t i = 0; i < length; i++) {
@@ -128,12 +116,11 @@ void DifluidScales::notifyCallback(
         }
     } else if (func == 0x03 && cmd == 0x05) { // Heartbeat Acknowledgment(Get Device Status)
         log("Heartbeat acknowledged.\n");
-        uint8_t battery_capacity = pData[6];  // Battery capacity percentage.
+        uint8_t battery_capacity = pData[6]; // Battery capacity percentage.
     } else {
         log("Unknown function (%02X) or command (%02X).\n", func, cmd);
     }
 }
-
 
 bool DifluidScales::performConnectionHandshake() {
     log("Performing handshake\n");
@@ -159,9 +146,8 @@ bool DifluidScales::performConnectionHandshake() {
 
     // Subscribe to notifications
     if (weightCharacteristic->canNotify()) {
-        weightCharacteristic->subscribe(true, [this](NimBLERemoteCharacteristic* characteristic, uint8_t* data, size_t length, bool isNotify) {
-            notifyCallback(characteristic, data, length, isNotify);
-        });
+        weightCharacteristic->subscribe(true, [this](NimBLERemoteCharacteristic *characteristic, uint8_t *data, size_t length,
+                                                     bool isNotify) { notifyCallback(characteristic, data, length, isNotify); });
     } else {
         log("Cannot subscribe to notifications.\n");
         return false;
@@ -195,7 +181,7 @@ void DifluidScales::enableAutoNotifications() {
 
 void DifluidScales::sendHeartbeat() {
     if (!isConnected()) {
-        markedForReconnection=true;
+        markedForReconnection = true;
         return;
     }
 
@@ -204,14 +190,15 @@ void DifluidScales::sendHeartbeat() {
         return;
     }
 
-    uint8_t heartbeatCommand[] = {0xDF, 0xDF, 0x03, 0x05, 0x00, 0xC6};  // Use Func 0x03 and Cmd 0x05(Get Device Status) as the heartbeat.
+    uint8_t heartbeatCommand[] = {0xDF, 0xDF, 0x03,
+                                  0x05, 0x00, 0xC6}; // Use Func 0x03 and Cmd 0x05(Get Device Status) as the heartbeat.
     heartbeatCommand[5] = calculateChecksum(heartbeatCommand, sizeof(heartbeatCommand));
     weightCharacteristic->writeValue(heartbeatCommand, sizeof(heartbeatCommand), true);
     lastHeartbeat = now;
 }
 
 // Calculate checksum according to the protocol
-uint8_t DifluidScales::calculateChecksum(const uint8_t* data, size_t length) {
+uint8_t DifluidScales::calculateChecksum(const uint8_t *data, size_t length) {
     uint16_t sum = 0;
     // Sum all bytes except the checksum byte itself
     for (size_t i = 0; i < length - 1; i++) {

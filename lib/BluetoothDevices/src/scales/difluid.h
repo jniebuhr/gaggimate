@@ -3,9 +3,8 @@
 #include "remote_scales_plugin_registry.h"
 #include <NimBLEDevice.h>
 
-class DifluidScales : public RemoteScales
-{
-public:
+class DifluidScales : public RemoteScales {
+  public:
     DifluidScales(const DiscoveredDevice &device);
 
     bool tare() override;
@@ -15,7 +14,7 @@ public:
     void disconnect() override;
     void update() override;
 
-private:
+  private:
     NimBLERemoteService *service = nullptr;
     NimBLERemoteCharacteristic *weightCharacteristic = nullptr;
     uint32_t lastHeartbeat = 0;
@@ -31,11 +30,9 @@ private:
 };
 
 // Update the DifluidScalesPlugin class
-class DifluidScalesPlugin
-{
-public:
-    static void apply()
-    {
+class DifluidScalesPlugin {
+  public:
+    static void apply() {
         RemoteScalesPlugin plugin;
         plugin.id = "plugin-difluid";
         plugin.handles = &DifluidScalesPlugin::handles;
@@ -43,20 +40,17 @@ public:
         RemoteScalesPluginRegistry::getInstance()->registerPlugin(plugin);
     }
 
-private:
+  private:
     // Determines whether this plugin can handle the given device
-    static bool handles(const DiscoveredDevice &device)
-    {
+    static bool handles(const DiscoveredDevice &device) {
         const std::string &deviceName = device.getName();
-        if (deviceName.empty())
-        {
+        if (deviceName.empty()) {
             return false;
         }
         return deviceName.find("Microbalance") == 0 || deviceName.find("Mb") == 0;
     }
 
-    static std::unique_ptr<RemoteScales> initialise(const DiscoveredDevice &device)
-    {
+    static std::unique_ptr<RemoteScales> initialise(const DiscoveredDevice &device) {
         return std::make_unique<DifluidScales>(device);
     }
 };
