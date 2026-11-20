@@ -39,7 +39,7 @@ import { t } from '@lingui/core/macro';
 export function usePumpFlowCalibration({ currentCoeffs, onApplied }) {
   const apiService = useContext(ApiServiceContext);
 
-  const [phase, setPhase] = useState(PHASE.IDLE);
+  const [phase, setPhase] = useState(/** @type {import('./constants.js').Phase} */ (PHASE.IDLE));
   const [logs, setLogs] = useState([]);
   const [results, setResults] = useState(null);
   const [saving, setSaving] = useState(false);

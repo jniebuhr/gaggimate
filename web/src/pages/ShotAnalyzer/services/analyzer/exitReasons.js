@@ -10,6 +10,7 @@ export const PHASE_EXIT_REASON = Object.freeze({
   DURATION: 5,
   SAFETY: 6,
   ABORTED: 7,
+  HOLD_RELEASED: 8,
   TARGET_RATIO: 9,
 });
 
@@ -53,6 +54,11 @@ const EXIT_REASON_META = Object.freeze({
     label: msg`Manually stopped`,
     stopReason: 'Manually Stopped',
     exitType: 'manual',
+  },
+  [PHASE_EXIT_REASON.HOLD_RELEASED]: {
+    label: msg`Hold released`,
+    stopReason: 'Hold Released',
+    exitType: null,
   },
   [PHASE_EXIT_REASON.TARGET_RATIO]: {
     label: msg`Ratio target`,

@@ -23,7 +23,7 @@ export function getShotChartColors() {
   return Object.keys(CHART_COLOR_FALLBACKS).reduce((acc, key) => {
     acc[key] = readCssColorVar(CHART_COLOR_TOKEN_MAP[key], CHART_COLOR_FALLBACKS[key]);
     return acc;
-  }, {});
+  }, /** @type {Record<string, string>} */ ({}));
 }
 
 export function getLegendColorByLabel(colors) {

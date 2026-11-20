@@ -136,7 +136,7 @@ export default function VisualizerUploadModal({
                 name='username'
                 type='text'
                 value={username}
-                onChange={e => setUsername(e.target.value)}
+                onChange={e => setUsername(e.currentTarget.value)}
                 disabled={isUploading}
                 className='w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-white'
                 placeholder={t`Enter your username`}
@@ -155,7 +155,7 @@ export default function VisualizerUploadModal({
                   name='password'
                   type={showPassword ? 'text' : 'password'}
                   value={password}
-                  onChange={e => setPassword(e.target.value)}
+                  onChange={e => setPassword(e.currentTarget.value)}
                   disabled={isUploading}
                   className='w-full rounded-md border border-gray-300 px-3 py-2 pr-10 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-white'
                   placeholder={t`Enter your password`}
@@ -179,7 +179,7 @@ export default function VisualizerUploadModal({
                 id='remember'
                 type='checkbox'
                 checked={rememberCredentials}
-                onChange={e => setRememberCredentials(e.target.checked)}
+                onChange={e => setRememberCredentials(e.currentTarget.checked)}
                 disabled={isUploading}
                 className='h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50'
               />

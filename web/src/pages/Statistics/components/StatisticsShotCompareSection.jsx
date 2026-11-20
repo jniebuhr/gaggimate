@@ -25,6 +25,7 @@ export function StatisticsShotCompareSection({
         showPhaseAnnotations={false}
         showStopAnnotations={false}
         showBrewModeAnnotation={false}
+        // @ts-expect-error CompareShotCharts has no showCompareAnnotationToggle prop; it is ignored
         showCompareAnnotationToggle={false}
         enableDualMainChartAnnotations={false}
         showMainChartTitle={false}

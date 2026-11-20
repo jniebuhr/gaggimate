@@ -451,7 +451,7 @@ export function ShotHistory() {
               placeholder={t`Search...`}
               value={searchTerm}
               onChange={e => {
-                setSearchTerm(e.target.value);
+                setSearchTerm(e.currentTarget.value);
                 setCurrentPage(1); // Reset to page 1 when searching
               }}
               className='input input-bordered w-full pr-4 pl-10 text-sm'
@@ -464,7 +464,7 @@ export function ShotHistory() {
             <select
               value={`${sortBy}-${sortOrder}`}
               onChange={e => {
-                const [newSortBy, newSortOrder] = e.target.value.split('-');
+                const [newSortBy, newSortOrder] = e.currentTarget.value.split('-');
                 setSortBy(newSortBy);
                 setSortOrder(newSortOrder);
                 setCurrentPage(1); // Reset to page 1 when sorting
@@ -492,7 +492,7 @@ export function ShotHistory() {
             <select
               value={filterBy}
               onChange={e => {
-                setFilterBy(e.target.value);
+                setFilterBy(e.currentTarget.value);
                 setCurrentPage(1); // Reset to page 1 when filtering
               }}
               className='select select-bordered text-sm'
@@ -516,7 +516,7 @@ export function ShotHistory() {
             <progress
               className='progress progress-primary w-full max-w-xs'
               value={exportProgress.current}
-              max={exportProgress.total}
+              max={String(exportProgress.total)}
             />
           ) : (
             <progress className='progress progress-primary w-full max-w-xs' />

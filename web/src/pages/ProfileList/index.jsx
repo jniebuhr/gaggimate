@@ -939,8 +939,8 @@ export function ProfileList() {
     };
   }, [loading, searchTerm, onDragStart, onDragChange, onDragEnd]);
 
-  const [pendingById, setPendingById] = useState({});
-  const withPending = useCallback(async (id, kind, task) => {
+  const [pendingById, setPendingById] = useState(/** @type {Record<string, string>} */ ({}));
+  const withPending = useCallback(async (/** @type {string} */ id, kind, task) => {
     setPendingById(prev => ({ ...prev, [id]: kind }));
     try {
       await task();
@@ -1125,7 +1125,7 @@ export function ProfileList() {
               placeholder={t`Search...`}
               value={searchTerm}
               onChange={e => {
-                setSearchTerm(e.target.value);
+                setSearchTerm(e.currentTarget.value);
               }}
               className='grow'
             />

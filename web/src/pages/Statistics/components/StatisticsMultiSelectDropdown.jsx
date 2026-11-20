@@ -473,7 +473,7 @@ export function StatisticsMultiSelectDropdown({
               <input
                 type='text'
                 value={searchTerm}
-                onInput={e => setSearchTerm(e.target.value)}
+                onInput={e => setSearchTerm(e.currentTarget.value)}
                 placeholder={t`Search ${labelLower}...`}
                 className='input input-sm input-bordered border-base-content/10 bg-base-100/70 h-8 min-h-0 w-full flex-1 text-xs'
               />

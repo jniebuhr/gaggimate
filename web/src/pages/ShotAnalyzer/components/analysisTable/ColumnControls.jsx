@@ -203,7 +203,7 @@ export function ColumnControls({
                 <select
                   value={selectedPresetId}
                   onChange={e => {
-                    const val = e.target.value;
+                    const val = e.currentTarget.value;
                     if (val === BUILT_IN_PRESET_IDS.ALL_METRICS) {
                       applyAll();
                     } else if (val === BUILT_IN_PRESET_IDS.SYSTEM_INFO) {
@@ -293,7 +293,7 @@ export function ColumnControls({
                             <input
                               type='checkbox'
                               checked={activeColumns.has(col.id)}
-                              onChange={e => toggleColumn(col.id, e.target.checked)}
+                              onChange={e => toggleColumn(col.id, e.currentTarget.checked)}
                               className='checkbox checkbox-primary checkbox-xs border-base-content/20 rounded-sm'
                             />
                             <span className={COLUMN_OPTION_TEXT_CLASS}>

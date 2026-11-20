@@ -119,7 +119,7 @@ export function ShotDetailsCard({ entry, isCompare }) {
               onKeyDown={event =>
                 initializeEmptyDoseKeyboardStepper(event, EMPTY_DOSE_DEFAULTS.doseIn)
               }
-              onInput={event => handleFieldChange('doseIn', event.target.value)}
+              onInput={event => handleFieldChange('doseIn', event.currentTarget.value)}
               onBlur={flushSave}
               placeholder='18.0'
             />
@@ -136,7 +136,7 @@ export function ShotDetailsCard({ entry, isCompare }) {
               onKeyDown={event =>
                 initializeEmptyDoseKeyboardStepper(event, EMPTY_DOSE_DEFAULTS.doseOut)
               }
-              onInput={event => handleFieldChange('doseOut', event.target.value)}
+              onInput={event => handleFieldChange('doseOut', event.currentTarget.value)}
               onBlur={flushSave}
               placeholder='36.0'
             />
@@ -155,7 +155,7 @@ export function ShotDetailsCard({ entry, isCompare }) {
               type='text'
               className={inputClass}
               value={notes.grindSetting || ''}
-              onInput={event => handleFieldChange('grindSetting', event.target.value)}
+              onInput={event => handleFieldChange('grindSetting', event.currentTarget.value)}
               onBlur={flushSave}
               placeholder='2.5'
             />
@@ -165,7 +165,7 @@ export function ShotDetailsCard({ entry, isCompare }) {
               type='text'
               className={inputClass}
               value={notes.beanType || ''}
-              onInput={event => handleFieldChange('beanType', event.target.value)}
+              onInput={event => handleFieldChange('beanType', event.currentTarget.value)}
               onBlur={flushSave}
               placeholder={t`Single Origin, Blend...`}
             />
@@ -202,7 +202,7 @@ export function ShotDetailsCard({ entry, isCompare }) {
             className={`${textareaClass} flex-1`}
             value={notes.notes || ''}
             maxLength={200}
-            onInput={event => handleFieldChange('notes', event.target.value)}
+            onInput={event => handleFieldChange('notes', event.currentTarget.value)}
             onBlur={flushSave}
             placeholder={t`Tasting notes, brewing observations...`}
           />

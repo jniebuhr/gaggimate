@@ -110,6 +110,11 @@ function updateNotesValue(notes, field, value) {
   return updated;
 }
 
+/**
+ * @param {object} [options]
+ * @param {any} [options.currentShot]
+ * @param {boolean} [options.isSelectionPending]
+ */
 export function useShotNotesState({ currentShot, isSelectionPending = false } = {}) {
   const [notes, setNotes] = useState(notesService.getDefaults(null));
   const [saving, setSaving] = useState(false);
@@ -130,6 +135,8 @@ export function useShotNotesState({ currentShot, isSelectionPending = false } = 
       autoFillFields: new Set(),
       errorReported: false,
       active: true,
+      /** @type {Promise<void> | null} */
+      ready: null,
     }),
     [notesKey, source],
   );

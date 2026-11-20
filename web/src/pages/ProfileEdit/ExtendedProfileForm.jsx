@@ -144,7 +144,6 @@ export function ExtendedProfileForm(props) {
                 phase={currentPhase}
                 index={currentPhaseIndex}
                 onChange={phase => onPhaseChange(currentPhaseIndex, phase)}
-                onRemove={() => onPhaseRemove(currentPhaseIndex)}
                 pressureAvailable={pressureAvailable}
               />
             ) : (

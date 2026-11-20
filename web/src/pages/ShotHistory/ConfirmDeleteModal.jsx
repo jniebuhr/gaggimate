@@ -1,6 +1,20 @@
 import { useEffect, useId, useRef } from 'preact/hooks';
 import { useLingui } from '@lingui/react/macro';
 
+/**
+ * @param {object} props
+ * @param {string} props.title
+ * @param {string} props.description
+ * @param {string} props.confirmLabel
+ * @param {string} [props.busyLabel]
+ * @param {string} [props.descriptionClassName]
+ * @param {boolean} [props.busy]
+ * @param {{ current: number, total: number } | null} [props.progress]
+ * @param {string} [props.progressClassName]
+ * @param {() => void} props.onClose
+ * @param {() => void} props.onConfirm
+ * @param {() => void} [props.onCancelBusy]
+ */
 export default function ConfirmDeleteModal({
   title,
   description,
@@ -71,7 +85,7 @@ export default function ConfirmDeleteModal({
                 <progress
                   className={`progress ${progressClassName} w-full max-w-xs`}
                   value={progress.current}
-                  max={progress.total}
+                  max={String(progress.total)}
                 />
               ) : (
                 <progress className={`progress ${progressClassName} w-full max-w-xs`} />

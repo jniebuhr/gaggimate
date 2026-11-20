@@ -60,8 +60,8 @@ function ResistanceControl({ value, field, presets, disabled, onChange }) {
             type='number'
             className='input input-bordered w-full'
             value={value === undefined ? '' : value / 1000}
-            min={field.min / 1000}
-            max={field.max / 1000}
+            min={String(field.min / 1000)}
+            max={String(field.max / 1000)}
             step='any'
             disabled={disabled}
             onChange={event =>
@@ -213,8 +213,8 @@ export function MachineProfileFields({ formData, setFields, hardwareOnly = false
                     <input
                       type='range'
                       className='range range-primary w-full'
-                      min={0}
-                      max={255}
+                      min='0'
+                      max='255'
                       step={1}
                       value={brightness}
                       disabled={
@@ -238,8 +238,8 @@ export function MachineProfileFields({ formData, setFields, hardwareOnly = false
                         <input
                           type='range'
                           className='range range-primary w-full'
-                          min={0}
-                          max={255}
+                          min='0'
+                          max='255'
                           step={1}
                           value={minimum}
                           disabled={isProfileFieldLocked(formData, minimumKey)}
@@ -257,8 +257,8 @@ export function MachineProfileFields({ formData, setFields, hardwareOnly = false
                         <input
                           type='number'
                           className='input input-bordered w-full'
-                          min={0.5}
-                          max={10}
+                          min='0.5'
+                          max='10'
                           step={0.1}
                           value={(formData[cycleKey] ?? 3000) / 1000}
                           disabled={isProfileFieldLocked(formData, cycleKey)}

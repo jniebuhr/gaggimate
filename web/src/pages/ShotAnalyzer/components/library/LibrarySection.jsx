@@ -124,6 +124,42 @@ function getLibraryCompareState({
   };
 }
 
+/**
+ * @param {object} props
+ * @param {string} props.title
+ * @param {any[]} props.items
+ * @param {boolean} props.isShot
+ * @param {number | string} props.sectionHeight
+ * @param {string} props.searchValue
+ * @param {string} props.sortKey
+ * @param {string} props.sortOrder
+ * @param {string} props.sourceFilter
+ * @param {(value: string) => void} props.onSearchChange
+ * @param {(key: string, order?: string) => void} props.onSortChange
+ * @param {(value: string) => void} props.onSourceFilterChange
+ * @param {(item: any) => void} props.onLoad
+ * @param {(item: any) => void} props.onExport
+ * @param {(item: any) => void} props.onDelete
+ * @param {() => void} props.onExportAll
+ * @param {() => void} props.onDeleteAll
+ * @param {number} [props.compareSelectedCount] Currently unused.
+ * @param {Set<string>} [props.compareSelectionKeys]
+ * @param {string[]} [props.comparePendingKeys]
+ * @param {string} [props.compareReferenceKey]
+ * @param {boolean} [props.compareMode]
+ * @param {(item: any, checked: boolean) => void} [props.onCompareToggle]
+ * @param {(item: any) => void} [props.onShowStats]
+ * @param {(item: any) => any} props.getMatchStatus
+ * @param {(item: any) => any} [props.getCompareStatus]
+ * @param {(item: any) => number | null | undefined} [props.getCompareBadgeNumber]
+ * @param {(item: any) => any} [props.getActiveStatus]
+ * @param {(item: any) => any} [props.getPinStatus]
+ * @param {(item: any) => string} [props.getPinDisabledReason]
+ * @param {(item: any) => void} [props.onPinToggle]
+ * @param {boolean} [props.pinnedFirstEnabled]
+ * @param {() => void} [props.onPinnedFirstToggle]
+ * @param {boolean} props.isLoading
+ */
 export function LibrarySection({
   title,
   items,
@@ -215,13 +251,13 @@ export function LibrarySection({
             type='text'
             placeholder={isShot ? t`Search shots...` : t`Search profiles...`}
             value={searchValue}
-            onInput={e => onSearchChange(e.target.value)}
+            onInput={e => onSearchChange(e.currentTarget.value)}
             className='library-toolbar-field bg-base-100/50 border-base-content/10 focus:border-primary h-9 min-w-0 flex-1 rounded-md border px-3 text-sm outline-none'
           />
           <select
             value={`${sortKey}-${sortOrder}`}
             onChange={e => {
-              const [k, o] = e.target.value.split('-');
+              const [k, o] = e.currentTarget.value.split('-');
               onSortChange(k, o);
             }}
             className='library-toolbar-field bg-base-100/50 border-base-content/10 hover:bg-base-content/5 hover:border-base-content/20 focus:border-primary h-9 max-w-[8.5rem] shrink-0 cursor-pointer rounded-md border px-2 text-xs transition-colors outline-none sm:max-w-none'

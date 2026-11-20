@@ -23,6 +23,14 @@ import {
 } from '../utils/machineProfiles.js';
 
 // The wizard and Machine tab deliberately share the same catalog and import/apply behavior.
+/**
+ * @param {object} props
+ * @param {Record<string, any>} props.formData
+ * @param {(values: Record<string, any>) => void} props.setFields
+ * @param {boolean} [props.wizard]
+ * @param {boolean} [props.disabled]
+ * @param {(profile: any) => void} [props.onProfileResolved]
+ */
 export function MachineProfileControl({
   formData,
   setFields,
@@ -31,7 +39,7 @@ export function MachineProfileControl({
   onProfileResolved,
 }) {
   const { t } = useLingui();
-  const fileInput = useRef();
+  const fileInput = useRef(/** @type {HTMLInputElement | null} */ (null));
   const [activeId, setActiveId] = useState(null);
   const refreshActive = () =>
     requestSettings()
@@ -115,6 +123,7 @@ export function MachineProfileControl({
   const profiles = [...MACHINE_PROFILES, ...imported];
   if (selection && !profiles.some(p => p.id === selection.id))
     profiles.push(selected || { id: selection.id, name: selection.id });
+  // @ts-expect-error machine state has no hardware field, so this fallback is always undefined
   const controllerKnown = !!(formData.machineProfileBoard || machine.value.hardware);
   const compatibleProfiles = [];
   const incompatibleProfiles = [];
@@ -309,7 +318,7 @@ export function MachineProfileControl({
             title={t`Import configuration`}
             aria-label={t`Import configuration`}
             disabled={disabled || busy || loadingLibrary}
-            onClick={() => fileInput.current.click()}
+            onClick={() => fileInput.current?.click()}
           >
             <FontAwesomeIcon icon={faFileImport} />
           </button>

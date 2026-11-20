@@ -76,6 +76,21 @@ function MahlkonigRecipeProfiles({ formData, onChange }) {
   );
 }
 
+/**
+ * @param {object} props
+ * @param {Record<string, any>} props.formData
+ * @param {(key: string) => (e: any) => void} props.onChange
+ * @param {(...args: any[]) => void} [props.onSmartDoseSaved] Used by the settings page.
+ * @param {(saving: boolean) => void} [props.onSmartDoseSaving] Used by the settings page.
+ * @param {(...args: any[]) => void} [props.onSettingSaved] Used by the setup wizard.
+ * @param {(saving: boolean) => void} [props.onSaving] Used by the setup wizard.
+ * @param {boolean} [props.settingsDisabled]
+ * @param {any[]} props.autowakeupSchedules
+ * @param {() => void} props.addAutoWakeupSchedule
+ * @param {(index: number) => void} props.removeAutoWakeupSchedule
+ * @param {(index: number, time: string) => void} props.updateAutoWakeupTime
+ * @param {(index: number, day: number, enabled: boolean) => void} props.updateAutoWakeupDay
+ */
 export function PluginCard({
   formData,
   onChange,
@@ -154,7 +169,7 @@ export function PluginCard({
                         type='time'
                         className='input input-bordered input-sm md:input-md w-auto min-w-0 pr-6 text-center'
                         value={schedule.time}
-                        onChange={e => updateAutoWakeupTime(scheduleIndex, e.target.value)}
+                        onChange={e => updateAutoWakeupTime(scheduleIndex, e.currentTarget.value)}
                         disabled={!formData.autowakeupEnabled}
                       />
                     </div>

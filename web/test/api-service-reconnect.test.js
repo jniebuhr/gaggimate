@@ -38,8 +38,9 @@ class FakeWebSocket {
     for (const listener of this.listeners[type] ?? []) listener(event);
   }
 }
-globalThis.WebSocket = FakeWebSocket;
-globalThis.window = { location: { protocol: 'http:', host: 'localhost' } };
+// Partial browser stand-ins, cast so the type check accepts them.
+globalThis.WebSocket = /** @type {any} */ (FakeWebSocket);
+globalThis.window = /** @type {any} */ ({ location: { protocol: 'http:', host: 'localhost' } });
 
 const { default: ApiService, createMachineState } = await import('../src/services/ApiService.js');
 

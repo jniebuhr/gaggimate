@@ -34,9 +34,7 @@ export function mergeAnalyzerNotes(
       JSON.stringify(latest[field]) !== JSON.stringify(baseline[field]) &&
       JSON.stringify(latest[field]) !== JSON.stringify(draft[field])
     ) {
-      const error = new Error('Notes changed elsewhere');
-      error.notesConflict = true;
-      throw error;
+      throw Object.assign(new Error('Notes changed elsewhere'), { notesConflict: true });
     }
     merged[field] = draft[field];
   }

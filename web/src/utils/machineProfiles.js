@@ -3,11 +3,40 @@ import { requestSettings } from './settingsRequest.js';
 import fields from '../data/machineProfileFields.json';
 import { splitPidString } from '../pages/Settings/settingsForm.js';
 
+/**
+ * A machine profile from src/data/machineProfiles or the device's library.
+ * @typedef {object} MachineProfile
+ * @property {string} id
+ * @property {string} name
+ * @property {number} [schemaVersion]
+ * @property {number} [revision]
+ * @property {Record<string, any>} [requires] Capabilities the machine must (not) have.
+ * @property {Record<string, any>} [settings]
+ */
+
+/**
+ * One editable setting in src/data/machineProfileFields.json.
+ * @typedef {object} ProfileField
+ * @property {string} label
+ * @property {string} type
+ * @property {number[]} [lengths] Allowed value counts for csv fields.
+ * @property {number} [min]
+ * @property {number} [max]
+ * @property {string} [capability] Capability the field needs.
+ * @property {boolean} [singleBoiler] Only for single-boiler machines.
+ * @property {number[]} [values] Allowed values, in display order.
+ * @property {boolean} [restart] Changing it restarts the controller.
+ * @property {boolean} [hardware] Shown in the hardware section.
+ * @property {Record<string, string>} [options] Labels for select values.
+ */
+
+/** @type {Record<string, MachineProfile>} */
 const modules = import.meta.glob('../data/machineProfiles/*.json', {
   eager: true,
   import: 'default',
 });
 export const MACHINE_PROFILES = Object.values(modules).sort((a, b) => a.name.localeCompare(b.name));
+/** @type {Record<string, ProfileField>} */
 export const PROFILE_FIELDS = fields;
 export const CUSTOM_PROFILE = '';
 export const MAX_PROFILE_BYTES = 3500;

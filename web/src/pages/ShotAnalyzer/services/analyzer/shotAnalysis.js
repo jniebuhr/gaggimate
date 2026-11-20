@@ -133,7 +133,7 @@ function resolveRatioTargets(profileData, shotData) {
  * Main Analysis Function
  * Calculates all metrics for a shot with optional profile comparison
  * * @param {Object} shotData - Shot data with samples array
- * @param {Object|null} profileData - Optional profile for comparison
+ * @param {Object|null} rawProfileData - Optional profile for comparison
  * @param {Object} settings - Analysis settings
  * @param {number} settings.scaleDelayMs - Scale latency in ms (default: 0)
  * @param {number} settings.sensorDelayMs - System sensor delay in ms (default: 200)
@@ -157,7 +157,7 @@ export function calculateShotMetrics(shotData, rawProfileData, settings) {
   const phaseNameMap = buildPhaseNameMap(shotData.phaseTransitions);
   const phases = groupSamplesByPhase(gSamples);
 
-  const sortedPhaseKeys = Object.keys(phases).sort((a, b) => a - b);
+  const sortedPhaseKeys = Object.keys(phases).sort((a, b) => Number(a) - Number(b));
   const lastPhaseKey = sortedPhaseKeys.at(-1);
   const profilePhaseIndices = resolveProfilePhaseIndices(
     sortedPhaseKeys,

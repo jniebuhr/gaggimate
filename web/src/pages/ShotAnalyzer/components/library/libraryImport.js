@@ -128,6 +128,23 @@ async function importProfileFile({
   return outcome;
 }
 
+/**
+ * @typedef {object} ImportAnalyzerFileOptions
+ * @property {any} data Parsed JSON content of the file.
+ * @property {File} file
+ * @property {any} targetType
+ * @property {any} slot
+ * @property {any} importMode
+ * @property {any} currentShot
+ * @property {any} secondaryShot
+ * @property {boolean} compareMode
+ * @property {any} onCompareShotToggle
+ * @property {any} onShotSelect
+ * @property {any} onCompareProfileLoad
+ * @property {any} onProfileLoad
+ */
+
+/** @param {ImportAnalyzerFileOptions} options */
 async function importAnalyzerFile({ file, data, ...options }) {
   if (data.samples) return importShotFile({ file, data, ...options });
   if (data.phases) return importProfileFile({ file, data, ...options });

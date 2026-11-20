@@ -154,7 +154,7 @@ export function CalibrationTab({ formData, setField }) {
                   max='300'
                   className='input input-bordered w-full'
                   value={autotuneTime}
-                  onChange={e => setAutotuneTime(Number.parseInt(e.target.value, 10) || 0)}
+                  onChange={e => setAutotuneTime(Number.parseInt(e.currentTarget.value, 10) || 0)}
                   placeholder='120'
                 />
               </SettingsFormField>
@@ -171,7 +171,9 @@ export function CalibrationTab({ formData, setField }) {
                   max='20'
                   className='input input-bordered w-full'
                   value={autotuneSamples}
-                  onChange={e => setAutotuneSamples(Number.parseInt(e.target.value, 10) || 4)}
+                  onChange={e =>
+                    setAutotuneSamples(Number.parseInt(e.currentTarget.value, 10) || 4)
+                  }
                   placeholder='6'
                 />
               </SettingsFormField>
@@ -188,7 +190,9 @@ export function CalibrationTab({ formData, setField }) {
                   max='1500'
                   className='input input-bordered w-full'
                   value={autotuneWattage}
-                  onChange={e => setAutotuneWattage(Number.parseInt(e.target.value, 10) || 0)}
+                  onChange={e =>
+                    setAutotuneWattage(Number.parseInt(e.currentTarget.value, 10) || 0)
+                  }
                   placeholder='1360'
                 />
               </SettingsFormField>

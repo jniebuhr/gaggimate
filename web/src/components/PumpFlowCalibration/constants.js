@@ -9,6 +9,8 @@ export const PHASE = Object.freeze({
   ERROR: 'error',
 });
 
+/** @typedef {(typeof PHASE)[keyof typeof PHASE]} Phase */
+
 export const MODE_BREW = 1;
 export const SHOT_END_TIMEOUT_MS = 5 * 60 * 1000;
 export const POST_MODE_SETTLE_MS = 1500;

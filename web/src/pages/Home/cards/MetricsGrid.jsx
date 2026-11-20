@@ -42,7 +42,7 @@ function MetricCell({
   const Wrapper = onClick ? 'button' : 'div';
   const wrapperProps = onClick
     ? {
-        type: 'button',
+        type: /** @type {const} */ ('button'),
         onClick,
         disabled,
         'aria-label': ariaLabel || label,

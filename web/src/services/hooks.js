@@ -9,9 +9,14 @@ const useApiService = () => {
 const connected = computed(() => machine.value.connected);
 const selectedProfileId = computed(() => machine.value.status.selectedProfileId);
 
+// Full profile shape is schema/profile.json; only what this module touches is typed so far.
+/** @typedef {{ id: string, selected?: boolean, [key: string]: any }} ProfileSummary */
+
+/** @type {import('@preact/signals').Signal<ProfileSummary[]>} */
 const profiles = signal([]);
 const profilesLoaded = signal(false);
 const profilesLoading = signal(true);
+/** @type {Promise<void> | null} */
 let profilesInflight = null;
 
 // Overlay copies are reused so a profile keeps its identity across recomputes (GM-292)
@@ -36,7 +41,8 @@ const profilesWithSelection = computed(() => {
 const RETRY_MIN_MS = 1000;
 const RETRY_MAX_MS = 30000;
 let profilesGeneration = 0;
-let retryTimer = null;
+/** @type {ReturnType<typeof setTimeout> | undefined} */
+let retryTimer;
 let retryDelay = RETRY_MIN_MS;
 
 // A request sent on a dropped socket is never answered, so abandon it instead of joining it
@@ -49,16 +55,18 @@ effect(() => {
   retryDelay = RETRY_MIN_MS;
 });
 
+/** @param {import('./ApiService.js').default} apiService */
 const scheduleRetry = apiService => {
   clearTimeout(retryTimer);
   retryTimer = setTimeout(() => {
-    if (connected.value && !profilesLoaded.value) loadProfiles(apiService);
+    if (connected.value && !profilesLoaded.value) void loadProfiles(apiService);
   }, retryDelay);
   retryDelay = Math.min(retryDelay * 2, RETRY_MAX_MS);
 };
 
+/** @param {import('./ApiService.js').default} apiService */
 const loadProfiles = apiService => {
-  if (profilesInflight) return profilesInflight;
+  if (profilesInflight !== null) return profilesInflight;
   clearTimeout(retryTimer);
   const generation = profilesGeneration;
   const request = apiService
@@ -82,10 +90,12 @@ const loadProfiles = apiService => {
   return request;
 };
 
+/** @param {boolean} loading */
 const setProfilesLoading = loading => {
   profilesLoading.value = loading;
 };
 
+/** @param {ProfileSummary[] | ((current: ProfileSummary[]) => ProfileSummary[])} update */
 const setProfiles = update => {
   profiles.value = typeof update === 'function' ? update(profiles.value) : update;
 };
@@ -94,14 +104,14 @@ const useProfileList = () => {
   const apiService = useApiService();
 
   const invalidate = useCallback(async () => {
-    if (profilesInflight) await profilesInflight;
+    if (profilesInflight !== null) await profilesInflight;
     profilesLoaded.value = false;
     await loadProfiles(apiService);
   }, [apiService]);
 
   useSignalEffect(() => {
     if (connected.value && !profilesLoaded.value) {
-      loadProfiles(apiService);
+      void loadProfiles(apiService);
     }
   });
 

@@ -383,14 +383,14 @@ export function MachineTab({ formData, onChange, setField, profiles = [] }) {
                         steamPumpDraft ??
                         String(formData.steamPumpPercentage / (pressureAvailable.value ? 10 : 1))
                       }
-                      onChange={e => setSteamPumpDraft(e.target.value)}
+                      onChange={e => setSteamPumpDraft(e.currentTarget.value)}
                       onBlur={e => {
                         setSteamPumpDraft(null);
                         setField(
                           'steamPumpPercentage',
-                          (parseFloat(e.target.value) * (pressureAvailable.value ? 10 : 1)).toFixed(
-                            0,
-                          ),
+                          (
+                            parseFloat(e.currentTarget.value) * (pressureAvailable.value ? 10 : 1)
+                          ).toFixed(0),
                         );
                       }}
                     />
@@ -774,8 +774,8 @@ export function MachineTab({ formData, onChange, setField, profiles = [] }) {
               name='sunriseExtBrightness'
               type='range'
               className='range w-full'
-              min={0}
-              max={255}
+              min='0'
+              max='255'
               step={1}
               value={formData.sunriseExtBrightness}
               onChange={onChange('sunriseExtBrightness')}

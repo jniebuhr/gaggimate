@@ -94,6 +94,7 @@ function resolveCompareTitleOnlyDatasetIndex(chart) {
     }
   }
 
+  /** @type {{ datasetIndex: number, endX: number } | null} */
   let bestCandidate = null;
 
   chart.data.datasets.forEach((dataset, datasetIndex) => {
