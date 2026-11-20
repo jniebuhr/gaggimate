@@ -138,8 +138,8 @@ export function App() {
                           path='/statistics/:sourceAlias/:profileName'
                           component={StatisticsPage}
                         />
-                        <Route path='/analyzer/:source/:id' component={ShotAnalyzer} />{' '}
-                        {/*deep-link route (sorce & ID)*/}
+                        {/* deep-link route (source and id) */}
+                        <Route path='/analyzer/:source/:id' component={ShotAnalyzer} />
                         <Route default component={NotFound} />
                       </Router>
                     )}
