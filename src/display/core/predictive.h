@@ -2,6 +2,7 @@
 #define PREDICTIVE_H
 
 #include <Arduino.h>
+#include <cmath>
 #include <deque>
 
 class VolumetricRateCalculator {
@@ -77,7 +78,7 @@ class VolumetricRateCalculator {
 
         const double adjust = overshoot / rate;
 
-        if (isnan(adjust) || isinf(adjust)) {
+        if (std::isnan(adjust) || std::isinf(adjust)) {
             ESP_LOGW("VolumetricRateCalculator", "Invalid adjust: %f", adjust);
             return 0.0;
         }
