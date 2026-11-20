@@ -244,9 +244,9 @@ function ProfileCard({
         aria-labelledby={`profile-${data.id}-title`}
         aria-busy={Boolean(pending)}
       >
-        <div className='flex flex-grow flex-col overflow-hidden'>
+        <div className='flex grow flex-col overflow-hidden'>
           <div className='mx-2 flex flex-row items-center gap-2 align-middle'>
-            <div className='flex min-w-0 flex-grow flex-row items-center gap-4'>
+            <div className='flex min-w-0 grow flex-row items-center gap-4'>
               {/* CheckBox */}
               <div className='flex size-5 items-center justify-center'>
                 {visiblePending === 'select' ? (
@@ -268,291 +268,295 @@ function ProfileCard({
                   </label>
                 )}
               </div>
-              {/* Label and Type */}
-              <div className='flex flex-row flex-wrap items-center gap-4'>
-                <span
-                  id={`profile-${data.id}-title`}
-                  className='min-w-0 flex-1 truncate text-sm leading-tight font-bold lg:text-xl'
-                >
-                  {data.label}
-                </span>
-                <span
-                  className={`${typeClass} badge-sm lg:badge-md font-medium`}
-                  aria-label={t`Profile type: ${typeText}`}
-                >
-                  {typeText}
-                </span>
-                {isSystem && (
+              {/* Label, Type and Actions */}
+              <div className='flex flex-col grow min-w-0'>
+                <div className='flex flex-row items-center gap-2'>
                   <span
-                    className='badge badge-outline badge-sm lg:badge-md font-medium'
-                    title={t`Built-in profile, can be edited but not deleted`}
+                    id={`profile-${data.id}-title`}
+                    className='min-w-0 flex-1 truncate text-sm leading-tight font-bold lg:text-xl'
                   >
-                    <Trans context='profile badge'>System</Trans>
+                    {data.label}
                   </span>
-                )}
-                <button
-                  onClick={onToggleDetails}
-                  className='btn btn-xs btn-ghost self-start'
-                  aria-label={
-                    detailsCollapsed ? t`Show details for ${label}` : t`Hide details for ${label}`
-                  }
-                  aria-expanded={!detailsCollapsed}
-                  aria-controls={detailsSectionId}
-                  title={detailsCollapsed ? t`Show details` : t`Hide details`}
-                >
-                  <FontAwesomeIcon
-                    icon={faChevronRight}
-                    className={`transition-transform ${chevronRotation}`}
-                  />
-                </button>
-              </div>
-              {/*- Actions -*/}
-              <div
-                className='flex flex-1 flex-row justify-end gap-2'
-                role='group'
-                aria-label={t`Actions for ${label} profile`}
-              >
-                {/* Mobile: Popover actions menu */}
-                <div>
                   <button
-                    ref={kebabRef}
-                    onClick={toggleMenu}
-                    disabled={busy}
-                    className='btn btn-sm btn-ghost sm:hidden'
-                    aria-label={t`Open actions menu for ${label} profile`}
-                    aria-haspopup='menu'
-                    aria-expanded={menuOpen}
-                    aria-controls={`profile-${data.id}-menu`}
+                    onClick={onToggleDetails}
+                    className='btn btn-xs btn-ghost shrink-0'
+                    aria-label={
+                      detailsCollapsed ? t`Show details for ${label}` : t`Hide details for ${label}`
+                    }
+                    aria-expanded={!detailsCollapsed}
+                    aria-controls={detailsSectionId}
+                    title={detailsCollapsed ? t`Show details` : t`Hide details`}
                   >
-                    {visiblePending ? (
-                      <Spinner size={4} />
-                    ) : (
-                      <FontAwesomeIcon icon={faEllipsisVertical} />
-                    )}
+                    <FontAwesomeIcon
+                      icon={faChevronRight}
+                      className={`transition-transform ${chevronRotation}`}
+                    />
                   </button>
-                  {menuOpen && (
-                    <div
-                      id={`profile-${data.id}-menu`}
-                      ref={popoverRef}
-                      role='menu'
-                      className='bg-base-100 rounded-box z-50 w-56 p-2 shadow'
-                      style={{ position: 'fixed', top: 0, left: 0 }}
-                      onKeyDown={e => {
-                        if (e.key === 'Escape') closeMenu();
-                      }}
-                    >
-                      <ul className='menu' role='none'>
-                        <li role='none'>
-                          <button
-                            role='menuitem'
-                            onClick={() => {
-                              onFavoriteToggle();
-                              closeMenu();
-                            }}
-                            disabled={favoriteToggleDisabled || busy}
-                            className={`justify-start ${favoriteToggleClass}`}
-                            aria-label={
-                              data.favorite
-                                ? t`Remove ${label} from favorites`
-                                : t`Add ${label} to favorites`
-                            }
-                            aria-pressed={data.favorite}
-                          >
-                            <FontAwesomeIcon icon={faStar} className={bookmarkClass} />
-                            <span>{data.favorite ? t`Unfavorite` : t`Favorite`}</span>
-                          </button>
-                        </li>
-                        <li role='none'>
-                          <a
-                            role='menuitem'
-                            href={`/profiles/${data.id}`}
-                            onClick={closeMenu}
-                            aria-label={t`Edit ${label} profile`}
-                          >
-                            <FontAwesomeIcon icon={faPen} />
-                            <span>
-                              <Trans>Edit</Trans>
-                            </span>
-                          </a>
-                        </li>
-                        <li role='none'>
-                          <a
-                            role='menuitem'
-                            href={statsHref}
-                            onClick={closeMenu}
-                            className='text-success justify-start'
-                            aria-label={t`View statistics for ${label} profile`}
-                          >
-                            <FontAwesomeIcon icon={faChartSimple} />
-                            <span>
-                              <Trans>Statistics</Trans>
-                            </span>
-                          </a>
-                        </li>
-                        <li role='none'>
-                          <button
-                            role='menuitem'
-                            onClick={() => {
-                              onDownload();
-                              closeMenu();
-                            }}
-                            disabled={busy}
-                            className='text-primary justify-start'
-                            aria-label={t`Export ${label} profile`}
-                          >
-                            <FontAwesomeIcon icon={faFileExport} />
-                            <span>
-                              <Trans>Export</Trans>
-                            </span>
-                          </button>
-                        </li>
-                        <li role='none'>
-                          <button
-                            role='menuitem'
-                            onClick={() => {
-                              onDuplicate(data.id);
-                              closeMenu();
-                            }}
-                            disabled={busy}
-                            className='text-success justify-start'
-                            aria-label={t`Duplicate ${label} profile`}
-                          >
-                            <FontAwesomeIcon icon={faCopy} />
-                            <span>
-                              <Trans>Duplicate</Trans>
-                            </span>
-                          </button>
-                        </li>
-                        {!isSystem && (
-                          <li role='none'>
-                            <button
-                              role='menuitem'
-                              onClick={() => {
-                                confirmOrDelete(() => {
-                                  onDelete(data.id);
-                                  closeMenu();
-                                });
-                              }}
-                              disabled={deleteDisabled || busy}
-                              className={`justify-start ${deleteClass} ${confirmDelete ? 'bg-error text-error-content rounded font-semibold' : 'text-error'}`}
-                              aria-label={
-                                confirmDelete
-                                  ? t`Confirm deletion of ${label} profile`
-                                  : t`Delete ${label} profile`
-                              }
-                              title={confirmDelete ? t`Click to confirm delete` : t`Delete profile`}
-                            >
-                              <FontAwesomeIcon icon={faTrashCan} />
-                              <span>{confirmDelete ? t`Confirm` : t`Delete`}</span>
-                            </button>
-                          </li>
-                        )}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-
-                {/* Desktop: inline actions */}
-                <div
-                  className='hidden flex-row justify-end gap-2 sm:flex'
-                  role='group'
-                  aria-label={t`Actions for ${label} profile`}
-                >
-                  <Tooltip content={data.favorite ? t`Remove from favorites` : t`Add to favorites`}>
-                    <button
-                      onClick={onFavoriteToggle}
-                      disabled={favoriteToggleDisabled || busy}
-                      className={`btn btn-sm btn-ghost ${favoriteToggleClass}`}
-                      aria-label={
-                        data.favorite
-                          ? t`Remove ${label} from favorites`
-                          : t`Add ${label} to favorites`
-                      }
-                      aria-pressed={data.favorite}
-                    >
-                      {visiblePending === 'favorite' ? (
-                        <Spinner size={4} />
-                      ) : (
-                        <FontAwesomeIcon icon={faStar} className={bookmarkClass} />
-                      )}
-                    </button>
-                  </Tooltip>
-                  <Tooltip content={t`Edit profile`}>
-                    <a
-                      href={`/profiles/${data.id}`}
-                      className='btn btn-sm btn-ghost'
-                      aria-label={t`Edit ${label} profile`}
-                    >
-                      <FontAwesomeIcon icon={faPen} />
-                    </a>
-                  </Tooltip>
-                  <Tooltip content={t`View statistics for this profile`}>
-                    <a
-                      href={statsHref}
-                      className='btn btn-sm btn-ghost text-success'
-                      aria-label={t`View statistics for ${label} profile`}
-                    >
-                      <FontAwesomeIcon icon={faChartSimple} />
-                    </a>
-                  </Tooltip>
-                  <Tooltip content={t`Export profile`}>
-                    <button
-                      onClick={onDownload}
-                      disabled={busy}
-                      className='btn btn-sm btn-ghost text-primary'
-                      aria-label={t`Export ${label} profile`}
-                    >
-                      <FontAwesomeIcon icon={faFileExport} />
-                    </button>
-                  </Tooltip>
-                  <Tooltip content={t`Duplicate profile`}>
-                    <button
-                      onClick={() => onDuplicate(data.id)}
-                      disabled={busy}
-                      className='btn btn-sm btn-ghost text-success'
-                      aria-label={t`Duplicate ${label} profile`}
-                    >
-                      {visiblePending === 'duplicate' ? (
-                        <Spinner size={4} />
-                      ) : (
-                        <FontAwesomeIcon icon={faCopy} />
-                      )}
-                    </button>
-                  </Tooltip>
-                  {!isSystem && (
-                    <Tooltip
-                      content={
-                        deleteDisabled
-                          ? t`The selected profile can't be deleted`
-                          : confirmDelete
-                            ? t`Click to confirm`
-                            : t`Delete profile`
-                      }
-                    >
+                  {/*- Actions -*/}
+                  <div
+                    className='flex shrink-0 flex-row justify-end gap-2'
+                    role='group'
+                    aria-label={t`Actions for ${label} profile`}
+                  >
+                    {/* Mobile: Popover actions menu */}
+                    <div>
                       <button
-                        onClick={() => {
-                          confirmOrDelete(() => onDelete(data.id));
-                        }}
-                        disabled={deleteDisabled || busy}
-                        className={`btn btn-sm btn-ghost ${deleteClass} ${confirmDelete ? 'bg-error text-error-content' : 'text-error'}`}
-                        aria-label={
-                          confirmDelete
-                            ? t`Confirm deletion of ${label} profile`
-                            : t`Delete ${label} profile`
-                        }
+                        ref={kebabRef}
+                        onClick={toggleMenu}
+                        disabled={busy}
+                        className='btn btn-sm btn-ghost sm:hidden'
+                        aria-label={t`Open actions menu for ${label} profile`}
+                        aria-haspopup='menu'
+                        aria-expanded={menuOpen}
+                        aria-controls={`profile-${data.id}-menu`}
                       >
-                        {visiblePending === 'delete' ? (
+                        {visiblePending ? (
                           <Spinner size={4} />
                         ) : (
-                          <FontAwesomeIcon icon={faTrashCan} />
-                        )}
-                        {confirmDelete && (
-                          <span className='ml-2 font-semibold'>
-                            <Trans>Confirm</Trans>
-                          </span>
+                          <FontAwesomeIcon icon={faEllipsisVertical} />
                         )}
                       </button>
-                    </Tooltip>
+                      {menuOpen && (
+                        <div
+                          id={`profile-${data.id}-menu`}
+                          ref={popoverRef}
+                          role='menu'
+                          className='bg-base-100 rounded-box z-50 w-56 p-2 shadow'
+                          style={{ position: 'fixed', top: 0, left: 0 }}
+                          onKeyDown={e => {
+                            if (e.key === 'Escape') closeMenu();
+                          }}
+                        >
+                          <ul className='menu' role='none'>
+                            <li role='none'>
+                              <button
+                                role='menuitem'
+                                onClick={() => {
+                                  onFavoriteToggle();
+                                  closeMenu();
+                                }}
+                                disabled={favoriteToggleDisabled || busy}
+                                className={`justify-start ${favoriteToggleClass}`}
+                                aria-label={
+                                  data.favorite
+                                    ? t`Remove ${label} from favorites`
+                                    : t`Add ${label} to favorites`
+                                }
+                                aria-pressed={data.favorite}
+                              >
+                                <FontAwesomeIcon icon={faStar} className={bookmarkClass} />
+                                <span>{data.favorite ? t`Unfavorite` : t`Favorite`}</span>
+                              </button>
+                            </li>
+                            <li role='none'>
+                              <a
+                                role='menuitem'
+                                href={`/profiles/${data.id}`}
+                                onClick={closeMenu}
+                                aria-label={t`Edit ${label} profile`}
+                              >
+                                <FontAwesomeIcon icon={faPen} />
+                                <span>
+                                  <Trans>Edit</Trans>
+                                </span>
+                              </a>
+                            </li>
+                            <li role='none'>
+                              <a
+                                role='menuitem'
+                                href={statsHref}
+                                onClick={closeMenu}
+                                className='text-success justify-start'
+                                aria-label={t`View statistics for ${label} profile`}
+                              >
+                                <FontAwesomeIcon icon={faChartSimple} />
+                                <span>
+                                  <Trans>Statistics</Trans>
+                                </span>
+                              </a>
+                            </li>
+                            <li role='none'>
+                              <button
+                                role='menuitem'
+                                onClick={() => {
+                                  onDownload();
+                                  closeMenu();
+                                }}
+                                disabled={busy}
+                                className='text-primary justify-start'
+                                aria-label={t`Export ${label} profile`}
+                              >
+                                <FontAwesomeIcon icon={faFileExport} />
+                                <span>
+                                  <Trans>Export</Trans>
+                                </span>
+                              </button>
+                            </li>
+                            <li role='none'>
+                              <button
+                                role='menuitem'
+                                onClick={() => {
+                                  onDuplicate(data.id);
+                                  closeMenu();
+                                }}
+                                disabled={busy}
+                                className='text-success justify-start'
+                                aria-label={t`Duplicate ${label} profile`}
+                              >
+                                <FontAwesomeIcon icon={faCopy} />
+                                <span>
+                                  <Trans>Duplicate</Trans>
+                                </span>
+                              </button>
+                            </li>
+                            {!isSystem && (
+                              <li role='none'>
+                                <button
+                                  role='menuitem'
+                                  onClick={() => {
+                                    confirmOrDelete(() => {
+                                      onDelete(data.id);
+                                      closeMenu();
+                                    });
+                                  }}
+                                  disabled={deleteDisabled || busy}
+                                  className={`justify-start ${deleteClass} ${confirmDelete ? 'bg-error text-error-content rounded font-semibold' : 'text-error'}`}
+                                  aria-label={
+                                    confirmDelete
+                                      ? t`Confirm deletion of ${label} profile`
+                                      : t`Delete ${label} profile`
+                                  }
+                                  title={confirmDelete ? t`Click to confirm delete` : t`Delete profile`}
+                                >
+                                  <FontAwesomeIcon icon={faTrashCan} />
+                                  <span>{confirmDelete ? t`Confirm` : t`Delete`}</span>
+                                </button>
+                              </li>
+                            )}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Desktop: inline actions */}
+                    <div
+                      className='hidden flex-row justify-end gap-2 sm:flex'
+                      role='group'
+                      aria-label={t`Actions for ${label} profile`}
+                    >
+                      <Tooltip content={data.favorite ? t`Remove from favorites` : t`Add to favorites`}>
+                        <button
+                          onClick={onFavoriteToggle}
+                          disabled={favoriteToggleDisabled || busy}
+                          className={`btn btn-sm btn-ghost ${favoriteToggleClass}`}
+                          aria-label={
+                            data.favorite
+                              ? t`Remove ${label} from favorites`
+                              : t`Add ${label} to favorites`
+                          }
+                          aria-pressed={data.favorite}
+                        >
+                          {visiblePending === 'favorite' ? (
+                            <Spinner size={4} />
+                          ) : (
+                            <FontAwesomeIcon icon={faStar} className={bookmarkClass} />
+                          )}
+                        </button>
+                      </Tooltip>
+                      <Tooltip content={t`Edit profile`}>
+                        <a
+                          href={`/profiles/${data.id}`}
+                          className='btn btn-sm btn-ghost'
+                          aria-label={t`Edit ${label} profile`}
+                        >
+                          <FontAwesomeIcon icon={faPen} />
+                        </a>
+                      </Tooltip>
+                      <Tooltip content={t`View statistics for this profile`}>
+                        <a
+                          href={statsHref}
+                          className='btn btn-sm btn-ghost text-success'
+                          aria-label={t`View statistics for ${label} profile`}
+                        >
+                          <FontAwesomeIcon icon={faChartSimple} />
+                        </a>
+                      </Tooltip>
+                      <Tooltip content={t`Export profile`}>
+                        <button
+                          onClick={onDownload}
+                          disabled={busy}
+                          className='btn btn-sm btn-ghost text-primary'
+                          aria-label={t`Export ${label} profile`}
+                        >
+                          <FontAwesomeIcon icon={faFileExport} />
+                        </button>
+                      </Tooltip>
+                      <Tooltip content={t`Duplicate profile`}>
+                        <button
+                          onClick={() => onDuplicate(data.id)}
+                          disabled={busy}
+                          className='btn btn-sm btn-ghost text-success'
+                          aria-label={t`Duplicate ${label} profile`}
+                        >
+                          {visiblePending === 'duplicate' ? (
+                            <Spinner size={4} />
+                          ) : (
+                            <FontAwesomeIcon icon={faCopy} />
+                          )}
+                        </button>
+                      </Tooltip>
+                      {!isSystem && (
+                        <Tooltip
+                          content={
+                            deleteDisabled
+                              ? t`The selected profile can't be deleted`
+                              : confirmDelete
+                                ? t`Click to confirm`
+                                : t`Delete profile`
+                          }
+                        >
+                          <button
+                            onClick={() => {
+                              confirmOrDelete(() => onDelete(data.id));
+                            }}
+                            disabled={deleteDisabled || busy}
+                            className={`btn btn-sm btn-ghost ${deleteClass} ${confirmDelete ? 'bg-error text-error-content' : 'text-error'}`}
+                            aria-label={
+                              confirmDelete
+                                ? t`Confirm deletion of ${label} profile`
+                                : t`Delete ${label} profile`
+                            }
+                          >
+                            {visiblePending === 'delete' ? (
+                              <Spinner size={4} />
+                            ) : (
+                              <FontAwesomeIcon icon={faTrashCan} />
+                            )}
+                            {confirmDelete && (
+                              <span className='ml-2 font-semibold'>
+                                <Trans>Confirm</Trans>
+                              </span>
+                            )}
+                          </button>
+                        </Tooltip>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <div className='flex flex-row items-center gap-2'>
+                  <span
+                    className={`${typeClass} badge-sm lg:badge-md font-medium`}
+                    aria-label={t`Profile type: ${typeText}`}
+                  >
+                    {typeText}
+                  </span>
+                  {isSystem && (
+                    <span
+                      className='badge badge-outline badge-sm lg:badge-md font-medium'
+                      title={t`Built-in profile, can be edited but not deleted`}
+                    >
+                      <Trans context='profile badge'>System</Trans>
+                    </span>
                   )}
                 </div>
               </div>
@@ -621,7 +625,7 @@ function ProfileCard({
                   </button>
                 </Tooltip>
               </div>
-              <div className='flex-grow overflow-x-auto'>
+              <div className='grow overflow-x-auto'>
                 {data.type === 'pro' ? (
                   <ExtendedProfileChart data={{ ...data, phases }} className='max-h-36' />
                 ) : (
@@ -1109,7 +1113,7 @@ export function ProfileList() {
   return (
     <>
       <div className='mb-4 flex flex-row items-center gap-2'>
-        <h1 className='flex-grow text-2xl font-bold sm:text-3xl'>
+        <h1 className='grow text-2xl font-bold sm:text-3xl'>
           <Trans>Profiles</Trans>
         </h1>
       </div>
@@ -1131,7 +1135,7 @@ export function ProfileList() {
             />
           </label>
         </div>
-        <div className='flex flex-grow items-center justify-end gap-2'>
+        <div className='flex grow items-center justify-end gap-2'>
           <Tooltip content={t`Export all profiles`}>
             <button
               id='export-profiles'
