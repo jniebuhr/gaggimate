@@ -91,11 +91,11 @@ export function ExtendedProfileForm(props) {
           />
         </Card>
         <Card sm={10}>
-          <div className='card-header flex items-center gap-4'>
-            <h2 className='card-title flex-grow text-lg sm:text-xl'>
+          <div className='flex items-center gap-4'>
+            <h2 className='card-title grow text-lg sm:text-xl'>
               <Trans>Phases</Trans>
             </h2>
-            <h5 className='card-subtitle text-sm sm:text-base'>
+            <h5 className='text-sm sm:text-base'>
               {phases.length > 0 ? `${currentPhaseIndex + 1} / ${phases.length}` : '0 / 0'}
             </h5>
             <div>
@@ -144,7 +144,6 @@ export function ExtendedProfileForm(props) {
                 phase={currentPhase}
                 index={currentPhaseIndex}
                 onChange={phase => onPhaseChange(currentPhaseIndex, phase)}
-                onRemove={() => onPhaseRemove(currentPhaseIndex)}
                 pressureAvailable={pressureAvailable}
               />
             ) : (
