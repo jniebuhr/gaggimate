@@ -1,3 +1,4 @@
+// @ts-check
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   LEGEND_BLOCK_LABELS,

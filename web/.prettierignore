@@ -3,6 +3,7 @@ node_modules
 /.idea
 *.iml
 /coverage/
-package-lock.json/dist-app
+package-lock.json
+/dist-app
 /android
 /ios

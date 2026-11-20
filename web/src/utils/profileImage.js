@@ -1,3 +1,4 @@
+// @ts-check
 import { t } from '@lingui/core/macro';
 
 // Profile images live on the device SD card as a 4-byte LVGL header (true color, 300x300) + RGB565 little endian pixels.

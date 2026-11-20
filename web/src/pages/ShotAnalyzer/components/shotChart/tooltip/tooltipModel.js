@@ -1,3 +1,4 @@
+// @ts-check
 import {
   EXTERNAL_TOOLTIP_FALLBACK_OFFSET_X,
   TOOLTIP_GROUP_BY_LABEL,
@@ -384,6 +385,18 @@ function resolveTitleLines({ isCompareTooltipMode, compareXValue, tooltip }) {
     : [];
 }
 
+/**
+ * @param {object} options
+ * @param {any} options.chart Chart.js chart instance.
+ * @param {any} options.tooltip Chart.js tooltip model.
+ * @param {(xValue: number) => { totalWaterMl: number, phaseWaterMl: number, phaseTotalWaterMl: number }} [options.getHoverWaterValuesAtX]
+ *   Required for the 'single' tooltip mode.
+ * @param {Record<string, string>} [options.tooltipColorByLabel] Required for the 'single' tooltip mode.
+ * @param {string} [options.tooltipMode]
+ * @param {any[]} [options.phaseTooltipGroups]
+ * @param {boolean} [options.showPhaseNames]
+ * @param {boolean} [options.showStops]
+ */
 export function buildExternalTooltipState({
   chart,
   tooltip,

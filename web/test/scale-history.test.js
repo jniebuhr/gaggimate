@@ -1,3 +1,4 @@
+// @ts-check
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { parseBinaryShot } from '../src/pages/ShotHistory/parseBinaryShot.js';
@@ -30,14 +31,21 @@ function fixture(version, size, flags, elapsed = true) {
   return buffer;
 }
 
-for (const [name, version, size, flags, elapsed, connected] of [
+for (const [
+  name,
+  version,
+  size,
+  flags,
+  elapsed,
+  connected,
+] of /** @type {[string, number, number, number, boolean, boolean][]} */ ([
   ['legacy v5', 5, 26, 4, false, true],
   ['legacy hardware-scale v6', 6, 26, 0x100, false, true],
   ['upstream v6', 6, 28, 4, true, true],
   ['upstream v7', 7, 30, 4, true, true],
   ['new hardware-scale v8', 8, 30, 0x100, true, true],
   ['v8 disconnected active scale with Bluetooth still connected', 8, 30, 4, true, false],
-]) {
+])) {
   test(`decode ${name}`, () => {
     const shot = parseBinaryShot(fixture(version, size, flags, elapsed), 'test');
     assert.deepEqual(

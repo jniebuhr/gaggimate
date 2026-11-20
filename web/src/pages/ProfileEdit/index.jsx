@@ -1,3 +1,4 @@
+// @ts-check
 import { useLocation, useRoute } from 'preact-iso';
 import { useCallback, useEffect, useState, useContext } from 'preact/hooks';
 import {

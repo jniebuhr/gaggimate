@@ -1,3 +1,4 @@
+// @ts-check
 import Section from '../Card.jsx';
 
 // Helper component for an input group skeleton

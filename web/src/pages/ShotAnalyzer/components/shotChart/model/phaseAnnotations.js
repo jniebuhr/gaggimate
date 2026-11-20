@@ -1,3 +1,4 @@
+// @ts-check
 /** Builds phase, stop, and overview metadata shared by chart rendering and tooltips. */
 
 import { faClock } from '@fortawesome/free-solid-svg-icons/faClock';
@@ -414,6 +415,7 @@ function addPhaseSeparatorAndStops({
     const shotStartTime = (samples[0].t || 0) / 1000;
     phaseAnnotations.shot_start = createPhaseSeparatorAnnotation({
       value: shotStartTime,
+      // @ts-expect-error colors/visibility are passed but createPhaseSeparatorAnnotation ignores them
       colors,
       visibility,
     });
@@ -429,6 +431,7 @@ function addPhaseSeparatorAndStops({
 
     phaseAnnotations[`phase_line_${index}`] = createPhaseSeparatorAnnotation({
       value: timeInSeconds,
+      // @ts-expect-error colors/visibility are passed but createPhaseSeparatorAnnotation ignores them
       colors,
       visibility,
     });

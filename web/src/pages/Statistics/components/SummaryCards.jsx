@@ -1,3 +1,4 @@
+// @ts-check
 import { faDroplet } from '@fortawesome/free-solid-svg-icons/faDroplet';
 import { faMugHot } from '@fortawesome/free-solid-svg-icons/faMugHot';
 import { faScaleBalanced } from '@fortawesome/free-solid-svg-icons/faScaleBalanced';

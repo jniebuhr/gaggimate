@@ -1,3 +1,4 @@
+// @ts-check
 import { grindAvailable } from '../../utils/grind.js';
 import { computed } from '@preact/signals';
 import { useContext, useEffect, useState } from 'preact/hooks';
@@ -32,6 +33,8 @@ export function useDashboardState() {
   const { data: settings } = useQuery(
     'settings-cache',
     async () => (await fetch('/api/settings')).json(),
+    // @ts-expect-error preact-fetching's useQuery takes (key, fetcher) only; this options object
+    // is silently ignored (no staleTime / refetchOnWindowFocus support).
     { staleTime: 30000, refetchOnWindowFocus: false },
   );
 

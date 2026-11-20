@@ -1,3 +1,4 @@
+// @ts-check
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { getShotChartDisplayLabel, getShotChartLabelIcon } from '../labelVisuals';
 import { TooltipShotBadge } from './TooltipPrimitives';

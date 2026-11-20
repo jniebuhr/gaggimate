@@ -1,3 +1,4 @@
+// @ts-check
 import { TclConverter } from './TclConverter.js';
 
 export function parseProfile(input) {
@@ -57,7 +58,7 @@ function parseJsonProfile(input) {
       let phase = {
         name: p && typeof p.name === 'string' && p.name.trim() ? p.name : `Phase ${i + 1}`,
         valve: 1,
-        pump: 0,
+        pump: /** @type {number | { target: string, pressure: number, flow: number }} */ (0),
         duration: Math.max(p.target.time, p.stopConditions.time) / 1000,
         targets: [],
         temperature: isPositive(p.waterTemperature) ? p.waterTemperature : 0,

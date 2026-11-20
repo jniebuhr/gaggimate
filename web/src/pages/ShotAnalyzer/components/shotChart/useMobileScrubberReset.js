@@ -1,3 +1,4 @@
+// @ts-check
 import { useEffect } from 'preact/hooks';
 
 export function useMobileScrubberReset({ enabled, hasActiveScrubValue, scrubberRef, onReset }) {

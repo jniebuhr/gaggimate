@@ -1,3 +1,4 @@
+// @ts-check
 import { t } from '@lingui/core/macro';
 /**
  * createShotChartConfigs.js
@@ -31,6 +32,13 @@ import {
 const MAIN_CHART_MARKER_TOP_PADDING = 48;
 const RIGHT_AXIS_UNIT_ROW_GAP = 14;
 
+/**
+ * Chart.js configs for the main and temperature charts. Typed loosely because the options carry
+ * settings for the custom plugins (phaseBackgroundOverlay, axisUnitLabels, ...) that Chart.js'
+ * `PluginOptionsByType` does not know about.
+ *
+ * @returns {{ mainConfig: any, tempConfig: any }}
+ */
 export function createShotChartConfigs({
   model,
   colors,

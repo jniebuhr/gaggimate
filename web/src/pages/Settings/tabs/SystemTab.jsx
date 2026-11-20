@@ -230,12 +230,36 @@ function MaintenanceSection({
   );
 }
 
+/**
+ * Payload of `res:ota-settings` (see `WebUIPlugin.cpp`).
+ * @typedef {object} OtaSettings
+ * @property {boolean} [displayUpdateAvailable]
+ * @property {boolean} [controllerUpdateAvailable]
+ * @property {string} [displayVersion]
+ * @property {string} [controllerVersion]
+ * @property {string} [hardware]
+ * @property {string} [latestVersion]
+ * @property {string} [channel]
+ * @property {boolean} [updating]
+ * @property {number} [spiffsTotal]
+ * @property {number} [spiffsUsed]
+ * @property {number} [spiffsFree]
+ * @property {number} [spiffsUsedPct]
+ * @property {number} [sdTotal]
+ * @property {number} [sdUsed]
+ * @property {number} [sdUsedPct]
+ * @property {number} [heapFree]
+ * @property {number} [heapLargest]
+ * @property {number} [heapTotal]
+ * @property {boolean} [controllerTaskHealth]
+ */
+
 export function SystemTab() {
   const { t } = useLingui();
   const apiService = useContext(ApiServiceContext);
   const [isLoading, setIsLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [formData, setFormData] = useState({});
+  const [formData, setFormData] = useState(/** @type {OtaSettings} */ ({}));
   const [phase, setPhase] = useState(0);
   const [progress, setProgress] = useState(0);
   const rssi = machine.value.status.rssi;
@@ -268,7 +292,7 @@ export function SystemTab() {
 
   useEffect(() => {
     const listenerId = apiService.on('res:ota-settings', msg => {
-      setFormData(msg);
+      setFormData(/** @type {OtaSettings} */ (msg));
       setIsLoading(false);
       setSubmitting(false);
     });

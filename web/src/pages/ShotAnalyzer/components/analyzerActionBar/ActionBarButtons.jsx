@@ -1,3 +1,4 @@
+// @ts-check
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { faChevronLeft } from '@fortawesome/free-solid-svg-icons/faChevronLeft';

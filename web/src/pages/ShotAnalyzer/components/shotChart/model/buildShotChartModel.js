@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * buildShotChartModel.js
  *

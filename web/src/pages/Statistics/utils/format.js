@@ -1,3 +1,4 @@
+// @ts-check
 // Shared formatting helpers for Statistics components.
 
 export function fmt(val, digits = 1) {

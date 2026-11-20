@@ -1,3 +1,17 @@
+// @ts-check
+/**
+ * @param {object} props
+ * @param {number} [props.xs] - Grid column span (1-12) per breakpoint
+ * @param {number} [props.sm]
+ * @param {number} [props.md]
+ * @param {number} [props.lg]
+ * @param {number} [props.xl]
+ * @param {import('preact').ComponentChildren} [props.title]
+ * @param {import('preact').ComponentChildren} [props.children]
+ * @param {string} [props.className]
+ * @param {import('preact').JSX.AriaRole} [props.role]
+ * @param {boolean} [props.fullHeight]
+ */
 export default function Card({
   xs,
   sm,

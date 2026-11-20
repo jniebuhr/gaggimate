@@ -1,3 +1,4 @@
+// @ts-check
 import { msg, t } from '@lingui/core/macro';
 import { i18n } from '../i18n.js';
 

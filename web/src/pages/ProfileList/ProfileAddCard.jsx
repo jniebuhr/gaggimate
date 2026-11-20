@@ -1,3 +1,4 @@
+// @ts-check
 import Card from '../../components/Card.jsx';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';

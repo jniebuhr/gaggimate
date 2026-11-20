@@ -1,3 +1,4 @@
+// @ts-check
 // Pure helper functions for StatisticsView: date parsing, profile/shot pinning, selection, candidate filtering, and display formatting
 import {
   cleanName,
@@ -142,7 +143,7 @@ export function isStatisticsHotkeyBlockedTarget(target) {
     typeof Element !== 'undefined' && target instanceof Element ? target : document.activeElement;
   if (!activeElement) return false;
   const tag = activeElement.tagName?.toLowerCase();
-  if (activeElement.isContentEditable) return true;
+  if (/** @type {HTMLElement} */ (activeElement).isContentEditable) return true;
   if (tag === 'input' || tag === 'textarea' || tag === 'select' || tag === 'button') return true;
   return !!activeElement.closest(
     'input, textarea, select, button, summary, a[href], [contenteditable="true"], [role="textbox"]',
@@ -166,6 +167,12 @@ export function getStatisticsCompareFallbackKey(entry, index) {
   );
 }
 
+/**
+ * @param {any} entry
+ * @param {object} [options]
+ * @param {string} [options.key]
+ * @param {boolean} [options.isReference]
+ */
 export function buildStatisticsCompareEntry(entry, { key, isReference = false } = {}) {
   if (!entry?.shotData || !entry?.analysis) return null;
 

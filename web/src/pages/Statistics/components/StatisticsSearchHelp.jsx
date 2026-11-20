@@ -1,3 +1,4 @@
+// @ts-check
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCircleQuestion } from '@fortawesome/free-solid-svg-icons/faCircleQuestion';
 import { useEffect, useRef, useState } from 'preact/hooks';

@@ -1,3 +1,4 @@
+// @ts-check
 import { faBullseye } from '@fortawesome/free-solid-svg-icons/faBullseye';
 import { faClock } from '@fortawesome/free-solid-svg-icons/faClock';
 import { faDroplet } from '@fortawesome/free-solid-svg-icons/faDroplet';
@@ -9,6 +10,17 @@ import { msg } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react/macro';
 import { formatMetricValue } from '../../utils/analyzerUtils';
 
+/**
+ * @type {Array<{
+ *   key: string,
+ *   label: import('@lingui/core').MessageDescriptor,
+ *   unit: string,
+ *   color: string,
+ *   icon: import('@fortawesome/fontawesome-svg-core').IconDefinition,
+ *   getValue: (total: any) => any,
+ *   digits?: number,
+ * }>}
+ */
 const metricRows = [
   {
     key: 'duration',

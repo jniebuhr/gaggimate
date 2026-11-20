@@ -1,9 +1,18 @@
+// @ts-check
 import { createContext } from 'preact';
 import { parseWarningStates } from '../utils/warnings.js';
 import { signal } from '@preact/signals';
 import uuidv4 from '../utils/uuid.js';
 import { isApp } from '../app/platform.js';
 import { machineSocketUrl } from '../app/machines.js';
+
+/** @typedef {import('./machineTypes.js').MachineState} MachineState */
+/** @typedef {import('./machineTypes.js').MachineStatus} MachineStatus */
+/** @typedef {import('./machineTypes.js').Capabilities} Capabilities */
+/** @typedef {import('./machineTypes.js').ScaleState} ScaleState */
+/** @typedef {import('./machineTypes.js').StatusFrame} StatusFrame */
+/** @typedef {import('./machineTypes.js').SocketMessage} SocketMessage */
+/** @typedef {(message: SocketMessage) => void} SocketListener */
 
 function randomId() {
   return Math.random()
@@ -13,14 +22,22 @@ function randomId() {
 }
 
 export default class ApiService {
+  /** @type {WebSocket | null} */
   socket = null;
+  /** @type {Record<string, Record<string, SocketListener>>} */
   listeners = {};
   reconnectAttempts = 0;
   maxReconnectDelay = 30000; // Maximum delay of 30 seconds
   baseReconnectDelay = 1000; // Start with 1 second delay
-  reconnectTimeout = null;
+  /** @type {ReturnType<typeof setTimeout> | undefined} */
+  reconnectTimeout = undefined;
 
   // socketUrl/state let extra instances watch other machines without touching the dashboard's state.
+  /**
+   * @param {object} [options]
+   * @param {string | null} [options.socketUrl]
+   * @param {import('@preact/signals').Signal<MachineState>} [options.state]
+   */
   constructor({ socketUrl = null, state = machine } = {}) {
     this.socketUrl = socketUrl;
     this.state = state;
@@ -43,7 +60,7 @@ export default class ApiService {
 
   async connect() {
     clearTimeout(this.reconnectTimeout);
-    this.reconnectTimeout = null;
+    this.reconnectTimeout = undefined;
     try {
       this._dropSocket();
 
@@ -98,6 +115,7 @@ export default class ApiService {
     };
   }
 
+  /** @param {Event} error */
   _onError(error) {
     console.error('WebSocket error:', error);
     if (this.socket) {
@@ -125,7 +143,9 @@ export default class ApiService {
     }, delay);
   }
 
+  /** @param {MessageEvent<string>} event */
   _onMessage(event) {
+    /** @type {SocketMessage} */
     let message;
     try {
       message = JSON.parse(event.data);
@@ -134,7 +154,7 @@ export default class ApiService {
     }
     const listeners = Object.values(this.listeners[message.tp] || {});
     if (message.tp === 'evt:status') {
-      this._onStatus(message);
+      this._onStatus(/** @type {StatusFrame} */ (message));
     } else if (message.tp === 'evt:hardware-scale') {
       this._onHardwareScale(message);
     } else if (message.tp.startsWith('evt:scale:')) {
@@ -145,6 +165,7 @@ export default class ApiService {
     }
   }
 
+  /** @param {SocketMessage} event */
   send(event) {
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
       this.socket.send(JSON.stringify(event));
@@ -153,7 +174,12 @@ export default class ApiService {
     }
   }
 
-  async request(data = {}) {
+  /**
+   * Sends a `req:<name>` message and resolves with the `res:<name>` answer carrying the same `rid`.
+   * @param {SocketMessage} data
+   * @returns {Promise<SocketMessage>}
+   */
+  async request(data) {
     if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
       throw new Error('WebSocket is not connected');
     }
@@ -185,6 +211,11 @@ export default class ApiService {
     });
   }
 
+  /**
+   * @param {string} type Message `tp` to listen for.
+   * @param {SocketListener} listener
+   * @returns {string} Listener id for off().
+   */
   on(type, listener) {
     const id = randomId();
     if (!this.listeners[type]) {
@@ -194,17 +225,29 @@ export default class ApiService {
     return id;
   }
 
+  /**
+   * @param {string} type
+   * @param {string} id
+   */
   off(type, id) {
     delete this.listeners[type][id];
   }
 
   // evt:status frames are partial: fast telemetry every tick, slow state only when it changes
   // (plus a full snapshot on connect and every 10 s). Merge onto the last known status.
+  /** @param {StatusFrame} message */
   _onStatus(message) {
+    /** @param {keyof StatusFrame} key */
     const has = key => Object.prototype.hasOwnProperty.call(message, key);
     const status = { ...this.state.value.status };
+    /**
+     * @param {keyof StatusFrame} key
+     * @param {keyof MachineStatus} name
+     * @param {(value: any) => any} [convert]
+     */
     const map = (key, name, convert = v => v) => {
-      if (has(key)) status[name] = convert(message[key]);
+      // Keys vary per call, so write through an index type; the key params keep the names checked.
+      if (has(key)) /** @type {Record<string, unknown>} */ (status)[name] = convert(message[key]);
     };
     map('ct', 'currentTemperature');
     map('tt', 'targetTemperature');
@@ -247,6 +290,7 @@ export default class ApiService {
     map('hp', 'currentBoilerPower', v => v ?? 0);
     map('pkr', 'currentPuckResistance', v => v ?? 0);
     map('pf', 'currentPuckFlow', v => v ?? 0);
+    // @ts-expect-error The firmware never sends `cv` (WebSocketHandler::publishTelemetry), so this stays 0.
     map('cv', 'currentCoffeeVolume', v => v ?? 0);
     map('up', 'update', v => !!v);
     map('warn', 'warnings', parseWarningStates);
@@ -277,6 +321,7 @@ export default class ApiService {
     this.state.value = { ...this.state.value, connected: true, status, capabilities, history };
   }
 
+  /** @param {SocketMessage} message */
   _onScaleEvent(message) {
     const now = Date.now();
     switch (message.tp) {
@@ -299,6 +344,7 @@ export default class ApiService {
     }
   }
 
+  /** @param {SocketMessage} message */
   _onHardwareScale(message) {
     this.state.value = {
       ...this.state.value,
@@ -313,11 +359,12 @@ export default class ApiService {
   }
 }
 
-export const ApiServiceContext = createContext(null);
+export const ApiServiceContext = createContext(/** @type {ApiService | null} */ (null));
 
 // Fresh per-machine state; `machine` is the one the UI renders.
-export const createMachineState = () =>
-  signal({
+export const createMachineState = () => {
+  /** @type {MachineState} */
+  const initial = {
     connected: false,
     status: {
       currentTemperature: 0,
@@ -330,7 +377,6 @@ export const createMachineState = () =>
       selectedProfile: '',
       selectedProfileId: null,
       brewTargetDuration: 0,
-      brewTargetVolume: 0,
       grindTargetDuration: 0,
       grindTargetVolume: 0,
       grindTarget: 0,
@@ -355,10 +401,13 @@ export const createMachineState = () =>
       disconnected: null,
     },
     history: [],
-  });
+  };
+  return signal(initial);
+};
 
 export const machine = createMachineState();
 
+/** @param {Partial<ScaleState>} patch */
 export const updateScaleState = patch => {
   machine.value = { ...machine.value, scale: { ...machine.value.scale, ...patch } };
 };

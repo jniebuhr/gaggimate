@@ -1,3 +1,4 @@
+// @ts-check
 // Firmware versions come from `git describe`: "v1.9.0" for a release, "v1.9.0-82-gad2cb603[-dirty]" for a nightly.
 const VERSION_PATTERN = /^v?(\d+)\.(\d+)\.(\d+)(?:-(\d+)-g[0-9a-f]+)?/i;
 

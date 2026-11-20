@@ -1,3 +1,4 @@
+// @ts-check
 import { faPowerOff } from '@fortawesome/free-solid-svg-icons/faPowerOff';
 import { faMugHot } from '@fortawesome/free-solid-svg-icons/faMugHot';
 import { faWind } from '@fortawesome/free-solid-svg-icons/faWind';

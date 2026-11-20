@@ -56,6 +56,18 @@ function WarningLevelSelect({ id, label, icon, value, onChange }) {
   );
 }
 
+/**
+ * @param {object} props
+ * @param {string} props.id
+ * @param {string} props.label
+ * @param {string} [props.placeholder]
+ * @param {string} props.value
+ * @param {(e: Event) => void} props.onChange
+ * @param {boolean} props.shown
+ * @param {(shown: boolean) => void} props.setShown
+ * @param {number} [props.minLength]
+ * @param {number} [props.maxLength]
+ */
 function PasswordField({ id, label, placeholder, value, onChange, shown, setShown, ...rest }) {
   const { t } = useLingui();
   return (

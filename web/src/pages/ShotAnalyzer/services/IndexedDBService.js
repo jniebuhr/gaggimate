@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * IndexedDBService.js
  *
@@ -11,6 +12,7 @@ import { openDB } from 'idb';
 const DB_NAME = 'gaggimate-analyzer';
 const DB_VERSION = 3;
 
+/** @param {any} [profile] */
 function normalizeStoredProfile(profile = {}) {
   const label = String(
     profile.label || profile.name || profile.fileName || profile.exportName || '',
@@ -198,7 +200,7 @@ class IndexedDBService {
   /**
    * Get notes for a shot by ID
    * @param {string} id - Shot ID
-   * @returns {Object|undefined} Notes object or undefined
+   * @returns {Promise<Object|undefined>} Notes object or undefined
    */
   async getNotes(id) {
     const db = await this.init();
@@ -230,7 +232,7 @@ class IndexedDBService {
 
   /**
    * Get storage stats
-   * @returns {Object} Count of shots and profiles
+   * @returns {Promise<Object>} Count of shots and profiles
    */
   async getStats() {
     const db = await this.init();

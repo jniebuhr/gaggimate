@@ -124,6 +124,42 @@ function getLibraryCompareState({
   };
 }
 
+/**
+ * @param {object} props
+ * @param {string} props.title
+ * @param {any[]} props.items
+ * @param {boolean} props.isShot
+ * @param {number | string} props.sectionHeight
+ * @param {string} props.searchValue
+ * @param {string} props.sortKey
+ * @param {string} props.sortOrder
+ * @param {string} props.sourceFilter
+ * @param {(value: string) => void} props.onSearchChange
+ * @param {(key: string, order?: string) => void} props.onSortChange
+ * @param {(value: string) => void} props.onSourceFilterChange
+ * @param {(item: any) => void} props.onLoad
+ * @param {(item: any) => void} props.onExport
+ * @param {(item: any) => void} props.onDelete
+ * @param {() => void} props.onExportAll
+ * @param {() => void} props.onDeleteAll
+ * @param {number} [props.compareSelectedCount] Currently unused.
+ * @param {Set<string>} [props.compareSelectionKeys]
+ * @param {string[]} [props.comparePendingKeys]
+ * @param {string} [props.compareReferenceKey]
+ * @param {boolean} [props.compareMode]
+ * @param {(item: any, checked: boolean) => void} [props.onCompareToggle]
+ * @param {(item: any) => void} [props.onShowStats]
+ * @param {(item: any) => any} props.getMatchStatus
+ * @param {(item: any) => any} [props.getCompareStatus]
+ * @param {(item: any) => number | null | undefined} [props.getCompareBadgeNumber]
+ * @param {(item: any) => any} [props.getActiveStatus]
+ * @param {(item: any) => any} [props.getPinStatus]
+ * @param {(item: any) => string} [props.getPinDisabledReason]
+ * @param {(item: any) => void} [props.onPinToggle]
+ * @param {boolean} [props.pinnedFirstEnabled]
+ * @param {() => void} [props.onPinnedFirstToggle]
+ * @param {boolean} props.isLoading
+ */
 export function LibrarySection({
   title,
   items,
