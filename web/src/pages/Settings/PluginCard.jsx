@@ -3,10 +3,13 @@ import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import homekitImage from '../../assets/homekit.png';
 import { faCalendarDays } from '@fortawesome/free-solid-svg-icons/faCalendarDays';
-import { ApiServiceContext } from '../../services/ApiService.js';
+import { computed } from '@preact/signals';
+import { machine, ApiServiceContext } from '../../services/ApiService.js';
 import { useContext, useEffect, useState } from 'preact/hooks';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { useProfileList } from '../../services/hooks.js';
+
+const pressureAvailable = computed(() => machine.value.capabilities.pressure);
 
 const MAHLKONIG_MIN_RECIPES = 4;
 
@@ -262,38 +265,39 @@ export function PluginCard({
             aria-label={t`Enable Boiler Refill`}
           />
         </div>
-        {formData.boilerFillActive && (
-          <div className='border-base-300 mt-4 grid grid-cols-2 gap-4 border-t pt-4'>
-            <div className='form-control'>
-              <label htmlFor='startupFillTime' className='mb-2 block text-sm font-medium'>
-                <Trans>On startup (s)</Trans>
-              </label>
-              <input
-                id='startupFillTime'
-                name='startupFillTime'
-                type='number'
-                className='input input-bordered w-full'
-                placeholder='0'
-                value={formData.startupFillTime}
-                onChange={onChange('startupFillTime')}
-              />
+        {formData.boilerFillActive &&
+          !(pressureAvailable.value && !machine.value.capabilities.dualBoiler) && (
+            <div className='border-base-300 mt-4 grid grid-cols-2 gap-4 border-t pt-4'>
+              <div className='form-control'>
+                <label htmlFor='startupFillTime' className='mb-2 block text-sm font-medium'>
+                  <Trans>On startup (s)</Trans>
+                </label>
+                <input
+                  id='startupFillTime'
+                  name='startupFillTime'
+                  type='number'
+                  className='input input-bordered w-full'
+                  placeholder='0'
+                  value={formData.startupFillTime}
+                  onChange={onChange('startupFillTime')}
+                />
+              </div>
+              <div className='form-control'>
+                <label htmlFor='steamFillTime' className='mb-2 block text-sm font-medium'>
+                  <Trans>On steam deactivate (s)</Trans>
+                </label>
+                <input
+                  id='steamFillTime'
+                  name='steamFillTime'
+                  type='number'
+                  className='input input-bordered w-full'
+                  placeholder='0'
+                  value={formData.steamFillTime}
+                  onChange={onChange('steamFillTime')}
+                />
+              </div>
             </div>
-            <div className='form-control'>
-              <label htmlFor='steamFillTime' className='mb-2 block text-sm font-medium'>
-                <Trans>On steam deactivate (s)</Trans>
-              </label>
-              <input
-                id='steamFillTime'
-                name='steamFillTime'
-                type='number'
-                className='input input-bordered w-full'
-                placeholder='0'
-                value={formData.steamFillTime}
-                onChange={onChange('steamFillTime')}
-              />
-            </div>
-          </div>
-        )}
+          )}
       </div>
 
       <div className='bg-base-200 rounded-lg p-4'>
