@@ -181,11 +181,11 @@ void WebUIPlugin::setupServer() {
         serializeJson(doc, *response);
         request->send(response);
     });
-    server.on("/api/scales/list", [this](AsyncWebServerRequest *request) { handleBluetoothList(request); });
-    server.on("/api/scales/connect", [this](AsyncWebServerRequest *request) { handleBluetoothConnect(request); });
-    server.on("/api/scales/scan", [this](AsyncWebServerRequest *request) { handleBluetoothScan(request); });
-    server.on("/api/scales/info", [this](AsyncWebServerRequest *request) { handleBluetoothInfo(request); });
-    server.on("/api/scales/forget", [this](AsyncWebServerRequest *request) { handleBluetoothForget(request); });
+    server.on("/api/scales/list", [this](AsyncWebServerRequest *request) { handleBLEScaleList(request); });
+    server.on("/api/scales/connect", [this](AsyncWebServerRequest *request) { handleBLEScaleConnect(request); });
+    server.on("/api/scales/scan", [this](AsyncWebServerRequest *request) { handleBLEScaleScan(request); });
+    server.on("/api/scales/info", [this](AsyncWebServerRequest *request) { handleBLEScaleInfo(request); });
+    server.on("/api/scales/forget", [this](AsyncWebServerRequest *request) { handleBLEScaleForget(request); });
     FS *fs = &LittleFS;
     if (controller->isSDCard()) {
         fs = &SD_MMC;
@@ -900,7 +900,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
         ESP.restart();
 }
 
-// The /api/scales/* routes predate device types and now serve every Bluetooth device; "type" tells them apart.
+// Deprecated: scale-only HTTP API kept for one release so older app builds keep working; the web UI uses req:bluetooth:*.
 static void sendSuccess(AsyncWebServerRequest *request) {
     JsonDocument doc(&psramAllocator);
     doc["success"] = true;
@@ -909,31 +909,24 @@ static void sendSuccess(AsyncWebServerRequest *request) {
     request->send(response);
 }
 
-// Device type from the optional "type" argument; requests from older clients carry none and mean the scale.
-static BluetoothDeviceType requestedDeviceType(AsyncWebServerRequest *request) {
-    BluetoothDeviceType type = BluetoothDeviceType::SCALE;
-    if (request->hasArg("type")) {
-        bluetoothDeviceTypeFromName(request->arg("type").c_str(), type);
-    }
-    return type;
-}
-
-void WebUIPlugin::handleBluetoothList(AsyncWebServerRequest *request) {
+void WebUIPlugin::handleBLEScaleList(AsyncWebServerRequest *request) {
     JsonDocument doc(&psramAllocator);
-    JsonArray devicesArray = doc.to<JsonArray>();
+    JsonArray scalesArray = doc.to<JsonArray>();
     for (const DiscoveredDevice &device : BLEDevices.getDiscoveredDevices()) {
-        JsonObject entry = devicesArray.add<JsonObject>();
-        entry["uuid"] = device.getAddress().toString();
-        entry["name"] = device.getName();
-        entry["rssi"] = device.getRSSI();
-        entry["type"] = bluetoothDeviceTypeName(device.getType());
+        if (device.getType() != BluetoothDeviceType::SCALE) {
+            continue;
+        }
+        JsonObject scale = scalesArray.add<JsonObject>();
+        scale["uuid"] = device.getAddress().toString();
+        scale["name"] = device.getName();
+        scale["rssi"] = device.getRSSI();
     }
     AsyncResponseStream *response = request->beginResponseStream("application/json");
     serializeJson(doc, *response);
     request->send(response);
 }
 
-void WebUIPlugin::handleBluetoothScan(AsyncWebServerRequest *request) {
+void WebUIPlugin::handleBLEScaleScan(AsyncWebServerRequest *request) {
     if (request->method() != HTTP_POST) {
         request->send(404);
         return;
@@ -942,64 +935,38 @@ void WebUIPlugin::handleBluetoothScan(AsyncWebServerRequest *request) {
     sendSuccess(request);
 }
 
-void WebUIPlugin::handleBluetoothConnect(AsyncWebServerRequest *request) {
+void WebUIPlugin::handleBLEScaleConnect(AsyncWebServerRequest *request) {
     if (request->method() != HTTP_POST) {
         request->send(404);
         return;
     }
-    BLEDevices.connect(request->arg("uuid").c_str(), requestedDeviceType(request));
+    BLEDevices.connect(request->arg("uuid").c_str(), BluetoothDeviceType::SCALE);
     sendSuccess(request);
 }
 
-void WebUIPlugin::handleBluetoothForget(AsyncWebServerRequest *request) {
+void WebUIPlugin::handleBLEScaleForget(AsyncWebServerRequest *request) {
     if (request->method() != HTTP_POST) {
         request->send(404);
         return;
     }
-    BLEDevices.forget(requestedDeviceType(request));
+    BLEDevices.forget(BluetoothDeviceType::SCALE);
     sendSuccess(request);
 }
 
-// Connection state of one device type; the top level of /api/scales/info carries the same fields for the scale.
-static void writeBluetoothDeviceInfo(JsonObject doc, BluetoothDeviceType type, const Settings &settings) {
-    const bool grinder = type == BluetoothDeviceType::GRINDER;
-    doc["connected"] = BLEDevices.isConnected(type);
-    doc["name"] = BLEDevices.getName(type);
-    doc["uuid"] = BLEDevices.getAddress(type);
-    doc["rssi"] = BLEDevices.getRSSI(type);
-    doc["saved"] = grinder ? settings.getSavedGrinder() : settings.getSavedScale();
-    doc["savedName"] = grinder ? settings.getSavedGrinderName() : settings.getSavedScaleName();
-    doc["hasBattery"] = BLEDevices.hasBatteryLevel(type);
+void WebUIPlugin::handleBLEScaleInfo(AsyncWebServerRequest *request) {
+    const BluetoothDeviceType scale = BluetoothDeviceType::SCALE;
+    JsonDocument doc(&psramAllocator);
+    doc["connected"] = BLEDevices.isConnected(scale);
+    doc["name"] = BLEDevices.getName(scale);
+    doc["uuid"] = BLEDevices.getAddress(scale);
+    doc["rssi"] = BLEDevices.getRSSI(scale);
+    doc["saved"] = controller->getSettings().getSavedScale();
+    doc["savedName"] = controller->getSettings().getSavedScaleName();
+    doc["hasBattery"] = BLEDevices.hasBatteryLevel(scale);
     // Left out while unknown: the 255 sentinel would otherwise render as a fake "255%".
-    const uint8_t pct = BLEDevices.getBatteryLevel(type);
+    const uint8_t pct = BLEDevices.getBatteryLevel(scale);
     if (pct != BLUETOOTH_BATTERY_UNKNOWN) {
         doc["battery"] = pct;
-    }
-}
-
-void WebUIPlugin::handleBluetoothInfo(AsyncWebServerRequest *request) {
-    const Settings &settings = controller->getSettings();
-    JsonDocument doc(&psramAllocator);
-    writeBluetoothDeviceInfo(doc.to<JsonObject>(), BluetoothDeviceType::SCALE, settings);
-
-    JsonArray devices = doc["devices"].to<JsonArray>();
-    JsonObject scale = devices.add<JsonObject>();
-    scale["type"] = bluetoothDeviceTypeName(BluetoothDeviceType::SCALE);
-    writeBluetoothDeviceInfo(scale, BluetoothDeviceType::SCALE, settings);
-
-    JsonObject grinder = devices.add<JsonObject>();
-    grinder["type"] = bluetoothDeviceTypeName(BluetoothDeviceType::GRINDER);
-    writeBluetoothDeviceInfo(grinder, BluetoothDeviceType::GRINDER, settings);
-    if (BLEDevices.isGrinderConnected()) {
-        // What the grinder itself reports, so a profile switch can be checked against the device.
-        const GrinderSettings reported = BLEDevices.getGrinderSettings();
-        grinder["state"] = grinderStateName(BLEDevices.getGrinderState());
-        if (reported.hasGrindSize())
-            grinder["grindSize"] = reported.grindSize;
-        if (reported.hasRpm())
-            grinder["rpm"] = reported.rpm;
-        if (reported.hasFeedRpm())
-            grinder["feedRpm"] = reported.feedRpm;
     }
     AsyncResponseStream *response = request->beginResponseStream("application/json");
     serializeJson(doc, *response);

@@ -602,10 +602,6 @@ msgstr "Métriques de base"
 msgid "Basics"
 msgstr "Bases"
 
-#: src/pages/ProfileEdit/ProfileGrinderSettings.jsx
-msgid "Bean feed speed in rpm"
-msgstr "Vitesse d'alimentation en grains en tr/min"
-
 #: src/pages/ShotHistory/ShotNotesCard.jsx
 msgid "Bean Type"
 msgstr "Type de grain"
@@ -2021,8 +2017,8 @@ msgid "Feed {feedRpm} rpm"
 msgstr "Alimentation {feedRpm} tr/min"
 
 #: src/pages/ProfileEdit/ProfileGrinderSettings.jsx
-msgid "Feed speed"
-msgstr "Vitesse d'alimentation"
+msgid "Feed RPM"
+msgstr "Tr/min d'alimentation"
 
 #: src/pages/Statistics/components/StatisticsSearchHelp.jsx
 msgid "Fields"
@@ -2309,10 +2305,6 @@ msgstr "Finesse de mouture"
 msgid "Grind size {grindSize}"
 msgstr "Finesse de mouture {grindSize}"
 
-#: src/pages/ProfileEdit/ProfileGrinderSettings.jsx
-msgid "Grind size in the grinder's own unit"
-msgstr "Finesse de mouture dans l'unité du moulin"
-
 #: src/pages/Home/cards/ActionCard.jsx
 msgid "Grind target"
 msgstr "Cible de mouture"
@@ -2320,14 +2312,6 @@ msgstr "Cible de mouture"
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "Grinder"
 msgstr "Moulin"
-
-#: src/pages/ProfileEdit/ProfileGrinderSettings.jsx
-msgid "Grinder speed"
-msgstr "Vitesse du moulin"
-
-#: src/pages/ProfileEdit/ProfileGrinderSettings.jsx
-msgid "Grinder speed in rpm"
-msgstr "Vitesse du moulin en tr/min"
 
 #: src/pages/Home/cards/ProfileCard.jsx
 #: src/pages/Home/utils.js
@@ -4448,6 +4432,10 @@ msgstr "VÉRIFIER LA PHASE {phaseNumber}"
 msgid "Review the stop reason for this phase. The algorithm was only able to identify it after several intermediate calculations."
 msgstr "Vérifiez la raison d'arrêt de cette phase. L'algorithme n'a pu l'identifier qu'après plusieurs calculs intermédiaires."
 
+#: src/pages/ProfileEdit/ProfileGrinderSettings.jsx
+msgid "RPM"
+msgstr "Tr/min"
+
 #: src/pages/Statistics/components/StatisticsSearchHelp.jsx
 msgid "Rules are separated with <0>;</0>. Visual filters and DSL are combined with AND."
 msgstr "Les règles sont séparées par <0>;</0>. Les filtres visuels et le DSL sont combinés avec ET."
@@ -4639,8 +4627,8 @@ msgid "Scan for Devices"
 msgstr "Rechercher des appareils"
 
 #: src/pages/Settings/tabs/BluetoothTab.jsx
-msgid "Scan for nearby Bluetooth scales and grinders to connect them to GaggiMate."
-msgstr "Recherchez les balances et moulins Bluetooth à proximité pour les connecter à GaggiMate."
+msgid "Scan for nearby Bluetooth devices to connect them to GaggiMate."
+msgstr "Recherchez les appareils Bluetooth à proximité pour les connecter à GaggiMate."
 
 #: src/pages/SetupWizard/WifiStep.jsx
 msgid "Scanning failed."
@@ -4789,10 +4777,6 @@ msgstr "Sélectionner un profil préremplit les valeurs. Enregistrez pour les ap
 #: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
 msgid "Selecting calibration profile..."
 msgstr "Sélection du profil d'étalonnage..."
-
-#: src/pages/ProfileEdit/ProfileGrinderSettings.jsx
-msgid "Sent to a connected Bluetooth grinder when this profile is selected. Leave a field empty to keep the grinder's own setting; values outside the grinder's range are limited to it."
-msgstr "Envoyés à un moulin Bluetooth connecté lorsque ce profil est sélectionné. Laissez un champ vide pour conserver le réglage du moulin ; les valeurs hors de la plage du moulin y sont ramenées."
 
 #: src/services/VisualizerService.js
 msgid "Server error - the API may not support this data format or account type"
@@ -5806,10 +5790,6 @@ msgstr "La version du firmware n'est pas encore connue"
 #: src/pages/Home/BrewConfirmModal.jsx
 msgid "The following warnings are currently active:"
 msgstr "Les avertissements suivants sont actuellement actifs :"
-
-#: src/pages/ProfileEdit/ProfileGrinderSettings.jsx
-msgid "The grind size uses the grinder's own unit (burr gap in µm on the Bookoo Motto 80, where it only sets the displayed value and the burrs are still adjusted by hand)."
-msgstr "La finesse de mouture utilise l'unité du moulin (écart des meules en µm sur le Bookoo Motto 80, où elle ne règle que la valeur affichée, les meules se réglant toujours à la main)."
 
 #: src/pages/Settings/PluginCard.jsx
 msgid "The grinder reaches GaggiMate at this address, so both need to share a network (the E64 WS is 2.4 GHz only) and the address must not change: reserve it for GaggiMate in your router."

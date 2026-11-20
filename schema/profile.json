@@ -57,22 +57,22 @@
     "grinder": {
       "type": "object",
       "additionalProperties": false,
-      "description": "Optional grinder settings for this recipe. They are sent to a connected Bluetooth grinder when the profile is selected, when the selected profile is saved and when the grinder connects. Omitted fields leave the grinder's own setting untouched; the whole object may be omitted. The grinder driver limits each value to the range the grinder accepts (`lib/BluetoothDevices`).",
+      "description": "Optional grinder settings for this recipe, sent to a connected Bluetooth grinder together with the profile label and dose when the profile is selected or saved and when the grinder connects. Omitted fields leave the grinder's own setting untouched; the grinder driver limits each value to the range the grinder accepts.",
       "properties": {
         "grindSize": {
           "type": "number",
           "minimum": 0,
-          "description": "Grind size in the grinder's own unit. On the Bookoo Motto 80 this is the burr gap in µm (0-999); that grinder is adjusted by hand, so the value only sets the gap shown in its settings."
+          "description": "Grind size in the grinder's own unit."
         },
         "rpm": {
           "type": "integer",
           "minimum": 0,
-          "description": "Burr speed in rpm (Bookoo Motto 80: 500-1500)."
+          "description": "Burr speed in rpm."
         },
         "feedRpm": {
           "type": "integer",
           "minimum": 0,
-          "description": "Bean feed speed in rpm (Bookoo Motto 80: 10-65)."
+          "description": "Bean feed speed in rpm."
         }
       },
       "examples": [{ "grindSize": 180, "rpm": 1100, "feedRpm": 62 }]

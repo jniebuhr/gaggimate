@@ -1,15 +1,7 @@
 import { scaleModelName } from './scaleModels.js';
 
-// Device types the firmware can connect, one device per type; order is the display order.
-export const DEVICE_TYPES = ['scale', 'grinder'];
-
 // Advertised BLE name prefix → friendly grinder model name; mirrors the BluetoothDevices library matchers.
 const GRINDER_MODELS = [[/^BOOKOO MT80/i, 'Bookoo Motto 80']];
-
-// Firmware without device types only knows scales and sends no type at all.
-export function deviceType(device) {
-  return DEVICE_TYPES.includes(device?.type) ? device.type : 'scale';
-}
 
 export function deviceModelName(bleName, type) {
   if (!bleName) return null;
@@ -20,38 +12,25 @@ export function deviceModelName(bleName, type) {
   return scaleModelName(bleName);
 }
 
-// Per-type connection state from /api/scales/info; older firmware reports only the scale, as top-level fields.
-export function deviceStates(info) {
-  if (!info) return [];
-  if (Array.isArray(info.devices)) {
-    return info.devices.map(device => ({ ...device, type: deviceType(device) }));
-  }
-  return [{ ...info, type: 'scale' }];
-}
-
-// Rows for the Bluetooth tab: connected devices, then nearby ones, plus saved devices that are out of range.
-export function buildDeviceList(info, discovered = []) {
-  const states = deviceStates(info);
-  const connectedTypes = new Set(states.filter(state => state.connected).map(state => state.type));
-  const rows = states
-    .filter(state => state.connected)
-    .map(state => ({ ...state, saved: true, connected: true }));
+// Rows for the Bluetooth tab from res:bluetooth:devices: connected devices, nearby ones, saved ones out of range.
+export function buildDeviceList({ devices = [], discovered = [] } = {}) {
+  const connectedTypes = new Set(devices.filter(state => state.connected).map(state => state.type));
+  const rows = devices.filter(state => state.connected).map(state => ({ ...state, saved: true }));
 
   const nearby = [];
   for (const device of discovered) {
-    const type = deviceType(device);
     // One device per type: nothing else of that type can be connected while one is.
-    if (connectedTypes.has(type)) continue;
-    const saved = states.find(state => state.type === type)?.saved;
-    nearby.push({ ...device, type, connected: false, saved: !!saved && device.uuid === saved });
+    if (connectedTypes.has(device.type)) continue;
+    const saved = devices.find(state => state.type === device.type)?.saved;
+    nearby.push({ ...device, connected: false, saved: !!saved && device.address === saved });
   }
 
-  for (const state of states) {
+  for (const state of devices) {
     if (state.connected || !state.saved) continue;
     if (nearby.some(device => device.type === state.type && device.saved)) continue;
     // Saved but not advertising: keep it listed so it can still be forgotten.
     nearby.push({
-      uuid: state.saved,
+      address: state.saved,
       name: state.savedName || '',
       type: state.type,
       connected: false,

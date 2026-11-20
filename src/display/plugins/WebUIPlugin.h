@@ -51,11 +51,11 @@ class WebUIPlugin : public Plugin {
     void serveWebAsset(AsyncWebServerRequest *request);
     void handleMachineProfiles(AsyncWebServerRequest *request);
     void handleSettings(AsyncWebServerRequest *request) const;
-    void handleBluetoothList(AsyncWebServerRequest *request);
-    void handleBluetoothScan(AsyncWebServerRequest *request);
-    void handleBluetoothConnect(AsyncWebServerRequest *request);
-    void handleBluetoothInfo(AsyncWebServerRequest *request);
-    void handleBluetoothForget(AsyncWebServerRequest *request);
+    void handleBLEScaleList(AsyncWebServerRequest *request);
+    void handleBLEScaleScan(AsyncWebServerRequest *request);
+    void handleBLEScaleConnect(AsyncWebServerRequest *request);
+    void handleBLEScaleInfo(AsyncWebServerRequest *request);
+    void handleBLEScaleForget(AsyncWebServerRequest *request);
     void updateOTAStatus(const String &version);
     void updateOTAProgress(uint8_t phase, int progress);
 

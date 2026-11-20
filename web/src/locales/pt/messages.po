@@ -610,10 +610,6 @@ msgstr "Métricas básicas"
 msgid "Basics"
 msgstr "Básico"
 
-#: src/pages/ProfileEdit/ProfileGrinderSettings.jsx
-msgid "Bean feed speed in rpm"
-msgstr "Velocidade de alimentação dos grãos em rpm"
-
 #: src/pages/ShotHistory/ShotNotesCard.jsx
 msgid "Bean Type"
 msgstr "Tipo de grão"
@@ -2029,8 +2025,8 @@ msgid "Feed {feedRpm} rpm"
 msgstr "Alimentação {feedRpm} rpm"
 
 #: src/pages/ProfileEdit/ProfileGrinderSettings.jsx
-msgid "Feed speed"
-msgstr "Velocidade de alimentação"
+msgid "Feed RPM"
+msgstr "RPM de alimentação"
 
 #: src/pages/Statistics/components/StatisticsSearchHelp.jsx
 msgid "Fields"
@@ -2317,10 +2313,6 @@ msgstr "Grau de moagem"
 msgid "Grind size {grindSize}"
 msgstr "Grau de moagem {grindSize}"
 
-#: src/pages/ProfileEdit/ProfileGrinderSettings.jsx
-msgid "Grind size in the grinder's own unit"
-msgstr "Grau de moagem na unidade do próprio moedor"
-
 #: src/pages/Home/cards/ActionCard.jsx
 msgid "Grind target"
 msgstr "Alvo de moagem"
@@ -2328,14 +2320,6 @@ msgstr "Alvo de moagem"
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "Grinder"
 msgstr "Moedor"
-
-#: src/pages/ProfileEdit/ProfileGrinderSettings.jsx
-msgid "Grinder speed"
-msgstr "Velocidade do moedor"
-
-#: src/pages/ProfileEdit/ProfileGrinderSettings.jsx
-msgid "Grinder speed in rpm"
-msgstr "Velocidade do moedor em rpm"
 
 #: src/pages/Home/cards/ProfileCard.jsx
 #: src/pages/Home/utils.js
@@ -4456,6 +4440,10 @@ msgstr "REVISAR FASE {phaseNumber}"
 msgid "Review the stop reason for this phase. The algorithm was only able to identify it after several intermediate calculations."
 msgstr "Revise o motivo de parada desta fase. O algoritmo só conseguiu identificá-lo após vários cálculos intermediários."
 
+#: src/pages/ProfileEdit/ProfileGrinderSettings.jsx
+msgid "RPM"
+msgstr "RPM"
+
 #: src/pages/Statistics/components/StatisticsSearchHelp.jsx
 msgid "Rules are separated with <0>;</0>. Visual filters and DSL are combined with AND."
 msgstr "As regras são separadas por <0>;</0>. Os filtros visuais e a DSL são combinados com E."
@@ -4647,8 +4635,8 @@ msgid "Scan for Devices"
 msgstr "Buscar dispositivos"
 
 #: src/pages/Settings/tabs/BluetoothTab.jsx
-msgid "Scan for nearby Bluetooth scales and grinders to connect them to GaggiMate."
-msgstr "Busque balanças e moedores Bluetooth próximos para conectá-los ao GaggiMate."
+msgid "Scan for nearby Bluetooth devices to connect them to GaggiMate."
+msgstr "Busque dispositivos Bluetooth próximos para conectá-los ao GaggiMate."
 
 #: src/pages/SetupWizard/WifiStep.jsx
 msgid "Scanning failed."
@@ -4797,10 +4785,6 @@ msgstr "Selecionar um perfil preenche os valores. Salve para aplicar. Escolha Pe
 #: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
 msgid "Selecting calibration profile..."
 msgstr "Selecionando perfil de calibração..."
-
-#: src/pages/ProfileEdit/ProfileGrinderSettings.jsx
-msgid "Sent to a connected Bluetooth grinder when this profile is selected. Leave a field empty to keep the grinder's own setting; values outside the grinder's range are limited to it."
-msgstr "Enviadas a um moedor Bluetooth conectado quando este perfil é selecionado. Deixe um campo vazio para manter o ajuste do próprio moedor; valores fora da faixa do moedor são limitados a ela."
 
 #: src/services/VisualizerService.js
 msgid "Server error - the API may not support this data format or account type"
@@ -5814,10 +5798,6 @@ msgstr ""
 #: src/pages/Home/BrewConfirmModal.jsx
 msgid "The following warnings are currently active:"
 msgstr "Os seguintes avisos estão ativos no momento:"
-
-#: src/pages/ProfileEdit/ProfileGrinderSettings.jsx
-msgid "The grind size uses the grinder's own unit (burr gap in µm on the Bookoo Motto 80, where it only sets the displayed value and the burrs are still adjusted by hand)."
-msgstr "O grau de moagem usa a unidade do próprio moedor (distância das mós em µm no Bookoo Motto 80, onde define apenas o valor exibido e as mós continuam sendo ajustadas manualmente)."
 
 #: src/pages/Settings/PluginCard.jsx
 msgid "The grinder reaches GaggiMate at this address, so both need to share a network (the E64 WS is 2.4 GHz only) and the address must not change: reserve it for GaggiMate in your router."

@@ -94,7 +94,7 @@ export default class ApiService {
       ...this.state.value,
       connected: false,
       // scan:complete can't arrive on a dead socket, so don't leave the spinner latched.
-      scale: { ...this.state.value.scale, scanning: false },
+      bluetooth: { ...this.state.value.bluetooth, scanning: false },
     };
   }
 
@@ -137,8 +137,8 @@ export default class ApiService {
       this._onStatus(message);
     } else if (message.tp === 'evt:hardware-scale') {
       this._onHardwareScale(message);
-    } else if (message.tp.startsWith('evt:scale:')) {
-      this._onScaleEvent(message);
+    } else if (message.tp.startsWith('evt:bluetooth:')) {
+      this._onBluetoothEvent(message);
     }
     for (const listener of listeners) {
       listener(message);
@@ -277,26 +277,26 @@ export default class ApiService {
     this.state.value = { ...this.state.value, connected: true, status, capabilities, history };
   }
 
-  _onScaleEvent(message) {
+  _onBluetoothEvent(message) {
     const now = Date.now();
     switch (message.tp) {
-      case 'evt:scale:scan:complete':
-        updateScaleState({ scanning: false });
+      case 'evt:bluetooth:scan:complete':
+        updateBluetoothState({ scanning: false });
         break;
-      case 'evt:scale:connect:error':
-        updateScaleState({
+      case 'evt:bluetooth:connect:error':
+        updateBluetoothState({
           connectError: { address: message.address, reason: message.reason, at: now },
         });
         break;
-      case 'evt:scale:connect:success':
-        updateScaleState({ connectError: null, disconnected: null, connectedAt: now });
+      case 'evt:bluetooth:connect:success':
+        updateBluetoothState({ connectError: null, disconnected: null, connectedAt: now });
         break;
-      case 'evt:scale:disconnect':
-        updateScaleState({
+      case 'evt:bluetooth:disconnect':
+        updateBluetoothState({
           disconnected: {
             address: message.address,
             name: message.name,
-            type: message.type || 'scale',
+            type: message.type,
             at: now,
           },
         });
@@ -353,8 +353,8 @@ export const createMachineState = () =>
       sdCard: false,
       headless: false,
     },
-    // Bluetooth device lifecycle (scales and grinders) from evt:scale:* (GM-257).
-    scale: {
+    // Bluetooth device lifecycle (scales and grinders) from evt:bluetooth:* (GM-257).
+    bluetooth: {
       scanning: false,
       connectError: null,
       disconnected: null,
@@ -365,8 +365,8 @@ export const createMachineState = () =>
 
 export const machine = createMachineState();
 
-export const updateScaleState = patch => {
-  machine.value = { ...machine.value, scale: { ...machine.value.scale, ...patch } };
+export const updateBluetoothState = patch => {
+  machine.value = { ...machine.value, bluetooth: { ...machine.value.bluetooth, ...patch } };
 };
 
 let settingsCache = null;

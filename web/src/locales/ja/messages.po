@@ -602,10 +602,6 @@ msgstr "基本メトリクス"
 msgid "Basics"
 msgstr "基本"
 
-#: src/pages/ProfileEdit/ProfileGrinderSettings.jsx
-msgid "Bean feed speed in rpm"
-msgstr "豆の供給速度 (rpm)"
-
 #: src/pages/ShotHistory/ShotNotesCard.jsx
 msgid "Bean Type"
 msgstr "豆の種類"
@@ -2021,8 +2017,8 @@ msgid "Feed {feedRpm} rpm"
 msgstr "供給 {feedRpm} rpm"
 
 #: src/pages/ProfileEdit/ProfileGrinderSettings.jsx
-msgid "Feed speed"
-msgstr "供給速度"
+msgid "Feed RPM"
+msgstr "供給回転数"
 
 #: src/pages/Statistics/components/StatisticsSearchHelp.jsx
 msgid "Fields"
@@ -2309,10 +2305,6 @@ msgstr "挽き目"
 msgid "Grind size {grindSize}"
 msgstr "挽き目 {grindSize}"
 
-#: src/pages/ProfileEdit/ProfileGrinderSettings.jsx
-msgid "Grind size in the grinder's own unit"
-msgstr "グラインダー固有の単位での挽き目"
-
 #: src/pages/Home/cards/ActionCard.jsx
 msgid "Grind target"
 msgstr "グラインド目標"
@@ -2320,14 +2312,6 @@ msgstr "グラインド目標"
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "Grinder"
 msgstr "グラインダー"
-
-#: src/pages/ProfileEdit/ProfileGrinderSettings.jsx
-msgid "Grinder speed"
-msgstr "グラインダーの回転数"
-
-#: src/pages/ProfileEdit/ProfileGrinderSettings.jsx
-msgid "Grinder speed in rpm"
-msgstr "グラインダーの回転数 (rpm)"
 
 #: src/pages/Home/cards/ProfileCard.jsx
 #: src/pages/Home/utils.js
@@ -4448,6 +4432,10 @@ msgstr "フェーズ {phaseNumber} を確認"
 msgid "Review the stop reason for this phase. The algorithm was only able to identify it after several intermediate calculations."
 msgstr "このフェーズの停止理由を確認してください。アルゴリズムは複数の中間計算を経てようやくこれを特定できました。"
 
+#: src/pages/ProfileEdit/ProfileGrinderSettings.jsx
+msgid "RPM"
+msgstr "回転数"
+
 #: src/pages/Statistics/components/StatisticsSearchHelp.jsx
 msgid "Rules are separated with <0>;</0>. Visual filters and DSL are combined with AND."
 msgstr "ルールは <0>;</0> で区切ります。ビジュアルフィルターと DSL は AND で結合されます。"
@@ -4639,8 +4627,8 @@ msgid "Scan for Devices"
 msgstr "デバイスをスキャン"
 
 #: src/pages/Settings/tabs/BluetoothTab.jsx
-msgid "Scan for nearby Bluetooth scales and grinders to connect them to GaggiMate."
-msgstr "近くの Bluetooth スケールやグラインダーをスキャンして GaggiMate に接続します。"
+msgid "Scan for nearby Bluetooth devices to connect them to GaggiMate."
+msgstr "近くの Bluetooth デバイスをスキャンして GaggiMate に接続します。"
 
 #: src/pages/SetupWizard/WifiStep.jsx
 msgid "Scanning failed."
@@ -4789,10 +4777,6 @@ msgstr "プロファイルを選択すると値が入力されます。保存す
 #: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
 msgid "Selecting calibration profile..."
 msgstr "キャリブレーションプロファイルを選択中..."
-
-#: src/pages/ProfileEdit/ProfileGrinderSettings.jsx
-msgid "Sent to a connected Bluetooth grinder when this profile is selected. Leave a field empty to keep the grinder's own setting; values outside the grinder's range are limited to it."
-msgstr "このプロファイルを選択すると、接続中の Bluetooth グラインダーに送信されます。空欄の項目はグラインダー側の設定が維持され、グラインダーの範囲外の値は範囲内に制限されます。"
 
 #: src/services/VisualizerService.js
 msgid "Server error - the API may not support this data format or account type"
@@ -5806,10 +5790,6 @@ msgstr "ファームウェアのバージョンはまだ不明です"
 #: src/pages/Home/BrewConfirmModal.jsx
 msgid "The following warnings are currently active:"
 msgstr "現在有効な警告:"
-
-#: src/pages/ProfileEdit/ProfileGrinderSettings.jsx
-msgid "The grind size uses the grinder's own unit (burr gap in µm on the Bookoo Motto 80, where it only sets the displayed value and the burrs are still adjusted by hand)."
-msgstr "挽き目にはグラインダー固有の単位を使用します（Bookoo Motto 80 では刃の間隔 µm。表示値が設定されるだけで、刃の調整は引き続き手動です）。"
 
 #: src/pages/Settings/PluginCard.jsx
 msgid "The grinder reaches GaggiMate at this address, so both need to share a network (the E64 WS is 2.4 GHz only) and the address must not change: reserve it for GaggiMate in your router."

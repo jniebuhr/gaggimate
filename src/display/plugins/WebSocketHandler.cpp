@@ -68,37 +68,22 @@ void WebSocketHandler::setup(Controller *_controller, PluginManager *_pluginMana
         broadcastJson(doc);
     });
 
-    // Bluetooth device lifecycle for the settings tab (GM-257); the wire names predate device types, "type" tells them apart.
+    // Bluetooth device lifecycle for the settings tab (GM-257).
     pluginManager->on("bluetooth:scan:complete", [this](Event const &event) {
         JsonDocument doc(&psramAllocator);
-        doc["tp"] = "evt:scale:scan:complete";
+        doc["tp"] = "evt:bluetooth:scan:complete";
         doc["count"] = event.getInt("count");
         broadcastJson(doc);
-    });
-    pluginManager->on("bluetooth:connect:error", [this](Event const &event) {
-        JsonDocument doc(&psramAllocator);
-        doc["tp"] = "evt:scale:connect:error";
-        doc["type"] = event.getString("type");
-        doc["address"] = event.getString("address");
-        doc["reason"] = event.getString("reason");
+        // Deprecated: evt:scale:* twins stay for one release so older app builds keep working.
+        doc["tp"] = "evt:scale:scan:complete";
         broadcastJson(doc);
     });
-    pluginManager->on("bluetooth:connect:success", [this](Event const &event) {
-        JsonDocument doc(&psramAllocator);
-        doc["tp"] = "evt:scale:connect:success";
-        doc["type"] = event.getString("type");
-        doc["address"] = event.getString("address");
-        doc["name"] = event.getString("name");
-        broadcastJson(doc);
-    });
-    pluginManager->on("bluetooth:disconnect", [this](Event const &event) {
-        JsonDocument doc(&psramAllocator);
-        doc["tp"] = "evt:scale:disconnect";
-        doc["type"] = event.getString("type");
-        doc["address"] = event.getString("address");
-        doc["name"] = event.getString("name");
-        broadcastJson(doc);
-    });
+    pluginManager->on("bluetooth:connect:error",
+                      [this](Event const &event) { broadcastBluetoothEvent(event, "connect:error", "reason"); });
+    pluginManager->on("bluetooth:connect:success",
+                      [this](Event const &event) { broadcastBluetoothEvent(event, "connect:success", "name"); });
+    pluginManager->on("bluetooth:disconnect",
+                      [this](Event const &event) { broadcastBluetoothEvent(event, "disconnect", "name"); });
 
     // Forward shot history rebuild progress events to WebSocket clients
     pluginManager->on("evt:history-rebuild-progress", [this](Event const &event) {
@@ -296,6 +281,8 @@ void WebSocketHandler::handleWebSocketData(AsyncWebSocket *server, AsyncWebSocke
                     JsonDocument resp(&psramAllocator);
                     ShotHistory.handleRequest(doc, resp);
                     client->text(toWsBuffer(resp));
+                } else if (msgType.startsWith("req:bluetooth:")) {
+                    handleBluetoothRequest(cid, msgType, doc);
                 } else if (msgType == "req:flush:start") {
                     handleFlushStart(client->id(), doc);
                 } else if (msgType == "req:steam:toggle") {
@@ -313,6 +300,91 @@ void WebSocketHandler::handleWebSocketData(AsyncWebSocket *server, AsyncWebSocke
         // Done with this message
         rxBuffers.erase(cid);
     }
+}
+
+// evt:bluetooth:<name> for every device type, plus the deprecated evt:scale:<name> twin for scales (older app builds).
+void WebSocketHandler::broadcastBluetoothEvent(Event const &event, const char *name, const char *detailKey) {
+    const String type = event.getString("type");
+    JsonDocument doc(&psramAllocator);
+    doc["tp"] = String("evt:bluetooth:") + name;
+    doc["type"] = type;
+    doc["address"] = event.getString("address");
+    doc[detailKey] = event.getString(detailKey);
+    broadcastJson(doc);
+    if (type == bluetoothDeviceTypeName(BluetoothDeviceType::SCALE)) {
+        doc.remove("type");
+        doc["tp"] = String("evt:scale:") + name;
+        broadcastJson(doc);
+    }
+}
+
+// req:bluetooth:devices | scan | connect | forget, answered with the matching res:bluetooth:*.
+void WebSocketHandler::handleBluetoothRequest(uint32_t clientId, const String &type, JsonDocument &request) {
+    JsonDocument resp(&psramAllocator);
+    resp["tp"] = String("res:") + type.substring(4);
+    resp["rid"] = request["rid"];
+
+    BluetoothDeviceType deviceType = BluetoothDeviceType::SCALE;
+    const bool typeKnown = bluetoothDeviceTypeFromName(request["type"] | "", deviceType);
+
+    if (type == "req:bluetooth:devices") {
+        const Settings &settings = controller->getSettings();
+        JsonArray devices = resp["devices"].to<JsonArray>();
+        for (size_t i = 0; i < BLUETOOTH_DEVICE_TYPE_COUNT; i++) {
+            const auto slotType = static_cast<BluetoothDeviceType>(i);
+            const bool grinder = slotType == BluetoothDeviceType::GRINDER;
+            JsonObject device = devices.add<JsonObject>();
+            device["type"] = bluetoothDeviceTypeName(slotType);
+            device["connected"] = BLEDevices.isConnected(slotType);
+            device["name"] = BLEDevices.getName(slotType);
+            device["address"] = BLEDevices.getAddress(slotType);
+            device["rssi"] = BLEDevices.getRSSI(slotType);
+            device["saved"] = grinder ? settings.getSavedGrinder() : settings.getSavedScale();
+            device["savedName"] = grinder ? settings.getSavedGrinderName() : settings.getSavedScaleName();
+            // Left out while unknown: the 255 sentinel would otherwise render as a fake "255%".
+            const uint8_t battery = BLEDevices.getBatteryLevel(slotType);
+            if (battery != BLUETOOTH_BATTERY_UNKNOWN) {
+                device["battery"] = battery;
+            }
+            if (grinder && BLEDevices.isGrinderConnected()) {
+                // What the grinder itself reports, so a profile switch can be checked against the device.
+                const GrinderSettings reported = BLEDevices.getGrinderSettings();
+                device["state"] = grinderStateName(BLEDevices.getGrinderState());
+                if (reported.hasGrindSize())
+                    device["grindSize"] = reported.grindSize;
+                if (reported.hasRpm())
+                    device["rpm"] = reported.rpm;
+                if (reported.hasFeedRpm())
+                    device["feedRpm"] = reported.feedRpm;
+            }
+        }
+        JsonArray discovered = resp["discovered"].to<JsonArray>();
+        for (const DiscoveredDevice &found : BLEDevices.getDiscoveredDevices()) {
+            JsonObject entry = discovered.add<JsonObject>();
+            entry["type"] = bluetoothDeviceTypeName(found.getType());
+            entry["address"] = found.getAddress().toString();
+            entry["name"] = found.getName();
+            entry["rssi"] = found.getRSSI();
+        }
+    } else if (type == "req:bluetooth:scan") {
+        BLEDevices.scan();
+        resp["success"] = true;
+    } else if (type == "req:bluetooth:connect") {
+        const char *address = request["address"] | "";
+        const bool valid = address[0] != '\0';
+        if (valid) {
+            BLEDevices.connect(address, deviceType);
+        }
+        resp["success"] = valid;
+    } else if (type == "req:bluetooth:forget") {
+        if (typeKnown) {
+            BLEDevices.forget(deviceType);
+        }
+        resp["success"] = typeKnown;
+    } else {
+        resp["success"] = false;
+    }
+    sendJson(clientId, resp);
 }
 
 void WebSocketHandler::handleAutotuneStart(uint32_t clientId, JsonDocument &request) {

@@ -602,10 +602,6 @@ msgstr "基础指标"
 msgid "Basics"
 msgstr "基础"
 
-#: src/pages/ProfileEdit/ProfileGrinderSettings.jsx
-msgid "Bean feed speed in rpm"
-msgstr "进豆转速（rpm）"
-
 #: src/pages/ShotHistory/ShotNotesCard.jsx
 msgid "Bean Type"
 msgstr "咖啡豆类型"
@@ -2021,7 +2017,7 @@ msgid "Feed {feedRpm} rpm"
 msgstr "进豆 {feedRpm} rpm"
 
 #: src/pages/ProfileEdit/ProfileGrinderSettings.jsx
-msgid "Feed speed"
+msgid "Feed RPM"
 msgstr "进豆转速"
 
 #: src/pages/Statistics/components/StatisticsSearchHelp.jsx
@@ -2309,10 +2305,6 @@ msgstr "研磨度"
 msgid "Grind size {grindSize}"
 msgstr "研磨度 {grindSize}"
 
-#: src/pages/ProfileEdit/ProfileGrinderSettings.jsx
-msgid "Grind size in the grinder's own unit"
-msgstr "以磨豆机自身单位表示的研磨度"
-
 #: src/pages/Home/cards/ActionCard.jsx
 msgid "Grind target"
 msgstr "研磨目标"
@@ -2320,14 +2312,6 @@ msgstr "研磨目标"
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "Grinder"
 msgstr "磨豆机"
-
-#: src/pages/ProfileEdit/ProfileGrinderSettings.jsx
-msgid "Grinder speed"
-msgstr "磨豆机转速"
-
-#: src/pages/ProfileEdit/ProfileGrinderSettings.jsx
-msgid "Grinder speed in rpm"
-msgstr "磨豆机转速（rpm）"
 
 #: src/pages/Home/cards/ProfileCard.jsx
 #: src/pages/Home/utils.js
@@ -4448,6 +4432,10 @@ msgstr "检查阶段 {phaseNumber}"
 msgid "Review the stop reason for this phase. The algorithm was only able to identify it after several intermediate calculations."
 msgstr "请检查此阶段的停止原因。算法经过多次中间计算后才得以识别。"
 
+#: src/pages/ProfileEdit/ProfileGrinderSettings.jsx
+msgid "RPM"
+msgstr "转速"
+
 #: src/pages/Statistics/components/StatisticsSearchHelp.jsx
 msgid "Rules are separated with <0>;</0>. Visual filters and DSL are combined with AND."
 msgstr "规则之间用 <0>;</0> 分隔。可视化筛选与 DSL 以 AND 组合。"
@@ -4639,8 +4627,8 @@ msgid "Scan for Devices"
 msgstr "扫描设备"
 
 #: src/pages/Settings/tabs/BluetoothTab.jsx
-msgid "Scan for nearby Bluetooth scales and grinders to connect them to GaggiMate."
-msgstr "扫描附近的蓝牙秤和磨豆机并将其连接到 GaggiMate。"
+msgid "Scan for nearby Bluetooth devices to connect them to GaggiMate."
+msgstr "扫描附近的蓝牙设备并将其连接到 GaggiMate。"
 
 #: src/pages/SetupWizard/WifiStep.jsx
 msgid "Scanning failed."
@@ -4789,10 +4777,6 @@ msgstr "选择配置会预填参数，保存后生效。选择“自定义”可
 #: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
 msgid "Selecting calibration profile..."
 msgstr "正在选择校准曲线..."
-
-#: src/pages/ProfileEdit/ProfileGrinderSettings.jsx
-msgid "Sent to a connected Bluetooth grinder when this profile is selected. Leave a field empty to keep the grinder's own setting; values outside the grinder's range are limited to it."
-msgstr "选择此配置文件时发送到已连接的蓝牙磨豆机。留空的字段将保留磨豆机自身的设置；超出磨豆机范围的值会被限制在范围内。"
 
 #: src/services/VisualizerService.js
 msgid "Server error - the API may not support this data format or account type"
@@ -5806,10 +5790,6 @@ msgstr "固件版本尚未确定"
 #: src/pages/Home/BrewConfirmModal.jsx
 msgid "The following warnings are currently active:"
 msgstr "当前有以下警告："
-
-#: src/pages/ProfileEdit/ProfileGrinderSettings.jsx
-msgid "The grind size uses the grinder's own unit (burr gap in µm on the Bookoo Motto 80, where it only sets the displayed value and the burrs are still adjusted by hand)."
-msgstr "研磨度使用磨豆机自身的单位（Bookoo Motto 80 为刀盘间距，单位 µm；该值仅设置显示数值，刀盘仍需手动调节）。"
 
 #: src/pages/Settings/PluginCard.jsx
 msgid "The grinder reaches GaggiMate at this address, so both need to share a network (the E64 WS is 2.4 GHz only) and the address must not change: reserve it for GaggiMate in your router."
