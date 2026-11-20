@@ -111,6 +111,93 @@ std::string buildSettingsRequest(const GrinderSettings &settings) {
     return R"({"request":{"geneSetting":{"op":"set","data":{)" + fields + "}}}}";
 }
 
+std::string buildGeneralSettingsQuery() {
+    return R"({"request":{"geneSetting":{"op":"get","selector":{"type":"keys","value":["feedingRpm","bladeGap","grindRpm"]}}}})";
+}
+
+// Cuts at a character boundary so a multi-byte UTF-8 sequence is never split.
+static std::string truncateUtf8(const std::string &text, size_t maxBytes) {
+    if (text.size() <= maxBytes) {
+        return text;
+    }
+    size_t end = maxBytes;
+    while (end > 0 && (static_cast<unsigned char>(text[end]) & 0xC0) == 0x80) {
+        end--;
+    }
+    return text.substr(0, end);
+}
+
+std::string buildPresetName(const std::string &label, float dose) {
+    std::string cleanLabel;
+    for (const char c : label) {
+        if (static_cast<unsigned char>(c) >= 0x20) {
+            cleanLabel.push_back(c);
+        }
+    }
+    if (cleanLabel.empty()) {
+        cleanLabel = GAGGIMATE_PRESET_NAME;
+    }
+    std::string suffix;
+    if (dose > 0.0f) {
+        // One decimal at most, without a trailing ".0".
+        char text[16];
+        const long tenths = std::lround(dose * 10.0f);
+        if (tenths % 10 == 0) {
+            snprintf(text, sizeof(text), " %ldg", tenths / 10);
+        } else {
+            snprintf(text, sizeof(text), " %ld.%ldg", tenths / 10, tenths % 10);
+        }
+        suffix = text;
+    }
+    std::string name = truncateUtf8(cleanLabel, PRESET_NAME_MAX_BYTES - suffix.size());
+    while (!name.empty() && name.back() == ' ') {
+        name.pop_back();
+    }
+    return name + suffix;
+}
+
+static std::string jsonString(const std::string &text) {
+    std::string out = "\"";
+    for (const char c : text) {
+        if (c == '"' || c == '\\') {
+            out.push_back('\\');
+        }
+        if (static_cast<unsigned char>(c) >= 0x20) {
+            out.push_back(c);
+        }
+    }
+    return out + "\"";
+}
+
+// The three preset values as JSON members, clamped; an unset value falls back to the lower bound.
+static std::string presetValues(const GrinderSettings &values) {
+    char text[80];
+    snprintf(text, sizeof(text), "\"bladeGap\":%d,\"feedingRpm\":%d,\"grindRpm\":%d",
+             clampTo(std::lround(values.grindSize), GRIND_SIZE_MIN, GRIND_SIZE_MAX),
+             clampTo(values.feedRpm, FEED_RPM_MIN, FEED_RPM_MAX), clampTo(values.rpm, RPM_MIN, RPM_MAX));
+    return text;
+}
+
+std::string buildPresetListRequest() { return R"({"request":{"grindPreset":{"op":"get","selector":{"type":"all"}}}})"; }
+
+std::string buildPresetAddRequest(const std::string &uid, int index, const std::string &name, const GrinderSettings &values) {
+    return R"({"request":{"grindPreset":{"op":"add","data":{"uid":)" + jsonString(uid) + ",\"index\":" + std::to_string(index) +
+           ",\"name\":" + jsonString(name) + ",\"note\":\"\"," + presetValues(values) + "}}}}";
+}
+
+std::string buildPresetUpdateRequest(const std::string &uid, const std::string &name, const GrinderSettings &values) {
+    return R"({"request":{"grindPreset":{"op":"update","selector":{"type":"uid","value":)" + jsonString(uid) +
+           "},\"data\":{\"name\":" + jsonString(name) + "," + presetValues(values) + "}}}}";
+}
+
+std::string buildPresetRestoreRequest(const std::string &uid) {
+    return R"({"request":{"grindPreset":{"op":"restore","selector":{"type":"uid","value":)" + jsonString(uid) + "}}}}";
+}
+
+std::string buildSelectPresetRequest(int index) {
+    return R"({"request":{"geneSetting":{"op":"set","data":{"selectPreset":)" + std::to_string(index) + "}}}}";
+}
+
 static bool equalsIgnoreCase(const char *a, const char *b) {
     for (; *a != '\0' && *b != '\0'; a++, b++) {
         if (std::tolower(static_cast<unsigned char>(*a)) != std::tolower(static_cast<unsigned char>(*b))) {
@@ -167,10 +254,29 @@ bool parseMessage(const std::string &json, Message &message) {
     if (settings.is<JsonObjectConst>()) {
         message.hasSettingsResponse = true;
         message.settingsAccepted = strcmp(settings["result"] | "", "success") == 0;
-        message.errorCode = settings["error"]["code"] | "";
-        message.errorMessage = settings["error"]["message"] | "";
-        message.errorField = settings["error"]["field"] | "";
+        message.general.grindSize = settings["data"]["bladeGap"] | -1.0f;
+        message.general.rpm = settings["data"]["grindRpm"] | -1;
+        message.general.feedRpm = settings["data"]["feedingRpm"] | -1;
     }
+
+    JsonVariantConst preset = doc["response"]["grindPreset"];
+    if (preset.is<JsonObjectConst>()) {
+        message.hasPresetResponse = true;
+        message.presetAccepted = strcmp(preset["result"] | "", "success") == 0;
+        if (preset["data"].is<JsonArrayConst>()) {
+            message.presetList = true;
+            for (JsonVariantConst entry : preset["data"].as<JsonArrayConst>()) {
+                message.presetUids.emplace_back(entry["uid"] | "");
+            }
+        } else {
+            message.presetIndex = preset["data"]["index"] | PRESET_NONE;
+        }
+    }
+
+    JsonVariantConst failed = settings.is<JsonObjectConst>() ? settings : preset;
+    message.errorCode = failed["error"]["code"] | "";
+    message.errorMessage = failed["error"]["message"] | "";
+    message.errorField = failed["error"]["field"] | "";
     return true;
 }
 

@@ -1,11 +1,15 @@
 #pragma once
 #include <cstdint>
+#include <string>
 
 // Grinder parameters a recipe can carry; a negative value means "not set" and is left untouched on the grinder.
 struct GrinderSettings {
     float grindSize = -1.0f; // grinder-specific unit, e.g. burr gap in µm
     int rpm = -1;            // burr speed
     int feedRpm = -1;        // bean feed speed
+    // Shown on grinders that can display a recipe; neither makes the settings non-empty.
+    float dose = -1.0f; // grams
+    std::string label;  // recipe name
 
     bool hasGrindSize() const { return grindSize >= 0.0f; }
     bool hasRpm() const { return rpm >= 0; }
@@ -13,7 +17,8 @@ struct GrinderSettings {
     bool isEmpty() const { return !hasGrindSize() && !hasRpm() && !hasFeedRpm(); }
 
     bool operator==(const GrinderSettings &other) const {
-        return grindSize == other.grindSize && rpm == other.rpm && feedRpm == other.feedRpm;
+        return grindSize == other.grindSize && rpm == other.rpm && feedRpm == other.feedRpm && dose == other.dose &&
+               label == other.label;
     }
     bool operator!=(const GrinderSettings &other) const { return !(*this == other); }
 };

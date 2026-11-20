@@ -187,6 +187,135 @@ static void test_settings_request_clamps_to_device_ranges() {
         buildSettingsRequest(high).c_str());
 }
 
+static void test_preset_name_carries_the_dose() {
+    TEST_ASSERT_EQUAL_STRING("Espresso 18g", buildPresetName("Espresso", 18.0f).c_str());
+    TEST_ASSERT_EQUAL_STRING("Espresso 18.5g", buildPresetName("Espresso", 18.5f).c_str());
+    TEST_ASSERT_EQUAL_STRING("Espresso 18.3g", buildPresetName("Espresso", 18.26f).c_str());
+    // No dose in the recipe: the label alone.
+    TEST_ASSERT_EQUAL_STRING("Espresso", buildPresetName("Espresso", 0.0f).c_str());
+    TEST_ASSERT_EQUAL_STRING("Espresso", buildPresetName("Espresso", -1.0f).c_str());
+    TEST_ASSERT_EQUAL_STRING("GaggiMate 18g", buildPresetName("", 18.0f).c_str());
+    TEST_ASSERT_EQUAL_STRING("AB 18g", buildPresetName("A\nB\t", 18.0f).c_str());
+}
+
+static void test_preset_name_fits_32_bytes() {
+    // The label gives way, the dose stays.
+    const std::string name = buildPresetName("A very long profile name that never ends", 18.5f);
+    TEST_ASSERT_EQUAL(32, name.size());
+    TEST_ASSERT_EQUAL_STRING("A very long profile name t 18.5g", name.c_str());
+    TEST_ASSERT_EQUAL_STRING("A very long profile name that ne",
+                             buildPresetName("A very long profile name that never ends", 0).c_str());
+    // Trailing blanks left by the cut are dropped.
+    TEST_ASSERT_EQUAL_STRING("A very long profile name 18.5g", buildPresetName("A very long profile name  that", 18.5f).c_str());
+
+    // Three-byte characters are never split: 9 fit into the 28 bytes left of " 18g".
+    std::string cjk;
+    for (int i = 0; i < 12; i++) {
+        cjk += "\xE5\x92\x96"; // 咖
+    }
+    const std::string cut = buildPresetName(cjk, 18.0f);
+    TEST_ASSERT_EQUAL(9 * 3 + 4, cut.size());
+    TEST_ASSERT_EQUAL_STRING(" 18g", cut.substr(27).c_str());
+}
+
+static void test_preset_requests() {
+    GrinderSettings values;
+    values.grindSize = 180.0f;
+    values.rpm = 1100;
+    values.feedRpm = 62;
+    TEST_ASSERT_EQUAL_STRING("{\"request\":{\"grindPreset\":{\"op\":\"get\",\"selector\":{\"type\":\"all\"}}}}",
+                             buildPresetListRequest().c_str());
+    TEST_ASSERT_EQUAL_STRING(
+        "{\"request\":{\"grindPreset\":{\"op\":\"add\",\"data\":{\"uid\":\"67616767696d61746500000000000000\",\"index\":2,"
+        "\"name\":\"Espresso 18g\",\"note\":\"\",\"bladeGap\":180,\"feedingRpm\":62,\"grindRpm\":1100}}}}",
+        buildPresetAddRequest(GAGGIMATE_PRESET_UID, 2, "Espresso 18g", values).c_str());
+    TEST_ASSERT_EQUAL_STRING(
+        "{\"request\":{\"grindPreset\":{\"op\":\"update\",\"selector\":{\"type\":\"uid\",\"value\":"
+        "\"67616767696d61746500000000000000\"},\"data\":{\"name\":\"Espresso 18g\",\"bladeGap\":180,\"feedingRpm\":62,"
+        "\"grindRpm\":1100}}}}",
+        buildPresetUpdateRequest(GAGGIMATE_PRESET_UID, "Espresso 18g", values).c_str());
+    TEST_ASSERT_EQUAL_STRING("{\"request\":{\"grindPreset\":{\"op\":\"restore\",\"selector\":{\"type\":\"uid\",\"value\":"
+                             "\"67616767696d61746500000000000000\"}}}}",
+                             buildPresetRestoreRequest(GAGGIMATE_PRESET_UID).c_str());
+    TEST_ASSERT_EQUAL_STRING("{\"request\":{\"geneSetting\":{\"op\":\"set\",\"data\":{\"selectPreset\":2}}}}",
+                             buildSelectPresetRequest(2).c_str());
+    TEST_ASSERT_EQUAL_STRING("{\"request\":{\"geneSetting\":{\"op\":\"set\",\"data\":{\"selectPreset\":-1}}}}",
+                             buildSelectPresetRequest(PRESET_NONE).c_str());
+    TEST_ASSERT_EQUAL(32, std::string(GAGGIMATE_PRESET_UID).size());
+}
+
+static void test_preset_requests_stay_valid_json() {
+    // Quotes and backslashes in a profile name are escaped, values are clamped.
+    GrinderSettings wild;
+    wild.grindSize = 5000.0f;
+    wild.rpm = 0;
+    wild.feedRpm = 500;
+    const std::string request = buildPresetAddRequest(GAGGIMATE_PRESET_UID, 0, "My \"best\" \\ shot", wild);
+    JsonDocument doc;
+    TEST_ASSERT_TRUE(deserializeJson(doc, request.data(), request.size()) == DeserializationError::Ok);
+    JsonVariantConst data = doc["request"]["grindPreset"]["data"];
+    TEST_ASSERT_EQUAL_STRING("My \"best\" \\ shot", data["name"] | "");
+    TEST_ASSERT_EQUAL(999, data["bladeGap"] | -1);
+    TEST_ASSERT_EQUAL(500, data["grindRpm"] | -1);
+    TEST_ASSERT_EQUAL(65, data["feedingRpm"] | -1);
+}
+
+static void test_parse_general_settings_answer() {
+    TEST_ASSERT_EQUAL_STRING("{\"request\":{\"geneSetting\":{\"op\":\"get\",\"selector\":{\"type\":\"keys\",\"value\":"
+                             "[\"feedingRpm\",\"bladeGap\",\"grindRpm\"]}}}}",
+                             buildGeneralSettingsQuery().c_str());
+    Message message;
+    TEST_ASSERT_TRUE(parseMessage("{\"response\":{\"geneSetting\":{\"result\":\"success\",\"data\":{\"feedingRpm\":65,"
+                                  "\"bladeGap\":500,\"grindRpm\":700}}}}",
+                                  message));
+    TEST_ASSERT_TRUE(message.settingsAccepted);
+    TEST_ASSERT_EQUAL_FLOAT(500.0f, message.general.grindSize);
+    TEST_ASSERT_EQUAL(700, message.general.rpm);
+    TEST_ASSERT_EQUAL(65, message.general.feedRpm);
+}
+
+static void test_parse_preset_responses() {
+    Message list;
+    TEST_ASSERT_TRUE(
+        parseMessage("{\"response\":{\"grindPreset\":{\"result\":\"success\",\"data\":["
+                     "{\"uid\":\"5f2c8a0b9d6e4f31a7c2b8d4e1f6a903\",\"name\":\"French Press\",\"note\":\"\",\"bladeGap\":350,"
+                     "\"feedingRpm\":55,\"grindRpm\":600,\"totalGrinds\":27,\"index\":0},"
+                     "{\"uid\":\"67616767696d61746500000000000000\",\"name\":\"Espresso 18g\",\"note\":\"\",\"bladeGap\":180,"
+                     "\"feedingRpm\":62,\"grindRpm\":1100,\"totalGrinds\":14,\"index\":1}]}}}",
+                     list));
+    TEST_ASSERT_TRUE(list.hasPresetResponse);
+    TEST_ASSERT_TRUE(list.presetAccepted);
+    TEST_ASSERT_TRUE(list.presetList);
+    TEST_ASSERT_FALSE(list.hasSettingsResponse);
+    TEST_ASSERT_EQUAL(2, list.presetUids.size());
+    TEST_ASSERT_EQUAL_STRING("5f2c8a0b9d6e4f31a7c2b8d4e1f6a903", list.presetUids[0].c_str());
+    TEST_ASSERT_EQUAL_STRING(GAGGIMATE_PRESET_UID, list.presetUids[1].c_str());
+
+    Message empty;
+    TEST_ASSERT_TRUE(parseMessage("{\"response\":{\"grindPreset\":{\"result\":\"success\",\"data\":[]}}}", empty));
+    TEST_ASSERT_TRUE(empty.presetList);
+    TEST_ASSERT_TRUE(empty.presetUids.empty());
+
+    Message added;
+    TEST_ASSERT_TRUE(parseMessage(
+        "{\"response\":{\"grindPreset\":{\"result\":\"success\",\"data\":{\"uid\":\"67616767696d61746500000000000000\","
+        "\"name\":\"Espresso 18g\",\"note\":\"\",\"bladeGap\":180,\"feedingRpm\":62,\"grindRpm\":1100,\"totalGrinds\":0,"
+        "\"index\":2}}}}",
+        added));
+    TEST_ASSERT_TRUE(added.presetAccepted);
+    TEST_ASSERT_FALSE(added.presetList);
+    TEST_ASSERT_EQUAL(2, added.presetIndex);
+
+    Message duplicate;
+    TEST_ASSERT_TRUE(parseMessage("{\"response\":{\"grindPreset\":{\"result\":\"fail\",\"error\":{\"code\":"
+                                  "\"PRESET_UID_DUPLICATE\",\"message\":\"uid duplicated\",\"field\":\"uid\"}}}}",
+                                  duplicate));
+    TEST_ASSERT_TRUE(duplicate.hasPresetResponse);
+    TEST_ASSERT_FALSE(duplicate.presetAccepted);
+    TEST_ASSERT_EQUAL(PRESET_NONE, duplicate.presetIndex);
+    TEST_ASSERT_EQUAL_STRING("PRESET_UID_DUPLICATE", duplicate.errorCode.c_str());
+}
+
 static void test_parse_period_info() {
     Message message;
     TEST_ASSERT_TRUE(
@@ -238,8 +367,9 @@ static void test_parse_settings_responses() {
 
     // Responses to other business objects are not settings responses.
     Message other;
-    TEST_ASSERT_TRUE(parseMessage("{\"response\":{\"grindPreset\":{\"result\":\"success\",\"data\":[]}}}", other));
+    TEST_ASSERT_TRUE(parseMessage("{\"response\":{\"grindSection\":{\"result\":\"success\",\"data\":[]}}}", other));
     TEST_ASSERT_FALSE(other.hasSettingsResponse);
+    TEST_ASSERT_FALSE(other.hasPresetResponse);
 }
 
 static void test_parse_tolerates_unknown_and_missing_fields() {
@@ -284,6 +414,12 @@ int main(int, char **) {
     RUN_TEST(test_reassembly_rejects_malformed_packets);
     RUN_TEST(test_settings_request);
     RUN_TEST(test_settings_request_clamps_to_device_ranges);
+    RUN_TEST(test_preset_name_carries_the_dose);
+    RUN_TEST(test_preset_name_fits_32_bytes);
+    RUN_TEST(test_preset_requests);
+    RUN_TEST(test_preset_requests_stay_valid_json);
+    RUN_TEST(test_parse_general_settings_answer);
+    RUN_TEST(test_parse_preset_responses);
     RUN_TEST(test_parse_period_info);
     RUN_TEST(test_parse_first_broadcast_with_base_info);
     RUN_TEST(test_parse_settings_responses);

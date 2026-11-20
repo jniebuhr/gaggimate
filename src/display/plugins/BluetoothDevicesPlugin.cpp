@@ -374,6 +374,8 @@ void BluetoothDevicesPlugin::syncGrinderProfile(bool force) {
     settings.grindSize = profile.grinder.grindSize;
     settings.rpm = profile.grinder.rpm;
     settings.feedRpm = profile.grinder.feedRpm;
+    settings.dose = profile.dose > 0.0f ? profile.dose : -1.0f;
+    settings.label = profile.label.c_str();
     if (settings.isEmpty() || (!force && settings == lastGrinderSettings)) {
         return;
     }

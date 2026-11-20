@@ -27,8 +27,11 @@ DiFluid Microbalance, Eclair, Eureka Precisa, Felicita, Timemore Black Mirror, T
 Varia AKU, WeighMyBru, MyScale.
 
 Grinders: Bookoo Motto 80 (`grinders/bookoo_motto.*`, grinder firmware v1.2.19.0820 or newer). Protocol reference:
-<https://github.com/BooKooCode/OpenSource/tree/main/bookoo_motto80>. The grinder exposes no start/stop command, and its
-burr gap is manual: the grind size only sets the value shown in the grinder's settings.
+<https://github.com/BooKooCode/OpenSource/tree/main/bookoo_motto80>. Settings go into a preset that GaggiMate owns (fixed
+uid, added behind the user's presets) and then selects; its name is the recipe label plus the dose, as the protocol has
+no dose field. Values the recipe leaves unset come from the grinder's general settings. With all 10 presets in use the
+driver writes the general settings instead. The grinder exposes no start/stop command, and its burr gap is manual: the
+grind size only sets the displayed value.
 
 ## Adding a device
 

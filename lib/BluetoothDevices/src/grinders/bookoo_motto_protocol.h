@@ -31,6 +31,14 @@ constexpr int RPM_MAX = 1500;
 constexpr int FEED_RPM_MIN = 10;
 constexpr int FEED_RPM_MAX = 65;
 
+// User presets: the grinder shows up to 10, indexed 0-9 without gaps; -1 selects N mode (no preset).
+constexpr int PRESET_LIMIT = 10;
+constexpr int PRESET_NONE = -1;
+constexpr size_t PRESET_NAME_MAX_BYTES = 32;
+// Fixed id of the preset GaggiMate owns ("gaggimate" in hex, zero padded to the required 32 characters).
+constexpr const char *GAGGIMATE_PRESET_UID = "67616767696d61746500000000000000";
+constexpr const char *GAGGIMATE_PRESET_NAME = "GaggiMate";
+
 // Largest packet for a connection: ATT payload (MTU - 3) limited to the protocol's bounds.
 size_t packetLengthForMtu(uint16_t mtu);
 
@@ -58,6 +66,21 @@ std::string buildHandshakeRequest();
 // geneSetting "set" request with the set fields clamped to the grinder's ranges; empty when nothing is set.
 std::string buildSettingsRequest(const GrinderSettings &settings);
 
+// Reads the three general (N mode) values, used to fill what a recipe leaves unset.
+std::string buildGeneralSettingsQuery();
+
+// Preset name for a recipe: its label, shortened to make room for the dose ("Espresso 18g"), at most 32 bytes of UTF-8.
+std::string buildPresetName(const std::string &label, float dose);
+
+std::string buildPresetListRequest();
+// A preset needs all three values; they are clamped to the grinder's ranges.
+std::string buildPresetAddRequest(const std::string &uid, int index, const std::string &name, const GrinderSettings &values);
+std::string buildPresetUpdateRequest(const std::string &uid, const std::string &name, const GrinderSettings &values);
+// Brings a deleted preset back from the grinder's recycle bin, at the end of the list.
+std::string buildPresetRestoreRequest(const std::string &uid);
+// Switches the grinder to a preset by index, or to N mode with PRESET_NONE.
+std::string buildSelectPresetRequest(int index);
+
 // Maps a devState string to the generic grinder state; unlisted states are reported as UNKNOWN.
 GrinderState parseDeviceState(const char *devState);
 
@@ -73,9 +96,19 @@ struct Message {
     uint32_t releaseVersion = 0;
     std::string serialNumber;
 
-    // response.geneSetting
+    // response.geneSetting; general holds the values of a "get" answer
     bool hasSettingsResponse = false;
     bool settingsAccepted = false;
+    GrinderSettings general;
+
+    // response.grindPreset: a list answer fills presetUids (in list order), a single-preset answer presetIndex
+    bool hasPresetResponse = false;
+    bool presetAccepted = false;
+    bool presetList = false;
+    std::vector<std::string> presetUids;
+    int presetIndex = PRESET_NONE;
+
+    // error of a failed response
     std::string errorCode;
     std::string errorMessage;
     std::string errorField;

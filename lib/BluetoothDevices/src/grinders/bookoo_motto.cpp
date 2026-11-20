@@ -1,4 +1,5 @@
 #include "bookoo_motto.h"
+#include <algorithm>
 
 static const NimBLEUUID serviceUUID(motto::SERVICE_UUID);
 static const NimBLEUUID rxCharacteristicUUID(motto::RX_CHARACTERISTIC_UUID);
@@ -24,7 +25,7 @@ bool BookooMottoGrinder::connect() {
         inbox.clear();
     }
     ready = false;
-    transfer = pendingSettings.isEmpty() ? SettingsTransfer::NONE : SettingsTransfer::QUEUED;
+    step = pendingSettings.isEmpty() ? Step::NONE : Step::QUEUED;
     settingsAttempts = 0;
 
     auto callback = [this](NimBLERemoteCharacteristic *, uint8_t *data, size_t length, bool) { onNotification(data, length); };
@@ -98,15 +99,16 @@ void BookooMottoGrinder::update() {
         handleMessage(json);
     }
 
-    if (transfer == SettingsTransfer::SENT && millis() - settingsSentAt > RESPONSE_TIMEOUT_MS) {
-        log("No answer to the settings request\n");
-        transfer = SettingsTransfer::QUEUED;
+    const bool awaitingResponse = step != Step::NONE && step != Step::QUEUED && step != Step::WAIT_FOR_IDLE;
+    if (awaitingResponse && millis() - requestSentAt > RESPONSE_TIMEOUT_MS) {
+        log("No answer from the grinder, starting over\n");
+        step = Step::QUEUED;
     }
-    if (transfer == SettingsTransfer::WAIT_FOR_IDLE && getState() == GrinderState::IDLE) {
-        transfer = SettingsTransfer::QUEUED;
+    if (step == Step::WAIT_FOR_IDLE && getState() == GrinderState::IDLE) {
+        step = Step::QUEUED;
     }
-    if (transfer == SettingsTransfer::QUEUED && ready) {
-        sendPendingSettings();
+    if (step == Step::QUEUED && ready) {
+        startTransfer();
     }
 }
 
@@ -124,23 +126,11 @@ void BookooMottoGrinder::handleMessage(const std::string &json) {
             log("Data channel ready\n");
         }
         ready = true;
-        selectedPreset = message.selectedPreset;
         setReportedSettings(message.reported);
         setState(message.state);
     }
-    if (message.hasSettingsResponse && transfer == SettingsTransfer::SENT) {
-        if (message.settingsAccepted) {
-            log("Settings applied\n");
-            transfer = SettingsTransfer::NONE;
-        } else if (message.errorCode == "INVALID_STATE") {
-            // The grinder is busy (grinding, cleaning, in its menu); try again once it reports idle.
-            log("Grinder busy, settings wait for idle\n");
-            transfer = SettingsTransfer::WAIT_FOR_IDLE;
-        } else {
-            log("Settings rejected: %s %s %s\n", message.errorCode.c_str(), message.errorMessage.c_str(),
-                message.errorField.c_str());
-            transfer = SettingsTransfer::NONE;
-        }
+    if (message.hasSettingsResponse || message.hasPresetResponse) {
+        handleResponse(message);
     }
 }
 
@@ -149,28 +139,134 @@ bool BookooMottoGrinder::applySettings(const GrinderSettings &settings) {
         return false;
     }
     pendingSettings = settings;
-    transfer = SettingsTransfer::QUEUED;
+    step = Step::QUEUED;
     settingsAttempts = 0;
     return isConnected();
 }
 
-void BookooMottoGrinder::sendPendingSettings() {
+void BookooMottoGrinder::startTransfer() {
     if (settingsAttempts >= SETTINGS_MAX_ATTEMPTS) {
         log("Giving up on the settings after %d attempts\n", static_cast<int>(settingsAttempts));
-        transfer = SettingsTransfer::NONE;
+        step = Step::NONE;
         return;
     }
-    if (selectedPreset >= 0) {
-        log("Grinder runs user preset %d, the general settings may not be in effect\n", selectedPreset);
-    }
     settingsAttempts++;
-    if (sendJson(motto::buildSettingsRequest(pendingSettings))) {
-        log("Settings sent: grind size %.0f, %d rpm, feed %d rpm\n", pendingSettings.grindSize, pendingSettings.rpm,
-            pendingSettings.feedRpm);
-        transfer = SettingsTransfer::SENT;
-        settingsSentAt = millis();
+    presetValues = pendingSettings;
+    // A preset needs all three values: take what the recipe leaves open from the grinder's general settings.
+    if (!presetValues.hasGrindSize() || !presetValues.hasRpm() || !presetValues.hasFeedRpm()) {
+        sendRequest(Step::FETCH_GENERAL, motto::buildGeneralSettingsQuery());
     } else {
-        log("Sending the settings failed\n");
+        sendRequest(Step::LIST_PRESETS, motto::buildPresetListRequest());
+    }
+}
+
+void BookooMottoGrinder::sendRequest(Step next, const std::string &json) {
+    if (!sendJson(json)) {
+        log("Sending a request failed\n");
+        step = Step::QUEUED;
+        return;
+    }
+    step = next;
+    requestSentAt = millis();
+}
+
+void BookooMottoGrinder::failTransfer(const motto::Message &message) {
+    if (message.errorCode == "INVALID_STATE") {
+        // The grinder is busy (grinding, cleaning, in its menu); start over once it reports idle.
+        log("Grinder busy, settings wait for idle\n");
+        step = Step::WAIT_FOR_IDLE;
+        return;
+    }
+    log("Request rejected: %s %s %s\n", message.errorCode.c_str(), message.errorMessage.c_str(), message.errorField.c_str());
+    step = Step::NONE;
+}
+
+void BookooMottoGrinder::handleResponse(const motto::Message &message) {
+    const std::string uid = motto::GAGGIMATE_PRESET_UID;
+    const std::string name = motto::buildPresetName(pendingSettings.label, pendingSettings.dose);
+    switch (step) {
+    case Step::FETCH_GENERAL:
+        if (!message.hasSettingsResponse) {
+            return;
+        }
+        if (!message.settingsAccepted) {
+            failTransfer(message);
+            return;
+        }
+        if (!presetValues.hasGrindSize())
+            presetValues.grindSize = message.general.grindSize;
+        if (!presetValues.hasRpm())
+            presetValues.rpm = message.general.rpm;
+        if (!presetValues.hasFeedRpm())
+            presetValues.feedRpm = message.general.feedRpm;
+        sendRequest(Step::LIST_PRESETS, motto::buildPresetListRequest());
+        return;
+
+    case Step::LIST_PRESETS: {
+        if (!message.hasPresetResponse) {
+            return;
+        }
+        if (!message.presetAccepted || !message.presetList) {
+            failTransfer(message);
+            return;
+        }
+        const auto &uids = message.presetUids;
+        const int count = static_cast<int>(uids.size());
+        if (std::find(uids.begin(), uids.end(), uid) != uids.end()) {
+            sendRequest(Step::WRITE_PRESET, motto::buildPresetUpdateRequest(uid, name, presetValues));
+        } else if (count < motto::PRESET_LIMIT) {
+            // New presets go to the end of the list, behind the user's own.
+            sendRequest(Step::WRITE_PRESET, motto::buildPresetAddRequest(uid, count, name, presetValues));
+        } else {
+            log("All %d presets are in use, writing the general settings instead\n", count);
+            sendRequest(Step::WRITE_GENERAL, motto::buildSettingsRequest(pendingSettings));
+        }
+        return;
+    }
+
+    case Step::RESTORE_PRESET:
+        if (!message.hasPresetResponse) {
+            return;
+        }
+        if (!message.presetAccepted) {
+            failTransfer(message);
+            return;
+        }
+        sendRequest(Step::WRITE_PRESET, motto::buildPresetUpdateRequest(uid, name, presetValues));
+        return;
+
+    case Step::WRITE_PRESET:
+        if (!message.hasPresetResponse) {
+            return;
+        }
+        if (!message.presetAccepted && message.errorCode == "PRESET_UID_DUPLICATE") {
+            // Deleted on the grinder earlier: the id is still taken by the recycle bin entry.
+            sendRequest(Step::RESTORE_PRESET, motto::buildPresetRestoreRequest(uid));
+            return;
+        }
+        if (!message.presetAccepted || message.presetIndex == motto::PRESET_NONE) {
+            failTransfer(message);
+            return;
+        }
+        log("Preset \"%s\" written at index %d\n", name.c_str(), message.presetIndex);
+        sendRequest(Step::SELECT_PRESET, motto::buildSelectPresetRequest(message.presetIndex));
+        return;
+
+    case Step::SELECT_PRESET:
+    case Step::WRITE_GENERAL:
+        if (!message.hasSettingsResponse) {
+            return;
+        }
+        if (!message.settingsAccepted) {
+            failTransfer(message);
+            return;
+        }
+        log(step == Step::SELECT_PRESET ? "Preset selected\n" : "General settings applied\n");
+        step = Step::NONE;
+        return;
+
+    default:
+        return;
     }
 }
 

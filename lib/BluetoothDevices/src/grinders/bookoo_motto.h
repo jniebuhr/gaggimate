@@ -18,14 +18,25 @@ class BookooMottoGrinder : public BluetoothGrinder {
     bool isConnected() override;
     void update() override;
 
-    // The burr gap is manual on the Motto 80: the grind size only sets the value shown in its settings.
+    // Written to a GaggiMate-owned preset that is then selected; the burr gap itself stays manual on the Motto 80.
     bool applySettings(const GrinderSettings &settings) override;
     bool supportsGrindSize() const override { return true; }
     bool supportsRpm() const override { return true; }
     bool supportsFeedRpm() const override { return true; }
 
   private:
-    enum class SettingsTransfer : uint8_t { NONE, QUEUED, SENT, WAIT_FOR_IDLE };
+    // One request is in flight at a time; responses carry no id, so the step says which answer is expected.
+    enum class Step : uint8_t {
+        NONE,
+        QUEUED,
+        FETCH_GENERAL,  // read the N mode values for fields the recipe leaves unset
+        LIST_PRESETS,   // look for the GaggiMate preset
+        RESTORE_PRESET, // it sits in the grinder's recycle bin
+        WRITE_PRESET,   // add or update it
+        SELECT_PRESET,
+        WRITE_GENERAL, // no preset slot free: fall back to the general settings
+        WAIT_FOR_IDLE,
+    };
 
     // Pending inbound messages are capped so a stalled update() cannot grow the queue without bound.
     static constexpr size_t INBOX_LIMIT = 16;
@@ -44,17 +55,20 @@ class BookooMottoGrinder : public BluetoothGrinder {
     // Everything below belongs to the task that calls update().
     bool ready = false; // first periodInfo received, the grinder accepts requests
     uint16_t sequence = 0;
-    int selectedPreset = -1;
     GrinderSettings pendingSettings;
-    SettingsTransfer transfer = SettingsTransfer::NONE;
+    GrinderSettings presetValues; // pendingSettings with the unset fields filled in
+    Step step = Step::NONE;
     uint8_t settingsAttempts = 0;
-    uint32_t settingsSentAt = 0;
+    uint32_t requestSentAt = 0;
 
     bool discoverCharacteristics();
     void onNotification(const uint8_t *data, size_t length);
     void handleMessage(const std::string &json);
+    void handleResponse(const motto::Message &message);
     bool sendJson(const std::string &json);
-    void sendPendingSettings();
+    void startTransfer();
+    void sendRequest(Step next, const std::string &json);
+    void failTransfer(const motto::Message &message);
 };
 
 class BookooMottoGrinderPlugin {
