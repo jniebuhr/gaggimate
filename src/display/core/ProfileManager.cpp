@@ -211,7 +211,10 @@ bool ProfileManager::saveProfile(Profile &profile) {
 
     ESP_LOGI("ProfileManager", "Saving profile %s", profile.id.c_str());
 
-    File file = _fs->open(profilePath(profile.id), "w");
+    // Write a temp file and rename it over the profile, so a failed or interrupted write never truncates the old one.
+    const String path = profilePath(profile.id);
+    const String tmpPath = path + ".tmp";
+    File file = _fs->open(tmpPath, "w");
     if (!file)
         return false;
 
@@ -221,6 +224,10 @@ bool ProfileManager::saveProfile(Profile &profile) {
 
     bool ok = serializeJson(doc, file) > 0;
     file.close();
+    // FAT (SD card) cannot rename onto an existing file, LittleFS can; remove first only if the plain rename fails.
+    ok = ok && (_fs->rename(tmpPath, path) || (_fs->remove(path) && _fs->rename(tmpPath, path)));
+    if (!ok && _fs->exists(path)) // keep the temp file if the old profile is already gone
+        _fs->remove(tmpPath);
     if (profile.id == selectedProfile.id) {
         selectedProfile = Profile{};
         loadSelectedProfile(selectedProfile);
