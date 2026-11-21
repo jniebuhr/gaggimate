@@ -1,4 +1,5 @@
 import { Trans, useLingui } from '@lingui/react/macro';
+import { useEffect, useRef } from 'preact/hooks';
 import Section from '../../../components/Card.jsx';
 import { InputGroupField } from '../../../components/SettingsFormField.jsx';
 
@@ -15,6 +16,31 @@ const inRangeOrOff = (value, min, max) => {
   const v = Number(value);
   return value === '' || v === 0 || (v >= min && v <= max);
 };
+
+// Values between 0 and the minimum are as silly as values above the maximum; block saving. The check follows the
+// value itself, not just typing, so an import or Discard that changes it also clears or sets the error.
+function RangeInput({ id, value, min, max, error, onChange }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    ref.current?.setCustomValidity(inRangeOrOff(ref.current.value, min, max) ? '' : error);
+  }, [value, min, max, error]);
+  return (
+    <input
+      ref={ref}
+      id={id}
+      name={id}
+      type='number'
+      step='any'
+      min='0'
+      max={max}
+      className='grow'
+      placeholder='0'
+      value={value}
+      onInput={e => e.target.setCustomValidity(inRangeOrOff(e.target.value, min, max) ? '' : error)}
+      onChange={onChange}
+    />
+  );
+}
 
 export function LagCompensationSection({ formData, onChange }) {
   const { t } = useLingui();
@@ -40,22 +66,12 @@ export function LagCompensationSection({ formData, onChange }) {
         helpText={`${help[key]} ${allowed}`}
         noMargin
       >
-        <input
+        <RangeInput
           id={key}
-          name={key}
-          type='number'
-          step='any'
-          min='0'
-          max={max}
-          className='grow'
-          placeholder='0'
           value={formData[key] ?? 0}
-          onInput={e =>
-            // Values between 0 and the minimum are as silly as values above the maximum; block saving.
-            e.target.setCustomValidity(
-              inRangeOrOff(e.target.value, min, max) ? '' : t`Use ${range}.`,
-            )
-          }
+          min={min}
+          max={max}
+          error={t`Use ${range}.`}
           onChange={onChange(key)}
         />
       </InputGroupField>
