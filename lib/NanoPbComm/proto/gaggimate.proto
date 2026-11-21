@@ -116,6 +116,10 @@ message HeaterSettings {
     float steam_kp = 7;
     float steam_ki = 8;
     float steam_kd = 9;
+    // Brew-boiler lag compensation. 0 = off, so a display that never sends these keeps the plain PID loop.
+    float derivative_filter_s = 10; // low-pass time constant on the D term (s)
+    float integral_zone = 11;       // integrate only while |error| < this (degC); also pauses I during water flow
+    float sensor_dead_time_s = 12;  // heater-to-sensor dead time (s): length of the post-flow I pause
 }
 
 message MachineHardwareSettings {

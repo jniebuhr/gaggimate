@@ -92,6 +92,35 @@ void Heater::setFeedforwardScale(float combinedKff) {
     ESP_LOGI(LOG_TAG, "Combined feedforward gain (Kff) set to: %.3f output units per watt", combinedKff);
 }
 
+void Heater::setLagCompensation(const HeaterLagSettings &lag) {
+    std::lock_guard<std::mutex> lock(lagMutex);
+    simplePid->setDerivativeFilterTime(lag.derivativeFilterS);
+    simplePid->setIntegralZone(lag.integralZoneC);
+    integralZoneActive = lag.integralZoneC > 0.0f;
+    integralHoldTailMs = lag.sensorDeadTimeS > 0.0f ? static_cast<uint32_t>(lag.sensorDeadTimeS * 1000.0f) : 0;
+    if (!integralZoneActive)
+        simplePid->setIntegralHold(false);
+    ESP_LOGI(LOG_TAG, "Lag compensation: D filter %.1fs, I zone %.2f°C, dead time %.1fs", lag.derivativeFilterS,
+             lag.integralZoneC, lag.sensorDeadTimeS);
+}
+
+void Heater::updateLagCompensation() {
+    const uint32_t now = millis();
+    const float flow = pumpFlowRate != nullptr ? *pumpFlowRate : 0.0f;
+    const bool flowing = flow > 0.01f;
+
+    std::lock_guard<std::mutex> lock(lagMutex);
+    if (flowing) {
+        lastFlowMs = now;
+        flowSeen = true;
+    }
+    if (integralZoneActive) {
+        // Pause the integral while fresh water flows and until its effect has reached the sensor: the error in
+        // that window is the (stale) flush, not a steady-state offset the integral should learn.
+        simplePid->setIntegralHold(flowing || (flowSeen && now - lastFlowMs < integralHoldTailMs));
+    }
+}
+
 void Heater::autotune(int testTimeSec, int windowSize, int heaterWattage) {
     setupAutotune(testTimeSec, windowSize, heaterWattage);
     autotuning = true;
@@ -100,6 +129,7 @@ void Heater::autotune(int testTimeSec, int windowSize, int heaterWattage) {
 void Heater::loopPid() {
     softPwm(TUNER_OUTPUT_SPAN);
     temperature = sensor->read();
+    updateLagCompensation();
 
     // Calculate and set disturbance feedforward BEFORE PID update
     // Only apply thermal feedforward when Kf>0, valve is open, and water is flowing

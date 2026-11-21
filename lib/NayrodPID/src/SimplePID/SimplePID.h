@@ -49,6 +49,14 @@ class SimplePID {
     void setDisturbanceGain(float gainDFF) { gainDistFF = gainDFF; };
     float getDisturbanceGain() { return gainDistFF; };
 
+    // First-order low-pass time constant (s) on the derivative term; 0 = unfiltered.
+    void setDerivativeFilterTime(float tauSeconds) { derivFilterTau = tauSeconds > 0.0f ? tauSeconds : 0.0f; };
+    // Only integrate while |error| is inside this band (°C); 0 = always integrate.
+    void setIntegralZone(float band) { integralZone = band > 0.0f ? band : 0.0f; };
+    // Freeze the integral while a known disturbance is acting (e.g. water flowing).
+    void setIntegralHold(bool hold) { integralHold = hold; };
+    float getIntegralState() const { return feedback_integralState; };
+
   private:
     // setpoint filtering
     void setpointFiltering(float freq);
@@ -80,6 +88,11 @@ class SimplePID {
     float feedback_integralState = 0.0f; // Integral state
     float prevError = 0.0f;              // Previous error for derivative calculation
     float prevOutput = 0.0f;             // Previous output for derivative calculation
+    float prevInput = 0.0f;              // Previous measurement; the derivative acts on it, not on the error
+    float derivFiltered = 0.0f;          // Low-pass filtered measurement rate (units/s)
+    float derivFilterTau = 0.0f;         // Derivative filter time constant (s), 0 = off
+    float integralZone = 0.0f;           // |error| band where the integral runs, 0 = everywhere
+    bool integralHold = false;           // Integral frozen while true
     Control mode = Control::manual;
     float manualOutput = 0.0f;
     unsigned long lastTime = 0;

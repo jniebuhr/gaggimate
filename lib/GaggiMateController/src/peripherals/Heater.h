@@ -8,6 +8,7 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <memory>
+#include <mutex>
 
 constexpr float MAX_AUTOTUNE_TEMP = 125.0f;
 constexpr float TUNER_OUTPUT_SPAN = 1000.0f;
@@ -18,6 +19,15 @@ using heater_autotune_fail_callback_t = std::function<void()>;
 // in Heater::loopAutotune as 1000 / heaterWattage when wattage > 0; 0 when the
 // caller didn't supply a wattage.
 using pid_result_callback_t = std::function<void(float Kp, float Ki, float Kd, float Kff)>;
+
+// PID refinements for boilers whose sensor reacts long after the heater; every value <= 0 keeps the legacy behaviour
+// for that part.
+struct HeaterLagSettings {
+    float derivativeFilterS = 0.0f; // low-pass time constant on the D term
+    float integralZoneC = 0.0f;     // integrate only within this |error| band, and pause the integral while water flows
+                                    // and for sensorDeadTimeS afterwards
+    float sensorDeadTimeS = 0.0f;   // delay from heater power to the sensor reacting
+};
 
 class HeaterCoordinator;
 
@@ -43,6 +53,8 @@ class Heater {
     void setThermalFeedforward(float *pumpFlowPtr = nullptr, float incomingWaterTemp = 23.0f, int *valveStatusPtr = nullptr);
     void setFeedforwardScale(float combinedKff); // Set combined Kff value (output units per watt)
 
+    void setLagCompensation(const HeaterLagSettings &lag);
+
   private:
     void setupPid();
     void setupAutotune(int testTimeSec, int windowSize, int heaterWattage);
@@ -54,6 +66,7 @@ class Heater {
     void plot(float optimumOutput, float outputScale, uint8_t everyNth);
     float calculateDisturbanceFeedforwardGain();
     float calculateSafetyScaling(float tempError);
+    void updateLagCompensation();
     TemperatureSensor *sensor;
     uint8_t heaterPin;
     xTaskHandle taskHandle;
@@ -87,6 +100,13 @@ class Heater {
     float heaterEfficiency = 0.95f; // 95% efficiency (immersion heater)
     float heatLossWatts = 5.0f;     // 5W heat loss (well-insulated boiler)
     float combinedKff = 0.0f;       // Combined feedforward gain (output units per watt) - disabled by default
+
+    // Lag compensation state (written from the comms task, read on the heater task)
+    std::mutex lagMutex;
+    bool integralZoneActive = false;
+    uint32_t integralHoldTailMs = 0;
+    uint32_t lastFlowMs = 0;
+    bool flowSeen = false;
 
     // Thermal model constants
     static constexpr float WATER_DENSITY = 1.0f;        // g/ml
