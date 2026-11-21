@@ -1304,12 +1304,19 @@ void Controller::deactivateLocked(std::vector<const char *> &events) {
     }
     lastProcess = std::move(currentProcess);
     bool utility = false;
+    // A process that was stopped by hand or ran out on time never stamped its own end; status reads elapsed time from it.
     if (lastProcess->getType() == MODE_BREW) {
-        utility = static_cast<BrewProcess *>(lastProcess.get())->isUtility();
+        auto *brew = static_cast<BrewProcess *>(lastProcess.get());
+        if (brew->finished == 0)
+            brew->finished = millis();
+        utility = brew->isUtility();
         if (!utility)
             flushPending = true; // a shot leaves grounds behind, a flush does not
         events.push_back("controller:brew:end");
     } else if (lastProcess->getType() == MODE_GRIND) {
+        auto *grind = static_cast<GrindProcess *>(lastProcess.get());
+        if (grind->finished == 0)
+            grind->finished = millis();
         events.push_back("controller:grind:end");
     }
     events.push_back("controller:process:end");
