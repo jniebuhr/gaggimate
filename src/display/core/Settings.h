@@ -232,6 +232,11 @@ class Settings {
     float getDerivativeFilterS() const { return derivativeFilterS.get(); }
     float getIntegralZone() const { return integralZone.get(); }
     float getSensorDeadTimeS() const { return sensorDeadTimeS.get(); }
+    float getModelHeaterW() const { return modelHeaterW.get(); }
+    float getModelHeatRate() const { return modelHeatRate.get(); }
+    float getModelLossW() const { return modelLossW.get(); } // learned by the controller, saved here
+    float getWaterDeadTimeS() const { return waterDeadTimeS.get(); }
+    float getValveDumpMl() const { return valveDumpMl.get(); }
     String getMachineProfileSelection() const { return machineProfileSelection.get(); }
     bool setMachineProfileSelection(const String &v);
     String getPid() const { return pid.get(); }
@@ -404,6 +409,11 @@ class Settings {
     void setDerivativeFilterS(float seconds);
     void setIntegralZone(float degrees);
     void setSensorDeadTimeS(float seconds);
+    void setModelHeaterW(float watts);
+    void setModelHeatRate(float degreesPerSecond);
+    void setModelLossW(float watts);
+    void setWaterDeadTimeS(float seconds);
+    void setValveDumpMl(float ml);
     void setPumpModelCoeffs(const String &pumpModelCoeffs);
     void setPumpSlipCoeffs(const String &pumpSlipCoeffs);
     void setWifiSsid(const String &wifiSsid);
@@ -596,6 +606,11 @@ class Settings {
     Property<float> derivativeFilterS{registry, "lc_df", 0.0f};
     Property<float> integralZone{registry, "lc_iz", 0.0f};
     Property<float> sensorDeadTimeS{registry, "lc_dt", 0.0f};
+    Property<float> modelHeaterW{registry, "lc_hw", 0.0f};
+    Property<float> modelHeatRate{registry, "lc_hr", 0.0f};
+    Property<float> modelLossW{registry, "lc_lw", 0.0f};
+    Property<float> waterDeadTimeS{registry, "lc_wd", 0.0f};
+    Property<float> valveDumpMl{registry, "lc_vd", 0.0f};
 
     Property<String> setupStep{registry, "setup_step", "machine"};
     Property<String, MachineProfileSelectionCodec> machineProfileSelection{registry, "mc_profile", ""};

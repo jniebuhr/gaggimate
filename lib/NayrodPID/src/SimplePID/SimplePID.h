@@ -55,6 +55,10 @@ class SimplePID {
     void setIntegralZone(float band) { integralZone = band > 0.0f ? band : 0.0f; };
     // Freeze the integral while a known disturbance is acting (e.g. water flowing).
     void setIntegralHold(bool hold) { integralHold = hold; };
+    // Measurement the D term differentiates; nullptr = the controlled input. Lets P/I run on a predicted
+    // temperature while D damps what the sensor actually shows (D on a prediction that includes the
+    // controller's own output becomes positive feedback through the model at high Kd).
+    void setDerivativeInput(const float *input) { derivativeInput = input; };
     float getIntegralState() const { return feedback_integralState; };
 
   private:
@@ -93,6 +97,8 @@ class SimplePID {
     float derivFilterTau = 0.0f;         // Derivative filter time constant (s), 0 = off
     float integralZone = 0.0f;           // |error| band where the integral runs, 0 = everywhere
     bool integralHold = false;           // Integral frozen while true
+
+    const float *derivativeInput = nullptr; // D-term measurement, nullptr = sensorOutput
     Control mode = Control::manual;
     float manualOutput = 0.0f;
     unsigned long lastTime = 0;

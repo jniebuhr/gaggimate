@@ -315,6 +315,15 @@ void Controller::setupBluetooth() {
     });
     pluginManager->on("ota:update:end", [this](Event const &) { applyConnectionPriority(true); });
     pluginManager->on("history:shot:recorded", [this](Event const &) { comms.tare(); });
+    // The controller's learned standing loss, saved so the next boot's predictor starts from it rather than a guess.
+    comms.onHeaterLoss([this](float watts) {
+        const float saved = settings.getModelLossW();
+        const unsigned long now = millis();
+        if (std::fabs(watts - saved) >= std::max(2.0f, 0.05f * saved) && now - lastLossSaveMs >= LOSS_SAVE_INTERVAL_MS) {
+            settings.setModelLossW(watts);
+            lastLossSaveMs = now;
+        }
+    });
     pluginManager->on("controller:brew:prestart", [this](Event const &) { comms.tareHardwareScale(); });
     pluginManager->on("controller:grind:start", [this](Event const &) { comms.tareHardwareScale(); });
     comms.onSensorData([this](float temp, float temp2, float pressure, float puckFlow, float pumpFlow, float puckResistance,
@@ -980,6 +989,11 @@ void Controller::setHeaterSettings() {
     lag.derivativeFilterS = settings.getDerivativeFilterS();
     lag.integralZone = settings.getIntegralZone();
     lag.sensorDeadTimeS = settings.getSensorDeadTimeS();
+    lag.modelHeaterW = settings.getModelHeaterW();
+    lag.modelHeatRate = settings.getModelHeatRate();
+    lag.modelLossW = settings.getModelLossW();
+    lag.waterDeadTimeS = settings.getWaterDeadTimeS();
+    lag.valveDumpMl = settings.getValveDumpMl();
     comms.sendHeaterSettings(pid[0], pid[1], pid[2], pid[3], settings.isHeaterCoordinationEnabled(),
                              static_cast<uint32_t>(settings.getHeaterHandoverMs()), steamPid[0], steamPid[1], steamPid[2], lag);
 }

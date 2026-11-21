@@ -133,6 +133,8 @@ class GaggiMateClient {
     void onSendFailed(std::function<void()> cb) { _endpoint.onSendFailed(std::move(cb)); }
     void onSystemInfo(SystemInfoCallback cb) { _systemInfoCb = std::move(cb); }
     void onSensorData(SensorCallback cb) { _sensorCb = std::move(cb); }
+    // Brew boiler's learned standing heat loss (W), reported while the heat-balance predictor runs.
+    void onHeaterLoss(std::function<void(float)> cb) { _heaterLossCb = std::move(cb); }
     void onButtonState(ButtonCallback cb) { _buttonCb = std::move(cb); }
     void onAutotuneResult(AutotuneResultCallback cb) { _autotuneResultCb = std::move(cb); }
     void onVolumetricMeasurement(VolumetricCallback cb) { _volumetricCb = std::move(cb); }
@@ -172,6 +174,7 @@ class GaggiMateClient {
     IncompatibleCallback _incompatibleCb;
     SystemInfoCallback _systemInfoCb;
     SensorCallback _sensorCb;
+    std::function<void(float)> _heaterLossCb;
     TankLevelCallback _tankLevelCb;
     SteamLevelCallback _steamLevelCb;
     ButtonCallback _buttonCb;

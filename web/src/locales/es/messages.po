@@ -270,6 +270,7 @@ msgstr "Añadir a favoritos"
 msgid "Address"
 msgstr "Dirección"
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
 #: src/pages/Statistics/components/toolbar/subcomponents.jsx
 msgid "Advanced"
 msgstr "Avanzado"
@@ -1367,6 +1368,10 @@ msgid "degrees Celsius"
 msgstr "grados Celsius"
 
 #: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Delay from the heater switching on to the temperature starting to rise (about 20 s on a Silvia with the sensor on the boiler shell)."
+msgstr ""
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
 msgid "Delay from the heater switching on to the temperature starting to rise (about 20 s on a Silvia with the sensor on the boiler shell). With an integral zone set, the integral stays paused this long after water stops flowing."
 msgstr ""
 
@@ -1716,6 +1721,10 @@ msgstr "Editar filtro de rango de fechas"
 #: src/pages/ProfileList/index.jsx
 msgid "Edit profile"
 msgstr "Editar perfil"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Element power from the machine's rating plate, e.g. 1100 W for a 230 V Rancilio Silvia."
+msgstr ""
 
 #: src/pages/Statistics/utils/statisticsSearchDsl.js
 msgid "Empty date expression."
@@ -2140,7 +2149,7 @@ msgid "For 120 V machines, heater coordination should generally remain enabled. 
 msgstr "En máquinas de 120 V, la coordinación de resistencias debería permanecer activada por lo general. Hacer funcionar a la vez las resistencias de extracción y de vapor puede sobrecargar el circuito, fundir un fusible o hacer saltar un interruptor automático, y crear riesgo de incendio. Desactívala solo si la máquina y el circuito de alimentación están preparados para alimentar ambas resistencias a la vez."
 
 #: src/pages/Settings/tabs/LagCompensationSection.jsx
-msgid "For boilers whose temperature sensor reacts long after the heater, like a sensor on the outside of the boiler. These keep the PID from overreacting to a slow, stepped reading and from winding up its integral during a flush. Leave everything at 0 to keep the plain PID."
+msgid "For boilers whose temperature sensor reacts long after the heater, like a sensor on the outside of the boiler. With heater power, heat-up rate and dead time set, the PID works on the measured temperature plus the heat still on its way to the sensor, so it stops heating in time instead of overshooting. Leave everything at 0 to keep the plain PID."
 msgstr ""
 
 #: src/pages/SetupWizard/index.jsx
@@ -2182,6 +2191,10 @@ msgstr "Desde"
 msgctxt "panel view"
 msgid "Full"
 msgstr "Completa"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Full-power heat-up rate"
+msgstr ""
 
 #: src/pages/SetupWizard/index.jsx
 msgid "Further Resources"
@@ -2337,6 +2350,10 @@ msgstr "Coordinación de resistencias"
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "Heater off, waiting for the temperature to rise…"
 msgstr "Resistencia apagada, esperando a que suba la temperatura…"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Heater power"
+msgstr ""
 
 #: src/utils/metricDefinitions.js
 msgid "Heater Power"
@@ -2639,6 +2656,10 @@ msgstr "La semana pasada"
 #: src/pages/Settings/tabs/CleaningSection.jsx
 msgid "Last: {lastTime} · {shotsSince, plural, one {# shot since} other {# shots since}}"
 msgstr "Última: {lastTime} · {shotsSince, plural, one {# extracción desde entonces} other {# extracciones desde entonces}}"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Learned standing heat loss: {learnedLoss} W. The predictor starts from this after a restart."
+msgstr ""
 
 #: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 msgid "Length (Long)"
@@ -4770,10 +4791,6 @@ msgstr "Al seleccionar un perfil se rellenan los valores. Guarda para aplicarlos
 msgid "Selecting calibration profile..."
 msgstr "Seleccionando perfil de calibración..."
 
-#: src/pages/Settings/tabs/LagCompensationSection.jsx
-msgid "Sensor dead time"
-msgstr ""
-
 #: src/services/VisualizerService.js
 msgid "Server error - the API may not support this data format or account type"
 msgstr "Error del servidor: puede que la API no admita este formato de datos o tipo de cuenta"
@@ -5295,6 +5312,10 @@ msgstr "DSL de búsqueda de estadísticas"
 #: src/pages/Statistics/components/MetricsTable.jsx
 msgid "Std Dev"
 msgstr "Desv. est."
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Steady temperature rise at full power, read off the middle of a warm-up from cold (about 0.6 °C/s on a Silvia)."
+msgstr ""
 
 #: src/app/machineStatus.js
 #: src/pages/Home/utils.js
@@ -5923,6 +5944,10 @@ msgstr "Tiempo"
 msgid "Time (s)"
 msgstr "Tiempo (s)"
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Time from water starting to flow until the temperature has dropped about half way; often shorter than the heater's (about 12 s on a Silvia). 0 uses the sensor dead time."
+msgstr ""
+
 #: src/pages/ShotAnalyzer/utils/formatting.js
 msgid "Time Limit"
 msgstr "Límite de tiempo"
@@ -6317,6 +6342,10 @@ msgstr "Válvula"
 msgid "Valve closed"
 msgstr "Válvula cerrada"
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Valve dump per flush"
+msgstr ""
+
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
 msgid "Valve open"
@@ -6498,6 +6527,10 @@ msgstr "Nivel del depósito de agua"
 msgid "Water tank low"
 msgstr "Depósito de agua bajo"
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Water the 3-way valve dumps into the drip tray when a flush or shot ends: weigh the tray after a flush. It leaves the boiler too. 0 counts none (about 5 ml on a Silvia)."
+msgstr ""
+
 #: src/pages/SetupWizard/WifiStep.jsx
 msgid "Weak"
 msgstr "Débil"
@@ -6598,6 +6631,10 @@ msgstr "Te damos la bienvenida a GaggiMate"
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "What percentage to run the pump at during steaming"
 msgstr "Porcentaje al que funciona la bomba mientras se vaporiza"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "When the pump puts cold water into the boiler, the sensor takes a while to notice the boiler getting cooler. This is how long it takes. To measure it, wait until the temperature is steady, then run a 5 second flush. Afterwards, look at the temperature graph on the home page: note the temperature before the flush and the lowest it dropped to, and work out the temperature half way between them (from 93 °C down to 85 °C, half way is 89 °C). Count the seconds from the water starting until the line reached that temperature. On a Silvia that's about 12 seconds. 0 means use the sensor dead time."
+msgstr ""
 
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "When the toggle is off, brightness will be set to 0"

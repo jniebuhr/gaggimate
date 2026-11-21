@@ -1,6 +1,7 @@
 #ifndef HEATER_H
 #define HEATER_H
 #include "Autotune/Autotune.h"
+#include "HeatBalancePredictor.h"
 #include "Max31855Thermocouple.h"
 #include "TemperatureSensor.h"
 #include <SimplePID/SimplePID.h>
@@ -20,13 +21,19 @@ using heater_autotune_fail_callback_t = std::function<void()>;
 // caller didn't supply a wattage.
 using pid_result_callback_t = std::function<void(float Kp, float Ki, float Kd, float Kff)>;
 
-// PID refinements for boilers whose sensor reacts long after the heater; every value <= 0 keeps the legacy behaviour
+// Lag compensation for boilers whose sensor reacts long after the heater; every value <= 0 keeps the legacy behaviour
 // for that part.
 struct HeaterLagSettings {
     float derivativeFilterS = 0.0f; // low-pass time constant on the D term
     float integralZoneC = 0.0f;     // integrate only within this |error| band, and pause the integral while water flows
                                     // and for sensorDeadTimeS afterwards
     float sensorDeadTimeS = 0.0f;   // delay from heater power to the sensor reacting
+    // Heat-balance predictor, with sensorDeadTimeS: the PID then runs on measured + not-yet-seen temperature change.
+    float modelHeaterW = 0.0f;
+    float modelHeatRate = 0.0f;  // degC/s at full power
+    float modelLossW = 0.0f;     // standing loss saved from an earlier run to start from (<= 0: default guess)
+    float waterDeadTimeS = 0.0f; // delay from water flowing to the sensor reacting (<= 0: same as sensorDeadTimeS)
+    float valveDumpMl = 0.0f;    // water a 3-way valve dumps when a flush or shot ends (<= 0: none)
 };
 
 class HeaterCoordinator;
@@ -56,6 +63,9 @@ class Heater {
     void setLagCompensation(const HeaterLagSettings &lag);
     // Pump power (0 = off): the flush signal for the integral pause on boards without measured flow (Standard).
     void setPumpPowerSource(const float *pumpPowerPtr) { pumpPower = pumpPowerPtr; }
+    float getControlTemperature() const { return controlTemperature; }
+    // Predictor's learned standing loss (W), 0 while the predictor is off.
+    float getLearnedLossWatts();
 
   private:
     void setupPid();
@@ -81,7 +91,8 @@ class Heater {
     heater_autotune_fail_callback_t autotune_fail_callback;
     HeaterCoordinator *coordinator = nullptr;
 
-    float temperature = 0.0f;
+    float temperature = 0.0f;        // measured (what safety checks and telemetry use)
+    float controlTemperature = 0.0f; // PID input: measured + predictor correction
     float output = 0.0f;
     float setpoint = 0.0f;
     int plotCount = 0;
@@ -107,11 +118,16 @@ class Heater {
 
     // Lag compensation state (written from the comms task, read on the heater task)
     std::mutex lagMutex;
+    HeatBalancePredictor predictor;
     bool integralZoneActive = false;
     uint32_t integralHoldTailMs = 0;
     uint32_t lastFlowMs = 0;
     bool flowSeen = false;
     bool waterFlowing = false;
+    uint32_t lastFlushMs = 0; // flow above HeatUpBoost::FLUSH_FLOW (a flush or shot, not steam pump assist)
+    bool flushSeen = false;
+    uint32_t lastPredictorMs = 0;
+    bool predictorPrimed = false;
 
     // Thermal model constants
     static constexpr float WATER_DENSITY = 1.0f;        // g/ml

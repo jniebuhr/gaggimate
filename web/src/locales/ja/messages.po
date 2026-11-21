@@ -270,6 +270,7 @@ msgstr "お気に入りに追加"
 msgid "Address"
 msgstr "アドレス"
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
 #: src/pages/Statistics/components/toolbar/subcomponents.jsx
 msgid "Advanced"
 msgstr "詳細設定"
@@ -1367,6 +1368,10 @@ msgid "degrees Celsius"
 msgstr "摂氏"
 
 #: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Delay from the heater switching on to the temperature starting to rise (about 20 s on a Silvia with the sensor on the boiler shell)."
+msgstr ""
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
 msgid "Delay from the heater switching on to the temperature starting to rise (about 20 s on a Silvia with the sensor on the boiler shell). With an integral zone set, the integral stays paused this long after water stops flowing."
 msgstr ""
 
@@ -1716,6 +1721,10 @@ msgstr "期間フィルターを編集"
 #: src/pages/ProfileList/index.jsx
 msgid "Edit profile"
 msgstr "プロファイルを編集"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Element power from the machine's rating plate, e.g. 1100 W for a 230 V Rancilio Silvia."
+msgstr ""
 
 #: src/pages/Statistics/utils/statisticsSearchDsl.js
 msgid "Empty date expression."
@@ -2140,7 +2149,7 @@ msgid "For 120 V machines, heater coordination should generally remain enabled. 
 msgstr "120 V のマシンでは、通常ヒーター協調を有効のままにしてください。抽出ヒーターとスチームヒーターを同時に動作させると回路が過負荷になり、ヒューズが切れたりブレーカーが落ちたりして、火災の危険があります。マシンと電源回路が両方のヒーターを同時に動作させる定格を満たしている場合にのみ無効にしてください。"
 
 #: src/pages/Settings/tabs/LagCompensationSection.jsx
-msgid "For boilers whose temperature sensor reacts long after the heater, like a sensor on the outside of the boiler. These keep the PID from overreacting to a slow, stepped reading and from winding up its integral during a flush. Leave everything at 0 to keep the plain PID."
+msgid "For boilers whose temperature sensor reacts long after the heater, like a sensor on the outside of the boiler. With heater power, heat-up rate and dead time set, the PID works on the measured temperature plus the heat still on its way to the sensor, so it stops heating in time instead of overshooting. Leave everything at 0 to keep the plain PID."
 msgstr ""
 
 #: src/pages/SetupWizard/index.jsx
@@ -2182,6 +2191,10 @@ msgstr "開始"
 msgctxt "panel view"
 msgid "Full"
 msgstr "フル"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Full-power heat-up rate"
+msgstr ""
 
 #: src/pages/SetupWizard/index.jsx
 msgid "Further Resources"
@@ -2337,6 +2350,10 @@ msgstr "ヒーター協調"
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "Heater off, waiting for the temperature to rise…"
 msgstr "ヒーター停止中、温度の上昇を待っています…"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Heater power"
+msgstr ""
 
 #: src/utils/metricDefinitions.js
 msgid "Heater Power"
@@ -2639,6 +2656,10 @@ msgstr "先週"
 #: src/pages/Settings/tabs/CleaningSection.jsx
 msgid "Last: {lastTime} · {shotsSince, plural, one {# shot since} other {# shots since}}"
 msgstr "前回: {lastTime} · {shotsSince, plural, other {以降 # ショット}}"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Learned standing heat loss: {learnedLoss} W. The predictor starts from this after a restart."
+msgstr ""
 
 #: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 msgid "Length (Long)"
@@ -4770,10 +4791,6 @@ msgstr "プロファイルを選択すると値が入力されます。保存す
 msgid "Selecting calibration profile..."
 msgstr "キャリブレーションプロファイルを選択中..."
 
-#: src/pages/Settings/tabs/LagCompensationSection.jsx
-msgid "Sensor dead time"
-msgstr ""
-
 #: src/services/VisualizerService.js
 msgid "Server error - the API may not support this data format or account type"
 msgstr "サーバーエラー - API がこのデータ形式またはアカウントの種類に対応していない可能性があります"
@@ -5295,6 +5312,10 @@ msgstr "統計検索 DSL"
 #: src/pages/Statistics/components/MetricsTable.jsx
 msgid "Std Dev"
 msgstr "標準偏差"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Steady temperature rise at full power, read off the middle of a warm-up from cold (about 0.6 °C/s on a Silvia)."
+msgstr ""
 
 #: src/app/machineStatus.js
 #: src/pages/Home/utils.js
@@ -5923,6 +5944,10 @@ msgstr "時間"
 msgid "Time (s)"
 msgstr "時間 (s)"
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Time from water starting to flow until the temperature has dropped about half way; often shorter than the heater's (about 12 s on a Silvia). 0 uses the sensor dead time."
+msgstr ""
+
 #: src/pages/ShotAnalyzer/utils/formatting.js
 msgid "Time Limit"
 msgstr "時間制限"
@@ -6317,6 +6342,10 @@ msgstr "バルブ"
 msgid "Valve closed"
 msgstr "バルブ閉"
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Valve dump per flush"
+msgstr ""
+
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
 msgid "Valve open"
@@ -6498,6 +6527,10 @@ msgstr "水タンクの水位"
 msgid "Water tank low"
 msgstr "水タンクの残量低下"
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Water the 3-way valve dumps into the drip tray when a flush or shot ends: weigh the tray after a flush. It leaves the boiler too. 0 counts none (about 5 ml on a Silvia)."
+msgstr ""
+
 #: src/pages/SetupWizard/WifiStep.jsx
 msgid "Weak"
 msgstr "弱"
@@ -6598,6 +6631,10 @@ msgstr "GaggiMate へようこそ"
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "What percentage to run the pump at during steaming"
 msgstr "スチーム中にポンプを動かす割合（%）"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "When the pump puts cold water into the boiler, the sensor takes a while to notice the boiler getting cooler. This is how long it takes. To measure it, wait until the temperature is steady, then run a 5 second flush. Afterwards, look at the temperature graph on the home page: note the temperature before the flush and the lowest it dropped to, and work out the temperature half way between them (from 93 °C down to 85 °C, half way is 89 °C). Count the seconds from the water starting until the line reached that temperature. On a Silvia that's about 12 seconds. 0 means use the sensor dead time."
+msgstr ""
 
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "When the toggle is off, brightness will be set to 0"
