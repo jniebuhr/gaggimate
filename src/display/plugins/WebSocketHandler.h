@@ -13,6 +13,7 @@ constexpr size_t STATE_RESEND_PERIOD = 10000; // full slow-state resend even wit
 constexpr size_t CLEANUP_PERIOD = 1000;
 
 class Controller;
+struct Event;
 class PluginManager;
 class ProfileManager;
 
@@ -54,6 +55,8 @@ class WebSocketHandler {
     void handleProfileRequest(uint32_t clientId, JsonDocument &request);
     void handleFlushStart(uint32_t clientId, JsonDocument &request);
     void handleFlushStop(uint32_t clientId, JsonDocument &request);
+    void handleBluetoothRequest(uint32_t clientId, const String &type, JsonDocument &request);
+    void broadcastBluetoothEvent(Event const &event, const char *name, const char *detailKey);
     void publishState(unsigned long now);
     void publishTelemetry();
     void sendAutotuneResult();

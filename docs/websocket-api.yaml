@@ -43,6 +43,12 @@ channels:
           - $ref: '#/components/messages/ScaleConnectErrorEvent'
           - $ref: '#/components/messages/ScaleConnectSuccessEvent'
           - $ref: '#/components/messages/ScaleDisconnectEvent'
+          - $ref: '#/components/messages/BluetoothDevicesResponse'
+          - $ref: '#/components/messages/BluetoothActionResponse'
+          - $ref: '#/components/messages/BluetoothScanCompleteEvent'
+          - $ref: '#/components/messages/BluetoothConnectErrorEvent'
+          - $ref: '#/components/messages/BluetoothConnectSuccessEvent'
+          - $ref: '#/components/messages/BluetoothDisconnectEvent'
           - $ref: '#/components/messages/FlushStartResponse'
           - $ref: '#/components/messages/CleaningResponse'
           - $ref: '#/components/messages/FlushStopResponse'
@@ -74,6 +80,10 @@ channels:
           - $ref: '#/components/messages/SetupTestStartRequest'
           - $ref: '#/components/messages/SetupTestAbortRequest'
           - $ref: '#/components/messages/WifiScanRequest'
+          - $ref: '#/components/messages/BluetoothDevicesRequest'
+          - $ref: '#/components/messages/BluetoothScanRequest'
+          - $ref: '#/components/messages/BluetoothConnectRequest'
+          - $ref: '#/components/messages/BluetoothForgetRequest'
 components:
   schemas:
     StatusPayload:
@@ -504,7 +514,7 @@ components:
         required: [tp]
 
     ScaleScanCompleteEvent:
-      summary: The listening window (5 s) after POST /api/scales/scan closed, or a connect attempt aborted it. Sent immediately when no scan could run (a scale is already connected). Discovery itself keeps running in the background.
+      summary: The listening window (5 s) after POST /api/scales/scan closed, or a connect attempt aborted it. Sent immediately when no scan could run (a scale is already connected). Discovery itself keeps running in the background. Deprecated, sent for scales only and kept for one release for older app builds; use evt:bluetooth:* instead.
       payload:
         type: object
         properties:
@@ -517,7 +527,7 @@ components:
         required: [tp, count]
 
     ScaleConnectErrorEvent:
-      summary: Connecting to a BLE scale failed, after a user connect or the saved-scale auto-connect.
+      summary: Connecting to a BLE scale failed, after a user connect or the saved-scale auto-connect. Deprecated, sent for scales only and kept for one release for older app builds; use evt:bluetooth:* instead.
       payload:
         type: object
         properties:
@@ -533,7 +543,7 @@ components:
         required: [tp, address, reason]
 
     ScaleConnectSuccessEvent:
-      summary: A BLE scale connected.
+      summary: A BLE scale connected. Deprecated, sent for scales only and kept for one release for older app builds; use evt:bluetooth:* instead.
       payload:
         type: object
         properties:
@@ -548,7 +558,7 @@ components:
         required: [tp, address, name]
 
     ScaleDisconnectEvent:
-      summary: A connected BLE scale was lost while the machine is awake; the display rescans and reconnects automatically. Not sent for the intentional disconnect on standby.
+      summary: A connected BLE scale was lost while the machine is awake; the display rescans and reconnects automatically. Not sent for the intentional disconnect on standby. Deprecated, sent for scales only and kept for one release for older app builds; use evt:bluetooth:* instead.
       payload:
         type: object
         properties:
@@ -561,6 +571,210 @@ components:
             type: string
             description: Advertised BLE name.
         required: [tp, address, name]
+
+    BluetoothDevicesRequest:
+      summary: State of the Bluetooth devices for the settings tab. One device per type (scale, grinder) can be connected.
+      payload:
+        type: object
+        properties:
+          tp:
+            type: string
+            enum: ['req:bluetooth:devices']
+          rid:
+            type: string
+        required: [tp]
+
+    BluetoothDevicesResponse:
+      payload:
+        type: object
+        properties:
+          tp:
+            type: string
+            enum: ['res:bluetooth:devices']
+          rid:
+            type: string
+          devices:
+            type: array
+            description: One entry per device type, connected or not.
+            items:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: ['scale', 'grinder']
+                connected:
+                  type: boolean
+                name:
+                  type: string
+                  description: Advertised BLE name; empty while disconnected.
+                address:
+                  type: string
+                  description: Empty while disconnected.
+                rssi:
+                  type: integer
+                saved:
+                  type: string
+                  description: Address of the paired device of this type, reconnected automatically; empty when none.
+                savedName:
+                  type: string
+                battery:
+                  type: integer
+                  description: Percent; absent when the device reports none.
+                state:
+                  type: string
+                  enum: ['unknown', 'idle', 'grinding', 'busy']
+                  description: Connected grinder only.
+                grindSize:
+                  type: number
+                  description: Connected grinder only, as reported by the grinder; likewise rpm and feedRpm.
+                rpm:
+                  type: integer
+                feedRpm:
+                  type: integer
+              required: [type, connected, name, address, rssi, saved, savedName]
+          discovered:
+            type: array
+            description: Supported devices seen by the scan.
+            items:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: ['scale', 'grinder']
+                address:
+                  type: string
+                name:
+                  type: string
+                rssi:
+                  type: integer
+              required: [type, address, name, rssi]
+        required: [tp, devices, discovered]
+
+    BluetoothScanRequest:
+      summary: Open the scan window (5 s); evt:bluetooth:scan:complete follows. The scan only runs while a device type is not connected.
+      payload:
+        type: object
+        properties:
+          tp:
+            type: string
+            enum: ['req:bluetooth:scan']
+          rid:
+            type: string
+        required: [tp]
+
+    BluetoothConnectRequest:
+      summary: Pair and connect a discovered device; the result arrives as evt:bluetooth:connect:success or evt:bluetooth:connect:error. The device is saved for its type and reconnected automatically from then on.
+      payload:
+        type: object
+        properties:
+          tp:
+            type: string
+            enum: ['req:bluetooth:connect']
+          rid:
+            type: string
+          address:
+            type: string
+          type:
+            type: string
+            enum: ['scale', 'grinder']
+        required: [tp, address, type]
+
+    BluetoothForgetRequest:
+      summary: Disconnect and forget the saved device of a type.
+      payload:
+        type: object
+        properties:
+          tp:
+            type: string
+            enum: ['req:bluetooth:forget']
+          rid:
+            type: string
+          type:
+            type: string
+            enum: ['scale', 'grinder']
+        required: [tp, type]
+
+    BluetoothActionResponse:
+      summary: Acknowledges req:bluetooth:scan, connect and forget; success is false when the request was malformed.
+      payload:
+        type: object
+        properties:
+          tp:
+            type: string
+            enum: ['res:bluetooth:scan', 'res:bluetooth:connect', 'res:bluetooth:forget']
+          rid:
+            type: string
+          success:
+            type: boolean
+        required: [tp, success]
+
+    BluetoothScanCompleteEvent:
+      summary: The scan window after req:bluetooth:scan closed, or a connect attempt aborted it. Sent immediately when no scan could run (every device type is connected).
+      payload:
+        type: object
+        properties:
+          tp:
+            type: string
+            enum: ['evt:bluetooth:scan:complete']
+          count:
+            type: integer
+            description: Number of supported devices discovered so far.
+        required: [tp, count]
+
+    BluetoothConnectErrorEvent:
+      summary: Connecting to a Bluetooth device failed, after a user connect or the saved-device auto-connect.
+      payload:
+        type: object
+        properties:
+          tp:
+            type: string
+            enum: ['evt:bluetooth:connect:error']
+          type:
+            type: string
+            enum: ['scale', 'grinder']
+          address:
+            type: string
+          reason:
+            type: string
+            enum: ['not_found', 'connect_failed', 'unsupported']
+            description: not_found = not in the discovered list, connect_failed = BLE connection failed, unsupported = no driver could be created.
+        required: [tp, type, address, reason]
+
+    BluetoothConnectSuccessEvent:
+      summary: A Bluetooth device connected. A grinder is sent the selected profile's grinder settings right after.
+      payload:
+        type: object
+        properties:
+          tp:
+            type: string
+            enum: ['evt:bluetooth:connect:success']
+          type:
+            type: string
+            enum: ['scale', 'grinder']
+          address:
+            type: string
+          name:
+            type: string
+            description: Advertised BLE name.
+        required: [tp, type, address, name]
+
+    BluetoothDisconnectEvent:
+      summary: A connected Bluetooth device was lost while the machine is awake; the display rescans and reconnects automatically. Not sent for the intentional disconnect on standby.
+      payload:
+        type: object
+        properties:
+          tp:
+            type: string
+            enum: ['evt:bluetooth:disconnect']
+          type:
+            type: string
+            enum: ['scale', 'grinder']
+          address:
+            type: string
+          name:
+            type: string
+            description: Advertised BLE name.
+        required: [tp, type, address, name]
 
     CleaningStartRequest:
       summary: Select the backflush or descaling system profile and start it in brew mode; error-level warnings trigger evt:brew:confirm as usual. Answered with res:cleaning:<task>:start (success false while a process is running).

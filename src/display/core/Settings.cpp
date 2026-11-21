@@ -247,6 +247,10 @@ void Settings::setSavedScale(const String &savedScale) { this->savedScale.set(sa
 
 void Settings::setSavedScaleName(const String &savedScaleName) { this->savedScaleName.set(savedScaleName); }
 
+void Settings::setSavedGrinder(const String &savedGrinder) { this->savedGrinder.set(savedGrinder); }
+
+void Settings::setSavedGrinderName(const String &savedGrinderName) { this->savedGrinderName.set(savedGrinderName); }
+
 void Settings::setBoilerFillActive(bool boiler_fill_active) { boilerFillActive.set(boiler_fill_active); }
 
 void Settings::setStartupFillTime(int startup_fill_time) { startupFillTime.set(startup_fill_time); }

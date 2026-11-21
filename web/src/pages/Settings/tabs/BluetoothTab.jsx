@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback, useRef } from 'preact/hooks';
+import { useState, useEffect, useCallback, useContext, useMemo, useRef } from 'preact/hooks';
 import { useQuery } from 'preact-fetching';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { msg } from '@lingui/core/macro';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faScaleBalanced } from '@fortawesome/free-solid-svg-icons/faScaleBalanced';
-import { machine, updateScaleState } from '../../../services/ApiService.js';
+import { ApiServiceContext, machine, updateBluetoothState } from '../../../services/ApiService.js';
 import { Spinner } from '../../../components/Spinner.jsx';
 import Section from '../../../components/Card.jsx';
 import { faBatteryFull } from '@fortawesome/free-solid-svg-icons/faBatteryFull';
@@ -13,25 +13,24 @@ import { faBatteryHalf } from '@fortawesome/free-solid-svg-icons/faBatteryHalf';
 import { faBatteryQuarter } from '@fortawesome/free-solid-svg-icons/faBatteryQuarter';
 import { faBatteryEmpty } from '@fortawesome/free-solid-svg-icons/faBatteryEmpty';
 import { BluetoothTabSkeleton } from '../../../components/skeletons/SettingsSkeletons.jsx';
-import { scaleModelName } from '../../../utils/scaleModels.js';
+import { GrinderIcon } from '../../../components/GrinderIcon.jsx';
+import { buildDeviceList, deviceModelName } from '../../../utils/bluetoothDevices.js';
 
 const DISCONNECT_BANNER_MS = 60000;
 const CONNECT_PENDING_MS = 15000;
 
 const CONNECT_ERROR_MESSAGES = {
-  not_found: msg`The scale wasn't found. Make sure it's switched on and nearby, then scan again.`,
-  connect_failed: msg`The scale was found, but the Bluetooth connection failed. Try again or restart the scale.`,
-  unsupported: msg`This scale model couldn't be set up.`,
+  not_found: msg`The device wasn't found. Make sure it's switched on and nearby, then scan again.`,
+  connect_failed: msg`The device was found, but the Bluetooth connection failed. Try again or restart the device.`,
+  unsupported: msg`This device model couldn't be set up.`,
   request_failed: msg`GaggiMate didn't accept the request. Check the connection and try again.`,
 };
 
-async function fetchJson(url, options) {
-  const response = await fetch(url, options);
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status}`);
-  }
-  return response.json();
-}
+// Labels per device type; the type icon carries the same text for screen readers.
+const DEVICE_TYPE_LABELS = {
+  scale: { name: msg`Scale`, saved: msg`Saved scale`, unknown: msg`Unknown Scale` },
+  grinder: { name: msg`Grinder`, saved: msg`Saved grinder`, unknown: msg`Unknown grinder` },
+};
 
 function batteryIcon(pct) {
   if (pct >= 87) return faBatteryFull;
@@ -50,11 +49,13 @@ function batteryColorClass(pct) {
 export function BluetoothTab() {
   const { t, i18n } = useLingui();
   const [key, setKey] = useState(0);
-  const [scaleData, setScaleData] = useState([]);
-  const [connectingUuid, setConnectingUuid] = useState(null);
-  const [forgettingUuid, setForgettingUuid] = useState(null);
+  const [deviceData, setDeviceData] = useState([]);
+  const [connectingAddress, setConnectingAddress] = useState(null);
+  const [forgettingAddress, setForgettingAddress] = useState(null);
   const mode = machine.value.status.mode;
-  const { scanning: isScanning, connectError, disconnected } = machine.value.scale;
+  const apiService = useContext(ApiServiceContext);
+  const socketConnected = machine.value.connected;
+  const { scanning: isScanning, connectError, disconnected, connectedAt } = machine.value.bluetooth;
 
   useEffect(() => {
     const intervalHandle = setInterval(() => {
@@ -64,40 +65,24 @@ export function BluetoothTab() {
     return () => clearInterval(intervalHandle);
   }, []);
 
+  // Asked again every 10 s, on device events and once the socket is (re)connected.
   const {
     isLoading,
     isError,
-    data: fetchedScales = [],
-  } = useQuery(`scales-${key}`, () => fetchJson('/api/scales/list'));
-
-  const {
-    isLoading: isInfoLoading,
-    isError: isInfoError,
-    data: connectedScale,
-  } = useQuery(`scale-info-${key}`, () => fetchJson('/api/scales/info'));
+    data: deviceInfo,
+  } = useQuery(`bluetooth-devices-${key}-${socketConnected}`, () =>
+    socketConnected ? apiService.request({ tp: 'req:bluetooth:devices' }) : null,
+  );
 
   useEffect(() => {
-    if (!connectedScale) {
-      return;
+    if (deviceInfo) {
+      setDeviceData(buildDeviceList(deviceInfo));
     }
-    if (connectedScale.connected) {
-      setScaleData([{ ...connectedScale, saved: true }]);
-      return;
-    }
-    const saved = connectedScale.saved;
-    const scales = fetchedScales.map(scale => ({ ...scale, saved: scale.uuid === saved }));
-    if (saved && !scales.some(scale => scale.saved)) {
-      // Saved but not advertising: keep it listed so it can still be forgotten.
-      scales.push({
-        uuid: saved,
-        name: connectedScale.savedName || '',
-        saved: true,
-        outOfRange: true,
-      });
-    }
-    scales.sort((a, b) => Number(b.saved) - Number(a.saved));
-    setScaleData(scales);
-  }, [connectedScale, fetchedScales]);
+  }, [deviceInfo]);
+  const connectedDevices = useMemo(
+    () => (deviceInfo?.devices || []).filter(device => device.connected),
+    [deviceInfo],
+  );
 
   // Refresh the list as soon as the firmware closes the scan window.
   const wasScanning = useRef(isScanning);
@@ -108,97 +93,111 @@ export function BluetoothTab() {
     wasScanning.current = isScanning;
   }, [isScanning]);
 
+  // A device connected or dropped: show it right away instead of at the next periodic refresh.
+  const disconnectedAt = disconnected?.at;
+  useEffect(() => {
+    if (connectedAt || disconnectedAt) {
+      setKey(Date.now().valueOf());
+    }
+  }, [connectedAt, disconnectedAt]);
+
   // A connect attempt ends with a success/error event; also clear a stale one in case neither arrives.
   useEffect(() => {
-    if (connectedScale?.connected || connectError) {
-      setConnectingUuid(null);
+    if (connectError || connectedDevices.some(device => device.address === connectingAddress)) {
+      setConnectingAddress(null);
     }
-  }, [connectedScale, connectError]);
+  }, [connectedDevices, connectError, connectingAddress]);
   useEffect(() => {
-    if (!connectingUuid) {
+    if (!connectingAddress) {
       return undefined;
     }
     const handle = setTimeout(() => {
-      setConnectingUuid(null);
+      setConnectingAddress(null);
       setKey(Date.now().valueOf());
     }, CONNECT_PENDING_MS);
     return () => clearTimeout(handle);
-  }, [connectingUuid]);
+  }, [connectingAddress]);
 
-  // The scale reconnected: the disconnect notice no longer applies.
+  // The device reconnected: the disconnect notice no longer applies.
   useEffect(() => {
-    if (connectedScale?.connected && disconnected) {
-      updateScaleState({ disconnected: null });
+    if (disconnected && connectedDevices.some(device => device.type === disconnected.type)) {
+      updateBluetoothState({ disconnected: null });
     }
-  }, [connectedScale, disconnected]);
+  }, [connectedDevices, disconnected]);
 
   useEffect(() => {
     if (!disconnected) {
       return undefined;
     }
     const remaining = Math.max(0, disconnected.at + DISCONNECT_BANNER_MS - Date.now());
-    const handle = setTimeout(() => updateScaleState({ disconnected: null }), remaining);
+    const handle = setTimeout(() => updateBluetoothState({ disconnected: null }), remaining);
     return () => clearTimeout(handle);
   }, [disconnected]);
 
-  // Nothing to act on in standby; the scale is powered off on purpose.
+  // Nothing to act on in standby; the devices are disconnected on purpose.
   useEffect(() => {
     if (mode === 0) {
-      updateScaleState({ connectError: null, disconnected: null });
-      setConnectingUuid(null);
+      updateBluetoothState({ connectError: null, disconnected: null });
+      setConnectingAddress(null);
     }
   }, [mode]);
 
   const onScan = useCallback(async () => {
-    updateScaleState({ scanning: true, connectError: null });
+    updateBluetoothState({ scanning: true, connectError: null });
     try {
-      await fetchJson('/api/scales/scan', { method: 'post' });
+      await apiService.request({ tp: 'req:bluetooth:scan' });
     } catch (error) {
       console.error('Scan failed:', error);
-      updateScaleState({
+      updateBluetoothState({
         scanning: false,
         connectError: { address: null, reason: 'request_failed', at: Date.now() },
       });
     }
-  }, []);
+  }, [apiService]);
 
-  const onConnect = useCallback(async uuid => {
-    setConnectingUuid(uuid);
-    updateScaleState({ connectError: null });
-    try {
-      const data = new FormData();
-      data.append('uuid', uuid);
-      await fetchJson('/api/scales/connect', { method: 'post', body: data });
-      setKey(Date.now().valueOf());
-    } catch (error) {
-      console.error('Connection failed:', error);
-      updateScaleState({
-        connectError: { address: uuid, reason: 'request_failed', at: Date.now() },
-      });
-    }
-  }, []);
-
-  const onForget = useCallback(async uuid => {
-    setForgettingUuid(uuid);
-    updateScaleState({ connectError: null, disconnected: null });
-    try {
-      await fetchJson('/api/scales/forget', { method: 'post' });
-      // The plugin forgets on its next loop tick; refresh just after.
-      setTimeout(() => {
-        setForgettingUuid(null);
+  const onConnect = useCallback(
+    async ({ address, type }) => {
+      setConnectingAddress(address);
+      updateBluetoothState({ connectError: null });
+      try {
+        await apiService.request({ tp: 'req:bluetooth:connect', address, type });
         setKey(Date.now().valueOf());
-      }, 500);
-    } catch (error) {
-      console.error('Forget failed:', error);
-      setForgettingUuid(null);
-    }
-  }, []);
+      } catch (error) {
+        console.error('Connection failed:', error);
+        updateBluetoothState({
+          connectError: { address, reason: 'request_failed', at: Date.now() },
+        });
+      }
+    },
+    [apiService],
+  );
 
-  const loading = isLoading || isInfoLoading;
+  const onForget = useCallback(
+    async ({ address, type }) => {
+      setForgettingAddress(address);
+      updateBluetoothState({ connectError: null, disconnected: null });
+      try {
+        await apiService.request({ tp: 'req:bluetooth:forget', type });
+        // The plugin forgets on its next loop tick; refresh just after.
+        setTimeout(() => {
+          setForgettingAddress(null);
+          setKey(Date.now().valueOf());
+        }, 500);
+      } catch (error) {
+        console.error('Forget failed:', error);
+        setForgettingAddress(null);
+      }
+    },
+    [apiService],
+  );
+
+  const loading = isLoading || !deviceInfo;
   const errorAddress = connectError?.address;
   const errorMessage = CONNECT_ERROR_MESSAGES[connectError?.reason];
-  const scaleName =
-    (disconnected && (scaleModelName(disconnected.name) || disconnected.name)) || t`Scale`;
+  const disconnectedType = disconnected?.type === 'grinder' ? 'grinder' : 'scale';
+  const disconnectedName =
+    (disconnected && (deviceModelName(disconnected.name, disconnectedType) || disconnected.name)) ||
+    i18n._(DEVICE_TYPE_LABELS[disconnectedType].name);
 
   return (
     <div className='space-y-4 sm:space-y-6'>
@@ -206,7 +205,7 @@ export function BluetoothTab() {
         <div className='flex flex-col gap-4'>
           <div className='border-base-content/5 flex flex-row items-center justify-between gap-4 border-b pb-4'>
             <span className='text-base-content/75 text-sm'>
-              <Trans>Scan for nearby Bluetooth scales to connect them to GaggiMate.</Trans>
+              <Trans>Scan for nearby Bluetooth devices to connect them to GaggiMate.</Trans>
             </span>
             <button
               type='button'
@@ -223,16 +222,16 @@ export function BluetoothTab() {
             <ScaleNotice
               kind='error'
               title={errorAddress ? t`Couldn't connect to ${errorAddress}` : t`Scan failed`}
-              message={errorMessage ? i18n._(errorMessage) : t`Connecting to the scale failed.`}
-              onDismiss={() => updateScaleState({ connectError: null })}
+              message={errorMessage ? i18n._(errorMessage) : t`Connecting to the device failed.`}
+              onDismiss={() => updateBluetoothState({ connectError: null })}
             />
           )}
           {mode > 0 && disconnected && (
             <ScaleNotice
               kind='warning'
-              title={t`${scaleName} disconnected`}
-              message={t`GaggiMate reconnects automatically once the scale is switched on and in range.`}
-              onDismiss={() => updateScaleState({ disconnected: null })}
+              title={t`${disconnectedName} disconnected`}
+              message={t`GaggiMate reconnects automatically once the device is switched on and in range.`}
+              onDismiss={() => updateBluetoothState({ disconnected: null })}
             />
           )}
 
@@ -245,7 +244,7 @@ export function BluetoothTab() {
                       <Trans>System in Standby</Trans>
                     </h3>
                     <p className='text-base-content/70 text-sm'>
-                      <Trans>Please wake up GaggiMate from Standby to use Bluetooth scales.</Trans>
+                      <Trans>Please wake up GaggiMate from Standby to use Bluetooth devices.</Trans>
                     </p>
                   </div>
                 </div>
@@ -255,13 +254,12 @@ export function BluetoothTab() {
               (loading ? (
                 <BluetoothTabSkeleton />
               ) : (
-                <ScaleList
+                <DeviceList
                   isLoading={loading}
                   isError={isError}
-                  isInfoError={isInfoError}
-                  scaleData={scaleData}
-                  connectingUuid={connectingUuid}
-                  forgettingUuid={forgettingUuid}
+                  deviceData={deviceData}
+                  connectingAddress={connectingAddress}
+                  forgettingAddress={forgettingAddress}
                   onConnect={onConnect}
                   onForget={onForget}
                 />
@@ -270,7 +268,7 @@ export function BluetoothTab() {
               <div className='alert alert-warning text-xs'>
                 <span>
                   <Trans>
-                    Scales are automatically refreshed every 10 seconds. Use the scan button to
+                    Devices are automatically refreshed every 10 seconds. Use the scan button to
                     discover new devices.
                   </Trans>
                 </span>
@@ -300,19 +298,44 @@ function ScaleNotice({ kind, title, message, onDismiss }) {
   );
 }
 
-function ScaleList(props) {
+function DeviceTypeIcon({ type, size }) {
+  const { i18n } = useLingui();
+  const label = i18n._(DEVICE_TYPE_LABELS[type].name);
+  return (
+    <span role='img' aria-label={label} title={label} className='inline-flex'>
+      {type === 'grinder' ? (
+        <GrinderIcon className={size === 'lg' ? 'fa-lg' : ''} />
+      ) : (
+        <FontAwesomeIcon icon={faScaleBalanced} size={size} />
+      )}
+    </span>
+  );
+}
+
+// What the grinder itself reports, e.g. to check that the selected profile's settings arrived.
+function GrinderSummary({ device }) {
+  const { t } = useLingui();
+  const { grindSize, rpm, feedRpm } = device;
+  const parts = [];
+  if (typeof grindSize === 'number') parts.push(t`Grind size ${grindSize}`);
+  if (typeof rpm === 'number') parts.push(t`${rpm} rpm`);
+  if (typeof feedRpm === 'number') parts.push(t`Feed ${feedRpm} rpm`);
+  if (parts.length === 0) return null;
+  return <p className='text-base-content/60 text-xs'>{parts.join(' · ')}</p>;
+}
+
+function DeviceList(props) {
   const {
     isLoading,
     isError,
-    isInfoError,
-    scaleData,
-    connectingUuid,
-    forgettingUuid,
+    deviceData,
+    connectingAddress,
+    forgettingAddress,
     onConnect,
     onForget,
   } = props;
-  const { t } = useLingui();
-  if (isError || isInfoError) {
+  const { t, i18n } = useLingui();
+  if (isError) {
     return (
       <div className='alert alert-error'>
         <span>
@@ -326,82 +349,88 @@ function ScaleList(props) {
   }
   return (
     <>
-      {scaleData.length > 0 ? (
+      {deviceData.length > 0 ? (
         <div className='space-y-4'>
-          {scaleData.map(scale => {
-            const model = scaleModelName(scale.name);
+          {deviceData.map(device => {
+            const model = deviceModelName(device.name, device.type);
+            const labels = DEVICE_TYPE_LABELS[device.type];
             return (
               <div
-                key={scale.uuid}
+                key={`${device.type}-${device.address}`}
                 className='border-base-content/10 bg-base-100 flex flex-col space-y-4 rounded-xl border p-4 shadow-sm md:flex-row md:items-center md:justify-between md:space-y-0'
               >
                 <div className='flex items-center space-x-4'>
                   <div
                     className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${
-                      scale.connected
+                      device.connected
                         ? 'bg-success/20 text-success'
                         : 'bg-base-200 text-base-content/50'
                     }`}
                   >
-                    <FontAwesomeIcon icon={faScaleBalanced} size='lg' />
+                    <DeviceTypeIcon type={device.type} size='lg' />
                   </div>
                   <div>
                     <h4 className='text-base-content font-bold'>
-                      {model || scale.name || (scale.saved ? t`Saved scale` : t`Unknown Scale`)}
+                      {model || device.name || i18n._(device.saved ? labels.saved : labels.unknown)}
                       <span
                         className={`ml-2 inline-block h-2 w-2 rounded-full ${
-                          scale.connected ? 'bg-success' : 'bg-base-content/20'
+                          device.connected ? 'bg-success' : 'bg-base-content/20'
                         }`}
                       />
                     </h4>
-                    {model && <p className='text-base-content/60 text-xs'>{scale.name}</p>}
-                    {scale.outOfRange && (
+                    {model && <p className='text-base-content/60 text-xs'>{device.name}</p>}
+                    {device.outOfRange && (
                       <p className='text-base-content/60 text-xs'>
                         <Trans>Not in range. Switch it on to reconnect.</Trans>
                       </p>
                     )}
+                    {device.connected && device.type === 'grinder' && (
+                      <GrinderSummary device={device} />
+                    )}
                     <p className='text-base-content/70 flex items-center space-x-2 text-sm'>
-                      <span className='font-mono text-xs'>{scale.uuid}</span>
-                      {scale.saved && !scale.connected && (
+                      <span className='font-mono text-xs'>{device.address}</span>
+                      {device.saved && !device.connected && (
                         <span className='badge badge-ghost badge-xs'>
                           <Trans context='scale state'>Saved</Trans>
                         </span>
                       )}
-                      {scale.connected && scale.hasBattery && typeof scale.battery === 'number' && (
+                      {device.connected && typeof device.battery === 'number' && (
                         <span
-                          className={`flex items-center gap-1 ${batteryColorClass(scale.battery)}`}
+                          className={`flex items-center gap-1 ${batteryColorClass(device.battery)}`}
                         >
-                          <FontAwesomeIcon icon={batteryIcon(scale.battery)} /> {scale.battery}%
+                          <FontAwesomeIcon icon={batteryIcon(device.battery)} /> {device.battery}%
                         </span>
                       )}
                     </p>
                   </div>
                 </div>
                 <div className='flex w-full items-center gap-2 md:w-auto'>
-                  {scale.connected && (
+                  {device.connected && (
                     <div className='badge badge-success gap-2'>
                       <Trans context='scale state'>Connected</Trans>
                     </div>
                   )}
-                  {!scale.connected && !scale.outOfRange && (
+                  {!device.connected && !device.outOfRange && (
                     <button
                       type='button'
                       className='btn btn-primary btn-sm flex-1 md:flex-none'
-                      onClick={() => onConnect(scale.uuid)}
-                      disabled={!!connectingUuid || !!forgettingUuid}
+                      onClick={() => onConnect(device)}
+                      disabled={!!connectingAddress || !!forgettingAddress}
                     >
-                      {connectingUuid === scale.uuid ? t`Connecting...` : t`Connect`}
-                      {connectingUuid === scale.uuid && <Spinner size={4} className='ml-2' />}
+                      {connectingAddress === device.address ? t`Connecting...` : t`Connect`}
+                      {connectingAddress === device.address && (
+                        <Spinner size={4} className='ml-2' />
+                      )}
                     </button>
                   )}
-                  {scale.saved && (
+                  {device.saved && (
                     <button
                       type='button'
-                      className={`btn btn-ghost btn-sm text-error ${scale.connected || scale.outOfRange ? 'ml-auto md:ml-0' : ''}`}
-                      onClick={() => onForget(scale.uuid)}
-                      disabled={!!forgettingUuid}
+                      className={`btn btn-ghost btn-sm text-error ${device.connected || device.outOfRange ? 'ml-auto md:ml-0' : ''}`}
+                      onClick={() => onForget(device)}
+                      disabled={!!forgettingAddress}
                     >
-                      {forgettingUuid === scale.uuid ? t`Forgetting...` : t`Forget`}
+                      {forgettingAddress === device.address ? t`Forgetting...` : t`Forget`}
                     </button>
                   )}
                 </div>
@@ -412,15 +441,16 @@ function ScaleList(props) {
       ) : (
         <div className='border-base-content/8 bg-base-200/40 rounded-xl border py-12 text-center'>
           <div className='flex flex-col items-center space-y-4'>
-            <div className='text-base-content/30 text-6xl'>
+            <div className='text-base-content/30 flex gap-6 text-6xl'>
               <FontAwesomeIcon icon={faScaleBalanced} />
+              <GrinderIcon />
             </div>
             <div>
               <h3 className='text-base-content text-lg font-medium'>
-                <Trans>No scales found</Trans>
+                <Trans>No devices found</Trans>
               </h3>
               <p className='text-base-content/70 text-sm'>
-                <Trans>Click "Scan" to discover Bluetooth scales nearby</Trans>
+                <Trans>Click "Scan" to discover Bluetooth devices nearby</Trans>
               </p>
             </div>
           </div>

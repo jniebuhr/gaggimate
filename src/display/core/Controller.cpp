@@ -16,6 +16,7 @@
 #include <display/core/static_profiles.h>
 #include <display/core/zones.h>
 #include <display/plugins/AutoWakeupPlugin.h>
+#include <display/plugins/BluetoothDevicesPlugin.h>
 #include <display/plugins/BoilerFillPlugin.h>
 #include <display/plugins/CleaningSchedulePlugin.h>
 #include <display/plugins/LedControlPlugin.h>
@@ -26,8 +27,7 @@
 #include <display/plugins/WebUIPlugin.h>
 #include <display/plugins/mahlkonig/MahlkonigPlugin.h>
 #include <display/util/FsUtil.h>
-#ifndef GAGGIMATE_SIM // network/BLE plugins are device-only
-#include <display/plugins/BLEScalePlugin.h>
+#ifndef GAGGIMATE_SIM // network plugins are device-only
 #include <display/plugins/HomekitPlugin.h>
 #include <display/plugins/ImprovPlugin.h>
 #include <display/plugins/MQTTPlugin.h>
@@ -108,15 +108,13 @@ void Controller::setup() {
     if (settings.isMahlkonigActive()) {
         pluginManager->registerPlugin(new MahlkonigPlugin());
     }
-#ifndef GAGGIMATE_SIM // WiFi watchdogs and BLE scales are device-only
+#ifndef GAGGIMATE_SIM // WiFi watchdogs are device-only
     pluginManager->registerPlugin(new NetworkWatchdogPlugin());
     pluginManager->registerPlugin(new WifiStaWatchdogPlugin());
     pluginManager->registerPlugin(new ImprovPlugin());
 #endif
     pluginManager->registerPlugin(&ShotHistory);
-#ifndef GAGGIMATE_SIM
-    pluginManager->registerPlugin(&BLEScales);
-#endif
+    pluginManager->registerPlugin(&BLEDevices); // the simulator links a fake (sim/web/bluetooth_devices_stub.cpp)
     if (settings.isSmartDoseActive()) {
         pluginManager->registerPlugin(&SmartDose);
     }

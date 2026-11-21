@@ -9,7 +9,7 @@
 #include <display/core/ProfileImage.h>
 #include <display/core/ProfileManager.h>
 #include <display/models/profile.h>
-#include <display/plugins/BLEScalePlugin.h>
+#include <display/plugins/BluetoothDevicesPlugin.h>
 #include <display/plugins/ShotHistoryPlugin.h>
 #include <display/webassets/web_ui_manifest.h>
 #include <esp32-hal-psram.h>
@@ -678,6 +678,10 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setSavedScale(request->arg("savedScale"));
             if (request->hasArg("savedScaleName"))
                 settings->setSavedScaleName(request->arg("savedScaleName"));
+            if (request->hasArg("savedGrinder"))
+                settings->setSavedGrinder(request->arg("savedGrinder"));
+            if (request->hasArg("savedGrinderName"))
+                settings->setSavedGrinderName(request->arg("savedGrinderName"));
             if (request->hasArg("autowakeupEnabled"))
                 settings->setAutoWakeupEnabled(parseBoolArg(request->arg("autowakeupEnabled")));
             if (request->hasArg("autowakeupSchedules")) {
@@ -871,6 +875,8 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["maxPumpPower"] = settings.getMaxPumpPower();
     doc["savedScale"] = settings.getSavedScale();
     doc["savedScaleName"] = settings.getSavedScaleName();
+    doc["savedGrinder"] = settings.getSavedGrinder();
+    doc["savedGrinderName"] = settings.getSavedGrinderName();
 
     // Add schedule format with days
     std::vector<AutoWakeupSchedule> autowakeupSchedules = settings.getAutoWakeupSchedules();
@@ -894,16 +900,26 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
         ESP.restart();
 }
 
+// Deprecated: scale-only HTTP API kept for one release so older app builds keep working; the web UI uses req:bluetooth:*.
+static void sendSuccess(AsyncWebServerRequest *request) {
+    JsonDocument doc(&psramAllocator);
+    doc["success"] = true;
+    AsyncResponseStream *response = request->beginResponseStream("application/json");
+    serializeJson(doc, *response);
+    request->send(response);
+}
+
 void WebUIPlugin::handleBLEScaleList(AsyncWebServerRequest *request) {
     JsonDocument doc(&psramAllocator);
     JsonArray scalesArray = doc.to<JsonArray>();
-    std::vector<DiscoveredDevice> devices = BLEScales.getDiscoveredScales();
-    for (const DiscoveredDevice &device : BLEScales.getDiscoveredScales()) {
-        JsonDocument scale(&psramAllocator);
+    for (const DiscoveredDevice &device : BLEDevices.getDiscoveredDevices()) {
+        if (device.getType() != BluetoothDeviceType::SCALE) {
+            continue;
+        }
+        JsonObject scale = scalesArray.add<JsonObject>();
         scale["uuid"] = device.getAddress().toString();
         scale["name"] = device.getName();
         scale["rssi"] = device.getRSSI();
-        scalesArray.add(scale);
     }
     AsyncResponseStream *response = request->beginResponseStream("application/json");
     serializeJson(doc, *response);
@@ -915,12 +931,8 @@ void WebUIPlugin::handleBLEScaleScan(AsyncWebServerRequest *request) {
         request->send(404);
         return;
     }
-    BLEScales.scan();
-    JsonDocument doc(&psramAllocator);
-    doc["success"] = true;
-    AsyncResponseStream *response = request->beginResponseStream("application/json");
-    serializeJson(doc, *response);
-    request->send(response);
+    BLEDevices.scan();
+    sendSuccess(request);
 }
 
 void WebUIPlugin::handleBLEScaleConnect(AsyncWebServerRequest *request) {
@@ -928,12 +940,8 @@ void WebUIPlugin::handleBLEScaleConnect(AsyncWebServerRequest *request) {
         request->send(404);
         return;
     }
-    BLEScales.connect(request->arg("uuid").c_str());
-    JsonDocument doc(&psramAllocator);
-    doc["success"] = true;
-    AsyncResponseStream *response = request->beginResponseStream("application/json");
-    serializeJson(doc, *response);
-    request->send(response);
+    BLEDevices.connect(request->arg("uuid").c_str(), BluetoothDeviceType::SCALE);
+    sendSuccess(request);
 }
 
 void WebUIPlugin::handleBLEScaleForget(AsyncWebServerRequest *request) {
@@ -941,30 +949,24 @@ void WebUIPlugin::handleBLEScaleForget(AsyncWebServerRequest *request) {
         request->send(404);
         return;
     }
-    BLEScales.forget();
-    JsonDocument doc(&psramAllocator);
-    doc["success"] = true;
-    AsyncResponseStream *response = request->beginResponseStream("application/json");
-    serializeJson(doc, *response);
-    request->send(response);
+    BLEDevices.forget(BluetoothDeviceType::SCALE);
+    sendSuccess(request);
 }
 
 void WebUIPlugin::handleBLEScaleInfo(AsyncWebServerRequest *request) {
+    const BluetoothDeviceType scale = BluetoothDeviceType::SCALE;
     JsonDocument doc(&psramAllocator);
-    doc["connected"] = BLEScales.isConnected();
-    doc["name"] = BLEScales.getName();
-    doc["uuid"] = BLEScales.getUUID();
-    doc["rssi"] = BLEScales.getRSSI();
+    doc["connected"] = BLEDevices.isConnected(scale);
+    doc["name"] = BLEDevices.getName(scale);
+    doc["uuid"] = BLEDevices.getAddress(scale);
+    doc["rssi"] = BLEDevices.getRSSI(scale);
     doc["saved"] = controller->getSettings().getSavedScale();
     doc["savedName"] = controller->getSettings().getSavedScaleName();
-    doc["hasBattery"] = BLEScales.hasBatteryLevel();
-    // Only surface the numeric when the scale reports one — a 255 sentinel
-    // (REMOTE_SCALES_BATTERY_UNKNOWN) would otherwise render as a fake "255%".
-    if (BLEScales.hasBatteryLevel()) {
-        const uint8_t pct = BLEScales.getBatteryLevel();
-        if (pct != REMOTE_SCALES_BATTERY_UNKNOWN) {
-            doc["battery"] = pct;
-        }
+    doc["hasBattery"] = BLEDevices.hasBatteryLevel(scale);
+    // Left out while unknown: the 255 sentinel would otherwise render as a fake "255%".
+    const uint8_t pct = BLEDevices.getBatteryLevel(scale);
+    if (pct != BLUETOOTH_BATTERY_UNKNOWN) {
+        doc["battery"] = pct;
     }
     AsyncResponseStream *response = request->beginResponseStream("application/json");
     serializeJson(doc, *response);

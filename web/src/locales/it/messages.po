@@ -84,6 +84,10 @@ msgstr "{diffWeeks, plural, one {# settimana fa} other {# settimane fa}}"
 msgid "{diffYears, plural, one {# year ago} other {# years ago}}"
 msgstr "{diffYears, plural, one {# anno fa} other {# anni fa}}"
 
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "{disconnectedName} disconnected"
+msgstr "{disconnectedName} disconnesso"
+
 #: src/pages/ShotHistory/index.jsx
 msgid "{historyCount, plural, one {This will permanently delete the only shot on the device. This cannot be undone.} other {This will permanently delete all # shots from the device. This cannot be undone.}}"
 msgstr "{historyCount, plural, one {L’unica estrazione presente sul dispositivo verrà eliminata definitivamente. L’operazione non può essere annullata.} other {Tutte le # estrazioni verranno eliminate definitivamente dal dispositivo. L’operazione non può essere annullata.}}"
@@ -117,8 +121,8 @@ msgid "{recentShotCount, plural, one {# shot} other {# shots}}"
 msgstr "{recentShotCount, plural, one {# estrazione} other {# estrazioni}}"
 
 #: src/pages/Settings/tabs/BluetoothTab.jsx
-msgid "{scaleName} disconnected"
-msgstr "{scaleName} disconnessa"
+msgid "{rpm} rpm"
+msgstr "{rpm} giri/min"
 
 #: src/pages/Settings/PatchNotes.jsx
 msgid "{total, plural, one {# commit} other {# commits}}"
@@ -278,6 +282,10 @@ msgstr "Avanzate"
 msgctxt "dashboard view"
 msgid "Advanced"
 msgstr "Avanzata"
+
+#: src/pages/ProfileEdit/ProfileGrinderSettings.jsx
+msgid "Advanced grinder settings"
+msgstr "Impostazioni avanzate del macinacaffè"
 
 #: src/components/MachineProfileFields.jsx
 msgid "Advanced hardware settings"
@@ -854,8 +862,8 @@ msgid "Clear filters and selections ({resetAriaCount})"
 msgstr "Cancella filtri e selezioni ({resetAriaCount})"
 
 #: src/pages/Settings/tabs/BluetoothTab.jsx
-msgid "Click \"Scan\" to discover Bluetooth scales nearby"
-msgstr "Fai clic su \"Scansiona\" per trovare bilance Bluetooth nelle vicinanze"
+msgid "Click \"Scan\" to discover Bluetooth devices nearby"
+msgstr "Fai clic su \"Cerca dispositivi\" per trovare i dispositivi Bluetooth nelle vicinanze"
 
 #: src/pages/ProfileList/index.jsx
 msgid "Click to confirm"
@@ -1051,13 +1059,13 @@ msgstr "Connessione a {host}…"
 msgid "Connecting to {name}…"
 msgstr "Connessione a {name}…"
 
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Connecting to the device failed."
+msgstr "Connessione al dispositivo non riuscita."
+
 #: src/pages/Home/useDashboardState.js
 msgid "Connecting to the machine..."
 msgstr "Connessione alla macchina..."
-
-#: src/pages/Settings/tabs/BluetoothTab.jsx
-msgid "Connecting to the scale failed."
-msgstr "Connessione alla bilancia non riuscita."
 
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "Connecting..."
@@ -1488,6 +1496,10 @@ msgstr "Scheda rilevata"
 #: src/pages/Settings/index.jsx
 msgid "Device Settings"
 msgstr "Impostazioni dispositivo"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Devices are automatically refreshed every 10 seconds. Use the scan button to discover new devices."
+msgstr "I dispositivi vengono aggiornati automaticamente ogni 10 secondi. Usa il pulsante di ricerca per trovare nuovi dispositivi."
 
 #: src/pages/ShotAnalyzer/components/shotChart/tooltip/StaticTooltipContent.jsx
 #: src/pages/ShotAnalyzer/components/shotChart/tooltip/tooltipModel.js
@@ -2004,6 +2016,14 @@ msgstr "Impossibile caricare le statistiche. Riprova."
 msgid "Favorite"
 msgstr "Preferito"
 
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Feed {feedRpm} rpm"
+msgstr "Alimentazione {feedRpm} giri/min"
+
+#: src/pages/ProfileEdit/ProfileGrinderSettings.jsx
+msgid "Feed RPM"
+msgstr "Giri alimentazione"
+
 #: src/pages/Statistics/components/StatisticsSearchHelp.jsx
 msgid "Fields"
 msgstr "Campi"
@@ -2196,8 +2216,8 @@ msgid "GaggiMate is running its own Wi-Fi network. Pick your home network so you
 msgstr "GaggiMate sta usando la propria rete Wi-Fi. Scegli la tua rete di casa per raggiungere GaggiMate da qualsiasi dispositivo. Si connetterà al riavvio alla fine della configurazione."
 
 #: src/pages/Settings/tabs/BluetoothTab.jsx
-msgid "GaggiMate reconnects automatically once the scale is switched on and in range."
-msgstr "GaggiMate si riconnette automaticamente quando la bilancia è accesa e nel raggio d'azione."
+msgid "GaggiMate reconnects automatically once the device is switched on and in range."
+msgstr "GaggiMate si riconnette automaticamente quando il dispositivo è acceso e a portata."
 
 #: src/pages/SetupWizard/index.jsx
 msgid "GaggiMate restarts when you finish so it can connect to {joinSsid}. Plugins you enabled start with it."
@@ -2281,9 +2301,21 @@ msgstr "Macina una volta con GbS per vedere quale numero di ricetta riporta il m
 msgid "Grind Setting"
 msgstr "Grado di macinatura"
 
+#: src/pages/ProfileEdit/ProfileGrinderSettings.jsx
+msgid "Grind size"
+msgstr "Grado di macinatura"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Grind size {grindSize}"
+msgstr "Grado di macinatura {grindSize}"
+
 #: src/pages/Home/cards/ActionCard.jsx
 msgid "Grind target"
 msgstr "Obiettivo di macinatura"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Grinder"
+msgstr "Macinacaffè"
 
 #: src/pages/Home/cards/ProfileCard.jsx
 #: src/pages/Home/utils.js
@@ -3152,6 +3184,10 @@ msgstr "Nessuna data"
 msgid "No dates"
 msgstr "Nessuna data"
 
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "No devices found"
+msgstr "Nessun dispositivo trovato"
+
 #: src/pages/Home/cards/FavoriteProfilesCard.jsx
 msgid "No favorites — mark profiles as ★ in the profile list"
 msgstr "Nessun preferito: contrassegna i profili con ★ nell'elenco profili"
@@ -3212,10 +3248,6 @@ msgstr "Nessun profilo caricato"
 #: src/pages/ShotAnalyzer/services/analyzer/shotAnalysis.js
 msgid "No sample data available for analysis."
 msgstr "Nessun dato di campionamento disponibile per l'analisi."
-
-#: src/pages/Settings/tabs/BluetoothTab.jsx
-msgid "No scales found"
-msgstr "Nessuna bilancia trovata"
 
 #: src/pages/ShotAnalyzer/components/EmptyState.jsx
 #: src/pages/ShotAnalyzer/components/library/libraryDisplay.js
@@ -3644,8 +3676,8 @@ msgid "Please enter both username and password"
 msgstr "Inserisci nome utente e password"
 
 #: src/pages/Settings/tabs/BluetoothTab.jsx
-msgid "Please wake up GaggiMate from Standby to use Bluetooth scales."
-msgstr "Riattiva GaggiMate dallo standby per usare le bilance Bluetooth."
+msgid "Please wake up GaggiMate from Standby to use Bluetooth devices."
+msgstr "Riattiva GaggiMate dallo standby per usare i dispositivi Bluetooth."
 
 #: src/pages/Settings/index.jsx
 #: src/pages/Settings/tabs/PluginsTab.jsx
@@ -4404,6 +4436,10 @@ msgstr "CONTROLLA FASE {phaseNumber}"
 msgid "Review the stop reason for this phase. The algorithm was only able to identify it after several intermediate calculations."
 msgstr "Controlla il motivo di arresto di questa fase. L'algoritmo è riuscito a identificarlo solo dopo diversi calcoli intermedi."
 
+#: src/pages/ProfileEdit/ProfileGrinderSettings.jsx
+msgid "RPM"
+msgstr "Giri/min"
+
 #: src/pages/Statistics/components/StatisticsSearchHelp.jsx
 msgid "Rules are separated with <0>;</0>. Visual filters and DSL are combined with AND."
 msgstr "Le regole sono separate da <0>;</0>. Filtri visivi e DSL sono combinati con AND."
@@ -4537,6 +4573,10 @@ msgid "Saved"
 msgstr "Salvata"
 
 #: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Saved grinder"
+msgstr "Macinacaffè salvato"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "Saved scale"
 msgstr "Bilancia salvata"
 
@@ -4583,10 +4623,6 @@ msgid "Scales"
 msgstr "Bilance"
 
 #: src/pages/Settings/tabs/BluetoothTab.jsx
-msgid "Scales are automatically refreshed every 10 seconds. Use the scan button to discover new devices."
-msgstr "Le bilance vengono aggiornate automaticamente ogni 10 secondi. Usa il pulsante di scansione per trovare nuovi dispositivi."
-
-#: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "Scan failed"
 msgstr "Scansione non riuscita"
 
@@ -4595,8 +4631,8 @@ msgid "Scan for Devices"
 msgstr "Cerca dispositivi"
 
 #: src/pages/Settings/tabs/BluetoothTab.jsx
-msgid "Scan for nearby Bluetooth scales to connect them to GaggiMate."
-msgstr "Cerca bilance Bluetooth nelle vicinanze per connetterle a GaggiMate."
+msgid "Scan for nearby Bluetooth devices to connect them to GaggiMate."
+msgstr "Cerca dispositivi Bluetooth nelle vicinanze per collegarli a GaggiMate."
 
 #: src/pages/SetupWizard/WifiStep.jsx
 msgid "Scanning failed."
@@ -5013,6 +5049,7 @@ msgstr "Mostra i pannelli della colonna di controllo come schede separate o ragg
 #: src/pages/Settings/PatchNotes.jsx
 msgid "showing the newest {0}"
 msgstr "mostrati i {0} più recenti"
+
 #: src/pages/Statistics/components/StatisticsShotCompareSection.jsx
 msgid "Showing up to 100 latest shots. Refine with filters."
 msgstr "Vengono mostrate fino a 100 estrazioni più recenti. Affina con i filtri."
@@ -5734,6 +5771,14 @@ msgstr "Il controller non è ancora connesso."
 msgid "The controller reported an error."
 msgstr "Il controller ha segnalato un errore."
 
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "The device was found, but the Bluetooth connection failed. Try again or restart the device."
+msgstr "Il dispositivo è stato trovato, ma la connessione Bluetooth non è riuscita. Riprova o riavvia il dispositivo."
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "The device wasn't found. Make sure it's switched on and nearby, then scan again."
+msgstr "Il dispositivo non è stato trovato. Assicurati che sia acceso e nelle vicinanze, poi ripeti la ricerca."
+
 #: src/pages/Settings/index.jsx
 msgid "The file contains no known settings."
 msgstr "Il file non contiene impostazioni note."
@@ -5794,14 +5839,6 @@ msgstr "La dose del profilo viene salvata nella cronologia shot."
 msgid "The pump runs with the 3-way valve closed until pressure stops rising. Then the pump stops and the valve opens, which should release the pressure to about 0 bar."
 msgstr "La pompa funziona con la valvola a 3 vie chiusa finché la pressione smette di salire. Poi la pompa si ferma e la valvola si apre, il che dovrebbe scaricare la pressione fino a circa 0 bar."
 
-#: src/pages/Settings/tabs/BluetoothTab.jsx
-msgid "The scale was found, but the Bluetooth connection failed. Try again or restart the scale."
-msgstr "La bilancia è stata trovata, ma la connessione Bluetooth non è riuscita. Riprova o riavvia la bilancia."
-
-#: src/pages/Settings/tabs/BluetoothTab.jsx
-msgid "The scale wasn't found. Make sure it's switched on and nearby, then scan again."
-msgstr "La bilancia non è stata trovata. Assicurati che sia accesa e vicina, poi ripeti la scansione."
-
 #: src/pages/ProfileList/index.jsx
 msgid "The selected profile can't be deleted"
 msgstr "Il profilo selezionato non può essere eliminato"
@@ -5847,6 +5884,10 @@ msgstr "Questo browser non può registrare video MP4. Usa invece l'esportazione 
 msgid "This browser records replay video as WebM natively."
 msgstr "Questo browser registra nativamente i video di replay in WebM."
 
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "This device model couldn't be set up."
+msgstr "Impossibile configurare questo modello di dispositivo."
+
 #: src/pages/Settings/PluginCard.jsx
 msgid "This feature allows connection to a Home Assistant or MQTT installation and push the current state. This feature is deprecated for usage with Home Assistant. Please see the <0>Home Assistant Integration</0> for a more up-to-date solution."
 msgstr "Questa funzione consente di connettersi a un'installazione Home Assistant o MQTT e inviare lo stato attuale. Questa funzione è deprecata per l'uso con Home Assistant. Consulta l'<0>integrazione Home Assistant</0> per una soluzione più aggiornata."
@@ -5858,10 +5899,6 @@ msgstr "Questa funzione controlla una presa Tasmota per spegnere il macinacaffè
 #: src/utils/machineProfiles.js
 msgid "This profile includes settings outside machine configuration. Remove them from the profile before importing it."
 msgstr "Questo profilo contiene impostazioni non relative alla configurazione della macchina. Rimuovile dal profilo prima di importarlo."
-
-#: src/pages/Settings/tabs/BluetoothTab.jsx
-msgid "This scale model couldn't be set up."
-msgstr "Non è stato possibile configurare questo modello di bilancia."
 
 #: src/pages/Settings/PluginCard.jsx
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
@@ -6058,6 +6095,10 @@ msgstr "Errore sconosciuto."
 #: src/pages/Statistics/utils/statisticsSearchDsl.js
 msgid "Unknown field \"{fieldRaw}\". Supported: {supportedFields}."
 msgstr "Campo sconosciuto \"{fieldRaw}\". Supportati: {supportedFields}."
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Unknown grinder"
+msgstr "Macinacaffè sconosciuto"
 
 #: src/pages/ShotHistory/HistoryCard.jsx
 msgid "Unknown Profile"

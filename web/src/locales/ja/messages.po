@@ -80,6 +80,10 @@ msgstr "{diffWeeks, plural, other {# 週間前}}"
 msgid "{diffYears, plural, one {# year ago} other {# years ago}}"
 msgstr "{diffYears, plural, other {# 年前}}"
 
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "{disconnectedName} disconnected"
+msgstr "{disconnectedName} の接続が切れました"
+
 #: src/pages/ShotHistory/index.jsx
 msgid "{historyCount, plural, one {This will permanently delete the only shot on the device. This cannot be undone.} other {This will permanently delete all # shots from the device. This cannot be undone.}}"
 msgstr "{historyCount, plural, other {デバイス上のショット # 件をすべて完全に削除します。この操作は元に戻せません。}}"
@@ -113,8 +117,8 @@ msgid "{recentShotCount, plural, one {# shot} other {# shots}}"
 msgstr "{recentShotCount, plural, other {# ショット}}"
 
 #: src/pages/Settings/tabs/BluetoothTab.jsx
-msgid "{scaleName} disconnected"
-msgstr "{scaleName} の接続が切れました"
+msgid "{rpm} rpm"
+msgstr "{rpm} rpm"
 
 #: src/pages/Settings/PatchNotes.jsx
 msgid "{total, plural, one {# commit} other {# commits}}"
@@ -274,6 +278,10 @@ msgstr "詳細設定"
 msgctxt "dashboard view"
 msgid "Advanced"
 msgstr "詳細"
+
+#: src/pages/ProfileEdit/ProfileGrinderSettings.jsx
+msgid "Advanced grinder settings"
+msgstr "グラインダーの詳細設定"
 
 #: src/components/MachineProfileFields.jsx
 msgid "Advanced hardware settings"
@@ -850,8 +858,8 @@ msgid "Clear filters and selections ({resetAriaCount})"
 msgstr "フィルターと選択をクリア（{resetAriaCount}）"
 
 #: src/pages/Settings/tabs/BluetoothTab.jsx
-msgid "Click \"Scan\" to discover Bluetooth scales nearby"
-msgstr "「スキャン」をクリックして近くの Bluetooth スケールを検出します"
+msgid "Click \"Scan\" to discover Bluetooth devices nearby"
+msgstr "「スキャン」をクリックして近くの Bluetooth デバイスを検出します"
 
 #: src/pages/ProfileList/index.jsx
 msgid "Click to confirm"
@@ -1047,13 +1055,13 @@ msgstr "{host} に接続中…"
 msgid "Connecting to {name}…"
 msgstr "{name} に接続中…"
 
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Connecting to the device failed."
+msgstr "デバイスへの接続に失敗しました。"
+
 #: src/pages/Home/useDashboardState.js
 msgid "Connecting to the machine..."
 msgstr "マシンに接続中..."
-
-#: src/pages/Settings/tabs/BluetoothTab.jsx
-msgid "Connecting to the scale failed."
-msgstr "スケールへの接続に失敗しました。"
 
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "Connecting..."
@@ -1484,6 +1492,10 @@ msgstr "検出されたボード"
 #: src/pages/Settings/index.jsx
 msgid "Device Settings"
 msgstr "デバイス設定"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Devices are automatically refreshed every 10 seconds. Use the scan button to discover new devices."
+msgstr "デバイスは 10 秒ごとに自動更新されます。新しいデバイスを検出するにはスキャンボタンを使用してください。"
 
 #: src/pages/ShotAnalyzer/components/shotChart/tooltip/StaticTooltipContent.jsx
 #: src/pages/ShotAnalyzer/components/shotChart/tooltip/tooltipModel.js
@@ -2000,6 +2012,14 @@ msgstr "統計の読み込みに失敗しました。もう一度お試しくだ
 msgid "Favorite"
 msgstr "お気に入り"
 
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Feed {feedRpm} rpm"
+msgstr "供給 {feedRpm} rpm"
+
+#: src/pages/ProfileEdit/ProfileGrinderSettings.jsx
+msgid "Feed RPM"
+msgstr "供給回転数"
+
 #: src/pages/Statistics/components/StatisticsSearchHelp.jsx
 msgid "Fields"
 msgstr "フィールド"
@@ -2192,8 +2212,8 @@ msgid "GaggiMate is running its own Wi-Fi network. Pick your home network so you
 msgstr "GaggiMate は現在、独自の Wi-Fi ネットワークで動作しています。どのデバイスからも GaggiMate にアクセスできるよう、ご自宅のネットワークを選択してください。セットアップの最後に再起動したときに接続されます。"
 
 #: src/pages/Settings/tabs/BluetoothTab.jsx
-msgid "GaggiMate reconnects automatically once the scale is switched on and in range."
-msgstr "スケールの電源が入り、範囲内に入ると GaggiMate は自動的に再接続します。"
+msgid "GaggiMate reconnects automatically once the device is switched on and in range."
+msgstr "デバイスの電源が入り、範囲内に入ると GaggiMate は自動的に再接続します。"
 
 #: src/pages/SetupWizard/index.jsx
 msgid "GaggiMate restarts when you finish so it can connect to {joinSsid}. Plugins you enabled start with it."
@@ -2277,9 +2297,21 @@ msgstr "GbS で一度挽いて、グラインダーが報告するレシピ番�
 msgid "Grind Setting"
 msgstr "挽き目"
 
+#: src/pages/ProfileEdit/ProfileGrinderSettings.jsx
+msgid "Grind size"
+msgstr "挽き目"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Grind size {grindSize}"
+msgstr "挽き目 {grindSize}"
+
 #: src/pages/Home/cards/ActionCard.jsx
 msgid "Grind target"
 msgstr "グラインド目標"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Grinder"
+msgstr "グラインダー"
 
 #: src/pages/Home/cards/ProfileCard.jsx
 #: src/pages/Home/utils.js
@@ -3148,6 +3180,10 @@ msgstr "日付なし"
 msgid "No dates"
 msgstr "日付なし"
 
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "No devices found"
+msgstr "デバイスが見つかりません"
+
 #: src/pages/Home/cards/FavoriteProfilesCard.jsx
 msgid "No favorites — mark profiles as ★ in the profile list"
 msgstr "お気に入りがありません。プロファイル一覧でプロファイルに ★ を付けてください"
@@ -3208,10 +3244,6 @@ msgstr "プロファイルが読み込まれていません"
 #: src/pages/ShotAnalyzer/services/analyzer/shotAnalysis.js
 msgid "No sample data available for analysis."
 msgstr "分析に使用できるサンプルデータがありません。"
-
-#: src/pages/Settings/tabs/BluetoothTab.jsx
-msgid "No scales found"
-msgstr "スケールが見つかりません"
 
 #: src/pages/ShotAnalyzer/components/EmptyState.jsx
 #: src/pages/ShotAnalyzer/components/library/libraryDisplay.js
@@ -3640,8 +3672,8 @@ msgid "Please enter both username and password"
 msgstr "ユーザー名とパスワードの両方を入力してください"
 
 #: src/pages/Settings/tabs/BluetoothTab.jsx
-msgid "Please wake up GaggiMate from Standby to use Bluetooth scales."
-msgstr "Bluetooth スケールを使用するには、GaggiMate をスタンバイから復帰させてください。"
+msgid "Please wake up GaggiMate from Standby to use Bluetooth devices."
+msgstr "Bluetooth デバイスを使用するには、GaggiMate をスタンバイから復帰させてください。"
 
 #: src/pages/Settings/index.jsx
 #: src/pages/Settings/tabs/PluginsTab.jsx
@@ -4400,6 +4432,10 @@ msgstr "フェーズ {phaseNumber} を確認"
 msgid "Review the stop reason for this phase. The algorithm was only able to identify it after several intermediate calculations."
 msgstr "このフェーズの停止理由を確認してください。アルゴリズムは複数の中間計算を経てようやくこれを特定できました。"
 
+#: src/pages/ProfileEdit/ProfileGrinderSettings.jsx
+msgid "RPM"
+msgstr "回転数"
+
 #: src/pages/Statistics/components/StatisticsSearchHelp.jsx
 msgid "Rules are separated with <0>;</0>. Visual filters and DSL are combined with AND."
 msgstr "ルールは <0>;</0> で区切ります。ビジュアルフィルターと DSL は AND で結合されます。"
@@ -4533,6 +4569,10 @@ msgid "Saved"
 msgstr "保存済み"
 
 #: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Saved grinder"
+msgstr "保存済みのグラインダー"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "Saved scale"
 msgstr "保存済みのスケール"
 
@@ -4579,10 +4619,6 @@ msgid "Scales"
 msgstr "スケール"
 
 #: src/pages/Settings/tabs/BluetoothTab.jsx
-msgid "Scales are automatically refreshed every 10 seconds. Use the scan button to discover new devices."
-msgstr "スケールは 10 秒ごとに自動更新されます。新しいデバイスを検出するにはスキャンボタンを使用してください。"
-
-#: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "Scan failed"
 msgstr "スキャンに失敗しました"
 
@@ -4591,8 +4627,8 @@ msgid "Scan for Devices"
 msgstr "デバイスをスキャン"
 
 #: src/pages/Settings/tabs/BluetoothTab.jsx
-msgid "Scan for nearby Bluetooth scales to connect them to GaggiMate."
-msgstr "近くの Bluetooth スケールをスキャンして GaggiMate に接続します。"
+msgid "Scan for nearby Bluetooth devices to connect them to GaggiMate."
+msgstr "近くの Bluetooth デバイスをスキャンして GaggiMate に接続します。"
 
 #: src/pages/SetupWizard/WifiStep.jsx
 msgid "Scanning failed."
@@ -5731,6 +5767,14 @@ msgstr "コントローラーはまだ接続されていません。"
 msgid "The controller reported an error."
 msgstr "コントローラーがエラーを報告しました。"
 
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "The device was found, but the Bluetooth connection failed. Try again or restart the device."
+msgstr "デバイスは見つかりましたが、Bluetooth 接続に失敗しました。もう一度試すか、デバイスを再起動してください。"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "The device wasn't found. Make sure it's switched on and nearby, then scan again."
+msgstr "デバイスが見つかりませんでした。電源が入っていて近くにあることを確認してから、もう一度スキャンしてください。"
+
 #: src/pages/Settings/index.jsx
 msgid "The file contains no known settings."
 msgstr "ファイルに既知の設定が含まれていません。"
@@ -5791,14 +5835,6 @@ msgstr "プロファイルのドーズがショット履歴に保存されます
 msgid "The pump runs with the 3-way valve closed until pressure stops rising. Then the pump stops and the valve opens, which should release the pressure to about 0 bar."
 msgstr "三方弁を閉じた状態で、圧力が上がらなくなるまでポンプを動作させます。その後ポンプが停止してバルブが開き、圧力が約 0 bar まで解放されるはずです。"
 
-#: src/pages/Settings/tabs/BluetoothTab.jsx
-msgid "The scale was found, but the Bluetooth connection failed. Try again or restart the scale."
-msgstr "スケールは見つかりましたが、Bluetooth 接続に失敗しました。もう一度試すか、スケールを再起動してください。"
-
-#: src/pages/Settings/tabs/BluetoothTab.jsx
-msgid "The scale wasn't found. Make sure it's switched on and nearby, then scan again."
-msgstr "スケールが見つかりませんでした。電源が入っていて近くにあることを確認してから、もう一度スキャンしてください。"
-
 #: src/pages/ProfileList/index.jsx
 msgid "The selected profile can't be deleted"
 msgstr "選択中のプロファイルは削除できません"
@@ -5844,6 +5880,10 @@ msgstr "このブラウザーは MP4 動画を録画できません。代わり�
 msgid "This browser records replay video as WebM natively."
 msgstr "このブラウザーはリプレイ動画を WebM でネイティブに録画します。"
 
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "This device model couldn't be set up."
+msgstr "このデバイスモデルをセットアップできませんでした。"
+
 #: src/pages/Settings/PluginCard.jsx
 msgid "This feature allows connection to a Home Assistant or MQTT installation and push the current state. This feature is deprecated for usage with Home Assistant. Please see the <0>Home Assistant Integration</0> for a more up-to-date solution."
 msgstr "この機能は Home Assistant または MQTT に接続し、現在の状態を送信します。Home Assistant での使用には非推奨です。より新しい方法については <0>Home Assistant 連携</0>を参照してください。"
@@ -5855,10 +5895,6 @@ msgstr "この機能は Tasmota プラグを制御し、目標に達した後に
 #: src/utils/machineProfiles.js
 msgid "This profile includes settings outside machine configuration. Remove them from the profile before importing it."
 msgstr "このプロファイルにはマシン設定以外の設定が含まれています。インポートする前にプロファイルから削除してください。"
-
-#: src/pages/Settings/tabs/BluetoothTab.jsx
-msgid "This scale model couldn't be set up."
-msgstr "このスケールモデルをセットアップできませんでした。"
 
 #: src/pages/Settings/PluginCard.jsx
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
@@ -6055,6 +6091,10 @@ msgstr "不明なエラーです。"
 #: src/pages/Statistics/utils/statisticsSearchDsl.js
 msgid "Unknown field \"{fieldRaw}\". Supported: {supportedFields}."
 msgstr "不明なフィールド「{fieldRaw}」。対応フィールド: {supportedFields}。"
+
+#: src/pages/Settings/tabs/BluetoothTab.jsx
+msgid "Unknown grinder"
+msgstr "不明なグラインダー"
 
 #: src/pages/ShotHistory/HistoryCard.jsx
 msgid "Unknown Profile"

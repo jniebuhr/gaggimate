@@ -54,6 +54,29 @@
       "maximum": 100,
       "description": "The dose in grams to use for this specific shot. This dose can be referenced in a ratio type target. Quick adjustments of the dose will then be reflect in volumetric brewing."
     },
+    "grinder": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Optional grinder settings for this recipe, sent to a connected Bluetooth grinder together with the profile label and dose when the profile is selected or saved and when the grinder connects. Omitted fields leave the grinder's own setting untouched; the grinder driver limits each value to the range the grinder accepts.",
+      "properties": {
+        "grindSize": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Grind size in the grinder's own unit."
+        },
+        "rpm": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Burr speed in rpm."
+        },
+        "feedRpm": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Bean feed speed in rpm."
+        }
+      },
+      "examples": [{ "grindSize": 180, "rpm": 1100, "feedRpm": 62 }]
+    },
     "favorite": {
       "type": "boolean",
       "default": false,

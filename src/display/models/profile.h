@@ -188,6 +188,15 @@ struct Phase {
     }
 };
 
+// Grinder parameters for this recipe; a negative value means "not set" and is not sent to the grinder.
+struct ProfileGrinder {
+    float grindSize = -1.0f; // grinder-specific unit, e.g. burr gap in µm
+    int rpm = -1;            // burr speed
+    int feedRpm = -1;        // bean feed speed
+
+    bool isSet() const { return grindSize >= 0.0f || rpm >= 0 || feedRpm >= 0; }
+};
+
 struct Profile {
     String id;
     String label;
@@ -196,6 +205,7 @@ struct Profile {
     bool utility = false;
     float temperature;
     float dose = 0;
+    ProfileGrinder grinder;
     bool favorite = false;
     bool selected = false;
     std::vector<Phase> phases;
@@ -300,6 +310,15 @@ struct Profile {
     }
 };
 
+// Optional numeric field: absent, null, empty or negative means "not set" (-1); form inputs may arrive as strings.
+inline float optionalProfileNumber(JsonVariantConst value) {
+    if (value.isNull() || (value.is<const char *>() && value.as<const char *>()[0] == '\0')) {
+        return -1.0f;
+    }
+    const float number = value.as<float>();
+    return number >= 0.0f ? number : -1.0f;
+}
+
 inline bool parseProfile(const JsonObject &obj, Profile &profile) {
     // Reject profiles missing the structural fields the rest of the system
     // assumes are present. Without this, a truncated/corrupted JSON loads as
@@ -329,6 +348,9 @@ inline bool parseProfile(const JsonObject &obj, Profile &profile) {
     profile.description = obj["description"].as<String>();
     profile.temperature = obj["temperature"].as<float>();
     profile.dose = obj["dose"].as<float>();
+    profile.grinder.grindSize = optionalProfileNumber(obj["grinder"]["grindSize"]);
+    profile.grinder.rpm = static_cast<int>(lroundf(optionalProfileNumber(obj["grinder"]["rpm"])));
+    profile.grinder.feedRpm = static_cast<int>(lroundf(optionalProfileNumber(obj["grinder"]["feedRpm"])));
     profile.favorite = obj["favorite"] | false;
     profile.selected = obj["selected"] | false;
     profile.utility = obj["utility"] | false;
@@ -439,6 +461,15 @@ inline void writeProfile(JsonObject &obj, const Profile &profile) {
     obj["description"] = profile.description;
     obj["temperature"] = profile.temperature;
     obj["dose"] = profile.dose;
+    if (profile.grinder.isSet()) {
+        auto grinder = obj["grinder"].to<JsonObject>();
+        if (profile.grinder.grindSize >= 0.0f)
+            grinder["grindSize"] = profile.grinder.grindSize;
+        if (profile.grinder.rpm >= 0)
+            grinder["rpm"] = profile.grinder.rpm;
+        if (profile.grinder.feedRpm >= 0)
+            grinder["feedRpm"] = profile.grinder.feedRpm;
+    }
     obj["favorite"] = profile.favorite;
     obj["selected"] = profile.selected;
     obj["utility"] = profile.utility;

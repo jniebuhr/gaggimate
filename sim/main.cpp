@@ -23,6 +23,8 @@ int main(int argc, char **argv) {
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "--ap") == 0)
             apMode = true;
+        if (strcmp(argv[i], "--scale") == 0) // start with the simulated Bluetooth scale switched on (like key 3)
+            g_simScaleTarget = 0.0f;
         if (strcmp(argv[i], "--screenshot") == 0 && i + 1 < argc) {
             shotPath = argv[++i];
             if (i + 1 < argc)
