@@ -68,6 +68,7 @@ class Heater {
     void plot(float optimumOutput, float outputScale, uint8_t everyNth);
     float calculateDisturbanceFeedforwardGain();
     float calculateSafetyScaling(float tempError);
+    void recordFlow();
     void updateLagCompensation();
     TemperatureSensor *sensor;
     uint8_t heaterPin;
@@ -110,6 +111,7 @@ class Heater {
     uint32_t integralHoldTailMs = 0;
     uint32_t lastFlowMs = 0;
     bool flowSeen = false;
+    bool waterFlowing = false;
 
     // Thermal model constants
     static constexpr float WATER_DENSITY = 1.0f;        // g/ml

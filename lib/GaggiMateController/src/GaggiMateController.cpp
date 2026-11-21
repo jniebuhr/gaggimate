@@ -213,6 +213,9 @@ void GaggiMateController::setup() {
                 ledController->setChannel(channel, brightness);
         });
     brewTemperature->setup();
+    // Without measured flow, the pump's power tells the brew heater's integral pause when a flush is on. Attached
+    // before setup() starts the heater task, which reads it.
+    heater->setPumpPowerSource(pump->getPumpPowerPtr());
     heater->setup();
     valve->setup();
     pump->setup();
@@ -247,9 +250,6 @@ void GaggiMateController::setup() {
         heater->setThermalFeedforward(pumpFlowPtr, 23.0f, valveStatusPtr);
         heater->setFeedforwardScale(0.0f);
     }
-    // Without measured flow, the pump's power tells the brew heater's integral pause when a flush is on.
-    if (heater && pump)
-        heater->setPumpPowerSource(pump->getPumpPowerPtr());
     // Initialize last ping time
     lastPingTime = millis();
 

@@ -39,6 +39,9 @@ void Heater::setupAutotune(int testTimeSec, int windowSize, int heaterWattage) {
 }
 
 void Heater::loop() {
+    // Every tick, heating or not: a flush while the heater is off still counts towards the integral pause.
+    recordFlow();
+
     if (!sensor->isErrorState() && autotuning) {
         loopAutotune();
         return;
@@ -104,21 +107,25 @@ void Heater::setLagCompensation(const HeaterLagSettings &lag) {
              lag.integralZoneC, lag.sensorDeadTimeS);
 }
 
-void Heater::updateLagCompensation() {
-    const uint32_t now = millis();
-    const float flow = pumpFlowRate != nullptr ? *pumpFlowRate : 0.0f;
+void Heater::recordFlow() {
     // Measured flow where the board has it (Pro); otherwise the pump running means water is entering the boiler.
-    const bool flowing = pumpFlowRate != nullptr ? flow > 0.01f : (pumpPower != nullptr && *pumpPower > 0.0f);
+    const bool flowing = pumpFlowRate != nullptr ? *pumpFlowRate > 0.01f : (pumpPower != nullptr && *pumpPower > 0.0f);
 
     std::lock_guard<std::mutex> lock(lagMutex);
+    waterFlowing = flowing;
     if (flowing) {
-        lastFlowMs = now;
+        lastFlowMs = millis();
         flowSeen = true;
     }
+}
+
+void Heater::updateLagCompensation() {
+    const uint32_t now = millis();
+    std::lock_guard<std::mutex> lock(lagMutex);
     if (integralZoneActive) {
         // Pause the integral while fresh water flows and until its effect has reached the sensor: the error in
         // that window is the (stale) flush, not a steady-state offset the integral should learn.
-        simplePid->setIntegralHold(flowing || (flowSeen && now - lastFlowMs < integralHoldTailMs));
+        simplePid->setIntegralHold(waterFlowing || (flowSeen && now - lastFlowMs < integralHoldTailMs));
     }
 }
 
