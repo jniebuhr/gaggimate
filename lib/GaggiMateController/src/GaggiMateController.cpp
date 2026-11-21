@@ -213,8 +213,17 @@ void GaggiMateController::setup() {
                 ledController->setChannel(channel, brightness);
         });
     brewTemperature->setup();
-    // Without measured flow, the pump's power tells the brew heater's integral pause when a flush is on. Attached
-    // before setup() starts the heater task, which reads it.
+    // The heater's flow sources are attached before setup() starts the heater task, which reads them.
+    // Set up thermal feedforward for main heater if pressure/dimming capability exists
+    if (_config.capabilites.dimming && _config.capabilites.pressure) {
+        auto dimmedPump = static_cast<DimmedPump *>(pump.get());
+        float *pumpFlowPtr = dimmedPump->getPumpFlowPtr();
+        int *valveStatusPtr = dimmedPump->getValveStatusPtr();
+
+        heater->setThermalFeedforward(pumpFlowPtr, 23.0f, valveStatusPtr);
+        heater->setFeedforwardScale(0.0f);
+    }
+    // Without measured flow, the pump's power tells the brew heater's integral pause when a flush is on.
     heater->setPumpPowerSource(pump->getPumpPowerPtr());
     heater->setup();
     valve->setup();
@@ -240,15 +249,6 @@ void GaggiMateController::setup() {
     }
     if (tankLevel != nullptr) {
         tankLevel->setup();
-    }
-    // Set up thermal feedforward for main heater if pressure/dimming capability exists
-    if (heater && _config.capabilites.dimming && _config.capabilites.pressure) {
-        auto dimmedPump = static_cast<DimmedPump *>(pump.get());
-        float *pumpFlowPtr = dimmedPump->getPumpFlowPtr();
-        int *valveStatusPtr = dimmedPump->getValveStatusPtr();
-
-        heater->setThermalFeedforward(pumpFlowPtr, 23.0f, valveStatusPtr);
-        heater->setFeedforwardScale(0.0f);
     }
     // Initialize last ping time
     lastPingTime = millis();
