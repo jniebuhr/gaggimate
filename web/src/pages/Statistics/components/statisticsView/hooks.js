@@ -11,12 +11,11 @@ import { computeStatistics } from '../../services/StatisticsService';
 import {
   parseStatisticsQuery,
   buildShotCandidatePredicate,
-  resolveShotEffectiveTimestampMs,
+  resolveShotTimestampMs,
 } from '../../utils/statisticsSearchDsl';
 import {
   getAvailableProfileNames,
   getShotSelectionKey,
-  buildDateBasisWarningState,
   buildBaseFilterState,
   buildCandidateFilterState,
   buildShotSelectionItem,
@@ -40,8 +39,7 @@ import { t } from '@lingui/core/macro';
 
 export function useStatisticsMetadataState({
   apiService,
-  shotSource,
-  profileSource,
+  connected,
   initialProfileName,
   setSelectedProfileNames,
   setSelectedShotKeys,
@@ -64,6 +62,12 @@ export function useStatisticsMetadataState({
     const loadId = ++metaLoadIdRef.current;
     let cancelled = false;
 
+    setMetadataLoaded(false);
+    if (!apiService || !connected) {
+      setMetadataLoading(false);
+      return;
+    }
+
     async function loadMetadata() {
       setMetadataLoading(true);
       setMetadataLoaded(false);
@@ -71,8 +75,8 @@ export function useStatisticsMetadataState({
 
       try {
         const [shotList, profileList] = await Promise.all([
-          libraryService.getAllShots(shotSource),
-          libraryService.getAllProfiles(profileSource),
+          libraryService.getAllShots(),
+          libraryService.getAllProfiles(),
         ]);
 
         if (cancelled || loadId !== metaLoadIdRef.current) return;
@@ -92,16 +96,16 @@ export function useStatisticsMetadataState({
       }
     }
 
-    loadMetadata();
+    void loadMetadata();
 
     return () => {
       cancelled = true;
     };
-  }, [shotSource, profileSource, apiService, metadataReloadNonce]);
+  }, [apiService, connected, metadataReloadNonce]);
 
   useEffect(() => {
     gmPrefillRetryCountRef.current = 0;
-  }, [profileSource, initialProfileName]);
+  }, [initialProfileName]);
 
   const availableProfiles = useMemo(() => getAvailableProfileNames(rawProfiles), [rawProfiles]);
   const normalizedAvailableProfilesMap = useMemo(() => {
@@ -193,7 +197,6 @@ export function useStatisticsMetadataState({
   }, [availableProfiles, initialProfileName, metadataLoaded, setSelectedProfileNames]);
 
   useEffect(() => {
-    if (profileSource !== 'gaggimate') return;
     if (!initialProfileName) return;
     if (!metadataLoaded || metadataLoading || metadataError) return;
     if (initialProfilePresetAppliedRef.current) return;
@@ -206,14 +209,7 @@ export function useStatisticsMetadataState({
     }, 450);
 
     return () => clearTimeout(timer);
-  }, [
-    profileSource,
-    initialProfileName,
-    metadataLoaded,
-    metadataLoading,
-    metadataError,
-    availableProfiles,
-  ]);
+  }, [initialProfileName, metadataLoaded, metadataLoading, metadataError, availableProfiles]);
 
   return {
     rawShotCandidates,
@@ -242,7 +238,6 @@ export function useStatisticsSelectionModel({
   query,
   dateFromLocal,
   dateToLocal,
-  dateBasisMode,
 }) {
   const matchesPinnedShotMeta = shotMeta =>
     matchesPinnedShotMetaWithPins(shotMeta, {
@@ -257,18 +252,13 @@ export function useStatisticsSelectionModel({
   const getShotPinDisabledReason = shotMeta =>
     getShotPinDisabledReasonText(shotMeta, shotKeyToCanonicalProfile, pinnedShotsByProfile);
 
-  const dateBasisWarningState = useMemo(
-    () => buildDateBasisWarningState(rawShotCandidates),
-    [rawShotCandidates],
-  );
   const parsedDslQuery = useMemo(() => parseStatisticsQuery(query), [query]);
   const compiledDslFilter = useMemo(
     () =>
       buildShotCandidatePredicate(parsedDslQuery, {
-        dateBasisMode,
         matchesPinnedShot: matchesPinnedShotMeta,
       }),
-    [parsedDslQuery, dateBasisMode, matchesPinnedShotMeta],
+    [parsedDslQuery, matchesPinnedShotMeta],
   );
   const visualDateFrom = useMemo(() => parseDateInputMs(dateFromLocal, 'start'), [dateFromLocal]);
   const visualDateTo = useMemo(() => parseDateInputMs(dateToLocal, 'end'), [dateToLocal]);
@@ -279,10 +269,9 @@ export function useStatisticsSelectionModel({
         compiledDslFilter,
         visualDateFrom,
         visualDateTo,
-        dateBasisMode,
         rawShotCandidates,
       }),
-    [compiledDslFilter, dateBasisMode, rawShotCandidates, visualDateFrom, visualDateTo],
+    [compiledDslFilter, rawShotCandidates, visualDateFrom, visualDateTo],
   );
 
   const hasBaseParseErrors = baseFilterState.parseErrors.length > 0;
@@ -351,7 +340,7 @@ export function useStatisticsSelectionModel({
     () =>
       (selectionScopeShots || [])
         .map(shot => {
-          const baseItem = buildShotSelectionItem(shot, dateBasisMode);
+          const baseItem = buildShotSelectionItem(shot);
           const pinBucketKey =
             getCanonicalShotProfilePinKeyFromMap(shot, shotKeyToCanonicalProfile) ||
             getShotPinBucketKey(shot);
@@ -366,7 +355,6 @@ export function useStatisticsSelectionModel({
         .filter(item => item.id),
     [
       selectionScopeShots,
-      dateBasisMode,
       pinnedShotsByProfile,
       shotKeyToCanonicalProfile,
       getShotPinDisabledReason,
@@ -405,7 +393,7 @@ export function useStatisticsSelectionModel({
     () =>
       byProfileEligibleShots
         .map(shot => {
-          const baseItem = buildShotSelectionItem(shot, dateBasisMode);
+          const baseItem = buildShotSelectionItem(shot);
           const pinBucketKey =
             getCanonicalShotProfilePinKeyFromMap(shot, shotKeyToCanonicalProfile) ||
             getShotPinBucketKey(shot);
@@ -420,7 +408,6 @@ export function useStatisticsSelectionModel({
         .filter(item => item.id),
     [
       byProfileEligibleShots,
-      dateBasisMode,
       pinnedShotsByProfile,
       shotKeyToCanonicalProfile,
       getShotPinDisabledReason,
@@ -473,7 +460,7 @@ export function useStatisticsSelectionModel({
     let minTs = Infinity;
     let maxTs = -Infinity;
     for (const shot of candidateFilterState.filteredShots || []) {
-      const ts = resolveShotEffectiveTimestampMs(shot, dateBasisMode);
+      const ts = resolveShotTimestampMs(shot);
       if (!Number.isFinite(ts)) continue;
       if (ts < minTs) minTs = ts;
       if (ts > maxTs) maxTs = ts;
@@ -487,7 +474,7 @@ export function useStatisticsSelectionModel({
       fromLocal: formatDateTimeLocalInputValue(minTs),
       toLocal: formatDateTimeLocalInputValue(maxTs),
     };
-  }, [candidateFilterState.filteredShots, dateBasisMode, dateFromLocal, dateToLocal]);
+  }, [candidateFilterState.filteredShots, dateFromLocal, dateToLocal]);
 
   const orderShotSelection = nextSet => rawShotKeyOrder.filter(key => nextSet.has(key));
 
@@ -544,7 +531,6 @@ export function useStatisticsSelectionModel({
   };
 
   return {
-    dateBasisWarningState,
     candidateFilterState,
     hasBaseParseErrors,
     selectionScopeShotKeySet,
@@ -569,8 +555,6 @@ export function useStatisticsSelectionSync({
   metadataLoaded,
   hasBaseParseErrors,
   visibleProfileIdSet,
-  shotSource,
-  profileSource,
   selectedProfileNames,
   byProfileEligibleShotKeys,
   byProfileEligibleShotKeySet,
@@ -602,8 +586,6 @@ export function useStatisticsSelectionSync({
 
     const signature = JSON.stringify({
       mode,
-      shotSource,
-      profileSource,
       profiles: [...selectedProfileNames].sort((a, b) => a.localeCompare(b)),
     });
     const shouldSeedAll = profileModeShotSeedSignatureRef.current !== signature;
@@ -620,8 +602,6 @@ export function useStatisticsSelectionSync({
     mode,
     metadataLoaded,
     hasBaseParseErrors,
-    shotSource,
-    profileSource,
     selectedProfileNames,
     byProfileEligibleShotKeys,
     byProfileEligibleShotKeySet,
@@ -681,7 +661,7 @@ export function useStatisticsRunExecution({
       }
     }
 
-    loadAndAnalyze();
+    void loadAndAnalyze();
 
     return () => {
       cancelled = true;
@@ -696,7 +676,6 @@ export function useStatisticsResultViewState({
   setStatisticsDetailSection,
   initializedDetailSectionRunIdRef,
   entriesRef,
-  preparingRun,
   loading,
   error,
   metadataError,
@@ -778,12 +757,8 @@ export function useStatisticsResultViewState({
     () => getBuiltProfileCount(entriesRef),
     [entriesRef, result, runRequest],
   );
-  const builtDateRange = useMemo(
-    () => getBuiltDateRange(entriesRef, runRequest?.dateBasisMode || 'auto'),
-    [entriesRef, result, runRequest],
-  );
-  const shouldShowEmptyStatisticsState =
-    !preparingRun && !loading && !result && !error && !metadataError;
+  const builtDateRange = useMemo(() => getBuiltDateRange(entriesRef), [entriesRef, result]);
+  const shouldShowEmptyStatisticsState = !loading && !result && !error && !metadataError;
 
   return {
     hasProfileGroupStatistics,

@@ -28,14 +28,14 @@ function createSelectionBaseRequest(request) {
   return isRequestObject && Object.hasOwn(request, 'item') ? request : { item: request };
 }
 
-export function normalizeSelectionRequest(request, importMode, defaults = {}) {
+export function normalizeSelectionRequest(request, defaults = {}) {
   const baseRequest = createSelectionBaseRequest(request);
   const item = baseRequest?.item;
   if (!item) return null;
 
   const shotItem = {
     ...item,
-    source: item.source || importMode,
+    source: item.source || 'temp',
   };
 
   return {
@@ -68,55 +68,30 @@ export function getNextDirectionalSelection(request) {
   };
 }
 
-export function findPreferredProfileMatch(
-  allProfiles,
-  shotProfileName,
-  shotSource,
-  shotProfileId = '',
-) {
+export function findPreferredProfileMatch(allProfiles, shotProfileName, shotProfileId = '') {
   // Legacy shots may retain IDs from an older profile revision. Prefer the normalized
   // profile label so they follow the intended version, then fall back to the stored ID.
   const target = cleanName(shotProfileName).toLowerCase();
   if (target) {
-    const matches = allProfiles.filter(
+    const match = allProfiles.find(
       profile => getProfileDisplayLabel(profile, '').toLowerCase() === target,
     );
-    const preferredNameMatch = matches.find(profile => profile.source === shotSource) || matches[0];
-    if (preferredNameMatch) return preferredNameMatch;
+    if (match) return match;
   }
 
   const targetId = String(shotProfileId || '').trim();
   if (targetId) {
-    const idMatches = allProfiles.filter(
+    const idMatch = allProfiles.find(
       profile => String(profile.profileId || profile.id || '').trim() === targetId,
     );
-    const preferredIdMatch =
-      idMatches.find(profile => profile.source === shotSource) || idMatches[0];
-    if (preferredIdMatch) return preferredIdMatch;
+    if (idMatch) return idMatch;
   }
 
   return null;
 }
 
-function getProfileLookupId(profileMatch) {
-  return profileMatch.source === 'gaggimate'
-    ? profileMatch.profileId || profileMatch.id
-    : profileMatch.label ||
-        profileMatch.data?.label ||
-        profileMatch.name ||
-        profileMatch.data?.name ||
-        profileMatch.fileName ||
-        profileMatch.data?.fileName ||
-        profileMatch.exportName ||
-        profileMatch.data?.exportName;
-}
-
 export function normalizeMatchedProfileSource(profileData, profileSource) {
-  if (
-    profileSource &&
-    (profileSource === 'gaggimate' || profileSource === 'browser') &&
-    !profileData?.source
-  ) {
+  if (profileData && (profileSource === 'gaggimate' || profileSource === 'temp')) {
     return { ...profileData, source: profileSource };
   }
   return profileData;
@@ -132,17 +107,14 @@ export async function loadPreferredAutoMatchedProfile(shotWithMetadata, allProfi
   const preferredMatch = findPreferredProfileMatch(
     allProfiles,
     shotWithMetadata.profile,
-    shotWithMetadata.source,
     shotWithMetadata.profileId,
   );
 
   if (!preferredMatch) return null;
 
   const profileName = getProfileDisplayLabel(preferredMatch, '');
-  const profileId = getProfileLookupId(preferredMatch);
-  const fullProfile = preferredMatch.data
-    ? preferredMatch.data
-    : await libraryService.loadProfile(profileId, preferredMatch.source);
+  const profileId = preferredMatch.profileId || preferredMatch.id;
+  const fullProfile = await libraryService.loadProfile(profileId);
 
   if (!fullProfile) return null;
 
@@ -169,24 +141,23 @@ export function analyzeShot(shotData, profileData) {
   });
 }
 
-export function buildShotWithMetadata({ item, loadedShot, importMode, loadKey }) {
+export function buildShotWithMetadata({ item, loadedShot, loadKey }) {
   return {
     ...loadedShot,
-    source: loadedShot.source || item.source || importMode,
+    source: loadedShot.source || item.source || 'temp',
     storageKey: loadedShot.storageKey || item.storageKey || item.name || String(loadKey),
     name: loadedShot.name || item.name || item.storageKey || String(loadKey),
   };
 }
 
-export async function loadShotSelection({ item, importMode, signal }) {
+export async function loadShotSelection({ item, signal }) {
   const loadKey = getShotStorageKey(item);
   const loadedShot = hasLoadedShotPayload(item)
     ? item
-    : await libraryService.loadShot(loadKey, item.source, { signal });
+    : await libraryService.loadShot(loadKey, { signal });
   const shotWithMetadata = buildShotWithMetadata({
     item,
     loadedShot,
-    importMode,
     loadKey,
   });
 

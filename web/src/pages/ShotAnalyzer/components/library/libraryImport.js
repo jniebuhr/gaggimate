@@ -1,6 +1,5 @@
 /** Coordinates file-import side effects and summarizes outcomes for the library UI. */
 
-import { indexedDBService } from '../../services/IndexedDBService';
 import { notesService } from '../../services/NotesService';
 import { cleanName } from '../../utils/analyzerUtils';
 import { useCallback } from 'preact/hooks';
@@ -21,8 +20,7 @@ function mergeImportOutcome(target, source) {
     target.blockedSecondaryProfileImport || source.blockedSecondaryProfileImport;
 }
 
-async function buildImportedShot({ data, file, importMode }) {
-  const source = importMode === 'browser' ? 'browser' : 'temp';
+async function buildImportedShot({ data, file }) {
   const storageKey = file.name;
   let notesWithId = null;
   const importedNotes = data.notes;
@@ -35,9 +33,8 @@ async function buildImportedShot({ data, file, importMode }) {
     name: file.name,
     storageKey,
     data: shotData,
-    source,
+    source: 'temp',
   };
-  if (source === 'browser') await indexedDBService.saveShot(shot);
 
   if (importedNotes && typeof importedNotes === 'object') {
     notesWithId = {
@@ -45,7 +42,7 @@ async function buildImportedShot({ data, file, importMode }) {
       ...importedNotes,
       id: storageKey,
     };
-    await notesService.saveNotes(storageKey, source, notesWithId);
+    await notesService.saveNotes(storageKey, 'temp', notesWithId);
   }
 
   return notesWithId ? { ...shot, notes: notesWithId } : shot;
@@ -56,7 +53,6 @@ async function importShotFile({
   file,
   targetType,
   slot,
-  importMode,
   currentShot,
   compareMode,
   onCompareShotToggle,
@@ -68,7 +64,7 @@ async function importShotFile({
     return outcome;
   }
 
-  const importedShot = await buildImportedShot({ data, file, importMode });
+  const importedShot = await buildImportedShot({ data, file });
   if (slot === 'secondary' && currentShot) {
     await onCompareShotToggle?.(importedShot, true);
   } else {
@@ -87,7 +83,6 @@ async function importProfileFile({
   file,
   targetType,
   slot,
-  importMode,
   currentShot,
   secondaryShot,
   onCompareProfileLoad,
@@ -105,9 +100,8 @@ async function importProfileFile({
     ...profileData,
     data: profileData,
     fileName: file.name,
-    source: importMode === 'browser' ? 'browser' : 'temp',
+    source: 'temp',
   };
-  if (importMode === 'browser') await indexedDBService.saveProfile(profile);
 
   if (slot !== 'secondary') {
     onProfileLoad(profileData, profileName, profile.source);
@@ -154,7 +148,6 @@ function showImportOutcomeAlerts({ outcome, targetType }) {
 export function useLibraryPanelImportHandler({
   currentShot,
   secondaryShot,
-  importMode,
   compareMode,
   onShotSelect,
   onProfileLoad,
@@ -172,14 +165,13 @@ export function useLibraryPanelImportHandler({
 
         try {
           for (const file of Array.from(files)) {
-            const text = await file.text();
+            const text = await file.text(); // NOSONAR -- Read in order so an invalid file stops later imports.
             const data = JSON.parse(text);
-            const fileOutcome = await importAnalyzerFile({
+            const importOptions = {
               data,
               file,
               targetType,
               slot,
-              importMode,
               currentShot,
               secondaryShot,
               compareMode,
@@ -187,7 +179,8 @@ export function useLibraryPanelImportHandler({
               onShotSelect,
               onCompareProfileLoad,
               onProfileLoad,
-            });
+            };
+            const fileOutcome = await importAnalyzerFile(importOptions); // NOSONAR -- Apply shared analyzer state changes in file order.
             mergeImportOutcome(outcome, fileOutcome);
           }
 
@@ -197,14 +190,13 @@ export function useLibraryPanelImportHandler({
           alert(t`Import failed. Please check the file format.`);
         } finally {
           setImporting(false);
-          refreshLibraries();
+          void refreshLibraries();
         }
       }, 50);
     },
     [
       compareMode,
       currentShot,
-      importMode,
       onCompareProfileLoad,
       onCompareShotToggle,
       onProfileLoad,

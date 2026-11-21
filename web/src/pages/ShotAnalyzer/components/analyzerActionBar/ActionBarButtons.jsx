@@ -5,11 +5,8 @@ import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight
 import { faChartArea } from '@fortawesome/free-solid-svg-icons/faChartArea';
 import { faChartSimple } from '@fortawesome/free-solid-svg-icons/faChartSimple';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons/faCircleNotch';
-import { faEye } from '@fortawesome/free-solid-svg-icons/faEye';
 import { faEquals } from '@fortawesome/free-solid-svg-icons/faEquals';
 import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
-import { faLaptopFile } from '@fortawesome/free-solid-svg-icons/faLaptopFile';
-import { analyzerUiColors } from '../../utils/analyzerUtils';
 
 export function ActionBarNavigationButtons({
   navButtonClasses,
@@ -115,83 +112,27 @@ export function ActionBarStatisticsAction({
   );
 }
 
-function ActionBarImportModeToggle({
-  actionButtonClasses,
-  importMode,
-  modeButtonRef,
-  handleModeToggle,
-}) {
-  const { t } = useLingui();
-  const isBrowserImportMode = importMode === 'browser';
-
-  return (
-    <button
-      ref={modeButtonRef}
-      type='button'
-      className={`${actionButtonClasses} ${isBrowserImportMode ? 'opacity-100' : ''}`}
-      style={isBrowserImportMode ? { color: analyzerUiColors.sourceBadgeWebText } : undefined}
-      onClick={handleModeToggle}
-      title={
-        isBrowserImportMode
-          ? t`Save to Browser. Click to switch imports to View temporarily.`
-          : t`View temporarily. Click to switch imports to Save to Browser.`
-      }
-      aria-label={
-        isBrowserImportMode
-          ? t`Switch import mode to View temporarily`
-          : t`Switch import mode to Save to Browser`
-      }
-    >
-      <FontAwesomeIcon icon={isBrowserImportMode ? faLaptopFile : faEye} className='text-sm' />
-      <span>
-        {isBrowserImportMode ? (
-          <Trans context='import mode'>Save</Trans>
-        ) : (
-          <Trans context='import mode'>View</Trans>
-        )}
-      </span>
-    </button>
-  );
-}
-
-export function ActionBarImportActions({
-  actionButtonClasses,
-  handleImportClick,
-  handleModeToggle,
-  importMode,
-  isImporting,
-  modeButtonRef,
-  showImportModeToggle,
-}) {
+export function ActionBarImportActions({ actionButtonClasses, handleImportClick, isImporting }) {
   const { t } = useLingui();
   return (
-    <div className='hidden shrink-0 items-center gap-1 sm:ml-auto sm:flex'>
+    <div className='ml-auto flex shrink-0 items-center'>
       <button
         type='button'
-        className={actionButtonClasses}
+        className={`${actionButtonClasses} max-sm:px-1`}
         onClick={handleImportClick}
         disabled={isImporting}
-        title={t`Import shot or profile`}
-        aria-label={isImporting ? t`Importing shot or profile` : t`Import shot or profile`}
+        title={t`Open shot or profile`}
+        aria-label={isImporting ? t`Opening shot or profile` : t`Open shot or profile`}
       >
         <FontAwesomeIcon
           icon={isImporting ? faCircleNotch : faFileImport}
           spin={isImporting}
           className='text-sm'
         />
-        <span>
-          <Trans>Import</Trans>
+        <span className='hidden sm:inline'>
+          <Trans>Open</Trans>
         </span>
       </button>
-
-      {showImportModeToggle ? (
-        <ActionBarImportModeToggle
-          actionButtonClasses={actionButtonClasses}
-          importMode={importMode}
-          modeButtonRef={modeButtonRef}
-          handleModeToggle={handleModeToggle}
-        />
-      ) : null}
     </div>
   );
 }

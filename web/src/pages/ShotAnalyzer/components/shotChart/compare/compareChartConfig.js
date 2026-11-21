@@ -8,6 +8,7 @@ import {
   getAxisUnitReservedPadding,
   formatResponsiveXAxisTick,
   formatUniqueAxisTick,
+  formatTemperatureAxisTick,
   getPercentileValue,
   getSpikeResistantSeriesMax,
   axisUnitLabelPlugin,
@@ -289,6 +290,7 @@ export function getCompareMainChartConfig({
 }
 
 function getCompareDetailChartConfig({
+  chartId,
   axisRange,
   axisUnitLabel,
   compareModels,
@@ -357,7 +359,7 @@ function getCompareDetailChartConfig({
           ticks: {
             font: { size: 10 },
             color: neutralAxisTickColor,
-            callback: formatUniqueAxisTick,
+            callback: chartId === 'temperature' ? formatTemperatureAxisTick : formatUniqueAxisTick,
           },
           grid: {
             color: 'rgba(200, 200, 200, 0.1)',
@@ -409,6 +411,7 @@ export function buildCompareDetailCharts({
     return {
       ...chart,
       config: getCompareDetailChartConfig({
+        chartId: chart.id,
         axisRange,
         axisUnitLabel,
         compareModels,

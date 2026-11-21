@@ -15,10 +15,6 @@ msgstr "-- 非対応 --"
 msgid "(exact)"
 msgstr "（完全一致）"
 
-#: src/pages/ShotHistory/index.jsx
-msgid "(Page {currentPage} of {totalPages})"
-msgstr "（{currentPage} / {totalPages} ページ）"
-
 #: src/pages/Statistics/components/StatisticsSearchHelp.jsx
 msgid "(same field = OR)"
 msgstr "（同じフィールド = OR）"
@@ -80,10 +76,6 @@ msgstr "{diffWeeks, plural, other {# 週間前}}"
 msgid "{diffYears, plural, one {# year ago} other {# years ago}}"
 msgstr "{diffYears, plural, other {# 年前}}"
 
-#: src/pages/ShotHistory/index.jsx
-msgid "{historyCount, plural, one {This will permanently delete the only shot on the device. This cannot be undone.} other {This will permanently delete all # shots from the device. This cannot be undone.}}"
-msgstr "{historyCount, plural, other {デバイス上のショット # 件をすべて完全に削除します。この操作は元に戻せません。}}"
-
 #: src/app/ConnectionGate.jsx
 msgid "{host} isn't answering. Make sure the machine is on and your phone is on the same Wi-Fi network."
 msgstr "{host} が応答しません。マシンの電源が入っていて、スマートフォンが同じ Wi-Fi ネットワークに接続されていることを確認してください。"
@@ -119,18 +111,6 @@ msgstr "{scaleName} の接続が切れました"
 #: src/pages/Settings/PatchNotes.jsx
 msgid "{total, plural, one {# commit} other {# commits}}"
 msgstr "{total, plural, other {# 件のコミット}}"
-
-#: src/pages/ShotHistory/index.jsx
-msgid "{totalFilteredItems, plural, one {Delete # shot} other {Delete # shots}}"
-msgstr "{totalFilteredItems, plural, other {# 件のショットを削除}}"
-
-#: src/pages/ShotHistory/index.jsx
-msgid "{totalFilteredItems, plural, one {This will permanently delete the # shot matching your current search and filters. This cannot be undone.} other {This will permanently delete the # shots matching your current search and filters (across all pages). This cannot be undone.}}"
-msgstr "{totalFilteredItems, plural, other {現在の検索とフィルターに一致するショット # 件を完全に削除します(すべてのページが対象)。この操作は元に戻せません。}}"
-
-#: src/pages/ShotHistory/index.jsx
-msgid "{totalFilteredItems} of {historyCount} shots"
-msgstr "{historyCount} 件中 {totalFilteredItems} 件のショット"
 
 #: src/pages/Settings/StickyFormFooter.jsx
 msgid "* Restart required for Wi-Fi, Timezone, or Plugin changes."
@@ -295,6 +275,10 @@ msgstr "Alba 設定"
 msgid "Align to grid"
 msgstr "グリッドに揃える"
 
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "All"
+msgstr "すべて"
+
 #: src/pages/ShotAnalyzer/components/shotChart/single/SingleShotMetricPreview.jsx
 msgctxt "all metrics page"
 msgid "All"
@@ -304,16 +288,6 @@ msgstr "すべて"
 msgctxt "statistics mode"
 msgid "All"
 msgstr "すべて"
-
-#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
-msgctxt "library source filter"
-msgid "ALL"
-msgstr "ALL"
-
-#: src/pages/Statistics/components/toolbar/constants.js
-msgctxt "shot source: all sources"
-msgid "ALL"
-msgstr "ALL"
 
 #: src/pages/DashboardSettings/index.jsx
 msgid "All available metrics are visible."
@@ -330,10 +304,6 @@ msgstr "すべてのメトリクス"
 #: src/pages/Settings/PatchNotes.jsx
 msgid "All nightly changes"
 msgstr "Nightly のすべての変更"
-
-#: src/pages/ShotHistory/index.jsx
-msgid "All Shots"
-msgstr "すべてのショット"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Alt Relay / SSR2 Function"
@@ -391,11 +361,6 @@ msgstr "ポンプアシストを停止する圧力（bar）。スチームが出
 #: src/services/VisualizerService.js
 msgid "Authentication failed - please check your username and password"
 msgstr "認証に失敗しました。ユーザー名とパスワードを確認してください"
-
-#: src/pages/Statistics/components/toolbar/constants.js
-msgctxt "date basis"
-msgid "Auto"
-msgstr "自動"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Auto (Bluetooth when connected)"
@@ -577,12 +542,7 @@ msgstr "バックフラッシュの時期です"
 msgid "Balance / Taste"
 msgstr "バランス / 味"
 
-#: src/pages/ShotHistory/ShotNotesCard.jsx
-msgid "Balance/Taste"
-msgstr "バランス/味"
-
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
-#: src/pages/ShotHistory/ShotNotesCard.jsx
 msgid "Balanced"
 msgstr "バランス良好"
 
@@ -594,16 +554,11 @@ msgstr "基本メトリクス"
 msgid "Basics"
 msgstr "基本"
 
-#: src/pages/ShotHistory/ShotNotesCard.jsx
-msgid "Bean Type"
-msgstr "豆の種類"
-
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
 msgid "Beans"
 msgstr "豆"
 
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
-#: src/pages/ShotHistory/ShotNotesCard.jsx
 msgid "Bitter"
 msgstr "苦味"
 
@@ -692,12 +647,10 @@ msgid "Brew Status Display"
 msgstr "抽出ステータス表示"
 
 #: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
-#: src/pages/ShotHistory/HistoryCard.jsx
 msgid "Brewed by Time"
 msgstr "時間で抽出"
 
 #: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
-#: src/pages/ShotHistory/HistoryCard.jsx
 msgid "Brewed by Weight"
 msgstr "重量で抽出"
 
@@ -708,6 +661,10 @@ msgstr "抽出フィルター Alpha"
 #: src/app/notifications.js
 msgid "Brewing…"
 msgstr "抽出中…"
+
+#: src/components/Navigation.jsx
+msgid "Brews"
+msgstr "抽出"
 
 #: src/pages/ShotAnalyzer/utils/columns.js
 msgid "BT Scale Connected"
@@ -729,10 +686,6 @@ msgstr "加圧中…"
 #: src/pages/ProfileList/index.jsx
 msgid "Built-in profile, can be edited but not deleted"
 msgstr "組み込みプロファイル（編集可、削除不可）"
-
-#: src/pages/ShotAnalyzer/components/EmptyState.jsx
-msgid "Bulk upload and download are supported."
-msgstr "一括アップロードとダウンロードに対応しています。"
 
 #: src/pages/Statistics/components/toolbar/constants.js
 msgid "By Profile"
@@ -772,16 +725,10 @@ msgstr "{name} に接続できません"
 #: src/components/PumpFlowCalibration/Footer.jsx
 #: src/components/VisualizerUploadModal.jsx
 #: src/pages/SetupWizard/MachineStep.jsx
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 #: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
-#: src/pages/ShotHistory/ConfirmDeleteModal.jsx
-#: src/pages/ShotHistory/index.jsx
-#: src/pages/ShotHistory/ShotNotesCard.jsx
 msgid "Cancel"
 msgstr "キャンセル"
-
-#: src/pages/ShotHistory/ConfirmDeleteModal.jsx
-msgid "Cancel deletion"
-msgstr "削除を中止"
 
 #: src/app/MachineSetup.jsx
 msgid "Cancel renaming"
@@ -858,19 +805,17 @@ msgid "Click to confirm"
 msgstr "クリックして確定"
 
 #: src/pages/ProfileList/index.jsx
-#: src/pages/ShotHistory/HistoryCard.jsx
 msgid "Click to confirm delete"
 msgstr "クリックして削除を確定"
 
 #: src/pages/ShotAnalyzer/components/library/StatusBar.jsx
-msgid "Click to open the library. Use Import below or drop files here to import."
-msgstr "クリックしてライブラリを開きます。下のインポートを使うか、ここにファイルをドロップしてインポートします。"
+msgid "Click to open the library. Use Open below or drop files here."
+msgstr "クリックしてライブラリを開きます。下の「開く」を使うか、ここにファイルをドロップしてください。"
 
 #: src/app/MachineSetup.jsx
 #: src/components/VisualizerUploadModal.jsx
 #: src/pages/Home/BrewConfirmModal.jsx
 #: src/pages/Settings/PatchNotes.jsx
-#: src/pages/ShotHistory/ConfirmDeleteModal.jsx
 msgid "Close"
 msgstr "閉じる"
 
@@ -923,10 +868,6 @@ msgstr "列設定を折りたたむ"
 #: src/components/Navigation.jsx
 msgid "Collapse navigation"
 msgstr "ナビゲーションを折りたたむ"
-
-#: src/pages/ShotHistory/HistoryCard.jsx
-msgid "Collapse shot details"
-msgstr "ショットの詳細を折りたたむ"
 
 #: src/pages/Statistics/components/toolbar/subcomponents.jsx
 msgid "Collapse statistics toolbar"
@@ -997,7 +938,6 @@ msgstr "設定済みのスケール遅延 (ms)"
 
 #: src/components/ConfirmButton.jsx
 #: src/pages/ProfileList/index.jsx
-#: src/pages/ShotHistory/HistoryCard.jsx
 msgid "Confirm"
 msgstr "確定"
 
@@ -1008,10 +948,6 @@ msgstr "削除の確認"
 #: src/pages/ProfileList/index.jsx
 msgid "Confirm deletion of {label} profile"
 msgstr "{label} プロファイルの削除を確認"
-
-#: src/pages/ShotHistory/HistoryCard.jsx
-msgid "Confirm deletion of shot"
-msgstr "ショットの削除を確認"
 
 #: src/app/MachineSetup.jsx
 #: src/pages/Settings/tabs/BluetoothTab.jsx
@@ -1095,26 +1031,13 @@ msgstr "収束ゲイン"
 msgid "Convert to Pro"
 msgstr "Pro に変換"
 
+#: src/pages/ShotAnalyzer/components/library/useShotListActions.js
+msgid "Could not delete {failed} of {count} shots."
+msgstr "{count} 件中 {failed} 件のショットを削除できませんでした。"
+
 #: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
 msgid "Could not delete calibration profile: {message}"
 msgstr "キャリブレーションプロファイルを削除できませんでした: {message}"
-
-#. placeholder {0}: resp.error
-#: src/pages/ShotHistory/index.jsx
-msgid "Could not delete history: {0}"
-msgstr "履歴を削除できませんでした: {0}"
-
-#: src/pages/ShotHistory/index.jsx
-msgid "Could not delete history. Please try again."
-msgstr "履歴を削除できませんでした。もう一度お試しください。"
-
-#: src/pages/ShotHistory/index.jsx
-msgid "Could not delete shot {id}. Please try again."
-msgstr "ショット {id} を削除できませんでした。もう一度お試しください。"
-
-#: src/pages/ShotHistory/index.jsx
-msgid "Could not export any shots. Please try again."
-msgstr "ショットをエクスポートできませんでした。もう一度お試しください。"
 
 #: src/pages/ProfileEdit/ProfileImageUpload.jsx
 msgid "Could not generate an image."
@@ -1177,24 +1100,14 @@ msgid "Current Flow"
 msgstr "現在の流量"
 
 #: src/components/OverviewChart.jsx
-#: src/pages/ShotHistory/HistoryChart.jsx
 msgid "Current Pressure"
 msgstr "現在の圧力"
-
-#: src/pages/ShotHistory/HistoryChart.jsx
-msgid "Current Puck Flow"
-msgstr "現在のパック流量"
-
-#: src/pages/ShotHistory/HistoryChart.jsx
-msgid "Current Pump Flow"
-msgstr "現在のポンプ流量"
 
 #: src/pages/Statistics/components/ActivityHeatmap.jsx
 msgid "Current streak:"
 msgstr "現在の連続記録:"
 
 #: src/components/OverviewChart.jsx
-#: src/pages/ShotHistory/HistoryChart.jsx
 msgid "Current Temperature"
 msgstr "現在の温度"
 
@@ -1271,7 +1184,6 @@ msgstr "ダッシュボード表示"
 msgid "Data validation failed - the shot data format may be incorrect"
 msgstr "データの検証に失敗しました。ショットデータの形式が正しくない可能性があります"
 
-#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 #: src/pages/Statistics/components/StatisticsSearchHelp.jsx
 msgid "Date"
 msgstr "日付"
@@ -1283,14 +1195,6 @@ msgstr "日付（新しい順）"
 #: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 msgid "Date (Old)"
 msgstr "日付（古い順）"
-
-#: src/pages/Statistics/components/StatisticsSearchHelp.jsx
-msgid "Date basis (<0>Shot / Auto / Upload</0>) appears only when missing shot timestamps are detected."
-msgstr "日付基準（<0>ショット / 自動 / アップロード</0>）は、ショットのタイムスタンプの欠落が検出された場合にのみ表示されます。"
-
-#: src/pages/Statistics/components/toolbar/subcomponents.jsx
-msgid "Date Basis:"
-msgstr "日付基準:"
 
 #: src/pages/Statistics/components/toolbar/helpers.js
 msgid "Date Range"
@@ -1355,18 +1259,14 @@ msgid "degrees Celsius"
 msgstr "摂氏"
 
 #: src/pages/ProfileList/index.jsx
+#: src/pages/ShotAnalyzer/components/library/LibraryPanel.jsx
 #: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
-#: src/pages/ShotHistory/HistoryCard.jsx
 msgid "Delete"
 msgstr "削除"
 
 #: src/pages/ProfileList/index.jsx
 msgid "Delete {label} profile"
 msgstr "{label} プロファイルを削除"
-
-#: src/pages/ShotHistory/index.jsx
-msgid "Delete all"
-msgstr "すべて削除"
 
 #: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 msgid "Delete All"
@@ -1376,29 +1276,9 @@ msgstr "すべて削除"
 msgid "Delete all profiles"
 msgstr "すべてのプロファイルを削除"
 
-#: src/pages/ShotHistory/index.jsx
-msgid "Delete all shots"
-msgstr "すべてのショットを削除"
-
-#: src/pages/ShotHistory/index.jsx
-msgid "Delete all shots?"
-msgstr "すべてのショットを削除しますか?"
-
 #: src/pages/ShotAnalyzer/components/library/LibraryPanel.jsx
 msgid "Delete failed: {message}"
 msgstr "削除に失敗しました: {message}"
-
-#: src/pages/ShotHistory/index.jsx
-msgid "Delete filtered shots"
-msgstr "絞り込んだショットを削除"
-
-#: src/pages/ShotHistory/index.jsx
-msgid "Delete filtered shots ({totalFilteredItems})"
-msgstr "絞り込んだショットを削除 ({totalFilteredItems})"
-
-#: src/pages/ShotHistory/index.jsx
-msgid "Delete filtered shots?"
-msgstr "絞り込んだショットを削除しますか?"
 
 #: src/components/MachineProfileControl.jsx
 msgid "Delete imported profile"
@@ -1416,10 +1296,6 @@ msgstr "プリセットを削除"
 msgid "Delete profile"
 msgstr "プロファイルを削除"
 
-#: src/pages/ShotHistory/HistoryCard.jsx
-msgid "Delete shot"
-msgstr "ショットを削除"
-
 #: src/components/MachineProfileControl.jsx
 msgid "Delete this imported profile?"
 msgstr "このインポートしたプロファイルを削除しますか？"
@@ -1436,25 +1312,13 @@ msgstr "このプリセットを削除しますか？"
 msgid "Delete this schedule"
 msgstr "このスケジュールを削除"
 
-#. placeholder {0}: targets.length
-#. placeholder {1}: failedIds.join(', ')
-#: src/pages/ShotHistory/index.jsx
-msgid "Deleted {done} of {0} shots. Failed: {1}"
-msgstr "{0} 件中 {done} 件のショットを削除しました。失敗: {1}"
-
 #: src/pages/Settings/PluginCard.jsx
 msgid "Deleted profile"
 msgstr "プロファイルを削除しました"
 
-#. placeholder {0}: progress.current
-#. placeholder {1}: progress.total
-#: src/pages/ShotHistory/ConfirmDeleteModal.jsx
-msgid "Deleting shot {0} of {1}..."
-msgstr "ショットを削除中 ({0}/{1})..."
-
-#: src/pages/ShotHistory/ConfirmDeleteModal.jsx
-msgid "Deleting…"
-msgstr "削除中…"
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Deleting shots..."
+msgstr "ショットを削除中..."
 
 #: src/pages/Settings/tabs/CleaningSection.jsx
 msgid "Descaling"
@@ -1537,10 +1401,6 @@ msgstr "センサーから満水ラインまでの距離"
 msgid "Do you really want to export all {count} filtered profiles? (Profiles are downloaded individually, one after the other.)"
 msgstr "絞り込まれた {count} 件のプロファイルをすべてエクスポートしますか？（プロファイルは 1 件ずつ順番にダウンロードされます。）"
 
-#: src/pages/ShotAnalyzer/components/library/LibraryDropdown.jsx
-msgid "Do you really want to export all {count} filtered shots? (Shots are downloaded individually, one after the other.)"
-msgstr "絞り込まれた {count} 件のショットをすべてエクスポートしますか？（ショットは 1 件ずつ順番にダウンロードされます。）"
-
 #: src/components/PumpFlowCalibration/Footer.jsx
 #: src/pages/SetupWizard/index.jsx
 msgid "Done"
@@ -1554,10 +1414,6 @@ msgstr "ドーズ"
 msgid "Dose In"
 msgstr "粉量"
 
-#: src/pages/ShotHistory/ShotNotesCard.jsx
-msgid "Dose In (g)"
-msgstr "粉量 (g)"
-
 #: src/pages/ProfileEdit/ProfileMainInformation.jsx
 msgid "Dose in g"
 msgstr "粉量 (g)"
@@ -1565,10 +1421,6 @@ msgstr "粉量 (g)"
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
 msgid "Dose Out"
 msgstr "抽出量"
-
-#: src/pages/ShotHistory/ShotNotesCard.jsx
-msgid "Dose Out (g)"
-msgstr "抽出量 (g)"
 
 #: src/pages/Settings/tabs/SystemTab.jsx
 msgid "Download Support Data"
@@ -1581,10 +1433,6 @@ msgstr "エクスポートをダウンロード中..."
 #: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
 msgid "Downloading shot #{shotId}"
 msgstr "ショット #{shotId} をダウンロード中"
-
-#: src/pages/ShotAnalyzer/components/EmptyState.jsx
-msgid "Drag and drop files onto the status bar or use the import icons in the shot and profile badges."
-msgstr "ステータスバーにファイルをドラッグ＆ドロップするか、ショットとプロファイルのバッジにあるインポートアイコンを使用してください。"
 
 #: src/pages/ProfileList/index.jsx
 msgid "Drag disabled on search result"
@@ -1656,14 +1504,6 @@ msgstr "ショット中にバルブを調整し、圧力を 1 bar、次に 9 bar
 msgid "E.g. water tank low, scale battery low."
 msgstr "例: 水タンクの残量低下、スケールのバッテリー残量低下。"
 
-#: src/pages/ShotHistory/ShotNotesCard.jsx
-msgid "e.g., 2.5, Medium-Fine"
-msgstr "例: 2.5、中細挽き"
-
-#: src/pages/ShotHistory/ShotNotesCard.jsx
-msgid "e.g., Single Origin, Blend"
-msgstr "例: シングルオリジン、ブレンド"
-
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 msgid "Ease In"
 msgstr "イーズイン"
@@ -1677,7 +1517,6 @@ msgid "Ease Out"
 msgstr "イーズアウト"
 
 #: src/pages/ProfileList/index.jsx
-#: src/pages/ShotHistory/ShotNotesCard.jsx
 msgid "Edit"
 msgstr "編集"
 
@@ -1861,10 +1700,6 @@ msgstr "列設定を展開"
 msgid "Expand navigation"
 msgstr "ナビゲーションを展開"
 
-#: src/pages/ShotHistory/HistoryCard.jsx
-msgid "Expand shot details"
-msgstr "ショットの詳細を展開"
-
 #: src/pages/Statistics/components/toolbar/subcomponents.jsx
 msgid "Expand statistics toolbar"
 msgstr "統計ツールバーを展開"
@@ -1874,9 +1709,9 @@ msgid "Explain WebM export"
 msgstr "WebM エクスポートについて"
 
 #: src/pages/ProfileList/index.jsx
+#: src/pages/ShotAnalyzer/components/library/LibraryPanel.jsx
 #: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
 #: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
-#: src/pages/ShotHistory/HistoryCard.jsx
 msgid "Export"
 msgstr "エクスポート"
 
@@ -1887,6 +1722,10 @@ msgstr "{label} プロファイルをエクスポート"
 #: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 msgid "Export All"
 msgstr "すべてエクスポート"
+
+#: src/pages/ShotAnalyzer/components/library/useShotListActions.js
+msgid "Export all {count} filtered shots to one JSON file?"
+msgstr "絞り込まれた {count} 件のショットを1つのJSONファイルにエクスポートしますか？"
 
 #: src/pages/ProfileList/index.jsx
 msgid "Export all profiles"
@@ -1909,6 +1748,7 @@ msgid "Export current shot"
 msgstr "現在のショットをエクスポート"
 
 #: src/pages/ShotAnalyzer/components/library/LibraryPanel.jsx
+#: src/pages/ShotAnalyzer/components/library/useShotListActions.js
 msgid "Export failed: {message}"
 msgstr "エクスポートに失敗しました: {message}"
 
@@ -1916,8 +1756,8 @@ msgstr "エクスポートに失敗しました: {message}"
 msgid "Export File"
 msgstr "ファイルをエクスポート"
 
-#: src/pages/ShotHistory/index.jsx
-msgid "Export filtered shots"
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Export Filtered Shots"
 msgstr "絞り込んだショットをエクスポート"
 
 #: src/pages/ProfileList/index.jsx
@@ -1936,21 +1776,14 @@ msgstr "設定をエクスポート"
 msgid "Export Settings"
 msgstr "設定をエクスポート"
 
-#: src/pages/ShotHistory/HistoryCard.jsx
-msgid "Export shot data"
-msgstr "ショットデータをエクスポート"
+#. placeholder {0}: completed.length
+#: src/pages/ShotAnalyzer/components/library/useShotListActions.js
+msgid "Exported {0} of {count} shots ({failed} failed)."
+msgstr "{count} 件中 {0} 件のショットをエクスポートしました（{failed} 件失敗）。"
 
-#. placeholder {0}: exported.length
-#. placeholder {1}: targets.length
-#: src/pages/ShotHistory/index.jsx
-msgid "Exported {0} of {1} shots ({failed} failed)."
-msgstr "{1} 件中 {0} 件のショットをエクスポートしました(失敗 {failed} 件)。"
-
-#. placeholder {0}: exportProgress.current
-#. placeholder {1}: exportProgress.total
-#: src/pages/ShotHistory/index.jsx
-msgid "Exporting shot {0} of {1}..."
-msgstr "ショットをエクスポート中 ({0}/{1})..."
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Exporting shots..."
+msgstr "ショットをエクスポート中..."
 
 #: src/pages/ShotAnalyzer/components/analysisTable/analysisTablePhases.js
 #: src/pages/ShotAnalyzer/utils/columns.js
@@ -2013,8 +1846,8 @@ msgid "Fill the water tank and close the steam knob."
 msgstr "水タンクに水を入れ、スチームノブを閉じてください。"
 
 #: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
-msgid "Filter library source"
-msgstr "ライブラリのソースで絞り込む"
+msgid "Filter by rating"
+msgstr "評価で絞り込み"
 
 #: src/pages/Home/utils.js
 msgctxt "process action"
@@ -2163,10 +1996,6 @@ msgstr "フル"
 msgid "Further Resources"
 msgstr "その他のリソース"
 
-#: src/pages/ShotAnalyzer/components/EmptyState.jsx
-msgid "GaggiMate (GM)"
-msgstr "GaggiMate (GM)"
-
 #: src/pages/SetupWizard/PluginsStep.jsx
 msgid "GaggiMate can connect to your smart home, grinder and more. Enable what you need now; you can always change this later in the settings."
 msgstr "GaggiMate はスマートホームやグラインダーなどと連携できます。必要なものを今すぐ有効にしてください。あとから設定でいつでも変更できます。"
@@ -2273,10 +2102,6 @@ msgstr "グラインド"
 msgid "Grind once with GbS to see which recipe number your grinder reports."
 msgstr "GbS で一度挽いて、グラインダーが報告するレシピ番号を確認してください。"
 
-#: src/pages/ShotHistory/ShotNotesCard.jsx
-msgid "Grind Setting"
-msgstr "挽き目"
-
 #: src/pages/Home/cards/ActionCard.jsx
 msgid "Grind target"
 msgstr "グラインド目標"
@@ -2379,15 +2204,11 @@ msgstr "スケール遅延大"
 msgid "HIGH SCALE DELAY"
 msgstr "スケール遅延大"
 
-#: src/pages/ShotHistory/index.jsx
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 msgid "Highest ID First"
 msgstr "ID の大きい順"
 
-#: src/pages/ShotHistory/index.jsx
-msgid "Highest Rated"
-msgstr "評価の高い順"
-
-#: src/pages/ShotHistory/index.jsx
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 msgid "Highest Volume"
 msgstr "量の多い順"
 
@@ -2462,15 +2283,6 @@ msgstr "下のパネル一覧にフレキシブルスペースがある場合は
 msgid "Image"
 msgstr "画像"
 
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/MobileStatusActionsMenu.jsx
-msgid "Import"
-msgstr "インポート"
-
-#: src/pages/ShotAnalyzer/components/EmptyState.jsx
-msgid "Import a shot file or select one from your library to start analyzing."
-msgstr "ショットファイルをインポートするか、ライブラリから選択して分析を開始してください。"
-
 #: src/components/MachineProfileControl.jsx
 msgid "Import configuration"
 msgstr "設定をインポート"
@@ -2491,23 +2303,11 @@ msgstr "設定をインポート"
 msgid "Import Settings"
 msgstr "設定をインポート"
 
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
-msgid "Import shot or profile"
-msgstr "ショットまたはプロファイルをインポート"
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/MobileStatusActionsMenu.jsx
-msgid "Importing"
-msgstr "インポート中"
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
-msgid "Importing shot or profile"
-msgstr "ショットまたはプロファイルをインポート中"
-
 #: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
 msgid "Include legend"
 msgstr "凡例を含める"
 
-#: src/pages/ShotHistory/HistoryCard.jsx
+#: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
 msgid "INCOMPLETE"
 msgstr "未完了"
 
@@ -2678,14 +2478,6 @@ msgstr "ロードセル 1 のスケール係数"
 msgid "Load Cell 2 Scale Factor"
 msgstr "ロードセル 2 のスケール係数"
 
-#: src/pages/ShotHistory/HistoryCard.jsx
-msgid "Load first"
-msgstr "先に読み込んでください"
-
-#: src/pages/ShotHistory/HistoryCard.jsx
-msgid "Load shot data first by expanding the shot"
-msgstr "ショットを展開して先にショットデータを読み込んでください"
-
 #: src/pages/Settings/index.jsx
 msgid "Loaded {importCount, plural, one {# setting} other {# settings}} from {importName}. All other settings are kept. Save to apply."
 msgstr "{importName} から {importCount, plural, other {# 件の設定}}を読み込みました。その他の設定は保持されます。保存すると適用されます。"
@@ -2706,21 +2498,9 @@ msgstr "プラグイン設定を読み込み中…"
 msgid "Loading profiles"
 msgstr "プロファイルを読み込み中"
 
-#: src/pages/ShotHistory/HistoryCard.jsx
-msgid "Loading shot data..."
-msgstr "ショットデータを読み込み中..."
-
-#: src/pages/ShotAnalyzer/components/EmptyState.jsx
-msgid "Local Browser Storage (WEB)"
-msgstr "ローカルブラウザーストレージ (WEB)"
-
 #: src/pages/Statistics/components/StatisticsSearchHelp.jsx
 msgid "Local browser time is used."
 msgstr "ローカルブラウザーの時刻を使用します。"
-
-#: src/pages/ShotHistory/index.jsx
-msgid "Longest Duration"
-msgstr "時間の長い順"
 
 #: src/pages/Statistics/components/ActivityHeatmap.jsx
 msgid "Longest streak:"
@@ -2735,15 +2515,11 @@ msgstr "マシンを検索中… 表示されない場合は、アドレスで�
 msgid "Low"
 msgstr "低"
 
-#: src/pages/ShotHistory/index.jsx
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 msgid "Lowest ID first"
 msgstr "ID の小さい順"
 
-#: src/pages/ShotHistory/index.jsx
-msgid "Lowest Rated"
-msgstr "評価の低い順"
-
-#: src/pages/ShotHistory/index.jsx
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 msgid "Lowest Volume"
 msgstr "量の少ない順"
 
@@ -2992,7 +2768,11 @@ msgctxt "time bucket"
 msgid "Month"
 msgstr "月"
 
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/MobileStatusActionsMenu.jsx
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/AnalyzerActionBar.jsx
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "More"
+msgstr "その他"
+
 #: src/pages/ShotAnalyzer/components/library/LibraryActionsMenu.jsx
 msgid "More actions"
 msgstr "その他の操作"
@@ -3038,6 +2818,7 @@ msgid "MQTT User"
 msgstr "MQTT ユーザー"
 
 #: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/AnalyzerActionBar.jsx
 msgid "Multi-Compare"
 msgstr "複数比較"
 
@@ -3052,10 +2833,6 @@ msgstr "満水ラインまでの距離より大きい値にしてください。
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Must match the physical RATE-jumper configuration on the HX711 board. This setting does not switch the RATE pin."
 msgstr "HX711 基板の RATE ジャンパーの物理的な設定と一致させる必要があります。この設定で RATE ピンが切り替わるわけではありません。"
-
-#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
-msgid "Name"
-msgstr "名前"
 
 #: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 msgid "Name (A-Z)"
@@ -3110,13 +2887,8 @@ msgstr "NEW"
 msgid "New shot did not appear in history — was it cancelled?"
 msgstr "新しいショットが履歴に表示されませんでした。キャンセルされましたか？"
 
-#: src/pages/ShotHistory/index.jsx
-msgid "Newest First"
-msgstr "新しい順"
-
 #: src/pages/ProfileEdit/ExtendedProfileForm.jsx
 #: src/pages/SetupWizard/index.jsx
-#: src/pages/ShotHistory/index.jsx
 msgid "Next"
 msgstr "次へ"
 
@@ -3168,10 +2940,6 @@ msgstr "追加できる種類はもうありません"
 msgid "No new commits since the installed version"
 msgstr "インストール済みのバージョン以降、新しいコミットはありません"
 
-#: src/pages/ShotHistory/ShotNotesCard.jsx
-msgid "No notes added"
-msgstr "メモはありません"
-
 #: src/app/MachineSetup.jsx
 msgid "No other machines found."
 msgstr "他のマシンが見つかりません。"
@@ -3213,23 +2981,18 @@ msgstr "分析に使用できるサンプルデータがありません。"
 msgid "No scales found"
 msgstr "スケールが見つかりません"
 
-#: src/pages/ShotAnalyzer/components/EmptyState.jsx
 #: src/pages/ShotAnalyzer/components/library/libraryDisplay.js
 #: src/pages/ShotAnalyzer/components/useShotNotesState.js
 msgid "No Shot Loaded"
 msgstr "ショットが読み込まれていません"
 
-#: src/pages/ShotHistory/index.jsx
-msgid "No shots available"
-msgstr "利用できるショットがありません"
-
 #: src/pages/Statistics/components/statisticsView/StatisticsView.jsx
 msgid "No shots found for the selected filters."
 msgstr "選択したフィルターに一致するショットが見つかりません。"
 
-#: src/pages/ShotHistory/index.jsx
-msgid "No shots match your search and filter criteria"
-msgstr "検索条件とフィルター条件に一致するショットがありません"
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "No shots or profiles match the current filters."
+msgstr "現在のフィルターに一致するショットまたはプロファイルはありません。"
 
 #: src/pages/Statistics/components/statisticsView/StatisticsView.jsx
 msgid "No Statistics Built Yet"
@@ -3242,10 +3005,6 @@ msgstr "リプレイのエクスポートに対応したビデオレコーダー
 #: src/pages/ShotAnalyzer/components/shotChart/controls/compareControls.jsx
 msgid "No Targets"
 msgstr "目標なし"
-
-#: src/pages/ShotHistory/HistoryCard.jsx
-msgid "No timestamp available"
-msgstr "タイムスタンプがありません"
 
 #: src/pages/Settings/tabs/CalibrationTab.jsx
 msgid "No valid gains were produced. Your existing PID settings have been preserved. Try increasing Test Duration or confirm the boiler was cold at start."
@@ -3289,7 +3048,7 @@ msgstr "見つかりません"
 msgid "Not in range. Switch it on to reconnect."
 msgstr "範囲外です。電源を入れると再接続します。"
 
-#: src/pages/ShotHistory/HistoryCard.jsx
+#: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
 msgid "Not rated"
 msgstr "未評価"
 
@@ -3299,7 +3058,6 @@ msgstr "記録なし"
 
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
 #: src/pages/ShotAnalyzer/shotAnalyzer/ActiveAnalysisView.jsx
-#: src/pages/ShotHistory/ShotNotesCard.jsx
 msgid "Notes"
 msgstr "メモ"
 
@@ -3342,10 +3100,6 @@ msgstr "OK"
 msgid "Old firmware"
 msgstr "古いファームウェア"
 
-#: src/pages/ShotHistory/index.jsx
-msgid "Oldest First"
-msgstr "古い順"
-
 #: src/pages/Settings/PluginCard.jsx
 msgid "On startup (s)"
 msgstr "起動時 (s)"
@@ -3366,6 +3120,10 @@ msgstr "プロファイル欄にはプロファイルファイルのみインポ
 msgid "Only shot files can be imported in the shot field."
 msgstr "ショット欄にはショットファイルのみインポートできます。"
 
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgid "Open"
+msgstr "開く"
+
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
 msgctxt "valve state"
@@ -3381,17 +3139,12 @@ msgid "Open full display"
 msgstr "全画面表示を開く"
 
 #: src/pages/Home/cards/RecentShotsCard.jsx
-#: src/pages/ShotHistory/HistoryCard.jsx
 msgid "Open in Analyzer"
 msgstr "アナライザーで開く"
 
 #: src/pages/ShotAnalyzer/components/library/StatusBar.jsx
 msgid "Open library"
 msgstr "ライブラリを開く"
-
-#: src/pages/ShotAnalyzer/components/EmptyState.jsx
-msgid "Open or close the library."
-msgstr "ライブラリを開閉します。"
 
 #: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
 msgid "Open profile actions menu"
@@ -3405,9 +3158,14 @@ msgstr "プロファイル一覧の操作メニューを開く"
 msgid "Open Settings → Machine to configure your machine before use."
 msgstr "使用前に 設定 → マシン でマシンを設定してください。"
 
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/AnalyzerActionBar.jsx
 #: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
 msgid "Open shot actions menu"
 msgstr "ショットの操作メニューを開く"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgid "Open shot or profile"
+msgstr "ショットまたはプロファイルを開く"
 
 #: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 msgid "Open shots actions menu"
@@ -3417,17 +3175,13 @@ msgstr "ショット一覧の操作メニューを開く"
 msgid "Open statistics"
 msgstr "統計を開く"
 
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/MobileStatusActionsMenu.jsx
-msgid "Open status actions menu"
-msgstr "ステータスの操作メニューを開く"
-
 #: src/pages/Settings/PluginCard.jsx
 msgid "Open the Home app on your iOS device, select Add Accessory, and enter the setup code shown above."
 msgstr "iOS デバイスでホームアプリを開き、「アクセサリを追加」を選択して、上記のセットアップコードを入力してください。"
 
-#: src/pages/ShotAnalyzer/components/EmptyState.jsx
-msgid "Opens imported external shots and profiles temporarily without saving them to the browser library."
-msgstr "インポートした外部のショットやプロファイルを、ブラウザーのライブラリに保存せず一時的に開きます。"
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgid "Opening shot or profile"
+msgstr "ショットまたはプロファイルを開いています"
 
 #: src/pages/ProfileEdit/ProfileMainInformation.jsx
 msgid "Optional description for this profile"
@@ -3480,6 +3234,7 @@ msgstr "一時停止"
 msgid "Pause replay"
 msgstr "リプレイを一時停止"
 
+#: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
 #: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotMetricCards.jsx
 msgid "Peak Pressure"
@@ -3533,7 +3288,6 @@ msgstr "フェーズ {phaseNum}"
 #: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTable.jsx
 #: src/pages/ShotAnalyzer/components/shotChart/compare/compareModel.js
 #: src/pages/ShotAnalyzer/components/shotChart/tooltip/tooltipModel.js
-#: src/pages/ShotHistory/HistoryChart.jsx
 #: src/pages/Statistics/services/StatisticsService.js
 msgid "Phase {phaseNumber}"
 msgstr "フェーズ {phaseNumber}"
@@ -3693,14 +3447,6 @@ msgstr "予熱中..."
 msgid "Preinfusion"
 msgstr "プレインフュージョン"
 
-#: src/pages/ShotHistory/ConfirmDeleteModal.jsx
-msgid "Preparing deletion..."
-msgstr "削除を準備中..."
-
-#: src/pages/ShotHistory/index.jsx
-msgid "Preparing export..."
-msgstr "エクスポートを準備中..."
-
 #: src/pages/ShotAnalyzer/components/shotChart/constants.js
 msgid "Preparing MP4 export..."
 msgstr "MP4 エクスポートを準備中..."
@@ -3814,7 +3560,6 @@ msgid "Pressure test"
 msgstr "圧力テスト"
 
 #: src/pages/ProfileEdit/ExtendedProfileForm.jsx
-#: src/pages/ShotHistory/index.jsx
 msgid "Previous"
 msgstr "前へ"
 
@@ -3853,7 +3598,6 @@ msgid "profile"
 msgstr "プロファイル"
 
 #: src/pages/Home/cards/ProfileCard.jsx
-#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 #: src/pages/Statistics/components/ProfileGroupTable.jsx
 msgid "Profile"
 msgstr "プロファイル"
@@ -3864,16 +3608,8 @@ msgid "Profile"
 msgstr "プロファイル"
 
 #: src/pages/ShotAnalyzer/services/LibraryService.js
-msgid "Profile {nameOrId} not found"
-msgstr "プロファイル {nameOrId} が見つかりません"
-
-#: src/pages/ShotAnalyzer/services/LibraryService.js
-msgid "Profile {nameOrId} not found in browser storage"
-msgstr "ブラウザーストレージにプロファイル {nameOrId} が見つかりません"
-
-#: src/pages/ShotHistory/index.jsx
-msgid "Profile A-Z"
-msgstr "プロファイル A-Z"
+msgid "Profile {id} not found"
+msgstr "プロファイル {id} が見つかりません"
 
 #: src/pages/DashboardSettings/index.jsx
 msgid "Profile Chart Height"
@@ -3907,17 +3643,13 @@ msgstr "プロファイル情報"
 msgid "Profile is too large."
 msgstr "プロファイルが大きすぎます。"
 
-#: src/pages/ShotAnalyzer/services/IndexedDBService.js
-msgid "Profile label is required for browser storage"
-msgstr "ブラウザーストレージにはプロファイルのラベルが必要です"
-
 #: src/pages/ProfileList/index.jsx
 msgid "Profile list"
 msgstr "プロファイル一覧"
 
 #: src/pages/ShotAnalyzer/components/library/StatusBar.jsx
-msgid "Profile mismatch detected. Use Import below or drop files here to import."
-msgstr "プロファイルの不一致を検出しました。下のインポートを使うか、ここにファイルをドロップしてインポートしてください。"
+msgid "Profile mismatch detected. Use Open below or drop files here."
+msgstr "プロファイルの不一致を検出しました。下の「開く」を使うか、ここにファイルをドロップしてください。"
 
 #: src/pages/Settings/PluginCard.jsx
 msgid "Profile per grinder recipe"
@@ -3932,6 +3664,7 @@ msgid "Profile Statistics"
 msgstr "プロファイル統計"
 
 #: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/AnalyzerActionBar.jsx
 msgid "Profile Stats"
 msgstr "プロファイル統計"
 
@@ -3946,10 +3679,6 @@ msgstr "プロファイル更新"
 #: src/components/MachineProfileControl.jsx
 msgid "Profile values"
 msgstr "プロファイルの値"
-
-#: src/pages/ShotHistory/index.jsx
-msgid "Profile Z-A"
-msgstr "プロファイル Z-A"
 
 #: src/pages/Settings/tabs/PhysicalButtonsSection.jsx
 msgid "Profile: {profileLabel}"
@@ -4152,13 +3881,9 @@ msgstr "ランプの目標の選択"
 msgid "Range"
 msgstr "範囲"
 
-#: src/pages/ShotHistory/index.jsx
-msgid "Rated Only"
-msgstr "評価済みのみ"
-
-#: src/pages/ShotHistory/ShotNotesCard.jsx
-msgid "Rating"
-msgstr "評価"
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Rated"
+msgstr "評価済み"
 
 #: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 msgid "Rating (High)"
@@ -4171,10 +3896,6 @@ msgstr "評価（低い順）"
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
 msgid "Ratio"
 msgstr "比率"
-
-#: src/pages/ShotHistory/ShotNotesCard.jsx
-msgid "Ratio (1:{ratioLabel})"
-msgstr "比率（1:{ratioLabel}）"
 
 #: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
 msgid "Ratio reached"
@@ -4450,18 +4171,7 @@ msgstr "土曜日"
 #: src/app/MachineSetup.jsx
 #: src/pages/ProfileEdit/ExtendedProfileForm.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
-#: src/pages/ShotHistory/ShotNotesCard.jsx
 msgid "Save"
-msgstr "保存"
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
-msgctxt "import mode"
-msgid "Save"
-msgstr "保存"
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarModeHint.jsx
-msgctxt "import mode badge"
-msgid "SAVE"
 msgstr "保存"
 
 #: src/pages/Settings/StickyFormFooter.jsx
@@ -4505,18 +4215,6 @@ msgstr "設定を保存"
 #: src/pages/ProfileEdit/ProfileImageUpload.jsx
 msgid "Save the profile first to add an image."
 msgstr "画像を追加するには、先にプロファイルを保存してください。"
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/MobileStatusActionsMenu.jsx
-msgid "Save to Browser"
-msgstr "ブラウザーに保存"
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
-msgid "Save to Browser. Click to switch imports to View temporarily."
-msgstr "ブラウザーに保存。クリックするとインポートを一時表示に切り替えます。"
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarModeHint.jsx
-msgid "Save to Browser. Imported shots and profiles will now be saved to the browser library."
-msgstr "ブラウザーに保存。インポートしたショットとプロファイルはブラウザーのライブラリに保存されます。"
 
 #: src/components/PumpFlowCalibration/Footer.jsx
 msgid "Save to machine"
@@ -4651,7 +4349,6 @@ msgid "Search shots..."
 msgstr "ショットを検索..."
 
 #: src/pages/ProfileList/index.jsx
-#: src/pages/ShotHistory/index.jsx
 msgid "Search..."
 msgstr "検索..."
 
@@ -4700,10 +4397,6 @@ msgstr "Pro プロファイルの種類を選択"
 #: src/pages/Statistics/components/toolbar/subcomponents.jsx
 msgid "Select Profiles..."
 msgstr "プロファイルを選択..."
-
-#: src/pages/Statistics/components/toolbar/subcomponents.jsx
-msgid "Select shot and profile sources"
-msgstr "ショットとプロファイルのソースを選択"
 
 #: src/pages/Statistics/components/toolbar/subcomponents.jsx
 msgid "Select Shots..."
@@ -4803,17 +4496,8 @@ msgstr "共有"
 msgid "Shift = Range"
 msgstr "Shift = 範囲"
 
-#: src/pages/ShotHistory/index.jsx
-msgid "Shortest Duration"
-msgstr "時間の短い順"
-
 #: src/pages/Statistics/components/toolbar/subcomponents.jsx
 msgid "shot"
-msgstr "ショット"
-
-#: src/pages/Statistics/components/toolbar/constants.js
-msgctxt "date basis"
-msgid "Shot"
 msgstr "ショット"
 
 #: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
@@ -4825,10 +4509,6 @@ msgstr "ショット"
 msgctxt "table column"
 msgid "Shot"
 msgstr "ショット"
-
-#: src/pages/ShotAnalyzer/services/LibraryService.js
-msgid "Shot {idStr} not found in browser storage"
-msgstr "ブラウザーストレージにショット {idStr} が見つかりません"
 
 #: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTable.jsx
 #: src/pages/ShotAnalyzer/components/shotChart/compare/compareChartConfig.js
@@ -4842,10 +4522,6 @@ msgstr "ショット {shotNumber}"
 #: src/pages/ShotAnalyzer/shotAnalyzer/ActiveAnalysisView.jsx
 msgid "Shot analysis table"
 msgstr "ショット分析テーブル"
-
-#: src/components/Navigation.jsx
-msgid "Shot Analyzer"
-msgstr "ショットアナライザー"
 
 #: src/pages/ShotAnalyzer/components/library/AnalyzerPanelSlot.jsx
 msgid "Shot and profile import dropzone"
@@ -4868,7 +4544,7 @@ msgstr "ショットチャート"
 msgid "Shot Controls"
 msgstr "ショット操作"
 
-#: src/pages/ShotHistory/HistoryCard.jsx
+#: src/pages/ShotAnalyzer/components/library/ShotVisualizerUpload.jsx
 msgid "Shot data is invalid or incomplete"
 msgstr "ショットデータが無効または不完全です"
 
@@ -4885,8 +4561,7 @@ msgstr "ショット終了"
 msgid "Shot finished. Waiting for it to be saved to history..."
 msgstr "ショットが終了しました。履歴への保存を待っています..."
 
-#: src/components/Navigation.jsx
-#: src/pages/ShotHistory/index.jsx
+#: src/pages/ShotAnalyzer/shotAnalyzer/ShotAnalyzer.jsx
 msgid "Shot History"
 msgstr "ショット履歴"
 
@@ -4904,7 +4579,6 @@ msgid "Shot Metrics"
 msgstr "ショットのメトリクス"
 
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
-#: src/pages/ShotHistory/ShotNotesCard.jsx
 msgid "Shot Notes"
 msgstr "ショットのメモ"
 
@@ -4921,7 +4595,7 @@ msgstr "マシンでショットの開始がキャンセルされました。"
 msgid "Shot started"
 msgstr "ショットが開始されました"
 
-#: src/pages/ShotHistory/HistoryCard.jsx
+#: src/pages/ShotAnalyzer/components/library/ShotVisualizerUpload.jsx
 msgid "Shot uploaded successfully to visualizer.coffee!"
 msgstr "visualizer.coffee へのショットのアップロードに成功しました！"
 
@@ -5096,24 +4770,11 @@ msgstr "スマートグラインドプラグイン"
 msgid "Snapshotting shot history..."
 msgstr "ショット履歴のスナップショットを作成中..."
 
-#: src/pages/Statistics/components/statisticsView/helpers.js
-msgid "Some shots have no shot timestamp. Choose how date handling should treat them (Shot = exclude missing, Auto = fallback to upload time, Upload = upload time only)."
-msgstr "一部のショットにショットのタイムスタンプがありません。日付の扱い方を選択してください（ショット = 欠落分を除外、自動 = アップロード時刻で代替、アップロード = アップロード時刻のみ）。"
-
-#: src/pages/Statistics/components/statisticsView/helpers.js
-msgid "Some shots have no shot timestamp. Choose how date handling should treat them (Shot = exclude missing, Auto = fallback to upload time, Upload = upload time only). Some shots have no usable date at all and may still be excluded from date filtering."
-msgstr "一部のショットにショットのタイムスタンプがありません。日付の扱い方を選択してください（ショット = 欠落分を除外、自動 = アップロード時刻で代替、アップロード = アップロード時刻のみ）。使用可能な日付がまったくないショットは、日付による絞り込みから除外される場合があります。"
-
-#: src/pages/Statistics/components/toolbar/subcomponents.jsx
-msgid "Some shots have no shot timestamp. Choose how date handling should treat them."
-msgstr "一部のショットにショットのタイムスタンプがありません。日付の扱い方を選択してください。"
-
-#: src/pages/Statistics/components/statisticsView/helpers.js
-msgid "Some shots have no usable shot timestamp. Date filtering may exclude them unless upload time is available."
-msgstr "一部のショットに使用可能なショットのタイムスタンプがありません。アップロード時刻がない場合、日付による絞り込みで除外されることがあります。"
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Sort"
+msgstr "並べ替え"
 
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
-#: src/pages/ShotHistory/ShotNotesCard.jsx
 msgid "Sour"
 msgstr "酸味"
 
@@ -5202,10 +4863,6 @@ msgstr "前回の設定値から開始"
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "Start heating test"
 msgstr "加熱テストを開始"
-
-#: src/pages/ShotAnalyzer/components/EmptyState.jsx
-msgid "Start or end compare mode."
-msgstr "比較モードを開始または終了します。"
 
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "Start pressure test"
@@ -5367,10 +5024,6 @@ msgstr "ストレージ (SD カード)"
 msgid "Storage & Memory"
 msgstr "ストレージとメモリ"
 
-#: src/pages/ShotAnalyzer/components/EmptyState.jsx
-msgid "Stores imported external shots and profiles locally in this browser on this device. They are not automatically available in other browsers or on other devices."
-msgstr "インポートした外部のショットとプロファイルを、このデバイスのこのブラウザーにローカル保存します。他のブラウザーや他のデバイスでは自動的には利用できません。"
-
 #: src/pages/SetupWizard/WifiStep.jsx
 msgid "Strong"
 msgstr "強"
@@ -5396,18 +5049,6 @@ msgstr "ショット 1 とショット 2 を入れ替え"
 #: src/pages/ShotAnalyzer/components/shotChart/MobileChartScrubber.jsx
 msgid "Swipe"
 msgstr "スワイプ"
-
-#: src/pages/ShotAnalyzer/components/EmptyState.jsx
-msgid "Switch between shots."
-msgstr "ショットを切り替えます。"
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
-msgid "Switch import mode to Save to Browser"
-msgstr "インポートモードを「ブラウザーに保存」に切り替え"
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
-msgid "Switch import mode to View temporarily"
-msgstr "インポートモードを「一時表示」に切り替え"
 
 #: src/pages/DashboardSettings/index.jsx
 msgid "Switch to compact view"
@@ -5522,7 +5163,6 @@ msgstr "目標 P"
 #: src/components/OverviewChart.jsx
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
-#: src/pages/ShotHistory/HistoryChart.jsx
 msgid "Target Pressure"
 msgstr "目標圧力"
 
@@ -5533,7 +5173,6 @@ msgstr "目標圧力 (bar)"
 
 #: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
 #: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
-#: src/pages/ShotHistory/HistoryChart.jsx
 msgid "Target Pump Flow"
 msgstr "目標ポンプ流量"
 
@@ -5567,7 +5206,6 @@ msgstr "目標温度"
 #: src/components/OverviewChart.jsx
 #: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotMetricCards.jsx
-#: src/pages/ShotHistory/HistoryChart.jsx
 msgid "Target Temperature"
 msgstr "目標温度"
 
@@ -5586,10 +5224,6 @@ msgstr "目標重量（グラム）"
 #: src/pages/Settings/PluginCard.jsx
 msgid "Tasmota IP"
 msgstr "Tasmota IP"
-
-#: src/pages/ShotHistory/ShotNotesCard.jsx
-msgid "Tasting notes, brewing observations, etc..."
-msgstr "テイスティングノート、抽出時の気づきなど..."
 
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
 msgid "Tasting notes, brewing observations..."
@@ -5650,10 +5284,6 @@ msgstr "温度オフセット (°C)"
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "Temperature rise: {0} of {1} °C"
 msgstr "温度上昇: {0} / {1} °C"
-
-#: src/pages/ShotAnalyzer/components/EmptyState.jsx
-msgid "Temporary View (VIEW)"
-msgstr "一時表示 (VIEW)"
 
 #: src/pages/Settings/tabs/CalibrationTab.jsx
 msgid "Test Duration (seconds)"
@@ -5879,10 +5509,6 @@ msgctxt "ramp target"
 msgid "Time"
 msgstr "時間"
 
-#: src/pages/ShotHistory/HistoryChart.jsx
-msgid "Time (s)"
-msgstr "時間 (s)"
-
 #: src/pages/ShotAnalyzer/utils/formatting.js
 msgid "Time Limit"
 msgstr "時間制限"
@@ -6056,7 +5682,7 @@ msgstr "不明なエラーです。"
 msgid "Unknown field \"{fieldRaw}\". Supported: {supportedFields}."
 msgstr "不明なフィールド「{fieldRaw}」。対応フィールド: {supportedFields}。"
 
-#: src/pages/ShotHistory/HistoryCard.jsx
+#: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
 msgid "Unknown Profile"
 msgstr "不明なプロファイル"
 
@@ -6067,6 +5693,10 @@ msgstr "不明なスケール"
 #: src/pages/Statistics/components/statisticsView/helpers.js
 msgid "Unknown Shot"
 msgstr "不明なショット"
+
+#: src/pages/ShotAnalyzer/components/library/StatusBar.jsx
+msgid "Unload shot"
+msgstr "ショットを閉じる"
 
 #: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
 msgid "Unpin {displayName}"
@@ -6088,9 +5718,9 @@ msgstr "プロファイルの固定を解除"
 msgid "Unpin shot"
 msgstr "ショットの固定を解除"
 
-#: src/pages/ShotHistory/index.jsx
-msgid "Unrated Only"
-msgstr "未評価のみ"
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Unrated"
+msgstr "未評価"
 
 #: src/pages/Statistics/utils/statisticsSearchDsl.js
 msgid "Unsupported date expression. Use DD.MM.YYYY, optional HH:MM, or h-7d."
@@ -6160,16 +5790,11 @@ msgstr "Headless のファイルシステムを更新中"
 msgid "Updating Headless firmware"
 msgstr "Headless のファームウェアを更新中"
 
-#: src/pages/Statistics/components/toolbar/constants.js
-msgctxt "date basis"
-msgid "Upload"
-msgstr "アップロード"
-
 #: src/utils/profileImage.js
 msgid "Upload failed"
 msgstr "アップロードに失敗しました"
 
-#: src/pages/ShotHistory/HistoryCard.jsx
+#: src/pages/ShotAnalyzer/components/library/ShotVisualizerUpload.jsx
 msgid "Upload failed: {errorMessage}"
 msgstr "アップロードに失敗しました: {errorMessage}"
 
@@ -6181,12 +5806,9 @@ msgstr "画像をアップロード"
 msgid "Upload Shot"
 msgstr "ショットをアップロード"
 
-#: src/pages/ShotHistory/HistoryCard.jsx
-msgid "Upload to visualizer.coffee"
-msgstr "visualizer.coffee にアップロード"
-
 #: src/components/VisualizerUploadModal.jsx
-#: src/pages/ShotHistory/HistoryCard.jsx
+#: src/pages/ShotAnalyzer/components/library/LibraryPanel.jsx
+#: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
 msgid "Upload to Visualizer.coffee"
 msgstr "Visualizer.coffee にアップロード"
 
@@ -6213,22 +5835,6 @@ msgstr "カスタマイズした組み込みプロファイルには別の ID �
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Use Alba reservoir level to interlock steam refill"
 msgstr "Alba の水タンク水位でスチーム給水をインターロックする"
-
-#: src/pages/Statistics/components/toolbar/helpers.js
-msgid "Use shot timestamp only"
-msgstr "ショットのタイムスタンプのみを使用"
-
-#: src/pages/Statistics/components/toolbar/helpers.js
-msgid "Use shot timestamp, fallback to upload time"
-msgstr "ショットのタイムスタンプを使用し、なければアップロード時刻を使用"
-
-#: src/pages/ShotAnalyzer/components/EmptyState.jsx
-msgid "Use the status bar toggle to switch between <0>View temporarily</0> and <1>Save to Browser</1> before importing."
-msgstr "インポートする前に、ステータスバーの切り替えで<0>一時表示</0>と<1>ブラウザーに保存</1>を切り替えてください。"
-
-#: src/pages/Statistics/components/toolbar/helpers.js
-msgid "Use upload time only"
-msgstr "アップロード時刻のみを使用"
 
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Used for the GaggiMate hotspot when no Wi-Fi is configured (min. 8 characters)."
@@ -6303,16 +5909,6 @@ msgstr "動画（非対応）"
 msgid "Video export is not supported in this browser."
 msgstr "このブラウザーは動画のエクスポートに対応していません。"
 
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
-msgctxt "import mode"
-msgid "View"
-msgstr "表示"
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarModeHint.jsx
-msgctxt "import mode badge"
-msgid "VIEW"
-msgstr "VIEW"
-
 #: src/pages/Settings/PatchNotes.jsx
 msgid "View on GitHub"
 msgstr "GitHub で見る"
@@ -6324,18 +5920,6 @@ msgstr "{label} プロファイルの統計を表示"
 #: src/pages/ProfileList/index.jsx
 msgid "View statistics for this profile"
 msgstr "このプロファイルの統計を表示"
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/MobileStatusActionsMenu.jsx
-msgid "View temporarily"
-msgstr "一時表示"
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
-msgid "View temporarily. Click to switch imports to Save to Browser."
-msgstr "一時表示。クリックするとインポートを「ブラウザーに保存」に切り替えます。"
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarModeHint.jsx
-msgid "View temporarily. Imported shots and profiles will now open temporarily in the analyzer."
-msgstr "一時表示。インポートしたショットとプロファイルはアナライザーで一時的に開かれます。"
 
 #: src/components/SettingsFormField.jsx
 msgid "Visible"
@@ -6392,7 +5976,7 @@ msgstr "警告"
 msgid "WARNING: Do you really want to IRREVOCABLY delete all {count} filtered profiles?"
 msgstr "警告: 絞り込まれた {count} 件のプロファイルをすべて削除しますか？この操作は元に戻せません。"
 
-#: src/pages/ShotAnalyzer/components/library/LibraryDropdown.jsx
+#: src/pages/ShotAnalyzer/components/library/useShotListActions.js
 msgid "WARNING: Do you really want to IRREVOCABLY delete all {count} filtered shots?"
 msgstr "警告: 絞り込まれた {count} 件のショットをすべて削除しますか？この操作は元に戻せません。"
 
@@ -6458,11 +6042,6 @@ msgstr "水タンクの残量低下"
 msgid "Weak"
 msgstr "弱"
 
-#: src/pages/Statistics/components/toolbar/constants.js
-msgctxt "shot source: browser storage"
-msgid "WEB"
-msgstr "WEB"
-
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Web Settings"
 msgstr "Web 設定"
@@ -6503,7 +6082,6 @@ msgstr "週"
 #: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
 #: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotMetricCards.jsx
-#: src/pages/ShotHistory/HistoryChart.jsx
 #: src/pages/Statistics/components/MetricsTable.jsx
 #: src/pages/Statistics/components/PhaseStatistics.jsx
 #: src/utils/metricDefinitions.js
@@ -6526,7 +6104,6 @@ msgid "Weight (total)"
 msgstr "重量（合計）"
 
 #: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
-#: src/pages/ShotHistory/HistoryChart.jsx
 msgid "Weight Flow"
 msgstr "重量流量"
 
@@ -6628,7 +6205,3 @@ msgstr "新しい PID 値を保存しました。"
 #: src/app/MachineSetup.jsx
 msgid "Your phone needs to be on the same Wi-Fi network as the machine."
 msgstr "スマートフォンをマシンと同じ Wi-Fi ネットワークに接続する必要があります。"
-
-#: src/pages/ShotAnalyzer/components/EmptyState.jsx
-msgid "Your saved shots and profiles directly from the GaggiMate internal storage."
-msgstr "GaggiMate の内部ストレージに保存されたショットとプロファイルを直接表示します。"

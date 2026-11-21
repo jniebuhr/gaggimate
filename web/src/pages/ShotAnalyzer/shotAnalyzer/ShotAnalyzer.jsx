@@ -3,14 +3,23 @@
 import { useState, useEffect, useContext, useRef, useCallback } from 'preact/hooks';
 import { useRoute } from 'preact-iso';
 import { Trans } from '@lingui/react/macro';
+import {
+  applyChangedShotPins,
+  getActiveShotPinBucketKey,
+  getShotPinDisabledReasonForItem,
+} from '../components/library/libraryDisplay';
+import { hasLoadedProfileMismatch } from '../components/library/libraryData';
 import { LibraryPanel } from '../components/LibraryPanel';
-import { EmptyState } from '../components/EmptyState.jsx';
 import { useAnalyzerMobileSubpageNavigation } from '../components/useAnalyzerMobileSubpageNavigation';
 import { libraryService } from '../services/LibraryService';
 import { notesService } from '../services/NotesService';
 import { ApiServiceContext } from '../../../services/ApiService';
 import {
   getDefaultColumns,
+  getPinnedShotsByProfile,
+  getShotPinBucketKey,
+  isShotPinned,
+  toggleShotPin,
   cleanName,
   ANALYZER_DB_KEYS,
   getProfileDisplayLabel,
@@ -48,15 +57,13 @@ export function ShotAnalyzer() {
   const { params } = useRoute();
   // --- State ---
   const [currentShot, setCurrentShot] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [pinnedShotsByProfile, setPinnedShotsByProfile] = useState(() => getPinnedShotsByProfile());
   const [currentProfile, setCurrentProfile] = useState(null);
   const [currentShotName, setCurrentShotName] = useState('No Shot Loaded');
   const [currentProfileName, setCurrentProfileName] = useState('No Profile Loaded');
   const [currentProfileSelectionMode, setCurrentProfileSelectionMode] = useState('none');
   const [pendingPrimarySelection, setPendingPrimarySelection] = useState(null);
   const [pendingCompareSelection, setPendingCompareSelection] = useState(null);
-
-  const [importMode, setImportMode] = useState('temp');
 
   const [isMatchingProfile, setIsMatchingProfile] = useState(false);
   const [isSearchingProfile, setIsSearchingProfile] = useState(false);
@@ -68,6 +75,7 @@ export function ShotAnalyzer() {
 
   const [analysisResults, setAnalysisResults] = useState(null);
   const [compareMode, setCompareMode] = useState(false);
+  const [selectingEntryCompare, setSelectingEntryCompare] = useState(false);
   const [compareShots, setCompareShots] = useState([]);
   const [comparePendingKeys, setComparePendingKeys] = useState([]);
   const [compareResults, setCompareResults] = useState([]);
@@ -171,7 +179,6 @@ export function ShotAnalyzer() {
     abortPrimarySelectionLoad();
     primarySelectionRequestIdRef.current += 1;
     updatePendingPrimarySelection(null);
-    setLoading(false);
   }, [abortPrimarySelectionLoad, clearPrimarySelectionTimer, updatePendingPrimarySelection]);
 
   const clearPendingCompareSelection = useCallback(() => {
@@ -308,23 +315,23 @@ export function ShotAnalyzer() {
   // --- Data Handlers ---
   const normalizePrimarySelectionRequest = useCallback(
     request =>
-      normalizeSelectionRequest(request, importMode, {
+      normalizeSelectionRequest(request, {
         preserveCompare: false,
         requestSelectionScroll: false,
       }),
-    [importMode],
+    [],
   );
 
   const normalizeCompareSelectionRequest = useCallback(
-    request => normalizeSelectionRequest(request, importMode),
-    [importMode],
+    request => normalizeSelectionRequest(request),
+    [],
   );
 
   const commitPrimaryShotLoad = useCallback(
     (shotData, name, { preserveCompare = false, requestSelectionScroll = false } = {}) => {
       const shotWithMetadata = {
         ...shotData,
-        source: shotData.source || importMode,
+        source: shotData.source || 'temp',
       };
       const nextShotKey = getShotIdentityKey(shotWithMetadata);
       const previousShot = currentShotRef.current;
@@ -355,7 +362,7 @@ export function ShotAnalyzer() {
         const attemptProfileAutoMatch = async (attempt = 0) => {
           profileSearchTimerRef.current = null;
           try {
-            const allProfiles = await libraryService.getAllProfiles('both');
+            const allProfiles = await libraryService.getAllProfiles();
 
             if (matchId !== profileMatchIdRef.current) return; // stale
 
@@ -369,7 +376,6 @@ export function ShotAnalyzer() {
             const preferredMatch = findPreferredProfileMatch(
               allProfiles,
               shotWithMetadata.profile,
-              shotWithMetadata.source,
               shotWithMetadata.profileId,
             );
 
@@ -410,7 +416,7 @@ export function ShotAnalyzer() {
 
         // Debounce: wait for rapid navigation to settle before searching
         profileSearchTimerRef.current = setTimeout(() => {
-          attemptProfileAutoMatch(0);
+          void attemptProfileAutoMatch(0);
         }, PROFILE_AUTO_MATCH_INITIAL_DELAY_MS);
       } else {
         // Shot has no profile field — clear search states immediately
@@ -426,13 +432,10 @@ export function ShotAnalyzer() {
           setPendingDesktopLibraryScroll(true);
         }
       }
-
-      setLoading(false);
     },
     [
       cancelPrimaryProfileSearch,
       clearPrimarySelectionTimer,
-      importMode,
       resetCompareState,
       updateCurrentShot,
       updatePendingPrimarySelection,
@@ -451,7 +454,6 @@ export function ShotAnalyzer() {
 
       if (!targetShotKey) {
         updatePendingPrimarySelection(null);
-        setLoading(false);
         return false;
       }
 
@@ -467,15 +469,12 @@ export function ShotAnalyzer() {
 
         abortPrimarySelectionLoad(requestId);
         updatePendingPrimarySelection(null);
-        setLoading(false);
         return false;
       }
 
       try {
-        setLoading(true);
         const { shotWithMetadata, shotName } = await loadShotSelection({
           item,
-          importMode,
           signal,
         });
         if (requestId !== primarySelectionRequestIdRef.current) return false;
@@ -488,7 +487,6 @@ export function ShotAnalyzer() {
         if (error?.name === 'AbortError') {
           abortPrimarySelectionLoad(requestId);
           updatePendingPrimarySelection(null);
-          setLoading(false);
           return false;
         }
 
@@ -505,11 +503,10 @@ export function ShotAnalyzer() {
 
         abortPrimarySelectionLoad(requestId);
         updatePendingPrimarySelection(null);
-        setLoading(false);
         return false;
       }
     },
-    [abortPrimarySelectionLoad, commitPrimaryShotLoad, importMode, updatePendingPrimarySelection],
+    [abortPrimarySelectionLoad, commitPrimaryShotLoad, updatePendingPrimarySelection],
   );
 
   const launchPrimarySelectionLoad = useCallback(
@@ -537,7 +534,6 @@ export function ShotAnalyzer() {
         abortPrimarySelectionLoad();
         primarySelectionRequestIdRef.current += 1;
         updatePendingPrimarySelection(null);
-        setLoading(false);
         return;
       }
 
@@ -587,9 +583,8 @@ export function ShotAnalyzer() {
     }
     if (!apiService) return undefined;
 
-    let serviceSource = params.source;
-    if (params.source === 'internal') serviceSource = 'gaggimate';
-    if (params.source === 'external') serviceSource = 'browser';
+    if (params.source !== 'internal' && params.source !== 'gaggimate') return undefined;
+    const serviceSource = 'gaggimate';
 
     const deepLinkKey = `${serviceSource}:${params.id}`;
     if (handledDeepLinkKeyRef.current === deepLinkKey) return undefined;
@@ -632,7 +627,7 @@ export function ShotAnalyzer() {
       profileSearchTimerRef.current = null;
 
       try {
-        const allProfiles = await libraryService.getAllProfiles('both');
+        const allProfiles = await libraryService.getAllProfiles();
 
         if (matchId !== profileMatchIdRef.current) return;
 
@@ -646,7 +641,6 @@ export function ShotAnalyzer() {
         const preferredMatch = findPreferredProfileMatch(
           allProfiles,
           shotWithMetadata.profile,
-          shotWithMetadata.source,
           shotWithMetadata.profileId,
         );
 
@@ -677,7 +671,7 @@ export function ShotAnalyzer() {
       }
     };
 
-    attemptProfileAutoMatch(0);
+    await attemptProfileAutoMatch(0);
   };
 
   const handleProfileUnload = useCallback(() => {
@@ -687,13 +681,19 @@ export function ShotAnalyzer() {
     setCurrentProfileSelectionMode('none');
   }, [cancelPrimaryProfileSearch]);
 
+  useEffect(() => {
+    if (currentShot && compareShots.length > 0) setSelectingEntryCompare(false);
+  }, [currentShot, compareShots]);
+
   const handleCompareModeToggle = () => {
     if (compareMode) {
+      setSelectingEntryCompare(false);
       resetCompareState();
       setCompareMode(false);
       return;
     }
 
+    if (!currentShot) setSelectingEntryCompare(true);
     setCompareMode(true);
   };
 
@@ -702,7 +702,6 @@ export function ShotAnalyzer() {
       executeCompareSelectionLoad({
         requestId,
         selectionRequest,
-        importMode,
         compareSelectionRequestIdRef,
         compareLoadIdRef,
         pendingPrimarySelectionRef,
@@ -712,7 +711,7 @@ export function ShotAnalyzer() {
         setCompareIsSearchingProfile,
         setCompareShots,
       }),
-    [importMode],
+    [],
   );
 
   const launchCompareSelectionLoad = useCallback(
@@ -845,7 +844,7 @@ export function ShotAnalyzer() {
     setCompareIsSearchingProfile(true);
 
     try {
-      const allProfiles = await libraryService.getAllProfiles('both');
+      const allProfiles = await libraryService.getAllProfiles();
       if (matchId !== compareProfileMatchIdRef.current) return;
 
       const matchedProfile = await loadPreferredAutoMatchedProfile(
@@ -941,6 +940,33 @@ export function ShotAnalyzer() {
     pendingCompareSelection,
     pendingPrimarySelection,
   });
+  const shotDetailsWithPins = shotDetailsEntries.map(entry => {
+    const getEffectiveShotPinBucketKey = shot =>
+      getActiveShotPinBucketKey({
+        primaryDisplayProfile: entry.profile,
+        primaryProfileMismatch: hasLoadedProfileMismatch(
+          entry.shot,
+          entry.profile,
+          entry.profileName,
+        ),
+        primaryDisplayProfileName: entry.profileName,
+      }) || getShotPinBucketKey(shot);
+    const bucketKey = getEffectiveShotPinBucketKey(entry.shot);
+    return {
+      ...entry,
+      pinProps: {
+        item: entry.shot,
+        isPinned: isShotPinned(entry.shot, bucketKey, pinnedShotsByProfile),
+        pinDisabledReason: getShotPinDisabledReasonForItem({
+          item: entry.shot,
+          getEffectiveShotPinBucketKey,
+          pinnedShotsByProfile,
+        }),
+        onPinToggle: shot =>
+          applyChangedShotPins(toggleShotPin(shot, bucketKey), setPinnedShotsByProfile),
+      },
+    };
+  });
   const mobileSubpageNavigation = useAnalyzerMobileSubpageNavigation({
     analysisEnabled: Boolean(currentShot && analysisResults),
     notesEnabled: Boolean(currentShot && isCompareActive),
@@ -954,12 +980,43 @@ export function ShotAnalyzer() {
     shotDetailsColumnRef,
   });
 
+  const handleShotUnload = () => {
+    setSelectingEntryCompare(false);
+    clearPendingPrimarySelection();
+    clearPendingCompareSelection();
+    resetCompareState({ disableMode: true });
+    cancelPrimaryProfileSearch();
+    updateCurrentShot(null);
+    setCurrentShotName('No Shot Loaded');
+    setCurrentProfile(null);
+    setCurrentProfileName('No Profile Loaded');
+    setCurrentProfileSelectionMode('none');
+    setAnalysisResults(null);
+  };
+
+  const handleShotsDeleted = ids => {
+    const deleted = new Set(ids);
+    const isDeleted = shot => shot?.source === 'gaggimate' && deleted.has(String(shot.id));
+    if (isDeleted(currentShotRef.current) || isDeleted(pendingPrimarySelectionRef.current?.shot)) {
+      handleShotUnload();
+    } else if (
+      isDeleted(compareShotsRef.current[0]?.shot) ||
+      isDeleted(pendingCompareSelectionRef.current?.shot)
+    ) {
+      resetCompareState();
+    }
+  };
+
   return (
     <div className='shot-analyzer-page pb-20'>
       {/* Header */}
       <div className='mb-4 flex flex-row items-center gap-2'>
         <h2 className='flex-grow text-2xl font-bold sm:text-3xl'>
-          <Trans>Deep Dive Shot Analyzer</Trans>
+          {!currentShot || selectingEntryCompare ? (
+            <Trans>Shot History</Trans>
+          ) : (
+            <Trans>Deep Dive Shot Analyzer</Trans>
+          )}
         </h2>
       </div>
 
@@ -967,6 +1024,9 @@ export function ShotAnalyzer() {
         {/* Library Panel (Always visible) */}
         <div ref={libraryPanelRef} className='mt-4'>
           <LibraryPanel
+            showShotList={!currentShot || selectingEntryCompare}
+            pinnedShotsByProfile={pinnedShotsByProfile}
+            setPinnedShotsByProfile={setPinnedShotsByProfile}
             currentShot={currentShot}
             currentProfile={currentProfile}
             currentShotName={currentShotName}
@@ -974,18 +1034,8 @@ export function ShotAnalyzer() {
             pendingPrimarySelection={pendingPrimarySelection}
             onShotSelect={handleShotSelect}
             onProfileLoad={handleProfileLoad}
-            onShotUnload={() => {
-              clearPendingPrimarySelection();
-              clearPendingCompareSelection();
-              resetCompareState({ disableMode: true });
-              cancelPrimaryProfileSearch();
-              updateCurrentShot(null);
-              setCurrentShotName('No Shot Loaded');
-              setCurrentProfile(null);
-              setCurrentProfileName('No Profile Loaded');
-              setCurrentProfileSelectionMode('none');
-              setAnalysisResults(null);
-            }}
+            onShotUnload={handleShotUnload}
+            onShotsDeleted={handleShotsDeleted}
             onProfileUnload={handleProfileUnload}
             onShowStats={context =>
               persistStatisticsInitialContext({
@@ -995,12 +1045,9 @@ export function ShotAnalyzer() {
                 },
                 currentProfile,
                 currentProfileName,
-                currentShot,
               })
             }
             statsHref={statsHref}
-            importMode={importMode}
-            onImportModeChange={setImportMode}
             compareMode={compareMode}
             compareHasSecondaryShot={compareHasSecondaryShot}
             compareSelectedCount={compareSelectedCount}
@@ -1026,7 +1073,7 @@ export function ShotAnalyzer() {
           />
         </div>
 
-        {currentShot ? (
+        {currentShot && !selectingEntryCompare ? (
           <ActiveAnalysisView
             activeColumns={activeColumns}
             analysisResults={analysisResults}
@@ -1042,15 +1089,11 @@ export function ShotAnalyzer() {
             setActiveColumns={setActiveColumns}
             setCompareTargetDisplayMode={setCompareTargetDisplayMode}
             shotDetailsColumnRef={shotDetailsColumnRef}
-            shotDetailsEntries={shotDetailsEntries}
+            shotDetailsEntries={shotDetailsWithPins}
             singleDesktopChartStyle={singleDesktopChartStyle}
             singleDesktopDetailsHeight={singleDesktopDetailsHeight}
           />
-        ) : (
-          <div className='mt-6'>
-            <EmptyState loading={loading} />
-          </div>
-        )}
+        ) : null}
       </div>
     </div>
   );

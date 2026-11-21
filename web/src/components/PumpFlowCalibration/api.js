@@ -1,8 +1,8 @@
 // HTTP helpers used by the calibration flow. Wrap the firmware endpoints so
 // the hook deals with parsed shots and typed errors, not fetch plumbing.
 
-import { parseBinaryIndex } from '../../pages/ShotHistory/parseBinaryIndex.js';
-import { parseBinaryShot } from '../../pages/ShotHistory/parseBinaryShot.js';
+import { parseBinaryIndex } from '../../services/shotHistory/parseBinaryIndex.js';
+import { parseBinaryShot } from '../../services/shotHistory/parseBinaryShot.js';
 import { SLOG_FETCH_DELAY_MS, SLOG_FETCH_RETRIES } from './constants.js';
 import { t } from '@lingui/core/macro';
 

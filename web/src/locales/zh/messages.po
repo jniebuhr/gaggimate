@@ -15,10 +15,6 @@ msgstr "-- 不兼容 --"
 msgid "(exact)"
 msgstr "（精确）"
 
-#: src/pages/ShotHistory/index.jsx
-msgid "(Page {currentPage} of {totalPages})"
-msgstr "（第 {currentPage} 页，共 {totalPages} 页）"
-
 #: src/pages/Statistics/components/StatisticsSearchHelp.jsx
 msgid "(same field = OR)"
 msgstr "（同一字段 = 或）"
@@ -80,10 +76,6 @@ msgstr "{diffWeeks, plural, other {# 周前}}"
 msgid "{diffYears, plural, one {# year ago} other {# years ago}}"
 msgstr "{diffYears, plural, other {# 年前}}"
 
-#: src/pages/ShotHistory/index.jsx
-msgid "{historyCount, plural, one {This will permanently delete the only shot on the device. This cannot be undone.} other {This will permanently delete all # shots from the device. This cannot be undone.}}"
-msgstr "{historyCount, plural, other {将永久删除设备上的全部 # 条萃取记录。此操作无法撤销。}}"
-
 #: src/app/ConnectionGate.jsx
 msgid "{host} isn't answering. Make sure the machine is on and your phone is on the same Wi-Fi network."
 msgstr "{host} 没有响应。请确认咖啡机已开机，并且手机与咖啡机处于同一 Wi-Fi 网络。"
@@ -119,18 +111,6 @@ msgstr "{scaleName} 已断开"
 #: src/pages/Settings/PatchNotes.jsx
 msgid "{total, plural, one {# commit} other {# commits}}"
 msgstr "{total, plural, other {# 个提交}}"
-
-#: src/pages/ShotHistory/index.jsx
-msgid "{totalFilteredItems, plural, one {Delete # shot} other {Delete # shots}}"
-msgstr "{totalFilteredItems, plural, other {删除 # 条萃取记录}}"
-
-#: src/pages/ShotHistory/index.jsx
-msgid "{totalFilteredItems, plural, one {This will permanently delete the # shot matching your current search and filters. This cannot be undone.} other {This will permanently delete the # shots matching your current search and filters (across all pages). This cannot be undone.}}"
-msgstr "{totalFilteredItems, plural, other {将永久删除符合当前搜索和筛选条件的 # 条萃取记录(包括所有页面)。此操作无法撤销。}}"
-
-#: src/pages/ShotHistory/index.jsx
-msgid "{totalFilteredItems} of {historyCount} shots"
-msgstr "{totalFilteredItems} / {historyCount} 次萃取"
 
 #: src/pages/Settings/StickyFormFooter.jsx
 msgid "* Restart required for Wi-Fi, Timezone, or Plugin changes."
@@ -295,6 +275,10 @@ msgstr "Alba 设置"
 msgid "Align to grid"
 msgstr "对齐网格"
 
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "All"
+msgstr "全部"
+
 #: src/pages/ShotAnalyzer/components/shotChart/single/SingleShotMetricPreview.jsx
 msgctxt "all metrics page"
 msgid "All"
@@ -303,16 +287,6 @@ msgstr "全部"
 #: src/pages/Statistics/components/toolbar/constants.js
 msgctxt "statistics mode"
 msgid "All"
-msgstr "全部"
-
-#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
-msgctxt "library source filter"
-msgid "ALL"
-msgstr "全部"
-
-#: src/pages/Statistics/components/toolbar/constants.js
-msgctxt "shot source: all sources"
-msgid "ALL"
 msgstr "全部"
 
 #: src/pages/DashboardSettings/index.jsx
@@ -330,10 +304,6 @@ msgstr "全部指标"
 #: src/pages/Settings/PatchNotes.jsx
 msgid "All nightly changes"
 msgstr "Nightly 的全部更改"
-
-#: src/pages/ShotHistory/index.jsx
-msgid "All Shots"
-msgstr "全部萃取"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Alt Relay / SSR2 Function"
@@ -391,11 +361,6 @@ msgstr "泵辅助在多少 bar 时停止。这样泵只会在蒸汽流出时运�
 #: src/services/VisualizerService.js
 msgid "Authentication failed - please check your username and password"
 msgstr "认证失败 - 请检查用户名和密码"
-
-#: src/pages/Statistics/components/toolbar/constants.js
-msgctxt "date basis"
-msgid "Auto"
-msgstr "自动"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Auto (Bluetooth when connected)"
@@ -577,12 +542,7 @@ msgstr "需要反冲洗"
 msgid "Balance / Taste"
 msgstr "平衡 / 口味"
 
-#: src/pages/ShotHistory/ShotNotesCard.jsx
-msgid "Balance/Taste"
-msgstr "平衡/口味"
-
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
-#: src/pages/ShotHistory/ShotNotesCard.jsx
 msgid "Balanced"
 msgstr "平衡"
 
@@ -594,16 +554,11 @@ msgstr "基础指标"
 msgid "Basics"
 msgstr "基础"
 
-#: src/pages/ShotHistory/ShotNotesCard.jsx
-msgid "Bean Type"
-msgstr "咖啡豆类型"
-
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
 msgid "Beans"
 msgstr "咖啡豆"
 
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
-#: src/pages/ShotHistory/ShotNotesCard.jsx
 msgid "Bitter"
 msgstr "苦"
 
@@ -692,12 +647,10 @@ msgid "Brew Status Display"
 msgstr "冲煮状态显示"
 
 #: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
-#: src/pages/ShotHistory/HistoryCard.jsx
 msgid "Brewed by Time"
 msgstr "按时间冲煮"
 
 #: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
-#: src/pages/ShotHistory/HistoryCard.jsx
 msgid "Brewed by Weight"
 msgstr "按重量冲煮"
 
@@ -708,6 +661,10 @@ msgstr "冲煮滤波 Alpha"
 #: src/app/notifications.js
 msgid "Brewing…"
 msgstr "冲煮中…"
+
+#: src/components/Navigation.jsx
+msgid "Brews"
+msgstr "萃取"
 
 #: src/pages/ShotAnalyzer/utils/columns.js
 msgid "BT Scale Connected"
@@ -729,10 +686,6 @@ msgstr "正在建立压力…"
 #: src/pages/ProfileList/index.jsx
 msgid "Built-in profile, can be edited but not deleted"
 msgstr "内置曲线，可编辑但不可删除"
-
-#: src/pages/ShotAnalyzer/components/EmptyState.jsx
-msgid "Bulk upload and download are supported."
-msgstr "支持批量上传和下载。"
 
 #: src/pages/Statistics/components/toolbar/constants.js
 msgid "By Profile"
@@ -772,16 +725,10 @@ msgstr "无法连接 {name}"
 #: src/components/PumpFlowCalibration/Footer.jsx
 #: src/components/VisualizerUploadModal.jsx
 #: src/pages/SetupWizard/MachineStep.jsx
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 #: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
-#: src/pages/ShotHistory/ConfirmDeleteModal.jsx
-#: src/pages/ShotHistory/index.jsx
-#: src/pages/ShotHistory/ShotNotesCard.jsx
 msgid "Cancel"
 msgstr "取消"
-
-#: src/pages/ShotHistory/ConfirmDeleteModal.jsx
-msgid "Cancel deletion"
-msgstr "取消删除"
 
 #: src/app/MachineSetup.jsx
 msgid "Cancel renaming"
@@ -858,19 +805,17 @@ msgid "Click to confirm"
 msgstr "点击确认"
 
 #: src/pages/ProfileList/index.jsx
-#: src/pages/ShotHistory/HistoryCard.jsx
 msgid "Click to confirm delete"
 msgstr "点击确认删除"
 
 #: src/pages/ShotAnalyzer/components/library/StatusBar.jsx
-msgid "Click to open the library. Use Import below or drop files here to import."
-msgstr "点击打开库。使用下方的导入或将文件拖放到此处进行导入。"
+msgid "Click to open the library. Use Open below or drop files here."
+msgstr "点击打开资料库。请使用下方的“打开”按钮或将文件拖放到此处。"
 
 #: src/app/MachineSetup.jsx
 #: src/components/VisualizerUploadModal.jsx
 #: src/pages/Home/BrewConfirmModal.jsx
 #: src/pages/Settings/PatchNotes.jsx
-#: src/pages/ShotHistory/ConfirmDeleteModal.jsx
 msgid "Close"
 msgstr "关闭"
 
@@ -923,10 +868,6 @@ msgstr "收起列设置"
 #: src/components/Navigation.jsx
 msgid "Collapse navigation"
 msgstr "收起导航"
-
-#: src/pages/ShotHistory/HistoryCard.jsx
-msgid "Collapse shot details"
-msgstr "收起萃取详情"
 
 #: src/pages/Statistics/components/toolbar/subcomponents.jsx
 msgid "Collapse statistics toolbar"
@@ -997,7 +938,6 @@ msgstr "已配置的秤延迟 (ms)"
 
 #: src/components/ConfirmButton.jsx
 #: src/pages/ProfileList/index.jsx
-#: src/pages/ShotHistory/HistoryCard.jsx
 msgid "Confirm"
 msgstr "确认"
 
@@ -1008,10 +948,6 @@ msgstr "确认删除"
 #: src/pages/ProfileList/index.jsx
 msgid "Confirm deletion of {label} profile"
 msgstr "确认删除 {label} 曲线"
-
-#: src/pages/ShotHistory/HistoryCard.jsx
-msgid "Confirm deletion of shot"
-msgstr "确认删除萃取记录"
 
 #: src/app/MachineSetup.jsx
 #: src/pages/Settings/tabs/BluetoothTab.jsx
@@ -1095,26 +1031,13 @@ msgstr "收敛增益"
 msgid "Convert to Pro"
 msgstr "转换为 Pro"
 
+#: src/pages/ShotAnalyzer/components/library/useShotListActions.js
+msgid "Could not delete {failed} of {count} shots."
+msgstr "无法删除 {count} 次萃取中的 {failed} 次。"
+
 #: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
 msgid "Could not delete calibration profile: {message}"
 msgstr "无法删除校准曲线：{message}"
-
-#. placeholder {0}: resp.error
-#: src/pages/ShotHistory/index.jsx
-msgid "Could not delete history: {0}"
-msgstr "无法删除历史记录:{0}"
-
-#: src/pages/ShotHistory/index.jsx
-msgid "Could not delete history. Please try again."
-msgstr "无法删除历史记录,请重试。"
-
-#: src/pages/ShotHistory/index.jsx
-msgid "Could not delete shot {id}. Please try again."
-msgstr "无法删除萃取记录 {id},请重试。"
-
-#: src/pages/ShotHistory/index.jsx
-msgid "Could not export any shots. Please try again."
-msgstr "未能导出任何萃取记录,请重试。"
 
 #: src/pages/ProfileEdit/ProfileImageUpload.jsx
 msgid "Could not generate an image."
@@ -1177,24 +1100,14 @@ msgid "Current Flow"
 msgstr "当前流量"
 
 #: src/components/OverviewChart.jsx
-#: src/pages/ShotHistory/HistoryChart.jsx
 msgid "Current Pressure"
 msgstr "当前压力"
-
-#: src/pages/ShotHistory/HistoryChart.jsx
-msgid "Current Puck Flow"
-msgstr "当前粉饼流量"
-
-#: src/pages/ShotHistory/HistoryChart.jsx
-msgid "Current Pump Flow"
-msgstr "当前泵流量"
 
 #: src/pages/Statistics/components/ActivityHeatmap.jsx
 msgid "Current streak:"
 msgstr "当前连续天数："
 
 #: src/components/OverviewChart.jsx
-#: src/pages/ShotHistory/HistoryChart.jsx
 msgid "Current Temperature"
 msgstr "当前温度"
 
@@ -1271,7 +1184,6 @@ msgstr "仪表盘视图"
 msgid "Data validation failed - the shot data format may be incorrect"
 msgstr "数据校验失败 - 萃取数据格式可能不正确"
 
-#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 #: src/pages/Statistics/components/StatisticsSearchHelp.jsx
 msgid "Date"
 msgstr "日期"
@@ -1283,14 +1195,6 @@ msgstr "日期（最新）"
 #: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 msgid "Date (Old)"
 msgstr "日期（最早）"
-
-#: src/pages/Statistics/components/StatisticsSearchHelp.jsx
-msgid "Date basis (<0>Shot / Auto / Upload</0>) appears only when missing shot timestamps are detected."
-msgstr "仅在检测到缺失萃取时间戳时才显示日期依据（<0>萃取 / 自动 / 上传</0>）。"
-
-#: src/pages/Statistics/components/toolbar/subcomponents.jsx
-msgid "Date Basis:"
-msgstr "日期依据："
 
 #: src/pages/Statistics/components/toolbar/helpers.js
 msgid "Date Range"
@@ -1355,18 +1259,14 @@ msgid "degrees Celsius"
 msgstr "摄氏度"
 
 #: src/pages/ProfileList/index.jsx
+#: src/pages/ShotAnalyzer/components/library/LibraryPanel.jsx
 #: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
-#: src/pages/ShotHistory/HistoryCard.jsx
 msgid "Delete"
 msgstr "删除"
 
 #: src/pages/ProfileList/index.jsx
 msgid "Delete {label} profile"
 msgstr "删除 {label} 曲线"
-
-#: src/pages/ShotHistory/index.jsx
-msgid "Delete all"
-msgstr "全部删除"
 
 #: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 msgid "Delete All"
@@ -1376,29 +1276,9 @@ msgstr "全部删除"
 msgid "Delete all profiles"
 msgstr "删除所有曲线"
 
-#: src/pages/ShotHistory/index.jsx
-msgid "Delete all shots"
-msgstr "删除全部萃取记录"
-
-#: src/pages/ShotHistory/index.jsx
-msgid "Delete all shots?"
-msgstr "删除全部萃取记录?"
-
 #: src/pages/ShotAnalyzer/components/library/LibraryPanel.jsx
 msgid "Delete failed: {message}"
 msgstr "删除失败：{message}"
-
-#: src/pages/ShotHistory/index.jsx
-msgid "Delete filtered shots"
-msgstr "删除筛选出的萃取记录"
-
-#: src/pages/ShotHistory/index.jsx
-msgid "Delete filtered shots ({totalFilteredItems})"
-msgstr "删除筛选出的萃取记录({totalFilteredItems})"
-
-#: src/pages/ShotHistory/index.jsx
-msgid "Delete filtered shots?"
-msgstr "删除筛选出的萃取记录?"
 
 #: src/components/MachineProfileControl.jsx
 msgid "Delete imported profile"
@@ -1416,10 +1296,6 @@ msgstr "删除预设"
 msgid "Delete profile"
 msgstr "删除曲线"
 
-#: src/pages/ShotHistory/HistoryCard.jsx
-msgid "Delete shot"
-msgstr "删除萃取记录"
-
 #: src/components/MachineProfileControl.jsx
 msgid "Delete this imported profile?"
 msgstr "删除此导入的配置？"
@@ -1436,25 +1312,13 @@ msgstr "删除此预设？"
 msgid "Delete this schedule"
 msgstr "删除此计划"
 
-#. placeholder {0}: targets.length
-#. placeholder {1}: failedIds.join(', ')
-#: src/pages/ShotHistory/index.jsx
-msgid "Deleted {done} of {0} shots. Failed: {1}"
-msgstr "已删除 {done} / {0} 条萃取记录。失败:{1}"
-
 #: src/pages/Settings/PluginCard.jsx
 msgid "Deleted profile"
 msgstr "已删除的曲线"
 
-#. placeholder {0}: progress.current
-#. placeholder {1}: progress.total
-#: src/pages/ShotHistory/ConfirmDeleteModal.jsx
-msgid "Deleting shot {0} of {1}..."
-msgstr "正在删除萃取记录 {0} / {1}..."
-
-#: src/pages/ShotHistory/ConfirmDeleteModal.jsx
-msgid "Deleting…"
-msgstr "正在删除…"
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Deleting shots..."
+msgstr "正在删除萃取..."
 
 #: src/pages/Settings/tabs/CleaningSection.jsx
 msgid "Descaling"
@@ -1537,10 +1401,6 @@ msgstr "传感器到加水线的距离"
 msgid "Do you really want to export all {count} filtered profiles? (Profiles are downloaded individually, one after the other.)"
 msgstr "确定要导出全部 {count} 条筛选出的曲线吗？（曲线将逐个依次下载。）"
 
-#: src/pages/ShotAnalyzer/components/library/LibraryDropdown.jsx
-msgid "Do you really want to export all {count} filtered shots? (Shots are downloaded individually, one after the other.)"
-msgstr "确定要导出全部 {count} 条筛选出的萃取记录吗？（萃取记录将逐个依次下载。）"
-
 #: src/components/PumpFlowCalibration/Footer.jsx
 #: src/pages/SetupWizard/index.jsx
 msgid "Done"
@@ -1554,10 +1414,6 @@ msgstr "粉量"
 msgid "Dose In"
 msgstr "粉量"
 
-#: src/pages/ShotHistory/ShotNotesCard.jsx
-msgid "Dose In (g)"
-msgstr "粉量 (g)"
-
 #: src/pages/ProfileEdit/ProfileMainInformation.jsx
 msgid "Dose in g"
 msgstr "粉量 (g)"
@@ -1565,10 +1421,6 @@ msgstr "粉量 (g)"
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
 msgid "Dose Out"
 msgstr "出液量"
-
-#: src/pages/ShotHistory/ShotNotesCard.jsx
-msgid "Dose Out (g)"
-msgstr "出液量 (g)"
 
 #: src/pages/Settings/tabs/SystemTab.jsx
 msgid "Download Support Data"
@@ -1581,10 +1433,6 @@ msgstr "正在下载导出..."
 #: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
 msgid "Downloading shot #{shotId}"
 msgstr "正在下载萃取 #{shotId}"
-
-#: src/pages/ShotAnalyzer/components/EmptyState.jsx
-msgid "Drag and drop files onto the status bar or use the import icons in the shot and profile badges."
-msgstr "将文件拖放到状态栏，或使用萃取和曲线标签中的导入图标。"
 
 #: src/pages/ProfileList/index.jsx
 msgid "Drag disabled on search result"
@@ -1656,14 +1504,6 @@ msgstr "萃取过程中，调节阀门使压力先达到 1 bar，再达到 9 bar
 msgid "E.g. water tank low, scale battery low."
 msgstr "例如水箱水位低、秤电量低。"
 
-#: src/pages/ShotHistory/ShotNotesCard.jsx
-msgid "e.g., 2.5, Medium-Fine"
-msgstr "例如 2.5、中细"
-
-#: src/pages/ShotHistory/ShotNotesCard.jsx
-msgid "e.g., Single Origin, Blend"
-msgstr "例如单品、拼配"
-
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 msgid "Ease In"
 msgstr "缓入"
@@ -1677,7 +1517,6 @@ msgid "Ease Out"
 msgstr "缓出"
 
 #: src/pages/ProfileList/index.jsx
-#: src/pages/ShotHistory/ShotNotesCard.jsx
 msgid "Edit"
 msgstr "编辑"
 
@@ -1861,10 +1700,6 @@ msgstr "展开列设置"
 msgid "Expand navigation"
 msgstr "展开导航"
 
-#: src/pages/ShotHistory/HistoryCard.jsx
-msgid "Expand shot details"
-msgstr "展开萃取详情"
-
 #: src/pages/Statistics/components/toolbar/subcomponents.jsx
 msgid "Expand statistics toolbar"
 msgstr "展开统计工具栏"
@@ -1874,9 +1709,9 @@ msgid "Explain WebM export"
 msgstr "WebM 导出说明"
 
 #: src/pages/ProfileList/index.jsx
+#: src/pages/ShotAnalyzer/components/library/LibraryPanel.jsx
 #: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
 #: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
-#: src/pages/ShotHistory/HistoryCard.jsx
 msgid "Export"
 msgstr "导出"
 
@@ -1887,6 +1722,10 @@ msgstr "导出 {label} 曲线"
 #: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 msgid "Export All"
 msgstr "全部导出"
+
+#: src/pages/ShotAnalyzer/components/library/useShotListActions.js
+msgid "Export all {count} filtered shots to one JSON file?"
+msgstr "将筛选出的全部 {count} 次萃取导出到一个 JSON 文件？"
 
 #: src/pages/ProfileList/index.jsx
 msgid "Export all profiles"
@@ -1909,6 +1748,7 @@ msgid "Export current shot"
 msgstr "导出当前萃取"
 
 #: src/pages/ShotAnalyzer/components/library/LibraryPanel.jsx
+#: src/pages/ShotAnalyzer/components/library/useShotListActions.js
 msgid "Export failed: {message}"
 msgstr "导出失败：{message}"
 
@@ -1916,9 +1756,9 @@ msgstr "导出失败：{message}"
 msgid "Export File"
 msgstr "导出文件"
 
-#: src/pages/ShotHistory/index.jsx
-msgid "Export filtered shots"
-msgstr "导出筛选出的萃取记录"
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Export Filtered Shots"
+msgstr "导出筛选后的萃取"
 
 #: src/pages/ProfileList/index.jsx
 msgid "Export profile"
@@ -1936,21 +1776,14 @@ msgstr "导出设置"
 msgid "Export Settings"
 msgstr "导出设置"
 
-#: src/pages/ShotHistory/HistoryCard.jsx
-msgid "Export shot data"
-msgstr "导出萃取数据"
+#. placeholder {0}: completed.length
+#: src/pages/ShotAnalyzer/components/library/useShotListActions.js
+msgid "Exported {0} of {count} shots ({failed} failed)."
+msgstr "已导出 {count} 次萃取中的 {0} 次（{failed} 次失败）。"
 
-#. placeholder {0}: exported.length
-#. placeholder {1}: targets.length
-#: src/pages/ShotHistory/index.jsx
-msgid "Exported {0} of {1} shots ({failed} failed)."
-msgstr "已导出 {0} / {1} 条萃取记录({failed} 条失败)。"
-
-#. placeholder {0}: exportProgress.current
-#. placeholder {1}: exportProgress.total
-#: src/pages/ShotHistory/index.jsx
-msgid "Exporting shot {0} of {1}..."
-msgstr "正在导出萃取记录 {0} / {1}..."
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Exporting shots..."
+msgstr "正在导出萃取..."
 
 #: src/pages/ShotAnalyzer/components/analysisTable/analysisTablePhases.js
 #: src/pages/ShotAnalyzer/utils/columns.js
@@ -2013,8 +1846,8 @@ msgid "Fill the water tank and close the steam knob."
 msgstr "请加满水箱并关闭蒸汽旋钮。"
 
 #: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
-msgid "Filter library source"
-msgstr "筛选库来源"
+msgid "Filter by rating"
+msgstr "按评分筛选"
 
 #: src/pages/Home/utils.js
 msgctxt "process action"
@@ -2163,10 +1996,6 @@ msgstr "完整"
 msgid "Further Resources"
 msgstr "更多资源"
 
-#: src/pages/ShotAnalyzer/components/EmptyState.jsx
-msgid "GaggiMate (GM)"
-msgstr "GaggiMate (GM)"
-
 #: src/pages/SetupWizard/PluginsStep.jsx
 msgid "GaggiMate can connect to your smart home, grinder and more. Enable what you need now; you can always change this later in the settings."
 msgstr "GaggiMate 可以连接你的智能家居、磨豆机等。现在启用你需要的功能，之后也可以随时在设置中更改。"
@@ -2273,10 +2102,6 @@ msgstr "研磨"
 msgid "Grind once with GbS to see which recipe number your grinder reports."
 msgstr "使用 GbS 研磨一次，即可查看磨豆机报告的配方编号。"
 
-#: src/pages/ShotHistory/ShotNotesCard.jsx
-msgid "Grind Setting"
-msgstr "研磨度"
-
 #: src/pages/Home/cards/ActionCard.jsx
 msgid "Grind target"
 msgstr "研磨目标"
@@ -2379,15 +2204,11 @@ msgstr "秤延迟过高"
 msgid "HIGH SCALE DELAY"
 msgstr "秤延迟过高"
 
-#: src/pages/ShotHistory/index.jsx
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 msgid "Highest ID First"
 msgstr "ID 从大到小"
 
-#: src/pages/ShotHistory/index.jsx
-msgid "Highest Rated"
-msgstr "评分最高"
-
-#: src/pages/ShotHistory/index.jsx
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 msgid "Highest Volume"
 msgstr "出液量最多"
 
@@ -2462,15 +2283,6 @@ msgstr "下方面板列表中存在弹性空间项时此设置无效。"
 msgid "Image"
 msgstr "图片"
 
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/MobileStatusActionsMenu.jsx
-msgid "Import"
-msgstr "导入"
-
-#: src/pages/ShotAnalyzer/components/EmptyState.jsx
-msgid "Import a shot file or select one from your library to start analyzing."
-msgstr "导入萃取文件或从库中选择一个开始分析。"
-
 #: src/components/MachineProfileControl.jsx
 msgid "Import configuration"
 msgstr "导入配置"
@@ -2491,23 +2303,11 @@ msgstr "导入设置"
 msgid "Import Settings"
 msgstr "导入设置"
 
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
-msgid "Import shot or profile"
-msgstr "导入萃取或曲线"
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/MobileStatusActionsMenu.jsx
-msgid "Importing"
-msgstr "导入中"
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
-msgid "Importing shot or profile"
-msgstr "正在导入萃取或曲线"
-
 #: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
 msgid "Include legend"
 msgstr "包含图例"
 
-#: src/pages/ShotHistory/HistoryCard.jsx
+#: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
 msgid "INCOMPLETE"
 msgstr "未完成"
 
@@ -2678,14 +2478,6 @@ msgstr "称重传感器 1 比例系数"
 msgid "Load Cell 2 Scale Factor"
 msgstr "称重传感器 2 比例系数"
 
-#: src/pages/ShotHistory/HistoryCard.jsx
-msgid "Load first"
-msgstr "请先加载"
-
-#: src/pages/ShotHistory/HistoryCard.jsx
-msgid "Load shot data first by expanding the shot"
-msgstr "请先展开萃取以加载萃取数据"
-
 #: src/pages/Settings/index.jsx
 msgid "Loaded {importCount, plural, one {# setting} other {# settings}} from {importName}. All other settings are kept. Save to apply."
 msgstr "已从 {importName} 加载 {importCount, plural, other {# 项设置}}。其他设置保持不变。保存后生效。"
@@ -2706,21 +2498,9 @@ msgstr "正在加载插件设置…"
 msgid "Loading profiles"
 msgstr "正在加载曲线"
 
-#: src/pages/ShotHistory/HistoryCard.jsx
-msgid "Loading shot data..."
-msgstr "正在加载萃取数据..."
-
-#: src/pages/ShotAnalyzer/components/EmptyState.jsx
-msgid "Local Browser Storage (WEB)"
-msgstr "本地浏览器存储 (WEB)"
-
 #: src/pages/Statistics/components/StatisticsSearchHelp.jsx
 msgid "Local browser time is used."
 msgstr "使用本地浏览器时间。"
-
-#: src/pages/ShotHistory/index.jsx
-msgid "Longest Duration"
-msgstr "时长最长"
 
 #: src/pages/Statistics/components/ActivityHeatmap.jsx
 msgid "Longest streak:"
@@ -2735,15 +2515,11 @@ msgstr "正在查找咖啡机… 如果你的咖啡机没有出现，请通过�
 msgid "Low"
 msgstr "低"
 
-#: src/pages/ShotHistory/index.jsx
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 msgid "Lowest ID first"
 msgstr "ID 从小到大"
 
-#: src/pages/ShotHistory/index.jsx
-msgid "Lowest Rated"
-msgstr "评分最低"
-
-#: src/pages/ShotHistory/index.jsx
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 msgid "Lowest Volume"
 msgstr "出液量最少"
 
@@ -2992,7 +2768,11 @@ msgctxt "time bucket"
 msgid "Month"
 msgstr "月"
 
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/MobileStatusActionsMenu.jsx
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/AnalyzerActionBar.jsx
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "More"
+msgstr "更多"
+
 #: src/pages/ShotAnalyzer/components/library/LibraryActionsMenu.jsx
 msgid "More actions"
 msgstr "更多操作"
@@ -3038,6 +2818,7 @@ msgid "MQTT User"
 msgstr "MQTT 用户名"
 
 #: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/AnalyzerActionBar.jsx
 msgid "Multi-Compare"
 msgstr "多重对比"
 
@@ -3052,10 +2833,6 @@ msgstr "必须大于到加水线的距离。"
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Must match the physical RATE-jumper configuration on the HX711 board. This setting does not switch the RATE pin."
 msgstr "必须与 HX711 板上的 RATE 跳线物理配置一致。此设置不会切换 RATE 引脚。"
-
-#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
-msgid "Name"
-msgstr "名称"
 
 #: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 msgid "Name (A-Z)"
@@ -3110,13 +2887,8 @@ msgstr "NEW"
 msgid "New shot did not appear in history — was it cancelled?"
 msgstr "新的萃取未出现在历史记录中 — 是否已取消？"
 
-#: src/pages/ShotHistory/index.jsx
-msgid "Newest First"
-msgstr "最新优先"
-
 #: src/pages/ProfileEdit/ExtendedProfileForm.jsx
 #: src/pages/SetupWizard/index.jsx
-#: src/pages/ShotHistory/index.jsx
 msgid "Next"
 msgstr "下一个"
 
@@ -3168,10 +2940,6 @@ msgstr "没有更多可用类型"
 msgid "No new commits since the installed version"
 msgstr "自已安装版本以来没有新的提交"
 
-#: src/pages/ShotHistory/ShotNotesCard.jsx
-msgid "No notes added"
-msgstr "未添加备注"
-
 #: src/app/MachineSetup.jsx
 msgid "No other machines found."
 msgstr "未找到其他咖啡机。"
@@ -3213,23 +2981,18 @@ msgstr "没有可供分析的样本数据。"
 msgid "No scales found"
 msgstr "未找到秤"
 
-#: src/pages/ShotAnalyzer/components/EmptyState.jsx
 #: src/pages/ShotAnalyzer/components/library/libraryDisplay.js
 #: src/pages/ShotAnalyzer/components/useShotNotesState.js
 msgid "No Shot Loaded"
 msgstr "未加载萃取"
 
-#: src/pages/ShotHistory/index.jsx
-msgid "No shots available"
-msgstr "没有可用的萃取记录"
-
 #: src/pages/Statistics/components/statisticsView/StatisticsView.jsx
 msgid "No shots found for the selected filters."
 msgstr "所选筛选条件下没有萃取记录。"
 
-#: src/pages/ShotHistory/index.jsx
-msgid "No shots match your search and filter criteria"
-msgstr "没有符合搜索和筛选条件的萃取记录"
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "No shots or profiles match the current filters."
+msgstr "没有符合当前筛选条件的萃取或配置。"
 
 #: src/pages/Statistics/components/statisticsView/StatisticsView.jsx
 msgid "No Statistics Built Yet"
@@ -3242,10 +3005,6 @@ msgstr "未找到支持回放导出的视频录制器。"
 #: src/pages/ShotAnalyzer/components/shotChart/controls/compareControls.jsx
 msgid "No Targets"
 msgstr "无目标"
-
-#: src/pages/ShotHistory/HistoryCard.jsx
-msgid "No timestamp available"
-msgstr "无时间戳"
 
 #: src/pages/Settings/tabs/CalibrationTab.jsx
 msgid "No valid gains were produced. Your existing PID settings have been preserved. Try increasing Test Duration or confirm the boiler was cold at start."
@@ -3289,7 +3048,7 @@ msgstr "未找到"
 msgid "Not in range. Switch it on to reconnect."
 msgstr "不在范围内。打开它以重新连接。"
 
-#: src/pages/ShotHistory/HistoryCard.jsx
+#: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
 msgid "Not rated"
 msgstr "未评分"
 
@@ -3299,7 +3058,6 @@ msgstr "未记录"
 
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
 #: src/pages/ShotAnalyzer/shotAnalyzer/ActiveAnalysisView.jsx
-#: src/pages/ShotHistory/ShotNotesCard.jsx
 msgid "Notes"
 msgstr "备注"
 
@@ -3342,10 +3100,6 @@ msgstr "正常"
 msgid "Old firmware"
 msgstr "旧版固件"
 
-#: src/pages/ShotHistory/index.jsx
-msgid "Oldest First"
-msgstr "最早优先"
-
 #: src/pages/Settings/PluginCard.jsx
 msgid "On startup (s)"
 msgstr "开机时 (s)"
@@ -3366,6 +3120,10 @@ msgstr "曲线栏中只能导入曲线文件。"
 msgid "Only shot files can be imported in the shot field."
 msgstr "萃取栏中只能导入萃取文件。"
 
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgid "Open"
+msgstr "打开"
+
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
 msgctxt "valve state"
@@ -3381,17 +3139,12 @@ msgid "Open full display"
 msgstr "打开全屏显示"
 
 #: src/pages/Home/cards/RecentShotsCard.jsx
-#: src/pages/ShotHistory/HistoryCard.jsx
 msgid "Open in Analyzer"
 msgstr "在分析器中打开"
 
 #: src/pages/ShotAnalyzer/components/library/StatusBar.jsx
 msgid "Open library"
 msgstr "打开库"
-
-#: src/pages/ShotAnalyzer/components/EmptyState.jsx
-msgid "Open or close the library."
-msgstr "打开或关闭库。"
 
 #: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
 msgid "Open profile actions menu"
@@ -3405,9 +3158,14 @@ msgstr "打开曲线列表操作菜单"
 msgid "Open Settings → Machine to configure your machine before use."
 msgstr "使用前请打开“设置 → 咖啡机”配置你的咖啡机。"
 
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/AnalyzerActionBar.jsx
 #: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
 msgid "Open shot actions menu"
 msgstr "打开萃取操作菜单"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgid "Open shot or profile"
+msgstr "打开萃取或配置"
 
 #: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 msgid "Open shots actions menu"
@@ -3417,17 +3175,13 @@ msgstr "打开萃取列表操作菜单"
 msgid "Open statistics"
 msgstr "打开统计"
 
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/MobileStatusActionsMenu.jsx
-msgid "Open status actions menu"
-msgstr "打开状态操作菜单"
-
 #: src/pages/Settings/PluginCard.jsx
 msgid "Open the Home app on your iOS device, select Add Accessory, and enter the setup code shown above."
 msgstr "在 iOS 设备上打开“家庭”App，选择“添加配件”，然后输入上方显示的设置代码。"
 
-#: src/pages/ShotAnalyzer/components/EmptyState.jsx
-msgid "Opens imported external shots and profiles temporarily without saving them to the browser library."
-msgstr "临时打开导入的外部萃取和曲线，不保存到浏览器库中。"
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgid "Opening shot or profile"
+msgstr "正在打开萃取或配置"
 
 #: src/pages/ProfileEdit/ProfileMainInformation.jsx
 msgid "Optional description for this profile"
@@ -3480,6 +3234,7 @@ msgstr "暂停"
 msgid "Pause replay"
 msgstr "暂停回放"
 
+#: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
 #: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotMetricCards.jsx
 msgid "Peak Pressure"
@@ -3533,7 +3288,6 @@ msgstr "阶段 {phaseNum}"
 #: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTable.jsx
 #: src/pages/ShotAnalyzer/components/shotChart/compare/compareModel.js
 #: src/pages/ShotAnalyzer/components/shotChart/tooltip/tooltipModel.js
-#: src/pages/ShotHistory/HistoryChart.jsx
 #: src/pages/Statistics/services/StatisticsService.js
 msgid "Phase {phaseNumber}"
 msgstr "阶段 {phaseNumber}"
@@ -3693,14 +3447,6 @@ msgstr "预热中..."
 msgid "Preinfusion"
 msgstr "预浸泡"
 
-#: src/pages/ShotHistory/ConfirmDeleteModal.jsx
-msgid "Preparing deletion..."
-msgstr "正在准备删除..."
-
-#: src/pages/ShotHistory/index.jsx
-msgid "Preparing export..."
-msgstr "正在准备导出..."
-
 #: src/pages/ShotAnalyzer/components/shotChart/constants.js
 msgid "Preparing MP4 export..."
 msgstr "正在准备 MP4 导出..."
@@ -3814,7 +3560,6 @@ msgid "Pressure test"
 msgstr "压力测试"
 
 #: src/pages/ProfileEdit/ExtendedProfileForm.jsx
-#: src/pages/ShotHistory/index.jsx
 msgid "Previous"
 msgstr "上一个"
 
@@ -3853,7 +3598,6 @@ msgid "profile"
 msgstr "曲线"
 
 #: src/pages/Home/cards/ProfileCard.jsx
-#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 #: src/pages/Statistics/components/ProfileGroupTable.jsx
 msgid "Profile"
 msgstr "曲线"
@@ -3864,16 +3608,8 @@ msgid "Profile"
 msgstr "曲线"
 
 #: src/pages/ShotAnalyzer/services/LibraryService.js
-msgid "Profile {nameOrId} not found"
-msgstr "未找到曲线 {nameOrId}"
-
-#: src/pages/ShotAnalyzer/services/LibraryService.js
-msgid "Profile {nameOrId} not found in browser storage"
-msgstr "浏览器存储中未找到曲线 {nameOrId}"
-
-#: src/pages/ShotHistory/index.jsx
-msgid "Profile A-Z"
-msgstr "曲线 A-Z"
+msgid "Profile {id} not found"
+msgstr "未找到配置文件 {id}"
 
 #: src/pages/DashboardSettings/index.jsx
 msgid "Profile Chart Height"
@@ -3907,17 +3643,13 @@ msgstr "曲线信息"
 msgid "Profile is too large."
 msgstr "配置过大。"
 
-#: src/pages/ShotAnalyzer/services/IndexedDBService.js
-msgid "Profile label is required for browser storage"
-msgstr "浏览器存储需要曲线标签"
-
 #: src/pages/ProfileList/index.jsx
 msgid "Profile list"
 msgstr "曲线列表"
 
 #: src/pages/ShotAnalyzer/components/library/StatusBar.jsx
-msgid "Profile mismatch detected. Use Import below or drop files here to import."
-msgstr "检测到曲线不匹配。使用下方的导入或将文件拖放到此处进行导入。"
+msgid "Profile mismatch detected. Use Open below or drop files here."
+msgstr "检测到配置不匹配。请使用下方的“打开”按钮或将文件拖放到此处。"
 
 #: src/pages/Settings/PluginCard.jsx
 msgid "Profile per grinder recipe"
@@ -3932,6 +3664,7 @@ msgid "Profile Statistics"
 msgstr "曲线统计"
 
 #: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/AnalyzerActionBar.jsx
 msgid "Profile Stats"
 msgstr "曲线统计"
 
@@ -3946,10 +3679,6 @@ msgstr "配置已更新"
 #: src/components/MachineProfileControl.jsx
 msgid "Profile values"
 msgstr "配置参数"
-
-#: src/pages/ShotHistory/index.jsx
-msgid "Profile Z-A"
-msgstr "曲线 Z-A"
 
 #: src/pages/Settings/tabs/PhysicalButtonsSection.jsx
 msgid "Profile: {profileLabel}"
@@ -4152,13 +3881,9 @@ msgstr "渐变目标选择"
 msgid "Range"
 msgstr "范围"
 
-#: src/pages/ShotHistory/index.jsx
-msgid "Rated Only"
-msgstr "仅已评分"
-
-#: src/pages/ShotHistory/ShotNotesCard.jsx
-msgid "Rating"
-msgstr "评分"
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Rated"
+msgstr "已评分"
 
 #: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 msgid "Rating (High)"
@@ -4171,10 +3896,6 @@ msgstr "评分（低）"
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
 msgid "Ratio"
 msgstr "粉液比"
-
-#: src/pages/ShotHistory/ShotNotesCard.jsx
-msgid "Ratio (1:{ratioLabel})"
-msgstr "粉液比 (1:{ratioLabel})"
 
 #: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
 msgid "Ratio reached"
@@ -4450,18 +4171,7 @@ msgstr "星期六"
 #: src/app/MachineSetup.jsx
 #: src/pages/ProfileEdit/ExtendedProfileForm.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
-#: src/pages/ShotHistory/ShotNotesCard.jsx
 msgid "Save"
-msgstr "保存"
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
-msgctxt "import mode"
-msgid "Save"
-msgstr "保存"
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarModeHint.jsx
-msgctxt "import mode badge"
-msgid "SAVE"
 msgstr "保存"
 
 #: src/pages/Settings/StickyFormFooter.jsx
@@ -4505,18 +4215,6 @@ msgstr "保存设置"
 #: src/pages/ProfileEdit/ProfileImageUpload.jsx
 msgid "Save the profile first to add an image."
 msgstr "请先保存曲线再添加图片。"
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/MobileStatusActionsMenu.jsx
-msgid "Save to Browser"
-msgstr "保存到浏览器"
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
-msgid "Save to Browser. Click to switch imports to View temporarily."
-msgstr "保存到浏览器。点击可将导入切换为“临时查看”。"
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarModeHint.jsx
-msgid "Save to Browser. Imported shots and profiles will now be saved to the browser library."
-msgstr "保存到浏览器。导入的萃取和曲线将保存到浏览器库中。"
 
 #: src/components/PumpFlowCalibration/Footer.jsx
 msgid "Save to machine"
@@ -4651,7 +4349,6 @@ msgid "Search shots..."
 msgstr "搜索萃取..."
 
 #: src/pages/ProfileList/index.jsx
-#: src/pages/ShotHistory/index.jsx
 msgid "Search..."
 msgstr "搜索..."
 
@@ -4700,10 +4397,6 @@ msgstr "选择 Pro 曲线类型"
 #: src/pages/Statistics/components/toolbar/subcomponents.jsx
 msgid "Select Profiles..."
 msgstr "选择曲线..."
-
-#: src/pages/Statistics/components/toolbar/subcomponents.jsx
-msgid "Select shot and profile sources"
-msgstr "选择萃取和曲线来源"
 
 #: src/pages/Statistics/components/toolbar/subcomponents.jsx
 msgid "Select Shots..."
@@ -4803,17 +4496,8 @@ msgstr "分享"
 msgid "Shift = Range"
 msgstr "Shift = 范围"
 
-#: src/pages/ShotHistory/index.jsx
-msgid "Shortest Duration"
-msgstr "时长最短"
-
 #: src/pages/Statistics/components/toolbar/subcomponents.jsx
 msgid "shot"
-msgstr "萃取"
-
-#: src/pages/Statistics/components/toolbar/constants.js
-msgctxt "date basis"
-msgid "Shot"
 msgstr "萃取"
 
 #: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
@@ -4825,10 +4509,6 @@ msgstr "萃取"
 msgctxt "table column"
 msgid "Shot"
 msgstr "萃取"
-
-#: src/pages/ShotAnalyzer/services/LibraryService.js
-msgid "Shot {idStr} not found in browser storage"
-msgstr "浏览器存储中未找到萃取 {idStr}"
 
 #: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTable.jsx
 #: src/pages/ShotAnalyzer/components/shotChart/compare/compareChartConfig.js
@@ -4842,10 +4522,6 @@ msgstr "萃取 {shotNumber}"
 #: src/pages/ShotAnalyzer/shotAnalyzer/ActiveAnalysisView.jsx
 msgid "Shot analysis table"
 msgstr "萃取分析表格"
-
-#: src/components/Navigation.jsx
-msgid "Shot Analyzer"
-msgstr "萃取分析器"
 
 #: src/pages/ShotAnalyzer/components/library/AnalyzerPanelSlot.jsx
 msgid "Shot and profile import dropzone"
@@ -4868,7 +4544,7 @@ msgstr "萃取图表"
 msgid "Shot Controls"
 msgstr "萃取控制"
 
-#: src/pages/ShotHistory/HistoryCard.jsx
+#: src/pages/ShotAnalyzer/components/library/ShotVisualizerUpload.jsx
 msgid "Shot data is invalid or incomplete"
 msgstr "萃取数据无效或不完整"
 
@@ -4885,8 +4561,7 @@ msgstr "萃取完成"
 msgid "Shot finished. Waiting for it to be saved to history..."
 msgstr "萃取完成。正在等待保存到历史记录..."
 
-#: src/components/Navigation.jsx
-#: src/pages/ShotHistory/index.jsx
+#: src/pages/ShotAnalyzer/shotAnalyzer/ShotAnalyzer.jsx
 msgid "Shot History"
 msgstr "萃取历史"
 
@@ -4904,7 +4579,6 @@ msgid "Shot Metrics"
 msgstr "萃取指标"
 
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
-#: src/pages/ShotHistory/ShotNotesCard.jsx
 msgid "Shot Notes"
 msgstr "萃取备注"
 
@@ -4921,7 +4595,7 @@ msgstr "咖啡机上的萃取启动已取消。"
 msgid "Shot started"
 msgstr "萃取已开始"
 
-#: src/pages/ShotHistory/HistoryCard.jsx
+#: src/pages/ShotAnalyzer/components/library/ShotVisualizerUpload.jsx
 msgid "Shot uploaded successfully to visualizer.coffee!"
 msgstr "萃取已成功上传到 visualizer.coffee！"
 
@@ -5009,6 +4683,7 @@ msgstr "将控制列面板显示为独立卡片，或合并为一张统一卡片
 #: src/pages/Settings/PatchNotes.jsx
 msgid "showing the newest {0}"
 msgstr "显示最新的 {0} 个"
+
 #: src/pages/Statistics/components/StatisticsShotCompareSection.jsx
 msgid "Showing up to 100 latest shots. Refine with filters."
 msgstr "最多显示最近 100 条萃取记录。可使用筛选条件缩小范围。"
@@ -5095,24 +4770,11 @@ msgstr "智能研磨插件"
 msgid "Snapshotting shot history..."
 msgstr "正在生成萃取历史快照..."
 
-#: src/pages/Statistics/components/statisticsView/helpers.js
-msgid "Some shots have no shot timestamp. Choose how date handling should treat them (Shot = exclude missing, Auto = fallback to upload time, Upload = upload time only)."
-msgstr "部分萃取没有萃取时间戳。请选择日期处理方式（萃取 = 排除缺失项，自动 = 回退到上传时间，上传 = 仅使用上传时间）。"
-
-#: src/pages/Statistics/components/statisticsView/helpers.js
-msgid "Some shots have no shot timestamp. Choose how date handling should treat them (Shot = exclude missing, Auto = fallback to upload time, Upload = upload time only). Some shots have no usable date at all and may still be excluded from date filtering."
-msgstr "部分萃取没有萃取时间戳。请选择日期处理方式（萃取 = 排除缺失项，自动 = 回退到上传时间，上传 = 仅使用上传时间）。部分萃取完全没有可用日期，仍可能被日期筛选排除。"
-
-#: src/pages/Statistics/components/toolbar/subcomponents.jsx
-msgid "Some shots have no shot timestamp. Choose how date handling should treat them."
-msgstr "部分萃取没有萃取时间戳。请选择日期处理方式。"
-
-#: src/pages/Statistics/components/statisticsView/helpers.js
-msgid "Some shots have no usable shot timestamp. Date filtering may exclude them unless upload time is available."
-msgstr "部分萃取没有可用的萃取时间戳。除非有上传时间，否则日期筛选可能会将其排除。"
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Sort"
+msgstr "排序"
 
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
-#: src/pages/ShotHistory/ShotNotesCard.jsx
 msgid "Sour"
 msgstr "酸"
 
@@ -5201,10 +4863,6 @@ msgstr "从上一个设定值开始"
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "Start heating test"
 msgstr "开始加热测试"
-
-#: src/pages/ShotAnalyzer/components/EmptyState.jsx
-msgid "Start or end compare mode."
-msgstr "开始或结束对比模式。"
 
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "Start pressure test"
@@ -5366,10 +5024,6 @@ msgstr "存储 (SD 卡)"
 msgid "Storage & Memory"
 msgstr "存储与内存"
 
-#: src/pages/ShotAnalyzer/components/EmptyState.jsx
-msgid "Stores imported external shots and profiles locally in this browser on this device. They are not automatically available in other browsers or on other devices."
-msgstr "将导入的外部萃取和曲线保存在此设备的此浏览器中。它们不会自动出现在其他浏览器或其他设备上。"
-
 #: src/pages/SetupWizard/WifiStep.jsx
 msgid "Strong"
 msgstr "强"
@@ -5395,18 +5049,6 @@ msgstr "交换萃取 1 和萃取 2"
 #: src/pages/ShotAnalyzer/components/shotChart/MobileChartScrubber.jsx
 msgid "Swipe"
 msgstr "滑动"
-
-#: src/pages/ShotAnalyzer/components/EmptyState.jsx
-msgid "Switch between shots."
-msgstr "在萃取之间切换。"
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
-msgid "Switch import mode to Save to Browser"
-msgstr "将导入模式切换为保存到浏览器"
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
-msgid "Switch import mode to View temporarily"
-msgstr "将导入模式切换为临时查看"
 
 #: src/pages/DashboardSettings/index.jsx
 msgid "Switch to compact view"
@@ -5521,7 +5163,6 @@ msgstr "目标 P"
 #: src/components/OverviewChart.jsx
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
-#: src/pages/ShotHistory/HistoryChart.jsx
 msgid "Target Pressure"
 msgstr "目标压力"
 
@@ -5532,7 +5173,6 @@ msgstr "目标压力 (bar)"
 
 #: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
 #: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
-#: src/pages/ShotHistory/HistoryChart.jsx
 msgid "Target Pump Flow"
 msgstr "目标泵流量"
 
@@ -5566,7 +5206,6 @@ msgstr "目标温度"
 #: src/components/OverviewChart.jsx
 #: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotMetricCards.jsx
-#: src/pages/ShotHistory/HistoryChart.jsx
 msgid "Target Temperature"
 msgstr "目标温度"
 
@@ -5585,10 +5224,6 @@ msgstr "目标重量（克）"
 #: src/pages/Settings/PluginCard.jsx
 msgid "Tasmota IP"
 msgstr "Tasmota IP"
-
-#: src/pages/ShotHistory/ShotNotesCard.jsx
-msgid "Tasting notes, brewing observations, etc..."
-msgstr "风味笔记、冲煮观察等..."
 
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
 msgid "Tasting notes, brewing observations..."
@@ -5649,10 +5284,6 @@ msgstr "温度偏移 (°C)"
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "Temperature rise: {0} of {1} °C"
 msgstr "温度上升：{0} / {1} °C"
-
-#: src/pages/ShotAnalyzer/components/EmptyState.jsx
-msgid "Temporary View (VIEW)"
-msgstr "临时查看 (VIEW)"
 
 #: src/pages/Settings/tabs/CalibrationTab.jsx
 msgid "Test Duration (seconds)"
@@ -5878,10 +5509,6 @@ msgctxt "ramp target"
 msgid "Time"
 msgstr "时间"
 
-#: src/pages/ShotHistory/HistoryChart.jsx
-msgid "Time (s)"
-msgstr "时间 (s)"
-
 #: src/pages/ShotAnalyzer/utils/formatting.js
 msgid "Time Limit"
 msgstr "时间限制"
@@ -6055,7 +5682,7 @@ msgstr "未知错误。"
 msgid "Unknown field \"{fieldRaw}\". Supported: {supportedFields}."
 msgstr "未知字段“{fieldRaw}”。支持的字段：{supportedFields}。"
 
-#: src/pages/ShotHistory/HistoryCard.jsx
+#: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
 msgid "Unknown Profile"
 msgstr "未知曲线"
 
@@ -6066,6 +5693,10 @@ msgstr "未知秤"
 #: src/pages/Statistics/components/statisticsView/helpers.js
 msgid "Unknown Shot"
 msgstr "未知萃取"
+
+#: src/pages/ShotAnalyzer/components/library/StatusBar.jsx
+msgid "Unload shot"
+msgstr "关闭萃取"
 
 #: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
 msgid "Unpin {displayName}"
@@ -6087,9 +5718,9 @@ msgstr "取消固定曲线"
 msgid "Unpin shot"
 msgstr "取消固定萃取"
 
-#: src/pages/ShotHistory/index.jsx
-msgid "Unrated Only"
-msgstr "仅未评分"
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Unrated"
+msgstr "未评分"
 
 #: src/pages/Statistics/utils/statisticsSearchDsl.js
 msgid "Unsupported date expression. Use DD.MM.YYYY, optional HH:MM, or h-7d."
@@ -6159,16 +5790,11 @@ msgstr "正在更新 Headless 文件系统"
 msgid "Updating Headless firmware"
 msgstr "正在更新 Headless 固件"
 
-#: src/pages/Statistics/components/toolbar/constants.js
-msgctxt "date basis"
-msgid "Upload"
-msgstr "上传"
-
 #: src/utils/profileImage.js
 msgid "Upload failed"
 msgstr "上传失败"
 
-#: src/pages/ShotHistory/HistoryCard.jsx
+#: src/pages/ShotAnalyzer/components/library/ShotVisualizerUpload.jsx
 msgid "Upload failed: {errorMessage}"
 msgstr "上传失败：{errorMessage}"
 
@@ -6180,12 +5806,9 @@ msgstr "上传图片"
 msgid "Upload Shot"
 msgstr "上传萃取"
 
-#: src/pages/ShotHistory/HistoryCard.jsx
-msgid "Upload to visualizer.coffee"
-msgstr "上传到 visualizer.coffee"
-
 #: src/components/VisualizerUploadModal.jsx
-#: src/pages/ShotHistory/HistoryCard.jsx
+#: src/pages/ShotAnalyzer/components/library/LibraryPanel.jsx
+#: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
 msgid "Upload to Visualizer.coffee"
 msgstr "上传到 Visualizer.coffee"
 
@@ -6212,22 +5835,6 @@ msgstr "自定义内置配置时请使用不同的 ID。"
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Use Alba reservoir level to interlock steam refill"
 msgstr "使用 Alba 储水箱水位联锁蒸汽补水"
-
-#: src/pages/Statistics/components/toolbar/helpers.js
-msgid "Use shot timestamp only"
-msgstr "仅使用萃取时间戳"
-
-#: src/pages/Statistics/components/toolbar/helpers.js
-msgid "Use shot timestamp, fallback to upload time"
-msgstr "使用萃取时间戳，缺失时回退到上传时间"
-
-#: src/pages/ShotAnalyzer/components/EmptyState.jsx
-msgid "Use the status bar toggle to switch between <0>View temporarily</0> and <1>Save to Browser</1> before importing."
-msgstr "导入前，使用状态栏开关在 <0>临时查看</0> 和 <1>保存到浏览器</1> 之间切换。"
-
-#: src/pages/Statistics/components/toolbar/helpers.js
-msgid "Use upload time only"
-msgstr "仅使用上传时间"
 
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Used for the GaggiMate hotspot when no Wi-Fi is configured (min. 8 characters)."
@@ -6302,16 +5909,6 @@ msgstr "视频（不支持）"
 msgid "Video export is not supported in this browser."
 msgstr "此浏览器不支持视频导出。"
 
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
-msgctxt "import mode"
-msgid "View"
-msgstr "查看"
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarModeHint.jsx
-msgctxt "import mode badge"
-msgid "VIEW"
-msgstr "查看"
-
 #: src/pages/Settings/PatchNotes.jsx
 msgid "View on GitHub"
 msgstr "在 GitHub 上查看"
@@ -6323,18 +5920,6 @@ msgstr "查看 {label} 曲线的统计"
 #: src/pages/ProfileList/index.jsx
 msgid "View statistics for this profile"
 msgstr "查看此曲线的统计"
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/MobileStatusActionsMenu.jsx
-msgid "View temporarily"
-msgstr "临时查看"
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
-msgid "View temporarily. Click to switch imports to Save to Browser."
-msgstr "临时查看。点击可将导入切换为“保存到浏览器”。"
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarModeHint.jsx
-msgid "View temporarily. Imported shots and profiles will now open temporarily in the analyzer."
-msgstr "临时查看。导入的萃取和曲线将临时在分析器中打开。"
 
 #: src/components/SettingsFormField.jsx
 msgid "Visible"
@@ -6391,7 +5976,7 @@ msgstr "警告"
 msgid "WARNING: Do you really want to IRREVOCABLY delete all {count} filtered profiles?"
 msgstr "警告：确定要不可撤销地删除全部 {count} 条筛选出的曲线吗？"
 
-#: src/pages/ShotAnalyzer/components/library/LibraryDropdown.jsx
+#: src/pages/ShotAnalyzer/components/library/useShotListActions.js
 msgid "WARNING: Do you really want to IRREVOCABLY delete all {count} filtered shots?"
 msgstr "警告：确定要不可撤销地删除全部 {count} 条筛选出的萃取记录吗？"
 
@@ -6457,11 +6042,6 @@ msgstr "水箱水位低"
 msgid "Weak"
 msgstr "弱"
 
-#: src/pages/Statistics/components/toolbar/constants.js
-msgctxt "shot source: browser storage"
-msgid "WEB"
-msgstr "WEB"
-
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Web Settings"
 msgstr "网页设置"
@@ -6502,7 +6082,6 @@ msgstr "周"
 #: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
 #: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotMetricCards.jsx
-#: src/pages/ShotHistory/HistoryChart.jsx
 #: src/pages/Statistics/components/MetricsTable.jsx
 #: src/pages/Statistics/components/PhaseStatistics.jsx
 #: src/utils/metricDefinitions.js
@@ -6525,7 +6104,6 @@ msgid "Weight (total)"
 msgstr "重量（总计）"
 
 #: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
-#: src/pages/ShotHistory/HistoryChart.jsx
 msgid "Weight Flow"
 msgstr "重量流量"
 
@@ -6627,7 +6205,3 @@ msgstr "新的 PID 参数已成功保存。"
 #: src/app/MachineSetup.jsx
 msgid "Your phone needs to be on the same Wi-Fi network as the machine."
 msgstr "手机需要与咖啡机处于同一 Wi-Fi 网络。"
-
-#: src/pages/ShotAnalyzer/components/EmptyState.jsx
-msgid "Your saved shots and profiles directly from the GaggiMate internal storage."
-msgstr "直接来自 GaggiMate 内部存储的已保存萃取和曲线。"

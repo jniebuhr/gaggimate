@@ -203,7 +203,6 @@ async function tryLoadActiveCompareSelection({
   clearPendingState,
   compareLoadIdRef,
   compareSelectionRequestIdRef,
-  importMode,
   requestId,
   setCompareIsSearchingProfile,
   setComparePendingKeys,
@@ -214,7 +213,7 @@ async function tryLoadActiveCompareSelection({
   const { item, loadId } = activeRequest;
 
   try {
-    const { shotWithMetadata, loadKey } = await loadCompareShotSelection({ item, importMode });
+    const { shotWithMetadata, loadKey } = await loadCompareShotSelection({ item });
     if (
       shouldAbortCompareLoad({
         requestId,
@@ -283,7 +282,6 @@ async function tryLoadActiveCompareSelection({
 export async function executeCompareSelectionLoad({
   requestId,
   selectionRequest,
-  importMode,
   compareSelectionRequestIdRef,
   compareLoadIdRef,
   pendingPrimarySelectionRef,
@@ -331,7 +329,6 @@ export async function executeCompareSelectionLoad({
       clearPendingState,
       compareLoadIdRef,
       compareSelectionRequestIdRef,
-      importMode,
       requestId,
       setCompareIsSearchingProfile,
       setComparePendingKeys,
@@ -351,15 +348,12 @@ export async function executeCompareSelectionLoad({
   return false;
 }
 
-async function loadCompareShotSelection({ item, importMode }) {
+async function loadCompareShotSelection({ item }) {
   const loadKey = getShotStorageKey(item);
-  const loadedShot = hasLoadedShotPayload(item)
-    ? item
-    : await libraryService.loadShot(loadKey, item.source);
+  const loadedShot = hasLoadedShotPayload(item) ? item : await libraryService.loadShot(loadKey);
   const shotWithMetadata = buildShotWithMetadata({
     item,
     loadedShot,
-    importMode,
     loadKey,
   });
 
@@ -383,7 +377,7 @@ async function tryAutoMatchCompareShotProfile({
 
   try {
     setCompareIsSearchingProfile(true);
-    const allProfiles = await libraryService.getAllProfiles('both');
+    const allProfiles = await libraryService.getAllProfiles();
     if (!isCurrentCompareLoad(loadId, compareLoadIdRef)) return;
 
     const matchedProfile = await loadPreferredAutoMatchedProfile(shotWithMetadata, allProfiles);

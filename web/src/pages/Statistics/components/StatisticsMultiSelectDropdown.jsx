@@ -420,7 +420,7 @@ export function StatisticsMultiSelectDropdown({
     };
   }, [open]);
 
-  // Prune stale selections when the available items change (e.g. after a source switch).
+  // Prune stale selections when the available items change (e.g. after filtering).
   // The latest callback is read from a ref so this effect only tracks data changes.
   useEffect(() => {
     const validIds = new Set((items || []).map(item => item.id).filter(Boolean));

@@ -2,16 +2,12 @@ import { msg } from '@lingui/core/macro';
 import { i18n } from '../../../i18n.js';
 
 export const ANALYZER_DB_KEYS = {
-  SHOTS: 'gaggimate_shots',
-  PROFILES: 'gaggimate_profiles',
   PRESETS: 'gaggimate_column_presets',
   USER_STANDARD: 'gaggimate_user_standard_cols',
   SINGLE_CHART_VISIBILITY: 'gaggimate_single_chart_visibility',
   COMPARE_TARGET_DISPLAY_MODE: 'gaggimate_compare_target_display_mode',
   COMPARE_ANNOTATIONS_ENABLED: 'gaggimate_compare_annotations_enabled',
   COMPARE_CHART_VISIBILITY: 'gaggimate_compare_chart_visibility',
-  LIBRARY_SHOTS_SOURCE_FILTER: 'gaggimate_library_shots_source_filter',
-  LIBRARY_PROFILES_SOURCE_FILTER: 'gaggimate_library_profiles_source_filter',
   PINNED_PROFILES: 'gaggimate_pinned_profiles',
   PINNED_SHOTS_BY_PROFILE: 'gaggimate_pinned_shots_by_profile',
 };
@@ -66,12 +62,6 @@ export const analyzerUiColors = {
   warningOrange: 'var(--analyzer-warning-orange)',
   warningOrangeStrong: 'var(--analyzer-warning-orange-strong)',
   warningOrangeShadow: 'var(--analyzer-warning-orange-shadow)',
-  sourceBadgeGmBg: 'var(--analyzer-source-gm-badge-bg)',
-  sourceBadgeGmBorder: 'var(--analyzer-source-gm-badge-border)',
-  sourceBadgeGmText: 'var(--analyzer-source-gm-badge-text)',
-  sourceBadgeWebBg: 'var(--analyzer-source-web-badge-bg)',
-  sourceBadgeWebBorder: 'var(--analyzer-source-web-badge-border)',
-  sourceBadgeWebText: 'var(--analyzer-source-web-badge-text)',
   brewByTimeLabelBg: 'var(--analyzer-brew-by-time-label-bg)',
   brewByTimeLabelBorder: 'var(--analyzer-brew-by-time-label-border)',
   brewByTimeLabelText: 'var(--analyzer-brew-by-time-label-text)',

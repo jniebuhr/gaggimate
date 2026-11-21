@@ -1,4 +1,4 @@
-import { resolveShotEffectiveTimestampMs } from './statisticsSearchDsl';
+import { resolveShotTimestampMs } from './statisticsSearchDsl';
 
 export const STATISTICS_CHART_SHOT_LIMIT = 100;
 
@@ -12,7 +12,7 @@ export function getLatestStatisticsChartEntries(entries) {
     )
     .map(entry => ({
       entry,
-      timestamp: resolveShotEffectiveTimestampMs({ ...entry.meta, ...entry.shotData }) || 0,
+      timestamp: resolveShotTimestampMs({ ...entry.meta, ...entry.shotData }) || 0,
     }))
     .sort((a, b) => b.timestamp - a.timestamp)
     .slice(0, STATISTICS_CHART_SHOT_LIMIT)

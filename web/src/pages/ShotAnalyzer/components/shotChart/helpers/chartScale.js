@@ -180,6 +180,13 @@ function formatAxisTick(value) {
   return rounded < 0 ? `-${absolute}` : absolute;
 }
 
+// Temperature ranges are narrow: integer rounding mislabels fractional tick positions.
+export function formatTemperatureAxisTick(value, index, ticks) {
+  if (Array.isArray(ticks) && index === ticks.length - 1) return '';
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? String(Number(numeric.toFixed(2))) : '';
+}
+
 export function formatUniqueAxisTick(value, index, ticks) {
   if (Array.isArray(ticks) && index === ticks.length - 1) return '';
 

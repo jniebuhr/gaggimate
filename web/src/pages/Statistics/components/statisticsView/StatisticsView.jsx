@@ -3,8 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlay } from '@fortawesome/free-solid-svg-icons/faPlay';
 import { Trans, useLingui } from '@lingui/react/macro';
 // Main StatisticsView orchestrator: wires hooks, toolbar, summary cards, and the detail section panel
-import { ApiServiceContext } from '../../../../services/ApiService';
-import { libraryService } from '../../../ShotAnalyzer/services/LibraryService';
+import { ApiServiceContext, machine } from '../../../../services/ApiService';
 import {
   ANALYZER_DB_KEYS,
   loadFromStorage,
@@ -17,13 +16,11 @@ import {
 } from '../../../ShotAnalyzer/utils/analyzerUtils';
 import { StatisticsToolbar, STATISTICS_RUN_BUTTON_TONE_CLASS } from '../StatisticsToolbar';
 import { SummaryCards } from '../SummaryCards';
-import { normalizeStatisticsSourceSelection } from '../../utils/statisticsRoute';
 import { STATISTICS_PANEL_CLASS } from './constants';
 import {
   getInitialProfileName,
   getStatisticsSelectionHint,
   isStatisticsHotkeyBlockedTarget,
-  getStatisticsFallbackSource,
   normalizeStatisticsDetailSection,
 } from './helpers';
 import {
@@ -40,19 +37,6 @@ export function StatisticsView({ initialContext }) {
   const apiService = useContext(ApiServiceContext);
   const initialProfileName = getInitialProfileName(initialContext);
 
-  const [shotSource, setShotSource] = useState(() =>
-    normalizeStatisticsSourceSelection(
-      initialContext?.shotSource || initialContext?.source,
-      'gaggimate',
-    ),
-  );
-  const [profileSource, setProfileSource] = useState(() =>
-    normalizeStatisticsSourceSelection(
-      initialContext?.profileSource || initialContext?.source,
-      'gaggimate',
-    ),
-  );
-
   const [mode, setMode] = useState(() => (initialProfileName ? 'profile' : 'all'));
 
   const [selectedProfileNames, setSelectedProfileNames] = useState(() =>
@@ -62,14 +46,12 @@ export function StatisticsView({ initialContext }) {
   const [query, setQuery] = useState('');
   const [dateFromLocal, setDateFromLocal] = useState('');
   const [dateToLocal, setDateToLocal] = useState('');
-  const [dateBasisMode, setDateBasisMode] = useState('auto');
 
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
   const [runRequest, setRunRequest] = useState(null);
-  const [preparingRun, setPreparingRun] = useState(false);
   const [statisticsDetailSection, setStatisticsDetailSection] = useState(
     () => normalizeStatisticsDetailSection(initialContext?.preferredDetailSection) || 'metrics',
   );
@@ -82,7 +64,7 @@ export function StatisticsView({ initialContext }) {
   const [pinnedShotsByProfile, setPinnedShotsByProfile] = useState(() => getPinnedShotsByProfile());
 
   const analyzeLoadIdRef = useRef(0);
-  const prepareRunIdRef = useRef(0);
+  const runIdRef = useRef(0);
   const entriesRef = useRef(null);
   const initializedDetailSectionRunIdRef = useRef(null);
 
@@ -104,8 +86,7 @@ export function StatisticsView({ initialContext }) {
     availableProfiles,
   } = useStatisticsMetadataState({
     apiService,
-    shotSource,
-    profileSource,
+    connected: machine.value.connected,
     initialProfileName,
     setSelectedProfileNames,
     setSelectedShotKeys,
@@ -123,7 +104,6 @@ export function StatisticsView({ initialContext }) {
     setPinnedShotsByProfile(result.pinnedShotsByProfile);
   };
   const {
-    dateBasisWarningState,
     candidateFilterState,
     hasBaseParseErrors,
     selectionScopeShotKeySet,
@@ -153,7 +133,6 @@ export function StatisticsView({ initialContext }) {
     query,
     dateFromLocal,
     dateToLocal,
-    dateBasisMode,
   });
 
   useStatisticsSelectionSync({
@@ -161,8 +140,6 @@ export function StatisticsView({ initialContext }) {
     metadataLoaded,
     hasBaseParseErrors,
     visibleProfileIdSet,
-    shotSource,
-    profileSource,
     selectedProfileNames,
     byProfileEligibleShotKeys,
     byProfileEligibleShotKeySet,
@@ -191,7 +168,6 @@ export function StatisticsView({ initialContext }) {
   });
   const canRunStatistics =
     !loading &&
-    !preparingRun &&
     !metadataLoading &&
     !metadataError &&
     candidateFilterState.parseErrors.length === 0 &&
@@ -203,56 +179,16 @@ export function StatisticsView({ initialContext }) {
         return;
       }
 
-      const prepareRunId = ++prepareRunIdRef.current;
-      const nextRunId = `${Date.now()}-${prepareRunId}`;
-      const fallbackSource = getStatisticsFallbackSource(profileSource);
-      const shotSnapshot = [...candidateFilterState.filteredShots];
-      const profileSnapshot = [...rawProfiles];
-      const orderedShotKeysSnapshot = [...selectedShotKeys];
-      setPreparingRun(true);
-
-      async function prepareRunRequest() {
-        try {
-          let fallbackProfiles = [];
-          if (fallbackSource) {
-            try {
-              fallbackProfiles = await libraryService.getAllProfiles(fallbackSource);
-            } catch {
-              fallbackProfiles = [];
-            }
-          }
-
-          if (prepareRunIdRef.current !== prepareRunId) return;
-
-          setRunRequest({
-            id: nextRunId,
-            shots: shotSnapshot,
-            profiles: profileSnapshot,
-            fallbackProfiles: Array.isArray(fallbackProfiles) ? fallbackProfiles : [],
-            orderedShotKeys: orderedShotKeysSnapshot,
-            dateBasisMode,
-            mode,
-            preferredDetailSection:
-              normalizeStatisticsDetailSection(preferredDetailSection) || null,
-          });
-        } finally {
-          if (prepareRunIdRef.current === prepareRunId) {
-            setPreparingRun(false);
-          }
-        }
-      }
-
-      prepareRunRequest();
+      setRunRequest({
+        id: `${Date.now()}-${++runIdRef.current}`,
+        shots: [...candidateFilterState.filteredShots],
+        profiles: [...rawProfiles],
+        orderedShotKeys: [...selectedShotKeys],
+        mode,
+        preferredDetailSection: normalizeStatisticsDetailSection(preferredDetailSection) || null,
+      });
     },
-    [
-      canRunStatistics,
-      profileSource,
-      candidateFilterState.filteredShots,
-      rawProfiles,
-      selectedShotKeys,
-      dateBasisMode,
-      mode,
-    ],
+    [canRunStatistics, candidateFilterState.filteredShots, rawProfiles, selectedShotKeys, mode],
   );
 
   useEffect(() => {
@@ -284,7 +220,6 @@ export function StatisticsView({ initialContext }) {
     setDateFromLocal('');
     setDateToLocal('');
     setQuery('');
-    setDateBasisMode('auto');
   };
 
   const {
@@ -306,7 +241,6 @@ export function StatisticsView({ initialContext }) {
     setStatisticsDetailSection,
     initializedDetailSectionRunIdRef,
     entriesRef,
-    preparingRun,
     loading,
     error,
     metadataError,
@@ -340,14 +274,9 @@ export function StatisticsView({ initialContext }) {
       >
         <div className='px-1.5 py-1.5 sm:px-2 sm:py-2'>
           <StatisticsToolbar
-            shotSource={shotSource}
-            onShotSourceChange={setShotSource}
-            profileSource={profileSource}
-            onProfileSourceChange={setProfileSource}
             mode={mode}
             onModeChange={setMode}
             onGo={handleGo}
-            startLoading={preparingRun}
             loading={loading}
             metadataLoading={metadataLoading}
             canGo={canRunStatistics}
@@ -371,10 +300,6 @@ export function StatisticsView({ initialContext }) {
             dateToLocal={dateToLocal}
             dateToPreviewLocal={dateInputPreviewRange.toLocal}
             onDateToChange={setDateToLocal}
-            dateBasisMode={dateBasisMode}
-            onDateBasisModeChange={setDateBasisMode}
-            showDateBasisWarning={dateBasisWarningState.showDateBasisWarning}
-            dateBasisWarningMessage={dateBasisWarningState.dateBasisWarningMessage}
             candidateCount={metadataLoading ? null : candidateFilterState.count}
             parseErrors={candidateFilterState.parseErrors}
             parseWarnings={candidateFilterState.parseWarnings}
