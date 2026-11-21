@@ -1,4 +1,5 @@
 #include "GaggiMateController.h"
+#include "LagCompensationLimits.h"
 #include "MachineHardwareSettings.h"
 #include "utilities.h"
 #include <Arduino.h>
@@ -212,6 +213,9 @@ void GaggiMateController::setup() {
                 ledController->setChannel(channel, brightness);
         });
     brewTemperature->setup();
+    // Without measured flow, the pump's power tells the brew heater's integral pause when a flush is on. Attached
+    // before setup() starts the heater task, which reads it.
+    heater->setPumpPowerSource(pump->getPumpPowerPtr());
     heater->setup();
     valve->setup();
     pump->setup();
@@ -341,8 +345,25 @@ void GaggiMateController::setup() {
         }
         heater->setFeedforwardScale(settings.kf);
         heater->setTunings(settings.kp, settings.ki, settings.kd);
+        // Clamp here as well as on the display: the controller drives the heater and shouldn't trust the link.
+        using namespace lag_limits;
+        HeaterLagSettings lag;
+        lag.derivativeFilterS = clampOrOff(settings.derivative_filter_s, DERIVATIVE_FILTER_S);
+        lag.integralZoneC = clampOrOff(settings.integral_zone, INTEGRAL_ZONE_C);
+        lag.sensorDeadTimeS = clampOrOff(settings.sensor_dead_time_s, SENSOR_DEAD_TIME_S);
+        lag.modelHeaterW = clampOrOff(settings.model_heater_w, HEATER_W);
+        lag.modelHeatRate = clampOrOff(settings.model_heat_rate, HEAT_RATE_C_PER_S);
+        lag.modelLossW = clampOrOff(settings.model_loss_w, STANDING_LOSS_W);
+        lag.waterDeadTimeS = clampOrOff(settings.water_dead_time_s, WATER_DEAD_TIME_S);
+        lag.valveDumpMl = clampOrOff(settings.valve_dump_ml, VALVE_DUMP_ML);
+        heater->setLagCompensation(lag);
         if (heater2 != nullptr) {
             heater2->setTunings(settings.steam_kp, settings.steam_ki, settings.steam_kd);
+            // The heat-balance model describes the brew boiler only; the steam boiler keeps the plain loop.
+            HeaterLagSettings steamLag;
+            steamLag.derivativeFilterS = lag.derivativeFilterS;
+            steamLag.integralZoneC = lag.integralZoneC;
+            heater2->setLagCompensation(steamLag);
         }
     });
     _comms.onPumpSettings([this](gm::PumpSettings settings) {
@@ -633,6 +654,7 @@ void GaggiMateController::sendSensorData() {
     p.content.sensor.boilers[0].temperature = this->brewTemperature->read();
     p.content.sensor.boilers[0].pressure = pressure;
     p.content.sensor.boilers[0].power = heaterPower;
+    p.content.sensor.boilers[0].standing_loss_w = heater ? heater->getLearnedLossWatts() : 0.0f;
     if (_config.capabilites.dualBoiler) {
         p.content.sensor.boilers[1].index = 1;
         p.content.sensor.boilers[1].temperature = this->steamTemperature->read();

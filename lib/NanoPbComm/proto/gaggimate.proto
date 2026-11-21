@@ -116,6 +116,15 @@ message HeaterSettings {
     float steam_kp = 7;
     float steam_ki = 8;
     float steam_kd = 9;
+    // Brew-boiler lag compensation. 0 = off, so a display that never sends these keeps the plain PID loop.
+    float derivative_filter_s = 10; // low-pass time constant on the D term (s)
+    float integral_zone = 11;       // integrate only while |error| < this (degC); also pauses I during water flow
+    float sensor_dead_time_s = 12;  // heater-to-sensor dead time (s): length of the post-flow I pause, predictor delay
+    float model_heater_w = 13;      // heat-balance predictor: heater power (W)
+    float model_heat_rate = 14;     // heat-balance predictor: full-power heat-up rate (degC/s)
+    float model_loss_w = 15;        // heat-balance predictor: saved standing loss to start from (W), 0 = default guess
+    float water_dead_time_s = 16;   // heat-balance predictor: delay from water flowing to the sensor (s), 0 = dead time
+    float valve_dump_ml = 17;       // water the 3-way valve dumps when a flush or shot ends (ml), 0 = none
 }
 
 message MachineHardwareSettings {
@@ -240,6 +249,7 @@ message BoilerReading {
     float temperature = 2;
     float pressure = 3;
     float power = 4; // heater power 0..100 %
+    float standing_loss_w = 5; // learned standing loss (W) at 93 °C in a 23 °C room (learned per °C), 0 = predictor off
 }
 
 message SensorData {

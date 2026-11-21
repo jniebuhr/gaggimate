@@ -97,7 +97,7 @@ class GaggiMateClient {
     gm::Payload buildPumpControl(uint8_t index, PumpControlMode mode, float power, float pressure, float flow);
     gm::Payload buildRelayControl(uint8_t index, bool open);
     gm::Payload buildHeaterSettings(float kp, float ki, float kd, float kf, bool heaterCoordinationEnabled, uint32_t handoverMs,
-                                    float steamKp, float steamKi, float steamKd);
+                                    float steamKp, float steamKi, float steamKd, const HeaterLagCompensation &lag = {});
     gm::Payload buildPumpSettings(float a, float b, float c, float d, float commutationGain, float convergenceGain,
                                   float integralGain, float maxPower);
     gm::Payload buildAutotune(uint32_t testTime, uint32_t samples, uint32_t heaterWattage);
@@ -114,7 +114,7 @@ class GaggiMateClient {
     void sendPumpControl(uint8_t index, PumpControlMode mode, float power, float pressure, float flow);
     void sendRelayControl(uint8_t index, bool open);
     void sendHeaterSettings(float kp, float ki, float kd, float kf, bool heaterCoordinationEnabled, uint32_t handoverMs,
-                            float steamKp, float steamKi, float steamKd);
+                            float steamKp, float steamKi, float steamKd, const HeaterLagCompensation &lag = {});
     // The mock accepts any hardware configuration at once, like a controller that needs no restart.
     void sendMachineHardware(const gm::MachineHardwareSettings &settings) {
         if (_machineHardwareCb)
@@ -134,7 +134,8 @@ class GaggiMateClient {
 
     void onIncompatibleController(IncompatibleCallback cb) { _incompatibleCb = std::move(cb); }
     void onConnectionChanged(ConnectionCallback cb) { _connCb = std::move(cb); }
-    void onSendFailed(std::function<void()>) {} // the mocked link never drops a frame
+    void onSendFailed(std::function<void()>) {}      // the mocked link never drops a frame
+    void onHeaterLoss(std::function<void(float)>) {} // the mock boiler reports no learned standing loss
     void onSystemInfo(SystemInfoCallback cb) { _systemInfoCb = std::move(cb); }
     void onSensorData(SensorCallback cb) { _sensorCb = std::move(cb); }
     void onButtonState(ButtonCallback cb) { _buttonCb = std::move(cb); }

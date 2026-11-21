@@ -69,9 +69,11 @@ import {
   splitPidString,
 } from './settingsForm.js';
 
-// Device facts GET /api/settings reports for display only; never saved, exported or imported.
+// Device facts GET /api/settings reports for display only; never saved, exported or imported. modelLossW is
+// learned by the controller: posting the loaded value back on save would overwrite a newer one.
 const READ_ONLY_KEYS = [
   'deviceIp',
+  'modelLossW',
   'setupDone',
   'apMode',
   'setupStep',

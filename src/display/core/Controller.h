@@ -322,6 +322,8 @@ class Controller {
     // Re-send the config burst for a few seconds after a (re)connect (see loop()).
     unsigned long configResendUntil = 0;
     unsigned long lastConfigResend = 0;
+    static const unsigned long LOSS_SAVE_INTERVAL_MS = 10UL * 60UL * 1000UL; // NVS writes for the learned standing loss
+    unsigned long lastLossSaveMs = 0;
     static const unsigned long CONFIG_RESEND_WINDOW_MS = 8000;
     static const unsigned long CONFIG_RESEND_INTERVAL_MS = 1000;
     bool processCompleted = false;
