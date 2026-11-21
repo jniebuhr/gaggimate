@@ -107,7 +107,8 @@ void Heater::setLagCompensation(const HeaterLagSettings &lag) {
 void Heater::updateLagCompensation() {
     const uint32_t now = millis();
     const float flow = pumpFlowRate != nullptr ? *pumpFlowRate : 0.0f;
-    const bool flowing = flow > 0.01f;
+    // Measured flow where the board has it (Pro); otherwise the pump running means water is entering the boiler.
+    const bool flowing = pumpFlowRate != nullptr ? flow > 0.01f : (pumpPower != nullptr && *pumpPower > 0.0f);
 
     std::lock_guard<std::mutex> lock(lagMutex);
     if (flowing) {
