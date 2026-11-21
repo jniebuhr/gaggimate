@@ -976,8 +976,12 @@ void Controller::setHeaterSettings() {
     parseFloatCsv(settings.getPid(), pid, 4, 0.0f);
     float steamPid[3];
     parseFloatCsv(settings.getSteamPid(), steamPid, 3, 0.0f);
+    HeaterLagCompensation lag;
+    lag.derivativeFilterS = settings.getDerivativeFilterS();
+    lag.integralZone = settings.getIntegralZone();
+    lag.sensorDeadTimeS = settings.getSensorDeadTimeS();
     comms.sendHeaterSettings(pid[0], pid[1], pid[2], pid[3], settings.isHeaterCoordinationEnabled(),
-                             static_cast<uint32_t>(settings.getHeaterHandoverMs()), steamPid[0], steamPid[1], steamPid[2]);
+                             static_cast<uint32_t>(settings.getHeaterHandoverMs()), steamPid[0], steamPid[1], steamPid[2], lag);
 }
 
 int Controller::getTargetGrindDuration() const { return settings.getTargetGrindDuration(); }

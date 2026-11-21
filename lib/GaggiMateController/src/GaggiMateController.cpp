@@ -1,4 +1,5 @@
 #include "GaggiMateController.h"
+#include "LagCompensationLimits.h"
 #include "MachineHardwareSettings.h"
 #include "utilities.h"
 #include <Arduino.h>
@@ -212,6 +213,9 @@ void GaggiMateController::setup() {
                 ledController->setChannel(channel, brightness);
         });
     brewTemperature->setup();
+    // Without measured flow, the pump's power tells the brew heater's integral pause when a flush is on. Attached
+    // before setup() starts the heater task, which reads it.
+    heater->setPumpPowerSource(pump->getPumpPowerPtr());
     heater->setup();
     valve->setup();
     pump->setup();
@@ -341,8 +345,21 @@ void GaggiMateController::setup() {
         }
         heater->setFeedforwardScale(settings.kf);
         heater->setTunings(settings.kp, settings.ki, settings.kd);
+        // Clamp here as well as on the display: the controller drives the heater and shouldn't trust the link.
+        using namespace lag_limits;
+        HeaterLagSettings lag;
+        lag.derivativeFilterS = clampOrOff(settings.derivative_filter_s, DERIVATIVE_FILTER_S);
+        lag.integralZoneC = clampOrOff(settings.integral_zone, INTEGRAL_ZONE_C);
+        lag.sensorDeadTimeS = clampOrOff(settings.sensor_dead_time_s, SENSOR_DEAD_TIME_S);
+        heater->setLagCompensation(lag);
         if (heater2 != nullptr) {
             heater2->setTunings(settings.steam_kp, settings.steam_ki, settings.steam_kd);
+            // The flow pause is for the brew boiler, which the water passes through; the steam boiler gets the D filter
+            // and the integral zone only.
+            HeaterLagSettings steamLag;
+            steamLag.derivativeFilterS = lag.derivativeFilterS;
+            steamLag.integralZoneC = lag.integralZoneC;
+            heater2->setLagCompensation(steamLag);
         }
     });
     _comms.onPumpSettings([this](gm::PumpSettings settings) {

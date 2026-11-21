@@ -1,5 +1,6 @@
 #include "Settings.h"
 #include "MachineProfiles.h"
+#include <LagCompensationLimits.h>
 
 #include <algorithm>
 #include <cmath>
@@ -223,6 +224,16 @@ void Settings::setHeaterCoordinationEnabled(bool enabled) { heaterCoordinationEn
 
 void Settings::setHeaterHandoverMs(int handoverMs) {
     heaterHandoverMs.set(std::clamp(handoverMs, MIN_HEATER_HANDOVER_MS, MAX_HEATER_HANDOVER_MS));
+}
+
+void Settings::setDerivativeFilterS(float seconds) {
+    derivativeFilterS.set(lag_limits::clampOrOff(seconds, lag_limits::DERIVATIVE_FILTER_S));
+}
+
+void Settings::setIntegralZone(float degrees) { integralZone.set(lag_limits::clampOrOff(degrees, lag_limits::INTEGRAL_ZONE_C)); }
+
+void Settings::setSensorDeadTimeS(float seconds) {
+    sensorDeadTimeS.set(lag_limits::clampOrOff(seconds, lag_limits::SENSOR_DEAD_TIME_S));
 }
 
 void Settings::setPumpModelCoeffs(const String &pumpModelCoeffs) { this->pumpModelCoeffs.set(pumpModelCoeffs); }

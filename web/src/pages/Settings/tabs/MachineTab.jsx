@@ -8,6 +8,7 @@ import { Trans, useLingui } from '@lingui/react/macro';
 import { ApiServiceContext, machine } from '../../../services/ApiService.js';
 import Section from '../../../components/Card.jsx';
 import { HeaterCoordinationSection } from './HeaterCoordinationSection.jsx';
+import { LagCompensationSection } from './LagCompensationSection.jsx';
 import { Tooltip } from '../../../components/Tooltip.jsx';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCrosshairs } from '@fortawesome/free-solid-svg-icons/faCrosshairs';
@@ -445,6 +446,7 @@ export function MachineTab({ formData, onChange, setField, profiles = [] }) {
         </div>
       </Section>
 
+      <LagCompensationSection formData={formData} onChange={onChange} />
       {machine.value.capabilities.dualBoiler && (
         <Section title={t`Dual Boiler Hardware`}>
           <MachineProfileFields
