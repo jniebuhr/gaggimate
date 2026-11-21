@@ -6,7 +6,7 @@
     "selectedGlobalVariableObject": "[gaggimate.eez-project]:/variables/globalVariables/5",
     "selectedStructureObject": "[gaggimate.eez-project]:/variables/structures/1",
     "selectedThemeObject": "[gaggimate.eez-project]:/themes/1",
-    "selectedThemeColorObject": "[gaggimate.eez-project]:/colors/3",
+    "selectedThemeColorObject": "[gaggimate.eez-project]:/colors/9",
     "selectedFontObject": "[gaggimate.eez-project]:/fonts/1",
     "selectedBitmapObject": "[gaggimate.eez-project]:/bitmaps/9",
     "subnavigationSelectedItems": {
@@ -31,7 +31,7 @@
           },
           {
             "type": "border",
-            "selected": 1,
+            "selected": 3,
             "size": 168.5,
             "location": "right",
             "children": [
@@ -212,7 +212,8 @@
                   },
                   "icon": "svg:page"
                 }
-              ]
+              ],
+              "active": true
             },
             {
               "type": "row",
@@ -232,8 +233,7 @@
                       "enableClose": false,
                       "icon": "svg:properties"
                     }
-                  ],
-                  "active": true
+                  ]
                 },
                 {
                   "type": "tabset",
@@ -1947,11 +1947,12 @@
         "0": {
           "0": {},
           "1": {
-            "0": {
-              "$selected": true
-            },
+            "0": {},
             "1": {
-              "2": {}
+              "0": {},
+              "2": {
+                "$selected": true
+              }
             }
           }
         }

@@ -464,9 +464,11 @@ enum Colors {
     COLOR_ID_TEMPERATURE,
     COLOR_ID_PRESSURE,
     COLOR_ID_WARNING,
+    COLOR_ID_CARD_SHADE,
+    COLOR_ID_BORDER_SHADE,
 };
 void change_color_theme(uint32_t themeIndex);
-extern uint32_t theme_colors[3][9];
+extern uint32_t theme_colors[3][11];
 
 #ifdef __cplusplus
 }

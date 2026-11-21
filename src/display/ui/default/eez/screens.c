@@ -4824,8 +4824,8 @@ void create_screen_new_profile_screen() {
                             lv_obj_set_style_align(obj, LV_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
                             lv_obj_set_style_radius(obj, 30, LV_PART_MAIN | LV_STATE_DEFAULT);
                             lv_obj_set_style_clip_corner(obj, true, LV_PART_MAIN | LV_STATE_DEFAULT);
-                            lv_obj_set_style_bg_color(obj, lv_color_hex(theme_colors[eez_flow_get_selected_theme_index()][1]), LV_PART_MAIN | LV_STATE_DEFAULT);
-                            lv_obj_set_style_border_color(obj, lv_color_hex(theme_colors[eez_flow_get_selected_theme_index()][3]), LV_PART_MAIN | LV_STATE_DEFAULT);
+                            lv_obj_set_style_bg_color(obj, lv_color_hex(theme_colors[eez_flow_get_selected_theme_index()][9]), LV_PART_MAIN | LV_STATE_DEFAULT);
+                            lv_obj_set_style_border_color(obj, lv_color_hex(theme_colors[eez_flow_get_selected_theme_index()][10]), LV_PART_MAIN | LV_STATE_DEFAULT);
                             lv_obj_set_style_border_width(obj, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
                             {
                                 lv_obj_t *parent_obj = obj;
@@ -4980,9 +4980,9 @@ void create_screen_new_profile_screen() {
                             lv_obj_set_style_align(obj, LV_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
                             lv_obj_set_style_radius(obj, 30, LV_PART_MAIN | LV_STATE_DEFAULT);
                             lv_obj_set_style_clip_corner(obj, true, LV_PART_MAIN | LV_STATE_DEFAULT);
-                            lv_obj_set_style_bg_color(obj, lv_color_hex(theme_colors[eez_flow_get_selected_theme_index()][1]), LV_PART_MAIN | LV_STATE_DEFAULT);
+                            lv_obj_set_style_bg_color(obj, lv_color_hex(theme_colors[eez_flow_get_selected_theme_index()][9]), LV_PART_MAIN | LV_STATE_DEFAULT);
                             lv_obj_set_style_border_width(obj, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
-                            lv_obj_set_style_border_color(obj, lv_color_hex(theme_colors[eez_flow_get_selected_theme_index()][3]), LV_PART_MAIN | LV_STATE_DEFAULT);
+                            lv_obj_set_style_border_color(obj, lv_color_hex(theme_colors[eez_flow_get_selected_theme_index()][10]), LV_PART_MAIN | LV_STATE_DEFAULT);
                             {
                                 lv_obj_t *parent_obj = obj;
                                 {
@@ -5116,6 +5116,7 @@ void create_screen_new_profile_screen() {
                                     lv_obj_set_style_line_opa(obj, 100, LV_PART_MAIN | LV_STATE_DEFAULT);
                                     lv_obj_set_style_line_color(obj, lv_color_hex(theme_colors[eez_flow_get_selected_theme_index()][3]), LV_PART_MAIN | LV_STATE_DEFAULT);
                                     lv_obj_set_style_border_opa(obj, 150, LV_PART_MAIN | LV_STATE_DEFAULT);
+                                    lv_obj_set_style_border_color(obj, lv_color_hex(theme_colors[eez_flow_get_selected_theme_index()][10]), LV_PART_MAIN | LV_STATE_DEFAULT);
                                 }
                             }
                         }
@@ -5131,7 +5132,7 @@ void create_screen_new_profile_screen() {
                             lv_obj_set_style_text_font(obj, &lv_font_montserrat_16, LV_PART_MAIN | LV_STATE_DEFAULT);
                             lv_obj_set_style_radius(obj, 15, LV_PART_MAIN | LV_STATE_DEFAULT);
                             lv_obj_set_style_border_width(obj, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
-                            lv_obj_set_style_border_color(obj, lv_color_hex(theme_colors[eez_flow_get_selected_theme_index()][3]), LV_PART_MAIN | LV_STATE_DEFAULT);
+                            lv_obj_set_style_border_color(obj, lv_color_hex(theme_colors[eez_flow_get_selected_theme_index()][10]), LV_PART_MAIN | LV_STATE_DEFAULT);
                             {
                                 lv_obj_t *parent_obj = obj;
                                 {
@@ -7761,8 +7762,8 @@ void change_color_theme(uint32_t theme_index) {
         if (objects.new_profile_screen) lv_obj_set_style_bg_color(objects.new_profile_screen, lv_color_hex(theme_colors[theme_index][1]), LV_PART_MAIN | LV_STATE_DEFAULT);
         if (objects.obj24) lv_obj_set_style_text_color(objects.obj24, lv_color_hex(theme_colors[theme_index][0]), LV_PART_MAIN | LV_STATE_DEFAULT);
         if (objects.obj24) lv_obj_set_style_text_color(objects.obj24, lv_color_hex(theme_colors[theme_index][7]), LV_PART_MAIN | LV_STATE_CHECKED);
-        if (objects.simple_preview) lv_obj_set_style_bg_color(objects.simple_preview, lv_color_hex(theme_colors[theme_index][1]), LV_PART_MAIN | LV_STATE_DEFAULT);
-        if (objects.simple_preview) lv_obj_set_style_border_color(objects.simple_preview, lv_color_hex(theme_colors[theme_index][3]), LV_PART_MAIN | LV_STATE_DEFAULT);
+        if (objects.simple_preview) lv_obj_set_style_bg_color(objects.simple_preview, lv_color_hex(theme_colors[theme_index][9]), LV_PART_MAIN | LV_STATE_DEFAULT);
+        if (objects.simple_preview) lv_obj_set_style_border_color(objects.simple_preview, lv_color_hex(theme_colors[theme_index][10]), LV_PART_MAIN | LV_STATE_DEFAULT);
         if (objects.obj25) lv_obj_set_style_img_recolor(objects.obj25, lv_color_hex(theme_colors[theme_index][3]), LV_PART_MAIN | LV_STATE_DEFAULT);
         if (objects.obj26) lv_obj_set_style_text_color(objects.obj26, lv_color_hex(theme_colors[theme_index][3]), LV_PART_MAIN | LV_STATE_DEFAULT);
         if (objects.obj27) lv_obj_set_style_img_recolor(objects.obj27, lv_color_hex(theme_colors[theme_index][3]), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -7770,8 +7771,8 @@ void change_color_theme(uint32_t theme_index) {
         if (objects.obj29) lv_obj_set_style_text_color(objects.obj29, lv_color_hex(theme_colors[theme_index][3]), LV_PART_MAIN | LV_STATE_DEFAULT);
         if (objects.obj30) lv_obj_set_style_text_color(objects.obj30, lv_color_hex(theme_colors[theme_index][3]), LV_PART_MAIN | LV_STATE_DEFAULT);
         if (objects.obj31) lv_obj_set_style_text_color(objects.obj31, lv_color_hex(theme_colors[theme_index][3]), LV_PART_MAIN | LV_STATE_DEFAULT);
-        if (objects.chart_preview) lv_obj_set_style_bg_color(objects.chart_preview, lv_color_hex(theme_colors[theme_index][1]), LV_PART_MAIN | LV_STATE_DEFAULT);
-        if (objects.chart_preview) lv_obj_set_style_border_color(objects.chart_preview, lv_color_hex(theme_colors[theme_index][3]), LV_PART_MAIN | LV_STATE_DEFAULT);
+        if (objects.chart_preview) lv_obj_set_style_bg_color(objects.chart_preview, lv_color_hex(theme_colors[theme_index][9]), LV_PART_MAIN | LV_STATE_DEFAULT);
+        if (objects.chart_preview) lv_obj_set_style_border_color(objects.chart_preview, lv_color_hex(theme_colors[theme_index][10]), LV_PART_MAIN | LV_STATE_DEFAULT);
         if (objects.obj32) lv_obj_set_style_img_recolor(objects.obj32, lv_color_hex(theme_colors[theme_index][3]), LV_PART_MAIN | LV_STATE_DEFAULT);
         if (objects.obj33) lv_obj_set_style_text_color(objects.obj33, lv_color_hex(theme_colors[theme_index][3]), LV_PART_MAIN | LV_STATE_DEFAULT);
         if (objects.obj34) lv_obj_set_style_img_recolor(objects.obj34, lv_color_hex(theme_colors[theme_index][3]), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -7781,9 +7782,10 @@ void change_color_theme(uint32_t theme_index) {
         if (objects.obj36) lv_obj_set_style_img_recolor(objects.obj36, lv_color_hex(theme_colors[theme_index][3]), LV_PART_MAIN | LV_STATE_DEFAULT);
         if (objects.obj36) lv_obj_set_style_text_color(objects.obj36, lv_color_hex(theme_colors[theme_index][3]), LV_PART_MAIN | LV_STATE_DEFAULT);
         if (objects.profile_chart) lv_obj_set_style_line_color(objects.profile_chart, lv_color_hex(theme_colors[theme_index][3]), LV_PART_MAIN | LV_STATE_DEFAULT);
+        if (objects.profile_chart) lv_obj_set_style_border_color(objects.profile_chart, lv_color_hex(theme_colors[theme_index][10]), LV_PART_MAIN | LV_STATE_DEFAULT);
         if (objects.obj37) lv_obj_set_style_bg_color(objects.obj37, lv_color_hex(theme_colors[theme_index][1]), LV_PART_MAIN | LV_STATE_DEFAULT);
         if (objects.obj37) lv_obj_set_style_text_color(objects.obj37, lv_color_hex(theme_colors[theme_index][3]), LV_PART_MAIN | LV_STATE_DEFAULT);
-        if (objects.obj37) lv_obj_set_style_border_color(objects.obj37, lv_color_hex(theme_colors[theme_index][3]), LV_PART_MAIN | LV_STATE_DEFAULT);
+        if (objects.obj37) lv_obj_set_style_border_color(objects.obj37, lv_color_hex(theme_colors[theme_index][10]), LV_PART_MAIN | LV_STATE_DEFAULT);
         if (objects.obj38) lv_obj_set_style_text_color(objects.obj38, lv_color_hex(theme_colors[theme_index][3]), LV_PART_MAIN | LV_STATE_DEFAULT);
         if (objects.obj39) lv_obj_set_style_bg_color(objects.obj39, lv_color_hex(theme_colors[theme_index][1]), LV_PART_MAIN | LV_STATE_DEFAULT);
         if (objects.obj39) lv_obj_set_style_text_color(objects.obj39, lv_color_hex(theme_colors[theme_index][3]), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -7894,10 +7896,10 @@ void change_color_theme(uint32_t theme_index) {
     if (objects.welcome_screen) lv_obj_invalidate(objects.welcome_screen);
 }
 static const char *theme_names[] = { "Dark", "Light", "AmoledDark" };
-uint32_t theme_colors[3][9] = {
-    { 0xfffafafa, 0xff131313, 0xff1ffba3, 0xffcccccc, 0xff0069ad, 0xffebebeb, 0xfff62c2c, 0xff2ca4f6, 0xfffbbe23 },
-    { 0xff131313, 0xfffafafa, 0xff1ffba3, 0xff212529, 0xff0069ad, 0xffebebeb, 0xfff62c2c, 0xff2a92f6, 0xfffbbe23 },
-    { 0xfffafafa, 0xff000000, 0xff1ffba3, 0xffcccccc, 0xff0069ad, 0xffebebeb, 0xfff62c2c, 0xff2ca4f6, 0xfffbbe23 },
+uint32_t theme_colors[3][11] = {
+    { 0xfffafafa, 0xff131313, 0xff1ffba3, 0xffcccccc, 0xff0069ad, 0xffebebeb, 0xfff62c2c, 0xff2ca4f6, 0xfffbbe23, 0xff181716, 0xff2e2b28 },
+    { 0xff131313, 0xfffafafa, 0xff1ffba3, 0xff616161, 0xff0069ad, 0xffebebeb, 0xfff62c2c, 0xff2a92f6, 0xfffbbe23, 0xfff4f3f1, 0xffeae7e1 },
+    { 0xfffafafa, 0xff000000, 0xff1ffba3, 0xffcccccc, 0xff0069ad, 0xffebebeb, 0xfff62c2c, 0xff2ca4f6, 0xfffbbe23, 0xff000000, 0xff000000 },
 };
 
 //

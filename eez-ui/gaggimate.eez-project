@@ -10260,7 +10260,7 @@
                         "conditionalStyles": [],
                         "childStyles": []
                       },
-                      "hiddenInEditor": true,
+                      "hiddenInEditor": false,
                       "timeline": [],
                       "eventHandlers": [],
                       "identifier": "simplePreview",
@@ -10284,7 +10284,7 @@
                             "conditionalStyles": [],
                             "childStyles": []
                           },
-                          "hiddenInEditor": true,
+                          "hiddenInEditor": false,
                           "timeline": [],
                           "eventHandlers": [],
                           "leftUnit": "px",
@@ -10307,7 +10307,7 @@
                                 "conditionalStyles": [],
                                 "childStyles": []
                               },
-                              "hiddenInEditor": true,
+                              "hiddenInEditor": false,
                               "timeline": [],
                               "eventHandlers": [],
                               "leftUnit": "px",
@@ -10365,7 +10365,7 @@
                                 "conditionalStyles": [],
                                 "childStyles": []
                               },
-                              "hiddenInEditor": true,
+                              "hiddenInEditor": false,
                               "timeline": [],
                               "eventHandlers": [],
                               "leftUnit": "px",
@@ -10450,7 +10450,7 @@
                             "conditionalStyles": [],
                             "childStyles": []
                           },
-                          "hiddenInEditor": true,
+                          "hiddenInEditor": false,
                           "timeline": [],
                           "eventHandlers": [],
                           "leftUnit": "px",
@@ -10473,7 +10473,7 @@
                                 "conditionalStyles": [],
                                 "childStyles": []
                               },
-                              "hiddenInEditor": true,
+                              "hiddenInEditor": false,
                               "timeline": [],
                               "eventHandlers": [],
                               "leftUnit": "px",
@@ -10532,7 +10532,7 @@
                                 "conditionalStyles": [],
                                 "childStyles": []
                               },
-                              "hiddenInEditor": true,
+                              "hiddenInEditor": false,
                               "timeline": [],
                               "eventHandlers": [],
                               "leftUnit": "px",
@@ -10591,7 +10591,7 @@
                                 "conditionalStyles": [],
                                 "childStyles": []
                               },
-                              "hiddenInEditor": true,
+                              "hiddenInEditor": false,
                               "timeline": [],
                               "eventHandlers": [],
                               "leftUnit": "px",
@@ -10676,7 +10676,7 @@
                             "conditionalStyles": [],
                             "childStyles": []
                           },
-                          "hiddenInEditor": true,
+                          "hiddenInEditor": false,
                           "timeline": [],
                           "eventHandlers": [],
                           "leftUnit": "px",
@@ -10699,7 +10699,7 @@
                                 "conditionalStyles": [],
                                 "childStyles": []
                               },
-                              "hiddenInEditor": true,
+                              "hiddenInEditor": false,
                               "timeline": [],
                               "eventHandlers": [],
                               "leftUnit": "px",
@@ -10754,7 +10754,7 @@
                                 "conditionalStyles": [],
                                 "childStyles": []
                               },
-                              "hiddenInEditor": true,
+                              "hiddenInEditor": false,
                               "timeline": [],
                               "eventHandlers": [],
                               "leftUnit": "px",
@@ -10845,8 +10845,8 @@
                               "align": "CENTER",
                               "radius": 30,
                               "clip_corner": true,
-                              "bg_color": "Dark",
-                              "border_color": "SemiDark",
+                              "bg_color": "CardShade",
+                              "border_color": "BorderShade",
                               "border_width": 1
                             }
                           }
@@ -10870,7 +10870,7 @@
                         "conditionalStyles": [],
                         "childStyles": []
                       },
-                      "hiddenInEditor": false,
+                      "hiddenInEditor": true,
                       "timeline": [],
                       "eventHandlers": [],
                       "identifier": "chartPreview",
@@ -10894,7 +10894,7 @@
                             "conditionalStyles": [],
                             "childStyles": []
                           },
-                          "hiddenInEditor": false,
+                          "hiddenInEditor": true,
                           "timeline": [],
                           "eventHandlers": [],
                           "identifier": "profileTempTime_1",
@@ -10918,7 +10918,7 @@
                                 "conditionalStyles": [],
                                 "childStyles": []
                               },
-                              "hiddenInEditor": false,
+                              "hiddenInEditor": true,
                               "timeline": [],
                               "eventHandlers": [],
                               "leftUnit": "px",
@@ -10941,7 +10941,7 @@
                                     "conditionalStyles": [],
                                     "childStyles": []
                                   },
-                                  "hiddenInEditor": false,
+                                  "hiddenInEditor": true,
                                   "timeline": [],
                                   "eventHandlers": [],
                                   "leftUnit": "px",
@@ -10999,7 +10999,7 @@
                                     "conditionalStyles": [],
                                     "childStyles": []
                                   },
-                                  "hiddenInEditor": false,
+                                  "hiddenInEditor": true,
                                   "timeline": [],
                                   "eventHandlers": [],
                                   "leftUnit": "px",
@@ -11082,7 +11082,7 @@
                                 "conditionalStyles": [],
                                 "childStyles": []
                               },
-                              "hiddenInEditor": false,
+                              "hiddenInEditor": true,
                               "timeline": [],
                               "eventHandlers": [],
                               "leftUnit": "px",
@@ -11105,7 +11105,7 @@
                                     "conditionalStyles": [],
                                     "childStyles": []
                                   },
-                                  "hiddenInEditor": false,
+                                  "hiddenInEditor": true,
                                   "timeline": [],
                                   "eventHandlers": [],
                                   "leftUnit": "px",
@@ -11165,7 +11165,7 @@
                                     "conditionalStyles": [],
                                     "childStyles": []
                                   },
-                                  "hiddenInEditor": false,
+                                  "hiddenInEditor": true,
                                   "timeline": [],
                                   "eventHandlers": [],
                                   "leftUnit": "px",
@@ -11225,7 +11225,7 @@
                                     "conditionalStyles": [],
                                     "childStyles": []
                                   },
-                                  "hiddenInEditor": false,
+                                  "hiddenInEditor": true,
                                   "timeline": [],
                                   "eventHandlers": [],
                                   "leftUnit": "px",
@@ -11339,7 +11339,7 @@
                             "conditionalStyles": [],
                             "childStyles": []
                           },
-                          "hiddenInEditor": false,
+                          "hiddenInEditor": true,
                           "timeline": [],
                           "eventHandlers": [],
                           "identifier": "profileChart",
@@ -11369,7 +11369,8 @@
                                   "line_width": 1,
                                   "line_opa": 100,
                                   "line_color": "SemiDark",
-                                  "border_opa": 150
+                                  "border_opa": 150,
+                                  "border_color": "BorderShade"
                                 }
                               }
                             }
@@ -11398,9 +11399,9 @@
                               "align": "CENTER",
                               "radius": 30,
                               "clip_corner": true,
-                              "bg_color": "Dark",
+                              "bg_color": "CardShade",
                               "border_width": 1,
-                              "border_color": "SemiDark"
+                              "border_color": "BorderShade"
                             }
                           }
                         }
@@ -11514,8 +11515,9 @@
                               "text_color": "SemiDark",
                               "text_font": "MONTSERRAT_16",
                               "radius": 15,
-                              "border_width": 1,
-                              "border_color": "SemiDark"
+                              "border_width": 2,
+                              "border_color": "BorderShade",
+                              "shadow_width": 0
                             }
                           }
                         }
@@ -16800,6 +16802,14 @@
     {
       "objID": "ffa6852f-b42c-4acd-8240-936dccb0a51c",
       "name": "Warning"
+    },
+    {
+      "objID": "4daf7273-c1c6-471e-8b22-1b80ca81ffbb",
+      "name": "CardShade"
+    },
+    {
+      "objID": "c5492d4b-d398-4e2b-89d3-44dc46e6c461",
+      "name": "BorderShade"
     }
   ],
   "themes": [
@@ -16815,7 +16825,9 @@
         "#ebebeb",
         "#f62c2c",
         "#2ca4f6",
-        "#fbbe23"
+        "#fbbe23",
+        "#181716",
+        "#2e2b28"
       ]
     },
     {
@@ -16825,12 +16837,14 @@
         "#131313",
         "#fafafa",
         "#1ffba3",
-        "#212529",
+        "#616161",
         "#0069ad",
         "#ebebeb",
         "#f62c2c",
         "#2a92f6",
-        "#fbbe23"
+        "#fbbe23",
+        "#f4f3f1",
+        "#eae7e1"
       ]
     },
     {
@@ -16845,7 +16859,9 @@
         "#ebebeb",
         "#f62c2c",
         "#2ca4f6",
-        "#fbbe23"
+        "#fbbe23",
+        "#000000",
+        "#000000"
       ]
     }
   ]
