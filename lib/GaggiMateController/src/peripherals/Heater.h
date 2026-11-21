@@ -54,6 +54,8 @@ class Heater {
     void setFeedforwardScale(float combinedKff); // Set combined Kff value (output units per watt)
 
     void setLagCompensation(const HeaterLagSettings &lag);
+    // Pump power (0 = off): the flush signal for the integral pause on boards without measured flow (Standard).
+    void setPumpPowerSource(const float *pumpPowerPtr) { pumpPower = pumpPowerPtr; }
 
   private:
     void setupPid();
@@ -95,7 +97,8 @@ class Heater {
     // Thermal feedforward variables
     float *pumpFlowRate = nullptr;
     int *valveStatus = nullptr;
-    float lastSafetyFactor = 1.0f; // For smooth safety scaling transitions
+    const float *pumpPower = nullptr; // fallback flow signal when pumpFlowRate is null
+    float lastSafetyFactor = 1.0f;    // For smooth safety scaling transitions
     float incomingWaterTemp = 23.0f;
     float heaterEfficiency = 0.95f; // 95% efficiency (immersion heater)
     float heatLossWatts = 5.0f;     // 5W heat loss (well-insulated boiler)
