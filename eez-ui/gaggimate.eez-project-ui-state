@@ -8,7 +8,7 @@
     "selectedThemeObject": "[gaggimate.eez-project]:/themes/1",
     "selectedThemeColorObject": "[gaggimate.eez-project]:/colors/9",
     "selectedFontObject": "[gaggimate.eez-project]:/fonts/1",
-    "selectedBitmapObject": "[gaggimate.eez-project]:/bitmaps/9",
+    "selectedBitmapObject": "[gaggimate.eez-project]:/bitmaps/-1",
     "subnavigationSelectedItems": {
       "variables-tab/sub-navigation/selected-item": "Global"
     }
@@ -31,7 +31,7 @@
           },
           {
             "type": "border",
-            "selected": 3,
+            "selected": 2,
             "size": 168.5,
             "location": "right",
             "children": [
@@ -1948,11 +1948,9 @@
           "0": {},
           "1": {
             "0": {},
-            "1": {
-              "0": {},
-              "2": {
-                "$selected": true
-              }
+            "1": {},
+            "2": {
+              "1": {}
             }
           }
         }

@@ -7977,7 +7977,7 @@ void create_screen_new_profile_screen() {
                             lv_obj_set_style_radius(
                                 obj, 15, LV_PART_MAIN | LV_STATE_DEFAULT);
                             lv_obj_set_style_border_width(
-                                obj, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+                                obj, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
                             lv_obj_set_style_border_color(
                                 obj,
                                 lv_color_hex(
@@ -7985,6 +7985,8 @@ void create_screen_new_profile_screen() {
                                         [eez_flow_get_selected_theme_index()]
                                         [10]),
                                 LV_PART_MAIN | LV_STATE_DEFAULT);
+                            lv_obj_set_style_shadow_width(
+                                obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
                             {
                                 lv_obj_t *parent_obj = obj;
                                 {
@@ -8046,6 +8048,15 @@ void create_screen_new_profile_screen() {
                                 obj, true, LV_PART_MAIN | LV_STATE_DEFAULT);
                             lv_obj_set_style_bg_opa(
                                 obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+                            lv_obj_set_style_border_width(
+                                obj, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+                            lv_obj_set_style_border_color(
+                                obj,
+                                lv_color_hex(
+                                    theme_colors
+                                        [eez_flow_get_selected_theme_index()]
+                                        [10]),
+                                LV_PART_MAIN | LV_STATE_DEFAULT);
                         }
                         {
                             lv_obj_t *obj = lv_btn_create(parent_obj);
@@ -8076,6 +8087,17 @@ void create_screen_new_profile_screen() {
                                 LV_PART_MAIN | LV_STATE_DEFAULT);
                             lv_obj_set_style_text_font(
                                 obj, &lv_font_montserrat_16,
+                                LV_PART_MAIN | LV_STATE_DEFAULT);
+                            lv_obj_set_style_shadow_width(
+                                obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+                            lv_obj_set_style_border_width(
+                                obj, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+                            lv_obj_set_style_border_color(
+                                obj,
+                                lv_color_hex(
+                                    theme_colors
+                                        [eez_flow_get_selected_theme_index()]
+                                        [10]),
                                 LV_PART_MAIN | LV_STATE_DEFAULT);
                             {
                                 lv_obj_t *parent_obj = obj;
@@ -12715,6 +12737,11 @@ void change_color_theme(uint32_t theme_index) {
             lv_obj_set_style_text_color(
                 objects.obj38, lv_color_hex(theme_colors[theme_index][3]),
                 LV_PART_MAIN | LV_STATE_DEFAULT);
+        if (objects.profile_preview)
+            lv_obj_set_style_border_color(
+                objects.profile_preview,
+                lv_color_hex(theme_colors[theme_index][10]),
+                LV_PART_MAIN | LV_STATE_DEFAULT);
         if (objects.obj39)
             lv_obj_set_style_bg_color(
                 objects.obj39, lv_color_hex(theme_colors[theme_index][1]),
@@ -12722,6 +12749,10 @@ void change_color_theme(uint32_t theme_index) {
         if (objects.obj39)
             lv_obj_set_style_text_color(
                 objects.obj39, lv_color_hex(theme_colors[theme_index][3]),
+                LV_PART_MAIN | LV_STATE_DEFAULT);
+        if (objects.obj39)
+            lv_obj_set_style_border_color(
+                objects.obj39, lv_color_hex(theme_colors[theme_index][10]),
                 LV_PART_MAIN | LV_STATE_DEFAULT);
         if (objects.obj40)
             lv_obj_set_style_text_color(
