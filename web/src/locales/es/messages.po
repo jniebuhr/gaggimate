@@ -152,6 +152,10 @@ msgstr "<0>Extracción:</0> las recetas con GbS activado informan aquí de cada 
 msgid "<0>Pairing:</0> GaggiMate shows up to the grinder as a Xenia machine. Under Settings → Connectivity → Machine To Machine, turn on Enable Xenia, then type the address above into Configuration. Automatic discovery does not see GaggiMate."
 msgstr "<0>Emparejamiento:</0> GaggiMate aparece en el molino como una máquina Xenia. En Settings → Connectivity → Machine To Machine, activa Enable Xenia y luego escribe la dirección de arriba en Configuration. La detección automática no encuentra GaggiMate."
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "0 (off) or {min}–{max} {unit}"
+msgstr ""
+
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
 msgid "1 year ago"
 msgstr "hace 1 año"
@@ -334,6 +338,10 @@ msgstr "Todos los cambios de Nightly"
 #: src/pages/ShotHistory/index.jsx
 msgid "All Shots"
 msgstr "Todas las extracciones"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Allowed: {range}."
+msgstr ""
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Alt Relay / SSR2 Function"
@@ -626,6 +634,10 @@ msgstr "Bluetooth, {rssi}dB (Ida y vuelta: {lat} ms, Reenvíos: {rtx})"
 #: src/app/notifications.js
 msgid "Boiler at {temperature} °C"
 msgstr "Caldera a {temperature} °C"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Boiler Lag Compensation"
+msgstr ""
 
 #: src/pages/Settings/PluginCard.jsx
 msgid "Boiler Refill Plugin"
@@ -1354,6 +1366,10 @@ msgstr "Define el comportamiento de los botones físicos al pulsarlos. Asegúrat
 msgid "degrees Celsius"
 msgstr "grados Celsius"
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Delay from the heater switching on to the temperature starting to rise (about 20 s on a Silvia with the sensor on the boiler shell). With an integral zone set, the integral stays paused this long after water stops flowing."
+msgstr ""
+
 #: src/pages/ProfileList/index.jsx
 #: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
 #: src/pages/ShotHistory/HistoryCard.jsx
@@ -1455,6 +1471,10 @@ msgstr "Eliminando la extracción {0} de {1}..."
 #: src/pages/ShotHistory/ConfirmDeleteModal.jsx
 msgid "Deleting…"
 msgstr "Eliminando…"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Derivative filter"
+msgstr ""
 
 #: src/pages/Settings/tabs/CleaningSection.jsx
 msgid "Descaling"
@@ -2119,6 +2139,10 @@ msgstr "Enjuagar con agua"
 msgid "For 120 V machines, heater coordination should generally remain enabled. Running the brew and steam heaters simultaneously can overload the circuit, blow a fuse or trip a breaker, and create a fire hazard. Only disable it if the machine and supply circuit are rated to power both heaters together."
 msgstr "En máquinas de 120 V, la coordinación de resistencias debería permanecer activada por lo general. Hacer funcionar a la vez las resistencias de extracción y de vapor puede sobrecargar el circuito, fundir un fusible o hacer saltar un interruptor automático, y crear riesgo de incendio. Desactívala solo si la máquina y el circuito de alimentación están preparados para alimentar ambas resistencias a la vez."
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "For boilers whose temperature sensor reacts long after the heater, like a sensor on the outside of the boiler. These keep the PID from overreacting to a slow, stepped reading and from winding up its integral during a flush. Leave everything at 0 to keep the plain PID."
+msgstr ""
+
 #: src/pages/SetupWizard/index.jsx
 msgid "For further information on how to use and configure GaggiMate please consult our documentation and guides!"
 msgstr "¡Para más información sobre cómo usar y configurar GaggiMate, consulta nuestra documentación y nuestras guías!"
@@ -2523,6 +2547,10 @@ msgstr "Instantánea"
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Integral Gain"
 msgstr "Ganancia integral"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Integral zone"
+msgstr ""
 
 #: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
 msgid "Internal error: ApiService unavailable."
@@ -4742,6 +4770,10 @@ msgstr "Al seleccionar un perfil se rellenan los valores. Guarda para aplicarlos
 msgid "Selecting calibration profile..."
 msgstr "Seleccionando perfil de calibración..."
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Sensor dead time"
+msgstr ""
+
 #: src/services/VisualizerService.js
 msgid "Server error - the API may not support this data format or account type"
 msgstr "Error del servidor: puede que la API no admita este formato de datos o tipo de cuenta"
@@ -5091,6 +5123,10 @@ msgstr "Dosificación inteligente"
 #: src/pages/Settings/PluginCard.jsx
 msgid "Smart Grind Plugin"
 msgstr "Plugin Smart Grind"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Smooths the D term so the thermocouple's 0.25 °C steps don't switch the heater on and off. Try 2 s; long filters delay its braking."
+msgstr ""
 
 #: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
 msgid "Snapshotting shot history..."
@@ -5763,6 +5799,10 @@ msgstr "El molino accede a GaggiMate a través de esta dirección, así que ambo
 msgid "The heater runs at full power for up to 10 seconds. The test passes as soon as the boiler temperature has risen by a few degrees, which can take up to 30 more seconds on a larger boiler."
 msgstr "La resistencia funciona a plena potencia durante un máximo de 10 segundos. La prueba se supera en cuanto la temperatura de la caldera ha subido unos grados, lo que puede tardar hasta 30 segundos más en una caldera grande."
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "The integral only runs within this distance of the target, and pauses while water flows and for the dead time after, so a flush can't wind it up into an overshoot. Try 1.5 °C."
+msgstr ""
+
 #: src/app/appSettings.js
 msgid "The machine has been in steam mode for 5 minutes."
 msgstr "La máquina lleva 5 minutos en modo vapor."
@@ -6205,6 +6245,10 @@ msgstr "Subiendo..."
 #: src/pages/Settings/tabs/CalibrationTab.jsx
 msgid "Upper bound on the identification test. Most espresso boilers resolve within 60–120 s. Extend if Autotune fails before peak slope is detected."
 msgstr "Límite superior de la prueba de identificación. La mayoría de las calderas de espresso se resuelven en 60–120 s. Auméntalo si el autoajuste falla antes de detectar la pendiente máxima."
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Use {range}."
+msgstr ""
 
 #: src/pages/Statistics/components/StatisticsSearchHelp.jsx
 msgid "Use <0>></0>, <1>>=</1>, <2><</2>, <3><=</3>, <4>=</4>"
