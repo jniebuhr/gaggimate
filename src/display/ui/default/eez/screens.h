@@ -288,12 +288,12 @@ typedef struct _objects_t {
     lv_obj_t *obj36;
     lv_obj_t *profile_chart;
     lv_obj_t *obj37;
+    lv_obj_t *obj38;
     lv_obj_t *image_preview;
     lv_obj_t *profile_preview;
-    lv_obj_t *obj38;
-    lv_obj_t *list_view;
     lv_obj_t *obj39;
     lv_obj_t *obj40;
+    lv_obj_t *list_view;
     lv_obj_t *obj41;
     lv_obj_t *obj42;
     lv_obj_t *obj43;
@@ -319,11 +319,13 @@ typedef struct _objects_t {
     lv_obj_t *obj63;
     lv_obj_t *obj64;
     lv_obj_t *obj65;
+    lv_obj_t *obj66;
+    lv_obj_t *obj67;
     lv_obj_t *select_profile_1;
     lv_obj_t *previous_profile_1;
     lv_obj_t *next_profile_1;
-    lv_obj_t *obj66;
-    lv_obj_t *obj67;
+    lv_obj_t *obj68;
+    lv_obj_t *obj69;
     lv_obj_t *welcome_icon;
     lv_obj_t *standby_icons_2;
     lv_obj_t *wifi_icon_2;
@@ -331,7 +333,7 @@ typedef struct _objects_t {
     lv_obj_t *update_icon_2;
     lv_obj_t *status_1;
     lv_obj_t *qrcode_welcome;
-    lv_obj_t *obj68;
+    lv_obj_t *obj70;
 } objects_t;
 
 extern objects_t objects;
