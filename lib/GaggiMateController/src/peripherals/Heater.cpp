@@ -155,8 +155,13 @@ void Heater::loopPid() {
         simplePid->setDisturbanceFeedforward(0.0f, 0.0f);
     }
 
-    // Now run PID with proper feedforward integrated
-    bool pidUpdated = simplePid->update();
+    // Now run PID with proper feedforward integrated. Hold lagMutex so a settings update from the comms task can't
+    // change the D filter or integral zone mid-calculation.
+    bool pidUpdated;
+    {
+        std::lock_guard<std::mutex> lock(lagMutex);
+        pidUpdated = simplePid->update();
+    }
 
     if (pidUpdated) {
         plot(output, 1.0f, 1);
