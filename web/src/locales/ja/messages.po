@@ -270,6 +270,7 @@ msgstr "お気に入りに追加"
 msgid "Address"
 msgstr "アドレス"
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
 #: src/pages/Statistics/components/toolbar/subcomponents.jsx
 msgid "Advanced"
 msgstr "詳細設定"
@@ -1717,6 +1718,10 @@ msgstr "期間フィルターを編集"
 msgid "Edit profile"
 msgstr "プロファイルを編集"
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Element power from the machine's rating plate, e.g. 1100 W for a 230 V Rancilio Silvia."
+msgstr "マシンの定格銘板に記載されたヒーター出力です（例: 230 V の Rancilio Silvia なら 1100 W）。"
+
 #: src/pages/Statistics/utils/statisticsSearchDsl.js
 msgid "Empty date expression."
 msgstr "日付の式が空です。"
@@ -2140,8 +2145,8 @@ msgid "For 120 V machines, heater coordination should generally remain enabled. 
 msgstr "120 V のマシンでは、通常ヒーター協調を有効のままにしてください。抽出ヒーターとスチームヒーターを同時に動作させると回路が過負荷になり、ヒューズが切れたりブレーカーが落ちたりして、火災の危険があります。マシンと電源回路が両方のヒーターを同時に動作させる定格を満たしている場合にのみ無効にしてください。"
 
 #: src/pages/Settings/tabs/LagCompensationSection.jsx
-msgid "For boilers whose temperature sensor reacts long after the heater, like a sensor on the outside of the boiler. These keep the PID from overreacting to a slow, stepped reading and from winding up its integral during a flush. Leave everything at 0 to keep the plain PID."
-msgstr "ボイラー外側のセンサーのように、ヒーターよりかなり遅れて反応する温度センサー向けの設定です。遅く階段状の読み値に PID が過剰反応したり、フラッシュ中に積分がたまったりするのを防ぎます。すべて 0 のままにすると通常の PID になります。"
+msgid "For boilers whose temperature sensor reacts long after the heater, like a sensor on the outside of the boiler. With heater power, heat-up rate and dead time set, the PID works on the measured temperature plus the heat still on its way to the sensor, so it stops heating in time instead of overshooting. Leave everything at 0 to keep the plain PID."
+msgstr "ボイラー外側のセンサーのように、ヒーターよりかなり遅れて反応する温度センサー向けの設定です。ヒーター出力、昇温速度、むだ時間を設定すると、PID は測定温度にまだセンサーへ伝わっていない熱を加えた値で制御するため、オーバーシュートせずに適切なタイミングで加熱を止めます。すべて 0 のままにすると通常の PID になります。"
 
 #: src/pages/SetupWizard/index.jsx
 msgid "For further information on how to use and configure GaggiMate please consult our documentation and guides!"
@@ -2182,6 +2187,10 @@ msgstr "開始"
 msgctxt "panel view"
 msgid "Full"
 msgstr "フル"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Full-power heat-up rate"
+msgstr "フルパワー時の昇温速度"
 
 #: src/pages/SetupWizard/index.jsx
 msgid "Further Resources"
@@ -2337,6 +2346,10 @@ msgstr "ヒーター協調"
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "Heater off, waiting for the temperature to rise…"
 msgstr "ヒーター停止中、温度の上昇を待っています…"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Heater power"
+msgstr "ヒーター出力"
 
 #: src/utils/metricDefinitions.js
 msgid "Heater Power"
@@ -2639,6 +2652,10 @@ msgstr "先週"
 #: src/pages/Settings/tabs/CleaningSection.jsx
 msgid "Last: {lastTime} · {shotsSince, plural, one {# shot since} other {# shots since}}"
 msgstr "前回: {lastTime} · {shotsSince, plural, other {以降 # ショット}}"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Learned standing heat loss: {learnedLoss} W. The predictor starts from this after a restart."
+msgstr "学習した待機時の熱損失: {learnedLoss} W。再起動後、予測器はこの値から始めます。"
 
 #: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 msgid "Length (Long)"
@@ -5296,6 +5313,10 @@ msgstr "統計検索 DSL"
 msgid "Std Dev"
 msgstr "標準偏差"
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Steady temperature rise at full power, read off the middle of a warm-up from cold (about 0.6 °C/s on a Silvia)."
+msgstr "フルパワー時の安定した温度上昇です。冷えた状態からのウォームアップの中ほどで読み取ります（Silvia で約 0.6 °C/秒）。"
+
 #: src/app/machineStatus.js
 #: src/pages/Home/utils.js
 msgctxt "machine mode"
@@ -6325,6 +6346,10 @@ msgstr "バルブ"
 msgid "Valve closed"
 msgstr "バルブ閉"
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Valve dump per flush"
+msgstr "フラッシュごとのバルブ排水量"
+
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
 msgid "Valve open"
@@ -6471,6 +6496,10 @@ msgstr "給湯ボタン"
 msgid "Water Button Behavior"
 msgstr "給湯ボタンの動作"
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Water dead time"
+msgstr "水のむだ時間"
+
 #: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
 msgid "Water drawn"
 msgstr "抽出した水量"
@@ -6505,6 +6534,10 @@ msgstr "水タンクの水位"
 #: src/utils/warnings.js
 msgid "Water tank low"
 msgstr "水タンクの残量低下"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Water the 3-way valve dumps into the drip tray when a flush or shot ends; it leaves the boiler too. To measure it, weigh the empty drip tray, run a flush with a cup under the group to catch its water, then weigh the tray again: the difference is the dump. 0 counts none (about 5 ml on a Silvia)."
+msgstr "フラッシュや抽出の終了時に三方弁がドリップトレイへ排出する水で、この水もボイラーから出ていきます。測るには、空のドリップトレイの重さを量り、グループヘッドの下にカップを置いて水を受けながらフラッシュし、もう一度トレイを量ります。その差が排水量です。0 にすると数えません（Silvia で約 5 ml）。"
 
 #: src/pages/SetupWizard/WifiStep.jsx
 msgid "Weak"
@@ -6606,6 +6639,10 @@ msgstr "GaggiMate へようこそ"
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "What percentage to run the pump at during steaming"
 msgstr "スチーム中にポンプを動かす割合（%）"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "When the pump puts cold water into the boiler, the sensor takes a while to notice the boiler getting cooler. This is how long it takes. To measure it, wait until the temperature is steady, then run a 5 second flush. Afterwards, look at the temperature graph on the home page: note the temperature before the flush and the lowest it dropped to, and work out the temperature half way between them (from 93 °C down to 85 °C, half way is 89 °C). Count the seconds from the water starting until the line reached that temperature. On a Silvia that's about 12 seconds. 0 means use the sensor dead time."
+msgstr "ポンプがボイラーに冷たい水を送り込むと、センサーがボイラーの温度低下に気付くまで少し時間がかかります。その時間のことです。測るには、温度が安定するまで待ってから 5 秒間フラッシュします。その後、ホーム画面の温度グラフで、フラッシュ前の温度と下がりきった最低温度を確認し、その中間の温度を求めます（93 °C から 85 °C なら中間は 89 °C）。水が出始めてからグラフがその温度に達するまでの秒数を数えます。Silvia では約 12 秒です。0 はセンサーのむだ時間を使うという意味です。"
 
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "When the toggle is off, brightness will be set to 0"

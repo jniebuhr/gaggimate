@@ -70,9 +70,11 @@ import {
   splitPidString,
 } from './settingsForm.js';
 
-// Device facts GET /api/settings reports for display only; never saved, exported or imported.
+// Device facts GET /api/settings reports for display only; never saved, exported or imported. modelLossW is
+// learned by the controller: posting the loaded value back on save would overwrite a newer one.
 const READ_ONLY_KEYS = [
   'deviceIp',
+  'modelLossW',
   'setupDone',
   'apMode',
   'setupStep',
@@ -388,9 +390,13 @@ export function Settings() {
   const onSubmit = useCallback(
     async (e, restart = false) => {
       if (e) e.preventDefault();
-      if (!isLoading && invalidSaveField(formData, machine.value.capabilities)) {
-        if (tab === 'machine') formRef.current.reportValidity();
-        else route('/settings/machine');
+      const invalid = isLoading ? null : invalidSaveField(formData, machine.value.capabilities);
+      if (invalid) {
+        if (tab === 'machine') {
+          // Advanced lag fields sit in a collapsed <details>; open it so the browser can point at the field.
+          document.getElementById(invalid)?.closest('details')?.setAttribute('open', '');
+          formRef.current.reportValidity();
+        } else route('/settings/machine');
         return;
       }
       if (smartDoseSaving || submitting) return;

@@ -270,6 +270,7 @@ msgstr "加入收藏"
 msgid "Address"
 msgstr "地址"
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
 #: src/pages/Statistics/components/toolbar/subcomponents.jsx
 msgid "Advanced"
 msgstr "高级"
@@ -1717,6 +1718,10 @@ msgstr "编辑日期范围筛选"
 msgid "Edit profile"
 msgstr "编辑曲线"
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Element power from the machine's rating plate, e.g. 1100 W for a 230 V Rancilio Silvia."
+msgstr "机器铭牌上的加热元件功率，例如 230 V 的 Rancilio Silvia 为 1100 W。"
+
 #: src/pages/Statistics/utils/statisticsSearchDsl.js
 msgid "Empty date expression."
 msgstr "日期表达式为空。"
@@ -2140,8 +2145,8 @@ msgid "For 120 V machines, heater coordination should generally remain enabled. 
 msgstr "对于 120 V 咖啡机，通常应保持启用加热协调。同时运行冲煮和蒸汽加热器可能会使电路过载、烧断保险丝或使断路器跳闸，并引发火灾隐患。仅当咖啡机和供电电路的额定值足以同时为两个加热器供电时，才可禁用此功能。"
 
 #: src/pages/Settings/tabs/LagCompensationSection.jsx
-msgid "For boilers whose temperature sensor reacts long after the heater, like a sensor on the outside of the boiler. These keep the PID from overreacting to a slow, stepped reading and from winding up its integral during a flush. Leave everything at 0 to keep the plain PID."
-msgstr "适用于温度传感器比加热器反应慢很多的锅炉，例如装在锅炉外侧的传感器。这些设置可防止 PID 对缓慢、阶梯状的读数反应过度，并防止冲洗时积分累积。全部保持为 0 即使用普通 PID。"
+msgid "For boilers whose temperature sensor reacts long after the heater, like a sensor on the outside of the boiler. With heater power, heat-up rate and dead time set, the PID works on the measured temperature plus the heat still on its way to the sensor, so it stops heating in time instead of overshooting. Leave everything at 0 to keep the plain PID."
+msgstr "适用于温度传感器比加热器反应慢很多的锅炉，例如装在锅炉外侧的传感器。设置加热功率、升温速率和死区时间后，PID 会以测得温度加上仍在传向传感器的热量来控制，从而及时停止加热，而不会超调。全部保持为 0 即使用普通 PID。"
 
 #: src/pages/SetupWizard/index.jsx
 msgid "For further information on how to use and configure GaggiMate please consult our documentation and guides!"
@@ -2182,6 +2187,10 @@ msgstr "从"
 msgctxt "panel view"
 msgid "Full"
 msgstr "完整"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Full-power heat-up rate"
+msgstr "满功率升温速率"
 
 #: src/pages/SetupWizard/index.jsx
 msgid "Further Resources"
@@ -2337,6 +2346,10 @@ msgstr "加热协调"
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "Heater off, waiting for the temperature to rise…"
 msgstr "加热器已关闭，正在等待温度上升…"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Heater power"
+msgstr "加热功率"
 
 #: src/utils/metricDefinitions.js
 msgid "Heater Power"
@@ -2639,6 +2652,10 @@ msgstr "上周"
 #: src/pages/Settings/tabs/CleaningSection.jsx
 msgid "Last: {lastTime} · {shotsSince, plural, one {# shot since} other {# shots since}}"
 msgstr "上次：{lastTime} · {shotsSince, plural, other {此后 # 次萃取}}"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Learned standing heat loss: {learnedLoss} W. The predictor starts from this after a restart."
+msgstr "已学习的待机热损失：{learnedLoss} W。重启后预测器会从此值开始。"
 
 #: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 msgid "Length (Long)"
@@ -5296,6 +5313,10 @@ msgstr "统计搜索 DSL"
 msgid "Std Dev"
 msgstr "标准差"
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Steady temperature rise at full power, read off the middle of a warm-up from cold (about 0.6 °C/s on a Silvia)."
+msgstr "满功率下稳定的升温速度，在冷机预热过程的中段读取（Silvia 约为 0.6 °C/秒）。"
+
 #: src/app/machineStatus.js
 #: src/pages/Home/utils.js
 msgctxt "machine mode"
@@ -6325,6 +6346,10 @@ msgstr "阀门"
 msgid "Valve closed"
 msgstr "阀门关闭"
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Valve dump per flush"
+msgstr "每次冲洗的阀门排水量"
+
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
 msgid "Valve open"
@@ -6471,6 +6496,10 @@ msgstr "热水按钮"
 msgid "Water Button Behavior"
 msgstr "热水按钮行为"
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Water dead time"
+msgstr "进水死区时间"
+
 #: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
 msgid "Water drawn"
 msgstr "已取水量"
@@ -6505,6 +6534,10 @@ msgstr "水箱水位"
 #: src/utils/warnings.js
 msgid "Water tank low"
 msgstr "水箱水位低"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Water the 3-way valve dumps into the drip tray when a flush or shot ends; it leaves the boiler too. To measure it, weigh the empty drip tray, run a flush with a cup under the group to catch its water, then weigh the tray again: the difference is the dump. 0 counts none (about 5 ml on a Silvia)."
+msgstr "冲洗或萃取结束时三通阀排到滴水盘的水，这些水同样来自锅炉。测量方法：先称空滴水盘，然后在冲泡头下放一个杯子接住冲洗的水并进行冲洗，再称一次滴水盘：两者之差就是排水量。0 表示不计入（Silvia 约为 5 ml）。"
 
 #: src/pages/SetupWizard/WifiStep.jsx
 msgid "Weak"
@@ -6606,6 +6639,10 @@ msgstr "欢迎使用 GaggiMate"
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "What percentage to run the pump at during steaming"
 msgstr "打蒸汽时泵的运行功率百分比"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "When the pump puts cold water into the boiler, the sensor takes a while to notice the boiler getting cooler. This is how long it takes. To measure it, wait until the temperature is steady, then run a 5 second flush. Afterwards, look at the temperature graph on the home page: note the temperature before the flush and the lowest it dropped to, and work out the temperature half way between them (from 93 °C down to 85 °C, half way is 89 °C). Count the seconds from the water starting until the line reached that temperature. On a Silvia that's about 12 seconds. 0 means use the sensor dead time."
+msgstr "水泵把冷水送入锅炉后，传感器要过一会儿才会察觉锅炉在变冷。这就是这段时间。测量方法：等温度稳定后，冲洗 5 秒。然后查看主页上的温度曲线：记下冲洗前的温度和降到的最低温度，算出两者正中间的温度（从 93 °C 降到 85 °C，中间是 89 °C）。从开始出水数到曲线降到这个温度所用的秒数。Silvia 约为 12 秒。0 表示使用传感器死区时间。"
 
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "When the toggle is off, brightness will be set to 0"

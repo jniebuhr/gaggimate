@@ -237,6 +237,20 @@ void Settings::setSensorDeadTimeS(float seconds) {
     sensorDeadTimeS.set(lag_limits::clampOrOff(seconds, lag_limits::SENSOR_DEAD_TIME_S));
 }
 
+void Settings::setModelHeaterW(float watts) { modelHeaterW.set(lag_limits::clampOrOff(watts, lag_limits::HEATER_W)); }
+
+void Settings::setModelHeatRate(float degreesPerSecond) {
+    modelHeatRate.set(lag_limits::clampOrOff(degreesPerSecond, lag_limits::HEAT_RATE_C_PER_S));
+}
+
+void Settings::setModelLossW(float watts) { modelLossW.set(lag_limits::clampOrOff(watts, lag_limits::STANDING_LOSS_W)); }
+
+void Settings::setWaterDeadTimeS(float seconds) {
+    waterDeadTimeS.set(lag_limits::clampOrOff(seconds, lag_limits::WATER_DEAD_TIME_S));
+}
+
+void Settings::setValveDumpMl(float ml) { valveDumpMl.set(lag_limits::clampOrOff(ml, lag_limits::VALVE_DUMP_ML)); }
+
 void Settings::setPumpModelCoeffs(const String &pumpModelCoeffs) { this->pumpModelCoeffs.set(pumpModelCoeffs); }
 
 void Settings::setPumpSlipCoeffs(const String &pumpSlipCoeffs) { this->pumpSlipCoeffs.set(pumpSlipCoeffs); }

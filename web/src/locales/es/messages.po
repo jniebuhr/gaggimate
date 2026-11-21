@@ -270,6 +270,7 @@ msgstr "Añadir a favoritos"
 msgid "Address"
 msgstr "Dirección"
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
 #: src/pages/Statistics/components/toolbar/subcomponents.jsx
 msgid "Advanced"
 msgstr "Avanzado"
@@ -1717,6 +1718,10 @@ msgstr "Editar filtro de rango de fechas"
 msgid "Edit profile"
 msgstr "Editar perfil"
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Element power from the machine's rating plate, e.g. 1100 W for a 230 V Rancilio Silvia."
+msgstr "Potencia de la resistencia según la placa de características, p. ej. 1100 W en una Rancilio Silvia de 230 V."
+
 #: src/pages/Statistics/utils/statisticsSearchDsl.js
 msgid "Empty date expression."
 msgstr "Expresión de fecha vacía."
@@ -2140,8 +2145,8 @@ msgid "For 120 V machines, heater coordination should generally remain enabled. 
 msgstr "En máquinas de 120 V, la coordinación de resistencias debería permanecer activada por lo general. Hacer funcionar a la vez las resistencias de extracción y de vapor puede sobrecargar el circuito, fundir un fusible o hacer saltar un interruptor automático, y crear riesgo de incendio. Desactívala solo si la máquina y el circuito de alimentación están preparados para alimentar ambas resistencias a la vez."
 
 #: src/pages/Settings/tabs/LagCompensationSection.jsx
-msgid "For boilers whose temperature sensor reacts long after the heater, like a sensor on the outside of the boiler. These keep the PID from overreacting to a slow, stepped reading and from winding up its integral during a flush. Leave everything at 0 to keep the plain PID."
-msgstr "Para calderas cuyo sensor de temperatura reacciona mucho después de la resistencia, como un sensor en el exterior de la caldera. Estos valores evitan que el PID reaccione en exceso a una lectura lenta y escalonada y que su integral se acumule durante un enjuague. Deja todo en 0 para mantener el PID simple."
+msgid "For boilers whose temperature sensor reacts long after the heater, like a sensor on the outside of the boiler. With heater power, heat-up rate and dead time set, the PID works on the measured temperature plus the heat still on its way to the sensor, so it stops heating in time instead of overshooting. Leave everything at 0 to keep the plain PID."
+msgstr "Para calderas cuyo sensor de temperatura reacciona mucho después de la resistencia, como un sensor en el exterior de la caldera. Con la potencia, la tasa de calentamiento y el tiempo muerto configurados, el PID trabaja con la temperatura medida más el calor que aún va de camino al sensor, así deja de calentar a tiempo en lugar de pasarse. Deja todo en 0 para mantener el PID simple."
 
 #: src/pages/SetupWizard/index.jsx
 msgid "For further information on how to use and configure GaggiMate please consult our documentation and guides!"
@@ -2182,6 +2187,10 @@ msgstr "Desde"
 msgctxt "panel view"
 msgid "Full"
 msgstr "Completa"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Full-power heat-up rate"
+msgstr "Tasa de calentamiento a plena potencia"
 
 #: src/pages/SetupWizard/index.jsx
 msgid "Further Resources"
@@ -2337,6 +2346,10 @@ msgstr "Coordinación de resistencias"
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "Heater off, waiting for the temperature to rise…"
 msgstr "Resistencia apagada, esperando a que suba la temperatura…"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Heater power"
+msgstr "Potencia de la resistencia"
 
 #: src/utils/metricDefinitions.js
 msgid "Heater Power"
@@ -2639,6 +2652,10 @@ msgstr "La semana pasada"
 #: src/pages/Settings/tabs/CleaningSection.jsx
 msgid "Last: {lastTime} · {shotsSince, plural, one {# shot since} other {# shots since}}"
 msgstr "Última: {lastTime} · {shotsSince, plural, one {# extracción desde entonces} other {# extracciones desde entonces}}"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Learned standing heat loss: {learnedLoss} W. The predictor starts from this after a restart."
+msgstr "Pérdida de calor en reposo aprendida: {learnedLoss} W. El predictor parte de este valor tras un reinicio."
 
 #: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 msgid "Length (Long)"
@@ -5296,6 +5313,10 @@ msgstr "DSL de búsqueda de estadísticas"
 msgid "Std Dev"
 msgstr "Desv. est."
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Steady temperature rise at full power, read off the middle of a warm-up from cold (about 0.6 °C/s on a Silvia)."
+msgstr "Subida constante de temperatura a plena potencia, leída en la mitad de un calentamiento en frío (unos 0,6 °C/s en una Silvia)."
+
 #: src/app/machineStatus.js
 #: src/pages/Home/utils.js
 msgctxt "machine mode"
@@ -6325,6 +6346,10 @@ msgstr "Válvula"
 msgid "Valve closed"
 msgstr "Válvula cerrada"
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Valve dump per flush"
+msgstr "Descarga de la válvula por enjuague"
+
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
 msgid "Valve open"
@@ -6471,6 +6496,10 @@ msgstr "Botón de agua"
 msgid "Water Button Behavior"
 msgstr "Comportamiento del botón de agua"
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Water dead time"
+msgstr "Tiempo muerto del agua"
+
 #: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
 msgid "Water drawn"
 msgstr "Agua extraída"
@@ -6505,6 +6534,10 @@ msgstr "Nivel del depósito de agua"
 #: src/utils/warnings.js
 msgid "Water tank low"
 msgstr "Depósito de agua bajo"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Water the 3-way valve dumps into the drip tray when a flush or shot ends; it leaves the boiler too. To measure it, weigh the empty drip tray, run a flush with a cup under the group to catch its water, then weigh the tray again: the difference is the dump. 0 counts none (about 5 ml on a Silvia)."
+msgstr "Agua que la válvula de 3 vías descarga en la bandeja de goteo al terminar un enjuague o una extracción; también sale de la caldera. Para medirla, pesa la bandeja de goteo vacía, haz un enjuague con una taza bajo el grupo para recoger su agua y vuelve a pesar la bandeja: la diferencia es la descarga. 0 no cuenta nada (unos 5 ml en una Silvia)."
 
 #: src/pages/SetupWizard/WifiStep.jsx
 msgid "Weak"
@@ -6606,6 +6639,10 @@ msgstr "Te damos la bienvenida a GaggiMate"
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "What percentage to run the pump at during steaming"
 msgstr "Porcentaje al que funciona la bomba mientras se vaporiza"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "When the pump puts cold water into the boiler, the sensor takes a while to notice the boiler getting cooler. This is how long it takes. To measure it, wait until the temperature is steady, then run a 5 second flush. Afterwards, look at the temperature graph on the home page: note the temperature before the flush and the lowest it dropped to, and work out the temperature half way between them (from 93 °C down to 85 °C, half way is 89 °C). Count the seconds from the water starting until the line reached that temperature. On a Silvia that's about 12 seconds. 0 means use the sensor dead time."
+msgstr "Cuando la bomba mete agua fría en la caldera, el sensor tarda un rato en notar que la caldera se enfría. Este es ese tiempo. Para medirlo, espera a que la temperatura esté estable y haz un enjuague de 5 segundos. Después, mira la gráfica de temperatura en la página de inicio: anota la temperatura antes del enjuague y la más baja a la que llegó, y calcula la temperatura a medio camino entre ambas (de 93 °C a 85 °C, la mitad es 89 °C). Cuenta los segundos desde que empieza el agua hasta que la línea llega a esa temperatura. En una Silvia son unos 12 segundos. 0 significa usar el tiempo muerto del sensor."
 
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "When the toggle is off, brightness will be set to 0"
