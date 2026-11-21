@@ -14,15 +14,21 @@ const FIELDS = [
 
 const inRangeOrOff = (value, min, max) => {
   const v = Number(value);
-  return value === '' || v === 0 || (v >= min && v <= max);
+  return value === '' || value == null || v === 0 || (v >= min && v <= max);
 };
+
+// First lag field whose value is out of range, or null. The save handler checks this too: imports and Save & Restart
+// skip the inputs' own validation, and the inputs aren't mounted off the Machine tab.
+export const invalidLagField = formData =>
+  FIELDS.find(({ key, min, max }) => !inRangeOrOff(formData[key], min, max))?.key ?? null;
 
 // Values between 0 and the minimum are as silly as values above the maximum; block saving. The check follows the
 // value itself, not just typing, so an import or Discard that changes it also clears or sets the error.
 function RangeInput({ id, value, min, max, error, onChange }) {
   const ref = useRef(null);
   useEffect(() => {
-    ref.current?.setCustomValidity(inRangeOrOff(ref.current.value, min, max) ? '' : error);
+    // The prop, not the input's own value: a number input blanks non-numbers like an imported "abc".
+    ref.current?.setCustomValidity(inRangeOrOff(value, min, max) ? '' : error);
   }, [value, min, max, error]);
   return (
     <input

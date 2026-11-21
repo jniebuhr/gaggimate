@@ -21,6 +21,7 @@ import {
 } from '../../utils/dashboardManager.js';
 import { downloadJson } from '../../utils/download.js';
 import { validateTankCalibration } from '../../utils/waterLevel.js';
+import { invalidLagField } from './tabs/LagCompensationSection.jsx';
 import { getStoredTheme, handleThemeChange } from '../../utils/themeManager.js';
 
 import PageLayout from '../../components/PageLayout.jsx';
@@ -386,6 +387,11 @@ export function Settings() {
         machine.value.capabilities.ledControl &&
         (tankErrors.empty || tankErrors.full)
       ) {
+        if (tab === 'machine') formRef.current.reportValidity();
+        else route('/settings/machine');
+        return;
+      }
+      if (!isLoading && invalidLagField(formData)) {
         if (tab === 'machine') formRef.current.reportValidity();
         else route('/settings/machine');
         return;
