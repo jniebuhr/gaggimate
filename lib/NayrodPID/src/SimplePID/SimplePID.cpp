@@ -18,7 +18,7 @@ bool SimplePID::update() {
     }
     uint32_t now = millis();
     uint32_t timeChange = (now - lastTime);
-    if (timeChange < ctrl_freq_sampling * 1000) {
+    if (timeChange < 1000.0f / ctrl_freq_sampling) { // the sampling period in ms
         return false;
     }
     lastTime = now;
