@@ -426,14 +426,14 @@ export function MachineTab({ formData, onChange, setField, profiles = [] }) {
                       id='altRelayFunction'
                       name='altRelayFunction'
                       className='select select-bordered w-full'
-                      value={formData.altRelayFunction ?? 1}
+                      value={String(formData.altRelayFunction ?? 1)}
                       onChange={onChange('altRelayFunction')}
                     >
-                      <option value={0}>{t({ message: 'None', context: 'relay function' })}</option>
-                      <option value={1}>
+                      <option value='0'>{t({ message: 'None', context: 'relay function' })}</option>
+                      <option value='1'>
                         {t({ message: 'Grind', context: 'relay function' })}
                       </option>
-                      <option value={2} disabled className='text-gray-400'>
+                      <option value='2' disabled className='text-gray-400'>
                         {t`Steam Boiler (Coming Soon)`}
                       </option>
                     </select>
