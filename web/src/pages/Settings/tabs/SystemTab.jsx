@@ -91,7 +91,7 @@ function StorageAndMemorySection({ formData }) {
             <span className='text-base-content/70 text-sm font-medium'>
               <Trans>Storage (LittleFS)</Trans>
             </span>
-            <div className='bg-base-300 h-3 w-full overflow-hidden rounded'>
+            <div className='bg-base-300 h-3 w-full overflow-hidden rounded-sm'>
               <div
                 className='bg-primary h-full transition-all'
                 style={{ width: `${formData.spiffsUsedPct || 0}%` }}
@@ -109,7 +109,7 @@ function StorageAndMemorySection({ formData }) {
             <span className='text-base-content/70 text-sm font-medium'>
               <Trans>Storage (SD-Card)</Trans>
             </span>
-            <div className='bg-base-300 h-3 w-full overflow-hidden rounded'>
+            <div className='bg-base-300 h-3 w-full overflow-hidden rounded-sm'>
               <div
                 className='bg-primary h-full transition-all'
                 style={{ width: `${formData.sdUsedPct || 0}%` }}
@@ -127,7 +127,7 @@ function StorageAndMemorySection({ formData }) {
             <span className='text-base-content/70 text-sm font-medium'>
               <Trans>Free Memory (Heap)</Trans>
             </span>
-            <div className='bg-base-300 h-3 w-full overflow-hidden rounded'>
+            <div className='bg-base-300 h-3 w-full overflow-hidden rounded-sm'>
               <div
                 className='bg-primary h-full transition-all'
                 style={{
@@ -211,7 +211,7 @@ function MaintenanceSection({
               ? t`Scanning shot history files...`
               : t`Processing shot history files (${current}/${total})`}
           </div>
-          <div className='bg-base-300 h-2 w-full overflow-hidden rounded'>
+          <div className='bg-base-300 h-2 w-full overflow-hidden rounded-sm'>
             <div
               className={`h-full transition-all duration-300 ${
                 rebuildProgress.total === 0 ? 'bg-primary animate-pulse' : 'bg-primary'
@@ -355,12 +355,12 @@ export function SystemTab() {
       {/* Firmware updates channel */}
       <Section title={t`System Version & Updates`} className='h-full'>
         <form ref={formRef} onSubmit={onSubmit} className='space-y-4'>
-          <div className='form-control max-w-md'>
+          <div className='max-w-md'>
             <label htmlFor='channel' className='mb-2 block text-sm font-medium'>
               <Trans>Update Channel</Trans>
             </label>
             <div className='mb-2 flex w-full items-center gap-2'>
-              <select id='channel' name='channel' className='select select-bordered grow'>
+              <select id='channel' name='channel' className='select grow'>
                 <option value='latest' selected={formData.channel === 'latest'}>
                   {t({ message: 'Stable', context: 'update channel' })}
                 </option>

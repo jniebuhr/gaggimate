@@ -253,7 +253,7 @@ export function LibrarySection({
             <tr>
               <th colSpan={columnCount} className='library-table-header-cell relative z-20 p-0'>
                 <div
-                  className={`library-row-grid library-row-grid--${isShot ? 'shot' : 'profile'} library-row-grid--header min-h-9 px-3`}
+                  className={`library-row-grid ${isShot ? 'library-row-grid--shot' : 'library-row-grid--profile'} library-row-grid--header min-h-9 px-3`}
                 >
                   <button
                     type='button'

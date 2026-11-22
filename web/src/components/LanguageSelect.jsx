@@ -12,7 +12,7 @@ export function LanguageSelect() {
     <SettingsFormField label={t`Language`} htmlFor='ui-language' noMargin>
       <select
         id='ui-language'
-        className='select select-bordered w-full'
+        className='select w-full'
         value={value}
         onChange={async e => {
           setValue(e.target.value);

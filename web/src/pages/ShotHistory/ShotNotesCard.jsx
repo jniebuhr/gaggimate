@@ -206,7 +206,7 @@ export default function ShotNotesCard({ shot, onNotesUpdate, onNotesLoaded }) {
   }
 
   return (
-    <div className='border-t-base-content/10 accent mt-6 border-t-2 pt-6'>
+    <div className='border-t-base-content/10 mt-6 border-t-2 pt-6'>
       <div className='mb-4 flex items-center justify-between'>
         <h3 className='text-lg font-semibold'>
           <Trans>Shot Notes</Trans>
@@ -241,7 +241,7 @@ export default function ShotNotesCard({ shot, onNotesUpdate, onNotesLoaded }) {
 
       <div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4'>
         {/* Rating */}
-        <div className='form-control'>
+        <div>
           <label className='mb-2 block text-sm font-medium'>
             <Trans>Rating</Trans>
           </label>
@@ -249,27 +249,25 @@ export default function ShotNotesCard({ shot, onNotesUpdate, onNotesLoaded }) {
         </div>
 
         {/* Bean Type */}
-        <div className='form-control'>
+        <div>
           <label className='mb-2 block text-sm font-medium'>
             <Trans>Bean Type</Trans>
           </label>
           {isEditing ? (
             <input
               type='text'
-              className='input input-bordered w-full'
+              className='input w-full'
               value={notes.beanType}
               onChange={e => handleInputChange('beanType', e.target.value)}
               placeholder={t`e.g., Single Origin, Blend`}
             />
           ) : (
-            <div className='input input-bordered bg-base-200 w-full cursor-default'>
-              {notes.beanType || '—'}
-            </div>
+            <div className='input bg-base-200 w-full cursor-default'>{notes.beanType || '—'}</div>
           )}
         </div>
 
         {/* Dose In */}
-        <div className='form-control'>
+        <div>
           <label className='mb-2 block text-sm font-medium'>
             <Trans>Dose In (g)</Trans>
           </label>
@@ -277,20 +275,18 @@ export default function ShotNotesCard({ shot, onNotesUpdate, onNotesLoaded }) {
             <input
               type='number'
               step='0.1'
-              className='input input-bordered w-full'
+              className='input w-full'
               value={notes.doseIn}
               onChange={e => handleInputChange('doseIn', e.target.value)}
               placeholder='18.0'
             />
           ) : (
-            <div className='input input-bordered bg-base-200 w-full cursor-default'>
-              {notes.doseIn || '—'}
-            </div>
+            <div className='input bg-base-200 w-full cursor-default'>{notes.doseIn || '—'}</div>
           )}
         </div>
 
         {/* Dose Out */}
-        <div className='form-control'>
+        <div>
           <label className='mb-2 block text-sm font-medium'>
             <Trans>Dose Out (g)</Trans>
           </label>
@@ -298,56 +294,54 @@ export default function ShotNotesCard({ shot, onNotesUpdate, onNotesLoaded }) {
             <input
               type='number'
               step='0.1'
-              className='input input-bordered w-full'
+              className='input w-full'
               value={notes.doseOut}
               onChange={e => handleInputChange('doseOut', e.target.value)}
               placeholder='36.0'
             />
           ) : (
-            <div className='input input-bordered bg-base-200 w-full cursor-default'>
-              {notes.doseOut || '—'}
-            </div>
+            <div className='input bg-base-200 w-full cursor-default'>{notes.doseOut || '—'}</div>
           )}
         </div>
 
         {/* Ratio */}
-        <div className='form-control'>
+        <div>
           <label className='mb-2 block text-sm font-medium'>
             <Trans>Ratio (1:{ratioLabel})</Trans>
           </label>
-          <div className='input input-bordered bg-base-200 w-full cursor-default'>
+          <div className='input bg-base-200 w-full cursor-default'>
             {notes.ratio ? `1:${notes.ratio}` : '—'}
           </div>
         </div>
 
         {/* Grind Setting */}
-        <div className='form-control'>
+        <div>
           <label className='mb-2 block text-sm font-medium'>
             <Trans>Grind Setting</Trans>
           </label>
           {isEditing ? (
             <input
               type='text'
-              className='input input-bordered w-full'
+              className='input w-full'
               value={notes.grindSetting}
               onChange={e => handleInputChange('grindSetting', e.target.value)}
               placeholder={t`e.g., 2.5, Medium-Fine`}
             />
           ) : (
-            <div className='input input-bordered bg-base-200 w-full cursor-default'>
+            <div className='input bg-base-200 w-full cursor-default'>
               {notes.grindSetting || '—'}
             </div>
           )}
         </div>
 
         {/* Balance/Taste */}
-        <div className='form-control'>
+        <div>
           <label className='mb-2 block text-sm font-medium'>
             <Trans>Balance/Taste</Trans>
           </label>
           {isEditing ? (
             <select
-              className='select select-bordered w-full'
+              className='select w-full'
               value={notes.balanceTaste}
               onChange={e => handleInputChange('balanceTaste', e.target.value)}
             >
@@ -357,7 +351,7 @@ export default function ShotNotesCard({ shot, onNotesUpdate, onNotesLoaded }) {
             </select>
           ) : (
             <div
-              className={`input input-bordered bg-base-200 w-full cursor-default capitalize ${getTasteColor(notes.balanceTaste)}`}
+              className={`input bg-base-200 w-full cursor-default capitalize ${getTasteColor(notes.balanceTaste)}`}
             >
               {tasteLabels[notes.balanceTaste] ?? notes.balanceTaste}
             </div>
@@ -366,14 +360,14 @@ export default function ShotNotesCard({ shot, onNotesUpdate, onNotesLoaded }) {
       </div>
 
       {/* Notes Text Area - Full Width */}
-      <div className='form-control mt-6'>
+      <div className='mt-6'>
         <label className='mb-2 block text-sm font-medium'>
           <Trans>Notes</Trans>{' '}
           {isEditing && <span className='text-xs text-gray-500'>({notes.notes.length}/200)</span>}
         </label>
         {isEditing ? (
           <textarea
-            className='textarea textarea-bordered w-full'
+            className='textarea w-full'
             rows='4'
             value={notes.notes}
             maxLength={200}
@@ -381,7 +375,7 @@ export default function ShotNotesCard({ shot, onNotesUpdate, onNotesLoaded }) {
             placeholder={t`Tasting notes, brewing observations, etc...`}
           />
         ) : (
-          <div className='textarea textarea-bordered bg-base-200 min-h-[6rem] w-full cursor-default'>
+          <div className='textarea bg-base-200 min-h-[6rem] w-full cursor-default'>
             {notes.notes || t`No notes added`}
           </div>
         )}
