@@ -103,7 +103,12 @@ export function useDashboardState() {
   const startFlush = () => {
     if (isFlushing) return;
     setFlushPending(true);
-    apiService.request({ tp: 'req:flush:start' }).catch(() => setFlushPending(false));
+    apiService
+      .request({ tp: 'req:flush:start' })
+      .then(res => {
+        if (!res?.success) setFlushPending(false);
+      })
+      .catch(() => setFlushPending(false));
   };
   // Ends a hold-to-flush (flush duration 0). Always sent, even when isFlushing already reads false
   // (status lagging, pending cleared): the firmware ignores it unless a hold-to-flush runs.

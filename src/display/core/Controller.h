@@ -151,7 +151,7 @@ class Controller {
     float getHardwareScaleCell2Weight() const { return hardwareScaleCell2Weight.load(); }
     bool isHardwareScaleCell1Valid() const { return hardwareScaleCell1Valid.load(); }
     bool isHardwareScaleCell2Valid() const { return hardwareScaleCell2Valid.load(); }
-    void onFlush();
+    bool onFlush();
     void onFlushRelease(); // ends a hold-to-flush; no-op otherwise
     int getWaterLevel() const {
         if (tankLevelPresent)

@@ -595,12 +595,12 @@ void WebSocketHandler::sendAutotuneFailed() {
 }
 
 void WebSocketHandler::handleFlushStart(uint32_t clientId, JsonDocument &request) {
-    controller->onFlush();
+    const bool started = controller->onFlush();
 
     JsonDocument response(&psramAllocator);
     response["tp"] = "res:flush:start";
     response["rid"] = request["rid"];
-    response["success"] = true;
+    response["success"] = started;
     ws.text(clientId, toWsBuffer(response));
 }
 

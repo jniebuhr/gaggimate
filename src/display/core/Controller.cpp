@@ -1644,9 +1644,9 @@ bool Controller::isHardwareScaleHealthy() const {
     return lastMeasurement != 0 && millis() - lastMeasurement < HARDWARE_GRACE_PERIOD_MS;
 }
 
-void Controller::onFlush() {
+bool Controller::onFlush() {
     if (!isMachineHardwareReady())
-        return;
+        return false;
     // Allocate outside the lock; reachable from the UI, AsyncTCP and BLE tasks (GM-147).
     const int duration = settings.getFlushDuration();
     Profile profile = FLUSH_PROFILE;
@@ -1658,7 +1658,7 @@ void Controller::onFlush() {
     {
         std::lock_guard<std::recursive_mutex> guard(processMutex);
         if (isActiveLocked()) {
-            return;
+            return false;
         }
         clearLocked(events);
         startProcessLocked(std::move(flush), events);
@@ -1667,6 +1667,7 @@ void Controller::onFlush() {
     }
     updateControl(); // same immediate send as startProcess()
     dispatchEvents(events);
+    return true;
 }
 
 // Every hold-to-flush source (physical button, touch, web) funnels its release through here.

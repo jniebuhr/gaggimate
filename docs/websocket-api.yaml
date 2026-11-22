@@ -761,6 +761,7 @@ components:
             type: string
           success:
             type: boolean
+            description: false when no flush started (machine hardware not ready, or another process is running).
         required: [tp]
     FlushStopRequest:
       summary: End a hold-to-flush (flush duration 0). Ignored while a fixed-length flush runs.
