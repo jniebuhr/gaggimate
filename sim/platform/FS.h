@@ -117,6 +117,7 @@ class FS {
     bool mkdir(const String &path) { return mkdir(path.c_str()); }
     bool rmdir(const char *path);
     bool rename(const char *from, const char *to);
+    bool rename(const String &from, const String &to) { return rename(from.c_str(), to.c_str()); }
     size_t totalBytes() { return 16u * 1024u * 1024u; }
     size_t usedBytes() { return 1u * 1024u * 1024u; }
 
