@@ -8,58 +8,59 @@
 #include <nvs.h>
 #include <utility>
 
+std::vector<AutoWakeupSchedule> parseAutoWakeupSchedules(const String &serialized) {
+    std::vector<AutoWakeupSchedule> schedules;
+    int start = 0;
+    while (start < serialized.length()) {
+        int end = serialized.indexOf(';', start);
+        if (end == -1)
+            end = serialized.length();
+        const String entry = serialized.substring(start, end);
+        start = end + 1;
+        const int daysPos = entry.indexOf('|');
+        if (daysPos == -1)
+            continue;
+        const int offPos = entry.indexOf('|', daysPos + 1);
+        const String daysStr = offPos == -1 ? entry.substring(daysPos + 1) : entry.substring(daysPos + 1, offPos);
+        AutoWakeupSchedule schedule;
+        schedule.time = entry.substring(0, daysPos);
+        if (offPos != -1)
+            schedule.offTime = entry.substring(offPos + 1);
+        if (daysStr.length() == 7) {
+            for (int i = 0; i < 7; i++) {
+                schedule.days[i] = (daysStr.charAt(i) == '1');
+            }
+        }
+        schedules.push_back(schedule);
+    }
+    return schedules;
+}
+
+String serializeAutoWakeupSchedules(const std::vector<AutoWakeupSchedule> &schedules) {
+    String serialized = "";
+    for (size_t i = 0; i < schedules.size(); i++) {
+        if (i > 0)
+            serialized += ";";
+        serialized += schedules[i].time + "|";
+        for (int j = 0; j < 7; j++) {
+            serialized += schedules[i].days[j] ? "1" : "0";
+        }
+        if (!schedules[i].offTime.isEmpty())
+            serialized += "|" + schedules[i].offTime;
+    }
+    return serialized;
+}
+
 std::vector<AutoWakeupSchedule>
 PreferencesCodec<std::vector<AutoWakeupSchedule>>::read(Preferences &prefs, const char *key,
                                                         const std::vector<AutoWakeupSchedule> &def) {
-    String schedulesStr = prefs.getString(key, "");
-    std::vector<AutoWakeupSchedule> schedules;
-
-    if (schedulesStr.length() > 0) {
-        int start = 0;
-        int end = schedulesStr.indexOf(';');
-
-        while (end != -1 || start < schedulesStr.length()) {
-            String scheduleStr = (end != -1) ? schedulesStr.substring(start, end) : schedulesStr.substring(start);
-
-            int pipePos = scheduleStr.indexOf('|');
-            if (pipePos != -1) {
-                String timeStr = scheduleStr.substring(0, pipePos);
-                String daysStr = scheduleStr.substring(pipePos + 1);
-
-                AutoWakeupSchedule schedule;
-                schedule.time = timeStr;
-
-                if (daysStr.length() == 7) {
-                    for (int i = 0; i < 7; i++) {
-                        schedule.days[i] = (daysStr.charAt(i) == '1');
-                    }
-                }
-
-                schedules.push_back(schedule);
-            }
-
-            if (end == -1)
-                break;
-            start = end + 1;
-            end = schedulesStr.indexOf(';', start);
-        }
-    }
-
+    std::vector<AutoWakeupSchedule> schedules = parseAutoWakeupSchedules(prefs.getString(key, ""));
     return schedules.empty() ? def : schedules;
 }
 
 void PreferencesCodec<std::vector<AutoWakeupSchedule>>::write(Preferences &prefs, const char *key,
                                                               const std::vector<AutoWakeupSchedule> &value) {
-    String serialized = "";
-    for (size_t i = 0; i < value.size(); i++) {
-        if (i > 0)
-            serialized += ";";
-        serialized += value[i].time + "|";
-        for (int j = 0; j < 7; j++) {
-            serialized += value[i].days[j] ? "1" : "0";
-        }
-    }
-    prefs.putString(key, serialized);
+    prefs.putString(key, serializeAutoWakeupSchedules(value));
 }
 
 std::atomic<esp_err_t> MachineProfileSelectionCodec::lastError{ESP_OK};

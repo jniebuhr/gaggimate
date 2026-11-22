@@ -29,6 +29,7 @@ enum StatusDisplayMode { STATUS_DISPLAY_PROGRESS = 0, STATUS_DISPLAY_CHART = 1 }
 struct AutoWakeupSchedule {
     String time;    // HH:MM format
     bool days[7]{}; // [Mon, Tue, Wed, Thu, Fri, Sat, Sun]
+    String offTime; // HH:MM format, empty when the machine stays on
 
     AutoWakeupSchedule() : time("07:00") {
         // Default to all days enabled
@@ -65,7 +66,7 @@ struct AutoWakeupSchedule {
     }
 
     bool operator==(const AutoWakeupSchedule &other) const {
-        if (time != other.time)
+        if (time != other.time || offTime != other.offTime)
             return false;
         for (int i = 0; i < 7; i++) {
             if (days[i] != other.days[i])
@@ -75,7 +76,10 @@ struct AutoWakeupSchedule {
     }
 };
 
-// Serialized as "time1|days1;time2|days2" where days is a 7-bit string (e.g. "1111100" for weekdays)
+// Serialized as "time1|days1;time2|days2|off2" where days is a 7-bit string (e.g. "1111100" for weekdays) and off is optional
+std::vector<AutoWakeupSchedule> parseAutoWakeupSchedules(const String &serialized);
+String serializeAutoWakeupSchedules(const std::vector<AutoWakeupSchedule> &schedules);
+
 template <> struct PreferencesCodec<std::vector<AutoWakeupSchedule>> {
     static std::vector<AutoWakeupSchedule> read(Preferences &prefs, const char *key, const std::vector<AutoWakeupSchedule> &def);
     static void write(Preferences &prefs, const char *key, const std::vector<AutoWakeupSchedule> &value);

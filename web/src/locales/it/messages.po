@@ -426,8 +426,8 @@ msgid "Automatic Wakeup Schedule"
 msgstr "Programmazione accensione automatica"
 
 #: src/pages/Settings/PluginCard.jsx
-msgid "Automatically switch to brew mode at specified time(s) of day."
-msgstr "Passa automaticamente alla modalità erogazione agli orari indicati."
+msgid "Automatically switch to brew mode at specified time(s) of day. An optional off time switches back to standby once the machine was idle for two minutes."
+msgstr "Passa automaticamente alla modalità erogazione agli orari indicati. Un orario di spegnimento facoltativo torna in standby quando la macchina è rimasta inutilizzata per due minuti."
 
 #: src/pages/Settings/tabs/CalibrationTab.jsx
 msgid "Autotune Complete!"
@@ -5013,6 +5013,7 @@ msgstr "Mostra i pannelli della colonna di controllo come schede separate o ragg
 #: src/pages/Settings/PatchNotes.jsx
 msgid "showing the newest {0}"
 msgstr "mostrati i {0} più recenti"
+
 #: src/pages/Statistics/components/StatisticsShotCompareSection.jsx
 msgid "Showing up to 100 latest shots. Refine with filters."
 msgstr "Vengono mostrate fino a 100 estrazioni più recenti. Affina con i filtri."
@@ -5411,6 +5412,14 @@ msgstr "Passa la modalità di importazione a Salva nel browser"
 #: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
 msgid "Switch import mode to View temporarily"
 msgstr "Passa la modalità di importazione a Visualizza temporaneamente"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Switch off (optional)"
+msgstr "Spegnimento (facoltativo)"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Switch on"
+msgstr "Accensione"
 
 #: src/pages/DashboardSettings/index.jsx
 msgid "Switch to compact view"

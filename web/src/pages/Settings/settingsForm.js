@@ -38,10 +38,10 @@ export function parseAutoWakeupSchedules(autowakeupSchedules) {
   if (typeof autowakeupSchedules === 'string' && autowakeupSchedules.trim()) {
     const scheduleStrings = autowakeupSchedules.split(';');
     for (const scheduleStr of scheduleStrings) {
-      const [time, daysStr] = scheduleStr.split('|');
+      const [time, daysStr, offTime] = scheduleStr.split('|');
       if (time && daysStr && daysStr.length === 7) {
         const days = daysStr.split('').map(d => d === '1');
-        schedules.push({ time, days });
+        schedules.push({ time, days, offTime: offTime || '' });
       }
     }
   }
@@ -50,6 +50,9 @@ export function parseAutoWakeupSchedules(autowakeupSchedules) {
 
 export function serializeAutoWakeupSchedules(autowakeupSchedules) {
   return autowakeupSchedules
-    .map(schedule => `${schedule.time}|${schedule.days.map(d => (d ? '1' : '0')).join('')}`)
+    .map(schedule => {
+      const entry = `${schedule.time}|${schedule.days.map(d => (d ? '1' : '0')).join('')}`;
+      return schedule.offTime ? `${entry}|${schedule.offTime}` : entry;
+    })
     .join(';');
 }

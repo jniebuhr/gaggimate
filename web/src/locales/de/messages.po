@@ -422,8 +422,8 @@ msgid "Automatic Wakeup Schedule"
 msgstr "Zeitplan für automatisches Aufwecken"
 
 #: src/pages/Settings/PluginCard.jsx
-msgid "Automatically switch to brew mode at specified time(s) of day."
-msgstr "Zu festgelegten Tageszeiten automatisch in den Bezugsmodus wechseln."
+msgid "Automatically switch to brew mode at specified time(s) of day. An optional off time switches back to standby once the machine was idle for two minutes."
+msgstr "Zu festgelegten Tageszeiten automatisch in den Bezugsmodus wechseln. Eine optionale Ausschaltzeit wechselt zurück in den Standby, sobald die Maschine zwei Minuten lang nicht benutzt wurde."
 
 #: src/pages/Settings/tabs/CalibrationTab.jsx
 msgid "Autotune Complete!"
@@ -5009,6 +5009,7 @@ msgstr "Zeige die Panels der Bedienspalte als separate Karten oder fasse sie in 
 #: src/pages/Settings/PatchNotes.jsx
 msgid "showing the newest {0}"
 msgstr "die neuesten {0} werden angezeigt"
+
 #: src/pages/Statistics/components/StatisticsShotCompareSection.jsx
 msgid "Showing up to 100 latest shots. Refine with filters."
 msgstr "Es werden bis zu 100 der neuesten Shots angezeigt. Mit Filtern eingrenzen."
@@ -5407,6 +5408,14 @@ msgstr "Importmodus auf Im Browser speichern umschalten"
 #: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
 msgid "Switch import mode to View temporarily"
 msgstr "Importmodus vorübergehend auf Ansehen umschalten"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Switch off (optional)"
+msgstr "Ausschalten (optional)"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Switch on"
+msgstr "Einschalten"
 
 #: src/pages/DashboardSettings/index.jsx
 msgid "Switch to compact view"

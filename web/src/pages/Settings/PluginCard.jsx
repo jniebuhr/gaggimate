@@ -136,7 +136,10 @@ export function PluginCard({
         {formData.autowakeupEnabled && (
           <div className='border-base-300 mt-4 space-y-4 border-t pt-4'>
             <p className='text-sm opacity-70'>
-              <Trans>Automatically switch to brew mode at specified time(s) of day.</Trans>
+              <Trans>
+                Automatically switch to brew mode at specified time(s) of day. An optional off time
+                switches back to standby once the machine was idle for two minutes.
+              </Trans>
             </p>
             <div className='form-control'>
               <label className='mb-2 block text-sm font-medium'>
@@ -148,14 +151,28 @@ export function PluginCard({
                     key={scheduleIndex}
                     className='flex flex-wrap items-center gap-1 md:flex-nowrap'
                   >
-                    {/* Time input */}
-                    <div className='grow-1 text-center sm:text-start'>
+                    {/* On and optional off time */}
+                    <div className='flex grow-1 items-center justify-center gap-1 sm:justify-start'>
                       <input
                         type='time'
                         className='input input-bordered input-sm md:input-md w-auto min-w-0 pr-6 text-center'
                         value={schedule.time}
                         onChange={e => updateAutoWakeupTime(scheduleIndex, e.target.value)}
                         disabled={!formData.autowakeupEnabled}
+                        title={t`Switch on`}
+                      />
+                      <span className='opacity-40' aria-hidden='true'>
+                        →
+                      </span>
+                      <input
+                        type='time'
+                        className='input input-bordered input-sm md:input-md w-auto min-w-0 pr-6 text-center'
+                        value={schedule.offTime || ''}
+                        onChange={e =>
+                          updateAutoWakeupTime(scheduleIndex, e.target.value, 'offTime')
+                        }
+                        disabled={!formData.autowakeupEnabled}
+                        title={t`Switch off (optional)`}
                       />
                     </div>
 
