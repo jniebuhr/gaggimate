@@ -638,6 +638,7 @@ msgctxt "machine mode"
 msgid "Brew"
 msgstr "Extracción"
 
+#: src/pages/Home/utils.js
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
 #: src/pages/ProfileList/index.jsx
@@ -700,6 +701,10 @@ msgstr "Extraído por tiempo"
 #: src/pages/ShotHistory/HistoryCard.jsx
 msgid "Brewed by Weight"
 msgstr "Extraído por peso"
+
+#: src/pages/Home/cards/ProfileCard.jsx
+msgid "Brewing"
+msgstr "Extrayendo"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Brewing Filter Alpha"
@@ -1594,6 +1599,11 @@ msgstr "Arrastre desactivado en los resultados de búsqueda"
 msgid "Drag to reorder"
 msgstr "Arrastra para reordenar"
 
+#: src/pages/Home/cards/ProfileCard.jsx
+msgctxt "flush phase"
+msgid "Drain"
+msgstr "Drenaje"
+
 #: src/pages/ShotAnalyzer/components/library/AnalyzerPanelSlot.jsx
 msgid "Drop shot or profile JSON here"
 msgstr "Suelta aquí el JSON de una extracción o un perfil"
@@ -2098,6 +2108,11 @@ msgctxt "button behavior"
 msgid "Flush"
 msgstr "Enjuague"
 
+#: src/pages/Home/cards/ProfileCard.jsx
+msgctxt "flush phase"
+msgid "Flush"
+msgstr "Enjuague"
+
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgctxt "settings section"
 msgid "Flush"
@@ -2114,6 +2129,10 @@ msgstr "Enjuague recomendado"
 #: src/pages/Home/FlushButton.jsx
 msgid "Flush water"
 msgstr "Enjuagar con agua"
+
+#: src/pages/Home/cards/ProfileCard.jsx
+msgid "Flushing"
+msgstr "Enjuagando"
 
 #: src/pages/Settings/tabs/HeaterCoordinationSection.jsx
 msgid "For 120 V machines, heater coordination should generally remain enabled. Running the brew and steam heaters simultaneously can overload the circuit, blow a fuse or trip a breaker, and create a fire hazard. Only disable it if the machine and supply circuit are rated to power both heaters together."
@@ -3323,10 +3342,6 @@ msgstr "Notificaciones"
 msgid "Notifications are blocked. Allow them for GaggiMate in your phone's settings."
 msgstr "Las notificaciones están bloqueadas. Permítelas para GaggiMate en los ajustes del teléfono."
 
-#: src/pages/Home/cards/ProfileCard.jsx
-msgid "Now Brewing"
-msgstr "Extrayendo ahora"
-
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
 msgctxt "pump mode"
@@ -3688,10 +3703,6 @@ msgstr "Fuente de báscula preferida"
 #: src/pages/Home/cards/ActionCard.jsx
 msgid "Preheating..."
 msgstr "Precalentando..."
-
-#: src/pages/Home/utils.js
-msgid "Preinfusion"
-msgstr "Preinfusión"
 
 #: src/pages/ShotHistory/ConfirmDeleteModal.jsx
 msgid "Preparing deletion..."
@@ -5492,11 +5503,6 @@ msgstr "Tarar"
 msgid "Tare the scale, then place a known weight and calibrate each load cell."
 msgstr "Tara la báscula, coloca un peso conocido y calibra cada célula de carga."
 
-#: src/pages/Home/cards/ProfileCard.jsx
-msgctxt "process"
-msgid "Target"
-msgstr "Objetivo"
-
 #: src/pages/Statistics/components/PhaseStatistics.jsx
 msgid "Target (Delta)"
 msgstr "Objetivo (delta)"
@@ -5962,6 +5968,10 @@ msgstr "Agua bombeada total"
 #: src/pages/Statistics/components/SummaryCards.jsx
 msgid "Total Shots"
 msgstr "Total de extracciones"
+
+#: src/pages/Home/cards/ProfileCard.jsx
+msgid "Total time"
+msgstr "Tiempo total"
 
 #: src/pages/Statistics/components/SummaryCards.jsx
 msgid "Total Weight"
