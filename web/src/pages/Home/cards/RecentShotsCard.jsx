@@ -2,7 +2,10 @@ import { useContext, useEffect, useRef, useState } from 'preact/hooks';
 import { useSignalEffect } from '@preact/signals';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMagnifyingGlassChart } from '@fortawesome/free-solid-svg-icons/faMagnifyingGlassChart';
-import { parseBinaryIndex, indexToShotList } from '../../ShotHistory/parseBinaryIndex.js';
+import {
+  parseBinaryIndex,
+  indexToShotList,
+} from '../../../services/shotHistory/parseBinaryIndex.js';
 import { ApiServiceContext } from '../../../services/ApiService.js';
 import { cleanName } from '../../ShotAnalyzer/utils/formatting.js';
 import {

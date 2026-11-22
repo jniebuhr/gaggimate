@@ -1,19 +1,10 @@
-// Pure helper functions for StatisticsToolbar: label formatting and source label construction
-import {
-  DATE_ONLY_PATTERN,
-  DATE_TIME_PATTERN,
-  SEGMENT_BUTTON_BASE_CLASS,
-  COMPACT_SEGMENT_BUTTON_BASE_CLASS,
-} from './constants';
+// Pure helper functions for StatisticsToolbar: label and date formatting
+import { DATE_ONLY_PATTERN, DATE_TIME_PATTERN } from './constants';
 import { plural, t } from '@lingui/core/macro';
 import { formatTimestamp } from '../../../ShotAnalyzer/utils/analyzerUtils';
 
 export function getPrimaryDropdownToneClasses() {
   return 'bg-primary text-primary-content hover:bg-primary/92';
-}
-
-export function getNeutralDropdownToneClasses() {
-  return 'bg-transparent text-base-content/70 hover:text-base-content';
 }
 
 export function getMenuItemClasses({ tone = 'neutral', isActive = false } = {}) {
@@ -26,28 +17,6 @@ export function getMenuItemClasses({ tone = 'neutral', isActive = false } = {}) 
   return isActive
     ? 'text-base-content hover:bg-base-content/5'
     : 'text-base-content/75 hover:bg-base-content/5 hover:text-base-content';
-}
-
-export function getSegmentButtonClasses({
-  isActive,
-  disabled = false,
-  activeTone = 'primary',
-  compact = false,
-}) {
-  const baseClass = compact ? COMPACT_SEGMENT_BUTTON_BASE_CLASS : SEGMENT_BUTTON_BASE_CLASS;
-  let activeClass = 'bg-primary text-primary-content';
-  if (activeTone === 'secondary') {
-    activeClass = 'bg-secondary text-secondary-content';
-  } else if (activeTone === 'calc') {
-    activeClass = 'bg-base-100/70 text-base-content';
-  } else if (activeTone === 'neutral') {
-    activeClass = 'bg-base-content/10 text-base-content';
-  }
-  const resolvedClass = isActive
-    ? activeClass
-    : 'bg-base-100/50 text-base-content/75 hover:bg-base-200/70';
-  const disabledClass = disabled ? 'pointer-events-none opacity-40' : '';
-  return `${baseClass} ${resolvedClass} ${disabledClass}`;
 }
 
 export function formatToolbarDateTimeDisplay(value) {
@@ -174,12 +143,6 @@ export function getToolbarMessages({ parseErrors, parseWarnings, metadataError }
     noticeMessage,
     noticeTone,
   };
-}
-
-export function getDateBasisOptionTitle(value) {
-  if (value === 'shot') return t`Use shot timestamp only`;
-  if (value === 'auto') return t`Use shot timestamp, fallback to upload time`;
-  return t`Use upload time only`;
 }
 
 export function closeParentDetails(target) {

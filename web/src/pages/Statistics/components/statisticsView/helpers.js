@@ -11,13 +11,8 @@ import {
   MAX_PINNED_SHOTS_PER_PROFILE,
   PINNED_NO_PROFILE_BUCKET,
 } from '../../../ShotAnalyzer/utils/analyzerUtils';
-import { resolveShotEffectiveTimestampMs } from '../../utils/statisticsSearchDsl';
-import { STATISTICS_SOURCE_FALLBACK } from '../../utils/statisticsRoute';
+import { resolveShotTimestampMs } from '../../utils/statisticsSearchDsl';
 import { t } from '@lingui/core/macro';
-
-export function getStatisticsFallbackSource(source) {
-  return STATISTICS_SOURCE_FALLBACK[source] || null;
-}
 
 export function getInitialProfileName(initialContext) {
   const profileName = initialContext?.profileName;
@@ -88,15 +83,7 @@ export function formatDateTimeLocalInputValue(ms) {
 }
 
 export function getShotSelectionKey(shotMeta) {
-  if (!shotMeta) return '';
-  if (shotMeta.source === 'gaggimate') return `gaggimate:${String(shotMeta.id || '')}`;
-  return `browser:${String(shotMeta.storageKey || shotMeta.name || shotMeta.id || '')}`;
-}
-
-export function getSourceShortLabel(source) {
-  if (source === 'gaggimate') return 'GM';
-  if (source === 'browser') return 'WEB';
-  return 'SRC';
+  return shotMeta ? `gaggimate:${String(shotMeta.id || '')}` : '';
 }
 
 export function formatShotDateTime(ms) {
@@ -132,9 +119,9 @@ export function getShotFileStem(shotMeta) {
   return String(shotMeta?.label || shotMeta?.title || shotMeta?.id || t`Unknown Shot`);
 }
 
-export function getShotDisplaySecondary(shotMeta, dateBasisMode) {
-  const ts = resolveShotEffectiveTimestampMs(shotMeta, dateBasisMode || 'auto');
-  return `${formatShotDateTime(ts)} • ${getSourceShortLabel(shotMeta?.source)}`;
+export function getShotDisplaySecondary(shotMeta) {
+  const ts = resolveShotTimestampMs(shotMeta);
+  return formatShotDateTime(ts);
 }
 
 export function isStatisticsHotkeyBlockedTarget(target) {
@@ -149,14 +136,14 @@ export function isStatisticsHotkeyBlockedTarget(target) {
   );
 }
 
-export function buildShotSelectionItem(shot, dateBasisMode) {
+export function buildShotSelectionItem(shot) {
   return {
     id: getShotSelectionKey(shot),
     primary: getShotDisplayPrimary(shot),
     fileStem: getShotFileStem(shot),
     shotId: String(shot?.id || shot?.storageKey || shot?.name || ''),
-    secondary: getShotDisplaySecondary(shot, dateBasisMode),
-    searchText: `${shot?.id || ''} ${shot?.profile || ''} ${shot?.name || ''} ${shot?.source || ''}`,
+    secondary: getShotDisplaySecondary(shot),
+    searchText: `${shot?.id || ''} ${shot?.profile || ''} ${shot?.name || ''}`,
   };
 }
 
@@ -281,48 +268,10 @@ export function getShotPinDisabledReasonText(
   return '';
 }
 
-export function buildDateBasisWarningState(rawShotCandidates) {
-  let missingShotTimestampCount = 0;
-  let uploadFallbackCount = 0;
-  let noUsableDateCount = 0;
-
-  for (const shot of rawShotCandidates || []) {
-    const shotTs = resolveShotEffectiveTimestampMs(shot, 'shot');
-    if (Number.isFinite(shotTs)) continue;
-
-    missingShotTimestampCount += 1;
-    const uploadTs = resolveShotEffectiveTimestampMs(shot, 'upload');
-    if (Number.isFinite(uploadTs)) uploadFallbackCount += 1;
-    else noUsableDateCount += 1;
-  }
-
-  const showDateBasisWarning = missingShotTimestampCount > 0;
-  let dateBasisWarningMessage = null;
-
-  if (showDateBasisWarning) {
-    if (uploadFallbackCount > 0 && noUsableDateCount > 0) {
-      dateBasisWarningMessage = t`Some shots have no shot timestamp. Choose how date handling should treat them (Shot = exclude missing, Auto = fallback to upload time, Upload = upload time only). Some shots have no usable date at all and may still be excluded from date filtering.`;
-    } else if (uploadFallbackCount > 0) {
-      dateBasisWarningMessage = t`Some shots have no shot timestamp. Choose how date handling should treat them (Shot = exclude missing, Auto = fallback to upload time, Upload = upload time only).`;
-    } else {
-      dateBasisWarningMessage = t`Some shots have no usable shot timestamp. Date filtering may exclude them unless upload time is available.`;
-    }
-  }
-
-  return {
-    showDateBasisWarning,
-    dateBasisWarningMessage,
-    missingShotTimestampCount,
-    uploadFallbackCount,
-    noUsableDateCount,
-  };
-}
-
 export function buildBaseFilterState({
   compiledDslFilter,
   visualDateFrom,
   visualDateTo,
-  dateBasisMode,
   rawShotCandidates,
 }) {
   const parseErrors = [...compiledDslFilter.errors];
@@ -358,7 +307,7 @@ export function buildBaseFilterState({
 
   const filteredShots = (rawShotCandidates || []).filter(shot => {
     if (Number.isFinite(visualDateFrom.valueMs) || Number.isFinite(visualDateTo.valueMs)) {
-      const ts = resolveShotEffectiveTimestampMs(shot, dateBasisMode);
+      const ts = resolveShotTimestampMs(shot);
       if (!Number.isFinite(ts)) return false;
       if (Number.isFinite(visualDateFrom.valueMs) && ts < visualDateFrom.valueMs) return false;
       if (Number.isFinite(visualDateTo.valueMs) && ts > visualDateTo.valueMs) return false;

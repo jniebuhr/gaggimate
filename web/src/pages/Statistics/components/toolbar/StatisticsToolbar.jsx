@@ -1,4 +1,4 @@
-// Main StatisticsToolbar component: orchestrates source/mode/date controls, profile/shot selectors, run button, and search help
+// Main StatisticsToolbar component: orchestrates mode/date controls, profile/shot selectors, run button, and search help
 import { useState, useRef } from 'preact/hooks';
 import {
   getAnalyzerSurfaceTriggerClasses,
@@ -6,7 +6,6 @@ import {
 } from '../../../ShotAnalyzer/components/analyzerControlStyles';
 import '../StatisticsToolbar.css';
 import {
-  SOURCE_OPTIONS,
   MODE_OPTIONS,
   STATISTICS_TOP_ROW_CONTROL_HEIGHT_CLASS,
   STATISTICS_RUN_BUTTON_TONE_CLASS,
@@ -18,7 +17,6 @@ import {
   getDateRangeDisplay,
   getCandidateSummary,
   getToolbarMessages,
-  getNeutralDropdownToneClasses,
   getPrimaryDropdownToneClasses,
 } from './helpers';
 import {
@@ -31,7 +29,6 @@ import {
   ToolbarBusyOverlay,
   CollapsedToolbarStrip,
   ExpandedToolbarControls,
-  DateBasisWarning,
   ToolbarNotice,
   SelectionHint,
   DslSelectionPreview,
@@ -40,14 +37,9 @@ import {
 export { STATISTICS_RUN_BUTTON_TONE_CLASS };
 
 export function StatisticsToolbar({
-  shotSource,
-  onShotSourceChange,
-  profileSource,
-  onProfileSourceChange,
   mode,
   onModeChange,
   onGo,
-  startLoading = false,
   loading = false,
   metadataLoading = false,
   canGo = true,
@@ -67,10 +59,6 @@ export function StatisticsToolbar({
   dateToLocal,
   dateToPreviewLocal = '',
   onDateToChange,
-  dateBasisMode,
-  onDateBasisModeChange,
-  showDateBasisWarning = false,
-  dateBasisWarningMessage = null,
   candidateCount,
   parseErrors = [],
   parseWarnings = [],
@@ -91,8 +79,8 @@ export function StatisticsToolbar({
   const toolbarContainerRef = useRef(null);
   const [isCollapsedStripExpanded, setIsCollapsedStripExpanded] = useState(false);
 
-  const isBusy = startLoading || loading || metadataLoading;
-  const showBusyOverlay = startLoading || metadataLoading;
+  const isBusy = loading || metadataLoading;
+  const showBusyOverlay = metadataLoading;
   const canExecute = canGo && !isBusy;
   const { topError, noticeMessage, noticeTone } = getToolbarMessages({
     parseErrors,
@@ -111,10 +99,6 @@ export function StatisticsToolbar({
     metadataLoading,
     candidateCount,
   });
-  const currentShotSourceOption =
-    SOURCE_OPTIONS.find(opt => opt.value === shotSource) || SOURCE_OPTIONS[0];
-  const currentProfileSourceOption =
-    SOURCE_OPTIONS.find(opt => opt.value === profileSource) || SOURCE_OPTIONS[0];
   const currentModeOption = MODE_OPTIONS.find(opt => opt.value === mode) || MODE_OPTIONS[0];
   const hasDslQuery = !!String(query || '').trim();
   const shotSelectionItemMap = new Map((shotSelectionItems || []).map(item => [item.id, item]));
@@ -151,9 +135,6 @@ export function StatisticsToolbar({
     builtDateRangeStartMs,
     builtDateRangeEndMs,
   );
-  const sourceTriggerClasses = getAnalyzerSurfaceTriggerClasses({
-    className: `flex h-9 min-h-0 w-[15rem] max-w-full list-none items-center justify-between gap-2 rounded-lg bg-transparent px-2 text-xs font-bold [&::-webkit-details-marker]:hidden ${getNeutralDropdownToneClasses()} ${isBusy ? 'pointer-events-none opacity-40' : ''}`,
-  });
   const modeTriggerClasses = getAnalyzerSurfaceTriggerClasses({
     className: `${STATISTICS_TOP_ROW_CONTROL_HEIGHT_CLASS} w-[7rem] list-none justify-between rounded-lg px-2 text-sm font-semibold [&::-webkit-details-marker]:hidden ${getPrimaryDropdownToneClasses()} ${isBusy ? 'pointer-events-none opacity-40' : ''}`,
   });
@@ -243,13 +224,6 @@ export function StatisticsToolbar({
           canExecute={canExecute}
           runButtonClasses={runButtonClasses}
           setShowDslSelectionPreview={setShowDslSelectionPreview}
-          sourceTriggerClasses={sourceTriggerClasses}
-          currentShotSourceOption={currentShotSourceOption}
-          currentProfileSourceOption={currentProfileSourceOption}
-          shotSource={shotSource}
-          onShotSourceChange={onShotSourceChange}
-          profileSource={profileSource}
-          onProfileSourceChange={onProfileSourceChange}
           dateTriggerClasses={dateTriggerClasses}
           hasDateFilter={hasDateFilter}
           showDateRangeLabelInTrigger={showDateRangeLabelInTrigger}
@@ -267,16 +241,6 @@ export function StatisticsToolbar({
           activeCompactNeutralButtonClasses={activeCompactNeutralButtonClasses}
         />
       )}
-
-      <DateBasisWarning
-        visible={isToolbarExpanded && showDateBasisWarning}
-        dateBasisWarningMessage={dateBasisWarningMessage}
-        dateBasisMode={dateBasisMode}
-        onDateBasisModeChange={onDateBasisModeChange}
-        isBusy={isBusy}
-        toolbarPassiveLayerClass={toolbarPassiveLayerClass}
-        toolbarControlClass={toolbarControlClass}
-      />
 
       <ToolbarNotice
         visible={isToolbarExpanded}

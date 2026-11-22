@@ -1,61 +1,20 @@
 // Shared route helpers keep Analyzer/ProfileList -> Statistics deep links consistent.
-export const VALID_STATISTICS_SOURCES = ['gaggimate', 'browser'];
-export const VALID_STATISTICS_SOURCE_SELECTIONS = ['gaggimate', 'browser', 'both'];
-
-const SOURCE_ALIAS_TO_SOURCE = {
-  internal: 'gaggimate',
-  gm: 'gaggimate',
-  gaggimate: 'gaggimate',
-  external: 'browser',
-  web: 'browser',
-  browser: 'browser',
-};
-
-const SOURCE_TO_ALIAS = {
-  gaggimate: 'internal',
-  browser: 'external',
-};
-
-export const STATISTICS_SOURCE_FALLBACK = {
-  gaggimate: 'browser',
-  browser: 'gaggimate',
-};
-
+const DEVICE_SOURCE_ALIASES = new Set(['internal', 'gm', 'gaggimate']);
 const INVALID_PROFILE_NAMES = new Set(['no profile loaded']);
 
-export function mapStatisticsSourceAliasToSource(alias) {
-  const normalized = String(alias || '')
-    .trim()
-    .toLowerCase();
-  return SOURCE_ALIAS_TO_SOURCE[normalized] || null;
-}
-
-export function mapSourceToStatisticsAlias(source) {
-  const normalized = String(source || '')
-    .trim()
-    .toLowerCase();
-  return SOURCE_TO_ALIAS[normalized] || null;
-}
-
-export function normalizeStatisticsSourceSelection(source, fallback = 'both') {
-  const normalized = String(source || '')
-    .trim()
-    .toLowerCase();
-  return VALID_STATISTICS_SOURCE_SELECTIONS.includes(normalized) ? normalized : fallback;
-}
-
 export function buildStatisticsProfileHref({ source, profileName }) {
-  const alias = mapSourceToStatisticsAlias(source);
   const trimmedName = String(profileName || '').trim();
-  if (!alias || !trimmedName) return '/statistics';
+  if (source !== 'gaggimate' || !trimmedName) return '/statistics';
   if (INVALID_PROFILE_NAMES.has(trimmedName.toLowerCase())) return '/statistics';
-  return `/statistics/${alias}/${encodeURIComponent(trimmedName)}`;
+  return `/statistics/internal/${encodeURIComponent(trimmedName)}`;
 }
 
 export function parseStatisticsProfileRouteParams(params) {
-  const source = mapStatisticsSourceAliasToSource(params?.sourceAlias);
+  const alias = String(params?.sourceAlias || '')
+    .trim()
+    .toLowerCase();
   const rawProfileParam = params?.profileName;
-  if (!source || !rawProfileParam) return null;
+  if (!DEVICE_SOURCE_ALIASES.has(alias) || !rawProfileParam) return null;
 
   let decodedName = String(rawProfileParam);
   try {
@@ -66,9 +25,5 @@ export function parseStatisticsProfileRouteParams(params) {
 
   decodedName = decodedName.trim();
   if (!decodedName || INVALID_PROFILE_NAMES.has(decodedName.toLowerCase())) return null;
-
-  return {
-    source,
-    profileName: decodedName,
-  };
+  return { profileName: decodedName };
 }

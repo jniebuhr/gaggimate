@@ -6,97 +6,24 @@ import { LibraryRow } from './LibraryRow';
 import { LibraryActionsMenu } from './LibraryActionsMenu';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown';
 import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
 import { faThumbtack } from '@fortawesome/free-solid-svg-icons/faThumbtack';
 import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
+import { faSearch } from '@fortawesome/free-solid-svg-icons/faSearch';
+import { faSort } from '@fortawesome/free-solid-svg-icons/faSort';
+import { faFilter } from '@fortawesome/free-solid-svg-icons/faFilter';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons/faCircleNotch';
 import { getShotIdentityKey } from '../../utils/analyzerUtils';
-import {
-  getAnalyzerIconButtonClasses,
-  getAnalyzerSurfaceTriggerClasses,
-} from '../analyzerControlStyles';
-import { SourceMarker } from '../SourceMarker';
+import { getAnalyzerIconButtonClasses } from '../analyzerControlStyles';
 import './LibrarySection.css';
 
 function getLibraryItemKey(item, isShot) {
-  if (!item) return 'unknown-item';
-
-  if (isShot) {
-    if (item.source === 'gaggimate') return `gaggimate-shot:${String(item.id || '')}`;
-    return `browser-shot:${String(item.storageKey || item.name || item.id || '')}`;
-  }
-
-  if (item.source === 'gaggimate') {
-    return `gaggimate-profile:${String(
-      item.profileId ||
-        item.id ||
-        item.label ||
-        item.name ||
-        item.fileName ||
-        item.exportName ||
-        '',
-    )}`;
-  }
-
-  return `browser-profile:${String(
-    item.label || item.name || item.fileName || item.exportName || item.id || '',
-  )}`;
-}
-
-const SOURCE_FILTER_OPTIONS = [
-  { value: 'all', label: 'ALL' },
-  { value: 'gaggimate', label: 'GM' },
-  { value: 'browser', label: 'WEB' },
-];
-
-function closeParentDetails(target) {
-  const details = target.closest('details');
-  if (details) details.open = false;
-}
-
-function renderLibrarySourceOptionContent(value) {
-  if (value === 'gaggimate') {
-    return (
-      <span className='inline-flex items-center gap-1.5'>
-        <SourceMarker source='gaggimate' variant='compact' />
-        <span>GM</span>
-      </span>
-    );
-  }
-
-  if (value === 'browser') {
-    return (
-      <span className='inline-flex items-center gap-1.5'>
-        <SourceMarker source='browser' variant='compact' />
-        <span>WEB</span>
-      </span>
-    );
-  }
-
-  return (
-    <span>
-      <Trans context='library source filter'>ALL</Trans>
-    </span>
-  );
-}
-
-function renderLibrarySourceHeaderContent(value) {
-  if (value === 'gaggimate' || value === 'browser') {
-    return <SourceMarker source={value} variant='compact' />;
-  }
-
-  return (
-    <span className='inline-flex items-center gap-1'>
-      <SourceMarker source='gaggimate' variant='compact' />
-      <SourceMarker source='browser' variant='compact' />
-    </span>
-  );
+  return isShot ? getShotIdentityKey(item) : String(item.profileId || item.id);
 }
 
 function getLibraryColumnLayout(isShot, showCompareSelection) {
   return {
-    columnCount: (showCompareSelection ? 1 : 0) + 1 + 1 + 1 + (isShot ? 2 : 0) + 1,
+    columnCount: (showCompareSelection ? 1 : 0) + 1 + 1 + (isShot ? 1 : 0) + 1,
   };
 }
 
@@ -129,18 +56,25 @@ export function LibrarySection({
   items,
   isShot,
   sectionHeight,
+  standalone = false,
   searchValue,
   sortKey,
   sortOrder,
-  sourceFilter,
   onSearchChange,
   onSortChange,
-  onSourceFilterChange,
   onLoad,
   onExport,
   onDelete,
   onExportAll,
   onDeleteAll,
+  onUpload,
+  toolbarActions,
+  hasActiveFilters = false,
+  progress,
+  bulkBusy = false,
+  onCancel,
+  ratingFilter,
+  onRatingFilterChange,
   compareSelectionKeys = new Set(),
   comparePendingKeys = [],
   compareReferenceKey = '',
@@ -159,17 +93,6 @@ export function LibrarySection({
   isLoading,
 }) {
   const { t } = useLingui();
-  const getSortIcon = k => {
-    const isActive = sortKey === k;
-    return (
-      <svg
-        className={`ml-1 inline-block h-2.5 w-2.5 transition-all ${isActive && sortOrder === 'asc' ? 'rotate-180' : ''} ${isActive ? 'text-primary opacity-100' : 'opacity-20'}`}
-        viewBox='0 0 10 10'
-      >
-        <path d='M5 10L0 0L10 0L5 10Z' fill='currentColor' />
-      </svg>
-    );
-  };
 
   // Keep the name column flexible because pinning and compare badges both live
   // inside that cell instead of adding separate narrow columns.
@@ -180,182 +103,156 @@ export function LibrarySection({
 
   return (
     <div
-      className='library-section bg-base-100/30 border-base-content/5 relative flex h-full flex-col rounded-lg border'
+      className={`library-section relative flex h-full flex-col rounded-lg border ${standalone ? 'border-transparent bg-transparent' : 'bg-base-100 border-base-content/5'}`}
       style={sectionHeight ? { height: sectionHeight } : undefined}
     >
       {/* Toolbar */}
       <div className='border-base-content/5 space-y-3 border-b p-3'>
-        <div className='flex items-center justify-between'>
+        <div className='flex flex-wrap items-center justify-between gap-2'>
           <h3 className='text-base-content flex items-center gap-2 text-base font-bold'>
             {title}{' '}
             <span className='bg-base-content/10 rounded-full px-1.5 py-0.5 text-[10px] font-normal'>
               {items.length}
             </span>
           </h3>
-          <LibraryActionsMenu
-            ariaLabel={isShot ? t`Open shots actions menu` : t`Open profiles actions menu`}
-            buttonClassName='h-7 w-7 p-1.5'
-            actions={[
-              {
-                label: t`Export All`,
-                icon: faFileExport,
-                onSelect: onExportAll,
-              },
-              {
-                label: t`Delete All`,
-                icon: faTrashCan,
-                tone: 'error',
-                onSelect: onDeleteAll,
-              },
-            ]}
-          />
+          <div className='flex items-center gap-1'>
+            {toolbarActions}
+            <LibraryActionsMenu
+              ariaLabel={isShot ? t`Open shots actions menu` : t`Open profiles actions menu`}
+              label={t`More`}
+              buttonClassName='h-7 w-7 p-1.5 text-sm font-medium lg:w-auto lg:gap-1.5 lg:px-2.5'
+              actions={[
+                {
+                  label: isShot && hasActiveFilters ? t`Export Filtered Shots` : t`Export All`,
+                  icon: faFileExport,
+                  onSelect: onExportAll,
+                  disabled: bulkBusy || Boolean(progress) || isLoading || !items.length,
+                },
+                {
+                  label: t`Delete All`,
+                  icon: faTrashCan,
+                  tone: 'error',
+                  onSelect: onDeleteAll,
+                  disabled: bulkBusy || Boolean(progress) || isLoading || !items.length,
+                },
+              ]}
+            />
+          </div>
         </div>
-        <div className='flex min-w-0 gap-2'>
-          <input
-            type='text'
-            placeholder={isShot ? t`Search shots...` : t`Search profiles...`}
-            value={searchValue}
-            onInput={e => onSearchChange(e.target.value)}
-            className='library-toolbar-field bg-base-100/50 border-base-content/10 focus:border-primary h-9 min-w-0 flex-1 rounded-md border px-3 text-sm outline-none'
-          />
-          <select
-            value={`${sortKey}-${sortOrder}`}
-            onChange={e => {
-              const [k, o] = e.target.value.split('-');
-              onSortChange(k, o);
-            }}
-            className='library-toolbar-field bg-base-100/50 border-base-content/10 hover:bg-base-content/5 hover:border-base-content/20 focus:border-primary h-9 max-w-[8.5rem] shrink-0 cursor-pointer rounded-md border px-2 text-xs transition-colors outline-none sm:max-w-none'
-          >
-            {isShot && <option value='shotDate-desc'>{t`Date (New)`}</option>}
-            {isShot && <option value='shotDate-asc'>{t`Date (Old)`}</option>}
-            <option value='name-asc'>{t`Name (A-Z)`}</option>
-            <option value='name-desc'>{t`Name (Z-A)`}</option>
-            {isShot && <option value='data.rating-desc'>{t`Rating (High)`}</option>}
-            {isShot && <option value='data.rating-asc'>{t`Rating (Low)`}</option>}
-            {isShot && <option value='duration-desc'>{t`Length (Long)`}</option>}
-            {isShot && <option value='duration-asc'>{t`Length (Short)`}</option>}
-          </select>
+        <div className='grid min-w-0 grid-cols-2 items-center gap-2 sm:flex'>
+          <div className='col-span-full flex min-w-0 flex-1 items-center gap-2'>
+            <div className='relative min-w-0 flex-1'>
+              <FontAwesomeIcon
+                icon={faSearch}
+                className='text-base-content/50 pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-xs'
+              />
+              <input
+                type='text'
+                placeholder={isShot ? t`Search shots...` : t`Search profiles...`}
+                value={searchValue}
+                onInput={e => onSearchChange(e.target.value)}
+                className='library-toolbar-field bg-base-100 border-base-content/10 focus:border-primary h-9 w-full min-w-0 rounded-md border pr-3 pl-8 text-sm outline-none'
+              />
+            </div>
+            {onPinnedFirstToggle && (
+              <button
+                type='button'
+                className={getAnalyzerIconButtonClasses({
+                  tone: pinnedFirstEnabled ? 'primary' : 'neutral',
+                  className:
+                    'library-toolbar-field bg-base-100 border-base-content/10 h-9 w-9 shrink-0 rounded-md border text-sm',
+                })}
+                onClick={onPinnedFirstToggle}
+                aria-label={pinnedFirstLabel}
+                title={pinnedFirstLabel}
+                aria-pressed={pinnedFirstEnabled}
+              >
+                <FontAwesomeIcon icon={faThumbtack} />
+              </button>
+            )}
+          </div>
+          <div className='library-select-control'>
+            <FontAwesomeIcon icon={faSort} className='text-base-content/50 shrink-0 text-xs' />
+            <select
+              aria-label={t`Sort`}
+              title={t`Sort`}
+              value={`${sortKey}-${sortOrder}`}
+              onChange={e => {
+                const [k, o] = e.target.value.split('-');
+                onSortChange(k, o);
+              }}
+              className='library-toolbar-field bg-base-100 border-base-content/10 hover:bg-base-100 hover:border-base-content/20 focus:border-primary h-9 cursor-pointer rounded-md border text-xs transition-colors outline-none'
+            >
+              {isShot && <option value='shotDate-desc'>{t`Date (New)`}</option>}
+              {isShot && <option value='shotDate-asc'>{t`Date (Old)`}</option>}
+              <option value='name-asc'>{t`Name (A-Z)`}</option>
+              <option value='name-desc'>{t`Name (Z-A)`}</option>
+              {isShot && <option value='data.rating-desc'>{t`Rating (High)`}</option>}
+              {isShot && <option value='data.rating-asc'>{t`Rating (Low)`}</option>}
+              {isShot && <option value='duration-desc'>{t`Length (Long)`}</option>}
+              {isShot && <option value='duration-asc'>{t`Length (Short)`}</option>}
+              {isShot && <option value='volume-desc'>{t`Highest Volume`}</option>}
+              {isShot && <option value='volume-asc'>{t`Lowest Volume`}</option>}
+              {isShot && <option value='id-desc'>{t`Highest ID First`}</option>}
+              {isShot && <option value='id-asc'>{t`Lowest ID first`}</option>}
+            </select>
+          </div>
+          {isShot && onRatingFilterChange && (
+            <div className='library-select-control'>
+              <FontAwesomeIcon
+                icon={faFilter}
+                className={`shrink-0 text-xs ${ratingFilter !== 'all' ? 'text-primary' : 'text-base-content/50'}`}
+              />
+              <select
+                aria-label={t`Filter by rating`}
+                title={t`Filter by rating`}
+                value={ratingFilter}
+                onChange={event => onRatingFilterChange(event.currentTarget.value)}
+                className='library-toolbar-field bg-base-100 border-base-content/10 h-9 cursor-pointer rounded-md border text-xs'
+              >
+                <option value='all'>{t`All`}</option>
+                <option value='rated'>{t`Rated`}</option>
+                <option value='unrated'>{t`Unrated`}</option>
+              </select>
+            </div>
+          )}
         </div>
+        {progress && (
+          <output className='flex items-center gap-3 text-xs'>
+            <span>
+              {progress.deleting ? t`Deleting shots...` : t`Exporting shots...`} {progress.current}/
+              {progress.total}
+            </span>
+            <progress
+              className='progress progress-primary flex-1'
+              value={progress.current}
+              max={progress.total}
+            />
+            <button type='button' className='btn btn-sm btn-ghost' onClick={onCancel}>
+              <Trans>Cancel</Trans>
+            </button>
+          </output>
+        )}
       </div>
 
       <div
-        className='relative h-96 scrollbar-thin overflow-y-auto px-2 lg:h-auto lg:min-h-0 lg:flex-1'
+        className={`relative scrollbar-thin overflow-y-auto px-2 ${sectionHeight ? 'min-h-0 flex-1' : 'h-96 lg:h-auto lg:min-h-0 lg:flex-1'}`}
         style={{ scrollbarGutter: 'stable' }}
       >
         {isLoading && (
-          <div className='bg-base-100/90 absolute inset-0 z-20 flex items-center justify-center'>
+          <div
+            className={`absolute inset-0 z-20 flex items-center justify-center ${standalone ? 'bg-transparent' : 'bg-base-100/90'}`}
+          >
             <FontAwesomeIcon icon={faCircleNotch} spin className='text-primary text-3xl' />
           </div>
         )}
 
+        {!isLoading && items.length === 0 && (
+          <p className='p-6 text-center text-sm opacity-60'>
+            <Trans>No shots or profiles match the current filters.</Trans>
+          </p>
+        )}
         <table className='relative w-full border-separate border-spacing-0'>
-          <thead className='sticky top-0 z-20 text-xs font-medium tracking-normal'>
-            <tr>
-              <th colSpan={columnCount} className='library-table-header-cell relative z-20 p-0'>
-                <div
-                  className={`library-row-grid library-row-grid--${isShot ? 'shot' : 'profile'} library-row-grid--header min-h-9 px-3`}
-                >
-                  <button
-                    type='button'
-                    className={getAnalyzerSurfaceTriggerClasses({
-                      className:
-                        'library-row-grid__name flex h-full w-full min-w-0 cursor-pointer items-center gap-1 p-0 text-left text-xs font-medium tracking-normal',
-                    })}
-                    onClick={() => onSortChange('name')}
-                  >
-                    <span className='truncate'>
-                      <Trans>Name</Trans>
-                    </span>
-                    {getSortIcon('name')}
-                  </button>
-                  {onPinnedFirstToggle ? (
-                    <button
-                      type='button'
-                      className={getAnalyzerIconButtonClasses({
-                        tone: pinnedFirstEnabled ? 'primary' : 'subtle',
-                        className: `library-row-grid__pin h-full min-h-full w-5 shrink-0 justify-self-end rounded-none bg-transparent p-0 text-xs ${
-                          pinnedFirstEnabled ? 'text-primary hover:text-primary' : ''
-                        }`,
-                      })}
-                      onClick={event => {
-                        event.stopPropagation();
-                        // Header pinning is a view-level promotion toggle; it
-                        // does not mutate the pinned items themselves.
-                        onPinnedFirstToggle();
-                      }}
-                      aria-label={pinnedFirstLabel}
-                      title={pinnedFirstLabel}
-                    >
-                      <FontAwesomeIcon icon={faThumbtack} />
-                    </button>
-                  ) : (
-                    <span className='library-row-grid__pin' aria-hidden='true' />
-                  )}
-                  <details className='library-row-grid__source dropdown block h-full w-full'>
-                    <summary
-                      className={getAnalyzerSurfaceTriggerClasses({
-                        className:
-                          'flex h-full w-full cursor-pointer list-none items-center justify-center gap-1 px-1 py-2 text-xs font-medium outline-none [&::-webkit-details-marker]:hidden',
-                      })}
-                      aria-label={t`Filter library source`}
-                      title={t`Filter library source`}
-                    >
-                      {renderLibrarySourceHeaderContent(sourceFilter)}
-                      <FontAwesomeIcon
-                        icon={faChevronDown}
-                        className='library-source-filter-chevron text-[10px] opacity-60'
-                      />
-                    </summary>
-
-                    <div className='dropdown-content app-card-surface z-[65] mt-2 w-28 rounded-xl p-1.5'>
-                      <div className='grid gap-1'>
-                        {SOURCE_FILTER_OPTIONS.map(option => (
-                          <button
-                            key={option.value}
-                            type='button'
-                            className={getAnalyzerSurfaceTriggerClasses({
-                              className: `flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-[10px] font-bold ${
-                                sourceFilter === option.value
-                                  ? 'bg-base-content/6 text-base-content'
-                                  : 'text-base-content/70'
-                              }`,
-                            })}
-                            onClick={event => {
-                              onSourceFilterChange(option.value);
-                              closeParentDetails(event.currentTarget);
-                            }}
-                          >
-                            {renderLibrarySourceOptionContent(option.value)}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </details>
-                  {isShot ? (
-                    <button
-                      type='button'
-                      className={getAnalyzerSurfaceTriggerClasses({
-                        className:
-                          'library-row-grid__date flex h-full w-full cursor-pointer items-center gap-1 p-0 text-left text-xs font-medium tracking-normal',
-                      })}
-                      onClick={() => onSortChange('shotDate')}
-                    >
-                      <span>
-                        <Trans>Date</Trans>
-                      </span>
-                      {getSortIcon('shotDate')}
-                    </button>
-                  ) : null}
-                  {isShot ? (
-                    <span className='library-row-grid__profile text-base-content/70 text-left text-xs font-medium tracking-normal'>
-                      <Trans>Profile</Trans>
-                    </span>
-                  ) : null}
-                  <span className='library-row-grid__actions' aria-hidden='true' />
-                </div>
-              </th>
-            </tr>
-          </thead>
           <tbody className='text-sm'>
             {hasCompareBadges ? (
               <tr>
@@ -399,6 +296,8 @@ export function LibrarySection({
                   onShowStats={onShowStats}
                   onLoad={() => onLoad(item)}
                   onExport={onExport}
+                  onUpload={onUpload}
+                  actionsDisabled={Boolean(progress)}
                   onDelete={onDelete}
                   isPinned={Boolean(getPinStatus?.(item))}
                   pinDisabledReason={getPinDisabledReason?.(item) || ''}

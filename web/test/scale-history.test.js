@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { parseBinaryShot } from '../src/pages/ShotHistory/parseBinaryShot.js';
+import { parseBinaryShot } from '../src/services/shotHistory/parseBinaryShot.js';
 import { getBluetoothScaleConnectionState } from '../src/pages/ShotAnalyzer/services/analyzer/scaleConnection.js';
 
 function fixture(version, size, flags, elapsed = true) {

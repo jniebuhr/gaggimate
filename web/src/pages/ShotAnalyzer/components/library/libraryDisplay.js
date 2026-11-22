@@ -12,11 +12,7 @@ import {
   MAX_PINNED_SHOTS_PER_PROFILE,
   PINNED_NO_PROFILE_BUCKET,
 } from '../../utils/analyzerUtils';
-import {
-  doesProfileMatchProfile,
-  getLibraryRequestSource,
-  hasLoadedProfileMismatch,
-} from './libraryData';
+import { doesProfileMatchProfile, hasLoadedProfileMismatch } from './libraryData';
 
 // 'No Shot Loaded' / 'No Profile Loaded' are sentinel values; translate them only for display.
 export function getLoadedNameLabel(name) {
@@ -145,33 +141,14 @@ export function getProfileCompareBadgeNumber({
 }
 
 export function getLibraryProfileDeleteKey(item) {
-  return item.source === 'gaggimate' ? item.profileId || item.id : item.label || item.name;
+  return item.profileId || item.id;
 }
 
-export function createLibraryProfileStatsContext({
-  compareMode,
-  currentShot,
-  profileItem,
-  secondaryShot,
-  shotsSourceFilter,
-}) {
-  const profileSource = profileItem.source || profileItem.src || 'both';
-  const statsInitialContext = {
+export function createLibraryProfileStatsContext({ compareMode, profileItem }) {
+  return {
     profileName: getProfileDisplayLabel(profileItem, ''),
-    shotSource:
-      currentShot?.source ||
-      secondaryShot?.source ||
-      getLibraryRequestSource(shotsSourceFilter) ||
-      'both',
-    profileSource,
-    source: profileSource,
+    ...(compareMode ? { preferredDetailSection: 'compare' } : {}),
   };
-
-  if (compareMode) {
-    statsInitialContext.preferredDetailSection = 'compare';
-  }
-
-  return statsInitialContext;
 }
 
 export function getNormalizedCurrentProfileName(profile, profileMismatch, profileName) {
@@ -359,10 +336,10 @@ export function getShotPinToggleBucketKey({
 
 export async function deleteLibraryItem(item) {
   if (item.duration !== undefined || item.samples) {
-    await libraryService.deleteShot(getShotStorageKey(item), item.source);
+    await libraryService.deleteShot(getShotStorageKey(item));
     return;
   }
-  await libraryService.deleteProfile(getLibraryProfileDeleteKey(item), item.source);
+  await libraryService.deleteProfile(getLibraryProfileDeleteKey(item));
 }
 
 export function getLibraryExportHandler(item, isShot, handleExport) {
@@ -373,27 +350,21 @@ export function createPrimaryStatsHandler({
   onShowStats,
   primaryDisplayProfile,
   primaryDisplayProfileName,
-  primaryDisplayShot,
 }) {
   return () =>
     onShowStats?.({
-      shotSource: primaryDisplayShot?.source || 'both',
-      profileSource: primaryDisplayProfile?.source || 'both',
-      profileName: primaryDisplayProfileName,
+      profileName: primaryDisplayProfile?.source === 'gaggimate' ? primaryDisplayProfileName : '',
     });
 }
 
 export function createSecondaryStatsHandler({
   onShowStats,
-  primaryDisplayShot,
   secondaryDisplayProfile,
   secondaryDisplayProfileName,
-  secondaryDisplayShot,
 }) {
   return () =>
     onShowStats?.({
-      shotSource: secondaryDisplayShot?.source || primaryDisplayShot?.source || 'both',
-      profileSource: secondaryDisplayProfile?.source || 'both',
-      profileName: secondaryDisplayProfileName,
+      profileName:
+        secondaryDisplayProfile?.source === 'gaggimate' ? secondaryDisplayProfileName : '',
     });
 }

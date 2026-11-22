@@ -3,10 +3,9 @@ import { msg, plural, t } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react/macro';
 import { i18n } from '../../../../i18n.js';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons/faCircleNotch';
-import { faEye } from '@fortawesome/free-solid-svg-icons/faEye';
 import { cleanName } from '../../utils/analyzerUtils';
-import { SourceMarker } from '../SourceMarker';
 import { getAnalyzerShotDisplayName, getShotDateTimeLabel } from '../useShotNotesState';
+import { LibraryPinButton } from '../library/LibraryRow';
 import { ShotSummaryMetricsRow } from './ShotMetricCards';
 
 const WEEKDAY_LABELS = [
@@ -132,14 +131,17 @@ export function ShotMainInfoCard({
           <div className='text-base-content/60 truncate text-xs'>{profileLabel}</div>
         </div>
         <div className='flex shrink-0 items-center gap-2'>
+          {entry?.pinProps && (
+            <LibraryPinButton
+              {...entry.pinProps}
+              isShot
+              displayName={shotLabel}
+              className='h-7 w-7 text-sm'
+            />
+          )}
           {loading ? (
             <FontAwesomeIcon icon={faCircleNotch} spin className='text-base-content/35 text-xs' />
           ) : null}
-          {entry?.shot?.source === 'temp' ? (
-            <FontAwesomeIcon icon={faEye} className='text-base-content/45 text-xs' />
-          ) : (
-            <SourceMarker source={entry?.shot?.source} variant='library' />
-          )}
         </div>
       </div>
 

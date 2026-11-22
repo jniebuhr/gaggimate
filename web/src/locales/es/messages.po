@@ -15,10 +15,6 @@ msgstr "-- Incompatible --"
 msgid "(exact)"
 msgstr "(exacto)"
 
-#: src/pages/ShotHistory/index.jsx
-msgid "(Page {currentPage} of {totalPages})"
-msgstr "(Página {currentPage} de {totalPages})"
-
 #: src/pages/Statistics/components/StatisticsSearchHelp.jsx
 msgid "(same field = OR)"
 msgstr "(mismo campo = O)"
@@ -80,10 +76,6 @@ msgstr "{diffWeeks, plural, one {hace # semana} other {hace # semanas}}"
 msgid "{diffYears, plural, one {# year ago} other {# years ago}}"
 msgstr "{diffYears, plural, one {hace # año} other {hace # años}}"
 
-#: src/pages/ShotHistory/index.jsx
-msgid "{historyCount, plural, one {This will permanently delete the only shot on the device. This cannot be undone.} other {This will permanently delete all # shots from the device. This cannot be undone.}}"
-msgstr "{historyCount, plural, one {Esto eliminará permanentemente la única extracción del dispositivo. Esta acción no se puede deshacer.} other {Esto eliminará permanentemente todas las # extracciones del dispositivo. Esta acción no se puede deshacer.}}"
-
 #: src/app/ConnectionGate.jsx
 msgid "{host} isn't answering. Make sure the machine is on and your phone is on the same Wi-Fi network."
 msgstr "{host} no responde. Asegúrate de que la máquina esté encendida y de que tu teléfono esté en la misma red Wi-Fi."
@@ -119,18 +111,6 @@ msgstr "{scaleName} desconectada"
 #: src/pages/Settings/PatchNotes.jsx
 msgid "{total, plural, one {# commit} other {# commits}}"
 msgstr "{total, plural, one {# commit} other {# commits}}"
-
-#: src/pages/ShotHistory/index.jsx
-msgid "{totalFilteredItems, plural, one {Delete # shot} other {Delete # shots}}"
-msgstr "{totalFilteredItems, plural, one {Eliminar # extracción} other {Eliminar # extracciones}}"
-
-#: src/pages/ShotHistory/index.jsx
-msgid "{totalFilteredItems, plural, one {This will permanently delete the # shot matching your current search and filters. This cannot be undone.} other {This will permanently delete the # shots matching your current search and filters (across all pages). This cannot be undone.}}"
-msgstr "{totalFilteredItems, plural, one {Esto eliminará permanentemente la extracción que coincide con la búsqueda y los filtros actuales. Esta acción no se puede deshacer.} other {Esto eliminará permanentemente las # extracciones que coinciden con la búsqueda y los filtros actuales (en todas las páginas). Esta acción no se puede deshacer.}}"
-
-#: src/pages/ShotHistory/index.jsx
-msgid "{totalFilteredItems} of {historyCount} shots"
-msgstr "{totalFilteredItems} de {historyCount} extracciones"
 
 #: src/pages/Settings/StickyFormFooter.jsx
 msgid "* Restart required for Wi-Fi, Timezone, or Plugin changes."
@@ -295,6 +275,10 @@ msgstr "Ajustes de Alba"
 msgid "Align to grid"
 msgstr "Alinear a la cuadrícula"
 
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "All"
+msgstr "Todos"
+
 #: src/pages/ShotAnalyzer/components/shotChart/single/SingleShotMetricPreview.jsx
 msgctxt "all metrics page"
 msgid "All"
@@ -304,16 +288,6 @@ msgstr "Todas"
 msgctxt "statistics mode"
 msgid "All"
 msgstr "Todas"
-
-#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
-msgctxt "library source filter"
-msgid "ALL"
-msgstr "ALL"
-
-#: src/pages/Statistics/components/toolbar/constants.js
-msgctxt "shot source: all sources"
-msgid "ALL"
-msgstr "ALL"
 
 #: src/pages/DashboardSettings/index.jsx
 msgid "All available metrics are visible."
@@ -330,10 +304,6 @@ msgstr "Todas las métricas"
 #: src/pages/Settings/PatchNotes.jsx
 msgid "All nightly changes"
 msgstr "Todos los cambios de Nightly"
-
-#: src/pages/ShotHistory/index.jsx
-msgid "All Shots"
-msgstr "Todas las extracciones"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Alt Relay / SSR2 Function"
@@ -391,11 +361,6 @@ msgstr "A cuántos bar debe detenerse la asistencia de la bomba. Así la bomba s
 #: src/services/VisualizerService.js
 msgid "Authentication failed - please check your username and password"
 msgstr "Error de autenticación: comprueba tu usuario y contraseña"
-
-#: src/pages/Statistics/components/toolbar/constants.js
-msgctxt "date basis"
-msgid "Auto"
-msgstr "Auto"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Auto (Bluetooth when connected)"
@@ -577,12 +542,7 @@ msgstr "Retrolavado pendiente"
 msgid "Balance / Taste"
 msgstr "Equilibrio / Sabor"
 
-#: src/pages/ShotHistory/ShotNotesCard.jsx
-msgid "Balance/Taste"
-msgstr "Equilibrio/Sabor"
-
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
-#: src/pages/ShotHistory/ShotNotesCard.jsx
 msgid "Balanced"
 msgstr "Equilibrado"
 
@@ -594,16 +554,11 @@ msgstr "Métricas básicas"
 msgid "Basics"
 msgstr "Básicos"
 
-#: src/pages/ShotHistory/ShotNotesCard.jsx
-msgid "Bean Type"
-msgstr "Tipo de grano"
-
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
 msgid "Beans"
 msgstr "Granos"
 
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
-#: src/pages/ShotHistory/ShotNotesCard.jsx
 msgid "Bitter"
 msgstr "Amargo"
 
@@ -692,12 +647,10 @@ msgid "Brew Status Display"
 msgstr "Indicador de estado de la extracción"
 
 #: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
-#: src/pages/ShotHistory/HistoryCard.jsx
 msgid "Brewed by Time"
 msgstr "Extraído por tiempo"
 
 #: src/pages/ShotAnalyzer/services/analyzer/exitReasons.js
-#: src/pages/ShotHistory/HistoryCard.jsx
 msgid "Brewed by Weight"
 msgstr "Extraído por peso"
 
@@ -708,6 +661,10 @@ msgstr "Alpha del filtro de extracción"
 #: src/app/notifications.js
 msgid "Brewing…"
 msgstr "Extrayendo…"
+
+#: src/components/Navigation.jsx
+msgid "Brews"
+msgstr "Extracciones"
 
 #: src/pages/ShotAnalyzer/utils/columns.js
 msgid "BT Scale Connected"
@@ -729,10 +686,6 @@ msgstr "Generando presión…"
 #: src/pages/ProfileList/index.jsx
 msgid "Built-in profile, can be edited but not deleted"
 msgstr "Perfil integrado: se puede editar pero no eliminar"
-
-#: src/pages/ShotAnalyzer/components/EmptyState.jsx
-msgid "Bulk upload and download are supported."
-msgstr "Se admite la subida y descarga masiva."
 
 #: src/pages/Statistics/components/toolbar/constants.js
 msgid "By Profile"
@@ -772,16 +725,10 @@ msgstr "No se puede conectar con {name}"
 #: src/components/PumpFlowCalibration/Footer.jsx
 #: src/components/VisualizerUploadModal.jsx
 #: src/pages/SetupWizard/MachineStep.jsx
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 #: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
-#: src/pages/ShotHistory/ConfirmDeleteModal.jsx
-#: src/pages/ShotHistory/index.jsx
-#: src/pages/ShotHistory/ShotNotesCard.jsx
 msgid "Cancel"
 msgstr "Cancelar"
-
-#: src/pages/ShotHistory/ConfirmDeleteModal.jsx
-msgid "Cancel deletion"
-msgstr "Cancelar la eliminación"
 
 #: src/app/MachineSetup.jsx
 msgid "Cancel renaming"
@@ -858,19 +805,17 @@ msgid "Click to confirm"
 msgstr "Haz clic para confirmar"
 
 #: src/pages/ProfileList/index.jsx
-#: src/pages/ShotHistory/HistoryCard.jsx
 msgid "Click to confirm delete"
 msgstr "Haz clic para confirmar la eliminación"
 
 #: src/pages/ShotAnalyzer/components/library/StatusBar.jsx
-msgid "Click to open the library. Use Import below or drop files here to import."
-msgstr "Haz clic para abrir la biblioteca. Usa Importar abajo o suelta archivos aquí para importarlos."
+msgid "Click to open the library. Use Open below or drop files here."
+msgstr "Haz clic para abrir la biblioteca. Usa Abrir abajo o suelta archivos aquí."
 
 #: src/app/MachineSetup.jsx
 #: src/components/VisualizerUploadModal.jsx
 #: src/pages/Home/BrewConfirmModal.jsx
 #: src/pages/Settings/PatchNotes.jsx
-#: src/pages/ShotHistory/ConfirmDeleteModal.jsx
 msgid "Close"
 msgstr "Cerrar"
 
@@ -923,10 +868,6 @@ msgstr "Contraer ajustes de columnas"
 #: src/components/Navigation.jsx
 msgid "Collapse navigation"
 msgstr "Contraer navegación"
-
-#: src/pages/ShotHistory/HistoryCard.jsx
-msgid "Collapse shot details"
-msgstr "Contraer detalles de la extracción"
 
 #: src/pages/Statistics/components/toolbar/subcomponents.jsx
 msgid "Collapse statistics toolbar"
@@ -997,7 +938,6 @@ msgstr "Retardo de báscula configurado (ms)"
 
 #: src/components/ConfirmButton.jsx
 #: src/pages/ProfileList/index.jsx
-#: src/pages/ShotHistory/HistoryCard.jsx
 msgid "Confirm"
 msgstr "Confirmar"
 
@@ -1008,10 +948,6 @@ msgstr "Confirmar eliminación"
 #: src/pages/ProfileList/index.jsx
 msgid "Confirm deletion of {label} profile"
 msgstr "Confirmar eliminación del perfil {label}"
-
-#: src/pages/ShotHistory/HistoryCard.jsx
-msgid "Confirm deletion of shot"
-msgstr "Confirmar eliminación de la extracción"
 
 #: src/app/MachineSetup.jsx
 #: src/pages/Settings/tabs/BluetoothTab.jsx
@@ -1095,26 +1031,13 @@ msgstr "Ganancia de convergencia"
 msgid "Convert to Pro"
 msgstr "Convertir a Pro"
 
+#: src/pages/ShotAnalyzer/components/library/useShotListActions.js
+msgid "Could not delete {failed} of {count} shots."
+msgstr "No se pudieron eliminar {failed} de {count} extracciones."
+
 #: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
 msgid "Could not delete calibration profile: {message}"
 msgstr "No se pudo eliminar el perfil de calibración: {message}"
-
-#. placeholder {0}: resp.error
-#: src/pages/ShotHistory/index.jsx
-msgid "Could not delete history: {0}"
-msgstr "No se pudo eliminar el historial: {0}"
-
-#: src/pages/ShotHistory/index.jsx
-msgid "Could not delete history. Please try again."
-msgstr "No se pudo eliminar el historial. Inténtalo de nuevo."
-
-#: src/pages/ShotHistory/index.jsx
-msgid "Could not delete shot {id}. Please try again."
-msgstr "No se pudo eliminar la extracción {id}. Inténtalo de nuevo."
-
-#: src/pages/ShotHistory/index.jsx
-msgid "Could not export any shots. Please try again."
-msgstr "No se pudo exportar ninguna extracción. Inténtalo de nuevo."
 
 #: src/pages/ProfileEdit/ProfileImageUpload.jsx
 msgid "Could not generate an image."
@@ -1177,24 +1100,14 @@ msgid "Current Flow"
 msgstr "Flujo actual"
 
 #: src/components/OverviewChart.jsx
-#: src/pages/ShotHistory/HistoryChart.jsx
 msgid "Current Pressure"
 msgstr "Presión actual"
-
-#: src/pages/ShotHistory/HistoryChart.jsx
-msgid "Current Puck Flow"
-msgstr "Flujo actual en la pastilla"
-
-#: src/pages/ShotHistory/HistoryChart.jsx
-msgid "Current Pump Flow"
-msgstr "Flujo actual de bomba"
 
 #: src/pages/Statistics/components/ActivityHeatmap.jsx
 msgid "Current streak:"
 msgstr "Racha actual:"
 
 #: src/components/OverviewChart.jsx
-#: src/pages/ShotHistory/HistoryChart.jsx
 msgid "Current Temperature"
 msgstr "Temperatura actual"
 
@@ -1271,7 +1184,6 @@ msgstr "Vista del panel"
 msgid "Data validation failed - the shot data format may be incorrect"
 msgstr "Error de validación de datos: puede que el formato de los datos de la extracción sea incorrecto"
 
-#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 #: src/pages/Statistics/components/StatisticsSearchHelp.jsx
 msgid "Date"
 msgstr "Fecha"
@@ -1283,14 +1195,6 @@ msgstr "Fecha (reciente)"
 #: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 msgid "Date (Old)"
 msgstr "Fecha (antigua)"
-
-#: src/pages/Statistics/components/StatisticsSearchHelp.jsx
-msgid "Date basis (<0>Shot / Auto / Upload</0>) appears only when missing shot timestamps are detected."
-msgstr "La base de fecha (<0>Extracción / Auto / Subida</0>) solo aparece cuando se detectan extracciones sin marca de tiempo."
-
-#: src/pages/Statistics/components/toolbar/subcomponents.jsx
-msgid "Date Basis:"
-msgstr "Base de fecha:"
 
 #: src/pages/Statistics/components/toolbar/helpers.js
 msgid "Date Range"
@@ -1355,18 +1259,14 @@ msgid "degrees Celsius"
 msgstr "grados Celsius"
 
 #: src/pages/ProfileList/index.jsx
+#: src/pages/ShotAnalyzer/components/library/LibraryPanel.jsx
 #: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
-#: src/pages/ShotHistory/HistoryCard.jsx
 msgid "Delete"
 msgstr "Eliminar"
 
 #: src/pages/ProfileList/index.jsx
 msgid "Delete {label} profile"
 msgstr "Eliminar perfil {label}"
-
-#: src/pages/ShotHistory/index.jsx
-msgid "Delete all"
-msgstr "Eliminar todo"
 
 #: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 msgid "Delete All"
@@ -1376,29 +1276,9 @@ msgstr "Eliminar todo"
 msgid "Delete all profiles"
 msgstr "Eliminar todos los perfiles"
 
-#: src/pages/ShotHistory/index.jsx
-msgid "Delete all shots"
-msgstr "Eliminar todas las extracciones"
-
-#: src/pages/ShotHistory/index.jsx
-msgid "Delete all shots?"
-msgstr "¿Eliminar todas las extracciones?"
-
 #: src/pages/ShotAnalyzer/components/library/LibraryPanel.jsx
 msgid "Delete failed: {message}"
 msgstr "Error al eliminar: {message}"
-
-#: src/pages/ShotHistory/index.jsx
-msgid "Delete filtered shots"
-msgstr "Eliminar las extracciones filtradas"
-
-#: src/pages/ShotHistory/index.jsx
-msgid "Delete filtered shots ({totalFilteredItems})"
-msgstr "Eliminar las extracciones filtradas ({totalFilteredItems})"
-
-#: src/pages/ShotHistory/index.jsx
-msgid "Delete filtered shots?"
-msgstr "¿Eliminar las extracciones filtradas?"
 
 #: src/components/MachineProfileControl.jsx
 msgid "Delete imported profile"
@@ -1416,10 +1296,6 @@ msgstr "Eliminar preajuste"
 msgid "Delete profile"
 msgstr "Eliminar perfil"
 
-#: src/pages/ShotHistory/HistoryCard.jsx
-msgid "Delete shot"
-msgstr "Eliminar extracción"
-
 #: src/components/MachineProfileControl.jsx
 msgid "Delete this imported profile?"
 msgstr "¿Eliminar este perfil importado?"
@@ -1436,25 +1312,13 @@ msgstr "¿Eliminar este preajuste?"
 msgid "Delete this schedule"
 msgstr "Eliminar esta programación"
 
-#. placeholder {0}: targets.length
-#. placeholder {1}: failedIds.join(', ')
-#: src/pages/ShotHistory/index.jsx
-msgid "Deleted {done} of {0} shots. Failed: {1}"
-msgstr "Se eliminaron {done} de {0} extracciones. Fallidas: {1}"
-
 #: src/pages/Settings/PluginCard.jsx
 msgid "Deleted profile"
 msgstr "Perfil eliminado"
 
-#. placeholder {0}: progress.current
-#. placeholder {1}: progress.total
-#: src/pages/ShotHistory/ConfirmDeleteModal.jsx
-msgid "Deleting shot {0} of {1}..."
-msgstr "Eliminando la extracción {0} de {1}..."
-
-#: src/pages/ShotHistory/ConfirmDeleteModal.jsx
-msgid "Deleting…"
-msgstr "Eliminando…"
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Deleting shots..."
+msgstr "Eliminando extracciones..."
 
 #: src/pages/Settings/tabs/CleaningSection.jsx
 msgid "Descaling"
@@ -1537,10 +1401,6 @@ msgstr "Distancia del sensor a la línea de llenado"
 msgid "Do you really want to export all {count} filtered profiles? (Profiles are downloaded individually, one after the other.)"
 msgstr "¿Seguro que quieres exportar los {count} perfiles filtrados? (Los perfiles se descargan uno a uno, uno detrás de otro.)"
 
-#: src/pages/ShotAnalyzer/components/library/LibraryDropdown.jsx
-msgid "Do you really want to export all {count} filtered shots? (Shots are downloaded individually, one after the other.)"
-msgstr "¿Seguro que quieres exportar las {count} extracciones filtradas? (Las extracciones se descargan una a una, una detrás de otra.)"
-
 #: src/components/PumpFlowCalibration/Footer.jsx
 #: src/pages/SetupWizard/index.jsx
 msgid "Done"
@@ -1554,10 +1414,6 @@ msgstr "Dosis"
 msgid "Dose In"
 msgstr "Dosis de entrada"
 
-#: src/pages/ShotHistory/ShotNotesCard.jsx
-msgid "Dose In (g)"
-msgstr "Dosis de entrada (g)"
-
 #: src/pages/ProfileEdit/ProfileMainInformation.jsx
 msgid "Dose in g"
 msgstr "Dosis en g"
@@ -1565,10 +1421,6 @@ msgstr "Dosis en g"
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
 msgid "Dose Out"
 msgstr "Dosis de salida"
-
-#: src/pages/ShotHistory/ShotNotesCard.jsx
-msgid "Dose Out (g)"
-msgstr "Dosis de salida (g)"
 
 #: src/pages/Settings/tabs/SystemTab.jsx
 msgid "Download Support Data"
@@ -1581,10 +1433,6 @@ msgstr "Descargando exportación..."
 #: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
 msgid "Downloading shot #{shotId}"
 msgstr "Descargando extracción #{shotId}"
-
-#: src/pages/ShotAnalyzer/components/EmptyState.jsx
-msgid "Drag and drop files onto the status bar or use the import icons in the shot and profile badges."
-msgstr "Arrastra y suelta archivos en la barra de estado o usa los iconos de importación de las insignias de extracción y perfil."
 
 #: src/pages/ProfileList/index.jsx
 msgid "Drag disabled on search result"
@@ -1656,14 +1504,6 @@ msgstr "Durante la extracción, ajusta la válvula para que la presión llegue a
 msgid "E.g. water tank low, scale battery low."
 msgstr "P. ej. depósito de agua bajo, batería de la báscula baja."
 
-#: src/pages/ShotHistory/ShotNotesCard.jsx
-msgid "e.g., 2.5, Medium-Fine"
-msgstr "p. ej., 2.5, media-fina"
-
-#: src/pages/ShotHistory/ShotNotesCard.jsx
-msgid "e.g., Single Origin, Blend"
-msgstr "p. ej., origen único, blend"
-
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 msgid "Ease In"
 msgstr "Entrada suave"
@@ -1677,7 +1517,6 @@ msgid "Ease Out"
 msgstr "Salida suave"
 
 #: src/pages/ProfileList/index.jsx
-#: src/pages/ShotHistory/ShotNotesCard.jsx
 msgid "Edit"
 msgstr "Editar"
 
@@ -1861,10 +1700,6 @@ msgstr "Expandir ajustes de columnas"
 msgid "Expand navigation"
 msgstr "Expandir navegación"
 
-#: src/pages/ShotHistory/HistoryCard.jsx
-msgid "Expand shot details"
-msgstr "Expandir detalles de la extracción"
-
 #: src/pages/Statistics/components/toolbar/subcomponents.jsx
 msgid "Expand statistics toolbar"
 msgstr "Expandir barra de estadísticas"
@@ -1874,9 +1709,9 @@ msgid "Explain WebM export"
 msgstr "Explicar exportación WebM"
 
 #: src/pages/ProfileList/index.jsx
+#: src/pages/ShotAnalyzer/components/library/LibraryPanel.jsx
 #: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
 #: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
-#: src/pages/ShotHistory/HistoryCard.jsx
 msgid "Export"
 msgstr "Exportar"
 
@@ -1887,6 +1722,10 @@ msgstr "Exportar perfil {label}"
 #: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 msgid "Export All"
 msgstr "Exportar todo"
+
+#: src/pages/ShotAnalyzer/components/library/useShotListActions.js
+msgid "Export all {count} filtered shots to one JSON file?"
+msgstr "¿Exportar las {count} extracciones filtradas a un archivo JSON?"
 
 #: src/pages/ProfileList/index.jsx
 msgid "Export all profiles"
@@ -1909,6 +1748,7 @@ msgid "Export current shot"
 msgstr "Exportar extracción actual"
 
 #: src/pages/ShotAnalyzer/components/library/LibraryPanel.jsx
+#: src/pages/ShotAnalyzer/components/library/useShotListActions.js
 msgid "Export failed: {message}"
 msgstr "Error al exportar: {message}"
 
@@ -1916,9 +1756,9 @@ msgstr "Error al exportar: {message}"
 msgid "Export File"
 msgstr "Exportar archivo"
 
-#: src/pages/ShotHistory/index.jsx
-msgid "Export filtered shots"
-msgstr "Exportar las extracciones filtradas"
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Export Filtered Shots"
+msgstr "Exportar extracciones filtradas"
 
 #: src/pages/ProfileList/index.jsx
 msgid "Export profile"
@@ -1936,21 +1776,14 @@ msgstr "Exportar ajustes"
 msgid "Export Settings"
 msgstr "Exportar ajustes"
 
-#: src/pages/ShotHistory/HistoryCard.jsx
-msgid "Export shot data"
-msgstr "Exportar datos de la extracción"
+#. placeholder {0}: completed.length
+#: src/pages/ShotAnalyzer/components/library/useShotListActions.js
+msgid "Exported {0} of {count} shots ({failed} failed)."
+msgstr "Se exportaron {0} de {count} extracciones ({failed} fallaron)."
 
-#. placeholder {0}: exported.length
-#. placeholder {1}: targets.length
-#: src/pages/ShotHistory/index.jsx
-msgid "Exported {0} of {1} shots ({failed} failed)."
-msgstr "Se exportaron {0} de {1} extracciones ({failed} fallidas)."
-
-#. placeholder {0}: exportProgress.current
-#. placeholder {1}: exportProgress.total
-#: src/pages/ShotHistory/index.jsx
-msgid "Exporting shot {0} of {1}..."
-msgstr "Exportando la extracción {0} de {1}..."
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Exporting shots..."
+msgstr "Exportando extracciones..."
 
 #: src/pages/ShotAnalyzer/components/analysisTable/analysisTablePhases.js
 #: src/pages/ShotAnalyzer/utils/columns.js
@@ -2013,8 +1846,8 @@ msgid "Fill the water tank and close the steam knob."
 msgstr "Llena el depósito de agua y cierra la llave de vapor."
 
 #: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
-msgid "Filter library source"
-msgstr "Filtrar origen de la biblioteca"
+msgid "Filter by rating"
+msgstr "Filtrar por valoración"
 
 #: src/pages/Home/utils.js
 msgctxt "process action"
@@ -2163,10 +1996,6 @@ msgstr "Completa"
 msgid "Further Resources"
 msgstr "Más recursos"
 
-#: src/pages/ShotAnalyzer/components/EmptyState.jsx
-msgid "GaggiMate (GM)"
-msgstr "GaggiMate (GM)"
-
 #: src/pages/SetupWizard/PluginsStep.jsx
 msgid "GaggiMate can connect to your smart home, grinder and more. Enable what you need now; you can always change this later in the settings."
 msgstr "GaggiMate puede conectarse a tu hogar inteligente, a tu molino y más. Activa ahora lo que necesites; siempre puedes cambiarlo más tarde en los ajustes."
@@ -2273,10 +2102,6 @@ msgstr "Molienda"
 msgid "Grind once with GbS to see which recipe number your grinder reports."
 msgstr "Muele una vez con GbS para ver qué número de receta indica tu molino."
 
-#: src/pages/ShotHistory/ShotNotesCard.jsx
-msgid "Grind Setting"
-msgstr "Ajuste de molienda"
-
 #: src/pages/Home/cards/ActionCard.jsx
 msgid "Grind target"
 msgstr "Objetivo de molienda"
@@ -2379,15 +2204,11 @@ msgstr "Retardo de báscula alto"
 msgid "HIGH SCALE DELAY"
 msgstr "RETARDO DE BÁSCULA ALTO"
 
-#: src/pages/ShotHistory/index.jsx
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 msgid "Highest ID First"
 msgstr "ID más alto primero"
 
-#: src/pages/ShotHistory/index.jsx
-msgid "Highest Rated"
-msgstr "Mejor valoradas"
-
-#: src/pages/ShotHistory/index.jsx
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 msgid "Highest Volume"
 msgstr "Mayor volumen"
 
@@ -2462,15 +2283,6 @@ msgstr "Se ignora mientras haya un elemento Espacio flexible en la lista de pane
 msgid "Image"
 msgstr "Imagen"
 
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/MobileStatusActionsMenu.jsx
-msgid "Import"
-msgstr "Importar"
-
-#: src/pages/ShotAnalyzer/components/EmptyState.jsx
-msgid "Import a shot file or select one from your library to start analyzing."
-msgstr "Importa un archivo de extracción o selecciona uno de tu biblioteca para empezar a analizar."
-
 #: src/components/MachineProfileControl.jsx
 msgid "Import configuration"
 msgstr "Importar configuración"
@@ -2491,23 +2303,11 @@ msgstr "Importar ajustes"
 msgid "Import Settings"
 msgstr "Importar ajustes"
 
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
-msgid "Import shot or profile"
-msgstr "Importar extracción o perfil"
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/MobileStatusActionsMenu.jsx
-msgid "Importing"
-msgstr "Importando"
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
-msgid "Importing shot or profile"
-msgstr "Importando extracción o perfil"
-
 #: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
 msgid "Include legend"
 msgstr "Incluir leyenda"
 
-#: src/pages/ShotHistory/HistoryCard.jsx
+#: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
 msgid "INCOMPLETE"
 msgstr "INCOMPLETA"
 
@@ -2678,14 +2478,6 @@ msgstr "Factor de escala de la célula de carga 1"
 msgid "Load Cell 2 Scale Factor"
 msgstr "Factor de escala de la célula de carga 2"
 
-#: src/pages/ShotHistory/HistoryCard.jsx
-msgid "Load first"
-msgstr "Cargar primero"
-
-#: src/pages/ShotHistory/HistoryCard.jsx
-msgid "Load shot data first by expanding the shot"
-msgstr "Primero carga los datos de la extracción expandiéndola"
-
 #: src/pages/Settings/index.jsx
 msgid "Loaded {importCount, plural, one {# setting} other {# settings}} from {importName}. All other settings are kept. Save to apply."
 msgstr "Se {importCount, plural, one {ha cargado # ajuste} other {han cargado # ajustes}} de {importName}. Los demás ajustes se mantienen. Guarda para aplicarlos."
@@ -2706,21 +2498,9 @@ msgstr "Cargando ajustes de los plugins…"
 msgid "Loading profiles"
 msgstr "Cargando perfiles"
 
-#: src/pages/ShotHistory/HistoryCard.jsx
-msgid "Loading shot data..."
-msgstr "Cargando datos de la extracción..."
-
-#: src/pages/ShotAnalyzer/components/EmptyState.jsx
-msgid "Local Browser Storage (WEB)"
-msgstr "Almacenamiento local del navegador (WEB)"
-
 #: src/pages/Statistics/components/StatisticsSearchHelp.jsx
 msgid "Local browser time is used."
 msgstr "Se usa la hora local del navegador."
-
-#: src/pages/ShotHistory/index.jsx
-msgid "Longest Duration"
-msgstr "Mayor duración"
 
 #: src/pages/Statistics/components/ActivityHeatmap.jsx
 msgid "Longest streak:"
@@ -2735,15 +2515,11 @@ msgstr "Buscando máquinas… Si la tuya no aparece, añádela por su dirección
 msgid "Low"
 msgstr "Bajo"
 
-#: src/pages/ShotHistory/index.jsx
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 msgid "Lowest ID first"
 msgstr "ID más bajo primero"
 
-#: src/pages/ShotHistory/index.jsx
-msgid "Lowest Rated"
-msgstr "Peor valoradas"
-
-#: src/pages/ShotHistory/index.jsx
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 msgid "Lowest Volume"
 msgstr "Menor volumen"
 
@@ -2992,7 +2768,11 @@ msgctxt "time bucket"
 msgid "Month"
 msgstr "Mes"
 
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/MobileStatusActionsMenu.jsx
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/AnalyzerActionBar.jsx
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "More"
+msgstr "Más"
+
 #: src/pages/ShotAnalyzer/components/library/LibraryActionsMenu.jsx
 msgid "More actions"
 msgstr "Más acciones"
@@ -3038,6 +2818,7 @@ msgid "MQTT User"
 msgstr "Usuario de MQTT"
 
 #: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/AnalyzerActionBar.jsx
 msgid "Multi-Compare"
 msgstr "Comparación múltiple"
 
@@ -3052,10 +2833,6 @@ msgstr "Debe ser mayor que la distancia hasta la línea de llenado."
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Must match the physical RATE-jumper configuration on the HX711 board. This setting does not switch the RATE pin."
 msgstr "Debe coincidir con la configuración física del puente RATE en la placa HX711. Este ajuste no conmuta el pin RATE."
-
-#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
-msgid "Name"
-msgstr "Nombre"
 
 #: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 msgid "Name (A-Z)"
@@ -3110,13 +2887,8 @@ msgstr "NEW"
 msgid "New shot did not appear in history — was it cancelled?"
 msgstr "La nueva extracción no apareció en el historial: ¿se canceló?"
 
-#: src/pages/ShotHistory/index.jsx
-msgid "Newest First"
-msgstr "Más recientes primero"
-
 #: src/pages/ProfileEdit/ExtendedProfileForm.jsx
 #: src/pages/SetupWizard/index.jsx
-#: src/pages/ShotHistory/index.jsx
 msgid "Next"
 msgstr "Siguiente"
 
@@ -3168,10 +2940,6 @@ msgstr "No hay más tipos disponibles"
 msgid "No new commits since the installed version"
 msgstr "No hay commits nuevos desde la versión instalada"
 
-#: src/pages/ShotHistory/ShotNotesCard.jsx
-msgid "No notes added"
-msgstr "No se han añadido notas"
-
 #: src/app/MachineSetup.jsx
 msgid "No other machines found."
 msgstr "No se encontraron otras máquinas."
@@ -3213,23 +2981,18 @@ msgstr "No hay datos de muestras disponibles para analizar."
 msgid "No scales found"
 msgstr "No se encontraron básculas"
 
-#: src/pages/ShotAnalyzer/components/EmptyState.jsx
 #: src/pages/ShotAnalyzer/components/library/libraryDisplay.js
 #: src/pages/ShotAnalyzer/components/useShotNotesState.js
 msgid "No Shot Loaded"
 msgstr "Ninguna extracción cargada"
 
-#: src/pages/ShotHistory/index.jsx
-msgid "No shots available"
-msgstr "No hay extracciones disponibles"
-
 #: src/pages/Statistics/components/statisticsView/StatisticsView.jsx
 msgid "No shots found for the selected filters."
 msgstr "No se encontraron extracciones con los filtros seleccionados."
 
-#: src/pages/ShotHistory/index.jsx
-msgid "No shots match your search and filter criteria"
-msgstr "Ninguna extracción coincide con tu búsqueda y filtros"
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "No shots or profiles match the current filters."
+msgstr "Ninguna extracción o perfil coincide con los filtros actuales."
 
 #: src/pages/Statistics/components/statisticsView/StatisticsView.jsx
 msgid "No Statistics Built Yet"
@@ -3242,10 +3005,6 @@ msgstr "No se encontró ningún grabador de vídeo compatible para exportar la r
 #: src/pages/ShotAnalyzer/components/shotChart/controls/compareControls.jsx
 msgid "No Targets"
 msgstr "Sin objetivos"
-
-#: src/pages/ShotHistory/HistoryCard.jsx
-msgid "No timestamp available"
-msgstr "No hay marca de tiempo disponible"
 
 #: src/pages/Settings/tabs/CalibrationTab.jsx
 msgid "No valid gains were produced. Your existing PID settings have been preserved. Try increasing Test Duration or confirm the boiler was cold at start."
@@ -3289,7 +3048,7 @@ msgstr "No encontrado"
 msgid "Not in range. Switch it on to reconnect."
 msgstr "Fuera de alcance. Enciéndela para reconectar."
 
-#: src/pages/ShotHistory/HistoryCard.jsx
+#: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
 msgid "Not rated"
 msgstr "Sin valorar"
 
@@ -3299,7 +3058,6 @@ msgstr "No registrado"
 
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
 #: src/pages/ShotAnalyzer/shotAnalyzer/ActiveAnalysisView.jsx
-#: src/pages/ShotHistory/ShotNotesCard.jsx
 msgid "Notes"
 msgstr "Notas"
 
@@ -3342,10 +3100,6 @@ msgstr "OK"
 msgid "Old firmware"
 msgstr "Firmware antiguo"
 
-#: src/pages/ShotHistory/index.jsx
-msgid "Oldest First"
-msgstr "Más antiguas primero"
-
 #: src/pages/Settings/PluginCard.jsx
 msgid "On startup (s)"
 msgstr "Al arrancar (s)"
@@ -3366,6 +3120,10 @@ msgstr "En el campo de perfil solo se pueden importar archivos de perfil."
 msgid "Only shot files can be imported in the shot field."
 msgstr "En el campo de extracción solo se pueden importar archivos de extracción."
 
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgid "Open"
+msgstr "Abrir"
+
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
 msgctxt "valve state"
@@ -3381,17 +3139,12 @@ msgid "Open full display"
 msgstr "Abrir pantalla completa"
 
 #: src/pages/Home/cards/RecentShotsCard.jsx
-#: src/pages/ShotHistory/HistoryCard.jsx
 msgid "Open in Analyzer"
 msgstr "Abrir en el analizador"
 
 #: src/pages/ShotAnalyzer/components/library/StatusBar.jsx
 msgid "Open library"
 msgstr "Abrir biblioteca"
-
-#: src/pages/ShotAnalyzer/components/EmptyState.jsx
-msgid "Open or close the library."
-msgstr "Abrir o cerrar la biblioteca."
 
 #: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
 msgid "Open profile actions menu"
@@ -3405,9 +3158,14 @@ msgstr "Abrir menú de acciones de perfiles"
 msgid "Open Settings → Machine to configure your machine before use."
 msgstr "Abre Ajustes → Máquina para configurar tu máquina antes de usarla."
 
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/AnalyzerActionBar.jsx
 #: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
 msgid "Open shot actions menu"
 msgstr "Abrir menú de acciones de la extracción"
+
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgid "Open shot or profile"
+msgstr "Abrir extracción o perfil"
 
 #: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 msgid "Open shots actions menu"
@@ -3417,17 +3175,13 @@ msgstr "Abrir menú de acciones de extracciones"
 msgid "Open statistics"
 msgstr "Abrir estadísticas"
 
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/MobileStatusActionsMenu.jsx
-msgid "Open status actions menu"
-msgstr "Abrir menú de acciones de estado"
-
 #: src/pages/Settings/PluginCard.jsx
 msgid "Open the Home app on your iOS device, select Add Accessory, and enter the setup code shown above."
 msgstr "Abre la app Casa en tu dispositivo iOS, selecciona Añadir accesorio e introduce el código de configuración que se muestra arriba."
 
-#: src/pages/ShotAnalyzer/components/EmptyState.jsx
-msgid "Opens imported external shots and profiles temporarily without saving them to the browser library."
-msgstr "Abre temporalmente extracciones y perfiles externos importados sin guardarlos en la biblioteca del navegador."
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+msgid "Opening shot or profile"
+msgstr "Abriendo extracción o perfil"
 
 #: src/pages/ProfileEdit/ProfileMainInformation.jsx
 msgid "Optional description for this profile"
@@ -3480,6 +3234,7 @@ msgstr "Pausar"
 msgid "Pause replay"
 msgstr "Pausar reproducción"
 
+#: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
 #: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotMetricCards.jsx
 msgid "Peak Pressure"
@@ -3533,7 +3288,6 @@ msgstr "Fase {phaseNum}"
 #: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTable.jsx
 #: src/pages/ShotAnalyzer/components/shotChart/compare/compareModel.js
 #: src/pages/ShotAnalyzer/components/shotChart/tooltip/tooltipModel.js
-#: src/pages/ShotHistory/HistoryChart.jsx
 #: src/pages/Statistics/services/StatisticsService.js
 msgid "Phase {phaseNumber}"
 msgstr "Fase {phaseNumber}"
@@ -3693,14 +3447,6 @@ msgstr "Precalentando..."
 msgid "Preinfusion"
 msgstr "Preinfusión"
 
-#: src/pages/ShotHistory/ConfirmDeleteModal.jsx
-msgid "Preparing deletion..."
-msgstr "Preparando la eliminación..."
-
-#: src/pages/ShotHistory/index.jsx
-msgid "Preparing export..."
-msgstr "Preparando la exportación..."
-
 #: src/pages/ShotAnalyzer/components/shotChart/constants.js
 msgid "Preparing MP4 export..."
 msgstr "Preparando exportación MP4..."
@@ -3814,7 +3560,6 @@ msgid "Pressure test"
 msgstr "Prueba de presión"
 
 #: src/pages/ProfileEdit/ExtendedProfileForm.jsx
-#: src/pages/ShotHistory/index.jsx
 msgid "Previous"
 msgstr "Anterior"
 
@@ -3853,7 +3598,6 @@ msgid "profile"
 msgstr "perfil"
 
 #: src/pages/Home/cards/ProfileCard.jsx
-#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 #: src/pages/Statistics/components/ProfileGroupTable.jsx
 msgid "Profile"
 msgstr "Perfil"
@@ -3864,16 +3608,8 @@ msgid "Profile"
 msgstr "Perfil"
 
 #: src/pages/ShotAnalyzer/services/LibraryService.js
-msgid "Profile {nameOrId} not found"
-msgstr "No se encontró el perfil {nameOrId}"
-
-#: src/pages/ShotAnalyzer/services/LibraryService.js
-msgid "Profile {nameOrId} not found in browser storage"
-msgstr "No se encontró el perfil {nameOrId} en el almacenamiento del navegador"
-
-#: src/pages/ShotHistory/index.jsx
-msgid "Profile A-Z"
-msgstr "Perfil A-Z"
+msgid "Profile {id} not found"
+msgstr "No se ha encontrado el perfil {id}"
 
 #: src/pages/DashboardSettings/index.jsx
 msgid "Profile Chart Height"
@@ -3907,17 +3643,13 @@ msgstr "Información del perfil"
 msgid "Profile is too large."
 msgstr "El perfil es demasiado grande."
 
-#: src/pages/ShotAnalyzer/services/IndexedDBService.js
-msgid "Profile label is required for browser storage"
-msgstr "El nombre del perfil es obligatorio para el almacenamiento del navegador"
-
 #: src/pages/ProfileList/index.jsx
 msgid "Profile list"
 msgstr "Lista de perfiles"
 
 #: src/pages/ShotAnalyzer/components/library/StatusBar.jsx
-msgid "Profile mismatch detected. Use Import below or drop files here to import."
-msgstr "Se detectó un perfil que no coincide. Usa Importar abajo o suelta archivos aquí para importarlos."
+msgid "Profile mismatch detected. Use Open below or drop files here."
+msgstr "Se detectó una discrepancia de perfil. Usa Abrir abajo o suelta archivos aquí."
 
 #: src/pages/Settings/PluginCard.jsx
 msgid "Profile per grinder recipe"
@@ -3932,6 +3664,7 @@ msgid "Profile Statistics"
 msgstr "Estadísticas del perfil"
 
 #: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
+#: src/pages/ShotAnalyzer/components/analyzerActionBar/AnalyzerActionBar.jsx
 msgid "Profile Stats"
 msgstr "Estadísticas del perfil"
 
@@ -3946,10 +3679,6 @@ msgstr "Perfil actualizado"
 #: src/components/MachineProfileControl.jsx
 msgid "Profile values"
 msgstr "Valores del perfil"
-
-#: src/pages/ShotHistory/index.jsx
-msgid "Profile Z-A"
-msgstr "Perfil Z-A"
 
 #: src/pages/Settings/tabs/PhysicalButtonsSection.jsx
 msgid "Profile: {profileLabel}"
@@ -4152,13 +3881,9 @@ msgstr "Selección del objetivo de la rampa"
 msgid "Range"
 msgstr "Rango"
 
-#: src/pages/ShotHistory/index.jsx
-msgid "Rated Only"
-msgstr "Solo valoradas"
-
-#: src/pages/ShotHistory/ShotNotesCard.jsx
-msgid "Rating"
-msgstr "Valoración"
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Rated"
+msgstr "Con valoración"
 
 #: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 msgid "Rating (High)"
@@ -4171,10 +3896,6 @@ msgstr "Valoración (baja)"
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
 msgid "Ratio"
 msgstr "Ratio"
-
-#: src/pages/ShotHistory/ShotNotesCard.jsx
-msgid "Ratio (1:{ratioLabel})"
-msgstr "Ratio (1:{ratioLabel})"
 
 #: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
 msgid "Ratio reached"
@@ -4450,19 +4171,8 @@ msgstr "Sábado"
 #: src/app/MachineSetup.jsx
 #: src/pages/ProfileEdit/ExtendedProfileForm.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
-#: src/pages/ShotHistory/ShotNotesCard.jsx
 msgid "Save"
 msgstr "Guardar"
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
-msgctxt "import mode"
-msgid "Save"
-msgstr "Guardar"
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarModeHint.jsx
-msgctxt "import mode badge"
-msgid "SAVE"
-msgstr "GUARDAR"
 
 #: src/pages/Settings/StickyFormFooter.jsx
 msgid "Save & Restart"
@@ -4505,18 +4215,6 @@ msgstr "Guardar ajustes"
 #: src/pages/ProfileEdit/ProfileImageUpload.jsx
 msgid "Save the profile first to add an image."
 msgstr "Guarda primero el perfil para añadir una imagen."
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/MobileStatusActionsMenu.jsx
-msgid "Save to Browser"
-msgstr "Guardar en el navegador"
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
-msgid "Save to Browser. Click to switch imports to View temporarily."
-msgstr "Guardar en el navegador. Haz clic para cambiar temporalmente las importaciones a Ver."
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarModeHint.jsx
-msgid "Save to Browser. Imported shots and profiles will now be saved to the browser library."
-msgstr "Guardar en el navegador. Las extracciones y perfiles importados se guardarán ahora en la biblioteca del navegador."
 
 #: src/components/PumpFlowCalibration/Footer.jsx
 msgid "Save to machine"
@@ -4651,7 +4349,6 @@ msgid "Search shots..."
 msgstr "Buscar extracciones..."
 
 #: src/pages/ProfileList/index.jsx
-#: src/pages/ShotHistory/index.jsx
 msgid "Search..."
 msgstr "Buscar..."
 
@@ -4700,10 +4397,6 @@ msgstr "Seleccionar tipo de perfil Pro"
 #: src/pages/Statistics/components/toolbar/subcomponents.jsx
 msgid "Select Profiles..."
 msgstr "Seleccionar perfiles..."
-
-#: src/pages/Statistics/components/toolbar/subcomponents.jsx
-msgid "Select shot and profile sources"
-msgstr "Seleccionar fuentes de extracción y perfil"
 
 #: src/pages/Statistics/components/toolbar/subcomponents.jsx
 msgid "Select Shots..."
@@ -4803,18 +4496,9 @@ msgstr "Compartir"
 msgid "Shift = Range"
 msgstr "Shift = Rango"
 
-#: src/pages/ShotHistory/index.jsx
-msgid "Shortest Duration"
-msgstr "Menor duración"
-
 #: src/pages/Statistics/components/toolbar/subcomponents.jsx
 msgid "shot"
 msgstr "extracción"
-
-#: src/pages/Statistics/components/toolbar/constants.js
-msgctxt "date basis"
-msgid "Shot"
-msgstr "Extracción"
 
 #: src/pages/ShotAnalyzer/components/shotChart/controls/chartReplayControls.jsx
 msgctxt "export file type"
@@ -4825,10 +4509,6 @@ msgstr "Extracción"
 msgctxt "table column"
 msgid "Shot"
 msgstr "Extracción"
-
-#: src/pages/ShotAnalyzer/services/LibraryService.js
-msgid "Shot {idStr} not found in browser storage"
-msgstr "No se encontró la extracción {idStr} en el almacenamiento del navegador"
 
 #: src/pages/ShotAnalyzer/components/analysisTable/AnalysisTable.jsx
 #: src/pages/ShotAnalyzer/components/shotChart/compare/compareChartConfig.js
@@ -4842,10 +4522,6 @@ msgstr "Extracción {shotNumber}"
 #: src/pages/ShotAnalyzer/shotAnalyzer/ActiveAnalysisView.jsx
 msgid "Shot analysis table"
 msgstr "Tabla de análisis de la extracción"
-
-#: src/components/Navigation.jsx
-msgid "Shot Analyzer"
-msgstr "Analizador de extracciones"
 
 #: src/pages/ShotAnalyzer/components/library/AnalyzerPanelSlot.jsx
 msgid "Shot and profile import dropzone"
@@ -4868,7 +4544,7 @@ msgstr "Gráficas de extracción"
 msgid "Shot Controls"
 msgstr "Controles de extracción"
 
-#: src/pages/ShotHistory/HistoryCard.jsx
+#: src/pages/ShotAnalyzer/components/library/ShotVisualizerUpload.jsx
 msgid "Shot data is invalid or incomplete"
 msgstr "Los datos de la extracción no son válidos o están incompletos"
 
@@ -4885,8 +4561,7 @@ msgstr "Extracción finalizada"
 msgid "Shot finished. Waiting for it to be saved to history..."
 msgstr "Extracción finalizada. Esperando a que se guarde en el historial..."
 
-#: src/components/Navigation.jsx
-#: src/pages/ShotHistory/index.jsx
+#: src/pages/ShotAnalyzer/shotAnalyzer/ShotAnalyzer.jsx
 msgid "Shot History"
 msgstr "Historial de extracciones"
 
@@ -4904,7 +4579,6 @@ msgid "Shot Metrics"
 msgstr "Métricas de la extracción"
 
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
-#: src/pages/ShotHistory/ShotNotesCard.jsx
 msgid "Shot Notes"
 msgstr "Notas de la extracción"
 
@@ -4921,7 +4595,7 @@ msgstr "El inicio de la extracción se canceló en la máquina."
 msgid "Shot started"
 msgstr "Extracción iniciada"
 
-#: src/pages/ShotHistory/HistoryCard.jsx
+#: src/pages/ShotAnalyzer/components/library/ShotVisualizerUpload.jsx
 msgid "Shot uploaded successfully to visualizer.coffee!"
 msgstr "¡Extracción subida correctamente a visualizer.coffee!"
 
@@ -5009,6 +4683,7 @@ msgstr "Muestra los paneles de la columna de control como tarjetas separadas o a
 #: src/pages/Settings/PatchNotes.jsx
 msgid "showing the newest {0}"
 msgstr "se muestran los {0} más recientes"
+
 #: src/pages/Statistics/components/StatisticsShotCompareSection.jsx
 msgid "Showing up to 100 latest shots. Refine with filters."
 msgstr "Se muestran hasta las 100 extracciones más recientes. Afina con los filtros."
@@ -5095,24 +4770,11 @@ msgstr "Plugin Smart Grind"
 msgid "Snapshotting shot history..."
 msgstr "Creando instantánea del historial de extracciones..."
 
-#: src/pages/Statistics/components/statisticsView/helpers.js
-msgid "Some shots have no shot timestamp. Choose how date handling should treat them (Shot = exclude missing, Auto = fallback to upload time, Upload = upload time only)."
-msgstr "Algunas extracciones no tienen marca de tiempo de extracción. Elige cómo tratarlas al filtrar por fecha (Extracción = excluir las que falten, Auto = usar la hora de subida como alternativa, Subida = solo la hora de subida)."
-
-#: src/pages/Statistics/components/statisticsView/helpers.js
-msgid "Some shots have no shot timestamp. Choose how date handling should treat them (Shot = exclude missing, Auto = fallback to upload time, Upload = upload time only). Some shots have no usable date at all and may still be excluded from date filtering."
-msgstr "Algunas extracciones no tienen marca de tiempo de extracción. Elige cómo tratarlas al filtrar por fecha (Extracción = excluir las que falten, Auto = usar la hora de subida como alternativa, Subida = solo la hora de subida). Algunas extracciones no tienen ninguna fecha utilizable y pueden quedar excluidas del filtro por fecha."
-
-#: src/pages/Statistics/components/toolbar/subcomponents.jsx
-msgid "Some shots have no shot timestamp. Choose how date handling should treat them."
-msgstr "Algunas extracciones no tienen marca de tiempo de extracción. Elige cómo tratarlas al filtrar por fecha."
-
-#: src/pages/Statistics/components/statisticsView/helpers.js
-msgid "Some shots have no usable shot timestamp. Date filtering may exclude them unless upload time is available."
-msgstr "Algunas extracciones no tienen una marca de tiempo utilizable. El filtro por fecha puede excluirlas a menos que haya hora de subida."
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Sort"
+msgstr "Ordenar"
 
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
-#: src/pages/ShotHistory/ShotNotesCard.jsx
 msgid "Sour"
 msgstr "Ácido"
 
@@ -5201,10 +4863,6 @@ msgstr "Empezar desde la consigna anterior"
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "Start heating test"
 msgstr "Iniciar prueba de calentamiento"
-
-#: src/pages/ShotAnalyzer/components/EmptyState.jsx
-msgid "Start or end compare mode."
-msgstr "Iniciar o finalizar el modo comparación."
 
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "Start pressure test"
@@ -5366,10 +5024,6 @@ msgstr "Almacenamiento (tarjeta SD)"
 msgid "Storage & Memory"
 msgstr "Almacenamiento y memoria"
 
-#: src/pages/ShotAnalyzer/components/EmptyState.jsx
-msgid "Stores imported external shots and profiles locally in this browser on this device. They are not automatically available in other browsers or on other devices."
-msgstr "Guarda localmente en este navegador y dispositivo las extracciones y perfiles externos importados. No están disponibles automáticamente en otros navegadores ni en otros dispositivos."
-
 #: src/pages/SetupWizard/WifiStep.jsx
 msgid "Strong"
 msgstr "Fuerte"
@@ -5395,18 +5049,6 @@ msgstr "Intercambiar extracción 1 y extracción 2"
 #: src/pages/ShotAnalyzer/components/shotChart/MobileChartScrubber.jsx
 msgid "Swipe"
 msgstr "Deslizar"
-
-#: src/pages/ShotAnalyzer/components/EmptyState.jsx
-msgid "Switch between shots."
-msgstr "Cambiar entre extracciones."
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
-msgid "Switch import mode to Save to Browser"
-msgstr "Cambiar el modo de importación a Guardar en el navegador"
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
-msgid "Switch import mode to View temporarily"
-msgstr "Cambiar temporalmente el modo de importación a Ver"
 
 #: src/pages/DashboardSettings/index.jsx
 msgid "Switch to compact view"
@@ -5521,7 +5163,6 @@ msgstr "Obj. P"
 #: src/components/OverviewChart.jsx
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
-#: src/pages/ShotHistory/HistoryChart.jsx
 msgid "Target Pressure"
 msgstr "Presión objetivo"
 
@@ -5532,7 +5173,6 @@ msgstr "Presión objetivo (bar)"
 
 #: src/pages/ShotAnalyzer/components/analysisTable/analysisTableModel.js
 #: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
-#: src/pages/ShotHistory/HistoryChart.jsx
 msgid "Target Pump Flow"
 msgstr "Flujo de bomba objetivo"
 
@@ -5566,7 +5206,6 @@ msgstr "Temperatura objetivo"
 #: src/components/OverviewChart.jsx
 #: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotMetricCards.jsx
-#: src/pages/ShotHistory/HistoryChart.jsx
 msgid "Target Temperature"
 msgstr "Temperatura objetivo"
 
@@ -5585,10 +5224,6 @@ msgstr "Peso objetivo en gramos"
 #: src/pages/Settings/PluginCard.jsx
 msgid "Tasmota IP"
 msgstr "IP de Tasmota"
-
-#: src/pages/ShotHistory/ShotNotesCard.jsx
-msgid "Tasting notes, brewing observations, etc..."
-msgstr "Notas de cata, observaciones de la extracción, etc..."
 
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
 msgid "Tasting notes, brewing observations..."
@@ -5649,10 +5284,6 @@ msgstr "Compensación de temperatura (°C)"
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "Temperature rise: {0} of {1} °C"
 msgstr "Aumento de temperatura: {0} de {1} °C"
-
-#: src/pages/ShotAnalyzer/components/EmptyState.jsx
-msgid "Temporary View (VIEW)"
-msgstr "Vista temporal (VIEW)"
 
 #: src/pages/Settings/tabs/CalibrationTab.jsx
 msgid "Test Duration (seconds)"
@@ -5878,10 +5509,6 @@ msgctxt "ramp target"
 msgid "Time"
 msgstr "Tiempo"
 
-#: src/pages/ShotHistory/HistoryChart.jsx
-msgid "Time (s)"
-msgstr "Tiempo (s)"
-
 #: src/pages/ShotAnalyzer/utils/formatting.js
 msgid "Time Limit"
 msgstr "Límite de tiempo"
@@ -6055,7 +5682,7 @@ msgstr "Error desconocido."
 msgid "Unknown field \"{fieldRaw}\". Supported: {supportedFields}."
 msgstr "Campo desconocido \"{fieldRaw}\". Admitidos: {supportedFields}."
 
-#: src/pages/ShotHistory/HistoryCard.jsx
+#: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
 msgid "Unknown Profile"
 msgstr "Perfil desconocido"
 
@@ -6066,6 +5693,10 @@ msgstr "Báscula desconocida"
 #: src/pages/Statistics/components/statisticsView/helpers.js
 msgid "Unknown Shot"
 msgstr "Extracción desconocida"
+
+#: src/pages/ShotAnalyzer/components/library/StatusBar.jsx
+msgid "Unload shot"
+msgstr "Descargar extracción"
 
 #: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
 msgid "Unpin {displayName}"
@@ -6087,9 +5718,9 @@ msgstr "Desfijar perfil"
 msgid "Unpin shot"
 msgstr "Desfijar extracción"
 
-#: src/pages/ShotHistory/index.jsx
-msgid "Unrated Only"
-msgstr "Solo sin valorar"
+#: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
+msgid "Unrated"
+msgstr "Sin valoración"
 
 #: src/pages/Statistics/utils/statisticsSearchDsl.js
 msgid "Unsupported date expression. Use DD.MM.YYYY, optional HH:MM, or h-7d."
@@ -6159,16 +5790,11 @@ msgstr "Actualizando el sistema de archivos de Headless"
 msgid "Updating Headless firmware"
 msgstr "Actualizando el firmware de Headless"
 
-#: src/pages/Statistics/components/toolbar/constants.js
-msgctxt "date basis"
-msgid "Upload"
-msgstr "Subida"
-
 #: src/utils/profileImage.js
 msgid "Upload failed"
 msgstr "Error al subir"
 
-#: src/pages/ShotHistory/HistoryCard.jsx
+#: src/pages/ShotAnalyzer/components/library/ShotVisualizerUpload.jsx
 msgid "Upload failed: {errorMessage}"
 msgstr "Error al subir: {errorMessage}"
 
@@ -6180,12 +5806,9 @@ msgstr "Subir imagen"
 msgid "Upload Shot"
 msgstr "Subir extracción"
 
-#: src/pages/ShotHistory/HistoryCard.jsx
-msgid "Upload to visualizer.coffee"
-msgstr "Subir a visualizer.coffee"
-
 #: src/components/VisualizerUploadModal.jsx
-#: src/pages/ShotHistory/HistoryCard.jsx
+#: src/pages/ShotAnalyzer/components/library/LibraryPanel.jsx
+#: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
 msgid "Upload to Visualizer.coffee"
 msgstr "Subir a Visualizer.coffee"
 
@@ -6212,22 +5835,6 @@ msgstr "Usa un ID distinto para un perfil integrado personalizado."
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Use Alba reservoir level to interlock steam refill"
 msgstr "Usar el nivel del depósito de Alba para bloquear el rellenado de vapor"
-
-#: src/pages/Statistics/components/toolbar/helpers.js
-msgid "Use shot timestamp only"
-msgstr "Usar solo la marca de tiempo de la extracción"
-
-#: src/pages/Statistics/components/toolbar/helpers.js
-msgid "Use shot timestamp, fallback to upload time"
-msgstr "Usar la marca de tiempo de la extracción o, si falta, la hora de subida"
-
-#: src/pages/ShotAnalyzer/components/EmptyState.jsx
-msgid "Use the status bar toggle to switch between <0>View temporarily</0> and <1>Save to Browser</1> before importing."
-msgstr "Usa el interruptor de la barra de estado para alternar entre <0>Ver temporalmente</0> y <1>Guardar en el navegador</1> antes de importar."
-
-#: src/pages/Statistics/components/toolbar/helpers.js
-msgid "Use upload time only"
-msgstr "Usar solo la hora de subida"
 
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Used for the GaggiMate hotspot when no Wi-Fi is configured (min. 8 characters)."
@@ -6302,16 +5909,6 @@ msgstr "Vídeo (no compatible)"
 msgid "Video export is not supported in this browser."
 msgstr "La exportación de vídeo no es compatible con este navegador."
 
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
-msgctxt "import mode"
-msgid "View"
-msgstr "Ver"
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarModeHint.jsx
-msgctxt "import mode badge"
-msgid "VIEW"
-msgstr "VER"
-
 #: src/pages/Settings/PatchNotes.jsx
 msgid "View on GitHub"
 msgstr "Ver en GitHub"
@@ -6323,18 +5920,6 @@ msgstr "Ver estadísticas del perfil {label}"
 #: src/pages/ProfileList/index.jsx
 msgid "View statistics for this profile"
 msgstr "Ver estadísticas de este perfil"
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/MobileStatusActionsMenu.jsx
-msgid "View temporarily"
-msgstr "Ver temporalmente"
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
-msgid "View temporarily. Click to switch imports to Save to Browser."
-msgstr "Ver temporalmente. Haz clic para cambiar las importaciones a Guardar en el navegador."
-
-#: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarModeHint.jsx
-msgid "View temporarily. Imported shots and profiles will now open temporarily in the analyzer."
-msgstr "Ver temporalmente. Las extracciones y perfiles importados se abrirán ahora temporalmente en el analizador."
 
 #: src/components/SettingsFormField.jsx
 msgid "Visible"
@@ -6391,7 +5976,7 @@ msgstr "Aviso"
 msgid "WARNING: Do you really want to IRREVOCABLY delete all {count} filtered profiles?"
 msgstr "ATENCIÓN: ¿Seguro que quieres eliminar de forma IRREVERSIBLE los {count} perfiles filtrados?"
 
-#: src/pages/ShotAnalyzer/components/library/LibraryDropdown.jsx
+#: src/pages/ShotAnalyzer/components/library/useShotListActions.js
 msgid "WARNING: Do you really want to IRREVOCABLY delete all {count} filtered shots?"
 msgstr "ATENCIÓN: ¿Seguro que quieres eliminar de forma IRREVERSIBLE las {count} extracciones filtradas?"
 
@@ -6457,11 +6042,6 @@ msgstr "Depósito de agua bajo"
 msgid "Weak"
 msgstr "Débil"
 
-#: src/pages/Statistics/components/toolbar/constants.js
-msgctxt "shot source: browser storage"
-msgid "WEB"
-msgstr "WEB"
-
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Web Settings"
 msgstr "Ajustes web"
@@ -6502,7 +6082,6 @@ msgstr "semanas"
 #: src/pages/ShotAnalyzer/components/shotChart/compare/CompareMetricContent.jsx
 #: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotMetricCards.jsx
-#: src/pages/ShotHistory/HistoryChart.jsx
 #: src/pages/Statistics/components/MetricsTable.jsx
 #: src/pages/Statistics/components/PhaseStatistics.jsx
 #: src/utils/metricDefinitions.js
@@ -6525,7 +6104,6 @@ msgid "Weight (total)"
 msgstr "Peso (total)"
 
 #: src/pages/ShotAnalyzer/components/shotChart/labelVisuals.js
-#: src/pages/ShotHistory/HistoryChart.jsx
 msgid "Weight Flow"
 msgstr "Flujo de peso"
 
@@ -6627,7 +6205,3 @@ msgstr "Tus nuevos valores PID se han guardado correctamente."
 #: src/app/MachineSetup.jsx
 msgid "Your phone needs to be on the same Wi-Fi network as the machine."
 msgstr "Tu teléfono debe estar en la misma red Wi-Fi que la máquina."
-
-#: src/pages/ShotAnalyzer/components/EmptyState.jsx
-msgid "Your saved shots and profiles directly from the GaggiMate internal storage."
-msgstr "Tus extracciones y perfiles guardados, directamente desde el almacenamiento interno de GaggiMate."

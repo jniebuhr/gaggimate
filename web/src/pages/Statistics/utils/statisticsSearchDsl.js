@@ -5,16 +5,8 @@
 // - date expressions are evaluated in local/browser time
 import { t } from '@lingui/core/macro';
 
-const SUPPORTED_FIELDS = new Set(['name', 'profile', 'id', 'source', 'date', 'pinned']);
+const SUPPORTED_FIELDS = new Set(['name', 'profile', 'id', 'date', 'pinned']);
 const SUPPORTED_FIELD_LIST = Array.from(SUPPORTED_FIELDS).join(', ');
-const SOURCE_ALIASES = {
-  gm: 'gaggimate',
-  gaggimate: 'gaggimate',
-  web: 'browser',
-  browser: 'browser',
-  src: 'both',
-  both: 'both',
-};
 
 function normalizeText(value) {
   return String(value ?? '')
@@ -68,7 +60,10 @@ function parseQuotedOrPlainValue(rawValue) {
     if (!(startsQuote && endsQuote) || trimmed.length < 2) {
       return { error: t`Unclosed quoted value.` };
     }
-    const inner = trimmed.slice(1, -1).replaceAll('\\"', '"').replaceAll('\\\\', '\\');
+    const inner = trimmed
+      .slice(1, -1)
+      .replaceAll(String.raw`\"`, '"')
+      .replaceAll(String.raw`\\`, '\\');
     return { value: inner.trim(), exact: true };
   }
 
@@ -93,7 +88,7 @@ export function parseStatisticsQuery(queryString) {
     const trimmed = raw.trim();
     if (!trimmed) return;
 
-    const fieldMatch = trimmed.match(/^([a-zA-Z]+)\s*:\s*(\S.*)$/);
+    const fieldMatch = /^([a-zA-Z]+)\s*:\s*(\S.*)$/.exec(trimmed);
     if (!fieldMatch) {
       const freeValue = parseQuotedOrPlainValue(trimmed);
       if (freeValue.error) {
@@ -188,25 +183,20 @@ function normalizeEpochInputToMs(value) {
   const numeric = Number(value);
   if (!Number.isFinite(numeric) || numeric <= 0) return null;
 
-  // Heuristic: GM timestamps are usually seconds, browser uploadedAt is milliseconds.
+  // Device timestamps are usually seconds; also accept millisecond timestamps.
   if (numeric > 1e12) return Math.round(numeric);
   if (numeric > 1e9) return Math.round(numeric * 1000);
   return null;
 }
 
-export function resolveShotEffectiveTimestampMs(shotMeta, dateBasisMode = 'auto') {
-  const shotTsMs = normalizeEpochInputToMs(shotMeta?.timestamp ?? shotMeta?.shotDate);
-  const uploadTsMs = normalizeEpochInputToMs(shotMeta?.uploadedAt);
-
-  if (dateBasisMode === 'shot') return shotTsMs;
-  if (dateBasisMode === 'upload') return uploadTsMs;
-  return shotTsMs ?? uploadTsMs;
+export function resolveShotTimestampMs(shotMeta) {
+  return normalizeEpochInputToMs(shotMeta?.timestamp ?? shotMeta?.shotDate);
 }
 
 function parseAbsoluteLocalDateExpression(expr) {
-  const match = String(expr ?? '')
-    .trim()
-    .match(/^(\d{1,2})\.(\d{1,2})\.(\d{2}|\d{4})(?:\s+(\d{1,2}):(\d{2}))?$/);
+  const match = /^(\d{1,2})\.(\d{1,2})\.(\d{2}|\d{4})(?:\s+(\d{1,2}):(\d{2}))?$/.exec(
+    String(expr ?? '').trim(),
+  );
   if (!match) return null;
 
   const [, dayRaw, monthRaw, yearRaw, hourRaw, minuteRaw] = match;
@@ -254,7 +244,7 @@ export function parseDateExpressionToEpochMs(expr, now = new Date()) {
   }
 
   // `h` means "now" for historical reasons; both `d` and legacy `t` are accepted as day suffixes.
-  const relativeMatch = trimmed.match(/^h(?:\s*([+-])\s*(\d+)\s*[dt])?$/i);
+  const relativeMatch = /^h(?:\s*([+-])\s*(\d+)\s*[dt])?$/i.exec(trimmed);
   if (relativeMatch) {
     const [, sign, amountRaw] = relativeMatch;
     const baseMs = now instanceof Date ? now.getTime() : Date.now();
@@ -307,7 +297,7 @@ function matchesTextClause(values, clause) {
 
   const normalizedValues = values.map(normalizeText).filter(Boolean);
   if (clause.exact) {
-    return normalizedValues.some(value => value === needle);
+    return normalizedValues.includes(needle);
   }
   return normalizedValues.some(value => value.includes(needle));
 }
@@ -326,33 +316,11 @@ function getTextValuesForField(shotMeta, field) {
       return [shotMeta?.profile, shotMeta?.profileName];
     case 'id':
       return [shotMeta?.id];
-    case 'source':
-      return [shotMeta?.source];
     case '__free':
-      return [
-        shotMeta?.name,
-        shotMeta?.label,
-        shotMeta?.title,
-        shotMeta?.profile,
-        shotMeta?.id,
-        shotMeta?.source,
-      ];
+      return [shotMeta?.name, shotMeta?.label, shotMeta?.title, shotMeta?.profile, shotMeta?.id];
     default:
       return [];
   }
-}
-
-function normalizeSourceValueForMatch(raw) {
-  const value = normalizeText(raw);
-  return SOURCE_ALIASES[value] || value;
-}
-
-function matchesSourceClause(shotMeta, clause) {
-  const source = normalizeSourceValueForMatch(shotMeta?.source);
-  const wanted = normalizeSourceValueForMatch(clause?.value);
-  if (!wanted || wanted === 'both') return true;
-  if (clause.exact) return source === wanted;
-  return source.includes(wanted);
 }
 
 function compileDateClause(clause, options) {
@@ -371,28 +339,27 @@ function compileDateClause(clause, options) {
   }
 
   const { valueMs, hasTime } = parsed;
-  const bounds = hasTime ? null : getDayBounds(valueMs);
+  const bounds = hasTime ? { start: valueMs, end: valueMs } : getDayBounds(valueMs);
   const op = clause.op;
 
   const matcher = shotMeta => {
-    const ts = resolveShotEffectiveTimestampMs(shotMeta, options.dateBasisMode);
+    const ts = resolveShotTimestampMs(shotMeta);
     if (!Number.isFinite(ts)) return false;
 
-    if (!hasTime) {
-      if (op === '=') return ts >= bounds.start && ts <= bounds.end;
-      if (op === '>') return ts > bounds.end;
-      if (op === '>=') return ts >= bounds.start;
-      if (op === '<') return ts < bounds.start;
-      if (op === '<=') return ts <= bounds.end;
-      return false;
+    switch (op) {
+      case '=':
+        return ts >= bounds.start && ts <= bounds.end;
+      case '>':
+        return ts > bounds.end;
+      case '>=':
+        return ts >= bounds.start;
+      case '<':
+        return ts < bounds.start;
+      case '<=':
+        return ts <= bounds.end;
+      default:
+        return false;
     }
-
-    if (op === '=') return ts === valueMs;
-    if (op === '>') return ts > valueMs;
-    if (op === '>=') return ts >= valueMs;
-    if (op === '<') return ts < valueMs;
-    if (op === '<=') return ts <= valueMs;
-    return false;
   };
 
   return { matcher, error: null };
@@ -410,15 +377,11 @@ function matchClauseAgainstShotMeta(shotMeta, clause, ctx) {
     return clause.pinnedValue ? isPinned : !isPinned;
   }
 
-  if (clause.field === 'source') {
-    return matchesSourceClause(shotMeta, clause);
-  }
-
   const values = getTextValuesForField(shotMeta, clause.field);
   return matchesTextClause(values, clause);
 }
 
-function groupShotCandidateClauses({ clauses, now, dateBasisMode, errors }) {
+function groupShotCandidateClauses({ clauses, now, errors }) {
   const freeClauses = [];
   const fieldClauseGroups = new Map();
   const dateMatchers = [];
@@ -432,7 +395,7 @@ function groupShotCandidateClauses({ clauses, now, dateBasisMode, errors }) {
     }
 
     if (clause.field === 'date') {
-      const compiled = compileDateClause(clause, { now, dateBasisMode });
+      const compiled = compileDateClause(clause, { now });
       if (compiled.error) {
         errors.push(compiled.error);
       } else if (compiled.matcher) {
@@ -476,7 +439,6 @@ function groupShotCandidateClauses({ clauses, now, dateBasisMode, errors }) {
 
 export function buildShotCandidatePredicate(parsedQuery, options = {}) {
   const now = options.now instanceof Date ? options.now : new Date();
-  const dateBasisMode = options.dateBasisMode || 'auto';
   // Callers own the cross-feature pin semantics. Statistics passes a matcher
   // that treats "pinned" as either a directly pinned shot or a shot whose
   // profile is pinned.
@@ -487,7 +449,6 @@ export function buildShotCandidatePredicate(parsedQuery, options = {}) {
   const { freeClauses, fieldClauseGroups, dateMatchers } = groupShotCandidateClauses({
     clauses,
     now,
-    dateBasisMode,
     errors,
   });
 
@@ -501,7 +462,7 @@ export function buildShotCandidatePredicate(parsedQuery, options = {}) {
       }
     }
 
-    // Same-field OR for text/source fields.
+    // Same-field OR for text and pin filters.
     for (const [, groupClauses] of fieldClauseGroups.entries()) {
       let matched = false;
       for (const clause of groupClauses) {

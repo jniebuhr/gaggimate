@@ -40,7 +40,13 @@ function getMenuPosition(anchor, actionCount, preferredPlacement) {
   };
 }
 
-export function LibraryActionsMenu({ actions, ariaLabel, buttonClassName, placement = 'bottom' }) {
+export function LibraryActionsMenu({
+  actions,
+  ariaLabel,
+  buttonClassName,
+  label,
+  placement = 'bottom',
+}) {
   const { t } = useLingui();
   const [isOpen, setIsOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState({
@@ -132,6 +138,7 @@ export function LibraryActionsMenu({ actions, ariaLabel, buttonClassName, placem
               key={action.label}
               type='button'
               role='menuitem'
+              disabled={action.disabled}
               className={className}
               onClick={event => handleAction(event, action.onSelect)}
             >
@@ -155,13 +162,14 @@ export function LibraryActionsMenu({ actions, ariaLabel, buttonClassName, placem
       <summary
         onClick={event => event.stopPropagation()}
         className={getAnalyzerIconButtonClasses({
-          tone: 'subtle',
+          tone: label ? 'neutral' : 'subtle',
           className: `cursor-pointer list-none ${buttonClassName} [&::-webkit-details-marker]:hidden`,
         })}
         aria-label={ariaLabel}
         title={t`More actions`}
       >
         <FontAwesomeIcon icon={faEllipsisVertical} size='sm' />
+        {label && <span className='hidden lg:inline'>{label}</span>}
       </summary>
 
       {isOpen ? createPortal(menu, document.body) : null}

@@ -2,14 +2,10 @@ import { useMemo, useState } from 'preact/hooks';
 import { useRoute } from 'preact-iso';
 import { Trans } from '@lingui/react/macro';
 import { StatisticsView } from './components/StatisticsView';
-import {
-  normalizeStatisticsSourceSelection,
-  parseStatisticsProfileRouteParams,
-} from './utils/statisticsRoute';
+import { parseStatisticsProfileRouteParams } from './utils/statisticsRoute';
 
 // Statistics entry page: merges deep-link context with transient session hints.
-// Route params stay canonical for profile source/name, while session state can
-// carry extra one-off UI context like the current shot source and detail tab.
+// Route params select the device profile; session state can carry the detail tab.
 export function StatisticsPage() {
   const { params } = useRoute();
   const [sessionInitialContext] = useState(() => {
@@ -26,30 +22,14 @@ export function StatisticsPage() {
   });
   const routeInitialContext = useMemo(() => parseStatisticsProfileRouteParams(params), [params]);
   const initialContext = useMemo(() => {
-    const sessionContext = sessionInitialContext || {};
-    const legacySource = normalizeStatisticsSourceSelection(sessionContext.source, '');
-    const baseContext = {
-      ...sessionContext,
-      shotSource: normalizeStatisticsSourceSelection(
-        sessionContext.shotSource || legacySource,
-        'gaggimate',
-      ),
-      profileSource: normalizeStatisticsSourceSelection(
-        sessionContext.profileSource || legacySource,
-        'gaggimate',
-      ),
-    };
-    baseContext.source = baseContext.profileSource;
-
-    if (!routeInitialContext) return baseContext;
-
+    // An unsupported deep link must not pick up a stale session profile preset.
+    if (params?.sourceAlias && !routeInitialContext) return {};
     return {
-      ...baseContext,
+      profileName: sessionInitialContext?.profileName || '',
+      preferredDetailSection: sessionInitialContext?.preferredDetailSection,
       ...routeInitialContext,
-      profileSource: routeInitialContext.source,
-      source: routeInitialContext.source,
     };
-  }, [routeInitialContext, sessionInitialContext]);
+  }, [params?.sourceAlias, routeInitialContext, sessionInitialContext]);
 
   return (
     <div className='pb-20'>

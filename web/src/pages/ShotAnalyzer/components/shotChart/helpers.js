@@ -32,6 +32,7 @@ export {
   getPercentileValue,
   getSpikeResistantSeriesMax,
   formatUniqueAxisTick,
+  formatTemperatureAxisTick,
   formatResponsiveXAxisTick,
 } from './helpers/chartScale';
 

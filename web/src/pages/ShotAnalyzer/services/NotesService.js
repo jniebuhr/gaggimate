@@ -1,17 +1,15 @@
 /**
  * NotesService.js
  *
- * Dual-persistence notes service for Shot Analyzer.
+ * Device and in-memory notes service for Shot Analyzer.
  * Notes JSON format is identical across all backends:
  *   { id, rating, beanType, doseIn, doseOut, ratio, grindSetting, balanceTaste, notes }
  *
- * - GaggiMate shots: Uses the same API as ShotHistory (req:history:notes:get/save)
- * - Browser shots: Dedicated 'notes' store in IndexedDB (same JSON format as API)
+ * - GaggiMate shots: Uses the device history API (req:history:notes:get/save)
  * - Temp shots: In-memory only, no persistence
  */
 
 import { mergeAnalyzerNotes } from './analyzerNotesMerge';
-import { indexedDBService } from './IndexedDBService';
 
 const DEFAULT_NOTES = {
   rating: 0,
@@ -160,13 +158,15 @@ class NotesService {
     }
   }
 
-  async loadBrowserNotes(shotId, defaults) {
+  // History exports preserve the saved payload, including absent notes as null.
+  async loadExportNotes(shotId) {
     try {
-      const stored = await Promise.resolve(indexedDBService.getNotes(String(shotId)));
-      return stored ? { ...defaults, ...stored } : defaults;
-    } catch (e) {
-      console.error('Failed to load notes from IndexedDB:', e);
-      return defaults;
+      const response = await this.apiService.request({ tp: 'req:history:notes:get', id: shotId });
+      const payload = response.notes;
+      if (!payload || Object.keys(payload).length === 0) return null;
+      return typeof payload === 'string' ? JSON.parse(payload) : payload;
+    } catch {
+      return null;
     }
   }
 
@@ -179,7 +179,6 @@ class NotesService {
     const defaults = this.getDefaults(shotId);
 
     if (source === 'gaggimate') return this.loadGaggiMateNotes(shotId, defaults);
-    if (source === 'browser') return this.loadBrowserNotes(shotId, defaults);
     return this.loadTempNotes(shotId, defaults);
   }
 
@@ -194,11 +193,6 @@ class NotesService {
         id: shotId,
         notes: notesWithId,
       });
-      return;
-    }
-
-    if (source === 'browser') {
-      await indexedDBService.saveNotes(notesWithId);
       return;
     }
 

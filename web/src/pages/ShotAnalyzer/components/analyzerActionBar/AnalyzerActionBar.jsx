@@ -1,5 +1,9 @@
 /** Coordinates analyzer navigation, import actions, status hints, and loading state. */
 
+import { faChartArea } from '@fortawesome/free-solid-svg-icons/faChartArea';
+import { faChartSimple } from '@fortawesome/free-solid-svg-icons/faChartSimple';
+import { t } from '@lingui/core/macro';
+import { LibraryActionsMenu } from '../library/LibraryActionsMenu';
 import { useCallback, useEffect, useRef } from 'preact/hooks';
 import { getAnalyzerIconButtonClasses } from '../analyzerControlStyles';
 import { getShotNotesKey } from '../useShotNotesState';
@@ -9,8 +13,6 @@ import {
   ActionBarNavigationButtons,
   ActionBarStatisticsAction,
 } from './ActionBarButtons';
-import { ModeHintPortal, useAnalyzerActionBarModeHint } from './ActionBarModeHint';
-import { MobileStatusActionsMenu } from './MobileStatusActionsMenu';
 import {
   getAnalyzerActionBarDisplayState,
   getAnalyzerActionBarNavigationState,
@@ -20,6 +22,9 @@ import { useAnalyzerActionBarLoadIndicator } from './useActionBarLoadIndicator';
 
 export function AnalyzerActionBar({
   currentShot,
+  shotActions = [],
+  entryMode = false,
+  isMobileViewport = false,
   selectedShot = null,
   shotList = [],
   onNavigate,
@@ -32,26 +37,11 @@ export function AnalyzerActionBar({
   statisticsAvailable = true,
   onImport,
   isImporting = false,
-  importMode = 'temp',
-  onImportModeChange,
   isSelectionPending = false,
   isProfilePending = false,
-  showImportModeToggle = true,
   enableKeyboardNavigation = true,
 }) {
   const fileInputRef = useRef(null);
-  const {
-    modeButtonRef,
-    modeHint,
-    modeHintVariant,
-    modeHintPosition,
-    modeHintBadgeStyle,
-    handleModeToggle,
-  } = useAnalyzerActionBarModeHint({
-    importMode,
-    onImportModeChange,
-  });
-
   const { displayShot, hasDisplayShot } = getAnalyzerActionBarDisplayState({
     currentShot,
     selectedShot,
@@ -85,7 +75,7 @@ export function AnalyzerActionBar({
 
   // Keyboard navigation: ArrowLeft / ArrowRight
   useEffect(() => {
-    if (!displayShot || !enableKeyboardNavigation) return;
+    if (!displayShot || !enableKeyboardNavigation || entryMode) return;
 
     const handleKeyDown = e => {
       if (e.defaultPrevented) return;
@@ -105,6 +95,7 @@ export function AnalyzerActionBar({
     return () => globalThis.removeEventListener('keydown', handleKeyDown);
   }, [
     displayShot,
+    entryMode,
     canGoPrev,
     canGoNext,
     currentIndex,
@@ -112,14 +103,26 @@ export function AnalyzerActionBar({
     enableKeyboardNavigation,
   ]);
 
+  const menuActions = isMobileViewport
+    ? [
+        {
+          label: compareMode ? t`Multi-Compare` : t`Profile Stats`,
+          icon: compareMode ? faChartArea : faChartSimple,
+          href: statisticsAvailable ? statsHref || '/statistics' : undefined,
+          onSelect: onShowStats,
+          disabled: !statisticsAvailable,
+        },
+        ...shotActions,
+      ]
+    : shotActions;
+
   const borderClasses = 'border-base-content/5 border-t';
 
   const navButtonClasses = getAnalyzerIconButtonClasses({
     className: 'btn btn-sm btn-ghost h-8 min-h-0 w-8 flex-shrink-0 rounded-lg p-0 text-sm',
   });
   const actionButtonClasses = getAnalyzerIconButtonClasses({
-    className:
-      'btn btn-sm btn-ghost h-8 min-h-0 flex-shrink-0 gap-1.5 rounded-lg px-2.5 text-sm font-medium hover:opacity-100',
+    className: `btn btn-sm btn-ghost h-8 min-h-0 flex-shrink-0 gap-1.5 rounded-lg font-medium hover:opacity-100 ${entryMode ? 'px-1.5 text-xs sm:px-2.5 sm:text-sm' : 'px-2.5 text-sm'}`,
   });
 
   const handleImportClick = event => {
@@ -141,16 +144,28 @@ export function AnalyzerActionBar({
   };
 
   return (
-    <div>
-      <div className={`overflow-hidden transition-all duration-200 ${borderClasses}`}>
-        <div className='shot-analyzer-action-scroll shot-analyzer-status-actions flex w-full items-center gap-1.5 overflow-x-auto overflow-y-hidden px-1.5 py-1 sm:px-2'>
-          <ActionBarNavigationButtons
-            navButtonClasses={navButtonClasses}
-            canGoPrev={canGoPrev}
-            canGoNext={canGoNext}
-            currentIndex={currentIndex}
-            onNavigateToIndex={handleNavigateToIndex}
-          />
+    <div className={entryMode ? 'contents' : undefined}>
+      <div
+        className={
+          entryMode ? 'contents' : `overflow-hidden transition-all duration-200 ${borderClasses}`
+        }
+      >
+        <div
+          className={
+            entryMode
+              ? 'flex items-center gap-1'
+              : 'shot-analyzer-action-scroll shot-analyzer-status-actions flex w-full items-center gap-1.5 overflow-x-auto overflow-y-hidden px-1.5 py-1 sm:px-2'
+          }
+        >
+          {!entryMode && (
+            <ActionBarNavigationButtons
+              navButtonClasses={navButtonClasses}
+              canGoPrev={canGoPrev}
+              canGoNext={canGoNext}
+              currentIndex={currentIndex}
+              onNavigateToIndex={handleNavigateToIndex}
+            />
+          )}
 
           {showCompareButton ? (
             <ActionBarCompareButton
@@ -161,32 +176,30 @@ export function AnalyzerActionBar({
             />
           ) : null}
 
-          <ActionBarStatisticsAction
-            actionButtonClasses={actionButtonClasses}
-            compareMode={compareMode}
-            statisticsAvailable={statisticsAvailable}
-            statsHref={statsHref}
-            onShowStats={onShowStats}
-          />
-
-          <MobileStatusActionsMenu
-            buttonClasses={`${actionButtonClasses} px-2.5 sm:hidden`}
-            handleImportClick={handleImportClick}
-            handleModeToggle={handleModeToggle}
-            importMode={importMode}
-            isImporting={isImporting}
-            showImportModeToggle={showImportModeToggle}
-          />
+          {!entryMode && !isMobileViewport && (
+            <ActionBarStatisticsAction
+              actionButtonClasses={actionButtonClasses}
+              compareMode={compareMode}
+              statisticsAvailable={statisticsAvailable}
+              statsHref={statsHref}
+              onShowStats={onShowStats}
+            />
+          )}
 
           <ActionBarImportActions
             actionButtonClasses={actionButtonClasses}
             handleImportClick={handleImportClick}
-            handleModeToggle={handleModeToggle}
-            importMode={importMode}
             isImporting={isImporting}
-            modeButtonRef={modeButtonRef}
-            showImportModeToggle={showImportModeToggle}
           />
+
+          {!entryMode && shotActions.length > 0 && (
+            <LibraryActionsMenu
+              actions={menuActions}
+              ariaLabel={t`Open shot actions menu`}
+              label={t`More`}
+              buttonClassName='h-8 w-8 shrink-0 p-1.5 text-sm font-medium lg:w-auto lg:gap-1.5 lg:px-2.5'
+            />
+          )}
 
           <input
             ref={fileInputRef}
@@ -199,7 +212,7 @@ export function AnalyzerActionBar({
           />
         </div>
 
-        {loadIndicatorVisible && (
+        {!entryMode && loadIndicatorVisible && (
           <div className='bg-primary/15 h-0.5 w-full overflow-hidden'>
             <div
               className='bg-primary h-full rounded-full transition-[width] duration-200 ease-out'
@@ -208,13 +221,6 @@ export function AnalyzerActionBar({
           </div>
         )}
       </div>
-
-      <ModeHintPortal
-        modeHint={modeHint}
-        modeHintBadgeStyle={modeHintBadgeStyle}
-        modeHintPosition={modeHintPosition}
-        modeHintVariant={modeHintVariant}
-      />
     </div>
   );
 }
