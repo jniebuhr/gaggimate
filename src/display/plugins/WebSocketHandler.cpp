@@ -537,6 +537,7 @@ void WebSocketHandler::publishTelemetry() {
             pObj["l"] = brew->isActive() ? brew->currentPhase.name.c_str() : "Finished";
             pObj["e"] = ts - brew->processStarted;
             pObj["u"] = brew->isUtility() ? 1 : 0;
+            pObj["f"] = brew->isFlush ? 1 : 0;
             const bool isVolumetric = brew->target == ProcessTarget::VOLUMETRIC && brew->currentPhase.hasVolumetricTarget() &&
                                       controller->isVolumetricAvailable();
             pObj["tt"] = isVolumetric ? "volumetric" : "time";
