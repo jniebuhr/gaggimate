@@ -109,6 +109,7 @@ class Controller {
 
     // Event callback methods
     void updateLastAction();
+    unsigned long getLastActionAt() const { return lastAction; }
     void raiseTemp();
     void lowerTemp();
     void toggleSteamHeater();

@@ -157,7 +157,9 @@ export function PluginsStep({ form }) {
           setSchedules([...schedules, { time: '07:00', days: Array(7).fill(true) }])
         }
         removeAutoWakeupSchedule={index => setSchedules(schedules.filter((_, i) => i !== index))}
-        updateAutoWakeupTime={(index, time) => updateSchedule(index, { time })}
+        updateAutoWakeupTime={(index, value, field = 'time') =>
+          updateSchedule(index, { [field]: value })
+        }
         updateAutoWakeupDay={(index, day, enabled) =>
           updateSchedule(index, {
             days: schedules[index].days.map((d, i) => (i === day ? enabled : d)),

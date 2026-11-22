@@ -422,8 +422,8 @@ msgid "Automatic Wakeup Schedule"
 msgstr "Programación de encendido automático"
 
 #: src/pages/Settings/PluginCard.jsx
-msgid "Automatically switch to brew mode at specified time(s) of day."
-msgstr "Cambia automáticamente al modo de extracción a la(s) hora(s) indicada(s) del día."
+msgid "Automatically switch to brew mode at specified time(s) of day. An optional off time switches back to standby once the machine was idle for two minutes."
+msgstr "Cambiar automáticamente al modo de preparación a la(s) hora(s) indicada(s). Una hora de apagado opcional vuelve al modo de espera cuando la máquina lleva dos minutos sin uso."
 
 #: src/pages/Settings/tabs/CalibrationTab.jsx
 msgid "Autotune Complete!"
@@ -5009,6 +5009,7 @@ msgstr "Muestra los paneles de la columna de control como tarjetas separadas o a
 #: src/pages/Settings/PatchNotes.jsx
 msgid "showing the newest {0}"
 msgstr "se muestran los {0} más recientes"
+
 #: src/pages/Statistics/components/StatisticsShotCompareSection.jsx
 msgid "Showing up to 100 latest shots. Refine with filters."
 msgstr "Se muestran hasta las 100 extracciones más recientes. Afina con los filtros."
@@ -5407,6 +5408,14 @@ msgstr "Cambiar el modo de importación a Guardar en el navegador"
 #: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
 msgid "Switch import mode to View temporarily"
 msgstr "Cambiar temporalmente el modo de importación a Ver"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Switch off (optional)"
+msgstr "Apagar (opcional)"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Switch on"
+msgstr "Encender"
 
 #: src/pages/DashboardSettings/index.jsx
 msgid "Switch to compact view"

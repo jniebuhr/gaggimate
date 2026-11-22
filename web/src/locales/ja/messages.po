@@ -422,8 +422,8 @@ msgid "Automatic Wakeup Schedule"
 msgstr "自動ウェイクアップのスケジュール"
 
 #: src/pages/Settings/PluginCard.jsx
-msgid "Automatically switch to brew mode at specified time(s) of day."
-msgstr "指定した時刻に自動で抽出モードに切り替えます。"
+msgid "Automatically switch to brew mode at specified time(s) of day. An optional off time switches back to standby once the machine was idle for two minutes."
+msgstr "指定した時刻に自動で抽出モードに切り替えます。オフ時刻を設定すると、マシンが2分間操作されなかった時点でスタンバイに戻ります。"
 
 #: src/pages/Settings/tabs/CalibrationTab.jsx
 msgid "Autotune Complete!"
@@ -5408,6 +5408,14 @@ msgstr "インポートモードを「ブラウザーに保存」に切り替え
 #: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
 msgid "Switch import mode to View temporarily"
 msgstr "インポートモードを「一時表示」に切り替え"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Switch off (optional)"
+msgstr "オフ（任意）"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Switch on"
+msgstr "オン"
 
 #: src/pages/DashboardSettings/index.jsx
 msgid "Switch to compact view"

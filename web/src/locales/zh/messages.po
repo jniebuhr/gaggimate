@@ -422,8 +422,8 @@ msgid "Automatic Wakeup Schedule"
 msgstr "自动唤醒计划"
 
 #: src/pages/Settings/PluginCard.jsx
-msgid "Automatically switch to brew mode at specified time(s) of day."
-msgstr "在每天指定时间自动切换到冲煮模式。"
+msgid "Automatically switch to brew mode at specified time(s) of day. An optional off time switches back to standby once the machine was idle for two minutes."
+msgstr "在指定时间自动切换到冲煮模式。可选的关闭时间会在机器闲置两分钟后切回待机。"
 
 #: src/pages/Settings/tabs/CalibrationTab.jsx
 msgid "Autotune Complete!"
@@ -5009,6 +5009,7 @@ msgstr "将控制列面板显示为独立卡片，或合并为一张统一卡片
 #: src/pages/Settings/PatchNotes.jsx
 msgid "showing the newest {0}"
 msgstr "显示最新的 {0} 个"
+
 #: src/pages/Statistics/components/StatisticsShotCompareSection.jsx
 msgid "Showing up to 100 latest shots. Refine with filters."
 msgstr "最多显示最近 100 条萃取记录。可使用筛选条件缩小范围。"
@@ -5407,6 +5408,14 @@ msgstr "将导入模式切换为保存到浏览器"
 #: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
 msgid "Switch import mode to View temporarily"
 msgstr "将导入模式切换为临时查看"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Switch off (optional)"
+msgstr "关闭（可选）"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Switch on"
+msgstr "开启"
 
 #: src/pages/DashboardSettings/index.jsx
 msgid "Switch to compact view"

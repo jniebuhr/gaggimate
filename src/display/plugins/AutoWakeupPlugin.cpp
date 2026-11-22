@@ -38,14 +38,20 @@ void AutoWakeupPlugin::loop() {
             checkAutoWakeup();
         }
     }
+
+    if (switchOffPending) {
+        if (controller->getMode() == MODE_STANDBY) {
+            switchOffPending = false;
+        } else if (!controller->isActive() && now - controller->getLastActionAt() >= SWITCH_OFF_IDLE_MS) {
+            ESP_LOGI(LOG_TAG.c_str(), "Auto-wakeup off time reached, switching to standby");
+            switchOffPending = false;
+            controller->activateStandby();
+            pluginManager->trigger("autowakeup:deactivated");
+        }
+    }
 }
 
 void AutoWakeupPlugin::checkAutoWakeup() {
-    // Only attempt if in standby mode
-    if (controller->getMode() != MODE_STANDBY) {
-        return;
-    }
-
     String currentTime = getCurrentTimeString();
     int currentDayOfWeek = getCurrentDayOfWeek(); // 1=Monday, 7=Sunday
 
@@ -54,6 +60,15 @@ void AutoWakeupPlugin::checkAutoWakeup() {
         return;
     }
     lastCheckedTime = currentTime;
+
+    // An off time switches the machine off once it was idle for two minutes (see loop)
+    if (controller->getMode() != MODE_STANDBY) {
+        for (const AutoWakeupSchedule &schedule : settings->getAutoWakeupSchedules()) {
+            if (schedule.offTime == currentTime && schedule.isDayEnabled(currentDayOfWeek))
+                switchOffPending = true;
+        }
+        return;
+    }
 
     // Check if current time and day matches any of the schedules
     for (const AutoWakeupSchedule &schedule : settings->getAutoWakeupSchedules()) {

@@ -681,42 +681,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
             if (request->hasArg("autowakeupEnabled"))
                 settings->setAutoWakeupEnabled(parseBoolArg(request->arg("autowakeupEnabled")));
             if (request->hasArg("autowakeupSchedules")) {
-                // Handle schedule format with days
-                String schedulesStr = request->arg("autowakeupSchedules");
-                std::vector<AutoWakeupSchedule> schedules;
-
-                if (schedulesStr.length() > 0) {
-                    // Split semicolon-separated schedules
-                    int start = 0;
-                    int end = schedulesStr.indexOf(';');
-
-                    while (end != -1 || start < schedulesStr.length()) {
-                        String scheduleStr = (end != -1) ? schedulesStr.substring(start, end) : schedulesStr.substring(start);
-
-                        int pipePos = scheduleStr.indexOf('|');
-                        if (pipePos != -1) {
-                            String timeStr = scheduleStr.substring(0, pipePos);
-                            String daysStr = scheduleStr.substring(pipePos + 1);
-
-                            AutoWakeupSchedule schedule;
-                            schedule.time = timeStr;
-
-                            if (daysStr.length() == 7) {
-                                for (int i = 0; i < 7; i++) {
-                                    schedule.days[i] = (daysStr.charAt(i) == '1');
-                                }
-                            }
-
-                            schedules.push_back(schedule);
-                        }
-
-                        if (end == -1)
-                            break;
-                        start = end + 1;
-                        end = schedulesStr.indexOf(';', start);
-                    }
-                }
-
+                std::vector<AutoWakeupSchedule> schedules = parseAutoWakeupSchedules(request->arg("autowakeupSchedules"));
                 if (schedules.empty()) {
                     schedules.push_back(AutoWakeupSchedule("07:00")); // Default fallback
                 }
@@ -873,19 +838,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["savedScaleName"] = settings.getSavedScaleName();
 
     // Add schedule format with days
-    std::vector<AutoWakeupSchedule> autowakeupSchedules = settings.getAutoWakeupSchedules();
-    String schedulesStr = "";
-    for (size_t i = 0; i < autowakeupSchedules.size(); i++) {
-        if (i > 0)
-            schedulesStr += ";";
-        schedulesStr += autowakeupSchedules[i].time + "|";
-
-        // Convert days array to 7-bit string
-        for (int j = 0; j < 7; j++) {
-            schedulesStr += autowakeupSchedules[i].days[j] ? "1" : "0";
-        }
-    }
-    doc["autowakeupSchedules"] = schedulesStr;
+    doc["autowakeupSchedules"] = serializeAutoWakeupSchedules(settings.getAutoWakeupSchedules());
     AsyncResponseStream *response = request->beginResponseStream("application/json");
     serializeJson(doc, *response);
     request->send(response);

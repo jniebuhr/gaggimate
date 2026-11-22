@@ -361,9 +361,9 @@ export function Settings() {
     }
   };
 
-  const updateAutoWakeupTime = (index, value) => {
+  const updateAutoWakeupTime = (index, value, field = 'time') => {
     const newSchedules = [...autowakeupSchedules];
-    newSchedules[index].time = value;
+    newSchedules[index] = { ...newSchedules[index], [field]: value };
     setAutoWakeupSchedules(newSchedules);
   };
 
