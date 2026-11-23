@@ -12,7 +12,11 @@ import { Tooltip } from '../../../components/Tooltip.jsx';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCrosshairs } from '@fortawesome/free-solid-svg-icons/faCrosshairs';
 import { faWeightScale } from '@fortawesome/free-solid-svg-icons/faWeightScale';
-import { InputGroupField, SettingsFormField } from '../../../components/SettingsFormField.jsx';
+import {
+  InputGroupField,
+  SettingsFormField,
+  ToggleField,
+} from '../../../components/SettingsFormField.jsx';
 import { CleaningSection } from './CleaningSection.jsx';
 import { validateTankCalibration } from '../../../utils/waterLevel.js';
 
@@ -22,6 +26,203 @@ const pressureAvailable = computed(() => machine.value.capabilities.pressure);
 const tofDistance = computed(() => machine.value.status.tofDistance);
 const hardwareScaleAvailable = computed(() => !!machine.value.capabilities.hardwareScale);
 const status = computed(() => machine.value.status);
+
+// Plausibility band for the mushroom-valve slope, bar per g/s. Mirrors VALVE_CAL_MIN_SLOPE /
+// VALVE_CAL_MAX_SLOPE in src/display/core/constants.h — keep the two in step.
+const VALVE_CAL_MIN_SLOPE = 0.3;
+const VALVE_CAL_MAX_SLOPE = 2.0;
+
+// Two measured (pressure, flow) points define the valve's drop-vs-flow line, and a third measured
+// at 100% pump duty caps it. Returns an error code instead of a line whenever the set cannot
+// describe a valve — the same conditions the firmware falls back to the fixed offset on. The codes
+// are turned into text by ValveCalibrationError, so this stays a pure function and every
+// user-visible string sits inside a component where the translation macros apply.
+function valveLine(formData) {
+  const p1 = parseFloat(formData.valveCalP1);
+  const f1 = parseFloat(formData.valveCalF1);
+  const p2 = parseFloat(formData.valveCalP2);
+  const f2 = parseFloat(formData.valveCalF2);
+  const pMax = parseFloat(formData.valveCalPMax);
+  const fMax = parseFloat(formData.valveCalFMax);
+  if (![p1, f1, p2, f2].every(Number.isFinite)) {
+    return { error: 'points-incomplete' };
+  }
+  if (!(p2 > p1)) return { error: 'pressure-order' };
+  if (!(f2 > f1)) return { error: 'flow-order' };
+  const slope = (p2 - p1) / (f2 - f1);
+  if (slope < VALVE_CAL_MIN_SLOPE || slope > VALVE_CAL_MAX_SLOPE) {
+    return { error: 'slope-implausible', slope };
+  }
+  // The ceiling is required: without it the line is unbounded and the model would ask for more
+  // drop than the machine can produce.
+  if (!Number.isFinite(pMax) || !Number.isFinite(fMax) || pMax <= 0 || fMax <= 0) {
+    return { error: 'max-incomplete' };
+  }
+  // A ceiling at or below point 2 would clip a pressure the user measured.
+  if (!(pMax > p2)) return { error: 'max-pressure-order' };
+  if (!(fMax > f2)) return { error: 'max-flow-order' };
+  const intercept = p1 - slope * f1;
+  return {
+    slope,
+    intercept,
+    pMax,
+    at: q => Math.max(0, Math.min(pMax, intercept + slope * q)),
+  };
+}
+
+function ValveCalibrationError({ error, slope }) {
+  switch (error) {
+    case 'pressure-order':
+      return <Trans>The second pressure must be higher than the first.</Trans>;
+    case 'flow-order':
+      return <Trans>The second flow must be higher than the first.</Trans>;
+    case 'slope-implausible': {
+      const slopeText = slope.toFixed(2);
+      const lo = VALVE_CAL_MIN_SLOPE.toFixed(1);
+      const hi = VALVE_CAL_MAX_SLOPE.toFixed(1);
+      return (
+        <Trans>
+          That works out to {slopeText} bar per g/s. A mushroom valve&apos;s drop usually rises
+          between {lo} and {hi} bar per g/s, so one of the two flow readings is probably off.
+        </Trans>
+      );
+    }
+    case 'max-incomplete':
+      return <Trans>Enter the pressure and flow measured at 100% pump.</Trans>;
+    case 'max-pressure-order':
+      return <Trans>100% pump pressure must be higher than point 2.</Trans>;
+    case 'max-flow-order':
+      return <Trans>100% pump flow must be higher than point 2.</Trans>;
+    default:
+      return <Trans>Enter a pressure and a flow for both calibration points.</Trans>;
+  }
+}
+
+function ValveCalibrationPreview({ line }) {
+  const at1 = line.at(1).toFixed(2);
+  const at2 = line.at(2).toFixed(2);
+  const slopeText = line.slope.toFixed(3);
+  const capBar = line.pMax.toFixed(2);
+  const capFlow = ((line.pMax - line.intercept) / line.slope).toFixed(1);
+  return (
+    <div className='mt-2 text-xs opacity-70'>
+      <Trans>
+        Offset {at1} bar at 1 g/s, {at2} bar at 2 g/s
+        <span className='opacity-60'> ({slopeText} bar per g/s)</span>, capped at {capBar} bar above{' '}
+        {capFlow} g/s
+      </Trans>
+    </div>
+  );
+}
+
+function ValveCalibrationFields({ formData, onChange }) {
+  const { t } = useLingui();
+  const line = valveLine(formData);
+  return (
+    <div className='border-base-content/10 mt-2 rounded-lg border p-3'>
+      <p className='mb-3 text-xs opacity-70'>
+        <Trans>
+          All measurements are taken with no puck in the portafilter and Pressure Offset at 0, so
+          the reading is the valve&apos;s own drop.
+        </Trans>
+      </p>
+      <p className='mb-3 text-xs opacity-70'>
+        <Trans>
+          Hold a target pressure long enough to read a steady flow in g/s, then repeat about a bar
+          higher. Record the pressure the machine actually holds, not the target you set. Keep the
+          two points well apart — the span is what makes the slope trustworthy. If nothing flows at
+          the lower value, your valve cracks above it.
+        </Trans>
+      </p>
+      {[1, 2].map(n => (
+        <div key={n} className='mb-2 grid grid-cols-1 gap-2 sm:grid-cols-2'>
+          <InputGroupField
+            label={t`Point ${n} pressure`}
+            htmlFor={`valveCalP${n}`}
+            unit='bar'
+            noMargin
+          >
+            <input
+              id={`valveCalP${n}`}
+              name={`valveCalP${n}`}
+              type='number'
+              step='any'
+              className='grow'
+              value={formData[`valveCalP${n}`]}
+              onChange={onChange(`valveCalP${n}`)}
+            />
+          </InputGroupField>
+          <InputGroupField
+            label={t`Point ${n} flow`}
+            htmlFor={`valveCalF${n}`}
+            unit='g/s'
+            unitAriaLabel={t`grams per second`}
+            noMargin
+          >
+            <input
+              id={`valveCalF${n}`}
+              name={`valveCalF${n}`}
+              type='number'
+              step='any'
+              className='grow'
+              value={formData[`valveCalF${n}`]}
+              onChange={onChange(`valveCalF${n}`)}
+            />
+          </InputGroupField>
+        </div>
+      ))}
+      <p className='mt-3 mb-2 text-xs opacity-70'>
+        <Trans>
+          Finally, run the pump at 100% and record the stable pressure and flow. That is the highest
+          drop this machine can produce, and the offset is capped there. If the pressure is not
+          above Point 2, Point 2 was never actually reached — redo it lower.
+        </Trans>
+      </p>
+      <div className='mb-2 grid grid-cols-1 gap-2 sm:grid-cols-2'>
+        <InputGroupField
+          label={t`Pressure at 100% pump`}
+          htmlFor='valveCalPMax'
+          unit='bar'
+          noMargin
+        >
+          <input
+            id='valveCalPMax'
+            name='valveCalPMax'
+            type='number'
+            step='any'
+            className='grow'
+            value={formData.valveCalPMax}
+            onChange={onChange('valveCalPMax')}
+          />
+        </InputGroupField>
+        <InputGroupField
+          label={t`Flow at 100% pump`}
+          htmlFor='valveCalFMax'
+          unit='g/s'
+          unitAriaLabel={t`grams per second`}
+          noMargin
+        >
+          <input
+            id='valveCalFMax'
+            name='valveCalFMax'
+            type='number'
+            step='any'
+            className='grow'
+            value={formData.valveCalFMax}
+            onChange={onChange('valveCalFMax')}
+          />
+        </InputGroupField>
+      </div>
+      {line.error ? (
+        <div className='text-error mt-2 text-xs'>
+          <ValveCalibrationError error={line.error} slope={line.slope} />
+        </div>
+      ) : (
+        <ValveCalibrationPreview line={line} />
+      )}
+    </div>
+  );
+}
 
 function SunriseColorField({ id, label, value, fallback, onChange }) {
   return (
@@ -319,7 +520,7 @@ export function MachineTab({ formData, onChange, setField, profiles = [] }) {
                     onChange={onChange('pumpModelCoeffs')}
                   />
                 </SettingsFormField>
-                {pressureAvailable.value && (
+                {pressureAvailable.value && !formData.pressureOffsetFlowDerived && (
                   <InputGroupField
                     label={t`Pressure Offset`}
                     htmlFor='pressureOffset'
@@ -338,6 +539,20 @@ export function MachineTab({ formData, onChange, setField, profiles = [] }) {
                       onChange={onChange('pressureOffset')}
                     />
                   </InputGroupField>
+                )}
+                {pressureAvailable.value && (
+                  <div className='form-control'>
+                    <ToggleField
+                      label={t`Vary offset with flow`}
+                      htmlFor='pressureOffsetFlowDerived'
+                      checked={!!formData.pressureOffsetFlowDerived}
+                      onChange={onChange('pressureOffsetFlowDerived')}
+                      helpText={t`A spring-loaded mushroom valve's drop grows with the flow through it, so a single number is only correct at one flow rate. Enable this to enter measured points instead. Leave off for a 3-way solenoid or a fixed offset. Calibrate Pump Flow Coefficients above first — this mode reads the firmware's flow estimate, so the offset is only as accurate as that model.`}
+                    />
+                    {formData.pressureOffsetFlowDerived && (
+                      <ValveCalibrationFields formData={formData} onChange={onChange} />
+                    )}
+                  </div>
                 )}
                 {pressureAvailable.value && (
                   <InputGroupField

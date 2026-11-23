@@ -164,6 +164,14 @@ msgstr "<0>Pareamento:</0> o GaggiMate aparece para o moedor como uma máquina X
 msgid "1 year ago"
 msgstr "há 1 ano"
 
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "100% pump flow must be higher than point 2."
+msgstr ""
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "100% pump pressure must be higher than point 2."
+msgstr ""
+
 #: src/app/appSettings.js
 msgid "A brew started on the machine."
 msgstr "Uma extração foi iniciada na máquina."
@@ -183,6 +191,10 @@ msgstr "Alguns perfis vêm pré-instalados para você começar agora mesmo, de u
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "A given alpha behaves faster in time at 80 SPS because it is applied more often. Tune the two alpha values independently for your installed sample rate. Changing sample rate resets both values to 0.80 at 10 SPS or 0.40 at 80 SPS as sensible starting points."
 msgstr "Um mesmo alfa age mais rápido no tempo a 80 SPS porque é aplicado com mais frequência. Ajuste os dois valores de alfa de forma independente para a taxa de amostragem instalada. Alterar a taxa de amostragem redefine os dois valores para 0,80 a 10 SPS ou 0,40 a 80 SPS, como pontos de partida razoáveis."
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "A spring-loaded mushroom valve's drop grows with the flow through it, so a single number is only correct at one flow rate. Enable this to enter measured points instead. Leave off for a 3-way solenoid or a fixed offset. Calibrate Pump Flow Coefficients above first — this mode reads the firmware's flow estimate, so the offset is only as accurate as that model."
+msgstr ""
 
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Access Point Password"
@@ -330,6 +342,10 @@ msgstr "Todas as métricas disponíveis estão visíveis."
 #: src/pages/DashboardSettings/index.jsx
 msgid "All available panels are visible."
 msgstr "Todos os painéis disponíveis estão visíveis."
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "All measurements are taken with no puck in the portafilter and Pressure Offset at 0, so the reading is the valve's own drop."
+msgstr ""
 
 #: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
 msgid "All Metrics"
@@ -1780,6 +1796,10 @@ msgid "Enter a name for this profile"
 msgstr "Insira um nome para este perfil"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Enter a pressure and a flow for both calibration points."
+msgstr ""
+
+#: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Enter a whole number of millimeters, 0 or more."
 msgstr "Insira um número inteiro de milímetros, 0 ou mais."
 
@@ -1790,6 +1810,10 @@ msgstr "Insira a classificação em bar do sensor de pressão utilizado"
 #: src/app/MachineSetup.jsx
 msgid "Enter the hostname or IP address of your machine."
 msgstr "Insira o nome do host ou o endereço IP da sua máquina."
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Enter the pressure and flow measured at 100% pump."
+msgstr ""
 
 #: src/components/VisualizerUploadModal.jsx
 msgid "Enter your password"
@@ -2024,6 +2048,10 @@ msgstr "Encha o reservatório de água e feche o registro de vapor."
 msgid "Filter library source"
 msgstr "Filtrar fonte da biblioteca"
 
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Finally, run the pump at 100% and record the stable pressure and flow. That is the highest drop this machine can produce, and the offset is capped there. If the pressure is not above Point 2, Point 2 was never actually reached — redo it lower."
+msgstr ""
+
 #: src/pages/Home/utils.js
 msgctxt "process action"
 msgid "Finish"
@@ -2074,6 +2102,10 @@ msgstr "Fluxo e volume"
 #: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
 msgid "Flow above"
 msgstr "Fluxo acima de"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Flow at 100% pump"
+msgstr ""
 
 #: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
 msgid "Flow below"
@@ -2254,6 +2286,7 @@ msgstr "gramas"
 
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
+#: src/pages/Settings/tabs/MachineTab.jsx
 msgid "grams per second"
 msgstr "gramas por segundo"
 
@@ -2403,6 +2436,10 @@ msgstr "Maior volume"
 msgctxt "flush duration"
 msgid "Hold"
 msgstr "Manter pressionado"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Hold a target pressure long enough to read a steady flow in g/s, then repeat about a bar higher. Record the pressure the machine actually holds, not the target you set. Keep the two points well apart — the span is what makes the slope trustworthy. If nothing flows at the lower value, your valve cracks above it."
+msgstr ""
 
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Hold runs the flush for as long as the button is held. The valve stays open for one more second after the pump stops."
@@ -3345,6 +3382,10 @@ msgctxt "pump mode"
 msgid "Off"
 msgstr "Desligada"
 
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Offset {at1} bar at 1 g/s, {at2} bar at 2 g/s<0> ({slopeText} bar per g/s)</0>, capped at {capBar} bar above {capFlow} g/s"
+msgstr ""
+
 #: src/pages/Home/cards/MachineLevelsCard.jsx
 #: src/utils/metricDefinitions.js
 msgid "OK"
@@ -3665,6 +3706,14 @@ msgstr "Plugins"
 msgid "PNG, JPEG, WebP or BMP. GIFs are not supported. The image is cropped to a square and scaled to 300×300 pixels for the display."
 msgstr "PNG, JPEG, WebP ou BMP. GIFs não são compatíveis. A imagem é cortada em formato quadrado e redimensionada para 300×300 pixels para a tela."
 
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Point {n} flow"
+msgstr ""
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Point {n} pressure"
+msgstr ""
+
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
 msgctxt "pump mode"
@@ -3767,6 +3816,10 @@ msgstr "Pressão e fluxo da bomba"
 #: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
 msgid "Pressure above"
 msgstr "Pressão acima de"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Pressure at 100% pump"
+msgstr ""
 
 #: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
 msgid "Pressure below"
@@ -5707,6 +5760,10 @@ msgstr "Obrigado por instalar o GaggiMate!"
 msgid "Thank you for installing GaggiMate! Your machine is ready for its first shot."
 msgstr "Obrigado por instalar o GaggiMate! Sua máquina está pronta para a primeira extração."
 
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "That works out to {slopeText} bar per g/s. A mushroom valve's drop usually rises between {lo} and {hi} bar per g/s, so one of the two flow readings is probably off."
+msgstr ""
+
 #: src/utils/machineProfiles.js
 msgid "The {profileName} profile is not supported by your current board or firmware."
 msgstr "O perfil {profileName} não é compatível com a sua placa ou o seu firmware atual."
@@ -5822,6 +5879,14 @@ msgstr "A balança foi encontrada, mas a conexão Bluetooth falhou. Tente novame
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "The scale wasn't found. Make sure it's switched on and nearby, then scan again."
 msgstr "A balança não foi encontrada. Verifique se ela está ligada e por perto e busque novamente."
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "The second flow must be higher than the first."
+msgstr ""
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "The second pressure must be higher than the first."
+msgstr ""
 
 #: src/pages/ProfileList/index.jsx
 msgid "The selected profile can't be deleted"
@@ -6310,6 +6375,10 @@ msgstr "Válvula aberta, liberando pressão…"
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
 msgid "Valve state selection"
 msgstr "Seleção do estado da válvula"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Vary offset with flow"
+msgstr ""
 
 #: src/app/AppSettings.jsx
 msgid "Version {bundleVersion}"

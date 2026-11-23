@@ -179,6 +179,20 @@ void Settings::setTemperatureOffset(const int temperature_offset) { temperatureO
 
 void Settings::setPressureOffset(const float pressure_offset) { pressureOffset.set(pressure_offset); }
 
+void Settings::setPressureOffsetFlowDerived(const bool flow_derived) { pressureOffsetFlowDerived.set(flow_derived); }
+
+void Settings::setValveCalP1(const float p1) { valveCalP1.set(p1); }
+
+void Settings::setValveCalF1(const float f1) { valveCalF1.set(f1); }
+
+void Settings::setValveCalP2(const float p2) { valveCalP2.set(p2); }
+
+void Settings::setValveCalF2(const float f2) { valveCalF2.set(f2); }
+
+void Settings::setValveCalPMax(const float pMax) { valveCalPMax.set(pMax); }
+
+void Settings::setValveCalFMax(const float fMax) { valveCalFMax.set(fMax); }
+
 void Settings::setPressureScaling(const float pressure_scaling) { pressureScaling.set(pressure_scaling); }
 
 void Settings::setScaleFactors(float scale_factor_1, float scale_factor_2) {

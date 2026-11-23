@@ -81,6 +81,9 @@ class Controller {
     virtual float getCurrentPressure() const { return pressure; }
     virtual float getCurrentPuckFlow() const { return currentPuckFlow; }
     virtual float getCurrentPumpFlow() const { return currentPumpFlow; }
+    // Mushroom-valve drop to apply right now. Equals the fixed Pressure Offset unless the
+    // flow-derived mode is enabled and fully calibrated, in which case it tracks the current flow.
+    float getEffectivePressureOffset() const;
     virtual float getCurrentPumpPower() const { return currentPumpPower; }
     virtual float getCurrentHeaterPower() const { return currentHeaterPower; }
     virtual float getCurrentPuckResistance() const { return currentPuckResistance; }

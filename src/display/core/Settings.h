@@ -216,6 +216,13 @@ class Settings {
     int getTargetWaterTemp() const { return targetWaterTemp.get(); }
     int getTemperatureOffset() const { return temperatureOffset.get(); }
     float getPressureOffset() const { return pressureOffset.get(); }
+    bool isPressureOffsetFlowDerived() const { return pressureOffsetFlowDerived.get(); }
+    float getValveCalP1() const { return valveCalP1.get(); }
+    float getValveCalF1() const { return valveCalF1.get(); }
+    float getValveCalP2() const { return valveCalP2.get(); }
+    float getValveCalF2() const { return valveCalF2.get(); }
+    float getValveCalPMax() const { return valveCalPMax.get(); }
+    float getValveCalFMax() const { return valveCalFMax.get(); }
     float getPressureScaling() const { return pressureScaling.get(); }
     float getScaleFactor1() const { return scaleFactor1.get(); }
     float getScaleFactor2() const { return scaleFactor2.get(); }
@@ -387,6 +394,13 @@ class Settings {
     void setTargetWaterTemp(int target_water_temp);
     void setTemperatureOffset(int temperature_offset);
     void setPressureOffset(float pressure_offset);
+    void setPressureOffsetFlowDerived(bool flow_derived);
+    void setValveCalP1(float p1);
+    void setValveCalF1(float f1);
+    void setValveCalP2(float p2);
+    void setValveCalF2(float f2);
+    void setValveCalPMax(float pMax);
+    void setValveCalFMax(float fMax);
     void setPressureScaling(float pressure_scaling);
     void setScaleFactors(float scale_factor_1, float scale_factor_2);
     void setHardwareScaleConfiguration(uint16_t sample_rate_sps, float idle_alpha, float active_alpha);
@@ -524,6 +538,14 @@ class Settings {
     Property<int> targetWaterTemp{registry, "tw", 80};
     Property<int> temperatureOffset{registry, "to", DEFAULT_TEMPERATURE_OFFSET};
     Property<float> pressureOffset{registry, "poff", DEFAULT_PRESSURE_OFFSET};
+    Property<bool> pressureOffsetFlowDerived{registry, "pofffd", DEFAULT_PRESSURE_OFFSET_FLOW_DERIVED};
+    Property<float> valveCalP1{registry, "vcp1", DEFAULT_VALVE_CAL_P1};
+    Property<float> valveCalF1{registry, "vcf1", DEFAULT_VALVE_CAL_F1};
+    Property<float> valveCalP2{registry, "vcp2", DEFAULT_VALVE_CAL_P2};
+    Property<float> valveCalF2{registry, "vcf2", DEFAULT_VALVE_CAL_F2};
+    Property<float> valveCalPMax{registry, "vcpm", DEFAULT_VALVE_CAL_PMAX};
+    // Read by the settings page only; the offset calculation uses the pressure above.
+    Property<float> valveCalFMax{registry, "vcfm", DEFAULT_VALVE_CAL_FMAX};
     Property<float> pressureScaling{registry, "ps", DEFAULT_PRESSURE_SCALING};
     Property<float> scaleFactor1{registry, "sf1", 0.0f};
     Property<float> scaleFactor2{registry, "sf2", 0.0f};
