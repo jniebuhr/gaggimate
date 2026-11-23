@@ -4567,6 +4567,10 @@ msgstr "設定を保存"
 msgid "Save the profile first to add an image."
 msgstr "画像を追加するには、先にプロファイルを保存してください。"
 
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Save this and the machine will use the fixed Pressure Offset above, not a flow-derived one."
+msgstr "この状態で保存すると、マシンは流量から導出したオフセットではなく、上の固定の圧力オフセットを使用します。"
+
 #: src/pages/ShotAnalyzer/components/analyzerActionBar/MobileStatusActionsMenu.jsx
 msgid "Save to Browser"
 msgstr "ブラウザーに保存"
@@ -6184,10 +6188,6 @@ msgstr "サポートされていない日付式です。DD.MM.YYYY（HH:MM は�
 #: src/pages/ProfileEdit/ProfileImageUpload.jsx
 msgid "Unsupported file type. Please use PNG, JPEG, WebP or BMP."
 msgstr "サポートされていないファイル形式です。PNG、JPEG、WebP、BMP を使用してください。"
-
-#: src/pages/Settings/tabs/MachineTab.jsx
-msgid "Until this is complete the machine uses the fixed Pressure Offset above, not a flow-derived one."
-msgstr "これが完了するまで、マシンは流量から導出したオフセットではなく、上の固定の圧力オフセットを使用します。"
 
 #: src/pages/ShotAnalyzer/services/analyzer/delayTracking.js
 msgid "Unusually high inferred delay in Phase {phaseNumber} ({delayMs} ms)."

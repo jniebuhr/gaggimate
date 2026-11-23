@@ -4567,6 +4567,10 @@ msgstr "Enregistrer les réglages"
 msgid "Save the profile first to add an image."
 msgstr "Enregistrez d'abord le profil pour ajouter une image."
 
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Save this and the machine will use the fixed Pressure Offset above, not a flow-derived one."
+msgstr "Si vous enregistrez ainsi, la machine utilisera le Décalage de pression fixe ci-dessus, et non un décalage dérivé du débit."
+
 #: src/pages/ShotAnalyzer/components/analyzerActionBar/MobileStatusActionsMenu.jsx
 msgid "Save to Browser"
 msgstr "Enregistrer dans le navigateur"
@@ -6184,10 +6188,6 @@ msgstr "Expression de date non prise en charge. Utilisez JJ.MM.AAAA, éventuelle
 #: src/pages/ProfileEdit/ProfileImageUpload.jsx
 msgid "Unsupported file type. Please use PNG, JPEG, WebP or BMP."
 msgstr "Type de fichier non pris en charge. Utilisez PNG, JPEG, WebP ou BMP."
-
-#: src/pages/Settings/tabs/MachineTab.jsx
-msgid "Until this is complete the machine uses the fixed Pressure Offset above, not a flow-derived one."
-msgstr "Tant que ce n'est pas complet, la machine utilise le Décalage de pression fixe ci-dessus, et non un décalage dérivé du débit."
 
 #: src/pages/ShotAnalyzer/services/analyzer/delayTracking.js
 msgid "Unusually high inferred delay in Phase {phaseNumber} ({delayMs} ms)."

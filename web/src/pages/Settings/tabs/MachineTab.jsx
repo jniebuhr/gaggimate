@@ -229,10 +229,13 @@ function ValveCalibrationFields({ formData, onChange }) {
           <div className='text-error'>
             <ValveCalibrationError error={line.error} slope={line.slope} />
           </div>
+          {/* Deliberately conditional: formData is what is being edited, not what the firmware
+              holds, so this cannot claim the machine has already fallen back. Saving is the
+              moment the two meet. */}
           <div className='mt-1 opacity-70'>
             <Trans>
-              Until this is complete the machine uses the fixed Pressure Offset above, not a
-              flow-derived one.
+              Save this and the machine will use the fixed Pressure Offset above, not a flow-derived
+              one.
             </Trans>
           </div>
         </div>

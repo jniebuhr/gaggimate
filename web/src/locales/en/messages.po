@@ -4567,6 +4567,10 @@ msgstr "Save Settings"
 msgid "Save the profile first to add an image."
 msgstr "Save the profile first to add an image."
 
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Save this and the machine will use the fixed Pressure Offset above, not a flow-derived one."
+msgstr "Save this and the machine will use the fixed Pressure Offset above, not a flow-derived one."
+
 #: src/pages/ShotAnalyzer/components/analyzerActionBar/MobileStatusActionsMenu.jsx
 msgid "Save to Browser"
 msgstr "Save to Browser"
@@ -6184,10 +6188,6 @@ msgstr "Unsupported date expression. Use DD.MM.YYYY, optional HH:MM, or h-7d."
 #: src/pages/ProfileEdit/ProfileImageUpload.jsx
 msgid "Unsupported file type. Please use PNG, JPEG, WebP or BMP."
 msgstr "Unsupported file type. Please use PNG, JPEG, WebP or BMP."
-
-#: src/pages/Settings/tabs/MachineTab.jsx
-msgid "Until this is complete the machine uses the fixed Pressure Offset above, not a flow-derived one."
-msgstr "Until this is complete the machine uses the fixed Pressure Offset above, not a flow-derived one."
 
 #: src/pages/ShotAnalyzer/services/analyzer/delayTracking.js
 msgid "Unusually high inferred delay in Phase {phaseNumber} ({delayMs} ms)."
