@@ -55,7 +55,7 @@ class BrewProcess : public Process {
 
     unsigned long getTotalDuration() const { return profile.getTotalDuration() * 1000L; }
 
-    unsigned long getPhaseDuration() const { return static_cast<long>(currentPhase.duration) * 1000L; }
+    unsigned long getPhaseDuration() const { return static_cast<unsigned long>(currentPhase.duration * 1000.0f + 0.5f); }
 
     // Ends a held first phase; no-op for every other process so callers need not check.
     void release() {
