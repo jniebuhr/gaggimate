@@ -12,9 +12,14 @@ const FIELDS = [
   { key: 'sensorDeadTimeS', unit: 's', min: 2, max: 60 },
 ];
 
+// What a number input can display: a padded or otherwise odd string (e.g. " 1100 " from an import) would show as
+// blank there while Number() still accepts it.
+const NUMBER_RE = /^-?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?$/;
 const inRangeOrOff = (value, min, max) => {
+  if (value === '' || value == null) return true;
+  if (typeof value === 'string' && !NUMBER_RE.test(value)) return false;
   const v = Number(value);
-  return value === '' || value == null || v === 0 || (v >= min && v <= max);
+  return v === 0 || (v >= min && v <= max);
 };
 
 // First lag field whose value is out of range, or null. The save handler checks this too: imports and Save & Restart
