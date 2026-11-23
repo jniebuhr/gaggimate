@@ -70,6 +70,9 @@ export const PANEL_DEFINITIONS = [
       isFinished: ds.isFinished,
       isBrewing: ds.isBrewing,
       isGrinding: ds.isGrinding,
+      isFlushing: ds.isFlushing,
+      isFlushPending: ds.isFlushPending,
+      isFlushFinished: ds.isFlushFinished,
     }),
   },
   {
@@ -139,6 +142,7 @@ export const PANEL_DEFINITIONS = [
       isGrinding: ds.isGrinding,
       isGrindAvailable: ds.isGrindAvailable,
       isFlushing: ds.isFlushing,
+      isHoldFlush: ds.isHoldFlush,
       activate: ds.activate,
       deactivate: ds.deactivate,
       clear: ds.clear,

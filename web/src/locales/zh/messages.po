@@ -638,6 +638,7 @@ msgctxt "machine mode"
 msgid "Brew"
 msgstr "冲煮"
 
+#: src/pages/Home/utils.js
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
 #: src/pages/ProfileList/index.jsx
@@ -700,6 +701,10 @@ msgstr "按时间冲煮"
 #: src/pages/ShotHistory/HistoryCard.jsx
 msgid "Brewed by Weight"
 msgstr "按重量冲煮"
+
+#: src/pages/Home/cards/ProfileCard.jsx
+msgid "Brewing"
+msgstr "冲煮中"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Brewing Filter Alpha"
@@ -1594,6 +1599,11 @@ msgstr "搜索结果中无法拖动"
 msgid "Drag to reorder"
 msgstr "拖动以排序"
 
+#: src/pages/Home/cards/ProfileCard.jsx
+msgctxt "flush phase"
+msgid "Drain"
+msgstr "排水"
+
 #: src/pages/ShotAnalyzer/components/library/AnalyzerPanelSlot.jsx
 msgid "Drop shot or profile JSON here"
 msgstr "将萃取或曲线 JSON 拖放到此处"
@@ -2098,6 +2108,11 @@ msgctxt "button behavior"
 msgid "Flush"
 msgstr "冲洗"
 
+#: src/pages/Home/cards/ProfileCard.jsx
+msgctxt "flush phase"
+msgid "Flush"
+msgstr "冲洗"
+
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgctxt "settings section"
 msgid "Flush"
@@ -2114,6 +2129,10 @@ msgstr "建议冲洗"
 #: src/pages/Home/FlushButton.jsx
 msgid "Flush water"
 msgstr "冲洗水"
+
+#: src/pages/Home/cards/ProfileCard.jsx
+msgid "Flushing"
+msgstr "冲洗中"
 
 #: src/pages/Settings/tabs/HeaterCoordinationSection.jsx
 msgid "For 120 V machines, heater coordination should generally remain enabled. Running the brew and steam heaters simultaneously can overload the circuit, blow a fuse or trip a breaker, and create a fire hazard. Only disable it if the machine and supply circuit are rated to power both heaters together."
@@ -3327,10 +3346,6 @@ msgstr "通知"
 msgid "Notifications are blocked. Allow them for GaggiMate in your phone's settings."
 msgstr "通知已被阻止。请在手机设置中允许 GaggiMate 发送通知。"
 
-#: src/pages/Home/cards/ProfileCard.jsx
-msgid "Now Brewing"
-msgstr "正在冲煮"
-
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
 msgctxt "pump mode"
@@ -3692,10 +3707,6 @@ msgstr "首选秤来源"
 #: src/pages/Home/cards/ActionCard.jsx
 msgid "Preheating..."
 msgstr "预热中..."
-
-#: src/pages/Home/utils.js
-msgid "Preinfusion"
-msgstr "预浸泡"
 
 #: src/pages/ShotHistory/ConfirmDeleteModal.jsx
 msgid "Preparing deletion..."
@@ -5496,11 +5507,6 @@ msgstr "去皮"
 msgid "Tare the scale, then place a known weight and calibrate each load cell."
 msgstr "先对秤去皮，然后放上已知重量的物体并校准每个称重传感器。"
 
-#: src/pages/Home/cards/ProfileCard.jsx
-msgctxt "process"
-msgid "Target"
-msgstr "目标"
-
 #: src/pages/Statistics/components/PhaseStatistics.jsx
 msgid "Target (Delta)"
 msgstr "目标（偏差）"
@@ -5970,6 +5976,10 @@ msgstr "总泵水量"
 #: src/pages/Statistics/components/SummaryCards.jsx
 msgid "Total Shots"
 msgstr "总萃取次数"
+
+#: src/pages/Home/cards/ProfileCard.jsx
+msgid "Total time"
+msgstr "总时间"
 
 #: src/pages/Statistics/components/SummaryCards.jsx
 msgid "Total Weight"

@@ -21,6 +21,7 @@ class BrewProcess : public Process {
     unsigned long finished = 0;
     PhaseExitReason lastExitReason = PhaseExitReason::NONE; // why the most recent phase ended (for shot history)
     bool holdPhase = false;                                 // phase 0 runs until release() (hold-to-flush, GM-201)
+    bool isFlush = false;
     bool releaseRequested = false;
     double phaseStartVolume = 0;
     double currentVolume = 0; // most recent volume pushed

@@ -33,16 +33,12 @@ export const fmtElapsed = (ms = 0) => {
   return `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
 };
 
-export const fmtPhaseTarget = (p, grind) => {
-  if (p?.tt === 'time') return `${(p.pt / 1000).toFixed(0)}s`;
-  if (p?.tt === 'volumetric') return `${p.pt.toFixed(grind ? 1 : 0)}g`;
-  return '';
-};
-
-export const getPhaseLabel = (p, grind) => {
+export const getPhaseLabel = (type, grind) => {
   if (grind) return t`Grinding`;
-  if (p?.s === 'brew') return t`Infusion`;
-  return t`Preinfusion`;
+  if (type === 'brew') return t({ message: 'Brew', context: 'phase type' });
+  if (type === 'infusion') return t`Infusion`;
+  const raw = type ?? '';
+  return raw.charAt(0).toUpperCase() + raw.slice(1);
 };
 
 export const getPrimaryIcon = (active, finished) => {

@@ -638,6 +638,7 @@ msgctxt "machine mode"
 msgid "Brew"
 msgstr "Extraction"
 
+#: src/pages/Home/utils.js
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
 #: src/pages/ProfileList/index.jsx
@@ -700,6 +701,10 @@ msgstr "Extrait au temps"
 #: src/pages/ShotHistory/HistoryCard.jsx
 msgid "Brewed by Weight"
 msgstr "Extrait au poids"
+
+#: src/pages/Home/cards/ProfileCard.jsx
+msgid "Brewing"
+msgstr "Extraction en cours"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Brewing Filter Alpha"
@@ -1594,6 +1599,11 @@ msgstr "Glisser désactivé sur les résultats de recherche"
 msgid "Drag to reorder"
 msgstr "Glisser pour réorganiser"
 
+#: src/pages/Home/cards/ProfileCard.jsx
+msgctxt "flush phase"
+msgid "Drain"
+msgstr "Vidange"
+
 #: src/pages/ShotAnalyzer/components/library/AnalyzerPanelSlot.jsx
 msgid "Drop shot or profile JSON here"
 msgstr "Déposez ici un JSON de shot ou de profil"
@@ -2098,6 +2108,11 @@ msgctxt "button behavior"
 msgid "Flush"
 msgstr "Rinçage"
 
+#: src/pages/Home/cards/ProfileCard.jsx
+msgctxt "flush phase"
+msgid "Flush"
+msgstr "Rinçage"
+
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgctxt "settings section"
 msgid "Flush"
@@ -2114,6 +2129,10 @@ msgstr "Rinçage recommandé"
 #: src/pages/Home/FlushButton.jsx
 msgid "Flush water"
 msgstr "Rincer"
+
+#: src/pages/Home/cards/ProfileCard.jsx
+msgid "Flushing"
+msgstr "Rinçage en cours"
 
 #: src/pages/Settings/tabs/HeaterCoordinationSection.jsx
 msgid "For 120 V machines, heater coordination should generally remain enabled. Running the brew and steam heaters simultaneously can overload the circuit, blow a fuse or trip a breaker, and create a fire hazard. Only disable it if the machine and supply circuit are rated to power both heaters together."
@@ -3327,10 +3346,6 @@ msgstr "Notifications"
 msgid "Notifications are blocked. Allow them for GaggiMate in your phone's settings."
 msgstr "Les notifications sont bloquées. Autorisez-les pour GaggiMate dans les réglages de votre téléphone."
 
-#: src/pages/Home/cards/ProfileCard.jsx
-msgid "Now Brewing"
-msgstr "Extraction en cours"
-
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
 msgctxt "pump mode"
@@ -3692,10 +3707,6 @@ msgstr "Source de balance préférée"
 #: src/pages/Home/cards/ActionCard.jsx
 msgid "Preheating..."
 msgstr "Préchauffage..."
-
-#: src/pages/Home/utils.js
-msgid "Preinfusion"
-msgstr "Préinfusion"
 
 #: src/pages/ShotHistory/ConfirmDeleteModal.jsx
 msgid "Preparing deletion..."
@@ -5496,11 +5507,6 @@ msgstr "Tarer"
 msgid "Tare the scale, then place a known weight and calibrate each load cell."
 msgstr "Tarez la balance, puis placez un poids connu et étalonnez chaque cellule de charge."
 
-#: src/pages/Home/cards/ProfileCard.jsx
-msgctxt "process"
-msgid "Target"
-msgstr "Cible"
-
 #: src/pages/Statistics/components/PhaseStatistics.jsx
 msgid "Target (Delta)"
 msgstr "Cible (delta)"
@@ -5970,6 +5976,10 @@ msgstr "Eau pompée totale"
 #: src/pages/Statistics/components/SummaryCards.jsx
 msgid "Total Shots"
 msgstr "Total des shots"
+
+#: src/pages/Home/cards/ProfileCard.jsx
+msgid "Total time"
+msgstr "Temps total"
 
 #: src/pages/Statistics/components/SummaryCards.jsx
 msgid "Total Weight"

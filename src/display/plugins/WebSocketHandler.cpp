@@ -453,6 +453,7 @@ void WebSocketHandler::publishState(unsigned long now) {
     doc["gtv"] = controller->getSettings().getTargetGrindVolume();
     doc["gt"] = controller->isVolumetricAvailable() && controller->getSettings().isVolumetricTarget() ? 1 : 0;
     doc["gact"] = controller->isGrindActive() ? 1 : 0;
+    doc["fd"] = controller->getSettings().getFlushDuration(); // 0 = hold-to-flush; the web picks the button mode from it
     doc["up"] = updateAvailableProvider ? updateAvailableProvider() : false;
     // Same text as the display's standby label, so headless users see starting/waiting/error states too.
     JsonObject sys = doc["sys"].to<JsonObject>();
@@ -536,6 +537,8 @@ void WebSocketHandler::publishTelemetry() {
             pObj["l"] = brew->isActive() ? brew->currentPhase.name.c_str() : "Finished";
             pObj["e"] = ts - brew->processStarted;
             pObj["u"] = brew->isUtility() ? 1 : 0;
+            pObj["f"] = brew->isFlush ? 1 : 0;
+            pObj["pi"] = brew->phaseIndex; // tells apart consecutive phases with the same name and type
             const bool isVolumetric = brew->target == ProcessTarget::VOLUMETRIC && brew->currentPhase.hasVolumetricTarget() &&
                                       controller->isVolumetricAvailable();
             pObj["tt"] = isVolumetric ? "volumetric" : "time";
@@ -594,12 +597,12 @@ void WebSocketHandler::sendAutotuneFailed() {
 }
 
 void WebSocketHandler::handleFlushStart(uint32_t clientId, JsonDocument &request) {
-    controller->onFlush();
+    const bool started = controller->onFlush();
 
     JsonDocument response(&psramAllocator);
     response["tp"] = "res:flush:start";
     response["rid"] = request["rid"];
-    response["success"] = true;
+    response["success"] = started;
     ws.text(clientId, toWsBuffer(response));
 }
 

@@ -1644,21 +1644,22 @@ bool Controller::isHardwareScaleHealthy() const {
     return lastMeasurement != 0 && millis() - lastMeasurement < HARDWARE_GRACE_PERIOD_MS;
 }
 
-void Controller::onFlush() {
+bool Controller::onFlush() {
     if (!isMachineHardwareReady())
-        return;
+        return false;
     // Allocate outside the lock; reachable from the UI, AsyncTCP and BLE tasks (GM-147).
     const int duration = settings.getFlushDuration();
     Profile profile = FLUSH_PROFILE;
     profile.temperature = profileManager->getSelectedProfile().temperature;
     profile.phases[0].duration = duration > 0 ? duration : FLUSH_HOLD_MAX_DURATION_S; // 0 = hold, capped
     auto flush = std::make_unique<BrewProcess>(profile, ProcessTarget::TIME, settings.getBrewDelay());
+    flush->isFlush = true;
     flush->holdPhase = duration == 0; // pump phase ends on onFlushRelease(), the drain phase still runs
     std::vector<const char *> events;
     {
         std::lock_guard<std::recursive_mutex> guard(processMutex);
         if (isActiveLocked()) {
-            return;
+            return false;
         }
         clearLocked(events);
         startProcessLocked(std::move(flush), events);
@@ -1667,6 +1668,7 @@ void Controller::onFlush() {
     }
     updateControl(); // same immediate send as startProcess()
     dispatchEvents(events);
+    return true;
 }
 
 // Every hold-to-flush source (physical button, touch, web) funnels its release through here.

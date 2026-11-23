@@ -7,6 +7,9 @@ import { MODES } from './utils.js';
 import { t } from '@lingui/core/macro';
 import { computeWaterLevel } from '../../utils/waterLevel.js';
 
+// A flush reports running within a status frame or two; past this it is assumed it never started.
+const FLUSH_PENDING_TIMEOUT_MS = 5000;
+
 const status = computed(() => machine.value.status);
 const capabilities = computed(() => machine.value.capabilities);
 const connected = computed(() => machine.value.connected);
@@ -40,10 +43,11 @@ export function useDashboardState() {
   const isFinished = !!p?.e && !isActive;
   const isBrewing = mode === 1;
   const isGrinding = mode === 4;
-  // The firmware flags a flush (utility process) so this state survives re-renders and reloads.
-  const flushRunning = !!p?.u && isActive;
-  const flushFinished = !!p?.u && isFinished;
-  const isFlushing = flushPending || flushRunning;
+  // The firmware flags a flush so this state survives re-renders and reloads.
+  const isFlushRunning = !!p?.f && isActive;
+  const isFlushFinished = !!p?.f && isFinished;
+  const isFlushing = flushPending || isFlushRunning;
+  const isFlushPending = flushPending && !isFlushRunning;
 
   const isSmartGrindEnabled = settings?.smartGrindActive || false;
   const altRelayFunction = settings?.altRelayFunction ?? 1;
@@ -103,21 +107,31 @@ export function useDashboardState() {
   const startFlush = () => {
     if (isFlushing) return;
     setFlushPending(true);
-    apiService.request({ tp: 'req:flush:start' }).catch(() => setFlushPending(false));
+    apiService
+      .request({ tp: 'req:flush:start' })
+      .then(res => {
+        if (!res?.success) setFlushPending(false);
+      })
+      .catch(() => setFlushPending(false));
   };
-  // Ends a hold-to-flush (flush duration 0); the firmware ignores it for a fixed-length flush.
-  const stopFlush = () => {
-    if (!isFlushing) return;
-    send('req:flush:stop');
-  };
+  // Ends a hold-to-flush (flush duration 0). Always sent, even when isFlushing already reads false
+  // (status lagging, pending cleared): the firmware ignores it unless a hold-to-flush runs.
+  const stopFlush = () => send('req:flush:stop');
 
   useEffect(() => {
-    if (flushRunning) setFlushPending(false);
-  }, [flushRunning]);
+    if (isFlushRunning) setFlushPending(false);
+  }, [isFlushRunning]);
+  // Never stay pending on a flush that isn't coming.
+  useEffect(() => {
+    if (!isFlushPending) return;
+    const id = setTimeout(() => setFlushPending(false), FLUSH_PENDING_TIMEOUT_MS);
+    return () => clearTimeout(id);
+  }, [isFlushPending]);
+
   // A finished flush clears itself; nobody wants to confirm a flush like a shot.
   useEffect(() => {
-    if (flushFinished) apiService.send({ tp: 'req:process:clear' });
-  }, [flushFinished, apiService]);
+    if (isFlushFinished) apiService.send({ tp: 'req:process:clear' });
+  }, [isFlushFinished, apiService]);
 
   const raiseTemp = () => send('req:raise-temp');
   const lowerTemp = () => send('req:lower-temp');
@@ -184,6 +198,12 @@ export function useDashboardState() {
     altRelayFunction,
     // action state
     isFlushing,
+    isFlushPending,
+    isFlushFinished,
+    // Unknown duration counts as hold: a tap then can't start a flush nothing stops.
+    // Live from status, so a change on the machine or the settings page applies at once; the cached
+    // settings only cover firmware that doesn't report it.
+    isHoldFlush: Number(s.flushDuration ?? settings?.flushDuration ?? 0) === 0,
     // handlers
     changeMode,
     toggleSteam,
