@@ -190,6 +190,17 @@ function normalizeImportedSettings(data, knownKeys) {
   return { fields, schedules, ignored, count };
 }
 
+// A field the save must not go out with, or null. Save & Restart and imports skip native validation, and these
+// fields are only mounted on the Machine tab, so the save handler checks them itself.
+function invalidSaveField(formData, capabilities) {
+  if (capabilities.ledControl) {
+    const tank = validateTankCalibration(formData.emptyTankDistance, formData.fullTankDistance);
+    if (tank.empty) return 'emptyTankDistance';
+    if (tank.full) return 'fullTankDistance';
+  }
+  return invalidLagField(formData);
+}
+
 function buildSubmitFormData(formData, autowakeupSchedules, restart, importedKeys) {
   const formDataToSubmit = new FormData();
 
@@ -377,21 +388,7 @@ export function Settings() {
   const onSubmit = useCallback(
     async (e, restart = false) => {
       if (e) e.preventDefault();
-      // Save & Restart and imports skip native validation, and the tank fields are only mounted on the Machine tab.
-      const tankErrors = validateTankCalibration(
-        formData.emptyTankDistance,
-        formData.fullTankDistance,
-      );
-      if (
-        !isLoading &&
-        machine.value.capabilities.ledControl &&
-        (tankErrors.empty || tankErrors.full)
-      ) {
-        if (tab === 'machine') formRef.current.reportValidity();
-        else route('/settings/machine');
-        return;
-      }
-      if (!isLoading && invalidLagField(formData)) {
+      if (!isLoading && invalidSaveField(formData, machine.value.capabilities)) {
         if (tab === 'machine') formRef.current.reportValidity();
         else route('/settings/machine');
         return;
