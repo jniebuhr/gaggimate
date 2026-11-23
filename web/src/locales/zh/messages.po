@@ -5832,6 +5832,10 @@ msgstr "磨豆机通过此地址访问 GaggiMate，因此两者需处于同一�
 msgid "The heater runs at full power for up to 10 seconds. The test passes as soon as the boiler temperature has risen by a few degrees, which can take up to 30 more seconds on a larger boiler."
 msgstr "加热器将以全功率运行最多 10 秒。锅炉温度上升几度后即通过测试，较大的锅炉可能还需要最多 30 秒。"
 
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "The machine does not read this figure — it only places the cap in the preview. The fitted line stays in use."
+msgstr "机器不会读取此数值——它只用于在预览中标出上限。拟合直线仍然有效。"
+
 #: src/app/appSettings.js
 msgid "The machine has been in steam mode for 5 minutes."
 msgstr "咖啡机已处于蒸汽模式 5 分钟。"

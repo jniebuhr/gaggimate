@@ -34,9 +34,15 @@ const VALVE_CAL_MAX_SLOPE = 2.0;
 
 // Two measured (pressure, flow) points define the valve's drop-vs-flow line, and a third measured
 // at 100% pump duty caps it. Returns an error code instead of a line whenever the set cannot
-// describe a valve — the same conditions the firmware falls back to the fixed offset on. The codes
-// are turned into text by ValveCalibrationError, so this stays a pure function and every
-// user-visible string sits inside a component where the translation macros apply.
+// describe a valve. The codes are turned into text by ValveCalibrationError, so this stays a pure
+// function and every user-visible string sits inside a component where the translation macros
+// apply.
+//
+// Most of these conditions are also the ones valveOffsetAt falls back to the fixed offset on, but
+// not all of them: it is never handed fMax, which exists only to place the cap in the preview. An
+// error that concerns fMax alone is therefore marked previewOnly, because the firmware will go on
+// using the fitted line regardless. Saying otherwise would tell the user the opposite of what the
+// machine does.
 function valveLine(formData) {
   const p1 = Number.parseFloat(formData.valveCalP1);
   const f1 = Number.parseFloat(formData.valveCalF1);
@@ -60,11 +66,13 @@ function valveLine(formData) {
   // The ceiling is required: without it the line is unbounded and the model would ask for more
   // drop than the machine can produce.
   if (!Number.isFinite(pMax) || !Number.isFinite(fMax) || pMax <= 0 || fMax <= 0) {
-    return { error: 'max-incomplete' };
+    // Everything the firmware checks may still be present here: only the ceiling's flow is
+    // missing, and that figure never reaches it.
+    return { error: 'max-incomplete', previewOnly: Number.isFinite(pMax) && pMax > p2 };
   }
   // A ceiling at or below point 2 would clip a pressure the user measured.
   if (pMax <= p2) return { error: 'max-pressure-order' };
-  if (fMax <= f2) return { error: 'max-flow-order' };
+  if (fMax <= f2) return { error: 'max-flow-order', previewOnly: true };
   const intercept = p1 - slope * f1;
   return {
     slope,
@@ -229,14 +237,21 @@ function ValveCalibrationFields({ formData, onChange }) {
           <div className='text-error'>
             <ValveCalibrationError error={line.error} slope={line.slope} />
           </div>
-          {/* Deliberately conditional: formData is what is being edited, not what the firmware
-              holds, so this cannot claim the machine has already fallen back. Saving is the
-              moment the two meet. */}
+          {/* Conditional on saving, because formData is what is being edited rather than what the
+              firmware holds, and split on previewOnly, because an fMax the firmware never reads
+              must not be reported as something that disables the model. */}
           <div className='mt-1 opacity-70'>
-            <Trans>
-              Save this and the machine will use the fixed Pressure Offset above, not a flow-derived
-              one.
-            </Trans>
+            {line.previewOnly ? (
+              <Trans>
+                The machine does not read this figure — it only places the cap in the preview. The
+                fitted line stays in use.
+              </Trans>
+            ) : (
+              <Trans>
+                Save this and the machine will use the fixed Pressure Offset above, not a
+                flow-derived one.
+              </Trans>
+            )}
           </div>
         </div>
       ) : (
