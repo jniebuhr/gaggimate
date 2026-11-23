@@ -158,11 +158,11 @@ msgstr "vor 1 Jahr"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "100% pump flow must be higher than point 2."
-msgstr ""
+msgstr "Der Durchfluss bei 100 % Pumpe muss höher sein als bei Punkt 2."
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "100% pump pressure must be higher than point 2."
-msgstr ""
+msgstr "Der Druck bei 100 % Pumpe muss höher sein als bei Punkt 2."
 
 #: src/app/appSettings.js
 msgid "A brew started on the machine."
@@ -186,7 +186,7 @@ msgstr "Ein gegebenes Alpha wirkt bei 80 SPS zeitlich schneller, weil es öfter 
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "A spring-loaded mushroom valve's drop grows with the flow through it, so a single number is only correct at one flow rate. Enable this to enter measured points instead. Leave off for a 3-way solenoid or a fixed offset. Calibrate Pump Flow Coefficients above first — this mode reads the firmware's flow estimate, so the offset is only as accurate as that model."
-msgstr ""
+msgstr "Der Druckabfall eines federbelasteten Pilzventils wächst mit dem Durchfluss, daher stimmt ein einzelner Wert nur bei genau einem Durchfluss. Aktiviere dies, um stattdessen gemessene Punkte einzugeben. Für ein 3-Wege-Magnetventil oder einen festen Offset ausgeschaltet lassen. Kalibriere zuerst die Pumpendurchfluss-Koeffizienten oben — dieser Modus nutzt die Durchflussschätzung der Firmware, der Offset ist also nur so genau wie dieses Modell."
 
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Access Point Password"
@@ -337,7 +337,7 @@ msgstr "Alle verfügbaren Panels sind sichtbar."
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "All measurements are taken with no puck in the portafilter and Pressure Offset at 0, so the reading is the valve's own drop."
-msgstr ""
+msgstr "Alle Messungen erfolgen ohne Kaffeemehl im Siebträger und mit Druck-Offset auf 0, sodass der Messwert dem Druckabfall des Ventils selbst entspricht."
 
 #: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
 msgid "All Metrics"
@@ -1789,7 +1789,7 @@ msgstr "Gib einen Namen für dieses Profil ein"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Enter a pressure and a flow for both calibration points."
-msgstr ""
+msgstr "Gib für beide Kalibrierpunkte einen Druck und einen Durchfluss ein."
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Enter a whole number of millimeters, 0 or more."
@@ -1805,7 +1805,7 @@ msgstr "Gib den Hostnamen oder die IP-Adresse deiner Maschine ein."
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Enter the pressure and flow measured at 100% pump."
-msgstr ""
+msgstr "Gib den bei 100 % Pumpe gemessenen Druck und Durchfluss ein."
 
 #: src/components/VisualizerUploadModal.jsx
 msgid "Enter your password"
@@ -2042,7 +2042,7 @@ msgstr "Bibliotheksquelle filtern"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Finally, run the pump at 100% and record the stable pressure and flow. That is the highest drop this machine can produce, and the offset is capped there. If the pressure is not above Point 2, Point 2 was never actually reached — redo it lower."
-msgstr ""
+msgstr "Lass zuletzt die Pumpe mit 100 % laufen und notiere den stabilen Druck und Durchfluss. Das ist der höchste Druckabfall, den diese Maschine erzeugen kann, und dort wird der Offset begrenzt. Liegt der Druck nicht über Punkt 2, wurde Punkt 2 nie wirklich erreicht — wiederhole ihn niedriger."
 
 #: src/pages/Home/utils.js
 msgctxt "process action"
@@ -2097,7 +2097,7 @@ msgstr "Durchfluss über"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Flow at 100% pump"
-msgstr ""
+msgstr "Durchfluss bei 100 % Pumpe"
 
 #: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
 msgid "Flow below"
@@ -2431,7 +2431,7 @@ msgstr "Halten"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Hold a target pressure long enough to read a steady flow in g/s, then repeat about a bar higher. Record the pressure the machine actually holds, not the target you set. Keep the two points well apart — the span is what makes the slope trustworthy. If nothing flows at the lower value, your valve cracks above it."
-msgstr ""
+msgstr "Halte einen Zieldruck lange genug, um einen stabilen Durchfluss in g/s abzulesen, und wiederhole das etwa ein Bar höher. Notiere den Druck, den die Maschine tatsächlich hält, nicht den eingestellten Zielwert. Halte die beiden Punkte weit auseinander — erst der Abstand macht die Steigung verlässlich. Fließt beim niedrigeren Wert nichts, öffnet dein Ventil erst darüber."
 
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Hold runs the flush for as long as the button is held. The valve stays open for one more second after the pump stops."
@@ -3376,7 +3376,7 @@ msgstr "Aus"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Offset {at1} bar at 1 g/s, {at2} bar at 2 g/s<0> ({slopeText} bar per g/s)</0>, capped at {capBar} bar above {capFlow} g/s"
-msgstr ""
+msgstr "Offset {at1} bar bei 1 g/s, {at2} bar bei 2 g/s<0> ({slopeText} bar pro g/s)</0>, begrenzt auf {capBar} bar oberhalb von {capFlow} g/s"
 
 #: src/pages/Home/cards/MachineLevelsCard.jsx
 #: src/utils/metricDefinitions.js
@@ -3700,11 +3700,15 @@ msgstr "PNG, JPEG, WebP oder BMP. GIFs werden nicht unterstützt. Das Bild wird 
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Point {n} flow"
-msgstr ""
+msgstr "Durchfluss Punkt {n}"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Point {n} pressure"
-msgstr ""
+msgstr "Druck Punkt {n}"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Point 1 flow must be above zero. If nothing flowed there, your valve cracks open above that pressure — take point 1 higher."
+msgstr "Der Durchfluss von Punkt 1 muss über null liegen. Floss dort nichts, öffnet dein Ventil erst oberhalb dieses Drucks — lege Punkt 1 höher."
 
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
@@ -3811,7 +3815,7 @@ msgstr "Druck über"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Pressure at 100% pump"
-msgstr ""
+msgstr "Druck bei 100 % Pumpe"
 
 #: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
 msgid "Pressure below"
@@ -5754,7 +5758,7 @@ msgstr "Danke, dass du GaggiMate installiert hast! Deine Maschine ist bereit fü
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "That works out to {slopeText} bar per g/s. A mushroom valve's drop usually rises between {lo} and {hi} bar per g/s, so one of the two flow readings is probably off."
-msgstr ""
+msgstr "Das ergibt {slopeText} bar pro g/s. Der Druckabfall eines Pilzventils steigt üblicherweise zwischen {lo} und {hi} bar pro g/s, daher ist wahrscheinlich einer der beiden Durchflusswerte falsch."
 
 #: src/utils/machineProfiles.js
 msgid "The {profileName} profile is not supported by your current board or firmware."
@@ -5874,11 +5878,11 @@ msgstr "Die Waage wurde nicht gefunden. Stelle sicher, dass sie eingeschaltet un
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "The second flow must be higher than the first."
-msgstr ""
+msgstr "Der zweite Durchfluss muss höher sein als der erste."
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "The second pressure must be higher than the first."
-msgstr ""
+msgstr "Der zweite Druck muss höher sein als der erste."
 
 #: src/pages/ProfileList/index.jsx
 msgid "The selected profile can't be deleted"
@@ -6181,6 +6185,10 @@ msgstr "Nicht unterstützter Datumsausdruck. Verwende TT.MM.JJJJ, optional HH:MM
 msgid "Unsupported file type. Please use PNG, JPEG, WebP or BMP."
 msgstr "Nicht unterstützter Dateityp. Bitte verwende PNG, JPEG, WebP oder BMP."
 
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Until this is complete the machine uses the fixed Pressure Offset above, not a flow-derived one."
+msgstr "Bis das vollständig ist, verwendet die Maschine den festen Druck-Offset oben, nicht den durchflussabhängigen."
+
 #: src/pages/ShotAnalyzer/services/analyzer/delayTracking.js
 msgid "Unusually high inferred delay in Phase {phaseNumber} ({delayMs} ms)."
 msgstr "Ungewöhnlich hohe ermittelte Verzögerung in Phase {phaseNumber} ({delayMs} ms)."
@@ -6370,7 +6378,7 @@ msgstr "Auswahl des Ventilzustands"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Vary offset with flow"
-msgstr ""
+msgstr "Offset mit Durchfluss variieren"
 
 #: src/app/AppSettings.jsx
 msgid "Version {bundleVersion}"

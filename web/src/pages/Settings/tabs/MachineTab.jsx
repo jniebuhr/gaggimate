@@ -38,17 +38,21 @@ const VALVE_CAL_MAX_SLOPE = 2.0;
 // are turned into text by ValveCalibrationError, so this stays a pure function and every
 // user-visible string sits inside a component where the translation macros apply.
 function valveLine(formData) {
-  const p1 = parseFloat(formData.valveCalP1);
-  const f1 = parseFloat(formData.valveCalF1);
-  const p2 = parseFloat(formData.valveCalP2);
-  const f2 = parseFloat(formData.valveCalF2);
-  const pMax = parseFloat(formData.valveCalPMax);
-  const fMax = parseFloat(formData.valveCalFMax);
+  const p1 = Number.parseFloat(formData.valveCalP1);
+  const f1 = Number.parseFloat(formData.valveCalF1);
+  const p2 = Number.parseFloat(formData.valveCalP2);
+  const f2 = Number.parseFloat(formData.valveCalF2);
+  const pMax = Number.parseFloat(formData.valveCalPMax);
+  const fMax = Number.parseFloat(formData.valveCalFMax);
   if (![p1, f1, p2, f2].every(Number.isFinite)) {
     return { error: 'points-incomplete' };
   }
-  if (!(p2 > p1)) return { error: 'pressure-order' };
-  if (!(f2 > f1)) return { error: 'flow-order' };
+  // Zero is the uncalibrated default for the flows, not a measurement. A valve passes nothing
+  // only at or below its cracking pressure, so a zero here means point 1 was taken too low —
+  // and left unchecked it would fit a line off an unset field.
+  if (f1 <= 0) return { error: 'first-flow-missing' };
+  if (p2 <= p1) return { error: 'pressure-order' };
+  if (f2 <= f1) return { error: 'flow-order' };
   const slope = (p2 - p1) / (f2 - f1);
   if (slope < VALVE_CAL_MIN_SLOPE || slope > VALVE_CAL_MAX_SLOPE) {
     return { error: 'slope-implausible', slope };
@@ -59,8 +63,8 @@ function valveLine(formData) {
     return { error: 'max-incomplete' };
   }
   // A ceiling at or below point 2 would clip a pressure the user measured.
-  if (!(pMax > p2)) return { error: 'max-pressure-order' };
-  if (!(fMax > f2)) return { error: 'max-flow-order' };
+  if (pMax <= p2) return { error: 'max-pressure-order' };
+  if (fMax <= f2) return { error: 'max-flow-order' };
   const intercept = p1 - slope * f1;
   return {
     slope,
@@ -72,6 +76,13 @@ function valveLine(formData) {
 
 function ValveCalibrationError({ error, slope }) {
   switch (error) {
+    case 'first-flow-missing':
+      return (
+        <Trans>
+          Point 1 flow must be above zero. If nothing flowed there, your valve cracks open above
+          that pressure — take point 1 higher.
+        </Trans>
+      );
     case 'pressure-order':
       return <Trans>The second pressure must be higher than the first.</Trans>;
     case 'flow-order':
@@ -214,8 +225,16 @@ function ValveCalibrationFields({ formData, onChange }) {
         </InputGroupField>
       </div>
       {line.error ? (
-        <div className='text-error mt-2 text-xs'>
-          <ValveCalibrationError error={line.error} slope={line.slope} />
+        <div className='mt-2 text-xs'>
+          <div className='text-error'>
+            <ValveCalibrationError error={line.error} slope={line.slope} />
+          </div>
+          <div className='mt-1 opacity-70'>
+            <Trans>
+              Until this is complete the machine uses the fixed Pressure Offset above, not a
+              flow-derived one.
+            </Trans>
+          </div>
         </div>
       ) : (
         <ValveCalibrationPreview line={line} />

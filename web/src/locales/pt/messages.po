@@ -166,11 +166,11 @@ msgstr "há 1 ano"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "100% pump flow must be higher than point 2."
-msgstr ""
+msgstr "O fluxo a 100 % da bomba deve ser maior que o do ponto 2."
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "100% pump pressure must be higher than point 2."
-msgstr ""
+msgstr "A pressão a 100 % da bomba deve ser maior que a do ponto 2."
 
 #: src/app/appSettings.js
 msgid "A brew started on the machine."
@@ -194,7 +194,7 @@ msgstr "Um mesmo alfa age mais rápido no tempo a 80 SPS porque é aplicado com 
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "A spring-loaded mushroom valve's drop grows with the flow through it, so a single number is only correct at one flow rate. Enable this to enter measured points instead. Leave off for a 3-way solenoid or a fixed offset. Calibrate Pump Flow Coefficients above first — this mode reads the firmware's flow estimate, so the offset is only as accurate as that model."
-msgstr ""
+msgstr "A queda de pressão de uma válvula de cogumelo com mola aumenta com o fluxo que a atravessa, portanto um único valor só está correto num caudal. Ative isto para introduzir pontos medidos em vez disso. Deixe desativado para uma eletroválvula de 3 vias ou um offset fixo. Calibre primeiro os Coeficientes de fluxo da bomba acima — este modo usa a estimativa de fluxo do firmware, por isso o offset é apenas tão preciso quanto esse modelo."
 
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Access Point Password"
@@ -345,7 +345,7 @@ msgstr "Todos os painéis disponíveis estão visíveis."
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "All measurements are taken with no puck in the portafilter and Pressure Offset at 0, so the reading is the valve's own drop."
-msgstr ""
+msgstr "Todas as medições são feitas sem pastilha no portafiltro e com o Offset de pressão a 0, para que a leitura seja a queda da própria válvula."
 
 #: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
 msgid "All Metrics"
@@ -1797,7 +1797,7 @@ msgstr "Insira um nome para este perfil"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Enter a pressure and a flow for both calibration points."
-msgstr ""
+msgstr "Introduza uma pressão e um fluxo para ambos os pontos de calibração."
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Enter a whole number of millimeters, 0 or more."
@@ -1813,7 +1813,7 @@ msgstr "Insira o nome do host ou o endereço IP da sua máquina."
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Enter the pressure and flow measured at 100% pump."
-msgstr ""
+msgstr "Introduza a pressão e o fluxo medidos a 100 % da bomba."
 
 #: src/components/VisualizerUploadModal.jsx
 msgid "Enter your password"
@@ -2050,7 +2050,7 @@ msgstr "Filtrar fonte da biblioteca"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Finally, run the pump at 100% and record the stable pressure and flow. That is the highest drop this machine can produce, and the offset is capped there. If the pressure is not above Point 2, Point 2 was never actually reached — redo it lower."
-msgstr ""
+msgstr "Por fim, ponha a bomba a 100 % e registe a pressão e o fluxo estáveis. É a maior queda que esta máquina consegue produzir, e é aí que o offset fica limitado. Se a pressão não for superior à do ponto 2, o ponto 2 nunca foi realmente atingido — repita-o mais baixo."
 
 #: src/pages/Home/utils.js
 msgctxt "process action"
@@ -2105,7 +2105,7 @@ msgstr "Fluxo acima de"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Flow at 100% pump"
-msgstr ""
+msgstr "Fluxo a 100 % da bomba"
 
 #: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
 msgid "Flow below"
@@ -2439,7 +2439,7 @@ msgstr "Manter pressionado"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Hold a target pressure long enough to read a steady flow in g/s, then repeat about a bar higher. Record the pressure the machine actually holds, not the target you set. Keep the two points well apart — the span is what makes the slope trustworthy. If nothing flows at the lower value, your valve cracks above it."
-msgstr ""
+msgstr "Mantenha uma pressão alvo tempo suficiente para ler um fluxo estável em g/s e repita cerca de um bar acima. Registe a pressão que a máquina mantém de facto, não o alvo que definiu. Mantenha os dois pontos bem afastados — é o intervalo que torna a inclinação fiável. Se nada fluir no valor mais baixo, a sua válvula abre acima dele."
 
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Hold runs the flush for as long as the button is held. The valve stays open for one more second after the pump stops."
@@ -3384,7 +3384,7 @@ msgstr "Desligada"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Offset {at1} bar at 1 g/s, {at2} bar at 2 g/s<0> ({slopeText} bar per g/s)</0>, capped at {capBar} bar above {capFlow} g/s"
-msgstr ""
+msgstr "Offset de {at1} bar a 1 g/s, {at2} bar a 2 g/s<0> ({slopeText} bar por g/s)</0>, limitado a {capBar} bar acima de {capFlow} g/s"
 
 #: src/pages/Home/cards/MachineLevelsCard.jsx
 #: src/utils/metricDefinitions.js
@@ -3708,11 +3708,15 @@ msgstr "PNG, JPEG, WebP ou BMP. GIFs não são compatíveis. A imagem é cortada
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Point {n} flow"
-msgstr ""
+msgstr "Fluxo do ponto {n}"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Point {n} pressure"
-msgstr ""
+msgstr "Pressão do ponto {n}"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Point 1 flow must be above zero. If nothing flowed there, your valve cracks open above that pressure — take point 1 higher."
+msgstr "O fluxo do ponto 1 deve ser superior a zero. Se nada fluiu aí, a sua válvula abre acima dessa pressão — coloque o ponto 1 mais alto."
 
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
@@ -3819,7 +3823,7 @@ msgstr "Pressão acima de"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Pressure at 100% pump"
-msgstr ""
+msgstr "Pressão a 100 % da bomba"
 
 #: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
 msgid "Pressure below"
@@ -5762,7 +5766,7 @@ msgstr "Obrigado por instalar o GaggiMate! Sua máquina está pronta para a prim
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "That works out to {slopeText} bar per g/s. A mushroom valve's drop usually rises between {lo} and {hi} bar per g/s, so one of the two flow readings is probably off."
-msgstr ""
+msgstr "Isso dá {slopeText} bar por g/s. A queda de uma válvula de cogumelo costuma aumentar entre {lo} e {hi} bar por g/s, por isso uma das duas leituras de fluxo está provavelmente errada."
 
 #: src/utils/machineProfiles.js
 msgid "The {profileName} profile is not supported by your current board or firmware."
@@ -5882,11 +5886,11 @@ msgstr "A balança não foi encontrada. Verifique se ela está ligada e por pert
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "The second flow must be higher than the first."
-msgstr ""
+msgstr "O segundo fluxo deve ser maior que o primeiro."
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "The second pressure must be higher than the first."
-msgstr ""
+msgstr "A segunda pressão deve ser maior que a primeira."
 
 #: src/pages/ProfileList/index.jsx
 msgid "The selected profile can't be deleted"
@@ -6189,6 +6193,10 @@ msgstr "Expressão de data não compatível. Use DD.MM.YYYY, HH:MM opcional ou h
 msgid "Unsupported file type. Please use PNG, JPEG, WebP or BMP."
 msgstr "Tipo de arquivo não compatível. Use PNG, JPEG, WebP ou BMP."
 
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Until this is complete the machine uses the fixed Pressure Offset above, not a flow-derived one."
+msgstr "Até isto estar completo, a máquina usa o Offset de pressão fixo acima, e não um derivado do fluxo."
+
 #: src/pages/ShotAnalyzer/services/analyzer/delayTracking.js
 msgid "Unusually high inferred delay in Phase {phaseNumber} ({delayMs} ms)."
 msgstr "Atraso inferido excepcionalmente alto na fase {phaseNumber} ({delayMs} ms)."
@@ -6378,7 +6386,7 @@ msgstr "Seleção do estado da válvula"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Vary offset with flow"
-msgstr ""
+msgstr "Variar o offset com o fluxo"
 
 #: src/app/AppSettings.jsx
 msgid "Version {bundleVersion}"

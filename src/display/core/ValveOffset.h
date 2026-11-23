@@ -40,6 +40,12 @@ inline float valveOffsetAt(float flow, float fixedOffset, bool flowDerived, floa
         return fixedOffset;
     if (!std::isfinite(p1) || !std::isfinite(f1) || !std::isfinite(p2) || !std::isfinite(f2))
         return fixedOffset;
+    // Zero is the uncalibrated default for the flows, not a measurement: a valve passes nothing
+    // only at or below its cracking pressure, which is no use as the lower end of the line. The
+    // registry is writable a field at a time, so without this a line could be fitted through an
+    // f1 nobody ever set.
+    if (!(f1 > 0.0f))
+        return fixedOffset;
     if (!(f2 > f1) || !(p2 > p1))
         return fixedOffset;
     const float slope = (p2 - p1) / (f2 - f1);

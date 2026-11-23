@@ -158,11 +158,11 @@ msgstr "1 年前"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "100% pump flow must be higher than point 2."
-msgstr ""
+msgstr "泵100%时的流量必须高于点2。"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "100% pump pressure must be higher than point 2."
-msgstr ""
+msgstr "泵100%时的压力必须高于点2。"
 
 #: src/app/appSettings.js
 msgid "A brew started on the machine."
@@ -186,7 +186,7 @@ msgstr "在 80 SPS 下，相同的 alpha 值在时间上响应更快，因为它
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "A spring-loaded mushroom valve's drop grows with the flow through it, so a single number is only correct at one flow rate. Enable this to enter measured points instead. Leave off for a 3-way solenoid or a fixed offset. Calibrate Pump Flow Coefficients above first — this mode reads the firmware's flow estimate, so the offset is only as accurate as that model."
-msgstr ""
+msgstr "弹簧式蘑菇阀的压降随通过它的流量增大，因此单一数值只在某一个流量下正确。启用此项可改为输入实测点。使用三通电磁阀或固定偏移时请保持关闭。请先校准上方的泵流量系数——此模式读取固件的流量估算值，因此偏移的精度取决于该模型。"
 
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Access Point Password"
@@ -337,7 +337,7 @@ msgstr "所有可用面板均已显示。"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "All measurements are taken with no puck in the portafilter and Pressure Offset at 0, so the reading is the valve's own drop."
-msgstr ""
+msgstr "所有测量均在手柄中不放粉饼、压力偏移设为0的情况下进行，这样读数就是阀门自身的压降。"
 
 #: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
 msgid "All Metrics"
@@ -1789,7 +1789,7 @@ msgstr "为此曲线输入名称"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Enter a pressure and a flow for both calibration points."
-msgstr ""
+msgstr "请为两个校准点都输入压力和流量。"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Enter a whole number of millimeters, 0 or more."
@@ -1805,7 +1805,7 @@ msgstr "输入咖啡机的主机名或 IP 地址。"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Enter the pressure and flow measured at 100% pump."
-msgstr ""
+msgstr "请输入泵100%时测得的压力和流量。"
 
 #: src/components/VisualizerUploadModal.jsx
 msgid "Enter your password"
@@ -2042,7 +2042,7 @@ msgstr "筛选库来源"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Finally, run the pump at 100% and record the stable pressure and flow. That is the highest drop this machine can produce, and the offset is capped there. If the pressure is not above Point 2, Point 2 was never actually reached — redo it lower."
-msgstr ""
+msgstr "最后，让泵以100%运行并记录稳定的压力和流量。这是本机能产生的最大压降，偏移将在此处封顶。如果该压力不高于点2，说明点2实际从未达到——请在更低的压力下重做。"
 
 #: src/pages/Home/utils.js
 msgctxt "process action"
@@ -2097,7 +2097,7 @@ msgstr "流量高于"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Flow at 100% pump"
-msgstr ""
+msgstr "泵100%时的流量"
 
 #: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
 msgid "Flow below"
@@ -2431,7 +2431,7 @@ msgstr "按住"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Hold a target pressure long enough to read a steady flow in g/s, then repeat about a bar higher. Record the pressure the machine actually holds, not the target you set. Keep the two points well apart — the span is what makes the slope trustworthy. If nothing flows at the lower value, your valve cracks above it."
-msgstr ""
+msgstr "将目标压力保持足够长的时间，以便读出稳定的流量（g/s），然后在高约1巴处重复一次。记录机器实际保持的压力，而非你设定的目标值。两点要拉开足够的间距——间距决定了斜率是否可靠。如果在较低的压力下没有水流，说明你的阀门在更高的压力才开启。"
 
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Hold runs the flush for as long as the button is held. The valve stays open for one more second after the pump stops."
@@ -3376,7 +3376,7 @@ msgstr "关闭"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Offset {at1} bar at 1 g/s, {at2} bar at 2 g/s<0> ({slopeText} bar per g/s)</0>, capped at {capBar} bar above {capFlow} g/s"
-msgstr ""
+msgstr "偏移在 1 g/s 时为 {at1} bar，2 g/s 时为 {at2} bar<0>（{slopeText} bar 每 g/s）</0>，超过 {capFlow} g/s 后封顶于 {capBar} bar"
 
 #: src/pages/Home/cards/MachineLevelsCard.jsx
 #: src/utils/metricDefinitions.js
@@ -3700,11 +3700,15 @@ msgstr "PNG、JPEG、WebP 或 BMP。不支持 GIF。图片将被裁剪为正方�
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Point {n} flow"
-msgstr ""
+msgstr "点 {n} 流量"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Point {n} pressure"
-msgstr ""
+msgstr "点 {n} 压力"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Point 1 flow must be above zero. If nothing flowed there, your valve cracks open above that pressure — take point 1 higher."
+msgstr "点1的流量必须大于零。如果那里没有水流，说明你的阀门在更高的压力才开启——请把点1取在更高处。"
 
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
@@ -3811,7 +3815,7 @@ msgstr "压力高于"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Pressure at 100% pump"
-msgstr ""
+msgstr "泵100%时的压力"
 
 #: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
 msgid "Pressure below"
@@ -5754,7 +5758,7 @@ msgstr "感谢你安装 GaggiMate！你的咖啡机已准备好进行首次萃�
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "That works out to {slopeText} bar per g/s. A mushroom valve's drop usually rises between {lo} and {hi} bar per g/s, so one of the two flow readings is probably off."
-msgstr ""
+msgstr "这相当于 {slopeText} bar 每 g/s。蘑菇阀的压降通常在 {lo} 到 {hi} bar 每 g/s 之间上升，因此两个流量读数中可能有一个不正确。"
 
 #: src/utils/machineProfiles.js
 msgid "The {profileName} profile is not supported by your current board or firmware."
@@ -5874,11 +5878,11 @@ msgstr "未找到秤。请确认秤已开机并在附近，然后重新扫描。
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "The second flow must be higher than the first."
-msgstr ""
+msgstr "第二个流量必须高于第一个。"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "The second pressure must be higher than the first."
-msgstr ""
+msgstr "第二个压力必须高于第一个。"
 
 #: src/pages/ProfileList/index.jsx
 msgid "The selected profile can't be deleted"
@@ -6181,6 +6185,10 @@ msgstr "不支持的日期表达式。请使用 DD.MM.YYYY、可选的 HH:MM，�
 msgid "Unsupported file type. Please use PNG, JPEG, WebP or BMP."
 msgstr "不支持的文件类型。请使用 PNG、JPEG、WebP 或 BMP。"
 
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Until this is complete the machine uses the fixed Pressure Offset above, not a flow-derived one."
+msgstr "在此项完成之前，机器将使用上方的固定压力偏移，而不是基于流量的偏移。"
+
 #: src/pages/ShotAnalyzer/services/analyzer/delayTracking.js
 msgid "Unusually high inferred delay in Phase {phaseNumber} ({delayMs} ms)."
 msgstr "阶段 {phaseNumber} 的推算延迟异常偏高（{delayMs} ms）。"
@@ -6370,7 +6378,7 @@ msgstr "阀门状态选择"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Vary offset with flow"
-msgstr ""
+msgstr "随流量变化偏移"
 
 #: src/app/AppSettings.jsx
 msgid "Version {bundleVersion}"

@@ -14,8 +14,10 @@
 
 // The two calibration points a user would enter after the documented procedure, using this
 // machine's measured flows.
-static constexpr float P1 = 5.0f, F1 = 1.19f;
-static constexpr float P2 = 6.0f, F2 = 2.90f;
+static constexpr float P1 = 5.0f;
+static constexpr float F1 = 1.19f;
+static constexpr float P2 = 6.0f;
+static constexpr float F2 = 2.90f;
 static constexpr float FIXED = 5.0f; // the fallback constant offset
 // Measured with the portafilter out and the pump at 100% duty: the most drop this machine can
 // produce. Required — the model has no ceiling of its own.
@@ -107,6 +109,15 @@ void test_uncalibrated_defaults_fall_back(void) {
                                                 DEFAULT_VALVE_CAL_PMAX));
 }
 
+void test_unset_first_flow_falls_back(void) {
+    // A half-filled calibration: f1 never set, so it still holds its 0.0 default while everything
+    // around it looks plausible. The implied slope of 0.5 bar per g/s sits inside the accepted
+    // band, so no other guard catches it — this is the state a partial write over the API leaves.
+    TEST_ASSERT_EQUAL_FLOAT(FIXED, valveOffsetAt(1.0f, FIXED, true, 5.0f, DEFAULT_VALVE_CAL_F1, 6.0f, 2.0f, 6.6f));
+    // A negative first flow is no more measurable, and the registry would accept it too.
+    TEST_ASSERT_EQUAL_FLOAT(FIXED, valveOffsetAt(1.0f, FIXED, true, 5.0f, -1.0f, 6.0f, 2.0f, 6.6f));
+}
+
 void test_negative_flow_does_not_invert_the_offset(void) {
     // A spurious negative reading must not pull the offset below the cracking intercept.
     TEST_ASSERT_EQUAL_FLOAT(derived(0.0f), derived(-3.0f));
@@ -175,7 +186,9 @@ void test_extraction_regime_command_stays_clear_of_the_gain_cliff(void) {
     // Nothing downstream clamps the setpoint, and the controller's gain schedule runs away as
     // measured pressure approaches 15. During extraction the pump bounds the flow, so across that
     // whole regime 9 + offset must stay clear of the cliff.
-    for (float q = 0.0f; q <= 1.7f; q += 0.05f) {
+    // Stepped with an integer counter so the 0.05 increment cannot accumulate rounding error.
+    for (int step = 0; step <= 34; ++step) {
+        const float q = 0.05f * static_cast<float>(step);
         TEST_ASSERT_TRUE(9.0f + derived(q) < 14.5f);
     }
 }
@@ -207,6 +220,7 @@ int main(int, char **) {
     RUN_TEST(test_implausible_slope_falls_back);
     RUN_TEST(test_non_finite_inputs_fall_back);
     RUN_TEST(test_uncalibrated_defaults_fall_back);
+    RUN_TEST(test_unset_first_flow_falls_back);
     RUN_TEST(test_negative_flow_does_not_invert_the_offset);
     RUN_TEST(test_missing_cap_falls_back);
     RUN_TEST(test_cap_at_or_below_the_second_point_falls_back);
