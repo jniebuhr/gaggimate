@@ -2,7 +2,7 @@
 #include <cmath>
 #include <display/core/Controller.h>
 #include <display/core/Event.h>
-#include <display/plugins/BLEScalePlugin.h>
+#include <display/plugins/BluetoothDevicesPlugin.h>
 #include <display/plugins/WebSocketHandler.h>
 #include <display/util/PsramAllocator.h>
 
@@ -159,7 +159,7 @@ void SmartDosePlugin::loop() {
         if (coordinator.ownerHardware)
             controller->getClientController()->tareHardwareScale();
         else
-            BLEScales.tare();
+            BLEDevices.tare();
     } else
         tarePending = false;
 }

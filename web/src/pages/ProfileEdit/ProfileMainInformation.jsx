@@ -1,6 +1,7 @@
 import Card from '../../components/Card.jsx';
 import { isSystemProfile } from '../../utils/systemProfiles.js';
 import { ProfileImageUpload } from './ProfileImageUpload.jsx';
+import { ProfileGrinderSettings } from './ProfileGrinderSettings.jsx';
 import { Trans, useLingui } from '@lingui/react/macro';
 
 export function ProfileMainInformation(props) {
@@ -99,6 +100,7 @@ export function ProfileMainInformation(props) {
         />
       </div>
       <ProfileImageUpload profileId={props.data?.id} />
+      <ProfileGrinderSettings grinder={props.data?.grinder} onChange={props.onChangeGrinder} />
     </Card>
   );
 }

@@ -1,4 +1,4 @@
-// Advertised BLE name prefix → friendly model name; mirrors the esp-arduino-ble-scales matchers.
+// Advertised BLE name prefix → friendly model name; mirrors the scale matchers in lib/BluetoothDevices.
 const SCALE_MODELS = [
   [/^BOOKOO[_-]SC[_-]M/i, 'Bookoo Themis Mini'],
   [/^BOOKOO[_-]SC[_-]U/i, 'Bookoo Themis Ultra'],

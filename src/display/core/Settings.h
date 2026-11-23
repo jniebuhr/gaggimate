@@ -247,6 +247,8 @@ class Settings {
     String getOTAChannel() const { return otaChannel.get(); }
     String getSavedScale() const { return savedScale.get(); }
     String getSavedScaleName() const { return savedScaleName.get(); }
+    String getSavedGrinder() const { return savedGrinder.get(); }
+    String getSavedGrinderName() const { return savedGrinderName.get(); }
     int getDefaultSteamMode() const { return defaultSteamMode.get(); }
     void setDefaultSteamMode(int value) {
         if (value >= 0 && value <= 2)
@@ -413,6 +415,8 @@ class Settings {
     void setOTAChannel(const String &otaChannel);
     void setSavedScale(const String &savedScale);
     void setSavedScaleName(const String &savedScaleName);
+    void setSavedGrinder(const String &savedGrinder);
+    void setSavedGrinderName(const String &savedGrinderName);
     void setBoilerFillActive(bool boiler_fill_active);
     void setStartupFillTime(int startup_fill_time);
     void setSteamFillTime(int steam_fill_time);
@@ -548,6 +552,8 @@ class Settings {
     Property<String> mdnsName{registry, "mn", DEFAULT_MDNS_NAME};
     Property<String> savedScale{registry, "ssc", ""};
     Property<String> savedScaleName{registry, "sscn", ""}; // advertised BLE name, shown while the scale is out of range
+    Property<String> savedGrinder{registry, "sgr", ""};
+    Property<String> savedGrinderName{registry, "sgrn", ""}; // advertised BLE name, shown while the grinder is out of range
     Property<bool> homekit{registry, "hk", false};
     Property<bool> setupDone{registry, "setup_ok", false}; // first-run wizard finished
     Property<bool> volumetricTarget{registry, "vt", false};

@@ -1,6 +1,6 @@
 #include "WarningManager.h"
 #include <display/core/Controller.h>
-#include <display/plugins/BLEScalePlugin.h>
+#include <display/plugins/BluetoothDevicesPlugin.h>
 #include <display/plugins/CleaningSchedulePlugin.h>
 
 namespace {
@@ -60,7 +60,7 @@ void WarningManager::sampleTemperature() {
 void WarningManager::evaluate() {
     const Settings &settings = controller->getSettings();
     const bool hardwareSelected = controller->getEffectiveScaleSource() == VolumetricMeasurementSource::HARDWARE;
-    const bool scaleConnected = hardwareSelected ? controller->isHardwareScaleHealthy() : BLEScales.isConnected();
+    const bool scaleConnected = hardwareSelected ? controller->isHardwareScaleHealthy() : BLEDevices.isScaleConnected();
     const bool scaleExpected = settings.getSavedScale() != "" ||
                                (controller->getMode() != MODE_GRIND && settings.getPreferredScaleSource() == "hardware");
 
@@ -68,8 +68,9 @@ void WarningManager::evaluate() {
     active[WARNING_FLUSH] = controller->isFlushPending();
     active[WARNING_SWITCH] = controller->isSteamSwitchOn();
     active[WARNING_SCALE_CONNECTED] = !scaleConnected && scaleExpected;
-    active[WARNING_SCALE_BATTERY] =
-        !hardwareSelected && scaleConnected && BLEScales.hasBatteryLevel() && BLEScales.getBatteryLevel() < 20;
+    active[WARNING_SCALE_BATTERY] = !hardwareSelected && scaleConnected &&
+                                    BLEDevices.hasBatteryLevel(BluetoothDeviceType::SCALE) &&
+                                    BLEDevices.getBatteryLevel(BluetoothDeviceType::SCALE) < 20;
     active[WARNING_TEMPERATURE] = !temperatureStable;
     const String selectedProfile = settings.getSelectedProfile();
     active[WARNING_BACKFLUSH] = selectedProfile != BACKFLUSH_PROFILE_ID && CleaningSchedulePlugin::isBackflushDue(settings);

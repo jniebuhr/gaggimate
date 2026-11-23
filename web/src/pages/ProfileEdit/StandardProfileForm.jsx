@@ -67,6 +67,7 @@ export function StandardProfileForm(props) {
           onChangeDescription={e => onFieldChange('description', e.target.value)}
           onChangeTemperature={e => onFieldChange('temperature', e.target.value)}
           onChangeUtility={e => onFieldChange('utility', !!e.target.checked)}
+          onChangeGrinder={grinder => onFieldChange('grinder', grinder)}
         />
 
         <Card sm={10} title={t`Brew Phases`}>
