@@ -864,6 +864,29 @@ export function MachineTab({ formData, onChange, setField, profiles = [] }) {
               />
             </div>
             <div className='form-control'>
+              <label htmlFor='minPumpPower' className='mb-2 block text-sm font-medium'>
+                <Trans>Minimum Pump Power (0 - 1)</Trans>
+              </label>
+              <input
+                id='minPumpPower'
+                name='minPumpPower'
+                type='number'
+                placeholder='0'
+                min='0'
+                max='1'
+                step='any'
+                className='input input-bordered w-full'
+                value={formData.minPumpPower?.toString()}
+                onChange={onChange('minPumpPower')}
+              />
+              <span className='mt-1 text-xs opacity-70'>
+                <Trans>
+                  The pump never drops below this while it has a pressure or flow target above zero,
+                  so the motor driver does not shut down mid-shot. 0 turns it off.
+                </Trans>
+              </span>
+            </div>
+            <div className='form-control'>
               <label htmlFor='pumpSlipCoeffs' className='mb-2 block text-sm font-medium'>
                 <Trans>Pump Slip Coefficients</Trans>
               </label>

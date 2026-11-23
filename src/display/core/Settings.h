@@ -381,6 +381,7 @@ class Settings {
     float getConvergenceGain() const { return convergenceGain.get(); }
     float getIntegralGain() const { return integralGain.get(); }
     float getMaxPumpPower() const { return maxPumpPower.get(); }
+    float getMinPumpPower() const { return minPumpPower.get(); }
 
     void setTargetSteamTemp(int target_steam_temp);
     void setTargetWaterTemp(int target_water_temp);
@@ -488,6 +489,7 @@ class Settings {
     void setConvergenceGain(float convergenceGain);
     void setIntegralGain(float integralGain);
     void setMaxPumpPower(float maxPumpPower);
+    void setMinPumpPower(float minPumpPower);
 
   private:
     std::mutex saveMutex;
@@ -646,6 +648,7 @@ class Settings {
     Property<float> convergenceGain{registry, "p_cv", DEFAULT_CONVERGENCE_GAIN};
     Property<float> integralGain{registry, "p_ig", DEFAULT_INTEGRAL_GAIN};
     Property<float> maxPumpPower{registry, "p_mp", 1.0f};
+    Property<float> minPumpPower{registry, "p_mnp", 0.0f}; // gear pump floor while it has a setpoint, 0..1
 
     bool doSave();
     xTaskHandle taskHandle;

@@ -674,6 +674,8 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setIntegralGain(request->arg("integralGain").toFloat());
             if (request->hasArg("maxPumpPower"))
                 settings->setMaxPumpPower(request->arg("maxPumpPower").toFloat());
+            if (request->hasArg("minPumpPower"))
+                settings->setMinPumpPower(request->arg("minPumpPower").toFloat());
             if (request->hasArg("savedScale"))
                 settings->setSavedScale(request->arg("savedScale"));
             if (request->hasArg("savedScaleName"))
@@ -834,6 +836,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["convergenceGain"] = settings.getConvergenceGain();
     doc["integralGain"] = settings.getIntegralGain();
     doc["maxPumpPower"] = settings.getMaxPumpPower();
+    doc["minPumpPower"] = settings.getMinPumpPower();
     doc["savedScale"] = settings.getSavedScale();
     doc["savedScaleName"] = settings.getSavedScaleName();
 

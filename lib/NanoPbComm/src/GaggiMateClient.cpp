@@ -167,7 +167,7 @@ gm::Payload GaggiMateClient::buildHeaterSettings(float kp, float ki, float kd, f
 
 gm::Payload GaggiMateClient::buildPumpSettings(float a, float b, float c, float d, float commutationGain, float convergenceGain,
                                                float integralGain, float maxPower, float slipA, float slipB, float slipC,
-                                               float slipD) {
+                                               float slipD, float minPower) {
     gm::Payload p = gaggimate_Payload_init_zero;
     p.which_content = gaggimate_Payload_pump_model_tag;
     p.content.pump_model.a = a;
@@ -182,6 +182,7 @@ gm::Payload GaggiMateClient::buildPumpSettings(float a, float b, float c, float 
     p.content.pump_model.slipB = slipB;
     p.content.pump_model.slipC = slipC;
     p.content.pump_model.slipD = slipD;
+    p.content.pump_model.minBLDCPower = minPower;
     return p;
 }
 
@@ -257,9 +258,10 @@ void GaggiMateClient::sendHeaterSettings(float kp, float ki, float kd, float kf,
 }
 
 void GaggiMateClient::sendPumpSettings(float a, float b, float c, float d, float commutationGain, float convergenceGain,
-                                       float integralGain, float maxPower, float slipA, float slipB, float slipC, float slipD) {
-    _endpoint.send(
-        buildPumpSettings(a, b, c, d, commutationGain, convergenceGain, integralGain, maxPower, slipA, slipB, slipC, slipD));
+                                       float integralGain, float maxPower, float slipA, float slipB, float slipC, float slipD,
+                                       float minPower) {
+    _endpoint.send(buildPumpSettings(a, b, c, d, commutationGain, convergenceGain, integralGain, maxPower, slipA, slipB, slipC,
+                                     slipD, minPower));
 }
 
 void GaggiMateClient::sendAutotune(uint32_t testTime, uint32_t samples, uint32_t heaterWattage) {

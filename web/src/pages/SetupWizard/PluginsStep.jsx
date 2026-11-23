@@ -28,6 +28,7 @@ export const PLUGIN_KEYS = [
   'convergenceGain',
   'integralGain',
   'maxPumpPower',
+  'minPumpPower',
   'pumpSlipCoeffs',
 ];
 
