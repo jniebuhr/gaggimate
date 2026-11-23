@@ -80,7 +80,8 @@ class GaggiMateClient {
     gm::Payload buildHeaterSettings(float kp, float ki, float kd, float kf, bool heaterCoordinationEnabled, uint32_t handoverMs,
                                     float steamKp, float steamKi, float steamKd);
     gm::Payload buildPumpSettings(float a, float b, float c, float d, float commutationGain, float convergenceGain,
-                                  float integralGain, float maxPower, float slipA, float slipB, float slipC, float slipD);
+                                  float integralGain, float maxPower, float slipA, float slipB, float slipC, float slipD,
+                                  float minPower = 0.0f);
     gm::Payload buildAutotune(uint32_t testTime, uint32_t samples, uint32_t heaterWattage);
     gm::Payload buildPressureScale(float scale);
     gm::Payload buildTare();
@@ -108,7 +109,7 @@ class GaggiMateClient {
     void sendHeaterSettings(float kp, float ki, float kd, float kf, bool heaterCoordinationEnabled, uint32_t handoverMs,
                             float steamKp, float steamKi, float steamKd);
     void sendPumpSettings(float a, float b, float c, float d, float commutationGain, float convergenceGain, float integralGain,
-                          float maxPower, float slipA, float slipB, float slipC, float slipD);
+                          float maxPower, float slipA, float slipB, float slipC, float slipD, float minPower = 0.0f);
     void sendAutotune(uint32_t testTime, uint32_t samples, uint32_t heaterWattage);
     void sendPressureScale(float scale);
     void sendScaleFactors(float scaleFactor1, float scaleFactor2, uint16_t sampleRateSps = 10, float idleFilterAlpha = 0.80f,

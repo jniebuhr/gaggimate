@@ -2969,6 +2969,10 @@ msgctxt "column type"
 msgid "Min/Max"
 msgstr "最小/最大"
 
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Minimum Pump Power (0 - 1)"
+msgstr "ポンプ最小出力 (0 - 1)"
+
 #: src/pages/Settings/PluginCard.jsx
 msgctxt "smart grind mode"
 msgid "Mode"
@@ -5794,6 +5798,10 @@ msgstr "このショットの記録後にプロファイルが更新された可
 #: src/pages/Settings/PluginCard.jsx
 msgid "The profile's dose is saved to the shot history."
 msgstr "プロファイルのドーズがショット履歴に保存されます。"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "The pump never drops below this while it has a pressure or flow target above zero, so the motor driver does not shut down mid-shot. 0 turns it off."
+msgstr "圧力または流量の目標値が 0 より大きい間、ポンプはこの値を下回りません。抽出の途中でモータードライバーが停止するのを防ぎます。0 で無効になります。"
 
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "The pump runs with the 3-way valve closed until pressure stops rising. Then the pump stops and the valve opens, which should release the pressure to about 0 bar."

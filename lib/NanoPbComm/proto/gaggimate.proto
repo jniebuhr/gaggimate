@@ -167,6 +167,9 @@ message PumpSettings {
     float slipB = 10;
     float slipC = 11;
     float slipD = 12;
+
+    // Gear pump only: lowest power (0..1) while a pressure or flow setpoint is above zero; 0 = off.
+    float minBLDCPower = 13;
 }
 
 message AutotuneRequest {

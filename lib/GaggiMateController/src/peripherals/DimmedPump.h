@@ -39,6 +39,8 @@ class DimmedPump : public Pump {
     void fullPower();
     void setValveState(bool open);
     void setBinaryMode(bool binaryMode);
+    // Floor (0..100) for a pump with a pressure or flow setpoint above zero, so an FOC drive keeps spinning.
+    void setMinPower(float minPower);
 
   private:
     uint8_t _ssr_pin;
@@ -62,6 +64,7 @@ class DimmedPump : public Pump {
     int _valveStatus = 0;
     int _cps = MAX_FREQ;
     bool _binaryMode = false;
+    float _minPower = 0.0f;
 
     float _opvPressure = 0.0f;
 

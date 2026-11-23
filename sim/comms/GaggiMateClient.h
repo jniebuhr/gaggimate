@@ -121,7 +121,7 @@ class GaggiMateClient {
             _machineHardwareCb(machineHardwareHash(settings), true, false);
     }
     void sendPumpSettings(float a, float b, float c, float d, float commutationGain, float convergenceGain, float integralGain,
-                          float maxPower, float slipA, float slipB, float slipC, float slipD);
+                          float maxPower, float slipA, float slipB, float slipC, float slipD, float minPower = 0.0f);
     void sendAutotune(uint32_t testTime, uint32_t samples, uint32_t heaterWattage);
     void sendPressureScale(float scale);
     void sendScaleFactors(float, float, uint16_t = 10, float = 0.80f, float = 0.80f) {} // no hardware scale in the mock

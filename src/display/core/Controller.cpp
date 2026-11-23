@@ -967,7 +967,7 @@ void Controller::setPumpModelCoeffs(void) {
                                gearpumpEnabled ? settings.getCommutationGain() : DEFAULT_COMMUTATION_GAIN,
                                gearpumpEnabled ? settings.getConvergenceGain() : DEFAULT_CONVERGENCE_GAIN,
                                gearpumpEnabled ? settings.getIntegralGain() : DEFAULT_INTEGRAL_GAIN, settings.getMaxPumpPower(),
-                               slip[0], slip[1], slip[2], slip[3]);
+                               slip[0], slip[1], slip[2], slip[3], gearpumpEnabled ? settings.getMinPumpPower() : 0.0f);
     }
 }
 

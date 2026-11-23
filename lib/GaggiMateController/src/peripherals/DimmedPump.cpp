@@ -75,7 +75,9 @@ void DimmedPump::updatePower(bool freshPressure, float sampleTime, float elapsed
     _pumpedWater += _currentFlow * elapsed;
     _pressureController.update(static_cast<PressureController::ControlMode>(_mode), freshPressure, sampleTime, elapsed);
     if (_mode != ControlMode::POWER) {
-        _power = _controllerPower;
+        // The floor is not fed back: below vane speed it moves no water, so the flow model keeps the raw output.
+        const bool floor = (_ctrlPressure > 0.0f || _ctrlFlow > 0.0f) && _controllerPower < _minPower;
+        _power = floor ? _minPower : _controllerPower;
     }
     if (_binaryMode) {
         int binaryPower = (_controllerPower > 0 || _ctrlPressure > 0 || _ctrlFlow > 0) ? 100 : 0;
@@ -102,6 +104,8 @@ void DimmedPump::setPressureTarget(float targetPressure, float flowLimit) {
 void DimmedPump::setValveState(bool open) { _valveStatus = open; }
 
 void DimmedPump::setBinaryMode(bool binaryMode) { _binaryMode = binaryMode; }
+
+void DimmedPump::setMinPower(float minPower) { _minPower = std::isfinite(minPower) ? std::clamp(minPower, 0.0f, 100.0f) : 0.0f; }
 
 void DimmedPump::setPumpFlowCoeff(float oneBarFlow, float nineBarFlow) {
     _pressureController.setPumpFlowCoeff(oneBarFlow, nineBarFlow);

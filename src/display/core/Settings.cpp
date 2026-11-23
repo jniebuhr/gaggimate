@@ -427,6 +427,8 @@ void Settings::setIntegralGain(float integral_gain) { integralGain.set(integral_
 
 void Settings::setMaxPumpPower(float max_pump_power) { maxPumpPower.set(max_pump_power); }
 
+void Settings::setMinPumpPower(float min_pump_power) { minPumpPower.set(std::clamp(min_pump_power, 0.0f, 1.0f)); }
+
 bool Settings::doSave() {
     // The periodic task and immediate WebUI saves share one Preferences handle.
     std::lock_guard<std::mutex> lock(saveMutex);
