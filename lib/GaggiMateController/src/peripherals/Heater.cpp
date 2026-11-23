@@ -183,6 +183,8 @@ void Heater::loopAutotune() {
     long loopInterval = (static_cast<long>(TUNER_OUTPUT_SPAN) - 1L) * 1000L;
     while (autotuning && !autotuner->isFinished()) {
         microseconds = micros();
+        // This loop blocks Heater::loop(), so keep the flow history (integral hold tail) current here too.
+        recordFlow();
         // Re-check sensor every iteration. Heater::loop entry gate sampled
         // once — mid-test fault would leave relay stuck at full power for
         // rest of window. Max31855Thermocouple::read() returns 0 on fault;
