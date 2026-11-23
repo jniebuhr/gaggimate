@@ -5841,8 +5841,8 @@ msgid "The heater runs at full power for up to 10 seconds. The test passes as so
 msgstr "O aquecedor funciona em potência máxima por até 10 segundos. O teste é aprovado assim que a temperatura da caldeira sobe alguns graus, o que pode levar até 30 segundos a mais em uma caldeira maior."
 
 #: src/pages/Settings/tabs/MachineTab.jsx
-msgid "The machine does not read this figure — it only places the cap in the preview. The fitted line stays in use."
-msgstr "A máquina não usa este valor — serve apenas para posicionar o limite na pré-visualização. A reta ajustada continua ativa."
+msgid "The machine does not read this figure — it only places the cap in the preview. Save this and the fitted line will still be used."
+msgstr "A máquina não usa este valor — serve apenas para posicionar o limite na pré-visualização. Se guardar assim, a reta ajustada continuará a ser usada."
 
 #: src/app/appSettings.js
 msgid "The machine has been in steam mode for 5 minutes."

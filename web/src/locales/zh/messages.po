@@ -5833,8 +5833,8 @@ msgid "The heater runs at full power for up to 10 seconds. The test passes as so
 msgstr "加热器将以全功率运行最多 10 秒。锅炉温度上升几度后即通过测试，较大的锅炉可能还需要最多 30 秒。"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
-msgid "The machine does not read this figure — it only places the cap in the preview. The fitted line stays in use."
-msgstr "机器不会读取此数值——它只用于在预览中标出上限。拟合直线仍然有效。"
+msgid "The machine does not read this figure — it only places the cap in the preview. Save this and the fitted line will still be used."
+msgstr "机器不会读取此数值——它只用于在预览中标出上限。如此保存后，仍会使用拟合直线。"
 
 #: src/app/appSettings.js
 msgid "The machine has been in steam mode for 5 minutes."

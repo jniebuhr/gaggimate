@@ -29,8 +29,18 @@ const status = computed(() => machine.value.status);
 
 // Plausibility band for the mushroom-valve slope, bar per g/s. Mirrors VALVE_CAL_MIN_SLOPE /
 // VALVE_CAL_MAX_SLOPE in src/display/core/constants.h — keep the two in step.
-const VALVE_CAL_MIN_SLOPE = 0.3;
-const VALVE_CAL_MAX_SLOPE = 2.0;
+//
+// Rounded to 32-bit, because the firmware's constants are floats and 0.3 is not exactly
+// representable: compared in double precision, ordinary two-decimal entries land on the other
+// side of the bound from where the machine puts them. 5.00/1.00 to 5.30/2.00 is accepted by the
+// firmware and would be rejected here; 5.00/1.10 to 5.33/2.20 is the reverse.
+const VALVE_CAL_MIN_SLOPE = Math.fround(0.3);
+const VALVE_CAL_MAX_SLOPE = Math.fround(2.0);
+
+// The settings are stored and used as 32-bit floats, so every step below rounds the way the
+// firmware's arithmetic does. Without this the page can reach a different verdict from
+// valveOffsetAt on the very same numbers.
+const f32 = Math.fround;
 
 // Two measured (pressure, flow) points define the valve's drop-vs-flow line, and a third measured
 // at 100% pump duty caps it. Returns an error code instead of a line whenever the set cannot
@@ -44,12 +54,12 @@ const VALVE_CAL_MAX_SLOPE = 2.0;
 // using the fitted line regardless. Saying otherwise would tell the user the opposite of what the
 // machine does.
 function valveLine(formData) {
-  const p1 = Number.parseFloat(formData.valveCalP1);
-  const f1 = Number.parseFloat(formData.valveCalF1);
-  const p2 = Number.parseFloat(formData.valveCalP2);
-  const f2 = Number.parseFloat(formData.valveCalF2);
-  const pMax = Number.parseFloat(formData.valveCalPMax);
-  const fMax = Number.parseFloat(formData.valveCalFMax);
+  const p1 = f32(Number.parseFloat(formData.valveCalP1));
+  const f1 = f32(Number.parseFloat(formData.valveCalF1));
+  const p2 = f32(Number.parseFloat(formData.valveCalP2));
+  const f2 = f32(Number.parseFloat(formData.valveCalF2));
+  const pMax = f32(Number.parseFloat(formData.valveCalPMax));
+  const fMax = f32(Number.parseFloat(formData.valveCalFMax));
   if (![p1, f1, p2, f2].every(Number.isFinite)) {
     return { error: 'points-incomplete' };
   }
@@ -59,7 +69,7 @@ function valveLine(formData) {
   if (f1 <= 0) return { error: 'first-flow-missing' };
   if (p2 <= p1) return { error: 'pressure-order' };
   if (f2 <= f1) return { error: 'flow-order' };
-  const slope = (p2 - p1) / (f2 - f1);
+  const slope = f32(f32(p2 - p1) / f32(f2 - f1));
   if (slope < VALVE_CAL_MIN_SLOPE || slope > VALVE_CAL_MAX_SLOPE) {
     return { error: 'slope-implausible', slope };
   }
@@ -73,12 +83,12 @@ function valveLine(formData) {
   // A ceiling at or below point 2 would clip a pressure the user measured.
   if (pMax <= p2) return { error: 'max-pressure-order' };
   if (fMax <= f2) return { error: 'max-flow-order', previewOnly: true };
-  const intercept = p1 - slope * f1;
+  const intercept = f32(p1 - f32(slope * f1));
   return {
     slope,
     intercept,
     pMax,
-    at: q => Math.max(0, Math.min(pMax, intercept + slope * q)),
+    at: q => Math.max(0, Math.min(pMax, f32(intercept + f32(slope * Math.max(0, q))))),
   };
 }
 
@@ -243,8 +253,8 @@ function ValveCalibrationFields({ formData, onChange }) {
           <div className='mt-1 opacity-70'>
             {line.previewOnly ? (
               <Trans>
-                The machine does not read this figure — it only places the cap in the preview. The
-                fitted line stays in use.
+                The machine does not read this figure — it only places the cap in the preview. Save
+                this and the fitted line will still be used.
               </Trans>
             ) : (
               <Trans>
