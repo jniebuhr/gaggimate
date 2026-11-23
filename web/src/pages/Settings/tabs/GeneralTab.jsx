@@ -266,11 +266,11 @@ export function GeneralTab({
                 id='themeMode'
                 name='themeMode'
                 className='select select-bordered w-full'
-                value={formData.themeMode}
+                value={String(formData.themeMode ?? 0)}
                 onChange={onChange('themeMode')}
               >
-                <option value={0}>{t`Dark Theme`}</option>
-                <option value={1}>{t`Light Theme`}</option>
+                <option value='0'>{t`Dark Theme`}</option>
+                <option value='1'>{t`Light Theme`}</option>
               </select>
             </SettingsFormField>
             {pressureAvailable.value && (
@@ -284,11 +284,11 @@ export function GeneralTab({
                   id='statusDisplayMode'
                   name='statusDisplayMode'
                   className='select select-bordered w-full'
-                  value={formData.statusDisplayMode ?? 0}
+                  value={String(formData.statusDisplayMode ?? 0)}
                   onChange={onChange('statusDisplayMode')}
                 >
-                  <option value={0}>{t`Progress Bar`}</option>
-                  <option value={1}>{t`Shot Chart`}</option>
+                  <option value='0'>{t`Progress Bar`}</option>
+                  <option value='1'>{t`Shot Chart`}</option>
                 </select>
               </SettingsFormField>
             )}
