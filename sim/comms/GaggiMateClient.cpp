@@ -60,7 +60,8 @@ gm::Payload GaggiMateClient::buildRelayControl(uint8_t index, bool open) {
     p.relay = {index, open};
     return p;
 }
-gm::Payload GaggiMateClient::buildHeaterSettings(float, float, float, float, bool, uint32_t, float, float, float) {
+gm::Payload GaggiMateClient::buildHeaterSettings(float, float, float, float, bool, uint32_t, float, float, float,
+                                                 const HeaterLagCompensation &) {
     return {gm::Payload::Heater};
 }
 gm::Payload GaggiMateClient::buildPumpSettings(float, float, float, float, float, float, float, float) {
@@ -104,7 +105,8 @@ void GaggiMateClient::sendPumpControl(uint8_t index, PumpControlMode mode, float
     send(buildPumpControl(index, mode, power, pressure, flow));
 }
 void GaggiMateClient::sendRelayControl(uint8_t index, bool open) { send(buildRelayControl(index, open)); }
-void GaggiMateClient::sendHeaterSettings(float, float, float, float, bool, uint32_t, float, float, float) {}
+void GaggiMateClient::sendHeaterSettings(float, float, float, float, bool, uint32_t, float, float, float,
+                                         const HeaterLagCompensation &) {}
 void GaggiMateClient::sendPumpSettings(float, float, float, float, float, float, float, float, float, float, float, float) {}
 void GaggiMateClient::sendAutotune(uint32_t, uint32_t, uint32_t) {
     _autotunePending = true;

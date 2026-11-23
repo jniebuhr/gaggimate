@@ -1,4 +1,5 @@
 #include "GaggiMateController.h"
+#include "LagCompensationLimits.h"
 #include "MachineHardwareSettings.h"
 #include "utilities.h"
 #include <Arduino.h>
@@ -212,6 +213,18 @@ void GaggiMateController::setup() {
                 ledController->setChannel(channel, brightness);
         });
     brewTemperature->setup();
+    // The heater's flow sources are attached before setup() starts the heater task, which reads them.
+    // Set up thermal feedforward for main heater if pressure/dimming capability exists
+    if (_config.capabilites.dimming && _config.capabilites.pressure) {
+        auto dimmedPump = static_cast<DimmedPump *>(pump.get());
+        float *pumpFlowPtr = dimmedPump->getPumpFlowPtr();
+        int *valveStatusPtr = dimmedPump->getValveStatusPtr();
+
+        heater->setThermalFeedforward(pumpFlowPtr, 23.0f, valveStatusPtr);
+        heater->setFeedforwardScale(0.0f);
+    }
+    // Without measured flow, the pump's power tells the brew heater's integral pause when a flush is on.
+    heater->setPumpPowerSource(pump->getPumpPowerPtr());
     heater->setup();
     valve->setup();
     pump->setup();
@@ -236,15 +249,6 @@ void GaggiMateController::setup() {
     }
     if (tankLevel != nullptr) {
         tankLevel->setup();
-    }
-    // Set up thermal feedforward for main heater if pressure/dimming capability exists
-    if (heater && _config.capabilites.dimming && _config.capabilites.pressure) {
-        auto dimmedPump = static_cast<DimmedPump *>(pump.get());
-        float *pumpFlowPtr = dimmedPump->getPumpFlowPtr();
-        int *valveStatusPtr = dimmedPump->getValveStatusPtr();
-
-        heater->setThermalFeedforward(pumpFlowPtr, 23.0f, valveStatusPtr);
-        heater->setFeedforwardScale(0.0f);
     }
     // Initialize last ping time
     lastPingTime = millis();
@@ -341,8 +345,21 @@ void GaggiMateController::setup() {
         }
         heater->setFeedforwardScale(settings.kf);
         heater->setTunings(settings.kp, settings.ki, settings.kd);
+        // Clamp here as well as on the display: the controller drives the heater and shouldn't trust the link.
+        using namespace lag_limits;
+        HeaterLagSettings lag;
+        lag.derivativeFilterS = clampOrOff(settings.derivative_filter_s, DERIVATIVE_FILTER_S);
+        lag.integralZoneC = clampOrOff(settings.integral_zone, INTEGRAL_ZONE_C);
+        lag.sensorDeadTimeS = clampOrOff(settings.sensor_dead_time_s, SENSOR_DEAD_TIME_S);
+        heater->setLagCompensation(lag);
         if (heater2 != nullptr) {
             heater2->setTunings(settings.steam_kp, settings.steam_ki, settings.steam_kd);
+            // The flow pause is for the brew boiler, which the water passes through; the steam boiler gets the D filter
+            // and the integral zone only.
+            HeaterLagSettings steamLag;
+            steamLag.derivativeFilterS = lag.derivativeFilterS;
+            steamLag.integralZoneC = lag.integralZoneC;
+            heater2->setLagCompensation(steamLag);
         }
     });
     _comms.onPumpSettings([this](gm::PumpSettings settings) {
