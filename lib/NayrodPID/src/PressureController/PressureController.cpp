@@ -71,9 +71,8 @@ void PressureController::update(ControlMode mode, bool freshPressure, float samp
         float flowOutput = getPumpDutyCycleForFlowRate();
         float pressureOutput = getPumpDutyCycleForPressure();
         *_ctrlOutput = std::min(flowOutput, pressureOutput);
-        if (flowOutput < pressureOutput) {
-            _errorIntegral = 0.0f; // Reset error buildup in flow target
-        }
+        if (flowOutput < pressureOutput)
+            trackPressureOutput(*_ctrlOutput);
     } else if (mode == ControlMode::FLOW) {
         *_ctrlOutput = getPumpDutyCycleForFlowRate();
     } else if (mode == ControlMode::PRESSURE) {
@@ -258,6 +257,9 @@ float PressureController::getPumpDutyCycleForPressure() {
     if (*_rawPressureSetpoint < 0.2f) {
         initSetpointFilter();
         _errorIntegral = 0.0f;
+        _pressureBaseDuty = 0.0f;
+        _pressureTrackingBias = 0.0f;
+        _pumpDutyCycle = 0.0f;
         *_ctrlOutput = 0.0f;
         _previousPressure = 0.0f;
         return 0.0f;
@@ -303,7 +305,8 @@ float PressureController::getPumpDutyCycleForPressure() {
     Qa = fmaxf(Qa, 1e-3f);
     float Ceq = _systemCompliance;
     float K = _commutationGain / denominator * Qa / Ceq;
-    _pumpDutyCycle = Ceq / Qa * (-_convergenceGain * error - K * sat_s) - iterm;
+    _pressureBaseDuty = Ceq / Qa * (-_convergenceGain * error - K * sat_s);
+    _pumpDutyCycle = _pressureBaseDuty - iterm + _pressureTrackingBias;
 
     // Anti-windup against the actuator limits [0, 1]
     if (integrating && ((_pumpDutyCycle > 1.0f && error < 0.0f) || (_pumpDutyCycle < 0.0f && error > 0.0f))) {
@@ -311,13 +314,24 @@ float PressureController::getPumpDutyCycleForPressure() {
         iterm = Ki * _errorIntegral;
     }
 
-    _pumpDutyCycle = Ceq / Qa * (-_convergenceGain * error - K * sat_s) - iterm;
+    _pumpDutyCycle = _pressureBaseDuty - iterm + _pressureTrackingBias;
     return std::clamp(_pumpDutyCycle * 100.0f, 0.0f, 100.0f);
+}
+
+void PressureController::trackPressureOutput(float appliedOutput) {
+    // Project only after min-selection, so pressure can still reduce the command.
+    // Moving the accumulated contribution into output units preserves the selected
+    // command without dividing by Ki (which may be zero or pressure-dependent).
+    _pressureTrackingBias = appliedOutput / 100.0f - _pressureBaseDuty;
+    _errorIntegral = 0.0f;
 }
 
 void PressureController::reset() {
     initSetpointFilter(_filteredPressureSensor);
     _errorIntegral = 0.0f;
+    _pressureBaseDuty = 0.0f;
+    _pressureTrackingBias = 0.0f;
+    _pumpDutyCycle = 0.0f;
     _pumpFlowRate = 0.0f;
     _puckSaturationVolume = 0.0f;
     _puckState[0] = false;
