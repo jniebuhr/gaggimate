@@ -105,11 +105,9 @@ export function useDashboardState() {
     setFlushPending(true);
     apiService.request({ tp: 'req:flush:start' }).catch(() => setFlushPending(false));
   };
-  // Ends a hold-to-flush (flush duration 0); the firmware ignores it for a fixed-length flush.
-  const stopFlush = () => {
-    if (!isFlushing) return;
-    send('req:flush:stop');
-  };
+  // Ends a hold-to-flush (flush duration 0). Always sent, even when isFlushing already reads false
+  // (status lagging, pending cleared): the firmware ignores it unless a hold-to-flush runs.
+  const stopFlush = () => send('req:flush:stop');
 
   useEffect(() => {
     if (flushRunning) setFlushPending(false);
@@ -184,6 +182,10 @@ export function useDashboardState() {
     altRelayFunction,
     // action state
     isFlushing,
+    // Unknown duration counts as hold: a tap then can't start a flush nothing stops.
+    // Live from status, so a change on the machine or the settings page applies at once; the cached
+    // settings only cover firmware that doesn't report it.
+    isHoldFlush: Number(s.flushDuration ?? settings?.flushDuration ?? 0) === 0,
     // handlers
     changeMode,
     toggleSteam,

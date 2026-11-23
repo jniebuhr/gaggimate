@@ -453,6 +453,7 @@ void WebSocketHandler::publishState(unsigned long now) {
     doc["gtv"] = controller->getSettings().getTargetGrindVolume();
     doc["gt"] = controller->isVolumetricAvailable() && controller->getSettings().isVolumetricTarget() ? 1 : 0;
     doc["gact"] = controller->isGrindActive() ? 1 : 0;
+    doc["fd"] = controller->getSettings().getFlushDuration(); // 0 = hold-to-flush; the web picks the button mode from it
     doc["up"] = updateAvailableProvider ? updateAvailableProvider() : false;
     // Same text as the display's standby label, so headless users see starting/waiting/error states too.
     JsonObject sys = doc["sys"].to<JsonObject>();
