@@ -1,4 +1,5 @@
 #include "Heater.h"
+#include "HeatUpBoost.h"
 #include "HeaterCoordinator.h"
 #include <Arduino.h>
 #include <algorithm>
@@ -9,7 +10,8 @@ Heater::Heater(TemperatureSensor *sensor, uint8_t heaterPin, const heater_error_
     : sensor(sensor), heaterPin(heaterPin), taskHandle(nullptr), error_callback(error_callback), pid_callback(pid_callback),
       autotune_fail_callback(autotune_fail_callback) {
 
-    simplePid = std::make_unique<SimplePID>(&output, &temperature, &setpoint);
+    simplePid = std::make_unique<SimplePID>(&output, &controlTemperature, &setpoint);
+    simplePid->setDerivativeInput(&temperature); // D damps the measured temperature, P/I act on the prediction
     autotuner = std::make_unique<Autotune>();
 }
 
@@ -39,6 +41,9 @@ void Heater::setupAutotune(int testTimeSec, int windowSize, int heaterWattage) {
 }
 
 void Heater::loop() {
+    // Every tick, heating or not: a flush while the heater is off still counts towards the integral pause.
+    recordFlow();
+
     if (!sensor->isErrorState() && autotuning) {
         loopAutotune();
         return;
@@ -47,7 +52,12 @@ void Heater::loop() {
     if (sensor->isErrorState() || setpoint <= 0.0f) {
         simplePid->setMode(SimplePID::Control::manual);
         requestOutput(false);
+        output = 0.0f; // the PID no longer writes it: left alone, the next wake-up and the display see the old duty
         temperature = sensor->read();
+        controlTemperature = temperature;
+        std::lock_guard<std::mutex> lock(lagMutex);
+        predictor.reset(); // heat in flight is no longer tracked while off; start clean on re-enable
+        predictorPrimed = false;
         return;
     }
     simplePid->setMode(SimplePID::Control::automatic);
@@ -92,7 +102,99 @@ void Heater::setFeedforwardScale(float combinedKff) {
     ESP_LOGI(LOG_TAG, "Combined feedforward gain (Kff) set to: %.3f output units per watt", combinedKff);
 }
 
+void Heater::setLagCompensation(const HeaterLagSettings &lag) {
+    std::lock_guard<std::mutex> lock(lagMutex);
+    simplePid->setDerivativeFilterTime(lag.derivativeFilterS);
+    simplePid->setIntegralZone(lag.integralZoneC);
+    integralZoneActive = lag.integralZoneC > 0.0f;
+    integralHoldTailMs = lag.sensorDeadTimeS > 0.0f ? static_cast<uint32_t>(lag.sensorDeadTimeS * 1000.0f) : 0;
+    if (!integralZoneActive)
+        simplePid->setIntegralHold(false);
+    predictor.configure(lag.modelHeaterW, lag.modelHeatRate, lag.sensorDeadTimeS, incomingWaterTemp, lag.waterDeadTimeS);
+    predictor.seedLoss(lag.modelLossW);
+    predictor.setValveDump(lag.valveDumpMl);
+    ESP_LOGI(LOG_TAG,
+             "Lag compensation: D filter %.1fs, I zone %.2f°C, dead time %.1fs, predictor %s (%.0fW, %.3f°C/s, water %.1fs)",
+             lag.derivativeFilterS, lag.integralZoneC, lag.sensorDeadTimeS, predictor.isEnabled() ? "on" : "off",
+             lag.modelHeaterW, lag.modelHeatRate, predictor.getWaterDeadTime());
+}
+
+float Heater::getLearnedLossWatts() {
+    std::lock_guard<std::mutex> lock(lagMutex);
+    return predictor.isEnabled() ? predictor.getLossWatts() : 0.0f;
+}
+
+void Heater::recordFlow() {
+    const float flow = pumpFlowRate != nullptr ? *pumpFlowRate : 0.0f;
+    // Measured flow where the board has it (Pro); otherwise the pump running means water is entering the boiler.
+    const bool flowing = pumpFlowRate != nullptr ? flow > 0.01f : (pumpPower != nullptr && *pumpPower > 0.0f);
+    const uint32_t now = millis();
+
+    std::lock_guard<std::mutex> lock(lagMutex);
+    waterFlowing = flowing;
+    if (flowing) {
+        lastFlowMs = now;
+        flowSeen = true;
+    }
+    // Add up the predictor's inputs over this tick (ticks are 10 ms; a longer gap, e.g. after autotune, counts once).
+    const float tickMs = lastInputMs != 0 ? std::min(static_cast<float>(now - lastInputMs), 100.0f) : 0.0f;
+    lastInputMs = now;
+    inputIntervalMs += tickMs;
+    if (elementOn)
+        elementOnMs += tickMs;
+    if (pumpFlowRate != nullptr && flow > 0.01f)
+        waterMl += flow * tickMs / 1000.0f;
+    // Without measured flow (Standard boards) any pump running counts: the boost can't tell a flush from pump assist
+    // there, and holding it back after either is the safe side.
+    if (pumpFlowRate != nullptr ? flow > HeatUpBoost::FLUSH_FLOW : flowing) {
+        lastFlushMs = now;
+        flushSeen = true;
+    }
+}
+
+void Heater::resetPredictorInputs() {
+    inputIntervalMs = 0.0f;
+    elementOnMs = 0.0f;
+    waterMl = 0.0f;
+}
+
+// Caller holds lagMutex (loopPid keeps it through the PID update, so one configuration applies to the whole step).
+void Heater::updateLagCompensation() {
+    const uint32_t now = millis();
+    if (integralZoneActive) {
+        // Pause the integral while fresh water flows and until its effect has reached the sensor: the error in
+        // that window is the (stale) flush, not a steady-state offset the integral should learn.
+        simplePid->setIntegralHold(waterFlowing || (flowSeen && now - lastFlowMs < integralHoldTailMs));
+    }
+
+    if (!predictor.isEnabled() || !predictorPrimed) {
+        // Off, or (re)starting: time the first step from now and drop inputs gathered before it.
+        predictorPrimed = predictor.isEnabled();
+        lastPredictorMs = now;
+        resetPredictorInputs();
+        if (!predictorPrimed) {
+            controlTemperature = temperature;
+            return;
+        }
+    } else if (now - lastPredictorMs >= static_cast<uint32_t>(TUNER_OUTPUT_SPAN)) {
+        // One step per PWM window, from what the element and the water actually did over it.
+        const float dt = static_cast<float>(now - lastPredictorMs) / 1000.0f;
+        lastPredictorMs = now;
+        const float duty = inputIntervalMs > 0.0f ? elementOnMs / inputIntervalMs : output / TUNER_OUTPUT_SPAN;
+        predictor.update(dt, duty, waterMl / dt, temperature, setpoint);
+        resetPredictorInputs();
+    }
+    controlTemperature = temperature + predictor.getCorrection();
+}
+
 void Heater::autotune(int testTimeSec, int windowSize, int heaterWattage) {
+    {
+        // The predictor doesn't run during autotune, so heat and water from before it would still be in its history
+        // afterwards, long after their delays have passed. Start clean once the PID takes over again.
+        std::lock_guard<std::mutex> lock(lagMutex);
+        predictor.reset();
+        predictorPrimed = false;
+    }
     setupAutotune(testTimeSec, windowSize, heaterWattage);
     autotuning = true;
 }
@@ -100,6 +202,10 @@ void Heater::autotune(int testTimeSec, int windowSize, int heaterWattage) {
 void Heater::loopPid() {
     softPwm(TUNER_OUTPUT_SPAN);
     temperature = sensor->read();
+    // One lag configuration for the whole step: a settings update from the comms task waits until the predictor
+    // correction, PID update and boost decision are done.
+    std::lock_guard<std::mutex> lock(lagMutex);
+    updateLagCompensation();
 
     // Calculate and set disturbance feedforward BEFORE PID update
     // Only apply thermal feedforward when Kf>0, valve is open, and water is flowing
@@ -125,8 +231,11 @@ void Heater::loopPid() {
         simplePid->setDisturbanceFeedforward(0.0f, 0.0f);
     }
 
-    // Now run PID with proper feedforward integrated
-    bool pidUpdated = simplePid->update();
+    // Now run PID with proper feedforward integrated (still under lagMutex, taken above).
+    const bool pidUpdated = simplePid->update();
+    // Far below the setpoint with no water about: full power (HeatUpBoost.h).
+    if (pidUpdated && HeatUpBoost::active(predictor.isEnabled(), setpoint, controlTemperature, flushSeen, millis() - lastFlushMs))
+        output = TUNER_OUTPUT_SPAN;
 
     if (pidUpdated) {
         plot(output, 1.0f, 1);
@@ -140,6 +249,8 @@ void Heater::loopAutotune() {
     long loopInterval = (static_cast<long>(TUNER_OUTPUT_SPAN) - 1L) * 1000L;
     while (autotuning && !autotuner->isFinished()) {
         microseconds = micros();
+        // This loop blocks Heater::loop(), so keep the flow history (integral hold tail, boost) current here too.
+        recordFlow();
         // Re-check sensor every iteration. Heater::loop entry gate sampled
         // once — mid-test fault would leave relay stuck at full power for
         // rest of window. Max31855Thermocouple::read() returns 0 on fault;
@@ -241,7 +352,10 @@ void Heater::requestOutput(bool on) {
         writeOutput(on);
 }
 
-void Heater::writeOutput(bool on) { digitalWrite(heaterPin, on ? HIGH : LOW); }
+void Heater::writeOutput(bool on) {
+    elementOn = on;
+    digitalWrite(heaterPin, on ? HIGH : LOW);
+}
 
 void Heater::plot(float optimumOutput, float outputScale, uint8_t everyNth) {
     if (plotCount >= everyNth) {

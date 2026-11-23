@@ -21,6 +21,7 @@ import {
 } from '../../utils/dashboardManager.js';
 import { downloadJson } from '../../utils/download.js';
 import { validateTankCalibration } from '../../utils/waterLevel.js';
+import { invalidLagField } from './tabs/LagCompensationSection.jsx';
 import { getStoredTheme, handleThemeChange } from '../../utils/themeManager.js';
 
 import PageLayout from '../../components/PageLayout.jsx';
@@ -69,9 +70,11 @@ import {
   splitPidString,
 } from './settingsForm.js';
 
-// Device facts GET /api/settings reports for display only; never saved, exported or imported.
+// Device facts GET /api/settings reports for display only; never saved, exported or imported. modelLossW is
+// learned by the controller: posting the loaded value back on save would overwrite a newer one.
 const READ_ONLY_KEYS = [
   'deviceIp',
+  'modelLossW',
   'setupDone',
   'apMode',
   'setupStep',
@@ -187,6 +190,17 @@ function normalizeImportedSettings(data, knownKeys) {
       ? parseAutoWakeupSchedules(fields.autowakeupSchedules)
       : null;
   return { fields, schedules, ignored, count };
+}
+
+// A field the save must not go out with, or null. Save & Restart and imports skip native validation, and these
+// fields are only mounted on the Machine tab, so the save handler checks them itself.
+function invalidSaveField(formData, capabilities) {
+  if (capabilities.ledControl) {
+    const tank = validateTankCalibration(formData.emptyTankDistance, formData.fullTankDistance);
+    if (tank.empty) return 'emptyTankDistance';
+    if (tank.full) return 'fullTankDistance';
+  }
+  return invalidLagField(formData);
 }
 
 function buildSubmitFormData(formData, autowakeupSchedules, restart, importedKeys) {
@@ -376,18 +390,13 @@ export function Settings() {
   const onSubmit = useCallback(
     async (e, restart = false) => {
       if (e) e.preventDefault();
-      // Save & Restart and imports skip native validation, and the tank fields are only mounted on the Machine tab.
-      const tankErrors = validateTankCalibration(
-        formData.emptyTankDistance,
-        formData.fullTankDistance,
-      );
-      if (
-        !isLoading &&
-        machine.value.capabilities.ledControl &&
-        (tankErrors.empty || tankErrors.full)
-      ) {
-        if (tab === 'machine') formRef.current.reportValidity();
-        else route('/settings/machine');
+      const invalid = isLoading ? null : invalidSaveField(formData, machine.value.capabilities);
+      if (invalid) {
+        if (tab === 'machine') {
+          // Advanced lag fields sit in a collapsed <details>; open it so the browser can point at the field.
+          document.getElementById(invalid)?.closest('details')?.setAttribute('open', '');
+          formRef.current.reportValidity();
+        } else route('/settings/machine');
         return;
       }
       if (smartDoseSaving || submitting) return;

@@ -1,5 +1,6 @@
 #include "Settings.h"
 #include "MachineProfiles.h"
+#include <LagCompensationLimits.h>
 
 #include <algorithm>
 #include <cmath>
@@ -225,6 +226,30 @@ void Settings::setHeaterCoordinationEnabled(bool enabled) { heaterCoordinationEn
 void Settings::setHeaterHandoverMs(int handoverMs) {
     heaterHandoverMs.set(std::clamp(handoverMs, MIN_HEATER_HANDOVER_MS, MAX_HEATER_HANDOVER_MS));
 }
+
+void Settings::setDerivativeFilterS(float seconds) {
+    derivativeFilterS.set(lag_limits::clampOrOff(seconds, lag_limits::DERIVATIVE_FILTER_S));
+}
+
+void Settings::setIntegralZone(float degrees) { integralZone.set(lag_limits::clampOrOff(degrees, lag_limits::INTEGRAL_ZONE_C)); }
+
+void Settings::setSensorDeadTimeS(float seconds) {
+    sensorDeadTimeS.set(lag_limits::clampOrOff(seconds, lag_limits::SENSOR_DEAD_TIME_S));
+}
+
+void Settings::setModelHeaterW(float watts) { modelHeaterW.set(lag_limits::clampOrOff(watts, lag_limits::HEATER_W)); }
+
+void Settings::setModelHeatRate(float degreesPerSecond) {
+    modelHeatRate.set(lag_limits::clampOrOff(degreesPerSecond, lag_limits::HEAT_RATE_C_PER_S));
+}
+
+void Settings::setModelLossW(float watts) { modelLossW.set(lag_limits::clampOrOff(watts, lag_limits::STANDING_LOSS_W)); }
+
+void Settings::setWaterDeadTimeS(float seconds) {
+    waterDeadTimeS.set(lag_limits::clampOrOff(seconds, lag_limits::WATER_DEAD_TIME_S));
+}
+
+void Settings::setValveDumpMl(float ml) { valveDumpMl.set(lag_limits::clampOrOff(ml, lag_limits::VALVE_DUMP_ML)); }
 
 void Settings::setPumpModelCoeffs(const String &pumpModelCoeffs) { this->pumpModelCoeffs.set(pumpModelCoeffs); }
 

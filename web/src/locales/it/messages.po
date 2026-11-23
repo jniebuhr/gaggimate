@@ -156,6 +156,10 @@ msgstr "<0>Erogazione:</0> le ricette con GbS attivo riportano qui ogni macinatu
 msgid "<0>Pairing:</0> GaggiMate shows up to the grinder as a Xenia machine. Under Settings → Connectivity → Machine To Machine, turn on Enable Xenia, then type the address above into Configuration. Automatic discovery does not see GaggiMate."
 msgstr "<0>Abbinamento:</0> GaggiMate si presenta al macinacaffè come una macchina Xenia. In Settings → Connectivity → Machine To Machine, attiva Enable Xenia, poi inserisci l'indirizzo qui sopra in Configuration. Il rilevamento automatico non vede GaggiMate."
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "0 (off) or {min}–{max} {unit}"
+msgstr "0 (disattivato) o {min}–{max} {unit}"
+
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotMainInfoCard.jsx
 msgid "1 year ago"
 msgstr "1 anno fa"
@@ -270,6 +274,7 @@ msgstr "Aggiungi ai preferiti"
 msgid "Address"
 msgstr "Indirizzo"
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
 #: src/pages/Statistics/components/toolbar/subcomponents.jsx
 msgid "Advanced"
 msgstr "Avanzate"
@@ -338,6 +343,10 @@ msgstr "Tutte le modifiche Nightly"
 #: src/pages/ShotHistory/index.jsx
 msgid "All Shots"
 msgstr "Tutti le estrazioni"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Allowed: {range}."
+msgstr "Consentito: {range}."
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Alt Relay / SSR2 Function"
@@ -630,6 +639,10 @@ msgstr "Bluetooth, {rssi}dB (Andata e ritorno: {lat} ms, Ritrasmissioni: {rtx})"
 #: src/app/notifications.js
 msgid "Boiler at {temperature} °C"
 msgstr "Caldaia a {temperature} °C"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Boiler Lag Compensation"
+msgstr "Compensazione del ritardo della caldaia"
 
 #: src/pages/Settings/PluginCard.jsx
 msgid "Boiler Refill Plugin"
@@ -1358,6 +1371,10 @@ msgstr "Definisci il comportamento dei pulsanti fisici quando vengono premuti. A
 msgid "degrees Celsius"
 msgstr "gradi Celsius"
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Delay from the heater switching on to the temperature starting to rise (about 20 s on a Silvia with the sensor on the boiler shell). With an integral zone set, the integral stays paused this long after water stops flowing."
+msgstr "Tempo dall'accensione della resistenza all'inizio dell'aumento della temperatura (circa 20 s su una Silvia con il sensore sulla parete della caldaia). Con una zona integrale impostata, l'integrale resta in pausa per questo tempo dopo che l'acqua smette di scorrere."
+
 #: src/pages/ProfileList/index.jsx
 #: src/pages/ShotAnalyzer/components/library/LibraryRow.jsx
 #: src/pages/ShotHistory/HistoryCard.jsx
@@ -1459,6 +1476,10 @@ msgstr "Eliminazione dell’estrazione {0} di {1}..."
 #: src/pages/ShotHistory/ConfirmDeleteModal.jsx
 msgid "Deleting…"
 msgstr "Eliminazione…"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Derivative filter"
+msgstr "Filtro derivativo"
 
 #: src/pages/Settings/tabs/CleaningSection.jsx
 msgid "Descaling"
@@ -1700,6 +1721,10 @@ msgstr "Modifica filtro intervallo di date"
 #: src/pages/ProfileList/index.jsx
 msgid "Edit profile"
 msgstr "Modifica profilo"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Element power from the machine's rating plate, e.g. 1100 W for a 230 V Rancilio Silvia."
+msgstr "Potenza della resistenza indicata sulla targhetta della macchina, ad es. 1100 W per una Rancilio Silvia a 230 V."
 
 #: src/pages/Statistics/utils/statisticsSearchDsl.js
 msgid "Empty date expression."
@@ -2123,6 +2148,10 @@ msgstr "Acqua di flush"
 msgid "For 120 V machines, heater coordination should generally remain enabled. Running the brew and steam heaters simultaneously can overload the circuit, blow a fuse or trip a breaker, and create a fire hazard. Only disable it if the machine and supply circuit are rated to power both heaters together."
 msgstr "Per le macchine a 120 V il coordinamento delle resistenze dovrebbe in genere restare attivo. Far funzionare contemporaneamente le resistenze di erogazione e vapore può sovraccaricare il circuito, bruciare un fusibile o far scattare un interruttore e creare un rischio di incendio. Disattivalo solo se la macchina e il circuito di alimentazione sono dimensionati per alimentare entrambe le resistenze insieme."
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "For boilers whose temperature sensor reacts long after the heater, like a sensor on the outside of the boiler. With heater power, heat-up rate and dead time set, the PID works on the measured temperature plus the heat still on its way to the sensor, so it stops heating in time instead of overshooting. Leave everything at 0 to keep the plain PID."
+msgstr "Per caldaie il cui sensore di temperatura reagisce molto dopo la resistenza, come un sensore all'esterno della caldaia. Con potenza, velocità di riscaldamento e tempo morto impostati, il PID lavora sulla temperatura misurata più il calore ancora in viaggio verso il sensore, così smette di scaldare in tempo invece di superare l'obiettivo. Lascia tutto a 0 per mantenere il PID semplice."
+
 #: src/pages/SetupWizard/index.jsx
 msgid "For further information on how to use and configure GaggiMate please consult our documentation and guides!"
 msgstr "Per maggiori informazioni su come usare e configurare GaggiMate, consulta la nostra documentazione e le nostre guide!"
@@ -2162,6 +2191,10 @@ msgstr "Da"
 msgctxt "panel view"
 msgid "Full"
 msgstr "Completa"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Full-power heat-up rate"
+msgstr "Velocità di riscaldamento a piena potenza"
 
 #: src/pages/SetupWizard/index.jsx
 msgid "Further Resources"
@@ -2317,6 +2350,10 @@ msgstr "Coordinamento resistenze"
 #: src/pages/SetupWizard/TestStep.jsx
 msgid "Heater off, waiting for the temperature to rise…"
 msgstr "Resistenza spenta, in attesa dell'aumento di temperatura…"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Heater power"
+msgstr "Potenza della resistenza"
 
 #: src/utils/metricDefinitions.js
 msgid "Heater Power"
@@ -2528,6 +2565,10 @@ msgstr "Istantaneo"
 msgid "Integral Gain"
 msgstr "Guadagno integrale"
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Integral zone"
+msgstr "Zona integrale"
+
 #: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
 msgid "Internal error: ApiService unavailable."
 msgstr "Errore interno: ApiService non disponibile."
@@ -2615,6 +2656,10 @@ msgstr "Settimana scorsa"
 #: src/pages/Settings/tabs/CleaningSection.jsx
 msgid "Last: {lastTime} · {shotsSince, plural, one {# shot since} other {# shots since}}"
 msgstr "Ultima: {lastTime} · {shotsSince, plural, one {# estrazione fatta } other {# estrazioni fatte }}"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Learned standing heat loss: {learnedLoss} W. The predictor starts from this after a restart."
+msgstr "Dispersione di calore a riposo appresa: {learnedLoss} W. Il predittore riparte da questo valore dopo un riavvio."
 
 #: src/pages/ShotAnalyzer/components/library/LibrarySection.jsx
 msgid "Length (Long)"
@@ -4746,6 +4791,10 @@ msgstr "Selezionando un profilo i valori vengono precompilati. Salva per applica
 msgid "Selecting calibration profile..."
 msgstr "Selezione profilo di calibrazione..."
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Sensor dead time"
+msgstr "Tempo morto del sensore"
+
 #: src/services/VisualizerService.js
 msgid "Server error - the API may not support this data format or account type"
 msgstr "Errore del server: l'API potrebbe non supportare questo formato di dati o tipo di account"
@@ -5096,6 +5145,10 @@ msgstr "Smart Dosing"
 msgid "Smart Grind Plugin"
 msgstr "Plugin Smart Grind"
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Smooths the D term so the thermocouple's 0.25 °C steps don't switch the heater on and off. Try 2 s; long filters delay its braking."
+msgstr "Smorza il termine D in modo che i gradini da 0,25 °C della termocoppia non accendano e spengano la resistenza. Prova 2 s; filtri lunghi ritardano la sua frenata."
+
 #: src/components/PumpFlowCalibration/usePumpFlowCalibration.js
 msgid "Snapshotting shot history..."
 msgstr "Snapshot della cronologia shot..."
@@ -5263,6 +5316,10 @@ msgstr "DSL di ricerca statistiche"
 #: src/pages/Statistics/components/MetricsTable.jsx
 msgid "Std Dev"
 msgstr "Dev std"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Steady temperature rise at full power, read off the middle of a warm-up from cold (about 0.6 °C/s on a Silvia)."
+msgstr "Aumento costante della temperatura a piena potenza, letto a metà di un riscaldamento da freddo (circa 0,6 °C/s su una Silvia)."
 
 #: src/app/machineStatus.js
 #: src/pages/Home/utils.js
@@ -5767,6 +5824,10 @@ msgstr "Il macinacaffè raggiunge GaggiMate a questo indirizzo, quindi entrambi 
 msgid "The heater runs at full power for up to 10 seconds. The test passes as soon as the boiler temperature has risen by a few degrees, which can take up to 30 more seconds on a larger boiler."
 msgstr "La resistenza funziona a piena potenza per un massimo di 10 secondi. Il test è superato non appena la temperatura della caldaia è salita di qualche grado, cosa che può richiedere fino a 30 secondi in più con una caldaia più grande."
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "The integral only runs within this distance of the target, and pauses while water flows and for the dead time after, so a flush can't wind it up into an overshoot. Try 1.5 °C."
+msgstr "L'integrale agisce solo entro questa distanza dall'obiettivo e si ferma mentre scorre l'acqua e per il tempo morto successivo, così un flush non lo accumula fino a un superamento. Prova 1,5 °C."
+
 #: src/app/appSettings.js
 msgid "The machine has been in steam mode for 5 minutes."
 msgstr "La macchina è in modalità vapore da 5 minuti."
@@ -6210,6 +6271,10 @@ msgstr "Caricamento..."
 msgid "Upper bound on the identification test. Most espresso boilers resolve within 60–120 s. Extend if Autotune fails before peak slope is detected."
 msgstr "Limite massimo del test di identificazione. La maggior parte delle caldaie per espresso si risolve in 60–120 s. Aumentalo se l'autotune fallisce prima di rilevare la pendenza massima."
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Use {range}."
+msgstr "Usa {range}."
+
 #: src/pages/Statistics/components/StatisticsSearchHelp.jsx
 msgid "Use <0>></0>, <1>>=</1>, <2><</2>, <3><=</3>, <4>=</4>"
 msgstr "Usa <0>></0>, <1>>=</1>, <2><</2>, <3><=</3>, <4>=</4>"
@@ -6284,6 +6349,10 @@ msgstr "Valvola"
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
 msgid "Valve closed"
 msgstr "Valvola chiusa"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Valve dump per flush"
+msgstr "Scarico della valvola per flush"
 
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
@@ -6431,6 +6500,10 @@ msgstr "Pulsante acqua"
 msgid "Water Button Behavior"
 msgstr "Comportamento pulsante acqua"
 
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Water dead time"
+msgstr "Tempo morto dell'acqua"
+
 #: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
 msgid "Water drawn"
 msgstr "Acqua prelevata"
@@ -6465,6 +6538,10 @@ msgstr "Livello serbatoio dell'acqua"
 #: src/utils/warnings.js
 msgid "Water tank low"
 msgstr "Serbatoio dell'acqua quasi vuoto"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "Water the 3-way valve dumps into the drip tray when a flush or shot ends; it leaves the boiler too. To measure it, weigh the empty drip tray, run a flush with a cup under the group to catch its water, then weigh the tray again: the difference is the dump. 0 counts none (about 5 ml on a Silvia)."
+msgstr "Acqua che la valvola a 3 vie scarica nella vaschetta alla fine di un flush o di un'erogazione; esce anche dalla caldaia. Per misurarla, pesa la vaschetta vuota, fai un flush con una tazza sotto il gruppo per raccoglierne l'acqua, poi pesa di nuovo la vaschetta: la differenza è lo scarico. 0 non ne conta (circa 5 ml su una Silvia)."
 
 #: src/pages/SetupWizard/WifiStep.jsx
 msgid "Weak"
@@ -6566,6 +6643,10 @@ msgstr "Benvenuto in GaggiMate"
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "What percentage to run the pump at during steaming"
 msgstr "A quale percentuale far funzionare la pompa durante l'erogazione di vapore"
+
+#: src/pages/Settings/tabs/LagCompensationSection.jsx
+msgid "When the pump puts cold water into the boiler, the sensor takes a while to notice the boiler getting cooler. This is how long it takes. To measure it, wait until the temperature is steady, then run a 5 second flush. Afterwards, look at the temperature graph on the home page: note the temperature before the flush and the lowest it dropped to, and work out the temperature half way between them (from 93 °C down to 85 °C, half way is 89 °C). Count the seconds from the water starting until the line reached that temperature. On a Silvia that's about 12 seconds. 0 means use the sensor dead time."
+msgstr "Quando la pompa immette acqua fredda nella caldaia, il sensore impiega un po' ad accorgersi che la caldaia si raffredda. Questo è quel tempo. Per misurarlo, aspetta che la temperatura sia stabile, poi fai un flush di 5 secondi. Poi guarda il grafico della temperatura nella pagina iniziale: annota la temperatura prima del flush e la più bassa raggiunta, e calcola la temperatura a metà tra le due (da 93 °C a 85 °C, la metà è 89 °C). Conta i secondi dall'inizio dell'acqua finché la linea raggiunge quella temperatura. Su una Silvia sono circa 12 secondi. 0 significa usare il tempo morto del sensore."
 
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "When the toggle is off, brightness will be set to 0"

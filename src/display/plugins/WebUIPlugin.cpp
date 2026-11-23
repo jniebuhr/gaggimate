@@ -526,6 +526,22 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setHeaterCoordinationEnabled(parseBoolArg(request->arg("heaterCoordinationEnabled")));
             if (request->hasArg("heaterHandoverMs"))
                 settings->setHeaterHandoverMs(request->arg("heaterHandoverMs").toInt());
+            if (request->hasArg("derivativeFilterS"))
+                settings->setDerivativeFilterS(request->arg("derivativeFilterS").toFloat());
+            if (request->hasArg("integralZone"))
+                settings->setIntegralZone(request->arg("integralZone").toFloat());
+            if (request->hasArg("sensorDeadTimeS"))
+                settings->setSensorDeadTimeS(request->arg("sensorDeadTimeS").toFloat());
+            if (request->hasArg("modelHeaterW"))
+                settings->setModelHeaterW(request->arg("modelHeaterW").toFloat());
+            if (request->hasArg("modelHeatRate"))
+                settings->setModelHeatRate(request->arg("modelHeatRate").toFloat());
+            if (request->hasArg("modelLossW")) // 0 = forget the learned value; the controller reseeds on its next boot
+                settings->setModelLossW(request->arg("modelLossW").toFloat());
+            if (request->hasArg("waterDeadTimeS"))
+                settings->setWaterDeadTimeS(request->arg("waterDeadTimeS").toFloat());
+            if (request->hasArg("valveDumpMl"))
+                settings->setValveDumpMl(request->arg("valveDumpMl").toFloat());
             if (request->hasArg("steamPid"))
                 settings->setSteamPid(request->arg("steamPid"));
             if (request->hasArg("pid"))
@@ -750,6 +766,14 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["haTopic"] = settings.getHomeAssistantTopic();
     doc["heaterCoordinationEnabled"] = settings.isHeaterCoordinationEnabled();
     doc["heaterHandoverMs"] = settings.getHeaterHandoverMs();
+    doc["derivativeFilterS"] = settings.getDerivativeFilterS();
+    doc["integralZone"] = settings.getIntegralZone();
+    doc["sensorDeadTimeS"] = settings.getSensorDeadTimeS();
+    doc["modelHeaterW"] = settings.getModelHeaterW();
+    doc["modelHeatRate"] = settings.getModelHeatRate();
+    doc["modelLossW"] = settings.getModelLossW();
+    doc["waterDeadTimeS"] = settings.getWaterDeadTimeS();
+    doc["valveDumpMl"] = settings.getValveDumpMl();
     doc["pid"] = settings.getPid();
     doc["steamPid"] = settings.getSteamPid();
     doc["pumpModelCoeffs"] = settings.getPumpModelCoeffs();
