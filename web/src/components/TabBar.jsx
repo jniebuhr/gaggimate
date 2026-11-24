@@ -1,3 +1,4 @@
+// @ts-check
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { useLocation } from 'preact-iso';
 import { useLingui } from '@lingui/react/macro';
@@ -5,6 +6,14 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronLeft } from '@fortawesome/free-solid-svg-icons/faChevronLeft';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight';
 
+/**
+ * @param {object} props
+ * @param {any[]} props.tabs
+ * @param {string} props.activeTab
+ * @param {(id: string) => void} [props.onTabChange]
+ * @param {string} [props.basePath]
+ * @param {string} [props.className]
+ */
 export default function TabBar({ tabs, activeTab, onTabChange, basePath, className = '' }) {
   const location = useLocation();
   const { t } = useLingui();

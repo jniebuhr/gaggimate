@@ -1,3 +1,4 @@
+// @ts-check
 import { useEffect, useRef, useState } from 'preact/hooks';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -42,7 +43,7 @@ function MetricCell({
   const Wrapper = onClick ? 'button' : 'div';
   const wrapperProps = onClick
     ? {
-        type: 'button',
+        type: /** @type {const} */ ('button'),
         onClick,
         disabled,
         'aria-label': ariaLabel || label,

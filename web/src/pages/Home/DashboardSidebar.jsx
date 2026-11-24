@@ -1,3 +1,4 @@
+// @ts-check
 import PropTypes from 'prop-types';
 import { useDashboardState } from './useDashboardState.js';
 import { PANEL_DEFINITIONS, SPACER_ID } from '../../utils/panelDefinitions.js';

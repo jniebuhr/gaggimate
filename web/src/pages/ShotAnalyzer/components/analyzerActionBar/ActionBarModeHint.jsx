@@ -1,3 +1,4 @@
+// @ts-check
 import { createPortal } from 'preact/compat';
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import { t } from '@lingui/core/macro';

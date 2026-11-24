@@ -1,3 +1,4 @@
+// @ts-check
 /** Coordinates analyzer navigation, import actions, status hints, and loading state. */
 
 import { useCallback, useEffect, useRef } from 'preact/hooks';

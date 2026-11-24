@@ -1,3 +1,4 @@
+// @ts-check
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 export const ModeTab = ({

@@ -1,3 +1,4 @@
+// @ts-check
 import { msg, t } from '@lingui/core/macro';
 import { withTranslatedLabel } from './translatedLabel.js';
 

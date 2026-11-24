@@ -1,3 +1,4 @@
+// @ts-check
 export class TclConverter {
   /**
    * @type {number} Set to 1 to include a 'debug' object in the output JSON.

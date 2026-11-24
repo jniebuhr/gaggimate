@@ -1,3 +1,4 @@
+// @ts-check
 import { useMemo, useState } from 'preact/hooks';
 import { useRoute } from 'preact-iso';
 import { Trans } from '@lingui/react/macro';

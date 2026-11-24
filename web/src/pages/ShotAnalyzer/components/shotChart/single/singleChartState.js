@@ -1,3 +1,4 @@
+// @ts-check
 import { createHiddenExternalTooltipState } from '../ShotChartExternalTooltip';
 import { INITIAL_VISIBILITY, SINGLE_METRIC_PAGE_KEYS } from '../constants';
 import { isStaticMobileTooltipViewport } from '../scrubberUtils';
@@ -52,6 +53,10 @@ function getDefaultSingleChartVisibility() {
   };
 }
 
+/**
+ * @param {any} storedVisibility
+ * @returns {Record<string, boolean>}
+ */
 export function normalizeSingleChartVisibility(storedVisibility) {
   const defaultVisibility = getDefaultSingleChartVisibility();
   if (!storedVisibility || typeof storedVisibility !== 'object') return defaultVisibility;

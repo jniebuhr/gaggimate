@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * LibraryService.js
  *
@@ -158,7 +159,7 @@ class LibraryService {
 
   /**
    * Set API service reference
-   * @param {ApiService} apiService
+   * @param {import('../../../services/ApiService.js').default} apiService
    */
   setApiService(apiService) {
     this.apiService = apiService;

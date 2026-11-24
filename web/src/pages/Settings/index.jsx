@@ -1,3 +1,4 @@
+// @ts-check
 import { confirmProfileApply, waitForMachineHardware } from '../../utils/machineProfiles.js';
 import { requestSettings } from '../../utils/settingsRequest.js';
 import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
@@ -242,7 +243,7 @@ export function Settings() {
   const { profiles } = useProfileList();
   const [submitting, setSubmitting] = useState(false);
   const [smartDoseSaving, setSmartDoseSaving] = useState(false);
-  const [formData, setFormData] = useState({});
+  const [formData, setFormData] = useState(/** @type {Record<string, any>} */ ({}));
   const [currentTheme, setCurrentTheme] = useState('light');
   const [showWifiPassword, setShowWifiPassword] = useState(false);
   const [showApPassword, setShowApPassword] = useState(false);
@@ -270,7 +271,7 @@ export function Settings() {
     }
   }, [fetchedSettings]);
 
-  const formRef = useRef();
+  const formRef = useRef(/** @type {HTMLFormElement | null} */ (null));
   const dropdownRef = useRef(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
@@ -315,10 +316,10 @@ export function Settings() {
       }
       if (key === 'standbyDisplayEnabled') {
         value = !formData.standbyDisplayEnabled;
-        const newFormData = {
+        const newFormData = /** @type {Record<string, any>} */ ({
           ...formData,
           [key]: value,
-        };
+        });
         if (!value) {
           newFormData.standbyBrightness = 0;
         }
@@ -386,7 +387,7 @@ export function Settings() {
         machine.value.capabilities.ledControl &&
         (tankErrors.empty || tankErrors.full)
       ) {
-        if (tab === 'machine') formRef.current.reportValidity();
+        if (tab === 'machine') formRef.current?.reportValidity();
         else route('/settings/machine');
         return;
       }
@@ -684,9 +685,7 @@ export function Settings() {
         )}
       </form>
 
-      {tab === 'calibration' && (
-        <LazyCalibrationTab formData={formData} onChange={onChange} setField={setField} />
-      )}
+      {tab === 'calibration' && <LazyCalibrationTab formData={formData} setField={setField} />}
       {tab === 'bluetooth' && (isLoading ? <BluetoothTabSkeleton /> : <LazyBluetoothTab />)}
       {tab === 'system' && (isLoading ? <SystemTabSkeleton /> : <LazySystemTab />)}
     </PageLayout>

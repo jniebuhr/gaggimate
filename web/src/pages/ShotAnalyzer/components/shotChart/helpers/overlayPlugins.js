@@ -1,3 +1,4 @@
+// @ts-check
 import { getNeutralAxisTickColor } from './axisPlugins';
 import {
   CHART_LABEL_FONT_FAMILY,

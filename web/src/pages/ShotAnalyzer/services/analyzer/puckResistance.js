@@ -1,3 +1,4 @@
+// @ts-check
 import { createEmptyMetricStats } from './metricStats';
 
 export const MAX_VALID_PUCK_RESISTANCE = 100;

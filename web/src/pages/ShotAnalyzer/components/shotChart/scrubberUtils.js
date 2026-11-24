@@ -1,3 +1,4 @@
+// @ts-check
 function clampScrubberValue(value, min, max) {
   const numericValue = Number(value);
   const numericMin = Number(min);

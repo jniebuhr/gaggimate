@@ -220,7 +220,7 @@ export function TrendChart({ trends }) {
                   `${metricLabel}: ${formatTrendMetricValue(ctx.parsed.y, metricDef.key)}`,
                 afterBody: ctx => {
                   if (metricDef.key === 'shotCount') return [];
-                  const raw = ctx?.[0]?.raw;
+                  const raw = /** @type {{ shotCount?: number } | undefined} */ (ctx?.[0]?.raw);
                   if (!raw || !Number.isFinite(raw.shotCount)) return [];
                   const shotCount = raw.shotCount;
                   return [t`Shots: ${shotCount}`];

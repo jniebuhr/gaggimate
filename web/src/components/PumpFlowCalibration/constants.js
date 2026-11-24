@@ -1,3 +1,4 @@
+// @ts-check
 // Feature-scoped constants for the calibration state machine and I/O timing.
 // Kept in the feature folder because none of these are meaningful elsewhere.
 
@@ -8,6 +9,8 @@ export const PHASE = Object.freeze({
   DONE: 'done',
   ERROR: 'error',
 });
+
+/** @typedef {(typeof PHASE)[keyof typeof PHASE]} Phase */
 
 export const MODE_BREW = 1;
 export const SHOT_END_TIMEOUT_MS = 5 * 60 * 1000;

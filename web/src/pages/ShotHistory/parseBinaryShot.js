@@ -1,3 +1,4 @@
+// @ts-check
 // Parser for .slog binary shot files
 // Mirrors shot_log_format.h (keep in sync)
 // Header: v4=128 bytes, v5+=512 bytes
@@ -32,7 +33,22 @@ const FIELD_BITS = {
   // Phase number moved to header transitions in v5+
 };
 
+/**
+ * Per-sample field descriptor. Every field is 2 bytes on the wire, except the
+ * tick field `t`, which is 4 bytes (elapsed ms) from v6 on.
+ * @typedef {object} FieldDef
+ * @property {string} name Key used on the decoded sample object.
+ * @property {'uint16' | 'int16'} type Wire type (little-endian).
+ * @property {number | null} scale Divisor applied to the raw value, or null if unscaled.
+ * @property {(val: number, sampleInterval: number) => any} [transform] Custom decoder; overrides `scale`.
+ */
+
+/**
+ * @typedef {FieldDef & { bitPos: number, size?: number }} FieldLayoutEntry
+ */
+
 // Field definitions with parsing info
+/** @type {Record<number, FieldDef>} */
 const FIELD_DEFS = {
   [FIELD_BITS.T]: {
     name: 't',
@@ -213,6 +229,7 @@ export function parseBinaryShot(arrayBuffer, id) {
   }
 
   // Build field layout based on mask (preserves field order)
+  /** @type {FieldLayoutEntry[]} */
   const fieldLayout = [];
   for (let bitPos = 0; bitPos < 32; bitPos++) {
     if (fieldsMask & (1 << bitPos)) {

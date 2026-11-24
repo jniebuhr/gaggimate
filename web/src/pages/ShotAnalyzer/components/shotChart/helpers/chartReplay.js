@@ -1,3 +1,4 @@
+// @ts-check
 export const replayRevealPlugin = {
   id: 'replayReveal',
   beforeDatasetsDraw(chart) {

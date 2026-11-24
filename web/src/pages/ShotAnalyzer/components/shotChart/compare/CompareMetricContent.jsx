@@ -1,3 +1,4 @@
+// @ts-check
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { t } from '@lingui/core/macro';
 import { Trans } from '@lingui/react/macro';
@@ -281,6 +282,14 @@ function getCompareChartLegendTitleData({ iconColor, icons, labelKey, title, var
   };
 }
 
+/**
+ * @param {object} props
+ * @param {string} props.title
+ * @param {string} [props.labelKey] Legend label used to resolve the icon; defaults to the title.
+ * @param {string} [props.variant]
+ * @param {string | null} [props.iconColor]
+ * @param {Array<{ key: string, icon: any, color: string | null }> | null} [props.icons]
+ */
 export function CompareChartTitle({
   title,
   labelKey,

@@ -1,3 +1,4 @@
+// @ts-check
 // Trend bucketing is intentionally done in the frontend so StatisticsService can stay
 // focused on per-shot outputs. Buckets use local/browser time for user-facing charts.
 import { t } from '@lingui/core/macro';
