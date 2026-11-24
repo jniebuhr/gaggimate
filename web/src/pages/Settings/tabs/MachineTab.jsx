@@ -175,7 +175,7 @@ function ValveCalibrationFields({ formData, onChange }) {
               id={`valveCalP${n}`}
               name={`valveCalP${n}`}
               type='number'
-              step='any'
+              step='0.001'
               className='grow'
               value={formData[`valveCalP${n}`]}
               onChange={onChange(`valveCalP${n}`)}
@@ -192,7 +192,7 @@ function ValveCalibrationFields({ formData, onChange }) {
               id={`valveCalF${n}`}
               name={`valveCalF${n}`}
               type='number'
-              step='any'
+              step='0.001'
               className='grow'
               value={formData[`valveCalF${n}`]}
               onChange={onChange(`valveCalF${n}`)}
@@ -218,7 +218,7 @@ function ValveCalibrationFields({ formData, onChange }) {
             id='valveCalPMax'
             name='valveCalPMax'
             type='number'
-            step='any'
+            step='0.001'
             className='grow'
             value={formData.valveCalPMax}
             onChange={onChange('valveCalPMax')}
@@ -235,7 +235,7 @@ function ValveCalibrationFields({ formData, onChange }) {
             id='valveCalFMax'
             name='valveCalFMax'
             type='number'
-            step='any'
+            step='0.001'
             className='grow'
             value={formData.valveCalFMax}
             onChange={onChange('valveCalFMax')}

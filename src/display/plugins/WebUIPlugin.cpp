@@ -777,12 +777,15 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["temperatureOffset"] = String(settings.getTemperatureOffset());
     doc["pressureOffset"] = String(settings.getPressureOffset());
     doc["pressureOffsetFlowDerived"] = settings.isPressureOffsetFlowDerived();
-    doc["valveCalP1"] = String(settings.getValveCalP1());
-    doc["valveCalF1"] = String(settings.getValveCalF1());
-    doc["valveCalP2"] = String(settings.getValveCalP2());
-    doc["valveCalF2"] = String(settings.getValveCalF2());
-    doc["valveCalPMax"] = String(settings.getValveCalPMax());
-    doc["valveCalFMax"] = String(settings.getValveCalFMax());
+    // Three decimals, unlike the offsets above: these are measurements, and the settings page
+    // posts every field back on any save, so anything the default two-decimal String() drops is
+    // written over the user's calibration the next time they change an unrelated setting.
+    doc["valveCalP1"] = String(settings.getValveCalP1(), 3);
+    doc["valveCalF1"] = String(settings.getValveCalF1(), 3);
+    doc["valveCalP2"] = String(settings.getValveCalP2(), 3);
+    doc["valveCalF2"] = String(settings.getValveCalF2(), 3);
+    doc["valveCalPMax"] = String(settings.getValveCalPMax(), 3);
+    doc["valveCalFMax"] = String(settings.getValveCalFMax(), 3);
     doc["pressureScaling"] = String(settings.getPressureScaling());
     doc["scaleFactor1"] = settings.getScaleFactor1();
     doc["scaleFactor2"] = settings.getScaleFactor2();
