@@ -8,6 +8,7 @@ extern "C" {
 #endif
 
 extern const lv_font_t ui_font_montserrat_symbol;
+extern const lv_font_t ui_font_montserrat_24_accented;
 
 #ifndef EXT_FONT_DESC_T
 #define EXT_FONT_DESC_T

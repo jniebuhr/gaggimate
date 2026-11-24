@@ -26,9 +26,7 @@ struct Config {
     }
     bool cupReady() const { return cupEnabled && std::isfinite(cup) && cup > 0 && cup <= 2000; }
     bool pfReady() const { return pfEnabled && std::isfinite(pf) && pf > 0 && pf <= 2000; }
-    bool autoReady() const {
-        return cupReady() && pfReady() && (cupHardware != pfHardware || cup + 1.2f < pf + 5.0f - 0.2f);
-    }
+    bool autoReady() const { return cupReady() && pfReady() && (cupHardware != pfHardware || cup + 1.2f < pf + 5.0f - 0.2f); }
     Mode mode() const {
         if (preference == Mode::AUTOMATIC && autoReady())
             return preference;
@@ -137,10 +135,9 @@ class Coordinator {
                 return action;
             }
             const auto mode = config.mode();
-            const bool cup = config.automatic && config.cupHardware == hardware &&
-                             (mode == Mode::CUP || mode == Mode::AUTOMATIC);
-            const bool pf = config.automatic && config.pfHardware == hardware &&
-                            (mode == Mode::PORTAFILTER || mode == Mode::AUTOMATIC);
+            const bool cup = config.automatic && config.cupHardware == hardware && (mode == Mode::CUP || mode == Mode::AUTOMATIC);
+            const bool pf =
+                config.automatic && config.pfHardware == hardware && (mode == Mode::PORTAFILTER || mode == Mode::AUTOMATIC);
             const float added = value - r.baseline;
             if (cup && std::abs(added - config.cup) <= ACCESSORY_WEIGHT_TOLERANCE_G) {
                 // Placement is relative to the previous stable weight, including
