@@ -3710,6 +3710,10 @@ msgstr "点 {n} 压力"
 msgid "Point 1 flow must be above zero. If nothing flowed there, your valve cracks open above that pressure — take point 1 higher."
 msgstr "点1的流量必须大于零。如果那里没有水流，说明你的阀门在更高的压力才开启——请把点1取在更高处。"
 
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Point 1 pressure must be above zero — take it comfortably above where your valve cracks open."
+msgstr "点1的压力必须大于零——请在明显高于阀门开启压力处测量。"
+
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
 msgctxt "pump mode"

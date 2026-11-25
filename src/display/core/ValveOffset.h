@@ -46,6 +46,15 @@ inline float valveOffsetAt(float flow, float fixedOffset, bool flowDerived, floa
     // f1 nobody ever set.
     if (!(f1 > 0.0f))
         return fixedOffset;
+    // The same for the first pressure, and for the same reason: a cleared field reaches the
+    // registry as 0, since String::toFloat() renders "" as zero. Nothing else reliably catches
+    // it — p2 > p1 is satisfied by any positive p2, so only the slope band stands in the way,
+    // and a wide span passes it. p1=0, f1=1, p2=5, f2=4 yields 1.67 bar per g/s and an offset
+    // fitted through a point nobody measured. A valve's first point sits above its cracking
+    // pressure, so zero is never one. This also anchors the chain: p2 > p1 and pMax > p2 then
+    // make every pressure positive.
+    if (!(p1 > 0.0f))
+        return fixedOffset;
     if (!(f2 > f1) || !(p2 > p1))
         return fixedOffset;
     const float slope = (p2 - p1) / (f2 - f1);

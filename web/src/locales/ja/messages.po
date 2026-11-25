@@ -3710,6 +3710,10 @@ msgstr "ポイント {n} の圧力"
 msgid "Point 1 flow must be above zero. If nothing flowed there, your valve cracks open above that pressure — take point 1 higher."
 msgstr "ポイント1の流量は0より大きい必要があります。そこで何も流れなかった場合、バルブはその圧力より上で開き始めます — ポイント1をより高い圧力で取り直してください。"
 
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Point 1 pressure must be above zero — take it comfortably above where your valve cracks open."
+msgstr "ポイント1の圧力は0より大きい必要があります — バルブが開き始める圧力より十分高いところで測定してください。"
+
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
 msgctxt "pump mode"

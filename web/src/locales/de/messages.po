@@ -3710,6 +3710,10 @@ msgstr "Druck Punkt {n}"
 msgid "Point 1 flow must be above zero. If nothing flowed there, your valve cracks open above that pressure — take point 1 higher."
 msgstr "Der Durchfluss von Punkt 1 muss über null liegen. Floss dort nichts, öffnet dein Ventil erst oberhalb dieses Drucks — lege Punkt 1 höher."
 
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Point 1 pressure must be above zero — take it comfortably above where your valve cracks open."
+msgstr "Der Druck von Punkt 1 muss über null liegen — nimm ihn deutlich oberhalb des Drucks, bei dem dein Ventil öffnet."
+
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
 msgctxt "pump mode"

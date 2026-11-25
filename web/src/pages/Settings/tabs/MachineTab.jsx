@@ -66,6 +66,7 @@ function valveLine(formData) {
   // Zero is the uncalibrated default for the flows, not a measurement. A valve passes nothing
   // only at or below its cracking pressure, so a zero here means point 1 was taken too low —
   // and left unchecked it would fit a line off an unset field.
+  if (p1 <= 0) return { error: 'first-pressure-missing' };
   if (f1 <= 0) return { error: 'first-flow-missing' };
   if (p2 <= p1) return { error: 'pressure-order' };
   if (f2 <= f1) return { error: 'flow-order' };
@@ -94,6 +95,13 @@ function valveLine(formData) {
 
 function ValveCalibrationError({ error, slope }) {
   switch (error) {
+    case 'first-pressure-missing':
+      return (
+        <Trans>
+          Point 1 pressure must be above zero — take it comfortably above where your valve cracks
+          open.
+        </Trans>
+      );
     case 'first-flow-missing':
       return (
         <Trans>

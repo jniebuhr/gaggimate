@@ -3710,6 +3710,10 @@ msgstr "Presión del punto {n}"
 msgid "Point 1 flow must be above zero. If nothing flowed there, your valve cracks open above that pressure — take point 1 higher."
 msgstr "El flujo del punto 1 debe ser mayor que cero. Si allí no fluyó nada, tu válvula se abre por encima de esa presión: sitúa el punto 1 más alto."
 
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Point 1 pressure must be above zero — take it comfortably above where your valve cracks open."
+msgstr "La presión del punto 1 debe ser mayor que cero: tómala bastante por encima de donde se abre tu válvula."
+
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
 msgctxt "pump mode"

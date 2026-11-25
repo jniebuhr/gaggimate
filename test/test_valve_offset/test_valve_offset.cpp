@@ -118,6 +118,15 @@ void test_unset_first_flow_falls_back(void) {
     TEST_ASSERT_EQUAL_FLOAT(FIXED, valveOffsetAt(1.0f, FIXED, true, 5.0f, -1.0f, 6.0f, 2.0f, 6.6f));
 }
 
+void test_unset_first_pressure_falls_back(void) {
+    // A cleared P1 field reaches the registry as 0, because String::toFloat() renders "" as zero.
+    // p2 > p1 is satisfied by any positive p2, so the slope band is the only other obstacle — and
+    // a wide span clears it: 5 / (4 - 1) is 1.67, inside 0.3-2.0.
+    TEST_ASSERT_EQUAL_FLOAT(FIXED, valveOffsetAt(2.0f, FIXED, true, 0.0f, 1.0f, 5.0f, 4.0f, 6.6f));
+    // A negative first pressure is no more a measurement, and the registry would accept it too.
+    TEST_ASSERT_EQUAL_FLOAT(FIXED, valveOffsetAt(2.0f, FIXED, true, -1.0f, 1.0f, 5.0f, 4.0f, 6.6f));
+}
+
 void test_negative_flow_does_not_invert_the_offset(void) {
     // A spurious negative reading must not pull the offset below the cracking intercept.
     TEST_ASSERT_EQUAL_FLOAT(derived(0.0f), derived(-3.0f));
@@ -221,6 +230,7 @@ int main(int, char **) {
     RUN_TEST(test_non_finite_inputs_fall_back);
     RUN_TEST(test_uncalibrated_defaults_fall_back);
     RUN_TEST(test_unset_first_flow_falls_back);
+    RUN_TEST(test_unset_first_pressure_falls_back);
     RUN_TEST(test_negative_flow_does_not_invert_the_offset);
     RUN_TEST(test_missing_cap_falls_back);
     RUN_TEST(test_cap_at_or_below_the_second_point_falls_back);
