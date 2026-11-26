@@ -18,6 +18,7 @@ export const CHECKBOX_KEYS = [
   'clock24hFormat',
   'autowakeupEnabled',
   'smartGrindToggle',
+  'pressureOffsetFlowDerived',
 ];
 
 export function splitPidString(pidString) {

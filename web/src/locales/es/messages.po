@@ -156,6 +156,14 @@ msgstr "<0>Emparejamiento:</0> GaggiMate aparece en el molino como una máquina 
 msgid "1 year ago"
 msgstr "hace 1 año"
 
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "100% pump flow must be higher than point 2."
+msgstr "El flujo al 100 % de bomba debe ser mayor que el del punto 2."
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "100% pump pressure must be higher than point 2."
+msgstr "La presión al 100 % de bomba debe ser mayor que la del punto 2."
+
 #: src/app/appSettings.js
 msgid "A brew started on the machine."
 msgstr "Se ha iniciado una extracción en la máquina."
@@ -175,6 +183,10 @@ msgstr "Vienen preinstalados algunos perfiles para que empieces enseguida, desde
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "A given alpha behaves faster in time at 80 SPS because it is applied more often. Tune the two alpha values independently for your installed sample rate. Changing sample rate resets both values to 0.80 at 10 SPS or 0.40 at 80 SPS as sensible starting points."
 msgstr "Un mismo alpha actúa más rápido en el tiempo a 80 SPS porque se aplica con más frecuencia. Ajusta los dos valores de alpha por separado para la frecuencia de muestreo instalada. Al cambiar la frecuencia de muestreo, ambos valores se restablecen a 0.80 a 10 SPS o 0.40 a 80 SPS como puntos de partida razonables."
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "A spring-loaded mushroom valve's drop grows with the flow through it, so a single number is only correct at one flow rate. Enable this to enter measured points instead. Leave off for a 3-way solenoid or a fixed offset. Calibrate Pump Flow Coefficients above first — this mode reads the firmware's flow estimate, so the offset is only as accurate as that model."
+msgstr "La caída de presión de una válvula de hongo con muelle aumenta con el flujo que la atraviesa, por lo que un único valor solo es correcto a un caudal. Actívalo para introducir puntos medidos en su lugar. Déjalo desactivado si tienes una electroválvula de 3 vías o prefieres una compensación fija. Calibra primero los Coeficientes de flujo de bomba de arriba: este modo usa la estimación de flujo del firmware, así que la compensación solo será tan precisa como ese modelo."
 
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Access Point Password"
@@ -601,6 +613,10 @@ msgstr "Tipo de grano"
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
 msgid "Beans"
 msgstr "Granos"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Before measuring, untick Vary offset with flow, set Pressure Offset to 0, and save — otherwise the machine keeps applying the offset it already has and the reading is not the valve's own drop. Take every measurement with no puck in the portafilter, then turn the mode back on once the numbers are in."
+msgstr "Antes de medir, desmarca «Variar la compensación con el flujo», pon la Compensación de presión a 0 y guarda: de lo contrario la máquina sigue aplicando la compensación que ya tiene y la lectura no es la caída propia de la válvula. Haz todas las mediciones sin pastilla de café en el portafiltro y vuelve a activar el modo cuando hayas introducido los valores."
 
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
 #: src/pages/ShotHistory/ShotNotesCard.jsx
@@ -1772,6 +1788,10 @@ msgid "Enter a name for this profile"
 msgstr "Introduce un nombre para este perfil"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Enter a pressure and a flow for both calibration points."
+msgstr "Introduce una presión y un flujo para ambos puntos de calibración."
+
+#: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Enter a whole number of millimeters, 0 or more."
 msgstr "Introduce un número entero de milímetros, 0 o más."
 
@@ -1782,6 +1802,10 @@ msgstr "Introduce el rango en bar del sensor de presión utilizado"
 #: src/app/MachineSetup.jsx
 msgid "Enter the hostname or IP address of your machine."
 msgstr "Introduce el nombre de host o la dirección IP de tu máquina."
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Enter the pressure and flow measured at 100% pump."
+msgstr "Introduce la presión y el flujo medidos al 100 % de bomba."
 
 #: src/components/VisualizerUploadModal.jsx
 msgid "Enter your password"
@@ -2016,6 +2040,10 @@ msgstr "Llena el depósito de agua y cierra la llave de vapor."
 msgid "Filter library source"
 msgstr "Filtrar origen de la biblioteca"
 
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Finally, run the pump at 100% and record the stable pressure and flow. That is the highest drop this machine can produce, and the offset is capped there. If the pressure is not above Point 2, Point 2 was never actually reached — redo it lower."
+msgstr "Por último, haz funcionar la bomba al 100 % y anota la presión y el flujo estables. Esa es la mayor caída que puede producir esta máquina, y ahí se limita la compensación. Si la presión no es superior a la del punto 2, el punto 2 nunca se alcanzó realmente: repítelo más bajo."
+
 #: src/pages/Home/utils.js
 msgctxt "process action"
 msgid "Finish"
@@ -2066,6 +2094,10 @@ msgstr "Flujo y volumen"
 #: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
 msgid "Flow above"
 msgstr "Flujo por encima de"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Flow at 100% pump"
+msgstr "Flujo al 100 % de bomba"
 
 #: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
 msgid "Flow below"
@@ -2246,6 +2278,7 @@ msgstr "gramos"
 
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
+#: src/pages/Settings/tabs/MachineTab.jsx
 msgid "grams per second"
 msgstr "gramos por segundo"
 
@@ -2395,6 +2428,10 @@ msgstr "Mayor volumen"
 msgctxt "flush duration"
 msgid "Hold"
 msgstr "Mantener"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Hold a target pressure long enough to read a steady flow in g/s, then repeat about a bar higher. Record the pressure the machine actually holds, not the target you set. Keep the two points well apart — the span is what makes the slope trustworthy. If nothing flows at the lower value, your valve cracks above it."
+msgstr "Mantén una presión objetivo el tiempo suficiente para leer un flujo estable en g/s y repite alrededor de un bar más arriba. Anota la presión que la máquina mantiene realmente, no el objetivo que fijaste. Separa bien los dos puntos: es la distancia entre ellos lo que hace fiable la pendiente. Si no fluye nada en el valor más bajo, tu válvula se abre por encima de él."
 
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Hold runs the flush for as long as the button is held. The valve stays open for one more second after the pump stops."
@@ -3337,6 +3374,10 @@ msgctxt "pump mode"
 msgid "Off"
 msgstr "Apagada"
 
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Offset {at1} bar at 1 g/s, {at2} bar at 2 g/s<0> ({slopeText} bar per g/s)</0>, capped at {capBar} bar above {capFlow} g/s"
+msgstr "Compensación de {at1} bar a 1 g/s, {at2} bar a 2 g/s<0> ({slopeText} bar por g/s)</0>, limitada a {capBar} bar por encima de {capFlow} g/s"
+
 #: src/pages/Home/cards/MachineLevelsCard.jsx
 #: src/utils/metricDefinitions.js
 msgid "OK"
@@ -3657,6 +3698,22 @@ msgstr "Plugins"
 msgid "PNG, JPEG, WebP or BMP. GIFs are not supported. The image is cropped to a square and scaled to 300×300 pixels for the display."
 msgstr "PNG, JPEG, WebP o BMP. Los GIF no son compatibles. La imagen se recorta en cuadrado y se escala a 300×300 píxeles para la pantalla."
 
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Point {n} flow"
+msgstr "Flujo del punto {n}"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Point {n} pressure"
+msgstr "Presión del punto {n}"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Point 1 flow must be above zero. If nothing flowed there, your valve cracks open above that pressure — take point 1 higher."
+msgstr "El flujo del punto 1 debe ser mayor que cero. Si allí no fluyó nada, tu válvula se abre por encima de esa presión: sitúa el punto 1 más alto."
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Point 1 pressure must be above zero — take it comfortably above where your valve cracks open."
+msgstr "La presión del punto 1 debe ser mayor que cero: tómala bastante por encima de donde se abre tu válvula."
+
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
 msgctxt "pump mode"
@@ -3759,6 +3816,10 @@ msgstr "Presión y flujo de bomba"
 #: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
 msgid "Pressure above"
 msgstr "Presión por encima de"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Pressure at 100% pump"
+msgstr "Presión al 100 % de bomba"
 
 #: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
 msgid "Pressure below"
@@ -4509,6 +4570,10 @@ msgstr "Guardar ajustes"
 #: src/pages/ProfileEdit/ProfileImageUpload.jsx
 msgid "Save the profile first to add an image."
 msgstr "Guarda primero el perfil para añadir una imagen."
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Save this and the machine will use the fixed Pressure Offset above, not a flow-derived one."
+msgstr "Si guardas así, la máquina usará la Compensación de presión fija de arriba, no una derivada del flujo."
 
 #: src/pages/ShotAnalyzer/components/analyzerActionBar/MobileStatusActionsMenu.jsx
 msgid "Save to Browser"
@@ -5699,6 +5764,10 @@ msgstr "¡Gracias por instalar GaggiMate!"
 msgid "Thank you for installing GaggiMate! Your machine is ready for its first shot."
 msgstr "¡Gracias por instalar GaggiMate! Tu máquina está lista para su primera extracción."
 
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "That works out to {slopeText} bar per g/s. A mushroom valve's drop usually rises between {lo} and {hi} bar per g/s, so one of the two flow readings is probably off."
+msgstr "Eso da {slopeText} bar por g/s. La caída de una válvula de hongo suele aumentar entre {lo} y {hi} bar por g/s, así que probablemente una de las dos lecturas de flujo sea errónea."
+
 #: src/utils/machineProfiles.js
 msgid "The {profileName} profile is not supported by your current board or firmware."
 msgstr "El perfil {profileName} no es compatible con tu placa o firmware actual."
@@ -5767,6 +5836,10 @@ msgstr "El molino accede a GaggiMate a través de esta dirección, así que ambo
 msgid "The heater runs at full power for up to 10 seconds. The test passes as soon as the boiler temperature has risen by a few degrees, which can take up to 30 more seconds on a larger boiler."
 msgstr "La resistencia funciona a plena potencia durante un máximo de 10 segundos. La prueba se supera en cuanto la temperatura de la caldera ha subido unos grados, lo que puede tardar hasta 30 segundos más en una caldera grande."
 
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "The machine does not read this figure — it only places the cap in the preview. Save this and the fitted line will still be used."
+msgstr "La máquina no usa este valor: solo sitúa el límite en la vista previa. Si guardas así, se seguirá usando la recta ajustada."
+
 #: src/app/appSettings.js
 msgid "The machine has been in steam mode for 5 minutes."
 msgstr "La máquina lleva 5 minutos en modo vapor."
@@ -5814,6 +5887,14 @@ msgstr "Se encontró la báscula, pero falló la conexión Bluetooth. Inténtalo
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "The scale wasn't found. Make sure it's switched on and nearby, then scan again."
 msgstr "No se encontró la báscula. Asegúrate de que esté encendida y cerca, y vuelve a buscar."
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "The second flow must be higher than the first."
+msgstr "El segundo flujo debe ser mayor que el primero."
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "The second pressure must be higher than the first."
+msgstr "La segunda presión debe ser mayor que la primera."
 
 #: src/pages/ProfileList/index.jsx
 msgid "The selected profile can't be deleted"
@@ -6302,6 +6383,10 @@ msgstr "Válvula abierta, liberando presión…"
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
 msgid "Valve state selection"
 msgstr "Selección del estado de la válvula"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Vary offset with flow"
+msgstr "Variar la compensación con el flujo"
 
 #: src/app/AppSettings.jsx
 msgid "Version {bundleVersion}"

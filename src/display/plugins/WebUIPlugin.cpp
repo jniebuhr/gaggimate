@@ -494,6 +494,20 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setTemperatureOffset(request->arg("temperatureOffset").toInt());
             if (request->hasArg("pressureOffset"))
                 settings->setPressureOffset(request->arg("pressureOffset").toFloat());
+            if (request->hasArg("pressureOffsetFlowDerived"))
+                settings->setPressureOffsetFlowDerived(parseBoolArg(request->arg("pressureOffsetFlowDerived")));
+            if (request->hasArg("valveCalP1"))
+                settings->setValveCalP1(request->arg("valveCalP1").toFloat());
+            if (request->hasArg("valveCalF1"))
+                settings->setValveCalF1(request->arg("valveCalF1").toFloat());
+            if (request->hasArg("valveCalP2"))
+                settings->setValveCalP2(request->arg("valveCalP2").toFloat());
+            if (request->hasArg("valveCalF2"))
+                settings->setValveCalF2(request->arg("valveCalF2").toFloat());
+            if (request->hasArg("valveCalPMax"))
+                settings->setValveCalPMax(request->arg("valveCalPMax").toFloat());
+            if (request->hasArg("valveCalFMax"))
+                settings->setValveCalFMax(request->arg("valveCalFMax").toFloat());
             if (request->hasArg("pressureScaling"))
                 settings->setPressureScaling(request->arg("pressureScaling").toFloat());
             if (request->hasArg("scaleFactor1") || request->hasArg("scaleFactor2")) {
@@ -762,6 +776,16 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["mdnsName"] = settings.getMdnsName();
     doc["temperatureOffset"] = String(settings.getTemperatureOffset());
     doc["pressureOffset"] = String(settings.getPressureOffset());
+    doc["pressureOffsetFlowDerived"] = settings.isPressureOffsetFlowDerived();
+    // Three decimals, unlike the offsets above: these are measurements, and the settings page
+    // posts every field back on any save, so anything the default two-decimal String() drops is
+    // written over the user's calibration the next time they change an unrelated setting.
+    doc["valveCalP1"] = String(settings.getValveCalP1(), 3);
+    doc["valveCalF1"] = String(settings.getValveCalF1(), 3);
+    doc["valveCalP2"] = String(settings.getValveCalP2(), 3);
+    doc["valveCalF2"] = String(settings.getValveCalF2(), 3);
+    doc["valveCalPMax"] = String(settings.getValveCalPMax(), 3);
+    doc["valveCalFMax"] = String(settings.getValveCalFMax(), 3);
     doc["pressureScaling"] = String(settings.getPressureScaling());
     doc["scaleFactor1"] = settings.getScaleFactor1();
     doc["scaleFactor2"] = settings.getScaleFactor2();

@@ -12,7 +12,11 @@ import { Tooltip } from '../../../components/Tooltip.jsx';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCrosshairs } from '@fortawesome/free-solid-svg-icons/faCrosshairs';
 import { faWeightScale } from '@fortawesome/free-solid-svg-icons/faWeightScale';
-import { InputGroupField, SettingsFormField } from '../../../components/SettingsFormField.jsx';
+import {
+  InputGroupField,
+  SettingsFormField,
+  ToggleField,
+} from '../../../components/SettingsFormField.jsx';
 import { CleaningSection } from './CleaningSection.jsx';
 import { validateTankCalibration } from '../../../utils/waterLevel.js';
 
@@ -22,6 +26,260 @@ const pressureAvailable = computed(() => machine.value.capabilities.pressure);
 const tofDistance = computed(() => machine.value.status.tofDistance);
 const hardwareScaleAvailable = computed(() => !!machine.value.capabilities.hardwareScale);
 const status = computed(() => machine.value.status);
+
+// Plausibility band for the mushroom-valve slope, bar per g/s. Mirrors VALVE_CAL_MIN_SLOPE /
+// VALVE_CAL_MAX_SLOPE in src/display/core/constants.h — keep the two in step.
+//
+// Rounded to 32-bit, because the firmware's constants are floats and 0.3 is not exactly
+// representable: compared in double precision, ordinary two-decimal entries land on the other
+// side of the bound from where the machine puts them. 5.00/1.00 to 5.30/2.00 is accepted by the
+// firmware and would be rejected here; 5.00/1.10 to 5.33/2.20 is the reverse.
+const VALVE_CAL_MIN_SLOPE = Math.fround(0.3);
+const VALVE_CAL_MAX_SLOPE = Math.fround(2.0);
+
+// The settings are stored and used as 32-bit floats, so every step below rounds the way the
+// firmware's arithmetic does. Without this the page can reach a different verdict from
+// valveOffsetAt on the very same numbers.
+const f32 = Math.fround;
+
+// Two measured (pressure, flow) points define the valve's drop-vs-flow line, and a third measured
+// at 100% pump duty caps it. Returns an error code instead of a line whenever the set cannot
+// describe a valve. The codes are turned into text by ValveCalibrationError, so this stays a pure
+// function and every user-visible string sits inside a component where the translation macros
+// apply.
+//
+// Most of these conditions are also the ones valveOffsetAt falls back to the fixed offset on, but
+// not all of them: it is never handed fMax, which exists only to place the cap in the preview. An
+// error that concerns fMax alone is therefore marked previewOnly, because the firmware will go on
+// using the fitted line regardless. Saying otherwise would tell the user the opposite of what the
+// machine does.
+function valveLine(formData) {
+  const p1 = f32(Number.parseFloat(formData.valveCalP1));
+  const f1 = f32(Number.parseFloat(formData.valveCalF1));
+  const p2 = f32(Number.parseFloat(formData.valveCalP2));
+  const f2 = f32(Number.parseFloat(formData.valveCalF2));
+  const pMax = f32(Number.parseFloat(formData.valveCalPMax));
+  const fMax = f32(Number.parseFloat(formData.valveCalFMax));
+  if (![p1, f1, p2, f2].every(Number.isFinite)) {
+    return { error: 'points-incomplete' };
+  }
+  // Zero is the uncalibrated default for the flows, not a measurement. A valve passes nothing
+  // only at or below its cracking pressure, so a zero here means point 1 was taken too low —
+  // and left unchecked it would fit a line off an unset field.
+  if (p1 <= 0) return { error: 'first-pressure-missing' };
+  if (f1 <= 0) return { error: 'first-flow-missing' };
+  if (p2 <= p1) return { error: 'pressure-order' };
+  if (f2 <= f1) return { error: 'flow-order' };
+  const slope = f32(f32(p2 - p1) / f32(f2 - f1));
+  if (slope < VALVE_CAL_MIN_SLOPE || slope > VALVE_CAL_MAX_SLOPE) {
+    return { error: 'slope-implausible', slope };
+  }
+  // The ceiling is required: without it the line is unbounded and the model would ask for more
+  // drop than the machine can produce.
+  if (!Number.isFinite(pMax) || !Number.isFinite(fMax) || pMax <= 0 || fMax <= 0) {
+    // Everything the firmware checks may still be present here: only the ceiling's flow is
+    // missing, and that figure never reaches it.
+    return { error: 'max-incomplete', previewOnly: Number.isFinite(pMax) && pMax > p2 };
+  }
+  // A ceiling at or below point 2 would clip a pressure the user measured.
+  if (pMax <= p2) return { error: 'max-pressure-order' };
+  if (fMax <= f2) return { error: 'max-flow-order', previewOnly: true };
+  const intercept = f32(p1 - f32(slope * f1));
+  return {
+    slope,
+    intercept,
+    pMax,
+    at: q => Math.max(0, Math.min(pMax, f32(intercept + f32(slope * Math.max(0, q))))),
+  };
+}
+
+function ValveCalibrationError({ error, slope }) {
+  switch (error) {
+    case 'first-pressure-missing':
+      return (
+        <Trans>
+          Point 1 pressure must be above zero — take it comfortably above where your valve cracks
+          open.
+        </Trans>
+      );
+    case 'first-flow-missing':
+      return (
+        <Trans>
+          Point 1 flow must be above zero. If nothing flowed there, your valve cracks open above
+          that pressure — take point 1 higher.
+        </Trans>
+      );
+    case 'pressure-order':
+      return <Trans>The second pressure must be higher than the first.</Trans>;
+    case 'flow-order':
+      return <Trans>The second flow must be higher than the first.</Trans>;
+    case 'slope-implausible': {
+      const slopeText = slope.toFixed(2);
+      const lo = VALVE_CAL_MIN_SLOPE.toFixed(1);
+      const hi = VALVE_CAL_MAX_SLOPE.toFixed(1);
+      return (
+        <Trans>
+          That works out to {slopeText} bar per g/s. A mushroom valve&apos;s drop usually rises
+          between {lo} and {hi} bar per g/s, so one of the two flow readings is probably off.
+        </Trans>
+      );
+    }
+    case 'max-incomplete':
+      return <Trans>Enter the pressure and flow measured at 100% pump.</Trans>;
+    case 'max-pressure-order':
+      return <Trans>100% pump pressure must be higher than point 2.</Trans>;
+    case 'max-flow-order':
+      return <Trans>100% pump flow must be higher than point 2.</Trans>;
+    default:
+      return <Trans>Enter a pressure and a flow for both calibration points.</Trans>;
+  }
+}
+
+function ValveCalibrationPreview({ line }) {
+  const at1 = line.at(1).toFixed(2);
+  const at2 = line.at(2).toFixed(2);
+  const slopeText = line.slope.toFixed(3);
+  const capBar = line.pMax.toFixed(2);
+  const capFlow = ((line.pMax - line.intercept) / line.slope).toFixed(1);
+  return (
+    <div className='mt-2 text-xs opacity-70'>
+      <Trans>
+        Offset {at1} bar at 1 g/s, {at2} bar at 2 g/s
+        <span className='opacity-60'> ({slopeText} bar per g/s)</span>, capped at {capBar} bar above{' '}
+        {capFlow} g/s
+      </Trans>
+    </div>
+  );
+}
+
+function ValveCalibrationFields({ formData, onChange }) {
+  const { t } = useLingui();
+  const line = valveLine(formData);
+  return (
+    <div className='border-base-content/10 mt-2 rounded-lg border p-3'>
+      <p className='mb-3 text-xs opacity-70'>
+        <Trans>
+          Before measuring, untick Vary offset with flow, set Pressure Offset to 0, and save —
+          otherwise the machine keeps applying the offset it already has and the reading is not the
+          valve&apos;s own drop. Take every measurement with no puck in the portafilter, then turn
+          the mode back on once the numbers are in.
+        </Trans>
+      </p>
+      <p className='mb-3 text-xs opacity-70'>
+        <Trans>
+          Hold a target pressure long enough to read a steady flow in g/s, then repeat about a bar
+          higher. Record the pressure the machine actually holds, not the target you set. Keep the
+          two points well apart — the span is what makes the slope trustworthy. If nothing flows at
+          the lower value, your valve cracks above it.
+        </Trans>
+      </p>
+      {[1, 2].map(n => (
+        <div key={n} className='mb-2 grid grid-cols-1 gap-2 sm:grid-cols-2'>
+          <InputGroupField
+            label={t`Point ${n} pressure`}
+            htmlFor={`valveCalP${n}`}
+            unit='bar'
+            noMargin
+          >
+            <input
+              id={`valveCalP${n}`}
+              name={`valveCalP${n}`}
+              type='number'
+              step='0.001'
+              className='grow'
+              value={formData[`valveCalP${n}`]}
+              onChange={onChange(`valveCalP${n}`)}
+            />
+          </InputGroupField>
+          <InputGroupField
+            label={t`Point ${n} flow`}
+            htmlFor={`valveCalF${n}`}
+            unit='g/s'
+            unitAriaLabel={t`grams per second`}
+            noMargin
+          >
+            <input
+              id={`valveCalF${n}`}
+              name={`valveCalF${n}`}
+              type='number'
+              step='0.001'
+              className='grow'
+              value={formData[`valveCalF${n}`]}
+              onChange={onChange(`valveCalF${n}`)}
+            />
+          </InputGroupField>
+        </div>
+      ))}
+      <p className='mt-3 mb-2 text-xs opacity-70'>
+        <Trans>
+          Finally, run the pump at 100% and record the stable pressure and flow. That is the highest
+          drop this machine can produce, and the offset is capped there. If the pressure is not
+          above Point 2, Point 2 was never actually reached — redo it lower.
+        </Trans>
+      </p>
+      <div className='mb-2 grid grid-cols-1 gap-2 sm:grid-cols-2'>
+        <InputGroupField
+          label={t`Pressure at 100% pump`}
+          htmlFor='valveCalPMax'
+          unit='bar'
+          noMargin
+        >
+          <input
+            id='valveCalPMax'
+            name='valveCalPMax'
+            type='number'
+            step='0.001'
+            className='grow'
+            value={formData.valveCalPMax}
+            onChange={onChange('valveCalPMax')}
+          />
+        </InputGroupField>
+        <InputGroupField
+          label={t`Flow at 100% pump`}
+          htmlFor='valveCalFMax'
+          unit='g/s'
+          unitAriaLabel={t`grams per second`}
+          noMargin
+        >
+          <input
+            id='valveCalFMax'
+            name='valveCalFMax'
+            type='number'
+            step='0.001'
+            className='grow'
+            value={formData.valveCalFMax}
+            onChange={onChange('valveCalFMax')}
+          />
+        </InputGroupField>
+      </div>
+      {line.error ? (
+        <div className='mt-2 text-xs'>
+          <div className='text-error'>
+            <ValveCalibrationError error={line.error} slope={line.slope} />
+          </div>
+          {/* Conditional on saving, because formData is what is being edited rather than what the
+              firmware holds, and split on previewOnly, because an fMax the firmware never reads
+              must not be reported as something that disables the model. */}
+          <div className='mt-1 opacity-70'>
+            {line.previewOnly ? (
+              <Trans>
+                The machine does not read this figure — it only places the cap in the preview. Save
+                this and the fitted line will still be used.
+              </Trans>
+            ) : (
+              <Trans>
+                Save this and the machine will use the fixed Pressure Offset above, not a
+                flow-derived one.
+              </Trans>
+            )}
+          </div>
+        </div>
+      ) : (
+        <ValveCalibrationPreview line={line} />
+      )}
+    </div>
+  );
+}
 
 function SunriseColorField({ id, label, value, fallback, onChange }) {
   return (
@@ -319,7 +577,7 @@ export function MachineTab({ formData, onChange, setField, profiles = [] }) {
                     onChange={onChange('pumpModelCoeffs')}
                   />
                 </SettingsFormField>
-                {pressureAvailable.value && (
+                {pressureAvailable.value && !formData.pressureOffsetFlowDerived && (
                   <InputGroupField
                     label={t`Pressure Offset`}
                     htmlFor='pressureOffset'
@@ -338,6 +596,20 @@ export function MachineTab({ formData, onChange, setField, profiles = [] }) {
                       onChange={onChange('pressureOffset')}
                     />
                   </InputGroupField>
+                )}
+                {pressureAvailable.value && (
+                  <div className='form-control'>
+                    <ToggleField
+                      label={t`Vary offset with flow`}
+                      htmlFor='pressureOffsetFlowDerived'
+                      checked={!!formData.pressureOffsetFlowDerived}
+                      onChange={onChange('pressureOffsetFlowDerived')}
+                      helpText={t`A spring-loaded mushroom valve's drop grows with the flow through it, so a single number is only correct at one flow rate. Enable this to enter measured points instead. Leave off for a 3-way solenoid or a fixed offset. Calibrate Pump Flow Coefficients above first — this mode reads the firmware's flow estimate, so the offset is only as accurate as that model.`}
+                    />
+                    {formData.pressureOffsetFlowDerived && (
+                      <ValveCalibrationFields formData={formData} onChange={onChange} />
+                    )}
+                  </div>
                 )}
                 {pressureAvailable.value && (
                   <InputGroupField

@@ -20,6 +20,21 @@ constexpr int MIN_TEMP = 0;
 constexpr int MAX_TEMP = 160;
 constexpr int DEFAULT_TEMPERATURE_OFFSET = 0;
 constexpr float DEFAULT_PRESSURE_OFFSET = 0.0f;
+// Flow-derived pressure offset. A spring-loaded mushroom valve's drop is a function of the flow
+// through it, so a single constant is only correct at one flow rate. When enabled, the offset is
+// interpolated from two measured (pressure, flow) points and capped at a third measured at 100%
+// pump duty. Disabled by default; the constant offset above is used and behaviour is unchanged.
+constexpr bool DEFAULT_PRESSURE_OFFSET_FLOW_DERIVED = false;
+constexpr float DEFAULT_VALVE_CAL_P1 = 5.0f;   // suggested first calibration pressure (bar)
+constexpr float DEFAULT_VALVE_CAL_F1 = 0.0f;   // measured flow there (g/s); 0 = not calibrated
+constexpr float DEFAULT_VALVE_CAL_P2 = 6.0f;   // suggested second calibration pressure (bar)
+constexpr float DEFAULT_VALVE_CAL_F2 = 0.0f;   // measured flow there (g/s); 0 = not calibrated
+constexpr float DEFAULT_VALVE_CAL_PMAX = 0.0f; // pressure at 100% pump duty (bar); 0 = not calibrated
+constexpr float DEFAULT_VALVE_CAL_FMAX = 0.0f; // flow at 100% pump duty (g/s); checked by the settings page
+// Plausibility band for the derived slope, bar per g/s. Outside this the calibration is almost
+// certainly a typo (e.g. two flows one digit apart) and is rejected on save.
+constexpr float VALVE_CAL_MIN_SLOPE = 0.3f;
+constexpr float VALVE_CAL_MAX_SLOPE = 2.0f;
 constexpr float DEFAULT_PRESSURE_SCALING = 16.0f;
 constexpr char DEFAULT_PID[] = "58.397,1.027,249.055,0.0";
 constexpr int DEFAULT_HEATER_HANDOVER_MS = 50;

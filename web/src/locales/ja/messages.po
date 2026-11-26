@@ -156,6 +156,14 @@ msgstr "<0>ペアリング:</0> GaggiMate はグラインダーから Xenia マ�
 msgid "1 year ago"
 msgstr "1 年前"
 
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "100% pump flow must be higher than point 2."
+msgstr "ポンプ100%時の流量は、ポイント2より大きくなければなりません。"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "100% pump pressure must be higher than point 2."
+msgstr "ポンプ100%時の圧力は、ポイント2より大きくなければなりません。"
+
 #: src/app/appSettings.js
 msgid "A brew started on the machine."
 msgstr "マシンで抽出が開始されました。"
@@ -175,6 +183,10 @@ msgstr "すぐに始められるよう、クラシックな 9 bar のショッ�
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "A given alpha behaves faster in time at 80 SPS because it is applied more often. Tune the two alpha values independently for your installed sample rate. Changing sample rate resets both values to 0.80 at 10 SPS or 0.40 at 80 SPS as sensible starting points."
 msgstr "同じ alpha 値でも 80 SPS ではより頻繁に適用されるため、時間的には速く反応します。2 つの alpha 値は、使用するサンプルレートに合わせてそれぞれ調整してください。サンプルレートを変更すると、妥当な初期値として両方の値が 10 SPS では 0.80、80 SPS では 0.40 にリセットされます。"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "A spring-loaded mushroom valve's drop grows with the flow through it, so a single number is only correct at one flow rate. Enable this to enter measured points instead. Leave off for a 3-way solenoid or a fixed offset. Calibrate Pump Flow Coefficients above first — this mode reads the firmware's flow estimate, so the offset is only as accurate as that model."
+msgstr "スプリング式マッシュルームバルブの圧力損失は通過する流量とともに増加するため、単一の値は特定の流量でしか正しくありません。これを有効にすると、代わりに実測点を入力できます。3wayソレノイドバルブを使う場合や固定オフセットで十分な場合はオフのままにしてください。先に上のポンプ流量係数を較正してください — このモードはファームウェアの流量推定値を使うため、オフセットの精度はそのモデルの精度までです。"
 
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Access Point Password"
@@ -601,6 +613,10 @@ msgstr "豆の種類"
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
 msgid "Beans"
 msgstr "豆"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Before measuring, untick Vary offset with flow, set Pressure Offset to 0, and save — otherwise the machine keeps applying the offset it already has and the reading is not the valve's own drop. Take every measurement with no puck in the portafilter, then turn the mode back on once the numbers are in."
+msgstr "測定前に「流量に応じてオフセットを変える」のチェックを外し、圧力オフセットを0にして保存してください — そうしないとマシンは既存のオフセットを適用し続け、読み値はバルブ自体の圧力損失になりません。すべての測定はポルタフィルターに粉を入れずに行い、数値を入力したらモードを再び有効にしてください。"
 
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
 #: src/pages/ShotHistory/ShotNotesCard.jsx
@@ -1772,6 +1788,10 @@ msgid "Enter a name for this profile"
 msgstr "このプロファイルの名前を入力"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Enter a pressure and a flow for both calibration points."
+msgstr "両方の較正ポイントに圧力と流量を入力してください。"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
 msgid "Enter a whole number of millimeters, 0 or more."
 msgstr "ミリメートル単位の整数（0以上）を入力してください。"
 
@@ -1782,6 +1802,10 @@ msgstr "使用している圧力センサーの定格（bar）を入力してく
 #: src/app/MachineSetup.jsx
 msgid "Enter the hostname or IP address of your machine."
 msgstr "マシンのホスト名または IP アドレスを入力してください。"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Enter the pressure and flow measured at 100% pump."
+msgstr "ポンプ100%で測定した圧力と流量を入力してください。"
 
 #: src/components/VisualizerUploadModal.jsx
 msgid "Enter your password"
@@ -2016,6 +2040,10 @@ msgstr "水タンクに水を入れ、スチームノブを閉じてください
 msgid "Filter library source"
 msgstr "ライブラリのソースで絞り込む"
 
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Finally, run the pump at 100% and record the stable pressure and flow. That is the highest drop this machine can produce, and the offset is capped there. If the pressure is not above Point 2, Point 2 was never actually reached — redo it lower."
+msgstr "最後にポンプを100%で動かし、安定した圧力と流量を記録します。これがこのマシンで生じ得る最大の圧力損失であり、オフセットはここで頭打ちになります。圧力がポイント2を上回らない場合、ポイント2には実際には到達していません — より低い圧力でやり直してください。"
+
 #: src/pages/Home/utils.js
 msgctxt "process action"
 msgid "Finish"
@@ -2066,6 +2094,10 @@ msgstr "流量と水量"
 #: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
 msgid "Flow above"
 msgstr "流量が次より上"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Flow at 100% pump"
+msgstr "ポンプ100%時の流量"
 
 #: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
 msgid "Flow below"
@@ -2246,6 +2278,7 @@ msgstr "グラム"
 
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
+#: src/pages/Settings/tabs/MachineTab.jsx
 msgid "grams per second"
 msgstr "グラム/秒"
 
@@ -2395,6 +2428,10 @@ msgstr "量の多い順"
 msgctxt "flush duration"
 msgid "Hold"
 msgstr "長押し"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Hold a target pressure long enough to read a steady flow in g/s, then repeat about a bar higher. Record the pressure the machine actually holds, not the target you set. Keep the two points well apart — the span is what makes the slope trustworthy. If nothing flows at the lower value, your valve cracks above it."
+msgstr "目標圧力を、g/s の流量が安定して読み取れるだけの時間保持し、約1バール高い圧力で繰り返します。設定した目標値ではなく、マシンが実際に保持した圧力を記録してください。2点は十分に離してください — 傾きの信頼性はこの間隔で決まります。低いほうの値で何も流れない場合、バルブはそれより上で開き始めます。"
 
 #: src/pages/Settings/tabs/GeneralTab.jsx
 msgid "Hold runs the flush for as long as the button is held. The valve stays open for one more second after the pump stops."
@@ -3337,6 +3374,10 @@ msgctxt "pump mode"
 msgid "Off"
 msgstr "オフ"
 
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Offset {at1} bar at 1 g/s, {at2} bar at 2 g/s<0> ({slopeText} bar per g/s)</0>, capped at {capBar} bar above {capFlow} g/s"
+msgstr "オフセットは 1 g/s で {at1} bar、2 g/s で {at2} bar<0>（{slopeText} bar / g/s）</0>、{capFlow} g/s を超えると {capBar} bar で頭打ち"
+
 #: src/pages/Home/cards/MachineLevelsCard.jsx
 #: src/utils/metricDefinitions.js
 msgid "OK"
@@ -3657,6 +3698,22 @@ msgstr "プラグイン"
 msgid "PNG, JPEG, WebP or BMP. GIFs are not supported. The image is cropped to a square and scaled to 300×300 pixels for the display."
 msgstr "PNG、JPEG、WebP、BMP に対応しています。GIF には対応していません。画像は正方形に切り抜かれ、ディスプレイ用に 300×300 ピクセルに縮小されます。"
 
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Point {n} flow"
+msgstr "ポイント {n} の流量"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Point {n} pressure"
+msgstr "ポイント {n} の圧力"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Point 1 flow must be above zero. If nothing flowed there, your valve cracks open above that pressure — take point 1 higher."
+msgstr "ポイント1の流量は0より大きい必要があります。そこで何も流れなかった場合、バルブはその圧力より上で開き始めます — ポイント1をより高い圧力で取り直してください。"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Point 1 pressure must be above zero — take it comfortably above where your valve cracks open."
+msgstr "ポイント1の圧力は0より大きい必要があります — バルブが開き始める圧力より十分高いところで測定してください。"
+
 #: src/pages/ProfileEdit/ExtendedPhase.jsx
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
 msgctxt "pump mode"
@@ -3759,6 +3816,10 @@ msgstr "圧力とポンプ流量"
 #: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
 msgid "Pressure above"
 msgstr "圧力が次より上"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Pressure at 100% pump"
+msgstr "ポンプ100%時の圧力"
 
 #: src/pages/ProfileEdit/ExtendedPhaseTarget.jsx
 msgid "Pressure below"
@@ -4509,6 +4570,10 @@ msgstr "設定を保存"
 #: src/pages/ProfileEdit/ProfileImageUpload.jsx
 msgid "Save the profile first to add an image."
 msgstr "画像を追加するには、先にプロファイルを保存してください。"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Save this and the machine will use the fixed Pressure Offset above, not a flow-derived one."
+msgstr "この状態で保存すると、マシンは流量から導出したオフセットではなく、上の固定の圧力オフセットを使用します。"
 
 #: src/pages/ShotAnalyzer/components/analyzerActionBar/MobileStatusActionsMenu.jsx
 msgid "Save to Browser"
@@ -5699,6 +5764,10 @@ msgstr "GaggiMate をインストールしていただきありがとうござ�
 msgid "Thank you for installing GaggiMate! Your machine is ready for its first shot."
 msgstr "GaggiMate をインストールしていただきありがとうございます！マシンは最初のショットの準備ができました。"
 
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "That works out to {slopeText} bar per g/s. A mushroom valve's drop usually rises between {lo} and {hi} bar per g/s, so one of the two flow readings is probably off."
+msgstr "これは {slopeText} bar / g/s になります。マッシュルームバルブの圧力損失は通常 {lo} ～ {hi} bar / g/s の範囲で増加するため、2つの流量のどちらかが正しくない可能性があります。"
+
 #: src/utils/machineProfiles.js
 msgid "The {profileName} profile is not supported by your current board or firmware."
 msgstr "{profileName} プロファイルは、現在のボードまたはファームウェアではサポートされていません。"
@@ -5767,6 +5836,10 @@ msgstr "グラインダーはこのアドレスで GaggiMate に接続するた�
 msgid "The heater runs at full power for up to 10 seconds. The test passes as soon as the boiler temperature has risen by a few degrees, which can take up to 30 more seconds on a larger boiler."
 msgstr "ヒーターを最大出力で最長 10 秒間動作させます。ボイラーの温度が数度上昇した時点でテストは合格です。大きなボイラーでは、さらに最長 30 秒かかる場合があります。"
 
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "The machine does not read this figure — it only places the cap in the preview. Save this and the fitted line will still be used."
+msgstr "マシンはこの値を読み取りません — プレビューで上限の位置を示すだけです。この状態で保存しても、フィットした直線が引き続き使われます。"
+
 #: src/app/appSettings.js
 msgid "The machine has been in steam mode for 5 minutes."
 msgstr "マシンが 5 分間スチームモードのままです。"
@@ -5814,6 +5887,14 @@ msgstr "スケールは見つかりましたが、Bluetooth 接続に失敗し�
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "The scale wasn't found. Make sure it's switched on and nearby, then scan again."
 msgstr "スケールが見つかりませんでした。電源が入っていて近くにあることを確認してから、もう一度スキャンしてください。"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "The second flow must be higher than the first."
+msgstr "2つ目の流量は1つ目より大きくなければなりません。"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "The second pressure must be higher than the first."
+msgstr "2つ目の圧力は1つ目より大きくなければなりません。"
 
 #: src/pages/ProfileList/index.jsx
 msgid "The selected profile can't be deleted"
@@ -6302,6 +6383,10 @@ msgstr "バルブ開放、圧力を解放中…"
 #: src/pages/ProfileEdit/StandardProfileForm.jsx
 msgid "Valve state selection"
 msgstr "バルブ状態の選択"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Vary offset with flow"
+msgstr "流量に応じてオフセットを変える"
 
 #: src/app/AppSettings.jsx
 msgid "Version {bundleVersion}"

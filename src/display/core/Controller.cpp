@@ -8,6 +8,7 @@
 #include <cmath>
 #include <ctime>
 #include <display/config.h>
+#include <display/core/ValveOffset.h>
 #include <display/core/constants.h>
 #include <display/core/process/BrewProcess.h>
 #include <display/core/process/GrindProcess.h>
@@ -320,10 +321,14 @@ void Controller::setupBluetooth() {
     comms.onSensorData([this](float temp, float temp2, float pressure, float puckFlow, float pumpFlow, float puckResistance,
                               float pumpPower, float heaterPower, float waterPumped) {
         onTempRead(temp);
+        // Before onPressureRead, which corrects the reading by getEffectivePressureOffset(), and
+        // that reads currentPumpFlow in flow-derived mode. Left below, every sample would be
+        // corrected with the previous packet's flow. Harmless while the offset was a constant;
+        // not once it depends on flow.
+        this->currentPumpFlow = pumpFlow;
         onPressureRead(pressure);
         this->currentSteamTemp = temp2;
         this->currentPuckFlow = puckFlow;
-        this->currentPumpFlow = pumpFlow;
         this->currentPumpPower = pumpPower;
         this->currentHeaterPower = heaterPower;
         this->currentPuckResistance = puckResistance;
@@ -1126,7 +1131,7 @@ void Controller::updateControl() {
                 // Mushroom-valve machines lose the cracking pressure before the puck; command the sensor-side value
                 pump.pressure = brewProcess->getPumpPressure();
                 if (pump.pressure > 0.0f) {
-                    pump.pressure += settings.getPressureOffset();
+                    pump.pressure += getEffectivePressureOffset();
                 }
                 pump.flow = brewProcess->getPumpFlow();
                 targetPressure = brewProcess->getPumpPressure();
@@ -1437,11 +1442,19 @@ void Controller::onTempRead(float temperature) {
     currentTemp = event.getFloat("value");
 }
 
+// Thin adapter over valveOffsetAt() in ValveOffset.h, which holds the calculation and its guards
+// so they can be unit tested without an Arduino runtime.
+float Controller::getEffectivePressureOffset() const {
+    return valveOffsetAt(currentPumpFlow, settings.getPressureOffset(), settings.isPressureOffsetFlowDerived(),
+                         settings.getValveCalP1(), settings.getValveCalF1(), settings.getValveCalP2(), settings.getValveCalF2(),
+                         settings.getValveCalPMax());
+}
+
 void Controller::onPressureRead(float pressure) {
     float p = pressure;
     // Only a running brew opens the grouphead valve, so only then does the mushroom valve eat its cracking pressure
     if (isBrewActive())
-        p = std::max(0.0f, p - settings.getPressureOffset());
+        p = std::max(0.0f, p - getEffectivePressureOffset());
     Event event = pluginManager->trigger("boiler:pressure:change", "value", p);
     this->pressure = event.getFloat("value");
 }
