@@ -321,10 +321,14 @@ void Controller::setupBluetooth() {
     comms.onSensorData([this](float temp, float temp2, float pressure, float puckFlow, float pumpFlow, float puckResistance,
                               float pumpPower, float heaterPower, float waterPumped) {
         onTempRead(temp);
+        // Before onPressureRead, which corrects the reading by getEffectivePressureOffset(), and
+        // that reads currentPumpFlow in flow-derived mode. Left below, every sample would be
+        // corrected with the previous packet's flow. Harmless while the offset was a constant;
+        // not once it depends on flow.
+        this->currentPumpFlow = pumpFlow;
         onPressureRead(pressure);
         this->currentSteamTemp = temp2;
         this->currentPuckFlow = puckFlow;
-        this->currentPumpFlow = pumpFlow;
         this->currentPumpPower = pumpPower;
         this->currentHeaterPower = heaterPower;
         this->currentPuckResistance = puckResistance;
@@ -1442,8 +1446,8 @@ void Controller::onTempRead(float temperature) {
 // so they can be unit tested without an Arduino runtime.
 float Controller::getEffectivePressureOffset() const {
     return valveOffsetAt(currentPumpFlow, settings.getPressureOffset(), settings.isPressureOffsetFlowDerived(),
-                         settings.getValveCalP1(), settings.getValveCalF1(), settings.getValveCalP2(),
-                         settings.getValveCalF2(), settings.getValveCalPMax());
+                         settings.getValveCalP1(), settings.getValveCalF1(), settings.getValveCalP2(), settings.getValveCalF2(),
+                         settings.getValveCalPMax());
 }
 
 void Controller::onPressureRead(float pressure) {

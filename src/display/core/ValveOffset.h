@@ -34,8 +34,7 @@
 // values before they are stored, but the registry is also writable over the API and survives
 // firmware downgrades, so nothing here trusts what it is handed. Note that nothing downstream
 // clamps the commanded setpoint.
-inline float valveOffsetAt(float flow, float fixedOffset, bool flowDerived, float p1, float f1, float p2,
-                           float f2, float pMax) {
+inline float valveOffsetAt(float flow, float fixedOffset, bool flowDerived, float p1, float f1, float p2, float f2, float pMax) {
     if (!flowDerived)
         return fixedOffset;
     if (!std::isfinite(p1) || !std::isfinite(f1) || !std::isfinite(p2) || !std::isfinite(f2))

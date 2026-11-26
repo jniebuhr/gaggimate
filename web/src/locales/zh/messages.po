@@ -335,10 +335,6 @@ msgstr "所有可用指标均已显示。"
 msgid "All available panels are visible."
 msgstr "所有可用面板均已显示。"
 
-#: src/pages/Settings/tabs/MachineTab.jsx
-msgid "All measurements are taken with no puck in the portafilter and Pressure Offset at 0, so the reading is the valve's own drop."
-msgstr "所有测量均在手柄中不放粉饼、压力偏移设为0的情况下进行，这样读数就是阀门自身的压降。"
-
 #: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
 msgid "All Metrics"
 msgstr "全部指标"
@@ -617,6 +613,10 @@ msgstr "咖啡豆类型"
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
 msgid "Beans"
 msgstr "咖啡豆"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Before measuring, untick Vary offset with flow, set Pressure Offset to 0, and save — otherwise the machine keeps applying the offset it already has and the reading is not the valve's own drop. Take every measurement with no puck in the portafilter, then turn the mode back on once the numbers are in."
+msgstr "测量前请取消勾选“随流量变化偏移”，将压力偏移设为0并保存——否则机器会继续应用已有的偏移，读数就不是阀门自身的压降。所有测量均在手柄中不放粉饼的情况下进行，数值输入完成后再重新启用该模式。"
 
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
 #: src/pages/ShotHistory/ShotNotesCard.jsx

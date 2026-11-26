@@ -335,10 +335,6 @@ msgstr "Todas las métricas disponibles están visibles."
 msgid "All available panels are visible."
 msgstr "Todos los paneles disponibles están visibles."
 
-#: src/pages/Settings/tabs/MachineTab.jsx
-msgid "All measurements are taken with no puck in the portafilter and Pressure Offset at 0, so the reading is the valve's own drop."
-msgstr "Todas las mediciones se hacen sin pastilla de café en el portafiltro y con la Compensación de presión a 0, de modo que la lectura es la caída propia de la válvula."
-
 #: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
 msgid "All Metrics"
 msgstr "Todas las métricas"
@@ -617,6 +613,10 @@ msgstr "Tipo de grano"
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
 msgid "Beans"
 msgstr "Granos"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Before measuring, untick Vary offset with flow, set Pressure Offset to 0, and save — otherwise the machine keeps applying the offset it already has and the reading is not the valve's own drop. Take every measurement with no puck in the portafilter, then turn the mode back on once the numbers are in."
+msgstr "Antes de medir, desmarca «Variar la compensación con el flujo», pon la Compensación de presión a 0 y guarda: de lo contrario la máquina sigue aplicando la compensación que ya tiene y la lectura no es la caída propia de la válvula. Haz todas las mediciones sin pastilla de café en el portafiltro y vuelve a activar el modo cuando hayas introducido los valores."
 
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
 #: src/pages/ShotHistory/ShotNotesCard.jsx

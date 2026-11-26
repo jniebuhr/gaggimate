@@ -343,10 +343,6 @@ msgstr "Todas as métricas disponíveis estão visíveis."
 msgid "All available panels are visible."
 msgstr "Todos os painéis disponíveis estão visíveis."
 
-#: src/pages/Settings/tabs/MachineTab.jsx
-msgid "All measurements are taken with no puck in the portafilter and Pressure Offset at 0, so the reading is the valve's own drop."
-msgstr "Todas as medições são feitas sem pastilha no portafiltro e com o Offset de pressão a 0, para que a leitura seja a queda da própria válvula."
-
 #: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
 msgid "All Metrics"
 msgstr "Todas as métricas"
@@ -625,6 +621,10 @@ msgstr "Tipo de grão"
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
 msgid "Beans"
 msgstr "Grãos"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Before measuring, untick Vary offset with flow, set Pressure Offset to 0, and save — otherwise the machine keeps applying the offset it already has and the reading is not the valve's own drop. Take every measurement with no puck in the portafilter, then turn the mode back on once the numbers are in."
+msgstr "Antes de medir, desmarque «Variar o offset com o fluxo», ponha o Offset de pressão a 0 e guarde — caso contrário a máquina continua a aplicar o offset que já tem e a leitura não é a queda da própria válvula. Faça todas as medições sem pastilha no portafiltro e volte a ativar o modo depois de introduzir os valores."
 
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
 #: src/pages/ShotHistory/ShotNotesCard.jsx

@@ -335,10 +335,6 @@ msgstr "Alle verfügbaren Metriken sind sichtbar."
 msgid "All available panels are visible."
 msgstr "Alle verfügbaren Panels sind sichtbar."
 
-#: src/pages/Settings/tabs/MachineTab.jsx
-msgid "All measurements are taken with no puck in the portafilter and Pressure Offset at 0, so the reading is the valve's own drop."
-msgstr "Alle Messungen erfolgen ohne Kaffeemehl im Siebträger und mit Druck-Offset auf 0, sodass der Messwert dem Druckabfall des Ventils selbst entspricht."
-
 #: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
 msgid "All Metrics"
 msgstr "Alle Metriken"
@@ -617,6 +613,10 @@ msgstr "Bohnensorte"
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
 msgid "Beans"
 msgstr "Bohnen"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Before measuring, untick Vary offset with flow, set Pressure Offset to 0, and save — otherwise the machine keeps applying the offset it already has and the reading is not the valve's own drop. Take every measurement with no puck in the portafilter, then turn the mode back on once the numbers are in."
+msgstr "Deaktiviere vor der Messung „Offset mit Durchfluss variieren“, setze den Druck-Offset auf 0 und speichere — sonst wendet die Maschine weiterhin den vorhandenen Offset an und der Messwert ist nicht der Druckabfall des Ventils selbst. Führe jede Messung ohne Kaffeemehl im Siebträger durch und aktiviere den Modus wieder, sobald die Werte eingetragen sind."
 
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
 #: src/pages/ShotHistory/ShotNotesCard.jsx

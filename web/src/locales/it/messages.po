@@ -339,10 +339,6 @@ msgstr "Tutte le metriche disponibili sono visibili."
 msgid "All available panels are visible."
 msgstr "Tutti i pannelli disponibili sono visibili."
 
-#: src/pages/Settings/tabs/MachineTab.jsx
-msgid "All measurements are taken with no puck in the portafilter and Pressure Offset at 0, so the reading is the valve's own drop."
-msgstr "Tutte le misure si effettuano senza pastiglia nel portafiltro e con l'Offset di pressione a 0, così la lettura è la caduta della valvola stessa."
-
 #: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
 msgid "All Metrics"
 msgstr "Tutte le metriche"
@@ -621,6 +617,10 @@ msgstr "Tipo di chicchi"
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
 msgid "Beans"
 msgstr "Chicchi"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Before measuring, untick Vary offset with flow, set Pressure Offset to 0, and save — otherwise the machine keeps applying the offset it already has and the reading is not the valve's own drop. Take every measurement with no puck in the portafilter, then turn the mode back on once the numbers are in."
+msgstr "Prima di misurare, disattiva «Varia l'offset con il flusso», imposta l'Offset di pressione a 0 e salva: altrimenti la macchina continua ad applicare l'offset che ha già e la lettura non è la caduta della valvola stessa. Effettua ogni misura senza pastiglia nel portafiltro, poi riattiva la modalità una volta inseriti i valori."
 
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
 #: src/pages/ShotHistory/ShotNotesCard.jsx

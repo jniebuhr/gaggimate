@@ -335,10 +335,6 @@ msgstr "Toutes les métriques disponibles sont visibles."
 msgid "All available panels are visible."
 msgstr "Tous les panneaux disponibles sont visibles."
 
-#: src/pages/Settings/tabs/MachineTab.jsx
-msgid "All measurements are taken with no puck in the portafilter and Pressure Offset at 0, so the reading is the valve's own drop."
-msgstr "Toutes les mesures se font sans galette dans le porte-filtre et avec le Décalage de pression à 0, afin que la lecture corresponde à la perte de charge de la soupape elle-même."
-
 #: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
 msgid "All Metrics"
 msgstr "Toutes les métriques"
@@ -617,6 +613,10 @@ msgstr "Type de grain"
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
 msgid "Beans"
 msgstr "Grains"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Before measuring, untick Vary offset with flow, set Pressure Offset to 0, and save — otherwise the machine keeps applying the offset it already has and the reading is not the valve's own drop. Take every measurement with no puck in the portafilter, then turn the mode back on once the numbers are in."
+msgstr "Avant de mesurer, décochez « Faire varier le décalage avec le débit », mettez le Décalage de pression à 0 et enregistrez — sinon la machine continue d'appliquer le décalage qu'elle a déjà et la lecture n'est pas la perte de charge de la soupape elle-même. Effectuez chaque mesure sans galette dans le porte-filtre, puis réactivez le mode une fois les valeurs saisies."
 
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
 #: src/pages/ShotHistory/ShotNotesCard.jsx

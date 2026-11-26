@@ -159,8 +159,10 @@ function ValveCalibrationFields({ formData, onChange }) {
     <div className='border-base-content/10 mt-2 rounded-lg border p-3'>
       <p className='mb-3 text-xs opacity-70'>
         <Trans>
-          All measurements are taken with no puck in the portafilter and Pressure Offset at 0, so
-          the reading is the valve&apos;s own drop.
+          Before measuring, untick Vary offset with flow, set Pressure Offset to 0, and save —
+          otherwise the machine keeps applying the offset it already has and the reading is not the
+          valve&apos;s own drop. Take every measurement with no puck in the portafilter, then turn
+          the mode back on once the numbers are in.
         </Trans>
       </p>
       <p className='mb-3 text-xs opacity-70'>

@@ -335,10 +335,6 @@ msgstr "利用可能なメトリクスはすべて表示されています。"
 msgid "All available panels are visible."
 msgstr "利用可能なパネルはすべて表示されています。"
 
-#: src/pages/Settings/tabs/MachineTab.jsx
-msgid "All measurements are taken with no puck in the portafilter and Pressure Offset at 0, so the reading is the valve's own drop."
-msgstr "すべての測定は、ポルタフィルターに粉を入れず、圧力オフセットを0にした状態で行います。これにより読み値がバルブ自体の圧力損失になります。"
-
 #: src/pages/ShotAnalyzer/components/analysisTable/ColumnControls.jsx
 msgid "All Metrics"
 msgstr "すべてのメトリクス"
@@ -617,6 +613,10 @@ msgstr "豆の種類"
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
 msgid "Beans"
 msgstr "豆"
+
+#: src/pages/Settings/tabs/MachineTab.jsx
+msgid "Before measuring, untick Vary offset with flow, set Pressure Offset to 0, and save — otherwise the machine keeps applying the offset it already has and the reading is not the valve's own drop. Take every measurement with no puck in the portafilter, then turn the mode back on once the numbers are in."
+msgstr "測定前に「流量に応じてオフセットを変える」のチェックを外し、圧力オフセットを0にして保存してください — そうしないとマシンは既存のオフセットを適用し続け、読み値はバルブ自体の圧力損失になりません。すべての測定はポルタフィルターに粉を入れずに行い、数値を入力したらモードを再び有効にしてください。"
 
 #: src/pages/ShotAnalyzer/components/shotDetails/ShotDetailsCard.jsx
 #: src/pages/ShotHistory/ShotNotesCard.jsx

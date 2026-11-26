@@ -23,7 +23,7 @@ static constexpr float FIXED = 5.0f; // the fallback constant offset
 // produce. Required — the model has no ceiling of its own.
 static constexpr float PMAX = 6.60f;
 static constexpr float FMAX = 4.45f;
-static constexpr float NO_CAP = 0.0f;  // an uncalibrated ceiling
+static constexpr float NO_CAP = 0.0f;    // an uncalibrated ceiling
 static constexpr float HIGH_CAP = 99.0f; // so far above the line it never binds
 
 // The model as the firmware evaluates it: always capped.
@@ -105,8 +105,7 @@ void test_non_finite_inputs_fall_back(void) {
 void test_uncalibrated_defaults_fall_back(void) {
     // Both flows still at their 0.0 default: the mode is on but nothing has been measured.
     TEST_ASSERT_EQUAL_FLOAT(FIXED, valveOffsetAt(1.5f, FIXED, true, DEFAULT_VALVE_CAL_P1, DEFAULT_VALVE_CAL_F1,
-                                                DEFAULT_VALVE_CAL_P2, DEFAULT_VALVE_CAL_F2,
-                                                DEFAULT_VALVE_CAL_PMAX));
+                                                 DEFAULT_VALVE_CAL_P2, DEFAULT_VALVE_CAL_F2, DEFAULT_VALVE_CAL_PMAX));
 }
 
 void test_unset_first_flow_falls_back(void) {
