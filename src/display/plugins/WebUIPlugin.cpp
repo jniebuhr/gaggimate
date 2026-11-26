@@ -582,6 +582,16 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setMahlkonigRecipeProfiles(request->arg("mahlkonigRecipeProfiles"));
             if (request->hasArg("homeAssistant"))
                 settings->setHomeAssistant(parseBoolArg(request->arg("homeAssistant")));
+            if (request->hasArg("smartGrindType"))
+                settings->setSmartGrindType(request->arg("smartGrindType").toInt());
+            if (request->hasArg("smartGrindSwitchId"))
+                settings->setSmartGrindSwitchId(request->arg("smartGrindSwitchId"));
+            if (request->hasArg("smartGrindUrlOn"))
+                settings->setSmartGrindUrlOn(request->arg("smartGrindUrlOn"));
+            if (request->hasArg("smartGrindUrlOff"))
+                settings->setSmartGrindUrlOff(request->arg("smartGrindUrlOff"));
+            if (request->hasArg("smartGrindMethod"))
+                settings->setSmartGrindMethod(request->arg("smartGrindMethod").toInt());
             if (request->hasArg("haUser"))
                 settings->setHomeAssistantUser(request->arg("haUser"));
             if (request->hasArg("haPassword"))
@@ -789,6 +799,11 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["mahlkonigRecipeProfiles"] = settings.getMahlkonigRecipeProfiles();
     doc["apMode"] = apMode; // read-only, the setup wizard offers Wi-Fi setup in AP mode
     doc["deviceIp"] = apMode ? WIFI_AP_IP.toString() : WiFi.localIP().toString(); // read-only, for plugin setup hints
+    doc["smartGrindType"] = settings.getSmartGrindType();
+    doc["smartGrindSwitchId"] = settings.getSmartGrindSwitchId();
+    doc["smartGrindUrlOn"] = settings.getSmartGrindUrlOn();
+    doc["smartGrindUrlOff"] = settings.getSmartGrindUrlOff();
+    doc["smartGrindMethod"] = settings.getSmartGrindMethod();
     doc["momentaryButtons"] = settings.isMomentaryButtons();
     doc["flushDuration"] = settings.getFlushDuration();
     doc["warnWaterLevel"] = settings.getWarnWaterLevel();

@@ -404,6 +404,16 @@ void Settings::setFullTankDistance(int full_tank_distance) { fullTankDistance.se
 
 void Settings::setAltRelayFunction(int alt_relay_function) { altRelayFunction.set(alt_relay_function); }
 
+void Settings::setSmartGrindType(int smart_grind_type) { smartGrindType.set(smart_grind_type); }
+
+void Settings::setSmartGrindSwitchId(String smart_grind_switch_id) { smartGrindSwitchId.set(smart_grind_switch_id); }
+
+void Settings::setSmartGrindUrlOn(String smart_grind_url_on) { smartGrindUrlOn.set(smart_grind_url_on); }
+
+void Settings::setSmartGrindUrlOff(String smart_grind_url_off) { smartGrindUrlOff.set(smart_grind_url_off); }
+
+void Settings::setSmartGrindMethod(int smart_grind_method) { smartGrindMethod.set(smart_grind_method); }
+
 void Settings::setAutoWakeupEnabled(bool enabled) { autowakeupEnabled.set(enabled); }
 
 void Settings::setAutoWakeupSchedules(const std::vector<AutoWakeupSchedule> &schedules) { autowakeupSchedules.set(schedules); }

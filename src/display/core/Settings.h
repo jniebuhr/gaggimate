@@ -369,6 +369,11 @@ class Settings {
     int getEmptyTankDistance() const { return emptyTankDistance.get(); }
     int getFullTankDistance() const { return fullTankDistance.get(); }
     int getAltRelayFunction() const { return altRelayFunction.get(); }
+    int getSmartGrindType() const { return smartGrindType.get(); }
+    String getSmartGrindSwitchId() const { return smartGrindSwitchId.get(); }
+    String getSmartGrindUrlOn() const { return smartGrindUrlOn.get(); }
+    String getSmartGrindUrlOff() const { return smartGrindUrlOff.get(); }
+    int getSmartGrindMethod() const { return smartGrindMethod.get(); }
     bool isAutoWakeupEnabled() const { return autowakeupEnabled.get(); }
     std::vector<AutoWakeupSchedule> getAutoWakeupSchedules() const { return autowakeupSchedules.get(); }
     String getButtonBehavior(int index) const {
@@ -480,6 +485,11 @@ class Settings {
     void setEmptyTankDistance(int empty_tank_distance);
     void setFullTankDistance(int full_tank_distance);
     void setAltRelayFunction(int alt_relay_function);
+    void setSmartGrindType(int smart_grind_type);
+    void setSmartGrindSwitchId(String smart_grind_switch_id);
+    void setSmartGrindUrlOn(String smart_grind_url_on);
+    void setSmartGrindUrlOff(String smart_grind_url_off);
+    void setSmartGrindMethod(int smart_grind_method);
     void setAutoWakeupEnabled(bool enabled);
     void setAutoWakeupSchedules(const std::vector<AutoWakeupSchedule> &schedules);
     void setButtonBehavior(int index, String behavior);
@@ -639,6 +649,11 @@ class Settings {
     Property<int> fullTankDistance{registry, "sr_fd", 30};
 
     Property<int> altRelayFunction{registry, "alt_relay", ALT_RELAY_GRIND}; // Default to grind
+    Property<int> smartGrindType{registry, "sg_pt", 0};
+    Property<String> smartGrindSwitchId{registry, "sg_si", ""};
+    Property<String> smartGrindUrlOn{registry, "sg_uo", ""};
+    Property<String> smartGrindUrlOff{registry, "sg_uf", ""};
+    Property<int> smartGrindMethod{registry, "sg_mt", 0};
     Property<std::vector<String>> buttonBehavior{registry, "btnb", {"brew", "steam", "water"}};
 
     // Pump settings

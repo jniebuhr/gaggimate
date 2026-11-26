@@ -12,28 +12,64 @@ void SmartGrindPlugin::setup(Controller *controller, PluginManager *pluginManage
 }
 
 void SmartGrindPlugin::start() {
-    Settings &settings = this->controller->getSettings();
+    const Settings &settings = this->controller->getSettings();
     if (settings.getSmartGrindMode() == SG_MODE_ON_OFF) {
-        controlRelay(COMMAND_ON);
+        controlRelay(true);
     }
 }
 
 void SmartGrindPlugin::stop() {
-    Settings &settings = controller->getSettings();
-    controlRelay(COMMAND_OFF);
+    const Settings &settings = controller->getSettings();
+    controlRelay(false);
     if (settings.getSmartGrindMode() == SG_MODE_OFF_ON) {
         delay(500);
-        controlRelay(COMMAND_ON);
+        controlRelay(true);
     }
 }
 
-void SmartGrindPlugin::controlRelay(String command) {
-    HTTPClient http;
-    Settings &settings = controller->getSettings();
-    String serverPath = "http://" + settings.getSmartGrindIp() + "/cm?cmnd=" + command;
-    http.begin(serverPath);
-    int responseCode = http.GET();
-    if (responseCode != 200) {
-        printf("Failed to switch Relay\n");
+void SmartGrindPlugin::controlRelay(bool on) {
+    const Settings &settings = controller->getSettings();
+    const int type = settings.getSmartGrindType();
+    String url;
+    int method = SG_METHOD_GET;
+
+    switch (type) {
+    case SG_TYPE_ESPHOME: {
+        const String switchId = settings.getSmartGrindSwitchId();
+        if (!switchId.isEmpty()) {
+            url = "http://" + settings.getSmartGrindIp() + "/switch/" + switchId + (on ? "/turn_on" : "/turn_off");
+        }
+        method = SG_METHOD_POST;
+        break;
     }
+    case SG_TYPE_CUSTOM: {
+        url = on ? settings.getSmartGrindUrlOn() : settings.getSmartGrindUrlOff();
+        method = settings.getSmartGrindMethod();
+        break;
+    }
+    case SG_TYPE_TASMOTA:
+    default: {
+        url = "http://" + settings.getSmartGrindIp() + "/cm?cmnd=" + (on ? "Power%20On" : "Power%20Off");
+        method = SG_METHOD_GET;
+        break;
+    }
+    }
+
+    if (url.isEmpty()) {
+        printf("SmartGrind: plug type %d has no switch ID or URL set\n", type);
+        return;
+    }
+
+    HTTPClient http;
+    http.begin(url);
+    int responseCode;
+    if (method == SG_METHOD_POST) {
+        responseCode = http.POST(static_cast<uint8_t *>(nullptr), 0);
+    } else {
+        responseCode = http.GET();
+    }
+    if (responseCode < 200 || responseCode >= 300) {
+        printf("SmartGrind: %s %s -> HTTP %d\n", method == SG_METHOD_POST ? "POST" : "GET", url.c_str(), responseCode);
+    }
+    http.end();
 }
