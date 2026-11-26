@@ -333,24 +333,120 @@ export function PluginCard({
           <div className='border-base-300 mt-4 space-y-4 border-t pt-4'>
             <p className='text-sm opacity-70'>
               <Trans>
-                This feature controls a Tasmota Plug to turn off your grinder after the target has
+                This feature controls a smart plug to turn off your grinder after the target has
                 been reached.
               </Trans>
             </p>
             <div className='form-control'>
-              <label htmlFor='smartGrindIp' className='mb-2 block text-sm font-medium'>
-                <Trans>Tasmota IP</Trans>
+              <label htmlFor='smartGrindType' className='mb-2 block text-sm font-medium'>
+                <Trans>Plug type</Trans>
               </label>
-              <input
-                id='smartGrindIp'
-                name='smartGrindIp'
-                type='text'
-                className='input input-bordered w-full'
-                placeholder='0'
-                value={formData.smartGrindIp}
-                onChange={onChange('smartGrindIp')}
-              />
+              <select
+                id='smartGrindType'
+                name='smartGrindType'
+                className='select select-bordered w-full'
+                onChange={onChange('smartGrindType')}
+              >
+                <option value='0' selected={(formData.smartGrindType ?? 0).toString() === '0'}>
+                  Tasmota
+                </option>
+                <option value='1' selected={formData.smartGrindType?.toString() === '1'}>
+                  ESPHome
+                </option>
+                <option value='2' selected={formData.smartGrindType?.toString() === '2'}>
+                  {t`Custom HTTP`}
+                </option>
+              </select>
             </div>
+            {(formData.smartGrindType ?? 0).toString() !== '2' && (
+              <div className='form-control'>
+                <label htmlFor='smartGrindIp' className='mb-2 block text-sm font-medium'>
+                  {formData.smartGrindType?.toString() === '1' ? (
+                    <Trans>ESPHome host (IP or name)</Trans>
+                  ) : (
+                    <Trans>Tasmota IP</Trans>
+                  )}
+                </label>
+                <input
+                  id='smartGrindIp'
+                  name='smartGrindIp'
+                  type='text'
+                  className='input input-bordered w-full'
+                  placeholder='0'
+                  value={formData.smartGrindIp}
+                  onChange={onChange('smartGrindIp')}
+                />
+              </div>
+            )}
+            {formData.smartGrindType?.toString() === '1' && (
+              <div className='form-control'>
+                <label htmlFor='smartGrindSwitchId' className='mb-2 block text-sm font-medium'>
+                  <Trans>Switch ID</Trans>
+                </label>
+                <input
+                  id='smartGrindSwitchId'
+                  name='smartGrindSwitchId'
+                  type='text'
+                  className='input input-bordered w-full'
+                  placeholder={t`As shown on the plug's web page, case-sensitive`}
+                  value={formData.smartGrindSwitchId}
+                  onChange={onChange('smartGrindSwitchId')}
+                />
+              </div>
+            )}
+            {formData.smartGrindType?.toString() === '2' && (
+              <>
+                <div className='form-control'>
+                  <label htmlFor='smartGrindUrlOn' className='mb-2 block text-sm font-medium'>
+                    <Trans>On URL</Trans>
+                  </label>
+                  <input
+                    id='smartGrindUrlOn'
+                    name='smartGrindUrlOn'
+                    type='text'
+                    className='input input-bordered w-full'
+                    placeholder='http://...'
+                    value={formData.smartGrindUrlOn}
+                    onChange={onChange('smartGrindUrlOn')}
+                  />
+                </div>
+                <div className='form-control'>
+                  <label htmlFor='smartGrindUrlOff' className='mb-2 block text-sm font-medium'>
+                    <Trans>Off URL</Trans>
+                  </label>
+                  <input
+                    id='smartGrindUrlOff'
+                    name='smartGrindUrlOff'
+                    type='text'
+                    className='input input-bordered w-full'
+                    placeholder='http://...'
+                    value={formData.smartGrindUrlOff}
+                    onChange={onChange('smartGrindUrlOff')}
+                  />
+                </div>
+                <div className='form-control'>
+                  <label htmlFor='smartGrindMethod' className='mb-2 block text-sm font-medium'>
+                    <Trans>HTTP method</Trans>
+                  </label>
+                  <select
+                    id='smartGrindMethod'
+                    name='smartGrindMethod'
+                    className='select select-bordered w-full'
+                    onChange={onChange('smartGrindMethod')}
+                  >
+                    <option
+                      value='0'
+                      selected={(formData.smartGrindMethod ?? 0).toString() === '0'}
+                    >
+                      GET
+                    </option>
+                    <option value='1' selected={formData.smartGrindMethod?.toString() === '1'}>
+                      POST
+                    </option>
+                  </select>
+                </div>
+              </>
+            )}
             <div className='form-control'>
               <label htmlFor='smartGrindMode' className='mb-2 block text-sm font-medium'>
                 <Trans context='smart grind mode'>Mode</Trans>

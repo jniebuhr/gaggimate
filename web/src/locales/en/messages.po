@@ -384,6 +384,10 @@ msgstr "Applying and waiting for controller…"
 msgid "Are you sure you want to delete \"{itemName}\"?"
 msgstr "Are you sure you want to delete \"{itemName}\"?"
 
+#: src/pages/Settings/PluginCard.jsx
+msgid "As shown on the plug's web page, case-sensitive"
+msgstr "As shown on the plug's web page, case-sensitive"
+
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "At how many bars should the pump assist stop. This makes it so the pump will only run when steam is flowing."
 msgstr "At how many bars should the pump assist stop. This makes it so the pump will only run when steam is flowing."
@@ -1219,6 +1223,10 @@ msgstr "Currently Volumetric"
 msgid "Custom"
 msgstr "Custom"
 
+#: src/pages/Settings/PluginCard.jsx
+msgid "Custom HTTP"
+msgstr "Custom HTTP"
+
 #: src/components/MachineProfileControl.jsx
 msgid "Custom machine"
 msgstr "Custom machine"
@@ -1821,6 +1829,10 @@ msgstr "Error: {message}"
 msgid "Errors"
 msgstr "Errors"
 
+#: src/pages/Settings/PluginCard.jsx
+msgid "ESPHome host (IP or name)"
+msgstr "ESPHome host (IP or name)"
+
 #: src/components/PumpFlowCalibration/ResultsPanel.jsx
 msgid "estimated flow"
 msgstr "estimated flow"
@@ -2419,6 +2431,10 @@ msgstr "Hostname"
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "How many ml/s to pump into the boiler during steaming"
 msgstr "How many ml/s to pump into the boiler during steaming"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "HTTP method"
+msgstr "HTTP method"
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "HX711 Sample Rate"
@@ -3337,6 +3353,10 @@ msgctxt "pump mode"
 msgid "Off"
 msgstr "Off"
 
+#: src/pages/Settings/PluginCard.jsx
+msgid "Off URL"
+msgstr "Off URL"
+
 #: src/pages/Home/cards/MachineLevelsCard.jsx
 #: src/utils/metricDefinitions.js
 msgid "OK"
@@ -3361,6 +3381,10 @@ msgstr "On steam deactivate (s)"
 #: src/app/MachineSetup.jsx
 msgid "On this network"
 msgstr "On this network"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "On URL"
+msgstr "On URL"
 
 #: src/pages/ShotAnalyzer/components/library/libraryImport.js
 msgid "Only profile files can be imported in the profile field."
@@ -3646,6 +3670,10 @@ msgstr "Please enter both username and password"
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "Please wake up GaggiMate from Standby to use Bluetooth scales."
 msgstr "Please wake up GaggiMate from Standby to use Bluetooth scales."
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Plug type"
+msgstr "Plug type"
 
 #: src/pages/Settings/index.jsx
 #: src/pages/Settings/tabs/PluginsTab.jsx
@@ -5405,6 +5433,10 @@ msgstr "Swipe"
 msgid "Switch between shots."
 msgstr "Switch between shots."
 
+#: src/pages/Settings/PluginCard.jsx
+msgid "Switch ID"
+msgstr "Switch ID"
+
 #: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
 msgid "Switch import mode to Save to Browser"
 msgstr "Switch import mode to Save to Browser"
@@ -5865,8 +5897,8 @@ msgid "This feature allows connection to a Home Assistant or MQTT installation a
 msgstr "This feature allows connection to a Home Assistant or MQTT installation and push the current state. This feature is deprecated for usage with Home Assistant. Please see the <0>Home Assistant Integration</0> for a more up-to-date solution."
 
 #: src/pages/Settings/PluginCard.jsx
-msgid "This feature controls a Tasmota Plug to turn off your grinder after the target has been reached."
-msgstr "This feature controls a Tasmota Plug to turn off your grinder after the target has been reached."
+msgid "This feature controls a smart plug to turn off your grinder after the target has been reached."
+msgstr "This feature controls a smart plug to turn off your grinder after the target has been reached."
 
 #: src/utils/machineProfiles.js
 msgid "This profile includes settings outside machine configuration. Remove them from the profile before importing it."
