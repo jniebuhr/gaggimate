@@ -384,6 +384,10 @@ msgstr "適用してコントローラーを待機中…"
 msgid "Are you sure you want to delete \"{itemName}\"?"
 msgstr "「{itemName}」を削除してもよろしいですか？"
 
+#: src/pages/Settings/PluginCard.jsx
+msgid "As shown on the plug's web page, case-sensitive"
+msgstr ""
+
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "At how many bars should the pump assist stop. This makes it so the pump will only run when steam is flowing."
 msgstr "ポンプアシストを停止する圧力（bar）。スチームが出ているときだけポンプが動作するようになります。"
@@ -1219,6 +1223,10 @@ msgstr "現在は容量制御"
 msgid "Custom"
 msgstr "カスタム"
 
+#: src/pages/Settings/PluginCard.jsx
+msgid "Custom HTTP"
+msgstr ""
+
 #: src/components/MachineProfileControl.jsx
 msgid "Custom machine"
 msgstr "カスタムマシン"
@@ -1821,6 +1829,10 @@ msgstr "エラー: {message}"
 msgid "Errors"
 msgstr "エラー"
 
+#: src/pages/Settings/PluginCard.jsx
+msgid "ESPHome host (IP or name)"
+msgstr ""
+
 #: src/components/PumpFlowCalibration/ResultsPanel.jsx
 msgid "estimated flow"
 msgstr "推定流量"
@@ -2419,6 +2431,10 @@ msgstr "ホスト名"
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "How many ml/s to pump into the boiler during steaming"
 msgstr "スチーム中にボイラーへ送る水量 (ml/s)"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "HTTP method"
+msgstr ""
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "HX711 Sample Rate"
@@ -3337,6 +3353,10 @@ msgctxt "pump mode"
 msgid "Off"
 msgstr "オフ"
 
+#: src/pages/Settings/PluginCard.jsx
+msgid "Off URL"
+msgstr ""
+
 #: src/pages/Home/cards/MachineLevelsCard.jsx
 #: src/utils/metricDefinitions.js
 msgid "OK"
@@ -3361,6 +3381,10 @@ msgstr "スチーム解除時 (s)"
 #: src/app/MachineSetup.jsx
 msgid "On this network"
 msgstr "このネットワーク上"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "On URL"
+msgstr ""
 
 #: src/pages/ShotAnalyzer/components/library/libraryImport.js
 msgid "Only profile files can be imported in the profile field."
@@ -3646,6 +3670,10 @@ msgstr "ユーザー名とパスワードの両方を入力してください"
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "Please wake up GaggiMate from Standby to use Bluetooth scales."
 msgstr "Bluetooth スケールを使用するには、GaggiMate をスタンバイから復帰させてください。"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Plug type"
+msgstr ""
 
 #: src/pages/Settings/index.jsx
 #: src/pages/Settings/tabs/PluginsTab.jsx
@@ -5405,6 +5433,10 @@ msgstr "スワイプ"
 msgid "Switch between shots."
 msgstr "ショットを切り替えます。"
 
+#: src/pages/Settings/PluginCard.jsx
+msgid "Switch ID"
+msgstr ""
+
 #: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
 msgid "Switch import mode to Save to Browser"
 msgstr "インポートモードを「ブラウザーに保存」に切り替え"
@@ -5865,8 +5897,8 @@ msgid "This feature allows connection to a Home Assistant or MQTT installation a
 msgstr "この機能は Home Assistant または MQTT に接続し、現在の状態を送信します。Home Assistant での使用には非推奨です。より新しい方法については <0>Home Assistant 連携</0>を参照してください。"
 
 #: src/pages/Settings/PluginCard.jsx
-msgid "This feature controls a Tasmota Plug to turn off your grinder after the target has been reached."
-msgstr "この機能は Tasmota プラグを制御し、目標に達した後にグラインダーをオフにします。"
+msgid "This feature controls a smart plug to turn off your grinder after the target has been reached."
+msgstr ""
 
 #: src/utils/machineProfiles.js
 msgid "This profile includes settings outside machine configuration. Remove them from the profile before importing it."

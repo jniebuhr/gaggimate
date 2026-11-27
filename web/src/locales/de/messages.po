@@ -384,6 +384,10 @@ msgstr "Wird angewendet, warte auf Controller…"
 msgid "Are you sure you want to delete \"{itemName}\"?"
 msgstr "Möchtest du „{itemName}“ wirklich löschen?"
 
+#: src/pages/Settings/PluginCard.jsx
+msgid "As shown on the plug's web page, case-sensitive"
+msgstr ""
+
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "At how many bars should the pump assist stop. This makes it so the pump will only run when steam is flowing."
 msgstr "Bei wie viel bar die Pumpenunterstützung stoppen soll. Dadurch läuft die Pumpe nur, wenn Dampf strömt."
@@ -1219,6 +1223,10 @@ msgstr "Derzeit volumetrisch"
 msgid "Custom"
 msgstr "Benutzerdefiniert"
 
+#: src/pages/Settings/PluginCard.jsx
+msgid "Custom HTTP"
+msgstr ""
+
 #: src/components/MachineProfileControl.jsx
 msgid "Custom machine"
 msgstr "Benutzerdefinierte Maschine"
@@ -1821,6 +1829,10 @@ msgstr "Fehler: {message}"
 msgid "Errors"
 msgstr "Fehler"
 
+#: src/pages/Settings/PluginCard.jsx
+msgid "ESPHome host (IP or name)"
+msgstr ""
+
 #: src/components/PumpFlowCalibration/ResultsPanel.jsx
 msgid "estimated flow"
 msgstr "geschätzter Durchfluss"
@@ -2419,6 +2431,10 @@ msgstr "Hostname"
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "How many ml/s to pump into the boiler during steaming"
 msgstr "Wie viele ml/s beim Dampfen in den Boiler gepumpt werden"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "HTTP method"
+msgstr ""
 
 #: src/pages/Settings/tabs/MachineTab.jsx
 msgid "HX711 Sample Rate"
@@ -3337,6 +3353,10 @@ msgctxt "pump mode"
 msgid "Off"
 msgstr "Aus"
 
+#: src/pages/Settings/PluginCard.jsx
+msgid "Off URL"
+msgstr ""
+
 #: src/pages/Home/cards/MachineLevelsCard.jsx
 #: src/utils/metricDefinitions.js
 msgid "OK"
@@ -3361,6 +3381,10 @@ msgstr "Beim Deaktivieren von Dampf (s)"
 #: src/app/MachineSetup.jsx
 msgid "On this network"
 msgstr "In diesem Netzwerk"
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "On URL"
+msgstr ""
 
 #: src/pages/ShotAnalyzer/components/library/libraryImport.js
 msgid "Only profile files can be imported in the profile field."
@@ -3646,6 +3670,10 @@ msgstr "Bitte gib Benutzername und Passwort ein"
 #: src/pages/Settings/tabs/BluetoothTab.jsx
 msgid "Please wake up GaggiMate from Standby to use Bluetooth scales."
 msgstr "Bitte wecke GaggiMate aus dem Standby, um Bluetooth-Waagen zu verwenden."
+
+#: src/pages/Settings/PluginCard.jsx
+msgid "Plug type"
+msgstr ""
 
 #: src/pages/Settings/index.jsx
 #: src/pages/Settings/tabs/PluginsTab.jsx
@@ -5405,6 +5433,10 @@ msgstr "Wischen"
 msgid "Switch between shots."
 msgstr "Zwischen Shots wechseln."
 
+#: src/pages/Settings/PluginCard.jsx
+msgid "Switch ID"
+msgstr ""
+
 #: src/pages/ShotAnalyzer/components/analyzerActionBar/ActionBarButtons.jsx
 msgid "Switch import mode to Save to Browser"
 msgstr "Importmodus auf Im Browser speichern umschalten"
@@ -5865,8 +5897,8 @@ msgid "This feature allows connection to a Home Assistant or MQTT installation a
 msgstr "Diese Funktion ermöglicht die Verbindung mit einer Home-Assistant- oder MQTT-Installation und überträgt den aktuellen Status. Für die Verwendung mit Home Assistant ist diese Funktion veraltet. Eine aktuellere Lösung findest du in der <0>Home-Assistant-Integration</0>."
 
 #: src/pages/Settings/PluginCard.jsx
-msgid "This feature controls a Tasmota Plug to turn off your grinder after the target has been reached."
-msgstr "Diese Funktion steuert eine Tasmota-Steckdose, um deine Mühle nach Erreichen des Ziels auszuschalten."
+msgid "This feature controls a smart plug to turn off your grinder after the target has been reached."
+msgstr ""
 
 #: src/utils/machineProfiles.js
 msgid "This profile includes settings outside machine configuration. Remove them from the profile before importing it."

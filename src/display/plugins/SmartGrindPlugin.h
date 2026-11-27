@@ -3,12 +3,16 @@
 #include "../core/Plugin.h"
 #include <Arduino.h>
 
-const String COMMAND_ON = "Power%20On";
-const String COMMAND_OFF = "Power%20off";
-
 constexpr int SG_MODE_OFF = 0;
 constexpr int SG_MODE_OFF_ON = 1;
 constexpr int SG_MODE_ON_OFF = 2;
+
+constexpr int SG_TYPE_TASMOTA = 0;
+constexpr int SG_TYPE_ESPHOME = 1;
+constexpr int SG_TYPE_CUSTOM = 2;
+
+constexpr int SG_METHOD_GET = 0;
+constexpr int SG_METHOD_POST = 1;
 
 struct Event;
 
@@ -22,7 +26,7 @@ class SmartGrindPlugin : public Plugin {
   private:
     void start();
     void stop();
-    void controlRelay(String command);
+    void controlRelay(bool on);
 
     Controller *controller = nullptr;
 };
