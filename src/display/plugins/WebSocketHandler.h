@@ -54,6 +54,7 @@ class WebSocketHandler {
     void handleProfileRequest(uint32_t clientId, JsonDocument &request);
     void handleFlushStart(uint32_t clientId, JsonDocument &request);
     void handleFlushStop(uint32_t clientId, JsonDocument &request);
+    void handleLiveBrewRequest(uint32_t clientId, JsonDocument &request);
     void publishState(unsigned long now);
     void publishTelemetry();
     void sendAutotuneResult();
@@ -74,6 +75,7 @@ class WebSocketHandler {
     long lastCleanup = 0;
     unsigned long lastHardwareScaleDiagnostic = 0;
     AsyncWebSocketSharedBuffer lastStateBuffer; // last slow-state frame, replayed to new clients
+    uint32_t liveBrewOwner = 0;
     float currentBluetoothWeight = 0.0f;
     float currentActiveWeight = 0.0f;
     // Reused for every 500ms status broadcast. Allocating a fresh JsonDocument

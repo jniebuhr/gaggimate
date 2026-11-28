@@ -6,6 +6,7 @@ import { ApiServiceContext, machine } from '../../services/ApiService.js';
 import { MODES } from './utils.js';
 import { t } from '@lingui/core/macro';
 import { computeWaterLevel } from '../../utils/waterLevel.js';
+import { clampLiveBrewSetpoint, liveBrewLimitsAreValid, liveBrewStartIsSafe } from '../../utils/liveBrew.js';
 
 const status = computed(() => machine.value.status);
 const capabilities = computed(() => machine.value.capabilities);
@@ -40,6 +41,9 @@ export function useDashboardState() {
   const isFinished = !!p?.e && !isActive;
   const isBrewing = mode === 1;
   const isGrinding = mode === 4;
+  const liveBrewLimits = caps.liveBrewLimits;
+  const liveBrewAvailable = connected.value && isBrewing && caps.liveBrew === true && liveBrewLimitsAreValid(liveBrewLimits);
+  const liveBrewActive = s.liveBrewActive === true;
   // The firmware flags a flush (utility process) so this state survives re-renders and reloads.
   const flushRunning = !!p?.u && isActive;
   const flushFinished = !!p?.u && isFinished;
@@ -98,6 +102,24 @@ export function useDashboardState() {
   const clear = () => {
     send('req:process:clear');
     setFlushPending(false);
+  };
+
+  const startLiveBrew = () => {
+    if (!liveBrewStartIsSafe({ connected: connected.value, systemReady, available: liveBrewAvailable, limits: liveBrewLimits })) return false;
+    if (!window.confirm('Start Live Brew? You will control pressure and flow manually.')) return false;
+    send('req:live-brew:start');
+    return true;
+  };
+  const stopLiveBrew = () => {
+    if (connected.value && liveBrewActive) send('req:live-brew:stop');
+  };
+  const setLiveBrew = (pressure, flow) => {
+    if (!liveBrewActive || !liveBrewLimitsAreValid(liveBrewLimits)) return;
+    apiService.send({
+      tp: 'req:live-brew:set',
+      pressure: clampLiveBrewSetpoint(pressure, liveBrewLimits.minPressure, liveBrewLimits.maxPressure),
+      flow: clampLiveBrewSetpoint(flow, liveBrewLimits.minFlow, liveBrewLimits.maxFlow),
+    });
   };
 
   const startFlush = () => {
@@ -173,6 +195,9 @@ export function useDashboardState() {
     isFinished,
     isBrewing,
     isGrinding,
+    liveBrewAvailable,
+    liveBrewActive,
+    liveBrewLimits,
     isGrindAvailable,
     showGrindTab,
     visibleModes,
@@ -197,5 +222,8 @@ export function useDashboardState() {
     raiseTarget,
     lowerTarget,
     changeTarget,
+    startLiveBrew,
+    stopLiveBrew,
+    setLiveBrew,
   };
 }

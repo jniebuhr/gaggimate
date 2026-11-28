@@ -23,6 +23,8 @@ class Process {
 
     virtual int getType() = 0;
 
+    virtual bool isLiveBrew() const { return false; }
+
     virtual void updateVolume(double volume) = 0;
 };
 

@@ -71,6 +71,15 @@ class Controller {
     bool isActive() const;
     bool isGrindActive() const;
     bool isBrewActive() const;
+    bool isLiveBrewActive() const;
+    bool isLiveBrewAvailable() const;
+    float getLiveBrewMinPressure() const;
+    float getLiveBrewMaxPressure() const;
+    float getLiveBrewMinFlow() const;
+    float getLiveBrewMaxFlow() const;
+    bool startLiveBrew(float pressure, float flow);
+    bool setLiveBrewSetpoints(float pressure, float flow);
+    void stopLiveBrew();
     bool isUpdating() const;
     bool isAutotuning() const;
     bool isReady() const;
@@ -378,6 +387,11 @@ class Controller {
     static const unsigned long BLUETOOTH_GRACE_PERIOD_MS = 1500; // 1.5 second grace period
     static const unsigned long HARDWARE_GRACE_PERIOD_MS = 1500;
     static const unsigned long CONTROLLER_WAITING_TIMEOUT_MS = 10000;
+
+    static constexpr float LIVE_BREW_MIN_PRESSURE = 0.0f;
+    static constexpr float LIVE_BREW_MAX_PRESSURE = 16.0f;
+    static constexpr float LIVE_BREW_MIN_FLOW = 0.0f;
+    static constexpr float LIVE_BREW_MAX_FLOW = 10.0f;
 
     xTaskHandle logicTaskHandle;
 
