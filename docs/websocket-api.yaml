@@ -46,6 +46,9 @@ channels:
           - $ref: '#/components/messages/FlushStartResponse'
           - $ref: '#/components/messages/CleaningResponse'
           - $ref: '#/components/messages/FlushStopResponse'
+          - $ref: '#/components/messages/LiveBrewStartResponse'
+          - $ref: '#/components/messages/LiveBrewStopResponse'
+          - $ref: '#/components/messages/LiveBrewSetResponse'
           - $ref: '#/components/messages/SetupTestResponse'
           - $ref: '#/components/messages/SetupTestEvent'
           - $ref: '#/components/messages/WifiScanResponse'
@@ -71,6 +74,9 @@ channels:
           - $ref: '#/components/messages/CleaningStartRequest'
           - $ref: '#/components/messages/CleaningCompleteRequest'
           - $ref: '#/components/messages/FlushStopRequest'
+          - $ref: '#/components/messages/LiveBrewStartRequest'
+          - $ref: '#/components/messages/LiveBrewStopRequest'
+          - $ref: '#/components/messages/LiveBrewSetRequest'
           - $ref: '#/components/messages/SetupTestStartRequest'
           - $ref: '#/components/messages/SetupTestAbortRequest'
           - $ref: '#/components/messages/WifiScanRequest'
@@ -129,6 +135,21 @@ components:
         cp:
           type: boolean
           description: Indicates pressure capability
+        lb:
+          type: boolean
+          description: Live Brew manual pressure/flow control capability; true only when the connected controller advertises both pressure sensing and a dimmable pump path (and the display is ready). Standard/non-dimmable hardware remains false.
+        lbl:
+          type: object
+          nullable: true
+          description: Firmware-advertised Live Brew bounds. Null means the capability is unavailable.
+          properties:
+            minPressure: {type: number, minimum: 0}
+            maxPressure: {type: number, exclusiveMinimum: 0}
+            minFlow: {type: number, minimum: 0}
+            maxFlow: {type: number, exclusiveMinimum: 0}
+        lba:
+          type: boolean
+          description: Whether a firmware-supported Live Brew session is active.
         cd:
           type: boolean
           description: Indicates dimming capability
@@ -785,6 +806,48 @@ components:
           success:
             type: boolean
         required: [tp]
+    LiveBrewStartRequest:
+      summary: Request manual Live Brew. Only firmware advertising lb=true and valid lbl bounds may execute it; otherwise the response is unsupported and no pump command is issued. Start may omit pressure/flow; firmware starts with both outputs at zero until a set request arrives.
+      payload:
+        type: object
+        properties:
+          tp: {type: string, enum: ['req:live-brew:start']}
+          rid: {type: string}
+        required: [tp]
+    LiveBrewStopRequest:
+      summary: Stop a firmware-supported manual Live Brew session. Implementations must fail safe on disconnect.
+      payload:
+        type: object
+        properties:
+          tp: {type: string, enum: ['req:live-brew:stop']}
+          rid: {type: string}
+        required: [tp]
+    LiveBrewSetRequest:
+      summary: Set both manual setpoints. Values must be validated and clamped to lbl by the firmware.
+      payload:
+        type: object
+        properties:
+          tp: {type: string, enum: ['req:live-brew:set']}
+          rid: {type: string}
+          pressure: {type: number}
+          flow: {type: number}
+        required: [tp, pressure, flow]
+    LiveBrewStartResponse:
+      $ref: '#/components/messages/LiveBrewResponse'
+    LiveBrewStopResponse:
+      $ref: '#/components/messages/LiveBrewResponse'
+    LiveBrewSetResponse:
+      $ref: '#/components/messages/LiveBrewResponse'
+    LiveBrewResponse:
+      payload:
+        type: object
+        properties:
+          tp: {type: string, enum: ['res:live-brew:start', 'res:live-brew:stop', 'res:live-brew:set']}
+          rid: {type: string}
+          success: {type: boolean}
+          error: {type: string, enum: [unsupported, rejected, invalid, notReady, busy]}
+        required: [tp, success]
+
     BrewConfirmCancelRequest:
       summary: Decline the pending brew confirmation on behalf of all UIs.
       payload:

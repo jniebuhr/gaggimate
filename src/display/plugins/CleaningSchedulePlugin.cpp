@@ -119,7 +119,7 @@ void CleaningSchedulePlugin::onBrewStart() {
     {
         std::lock_guard<std::recursive_mutex> guard(controller->getProcessLock());
         Process *current = controller->getProcess();
-        if (current == nullptr || current->getType() != MODE_BREW)
+        if (current == nullptr || current->getType() != MODE_BREW || current->isLiveBrew())
             return;
         profileId = static_cast<BrewProcess *>(current)->profile.id;
     }

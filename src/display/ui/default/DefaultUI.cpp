@@ -814,7 +814,7 @@ bool DefaultUI::isChartShot() {
     Process *process = controller->getProcess();
     if (process == nullptr)
         process = controller->getLastProcess();
-    if (process != nullptr && process->getType() == MODE_BREW)
+    if (process != nullptr && process->getType() == MODE_BREW && !process->isLiveBrew())
         return !static_cast<BrewProcess *>(process)->profile.utility;
     return !profileManager->getSelectedProfile().utility;
 }
@@ -965,7 +965,7 @@ void DefaultUI::updateBrewProcess() {
     if (process == nullptr) {
         process = controller->getLastProcess();
     }
-    const bool validBrew = process != nullptr && process->getType() == MODE_BREW;
+    const bool validBrew = process != nullptr && process->getType() == MODE_BREW && !process->isLiveBrew();
     if (!validBrew) {
         if (stringChanged(brewProcess.phase_type(), ""))
             brewProcess.phase_type("");

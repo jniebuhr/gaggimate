@@ -10,6 +10,7 @@
 #include <display/config.h>
 #include <display/core/constants.h>
 #include <display/core/process/BrewProcess.h>
+#include <display/core/process/LiveBrewProcess.h>
 #include <display/core/process/GrindProcess.h>
 #include <display/core/process/PumpProcess.h>
 #include <display/core/process/SteamProcess.h>
@@ -690,7 +691,7 @@ void Controller::loopLogic() {
         // Handle current process
         if (currentProcess != nullptr) {
             updateLastAction();
-            if (currentProcess->getType() == MODE_BREW) {
+            if (currentProcess->getType() == MODE_BREW && !currentProcess->isLiveBrew()) {
                 auto brewProcess = static_cast<BrewProcess *>(currentProcess.get());
                 brewProcess->updatePressure(pressure);
                 brewProcess->updateFlow(currentPumpFlow);
@@ -709,7 +710,7 @@ void Controller::loopLogic() {
         }
         if (lastProcess != nullptr && lastProcess->isComplete() && !processCompleted && settings.isDelayAdjust()) {
             processCompleted = true;
-            if (lastProcess->getType() == MODE_BREW) {
+            if (lastProcess->getType() == MODE_BREW && !lastProcess->isLiveBrew()) {
                 if (auto *brewProcess = static_cast<BrewProcess *>(lastProcess.get());
                     brewProcess->target == ProcessTarget::VOLUMETRIC) {
                     newBrewDelay = brewProcess->getNewDelayTime();
@@ -877,7 +878,7 @@ float Controller::getTargetTemp() const {
     case MODE_GRIND: {
         std::lock_guard<std::recursive_mutex> guard(processMutex);
         Process *proc = currentProcess.get();
-        if (proc != nullptr && proc->isActive() && proc->getType() == MODE_BREW) {
+        if (proc != nullptr && proc->isActive() && proc->getType() == MODE_BREW && !proc->isLiveBrew()) {
             auto brewProcess = static_cast<BrewProcess *>(proc);
             return brewProcess->getTemperature();
         }
@@ -1117,6 +1118,15 @@ void Controller::updateControl() {
             pump.flow = targetFlow;
             pump.pressure = targetPressure;
             handled = true;
+        } else if (proc->getType() == MODE_BREW && proc->isLiveBrew()) {
+            auto *live = static_cast<LiveBrewProcess *>(proc);
+            relay.open = live->isRelayActive();
+            pump.mode = live->getPressureTarget() > LIVE_BREW_MIN_PRESSURE ? PumpControlMode::Pressure : PumpControlMode::Flow;
+            pump.pressure = live->getPressureTarget();
+            pump.flow = live->getFlowTarget();
+            targetPressure = pump.pressure;
+            targetFlow = pump.flow;
+            handled = true;
         } else if (proc->getType() == MODE_BREW) {
             auto *brewProcess = static_cast<BrewProcess *>(proc);
             if (brewProcess->isAdvancedPump()) {
@@ -1289,7 +1299,7 @@ void Controller::afterDeactivate() {
     bool shot;
     {
         std::lock_guard<std::recursive_mutex> guard(processMutex);
-        shot = lastProcess != nullptr && lastProcess->getType() == MODE_BREW &&
+        shot = lastProcess != nullptr && lastProcess->getType() == MODE_BREW && !lastProcess->isLiveBrew() &&
                !static_cast<BrewProcess *>(lastProcess.get())->isUtility();
     }
     if (!shot)
@@ -1305,7 +1315,7 @@ void Controller::deactivateLocked(std::vector<const char *> &events) {
     lastProcess = std::move(currentProcess);
     bool utility = false;
     // A process that was stopped by hand or ran out on time never stamped its own end; status reads elapsed time from it.
-    if (lastProcess->getType() == MODE_BREW) {
+    if (lastProcess->getType() == MODE_BREW && !lastProcess->isLiveBrew()) {
         auto *brew = static_cast<BrewProcess *>(lastProcess.get());
         if (brew->finished == 0)
             brew->finished = millis();
@@ -1336,7 +1346,7 @@ void Controller::clear() {
 
 void Controller::clearLocked(std::vector<const char *> &events) {
     processCompleted = true;
-    if (lastProcess != nullptr && lastProcess->getType() == MODE_BREW) {
+    if (lastProcess != nullptr && lastProcess->getType() == MODE_BREW && !lastProcess->isLiveBrew()) {
         events.push_back("controller:brew:clear");
     }
     lastProcess.reset();
@@ -1400,9 +1410,53 @@ bool Controller::isBrewActive() const {
     return currentProcess != nullptr && currentProcess->isActive() && currentProcess->getType() == MODE_BREW;
 }
 
+bool Controller::isLiveBrewActive() const {
+    std::lock_guard<std::recursive_mutex> guard(processMutex);
+    return currentProcess != nullptr && currentProcess->isActive() && currentProcess->isLiveBrew();
+}
+
+bool Controller::isLiveBrewAvailable() const {
+    return systemInfo.capabilities.dimming && systemInfo.capabilities.pressure && mode == MODE_BREW && isReady();
+}
+
+float Controller::getLiveBrewMinPressure() const { return LIVE_BREW_MIN_PRESSURE; }
+float Controller::getLiveBrewMaxPressure() const { return LIVE_BREW_MAX_PRESSURE; }
+float Controller::getLiveBrewMinFlow() const { return LIVE_BREW_MIN_FLOW; }
+float Controller::getLiveBrewMaxFlow() const { return LIVE_BREW_MAX_FLOW; }
+
+bool Controller::startLiveBrew(float pressureTarget, float flowTarget) {
+    if (!isLiveBrewAvailable() || isActive() || !std::isfinite(pressureTarget) || !std::isfinite(flowTarget))
+        return false;
+    pressureTarget = constrain(pressureTarget, LIVE_BREW_MIN_PRESSURE, LIVE_BREW_MAX_PRESSURE);
+    flowTarget = constrain(flowTarget, LIVE_BREW_MIN_FLOW, LIVE_BREW_MAX_FLOW);
+    clear();
+    comms.tare();
+    currentWaterPumped = 0.0f;
+    startProcess(new LiveBrewProcess(pressureTarget, flowTarget));
+    return isLiveBrewActive();
+}
+
+bool Controller::setLiveBrewSetpoints(float pressureTarget, float flowTarget) {
+    if (!isLiveBrewAvailable() || !isLiveBrewActive() || !std::isfinite(pressureTarget) || !std::isfinite(flowTarget))
+        return false;
+    pressureTarget = constrain(pressureTarget, LIVE_BREW_MIN_PRESSURE, LIVE_BREW_MAX_PRESSURE);
+    flowTarget = constrain(flowTarget, LIVE_BREW_MIN_FLOW, LIVE_BREW_MAX_FLOW);
+    std::lock_guard<std::recursive_mutex> guard(processMutex);
+    static_cast<LiveBrewProcess *>(currentProcess.get())->setSetpoints(pressureTarget, flowTarget);
+    updateControl();
+    return true;
+}
+
+void Controller::stopLiveBrew() {
+    if (isLiveBrewActive())
+        deactivate();
+}
+
 int Controller::getMode() const { return mode; }
 
 void Controller::setMode(int newMode) {
+    if (isLiveBrewActive() && newMode != MODE_BREW)
+        stopLiveBrew();
     if (systemInfo.capabilities.dualBoiler && (newMode == MODE_STEAM || newMode == MODE_WATER))
         newMode = MODE_BREW;
     if (newMode == MODE_STANDBY) {
@@ -1672,7 +1726,7 @@ void Controller::onFlush() {
 // Every hold-to-flush source (physical button, touch, web) funnels its release through here.
 void Controller::onFlushRelease() {
     std::lock_guard<std::recursive_mutex> guard(processMutex);
-    if (currentProcess != nullptr && currentProcess->getType() == MODE_BREW) {
+    if (currentProcess != nullptr && currentProcess->getType() == MODE_BREW && !currentProcess->isLiveBrew()) {
         static_cast<BrewProcess *>(currentProcess.get())->release();
     }
 }

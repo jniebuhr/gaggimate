@@ -6,6 +6,7 @@ import { MetricsPanelWrapper } from '../pages/Home/cards/MetricsPanelWrapper.jsx
 import { MachineLevelsCard } from '../pages/Home/cards/MachineLevelsCard.jsx';
 import { WaterLevelCard } from '../pages/Home/cards/WaterLevelCard.jsx';
 import { ActionCard } from '../pages/Home/cards/ActionCard.jsx';
+import { LiveBrewCard } from '../pages/Home/cards/LiveBrewCard.jsx';
 import { msg } from '@lingui/core/macro';
 import { withTranslatedLabel } from './translatedLabel.js';
 
@@ -157,6 +158,22 @@ export const PANEL_DEFINITIONS = [
       raiseTarget: ds.raiseTarget,
       lowerTarget: ds.lowerTarget,
       volumetricAvailable: ds.volumetricAvailable,
+    }),
+  },
+  {
+    id: 'livebrew',
+    labelMsg: msg`Live Brew (manual)`,
+    required: false,
+    available: ds => ds.liveBrewAvailable,
+    availableInSettings: () => false,
+    component: LiveBrewCard,
+    props: ds => ({
+      active: ds.liveBrewActive,
+      limits: ds.liveBrewLimits,
+      start: ds.startLiveBrew,
+      stop: ds.stopLiveBrew,
+      setpoints: { pressure: ds.targetPressure, flow: ds.targetFlow },
+      setSetpoints: ds.setLiveBrew,
     }),
   },
 ].map(withTranslatedLabel);

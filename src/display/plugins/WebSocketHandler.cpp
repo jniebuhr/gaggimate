@@ -3,6 +3,7 @@
 #include <display/core/Controller.h>
 #include <display/core/ProfileManager.h>
 #include <display/core/process/BrewProcess.h>
+#include <display/core/process/LiveBrewProcess.h>
 #include <display/core/process/GrindProcess.h>
 #include <display/models/profile.h>
 #include <display/plugins/BLEScalePlugin.h>
@@ -162,6 +163,10 @@ void WebSocketHandler::attach(AsyncWebServer &server) {
                 ESP_LOGI("WebSocketHandler", "WebSocket client connected (%d open connections)", server->getClients().size());
             } else if (type == WS_EVT_DISCONNECT) {
                 ESP_LOGI("WebSocketHandler", "WebSocket client disconnected (%d open connections)", server->getClients().size());
+                if (liveBrewOwner == client->id()) {
+                    controller->stopLiveBrew();
+                    liveBrewOwner = 0;
+                }
                 rxBuffers.erase(client->id());
             } else if (type == WS_EVT_DATA) {
                 handleWebSocketData(server, client, type, arg, data, len);
@@ -302,6 +307,9 @@ void WebSocketHandler::handleWebSocketData(AsyncWebSocket *server, AsyncWebSocke
                     pluginManager->trigger("webui:scale:tare");
                 } else if (msgType == "req:flush:stop") {
                     handleFlushStop(client->id(), doc);
+                } else if (msgType == "req:live-brew:start" || msgType == "req:live-brew:stop" ||
+                           msgType == "req:live-brew:set") {
+                    handleLiveBrewRequest(client->id(), doc);
                 } else if (auto it = pluginRequestHandlers.find(msgType); it != pluginRequestHandlers.end()) {
                     it->second(cid, doc);
                 }
@@ -435,6 +443,18 @@ void WebSocketHandler::publishState(unsigned long now) {
 #else
     doc["hl"] = false;
 #endif
+    const bool liveBrewAvailable = controller->isLiveBrewAvailable();
+    doc["lb"] = liveBrewAvailable;
+    if (liveBrewAvailable) {
+        JsonObject limits = doc["lbl"].to<JsonObject>();
+        limits["minPressure"] = controller->getLiveBrewMinPressure();
+        limits["maxPressure"] = controller->getLiveBrewMaxPressure();
+        limits["minFlow"] = controller->getLiveBrewMinFlow();
+        limits["maxFlow"] = controller->getLiveBrewMaxFlow();
+    } else {
+        doc["lbl"] = nullptr;
+    }
+    doc["lba"] = controller->isLiveBrewActive();
     doc["htl"] = controller->hasTankLevel();
     if (controller->hasTankLevelReading())
         doc["tlo"] = controller->isTankLevelOK();
@@ -529,7 +549,16 @@ void WebSocketHandler::publishTelemetry() {
         statusDoc["pf"] = round_to(controller->getCurrentPuckFlow(), 3);
         statusDoc["tf"] = controller->getTargetFlow();
         statusDoc["wp"] = round_to(controller->getCurrentWaterPumped(), 3);
-        if (process->getType() == MODE_BREW) {
+        if (process->isLiveBrew()) {
+            auto *live = static_cast<LiveBrewProcess *>(process);
+            pObj["s"] = "brew";
+            pObj["l"] = live->isActive() ? "Live Brew" : "Finished";
+            pObj["e"] = (live->isActive() ? millis() : live->getStarted()) - live->getStarted();
+            pObj["u"] = 0;
+            pObj["tt"] = "manual";
+            pObj["tp"] = live->getPressureTarget();
+            pObj["tf"] = live->getFlowTarget();
+        } else if (process->getType() == MODE_BREW) {
             auto *brew = static_cast<BrewProcess *>(process);
             unsigned long ts = brew->isActive() && controller->isActive() ? millis() : brew->finished;
             pObj["s"] = brew->currentPhase.phase == PhaseType::PHASE_TYPE_BREW ? "brew" : "infusion";
@@ -611,5 +640,38 @@ void WebSocketHandler::handleFlushStop(uint32_t clientId, JsonDocument &request)
     response["tp"] = "res:flush:stop";
     response["rid"] = request["rid"];
     response["success"] = true;
+    ws.text(clientId, toWsBuffer(response));
+}
+
+void WebSocketHandler::handleLiveBrewRequest(uint32_t clientId, JsonDocument &request) {
+    JsonDocument response(&psramAllocator);
+    const String requestType = request["tp"].as<String>();
+    response["tp"] = String("res:") + requestType.substring(4);
+    response["rid"] = request["rid"];
+    bool success = false;
+    const bool available = controller->isLiveBrewAvailable();
+    if (requestType == "req:live-brew:start" && available && liveBrewOwner == 0) {
+        // Start is intentionally zero-output until the operator sends the first setpoint.
+        // The set request is the only path that can enable pump pressure/flow.
+        const float pressure = request["pressure"] | 0.0f;
+        const float flow = request["flow"] | 0.0f;
+        success = controller->startLiveBrew(pressure, flow);
+        if (success)
+            liveBrewOwner = clientId;
+    } else if (requestType == "req:live-brew:stop" && liveBrewOwner == clientId) {
+        controller->stopLiveBrew();
+        liveBrewOwner = 0;
+        success = true;
+    } else if (requestType == "req:live-brew:set" && liveBrewOwner == clientId && request["pressure"].is<float>() &&
+               request["flow"].is<float>()) {
+        success = controller->setLiveBrewSetpoints(request["pressure"].as<float>(), request["flow"].as<float>());
+    }
+    response["success"] = success;
+    if (!success)
+        response["error"] = available ? "rejected" : "unsupported";
+    if (requestType == "req:live-brew:set" && success) {
+        response["pressure"] = controller->getTargetPressure();
+        response["flow"] = controller->getTargetFlow();
+    }
     ws.text(clientId, toWsBuffer(response));
 }

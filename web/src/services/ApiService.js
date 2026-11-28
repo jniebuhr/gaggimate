@@ -93,6 +93,7 @@ export default class ApiService {
     this.state.value = {
       ...this.state.value,
       connected: false,
+      status: { ...this.state.value.status, liveBrewActive: false },
       // scan:complete can't arrive on a dead socket, so don't leave the spinner latched.
       scale: { ...this.state.value.scale, scanning: false },
     };
@@ -245,6 +246,7 @@ export default class ApiService {
     map('tof', 'tofDistance', v => v || 0);
     map('pw', 'currentPumpPower', v => v ?? 0);
     map('hp', 'currentBoilerPower', v => v ?? 0);
+    map('lba', 'liveBrewActive', v => !!v);
     map('pkr', 'currentPuckResistance', v => v ?? 0);
     map('pf', 'currentPuckFlow', v => v ?? 0);
     map('cv', 'currentCoffeeVolume', v => v ?? 0);
@@ -264,6 +266,8 @@ export default class ApiService {
     if (has('hs')) capabilities.hardwareScale = !!message.hs;
     if (has('sd')) capabilities.sdCard = !!message.sd;
     if (has('hl')) capabilities.headless = !!message.hl;
+    if (has('lb')) capabilities.liveBrew = !!message.lb;
+    if (has('lbl')) capabilities.liveBrewLimits = message.lbl;
 
     // Only telemetry frames extend the chart history; state-only frames would duplicate points.
     let history = this.state.value.history;
@@ -326,6 +330,8 @@ export const createMachineState = () =>
       targetSteamTemperature: 0,
       currentFlow: 0,
       targetFlow: 0,
+      targetPressure: 0,
+      liveBrewActive: false,
       mode: 0,
       selectedProfile: '',
       selectedProfileId: null,
@@ -347,6 +353,8 @@ export const createMachineState = () =>
       hardwareScale: false,
       sdCard: false,
       headless: false,
+      liveBrew: false,
+      liveBrewLimits: null,
     },
     // BLE scale lifecycle from evt:scale:* (GM-257).
     scale: {
